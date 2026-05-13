@@ -8,7 +8,9 @@ export default defineConfig(({mode}) => {
   return {
     plugins: [react(), tailwindcss()],
     define: {
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+      // Only expose the Gemini key when explicitly prefixed VITE_GEMINI_API_KEY.
+      // Never put a bare GEMINI_API_KEY (server secret) into the client bundle.
+      'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY ?? ''),
     },
     resolve: {
       alias: {
