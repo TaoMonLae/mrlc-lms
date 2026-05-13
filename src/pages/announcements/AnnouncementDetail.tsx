@@ -1,0 +1,268 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { 
+  ArrowLeft, 
+  Clock, 
+  Users, 
+  Pin, 
+  Edit, 
+  Archive, 
+  Calendar, 
+  ShieldCheck,
+  Share2,
+  Printer,
+  ChevronRight,
+  User,
+  Megaphone
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { usePermissions } from '@/src/lib/permissions';
+import { format } from 'date-fns';
+import { toast } from 'sonner';
+import { Announcement, AnnouncementAudience } from './AnnouncementsList';
+
+// Mock fetching function
+const getAnnouncement = (id: string): Announcement | undefined => {
+  const data: Announcement[] = [
+    {
+      id: 'ann-1',
+      title: 'School Reopening & Safety Guidelines',
+      body: 'Welcome back students! Please read the attached safety guidelines for the upcoming semester. We prioritize your health and safety above all else. Daily temperature checks will be mandatory. Hand sanitizers have been installed at every entrance. We request all parents to ensure their children are well-informed about the new guidelines.\n\nKey points to remember:\n1. Wear masks at all times within school premises.\n2. Maintain physical distancing in corridors and common areas.\n3. Wash hands frequently.\n4. Avoid sharing personal belongings such as stationery or water bottles.',
+      audience: 'ALL',
+      pinned: true,
+      createdById: 'u1',
+      createdByName: 'Admin User',
+      status: 'ACTIVE',
+      createdAt: '2025-05-01T08:00:00Z',
+      updatedAt: '2025-05-01T08:00:00Z',
+    },
+    {
+      id: 'ann-2',
+      title: 'Final Exam Schedule - Term 1',
+      body: 'The final exam schedule for Term 1 has been released. Please check your student portal for specific timings and room assignments. Ensure you arrive at least 15 minutes before the start time. Bring only necessary materials specified in the exam list. Electronic gadgets are strictly prohibited.',
+      audience: 'STUDENTS',
+      pinned: true,
+      expiresAt: '2025-06-15T23:59:59Z',
+      createdById: 'u1',
+      createdByName: 'Admin User',
+      status: 'ACTIVE',
+      createdAt: '2025-05-10T10:30:00Z',
+      updatedAt: '2025-05-10T10:30:00Z',
+    },
+    {
+      id: 'ann-3',
+      title: 'Staff Meeting: Curriculum Development',
+      body: 'Reminder for all teaching staff about our monthly meeting regarding curriculum updates and student progress reporting. We will be discussing the new integration of digital assessment tools. Please prepare your department progress summaries by Wednesday.',
+      audience: 'TEACHERS',
+      pinned: false,
+      createdById: 'u1',
+      createdByName: 'Admin User',
+      status: 'ACTIVE',
+      createdAt: '2025-05-12T14:00:00Z',
+      updatedAt: '2025-05-12T14:00:00Z',
+    }
+  ];
+  return data.find(a => a.id === id);
+};
+
+export default function AnnouncementDetail() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [announcement, setAnnouncement] = useState<Announcement | null>(null);
+  const { isAdmin, hasPermission } = usePermissions();
+
+  const canManage = isAdmin || hasPermission('manage_announcements');
+
+  useEffect(() => {
+    if (id) {
+      const data = getAnnouncement(id);
+      if (data) {
+        setAnnouncement(data);
+      } else {
+        toast.error('Announcement not found');
+        navigate('/announcements');
+      }
+    }
+  }, [id, navigate]);
+
+  if (!announcement) return null;
+
+  const getAudienceColor = (audience: AnnouncementAudience) => {
+    switch (audience) {
+      case 'ALL': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+      case 'TEACHERS': return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400';
+      case 'STUDENTS': return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400';
+      case 'CLASS': return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
+      default: return 'bg-slate-100 text-slate-700';
+    }
+  };
+
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href);
+    toast.success('Link copied to clipboard');
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            render={<Link to="/announcements" />}
+            className="rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div className="flex items-center gap-2">
+            <Megaphone className="h-5 w-5 text-indigo-600" />
+            <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Announcement Details</span>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2 self-end md:self-auto">
+          <Button variant="outline" size="sm" onClick={handleShare} className="h-9 px-3">
+            <Share2 className="mr-2 h-4 w-4" /> Share
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => window.print()} className="h-9 px-3">
+            <Printer className="mr-2 h-4 w-4" /> Print
+          </Button>
+          {canManage && (
+            <Button render={<Link to={`/announcements/${id}/edit`} />} size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white h-9 px-3">
+              <Edit className="mr-2 h-4 w-4" /> Edit
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* Sidebar Info */}
+        <div className="order-2 lg:order-1 lg:col-span-1 space-y-6">
+          <Card className="border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden bg-slate-50/50 dark:bg-slate-900/50">
+            <CardContent className="p-5 space-y-6">
+              <div>
+                <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Published By</h4>
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                    <User className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">{announcement.createdByName}</p>
+                    <p className="text-xs text-slate-500">School Faculty</p>
+                  </div>
+                </div>
+              </div>
+
+              <Separator className="bg-slate-200 dark:bg-slate-800" />
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-500 flex items-center gap-2">
+                    <Clock className="h-3 w-3" /> Published
+                  </span>
+                  <span className="text-xs font-medium text-slate-900 dark:text-white">
+                    {format(new Date(announcement.createdAt), 'MMM d, yyyy')}
+                  </span>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-500 flex items-center gap-2">
+                    <Users className="h-3 w-3" /> Audience
+                  </span>
+                  <Badge variant="secondary" className={`${getAudienceColor(announcement.audience)} border-none text-[10px] h-5`}>
+                    {announcement.audience}
+                  </Badge>
+                </div>
+
+                {announcement.expiresAt && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-500 flex items-center gap-2 text-rose-500">
+                      <Calendar className="h-3 w-3" /> Expires
+                    </span>
+                    <span className="text-xs font-medium text-slate-900 dark:text-white">
+                      {format(new Date(announcement.expiresAt), 'MMM d, yyyy')}
+                    </span>
+                  </div>
+                )}
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-500 flex items-center gap-2">
+                    <Pin className="h-3 w-3" /> Priority
+                  </span>
+                  <span className={`text-xs font-bold ${announcement.pinned ? 'text-indigo-600' : 'text-slate-900 dark:text-white'}`}>
+                    {announcement.pinned ? 'HIGH / PINNED' : 'NORMAL'}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-4 flex gap-3 border border-indigo-100 dark:border-indigo-900/50">
+            <ShieldCheck className="h-5 w-5 text-indigo-600 shrink-0" />
+            <p className="text-[11px] text-indigo-800 dark:text-indigo-400 leading-relaxed font-medium">
+              This message is verified by the school administration and is part of official school communications.
+            </p>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="order-1 lg:order-2 lg:col-span-3">
+          <Card className="border-slate-200 dark:border-slate-800 shadow-sm min-h-[500px]">
+            <CardContent className="p-8 md:p-12">
+              <div className="space-y-6">
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    {announcement.pinned && (
+                      <Badge className="bg-indigo-600 text-white hover:bg-indigo-600 border-none px-2 h-6 flex items-center gap-1.5 uppercase tracking-wider font-bold text-[10px]">
+                        <Pin className="h-3 w-3 fill-current" /> Important
+                      </Badge>
+                    )}
+                    <Badge variant="outline" className="border-slate-300 dark:border-slate-700 text-slate-500 px-2 h-6 uppercase tracking-wider font-bold text-[10px]">
+                      Announcement
+                    </Badge>
+                  </div>
+                  <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight">
+                    {announcement.title}
+                  </h1>
+                </div>
+
+                <Separator className="bg-slate-100 dark:bg-slate-800" />
+
+                <div className="prose prose-slate dark:prose-invert max-w-none">
+                  {announcement.body.split('\n').map((para, i) => (
+                    <p key={i} className="text-lg text-slate-700 dark:text-slate-300 leading-relaxed mb-6 font-medium">
+                      {para}
+                    </p>
+                  ))}
+                </div>
+                
+                <div className="pt-12">
+                   <div className="flex flex-col gap-4 p-6 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-slate-100 dark:border-slate-800">
+                      <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <Megaphone className="h-4 w-4 text-indigo-600" />
+                        Announcement Actions
+                      </h4>
+                      <p className="text-sm text-slate-500">Need more information or want to follow up on this announcement?</p>
+                      <div className="flex flex-wrap gap-3 mt-2">
+                         <Button variant="secondary" className="h-10 text-xs">Contact Administrator</Button>
+                         <Button variant="ghost" className="h-10 text-xs text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/20">Suggest Changes</Button>
+                      </div>
+                   </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <div className="mt-8 flex items-center justify-between text-slate-400">
+              <Link to="/announcements" className="text-sm font-bold flex items-center gap-2 hover:text-indigo-600 transition-colors">
+                <ChevronRight className="h-4 w-4 rotate-180" /> Back to all announcements
+              </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

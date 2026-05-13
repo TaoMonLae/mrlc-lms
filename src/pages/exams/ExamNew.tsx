@@ -1,0 +1,331 @@
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Save, Plus, Trash2, CheckCircle2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
+import { type Exam, type ExamQuestion, type ExamSettings } from '../../types/exam';
+
+const INITIAL_SETTINGS: ExamSettings = {
+  enableTimer: true,
+  autoSubmit: true,
+  shuffleQuestions: false,
+  shuffleChoices: false,
+  showScoreAfterSubmit: true,
+  showCorrectAnswers: false,
+  allowedAttempts: 1,
+};
+
+export default function ExamNew() {
+  const navigate = useNavigate();
+  const [step, setStep] = useState(1);
+  
+  // Setup data
+  const [title, setTitle] = useState('');
+  const [classId, setClassId] = useState('');
+  const [subject, setSubject] = useState('');
+  const [examType, setExamType] = useState('FINAL');
+  const [duration, setDuration] = useState('60');
+  
+  // Questions data
+  const [questions, setQuestions] = useState<ExamQuestion[]>([]);
+  
+  // Settings data
+  const [settings, setSettings] = useState<ExamSettings>(INITIAL_SETTINGS);
+
+  const addQuestion = () => {
+    setQuestions([
+      ...questions,
+      {
+        id: `q_${Date.now()}`,
+        type: 'MCQ',
+        questionText: '',
+        choices: ['', '', '', ''],
+        correctAnswer: '0',
+        points: 5,
+        order: questions.length,
+      }
+    ]);
+  };
+
+  const updateQuestion = (id: string, updates: Partial<ExamQuestion>) => {
+    setQuestions(questions.map(q => q.id === id ? { ...q, ...updates } : q));
+  };
+
+  const removeQuestion = (id: string) => {
+    setQuestions(questions.filter(q => q.id !== id));
+  };
+
+  const calculateTotalPoints = () => {
+    return questions.reduce((sum, q) => sum + (Number(q.points) || 0), 0);
+  };
+
+  const handleSave = () => {
+    toast.success('Exam saved as draft.');
+    navigate('/exams');
+  };
+
+  return (
+    <div className="space-y-6 max-w-[1000px] mx-auto">
+      <div>
+        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/exams" />} nativeButton={false}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Exams
+        </Button>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Create New Exam</h1>
+        <p className="text-sm text-slate-500 mt-1 dark:text-slate-400">Step {step} of 4</p>
+      </div>
+
+      <div className="flex items-center justify-between mb-8 relative">
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-slate-100 dark:bg-slate-800 -z-10 rounded-full overflow-hidden">
+           <div className="h-full bg-orange-600 transition-all duration-300" style={{ width: `${((step - 1) / 3) * 100}%` }}></div>
+        </div>
+        {[1, 2, 3, 4].map(s => (
+          <div key={s} className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm transition-colors ${
+            step >= s ? 'bg-orange-600 text-white' : 'bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
+          }`}>
+            {s}
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm">
+        {step === 1 && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">1. Setup Exam Details</h2>
+            <div className="space-y-2">
+              <Label>Exam Title</Label>
+              <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Midterm Mathematics" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Class</Label>
+                 <Select value={classId} onValueChange={setClassId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select class" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="c1">GED Social Studies</SelectItem>
+                    <SelectItem value="c2">Pre-GED English</SelectItem>
+                    <SelectItem value="c3">GED Math Prep</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Subject</Label>
+                <Input value={subject} onChange={e => setSubject(e.target.value)} placeholder="e.g. Math" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Exam Type</Label>
+                <Select value={examType} onValueChange={setExamType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="MIDTERM">Midterm</SelectItem>
+                    <SelectItem value="FINAL">Final</SelectItem>
+                    <SelectItem value="PRACTICE">Practice Test</SelectItem>
+                    <SelectItem value="QUIZ">Quiz</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Duration (Minutes)</Label>
+                <Input type="number" value={duration} onChange={e => setDuration(e.target.value)} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">2. Questions</h2>
+              <div className="text-sm font-medium bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">
+                Total Points: {calculateTotalPoints()}
+              </div>
+            </div>
+
+            {questions.length === 0 ? (
+              <div className="text-center py-10 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
+                <p className="text-slate-500 mb-4">No questions added yet.</p>
+                <Button onClick={addQuestion} variant="outline">
+                  <Plus className="mr-2 h-4 w-4" /> Add First Question
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-8">
+                {questions.map((q, index) => (
+                  <div key={q.id} className="p-4 border border-slate-200 dark:border-slate-700 rounded-lg space-y-4 bg-slate-50/50 dark:bg-slate-800/30">
+                    <div className="flex justify-between items-center">
+                      <h3 className="font-medium text-slate-900 dark:text-white">Question {index + 1}</h3>
+                      <Button variant="ghost" size="sm" onClick={() => removeQuestion(q.id)} className="text-red-500 hover:text-red-600 hover:bg-red-50">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                         <Label>Type</Label>
+                         <Select value={q.type} onValueChange={(val: any) => updateQuestion(q.id, { type: val })}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="MCQ">Multiple Choice</SelectItem>
+                            <SelectItem value="SHORT_ANSWER">Short Answer</SelectItem>
+                            <SelectItem value="WRITTEN">Written / Essay</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Points</Label>
+                        <Input type="number" value={q.points} onChange={e => updateQuestion(q.id, { points: Number(e.target.value) })} />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Question Text</Label>
+                      <Textarea value={q.questionText} onChange={e => updateQuestion(q.id, { questionText: e.target.value })} rows={3} />
+                    </div>
+
+                    {q.type === 'MCQ' && q.choices && (
+                      <div className="space-y-3">
+                        <Label>Choices & Correct Answer</Label>
+                        {q.choices.map((choice, cIndex) => (
+                          <div key={cIndex} className="flex items-center gap-3">
+                            <input 
+                              type="radio" 
+                              name={`correct_${q.id}`} 
+                              checked={q.correctAnswer === cIndex.toString()}
+                              onChange={() => updateQuestion(q.id, { correctAnswer: cIndex.toString() })}
+                              className="h-4 w-4 text-orange-600"
+                            />
+                            <Input 
+                              value={choice} 
+                              onChange={e => {
+                                const newChoices = [...q.choices!];
+                                newChoices[cIndex] = e.target.value;
+                                updateQuestion(q.id, { choices: newChoices });
+                              }}
+                              placeholder={`Choice ${cIndex + 1}`}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+                
+                <Button onClick={addQuestion} variant="outline" className="w-full border-dashed">
+                  <Plus className="mr-2 h-4 w-4" /> Add Question
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-6">3. Exam Settings</h2>
+            
+            <div className="space-y-6">
+              <div className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-800 rounded-lg">
+                <div className="space-y-0.5">
+                  <Label className="text-base">Enable Timer</Label>
+                  <p className="text-sm text-slate-500">Enforce the time limit strictly.</p>
+                </div>
+                <Switch checked={settings.enableTimer} onCheckedChange={(chk) => setSettings({...settings, enableTimer: chk})} />
+              </div>
+              <div className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-800 rounded-lg">
+                <div className="space-y-0.5">
+                  <Label className="text-base">Auto-Submit</Label>
+                  <p className="text-sm text-slate-500">Submit automatically when time runs out.</p>
+                </div>
+                <Switch checked={settings.autoSubmit} onCheckedChange={(chk) => setSettings({...settings, autoSubmit: chk})} />
+              </div>
+              <div className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-800 rounded-lg">
+                <div className="space-y-0.5">
+                  <Label className="text-base">Shuffle Questions</Label>
+                  <p className="text-sm text-slate-500">Randomize question order for each student.</p>
+                </div>
+                <Switch checked={settings.shuffleQuestions} onCheckedChange={(chk) => setSettings({...settings, shuffleQuestions: chk})} />
+              </div>
+               <div className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-800 rounded-lg">
+                <div className="space-y-0.5">
+                  <Label className="text-base">Show Score Immediately</Label>
+                  <p className="text-sm text-slate-500">Students see auto-graded score after submitting.</p>
+                </div>
+                <Switch checked={settings.showScoreAfterSubmit} onCheckedChange={(chk) => setSettings({...settings, showScoreAfterSubmit: chk})} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {step === 4 && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-center p-6 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400 rounded-xl mb-6">
+              <CheckCircle2 className="h-8 w-8 mr-3" />
+              <div>
+                <h3 className="font-bold text-lg">Ready to Create Exam</h3>
+                <p className="text-sm opacity-90">Review a summary of your exam before saving.</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6 text-sm">
+              <div className="space-y-3">
+                <div className="border-b pb-2 dark:border-slate-800">
+                  <span className="text-slate-500 block mb-1">Title</span>
+                  <span className="font-medium text-slate-900 dark:text-white">{title || 'Untitled Exam'}</span>
+                </div>
+                <div className="border-b pb-2 dark:border-slate-800">
+                  <span className="text-slate-500 block mb-1">Subject</span>
+                  <span className="font-medium text-slate-900 dark:text-white">{subject || 'N/A'}</span>
+                </div>
+                <div className="border-b pb-2 dark:border-slate-800">
+                  <span className="text-slate-500 block mb-1">Duration</span>
+                  <span className="font-medium text-slate-900 dark:text-white">{duration} minutes</span>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div className="border-b pb-2 dark:border-slate-800">
+                  <span className="text-slate-500 block mb-1">Questions</span>
+                  <span className="font-medium text-slate-900 dark:text-white">{questions.length} questions</span>
+                </div>
+                <div className="border-b pb-2 dark:border-slate-800">
+                  <span className="text-slate-500 block mb-1">Total Points</span>
+                  <span className="font-medium text-slate-900 dark:text-white">{calculateTotalPoints()} points</span>
+                </div>
+                 <div className="border-b pb-2 dark:border-slate-800">
+                  <span className="text-slate-500 block mb-1">Status</span>
+                  <span className="font-medium text-slate-900 dark:text-white">Draft</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-8 flex justify-between pt-6 border-t border-slate-200 dark:border-slate-800">
+          <Button variant="outline" onClick={() => setStep(step - 1)} disabled={step === 1}>
+            Previous
+          </Button>
+          {step < 4 ? (
+             <Button onClick={() => setStep(step + 1)} className="bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200">
+              Next Step
+            </Button>
+          ) : (
+            <Button onClick={handleSave} className="bg-orange-600 hover:bg-orange-700 text-white">
+              <Save className="mr-2 h-4 w-4" /> Save Exam
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

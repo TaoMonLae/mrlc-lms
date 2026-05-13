@@ -1,0 +1,368 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// -----------------------------------------------------------------------------
+// ENUMS
+// -----------------------------------------------------------------------------
+
+enum Role {
+  ADMIN
+  TEACHER
+  STUDENT
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+enum ExamType {
+  QUIZ
+  MIDTERM
+  FINAL
+  MOCK
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  SHORT_ANSWER
+  ESSAY
+}
+
+enum FeeStatus {
+  PAID
+  PENDING
+  OVERDUE
+  WAIVED
+}
+
+enum CaseStatus {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+  RESOLVED
+}
+
+enum CasePriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+// -----------------------------------------------------------------------------
+// MODELS
+// -----------------------------------------------------------------------------
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String?
+  firstName     String
+  lastName      String
+  role          Role      @default(STUDENT)
+  isActive      Boolean   @default(true)
+  
+  // Relations
+  studentProfile Student?
+  teacherProfile Teacher?
+  recordedAttendances Attendance[] @relation("RecordedBy")
+  caseNotes      CaseNote[]
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([email])
+}
+
+model SchoolProfile {
+  id              String   @id @default(uuid())
+  name            String
+  address         String?
+  contactEmail    String?
+  contactPhone    String?
+  establishedYear Int?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Student {
+  id             String   @id @default(uuid())
+  userId         String?  @unique
+  user           User?    @relation(fields: [userId], references: [id])
+  studentCode    String   @unique
+  dateOfBirth    DateTime?
+  enrollmentDate DateTime @default(now())
+  guardianName   String?
+  guardianPhone  String?
+  
+  classId        String?
+  class          Class?   @relation(fields: [classId], references: [id])
+  
+  attendances    Attendance[]
+  examAttempts   ExamAttempt[]
+  feePayments    FeePayment[]
+  caseRecords    CaseRecord[]
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([studentCode])
+  @@index([classId])
+}
+
+model Teacher {
+  id             String   @id @default(uuid())
+  userId         String?  @unique
+  user           User?    @relation(fields: [userId], references: [id])
+  teacherCode    String   @unique
+  hireDate       DateTime @default(now())
+  specialization String?
+
+  classes        ClassTeacher[]
+  subjects       SubjectTeacher[]
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([teacherCode])
+}
+
+model Class {
+  id             String   @id @default(uuid())
+  name           String
+  level          String   // e.g., "GED", "Pre-GED"
+  academicYear   String
+  room           String?
+  capacity       Int?
+  
+  students       Student[]
+  teachers       ClassTeacher[]
+  exams          Exam[]
+  attendances    Attendance[]
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// Intermediary table for Teacher <-> Class (Many-to-Many)
+model ClassTeacher {
+  classId        String
+  class          Class    @relation(fields: [classId], references: [id])
+  teacherId      String
+  teacher        Teacher  @relation(fields: [teacherId], references: [id])
+  
+  @@id([classId, teacherId])
+  @@index([teacherId])
+  @@index([classId])
+}
+
+model Subject {
+  id             String   @id @default(uuid())
+  name           String
+  code           String   @unique
+  description    String?
+
+  teachers       SubjectTeacher[]
+  exams          Exam[]
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// Intermediary table for Teacher <-> Subject
+model SubjectTeacher {
+  subjectId      String
+  subject        Subject  @relation(fields: [subjectId], references: [id])
+  teacherId      String
+  teacher        Teacher  @relation(fields: [teacherId], references: [id])
+  
+  @@id([subjectId, teacherId])
+  @@index([teacherId])
+  @@index([subjectId])
+}
+
+model Attendance {
+  id             String   @id @default(uuid())
+  date           DateTime
+  status         AttendanceStatus
+  remarks        String?
+  
+  studentId      String
+  student        Student  @relation(fields: [studentId], references: [id])
+  classId        String
+  class          Class    @relation(fields: [classId], references: [id])
+  recordedById   String
+  recordedBy     User     @relation("RecordedBy", fields: [recordedById], references: [id])
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([studentId, classId, date])
+  @@index([studentId])
+  @@index([classId])
+  @@index([date])
+}
+
+model Exam {
+  id             String   @id @default(uuid())
+  title          String
+  type           ExamType
+  date           DateTime
+  durationMinutes Int?
+  totalMarks     Float?
+  
+  classId        String
+  class          Class    @relation(fields: [classId], references: [id])
+  subjectId      String
+  subject        Subject  @relation(fields: [subjectId], references: [id])
+  
+  questions      Question[]
+  attempts       ExamAttempt[]
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([classId])
+  @@index([subjectId])
+}
+
+model Question {
+  id             String   @id @default(uuid())
+  text           String
+  type           QuestionType
+  points         Float
+  options        Json?    // Optional for multiple choice
+  correctAnswer  String?  // Can be an option string or detailed answer
+  
+  examId         String
+  exam           Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  
+  answers        ExamAnswer[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([examId])
+}
+
+model ExamAttempt {
+  id             String   @id @default(uuid())
+  score          Float?
+  isCompleted    Boolean  @default(false)
+  startedAt      DateTime @default(now())
+  completedAt    DateTime?
+  
+  studentId      String
+  student        Student  @relation(fields: [studentId], references: [id])
+  examId         String
+  exam           Exam     @relation(fields: [examId], references: [id])
+  
+  answers        ExamAnswer[]
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([studentId, examId])
+  @@index([studentId])
+  @@index([examId])
+}
+
+model ExamAnswer {
+  id             String   @id @default(uuid())
+  answerText     String?
+  isCorrect      Boolean?
+  pointsAwarded  Float?
+  
+  attemptId      String
+  attempt        ExamAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId     String
+  question       Question    @relation(fields: [questionId], references: [id])
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([attemptId, questionId])
+  @@index([attemptId])
+  @@index([questionId])
+}
+
+model LibraryResource {
+  id             String   @id @default(uuid())
+  title          String
+  author         String?
+  isbn           String?
+  type           String   // e.g., "BOOK", "DIGITAL", "EQUIPMENT"
+  totalCopies    Int      @default(1)
+  availableCopies Int     @default(1)
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model FeePayment {
+  id             String   @id @default(uuid())
+  amount         Float
+  currency       String   @default("MYR")
+  dueDate        DateTime
+  paidDate       DateTime?
+  status         FeeStatus @default(PENDING)
+  description    String?
+  receiptNumber  String?   @unique
+  
+  studentId      String
+  student        Student  @relation(fields: [studentId], references: [id])
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([studentId])
+  @@index([status])
+}
+
+model CaseRecord {
+  id             String   @id @default(uuid())
+  title          String
+  description    String
+  status         CaseStatus @default(OPEN)
+  priority       CasePriority @default(MEDIUM)
+  category       String?  // e.g., "ACADEMIC", "DISCIPLINE", "WELFARE"
+  
+  studentId      String
+  student        Student  @relation(fields: [studentId], references: [id])
+  
+  notes          CaseNote[]
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([studentId])
+  @@index([status])
+}
+
+model CaseNote {
+  id             String   @id @default(uuid())
+  content        String
+  
+  caseRecordId   String
+  caseRecord     CaseRecord @relation(fields: [caseRecordId], references: [id], onDelete: Cascade)
+  
+  createdById    String
+  createdBy      User       @relation(fields: [createdById], references: [id])
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([caseRecordId])
+  @@index([createdById])
+}

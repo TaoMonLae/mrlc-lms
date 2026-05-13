@@ -1,11 +1,44 @@
-<div align="center">
+# Single-School LMS
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+Production-ready LMS for single-school management.
 
-  <h1>Built with AI Studio</h2>
+## Setup
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+1. Copy `.env.example` to `.env`.
+2. Configure `DATABASE_URL` for your PostgreSQL instance.
+3. Replace `SESSION_SECRET` with a secure random string.
+4. Install dependencies: `npm install`.
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+## Database Migrations
 
-</div>
+Run migrations to synchronize your database schema:
+```bash
+npx prisma migrate dev
+```
+
+## Seeding Admin
+
+To create an initial administrator account, run the seed script:
+```bash
+npx prisma db seed
+```
+(Ensure your `prisma/seed.ts` is configured for your desired initial admin account.)
+
+## Production Deployment
+
+This application uses Vite + Express.
+
+1. Build for production:
+   ```bash
+   npm run build
+   ```
+2. Start the production server:
+   ```bash
+   npm run start
+   ```
+
+## Production Hardening
+
+- Security middleware (helmet, cors, rate-limiting) is enabled in `server.ts`.
+- Structured logging is enabled using `winston`.
+- Errors are sanitized to prevent stack trace leaks.
