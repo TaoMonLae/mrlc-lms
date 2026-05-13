@@ -176,32 +176,6 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     roles: ["TEACHER"],
   },
 
-  // Staff Portal
-  {
-    title: "Announcements",
-    url: "/announcements",
-    icon: Megaphone,
-    roles: ["STAFF"],
-  },
-  {
-    title: "Students",
-    url: "/students",
-    icon: Users,
-    roles: ["STAFF"],
-  },
-  {
-    title: "Timetable",
-    url: "/timetable",
-    icon: CalendarDays,
-    roles: ["STAFF"],
-  },
-  {
-    title: "Library",
-    url: "/library",
-    icon: Library,
-    roles: ["STAFF"],
-  },
-
   // Student Portal
   {
     title: "Student Dashboard",

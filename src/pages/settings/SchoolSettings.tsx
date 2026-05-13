@@ -24,15 +24,15 @@ const schoolSchema = z.object({
 type FormValues = z.infer<typeof schoolSchema>;
 
 const MOCK_SCHOOL_DATA = {
-  name: 'Mon Refugee Learning Centre',
-  shortName: 'MRLC',
-  address: 'Mae Sot, Tak Province, Thailand',
-  phone: '',
-  email: 'contact@mrlc.edu',
-  website: '',
+  name: 'Acme International School',
+  shortName: 'AIS',
+  address: '123 Education Blvd, Learning City, 10001',
+  phone: '+1 (555) 123-4567',
+  email: 'contact@acmeschool.edu',
+  website: 'https://acmeschool.edu',
   academicYear: '2025-2026',
-  principalName: '',
-  description: 'Providing quality GED education to Mon refugee learners.',
+  principalName: 'Dr. Sarah Smith',
+  description: 'Committed to excellence in education and fostering a global perspective.',
 };
 
 export default function SchoolSettings() {

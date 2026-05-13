@@ -48,14 +48,10 @@ const recentActivities = [
 ];
 
 export default function DashboardPage() {
-  const { isStudent, isTeacher } = usePermissions();
+  const { isStudent } = usePermissions();
 
   if (isStudent) {
     return <Navigate to="/student/dashboard" replace />;
-  }
-
-  if (isTeacher) {
-    return <Navigate to="/teacher/dashboard" replace />;
   }
 
   return (

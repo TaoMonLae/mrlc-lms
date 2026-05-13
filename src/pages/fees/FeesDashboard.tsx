@@ -103,9 +103,7 @@ export default function FeesDashboard() {
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-xl shadow-sm text-center">
            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Collection Rate</p>
            <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">
-             {totalCollected + totalOutstanding > 0
-               ? Math.round((totalCollected / (totalCollected + totalOutstanding)) * 100)
-               : 0}%
+             {Math.round((totalCollected / (totalCollected + totalOutstanding)) * 100)}%
            </p>
         </div>
       </div>

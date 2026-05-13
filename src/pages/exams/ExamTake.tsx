@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Clock, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -54,7 +54,7 @@ export default function ExamTake() {
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [submitted, handleSubmit]);
+  }, [submitted]);
 
   const formatTime = (seconds: number) => {
     const min = Math.floor(seconds / 60);
@@ -66,9 +66,9 @@ export default function ExamTake() {
     setAnswers({ ...answers, [question.id]: value });
   };
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = () => {
     setSubmitted(true);
-  }, []);
+  };
 
   if (submitted) {
     return (
