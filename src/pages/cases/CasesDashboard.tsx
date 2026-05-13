@@ -204,7 +204,7 @@ export default function CasesDashboard() {
                     </div>
                   </td>
                   <td className="px-6 py-4 font-medium">
-                    <Link to={`/users/${c.studentId}`} className="text-blue-600 dark:text-blue-400 hover:underline">
+                    <Link to={`/students/${c.studentId}`} className="text-blue-600 dark:text-blue-400 hover:underline">
                       {c.studentName}
                     </Link>
                   </td>
@@ -259,7 +259,7 @@ export default function CasesDashboard() {
               
               <div className="text-sm">
                 <span className="text-slate-500">Student:</span>{' '}
-                <Link to={`/users/${c.studentId}`} className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
+                <Link to={`/students/${c.studentId}`} className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
                   {c.studentName}
                 </Link>
               </div>
