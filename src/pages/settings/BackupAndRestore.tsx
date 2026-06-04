@@ -75,6 +75,7 @@ export default function BackupAndRestore() {
   const [logs, setLogs] = useState<BackupLog[]>(mockBackupLogs);
   const [isRestoreDialogOpen, setIsRestoreDialogOpen] = useState(false);
   const [adminPassword, setAdminPassword] = useState('');
+  const [restoreError, setRestoreError] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isRestoring, setIsRestoring] = useState(false);
 
@@ -119,34 +120,55 @@ export default function BackupAndRestore() {
     }
   };
 
-  const handleRestore = () => {
+  const handleRestore = async () => {
     if (!selectedFile) {
       toast.error('Please select a backup file to restore.');
       return;
     }
-    
-    if (adminPassword !== 'admin123') { // Mock password check
-      toast.error('Invalid admin password. Restoration aborted.');
+    if (!adminPassword) {
+      setRestoreError('Password is required.');
       return;
     }
 
-    // Auto backup before restore simulation
-    toast.info('Creating safety snapshot before restore...');
+    setRestoreError(null);
     setIsRestoring(true);
+    toast.info('Verifying credentials and creating safety snapshot...');
 
-    setTimeout(() => {
-      setIsRestoring(false);
-      setIsRestoreDialogOpen(false);
-      setAdminPassword('');
-      setSelectedFile(null);
-      // Reset the input
-      const fileInput = document.getElementById('backup-file') as HTMLInputElement;
-      if (fileInput) fileInput.value = '';
-      
-      toast.success('System restored successfully!', {
-        description: 'The system has been populated from your backup file.'
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const response = await fetch('/api/auth/verify-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ password: adminPassword }),
       });
-    }, 3000);
+
+      if (!response.ok) {
+        setRestoreError('Invalid password. Restoration aborted.');
+        setIsRestoring(false);
+        return;
+      }
+
+      // TODO: send selectedFile to the real restore endpoint
+      // For now we simulate the restore process
+      toast.info('Creating safety snapshot before restore...');
+      setTimeout(() => {
+        setIsRestoring(false);
+        setIsRestoreDialogOpen(false);
+        setAdminPassword('');
+        setSelectedFile(null);
+        const fileInput = document.getElementById('backup-file') as HTMLInputElement;
+        if (fileInput) fileInput.value = '';
+        toast.success('System restored successfully!', {
+          description: 'The system has been populated from your backup file.',
+        });
+      }, 3000);
+    } catch {
+      setRestoreError('Unable to verify credentials. Please try again.');
+      setIsRestoring(false);
+    }
   };
 
   const getStatusIcon = (status: string) => {
@@ -328,14 +350,17 @@ export default function BackupAndRestore() {
           
           <div className="py-4 space-y-4">
             <div className="space-y-2">
-               <Label htmlFor="adminPassword">Admin Password (try 'admin123')</Label>
+               <Label htmlFor="adminPassword">Your Admin Password</Label>
                <Input 
                   id="adminPassword" 
                   type="password" 
-                  placeholder="Enter password to confirm"
+                  placeholder="Enter your password to confirm"
                   value={adminPassword}
-                  onChange={(e) => setAdminPassword(e.target.value)}
+                  onChange={(e) => { setAdminPassword(e.target.value); setRestoreError(null); }}
                />
+               {restoreError && (
+                 <p className="text-xs text-red-500 font-medium">{restoreError}</p>
+               )}
             </div>
           </div>
 

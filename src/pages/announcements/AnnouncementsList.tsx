@@ -51,7 +51,7 @@ export interface Announcement {
 }
 
 // Mock Data
-const MOCK_ANNOUNCEMENTS: Announcement[] = [
+export const MOCK_ANNOUNCEMENTS: Announcement[] = [
   {
     id: 'ann-1',
     title: 'School Reopening & Safety Guidelines',

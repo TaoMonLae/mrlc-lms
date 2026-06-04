@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  Edit, 
-  Users, 
-  BookOpen, 
-  Clock, 
-  CheckCircle2, 
+import {
+  ArrowLeft,
+  Edit,
+  Users,
+  BookOpen,
+  Clock,
+  CheckCircle2,
   Calendar,
   MoreVertical,
   Archive,
@@ -25,7 +25,7 @@ const MOCK_CLASS = {
   academicYear: '2025-2026',
   description: 'Foundation class for students preparing for GED. Focuses on core subjects like basic mathematics, reading comprehension, and fundamental writing skills.',
   classTeacherId: 't1',
-  classTeacherName: 'Htet Wai Yan',
+  classTeacherName: 'Tao Mon Lae',
   status: 'ACTIVE',
   studentCount: 45,
   attendanceAvg: 92,
@@ -33,7 +33,7 @@ const MOCK_CLASS = {
 };
 
 const MOCK_TEACHERS = [
-  { id: 't1', name: 'Htet Wai Yan', role: 'Main Teacher', subject: 'Maths' },
+  { id: 't1', name: 'Tao Mon Lae', role: 'Main Teacher', subject: 'Maths' },
   { id: 't2', name: 'Aye Myat Thu', role: 'Assistant', subject: 'English' },
 ];
 
@@ -48,9 +48,9 @@ export default function ClassProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
-  
+
   // Hardcoded for demo - should come from auth
-  const userRole = 'ADMIN'; 
+  const userRole = 'ADMIN';
 
   const handleArchive = () => {
     toast.success('Class has been archived.');
@@ -82,7 +82,7 @@ export default function ClassProfile() {
               <Edit className="mr-2 h-4 w-4" /> Edit Class
             </Button>
             <Button variant="secondary" className="text-amber-600 bg-amber-50 hover:bg-amber-100" onClick={handleArchive}>
-               <Archive className="mr-2 h-4 w-4" /> Archive
+              <Archive className="mr-2 h-4 w-4" /> Archive
             </Button>
           </div>
         )}
@@ -103,8 +103,8 @@ export default function ClassProfile() {
             <CheckCircle2 className="h-6 w-6" />
           </div>
           <div>
-             <p className="text-2xl font-bold text-slate-900 dark:text-white">{MOCK_CLASS.attendanceAvg}%</p>
-             <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-1">Attendance</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">{MOCK_CLASS.attendanceAvg}%</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-1">Attendance</p>
           </div>
         </div>
         <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
@@ -142,83 +142,83 @@ export default function ClassProfile() {
 
         <TabsContent value="overview" className="p-6 space-y-8 animate-in fade-in slide-in-from-bottom-2">
           <div className="prose dark:prose-invert max-w-none">
-             <h3>Description</h3>
-             <p className="text-slate-600 dark:text-slate-300">{MOCK_CLASS.description}</p>
+            <h3>Description</h3>
+            <p className="text-slate-600 dark:text-slate-300">{MOCK_CLASS.description}</p>
           </div>
         </TabsContent>
 
         <TabsContent value="students" className="p-0 animate-in fade-in slide-in-from-bottom-2">
-           <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-end">
-             <Button size="sm"><Users className="w-4 h-4 mr-2" /> Assign Students</Button>
-           </div>
-           <table className="w-full text-left text-sm">
-             <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-slate-800/50">
-                <tr>
-                  <th className="px-6 py-4">Student</th>
-                  <th className="px-6 py-4">Student ID</th>
-                  <th className="px-6 py-4">Attendance</th>
-                  <th className="px-6 py-4 text-right">Action</th>
+          <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-end">
+            <Button size="sm"><Users className="w-4 h-4 mr-2" /> Assign Students</Button>
+          </div>
+          <table className="w-full text-left text-sm">
+            <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-slate-800/50">
+              <tr>
+                <th className="px-6 py-4">Student</th>
+                <th className="px-6 py-4">Student ID</th>
+                <th className="px-6 py-4">Attendance</th>
+                <th className="px-6 py-4 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {MOCK_STUDENTS.map(student => (
+                <tr key={student.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                  <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
+                    <Link to={`/students/${student.id}`} className="hover:underline hover:text-orange-600">{student.name}</Link>
+                  </td>
+                  <td className="px-6 py-4 text-slate-500 font-mono">{student.studentId}</td>
+                  <td className="px-6 py-4">
+                    <Badge variant="outline" className="text-emerald-600 bg-emerald-50 border-emerald-200">{student.attendance}</Badge>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <Button variant="ghost" size="sm" className="text-destructive">Remove</Button>
+                  </td>
                 </tr>
-             </thead>
-             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-               {MOCK_STUDENTS.map(student => (
-                 <tr key={student.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                    <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
-                      <Link to={`/students/${student.id}`} className="hover:underline hover:text-orange-600">{student.name}</Link>
-                    </td>
-                    <td className="px-6 py-4 text-slate-500 font-mono">{student.studentId}</td>
-                    <td className="px-6 py-4">
-                      <Badge variant="outline" className="text-emerald-600 bg-emerald-50 border-emerald-200">{student.attendance}</Badge>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                       <Button variant="ghost" size="sm" className="text-destructive">Remove</Button>
-                    </td>
-                 </tr>
-               ))}
-               {MOCK_STUDENTS.length === 0 && (
-                 <tr>
-                   <td colSpan={4} className="py-8 text-center text-slate-500">No students assigned.</td>
-                 </tr>
-               )}
-             </tbody>
-           </table>
+              ))}
+              {MOCK_STUDENTS.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="py-8 text-center text-slate-500">No students assigned.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </TabsContent>
 
         <TabsContent value="teachers" className="p-0 animate-in fade-in slide-in-from-bottom-2">
-           <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-end">
-             <Button size="sm"><Plus className="w-4 h-4 mr-2" /> Assign Teacher</Button>
-           </div>
-           <table className="w-full text-left text-sm">
-             <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-slate-800/50">
-                <tr>
-                  <th className="px-6 py-4">Teacher</th>
-                  <th className="px-6 py-4">Role</th>
-                  <th className="px-6 py-4">Subject</th>
-                  <th className="px-6 py-4 text-right">Action</th>
+          <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-end">
+            <Button size="sm"><Plus className="w-4 h-4 mr-2" /> Assign Teacher</Button>
+          </div>
+          <table className="w-full text-left text-sm">
+            <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-slate-800/50">
+              <tr>
+                <th className="px-6 py-4">Teacher</th>
+                <th className="px-6 py-4">Role</th>
+                <th className="px-6 py-4">Subject</th>
+                <th className="px-6 py-4 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {MOCK_TEACHERS.map(teacher => (
+                <tr key={teacher.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                  <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
+                    <Link to={`/teachers/${teacher.id}`} className="hover:underline hover:text-orange-600">{teacher.name}</Link>
+                  </td>
+                  <td className="px-6 py-4 text-slate-500">{teacher.role}</td>
+                  <td className="px-6 py-4"><Badge variant="secondary">{teacher.subject}</Badge></td>
+                  <td className="px-6 py-4 text-right">
+                    <Button variant="ghost" size="sm" className="text-destructive">Remove</Button>
+                  </td>
                 </tr>
-             </thead>
-             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-               {MOCK_TEACHERS.map(teacher => (
-                 <tr key={teacher.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                    <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
-                      <Link to={`/teachers/${teacher.id}`} className="hover:underline hover:text-orange-600">{teacher.name}</Link>
-                    </td>
-                    <td className="px-6 py-4 text-slate-500">{teacher.role}</td>
-                    <td className="px-6 py-4"><Badge variant="secondary">{teacher.subject}</Badge></td>
-                    <td className="px-6 py-4 text-right">
-                       <Button variant="ghost" size="sm" className="text-destructive">Remove</Button>
-                    </td>
-                 </tr>
-               ))}
-               {MOCK_TEACHERS.length === 0 && (
-                 <tr>
-                   <td colSpan={4} className="py-8 text-center text-slate-500">No teachers assigned.</td>
-                 </tr>
-               )}
-             </tbody>
-           </table>
+              ))}
+              {MOCK_TEACHERS.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="py-8 text-center text-slate-500">No teachers assigned.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </TabsContent>
-        
+
         <TabsContent value="subjects" className="p-6 animate-in fade-in slide-in-from-bottom-2">
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-semibold text-slate-900 dark:text-white">Assigned Subjects</h3>
@@ -235,27 +235,27 @@ export default function ClassProfile() {
 
         <TabsContent value="attendance" className="p-6 animate-in fade-in slide-in-from-bottom-2">
           <div className="text-center py-10">
-             <Calendar className="w-12 h-12 text-slate-200 mx-auto mb-3" />
-             <p className="text-lg font-medium text-slate-900 dark:text-white">Attendance Records</p>
-             <p className="text-slate-500 text-sm mb-6">View and manage daily attendance for this class.</p>
-             <Button render={<Link to="/attendance" />} nativeButton={false}>Go to Attendance Module</Button>
+            <Calendar className="w-12 h-12 text-slate-200 mx-auto mb-3" />
+            <p className="text-lg font-medium text-slate-900 dark:text-white">Attendance Records</p>
+            <p className="text-slate-500 text-sm mb-6">View and manage daily attendance for this class.</p>
+            <Button render={<Link to="/attendance" />} nativeButton={false}>Go to Attendance Module</Button>
           </div>
         </TabsContent>
 
         <TabsContent value="exams" className="p-6 animate-in fade-in slide-in-from-bottom-2">
           <div className="text-center py-10">
-             <BookOpen className="w-12 h-12 text-slate-200 mx-auto mb-3" />
-             <p className="text-lg font-medium text-slate-900 dark:text-white">Exams & Assessments</p>
-             <p className="text-slate-500 text-sm mb-6">Manage assignments, quizzes, and exams for this class.</p>
-             <Button render={<Link to="/exams" />} nativeButton={false}>Go to Exams Module</Button>
+            <BookOpen className="w-12 h-12 text-slate-200 mx-auto mb-3" />
+            <p className="text-lg font-medium text-slate-900 dark:text-white">Exams & Assessments</p>
+            <p className="text-slate-500 text-sm mb-6">Manage assignments, quizzes, and exams for this class.</p>
+            <Button render={<Link to="/exams" />} nativeButton={false}>Go to Exams Module</Button>
           </div>
         </TabsContent>
 
         <TabsContent value="timetable" className="p-6 animate-in fade-in slide-in-from-bottom-2">
           <div className="text-center py-10">
-             <Clock className="w-12 h-12 text-slate-200 mx-auto mb-3" />
-             <p className="text-lg font-medium text-slate-900 dark:text-white">Class Timetable</p>
-             <p className="text-slate-500 text-sm">Timetable management coming soon.</p>
+            <Clock className="w-12 h-12 text-slate-200 mx-auto mb-3" />
+            <p className="text-lg font-medium text-slate-900 dark:text-white">Class Timetable</p>
+            <p className="text-slate-500 text-sm">Timetable management coming soon.</p>
           </div>
         </TabsContent>
       </Tabs>

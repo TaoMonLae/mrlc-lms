@@ -30,6 +30,12 @@ const students = [
 ];
 
 export default function TeacherAttendance() {
+  const CLASS_OPTIONS = [
+    { value: 'c1', label: 'GED Social Studies' },
+    { value: 'c2', label: 'Pre-GED English' },
+    { value: 'c3', label: 'GED Math Prep' },
+  ];
+
   const [selectedClass, setSelectedClass] = useState("c1");
   const [attendance, setAttendance] = useState<Record<string, 'present' | 'late' | 'absent' | 'excused'>>({});
   const [searchTerm, setSearchTerm] = useState("");
@@ -39,7 +45,19 @@ export default function TeacherAttendance() {
   };
 
   const handleSave = () => {
-    toast.success("Attendance saved successfully!");
+    const markedCount = Object.keys(attendance).length;
+    const totalStudents = filteredStudents.length;
+
+    if (markedCount < students.length) {
+      const unmarked = students.length - markedCount;
+      toast.warning(`${unmarked} student${unmarked > 1 ? 's' : ''} not yet marked.`, {
+        description: 'Please mark attendance for all students before submitting.',
+      });
+      return;
+    }
+    toast.success('Attendance saved successfully!', {
+      description: `${students.length} students recorded for ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}.`,
+    });
   };
 
   const markAllPresent = () => {
@@ -79,12 +97,14 @@ export default function TeacherAttendance() {
                 <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Selected Class</span>
                 <Select value={selectedClass} onValueChange={setSelectedClass}>
                     <SelectTrigger className="h-10 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-                        <SelectValue placeholder="Select Class" />
+                        <SelectValue placeholder="Select Class">
+                          {CLASS_OPTIONS.find(o => o.value === selectedClass)?.label ?? 'Select Class'}
+                        </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="c1">GED Social Studies</SelectItem>
-                        <SelectItem value="c2">Pre-GED English</SelectItem>
-                        <SelectItem value="c3">GED Math Prep</SelectItem>
+                        {CLASS_OPTIONS.map(o => (
+                          <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                        ))}
                     </SelectContent>
                 </Select>
             </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Filter, DollarSign, ArrowUpRight, CheckCircle2, AlertCircle, FileText, Download, User, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -58,17 +58,41 @@ export default function FeesDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [classFilter, setClassFilter] = useState('ALL');
+  const [fees, setFees] = useState<any[]>(MOCK_FEES);
 
-  const filteredFees = MOCK_FEES.filter(f => {
-    const matchesSearch = f.studentName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  useEffect(() => {
+    const token = sessionStorage.getItem('auth_token');
+    fetch('/api/fees', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setFees(data.map((f: any) => ({
+            id: f.id,
+            studentId: f.studentId,
+            studentName: f.student ? `${f.student.user?.firstName ?? ''} ${f.student.user?.lastName ?? ''}`.trim() : '—',
+            studentIdNumber: f.student?.studentCode ?? '—',
+            class: f.student?.classId ?? '—',
+            totalDue: f.amount,
+            totalPaid: f.status === 'PAID' ? f.amount : 0,
+            balance: f.status === 'PAID' ? 0 : f.amount,
+            status: f.status ?? 'UNPAID',
+            lastPaymentDate: f.paidDate ?? null,
+          })));
+        }
+      })
+      .catch(() => {/* keep mock data on error */});
+  }, []);
+
+  const filteredFees = fees.filter(f => {
+    const matchesSearch = f.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           f.studentIdNumber.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'ALL' || f.status === statusFilter;
     const matchesClass = classFilter === 'ALL' || f.class === classFilter;
     return matchesSearch && matchesStatus && matchesClass;
   });
 
-  const totalCollected = MOCK_FEES.reduce((sum, f) => sum + f.totalPaid, 0);
-  const totalOutstanding = MOCK_FEES.reduce((sum, f) => sum + f.balance, 0);
+  const totalCollected = fees.reduce((sum, f) => sum + (f.totalPaid ?? 0), 0);
+  const totalOutstanding = fees.reduce((sum, f) => sum + (f.balance ?? 0), 0);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">

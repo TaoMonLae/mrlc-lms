@@ -48,14 +48,21 @@ export default function ClassNew() {
   });
 
   const onSubmit = async (data: ClassFormValues) => {
+    const token = sessionStorage.getItem('auth_token');
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('New class data:', data);
+      const res = await fetch('/api/classes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to create class');
+      }
       toast.success('Class created successfully');
       navigate('/classes');
-    } catch (error) {
-      toast.error('Failed to create class');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to create class');
     }
   };
 

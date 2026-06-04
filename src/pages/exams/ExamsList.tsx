@@ -13,9 +13,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 const MOCK_EXAMS = [
-  { id: 'e1', title: 'GED Math Midterm', subject: 'Math', durationMinutes: 60, totalPoints: 100, status: 'PUBLISHED', classId: 'c1' },
-  { id: 'e2', title: 'GED RLA Practice Test 1', subject: 'English', durationMinutes: 90, totalPoints: 150, status: 'DRAFT', classId: 'c2' },
-  { id: 'e3', title: 'Social Studies Final', subject: 'Social Studies', durationMinutes: 120, totalPoints: 200, status: 'CLOSED', classId: 'c3' },
+  { id: 'e1', title: 'GED Math Midterm', subject: 'Math', durationMinutes: 60, totalPoints: 100, status: 'PUBLISHED', classId: 'c1', className: 'Pre-GED Foundation' },
+  { id: 'e2', title: 'GED RLA Practice Test 1', subject: 'English', durationMinutes: 90, totalPoints: 150, status: 'DRAFT', classId: 'c2', className: 'GED Level A' },
+  { id: 'e3', title: 'Social Studies Final', subject: 'Social Studies', durationMinutes: 120, totalPoints: 200, status: 'CLOSED', classId: 'c3', className: 'GED Level B' },
 ];
 
 export default function ExamsList() {
@@ -80,7 +80,7 @@ export default function ExamsList() {
               </div>
             </div>
             <div className="bg-slate-50 dark:bg-slate-800/50 p-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
-              <span className="text-xs text-slate-500 font-medium">{exam.classId}</span>
+              <span className="text-xs text-slate-500 font-medium">{exam.className}</span>
               <Button variant="ghost" size="sm" className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-900/20" render={<Link to={`/exams/${exam.id}`} />} nativeButton={false}>
                 Manage <ArrowRight className="ml-1 h-3 w-3" />
               </Button>

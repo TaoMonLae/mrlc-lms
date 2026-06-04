@@ -28,20 +28,10 @@ const userSchema = z.object({
 
 type UserFormValues = z.infer<typeof userSchema>;
 
-const MOCK_USER_DATA = {
-  name: 'John Teacher',
-  username: 'jteacher',
-  email: 'john@school.edu',
-  role: 'TEACHER',
-  status: 'ACTIVE',
-  teacherId: 't1',
-  studentId: '',
-};
-
 export default function UserEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+
   const {
     register,
     handleSubmit,
@@ -63,19 +53,41 @@ export default function UserEdit() {
   });
 
   useEffect(() => {
-    // Populate form data
-    reset(MOCK_USER_DATA as any);
-  }, [reset]);
+    const token = sessionStorage.getItem('auth_token');
+    fetch(`/api/users/${id}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(u => {
+        reset({
+          name: `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim(),
+          username: u.email?.split('@')[0] ?? '',
+          email: u.email ?? '',
+          role: u.role ?? 'TEACHER',
+          status: u.isActive ? 'ACTIVE' : 'DISABLED',
+          teacherId: '',
+          studentId: '',
+        });
+      })
+      .catch(() => toast.error('Failed to load user'));
+  }, [id, reset]);
 
   const onSubmit = async (data: UserFormValues) => {
+    const token = sessionStorage.getItem('auth_token');
+    const [firstName, ...rest] = data.name.trim().split(' ');
+    const lastName = rest.join(' ');
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('Updated user data:', data);
+      const res = await fetch(`/api/users/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ firstName, lastName, email: data.email, role: data.role, status: data.status }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to update user');
+      }
       toast.success('User account updated');
       navigate('/users');
-    } catch (error) {
-      toast.error('Failed to update user account');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update user account');
     }
   };
 

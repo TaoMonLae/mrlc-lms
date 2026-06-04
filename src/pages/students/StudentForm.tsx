@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { toast } from 'sonner';
 
 interface StudentFormProps {
   initialData?: any;
@@ -19,11 +20,114 @@ interface StudentFormProps {
 
 export default function StudentForm({ initialData, isEdit = false }: StudentFormProps) {
   const navigate = useNavigate();
+  const [classes, setClasses] = useState<any[]>([]);
+  const [selectedClass, setSelectedClass] = useState<string>('');
+  const [selectedGender, setSelectedGender] = useState<string>('MALE');
+  const [selectedStatus, setSelectedStatus] = useState<string>('ACTIVE');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        const token = sessionStorage.getItem('auth_token') ?? '';
+        const res = await fetch('/api/classes', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setClasses(data);
+        }
+      } catch (err) {
+        console.error('Error fetching classes:', err);
+      }
+    };
+    fetchClasses();
+  }, []);
+
+  useEffect(() => {
+    if (initialData) {
+      if (initialData.classId) {
+        setSelectedClass(initialData.classId);
+      } else if (initialData.class?.id) {
+        setSelectedClass(initialData.class.id);
+      }
+      if (initialData.gender) setSelectedGender(initialData.gender);
+      if (initialData.status) setSelectedStatus(initialData.status);
+    }
+  }, [initialData]);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // In a real app, we would save here
-    navigate('/students');
+    setIsSubmitting(true);
+
+    try {
+      const studentId = (e.currentTarget.querySelector('#studentId') as HTMLInputElement).value;
+      const firstName = (e.currentTarget.querySelector('#firstName') as HTMLInputElement).value;
+      const lastName = (e.currentTarget.querySelector('#lastName') as HTMLInputElement).value;
+      const dateOfBirth = (e.currentTarget.querySelector('#dateOfBirth') as HTMLInputElement).value;
+      const nationality = (e.currentTarget.querySelector('#nationality') as HTMLInputElement).value;
+      const address = (e.currentTarget.querySelector('#address') as HTMLTextAreaElement).value;
+      const enrollmentDate = (e.currentTarget.querySelector('#enrollmentDate') as HTMLInputElement).value;
+      const guardianName = (e.currentTarget.querySelector('#guardianName') as HTMLInputElement).value;
+      const guardianPhone = (e.currentTarget.querySelector('#guardianPhone') as HTMLInputElement).value;
+
+      // Construct a valid email derived from student code/ID
+      const sanitizedId = studentId.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const email = `${sanitizedId || 'student'}@mrlc-student.edu`;
+
+      const payload = {
+        studentCode: studentId,
+        firstName,
+        lastName,
+        email,
+        dateOfBirth: dateOfBirth ? new Date(dateOfBirth).toISOString() : null,
+        gender: selectedGender,
+        nationality,
+        address,
+        classId: selectedClass || null,
+        enrollmentDate: enrollmentDate ? new Date(enrollmentDate).toISOString() : new Date().toISOString(),
+        status: selectedStatus,
+        guardianName,
+        guardianPhone,
+      };
+
+      const token = sessionStorage.getItem('auth_token') ?? '';
+      const url = isEdit ? `/api/students/${initialData.id}` : '/api/students';
+      const method = isEdit ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Failed to save student details');
+      }
+
+      toast.success(isEdit ? 'Student updated successfully' : 'Student enrolled successfully');
+      navigate('/students');
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || 'Failed to save student');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const getFormattedDate = (dateStr?: string) => {
+    if (!dateStr) return '';
+    try {
+      return new Date(dateStr).toISOString().split('T')[0];
+    } catch {
+      return dateStr;
+    }
   };
 
   return (
@@ -35,27 +139,27 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div className="space-y-2">
             <Label htmlFor="studentId">Student ID <span className="text-red-500">*</span></Label>
-            <Input id="studentId" defaultValue={initialData?.studentId} placeholder="e.g. ST-2024-001" required />
+            <Input id="studentId" defaultValue={initialData?.studentCode || initialData?.studentId} placeholder="e.g. ST-2024-001" required />
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="firstName">First Name <span className="text-red-500">*</span></Label>
-            <Input id="firstName" defaultValue={initialData?.firstName} placeholder="First name" required />
+            <Input id="firstName" defaultValue={initialData?.user?.firstName || initialData?.firstName} placeholder="First name" required />
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="lastName">Last Name <span className="text-red-500">*</span></Label>
-            <Input id="lastName" defaultValue={initialData?.lastName} placeholder="Last name" required />
+            <Input id="lastName" defaultValue={initialData?.user?.lastName || initialData?.lastName} placeholder="Last name" required />
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="dateOfBirth">Date of Birth</Label>
-            <Input id="dateOfBirth" type="date" defaultValue={initialData?.dateOfBirth} />
+            <Input id="dateOfBirth" type="date" defaultValue={getFormattedDate(initialData?.dateOfBirth)} />
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="gender">Gender</Label>
-            <Select defaultValue={initialData?.gender || "MALE"}>
+            <Select value={selectedGender} onValueChange={setSelectedGender}>
               <SelectTrigger>
                 <SelectValue placeholder="Select gender" />
               </SelectTrigger>
@@ -86,26 +190,26 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <Label htmlFor="classId">Assigned Class <span className="text-red-500">*</span></Label>
-            <Select defaultValue={initialData?.classId || "ged-social-studies"} required>
+            <Select value={selectedClass} onValueChange={setSelectedClass} required>
               <SelectTrigger>
                 <SelectValue placeholder="Select class" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ged-social-studies">GED Social Studies</SelectItem>
-                <SelectItem value="pre-ged-english">Pre-GED English</SelectItem>
-                <SelectItem value="ged-math">GED Math Prep</SelectItem>
+                {classes.map((cls) => (
+                  <SelectItem key={cls.id} value={cls.id}>{cls.name}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="enrollmentDate">Enrollment Date <span className="text-red-500">*</span></Label>
-            <Input id="enrollmentDate" type="date" defaultValue={initialData?.enrollmentDate || new Date().toISOString().split('T')[0]} required />
+            <Input id="enrollmentDate" type="date" defaultValue={getFormattedDate(initialData?.enrollmentDate) || new Date().toISOString().split('T')[0]} required />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="status">Student Status</Label>
-            <Select defaultValue={initialData?.status || "ACTIVE"}>
+            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
               <SelectTrigger>
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
@@ -141,7 +245,6 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
           </div>
           
           <div className="space-y-2">
-             {/* Note: In a real schema this might be boolean + string */}
             <Label htmlFor="unhcrInfo">UNHCR Status / Number</Label>
             <Input id="unhcrInfo" defaultValue={initialData?.unhcrNumber} placeholder="If registered, enter number" />
           </div>
@@ -158,14 +261,16 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
           type="button" 
           variant="outline" 
           onClick={() => navigate('/students')}
+          disabled={isSubmitting}
         >
           Cancel
         </Button>
         <Button 
           type="submit"
           className="bg-orange-600 hover:bg-orange-700 text-white"
+          disabled={isSubmitting}
         >
-          {isEdit ? 'Save Changes' : 'Create Student'}
+          {isSubmitting ? 'Saving...' : (isEdit ? 'Save Changes' : 'Create Student')}
         </Button>
       </div>
     </form>

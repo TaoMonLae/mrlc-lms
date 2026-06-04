@@ -8,34 +8,25 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import { useSettings } from '@/src/providers/SettingsProvider';
 
 const schoolSchema = z.object({
   name: z.string().min(2, 'Name is required'),
   shortName: z.string().min(2, 'Short name is required'),
-  address: z.string().min(5, 'Address is required'),
-  phone: z.string().min(5, 'Phone is required'),
-  email: z.string().email('Invalid email'),
+  address: z.string().optional().or(z.literal('')),
+  phone: z.string().optional().or(z.literal('')),
+  email: z.string().email('Invalid email').or(z.literal('')),
   website: z.string().url('Invalid URL').or(z.literal('')),
   academicYear: z.string().min(4, 'Academic year is required'),
-  principalName: z.string().min(2, 'Principal name is required'),
+  principalName: z.string().optional().or(z.literal('')),
   description: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof schoolSchema>;
 
-const MOCK_SCHOOL_DATA = {
-  name: 'Acme International School',
-  shortName: 'AIS',
-  address: '123 Education Blvd, Learning City, 10001',
-  phone: '+1 (555) 123-4567',
-  email: 'contact@acmeschool.edu',
-  website: 'https://acmeschool.edu',
-  academicYear: '2025-2026',
-  principalName: 'Dr. Sarah Smith',
-  description: 'Committed to excellence in education and fostering a global perspective.',
-};
-
 export default function SchoolSettings() {
+  const { schoolProfile } = useSettings();
+
   const {
     register,
     handleSubmit,
@@ -46,17 +37,18 @@ export default function SchoolSettings() {
   });
 
   useEffect(() => {
-    reset(MOCK_SCHOOL_DATA);
-  }, [reset]);
+    reset(schoolProfile);
+  }, [reset, schoolProfile]);
+
+  const { updateSchoolProfile } = useSettings();
 
   const onSubmit = async (data: FormValues) => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      console.log('Saved school settings:', data);
+      await updateSchoolProfile(data);
       toast.success('School profile updated successfully');
-      reset(data); // reset form with new data to clear isDirty
-    } catch (error) {
-      toast.error('Failed to update school profile');
+      reset(data);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update school profile');
     }
   };
 

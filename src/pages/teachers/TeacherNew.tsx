@@ -51,14 +51,21 @@ export default function TeacherNew() {
   });
 
   const onSubmit = async (data: TeacherFormValues) => {
+    const token = sessionStorage.getItem('auth_token');
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('New teacher data:', data);
+      const res = await fetch('/api/teachers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to add teacher');
+      }
       toast.success('Teacher added successfully');
       navigate('/teachers');
-    } catch (error) {
-      toast.error('Failed to add teacher');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to add teacher');
     }
   };
 

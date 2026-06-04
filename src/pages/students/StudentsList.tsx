@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Plus, Filter, MoreHorizontal, User, UserPlus, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -21,22 +21,49 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { StudentCsvImport } from '../../components/students/StudentCsvImport';
-
-// Mock data
-const mockStudents = [
-  { id: '1', studentId: 'ST-2024-001', firstName: 'Min Khant', lastName: 'Aung', class: 'GED Social Studies', status: 'ACTIVE', gender: 'MALE', enrollmentDate: '2024-01-15' },
-  { id: '2', studentId: 'ST-2024-002', firstName: 'Zun Pwint', lastName: 'Phyu', class: 'Pre-GED English', status: 'ACTIVE', gender: 'FEMALE', enrollmentDate: '2024-01-20' },
-  { id: '3', studentId: 'ST-2024-003', firstName: 'Aung Ko', lastName: 'Myat', class: 'GED Social Studies', status: 'ON_LEAVE', gender: 'MALE', enrollmentDate: '2024-02-10' },
-  { id: '4', studentId: 'ST-2024-004', firstName: 'May Mon', lastName: 'Thu', class: 'Pre-GED English', status: 'ACTIVE', gender: 'FEMALE', enrollmentDate: '2024-01-15' },
-  { id: '5', studentId: 'ST-2024-005', firstName: 'Kyaw Zin', lastName: 'Latt', class: 'GED Math Prep', status: 'GRADUATED', gender: 'MALE', enrollmentDate: '2023-08-01' },
-];
+import { toast } from 'sonner';
 
 export default function StudentsList() {
   const [searchTerm, setSearchTerm] = useState('');
   const [classFilter, setClassFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [students, setStudents] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const filteredStudents = mockStudents.filter(student => {
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const token = sessionStorage.getItem('auth_token');
+        const res = await fetch('/api/students', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (!res.ok) throw new Error('Failed to fetch students');
+        const data = await res.json();
+        setStudents(data);
+      } catch (err) {
+        console.error(err);
+        toast.error('Failed to load students. Please refresh the page.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchStudents();
+  }, []);
+
+  const mappedStudents = students.map((s: any) => ({
+    id: s.id,
+    studentId: s.studentCode,
+    firstName: s.user?.firstName || '',
+    lastName: s.user?.lastName || '',
+    class: s.class?.name || 'Unassigned',
+    status: s.status || 'ACTIVE',
+    gender: s.gender || 'MALE',
+    enrollmentDate: s.enrollmentDate
+  }));
+
+  const filteredStudents = mappedStudents.filter(student => {
     const matchesSearch = 
       student.firstName.toLowerCase().includes(searchTerm.toLowerCase()) || 
       student.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -128,7 +155,16 @@ export default function StudentsList() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {filteredStudents.length > 0 ? (
+              {isLoading ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="animate-spin rounded-full h-4 w-4 border-2 border-orange-600 border-t-transparent"></span>
+                      Loading students...
+                    </div>
+                  </td>
+                </tr>
+              ) : filteredStudents.length > 0 ? (
                 filteredStudents.map((student) => (
                   <tr key={student.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
                     <td className="px-6 py-4">
@@ -195,7 +231,14 @@ export default function StudentsList() {
 
         {/* Mobile Card View */}
         <div className="grid grid-cols-1 gap-4 p-4 md:hidden">
-          {filteredStudents.length > 0 ? (
+          {isLoading ? (
+            <div className="text-center py-10 text-slate-500">
+              <div className="flex items-center justify-center gap-2">
+                <span className="animate-spin rounded-full h-4 w-4 border-2 border-orange-600 border-t-transparent"></span>
+                Loading students...
+              </div>
+            </div>
+          ) : filteredStudents.length > 0 ? (
             filteredStudents.map((student) => (
               <div key={student.id} className="border border-slate-200 dark:border-slate-800 rounded-lg p-4 space-y-3 bg-white dark:bg-slate-900 shadow-sm relative">
                 <div className="flex justify-between items-start">

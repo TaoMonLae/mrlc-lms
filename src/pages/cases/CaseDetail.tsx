@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Edit2, ShieldAlert, Shield, Clock, CheckCircle2, AlertTriangle, MessageSquare, AlertCircle, Plus, FileText, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -46,6 +46,15 @@ export default function CaseDetail() {
   const [newNote, setNewNote] = useState('');
   const [isPrivateNote, setIsPrivateNote] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [caseData, setCaseData] = useState<any>(null);
+
+  useEffect(() => {
+    const token = sessionStorage.getItem('auth_token');
+    fetch(`/api/cases/${id}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(setCaseData)
+      .catch(() => toast.error('Failed to load case'));
+  }, [id]);
 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
@@ -70,17 +79,34 @@ export default function CaseDetail() {
   const handleAddNote = async () => {
     if (!newNote.trim()) return;
     setIsSubmitting(true);
+    const token = sessionStorage.getItem('auth_token');
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const res = await fetch(`/api/cases/${id}/notes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ content: newNote }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to add note');
+      }
+      const note = await res.json();
+      setCaseData((prev: any) => prev ? { ...prev, notes: [...(prev.notes || []), note] } : prev);
       toast.success('Note added successfully');
       setNewNote('');
       setIsPrivateNote(false);
-    } catch {
-      toast.error('Failed to add note');
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to add note');
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const activeCase = caseData ?? MOCK_CASE;
+
+  if (!caseData) {
+    return <div className="p-8 text-center text-slate-500">Loading case...</div>;
+  }
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-10">
@@ -91,16 +117,16 @@ export default function CaseDetail() {
             Back to Cases
           </Button>
           <div className="flex items-center gap-3">
-             <div className={`p-3 rounded-xl border shadow-sm ${MOCK_CASE.type === 'PROTECTION' ? 'bg-red-50 border-red-100 dark:bg-red-900/20 dark:border-red-900/30 text-red-500' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500'}`}>
-                {MOCK_CASE.type === 'PROTECTION' ? <ShieldAlert className="h-8 w-8" /> : <Shield className="h-8 w-8" />}
+             <div className={`p-3 rounded-xl border shadow-sm ${activeCase.type === 'PROTECTION' ? 'bg-red-50 border-red-100 dark:bg-red-900/20 dark:border-red-900/30 text-red-500' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500'}`}>
+                {activeCase.type === 'PROTECTION' ? <ShieldAlert className="h-8 w-8" /> : <Shield className="h-8 w-8" />}
              </div>
              <div>
-               <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{MOCK_CASE.title}</h1>
+               <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{activeCase.title}</h1>
                <div className="flex items-center gap-2 mt-2">
-                 <span className="font-mono text-sm text-slate-500">{MOCK_CASE.caseNumber}</span>
+                 <span className="font-mono text-sm text-slate-500">{activeCase.caseNumber}</span>
                  <span className="text-slate-300 dark:text-slate-700">•</span>
-                 <Link to={`/users/${MOCK_CASE.studentId}`} className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">
-                    {MOCK_CASE.studentName}
+                 <Link to={`/users/${activeCase.studentId}`} className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">
+                    {activeCase.studentName}
                  </Link>
                </div>
              </div>
@@ -122,13 +148,13 @@ export default function CaseDetail() {
             <div className="flex justify-between items-start mb-6">
                <div className="space-y-4 w-full">
                   <div className="flex gap-2">
-                    {getStatusBadge(MOCK_CASE.status)}
-                    {getPriorityBadge(MOCK_CASE.priority)}
-                    <Badge variant="outline" className="text-slate-600 dark:text-slate-400 font-normal uppercase">{MOCK_CASE.type}</Badge>
+                    {getStatusBadge(activeCase.status)}
+                    {getPriorityBadge(activeCase.priority)}
+                    <Badge variant="outline" className="text-slate-600 dark:text-slate-400 font-normal uppercase">{activeCase.type}</Badge>
                   </div>
                   <div>
                     <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Description / Concern</h3>
-                    <p className="text-slate-900 dark:text-slate-100 whitespace-pre-wrap">{MOCK_CASE.description}</p>
+                    <p className="text-slate-900 dark:text-slate-100 whitespace-pre-wrap">{activeCase.description}</p>
                   </div>
                </div>
             </div>
@@ -145,7 +171,7 @@ export default function CaseDetail() {
                 {/* Timeline Items */}
                 <div className="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 dark:before:via-slate-700 before:to-transparent">
                   
-                  {MOCK_CASE.notes.map((note) => (
+                  {activeCase.notes.map((note) => (
                     <div key={note.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
                       <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white dark:border-slate-900 bg-slate-100 dark:bg-slate-800 text-slate-500 shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-sm z-10">
                         {note.isPrivate ? <AlertCircle className="w-4 h-4 text-amber-500" /> : <FileText className="w-4 h-4" />}
@@ -177,9 +203,9 @@ export default function CaseDetail() {
                       <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-blue-100 bg-blue-50 dark:border-blue-900/50 dark:bg-blue-950/20 relative">
                         <div className="flex items-center justify-between mb-1">
                           <span className="font-medium text-sm text-slate-900 dark:text-white">Case Opened</span>
-                          <span className="text-xs text-slate-500">{format(new Date(MOCK_CASE.openedAt), 'MMM d, yyyy')}</span>
+                          <span className="text-xs text-slate-500">{format(new Date(activeCase.openedAt), 'MMM d, yyyy')}</span>
                         </div>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">Opened by {MOCK_CASE.openedByName}</p>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">Opened by {activeCase.openedByName}</p>
                       </div>
                   </div>
 
@@ -227,15 +253,15 @@ export default function CaseDetail() {
             <dl className="space-y-4">
               <div>
                 <dt className="text-xs text-slate-500 dark:text-slate-400">Assigned To</dt>
-                <dd className="font-medium text-slate-900 dark:text-white">{MOCK_CASE.assignedToName || 'Unassigned'}</dd>
+                <dd className="font-medium text-slate-900 dark:text-white">{activeCase.assignedToName || 'Unassigned'}</dd>
               </div>
               <div>
                 <dt className="text-xs text-slate-500 dark:text-slate-400">Opened By</dt>
-                <dd className="font-medium text-slate-900 dark:text-white">{MOCK_CASE.openedByName}</dd>
+                <dd className="font-medium text-slate-900 dark:text-white">{activeCase.openedByName}</dd>
               </div>
               <div>
                 <dt className="text-xs text-slate-500 dark:text-slate-400">Opened On</dt>
-                <dd className="font-medium text-slate-900 dark:text-white">{format(new Date(MOCK_CASE.openedAt), 'MMMM d, yyyy h:mm a')}</dd>
+                <dd className="font-medium text-slate-900 dark:text-white">{format(new Date(activeCase.openedAt), 'MMMM d, yyyy h:mm a')}</dd>
               </div>
             </dl>
           </div>

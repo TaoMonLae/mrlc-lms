@@ -8,6 +8,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { StudentDocuments } from '@/src/components/students/StudentDocuments';
+import { toast } from 'sonner';
 import {
   Tabs,
   TabsContent,
@@ -15,28 +16,72 @@ import {
   TabsTrigger,
 } from '@/components/ui/tabs';
 
-// Mock data
-const mockStudent = {
-  id: '1', 
-  studentId: 'ST-2024-001', 
-  firstName: 'Min Khant', 
-  lastName: 'Aung', 
-  class: 'GED Social Studies', 
-  status: 'ACTIVE', 
-  gender: 'MALE', 
-  enrollmentDate: '2024-01-15',
-  dateOfBirth: '2005-08-15',
-  nationality: 'Myanmar',
-  address: 'No. 45, Bogyoke Road, Yangon',
-  guardianName: 'Daw Ni Ni',
-  guardianPhone: '+95 9 123 456 789',
-  emergencyContact: 'U Maung Maung (+95 9 876 543 210)',
-  notes: 'Transferred from local curriculum. Excels in math, needs focus on academic English phrasing.'
-};
-
 export default function StudentProfile() {
   const { id } = useParams<{ id: string }>();
-  const s = mockStudent; // In real app, fetch based on id
+  const [student, setStudent] = React.useState<any>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchStudent = async () => {
+      try {
+        const token = sessionStorage.getItem('auth_token');
+        const res = await fetch(`/api/students/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setStudent(data);
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error('Failed to load student profile.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    if (id) fetchStudent();
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <span className="animate-spin rounded-full h-6 w-6 border-2 border-orange-600 border-t-transparent mr-2"></span>
+        <span className="text-slate-500">Loading student profile...</span>
+      </div>
+    );
+  }
+
+  if (!student) {
+    return (
+      <div className="text-center py-12 text-slate-500">
+        <p>Student profile not found.</p>
+        <Button variant="outline" className="mt-4" render={<Link to="/students" />} nativeButton={false}>
+          Back to Students
+        </Button>
+      </div>
+    );
+  }
+
+  // Map backend properties to UI variables
+  const s = {
+    id: student.id,
+    studentId: student.studentCode,
+    firstName: student.user?.firstName || '',
+    lastName: student.user?.lastName || '',
+    class: student.class?.name || 'Unassigned',
+    status: student.status || 'ACTIVE',
+    gender: student.gender || 'MALE',
+    enrollmentDate: student.enrollmentDate || new Date().toISOString(),
+    dateOfBirth: student.dateOfBirth || new Date().toISOString(),
+    nationality: student.nationality || 'Myanmar',
+    address: student.address || 'Unspecified',
+    guardianName: student.guardianName || 'Unspecified',
+    guardianPhone: student.guardianPhone || 'Unspecified',
+    emergencyContact: student.emergencyContact || 'Unspecified',
+    notes: student.notes || 'No notes available.'
+  };
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto">

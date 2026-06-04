@@ -1,17 +1,58 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { GraduationCap, ArrowRight } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { GraduationCap, ArrowRight, AlertCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+
+const loginSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(1, "Password is required"),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const [serverError, setServerError] = useState<string | null>(null);
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    navigate("/dashboard");
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const onSubmit = async (data: LoginFormValues) => {
+    setServerError(null);
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: data.email, password: data.password }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        setServerError(result.error ?? "Login failed. Please try again.");
+        return;
+      }
+
+      // Store the JWT token for subsequent API calls
+      sessionStorage.setItem("auth_token", result.token);
+      sessionStorage.setItem("auth_user", JSON.stringify(result.user));
+
+      navigate("/dashboard");
+    } catch {
+      setServerError("Unable to connect to the server. Please try again.");
+    }
   };
 
   return (
@@ -39,37 +80,70 @@ export default function LoginPage() {
               Enter your credentials to access the school portal
             </CardDescription>
           </CardHeader>
-          <form onSubmit={handleLogin} className="mt-2">
+          <form onSubmit={handleSubmit(onSubmit)} className="mt-2">
             <CardContent className="space-y-4">
+              {serverError && (
+                <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <span>{serverError}</span>
+                </div>
+              )}
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-slate-500">Email Address</Label>
-                <Input id="email" type="email" placeholder="admin@mrlc.edu" required className="h-11 border-slate-200 bg-slate-50/50 focus:bg-white transition-all" />
+                <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Email Address
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="admin@mrlc.edu"
+                  autoComplete="email"
+                  className="h-11 border-slate-200 bg-slate-50/50 focus:bg-white transition-all"
+                  {...register("email")}
+                />
+                {errors.email && (
+                  <p className="text-xs text-red-500 font-medium">{errors.email.message}</p>
+                )}
               </div>
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-slate-500">Password</Label>
-                  <Link to="#" className="text-xs text-orange-600 hover:underline font-bold">
-                    Forgot password?
-                  </Link>
-                </div>
-                <Input id="password" type="password" required className="h-11 border-slate-200 bg-slate-50/50 focus:bg-white transition-all" />
+                <Label htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Password
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  autoComplete="current-password"
+                  className="h-11 border-slate-200 bg-slate-50/50 focus:bg-white transition-all"
+                  {...register("password")}
+                />
+                {errors.password && (
+                  <p className="text-xs text-red-500 font-medium">{errors.password.message}</p>
+                )}
               </div>
             </CardContent>
             <CardFooter>
-              <Button type="submit" className="w-full h-12 text-sm font-bold bg-orange-600 hover:bg-orange-700 text-white transition-all group">
-                CONTINUE TO DASHBOARD
-                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+              <Button
+                type="submit"
+                id="login-submit-btn"
+                disabled={isSubmitting}
+                className="w-full h-12 text-sm font-bold bg-orange-600 hover:bg-orange-700 text-white transition-all group"
+              >
+                {isSubmitting ? "SIGNING IN..." : (
+                  <>
+                    CONTINUE TO DASHBOARD
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </>
+                )}
               </Button>
             </CardFooter>
           </form>
         </Card>
-        
+
         <div className="text-center mt-8 space-y-4">
           <p className="text-xs text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
             Protected area for authorized personnel only
           </p>
           <p className="text-sm text-slate-500">
-            Need help? <Link to="#" className="text-orange-600 hover:underline font-bold">Contact school admin</Link>
+            Need help? <span className="text-orange-600 font-bold">Contact school admin</span>
           </p>
         </div>
       </motion.div>

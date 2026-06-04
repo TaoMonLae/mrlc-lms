@@ -57,14 +57,22 @@ export default function PaymentNew() {
   });
 
   const onSubmit = async (data: FormValues) => {
+    const token = sessionStorage.getItem('auth_token');
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      console.log('Payment data:', data);
+      const res = await fetch('/api/fees', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to record payment');
+      }
+      const fee = await res.json();
       toast.success('Payment recorded successfully');
-      // Navigate to the newly created receipt or back to fees
-      navigate(`/fees/receipts/new-id`);
-    } catch (error) {
-      toast.error('Failed to record payment');
+      navigate(`/fees/receipts/${fee.id}`);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to record payment');
     }
   };
 

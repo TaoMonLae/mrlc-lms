@@ -38,7 +38,7 @@ const MOCK_CLASS_DATA = {
 export default function ClassEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+
   const {
     register,
     handleSubmit,
@@ -117,16 +117,16 @@ export default function ClassEdit() {
 
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
-            <Textarea 
-              id="description" 
-              {...register('description')} 
-              placeholder="Optional details about the curriculum or schedule..." 
+            <Textarea
+              id="description"
+              {...register('description')}
+              placeholder="Optional details about the curriculum or schedule..."
               rows={4}
             />
             {errors.description && <p className="text-xs text-red-500 font-medium">{errors.description.message}</p>}
           </div>
 
-           <div className="space-y-2">
+          <div className="space-y-2">
             <Label>Status</Label>
             <Select value={watch('status')} onValueChange={(val: any) => setValue('status', val)}>
               <SelectTrigger id="status">
@@ -142,17 +142,17 @@ export default function ClassEdit() {
         </div>
 
         <div className="flex justify-end gap-3">
-           <Button type="button" variant="outline" onClick={() => navigate(`/classes/${id}`)}>
-             Cancel
-           </Button>
-           <Button type="submit" className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900" disabled={isSubmitting}>
-             {isSubmitting ? 'Saving...' : (
-               <>
-                 <Save className="mr-2 h-4 w-4" />
-                 Save Changes
-               </>
-             )}
-           </Button>
+          <Button type="button" variant="outline" onClick={() => navigate(`/classes/${id}`)}>
+            Cancel
+          </Button>
+          <Button type="submit" className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900" disabled={isSubmitting}>
+            {isSubmitting ? 'Saving...' : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                Save Changes
+              </>
+            )}
+          </Button>
         </div>
       </form>
     </div>

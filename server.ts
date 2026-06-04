@@ -5,8 +5,16 @@ import helmet from "helmet";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
 import winston from "winston";
+import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
+import { Pool } from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "@prisma/client";
+import dotenv from "dotenv";
 
-// Logger configuration
+dotenv.config();
+
+// ─── Logger ──────────────────────────────────────────────────────────────────
 const logger = winston.createLogger({
   level: "info",
   format: winston.format.json(),
@@ -17,56 +25,1290 @@ const logger = winston.createLogger({
   ],
 });
 
+// ─── Prisma ───────────────────────────────────────────────────────────────────
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
+
+async function createAuditLog(
+  userId: string | null,
+  userName: string | null,
+  action: string,
+  entityType: string,
+  entityId: string | null,
+  description: string,
+  ipAddress: string | null,
+  userAgent: string | null,
+  severity: string = "INFO"
+) {
+  try {
+    await prisma.auditLog.create({
+      data: {
+        userId,
+        userName,
+        action,
+        entityType,
+        entityId,
+        description,
+        ipAddress,
+        userAgent,
+        severity,
+      }
+    });
+  } catch (err) {
+    logger.error("Failed to create audit log:", err);
+  }
+}
+
+// ─── JWT helpers ─────────────────────────────────────────────────────────────
+const JWT_SECRET = process.env.SESSION_SECRET;
+if (!JWT_SECRET || JWT_SECRET.length < 16) {
+  logger.error("FATAL: SESSION_SECRET must be set and at least 16 characters long.");
+  process.exit(1);
+}
+
+export interface JwtPayload {
+  userId: string;
+  role: string;
+  email: string;
+}
+
+function signToken(payload: JwtPayload): string {
+  return jwt.sign(payload, JWT_SECRET as string, { expiresIn: "8h" });
+}
+
+function verifyToken(token: string): JwtPayload {
+  return jwt.verify(token, JWT_SECRET as string) as JwtPayload;
+}
+
+// ─── Auth Middleware ──────────────────────────────────────────────────────────
+/**
+ * Verifies the JWT from the Authorization header (Bearer <token>).
+ * Sets req.user on success; returns 401 on failure.
+ * NEVER trusts client-supplied role headers.
+ */
+function authMiddleware(
+  req: express.Request,
+  res: express.Response,
+  next: express.NextFunction
+): void {
+  const authHeader = req.headers["authorization"];
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    res.status(401).json({ error: "Unauthorized: No token provided" });
+    return;
+  }
+
+  const token = authHeader.slice(7); // strip "Bearer "
+  try {
+    const payload = verifyToken(token);
+    (req as any).user = payload;
+    next();
+  } catch {
+    res.status(401).json({ error: "Unauthorized: Invalid or expired token" });
+  }
+}
+
+function requireRole(role: string) {
+  return (
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ): void => {
+    const user = (req as any).user as JwtPayload | undefined;
+    if (!user || user.role !== role) {
+      res.status(403).json({ error: "Forbidden: Insufficient permissions" });
+      return;
+    }
+    next();
+  };
+}
+
+// ─── Server bootstrap ─────────────────────────────────────────────────────────
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = process.env.PORT ? parseInt(process.env.PORT) : 9456;
+  const isProduction = process.env.NODE_ENV === "production";
 
-  // Security & Logging
-  app.use(helmet({ 
-    contentSecurityPolicy: false,
-    crossOriginEmbedderPolicy: false,
-    xFrameOptions: false
-  }));
-  app.use(cors());
+  // ── Security headers ────────────────────────────────────────────────────────
+  app.use(
+    helmet({
+      // Keep CSP enabled; only loosen directives that Vite/React genuinely need
+      contentSecurityPolicy: isProduction
+        ? undefined // use helmet defaults in prod
+        : false, // relax in dev so Vite HMR works
+      crossOriginEmbedderPolicy: false,
+      // Keep xFrameOptions on (default is SAMEORIGIN) — blocks clickjacking
+    })
+  );
+
+  // ── CORS ────────────────────────────────────────────────────────────────────
+  // Restrict to the configured APP_URL; never allow all origins
+  app.use(
+    cors({
+      origin: process.env.APP_URL || "http://localhost:3000",
+      credentials: true,
+    })
+  );
+
   app.use(express.json({ limit: "10mb" }));
-  
+
+  // ── Rate limiting ───────────────────────────────────────────────────────────
   const apiLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
+    windowMs: 15 * 60 * 1000, // 15 min
     max: 100,
     message: "Too many requests from this IP, please try again after 15 minutes",
   });
   app.use("/api/", apiLimiter);
 
-  // Auth Middleware Skeleton
-  const authMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    // TODO: Verify session/JWT here
-    const userRole = req.headers["x-user-role"]; 
-    (req as any).user = { role: userRole };
-    next();
-  };
+  // Stricter limit for auth endpoints to prevent brute-force
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    message: "Too many login attempts. Please try again after 15 minutes.",
+  });
 
-  const requireRole = (role: string) => (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    if ((req as any).user?.role !== role) {
-      return res.status(403).json({ error: "Forbidden: Insufficient permissions" });
+  // ── Auth routes ─────────────────────────────────────────────────────────────
+  /**
+   * POST /api/auth/login
+   * Body: { email: string, password: string }
+   * Returns: { token: string, user: { id, email, role } }
+   */
+  app.post("/api/auth/login", authLimiter, async (req, res) => {
+    const { email, password } = req.body as {
+      email?: string;
+      password?: string;
+    };
+
+    if (!email || !password) {
+      res.status(400).json({ error: "Email and password are required" });
+      return;
     }
-    next();
-  };
 
-  // API routes
+    try {
+      const user = await prisma.user.findUnique({ where: { email } });
+
+      if (!user || !user.passwordHash) {
+        // Use constant-time comparison even for missing users to avoid timing attacks
+        await bcrypt.compare(password, "$2b$10$invalidhashpadding000000000000000000000000000000000000");
+        res.status(401).json({ error: "Invalid email or password" });
+        return;
+      }
+
+      if (!user.isActive) {
+        res.status(403).json({ error: "Account is disabled. Contact your administrator." });
+        return;
+      }
+
+      const passwordValid = await bcrypt.compare(password, user.passwordHash);
+      if (!passwordValid) {
+        logger.warn(`Failed login attempt for email: ${email}`);
+        res.status(401).json({ error: "Invalid email or password" });
+        return;
+      }
+
+      const payload: JwtPayload = {
+        userId: user.id,
+        role: user.role,
+        email: user.email,
+      };
+      const token = signToken(payload);
+
+      logger.info(`User ${user.email} (${user.role}) logged in successfully`);
+
+      res.json({
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+          isActive: user.isActive,
+        },
+      });
+    } catch (err) {
+      logger.error("Login error:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  /**
+   * GET /api/auth/me
+   * Returns the currently authenticated user's profile.
+   */
+  app.get("/api/auth/me", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: jwtUser.userId },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          role: true,
+          isActive: true,
+        },
+      });
+      if (!user || !user.isActive) {
+        res.status(401).json({ error: "User not found or disabled" });
+        return;
+      }
+      res.json({ user });
+    } catch (err) {
+      logger.error("Error fetching user profile:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  /**
+   * POST /api/auth/verify-password
+   * Re-confirms the currently authenticated user's password before
+   * destructive operations (e.g. database restore).
+   */
+  app.post("/api/auth/verify-password", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { password } = req.body as { password?: string };
+
+    if (!password) {
+      res.status(400).json({ error: "Password is required" });
+      return;
+    }
+
+    try {
+      const user = await prisma.user.findUnique({ where: { id: jwtUser.userId } });
+      if (!user || !user.passwordHash || !user.isActive) {
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+      }
+      const valid = await bcrypt.compare(password, user.passwordHash);
+      if (!valid) {
+        logger.warn(`Password re-verification failed for user ${user.email}`);
+        res.status(401).json({ error: "Incorrect password" });
+        return;
+      }
+      res.json({ verified: true });
+    } catch (err) {
+      logger.error("Error verifying password:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Audit logs API ─────────────────────────────────────────────────────────
+  app.get("/api/audit-logs", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    try {
+      const logs = await prisma.auditLog.findMany({
+        orderBy: { createdAt: "desc" }
+      });
+      res.json(logs);
+    } catch (err) {
+      logger.error("Error fetching audit logs:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Students API ────────────────────────────────────────────────────────────
+  app.get("/api/students", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const students = await prisma.student.findMany({
+        include: {
+          user: {
+            select: {
+              firstName: true,
+              lastName: true,
+              email: true,
+              isActive: true,
+            }
+          },
+          class: true,
+        }
+      });
+      res.json(students);
+    } catch (err) {
+      logger.error("Error fetching students:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/students", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { firstName, lastName, email, studentCode, dateOfBirth, guardianName, guardianPhone, classId, gender, status } = req.body;
+    if (!firstName || !lastName || !email || !studentCode) {
+      res.status(400).json({ error: "First name, last name, email, and student code are required" });
+      return;
+    }
+    try {
+      const result = await prisma.$transaction(async (tx) => {
+        const user = await tx.user.create({
+          data: {
+            firstName,
+            lastName,
+            email,
+            role: "STUDENT",
+            passwordHash: await bcrypt.hash("Student123!", 10),
+          }
+        });
+        const student = await tx.student.create({
+          data: {
+            userId: user.id,
+            studentCode,
+            dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+            guardianName,
+            guardianPhone,
+            classId: classId || null,
+            gender,
+            status: status || "ACTIVE",
+          },
+          include: {
+            user: true,
+            class: true,
+          }
+        });
+        return student;
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "CREATE",
+        "STUDENT",
+        result.id,
+        `Student '${firstName} ${lastName}' created.`,
+        req.ip,
+        req.headers["user-agent"] || null,
+        "SUCCESS"
+      );
+
+      res.status(201).json(result);
+    } catch (err: any) {
+      logger.error("Error creating student:", err);
+      if (err.code === "P2002") {
+        res.status(400).json({ error: "Email or Student Code already exists" });
+      } else {
+        res.status(500).json({ error: "Internal Server Error" });
+      }
+    }
+  });
+
+  app.get("/api/students/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { id } = req.params;
+    try {
+      const student = await prisma.student.findUnique({
+        where: { id },
+        include: {
+          user: true,
+          class: true,
+        }
+      });
+      if (!student) {
+        res.status(404).json({ error: "Student not found" });
+        return;
+      }
+      res.json(student);
+    } catch (err) {
+      logger.error("Error fetching student:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.put("/api/students/:id", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { id } = req.params;
+    const { firstName, lastName, email, studentCode, dateOfBirth, guardianName, guardianPhone, classId, gender, status } = req.body;
+    try {
+      const existingStudent = await prisma.student.findUnique({ where: { id } });
+      if (!existingStudent) {
+        res.status(404).json({ error: "Student not found" });
+        return;
+      }
+      const updated = await prisma.$transaction(async (tx) => {
+        if (existingStudent.userId) {
+          await tx.user.update({
+            where: { id: existingStudent.userId },
+            data: {
+              firstName,
+              lastName,
+              email,
+            }
+          });
+        }
+        return await tx.student.update({
+          where: { id },
+          data: {
+            studentCode,
+            dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+            guardianName,
+            guardianPhone,
+            classId: classId || null,
+            gender,
+            status,
+          },
+          include: {
+            user: true,
+            class: true,
+          }
+        });
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "UPDATE",
+        "STUDENT",
+        id,
+        `Student '${firstName} ${lastName}' updated.`,
+        req.ip,
+        req.headers["user-agent"] || null,
+        "SUCCESS"
+      );
+
+      res.json(updated);
+    } catch (err) {
+      logger.error("Error updating student:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.delete("/api/students/:id", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { id } = req.params;
+    try {
+      const student = await prisma.student.findUnique({ where: { id } });
+      if (!student) {
+        res.status(404).json({ error: "Student not found" });
+        return;
+      }
+      await prisma.$transaction(async (tx) => {
+        await tx.student.delete({ where: { id } });
+        if (student.userId) {
+          await tx.user.delete({ where: { id: student.userId } });
+        }
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "DELETE",
+        "STUDENT",
+        id,
+        `Student ID ${id} deleted.`,
+        req.ip,
+        req.headers["user-agent"] || null,
+        "SUCCESS"
+      );
+
+      res.json({ message: "Student deleted successfully" });
+    } catch (err) {
+      logger.error("Error deleting student:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Users API ───────────────────────────────────────────────────────────────
+  app.get("/api/users", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    try {
+      const users = await prisma.user.findMany({
+        select: { id: true, firstName: true, lastName: true, email: true, role: true, isActive: true, createdAt: true },
+        orderBy: { createdAt: "desc" },
+      });
+      res.json(users);
+    } catch (err) {
+      logger.error("Error fetching users:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/users", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { firstName, lastName, email, password, role, status } = req.body;
+    if (!firstName || !email || !password || !role) {
+      res.status(400).json({ error: "firstName, email, password, and role are required" });
+      return;
+    }
+    try {
+      const passwordHash = await bcrypt.hash(password, 10);
+      const user = await prisma.user.create({
+        data: { firstName, lastName: lastName || "", email, passwordHash, role, isActive: status !== "DISABLED" },
+        select: { id: true, firstName: true, lastName: true, email: true, role: true, isActive: true },
+      });
+
+      await createAuditLog(
+        jwtUser.userId, jwtUser.email, "CREATE", "USER", user.id,
+        `User '${firstName} ${lastName}' (${role}) created.`,
+        req.ip, req.headers["user-agent"] || null, "SUCCESS"
+      );
+
+      res.status(201).json(user);
+    } catch (err: any) {
+      logger.error("Error creating user:", err);
+      if (err.code === "P2002") {
+        res.status(400).json({ error: "Email already exists" });
+      } else {
+        res.status(500).json({ error: "Internal Server Error" });
+      }
+    }
+  });
+
+  // ── Teachers API ────────────────────────────────────────────────────────────
+  app.get("/api/teachers", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    try {
+      const teachers = await prisma.teacher.findMany({
+        include: {
+          user: {
+            select: {
+              firstName: true,
+              lastName: true,
+              email: true,
+              isActive: true,
+            }
+          }
+        }
+      });
+      res.json(teachers);
+    } catch (err) {
+      logger.error("Error fetching teachers:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Classes & Subjects API ──────────────────────────────────────────────────
+  app.get("/api/classes", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const classes = await prisma.class.findMany({
+        include: { students: true }
+      });
+      res.json(classes);
+    } catch (err) {
+      logger.error("Error fetching classes:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/subjects", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const subjects = await prisma.subject.findMany();
+      res.json(subjects);
+    } catch (err) {
+      logger.error("Error fetching subjects:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Attendance API ──────────────────────────────────────────────────────────
+  app.get("/api/attendance", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { classId, date } = req.query as { classId?: string; date?: string };
+    if (!classId || !date) {
+      res.status(400).json({ error: "classId and date are required" });
+      return;
+    }
+    try {
+      const parsedDate = new Date(date);
+      const startOfDay = new Date(parsedDate.setUTCHours(0, 0, 0, 0));
+      const attendances = await prisma.attendance.findMany({
+        where: {
+          classId,
+          date: startOfDay,
+        },
+        include: {
+          student: {
+            include: { user: true }
+          }
+        }
+      });
+      res.json(attendances);
+    } catch (err) {
+      logger.error("Error fetching attendance:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/attendance", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { classId, date, records } = req.body as {
+      classId: string;
+      date: string;
+      records: Array<{ studentId: string; status: "PRESENT" | "ABSENT" | "LATE" | "EXCUSED"; remarks?: string }>;
+    };
+    if (!classId || !date || !records || !Array.isArray(records)) {
+      res.status(400).json({ error: "classId, date, and records array are required" });
+      return;
+    }
+    try {
+      const parsedDate = new Date(date);
+      const startOfDay = new Date(parsedDate.setUTCHours(0, 0, 0, 0));
+      const results = await prisma.$transaction(
+        records.map((rec) =>
+          prisma.attendance.upsert({
+            where: {
+              studentId_classId_date: {
+                studentId: rec.studentId,
+                classId,
+                date: startOfDay,
+              }
+            },
+            update: {
+              status: rec.status,
+              remarks: rec.remarks || null,
+              recordedById: jwtUser.userId,
+            },
+            create: {
+              studentId: rec.studentId,
+              classId,
+              date: startOfDay,
+              status: rec.status,
+              remarks: rec.remarks || null,
+              recordedById: jwtUser.userId,
+            }
+          })
+        )
+      );
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "STATUS_CHANGE",
+        "ATTENDANCE",
+        classId,
+        `Attendance recorded for class ${classId} on ${date}.`,
+        req.ip,
+        req.headers["user-agent"] || null,
+        "SUCCESS"
+      );
+
+      res.json({ success: true, count: results.length });
+    } catch (err) {
+      logger.error("Error saving attendance:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Cases (Support/Safeguarding) API ──────────────────────────────────────
+  app.get("/api/cases", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "CASE_WORKER") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const cases = await prisma.caseRecord.findMany({
+        include: {
+          student: {
+            include: { user: true }
+          },
+          notes: {
+            include: {
+              createdBy: {
+                select: { firstName: true, lastName: true }
+              }
+            }
+          }
+        }
+      });
+      res.json(cases);
+    } catch (err) {
+      logger.error("Error fetching cases:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/cases", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "CASE_WORKER") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { studentId, title, description, priority, category } = req.body;
+    if (!studentId || !title || !description) {
+      res.status(400).json({ error: "studentId, title, and description are required" });
+      return;
+    }
+    try {
+      const newCase = await prisma.caseRecord.create({
+        data: {
+          studentId,
+          title,
+          description,
+          priority: priority || "MEDIUM",
+          category: category || null,
+        },
+        include: {
+          student: {
+            include: { user: true }
+          }
+        }
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "CREATE",
+        "CASE",
+        newCase.id,
+        `Safeguarding case '${title}' opened.`,
+        req.ip,
+        req.headers["user-agent"] || null,
+        "WARNING"
+      );
+
+      res.status(201).json(newCase);
+    } catch (err) {
+      logger.error("Error creating case:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Library API ─────────────────────────────────────────────────────────────
+  app.get("/api/library", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      let resources;
+      if (jwtUser.role === "STUDENT") {
+        resources = await prisma.libraryResource.findMany({
+          where: { visibility: { in: ["ALL", "STUDENTS"] } }
+        });
+      } else if (jwtUser.role === "TEACHER") {
+        resources = await prisma.libraryResource.findMany({
+          where: { visibility: { in: ["ALL", "TEACHERS_ONLY"] } }
+        });
+      } else {
+        resources = await prisma.libraryResource.findMany();
+      }
+      res.json(resources);
+    } catch (err) {
+      logger.error("Error fetching library resources:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/library", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { title, description, type, visibility, classId, subjectId, externalUrl } = req.body;
+    if (!title || !type) {
+      res.status(400).json({ error: "Title and Type are required" });
+      return;
+    }
+    try {
+      const resource = await prisma.libraryResource.create({
+        data: {
+          title,
+          description,
+          type,
+          visibility: visibility || "ALL",
+          classId: classId || null,
+          subjectId: subjectId || null,
+          externalUrl: externalUrl || null,
+          totalCopies: 1,
+          availableCopies: 1,
+        }
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "CREATE",
+        "LIBRARY",
+        resource.id,
+        `Library resource '${title}' created.`,
+        req.ip,
+        req.headers["user-agent"] || null,
+        "SUCCESS"
+      );
+
+      res.status(201).json(resource);
+    } catch (err) {
+      logger.error("Error creating library resource:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/library/:id", authMiddleware, async (req, res) => {
+    const { id } = req.params;
+    try {
+      const resource = await prisma.libraryResource.findUnique({ where: { id } });
+      if (!resource) {
+        res.status(404).json({ error: "Resource not found" });
+        return;
+      }
+      res.json(resource);
+    } catch (err) {
+      logger.error("Error fetching library resource:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.put("/api/library/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { id } = req.params;
+    const { title, description, type, visibility, classId, subjectId, externalUrl } = req.body;
+    try {
+      const updated = await prisma.libraryResource.update({
+        where: { id },
+        data: {
+          title,
+          description,
+          type,
+          visibility,
+          classId: classId || null,
+          subjectId: subjectId || null,
+          externalUrl: externalUrl || null,
+        }
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "UPDATE",
+        "LIBRARY",
+        id,
+        `Library resource '${title}' updated.`,
+        req.ip,
+        req.headers["user-agent"] || null,
+        "SUCCESS"
+      );
+
+      res.json(updated);
+    } catch (err) {
+      logger.error("Error updating library resource:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.delete("/api/library/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { id } = req.params;
+    try {
+      await prisma.libraryResource.delete({ where: { id } });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "DELETE",
+        "LIBRARY",
+        id,
+        `Library resource ID ${id} deleted.`,
+        req.ip,
+        req.headers["user-agent"] || null,
+        "SUCCESS"
+      );
+
+      res.json({ message: "Resource deleted successfully" });
+    } catch (err) {
+      logger.error("Error deleting library resource:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Fees API ────────────────────────────────────────────────────────────────
+  app.get("/api/fees", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      if (jwtUser.role === "STUDENT") {
+        const student = await prisma.student.findUnique({
+          where: { userId: jwtUser.userId }
+        });
+        if (!student) {
+          res.status(404).json({ error: "Student profile not found" });
+          return;
+        }
+        const fees = await prisma.feePayment.findMany({
+          where: { studentId: student.id },
+          include: { student: { include: { user: true } } }
+        });
+        res.json(fees);
+      } else {
+        const fees = await prisma.feePayment.findMany({
+          include: { student: { include: { user: true } } }
+        });
+        res.json(fees);
+      }
+    } catch (err) {
+      logger.error("Error fetching fees:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/fees", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "ACCOUNTANT") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { studentId, amount, paymentType, paymentMethod, paymentDate, receiptNumber, notes } = req.body;
+    if (!studentId || !amount) {
+      res.status(400).json({ error: "studentId and amount are required" });
+      return;
+    }
+    if (Number(amount) <= 0) {
+      res.status(400).json({ error: "amount must be greater than 0" });
+      return;
+    }
+    try {
+      const fee = await prisma.feePayment.create({
+        data: {
+          studentId,
+          amount: Number(amount),
+          description: paymentType || "Tuition Fee",
+          paymentMethod: paymentMethod || "CASH",
+          paidDate: paymentDate ? new Date(paymentDate) : new Date(),
+          dueDate: new Date(),
+          status: "PAID",
+          receiptNumber: receiptNumber || `RCP-${Date.now()}`,
+          notes,
+        },
+        include: { student: { include: { user: true } } }
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "CREATE",
+        "PAYMENT",
+        fee.id,
+        `Recorded fee payment of ${amount} for student ID ${studentId}.`,
+        req.ip,
+        req.headers["user-agent"] || null,
+        "SUCCESS"
+      );
+
+      res.status(201).json(fee);
+    } catch (err) {
+      logger.error("Error creating fee payment:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Exams API ───────────────────────────────────────────────────────────────
+  app.get("/api/exams", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      let exams;
+      if (jwtUser.role === "STUDENT") {
+        const student = await prisma.student.findUnique({ where: { userId: jwtUser.userId } });
+        if (!student || !student.classId) {
+          res.json([]);
+          return;
+        }
+        exams = await prisma.exam.findMany({
+          where: { classId: student.classId },
+          include: { class: true, subject: true, questions: true }
+        });
+      } else {
+        exams = await prisma.exam.findMany({
+          include: { class: true, subject: true, questions: true }
+        });
+      }
+      res.json(exams);
+    } catch (err) {
+      logger.error("Error fetching exams:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/exams", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { title, classId, subjectId, examType, duration, questions } = req.body;
+    if (!title || !classId || !subjectId) {
+      res.status(400).json({ error: "title, classId, and subjectId are required" });
+      return;
+    }
+    try {
+      const result = await prisma.$transaction(async (tx) => {
+        const exam = await tx.exam.create({
+          data: {
+            title,
+            classId,
+            subjectId,
+            type: examType || "FINAL",
+            date: new Date(),
+            durationMinutes: duration ? Number(duration) : null,
+          }
+        });
+        if (questions && Array.isArray(questions)) {
+          for (const q of questions) {
+            await tx.question.create({
+              data: {
+                examId: exam.id,
+                text: q.questionText,
+                type: q.type || "MCQ",
+                points: Number(q.points) || 5,
+                options: q.choices || null,
+                correctAnswer: q.correctAnswer !== undefined ? String(q.correctAnswer) : null,
+              }
+            });
+          }
+        }
+        return exam;
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "CREATE",
+        "EXAM",
+        result.id,
+        `Exam '${title}' created.`,
+        req.ip,
+        req.headers["user-agent"] || null,
+        "SUCCESS"
+      );
+
+      res.status(201).json(result);
+    } catch (err) {
+      logger.error("Error creating exam:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Users (single + update) ─────────────────────────────────────────────────
+  app.get("/api/users/:id", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: req.params.id },
+        select: { id: true, firstName: true, lastName: true, email: true, role: true, isActive: true },
+      });
+      if (!user) { res.status(404).json({ error: "User not found" }); return; }
+      res.json(user);
+    } catch (err) {
+      logger.error("Error fetching user:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.put("/api/users/:id", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { firstName, lastName, email, role, status } = req.body;
+    try {
+      const user = await prisma.user.update({
+        where: { id: req.params.id },
+        data: {
+          ...(firstName && { firstName }),
+          ...(lastName !== undefined && { lastName }),
+          ...(email && { email }),
+          ...(role && { role }),
+          ...(status !== undefined && { isActive: status !== "DISABLED" }),
+        },
+        select: { id: true, firstName: true, lastName: true, email: true, role: true, isActive: true },
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "USER", user.id,
+        `User '${user.firstName} ${user.lastName}' updated.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.json(user);
+    } catch (err: any) {
+      logger.error("Error updating user:", err);
+      if (err.code === "P2002") { res.status(400).json({ error: "Email already in use" }); return; }
+      if (err.code === "P2025") { res.status(404).json({ error: "User not found" }); return; }
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Teachers (create) ───────────────────────────────────────────────────────
+  app.post("/api/teachers", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { firstName, lastName, email, phone, gender, address, employmentType, joinedDate, subjects, notes } = req.body;
+    if (!firstName || !lastName || !email) {
+      res.status(400).json({ error: "firstName, lastName, and email are required" }); return;
+    }
+    try {
+      const result = await prisma.$transaction(async (tx) => {
+        const passwordHash = await bcrypt.hash(`${firstName.toLowerCase()}${Math.floor(Math.random()*9000+1000)}`, 10);
+        const user = await tx.user.create({
+          data: { firstName, lastName, email, passwordHash, role: "TEACHER", isActive: true },
+        });
+        const teacherCode = `TCH-${Date.now().toString().slice(-6)}`;
+        const teacher = await tx.teacher.create({
+          data: {
+            userId: user.id,
+            teacherCode,
+            specialization: subjects || null,
+            hireDate: joinedDate ? new Date(joinedDate) : new Date(),
+          },
+          include: { user: { select: { firstName: true, lastName: true, email: true, isActive: true } } },
+        });
+        return teacher;
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "TEACHER", result.id,
+        `Teacher '${firstName} ${lastName}' added.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.status(201).json(result);
+    } catch (err: any) {
+      logger.error("Error creating teacher:", err);
+      if (err.code === "P2002") { res.status(400).json({ error: "Email already exists" }); return; }
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Classes (create) ────────────────────────────────────────────────────────
+  app.post("/api/classes", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { name, level, academicYear, description, room, capacity } = req.body;
+    if (!name || !level || !academicYear) {
+      res.status(400).json({ error: "name, level, and academicYear are required" }); return;
+    }
+    try {
+      const cls = await prisma.class.create({
+        data: { name, level, academicYear, room: room || null, capacity: capacity ? Number(capacity) : null },
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "CLASS", cls.id,
+        `Class '${name}' (${level}) created.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.status(201).json(cls);
+    } catch (err) {
+      logger.error("Error creating class:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Cases (single + notes) ──────────────────────────────────────────────────
+  app.get("/api/cases/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "CASE_WORKER") {
+      res.status(403).json({ error: "Forbidden" }); return;
+    }
+    try {
+      const caseRecord = await prisma.caseRecord.findUnique({
+        where: { id: req.params.id },
+        include: {
+          student: { include: { user: true } },
+          notes: { include: { createdBy: { select: { firstName: true, lastName: true } } }, orderBy: { createdAt: "asc" } },
+        },
+      });
+      if (!caseRecord) { res.status(404).json({ error: "Case not found" }); return; }
+      res.json(caseRecord);
+    } catch (err) {
+      logger.error("Error fetching case:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/cases/:id/notes", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "CASE_WORKER" && jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Forbidden" }); return;
+    }
+    const { content } = req.body;
+    if (!content?.trim()) { res.status(400).json({ error: "content is required" }); return; }
+    try {
+      const note = await prisma.caseNote.create({
+        data: { content, caseRecordId: req.params.id, createdById: jwtUser.userId },
+        include: { createdBy: { select: { firstName: true, lastName: true } } },
+      });
+      res.status(201).json(note);
+    } catch (err: any) {
+      logger.error("Error adding case note:", err);
+      if (err.code === "P2025") { res.status(404).json({ error: "Case not found" }); return; }
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Settings (school profile) ────────────────────────────────────────────────
+  app.get("/api/settings", authMiddleware, async (req, res) => {
+    try {
+      const profile = await prisma.schoolProfile.findFirst();
+      res.json(profile || {});
+    } catch (err) {
+      logger.error("Error fetching settings:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.put("/api/settings", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { name, address, phone, email } = req.body;
+    try {
+      const existing = await prisma.schoolProfile.findFirst();
+      const profile = existing
+        ? await prisma.schoolProfile.update({
+            where: { id: existing.id },
+            data: {
+              ...(name && { name }),
+              ...(address !== undefined && { address }),
+              ...(email !== undefined && { contactEmail: email }),
+              ...(phone !== undefined && { contactPhone: phone }),
+            },
+          })
+        : await prisma.schoolProfile.create({
+            data: { name: name || "School", address, contactEmail: email, contactPhone: phone },
+          });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "SETTINGS", profile.id,
+        "School profile settings updated.", req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.json(profile);
+    } catch (err) {
+      logger.error("Error updating settings:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Health check ────────────────────────────────────────────────────────────
   app.get("/api/health", (req, res) => {
     logger.info("Health check pinged");
     res.json({ status: "ok", school: "Mon Refugee Learning Centre - GED School" });
   });
 
-  // Vite middleware for development
-  if (process.env.NODE_ENV !== "production") {
+  // ── Vite / Static serving ───────────────────────────────────────────────────
+  if (!isProduction) {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(vite.middlewares);
+    app.get("*", async (req, res, next) => {
+      const url = req.originalUrl;
+      if (url.startsWith("/api/")) {
+        return next();
+      }
+      try {
+        const fs = await import("fs");
+        let template = fs.readFileSync(path.resolve(__dirname, "index.html"), "utf-8");
+        template = await vite.transformIndexHtml(url, template);
+        res.status(200).set({ "Content-Type": "text/html" }).end(template);
+      } catch (e) {
+        vite.ssrFixStacktrace(e as Error);
+        next(e);
+      }
+    });
   } else {
-    // Production static serving
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
     app.get("*", (req, res) => {
@@ -74,16 +1316,41 @@ async function startServer() {
     });
   }
 
-  // Global Error Handler (Production Sanitize)
-  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-    logger.error(err.stack);
-    res.status(500).json({ error: "Internal Server Error" });
-  });
+  // ── Global error handler ────────────────────────────────────────────────────
+  app.use(
+    (
+      err: any,
+      req: express.Request,
+      res: express.Response,
+      next: express.NextFunction
+    ) => {
+      logger.error(err.stack);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  );
 
-  app.listen(PORT, "0.0.0.0", () => {
+  const server = app.listen(PORT, "0.0.0.0", () => {
     logger.info(`Server running on port ${PORT}`);
     logger.info(`Mode: ${process.env.NODE_ENV || "development"}`);
   });
+
+  const shutdown = async () => {
+    logger.info("Shutting down server...");
+    server.close(async () => {
+      try {
+        await prisma.$disconnect();
+        await pool.end();
+        logger.info("Database pool closed.");
+        process.exit(0);
+      } catch (err) {
+        logger.error("Error during shutdown:", err);
+        process.exit(1);
+      }
+    });
+  };
+
+  process.on("SIGINT", shutdown);
+  process.on("SIGTERM", shutdown);
 }
 
 startServer().catch((err) => {
