@@ -126,7 +126,7 @@ function requireRole(role: string) {
 // ─── Server bootstrap ─────────────────────────────────────────────────────────
 async function startServer() {
   const app = express();
-  const PORT = process.env.PORT ? parseInt(process.env.PORT) : 9456;
+  const PORT = process.env.PORT ? parseInt(process.env.PORT) : 8000;
   const isProduction = process.env.NODE_ENV === "production";
 
   // Trust the first proxy hop (Cloud Run / reverse proxy) so that req.ip and
