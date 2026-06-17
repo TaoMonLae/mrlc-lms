@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { motion } from "motion/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useAuth } from "../providers/AuthProvider";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -19,7 +20,22 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [serverError, setServerError] = useState<string | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [schoolName, setSchoolName] = useState<string>("Mon Refugee Learning Centre");
+
+  // Pull the school's branding (logo + name) from the public endpoint so the
+  // login screen reflects the configured school. Falls back to the icon below.
+  useEffect(() => {
+    fetch("/api/public/branding")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.logoUrl) setLogoUrl(data.logoUrl);
+        if (data?.name) setSchoolName(data.name);
+      })
+      .catch(() => {/* keep defaults */});
+  }, []);
 
   const {
     register,
@@ -31,27 +47,19 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginFormValues) => {
     setServerError(null);
-    try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: data.email, password: data.password }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        setServerError(result.error ?? "Login failed. Please try again.");
-        return;
+    const result = await login(data.email, data.password);
+    if (!result.success) {
+      setServerError(result.error ?? "Login failed. Please try again.");
+    } else {
+      // Route each role to a sensible landing page.
+      let destination = "/dashboard";
+      try {
+        const stored = JSON.parse(sessionStorage.getItem("auth_user") || "{}");
+        if (stored.role === "LIBRARIAN") destination = "/books";
+      } catch {
+        // fall back to the default destination
       }
-
-      // Store the JWT token for subsequent API calls
-      sessionStorage.setItem("auth_token", result.token);
-      sessionStorage.setItem("auth_user", JSON.stringify(result.user));
-
-      navigate("/dashboard");
-    } catch {
-      setServerError("Unable to connect to the server. Please try again.");
+      navigate(destination);
     }
   };
 
@@ -64,16 +72,25 @@ export default function LoginPage() {
         className="w-full max-w-md"
       >
         <div className="flex flex-col items-center gap-6 mb-8">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-600 text-white shadow-xl shadow-orange-600/20">
-            <GraduationCap className="h-10 w-10" />
-          </div>
+          {logoUrl ? (
+            <img
+              src={logoUrl}
+              alt={`${schoolName} logo`}
+              className="h-16 w-16 rounded-2xl object-contain bg-white shadow-xl ring-1 ring-slate-200"
+              onError={() => setLogoUrl(null)}
+            />
+          ) : (
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-aubergine-600 text-white shadow-xl shadow-aubergine-600/20">
+              <GraduationCap className="h-10 w-10" />
+            </div>
+          )}
           <div className="text-center">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">MON REFUGEE LEARNING CENTRE</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 uppercase">{schoolName}</h1>
             <p className="text-xs text-slate-500 mt-1 uppercase tracking-[0.2em] font-bold">GED School LMS Portal</p>
           </div>
         </div>
 
-        <Card className="border-slate-200 shadow-xl shadow-slate-200/50">
+        <Card className="bg-white text-slate-900 ring-slate-200 border-slate-200 shadow-xl shadow-slate-200/50">
           <CardHeader className="space-y-1">
             <CardTitle className="text-xl font-bold text-slate-900">Sign in</CardTitle>
             <CardDescription className="text-slate-500 font-medium">
@@ -97,7 +114,7 @@ export default function LoginPage() {
                   type="email"
                   placeholder="admin@mrlc.edu"
                   autoComplete="email"
-                  className="h-11 border-slate-200 bg-slate-50/50 focus:bg-white transition-all"
+                  className="h-11 border-slate-200 bg-slate-50/50 text-slate-900 placeholder:text-slate-400 focus:bg-white transition-all dark:bg-slate-50/50 dark:border-slate-200 dark:text-slate-900"
                   {...register("email")}
                 />
                 {errors.email && (
@@ -112,7 +129,7 @@ export default function LoginPage() {
                   id="password"
                   type="password"
                   autoComplete="current-password"
-                  className="h-11 border-slate-200 bg-slate-50/50 focus:bg-white transition-all"
+                  className="h-11 border-slate-200 bg-slate-50/50 text-slate-900 placeholder:text-slate-400 focus:bg-white transition-all dark:bg-slate-50/50 dark:border-slate-200 dark:text-slate-900"
                   {...register("password")}
                 />
                 {errors.password && (
@@ -125,9 +142,14 @@ export default function LoginPage() {
                 type="submit"
                 id="login-submit-btn"
                 disabled={isSubmitting}
-                className="w-full h-12 text-sm font-bold bg-orange-600 hover:bg-orange-700 text-white transition-all group"
+                className="w-full h-12 text-sm font-bold bg-primary hover:bg-primary/90 text-primary-foreground transition-all group"
               >
-                {isSubmitting ? "SIGNING IN..." : (
+                {isSubmitting ? (
+                  <span className="flex items-center gap-2">
+                    <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                    SIGNING IN...
+                  </span>
+                ) : (
                   <>
                     CONTINUE TO DASHBOARD
                     <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -143,7 +165,7 @@ export default function LoginPage() {
             Protected area for authorized personnel only
           </p>
           <p className="text-sm text-slate-500">
-            Need help? <span className="text-orange-600 font-bold">Contact school admin</span>
+            Need help? <span className="text-aubergine-600 font-bold">Contact school admin</span>
           </p>
         </div>
       </motion.div>

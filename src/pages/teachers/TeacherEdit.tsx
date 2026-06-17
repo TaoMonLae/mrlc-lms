@@ -101,12 +101,12 @@ export default function TeacherEdit() {
           Back to Profile
         </Button>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Edit Teacher Profile</h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-400">Update account information and professional details for faculty members.</p>
+        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Update account information and professional details for faculty members.</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-4">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Personal Information</h2>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -163,7 +163,7 @@ export default function TeacherEdit() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-4">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Professional Details</h2>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -207,7 +207,7 @@ export default function TeacherEdit() {
         </div>
 
         <div className="space-y-6">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-4">
             <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-2">Profile Picture</h2>
             <div className="relative group">
               <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Htet" alt="Profile" className="w-full aspect-square rounded-lg object-cover border" />
@@ -219,7 +219,7 @@ export default function TeacherEdit() {
           </div>
 
           <div className="space-y-3">
-             <Button type="submit" className="w-full bg-slate-900 text-white dark:bg-white dark:text-slate-900" disabled={isSubmitting}>
+             <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
                {isSubmitting ? 'Updating...' : (
                  <>
                    <Save className="mr-2 h-4 w-4" />

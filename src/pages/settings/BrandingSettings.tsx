@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { useSettings } from '../../providers/SettingsProvider';
 
 const brandingSchema = z.object({
   primaryColor: z.string().min(4),
@@ -19,32 +20,45 @@ const brandingSchema = z.object({
 type FormValues = z.infer<typeof brandingSchema>;
 
 export default function BrandingSettings() {
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [signaturePreview, setSignaturePreview] = useState<string | null>(null);
+  const { schoolProfile, brandingSettings, updateBranding } = useSettings();
+  const [logoPreview, setLogoPreview] = useState<string | null>(brandingSettings.logoUrl);
+  const [signaturePreview, setSignaturePreview] = useState<string | null>(brandingSettings.signatureUrl);
 
   const {
     register,
     handleSubmit,
     setValue,
     watch,
+    reset,
     formState: { isSubmitting, isDirty }
   } = useForm<FormValues>({
     resolver: zodResolver(brandingSchema),
     defaultValues: {
-      primaryColor: '#ea580c', // orange-600
-      accentColor: '#3b82f6', // blue-500
-      darkModeDefault: false,
-      reportHeaderStyle: 'standard',
+      primaryColor: brandingSettings.primaryColor,
+      accentColor: brandingSettings.accentColor,
+      darkModeDefault: brandingSettings.darkModeDefault,
+      reportHeaderStyle: brandingSettings.reportHeaderStyle,
     }
   });
 
+  // Re-sync once persisted branding loads from the server.
+  useEffect(() => {
+    reset({
+      primaryColor: brandingSettings.primaryColor,
+      accentColor: brandingSettings.accentColor,
+      darkModeDefault: brandingSettings.darkModeDefault,
+      reportHeaderStyle: brandingSettings.reportHeaderStyle,
+    });
+    setLogoPreview(brandingSettings.logoUrl);
+    setSignaturePreview(brandingSettings.signatureUrl);
+  }, [brandingSettings, reset]);
+
   const onSubmit = async (data: FormValues) => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      console.log('Saved branding settings:', data);
+      await updateBranding({ ...data, logoUrl: logoPreview, signatureUrl: signaturePreview });
       toast.success('Branding settings updated successfully');
-    } catch (error) {
-      toast.error('Failed to update branding settings');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update branding settings');
     }
   };
 
@@ -86,7 +100,7 @@ export default function BrandingSettings() {
           
           <div className="space-y-3">
             <Label>School Logo (Display & PDF)</Label>
-            <div className="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col items-center justify-center text-center max-w-sm">
+            <div className="border-2 border-dashed border-slate-200 dark:border-surface-raised rounded-xl p-4 flex flex-col items-center justify-center text-center max-w-sm">
               {logoPreview ? (
                 <div className="relative group">
                   <img src={logoPreview} alt="Logo preview" className="h-20 object-contain" />
@@ -96,12 +110,12 @@ export default function BrandingSettings() {
                 </div>
               ) : (
                 <>
-                  <div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-3">
+                  <div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-surface-raised flex items-center justify-center mb-3">
                     <ImageIcon className="h-6 w-6 text-slate-400" />
                   </div>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">PNG, JPG or SVG max 2MB.</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">PNG, JPG or SVG max 2MB.</p>
                   <Label htmlFor="logo-upload" className="cursor-pointer">
-                    <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-4 py-2 rounded-md text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors flex items-center">
+                    <div className="bg-white dark:bg-canvas border border-slate-200 dark:border-surface-raised px-4 py-2 rounded-md text-sm font-medium hover:bg-slate-50 dark:hover:bg-surface-indigo transition-colors flex items-center">
                       <UploadCloud className="h-4 w-4 mr-2" /> Browse File
                     </div>
                   </Label>
@@ -113,7 +127,7 @@ export default function BrandingSettings() {
 
           <div className="space-y-3">
             <Label>Official Stamp / Signature (For Reports)</Label>
-            <div className="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col items-center justify-center text-center max-w-sm bg-slate-50 dark:bg-slate-900/50">
+            <div className="border-2 border-dashed border-slate-200 dark:border-surface-raised rounded-xl p-4 flex flex-col items-center justify-center text-center max-w-sm bg-slate-50 dark:bg-surface-indigo/50">
               {signaturePreview ? (
                 <div className="relative group">
                   <img src={signaturePreview} alt="Signature preview" className="h-16 object-contain" />
@@ -123,7 +137,7 @@ export default function BrandingSettings() {
                 </div>
               ) : (
                 <>
-                  <Label htmlFor="sig-upload" className="cursor-pointer inline-flex items-center text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
+                  <Label htmlFor="sig-upload" className="cursor-pointer inline-flex items-center text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
                     <UploadCloud className="h-4 w-4 mr-2" /> Upload transparent PNG signature
                   </Label>
                   <input id="sig-upload" type="file" accept="image/png" className="hidden" onChange={(e) => handleFileUpload(e, setSignaturePreview)} />
@@ -144,7 +158,7 @@ export default function BrandingSettings() {
                 <input 
                   type="color" 
                   {...register('primaryColor')}
-                  className="h-10 w-10 p-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 cursor-pointer"
+                  className="h-10 w-10 p-1 rounded border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas cursor-pointer"
                 />
                 <code className="text-xs text-slate-500 uppercase">{currentPrimaryColor}</code>
               </div>
@@ -155,7 +169,7 @@ export default function BrandingSettings() {
                 <input 
                   type="color" 
                   {...register('accentColor')}
-                  className="h-10 w-10 p-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 cursor-pointer"
+                  className="h-10 w-10 p-1 rounded border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas cursor-pointer"
                 />
                 <code className="text-xs text-slate-500 uppercase">{watch('accentColor')}</code>
               </div>
@@ -177,7 +191,7 @@ export default function BrandingSettings() {
           </div>
 
           <div className="pt-2">
-            <div className="flex items-center justify-between border border-slate-200 dark:border-slate-800 rounded-xl p-4">
+            <div className="flex items-center justify-between border border-slate-200 dark:border-surface-raised rounded-xl p-4">
               <div>
                 <Label className="text-base">Dark Mode Default</Label>
                 <p className="text-xs text-slate-500 mt-0.5">Enable dark mode by default for new users</p>
@@ -193,7 +207,7 @@ export default function BrandingSettings() {
       </div>
 
       {/* Preview Card */}
-      <div className="pt-6 border-t border-slate-200 dark:border-slate-800">
+      <div className="pt-6 border-t border-slate-200 dark:border-surface-raised">
         <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider mb-4">Header Preview</h3>
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8 overflow-hidden max-w-2xl">
            <div className={`flex ${
@@ -209,16 +223,16 @@ export default function BrandingSettings() {
                 </div>
               )}
               <div className={`${watch('reportHeaderStyle') !== 'standard' ? 'items-center' : ''}`}>
-                 <h4 className="text-xl font-bold font-serif" style={{ color: currentPrimaryColor }}>Acme International School</h4>
-                 <p className="text-xs text-slate-500 mt-1 uppercase tracking-widest font-medium">Excellence in Education</p>
+                 <h4 className="text-xl font-bold font-serif" style={{ color: currentPrimaryColor }}>{schoolProfile.name}</h4>
+                 <p className="text-xs text-slate-500 mt-1 uppercase tracking-widest font-medium">{schoolProfile.description || schoolProfile.shortName}</p>
               </div>
            </div>
            <div className="mt-6 border-t-2 opacity-20" style={{ borderColor: currentPrimaryColor }}></div>
         </div>
       </div>
 
-      <div className="pt-6 border-t border-slate-200 dark:border-slate-800 flex justify-end">
-        <Button type="submit" className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900" disabled={isSubmitting}>
+      <div className="pt-6 border-t border-slate-200 dark:border-surface-raised flex justify-end">
+        <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
           {isSubmitting ? 'Saving...' : (
             <>
               <Save className="mr-2 h-4 w-4" />

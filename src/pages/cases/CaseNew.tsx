@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, ShieldAlert } from 'lucide-react';
 import { useForm } from 'react-hook-form';
@@ -30,6 +30,27 @@ type FormValues = z.infer<typeof caseSchema>;
 
 export default function CaseNew() {
   const navigate = useNavigate();
+  const [students, setStudents] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const token = sessionStorage.getItem('auth_token');
+        const res = await fetch('/api/students', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setStudents(data);
+        }
+      } catch (err) {
+        console.error('Error fetching students:', err);
+      }
+    };
+    fetchStudents();
+  }, []);
 
   const {
     register,
@@ -47,12 +68,32 @@ export default function CaseNew() {
 
   const onSubmit = async (data: FormValues) => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      console.log('Case data:', data);
-      toast.success('Case created successfully');
-      navigate('/cases/new-id'); // Route to created case
-    } catch (error) {
-      toast.error('Failed to create case');
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch('/api/cases', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          studentId: data.studentId,
+          title: data.title,
+          description: data.description,
+          category: data.type,
+          priority: data.priority
+        })
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Failed to create case');
+      }
+
+      toast.success('Case created successfully.');
+      navigate('/cases');
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message || 'Failed to create case');
     }
   };
 
@@ -66,7 +107,7 @@ export default function CaseNew() {
           Back to Cases
         </Button>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Open New Case</h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-400">Record a new student support or protection concern.</p>
+        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Record a new student support or protection concern.</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -80,7 +121,7 @@ export default function CaseNew() {
            </div>
         )}
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm p-6 space-y-6">
+        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl overflow-hidden shadow-sm p-6 space-y-6">
            
            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2 md:col-span-2">
@@ -90,9 +131,16 @@ export default function CaseNew() {
                     <SelectValue placeholder="Select Student" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">Ali bin Ahmad (STU-2023-001)</SelectItem>
-                    <SelectItem value="2">Sarah Lee (STU-2023-002)</SelectItem>
-                    <SelectItem value="3">John Doe (STU-2023-003)</SelectItem>
+                    {students.map((student) => {
+                      const firstName = student.user?.firstName || student.firstName || '';
+                      const lastName = student.user?.lastName || student.lastName || '';
+                      const studentCode = student.studentCode || student.studentId || '';
+                      return (
+                        <SelectItem key={student.id} value={student.id}>
+                          {firstName} {lastName} ({studentCode})
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
                 {errors.studentId && <p className="text-xs text-red-500 font-medium">{errors.studentId.message}</p>}
@@ -176,7 +224,7 @@ export default function CaseNew() {
              <Button type="button" variant="outline" onClick={() => navigate('/cases')}>
                Cancel
              </Button>
-             <Button type="submit" className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900" disabled={isSubmitting}>
+             <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
                {isSubmitting ? 'Saving...' : (
                  <>
                    <Save className="mr-2 h-4 w-4" />

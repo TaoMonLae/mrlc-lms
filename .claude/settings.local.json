@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx prisma *)",
+      "mcp__Claude_in_Chrome__computer",
+      "mcp__Claude_in_Chrome__navigate",
+      "mcp__Claude_in_Chrome__javascript_tool",
+      "Bash(grep -n \"currency\\\\|\\\\$\\\\|MYR\\\\|symbol\\\\|amount\" /Users/taomonlae/Downloads/mrlc-lms/src/pages/fees/PaymentNew.tsx)",
+      "Bash(pkill -f \"tsx server.ts\")",
+      "Bash(npx tsc *)",
+      "Bash(xargs ls)",
+      "Bash(xargs cat)",
+      "Bash(sleep 4 && cat /tmp/mrlc-dev.log)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(kill 8279)"
+    ]
+  }
+}

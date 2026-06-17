@@ -129,6 +129,11 @@ async function startServer() {
   const PORT = process.env.PORT ? parseInt(process.env.PORT) : 9456;
   const isProduction = process.env.NODE_ENV === "production";
 
+  // Trust the first proxy hop (Cloud Run / reverse proxy) so that req.ip and
+  // express-rate-limit see the real client IP instead of the proxy's address.
+  // Without this, all traffic shares one IP and rate limiting blocks everyone.
+  app.set("trust proxy", 1);
+
   // ── Security headers ────────────────────────────────────────────────────────
   app.use(
     helmet({
@@ -855,10 +860,22 @@ async function startServer() {
   });
 
   app.get("/api/library/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
     const { id } = req.params;
     try {
       const resource = await prisma.libraryResource.findUnique({ where: { id } });
       if (!resource) {
+        res.status(404).json({ error: "Resource not found" });
+        return;
+      }
+      // Enforce the same visibility rules as the list endpoint so a student
+      // cannot fetch a TEACHERS_ONLY resource (or vice versa) by guessing its id.
+      const visibility = resource.visibility || "ALL";
+      if (jwtUser.role === "STUDENT" && !["ALL", "STUDENTS"].includes(visibility)) {
+        res.status(404).json({ error: "Resource not found" });
+        return;
+      }
+      if (jwtUser.role === "TEACHER" && !["ALL", "TEACHERS_ONLY"].includes(visibility)) {
         res.status(404).json({ error: "Resource not found" });
         return;
       }
@@ -935,6 +952,480 @@ async function startServer() {
       res.json({ message: "Resource deleted successfully" });
     } catch (err) {
       logger.error("Error deleting library resource:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Video Lessons API ────────────────────────────────────────────────────────
+  app.get("/api/videos", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      let where: any = {};
+      if (jwtUser.role === "STUDENT") {
+        where = { visibility: { in: ["ALL", "STUDENTS"] }, status: "PUBLISHED" };
+      } else if (jwtUser.role === "TEACHER") {
+        where = { visibility: { in: ["ALL", "TEACHERS_ONLY"] } };
+      }
+      const videos = await prisma.videoLesson.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+      });
+      res.json(videos);
+    } catch (err) {
+      logger.error("Error fetching video lessons:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/videos", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { title, description, videoUrl, thumbnailUrl, duration, classId, subjectId, visibility, status, uploadedByName } = req.body;
+    if (!title || !videoUrl) {
+      res.status(400).json({ error: "title and videoUrl are required" });
+      return;
+    }
+    try {
+      const video = await prisma.videoLesson.create({
+        data: {
+          title,
+          description: description || null,
+          videoUrl,
+          thumbnailUrl: thumbnailUrl || null,
+          duration: duration != null ? Number(duration) : null,
+          classId: classId || null,
+          subjectId: subjectId || null,
+          visibility: visibility || "ALL",
+          status: status || "PUBLISHED",
+          uploadedById: jwtUser.userId,
+          uploadedByName: uploadedByName || jwtUser.email,
+        },
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "CREATE",
+        "VIDEO",
+        video.id,
+        `Video lesson '${title}' created.`,
+        req.ip,
+        req.headers["user-agent"] || null,
+        "SUCCESS"
+      );
+
+      res.status(201).json(video);
+    } catch (err) {
+      logger.error("Error creating video lesson:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/videos/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { id } = req.params;
+    try {
+      const video = await prisma.videoLesson.findUnique({ where: { id } });
+      if (!video) {
+        res.status(404).json({ error: "Video lesson not found" });
+        return;
+      }
+      // Same visibility enforcement as the list endpoint.
+      if (jwtUser.role === "STUDENT" && (!["ALL", "STUDENTS"].includes(video.visibility) || video.status !== "PUBLISHED")) {
+        res.status(404).json({ error: "Video lesson not found" });
+        return;
+      }
+      if (jwtUser.role === "TEACHER" && !["ALL", "TEACHERS_ONLY"].includes(video.visibility)) {
+        res.status(404).json({ error: "Video lesson not found" });
+        return;
+      }
+      res.json(video);
+    } catch (err) {
+      logger.error("Error fetching video lesson:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.put("/api/videos/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { id } = req.params;
+    const { title, description, videoUrl, thumbnailUrl, duration, classId, subjectId, visibility, status } = req.body;
+    try {
+      const updated = await prisma.videoLesson.update({
+        where: { id },
+        data: {
+          ...(title && { title }),
+          ...(description !== undefined && { description: description || null }),
+          ...(videoUrl && { videoUrl }),
+          ...(thumbnailUrl !== undefined && { thumbnailUrl: thumbnailUrl || null }),
+          ...(duration !== undefined && { duration: duration != null ? Number(duration) : null }),
+          ...(classId !== undefined && { classId: classId || null }),
+          ...(subjectId !== undefined && { subjectId: subjectId || null }),
+          ...(visibility && { visibility }),
+          ...(status && { status }),
+        },
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "UPDATE",
+        "VIDEO",
+        id,
+        `Video lesson '${updated.title}' updated.`,
+        req.ip,
+        req.headers["user-agent"] || null,
+        "SUCCESS"
+      );
+
+      res.json(updated);
+    } catch (err: any) {
+      logger.error("Error updating video lesson:", err);
+      if (err.code === "P2025") {
+        res.status(404).json({ error: "Video lesson not found" });
+        return;
+      }
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.delete("/api/videos/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { id } = req.params;
+    try {
+      await prisma.videoLesson.delete({ where: { id } });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "DELETE",
+        "VIDEO",
+        id,
+        `Video lesson ID ${id} deleted.`,
+        req.ip,
+        req.headers["user-agent"] || null,
+        "SUCCESS"
+      );
+
+      res.json({ message: "Video lesson deleted successfully" });
+    } catch (err: any) {
+      logger.error("Error deleting video lesson:", err);
+      if (err.code === "P2025") {
+        res.status(404).json({ error: "Video lesson not found" });
+        return;
+      }
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Physical Library: Book Catalog API ───────────────────────────────────────
+  // Mutations are limited to ADMIN and LIBRARIAN; browsing the catalog is open
+  // to any authenticated user.
+  const canManageBooks = (role: string) => role === "ADMIN" || role === "LIBRARIAN";
+
+  app.get("/api/books", authMiddleware, async (req, res) => {
+    const { search } = req.query as { search?: string };
+    try {
+      const where = search
+        ? {
+            OR: [
+              { title: { contains: search, mode: "insensitive" as const } },
+              { author: { contains: search, mode: "insensitive" as const } },
+              { isbn: { contains: search, mode: "insensitive" as const } },
+              { category: { contains: search, mode: "insensitive" as const } },
+            ],
+          }
+        : {};
+      const books = await prisma.book.findMany({
+        where,
+        orderBy: { title: "asc" },
+      });
+      res.json(books);
+    } catch (err) {
+      logger.error("Error fetching books:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/books", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageBooks(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const {
+      title, author, isbn, publisher, publishedYear, category,
+      language, edition, shelfLocation, description, coverUrl, totalCopies,
+    } = req.body;
+    if (!title) {
+      res.status(400).json({ error: "title is required" });
+      return;
+    }
+    const copies = totalCopies != null ? Math.max(1, parseInt(String(totalCopies), 10) || 1) : 1;
+    try {
+      const book = await prisma.book.create({
+        data: {
+          title,
+          author: author || null,
+          isbn: isbn || null,
+          publisher: publisher || null,
+          publishedYear: publishedYear != null && publishedYear !== "" ? Number(publishedYear) : null,
+          category: category || null,
+          language: language || null,
+          edition: edition || null,
+          shelfLocation: shelfLocation || null,
+          description: description || null,
+          coverUrl: coverUrl || null,
+          totalCopies: copies,
+          availableCopies: copies,
+        },
+      });
+
+      await createAuditLog(
+        jwtUser.userId, jwtUser.email, "CREATE", "BOOK", book.id,
+        `Book '${title}' added to catalog (${copies} copies).`,
+        req.ip, req.headers["user-agent"] || null, "SUCCESS"
+      );
+
+      res.status(201).json(book);
+    } catch (err) {
+      logger.error("Error creating book:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/books/:id", authMiddleware, async (req, res) => {
+    const { id } = req.params;
+    try {
+      const book = await prisma.book.findUnique({
+        where: { id },
+        include: { loans: { orderBy: { borrowedDate: "desc" } } },
+      });
+      if (!book) {
+        res.status(404).json({ error: "Book not found" });
+        return;
+      }
+      res.json(book);
+    } catch (err) {
+      logger.error("Error fetching book:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.put("/api/books/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageBooks(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { id } = req.params;
+    const {
+      title, author, isbn, publisher, publishedYear, category,
+      language, edition, shelfLocation, description, coverUrl, totalCopies,
+    } = req.body;
+    try {
+      const existing = await prisma.book.findUnique({ where: { id } });
+      if (!existing) {
+        res.status(404).json({ error: "Book not found" });
+        return;
+      }
+
+      // If the total number of copies changes, shift availableCopies by the same
+      // delta so currently-borrowed counts stay consistent (never below 0).
+      let availableCopies = existing.availableCopies;
+      if (totalCopies != null && totalCopies !== "") {
+        const newTotal = Math.max(1, parseInt(String(totalCopies), 10) || existing.totalCopies);
+        const delta = newTotal - existing.totalCopies;
+        availableCopies = Math.max(0, Math.min(newTotal, existing.availableCopies + delta));
+      }
+
+      const book = await prisma.book.update({
+        where: { id },
+        data: {
+          ...(title && { title }),
+          ...(author !== undefined && { author: author || null }),
+          ...(isbn !== undefined && { isbn: isbn || null }),
+          ...(publisher !== undefined && { publisher: publisher || null }),
+          ...(publishedYear !== undefined && { publishedYear: publishedYear !== "" && publishedYear != null ? Number(publishedYear) : null }),
+          ...(category !== undefined && { category: category || null }),
+          ...(language !== undefined && { language: language || null }),
+          ...(edition !== undefined && { edition: edition || null }),
+          ...(shelfLocation !== undefined && { shelfLocation: shelfLocation || null }),
+          ...(description !== undefined && { description: description || null }),
+          ...(coverUrl !== undefined && { coverUrl: coverUrl || null }),
+          ...(totalCopies != null && totalCopies !== "" && {
+            totalCopies: Math.max(1, parseInt(String(totalCopies), 10) || existing.totalCopies),
+            availableCopies,
+          }),
+        },
+      });
+
+      await createAuditLog(
+        jwtUser.userId, jwtUser.email, "UPDATE", "BOOK", id,
+        `Book '${book.title}' updated.`,
+        req.ip, req.headers["user-agent"] || null, "SUCCESS"
+      );
+
+      res.json(book);
+    } catch (err) {
+      logger.error("Error updating book:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.delete("/api/books/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageBooks(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { id } = req.params;
+    try {
+      await prisma.book.delete({ where: { id } });
+
+      await createAuditLog(
+        jwtUser.userId, jwtUser.email, "DELETE", "BOOK", id,
+        `Book ID ${id} removed from catalog.`,
+        req.ip, req.headers["user-agent"] || null, "SUCCESS"
+      );
+
+      res.json({ message: "Book deleted successfully" });
+    } catch (err: any) {
+      logger.error("Error deleting book:", err);
+      if (err.code === "P2025") {
+        res.status(404).json({ error: "Book not found" });
+        return;
+      }
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Issue (check out) a copy of a book to a borrower.
+  app.post("/api/books/:id/loans", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageBooks(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { id } = req.params;
+    const { borrowerName, borrowerType, studentId, dueDate, notes } = req.body;
+    if (!borrowerName || !dueDate) {
+      res.status(400).json({ error: "borrowerName and dueDate are required" });
+      return;
+    }
+    try {
+      const loan = await prisma.$transaction(async (tx) => {
+        const book = await tx.book.findUnique({ where: { id } });
+        if (!book) throw Object.assign(new Error("Book not found"), { http: 404 });
+        if (book.availableCopies < 1) throw Object.assign(new Error("No copies available to borrow"), { http: 400 });
+
+        const created = await tx.bookLoan.create({
+          data: {
+            bookId: id,
+            borrowerName,
+            borrowerType: borrowerType || null,
+            studentId: studentId || null,
+            dueDate: new Date(dueDate),
+            status: "BORROWED",
+            recordedById: jwtUser.userId,
+            recordedByName: jwtUser.email,
+            notes: notes || null,
+          },
+        });
+        await tx.book.update({
+          where: { id },
+          data: { availableCopies: { decrement: 1 } },
+        });
+        return created;
+      });
+
+      await createAuditLog(
+        jwtUser.userId, jwtUser.email, "CHECKOUT", "BOOK", id,
+        `Book checked out to '${borrowerName}'.`,
+        req.ip, req.headers["user-agent"] || null, "SUCCESS"
+      );
+
+      res.status(201).json(loan);
+    } catch (err: any) {
+      if (err.http === 404) { res.status(404).json({ error: err.message }); return; }
+      if (err.http === 400) { res.status(400).json({ error: err.message }); return; }
+      logger.error("Error issuing book loan:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Return a borrowed copy.
+  app.post("/api/book-loans/:loanId/return", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageBooks(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { loanId } = req.params;
+    try {
+      const result = await prisma.$transaction(async (tx) => {
+        const loan = await tx.bookLoan.findUnique({ where: { id: loanId } });
+        if (!loan) throw Object.assign(new Error("Loan not found"), { http: 404 });
+        if (loan.status === "RETURNED") throw Object.assign(new Error("This loan has already been returned"), { http: 400 });
+
+        const updated = await tx.bookLoan.update({
+          where: { id: loanId },
+          data: { status: "RETURNED", returnedDate: new Date() },
+        });
+        const book = await tx.book.findUnique({ where: { id: loan.bookId } });
+        if (book) {
+          await tx.book.update({
+            where: { id: loan.bookId },
+            // Cap availableCopies at totalCopies to guard against double-returns.
+            data: { availableCopies: Math.min(book.totalCopies, book.availableCopies + 1) },
+          });
+        }
+        return updated;
+      });
+
+      await createAuditLog(
+        jwtUser.userId, jwtUser.email, "RETURN", "BOOK", result.bookId,
+        `Book returned by '${result.borrowerName}'.`,
+        req.ip, req.headers["user-agent"] || null, "SUCCESS"
+      );
+
+      res.json(result);
+    } catch (err: any) {
+      if (err.http === 404) { res.status(404).json({ error: err.message }); return; }
+      if (err.http === 400) { res.status(400).json({ error: err.message }); return; }
+      logger.error("Error returning book loan:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // List loans across the catalog (optionally filtered by status).
+  app.get("/api/book-loans", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageBooks(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { status } = req.query as { status?: string };
+    try {
+      const loans = await prisma.bookLoan.findMany({
+        where: status ? { status: status as any } : {},
+        include: { book: { select: { id: true, title: true, author: true } } },
+        orderBy: { borrowedDate: "desc" },
+      });
+      res.json(loans);
+    } catch (err) {
+      logger.error("Error fetching book loans:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
@@ -1029,9 +1520,25 @@ async function startServer() {
           res.json([]);
           return;
         }
+        // Students must never receive correctAnswer for exam questions.
         exams = await prisma.exam.findMany({
           where: { classId: student.classId },
-          include: { class: true, subject: true, questions: true }
+          include: {
+            class: true,
+            subject: true,
+            questions: {
+              select: {
+                id: true,
+                text: true,
+                type: true,
+                points: true,
+                options: true,
+                examId: true,
+                createdAt: true,
+                updatedAt: true,
+              },
+            },
+          },
         });
       } else {
         exams = await prisma.exam.findMany({
@@ -1242,6 +1749,21 @@ async function startServer() {
     }
   });
 
+  // ── Public branding (no auth) — used by the login screen ─────────────────────
+  app.get("/api/public/branding", async (req, res) => {
+    try {
+      const profile = await prisma.schoolProfile.findFirst();
+      res.json({
+        name: profile?.name || null,
+        logoUrl: profile?.logoUrl || null,
+        primaryColor: profile?.primaryColor || null,
+      });
+    } catch (err) {
+      logger.error("Error fetching public branding:", err);
+      res.json({ name: null, logoUrl: null, primaryColor: null });
+    }
+  });
+
   // ── Settings (school profile) ────────────────────────────────────────────────
   app.get("/api/settings", authMiddleware, async (req, res) => {
     try {
@@ -1255,24 +1777,39 @@ async function startServer() {
 
   app.put("/api/settings", authMiddleware, requireRole("ADMIN"), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
-    const { name, address, phone, email } = req.body;
+    const b = req.body || {};
+
+    // Build an update payload from only the fields actually provided, so the
+    // School / Branding / System tabs can each save independently.
+    const data: any = {};
+    if (b.name) data.name = b.name;
+    if (b.address !== undefined) data.address = b.address;
+    if (b.email !== undefined) data.contactEmail = b.email;
+    if (b.phone !== undefined) data.contactPhone = b.phone;
+
+    // Branding
+    if (b.logoUrl !== undefined) data.logoUrl = b.logoUrl;
+    if (b.signatureUrl !== undefined) data.signatureUrl = b.signatureUrl;
+    if (b.primaryColor !== undefined) data.primaryColor = b.primaryColor;
+    if (b.accentColor !== undefined) data.accentColor = b.accentColor;
+    if (b.darkModeDefault !== undefined) data.darkModeDefault = Boolean(b.darkModeDefault);
+    if (b.reportHeaderStyle !== undefined) data.reportHeaderStyle = b.reportHeaderStyle;
+
+    // System / localization
+    if (b.timezone !== undefined) data.timezone = b.timezone;
+    if (b.dateFormat !== undefined) data.dateFormat = b.dateFormat;
+    if (b.currency !== undefined) data.currency = b.currency;
+    if (b.defaultLanguage !== undefined) data.defaultLanguage = b.defaultLanguage;
+    if (b.fileUploadLimitMb !== undefined) data.fileUploadLimitMb = Number(b.fileUploadLimitMb);
+    if (b.backupEnabled !== undefined) data.backupEnabled = Boolean(b.backupEnabled);
+
     try {
       const existing = await prisma.schoolProfile.findFirst();
       const profile = existing
-        ? await prisma.schoolProfile.update({
-            where: { id: existing.id },
-            data: {
-              ...(name && { name }),
-              ...(address !== undefined && { address }),
-              ...(email !== undefined && { contactEmail: email }),
-              ...(phone !== undefined && { contactPhone: phone }),
-            },
-          })
-        : await prisma.schoolProfile.create({
-            data: { name: name || "School", address, contactEmail: email, contactPhone: phone },
-          });
+        ? await prisma.schoolProfile.update({ where: { id: existing.id }, data })
+        : await prisma.schoolProfile.create({ data: { name: data.name || "School", ...data } });
       await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "SETTINGS", profile.id,
-        "School profile settings updated.", req.ip, req.headers["user-agent"] || null, "SUCCESS");
+        "School settings updated.", req.ip, req.headers["user-agent"] || null, "SUCCESS");
       res.json(profile);
     } catch (err) {
       logger.error("Error updating settings:", err);

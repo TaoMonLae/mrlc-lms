@@ -99,7 +99,7 @@ export default function FeesDashboard() {
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Fees & Payments</h1>
-          <p className="text-sm text-slate-500 mt-1 dark:text-slate-400">Manage student fees and track payments.</p>
+          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Manage student fees and track payments.</p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
           {hasPermission('manage_fees') && (
@@ -107,7 +107,7 @@ export default function FeesDashboard() {
               <Button variant="outline" className="w-full sm:w-auto">
                 <Download className="mr-2 h-4 w-4" /> Export Report
               </Button>
-              <Button className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 w-full sm:w-auto" render={<Link to="/fees/payments/new" />} nativeButton={false}>
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto" render={<Link to="/fees/payments/new" />} nativeButton={false}>
                 <DollarSign className="mr-2 h-4 w-4" /> Record Payment
               </Button>
             </>
@@ -116,24 +116,24 @@ export default function FeesDashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-xl shadow-sm text-center">
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Collected</p>
+        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised p-6 rounded-xl shadow-sm text-center">
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-300">Total Collected</p>
           <p className="text-3xl font-bold text-slate-900 dark:text-white mt-2">MYR {totalCollected.toLocaleString()}</p>
         </div>
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-xl shadow-sm text-center">
-           <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Outstanding</p>
+        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised p-6 rounded-xl shadow-sm text-center">
+           <p className="text-sm font-medium text-slate-500 dark:text-slate-300">Total Outstanding</p>
            <p className="text-3xl font-bold text-slate-900 dark:text-white mt-2">MYR {totalOutstanding.toLocaleString()}</p>
         </div>
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-xl shadow-sm text-center">
-           <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Collection Rate</p>
+        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised p-6 rounded-xl shadow-sm text-center">
+           <p className="text-sm font-medium text-slate-500 dark:text-slate-300">Collection Rate</p>
            <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">
              {Math.round((totalCollected / (totalCollected + totalOutstanding)) * 100)}%
            </p>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col md:flex-row gap-4 items-center bg-slate-50/50 dark:bg-slate-800/50">
+      <div className="bg-white dark:bg-surface-indigo rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-slate-200 dark:border-surface-raised flex flex-col md:flex-row gap-4 items-center bg-slate-50/50 dark:bg-surface-raised/50">
           <div className="relative flex-1 w-full md:w-auto">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input 
@@ -170,7 +170,7 @@ export default function FeesDashboard() {
 
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <thead className="text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 uppercase">
+            <thead className="text-xs text-slate-500 dark:text-slate-300 bg-slate-50 dark:bg-surface-raised uppercase">
               <tr>
                 <th className="px-6 py-4 font-medium">Student</th>
                 <th className="px-6 py-4 font-medium">Class</th>
@@ -183,7 +183,7 @@ export default function FeesDashboard() {
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
               {filteredFees.map((fee) => (
-                <tr key={fee.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                <tr key={fee.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-700 dark:text-blue-300 font-semibold text-xs">
@@ -209,7 +209,7 @@ export default function FeesDashboard() {
                   <td className="px-6 py-4 font-medium text-slate-900 dark:text-white text-right">
                     {fee.balance.toLocaleString()}
                   </td>
-                  <td className="px-6 py-4 text-slate-500 dark:text-slate-400">
+                  <td className="px-6 py-4 text-slate-500 dark:text-slate-300">
                     {fee.lastPaymentDate ? format(new Date(fee.lastPaymentDate), 'MMM d, yyyy') : '-'}
                   </td>
                   <td className="px-6 py-4 text-right">

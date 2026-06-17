@@ -28,7 +28,7 @@ export function TopBar() {
   });
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white px-8 md:px-8">
+    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 dark:border-white/10 bg-white dark:bg-surface-indigo px-8 md:px-8">
       <div className="flex flex-1 items-center gap-4">
         <div className="relative w-full max-w-md hidden md:block">
           <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
@@ -36,10 +36,10 @@ export function TopBar() {
           </span>
           <Input
             placeholder="Search students, classes, records..."
-            className="block w-full rounded-md border border-slate-200 bg-slate-50 py-2 pl-10 pr-3 text-sm placeholder-slate-400 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 transition-all"
+            className="block w-full rounded-md border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-surface-raised dark:text-white py-2 pl-10 pr-3 text-sm placeholder-slate-400 focus:border-aubergine-500 focus:outline-none focus:ring-1 focus:ring-aubergine-500 transition-all"
           />
         </div>
-        <SidebarTrigger className="md:hidden bg-slate-100 hover:bg-slate-200 text-slate-600" />
+        <SidebarTrigger className="md:hidden bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-surface-raised dark:text-slate-300" />
       </div>
 
       <div className="flex items-center gap-4">
@@ -49,7 +49,7 @@ export function TopBar() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 text-slate-500 hover:bg-slate-100 rounded-full transition-colors"
+                className="h-10 w-10 text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-surface-raised rounded-full transition-colors"
               />
             }
             nativeButton={true}
@@ -81,7 +81,7 @@ export function TopBar() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="relative h-10 w-10 text-slate-500 hover:bg-slate-100 rounded-full transition-colors hidden sm:flex"
+                className="relative h-10 w-10 text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-surface-raised rounded-full transition-colors hidden sm:flex"
               />
             }
             nativeButton={true}
@@ -94,14 +94,14 @@ export function TopBar() {
 
           <DropdownMenuContent align="end" className="w-80 p-0">
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-white/10">
               <div className="flex items-center gap-2">
-                <Megaphone className="h-4 w-4 text-indigo-600" />
-                <span className="font-semibold text-sm text-slate-900">
+                <Megaphone className="h-4 w-4 text-aubergine-500" />
+                <span className="font-semibold text-sm text-slate-900 dark:text-white">
                   Announcements
                 </span>
                 {activeAnnouncements.length > 0 && (
-                  <Badge className="h-4 px-1.5 text-[10px] bg-indigo-600 text-white border-none">
+                  <Badge className="h-4 px-1.5 text-[10px] bg-aubergine-600 text-white border-none">
                     {activeAnnouncements.length}
                   </Badge>
                 )}
@@ -109,7 +109,7 @@ export function TopBar() {
             </div>
 
             {/* List */}
-            <div className="max-h-80 overflow-y-auto divide-y divide-slate-100">
+            <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-white/10">
               {activeAnnouncements.length === 0 ? (
                 <div className="py-8 text-center text-sm text-slate-400">
                   No announcements
@@ -120,14 +120,14 @@ export function TopBar() {
                     key={ann.id}
                     to={`/announcements/${ann.id}`}
                     onClick={() => setNotifOpen(false)}
-                    className="flex flex-col gap-1 px-4 py-3 hover:bg-slate-50 transition-colors"
+                    className="flex flex-col gap-1 px-4 py-3 hover:bg-slate-50 dark:hover:bg-surface-raised transition-colors"
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <span className="text-sm font-medium text-slate-900 line-clamp-1 flex-1">
+                      <span className="text-sm font-medium text-slate-900 dark:text-white line-clamp-1 flex-1">
                         {ann.title}
                       </span>
                       {ann.pinned && (
-                        <Pin className="h-3 w-3 text-indigo-500 fill-current flex-shrink-0 mt-0.5" />
+                        <Pin className="h-3 w-3 text-aubergine-500 fill-current flex-shrink-0 mt-0.5" />
                       )}
                     </div>
                     <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
@@ -143,11 +143,11 @@ export function TopBar() {
             </div>
 
             {/* Footer */}
-            <div className="border-t border-slate-100 px-4 py-2">
+            <div className="border-t border-slate-100 dark:border-white/10 px-4 py-2">
               <Link
                 to="/announcements"
                 onClick={() => setNotifOpen(false)}
-                className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
+                className="text-xs text-aubergine-600 hover:text-aubergine-700 font-medium"
               >
                 View all announcements →
               </Link>

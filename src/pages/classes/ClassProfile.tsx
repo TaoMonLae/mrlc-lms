@@ -16,6 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { usePermissions } from '../../lib/permissions';
 import { toast } from 'sonner';
 
 const MOCK_CLASS = {
@@ -48,9 +49,8 @@ export default function ClassProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
-
-  // Hardcoded for demo - should come from auth
-  const userRole = 'ADMIN';
+  const { hasPermission } = usePermissions();
+  const canManageClass = hasPermission('manage_classes');
 
   const handleArchive = () => {
     toast.success('Class has been archived.');
@@ -76,7 +76,7 @@ export default function ClassProfile() {
             <span>{MOCK_CLASS.academicYear}</span>
           </p>
         </div>
-        {userRole === 'ADMIN' && (
+        {canManageClass && (
           <div className="flex gap-2">
             <Button variant="outline" render={<Link to={`/classes/${id}/edit`} />} nativeButton={false}>
               <Edit className="mr-2 h-4 w-4" /> Edit Class
@@ -89,7 +89,7 @@ export default function ClassProfile() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
+        <div className="bg-white dark:bg-surface-indigo p-5 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex items-center gap-4">
           <div className="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600">
             <Users className="h-6 w-6" />
           </div>
@@ -98,7 +98,7 @@ export default function ClassProfile() {
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-1">Students</p>
           </div>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
+        <div className="bg-white dark:bg-surface-indigo p-5 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex items-center gap-4">
           <div className="h-12 w-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600">
             <CheckCircle2 className="h-6 w-6" />
           </div>
@@ -107,8 +107,8 @@ export default function ClassProfile() {
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-1">Attendance</p>
           </div>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
-          <div className="h-12 w-12 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600">
+        <div className="bg-white dark:bg-surface-indigo p-5 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex items-center gap-4">
+          <div className="h-12 w-12 rounded-full bg-aubergine-100 dark:bg-aubergine-900/30 flex items-center justify-center text-aubergine-600">
             <BookOpen className="h-6 w-6" />
           </div>
           <div>
@@ -116,7 +116,7 @@ export default function ClassProfile() {
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-1">Active Exams</p>
           </div>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
+        <div className="bg-white dark:bg-surface-indigo p-5 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex items-center gap-4">
           <div className="h-12 w-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600">
             <GraduationCap className="h-6 w-6" />
           </div>
@@ -127,16 +127,16 @@ export default function ClassProfile() {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm">
         <div className="px-6 pt-4 overflow-x-auto">
-          <TabsList className="bg-transparent border-b border-slate-100 dark:border-slate-800 w-full justify-start rounded-none h-12 gap-6 min-w-[600px]">
-            <TabsTrigger value="overview" className="border-b-2 border-transparent data-[state=active]:border-orange-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Overview</TabsTrigger>
-            <TabsTrigger value="students" className="border-b-2 border-transparent data-[state=active]:border-orange-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Students</TabsTrigger>
-            <TabsTrigger value="teachers" className="border-b-2 border-transparent data-[state=active]:border-orange-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Teachers</TabsTrigger>
-            <TabsTrigger value="subjects" className="border-b-2 border-transparent data-[state=active]:border-orange-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Subjects</TabsTrigger>
-            <TabsTrigger value="attendance" className="border-b-2 border-transparent data-[state=active]:border-orange-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Attendance</TabsTrigger>
-            <TabsTrigger value="exams" className="border-b-2 border-transparent data-[state=active]:border-orange-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Exams</TabsTrigger>
-            <TabsTrigger value="timetable" className="border-b-2 border-transparent data-[state=active]:border-orange-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Timetable</TabsTrigger>
+          <TabsList className="bg-transparent border-b border-slate-100 dark:border-surface-raised w-full justify-start rounded-none h-12 gap-6 min-w-[600px]">
+            <TabsTrigger value="overview" className="border-b-2 border-transparent data-[state=active]:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Overview</TabsTrigger>
+            <TabsTrigger value="students" className="border-b-2 border-transparent data-[state=active]:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Students</TabsTrigger>
+            <TabsTrigger value="teachers" className="border-b-2 border-transparent data-[state=active]:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Teachers</TabsTrigger>
+            <TabsTrigger value="subjects" className="border-b-2 border-transparent data-[state=active]:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Subjects</TabsTrigger>
+            <TabsTrigger value="attendance" className="border-b-2 border-transparent data-[state=active]:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Attendance</TabsTrigger>
+            <TabsTrigger value="exams" className="border-b-2 border-transparent data-[state=active]:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Exams</TabsTrigger>
+            <TabsTrigger value="timetable" className="border-b-2 border-transparent data-[state=active]:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Timetable</TabsTrigger>
           </TabsList>
         </div>
 
@@ -148,11 +148,11 @@ export default function ClassProfile() {
         </TabsContent>
 
         <TabsContent value="students" className="p-0 animate-in fade-in slide-in-from-bottom-2">
-          <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-end">
+          <div className="p-4 border-b border-slate-200 dark:border-surface-raised flex justify-end">
             <Button size="sm"><Users className="w-4 h-4 mr-2" /> Assign Students</Button>
           </div>
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-slate-800/50">
+            <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-surface-raised/50">
               <tr>
                 <th className="px-6 py-4">Student</th>
                 <th className="px-6 py-4">Student ID</th>
@@ -162,9 +162,9 @@ export default function ClassProfile() {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {MOCK_STUDENTS.map(student => (
-                <tr key={student.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                <tr key={student.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50">
                   <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
-                    <Link to={`/students/${student.id}`} className="hover:underline hover:text-orange-600">{student.name}</Link>
+                    <Link to={`/students/${student.id}`} className="hover:underline hover:text-aubergine-600">{student.name}</Link>
                   </td>
                   <td className="px-6 py-4 text-slate-500 font-mono">{student.studentId}</td>
                   <td className="px-6 py-4">
@@ -185,11 +185,11 @@ export default function ClassProfile() {
         </TabsContent>
 
         <TabsContent value="teachers" className="p-0 animate-in fade-in slide-in-from-bottom-2">
-          <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-end">
+          <div className="p-4 border-b border-slate-200 dark:border-surface-raised flex justify-end">
             <Button size="sm"><Plus className="w-4 h-4 mr-2" /> Assign Teacher</Button>
           </div>
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-slate-800/50">
+            <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-surface-raised/50">
               <tr>
                 <th className="px-6 py-4">Teacher</th>
                 <th className="px-6 py-4">Role</th>
@@ -199,9 +199,9 @@ export default function ClassProfile() {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {MOCK_TEACHERS.map(teacher => (
-                <tr key={teacher.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                <tr key={teacher.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50">
                   <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
-                    <Link to={`/teachers/${teacher.id}`} className="hover:underline hover:text-orange-600">{teacher.name}</Link>
+                    <Link to={`/teachers/${teacher.id}`} className="hover:underline hover:text-aubergine-600">{teacher.name}</Link>
                   </td>
                   <td className="px-6 py-4 text-slate-500">{teacher.role}</td>
                   <td className="px-6 py-4"><Badge variant="secondary">{teacher.subject}</Badge></td>

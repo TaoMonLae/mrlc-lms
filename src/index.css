@@ -31,6 +31,57 @@
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+
+  /* ─── Webflow-inspired brand palette ─────────────────────────────── */
+  /* Purple — lead brand accent. 600 = brand value (#7a3dff). The legacy
+     "aubergine" utility names now resolve to this purple ramp. */
+  --color-aubergine-50: #f5efff;
+  --color-aubergine-100: #ece1ff;
+  --color-aubergine-200: #ddc9ff;
+  --color-aubergine-300: #c4a6ff;
+  --color-aubergine-400: #a87dff;
+  --color-aubergine-500: #8f5cff;
+  --color-aubergine-600: #7a3dff;
+  --color-aubergine-700: #6325e6;
+  --color-aubergine-800: #4f1cb8;
+  --color-aubergine-900: #3f1a8f;
+  --color-aubergine-950: #25104f;
+
+  /* Pink — second accent (legacy "magenta" names). 500 = #ed52cb */
+  --color-magenta-50: #fdeef9;
+  --color-magenta-100: #fbd9f1;
+  --color-magenta-200: #f7b6e3;
+  --color-magenta-300: #f386d2;
+  --color-magenta-400: #ef67cd;
+  --color-magenta-500: #ed52cb;
+  --color-magenta-600: #d633b0;
+  --color-magenta-700: #b22390;
+  --color-magenta-800: #8f1d73;
+  --color-magenta-900: #761b60;
+  --color-magenta-950: #46093a;
+
+  /* Five-stop accent system (product-category colors) */
+  --color-accent-purple: #7a3dff;
+  --color-accent-pink: #ed52cb;
+  --color-accent-blue: #3b89ff;
+  --color-accent-blue-info: #146ef5;
+  --color-accent-orange: #ff6b00;
+  --color-accent-green: #00d722;
+  --color-accent-yellow: #ffae13;
+
+  /* Link blue */
+  --color-linkblue-500: #146ef5;
+  --color-linkblue-600: #006acc;
+  --color-linkblue-700: #006acc;
+
+  /* Warm / soft surfaces (legacy) */
+  --color-cream: #f4f4f4;
+  --color-lavender: #f5efff;
+
+  /* Surfaces — near-black canvas + raised panels (dark mode) */
+  --color-canvas: #080808;
+  --color-surface-indigo: #161616;
+  --color-surface-raised: #222222;
 }
 
 @layer base {
@@ -101,12 +152,13 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
     --font-heading: var(--font-sans);
-    --font-sans: 'Geist Variable', sans-serif;
+    --font-sans: 'Inter', 'Geist Variable', system-ui, -apple-system, sans-serif;
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -148,72 +200,75 @@
 }
 
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+    /* Light mode — Webflow: white canvas, near-black ink, purple accent,
+       hairline borders, sharp small radii. */
+    --background: #ffffff;
+    --foreground: #080808;
+    --card: #ffffff;
+    --card-foreground: #080808;
+    --popover: #ffffff;
+    --popover-foreground: #080808;
+    --primary: #080808;
+    --primary-foreground: #ffffff;
+    --secondary: #f4f4f4;
+    --secondary-foreground: #080808;
+    --muted: #f4f4f4;
+    --muted-foreground: #5a5a5a;
+    --accent: #f5efff;
+    --accent-foreground: #6325e6;
+    --destructive: #ee1d36;
+    --border: #d8d8d8;
+    --input: #d8d8d8;
+    --ring: #7a3dff;
+    --chart-1: #7a3dff;
+    --chart-2: #3b89ff;
+    --chart-3: #00d722;
+    --chart-4: #ff6b00;
+    --chart-5: #ed52cb;
+    --radius: 0.5rem;
+    --sidebar: #080808;
+    --sidebar-foreground: #ffffff;
+    --sidebar-primary: #7a3dff;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #222222;
+    --sidebar-accent-foreground: #ffffff;
+    --sidebar-border: rgba(255, 255, 255, 0.10);
+    --sidebar-ring: #7a3dff;
 }
 
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+    /* Dark mode — near-black canvas, gray raised surfaces, white ink, purple accent. */
+    --background: #080808;
+    --foreground: #ffffff;
+    --card: #161616;
+    --card-foreground: #ffffff;
+    --popover: #161616;
+    --popover-foreground: #ffffff;
+    --primary: #ffffff;
+    --primary-foreground: #080808;
+    --secondary: #161616;
+    --secondary-foreground: #ffffff;
+    --muted: #161616;
+    --muted-foreground: #ababab;
+    --accent: #222222;
+    --accent-foreground: #ffffff;
+    --destructive: #ee1d36;
+    --border: rgba(255, 255, 255, 0.12);
+    --input: rgba(255, 255, 255, 0.16);
+    --ring: #8f5cff;
+    --chart-1: #a87dff;
+    --chart-2: #3b89ff;
+    --chart-3: #00d722;
+    --chart-4: #ff6b00;
+    --chart-5: #ed52cb;
+    --sidebar: #080808;
+    --sidebar-foreground: #ffffff;
+    --sidebar-primary: #8f5cff;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #222222;
+    --sidebar-accent-foreground: #ffffff;
+    --sidebar-border: rgba(255, 255, 255, 0.10);
+    --sidebar-ring: #8f5cff;
 }
 
 @layer base {

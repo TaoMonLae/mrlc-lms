@@ -77,7 +77,7 @@ export default function CaseEdit() {
           Back to Case
         </Button>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Edit Case</h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-400">Update case details and status.</p>
+        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Update case details and status.</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -91,7 +91,7 @@ export default function CaseEdit() {
            </div>
         )}
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm p-6 space-y-6">
+        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl overflow-hidden shadow-sm p-6 space-y-6">
            
            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
@@ -102,7 +102,7 @@ export default function CaseEdit() {
                      <div 
                         key={s}
                         onClick={() => setValue('status', s as any)}
-                        className={`border rounded-lg p-3 flex items-center justify-center cursor-pointer text-sm font-medium transition-colors ${selectedStatus === s ? 'bg-slate-900 text-white border-slate-900 dark:bg-slate-100 dark:text-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800'}`}
+                        className={`border rounded-lg p-3 flex items-center justify-center cursor-pointer text-sm font-medium transition-colors ${selectedStatus === s ? 'bg-slate-900 text-white border-slate-900 dark:bg-slate-100 dark:text-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 dark:bg-surface-indigo dark:border-surface-raised dark:text-slate-300 dark:hover:bg-surface-raised'}`}
                      >
                        {s.replace('_', ' ')}
                      </div>
@@ -183,7 +183,7 @@ export default function CaseEdit() {
              <Button type="button" variant="outline" onClick={() => navigate(`/cases/${id}`)}>
                Cancel
              </Button>
-             <Button type="submit" className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900" disabled={isSubmitting}>
+             <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
                {isSubmitting ? 'Saving...' : (
                  <>
                    <Save className="mr-2 h-4 w-4" />

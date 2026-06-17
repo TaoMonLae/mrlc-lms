@@ -1,14 +1,14 @@
-import { 
-  LayoutDashboard, 
-  Users, 
-  UserSquare2, 
-  Library, 
-  BookOpen, 
-  CalendarCheck, 
-  FileCheck, 
-  Wallet, 
-  AlertCircle, 
-  BarChart3, 
+import {
+  LayoutDashboard,
+  Users,
+  UserSquare2,
+  Library,
+  BookOpen,
+  CalendarCheck,
+  FileCheck,
+  Wallet,
+  AlertCircle,
+  BarChart3,
   Settings,
   Briefcase,
   Megaphone,
@@ -16,7 +16,9 @@ import {
   GraduationCap,
   UserCheck,
   FileText,
-  Download
+  Download,
+  Video,
+  BookMarked
 } from "lucide-react";
 import { UserRole } from "./permissions";
 
@@ -88,6 +90,18 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     url: "/library",
     icon: Library,
     roles: ["ADMIN"],
+  },
+  {
+    title: "Video Lessons",
+    url: "/videos",
+    icon: Video,
+    roles: ["ADMIN"],
+  },
+  {
+    title: "Book Catalog",
+    url: "/books",
+    icon: BookMarked,
+    roles: ["ADMIN", "LIBRARIAN"],
   },
   {
     title: "Fees",
@@ -170,6 +184,12 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     roles: ["TEACHER"],
   },
   {
+    title: "Video Lessons",
+    url: "/teacher/videos",
+    icon: Video,
+    roles: ["TEACHER"],
+  },
+  {
     title: "Teacher Reports",
     url: "/teacher/reports",
     icon: BarChart3,
@@ -217,6 +237,12 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     title: "Student Library",
     url: "/student/library",
     icon: Library,
+    roles: ["STUDENT"],
+  },
+  {
+    title: "Video Lessons",
+    url: "/student/videos",
+    icon: Video,
     roles: ["STUDENT"],
   },
 ];

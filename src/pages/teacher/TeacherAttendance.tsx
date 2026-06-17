@@ -81,22 +81,22 @@ export default function TeacherAttendance() {
           <p className="text-sm text-slate-500 mt-1 font-medium">Record daily attendance for your assigned classes.</p>
         </div>
         <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={markAllPresent} className="h-10 px-4 font-bold text-[11px] uppercase tracking-widest border-slate-200 dark:border-slate-800">
+            <Button variant="outline" size="sm" onClick={markAllPresent} className="h-10 px-4 font-bold text-[11px] uppercase tracking-widest border-slate-200 dark:border-surface-raised">
                 Mark All Present
             </Button>
-            <Button size="sm" onClick={handleSave} className="h-10 px-6 bg-orange-600 hover:bg-orange-700 text-white font-bold text-[11px] uppercase tracking-widest shadow-lg">
+            <Button size="sm" onClick={handleSave} className="h-10 px-6 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-[11px] uppercase tracking-widest shadow-lg">
                 <Save className="h-3.5 w-3.5 mr-2" /> Save Attendance
             </Button>
         </div>
       </div>
 
-      <Card className="border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900 shadow-sm">
-        <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4 items-center justify-between bg-slate-50/50 dark:bg-slate-800/30">
+      <Card className="border-slate-200 dark:border-surface-raised overflow-hidden bg-white dark:bg-surface-indigo shadow-sm">
+        <div className="p-4 border-b border-slate-100 dark:border-surface-raised flex flex-col sm:flex-row gap-4 items-center justify-between bg-slate-50/50 dark:bg-surface-raised/30">
           <div className="flex flex-wrap items-center gap-4 w-full sm:w-auto">
             <div className="flex flex-col gap-1.5 min-w-[200px]">
                 <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Selected Class</span>
                 <Select value={selectedClass} onValueChange={setSelectedClass}>
-                    <SelectTrigger className="h-10 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+                    <SelectTrigger className="h-10 border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo">
                         <SelectValue placeholder="Select Class">
                           {CLASS_OPTIONS.find(o => o.value === selectedClass)?.label ?? 'Select Class'}
                         </SelectValue>
@@ -110,7 +110,7 @@ export default function TeacherAttendance() {
             </div>
             <div className="flex flex-col gap-1.5">
                 <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">Session Date</span>
-                <div className="flex items-center h-10 px-3 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm font-bold text-slate-700 dark:text-slate-300">
+                <div className="flex items-center h-10 px-3 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo text-sm font-bold text-slate-700 dark:text-slate-300">
                     <CalendarIcon className="h-4 w-4 mr-2 text-slate-400" />
                     {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                 </div>
@@ -120,7 +120,7 @@ export default function TeacherAttendance() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input 
                 placeholder="Find student..." 
-                className="pl-10 h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700" 
+                className="pl-10 h-10 bg-white dark:bg-surface-indigo border-slate-200 dark:border-surface-raised" 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -130,9 +130,9 @@ export default function TeacherAttendance() {
         <div className="p-0">
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {filteredStudents.map((student) => (
-              <div key={student.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 px-6 hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors gap-4">
+              <div key={student.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 px-6 hover:bg-slate-50/50 dark:hover:bg-surface-raised/20 transition-colors gap-4">
                 <div className="flex items-center gap-4">
-                  <Avatar className="h-10 w-10 border border-slate-200 dark:border-slate-800">
+                  <Avatar className="h-10 w-10 border border-slate-200 dark:border-surface-raised">
                     <AvatarImage src={student.photo} />
                     <AvatarFallback>{student.name.substring(0, 2).toUpperCase()}</AvatarFallback>
                   </Avatar>
@@ -142,7 +142,7 @@ export default function TeacherAttendance() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg w-fit">
+                <div className="flex items-center gap-1 bg-slate-100 dark:bg-surface-raised p-1 rounded-lg w-fit">
                     <Button 
                         variant={attendance[student.id] === 'present' ? 'default' : 'ghost'} 
                         size="sm"
@@ -197,7 +197,7 @@ export default function TeacherAttendance() {
           </div>
         </div>
 
-        <div className="p-6 bg-slate-50/50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800">
+        <div className="p-6 bg-slate-50/50 dark:bg-surface-raised/30 border-t border-slate-100 dark:border-surface-raised">
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
                 <div className="flex gap-6 text-[11px] font-bold text-slate-500 uppercase tracking-widest">
                     <div className="flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-emerald-500" /> Present: {Object.values(attendance).filter(v => v === 'present').length}</div>

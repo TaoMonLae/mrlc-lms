@@ -66,13 +66,13 @@ export default function TimetableEdit() {
           size="icon" 
           render={<Link to="/timetable" />}
           nativeButton={false}
-          className="rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
+          className="rounded-full hover:bg-slate-100 dark:hover:bg-surface-raised"
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
           <div className="flex items-center gap-2">
-            <CalendarDays className="h-5 w-5 text-indigo-600" />
+            <CalendarDays className="h-5 w-5 text-aubergine-600" />
             <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Edit Schedule Item</h1>
           </div>
           <p className="text-sm text-slate-500">Modify the timing or assignment for this timetable slot.</p>

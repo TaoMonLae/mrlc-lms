@@ -59,9 +59,9 @@ export default function CaseDetail() {
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
       case 'URGENT': return <Badge variant="destructive" className="py-1 uppercase text-xs">Urgent</Badge>;
-      case 'HIGH': return <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400 border-0 py-1 uppercase text-xs">High</Badge>;
+      case 'HIGH': return <Badge className="bg-aubergine-100 text-aubergine-800 hover:bg-aubergine-100 dark:bg-aubergine-900/30 dark:text-aubergine-400 border-0 py-1 uppercase text-xs">High</Badge>;
       case 'MEDIUM': return <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 border-0 py-1 uppercase text-xs">Medium</Badge>;
-      case 'LOW': return <Badge className="bg-slate-100 text-slate-800 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 border-0 py-1 uppercase text-xs">Low</Badge>;
+      case 'LOW': return <Badge className="bg-slate-100 text-slate-800 hover:bg-slate-100 dark:bg-surface-raised dark:text-slate-300 border-0 py-1 uppercase text-xs">Low</Badge>;
       default: return null;
     }
   };
@@ -71,7 +71,7 @@ export default function CaseDetail() {
       case 'OPEN': return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 border-0 text-sm"><AlertTriangle className="w-4 h-4 mr-1"/> Open</Badge>;
       case 'FOLLOW_UP': return <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 border-0 text-sm"><Clock className="w-4 h-4 mr-1"/> Follow Up</Badge>;
       case 'RESOLVED': return <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 border-0 text-sm"><CheckCircle2 className="w-4 h-4 mr-1"/> Resolved</Badge>;
-      case 'CLOSED': return <Badge variant="outline" className="text-slate-500 border-slate-300 dark:border-slate-700 text-sm">Closed</Badge>;
+      case 'CLOSED': return <Badge variant="outline" className="text-slate-500 border-slate-300 dark:border-surface-raised text-sm">Closed</Badge>;
       default: return null;
     }
   };
@@ -117,7 +117,7 @@ export default function CaseDetail() {
             Back to Cases
           </Button>
           <div className="flex items-center gap-3">
-             <div className={`p-3 rounded-xl border shadow-sm ${activeCase.type === 'PROTECTION' ? 'bg-red-50 border-red-100 dark:bg-red-900/20 dark:border-red-900/30 text-red-500' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500'}`}>
+             <div className={`p-3 rounded-xl border shadow-sm ${activeCase.type === 'PROTECTION' ? 'bg-red-50 border-red-100 dark:bg-red-900/20 dark:border-red-900/30 text-red-500' : 'bg-white dark:bg-surface-indigo border-slate-200 dark:border-surface-raised text-slate-500'}`}>
                 {activeCase.type === 'PROTECTION' ? <ShieldAlert className="h-8 w-8" /> : <Shield className="h-8 w-8" />}
              </div>
              <div>
@@ -144,24 +144,24 @@ export default function CaseDetail() {
         
         {/* Main Content Area */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm p-6">
+          <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl overflow-hidden shadow-sm p-6">
             <div className="flex justify-between items-start mb-6">
                <div className="space-y-4 w-full">
                   <div className="flex gap-2">
                     {getStatusBadge(activeCase.status)}
                     {getPriorityBadge(activeCase.priority)}
-                    <Badge variant="outline" className="text-slate-600 dark:text-slate-400 font-normal uppercase">{activeCase.type}</Badge>
+                    <Badge variant="outline" className="text-slate-600 dark:text-slate-300 font-normal uppercase">{activeCase.type}</Badge>
                   </div>
                   <div>
-                    <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Description / Concern</h3>
+                    <h3 className="text-sm font-medium text-slate-500 dark:text-slate-300 mb-1">Description / Concern</h3>
                     <p className="text-slate-900 dark:text-slate-100 whitespace-pre-wrap">{activeCase.description}</p>
                   </div>
                </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
-             <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex items-center justify-between">
+          <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl overflow-hidden shadow-sm">
+             <div className="p-4 border-b border-slate-200 dark:border-surface-raised bg-slate-50/50 dark:bg-surface-raised/50 flex items-center justify-between">
                 <h3 className="font-semibold text-slate-900 dark:text-white flex items-center">
                   <MessageSquare className="w-4 h-4 mr-2 text-slate-500" /> Case Notes & Timeline
                 </h3>
@@ -173,14 +173,14 @@ export default function CaseDetail() {
                   
                   {activeCase.notes.map((note) => (
                     <div key={note.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white dark:border-slate-900 bg-slate-100 dark:bg-slate-800 text-slate-500 shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-sm z-10">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white dark:border-slate-900 bg-slate-100 dark:bg-surface-raised text-slate-500 shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-sm z-10">
                         {note.isPrivate ? <AlertCircle className="w-4 h-4 text-amber-500" /> : <FileText className="w-4 h-4" />}
                       </div>
                       
-                      <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm relative">
+                      <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-sm relative">
                         {/* Connecting Arrow */}
-                        <div className="absolute top-[15px] -left-2 w-2 h-2 bg-white dark:bg-slate-900 border-t border-l border-slate-200 dark:border-slate-800 transform -rotate-45 md:group-even:hidden"></div>
-                        <div className="absolute top-[15px] -right-2 w-2 h-2 bg-white dark:bg-slate-900 border-t border-r border-slate-200 dark:border-slate-800 transform rotate-45 hidden md:group-even:block"></div>
+                        <div className="absolute top-[15px] -left-2 w-2 h-2 bg-white dark:bg-surface-indigo border-t border-l border-slate-200 dark:border-surface-raised transform -rotate-45 md:group-even:hidden"></div>
+                        <div className="absolute top-[15px] -right-2 w-2 h-2 bg-white dark:bg-surface-indigo border-t border-r border-slate-200 dark:border-surface-raised transform rotate-45 hidden md:group-even:block"></div>
                         
                         <div className="flex items-center justify-between mb-1">
                           <span className="font-medium text-sm text-slate-900 dark:text-white">{note.createdByName}</span>
@@ -205,13 +205,13 @@ export default function CaseDetail() {
                           <span className="font-medium text-sm text-slate-900 dark:text-white">Case Opened</span>
                           <span className="text-xs text-slate-500">{format(new Date(activeCase.openedAt), 'MMM d, yyyy')}</span>
                         </div>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">Opened by {activeCase.openedByName}</p>
+                        <p className="text-sm text-slate-600 dark:text-slate-300">Opened by {activeCase.openedByName}</p>
                       </div>
                   </div>
 
                 </div>
 
-                <div className="pt-6 border-t border-slate-100 dark:border-slate-800 space-y-4">
+                <div className="pt-6 border-t border-slate-100 dark:border-surface-raised space-y-4">
                   <h4 className="text-sm font-medium text-slate-900 dark:text-white flex items-center">
                     <Plus className="w-4 h-4 mr-1" /> Add New Note
                   </h4>
@@ -222,7 +222,7 @@ export default function CaseDetail() {
                     onChange={(e) => setNewNote(e.target.value)}
                   />
                   <div className="flex items-center justify-between">
-                    <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 cursor-pointer">
+                    <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 cursor-pointer">
                       <input 
                         type="checkbox" 
                         className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
@@ -247,20 +247,20 @@ export default function CaseDetail() {
 
         {/* Sidebar Info */}
         <div className="space-y-6">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm p-6 overflow-hidden">
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider mb-4 border-b border-slate-100 dark:border-slate-800 pb-2">Case Details</h3>
+          <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-6 overflow-hidden">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider mb-4 border-b border-slate-100 dark:border-surface-raised pb-2">Case Details</h3>
             
             <dl className="space-y-4">
               <div>
-                <dt className="text-xs text-slate-500 dark:text-slate-400">Assigned To</dt>
+                <dt className="text-xs text-slate-500 dark:text-slate-300">Assigned To</dt>
                 <dd className="font-medium text-slate-900 dark:text-white">{activeCase.assignedToName || 'Unassigned'}</dd>
               </div>
               <div>
-                <dt className="text-xs text-slate-500 dark:text-slate-400">Opened By</dt>
+                <dt className="text-xs text-slate-500 dark:text-slate-300">Opened By</dt>
                 <dd className="font-medium text-slate-900 dark:text-white">{activeCase.openedByName}</dd>
               </div>
               <div>
-                <dt className="text-xs text-slate-500 dark:text-slate-400">Opened On</dt>
+                <dt className="text-xs text-slate-500 dark:text-slate-300">Opened On</dt>
                 <dd className="font-medium text-slate-900 dark:text-white">{format(new Date(activeCase.openedAt), 'MMMM d, yyyy h:mm a')}</dd>
               </div>
             </dl>

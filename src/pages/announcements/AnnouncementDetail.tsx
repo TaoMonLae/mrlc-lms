@@ -113,12 +113,12 @@ export default function AnnouncementDetail() {
             variant="ghost" 
             size="icon" 
             render={<Link to="/announcements" />}
-            className="rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="rounded-full hover:bg-slate-100 dark:hover:bg-surface-raised"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex items-center gap-2">
-            <Megaphone className="h-5 w-5 text-indigo-600" />
+            <Megaphone className="h-5 w-5 text-aubergine-600" />
             <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Announcement Details</span>
           </div>
         </div>
@@ -131,7 +131,7 @@ export default function AnnouncementDetail() {
             <Printer className="mr-2 h-4 w-4" /> Print
           </Button>
           {canManage && (
-            <Button render={<Link to={`/announcements/${id}/edit`} />} size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white h-9 px-3">
+            <Button render={<Link to={`/announcements/${id}/edit`} />} size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground h-9 px-3">
               <Edit className="mr-2 h-4 w-4" /> Edit
             </Button>
           )}
@@ -141,12 +141,12 @@ export default function AnnouncementDetail() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Sidebar Info */}
         <div className="order-2 lg:order-1 lg:col-span-1 space-y-6">
-          <Card className="border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden bg-slate-50/50 dark:bg-slate-900/50">
+          <Card className="border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden bg-slate-50/50 dark:bg-surface-indigo/50">
             <CardContent className="p-5 space-y-6">
               <div>
                 <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Published By</h4>
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                  <div className="h-10 w-10 bg-aubergine-100 dark:bg-aubergine-900/30 rounded-full flex items-center justify-center text-aubergine-600 dark:text-aubergine-400">
                     <User className="h-5 w-5" />
                   </div>
                   <div>
@@ -156,7 +156,7 @@ export default function AnnouncementDetail() {
                 </div>
               </div>
 
-              <Separator className="bg-slate-200 dark:bg-slate-800" />
+              <Separator className="bg-slate-200 dark:bg-surface-raised" />
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -192,7 +192,7 @@ export default function AnnouncementDetail() {
                   <span className="text-xs text-slate-500 flex items-center gap-2">
                     <Pin className="h-3 w-3" /> Priority
                   </span>
-                  <span className={`text-xs font-bold ${announcement.pinned ? 'text-indigo-600' : 'text-slate-900 dark:text-white'}`}>
+                  <span className={`text-xs font-bold ${announcement.pinned ? 'text-aubergine-600' : 'text-slate-900 dark:text-white'}`}>
                     {announcement.pinned ? 'HIGH / PINNED' : 'NORMAL'}
                   </span>
                 </div>
@@ -200,9 +200,9 @@ export default function AnnouncementDetail() {
             </CardContent>
           </Card>
           
-          <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-4 flex gap-3 border border-indigo-100 dark:border-indigo-900/50">
-            <ShieldCheck className="h-5 w-5 text-indigo-600 shrink-0" />
-            <p className="text-[11px] text-indigo-800 dark:text-indigo-400 leading-relaxed font-medium">
+          <div className="bg-aubergine-50 dark:bg-aubergine-900/20 rounded-xl p-4 flex gap-3 border border-aubergine-100 dark:border-aubergine-900/50">
+            <ShieldCheck className="h-5 w-5 text-aubergine-600 shrink-0" />
+            <p className="text-[11px] text-aubergine-800 dark:text-aubergine-400 leading-relaxed font-medium">
               This message is verified by the school administration and is part of official school communications.
             </p>
           </div>
@@ -210,17 +210,17 @@ export default function AnnouncementDetail() {
 
         {/* Main Content */}
         <div className="order-1 lg:order-2 lg:col-span-3">
-          <Card className="border-slate-200 dark:border-slate-800 shadow-sm min-h-[500px]">
+          <Card className="border-slate-200 dark:border-surface-raised shadow-sm min-h-[500px]">
             <CardContent className="p-8 md:p-12">
               <div className="space-y-6">
                 <div>
                   <div className="flex items-center gap-3 mb-4">
                     {announcement.pinned && (
-                      <Badge className="bg-indigo-600 text-white hover:bg-indigo-600 border-none px-2 h-6 flex items-center gap-1.5 uppercase tracking-wider font-bold text-[10px]">
+                      <Badge className="bg-aubergine-600 text-white hover:bg-aubergine-600 border-none px-2 h-6 flex items-center gap-1.5 uppercase tracking-wider font-bold text-[10px]">
                         <Pin className="h-3 w-3 fill-current" /> Important
                       </Badge>
                     )}
-                    <Badge variant="outline" className="border-slate-300 dark:border-slate-700 text-slate-500 px-2 h-6 uppercase tracking-wider font-bold text-[10px]">
+                    <Badge variant="outline" className="border-slate-300 dark:border-surface-raised text-slate-500 px-2 h-6 uppercase tracking-wider font-bold text-[10px]">
                       Announcement
                     </Badge>
                   </div>
@@ -229,7 +229,7 @@ export default function AnnouncementDetail() {
                   </h1>
                 </div>
 
-                <Separator className="bg-slate-100 dark:bg-slate-800" />
+                <Separator className="bg-slate-100 dark:bg-surface-raised" />
 
                 <div className="prose prose-slate dark:prose-invert max-w-none">
                   {announcement.body.split('\n').map((para, i) => (
@@ -240,15 +240,15 @@ export default function AnnouncementDetail() {
                 </div>
                 
                 <div className="pt-12">
-                   <div className="flex flex-col gap-4 p-6 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-slate-100 dark:border-slate-800">
+                   <div className="flex flex-col gap-4 p-6 bg-slate-50 dark:bg-surface-raised/30 rounded-2xl border border-slate-100 dark:border-surface-raised">
                       <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <Megaphone className="h-4 w-4 text-indigo-600" />
+                        <Megaphone className="h-4 w-4 text-aubergine-600" />
                         Announcement Actions
                       </h4>
                       <p className="text-sm text-slate-500">Need more information or want to follow up on this announcement?</p>
                       <div className="flex flex-wrap gap-3 mt-2">
                          <Button variant="secondary" className="h-10 text-xs">Contact Administrator</Button>
-                         <Button variant="ghost" className="h-10 text-xs text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/20">Suggest Changes</Button>
+                         <Button variant="ghost" className="h-10 text-xs text-aubergine-600 hover:text-aubergine-700 hover:bg-aubergine-50 dark:hover:bg-aubergine-900/20">Suggest Changes</Button>
                       </div>
                    </div>
                 </div>
@@ -257,7 +257,7 @@ export default function AnnouncementDetail() {
           </Card>
           
           <div className="mt-8 flex items-center justify-between text-slate-400">
-              <Link to="/announcements" className="text-sm font-bold flex items-center gap-2 hover:text-indigo-600 transition-colors">
+              <Link to="/announcements" className="text-sm font-bold flex items-center gap-2 hover:text-aubergine-600 transition-colors">
                 <ChevronRight className="h-4 w-4 rotate-180" /> Back to all announcements
               </Link>
           </div>

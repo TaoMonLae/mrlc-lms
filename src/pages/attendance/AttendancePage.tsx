@@ -14,21 +14,6 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 
-// Mock data
-const CLASSES = [
-  { id: 'c1', name: 'GED Social Studies' },
-  { id: 'c2', name: 'Pre-GED English' },
-  { id: 'c3', name: 'GED Math Prep' },
-];
-
-const MOCK_STUDENTS = [
-  { id: 's1', studentId: 'ST-001', firstName: 'Min Khant', lastName: 'Aung', classId: 'c1' },
-  { id: 's2', studentId: 'ST-002', firstName: 'Zun Pwint', lastName: 'Phyu', classId: 'c1' },
-  { id: 's3', studentId: 'ST-003', firstName: 'Aung Ko', lastName: 'Myat', classId: 'c1' },
-  { id: 's4', studentId: 'ST-004', firstName: 'May Mon', lastName: 'Thu', classId: 'c2' },
-  { id: 's5', studentId: 'ST-005', firstName: 'Kyaw Zin', lastName: 'Latt', classId: 'c1' },
-];
-
 type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED' | null;
 
 interface AttendanceRecord {
@@ -38,27 +23,108 @@ interface AttendanceRecord {
 }
 
 export default function AttendancePage() {
-  const [selectedClass, setSelectedClass] = useState<string>('c1');
+  const [classes, setClasses] = useState<any[]>([]);
+  const [selectedClass, setSelectedClass] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   
+  const [students, setStudents] = useState<any[]>([]);
   const [records, setRecords] = useState<Record<string, AttendanceRecord>>({});
   const [isSaved, setIsSaved] = useState(false);
   const [isEditing, setIsEditing] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const currentStudents = MOCK_STUDENTS.filter(s => s.classId === selectedClass);
-
-  // Initialize records when class changes (simulating fetch)
+  // Fetch classes on mount
   useEffect(() => {
-    // In a real app, fetch existing attendance for this class and date
-    // For now, we simulate an empty/new form
-    const initialRecords: Record<string, AttendanceRecord> = {};
-    currentStudents.forEach(s => {
-      initialRecords[s.id] = { studentId: s.id, status: null, notes: '' };
-    });
-    setRecords(initialRecords);
-    setIsSaved(false);
-    setIsEditing(true);
-  }, [selectedClass, selectedDate]); // Resets when class or date changes
+    const fetchClasses = async () => {
+      try {
+        const token = sessionStorage.getItem('auth_token');
+        const res = await fetch('/api/classes', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setClasses(data);
+          if (data.length > 0) {
+            setSelectedClass(data[0].id);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching classes:', err);
+      }
+    };
+    fetchClasses();
+  }, []);
+
+  // Fetch student lists & attendance records when class or date changes
+  useEffect(() => {
+    const fetchAttendanceAndStudents = async () => {
+      if (!selectedClass) return;
+      setIsLoading(true);
+      try {
+        const token = sessionStorage.getItem('auth_token');
+        
+        // 1. Fetch class students
+        const studentsRes = await fetch('/api/students', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (!studentsRes.ok) throw new Error('Failed to load students');
+        const allStudents = await studentsRes.json();
+        const classStudents = allStudents.filter((s: any) => s.classId === selectedClass);
+        setStudents(classStudents);
+
+        // 2. Fetch existing attendance records
+        const attendanceRes = await fetch(`/api/attendance?classId=${selectedClass}&date=${selectedDate}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (!attendanceRes.ok) throw new Error('Failed to load attendance records');
+        const existingRecords = await attendanceRes.json();
+
+        // 3. Populate state records
+        const initialRecords: Record<string, AttendanceRecord> = {};
+        let hasSavedRecords = false;
+
+        classStudents.forEach((s: any) => {
+          const matched = existingRecords.find((r: any) => r.studentId === s.id);
+          if (matched) {
+            initialRecords[s.id] = {
+              studentId: s.id,
+              status: matched.status,
+              notes: matched.remarks || '',
+            };
+            hasSavedRecords = true;
+          } else {
+            initialRecords[s.id] = {
+              studentId: s.id,
+              status: null,
+              notes: '',
+            };
+          }
+        });
+
+        setRecords(initialRecords);
+        if (hasSavedRecords) {
+          setIsSaved(true);
+          setIsEditing(false);
+        } else {
+          setIsSaved(false);
+          setIsEditing(true);
+        }
+      } catch (err) {
+        console.error('Error fetching attendance details:', err);
+        toast.error('Error loading attendance logs');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAttendanceAndStudents();
+  }, [selectedClass, selectedDate]);
 
   const handleStatusChange = (studentId: string, status: AttendanceStatus) => {
     if (!isEditing) return;
@@ -79,7 +145,7 @@ export default function AttendancePage() {
   const markAllPresent = () => {
     if (!isEditing) return;
     const newRecords = { ...records };
-    currentStudents.forEach(s => {
+    students.forEach(s => {
       if (!newRecords[s.id].status) {
         newRecords[s.id].status = 'PRESENT';
       }
@@ -87,17 +153,46 @@ export default function AttendancePage() {
     setRecords(newRecords);
   };
 
-  const handleSave = () => {
-    // Check if all students have a valid status
-    const allMarked = currentStudents.every(s => records[s.id]?.status !== null);
+  const handleSave = async () => {
+    const allMarked = students.every(s => records[s.id]?.status !== null);
     if (!allMarked) {
       toast.error('Please mark attendance for all students before saving.');
       return;
     }
     
-    setIsSaved(true);
-    setIsEditing(false);
-    toast.success('Attendance saved successfully');
+    try {
+      const recordsArray = students.map(s => ({
+        studentId: s.id,
+        status: records[s.id].status,
+        remarks: records[s.id].notes || null,
+      }));
+
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch('/api/attendance', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          classId: selectedClass,
+          date: selectedDate,
+          records: recordsArray,
+        })
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Failed to save attendance');
+      }
+
+      setIsSaved(true);
+      setIsEditing(false);
+      toast.success('Attendance saved successfully');
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || 'Failed to save attendance');
+    }
   };
 
   const handleEdit = () => {
@@ -105,7 +200,6 @@ export default function AttendancePage() {
     setIsSaved(false);
   };
 
-  // Summary counts
   const counts = {
     present: Object.values(records).filter(r => r.status === 'PRESENT').length,
     absent: Object.values(records).filter(r => r.status === 'ABSENT').length,
@@ -118,7 +212,7 @@ export default function AttendancePage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Record Attendance</h1>
-          <p className="text-sm text-slate-500 mt-1 dark:text-slate-400">Daily attendance tracking for your classes.</p>
+          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Daily attendance tracking for your classes.</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" render={<Link to="/attendance/reports" />} nativeButton={false}>
@@ -129,15 +223,17 @@ export default function AttendancePage() {
       </div>
 
       {/* Controls */}
-      <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row gap-4 items-end">
+      <div className="bg-white dark:bg-surface-indigo p-4 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex flex-col sm:flex-row gap-4 items-end">
         <div className="space-y-2 w-full sm:w-[250px]">
           <Label>Class</Label>
           <Select value={selectedClass} onValueChange={setSelectedClass}>
             <SelectTrigger>
-              <SelectValue placeholder="Select class" />
+              <SelectValue placeholder="Select class">
+                {classes.find(c => c.id === selectedClass)?.name ?? 'Select class'}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              {CLASSES.map(c => (
+              {classes.map(c => (
                 <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
               ))}
             </SelectContent>
@@ -173,7 +269,7 @@ export default function AttendancePage() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-emerald-100 dark:border-emerald-900/30 flex items-center gap-4 shadow-sm">
+        <div className="bg-white dark:bg-surface-indigo p-4 rounded-xl border border-emerald-100 dark:border-emerald-900/30 flex items-center gap-4 shadow-sm">
           <div className="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600">
             <Check className="h-5 w-5" />
           </div>
@@ -182,7 +278,7 @@ export default function AttendancePage() {
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">Present</p>
           </div>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-red-100 dark:border-red-900/30 flex items-center gap-4 shadow-sm">
+        <div className="bg-white dark:bg-surface-indigo p-4 rounded-xl border border-red-100 dark:border-red-900/30 flex items-center gap-4 shadow-sm">
           <div className="h-10 w-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600">
             <X className="h-5 w-5" />
           </div>
@@ -191,7 +287,7 @@ export default function AttendancePage() {
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">Absent</p>
           </div>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-amber-100 dark:border-amber-900/30 flex items-center gap-4 shadow-sm">
+        <div className="bg-white dark:bg-surface-indigo p-4 rounded-xl border border-amber-100 dark:border-amber-900/30 flex items-center gap-4 shadow-sm">
           <div className="h-10 w-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600">
             <Clock className="h-5 w-5" />
           </div>
@@ -200,7 +296,7 @@ export default function AttendancePage() {
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">Late</p>
           </div>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-blue-100 dark:border-blue-900/30 flex items-center gap-4 shadow-sm">
+        <div className="bg-white dark:bg-surface-indigo p-4 rounded-xl border border-blue-100 dark:border-blue-900/30 flex items-center gap-4 shadow-sm">
           <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600">
             <AlertCircle className="h-5 w-5" />
           </div>
@@ -212,7 +308,7 @@ export default function AttendancePage() {
       </div>
 
       {/* Main List */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-surface-indigo rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
         {isSaved && (
            <div className="bg-emerald-50 dark:bg-emerald-900/20 px-4 py-3 flex items-center gap-3 border-b border-emerald-100 dark:border-emerald-800">
              <Check className="h-5 w-5 text-emerald-600" />
@@ -223,7 +319,7 @@ export default function AttendancePage() {
         {/* Desktop Table View */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-slate-800/50">
+            <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-surface-raised/50">
               <tr>
                 <th className="px-6 py-4">Student</th>
                 <th className="px-6 py-4">Student ID</th>
@@ -232,18 +328,28 @@ export default function AttendancePage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {currentStudents.length > 0 ? (
-                currentStudents.map(student => {
+              {isLoading ? (
+                <tr>
+                  <td colSpan={4} className="px-6 py-12 text-center text-slate-500">
+                    <span className="animate-spin rounded-full h-4 w-4 border-2 border-aubergine-600 border-t-transparent inline-block mr-2 align-middle"></span>
+                    Loading class records...
+                  </td>
+                </tr>
+              ) : students.length > 0 ? (
+                students.map(student => {
                   const record: Partial<AttendanceRecord> = records[student.id] || {};
+                  const firstName = student.user?.firstName || student.firstName || '';
+                  const lastName = student.user?.lastName || student.lastName || '';
+                  const studentId = student.studentCode || student.studentId || '';
                   return (
-                    <tr key={student.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                    <tr key={student.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors">
                       <td className="px-6 py-4">
                         <div className="font-semibold text-slate-900 dark:text-white">
-                          {student.firstName} {student.lastName}
+                          {firstName} {lastName}
                         </div>
                       </td>
                       <td className="px-6 py-4 text-slate-500 font-mono text-xs">
-                        {student.studentId}
+                        {studentId}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex gap-2">
@@ -301,7 +407,7 @@ export default function AttendancePage() {
                 <tr>
                   <td colSpan={4} className="px-6 py-12 text-center text-slate-500">
                     <Users className="h-10 w-10 mx-auto text-slate-300 mb-2" />
-                    <p>No students found for this class.</p>
+                    <p>No students enrolled in this class.</p>
                   </td>
                 </tr>
               )}
@@ -311,18 +417,26 @@ export default function AttendancePage() {
 
         {/* Mobile View */}
         <div className="grid grid-cols-1 gap-4 p-4 md:hidden">
-          {currentStudents.length > 0 ? (
-             currentStudents.map(student => {
+          {isLoading ? (
+            <div className="text-center py-10 text-slate-500">
+              <span className="animate-spin rounded-full h-4 w-4 border-2 border-aubergine-600 border-t-transparent inline-block mr-2 align-middle"></span>
+              Loading...
+            </div>
+          ) : students.length > 0 ? (
+             students.map(student => {
                const record: Partial<AttendanceRecord> = records[student.id] || {};
+               const firstName = student.user?.firstName || student.firstName || '';
+               const lastName = student.user?.lastName || student.lastName || '';
+               const studentId = student.studentCode || student.studentId || '';
                return (
-                 <div key={student.id} className="border border-slate-200 dark:border-slate-800 rounded-lg p-4 space-y-4 bg-white dark:bg-slate-900 shadow-sm relative">
+                 <div key={student.id} className="border border-slate-200 dark:border-surface-raised rounded-lg p-4 space-y-4 bg-white dark:bg-surface-indigo shadow-sm relative">
                     <div className="flex justify-between items-start">
                       <div>
                         <div className="font-semibold text-slate-900 dark:text-white">
-                          {student.firstName} {student.lastName}
+                          {firstName} {lastName}
                         </div>
                         <div className="text-xs text-slate-500 font-mono mt-0.5">
-                          {student.studentId}
+                          {studentId}
                         </div>
                       </div>
                       {!isEditing && record.status && (
@@ -384,7 +498,7 @@ export default function AttendancePage() {
                )
              })
           ) : (
-            <div className="text-center py-10 text-slate-500 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">
+            <div className="text-center py-10 text-slate-500 border border-dashed border-slate-200 dark:border-surface-raised rounded-lg">
               <Users className="h-8 w-8 mx-auto text-slate-300 mb-2" />
               <p>No students found</p>
             </div>
@@ -392,9 +506,9 @@ export default function AttendancePage() {
         </div>
 
         {/* Action Footer */}
-        {currentStudents.length > 0 && !isSaved && (
-          <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 flex justify-end">
-            <Button onClick={handleSave} className="bg-orange-600 hover:bg-orange-700 text-white px-8">
+        {students.length > 0 && !isSaved && (
+          <div className="p-4 border-t border-slate-200 dark:border-surface-raised bg-slate-50 dark:bg-surface-raised/30 flex justify-end">
+            <Button onClick={handleSave} className="bg-primary hover:bg-primary/90 text-primary-foreground px-8">
               <Save className="mr-2 h-4 w-4" />
               Save Attendance
             </Button>

@@ -133,8 +133,8 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       {/* Personal Information */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
-        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 border-b border-slate-100 dark:border-slate-800 pb-2">Personal Information</h2>
+      <div className="bg-white dark:bg-surface-indigo rounded-xl border border-slate-200 dark:border-surface-raised p-6 shadow-sm">
+        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 border-b border-slate-100 dark:border-surface-raised pb-2">Personal Information</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div className="space-y-2">
@@ -184,8 +184,8 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
       </div>
 
       {/* Academic & Enrollment */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
-        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 border-b border-slate-100 dark:border-slate-800 pb-2">Academic Information</h2>
+      <div className="bg-white dark:bg-surface-indigo rounded-xl border border-slate-200 dark:border-surface-raised p-6 shadow-sm">
+        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 border-b border-slate-100 dark:border-surface-raised pb-2">Academic Information</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
@@ -225,8 +225,8 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
       </div>
 
       {/* Guardian & Background Info */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
-        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 border-b border-slate-100 dark:border-slate-800 pb-2">Guardian & Background</h2>
+      <div className="bg-white dark:bg-surface-indigo rounded-xl border border-slate-200 dark:border-surface-raised p-6 shadow-sm">
+        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 border-b border-slate-100 dark:border-surface-raised pb-2">Guardian & Background</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
@@ -256,7 +256,7 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
         </div>
       </div>
 
-      <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+      <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-surface-raised">
         <Button 
           type="button" 
           variant="outline" 
@@ -267,7 +267,7 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
         </Button>
         <Button 
           type="submit"
-          className="bg-orange-600 hover:bg-orange-700 text-white"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground"
           disabled={isSubmitting}
         >
           {isSubmitting ? 'Saving...' : (isEdit ? 'Save Changes' : 'Create Student')}

@@ -115,8 +115,8 @@ export default function SchoolSettings() {
         </div>
       </div>
 
-      <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-end">
-        <Button type="submit" className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900" disabled={!isDirty || isSubmitting}>
+      <div className="pt-4 border-t border-slate-200 dark:border-surface-raised flex justify-end">
+        <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={!isDirty || isSubmitting}>
           {isSubmitting ? 'Saving...' : (
             <>
               <Save className="mr-2 h-4 w-4" />

@@ -77,23 +77,23 @@ export default function ExamNew() {
           Back to Exams
         </Button>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Create New Exam</h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-400">Step {step} of 4</p>
+        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Step {step} of 4</p>
       </div>
 
       <div className="flex items-center justify-between mb-8 relative">
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-slate-100 dark:bg-slate-800 -z-10 rounded-full overflow-hidden">
-           <div className="h-full bg-orange-600 transition-all duration-300" style={{ width: `${((step - 1) / 3) * 100}%` }}></div>
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-slate-100 dark:bg-surface-raised -z-10 rounded-full overflow-hidden">
+           <div className="h-full bg-aubergine-600 transition-all duration-300" style={{ width: `${((step - 1) / 3) * 100}%` }}></div>
         </div>
         {[1, 2, 3, 4].map(s => (
           <div key={s} className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm transition-colors ${
-            step >= s ? 'bg-orange-600 text-white' : 'bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
+            step >= s ? 'bg-aubergine-600 text-white' : 'bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-300'
           }`}>
             {s}
           </div>
         ))}
       </div>
 
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm">
+      <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm">
         {step === 1 && (
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">1. Setup Exam Details</h2>
@@ -147,13 +147,13 @@ export default function ExamNew() {
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white">2. Questions</h2>
-              <div className="text-sm font-medium bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">
+              <div className="text-sm font-medium bg-slate-100 dark:bg-surface-raised px-3 py-1 rounded-full">
                 Total Points: {calculateTotalPoints()}
               </div>
             </div>
 
             {questions.length === 0 ? (
-              <div className="text-center py-10 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
+              <div className="text-center py-10 border-2 border-dashed border-slate-200 dark:border-surface-raised rounded-xl">
                 <p className="text-slate-500 mb-4">No questions added yet.</p>
                 <Button onClick={addQuestion} variant="outline">
                   <Plus className="mr-2 h-4 w-4" /> Add First Question
@@ -162,7 +162,7 @@ export default function ExamNew() {
             ) : (
               <div className="space-y-8">
                 {questions.map((q, index) => (
-                  <div key={q.id} className="p-4 border border-slate-200 dark:border-slate-700 rounded-lg space-y-4 bg-slate-50/50 dark:bg-slate-800/30">
+                  <div key={q.id} className="p-4 border border-slate-200 dark:border-surface-raised rounded-lg space-y-4 bg-slate-50/50 dark:bg-surface-raised/30">
                     <div className="flex justify-between items-center">
                       <h3 className="font-medium text-slate-900 dark:text-white">Question {index + 1}</h3>
                       <Button variant="ghost" size="sm" onClick={() => removeQuestion(q.id)} className="text-red-500 hover:text-red-600 hover:bg-red-50">
@@ -205,7 +205,7 @@ export default function ExamNew() {
                               name={`correct_${q.id}`} 
                               checked={q.correctAnswer === cIndex.toString()}
                               onChange={() => updateQuestion(q.id, { correctAnswer: cIndex.toString() })}
-                              className="h-4 w-4 text-orange-600"
+                              className="h-4 w-4 text-aubergine-600"
                             />
                             <Input 
                               value={choice} 
@@ -236,28 +236,28 @@ export default function ExamNew() {
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-6">3. Exam Settings</h2>
             
             <div className="space-y-6">
-              <div className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-800 rounded-lg">
+              <div className="flex items-center justify-between p-4 border border-slate-200 dark:border-surface-raised rounded-lg">
                 <div className="space-y-0.5">
                   <Label className="text-base">Enable Timer</Label>
                   <p className="text-sm text-slate-500">Enforce the time limit strictly.</p>
                 </div>
                 <Switch checked={settings.enableTimer} onCheckedChange={(chk) => setSettings({...settings, enableTimer: chk})} />
               </div>
-              <div className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-800 rounded-lg">
+              <div className="flex items-center justify-between p-4 border border-slate-200 dark:border-surface-raised rounded-lg">
                 <div className="space-y-0.5">
                   <Label className="text-base">Auto-Submit</Label>
                   <p className="text-sm text-slate-500">Submit automatically when time runs out.</p>
                 </div>
                 <Switch checked={settings.autoSubmit} onCheckedChange={(chk) => setSettings({...settings, autoSubmit: chk})} />
               </div>
-              <div className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-800 rounded-lg">
+              <div className="flex items-center justify-between p-4 border border-slate-200 dark:border-surface-raised rounded-lg">
                 <div className="space-y-0.5">
                   <Label className="text-base">Shuffle Questions</Label>
                   <p className="text-sm text-slate-500">Randomize question order for each student.</p>
                 </div>
                 <Switch checked={settings.shuffleQuestions} onCheckedChange={(chk) => setSettings({...settings, shuffleQuestions: chk})} />
               </div>
-               <div className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-800 rounded-lg">
+               <div className="flex items-center justify-between p-4 border border-slate-200 dark:border-surface-raised rounded-lg">
                 <div className="space-y-0.5">
                   <Label className="text-base">Show Score Immediately</Label>
                   <p className="text-sm text-slate-500">Students see auto-graded score after submitting.</p>
@@ -280,29 +280,29 @@ export default function ExamNew() {
 
             <div className="grid grid-cols-2 gap-6 text-sm">
               <div className="space-y-3">
-                <div className="border-b pb-2 dark:border-slate-800">
+                <div className="border-b pb-2 dark:border-surface-raised">
                   <span className="text-slate-500 block mb-1">Title</span>
                   <span className="font-medium text-slate-900 dark:text-white">{title || 'Untitled Exam'}</span>
                 </div>
-                <div className="border-b pb-2 dark:border-slate-800">
+                <div className="border-b pb-2 dark:border-surface-raised">
                   <span className="text-slate-500 block mb-1">Subject</span>
                   <span className="font-medium text-slate-900 dark:text-white">{subject || 'N/A'}</span>
                 </div>
-                <div className="border-b pb-2 dark:border-slate-800">
+                <div className="border-b pb-2 dark:border-surface-raised">
                   <span className="text-slate-500 block mb-1">Duration</span>
                   <span className="font-medium text-slate-900 dark:text-white">{duration} minutes</span>
                 </div>
               </div>
               <div className="space-y-3">
-                <div className="border-b pb-2 dark:border-slate-800">
+                <div className="border-b pb-2 dark:border-surface-raised">
                   <span className="text-slate-500 block mb-1">Questions</span>
                   <span className="font-medium text-slate-900 dark:text-white">{questions.length} questions</span>
                 </div>
-                <div className="border-b pb-2 dark:border-slate-800">
+                <div className="border-b pb-2 dark:border-surface-raised">
                   <span className="text-slate-500 block mb-1">Total Points</span>
                   <span className="font-medium text-slate-900 dark:text-white">{calculateTotalPoints()} points</span>
                 </div>
-                 <div className="border-b pb-2 dark:border-slate-800">
+                 <div className="border-b pb-2 dark:border-surface-raised">
                   <span className="text-slate-500 block mb-1">Status</span>
                   <span className="font-medium text-slate-900 dark:text-white">Draft</span>
                 </div>
@@ -311,7 +311,7 @@ export default function ExamNew() {
           </div>
         )}
 
-        <div className="mt-8 flex justify-between pt-6 border-t border-slate-200 dark:border-slate-800">
+        <div className="mt-8 flex justify-between pt-6 border-t border-slate-200 dark:border-surface-raised">
           <Button variant="outline" onClick={() => setStep(step - 1)} disabled={step === 1}>
             Previous
           </Button>
@@ -320,7 +320,7 @@ export default function ExamNew() {
               Next Step
             </Button>
           ) : (
-            <Button onClick={handleSave} className="bg-orange-600 hover:bg-orange-700 text-white">
+            <Button onClick={handleSave} className="bg-primary hover:bg-primary/90 text-primary-foreground">
               <Save className="mr-2 h-4 w-4" /> Save Exam
             </Button>
           )}

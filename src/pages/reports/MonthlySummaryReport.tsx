@@ -30,13 +30,13 @@ export default function MonthlySummaryReport() {
         </div>
 
         <div className="flex items-center gap-2">
-           <Button onClick={handlePrint} className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900">
+           <Button onClick={handlePrint} className="bg-primary hover:bg-primary/90 text-primary-foreground">
              <Printer className="mr-2 h-4 w-4" /> Print / PDF
            </Button>
         </div>
       </div>
 
-      <div className="print:hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-wrap gap-4 items-end shadow-sm">
+      <div className="print:hidden bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-4 flex flex-wrap gap-4 items-end shadow-sm">
          <div className="space-y-1.5 flex-1 min-w-[200px]">
            <label className="text-xs font-semibold text-slate-500 uppercase">Month</label>
            <Select value={monthFilter} onValueChange={setMonthFilter}>

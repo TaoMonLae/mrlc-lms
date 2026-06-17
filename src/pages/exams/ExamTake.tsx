@@ -40,21 +40,21 @@ export default function ExamTake() {
 
   const question = MOCK_QUESTIONS[currentIdx];
 
-  // Timer effect
+  // ─── Timer: pure countdown, no side-effects inside the setter ───────────────
   useEffect(() => {
     if (submitted) return;
     const interval = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          handleSubmit();
-          return 0;
-        }
-        return prev - 1;
-      });
+      setTimeLeft((prev) => Math.max(0, prev - 1));
     }, 1000);
     return () => clearInterval(interval);
   }, [submitted]);
+
+  // Auto-submit when the clock hits zero
+  useEffect(() => {
+    if (timeLeft === 0 && !submitted) {
+      setSubmitted(true);
+    }
+  }, [timeLeft, submitted]);
 
   const formatTime = (seconds: number) => {
     const min = Math.floor(seconds / 60);
@@ -66,20 +66,20 @@ export default function ExamTake() {
     setAnswers({ ...answers, [question.id]: value });
   };
 
-  const handleSubmit = () => {
+  const handleExamSubmit = () => {
     setSubmitted(true);
   };
 
   if (submitted) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-8 max-w-md w-full text-center shadow-lg">
+        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-8 max-w-md w-full text-center shadow-lg">
           <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle2 className="w-8 h-8" />
           </div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Exam Submitted!</h2>
           <p className="text-slate-500 mb-6">Your answers have been saved successfully.</p>
-          <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg text-sm text-slate-600 dark:text-slate-300 mb-8 space-y-2">
+          <div className="bg-slate-50 dark:bg-surface-raised/50 p-4 rounded-lg text-sm text-slate-600 dark:text-slate-300 mb-8 space-y-2">
             <div className="flex justify-between">
               <span>Time Taken:</span>
               <span className="font-medium text-slate-900 dark:text-white">{formatTime(3600 - timeLeft)}</span>
@@ -100,13 +100,13 @@ export default function ExamTake() {
   return (
     <div className="max-w-[1200px] mx-auto min-h-[80vh] flex flex-col">
       {/* Header */}
-      <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 rounded-t-xl flex justify-between items-center shadow-sm">
+      <div className="bg-white dark:bg-surface-indigo border-b border-slate-200 dark:border-surface-raised p-4 rounded-t-xl flex justify-between items-center shadow-sm">
         <div>
           <h1 className="font-bold text-slate-900 dark:text-white">GED Math Midterm</h1>
           <p className="text-xs text-slate-500">Student preview mode</p>
         </div>
         <div className={`flex items-center gap-2 px-4 py-2 rounded-full font-mono text-lg font-bold ${
-          timeLeft < 300 ? 'bg-red-100 text-red-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+          timeLeft < 300 ? 'bg-red-100 text-red-600' : 'bg-slate-100 dark:bg-surface-raised text-slate-700 dark:text-slate-300'
         }`}>
           <Clock className="w-5 h-5" />
           {formatTime(timeLeft)}
@@ -116,10 +116,10 @@ export default function ExamTake() {
       <div className="flex-1 flex flex-col md:flex-row gap-6 p-6 bg-slate-50 dark:bg-[#09090b]">
         {/* Main QA Area */}
         <div className="flex-1 flex flex-col">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm flex-1">
-            <div className="flex justify-between items-center mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
+          <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm flex-1">
+            <div className="flex justify-between items-center mb-6 border-b border-slate-100 dark:border-surface-raised pb-4">
               <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-300">Question {currentIdx + 1} of {MOCK_QUESTIONS.length}</h2>
-              <span className="text-sm font-medium bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full text-slate-600 dark:text-slate-400">
+              <span className="text-sm font-medium bg-slate-100 dark:bg-surface-raised px-3 py-1 rounded-full text-slate-600 dark:text-slate-300">
                 {question.points} Points
               </span>
             </div>
@@ -142,12 +142,12 @@ export default function ExamTake() {
                       key={idx} 
                       className={`flex items-center space-x-3 border p-4 rounded-lg cursor-pointer transition-colors ${
                         answers[question.id] === choice 
-                          ? 'border-orange-600 bg-orange-50 dark:bg-orange-900/10' 
-                          : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                          ? 'border-aubergine-600 bg-aubergine-50 dark:bg-aubergine-900/10' 
+                          : 'border-slate-200 dark:border-surface-raised hover:border-slate-300'
                       }`}
                       onClick={() => handleAnswerChange(choice)}
                     >
-                      <RadioGroupItem value={choice} id={`choice-${idx}`} className="text-orange-600" />
+                      <RadioGroupItem value={choice} id={`choice-${idx}`} className="text-aubergine-600" />
                       <Label htmlFor={`choice-${idx}`} className="flex-1 cursor-pointer text-base font-normal">
                         {choice}
                       </Label>
@@ -181,7 +181,7 @@ export default function ExamTake() {
             </Button>
 
             {currentIdx === MOCK_QUESTIONS.length - 1 ? (
-              <Button onClick={handleSubmit} className="bg-orange-600 hover:bg-orange-700 text-white py-6 px-10 text-lg">
+              <Button onClick={handleExamSubmit} className="bg-primary hover:bg-primary/90 text-primary-foreground py-6 px-10 text-lg">
                 Submit Exam
               </Button>
             ) : (
@@ -197,7 +197,7 @@ export default function ExamTake() {
 
         {/* Sidebar Navigation */}
         <div className="w-full md:w-64 flex flex-col gap-4">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm">
+          <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-4 shadow-sm">
             <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Questions</h3>
             <div className="grid grid-cols-5 md:grid-cols-4 gap-2">
               {MOCK_QUESTIONS.map((q, idx) => (
@@ -206,10 +206,10 @@ export default function ExamTake() {
                   onClick={() => setCurrentIdx(idx)}
                   className={`h-10 w-10 rounded-md font-medium text-sm transition-colors flex items-center justify-center ${
                     currentIdx === idx 
-                      ? 'ring-2 ring-orange-600 ring-offset-2 dark:ring-offset-slate-900 bg-orange-100 text-orange-700 font-bold' 
+                      ? 'ring-2 ring-aubergine-600 ring-offset-2 dark:ring-offset-slate-900 bg-aubergine-100 text-aubergine-700 font-bold' 
                       : answers[q.id] 
                         ? 'bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900' 
-                        : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700'
+                        : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-surface-raised dark:hover:bg-slate-700'
                   }`}
                 >
                   {idx + 1}
@@ -217,7 +217,7 @@ export default function ExamTake() {
               ))}
             </div>
             
-            <div className="mt-8 space-y-3 border-t border-slate-100 dark:border-slate-800 pt-4">
+            <div className="mt-8 space-y-3 border-t border-slate-100 dark:border-surface-raised pt-4">
               <div className="flex items-center text-sm gap-2 text-slate-600">
                 <div className="w-4 h-4 rounded-sm bg-slate-800"></div> Answered
               </div>

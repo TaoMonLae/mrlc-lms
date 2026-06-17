@@ -71,7 +71,7 @@ export default function LibraryDetail() {
             Back to Library
           </Button>
           <div className="flex items-center gap-3">
-             <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+             <div className="p-3 bg-white dark:bg-surface-indigo rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm">
                 {getIconForType(MOCK_RESOURCE.type)}
              </div>
              <div>
@@ -83,7 +83,7 @@ export default function LibraryDetail() {
                      Internal Staff Only
                    </Badge>
                  ) : (
-                   <Badge variant="outline" className="font-normal border-slate-200 text-slate-600 dark:border-slate-700 dark:text-slate-400">
+                   <Badge variant="outline" className="font-normal border-slate-200 text-slate-600 dark:border-surface-raised dark:text-slate-300">
                      Visible to Students
                    </Badge>
                  )}
@@ -108,7 +108,7 @@ export default function LibraryDetail() {
         
         {/* Main Content Area */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
+          <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl overflow-hidden shadow-sm">
             {embedUrl ? (
               <div className="aspect-video w-full">
                 <iframe
@@ -120,11 +120,11 @@ export default function LibraryDetail() {
                 ></iframe>
               </div>
             ) : MOCK_RESOURCE.type === 'IMAGE' && MOCK_RESOURCE.fileUrl ? (
-               <div className="p-4 bg-slate-100 dark:bg-slate-950 flex justify-center">
+               <div className="p-4 bg-slate-100 dark:bg-canvas flex justify-center">
                  <img src={MOCK_RESOURCE.fileUrl} alt={MOCK_RESOURCE.title} className="max-w-full max-h-[600px] object-contain rounded drop-shadow-sm" />
                </div>
             ) : (
-              <div className="p-12 flex flex-col items-center justify-center text-center bg-slate-50 dark:bg-slate-900/50">
+              <div className="p-12 flex flex-col items-center justify-center text-center bg-slate-50 dark:bg-surface-indigo/50">
                 {getIconForType(MOCK_RESOURCE.type)}
                 <h3 className="mt-4 text-lg font-medium text-slate-900 dark:text-white">Preview not available</h3>
                 <p className="text-slate-500 mt-1 max-w-sm">This file type cannot be previewed directly in the browser.</p>
@@ -151,21 +151,21 @@ export default function LibraryDetail() {
 
         {/* Sidebar Info */}
         <div className="space-y-6">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm p-6 overflow-hidden">
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider mb-4 border-b border-slate-100 dark:border-slate-800 pb-2">Information</h3>
+          <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-6 overflow-hidden">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider mb-4 border-b border-slate-100 dark:border-surface-raised pb-2">Information</h3>
             
             <dl className="space-y-4">
               <div>
-                <dt className="text-xs text-slate-500 dark:text-slate-400">Uploaded By</dt>
+                <dt className="text-xs text-slate-500 dark:text-slate-300">Uploaded By</dt>
                 <dd className="font-medium text-slate-900 dark:text-white">{MOCK_RESOURCE.uploadedByName}</dd>
               </div>
               <div>
-                <dt className="text-xs text-slate-500 dark:text-slate-400">Date Added</dt>
+                <dt className="text-xs text-slate-500 dark:text-slate-300">Date Added</dt>
                 <dd className="font-medium text-slate-900 dark:text-white">{format(new Date(MOCK_RESOURCE.createdAt), 'MMMM d, yyyy')}</dd>
               </div>
               {MOCK_RESOURCE.classId && (
                 <div>
-                  <dt className="text-xs text-slate-500 dark:text-slate-400">Assigned Class</dt>
+                  <dt className="text-xs text-slate-500 dark:text-slate-300">Assigned Class</dt>
                   <dd className="font-medium text-blue-600 dark:text-blue-400">
                     <Link to={`/classes/${MOCK_RESOURCE.classId}`} className="hover:underline">Grade 10A</Link>
                   </dd>

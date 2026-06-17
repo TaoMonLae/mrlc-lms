@@ -85,6 +85,7 @@ import StudentExams from "./pages/student/StudentExams";
 import StudentResults from "./pages/student/StudentResults";
 import StudentLibrary from "./pages/student/StudentLibrary";
 import StudentFees from "./pages/student/StudentFees";
+import StudentVideos from "./pages/student/StudentVideos";
 
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
 import TeacherClasses from "./pages/teacher/TeacherClasses";
@@ -94,6 +95,17 @@ import TeacherExams from "./pages/teacher/TeacherExams";
 import TeacherLibrary from "./pages/teacher/TeacherLibrary";
 import TeacherReports from "./pages/teacher/TeacherReports";
 import TeacherTimetable from "./pages/teacher/TeacherTimetable";
+import TeacherVideos from "./pages/teacher/TeacherVideos";
+
+import VideoList from "./pages/videos/VideoList";
+import VideoNew from "./pages/videos/VideoNew";
+import VideoDetail from "./pages/videos/VideoDetail";
+import VideoEdit from "./pages/videos/VideoEdit";
+
+import BooksList from "./pages/books/BooksList";
+import BookNew from "./pages/books/BookNew";
+import BookDetail from "./pages/books/BookDetail";
+import BookEdit from "./pages/books/BookEdit";
 
 import UnauthorizedPage from "./pages/Unauthorized";
 
@@ -102,13 +114,15 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { SettingsProvider } from "./providers/SettingsProvider";
+import { AuthProvider } from "./providers/AuthProvider";
 
 import LandingPage from "./pages/Landing";
 
 export default function App() {
   return (
     <ThemeProvider defaultTheme="light" storageKey="mrlc-lms-theme">
-      <SettingsProvider>
+      <AuthProvider>
+        <SettingsProvider>
         <TooltipProvider>
           <BrowserRouter>
           <Routes>
@@ -130,6 +144,7 @@ export default function App() {
                   <Route path="/teacher/library" element={<TeacherLibrary />} />
                   <Route path="/teacher/reports" element={<TeacherReports />} />
                   <Route path="/teacher/timetable" element={<TeacherTimetable />} />
+                  <Route path="/teacher/videos" element={<TeacherVideos />} />
                 </Route>
                 
                 {/* Student Portal Routes */}
@@ -141,6 +156,7 @@ export default function App() {
                   <Route path="/student/results" element={<StudentResults />} />
                   <Route path="/student/library" element={<StudentLibrary />} />
                   <Route path="/student/fees" element={<StudentFees />} />
+                  <Route path="/student/videos" element={<StudentVideos />} />
                 </Route>
                 
                 <Route path="/announcements" element={<AnnouncementsList />} />
@@ -176,14 +192,16 @@ export default function App() {
                   <Route path="/exams/new" element={<ExamNew />} />
                   <Route path="/exams/:id" element={<ExamProfile />} />
                   <Route path="/exams/:id/edit" element={<ExamEdit />} />
-                  <Route path="/exams/:id/take" element={<ExamTake />} />
-                  <Route path="/exams/:id/results" element={<ExamResults />} />
                   
                   <Route path="/teachers" element={<TeachersList />} />
                   <Route path="/teachers/new" element={<TeacherNew />} />
                   <Route path="/teachers/:id" element={<TeacherProfile />} />
                   <Route path="/teachers/:id/edit" element={<TeacherEdit />} />
                 </Route>
+
+                {/* Exam take/results: accessible to all authenticated roles */}
+                <Route path="/exams/:id/take" element={<ExamTake />} />
+                <Route path="/exams/:id/results" element={<ExamResults />} />
 
                 {/* Users module - Admin only */}
                 <Route element={<ProtectedRoute requiredPermission="manage_users" />}>
@@ -206,17 +224,41 @@ export default function App() {
                   </Route>
                 </Route>
 
+                {/* Library: read routes open to all authenticated users */}
                 <Route path="/library" element={<LibraryList />} />
-                <Route path="/library/new" element={<LibraryNew />} />
                 <Route path="/library/:id" element={<LibraryDetail />} />
-                <Route path="/library/:id/edit" element={<LibraryEdit />} />
-                
+
+                {/* Library: write routes require manage_own_library (ADMIN, TEACHER) */}
+                <Route element={<ProtectedRoute requiredPermission="manage_own_library" />}>
+                  <Route path="/library/new" element={<LibraryNew />} />
+                  <Route path="/library/:id/edit" element={<LibraryEdit />} />
+                </Route>
+
+                {/* Video Lessons: read open to all authenticated users */}
+                <Route path="/videos" element={<VideoList />} />
+                <Route path="/videos/:id" element={<VideoDetail />} />
+
+                {/* Video Lessons: write requires manage_videos (ADMIN, TEACHER) */}
+                <Route element={<ProtectedRoute requiredPermission="manage_videos" />}>
+                  <Route path="/videos/new" element={<VideoNew />} />
+                  <Route path="/videos/:id/edit" element={<VideoEdit />} />
+                </Route>
+
+                {/* Physical Book Catalog: ADMIN + LIBRARIAN (via manage_books) */}
+                <Route element={<ProtectedRoute requiredPermission="manage_books" />}>
+                  <Route path="/books" element={<BooksList />} />
+                  <Route path="/books/new" element={<BookNew />} />
+                  <Route path="/books/:id" element={<BookDetail />} />
+                  <Route path="/books/:id/edit" element={<BookEdit />} />
+                </Route>
+
                 <Route element={<ProtectedRoute requiredPermission="manage_fees" />}>
                   <Route path="/fees" element={<FeesDashboard />} />
                   <Route path="/fees/payments/new" element={<PaymentNew />} />
+                  {/* Fee detail pages also contain sensitive financial data */}
+                  <Route path="/fees/students/:id" element={<StudentFeeProfile />} />
+                  <Route path="/fees/receipts/:id" element={<PaymentReceipt />} />
                 </Route>
-                <Route path="/fees/students/:id" element={<StudentFeeProfile />} />
-                <Route path="/fees/receipts/:id" element={<PaymentReceipt />} />
                 
                 <Route element={<ProtectedRoute requiredPermission="manage_cases" />}>
                   <Route path="/cases" element={<CasesDashboard />} />
@@ -245,6 +287,7 @@ export default function App() {
         </BrowserRouter>
         </TooltipProvider>
       </SettingsProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

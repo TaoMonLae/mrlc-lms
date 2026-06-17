@@ -34,14 +34,14 @@ export default function AttendanceReport() {
            <Button variant="outline">
              <FileSpreadsheet className="mr-2 h-4 w-4" /> Export CSV
            </Button>
-           <Button onClick={handlePrint} className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900">
+           <Button onClick={handlePrint} className="bg-primary hover:bg-primary/90 text-primary-foreground">
              <Printer className="mr-2 h-4 w-4" /> Print / PDF
            </Button>
         </div>
       </div>
 
       {/* Filter Panel */}
-      <div className="print:hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-wrap gap-4 items-end shadow-sm">
+      <div className="print:hidden bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-4 flex flex-wrap gap-4 items-end shadow-sm">
          <div className="space-y-1.5 flex-1 min-w-[200px]">
            <label className="text-xs font-semibold text-slate-500 uppercase">Class</label>
            <Select value={classFilter} onValueChange={setClassFilter}>
@@ -74,38 +74,38 @@ export default function AttendanceReport() {
       </div>
 
       {/* Screen Preview */}
-      <div className="print:hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm overflow-x-auto">
+      <div className="print:hidden bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm overflow-x-auto">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Preview</h3>
         <table className="w-full text-sm text-left border-collapse">
-            <thead className="bg-slate-50 dark:bg-slate-800">
+            <thead className="bg-slate-50 dark:bg-surface-raised">
               <tr>
-                <th className="px-4 py-3 border border-slate-200 dark:border-slate-700 font-semibold">Student Name</th>
-                <th className="px-4 py-3 border border-slate-200 dark:border-slate-700 font-semibold">ID</th>
-                <th className="px-4 py-3 border border-slate-200 dark:border-slate-700 font-semibold text-center">Total Days</th>
-                <th className="px-4 py-3 border border-slate-200 dark:border-slate-700 font-semibold text-center">Present</th>
-                <th className="px-4 py-3 border border-slate-200 dark:border-slate-700 font-semibold text-center">Absent</th>
-                <th className="px-4 py-3 border border-slate-200 dark:border-slate-700 font-semibold text-center">Late</th>
-                <th className="px-4 py-3 border border-slate-200 dark:border-slate-700 font-semibold text-center">Rate</th>
+                <th className="px-4 py-3 border border-slate-200 dark:border-surface-raised font-semibold">Student Name</th>
+                <th className="px-4 py-3 border border-slate-200 dark:border-surface-raised font-semibold">ID</th>
+                <th className="px-4 py-3 border border-slate-200 dark:border-surface-raised font-semibold text-center">Total Days</th>
+                <th className="px-4 py-3 border border-slate-200 dark:border-surface-raised font-semibold text-center">Present</th>
+                <th className="px-4 py-3 border border-slate-200 dark:border-surface-raised font-semibold text-center">Absent</th>
+                <th className="px-4 py-3 border border-slate-200 dark:border-surface-raised font-semibold text-center">Late</th>
+                <th className="px-4 py-3 border border-slate-200 dark:border-surface-raised font-semibold text-center">Rate</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td className="px-4 py-3 border border-slate-200 dark:border-slate-700 font-medium">Ali bin Ahmad</td>
-                <td className="px-4 py-3 border border-slate-200 dark:border-slate-700">STU-2023-001</td>
-                <td className="px-4 py-3 border border-slate-200 dark:border-slate-700 text-center">20</td>
-                <td className="px-4 py-3 border border-slate-200 dark:border-slate-700 text-center">15</td>
-                <td className="px-4 py-3 border border-slate-200 dark:border-slate-700 text-center">5</td>
-                <td className="px-4 py-3 border border-slate-200 dark:border-slate-700 text-center">0</td>
-                <td className="px-4 py-3 border border-slate-200 dark:border-slate-700 text-center font-semibold text-orange-600">75%</td>
+                <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised font-medium">Ali bin Ahmad</td>
+                <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised">STU-2023-001</td>
+                <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised text-center">20</td>
+                <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised text-center">15</td>
+                <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised text-center">5</td>
+                <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised text-center">0</td>
+                <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised text-center font-semibold text-aubergine-600">75%</td>
               </tr>
               <tr>
-                <td className="px-4 py-3 border border-slate-200 dark:border-slate-700 font-medium">Sarah Lee</td>
-                <td className="px-4 py-3 border border-slate-200 dark:border-slate-700">STU-2023-002</td>
-                <td className="px-4 py-3 border border-slate-200 dark:border-slate-700 text-center">20</td>
-                <td className="px-4 py-3 border border-slate-200 dark:border-slate-700 text-center">19</td>
-                <td className="px-4 py-3 border border-slate-200 dark:border-slate-700 text-center">0</td>
-                <td className="px-4 py-3 border border-slate-200 dark:border-slate-700 text-center">1</td>
-                <td className="px-4 py-3 border border-slate-200 dark:border-slate-700 text-center font-semibold text-emerald-600">95%</td>
+                <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised font-medium">Sarah Lee</td>
+                <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised">STU-2023-002</td>
+                <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised text-center">20</td>
+                <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised text-center">19</td>
+                <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised text-center">0</td>
+                <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised text-center">1</td>
+                <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised text-center font-semibold text-emerald-600">95%</td>
               </tr>
             </tbody>
         </table>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, UploadCloud, Link as LinkIcon, FileCheck } from 'lucide-react';
 import { useForm } from 'react-hook-form';
@@ -33,6 +33,26 @@ export default function LibraryNew() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'upload' | 'link'>('upload');
   const [file, setFile] = useState<File | null>(null);
+  const [classes, setClasses] = useState<any[]>([]);
+  const [subjects, setSubjects] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchClassesAndSubjects = async () => {
+      try {
+        const token = sessionStorage.getItem('auth_token');
+        const headers = { 'Authorization': `Bearer ${token}` };
+        const [cRes, sRes] = await Promise.all([
+          fetch('/api/classes', { headers }),
+          fetch('/api/subjects', { headers })
+        ]);
+        if (cRes.ok) setClasses(await cRes.json());
+        if (sRes.ok) setSubjects(await sRes.json());
+      } catch (err) {
+        console.error('Error fetching library options:', err);
+      }
+    };
+    fetchClassesAndSubjects();
+  }, []);
 
   const {
     register,
@@ -59,13 +79,36 @@ export default function LibraryNew() {
         return;
       }
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      console.log('New resource data:', data, 'File:', file);
-      toast.success('Resource added successfully');
+      const token = sessionStorage.getItem('auth_token');
+      const payload = {
+        title: data.title,
+        description: data.description,
+        type: activeTab === 'upload' ? data.type : 'LINK',
+        visibility: data.visibility,
+        classId: data.classId || null,
+        subjectId: data.subjectId || null,
+        externalUrl: activeTab === 'upload' ? null : data.externalUrl,
+      };
+
+      const res = await fetch('/api/library', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Failed to upload resource');
+      }
+
+      toast.success('Resource added to library successfully.');
       navigate('/library');
-    } catch (error) {
-      toast.error('Failed to add resource');
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message || 'Failed to add resource');
     }
   };
 
@@ -79,14 +122,14 @@ export default function LibraryNew() {
           Back to Library
         </Button>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Add New Resource</h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-400">Upload files or link external content to the central library.</p>
+        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Upload files or link external content to the central library.</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
+        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl overflow-hidden shadow-sm">
            
           {/* Tabs */}
-          <div className="flex border-b border-slate-200 dark:border-slate-800">
+          <div className="flex border-b border-slate-200 dark:border-surface-raised">
             <button
               type="button"
               className={`flex-1 py-4 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
@@ -122,7 +165,7 @@ export default function LibraryNew() {
             {activeTab === 'upload' ? (
               <div className="space-y-2">
                 <Label>Select File *</Label>
-                <div className="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-8 flex flex-col items-center justify-center text-center bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors">
+                <div className="border-2 border-dashed border-slate-200 dark:border-surface-raised rounded-xl p-8 flex flex-col items-center justify-center text-center bg-slate-50 dark:bg-surface-indigo/50 hover:bg-slate-100 dark:hover:bg-surface-raised/80 transition-colors">
                   {file ? (
                     <div className="flex flex-col items-center gap-2">
                       <div className="h-12 w-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 mb-2">
@@ -138,7 +181,7 @@ export default function LibraryNew() {
                       <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Click to upload or drag and drop</p>
                       <p className="text-xs text-slate-500 mt-1 mb-4">PDF, PPTX, DOCX, JPG, PNG (Max 50MB)</p>
                       <Label htmlFor="file-upload" className="cursor-pointer">
-                        <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-md justify-center text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
+                        <div className="bg-white dark:bg-canvas border border-slate-200 dark:border-surface-raised px-4 py-2 rounded-md justify-center text-sm font-medium hover:bg-slate-50 dark:hover:bg-surface-indigo transition-colors">
                           Browse Files
                         </div>
                       </Label>
@@ -162,7 +205,7 @@ export default function LibraryNew() {
               </div>
             )}
 
-            <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-surface-raised">
               <div className="space-y-2">
                 <Label htmlFor="title">Resource Title *</Label>
                 <Input id="title" {...register('title')} placeholder="e.g. Intro to Biology Worksheet" />
@@ -217,8 +260,9 @@ export default function LibraryNew() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">-- Global (All Classes) --</SelectItem>
-                      <SelectItem value="c1">Grade 10A</SelectItem>
-                      <SelectItem value="c2">Grade 10B</SelectItem>
+                      {classes.map(c => (
+                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -231,8 +275,9 @@ export default function LibraryNew() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">-- General System --</SelectItem>
-                      <SelectItem value="math-10">Mathematics</SelectItem>
-                      <SelectItem value="bio-10">Biology</SelectItem>
+                      {subjects.map(s => (
+                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -245,7 +290,7 @@ export default function LibraryNew() {
            <Button type="button" variant="outline" onClick={() => navigate('/library')}>
              Cancel
            </Button>
-           <Button type="submit" className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900" disabled={isSubmitting}>
+           <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
              {isSubmitting ? 'Uploading...' : (
                <>
                  <Save className="mr-2 h-4 w-4" />

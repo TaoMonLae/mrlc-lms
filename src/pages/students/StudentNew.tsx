@@ -13,7 +13,7 @@ export default function StudentNew() {
           Back to Students
         </Button>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Add New Student</h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-400">Enter details to enroll a new student into the system.</p>
+        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Enter details to enroll a new student into the system.</p>
       </div>
 
       <StudentForm />

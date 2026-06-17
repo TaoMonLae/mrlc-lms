@@ -34,14 +34,14 @@ export default function ExamResultsReport() {
            <Button variant="outline">
              <FileSpreadsheet className="mr-2 h-4 w-4" /> Export CSV
            </Button>
-           <Button onClick={handlePrint} className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900">
+           <Button onClick={handlePrint} className="bg-primary hover:bg-primary/90 text-primary-foreground">
              <Printer className="mr-2 h-4 w-4" /> Print / PDF
            </Button>
         </div>
       </div>
 
       {/* Filter Panel */}
-      <div className="print:hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-wrap gap-4 items-end shadow-sm">
+      <div className="print:hidden bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-4 flex flex-wrap gap-4 items-end shadow-sm">
          <div className="space-y-1.5 flex-1 min-w-[200px]">
            <label className="text-xs font-semibold text-slate-500 uppercase">Class</label>
            <Select value={classFilter} onValueChange={setClassFilter}>
@@ -111,8 +111,8 @@ export default function ExamResultsReport() {
                 <td className="px-4 py-3 border border-slate-300 text-slate-700">45</td>
                 <td className="px-4 py-3 border border-slate-300 text-slate-700">55</td>
                 <td className="px-4 py-3 border border-slate-300 text-slate-700">60</td>
-                <td className="px-4 py-3 border border-slate-300 text-right font-bold text-slate-900 bg-slate-50 text-orange-600">53.3</td>
-                <td className="px-4 py-3 border border-slate-300 text-right font-bold text-slate-900 bg-slate-50 text-orange-600">C</td>
+                <td className="px-4 py-3 border border-slate-300 text-right font-bold text-slate-900 bg-slate-50 text-aubergine-600">53.3</td>
+                <td className="px-4 py-3 border border-slate-300 text-right font-bold text-slate-900 bg-slate-50 text-aubergine-600">C</td>
               </tr>
             </tbody>
         </table>

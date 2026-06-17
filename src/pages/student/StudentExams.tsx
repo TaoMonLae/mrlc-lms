@@ -38,14 +38,14 @@ export default function StudentExams() {
     <div className="space-y-8 pb-10">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-          <FileText className="h-6 w-6 text-indigo-600" />
+          <FileText className="h-6 w-6 text-aubergine-600" />
           Examinations
         </h1>
         <p className="text-sm text-slate-500 mt-1">View available exams and your submission history.</p>
       </div>
 
       <Tabs defaultValue="available" className="space-y-6">
-        <TabsList className="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl h-12 w-fit">
+        <TabsList className="bg-slate-100 dark:bg-surface-raised p-1 rounded-xl h-12 w-fit">
           <TabsTrigger value="available" className="rounded-lg h-10 px-6 font-bold text-xs uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm">
             Available ({availableExams.length})
           </TabsTrigger>
@@ -57,39 +57,39 @@ export default function StudentExams() {
         <TabsContent value="available" className="space-y-6 outline-none">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {availableExams.map((exam) => (
-              <Card key={exam.id} className="border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all overflow-hidden group">
+              <Card key={exam.id} className="border-slate-200 dark:border-surface-raised shadow-sm hover:shadow-md transition-all overflow-hidden group">
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between mb-2">
-                    <Badge variant="outline" className="text-[9px] uppercase font-bold tracking-widest border-indigo-200 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-900/50">
+                    <Badge variant="outline" className="text-[9px] uppercase font-bold tracking-widest border-aubergine-200 bg-aubergine-50 text-aubergine-700 dark:bg-aubergine-900/20 dark:text-aubergine-400 dark:border-aubergine-900/50">
                       {exam.subject}
                     </Badge>
                     <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1 uppercase tracking-tighter">
                       <Clock className="h-3 w-3" /> Due {exam.deadline}
                     </span>
                   </div>
-                  <CardTitle className="text-lg group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{exam.title}</CardTitle>
+                  <CardTitle className="text-lg group-hover:text-aubergine-600 dark:group-hover:text-aubergine-400 transition-colors">{exam.title}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="grid grid-cols-3 gap-4">
-                    <div className="text-center p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                    <div className="text-center p-2 rounded-lg bg-slate-50 dark:bg-surface-raised/50">
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Duration</p>
                       <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{exam.duration}</p>
                     </div>
-                    <div className="text-center p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                    <div className="text-center p-2 rounded-lg bg-slate-50 dark:bg-surface-raised/50">
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Questions</p>
                       <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{exam.questions}</p>
                     </div>
-                    <div className="text-center p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                    <div className="text-center p-2 rounded-lg bg-slate-50 dark:bg-surface-raised/50">
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Type</p>
                       <p className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate">{exam.type.split(' ')[0]}</p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <Button className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold uppercase tracking-widest text-xs h-10" onClick={() => handleStartExam(exam)}>
+                    <Button className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-bold uppercase tracking-widest text-xs h-10" onClick={() => handleStartExam(exam)}>
                       <Play className="mr-2 h-3 w-3" /> Start Exam
                     </Button>
-                    <Button variant="outline" size="icon" className="h-10 w-10 shrink-0 border-slate-200 dark:border-slate-800">
+                    <Button variant="outline" size="icon" className="h-10 w-10 shrink-0 border-slate-200 dark:border-surface-raised">
                       <HelpCircle className="h-4 w-4 text-slate-500" />
                     </Button>
                   </div>
@@ -98,7 +98,7 @@ export default function StudentExams() {
             ))}
 
             {availableExams.length === 0 && (
-              <div className="col-span-full py-20 text-center bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
+              <div className="col-span-full py-20 text-center bg-white dark:bg-surface-indigo rounded-2xl border border-dashed border-slate-200 dark:border-surface-raised">
                 <CheckCircle2 className="h-12 w-12 text-emerald-200 mx-auto mb-4" />
                 <h3 className="text-lg font-bold">All caught up!</h3>
                 <p className="text-sm text-slate-500 mt-1">No pending exams or assignments found.</p>
@@ -108,11 +108,11 @@ export default function StudentExams() {
         </TabsContent>
 
         <TabsContent value="submitted" className="space-y-6 outline-none">
-          <Card className="border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+          <Card className="border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
-                  <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 font-bold text-[10px] uppercase tracking-widest border-b border-slate-100 dark:border-slate-800">
+                  <thead className="bg-slate-50 dark:bg-surface-raised/50 text-slate-500 font-bold text-[10px] uppercase tracking-widest border-b border-slate-100 dark:border-surface-raised">
                     <tr>
                       <th className="px-6 py-4">Assessment Name</th>
                       <th className="px-6 py-4">Submitted At</th>
@@ -123,10 +123,10 @@ export default function StudentExams() {
                   </thead>
                   <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                     {submittedExams.map((exam) => (
-                      <tr key={exam.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                      <tr key={exam.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors">
                         <td className="px-6 py-4">
                           <p className="text-sm font-bold text-slate-900 dark:text-white">{exam.title}</p>
-                          <p className="text-[10px] text-indigo-600 font-bold uppercase tracking-tighter mt-0.5">{exam.subject}</p>
+                          <p className="text-[10px] text-aubergine-600 font-bold uppercase tracking-tighter mt-0.5">{exam.subject}</p>
                         </td>
                         <td className="px-6 py-4 text-xs text-slate-500 font-medium">
                           {exam.submittedAt}
@@ -145,7 +145,7 @@ export default function StudentExams() {
                           {exam.score || '-'}
                         </td>
                         <td className="px-6 py-4">
-                          <Button variant="ghost" size="sm" className="text-indigo-600 text-[10px] uppercase font-bold tracking-widest h-8">
+                          <Button variant="ghost" size="sm" className="text-aubergine-600 text-[10px] uppercase font-bold tracking-widest h-8">
                             View Details
                           </Button>
                         </td>

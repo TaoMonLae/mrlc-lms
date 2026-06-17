@@ -16,7 +16,7 @@ export default function ExamEdit() {
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Edit Exam</h1>
       </div>
       
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm flex flex-col items-center justify-center min-h-[400px] text-slate-500">
+      <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm flex flex-col items-center justify-center min-h-[400px] text-slate-500">
         <p>Exam builder form goes here.</p>
         <p className="text-sm">(Reuses similar components to ExamNew)</p>
       </div>

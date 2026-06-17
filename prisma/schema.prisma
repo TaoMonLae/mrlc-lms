@@ -15,6 +15,16 @@ enum Role {
   ADMIN
   TEACHER
   STUDENT
+  STAFF
+  ACCOUNTANT
+  CASE_WORKER
+  LIBRARIAN
+}
+
+enum BookLoanStatus {
+  BORROWED
+  RETURNED
+  OVERDUE
 }
 
 enum AttendanceStatus {
@@ -36,6 +46,12 @@ enum QuestionType {
   TRUE_FALSE
   SHORT_ANSWER
   ESSAY
+  MCQ
+  WRITTEN
+  GED_RLA_PASSAGE
+  GED_MATH
+  GED_SCIENCE
+  GED_SOCIAL_STUDIES
 }
 
 enum FeeStatus {
@@ -57,6 +73,7 @@ enum CasePriority {
   MEDIUM
   HIGH
   CRITICAL
+  URGENT
 }
 
 // -----------------------------------------------------------------------------
@@ -91,7 +108,23 @@ model SchoolProfile {
   contactEmail    String?
   contactPhone    String?
   establishedYear Int?
-  
+
+  // Branding
+  logoUrl           String?
+  signatureUrl      String?
+  primaryColor      String?  @default("#5865f2")
+  accentColor       String?  @default("#3b82f6")
+  darkModeDefault   Boolean  @default(false)
+  reportHeaderStyle String?  @default("standard")
+
+  // System / localization
+  timezone          String?  @default("Asia/Bangkok")
+  dateFormat        String?  @default("DD/MM/YYYY")
+  currency          String?  @default("THB")
+  defaultLanguage   String?  @default("en")
+  fileUploadLimitMb Int      @default(10)
+  backupEnabled     Boolean  @default(true)
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
@@ -105,6 +138,8 @@ model Student {
   enrollmentDate DateTime @default(now())
   guardianName   String?
   guardianPhone  String?
+  gender         String?
+  status         String?  @default("ACTIVE")
   
   classId        String?
   class          Class?   @relation(fields: [classId], references: [id])
@@ -305,6 +340,11 @@ model LibraryResource {
   type           String   // e.g., "BOOK", "DIGITAL", "EQUIPMENT"
   totalCopies    Int      @default(1)
   availableCopies Int     @default(1)
+  description    String?
+  visibility     String?  @default("ALL")
+  classId        String?
+  subjectId      String?
+  externalUrl    String?
   
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -319,6 +359,8 @@ model FeePayment {
   status         FeeStatus @default(PENDING)
   description    String?
   receiptNumber  String?   @unique
+  paymentMethod  String?
+  notes          String?
   
   studentId      String
   student        Student  @relation(fields: [studentId], references: [id])
@@ -365,4 +407,103 @@ model CaseNote {
 
   @@index([caseRecordId])
   @@index([createdById])
+}
+
+model VideoLesson {
+  id            String   @id @default(uuid())
+  title         String
+  description   String?
+  videoUrl      String
+  thumbnailUrl  String?
+  duration      Int?     // seconds
+  classId       String?
+  subjectId     String?
+  visibility    String   @default("ALL") // ALL | STUDENTS | TEACHERS_ONLY
+  status        String   @default("PUBLISHED") // PUBLISHED | DRAFT | ARCHIVED
+  uploadedById  String
+  uploadedByName String
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([classId])
+  @@index([subjectId])
+  @@index([uploadedById])
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?
+  userName    String?
+  action      String
+  entityType  String
+  entityId    String?
+  description String
+  ipAddress   String?
+  userAgent   String?
+  severity    String   @default("INFO")
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([entityType])
+}
+
+// -----------------------------------------------------------------------------
+// PHYSICAL LIBRARY (book catalog + borrowing)
+// -----------------------------------------------------------------------------
+
+model Book {
+  id              String   @id @default(uuid())
+  title           String
+  author          String?
+  isbn            String?
+  publisher       String?
+  publishedYear   Int?
+  category        String?  // e.g. Fiction, Science, Reference
+  language        String?
+  edition         String?
+  shelfLocation   String?  // e.g. "A-12", "Reference Shelf 3"
+  description     String?
+  coverUrl        String?
+  totalCopies     Int      @default(1)
+  availableCopies Int      @default(1)
+
+  loans           BookLoan[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([title])
+  @@index([author])
+  @@index([category])
+  @@index([isbn])
+}
+
+model BookLoan {
+  id             String         @id @default(uuid())
+  bookId         String
+  book           Book           @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  // Borrower is stored denormalized (matches AuditLog / VideoLesson pattern) so
+  // loans can be issued to students, staff, or external members alike.
+  studentId      String?
+  borrowerName   String
+  borrowerType   String?        // e.g. STUDENT, TEACHER, STAFF, OTHER
+
+  status         BookLoanStatus @default(BORROWED)
+  borrowedDate   DateTime       @default(now())
+  dueDate        DateTime
+  returnedDate   DateTime?
+
+  recordedById   String?
+  recordedByName String?
+  notes          String?
+
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([bookId])
+  @@index([studentId])
+  @@index([status])
 }

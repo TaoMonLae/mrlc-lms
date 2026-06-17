@@ -21,7 +21,7 @@ const userSchema = z.object({
   username: z.string().min(3, 'Username must be at least 3 characters'),
   email: z.string().email('Invalid email address').optional().or(z.literal('')),
   password: z.string().min(8, 'Password must be at least 8 characters'),
-  role: z.enum(['ADMIN', 'TEACHER', 'STUDENT', 'STAFF', 'ACCOUNTANT', 'CASE_WORKER']),
+  role: z.enum(['ADMIN', 'TEACHER', 'STUDENT', 'STAFF', 'ACCOUNTANT', 'CASE_WORKER', 'LIBRARIAN']),
   status: z.enum(['ACTIVE', 'DISABLED']),
   teacherId: z.string().optional(),
   studentId: z.string().optional(),
@@ -48,13 +48,27 @@ export default function UserNew() {
 
   const onSubmit = async (data: UserFormValues) => {
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('New user data:', data);
+      const token = sessionStorage.getItem('auth_token');
+      const [firstName, ...rest] = data.name.trim().split(' ');
+      const lastName = rest.join(' ') || '';
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          email: data.email || `${data.username}@mrlc.edu`,
+          password: data.password,
+          role: data.role,
+          status: data.status,
+        }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || 'Failed to create user account');
       toast.success('User account created successfully');
       navigate('/users');
-    } catch (error) {
-      toast.error('Failed to create user account');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to create user account');
     }
   };
 
@@ -66,11 +80,11 @@ export default function UserNew() {
           Back to Users
         </Button>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Create New User</h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-400">Set up a new system account and assign permissions.</p>
+        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Set up a new system account and assign permissions.</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm space-y-6">
+        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-6">
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Account Details</h3>
             
@@ -101,7 +115,7 @@ export default function UserNew() {
             </div>
           </div>
 
-          <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-4">
+          <div className="pt-4 border-t border-slate-200 dark:border-surface-raised space-y-4">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
               <ShieldAlert className="h-5 w-5 text-purple-600" />
               Role & Permissions
@@ -121,6 +135,7 @@ export default function UserNew() {
                     <SelectItem value="STAFF">Staff</SelectItem>
                     <SelectItem value="ACCOUNTANT">Accountant</SelectItem>
                     <SelectItem value="CASE_WORKER">Case Worker</SelectItem>
+                    <SelectItem value="LIBRARIAN">Librarian</SelectItem>
                   </SelectContent>
                 </Select>
                 {errors.role && <p className="text-xs text-red-500 font-medium">{errors.role.message}</p>}
@@ -142,7 +157,7 @@ export default function UserNew() {
             </div>
           </div>
 
-          <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-4">
+          <div className="pt-4 border-t border-slate-200 dark:border-surface-raised space-y-4">
              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Profile Linking (Optional)</h3>
              <p className="text-sm text-slate-500">Link this user account to an existing profile in the system to enable relevant features.</p>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -162,7 +177,7 @@ export default function UserNew() {
            <Button type="button" variant="outline" onClick={() => navigate('/users')}>
              Cancel
            </Button>
-           <Button type="submit" className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900" disabled={isSubmitting}>
+           <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
              {isSubmitting ? 'Creating...' : (
                <>
                  <Save className="mr-2 h-4 w-4" />

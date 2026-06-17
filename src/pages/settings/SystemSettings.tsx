@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -9,6 +9,8 @@ import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { getTimezones, getCurrencies } from '../../lib/locale';
+import { useSettings } from '../../providers/SettingsProvider';
 
 const systemSchema = z.object({
   timezone: z.string(),
@@ -22,31 +24,34 @@ const systemSchema = z.object({
 type FormValues = z.infer<typeof systemSchema>;
 
 export default function SystemSettings() {
+  const timezones = useMemo(() => getTimezones(), []);
+  const currencies = useMemo(() => getCurrencies(), []);
+  const { systemSettings, updateSystem } = useSettings();
+
   const {
     register,
     handleSubmit,
     setValue,
     watch,
+    reset,
     formState: { isSubmitting, isDirty }
   } = useForm<FormValues>({
     resolver: zodResolver(systemSchema),
-    defaultValues: {
-      timezone: 'America/New_York',
-      dateFormat: 'MM/DD/YYYY',
-      currency: 'USD',
-      defaultLanguage: 'en',
-      fileUploadLimitMb: 10,
-      backupEnabled: true,
-    }
+    defaultValues: systemSettings,
   });
+
+  // Re-sync the form once the persisted settings load from the server.
+  useEffect(() => {
+    reset(systemSettings);
+  }, [systemSettings, reset]);
 
   const onSubmit = async (data: FormValues) => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      console.log('Saved system settings:', data);
+      await updateSystem(data);
+      reset(data);
       toast.success('System settings updated successfully');
-    } catch (error) {
-      toast.error('Failed to update system settings');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update system settings');
     }
   };
 
@@ -69,18 +74,13 @@ export default function SystemSettings() {
             <div className="space-y-2">
               <Label>Timezone</Label>
               <Select value={watch('timezone')} onValueChange={(v: any) => setValue('timezone', v, { shouldDirty: true })}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="America/New_York">Eastern Time (US & Canada)</SelectItem>
-                  <SelectItem value="America/Chicago">Central Time (US & Canada)</SelectItem>
-                  <SelectItem value="America/Denver">Mountain Time (US & Canada)</SelectItem>
-                  <SelectItem value="America/Los_Angeles">Pacific Time (US & Canada)</SelectItem>
-                  <SelectItem value="Europe/London">London</SelectItem>
-                  <SelectItem value="Asia/Dubai">Dubai</SelectItem>
-                  <SelectItem value="Asia/Singapore">Singapore</SelectItem>
-                  <SelectItem value="Australia/Sydney">Sydney</SelectItem>
+                <SelectContent className="max-h-72 min-w-[24rem]">
+                  {timezones.map((tz) => (
+                    <SelectItem key={tz.value} value={tz.value}>{tz.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -88,7 +88,7 @@ export default function SystemSettings() {
             <div className="space-y-2">
               <Label>Date Format</Label>
               <Select value={watch('dateFormat')} onValueChange={(v: any) => setValue('dateFormat', v, { shouldDirty: true })}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -103,21 +103,20 @@ export default function SystemSettings() {
                <div className="space-y-2">
                  <Label>Currency</Label>
                  <Select value={watch('currency')} onValueChange={(v: any) => setValue('currency', v, { shouldDirty: true })}>
-                   <SelectTrigger>
+                   <SelectTrigger className="w-full">
                      <SelectValue />
                    </SelectTrigger>
-                   <SelectContent>
-                     <SelectItem value="USD">USD ($)</SelectItem>
-                     <SelectItem value="EUR">EUR (€)</SelectItem>
-                     <SelectItem value="GBP">GBP (£)</SelectItem>
-                     <SelectItem value="JPY">JPY (¥)</SelectItem>
+                   <SelectContent className="max-h-72 min-w-[20rem]">
+                     {currencies.map((c) => (
+                       <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                     ))}
                    </SelectContent>
                  </Select>
                </div>
                <div className="space-y-2">
                  <Label>Language</Label>
                  <Select value={watch('defaultLanguage')} onValueChange={(v: any) => setValue('defaultLanguage', v, { shouldDirty: true })}>
-                   <SelectTrigger>
+                   <SelectTrigger className="w-full">
                      <SelectValue />
                    </SelectTrigger>
                    <SelectContent>
@@ -150,7 +149,7 @@ export default function SystemSettings() {
               <p className="text-xs text-slate-500">Maximum allowed size for student assignments and resources.</p>
             </div>
 
-            <div className="flex items-center justify-between border border-slate-200 dark:border-slate-800 rounded-xl p-4">
+            <div className="flex items-center justify-between border border-slate-200 dark:border-surface-raised rounded-xl p-4">
               <div className="flex gap-3">
                  <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 rounded-lg h-fit">
                     <HardDrive className="h-5 w-5" />
@@ -179,8 +178,8 @@ export default function SystemSettings() {
 
       </div>
 
-      <div className="pt-6 border-t border-slate-200 dark:border-slate-800 flex justify-end">
-        <Button type="submit" className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900" disabled={isSubmitting}>
+      <div className="pt-6 border-t border-slate-200 dark:border-surface-raised flex justify-end">
+        <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
           {isSubmitting ? 'Saving...' : (
             <>
               <Save className="mr-2 h-4 w-4" />

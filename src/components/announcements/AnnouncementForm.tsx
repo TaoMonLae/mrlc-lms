@@ -72,7 +72,7 @@ export function AnnouncementForm({ initialData, onSubmit, isLoading }: Announcem
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
+            <Card className="border-slate-200 dark:border-surface-raised shadow-sm">
               <CardContent className="pt-6 space-y-4">
                 <FormField
                   control={form.control}
@@ -84,7 +84,7 @@ export function AnnouncementForm({ initialData, onSubmit, isLoading }: Announcem
                         <Input 
                           placeholder="e.g., Annual Sports Day 2025" 
                           {...field} 
-                          className="h-12 text-lg font-medium ring-offset-indigo-600 focus-visible:ring-indigo-600"
+                          className="h-12 text-lg font-medium ring-offset-aubergine-600 focus-visible:ring-aubergine-600"
                         />
                       </FormControl>
                       <FormDescription>
@@ -104,7 +104,7 @@ export function AnnouncementForm({ initialData, onSubmit, isLoading }: Announcem
                       <FormControl>
                         <Textarea 
                           placeholder="Write your announcement details here..." 
-                          className="min-h-[250px] resize-none focus-visible:ring-indigo-600 text-base leading-relaxed"
+                          className="min-h-[250px] resize-none focus-visible:ring-aubergine-600 text-base leading-relaxed"
                           {...field} 
                         />
                       </FormControl>
@@ -129,10 +129,10 @@ export function AnnouncementForm({ initialData, onSubmit, isLoading }: Announcem
 
           {/* Sidebar Settings */}
           <div className="space-y-6">
-            <Card className="border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-              <div className="bg-slate-50 dark:bg-slate-800/50 px-4 py-3 border-b border-slate-200 dark:border-slate-800">
+            <Card className="border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
+              <div className="bg-slate-50 dark:bg-surface-raised/50 px-4 py-3 border-b border-slate-200 dark:border-surface-raised">
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <Users className="h-4 w-4 text-indigo-600" />
+                  <Users className="h-4 w-4 text-aubergine-600" />
                   Target Audience
                 </h3>
               </div>
@@ -191,10 +191,10 @@ export function AnnouncementForm({ initialData, onSubmit, isLoading }: Announcem
               </CardContent>
             </Card>
 
-            <Card className="border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-              <div className="bg-slate-50 dark:bg-slate-800/50 px-4 py-3 border-b border-slate-200 dark:border-slate-800">
+            <Card className="border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
+              <div className="bg-slate-50 dark:bg-surface-raised/50 px-4 py-3 border-b border-slate-200 dark:border-surface-raised">
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-indigo-600" />
+                  <Clock className="h-4 w-4 text-aubergine-600" />
                   Options & Visibility
                 </h3>
               </div>
@@ -203,7 +203,7 @@ export function AnnouncementForm({ initialData, onSubmit, isLoading }: Announcem
                   control={form.control}
                   name="pinned"
                   render={({ field }) => (
-                    <FormItem className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-800 p-3 shadow-sm">
+                    <FormItem className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-surface-raised p-3 shadow-sm">
                       <div className="space-y-0.5">
                         <FormLabel className="text-sm flex items-center gap-2">
                           <Pin className="h-3 w-3" />
@@ -217,7 +217,7 @@ export function AnnouncementForm({ initialData, onSubmit, isLoading }: Announcem
                         <Switch
                           checked={field.value}
                           onCheckedChange={field.onChange}
-                          className="data-[state=checked]:bg-indigo-600"
+                          className="data-[state=checked]:bg-aubergine-600"
                         />
                       </FormControl>
                     </FormItem>
@@ -249,7 +249,7 @@ export function AnnouncementForm({ initialData, onSubmit, isLoading }: Announcem
             <div className="flex flex-col gap-3">
               <Button 
                 type="submit" 
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white h-11"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-11"
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -261,7 +261,7 @@ export function AnnouncementForm({ initialData, onSubmit, isLoading }: Announcem
                   initialData ? 'Update Announcement' : 'Publish Announcement'
                 )}
               </Button>
-              <Button type="button" variant="outline" className="w-full h-11 border-slate-200 dark:border-slate-800" disabled={isLoading}>
+              <Button type="button" variant="outline" className="w-full h-11 border-slate-200 dark:border-surface-raised" disabled={isLoading}>
                 Cancel
               </Button>
             </div>

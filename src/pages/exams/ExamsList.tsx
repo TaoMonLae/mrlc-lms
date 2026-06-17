@@ -24,15 +24,15 @@ export default function ExamsList() {
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Exams</h1>
-          <p className="text-sm text-slate-500 mt-1 dark:text-slate-400">Manage assessments, quizzes, and standard tests.</p>
+          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Manage assessments, quizzes, and standard tests.</p>
         </div>
-        <Button className="bg-orange-600 hover:bg-orange-700 text-white w-full sm:w-auto" render={<Link to="/exams/new" />} nativeButton={false}>
+        <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto" render={<Link to="/exams/new" />} nativeButton={false}>
           <Plus className="mr-2 h-4 w-4" />
           Create Exam
         </Button>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row gap-4 items-center">
+      <div className="bg-white dark:bg-surface-indigo p-4 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex flex-col sm:flex-row gap-4 items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input placeholder="Search exams by title, subject..." className="pl-9" />
@@ -41,7 +41,7 @@ export default function ExamsList() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {MOCK_EXAMS.map(exam => (
-          <div key={exam.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm flex flex-col hover:border-orange-200 dark:hover:border-orange-900/50 transition-colors">
+          <div key={exam.id} className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl overflow-hidden shadow-sm flex flex-col hover:border-aubergine-200 dark:hover:border-aubergine-900/50 transition-colors">
             <div className="p-5 flex-1">
               <div className="flex justify-between items-start mb-4">
                 <Badge variant={exam.status === 'PUBLISHED' ? 'default' : exam.status === 'DRAFT' ? 'secondary' : 'outline'}
@@ -69,19 +69,19 @@ export default function ExamsList() {
               <p className="text-slate-500 text-sm mb-4">{exam.subject}</p>
               
               <div className="space-y-2 mt-auto">
-                <div className="flex items-center text-sm text-slate-600 dark:text-slate-400">
+                <div className="flex items-center text-sm text-slate-600 dark:text-slate-300">
                   <Clock className="mr-2 h-4 w-4 text-slate-400" />
                   {exam.durationMinutes} Minutes
                 </div>
-                <div className="flex items-center text-sm text-slate-600 dark:text-slate-400">
+                <div className="flex items-center text-sm text-slate-600 dark:text-slate-300">
                   <CheckCircle2 className="mr-2 h-4 w-4 text-slate-400" />
                   {exam.totalPoints} Points Total
                 </div>
               </div>
             </div>
-            <div className="bg-slate-50 dark:bg-slate-800/50 p-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
+            <div className="bg-slate-50 dark:bg-surface-raised/50 p-4 border-t border-slate-100 dark:border-surface-raised flex justify-between items-center">
               <span className="text-xs text-slate-500 font-medium">{exam.className}</span>
-              <Button variant="ghost" size="sm" className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-900/20" render={<Link to={`/exams/${exam.id}`} />} nativeButton={false}>
+              <Button variant="ghost" size="sm" className="text-aubergine-600 hover:text-aubergine-700 hover:bg-aubergine-50 dark:hover:bg-aubergine-900/20" render={<Link to={`/exams/${exam.id}`} />} nativeButton={false}>
                 Manage <ArrowRight className="ml-1 h-3 w-3" />
               </Button>
             </div>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, Link as LinkIcon } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -32,6 +32,9 @@ type FormValues = z.infer<typeof resourceSchema>;
 export default function LibraryEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [classes, setClasses] = useState<any[]>([]);
+  const [subjects, setSubjects] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const {
     register,
@@ -45,29 +48,88 @@ export default function LibraryEdit() {
   });
 
   useEffect(() => {
-    // Mock loading data
-    reset({
-      title: 'Introduction to React',
-      description: 'A great tutorial on React fundamentals.',
-      type: 'VIDEO',
-      visibility: 'ALL',
-      classId: 'c1',
-      externalUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
-    });
-  }, [reset]);
+    const fetchOptionsAndData = async () => {
+      try {
+        const token = sessionStorage.getItem('auth_token');
+        const headers = { 'Authorization': `Bearer ${token}` };
+        
+        // 1. Fetch dropdown options
+        const [cRes, sRes] = await Promise.all([
+          fetch('/api/classes', { headers }),
+          fetch('/api/subjects', { headers })
+        ]);
+        if (cRes.ok) setClasses(await cRes.json());
+        if (sRes.ok) setSubjects(await sRes.json());
+
+        // 2. Fetch the resource itself
+        const res = await fetch(`/api/library/${id}`, { headers });
+        if (!res.ok) throw new Error('Resource not found');
+        const resource = await res.json();
+
+        reset({
+          title: resource.title,
+          description: resource.description,
+          type: resource.type,
+          visibility: resource.visibility,
+          classId: resource.classId || undefined,
+          subjectId: resource.subjectId || undefined,
+          externalUrl: resource.externalUrl || '',
+        });
+      } catch (err) {
+        console.error('Error loading resource data:', err);
+        toast.error('Failed to load resource details');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchOptionsAndData();
+  }, [id, reset]);
 
   const onSubmit = async (data: FormValues) => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      console.log('Updated resource data:', data);
-      toast.success('Resource updated successfully');
+      const token = sessionStorage.getItem('auth_token');
+      const payload = {
+        title: data.title,
+        description: data.description,
+        type: data.type,
+        visibility: data.visibility,
+        classId: data.classId || null,
+        subjectId: data.subjectId || null,
+        externalUrl: data.externalUrl || null,
+      };
+
+      const res = await fetch(`/api/library/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Failed to update resource');
+      }
+
+      toast.success('Resource updated successfully.');
       navigate(`/library/${id}`);
-    } catch (error) {
-      toast.error('Failed to update resource');
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message || 'Failed to update resource');
     }
   };
 
   const resourceType = watch('type');
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <span className="animate-spin rounded-full h-6 w-6 border-2 border-aubergine-600 border-t-transparent mr-2"></span>
+        <span className="text-slate-500">Loading resource...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-[800px] mx-auto pb-10">
@@ -80,7 +142,7 @@ export default function LibraryEdit() {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm p-6 space-y-6">
+        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl overflow-hidden shadow-sm p-6 space-y-6">
             
           <div className="space-y-2">
             <Label htmlFor="title">Resource Title *</Label>
@@ -136,8 +198,9 @@ export default function LibraryEdit() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">-- Global (All Classes) --</SelectItem>
-                  <SelectItem value="c1">Grade 10A</SelectItem>
-                  <SelectItem value="c2">Grade 10B</SelectItem>
+                  {classes.map(c => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -150,15 +213,16 @@ export default function LibraryEdit() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">-- General System --</SelectItem>
-                  <SelectItem value="math-10">Mathematics</SelectItem>
-                  <SelectItem value="bio-10">Biology</SelectItem>
+                  {subjects.map(s => (
+                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
           </div>
           
           {(resourceType === 'VIDEO' || resourceType === 'LINK') && (
-            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-4">
+            <div className="pt-4 border-t border-slate-100 dark:border-surface-raised space-y-4">
                <div className="space-y-2">
                   <Label htmlFor="externalUrl">External URL</Label>
                   <Input id="externalUrl" {...register('externalUrl')} placeholder="https://..." />
@@ -173,7 +237,7 @@ export default function LibraryEdit() {
            <Button type="button" variant="outline" onClick={() => navigate(`/library/${id}`)}>
              Cancel
            </Button>
-           <Button type="submit" className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900" disabled={isSubmitting}>
+           <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
              {isSubmitting ? 'Saving...' : (
                <>
                  <Save className="mr-2 h-4 w-4" />

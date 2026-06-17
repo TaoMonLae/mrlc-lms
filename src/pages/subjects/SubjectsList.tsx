@@ -66,6 +66,15 @@ const MOCK_SUBJECTS: Subject[] = [
   }
 ];
 
+// Webflow five-stop category palette, cycled across subject cards.
+const CATEGORY_COLORS = [
+  { bar: 'border-l-accent-purple', chip: 'bg-accent-purple/10', icon: 'text-accent-purple' },
+  { bar: 'border-l-accent-blue', chip: 'bg-accent-blue/10', icon: 'text-accent-blue' },
+  { bar: 'border-l-accent-green', chip: 'bg-accent-green/10', icon: 'text-accent-green' },
+  { bar: 'border-l-accent-orange', chip: 'bg-accent-orange/10', icon: 'text-accent-orange' },
+  { bar: 'border-l-accent-pink', chip: 'bg-accent-pink/10', icon: 'text-accent-pink' },
+];
+
 export default function SubjectsList() {
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -83,17 +92,17 @@ export default function SubjectsList() {
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Subject Management</h1>
-          <p className="text-sm text-slate-500 mt-1 dark:text-slate-400">Manage academic subjects and curriculum.</p>
+          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Manage academic subjects and curriculum.</p>
         </div>
         {userRole === 'ADMIN' && (
-          <Button className="bg-orange-600 hover:bg-orange-700 text-white w-full sm:w-auto" render={<Link to="/subjects/new" />} nativeButton={false}>
+          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto" render={<Link to="/subjects/new" />} nativeButton={false}>
             <Plus className="mr-2 h-4 w-4" />
             Add Subject
           </Button>
         )}
       </div>
 
-      <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex gap-4 items-center">
+      <div className="bg-white dark:bg-surface-indigo p-4 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex gap-4 items-center">
         <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input 
@@ -106,17 +115,19 @@ export default function SubjectsList() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredSubjects.map(sub => (
-          <div key={sub.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col">
+        {filteredSubjects.map((sub, idx) => {
+          const c = CATEGORY_COLORS[idx % CATEGORY_COLORS.length];
+          return (
+          <div key={sub.id} className={`bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised border-l-4 ${c.bar} rounded-md overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col`}>
             <div className="p-5 flex-1">
               <div className="flex justify-between items-start mb-4">
                 <div className="flex gap-3">
-                  <div className="mt-1 bg-blue-50 dark:bg-blue-900/30 p-2 rounded-lg">
-                    <Book className="h-5 w-5 text-blue-600" />
+                  <div className={`mt-1 ${c.chip} p-2 rounded-md`}>
+                    <Book className={`h-5 w-5 ${c.icon}`} />
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">
-                      <Link to={`/subjects/${sub.id}`} className="hover:text-orange-600 hover:underline">{sub.name}</Link>
+                      <Link to={`/subjects/${sub.id}`} className="hover:text-aubergine-600 hover:underline">{sub.name}</Link>
                     </h3>
                     <div className="flex items-center gap-2 mt-1">
                       <Badge variant="outline" className="text-xs text-slate-500 font-normal">{sub.code}</Badge>
@@ -153,12 +164,12 @@ export default function SubjectsList() {
                 </DropdownMenu>
               </div>
 
-              <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 h-10 mt-2">
+              <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-2 h-10 mt-2">
                 {sub.description}
               </p>
             </div>
 
-            <div className="bg-slate-50 dark:bg-slate-800/30 p-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-sm">
+            <div className="bg-slate-50 dark:bg-surface-raised/30 p-4 border-t border-slate-100 dark:border-surface-raised flex justify-between items-center text-sm">
               <Badge variant={sub.status === 'ACTIVE' ? 'default' : 'secondary'} 
                 className={sub.status === 'ACTIVE' ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-slate-500 hover:bg-slate-600'}
               >
@@ -171,11 +182,12 @@ export default function SubjectsList() {
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {filteredSubjects.length === 0 && (
-        <div className="py-20 text-center bg-white dark:bg-slate-900 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
+        <div className="py-20 text-center bg-white dark:bg-surface-indigo rounded-xl border border-dashed border-slate-200 dark:border-surface-raised">
           <BookOpen className="h-12 w-12 mx-auto text-slate-200 mb-3" />
           <p className="text-lg font-medium text-slate-900 dark:text-white">No subjects found</p>
           <p className="text-sm text-slate-500">Try adjusting your filters or search term.</p>

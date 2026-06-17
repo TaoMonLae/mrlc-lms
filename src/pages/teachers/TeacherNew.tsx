@@ -77,12 +77,12 @@ export default function TeacherNew() {
           Back to Teachers
         </Button>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Add New Teacher</h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-400">Fill in the details to register a new teacher in the system.</p>
+        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Fill in the details to register a new teacher in the system.</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-4">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Personal Information</h2>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -139,7 +139,7 @@ export default function TeacherNew() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-4">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Professional Details</h2>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -170,9 +170,9 @@ export default function TeacherNew() {
         </div>
 
         <div className="space-y-6">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-4">
             <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-2">Profile Picture</h2>
-            <div className="aspect-square w-full rounded-lg border-2 border-dashed border-slate-100 dark:border-slate-800 flex flex-col items-center justify-center text-slate-400 bg-slate-50/50 dark:bg-slate-800/30">
+            <div className="aspect-square w-full rounded-lg border-2 border-dashed border-slate-100 dark:border-surface-raised flex flex-col items-center justify-center text-slate-400 bg-slate-50/50 dark:bg-surface-raised/30">
                <ImageIcon className="h-10 w-10 mb-2 opacity-20" />
                <p className="text-xs">Drag & drop or click to upload</p>
                <Button variant="ghost" size="sm" type="button" className="mt-4 text-xs">Browse Files</Button>
@@ -181,7 +181,7 @@ export default function TeacherNew() {
           </div>
 
           <div className="space-y-3">
-             <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-700 text-white" disabled={isSubmitting}>
+             <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
                {isSubmitting ? 'Adding...' : (
                  <>
                    <UserPlus className="mr-2 h-4 w-4" />

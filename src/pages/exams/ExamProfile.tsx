@@ -36,7 +36,7 @@ export default function ExamProfile() {
             <Button variant="outline" render={<Link to={`/exams/${id}/edit`} />} nativeButton={false}>
               <Edit className="mr-2 h-4 w-4" /> Edit
             </Button>
-            <Button variant="secondary" className="text-orange-600 bg-orange-50 hover:bg-orange-100 dark:bg-orange-900/20 dark:hover:bg-orange-900/40" render={<Link to={`/exams/${id}/take`} />} nativeButton={false}>
+            <Button variant="secondary" className="text-aubergine-600 bg-aubergine-50 hover:bg-aubergine-100 dark:bg-aubergine-900/20 dark:hover:bg-aubergine-900/40" render={<Link to={`/exams/${id}/take`} />} nativeButton={false}>
               <Play className="mr-2 h-4 w-4" /> Preview
             </Button>
           </div>
@@ -44,7 +44,7 @@ export default function ExamProfile() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-         <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
+         <div className="bg-white dark:bg-surface-indigo p-5 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex items-center gap-4">
           <div className="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600">
             <Users className="h-6 w-6" />
           </div>
@@ -53,7 +53,7 @@ export default function ExamProfile() {
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-1">Submitted</p>
           </div>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
+        <div className="bg-white dark:bg-surface-indigo p-5 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex items-center gap-4">
           <div className="h-12 w-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600">
             <BarChart3 className="h-6 w-6" />
           </div>
@@ -62,8 +62,8 @@ export default function ExamProfile() {
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-1">Avg Score</p>
           </div>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
-          <div className="h-12 w-12 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600">
+        <div className="bg-white dark:bg-surface-indigo p-5 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex items-center gap-4">
+          <div className="h-12 w-12 rounded-full bg-aubergine-100 dark:bg-aubergine-900/30 flex items-center justify-center text-aubergine-600">
             <Clock className="h-6 w-6" />
           </div>
           <div>
@@ -71,7 +71,7 @@ export default function ExamProfile() {
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-1">Duration</p>
           </div>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
+        <div className="bg-white dark:bg-surface-indigo p-5 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex items-center gap-4">
           <div className="h-12 w-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600">
             <CheckCircle2 className="h-6 w-6" />
           </div>
@@ -84,14 +84,14 @@ export default function ExamProfile() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+          <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl overflow-hidden shadow-sm">
+            <div className="p-4 border-b border-slate-200 dark:border-surface-raised flex justify-between items-center">
               <h2 className="font-semibold text-slate-900 dark:text-white">Recent Submissions</h2>
               <Button variant="ghost" size="sm" render={<Link to={`/exams/${id}/results`} />} nativeButton={false}>View All Results</Button>
             </div>
             <div className="p-0">
                <table className="w-full text-left text-sm">
-                <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-slate-800/50">
+                <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-surface-raised/50">
                   <tr>
                     <th className="px-6 py-3">Student</th>
                     <th className="px-6 py-3">Score</th>
@@ -100,7 +100,7 @@ export default function ExamProfile() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                  <tr className="hover:bg-slate-50 dark:hover:bg-surface-raised/50">
                     <td className="px-6 py-3 font-medium text-slate-900 dark:text-white">Min Khant Aung</td>
                     <td className="px-6 py-3 text-emerald-600 font-medium">95 / 100</td>
                     <td className="px-6 py-3 text-slate-500">45m 12s</td>
@@ -108,12 +108,12 @@ export default function ExamProfile() {
                       <Button variant="ghost" size="sm">Details</Button>
                     </td>
                   </tr>
-                  <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                  <tr className="hover:bg-slate-50 dark:hover:bg-surface-raised/50">
                     <td className="px-6 py-3 font-medium text-slate-900 dark:text-white">Zun Pwint Phyu</td>
                     <td className="px-6 py-3 text-amber-600 font-medium">Needs Grading</td>
                     <td className="px-6 py-3 text-slate-500">59m 40s</td>
                     <td className="px-6 py-3 text-right">
-                      <Button variant="outline" size="sm" className="text-orange-600 border-orange-200 hover:bg-orange-50">Grade Now</Button>
+                      <Button variant="outline" size="sm" className="text-aubergine-600 border-aubergine-200 hover:bg-aubergine-50">Grade Now</Button>
                     </td>
                   </tr>
                 </tbody>
@@ -123,7 +123,7 @@ export default function ExamProfile() {
         </div>
 
         <div className="space-y-6">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm">
+          <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-5 shadow-sm">
             <h2 className="font-semibold text-slate-900 dark:text-white mb-4 flex items-center">
               <Settings className="h-4 w-4 mr-2" /> Properties
             </h2>

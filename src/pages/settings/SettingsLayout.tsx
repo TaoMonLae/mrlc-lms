@@ -23,7 +23,7 @@ export default function SettingsLayout() {
     <div className="space-y-6 max-w-6xl mx-auto pb-10">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Settings</h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-400">Manage school profile, branding, and system configurations.</p>
+        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Manage school profile, branding, and system configurations.</p>
       </div>
 
       <div className="flex flex-col md:flex-row gap-6">
@@ -38,12 +38,12 @@ export default function SettingsLayout() {
                   to={item.path}
                   className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                     isActive
-                      ? 'bg-orange-100 text-orange-900 dark:bg-orange-900/30 dark:text-orange-300'
-                      : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'
+                      ? 'bg-aubergine-100 text-aubergine-900 dark:bg-aubergine-900/30 dark:text-aubergine-300'
+                      : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-surface-raised'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <Icon className={`h-4 w-4 ${isActive ? 'text-orange-600 dark:text-orange-400' : 'text-slate-400'}`} />
+                    <Icon className={`h-4 w-4 ${isActive ? 'text-aubergine-600 dark:text-aubergine-400' : 'text-slate-400'}`} />
                     {item.name}
                   </div>
                   {isActive && <ChevronRight className="h-4 w-4 hidden md:block opacity-50" />}
@@ -54,7 +54,7 @@ export default function SettingsLayout() {
         </div>
 
         <div className="flex-1">
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm min-h-[500px]">
+          <div className="bg-white dark:bg-surface-indigo rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm min-h-[500px]">
             <Outlet />
           </div>
         </div>

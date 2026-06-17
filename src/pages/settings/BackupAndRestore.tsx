@@ -206,8 +206,8 @@ export default function BackupAndRestore() {
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Database Backup */}
-            <div className="border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col items-center text-center hover:border-orange-500/50 transition-colors bg-white dark:bg-slate-900 shadow-sm cursor-pointer" onClick={() => handleBackup('Database', 'sql')}>
-              <div className="h-12 w-12 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center mb-3">
+            <div className="border border-slate-200 dark:border-surface-raised rounded-xl p-4 flex flex-col items-center text-center hover:border-aubergine-500/50 transition-colors bg-white dark:bg-surface-indigo shadow-sm cursor-pointer" onClick={() => handleBackup('Database', 'sql')}>
+              <div className="h-12 w-12 bg-aubergine-100 dark:bg-aubergine-900/30 text-aubergine-600 dark:text-aubergine-400 rounded-full flex items-center justify-center mb-3">
                 <Database className="h-6 w-6" />
               </div>
               <h3 className="font-semibold text-slate-900 dark:text-white mb-1">Database</h3>
@@ -216,7 +216,7 @@ export default function BackupAndRestore() {
             </div>
 
             {/* Uploaded Files */}
-            <div className="border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col items-center text-center hover:border-orange-500/50 transition-colors bg-white dark:bg-slate-900 shadow-sm cursor-pointer" onClick={() => handleBackup('Files Archive', 'zip')}>
+            <div className="border border-slate-200 dark:border-surface-raised rounded-xl p-4 flex flex-col items-center text-center hover:border-aubergine-500/50 transition-colors bg-white dark:bg-surface-indigo shadow-sm cursor-pointer" onClick={() => handleBackup('Files Archive', 'zip')}>
               <div className="h-12 w-12 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-full flex items-center justify-center mb-3">
                 <FolderArchive className="h-6 w-6" />
               </div>
@@ -226,7 +226,7 @@ export default function BackupAndRestore() {
             </div>
 
             {/* JSON Export */}
-            <div className="border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col items-center text-center hover:border-orange-500/50 transition-colors bg-white dark:bg-slate-900 shadow-sm cursor-pointer" onClick={() => handleBackup('JSON Export', 'json')}>
+            <div className="border border-slate-200 dark:border-surface-raised rounded-xl p-4 flex flex-col items-center text-center hover:border-aubergine-500/50 transition-colors bg-white dark:bg-surface-indigo shadow-sm cursor-pointer" onClick={() => handleBackup('JSON Export', 'json')}>
               <div className="h-12 w-12 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mb-3">
                 <FileJson className="h-6 w-6" />
               </div>
@@ -236,7 +236,7 @@ export default function BackupAndRestore() {
             </div>
 
             {/* CSV Export */}
-            <div className="border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col items-center text-center hover:border-orange-500/50 transition-colors bg-white dark:bg-slate-900 shadow-sm cursor-pointer" onClick={() => handleBackup('CSV Export', 'csv')}>
+            <div className="border border-slate-200 dark:border-surface-raised rounded-xl p-4 flex flex-col items-center text-center hover:border-aubergine-500/50 transition-colors bg-white dark:bg-surface-indigo shadow-sm cursor-pointer" onClick={() => handleBackup('CSV Export', 'csv')}>
               <div className="h-12 w-12 bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 rounded-full flex items-center justify-center mb-3">
                 <FileSpreadsheet className="h-6 w-6" />
               </div>
@@ -253,8 +253,8 @@ export default function BackupAndRestore() {
             <Upload className="h-5 w-5" /> Restore Data
           </h2>
 
-          <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm text-center">
-            <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-8 mb-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+          <div className="border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo p-6 rounded-xl shadow-sm text-center">
+            <div className="border-2 border-dashed border-slate-300 dark:border-surface-raised rounded-xl p-8 mb-4 hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors">
               <Upload className="h-10 w-10 text-slate-400 mx-auto mb-3" />
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Choose Backup File to Restore</h3>
               <p className="text-xs text-slate-500 mt-1 mb-4">Accepts .sql, .json, .csv, .zip formats</p>
@@ -290,10 +290,10 @@ export default function BackupAndRestore() {
             <History className="h-5 w-5" /> Backup History
          </h2>
          
-         <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900 shadow-sm">
+         <div className="border border-slate-200 dark:border-surface-raised rounded-xl overflow-hidden bg-white dark:bg-surface-indigo shadow-sm">
             <div className="overflow-x-auto">
                <table className="w-full text-sm text-left">
-                  <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                  <thead className="bg-slate-50 dark:bg-surface-raised/50 text-slate-500 dark:text-slate-300 border-b border-slate-200 dark:border-surface-raised">
                      <tr>
                         <th className="px-4 py-3 font-semibold">Date & Time</th>
                         <th className="px-4 py-3 font-semibold">Type</th>
@@ -304,17 +304,17 @@ export default function BackupAndRestore() {
                   </thead>
                   <tbody>
                      {logs.map((log) => (
-                        <tr key={log.id} className="border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/20">
+                        <tr key={log.id} className="border-b border-slate-100 dark:border-surface-raised/50 hover:bg-slate-50 dark:hover:bg-surface-raised/20">
                            <td className="px-4 py-3 text-slate-900 dark:text-slate-300">
                               {new Date(log.createdAt).toLocaleString()}
                            </td>
                            <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">
                               {log.type}
                            </td>
-                           <td className="px-4 py-3 text-slate-600 dark:text-slate-400 truncate max-w-[200px]">
+                           <td className="px-4 py-3 text-slate-600 dark:text-slate-300 truncate max-w-[200px]">
                               {log.fileName}
                            </td>
-                           <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
+                           <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
                               {log.fileSize}
                            </td>
                            <td className="px-4 py-3">

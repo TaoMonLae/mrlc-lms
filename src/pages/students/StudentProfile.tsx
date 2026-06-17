@@ -47,7 +47,7 @@ export default function StudentProfile() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <span className="animate-spin rounded-full h-6 w-6 border-2 border-orange-600 border-t-transparent mr-2"></span>
+        <span className="animate-spin rounded-full h-6 w-6 border-2 border-aubergine-600 border-t-transparent mr-2"></span>
         <span className="text-slate-500">Loading student profile...</span>
       </div>
     );
@@ -96,7 +96,7 @@ export default function StudentProfile() {
             <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{s.firstName} {s.lastName}</h1>
             <Badge className="bg-emerald-500">{s.status}</Badge>
           </div>
-          <p className="text-sm font-mono text-slate-500 mt-1 dark:text-slate-400">{s.studentId} • Enrolled {new Date(s.enrollmentDate).toLocaleDateString()}</p>
+          <p className="text-sm font-mono text-slate-500 mt-1 dark:text-slate-300">{s.studentId} • Enrolled {new Date(s.enrollmentDate).toLocaleDateString()}</p>
         </div>
         
         <div className="flex gap-2">
@@ -104,7 +104,7 @@ export default function StudentProfile() {
             <Edit className="mr-2 h-4 w-4" />
             Edit Profile
           </Button>
-          <Button variant="secondary" className="text-orange-600 bg-orange-50 hover:bg-orange-100 dark:bg-orange-900/20 dark:hover:bg-orange-900/40">
+          <Button variant="secondary" className="text-aubergine-600 bg-aubergine-50 hover:bg-aubergine-100 dark:bg-aubergine-900/20 dark:hover:bg-aubergine-900/40">
             <FileText className="mr-2 h-4 w-4" />
             Generate Report
           </Button>
@@ -115,14 +115,14 @@ export default function StudentProfile() {
         
         {/* Left Sidebar Info Card */}
         <div className="space-y-6">
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm flex flex-col items-center">
-            <div className="h-24 w-24 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-4xl text-slate-500 font-medium mb-4 ring-4 ring-white dark:ring-slate-900 shadow-sm">
+          <div className="bg-white dark:bg-surface-indigo rounded-xl border border-slate-200 dark:border-surface-raised p-6 shadow-sm flex flex-col items-center">
+            <div className="h-24 w-24 rounded-full bg-slate-100 dark:bg-surface-raised flex items-center justify-center text-4xl text-slate-500 font-medium mb-4 ring-4 ring-white dark:ring-slate-900 shadow-sm">
               {s.firstName.charAt(0)}{s.lastName.charAt(0)}
             </div>
             <h2 className="font-bold text-lg text-slate-900 dark:text-white">{s.firstName} {s.lastName}</h2>
             <p className="font-semibold text-slate-500 text-sm">{s.class}</p>
             
-            <div className="w-full mt-6 space-y-4 pt-6 border-t border-slate-100 dark:border-slate-800">
+            <div className="w-full mt-6 space-y-4 pt-6 border-t border-slate-100 dark:border-surface-raised">
               <div className="flex justify-between items-center text-sm">
                 <span className="text-slate-500">Gender</span>
                 <span className="font-medium capitalize text-slate-900 dark:text-slate-300">{s.gender.toLowerCase()}</span>
@@ -138,7 +138,7 @@ export default function StudentProfile() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+          <div className="bg-white dark:bg-surface-indigo rounded-xl border border-slate-200 dark:border-surface-raised p-6 shadow-sm">
             <h3 className="font-bold text-slate-900 dark:text-white mb-4">Contact Information</h3>
             <div className="space-y-4 text-sm">
               <div className="flex gap-3">
@@ -168,19 +168,19 @@ export default function StudentProfile() {
         </div>
 
         {/* Right Main Content Tabs */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-surface-indigo rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
           <Tabs defaultValue="overview" className="w-full">
-            <div className="border-b border-slate-200 dark:border-slate-800 px-2 overflow-x-auto">
+            <div className="border-b border-slate-200 dark:border-surface-raised px-2 overflow-x-auto">
               <TabsList className="h-14 w-full justify-start bg-transparent">
-                <TabsTrigger value="overview" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-orange-600 rounded-none h-14 px-6 font-semibold">Overview</TabsTrigger>
-                <TabsTrigger value="attendance" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-orange-600 rounded-none h-14 px-6 font-semibold">Attendance</TabsTrigger>
-                <TabsTrigger value="exams" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-orange-600 rounded-none h-14 px-6 font-semibold">Exams</TabsTrigger>
-                <TabsTrigger value="fees" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-orange-600 rounded-none h-14 px-6 font-semibold">Fees</TabsTrigger>
-                <TabsTrigger value="documents" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-orange-600 rounded-none h-14 px-6 font-semibold flex items-center gap-2">
+                <TabsTrigger value="overview" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-aubergine-600 rounded-none h-14 px-6 font-semibold">Overview</TabsTrigger>
+                <TabsTrigger value="attendance" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-aubergine-600 rounded-none h-14 px-6 font-semibold">Attendance</TabsTrigger>
+                <TabsTrigger value="exams" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-aubergine-600 rounded-none h-14 px-6 font-semibold">Exams</TabsTrigger>
+                <TabsTrigger value="fees" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-aubergine-600 rounded-none h-14 px-6 font-semibold">Fees</TabsTrigger>
+                <TabsTrigger value="documents" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-aubergine-600 rounded-none h-14 px-6 font-semibold flex items-center gap-2">
                   <FileText className="h-4 w-4" />
                   Documents
                 </TabsTrigger>
-                <TabsTrigger value="cases" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-orange-600 rounded-none h-14 px-6 font-semibold">Cases</TabsTrigger>
+                <TabsTrigger value="cases" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-aubergine-600 rounded-none h-14 px-6 font-semibold">Cases</TabsTrigger>
               </TabsList>
             </div>
             
@@ -188,13 +188,13 @@ export default function StudentProfile() {
             <TabsContent value="overview" className="p-6 m-0 border-none space-y-8 focus-visible:outline-none focus-visible:ring-0">
               <div>
                 <h3 className="font-bold text-slate-900 dark:text-white mb-2">Remarks & Notes</h3>
-                <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg text-sm text-slate-700 dark:text-slate-300 leading-relaxed border border-slate-100 dark:border-slate-800">
+                <div className="bg-slate-50 dark:bg-surface-raised/50 p-4 rounded-lg text-sm text-slate-700 dark:text-slate-300 leading-relaxed border border-slate-100 dark:border-surface-raised">
                   {s.notes}
                 </div>
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="p-4 border border-slate-200 dark:border-slate-800 rounded-lg flex items-start gap-4">
+                <div className="p-4 border border-slate-200 dark:border-surface-raised rounded-lg flex items-start gap-4">
                   <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
                     <CheckCircle2 className="h-5 w-5" />
                   </div>
@@ -204,7 +204,7 @@ export default function StudentProfile() {
                   </div>
                 </div>
                 
-                <div className="p-4 border border-slate-200 dark:border-slate-800 rounded-lg flex items-start gap-4">
+                <div className="p-4 border border-slate-200 dark:border-surface-raised rounded-lg flex items-start gap-4">
                   <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
                     <FileText className="h-5 w-5" />
                   </div>
@@ -214,8 +214,8 @@ export default function StudentProfile() {
                   </div>
                 </div>
 
-                <div className="p-4 border border-slate-200 dark:border-slate-800 rounded-lg flex items-start gap-4">
-                  <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 shrink-0">
+                <div className="p-4 border border-slate-200 dark:border-surface-raised rounded-lg flex items-start gap-4">
+                  <div className="h-10 w-10 rounded-full bg-aubergine-100 flex items-center justify-center text-aubergine-600 shrink-0">
                     <CreditCard className="h-5 w-5" />
                   </div>
                   <div>

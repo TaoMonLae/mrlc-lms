@@ -74,11 +74,11 @@ export default function ClassNew() {
           Back to Classes
         </Button>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Create New Class</h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-400">Define a new academic class, its level, and year.</p>
+        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Define a new academic class, its level, and year.</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm space-y-4">
+        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Class Name</Label>
             <Input id="name" {...register('name')} placeholder="e.g. GED Prep Morning" />
@@ -137,7 +137,7 @@ export default function ClassNew() {
            <Button type="button" variant="outline" onClick={() => navigate('/classes')}>
              Cancel
            </Button>
-           <Button type="submit" className="bg-orange-600 hover:bg-orange-700 text-white" disabled={isSubmitting}>
+           <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
              {isSubmitting ? 'Creating...' : (
                <>
                  <Plus className="mr-2 h-4 w-4" />

@@ -108,15 +108,15 @@ export default function TeachersList() {
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Teacher Management</h1>
-          <p className="text-sm text-slate-500 mt-1 dark:text-slate-400">Manage faculty staff, assignments, and profiles.</p>
+          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Manage faculty staff, assignments, and profiles.</p>
         </div>
-        <Button className="bg-orange-600 hover:bg-orange-700 text-white w-full sm:w-auto" render={<Link to="/teachers/new" />} nativeButton={false}>
+        <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto" render={<Link to="/teachers/new" />} nativeButton={false}>
           <Plus className="mr-2 h-4 w-4" />
           Add Teacher
         </Button>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row gap-4 items-center">
+      <div className="bg-white dark:bg-surface-indigo p-4 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex flex-col md:flex-row gap-4 items-center">
         <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input 
@@ -142,9 +142,9 @@ export default function TeachersList() {
       </div>
 
       {/* Desktop Table View */}
-      <div className="hidden lg:block bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
+      <div className="hidden lg:block bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl overflow-hidden shadow-sm">
         <table className="w-full text-left text-sm border-collapse">
-          <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
+          <thead className="bg-slate-50 dark:bg-surface-raised/50 border-b border-slate-100 dark:border-surface-raised">
             <tr className="text-slate-500 uppercase tracking-wider font-semibold text-[11px]">
               <th className="px-6 py-4">Teacher</th>
               <th className="px-6 py-4">Contact</th>
@@ -156,17 +156,17 @@ export default function TeachersList() {
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {filteredTeachers.map(teacher => (
-              <tr key={teacher.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+              <tr key={teacher.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors">
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
-                    <img src={teacher.photoUrl} alt={teacher.firstName} className="h-10 w-10 rounded-full border border-slate-200 dark:border-slate-700" />
+                    <img src={teacher.photoUrl} alt={teacher.firstName} className="h-10 w-10 rounded-full border border-slate-200 dark:border-surface-raised" />
                     <div>
                       <div className="font-semibold text-slate-900 dark:text-white">{teacher.firstName} {teacher.lastName}</div>
                       <div className="text-xs text-slate-500 font-mono">{teacher.teacherId}</div>
                     </div>
                   </div>
                 </td>
-                <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
+                <td className="px-6 py-4 text-slate-600 dark:text-slate-300">
                   <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-2"><Mail className="h-3 w-3" /> {teacher.email}</div>
                     <div className="flex items-center gap-2"><Phone className="h-3 w-3" /> {teacher.phone}</div>
@@ -186,7 +186,7 @@ export default function TeachersList() {
                     {teacher.status}
                   </Badge>
                 </td>
-                <td className="px-6 py-4 text-xs font-medium text-slate-600 dark:text-slate-400">
+                <td className="px-6 py-4 text-xs font-medium text-slate-600 dark:text-slate-300">
                   {teacher.employmentType.replace('_', ' ')}
                 </td>
                 <td className="px-6 py-4 text-right">
@@ -220,7 +220,7 @@ export default function TeachersList() {
       {/* Mobile Grid View */}
       <div className="grid lg:hidden grid-cols-1 md:grid-cols-2 gap-4">
         {filteredTeachers.map(teacher => (
-          <Link key={teacher.id} to={`/teachers/${teacher.id}`} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm hover:border-orange-500 transition-colors">
+          <Link key={teacher.id} to={`/teachers/${teacher.id}`} className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-5 shadow-sm hover:border-aubergine-500 transition-colors">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
                 <img src={teacher.photoUrl} alt={teacher.firstName} className="h-12 w-12 rounded-full border" />
@@ -236,12 +236,12 @@ export default function TeachersList() {
               </Badge>
             </div>
             
-            <div className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
+            <div className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
               <div className="flex items-center gap-2"><Mail className="h-3 w-3 text-slate-400" /> {teacher.email}</div>
               <div className="flex items-center gap-2"><GraduationCap className="h-3 w-3 text-slate-400" /> {teacher.subjects.join(', ')}</div>
             </div>
             
-            <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-xs">
+            <div className="mt-4 pt-4 border-t border-slate-100 dark:border-surface-raised flex justify-between items-center text-xs">
               <span className="font-medium text-slate-500 uppercase">{teacher.employmentType.replace('_', ' ')}</span>
               <span className="text-slate-400">Joined {new Date(teacher.joinedDate).toLocaleDateString()}</span>
             </div>

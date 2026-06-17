@@ -73,8 +73,8 @@ export default function StudentResults() {
 
       {/* Performance Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="md:col-span-2 border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900 overflow-hidden">
-          <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800/50">
+        <Card className="md:col-span-2 border-slate-200 dark:border-surface-raised shadow-sm bg-white dark:bg-surface-indigo overflow-hidden">
+          <CardHeader className="bg-slate-50 dark:bg-surface-raised/50 border-b border-slate-100 dark:border-surface-raised/50">
             <CardTitle className="text-sm flex items-center gap-2">
               <BarChart3 className="h-4 w-4 text-emerald-600" /> Performance Analytics
             </CardTitle>
@@ -100,12 +100,12 @@ export default function StudentResults() {
                     </div>
                     <p className="text-lg font-black text-emerald-900 dark:text-white">3.85 / 4.0</p>
                   </div>
-                  <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-100/50 dark:border-indigo-900/50">
+                  <div className="p-3 bg-aubergine-50 dark:bg-aubergine-900/20 rounded-xl border border-aubergine-100/50 dark:border-aubergine-900/50">
                     <div className="flex items-center justify-between mb-1">
-                      <p className="text-[10px] font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-widest">Credits Earned</p>
-                      <Trophy className="h-3 w-3 text-indigo-600" />
+                      <p className="text-[10px] font-bold text-aubergine-700 dark:text-aubergine-400 uppercase tracking-widest">Credits Earned</p>
+                      <Trophy className="h-3 w-3 text-aubergine-600" />
                     </div>
-                    <p className="text-lg font-black text-indigo-900 dark:text-white">18.0</p>
+                    <p className="text-lg font-black text-aubergine-900 dark:text-white">18.0</p>
                   </div>
                 </div>
                 <p className="text-xs text-slate-500 leading-relaxed">
@@ -116,8 +116,8 @@ export default function StudentResults() {
           </CardContent>
         </Card>
 
-        <Card className="border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-          <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800/50">
+        <Card className="border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
+          <CardHeader className="bg-slate-50 dark:bg-surface-raised/50 border-b border-slate-100 dark:border-surface-raised/50">
             <CardTitle className="text-sm flex items-center gap-2">
               <Trophy className="h-4 w-4 text-amber-500" /> Achievement Highlights
             </CardTitle>
@@ -132,7 +132,7 @@ export default function StudentResults() {
                 <p className="text-[10px] text-slate-500">Ranked in top 5% of class</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 border-t border-slate-100 dark:border-slate-800 pt-4">
+            <div className="flex items-center gap-3 border-t border-slate-100 dark:border-surface-raised pt-4">
               <div className="h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600">
                 <CheckCircle2 className="h-5 w-5" />
               </div>
@@ -149,11 +149,11 @@ export default function StudentResults() {
       <div className="space-y-6">
         <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">Recent Graded Assessments</h3>
         {results.map((result) => (
-          <Card key={result.id} className="border-slate-200 dark:border-slate-800 hover:shadow-md transition-all overflow-hidden bg-white dark:bg-slate-900">
+          <Card key={result.id} className="border-slate-200 dark:border-surface-raised hover:shadow-md transition-all overflow-hidden bg-white dark:bg-surface-indigo">
             <div className="flex flex-col md:flex-row">
               {/* Left Score Box */}
-              <div className="md:w-48 bg-slate-50 dark:bg-slate-800/50 border-b md:border-b-0 md:border-r border-slate-100 dark:border-slate-800 p-6 flex flex-col items-center justify-center text-center">
-                <div className="h-16 w-16 rounded-full bg-white dark:bg-slate-800 border-4 border-emerald-500 flex items-center justify-center mb-3 shadow-sm">
+              <div className="md:w-48 bg-slate-50 dark:bg-surface-raised/50 border-b md:border-b-0 md:border-r border-slate-100 dark:border-surface-raised p-6 flex flex-col items-center justify-center text-center">
+                <div className="h-16 w-16 rounded-full bg-white dark:bg-surface-raised border-4 border-emerald-500 flex items-center justify-center mb-3 shadow-sm">
                   <span className="text-2xl font-black text-slate-900 dark:text-white leading-none">{result.grade}</span>
                 </div>
                 <p className="text-lg font-black text-slate-900 dark:text-white">{result.score} <span className="text-slate-400 font-normal text-sm">/ {result.total}</span></p>
@@ -165,14 +165,14 @@ export default function StudentResults() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <Badge className="bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 uppercase font-bold text-[9px] tracking-widest border-none">
+                      <Badge className="bg-aubergine-50 text-aubergine-700 dark:bg-aubergine-900/30 dark:text-aubergine-400 uppercase font-bold text-[9px] tracking-widest border-none">
                         {result.subject}
                       </Badge>
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Released {result.date}</span>
                     </div>
                     <CardTitle className="text-lg text-slate-900 dark:text-white font-bold">{result.title}</CardTitle>
                   </div>
-                  <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800/50 px-4 py-2 rounded-xl">
+                  <div className="flex items-center gap-4 bg-slate-50 dark:bg-surface-raised/50 px-4 py-2 rounded-xl">
                     <div className="text-center">
                       <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-1">Class Avg</p>
                       <p className="text-xs font-bold text-slate-900 dark:text-slate-300">{result.classAverage}</p>
@@ -190,14 +190,14 @@ export default function StudentResults() {
                     <MessageSquare className="h-3.5 w-3.5 text-amber-600" />
                     <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-widest">Teacher's Feedback</p>
                   </div>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 italic leading-relaxed">"{result.feedback}"</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 italic leading-relaxed">"{result.feedback}"</p>
                 </div>
 
                 <div className="flex items-center justify-between pt-2">
-                  <Button variant="outline" size="sm" className="h-8 text-xs font-bold gap-2 text-slate-600 border-slate-200 dark:border-slate-800">
+                  <Button variant="outline" size="sm" className="h-8 text-xs font-bold gap-2 text-slate-600 border-slate-200 dark:border-surface-raised">
                     <FileText className="h-3.5 w-3.5" /> View Full Paper
                   </Button>
-                  <Button variant="ghost" size="sm" className="h-8 text-xs font-bold text-indigo-600 uppercase tracking-widest hover:bg-indigo-50">
+                  <Button variant="ghost" size="sm" className="h-8 text-xs font-bold text-aubergine-600 uppercase tracking-widest hover:bg-aubergine-50">
                     Analysis Report <ChevronRight className="h-3.5 w-3.5" />
                   </Button>
                 </div>

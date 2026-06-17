@@ -84,10 +84,10 @@ export default function PaymentNew() {
           Back to Fees
         </Button>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Record Payment</h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-400">Add a new fee payment to the system.</p>
+        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Add a new fee payment to the system.</p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-xl shadow-sm">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised p-6 rounded-xl shadow-sm">
          
          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2 md:col-span-2">
@@ -144,7 +144,7 @@ export default function PaymentNew() {
 
             <div className="space-y-2">
               <Label htmlFor="receiptNumber">Receipt Number (Auto)</Label>
-              <Input id="receiptNumber" {...register('receiptNumber')} readOnly className="bg-slate-50 dark:bg-slate-800/50" />
+              <Input id="receiptNumber" {...register('receiptNumber')} readOnly className="bg-slate-50 dark:bg-surface-raised/50" />
             </div>
 
             <div className="space-y-2 md:col-span-2">
@@ -153,11 +153,11 @@ export default function PaymentNew() {
             </div>
          </div>
 
-         <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
+         <div className="pt-4 border-t border-slate-100 dark:border-surface-raised flex justify-end gap-3">
              <Button type="button" variant="outline" onClick={() => navigate('/fees')}>
                Cancel
              </Button>
-             <Button type="submit" className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900" disabled={isSubmitting}>
+             <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
                {isSubmitting ? 'Recording...' : (
                  <>
                    <Receipt className="mr-2 h-4 w-4" />

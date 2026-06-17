@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Search, MoreVertical, Edit2, ShieldAlert, CheckCircle2, UserX, UserCheck, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -23,57 +23,53 @@ import { User } from '../../lib/permissions';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 
-const MOCK_USERS: User[] = [
-  {
-    id: 'u1',
-    name: 'Admin User',
-    username: 'admin',
-    email: 'admin@school.edu',
-    role: 'ADMIN',
-    status: 'ACTIVE',
-    lastLoginAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 mins ago
-    createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: '2024-01-01T00:00:00Z',
-  },
-  {
-    id: 'u2',
-    name: 'Sarah Principal',
-    username: 'sprincipal',
-    email: 'sarah.p@school.edu',
-    role: 'ADMIN',
-    status: 'ACTIVE',
-    lastLoginAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-    createdAt: '2024-01-02T00:00:00Z',
-    updatedAt: '2024-01-02T00:00:00Z',
-  },
-  {
-    id: 'u3',
-    name: 'John Teacher',
-    username: 'jteacher',
-    role: 'TEACHER',
-    teacherId: 't1',
-    status: 'ACTIVE',
-    createdAt: '2024-02-01T00:00:00Z',
-    updatedAt: '2024-02-01T00:00:00Z',
-  },
-  {
-    id: 'u4',
-    name: 'Mike Student',
-    username: 'mstudent',
-    role: 'STUDENT',
-    studentId: 's1',
-    status: 'DISABLED',
-    createdAt: '2024-02-05T00:00:00Z',
-    updatedAt: '2024-02-05T00:00:00Z',
-  }
-];
+interface ApiUser {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  email: string;
+  role: User['role'];
+  isActive: boolean;
+  createdAt?: string;
+}
+
+function mapUser(u: ApiUser): User {
+  return {
+    id: u.id,
+    name: `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() || u.email,
+    username: u.email ? u.email.split('@')[0] : '',
+    email: u.email,
+    role: u.role,
+    status: u.isActive ? 'ACTIVE' : 'DISABLED',
+    createdAt: u.createdAt ?? new Date().toISOString(),
+    updatedAt: u.createdAt ?? new Date().toISOString(),
+  };
+}
 
 export default function UsersList() {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
-  const [users, setUsers] = useState<User[]>(MOCK_USERS);
-  
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const token = sessionStorage.getItem('auth_token');
+        const res = await fetch('/api/users', { headers: { Authorization: `Bearer ${token}` } });
+        if (!res.ok) throw new Error('Failed to load users');
+        const data: ApiUser[] = await res.json();
+        setUsers(data.map(mapUser));
+      } catch (e: any) {
+        toast.error(e.message || 'Failed to load users');
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
   // Count active admins to prevent deleting the last one
   const activeAdminCount = users.filter(u => u.role === 'ADMIN' && u.status === 'ACTIVE').length;
 
@@ -89,19 +85,29 @@ export default function UsersList() {
     return matchesSearch && matchesRole && matchesStatus;
   });
 
-  const handleToggleStatus = (userId: string, currentStatus: string, role: string) => {
+  const handleToggleStatus = async (userId: string, currentStatus: string, role: string) => {
     if (role === 'ADMIN' && currentStatus === 'ACTIVE' && activeAdminCount <= 1) {
       toast.error('Cannot disable the last active administrator.');
       return;
     }
-    
-    setUsers(users.map(u => {
-      if (u.id === userId) {
-        return { ...u, status: currentStatus === 'ACTIVE' ? 'DISABLED' : 'ACTIVE' };
+
+    const newStatus: 'ACTIVE' | 'DISABLED' = currentStatus === 'ACTIVE' ? 'DISABLED' : 'ACTIVE';
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`/api/users/${userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to update status');
       }
-      return u;
-    }));
-    toast.success(`User status updated.`);
+      setUsers(users.map(u => (u.id === userId ? { ...u, status: newStatus } : u)));
+      toast.success('User status updated.');
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to update status');
+    }
   };
 
   const handleResetPassword = () => {
@@ -112,8 +118,8 @@ export default function UsersList() {
     switch(role) {
       case 'ADMIN': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200 dark:border-purple-800';
       case 'TEACHER': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800';
-      case 'STUDENT': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 border-orange-200 dark:border-orange-800';
-      default: return 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700';
+      case 'STUDENT': return 'bg-aubergine-100 text-aubergine-800 dark:bg-aubergine-900/30 dark:text-aubergine-300 border-aubergine-200 dark:border-aubergine-800';
+      default: return 'bg-slate-100 text-slate-800 dark:bg-surface-raised dark:text-slate-300 border-slate-200 dark:border-surface-raised';
     }
   };
 
@@ -122,21 +128,21 @@ export default function UsersList() {
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">User Management</h1>
-          <p className="text-sm text-slate-500 mt-1 dark:text-slate-400">Manage user accounts and roles for the school system.</p>
+          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Manage user accounts and roles for the school system.</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
           <Button variant="outline" render={<Link to="/settings/roles" />} nativeButton={false}>
             <Shield className="mr-2 h-4 w-4" />
             Roles & Permissions
           </Button>
-          <Button className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 w-full sm:w-auto" render={<Link to="/users/new" />} nativeButton={false}>
+          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto" render={<Link to="/users/new" />} nativeButton={false}>
             <Plus className="mr-2 h-4 w-4" />
             Create User
           </Button>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row gap-4 items-center">
+      <div className="bg-white dark:bg-surface-indigo p-4 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex flex-col md:flex-row gap-4 items-center">
         <div className="relative flex-1 w-full md:w-auto">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input 
@@ -156,6 +162,10 @@ export default function UsersList() {
               <SelectItem value="ADMIN">Admin</SelectItem>
               <SelectItem value="TEACHER">Teacher</SelectItem>
               <SelectItem value="STUDENT">Student</SelectItem>
+              <SelectItem value="LIBRARIAN">Librarian</SelectItem>
+              <SelectItem value="ACCOUNTANT">Accountant</SelectItem>
+              <SelectItem value="CASE_WORKER">Case Worker</SelectItem>
+              <SelectItem value="STAFF">Staff</SelectItem>
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -171,10 +181,10 @@ export default function UsersList() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 font-semibold">
+            <thead className="bg-slate-50 dark:bg-surface-raised/50 text-slate-500 font-semibold">
               <tr>
                 <th className="px-6 py-4">User</th>
                 <th className="px-6 py-4">Role</th>
@@ -186,7 +196,7 @@ export default function UsersList() {
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
               {filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="font-semibold text-slate-900 dark:text-white">{user.name}</div>
                     <div className="text-xs text-slate-500 mt-1">@{user.username} {user.email && `• ${user.email}`}</div>
@@ -207,7 +217,7 @@ export default function UsersList() {
                         Teacher Profile
                       </Link>
                     ) : user.studentId ? (
-                      <Link to={`/students/${user.studentId}`} className="text-orange-600 hover:underline flex items-center gap-1">
+                      <Link to={`/students/${user.studentId}`} className="text-aubergine-600 hover:underline flex items-center gap-1">
                         Student Profile
                       </Link>
                     ) : (
@@ -256,7 +266,7 @@ export default function UsersList() {
               {filteredUsers.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-6 py-10 text-center text-slate-500">
-                     No users found matching your filters.
+                     {loading ? 'Loading users…' : 'No users found matching your filters.'}
                   </td>
                 </tr>
               )}

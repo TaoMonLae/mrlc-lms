@@ -90,33 +90,33 @@ export default function StudentsList() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Students</h1>
-          <p className="text-sm text-slate-500 mt-1 dark:text-slate-400">Manage student records, enrollment, and academic profiles.</p>
+          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Manage student records, enrollment, and academic profiles.</p>
         </div>
         <div className="flex items-center gap-2">
           <StudentCsvImport />
-          <Button className="bg-orange-600 hover:bg-orange-700 text-white w-full sm:w-auto" render={<Link to="/students/new" />} nativeButton={false}>
+          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto" render={<Link to="/students/new" />} nativeButton={false}>
             <UserPlus className="mr-2 h-4 w-4" />
             Add Student
           </Button>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-surface-indigo rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
         {/* Filters */}
-        <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-4 items-center">
+        <div className="p-4 border-b border-slate-200 dark:border-surface-raised flex flex-col sm:flex-row gap-4 items-center">
           <div className="relative flex-1 w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input 
               placeholder="Search by name or ID..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+              className="pl-9 bg-slate-50 dark:bg-surface-raised border-slate-200 dark:border-surface-raised"
             />
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <Filter className="h-4 w-4 text-slate-400 hidden sm:block" />
             <Select value={classFilter} onValueChange={setClassFilter}>
-              <SelectTrigger className="w-full sm:w-[180px] bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+              <SelectTrigger className="w-full sm:w-[180px] bg-slate-50 dark:bg-surface-raised border-slate-200 dark:border-surface-raised">
                 <SelectValue placeholder="All Classes" />
               </SelectTrigger>
               <SelectContent>
@@ -127,7 +127,7 @@ export default function StudentsList() {
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-[150px] bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+              <SelectTrigger className="w-full sm:w-[150px] bg-slate-50 dark:bg-surface-raised border-slate-200 dark:border-surface-raised">
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
@@ -144,7 +144,7 @@ export default function StudentsList() {
         {/* Desktop Table View */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-slate-800/50">
+            <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-surface-raised/50">
               <tr>
                 <th className="px-6 py-4">Student</th>
                 <th className="px-6 py-4">ID / Gender</th>
@@ -159,21 +159,21 @@ export default function StudentsList() {
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
                     <div className="flex items-center justify-center gap-2">
-                      <span className="animate-spin rounded-full h-4 w-4 border-2 border-orange-600 border-t-transparent"></span>
+                      <span className="animate-spin rounded-full h-4 w-4 border-2 border-aubergine-600 border-t-transparent"></span>
                       Loading students...
                     </div>
                   </td>
                 </tr>
               ) : filteredStudents.length > 0 ? (
                 filteredStudents.map((student) => (
-                  <tr key={student.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+                  <tr key={student.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 font-medium">
+                        <div className="h-9 w-9 rounded-full bg-slate-100 dark:bg-surface-raised flex items-center justify-center text-slate-500 dark:text-slate-300 font-medium">
                           {student.firstName.charAt(0)}{student.lastName.charAt(0)}
                         </div>
                         <div>
-                          <Link to={`/students/${student.id}`} className="font-semibold text-slate-900 dark:text-white hover:text-orange-600 dark:hover:text-orange-400">
+                          <Link to={`/students/${student.id}`} className="font-semibold text-slate-900 dark:text-white hover:text-aubergine-600 dark:hover:text-aubergine-400">
                             {student.firstName} {student.lastName}
                           </Link>
                         </div>
@@ -183,10 +183,10 @@ export default function StudentsList() {
                       <div className="font-medium text-slate-700 dark:text-slate-300">{student.studentId}</div>
                       <div className="text-[11px] text-slate-500 capitalize">{student.gender.toLowerCase()}</div>
                     </td>
-                    <td className="px-6 py-4 text-slate-600 dark:text-slate-400 font-medium">
+                    <td className="px-6 py-4 text-slate-600 dark:text-slate-300 font-medium">
                       {student.class}
                     </td>
-                    <td className="px-6 py-4 text-slate-500 dark:text-slate-400">
+                    <td className="px-6 py-4 text-slate-500 dark:text-slate-300">
                       {new Date(student.enrollmentDate).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4">
@@ -209,7 +209,7 @@ export default function StudentsList() {
                             </DropdownMenuItem>
                           </DropdownMenuGroup>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-orange-600">
+                          <DropdownMenuItem className="text-aubergine-600">
                             Record Attendance
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -234,16 +234,16 @@ export default function StudentsList() {
           {isLoading ? (
             <div className="text-center py-10 text-slate-500">
               <div className="flex items-center justify-center gap-2">
-                <span className="animate-spin rounded-full h-4 w-4 border-2 border-orange-600 border-t-transparent"></span>
+                <span className="animate-spin rounded-full h-4 w-4 border-2 border-aubergine-600 border-t-transparent"></span>
                 Loading students...
               </div>
             </div>
           ) : filteredStudents.length > 0 ? (
             filteredStudents.map((student) => (
-              <div key={student.id} className="border border-slate-200 dark:border-slate-800 rounded-lg p-4 space-y-3 bg-white dark:bg-slate-900 shadow-sm relative">
+              <div key={student.id} className="border border-slate-200 dark:border-surface-raised rounded-lg p-4 space-y-3 bg-white dark:bg-surface-indigo shadow-sm relative">
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 font-medium shrink-0">
+                    <div className="h-10 w-10 rounded-full bg-slate-100 dark:bg-surface-raised flex items-center justify-center text-slate-500 font-medium shrink-0">
                       {student.firstName.charAt(0)}{student.lastName.charAt(0)}
                     </div>
                     <div>
@@ -268,7 +268,7 @@ export default function StudentsList() {
                   </DropdownMenu>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-2 text-sm pt-2 border-t border-slate-100 dark:border-slate-800">
+                <div className="grid grid-cols-2 gap-2 text-sm pt-2 border-t border-slate-100 dark:border-surface-raised">
                   <div>
                     <span className="text-xs text-slate-500 block">Class</span>
                     <span className="font-medium text-slate-700 dark:text-slate-300 truncate block">{student.class}</span>
@@ -285,7 +285,7 @@ export default function StudentsList() {
               </div>
             ))
           ) : (
-            <div className="text-center py-10 text-slate-500 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">
+            <div className="text-center py-10 text-slate-500 border border-dashed border-slate-200 dark:border-surface-raised rounded-lg">
               <User className="h-8 w-8 mx-auto text-slate-300 mb-2" />
               <p>No students found</p>
             </div>

@@ -16,7 +16,8 @@ import {
   AlertCircle
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const teacherExams = [
   { id: "e1", title: "Social Studies Mid-Term", class: "GED Social Studies", date: "May 15, 2024", duration: "120m", type: "Digital", status: "UPCOMING", submissions: 0, total: 24 },
@@ -26,6 +27,7 @@ const teacherExams = [
 ];
 
 export default function TeacherExams() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredExams = teacherExams.filter(e => 
@@ -40,13 +42,17 @@ export default function TeacherExams() {
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight dark:text-white uppercase tracking-tighter">Assessments & Exams</h1>
           <p className="text-sm text-slate-500 mt-1 font-medium">Create, manage, and grade exams for your assigned classes.</p>
         </div>
-        <Button className="h-11 px-6 bg-orange-600 hover:bg-orange-700 text-white font-bold text-[11px] uppercase tracking-widest shadow-lg">
+        <Button
+          id="create-assessment-btn"
+          className="h-11 px-6 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-[11px] uppercase tracking-widest shadow-lg"
+          onClick={() => toast.info('Create Assessment coming soon.', { description: 'The assessment builder will be available in the next update.' })}
+        >
           <Plus className="h-4 w-4 mr-2" /> Create New Assessment
         </Button>
       </div>
 
       <Tabs defaultValue="all" className="w-full">
-        <TabsList className="bg-slate-100/50 dark:bg-slate-900/50 p-1 border border-slate-200 dark:border-slate-800 h-11 mb-6">
+        <TabsList className="bg-slate-100/50 dark:bg-surface-indigo/50 p-1 border border-slate-200 dark:border-surface-raised h-11 mb-6">
           <TabsTrigger value="all" className="px-6 h-full font-bold text-[10px] uppercase tracking-widest">All Assessments</TabsTrigger>
           <TabsTrigger value="active" className="px-6 h-full font-bold text-[10px] uppercase tracking-widest text-emerald-600">Active / Grading</TabsTrigger>
           <TabsTrigger value="drafts" className="px-6 h-full font-bold text-[10px] uppercase tracking-widest">Drafts</TabsTrigger>
@@ -56,7 +62,7 @@ export default function TeacherExams() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input 
             placeholder="Filter exams by title or class..." 
-            className="pl-10 h-11 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 font-medium"
+            className="pl-10 h-11 bg-white dark:bg-canvas border-slate-200 dark:border-surface-raised font-medium"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -64,10 +70,10 @@ export default function TeacherExams() {
 
         <TabsContent value="all" className="space-y-4">
           {filteredExams.map((exam) => (
-            <Card key={exam.id} className="group overflow-hidden border-slate-200 dark:border-slate-800 hover:border-orange-300 transition-all duration-200">
+            <Card key={exam.id} className="group overflow-hidden border-slate-200 dark:border-surface-raised hover:border-aubergine-300 transition-all duration-200">
               <CardContent className="p-0">
                 <div className="flex flex-col lg:flex-row lg:items-center">
-                  <div className="p-5 lg:w-1/3 border-b lg:border-b-0 lg:border-r border-slate-100 dark:border-slate-800">
+                  <div className="p-5 lg:w-1/3 border-b lg:border-b-0 lg:border-r border-slate-100 dark:border-surface-raised">
                     <div className="flex items-center gap-3 mb-2">
                         <Badge className={`${
                             exam.status === 'GRADED' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' :
@@ -79,11 +85,11 @@ export default function TeacherExams() {
                         </Badge>
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{exam.type}</span>
                     </div>
-                    <h3 className="font-bold text-slate-900 dark:text-white group-hover:text-orange-600 transition-colors uppercase tracking-tight">{exam.title}</h3>
+                    <h3 className="font-bold text-slate-900 dark:text-white group-hover:text-aubergine-600 transition-colors uppercase tracking-tight">{exam.title}</h3>
                     <p className="text-[10px] font-bold text-slate-500 mt-1 uppercase">{exam.class}</p>
                   </div>
 
-                  <div className="p-5 lg:w-1/4 border-b lg:border-b-0 lg:border-r border-slate-100 dark:border-slate-800 flex items-center justify-between lg:justify-center gap-8">
+                  <div className="p-5 lg:w-1/4 border-b lg:border-b-0 lg:border-r border-slate-100 dark:border-surface-raised flex items-center justify-between lg:justify-center gap-8">
                     <div className="text-center">
                         <div className="flex items-center gap-1.5 text-slate-400 mb-1 justify-center">
                             <Calendar className="h-3 w-3" />
@@ -100,7 +106,7 @@ export default function TeacherExams() {
                     </div>
                   </div>
 
-                  <div className="p-5 lg:w-1/4 border-b lg:border-b-0 lg:border-r border-slate-100 dark:border-slate-800 flex items-center justify-between lg:justify-center gap-8">
+                  <div className="p-5 lg:w-1/4 border-b lg:border-b-0 lg:border-r border-slate-100 dark:border-surface-raised flex items-center justify-between lg:justify-center gap-8">
                      <div className="text-center">
                         <div className="flex items-center gap-1.5 text-slate-400 mb-1 justify-center">
                             <Users className="h-3 w-3" />
@@ -123,15 +129,28 @@ export default function TeacherExams() {
 
                   <div className="p-5 flex-1 flex gap-2">
                     {exam.status === 'NEEDS_GRADING' ? (
-                        <Button className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-[10px] uppercase tracking-widest h-10 shadow-md">
+                        <Button
+                          className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-[10px] uppercase tracking-widest h-10 shadow-md"
+                          onClick={() => toast.info(`Grading "${exam.title}"`, { description: 'Gradebook integration coming soon.' })}
+                        >
                             Grade Now
                         </Button>
                     ) : (
-                        <Button variant="outline" className="w-full border-slate-200 dark:border-slate-800 font-bold text-[10px] uppercase tracking-widest h-10">
+                        <Button
+                          variant="outline"
+                          className="w-full border-slate-200 dark:border-surface-raised font-bold text-[10px] uppercase tracking-widest h-10"
+                          onClick={() => toast.info(`Results for "${exam.title}"`, { description: 'Detailed results view coming soon.' })}
+                        >
                             View Results
                         </Button>
                     )}
-                    <Button variant="ghost" size="icon" className="h-10 w-10 text-slate-400 hover:text-orange-600 transition-colors">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-10 w-10 text-slate-400 hover:text-aubergine-600 transition-colors"
+                      title="View exam details"
+                      onClick={() => toast.info(`Opening details for "${exam.title}"`)}
+                    >
                         <ChevronRight className="h-5 w-5" />
                     </Button>
                   </div>
@@ -141,8 +160,8 @@ export default function TeacherExams() {
           ))}
           
           {filteredExams.length === 0 && (
-             <div className="py-12 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center text-center space-y-4">
-                <div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+             <div className="py-12 border-2 border-dashed border-slate-200 dark:border-surface-raised rounded-2xl flex flex-col items-center justify-center text-center space-y-4">
+                <div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-surface-raised flex items-center justify-center text-slate-400">
                     <AlertCircle className="h-6 w-6" />
                 </div>
                 <div>

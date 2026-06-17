@@ -148,7 +148,7 @@ export default function AnnouncementsList() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            <Megaphone className="h-6 w-6 text-indigo-600" />
+            <Megaphone className="h-6 w-6 text-aubergine-600" />
             Announcements
           </h1>
           <p className="text-sm text-slate-500">
@@ -156,26 +156,26 @@ export default function AnnouncementsList() {
           </p>
         </div>
         {canManage && (
-          <Button render={<Link to="/announcements/new" />} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+          <Button render={<Link to="/announcements/new" />} className="bg-primary hover:bg-primary/90 text-primary-foreground">
             <Plus className="mr-2 h-4 w-4" /> New Announcement
           </Button>
         )}
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4 items-center bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div className="flex flex-col md:flex-row gap-4 items-center bg-white dark:bg-surface-indigo p-4 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm">
         <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input 
             placeholder="Search announcements..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 h-10 ring-offset-indigo-600 focus-visible:ring-indigo-600"
+            className="pl-10 h-10 ring-offset-aubergine-600 focus-visible:ring-aubergine-600"
           />
         </div>
         <div className="flex items-center gap-2 w-full md:w-auto">
           <Filter className="h-4 w-4 text-slate-400 mr-1" />
           <select 
-            className="h-10 px-3 rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm focus:ring-2 focus:ring-indigo-600 outline-none flex-1 md:flex-none min-w-[140px]"
+            className="h-10 px-3 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo text-sm focus:ring-2 focus:ring-aubergine-600 outline-none flex-1 md:flex-none min-w-[140px]"
             value={filterAudience}
             onChange={(e) => setFilterAudience(e.target.value as any)}
           >
@@ -192,13 +192,13 @@ export default function AnnouncementsList() {
         {sortedAnnouncements.map((ann) => (
           <div 
             key={ann.id} 
-            className={`group relative bg-white dark:bg-slate-900 border rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex flex-col overflow-hidden ${
-              ann.pinned ? 'border-indigo-200 dark:border-indigo-900/50' : 'border-slate-200 dark:border-slate-800'
+            className={`group relative bg-white dark:bg-surface-indigo border rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex flex-col overflow-hidden ${
+              ann.pinned ? 'border-aubergine-200 dark:border-aubergine-900/50' : 'border-slate-200 dark:border-surface-raised'
             }`}
           >
             {ann.pinned && (
               <div className="absolute top-0 right-0 p-2">
-                <div className="bg-indigo-600 text-white p-1 rounded-bl-lg rounded-tr-md shadow-sm">
+                <div className="bg-aubergine-600 text-white p-1 rounded-bl-lg rounded-tr-md shadow-sm">
                   <Pin className="h-3 w-3 fill-current" />
                 </div>
               </div>
@@ -210,23 +210,23 @@ export default function AnnouncementsList() {
                   {ann.audience === 'CLASS' ? ann.className : ann.audience}
                 </Badge>
                 {ann.status === 'ARCHIVED' && (
-                  <Badge variant="outline" className="text-[10px] uppercase tracking-wider font-bold h-5 border-slate-300 dark:border-slate-700">
+                  <Badge variant="outline" className="text-[10px] uppercase tracking-wider font-bold h-5 border-slate-300 dark:border-surface-raised">
                     Archived
                   </Badge>
                 )}
               </div>
               
-              <Link to={`/announcements/${ann.id}`} className="block group-hover:text-indigo-600 transition-colors">
+              <Link to={`/announcements/${ann.id}`} className="block group-hover:text-aubergine-600 transition-colors">
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white line-clamp-1 mb-2">
                   {ann.title}
                 </h3>
               </Link>
               
-              <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-3 mb-4 leading-relaxed">
+              <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-3 mb-4 leading-relaxed">
                 {ann.body}
               </p>
 
-              <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500">
+              <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-surface-raised text-[11px] text-slate-500">
                 <div className="flex items-center gap-1.5">
                   <Clock className="h-3 w-3" />
                   {format(new Date(ann.createdAt), 'MMM d, yyyy')}
@@ -238,12 +238,12 @@ export default function AnnouncementsList() {
               </div>
             </div>
 
-            <div className="px-5 py-3 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <div className="px-5 py-3 bg-slate-50 dark:bg-surface-raised/50 border-t border-slate-100 dark:border-surface-raised flex items-center justify-between">
               <Button 
                 variant="ghost" 
                 size="sm" 
                 render={<Link to={`/announcements/${ann.id}`} />}
-                className="text-xs h-8 text-slate-600 hover:text-indigo-600"
+                className="text-xs h-8 text-slate-600 hover:text-aubergine-600"
               >
                 Read More <ChevronRight className="ml-1 h-3 w-3" />
               </Button>
@@ -257,7 +257,7 @@ export default function AnnouncementsList() {
                     <DropdownMenuItem render={<Link to={`/announcements/${ann.id}/edit`} className="w-full flex items-center" />}>
                       <Edit className="mr-2 h-4 w-4" /> Edit
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleArchive(ann.id)} className={ann.status === 'ARCHIVED' ? 'text-indigo-600' : 'text-amber-600'}>
+                    <DropdownMenuItem onClick={() => handleArchive(ann.id)} className={ann.status === 'ARCHIVED' ? 'text-aubergine-600' : 'text-amber-600'}>
                       <Archive className="mr-2 h-4 w-4" /> {ann.status === 'ARCHIVED' ? 'Unarchive' : 'Archive'}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -268,7 +268,7 @@ export default function AnnouncementsList() {
         ))}
 
         {sortedAnnouncements.length === 0 && (
-          <div className="col-span-full py-20 text-center bg-white dark:bg-slate-900 rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
+          <div className="col-span-full py-20 text-center bg-white dark:bg-surface-indigo rounded-xl border border-dashed border-slate-300 dark:border-surface-raised">
             <Megaphone className="h-12 w-12 text-slate-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-slate-900 dark:text-white">No announcements found</h3>
             <p className="text-sm text-slate-500 mt-1">Try adjusting your search or filters.</p>
@@ -283,8 +283,8 @@ export default function AnnouncementsList() {
       
       {/* Short Summary Section */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
-          <div className="h-10 w-10 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+        <div className="bg-white dark:bg-surface-indigo p-4 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex items-center gap-4">
+          <div className="h-10 w-10 bg-aubergine-100 dark:bg-aubergine-900/30 rounded-full flex items-center justify-center text-aubergine-600 dark:text-aubergine-400">
             <Megaphone className="h-5 w-5" />
           </div>
           <div>
@@ -292,7 +292,7 @@ export default function AnnouncementsList() {
             <p className="text-xl font-bold text-slate-900 dark:text-white">{announcements.filter(a => a.status === 'ACTIVE').length}</p>
           </div>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
+        <div className="bg-white dark:bg-surface-indigo p-4 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex items-center gap-4">
           <div className="h-10 w-10 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center text-amber-600 dark:text-amber-400">
             <Pin className="h-5 w-5" />
           </div>
@@ -301,7 +301,7 @@ export default function AnnouncementsList() {
             <p className="text-xl font-bold text-slate-900 dark:text-white">{announcements.filter(a => a.pinned).length}</p>
           </div>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
+        <div className="bg-white dark:bg-surface-indigo p-4 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex items-center gap-4">
           <div className="h-10 w-10 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center text-emerald-600 dark:text-emerald-400">
             <Eye className="h-5 w-5" />
           </div>
@@ -310,7 +310,7 @@ export default function AnnouncementsList() {
             <p className="text-xl font-bold text-slate-900 dark:text-white">1.2k</p>
           </div>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
+        <div className="bg-white dark:bg-surface-indigo p-4 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex items-center gap-4">
           <div className="h-10 w-10 bg-rose-100 dark:bg-rose-900/30 rounded-full flex items-center justify-center text-rose-600 dark:text-rose-400">
             <Calendar className="h-5 w-5" />
           </div>

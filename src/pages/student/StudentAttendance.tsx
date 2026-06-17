@@ -46,7 +46,7 @@ export default function StudentAttendance() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            <CalendarCheck className="h-6 w-6 text-indigo-600" />
+            <CalendarCheck className="h-6 w-6 text-aubergine-600" />
             My Attendance
           </h1>
           <p className="text-sm text-slate-500 mt-1">Track your daily presence and punctuality.</p>
@@ -67,8 +67,8 @@ export default function StudentAttendance() {
       </div>
 
       {/* Main List */}
-      <Card className="border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800/50 pb-4">
+      <Card className="border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-surface-raised/50 pb-4">
           <div>
             <CardTitle className="text-lg">Attendance History</CardTitle>
             <CardDescription>View detailed records for the selected period</CardDescription>
@@ -89,7 +89,7 @@ export default function StudentAttendance() {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
-              <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 font-bold text-[10px] uppercase tracking-widest border-b border-slate-100 dark:border-slate-800">
+              <thead className="bg-slate-50 dark:bg-surface-raised/50 text-slate-500 font-bold text-[10px] uppercase tracking-widest border-b border-slate-100 dark:border-surface-raised">
                 <tr>
                   <th className="px-6 py-4">Date & Time</th>
                   <th className="px-6 py-4">Subject</th>
@@ -99,7 +99,7 @@ export default function StudentAttendance() {
               </thead>
               <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                 {attendanceData.map((record, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+                  <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors group">
                     <td className="px-6 py-4">
                       <p className="text-sm font-bold text-slate-900 dark:text-white">{new Date(record.date).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                       <p className="text-[10px] text-slate-500 font-medium flex items-center gap-1 mt-0.5 uppercase tracking-tighter">
@@ -135,9 +135,9 @@ export default function StudentAttendance() {
       </Card>
 
       {/* Info Warning */}
-      <div className="bg-indigo-50 dark:bg-indigo-900/10 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/30 flex gap-4">
-        <AlertCircle className="h-5 w-5 text-indigo-600 shrink-0 mt-0.5" />
-        <div className="text-xs text-indigo-800 dark:text-indigo-400 leading-relaxed">
+      <div className="bg-aubergine-50 dark:bg-aubergine-900/10 p-4 rounded-xl border border-aubergine-100 dark:border-aubergine-900/30 flex gap-4">
+        <AlertCircle className="h-5 w-5 text-aubergine-600 shrink-0 mt-0.5" />
+        <div className="text-xs text-aubergine-800 dark:text-aubergine-400 leading-relaxed">
           <p className="font-bold uppercase tracking-widest mb-1 text-[10px]">Attendance Policy</p>
           <p>Maintenance of 75% attendance is mandatory to appear for end-of-year examinations. If you have been absent due to medical reasons, please submit your medical certificate to the school office within 3 days.</p>
         </div>
@@ -151,11 +151,11 @@ function StatCard({ title, value, total, label, color, icon }: any) {
     emerald: "bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-900/50",
     rose: "bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-900/50",
     amber: "bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-900/50",
-    indigo: "bg-indigo-50 text-indigo-600 border-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-900/50"
+    indigo: "bg-aubergine-50 text-aubergine-600 border-aubergine-100 dark:bg-aubergine-900/20 dark:text-aubergine-400 dark:border-aubergine-900/50"
   };
 
   return (
-    <Card className="border-none shadow-sm dark:bg-slate-900">
+    <Card className="border-none shadow-sm dark:bg-surface-indigo">
       <CardContent className="p-6">
         <div className="flex items-center justify-between mb-4">
           <div className={`p-2 rounded-lg ${colors[color]}`}>

@@ -65,10 +65,10 @@ export function TimetableForm({ initialData, onSubmit, isLoading }: TimetableFor
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Assignment Settings */}
           <div className="space-y-6">
-            <Card className="border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-              <div className="bg-slate-50 dark:bg-slate-800/50 px-4 py-3 border-b border-slate-200 dark:border-slate-800">
+            <Card className="border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
+              <div className="bg-slate-50 dark:bg-surface-raised/50 px-4 py-3 border-b border-slate-200 dark:border-surface-raised">
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <User className="h-4 w-4 text-indigo-600" />
+                  <User className="h-4 w-4 text-aubergine-600" />
                   Primary Assignment
                 </h3>
               </div>
@@ -152,10 +152,10 @@ export function TimetableForm({ initialData, onSubmit, isLoading }: TimetableFor
               </CardContent>
             </Card>
 
-            <Card className="border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-              <div className="bg-slate-50 dark:bg-slate-800/50 px-4 py-3 border-b border-slate-200 dark:border-slate-800">
+            <Card className="border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
+              <div className="bg-slate-50 dark:bg-surface-raised/50 px-4 py-3 border-b border-slate-200 dark:border-surface-raised">
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-indigo-600" />
+                  <MapPin className="h-4 w-4 text-aubergine-600" />
                   Location & Notes
                 </h3>
               </div>
@@ -197,10 +197,10 @@ export function TimetableForm({ initialData, onSubmit, isLoading }: TimetableFor
 
           {/* Time Settings */}
           <div className="space-y-6">
-            <Card className="border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-              <div className="bg-slate-50 dark:bg-slate-800/50 px-4 py-3 border-b border-slate-200 dark:border-slate-800">
+            <Card className="border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
+              <div className="bg-slate-50 dark:bg-surface-raised/50 px-4 py-3 border-b border-slate-200 dark:border-surface-raised">
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-indigo-600" />
+                  <Clock className="h-4 w-4 text-aubergine-600" />
                   Schedule Timing
                 </h3>
               </div>
@@ -262,7 +262,7 @@ export function TimetableForm({ initialData, onSubmit, isLoading }: TimetableFor
                   />
                 </div>
 
-                <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-lg flex gap-3 text-[11px] text-indigo-700 dark:text-indigo-400">
+                <div className="bg-aubergine-50 dark:bg-aubergine-900/20 p-4 rounded-lg flex gap-3 text-[11px] text-aubergine-700 dark:text-aubergine-400">
                   <Clock className="h-4 w-4 shrink-0" />
                   <p>Check for scheduling conflicts before publishing. The system will alert you if the room or teacher is already occupied at this time.</p>
                 </div>
@@ -272,7 +272,7 @@ export function TimetableForm({ initialData, onSubmit, isLoading }: TimetableFor
             <div className="flex flex-col gap-3">
               <Button 
                 type="submit" 
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white h-11"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-11"
                 disabled={isLoading}
               >
                 {isLoading ? 'Saving...' : initialData ? 'Update Schedule' : 'Create Schedule Slot'}
@@ -280,7 +280,7 @@ export function TimetableForm({ initialData, onSubmit, isLoading }: TimetableFor
               <Button 
                 type="button" 
                 variant="outline" 
-                className="w-full h-11 border-slate-200 dark:border-slate-800" 
+                className="w-full h-11 border-slate-200 dark:border-surface-raised" 
                 disabled={isLoading}
                 onClick={() => window.history.back()}
               >

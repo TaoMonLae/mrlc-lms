@@ -2,7 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Users, BookOpen, Clock, CheckCircle2, GraduationCap, Calendar, ArrowRight, MoreHorizontal, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const assignedClasses = [
   { 
@@ -41,6 +42,7 @@ const assignedClasses = [
 ];
 
 export default function TeacherClasses() {
+  const navigate = useNavigate();
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -52,10 +54,10 @@ export default function TeacherClasses() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {assignedClasses.map((cls) => (
-          <Card key={cls.id} className="group overflow-hidden border-slate-200 dark:border-slate-800 hover:shadow-lg transition-all duration-300">
-            <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 p-5">
+          <Card key={cls.id} className="group overflow-hidden border-slate-200 dark:border-surface-raised hover:shadow-lg transition-all duration-300">
+            <CardHeader className="bg-slate-50 dark:bg-surface-raised/50 border-b border-slate-100 dark:border-surface-raised p-5">
               <div className="flex justify-between items-start">
-                <Badge variant="outline" className="bg-white dark:bg-slate-900 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 border-slate-200 dark:border-slate-700">
+                <Badge variant="outline" className="bg-white dark:bg-surface-indigo text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 border-slate-200 dark:border-surface-raised">
                   {cls.level}
                 </Badge>
                 <div className="flex items-center gap-1.5 text-slate-500">
@@ -63,7 +65,7 @@ export default function TeacherClasses() {
                   <span className="text-[10px] font-bold uppercase">{cls.room}</span>
                 </div>
               </div>
-              <CardTitle className="mt-4 text-lg font-bold text-slate-900 dark:text-white group-hover:text-orange-600 transition-colors">
+              <CardTitle className="mt-4 text-lg font-bold text-slate-900 dark:text-white group-hover:text-aubergine-600 transition-colors">
                 {cls.name}
               </CardTitle>
               <CardDescription className="text-xs font-medium text-slate-500 line-clamp-1">
@@ -93,21 +95,28 @@ export default function TeacherClasses() {
                   <span>Course Progress</span>
                   <span className="text-slate-600 dark:text-slate-300">{cls.progress}%</span>
                 </div>
-                <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                <div className="h-1.5 w-full bg-slate-100 dark:bg-surface-raised rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-orange-500 rounded-full transition-all duration-1000" 
+                    className="h-full bg-aubergine-500 rounded-full transition-all duration-1000" 
                     style={{ width: `${cls.progress}%` }}
                   />
                 </div>
               </div>
 
               <div className="pt-2 flex gap-2">
-                <Button className="flex-1 bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:hover:bg-white dark:text-slate-900 font-bold text-[10px] uppercase tracking-widest h-9">
-                  <Link to={`/teacher/classes/${cls.id}`} className="w-full h-full flex items-center justify-center">
-                    Class Details
-                  </Link>
+                <Button
+                  className="flex-1 bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:hover:bg-white dark:text-slate-900 font-bold text-[10px] uppercase tracking-widest h-9"
+                  onClick={() => navigate(`/teacher/classes/${cls.id}`)}
+                >
+                  Class Details
                 </Button>
-                <Button variant="outline" size="icon" className="h-9 w-9 shrink-0 border-slate-200 dark:border-slate-800">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 shrink-0 border-slate-200 dark:border-surface-raised"
+                  title="View timetable"
+                  onClick={() => navigate('/teacher/timetable')}
+                >
                   <Calendar className="h-4 w-4 text-slate-500" />
                 </Button>
               </div>

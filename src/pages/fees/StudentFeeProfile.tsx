@@ -48,40 +48,40 @@ export default function StudentFeeProfile() {
             Back to Fees Dashboard
           </Button>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Fee Profile: Ali bin Ahmad</h1>
-          <p className="text-sm text-slate-500 mt-1 dark:text-slate-400">STU-2023-001 • Grade 10A</p>
+          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">STU-2023-001 • Grade 10A</p>
         </div>
 
         {hasPermission('manage_fees') && (
-           <Button className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900" render={<Link to={`/fees/payments/new?studentId=${id}`} />} nativeButton={false}>
+           <Button className="bg-primary hover:bg-primary/90 text-primary-foreground" render={<Link to={`/fees/payments/new?studentId=${id}`} />} nativeButton={false}>
              <Plus className="mr-2 h-4 w-4" /> Record Payment
            </Button>
         )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-xl shadow-sm text-center">
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Due</p>
+        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised p-6 rounded-xl shadow-sm text-center">
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-300">Total Due</p>
           <p className="text-3xl font-bold text-slate-900 dark:text-white mt-2">MYR {totalDue.toLocaleString()}</p>
         </div>
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-xl shadow-sm text-center">
-           <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Paid</p>
+        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised p-6 rounded-xl shadow-sm text-center">
+           <p className="text-sm font-medium text-slate-500 dark:text-slate-300">Total Paid</p>
            <p className="text-3xl font-bold text-slate-900 dark:text-white mt-2">MYR {totalPaid.toLocaleString()}</p>
         </div>
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-xl shadow-sm text-center">
-           <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Outstanding Balance</p>
+        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised p-6 rounded-xl shadow-sm text-center">
+           <p className="text-sm font-medium text-slate-500 dark:text-slate-300">Outstanding Balance</p>
            <p className={`text-3xl font-bold mt-2 ${balance === 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
              MYR {balance.toLocaleString()}
            </p>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden mt-8">
-        <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+      <div className="bg-white dark:bg-surface-indigo rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden mt-8">
+        <div className="p-6 border-b border-slate-200 dark:border-surface-raised flex justify-between items-center">
            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Payment History</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <thead className="text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 uppercase">
+            <thead className="text-xs text-slate-500 dark:text-slate-300 bg-slate-50 dark:bg-surface-raised uppercase">
               <tr>
                 <th className="px-6 py-4 font-medium">Date</th>
                 <th className="px-6 py-4 font-medium">Receipt No</th>
@@ -93,7 +93,7 @@ export default function StudentFeeProfile() {
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
               {MOCK_PAYMENTS.map((payment) => (
-                <tr key={payment.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                <tr key={payment.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors">
                   <td className="px-6 py-4 text-slate-600 dark:text-slate-300">
                     {format(new Date(payment.paymentDate), 'MMM d, yyyy')}
                   </td>

@@ -180,7 +180,7 @@ export function StudentDocuments({ studentId }: StudentDocumentsProps) {
 
   if (!canView) {
     return (
-      <div className="p-8 text-center bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-dashed border-slate-300 dark:border-slate-800">
+      <div className="p-8 text-center bg-slate-50 dark:bg-surface-indigo/50 rounded-xl border border-dashed border-slate-300 dark:border-surface-raised">
         <Shield className="h-12 w-12 text-slate-300 mx-auto mb-4" />
         <h3 className="text-lg font-bold text-slate-900 dark:text-white">Strict Access Only</h3>
         <p className="text-sm text-slate-500 mt-2">You don't have permission to view this student's private documents.</p>
@@ -198,7 +198,7 @@ export function StudentDocuments({ studentId }: StudentDocumentsProps) {
             placeholder="Search documents by title or file name..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 h-11 border-slate-200 dark:border-slate-800 focus:ring-orange-500"
+            className="pl-10 h-11 border-slate-200 dark:border-surface-raised focus:ring-aubergine-500"
           />
         </div>
         
@@ -223,7 +223,7 @@ export function StudentDocuments({ studentId }: StudentDocumentsProps) {
           )}
 
           {canManage && (
-            <Button className="bg-orange-600 hover:bg-orange-700 text-white h-11" onClick={() => toast.info('Upload feature would open here')}>
+            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground h-11" onClick={() => toast.info('Upload feature would open here')}>
               <Plus className="mr-2 h-4 w-4" /> Upload Document
             </Button>
           )}
@@ -239,7 +239,7 @@ export function StudentDocuments({ studentId }: StudentDocumentsProps) {
           });
 
           return (
-            <Card key={doc.id} className={`group border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all relative overflow-hidden ${isExpired ? 'bg-rose-50/10' : ''}`}>
+            <Card key={doc.id} className={`group border-slate-200 dark:border-surface-raised shadow-sm hover:shadow-md transition-all relative overflow-hidden ${isExpired ? 'bg-rose-50/10' : ''}`}>
               {/* Expiry Stripe */}
               {isExpired && <div className="absolute top-0 left-0 w-full h-1 bg-rose-500" />}
               {isExpiring && <div className="absolute top-0 left-0 w-full h-1 bg-amber-500" />}
@@ -253,7 +253,7 @@ export function StudentDocuments({ studentId }: StudentDocumentsProps) {
                     <CardTitle className="text-base font-bold text-slate-900 dark:text-white line-clamp-1">
                       {doc.title}
                     </CardTitle>
-                    <CardDescription className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wider">
+                    <CardDescription className="text-xs font-medium text-slate-500 dark:text-slate-300 mt-1 uppercase tracking-wider">
                       {doc.documentType.replace('_', ' ')}
                     </CardDescription>
                   </div>
@@ -282,8 +282,8 @@ export function StudentDocuments({ studentId }: StudentDocumentsProps) {
               </CardHeader>
               
               <CardContent className="space-y-4">
-                <div className="bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800">
-                  <p className="text-xs font-medium text-slate-600 dark:text-slate-400 flex items-center gap-2 truncate">
+                <div className="bg-slate-50 dark:bg-surface-raised/50 p-2.5 rounded-lg border border-slate-100 dark:border-surface-raised">
+                  <p className="text-xs font-medium text-slate-600 dark:text-slate-300 flex items-center gap-2 truncate">
                     <span className="truncate">{doc.fileName}</span>
                     <span className="shrink-0 text-[10px] text-slate-400 font-bold">• {formatFileSize(doc.fileSize)}</span>
                   </p>
@@ -313,8 +313,8 @@ export function StudentDocuments({ studentId }: StudentDocumentsProps) {
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2">
-                  <div className="h-5 w-5 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-500">
+                <div className="pt-2 border-t border-slate-100 dark:border-surface-raised flex items-center gap-2">
+                  <div className="h-5 w-5 rounded-full bg-slate-100 dark:bg-surface-raised flex items-center justify-center text-[10px] font-bold text-slate-500">
                     {doc.uploadedByName.charAt(0)}
                   </div>
                   <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">By {doc.uploadedByName}</span>
@@ -325,7 +325,7 @@ export function StudentDocuments({ studentId }: StudentDocumentsProps) {
         })}
 
         {filteredDocs.length === 0 && (
-          <div className="col-span-full py-20 text-center bg-white dark:bg-slate-900 rounded-xl border border-dashed border-slate-300 dark:border-slate-800">
+          <div className="col-span-full py-20 text-center bg-white dark:bg-surface-indigo rounded-xl border border-dashed border-slate-300 dark:border-surface-raised">
             <FileText className="h-12 w-12 text-slate-200 mx-auto mb-4" />
             <h3 className="text-lg font-bold text-slate-900 dark:text-white">No documents found</h3>
             <p className="text-sm text-slate-500 mt-2">Upload student documents to keep them organized.</p>

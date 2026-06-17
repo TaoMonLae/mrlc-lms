@@ -56,7 +56,7 @@ export default function AttendanceReportsPage() {
             Back to Record Attendance
           </Button>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Attendance Reports</h1>
-          <p className="text-sm text-slate-500 mt-1 dark:text-slate-400">Monthly overview of student attendance records.</p>
+          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Monthly overview of student attendance records.</p>
         </div>
         
         <div className="flex gap-2">
@@ -67,7 +67,7 @@ export default function AttendanceReportsPage() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row gap-4 items-end">
+      <div className="bg-white dark:bg-surface-indigo p-4 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex flex-col sm:flex-row gap-4 items-end">
         <div className="space-y-2 w-full sm:w-[250px]">
           <Label>Class</Label>
           <Select value={selectedClass} onValueChange={setSelectedClass}>
@@ -98,7 +98,7 @@ export default function AttendanceReportsPage() {
 
         <div className="flex-1"></div>
         
-        <div className="flex items-center gap-4 text-xs font-medium text-slate-600 dark:text-slate-400 flex-wrap">
+        <div className="flex items-center gap-4 text-xs font-medium text-slate-600 dark:text-slate-300 flex-wrap">
           <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-emerald-100 flex items-center justify-center text-[8px] text-emerald-700">P</span> Present</div>
           <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-red-100 flex items-center justify-center text-[8px] text-red-700">A</span> Absent</div>
           <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-amber-100 flex items-center justify-center text-[8px] text-amber-700">L</span> Late</div>
@@ -106,14 +106,14 @@ export default function AttendanceReportsPage() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-surface-indigo rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-slate-800/50">
+            <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-surface-raised/50">
               <tr>
-                <th className="px-6 py-4 min-w-[200px] border-r border-slate-100 dark:border-slate-800 sticky left-0 bg-slate-50 dark:bg-slate-800/90 z-10">Student</th>
+                <th className="px-6 py-4 min-w-[200px] border-r border-slate-100 dark:border-surface-raised sticky left-0 bg-slate-50 dark:bg-surface-raised/90 z-10">Student</th>
                 {days.map(d => (
-                  <th key={d} className="px-2 py-4 text-center min-w-[40px] border-r border-slate-100 dark:border-slate-800">{d}</th>
+                  <th key={d} className="px-2 py-4 text-center min-w-[40px] border-r border-slate-100 dark:border-surface-raised">{d}</th>
                 ))}
                 <th className="px-4 py-4 text-center text-emerald-600 bg-emerald-50/50 dark:bg-emerald-900/10 border-r border-emerald-100 dark:border-emerald-900/30">P</th>
                 <th className="px-4 py-4 text-center text-red-600 bg-red-50/50 dark:bg-red-900/10 border-r border-red-100 dark:border-red-900/30">A</th>
@@ -122,12 +122,12 @@ export default function AttendanceReportsPage() {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {MOCK_REPORT_DATA.map(student => (
-                <tr key={student.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                  <td className="px-6 py-3 font-semibold text-slate-900 dark:text-white border-r border-slate-100 dark:border-slate-800 sticky left-0 bg-white dark:bg-slate-900 z-10 transition-colors group-hover:bg-slate-50 dark:group-hover:bg-slate-800/50">
+                <tr key={student.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors">
+                  <td className="px-6 py-3 font-semibold text-slate-900 dark:text-white border-r border-slate-100 dark:border-surface-raised sticky left-0 bg-white dark:bg-surface-indigo z-10 transition-colors group-hover:bg-slate-50 dark:group-hover:bg-slate-800/50">
                     {student.name}
                   </td>
                   {student.days.map((status, idx) => (
-                    <td key={idx} className="p-1 text-center border-r border-slate-100 dark:border-slate-800">
+                    <td key={idx} className="p-1 text-center border-r border-slate-100 dark:border-surface-raised">
                       <div className={`w-full h-8 flex items-center justify-center rounded-sm text-[11px] ${getStatusColor(status)}`}>
                         {status}
                       </div>
