@@ -39,6 +39,14 @@ const MOCK_CASE = {
   ]
 };
 
+// Safely format a date — returns a placeholder instead of throwing on
+// missing/invalid values (date-fns `format` throws on Invalid Date).
+const safeFormat = (value: any, pattern: string) => {
+  if (!value) return '—';
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? '—' : format(d, pattern);
+};
+
 export default function CaseDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -69,6 +77,7 @@ export default function CaseDetail() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'OPEN': return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 border-0 text-sm"><AlertTriangle className="w-4 h-4 mr-1"/> Open</Badge>;
+      case 'IN_PROGRESS': return <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 border-0 text-sm"><Clock className="w-4 h-4 mr-1"/> In Progress</Badge>;
       case 'FOLLOW_UP': return <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 border-0 text-sm"><Clock className="w-4 h-4 mr-1"/> Follow Up</Badge>;
       case 'RESOLVED': return <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 border-0 text-sm"><CheckCircle2 className="w-4 h-4 mr-1"/> Resolved</Badge>;
       case 'CLOSED': return <Badge variant="outline" className="text-slate-500 border-slate-300 dark:border-surface-raised text-sm">Closed</Badge>;
@@ -102,11 +111,40 @@ export default function CaseDetail() {
     }
   };
 
-  const activeCase = caseData ?? MOCK_CASE;
-
   if (!caseData) {
     return <div className="p-8 text-center text-slate-500">Loading case...</div>;
   }
+
+  // Normalize the API record (Prisma CaseRecord) into the shape this view uses.
+  const activeCase = {
+    id: caseData.id,
+    caseNumber: caseData.caseNumber || `CAS-${String(caseData.id || '').slice(0, 8).toUpperCase()}`,
+    title: caseData.title,
+    description: caseData.description,
+    type: caseData.type || caseData.category || 'GENERAL',
+    priority: caseData.priority,
+    status: caseData.status,
+    studentId: caseData.studentId,
+    studentName:
+      caseData.studentName ||
+      (caseData.student?.user
+        ? `${caseData.student.user.firstName ?? ''} ${caseData.student.user.lastName ?? ''}`.trim()
+        : '') ||
+      'Unknown student',
+    assignedToName: caseData.assignedToName || 'Unassigned',
+    openedByName: caseData.openedByName || '—',
+    openedAt: caseData.openedAt || caseData.createdAt,
+    notes: (caseData.notes || []).map((n: any) => ({
+      id: n.id,
+      note: n.content ?? n.note ?? '',
+      createdByName:
+        n.createdByName ||
+        (n.createdBy ? `${n.createdBy.firstName ?? ''} ${n.createdBy.lastName ?? ''}`.trim() : '') ||
+        'Staff',
+      createdAt: n.createdAt,
+      isPrivate: Boolean(n.isPrivate),
+    })),
+  };
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-10">
@@ -125,7 +163,7 @@ export default function CaseDetail() {
                <div className="flex items-center gap-2 mt-2">
                  <span className="font-mono text-sm text-slate-500">{activeCase.caseNumber}</span>
                  <span className="text-slate-300 dark:text-slate-700">•</span>
-                 <Link to={`/users/${activeCase.studentId}`} className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">
+                 <Link to={`/students/${activeCase.studentId}`} className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">
                     {activeCase.studentName}
                  </Link>
                </div>
@@ -184,7 +222,7 @@ export default function CaseDetail() {
                         
                         <div className="flex items-center justify-between mb-1">
                           <span className="font-medium text-sm text-slate-900 dark:text-white">{note.createdByName}</span>
-                          <span className="text-xs text-slate-500">{format(new Date(note.createdAt), 'MMM d, h:mm a')}</span>
+                          <span className="text-xs text-slate-500">{safeFormat(note.createdAt, 'MMM d, h:mm a')}</span>
                         </div>
                         {note.isPrivate && (
                            <span className="inline-block px-2 py-0.5 rounded text-[10px] uppercase font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 mb-2 border border-amber-200 dark:border-amber-800/50">
@@ -203,7 +241,7 @@ export default function CaseDetail() {
                       <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-blue-100 bg-blue-50 dark:border-blue-900/50 dark:bg-blue-950/20 relative">
                         <div className="flex items-center justify-between mb-1">
                           <span className="font-medium text-sm text-slate-900 dark:text-white">Case Opened</span>
-                          <span className="text-xs text-slate-500">{format(new Date(activeCase.openedAt), 'MMM d, yyyy')}</span>
+                          <span className="text-xs text-slate-500">{safeFormat(activeCase.openedAt, 'MMM d, yyyy')}</span>
                         </div>
                         <p className="text-sm text-slate-600 dark:text-slate-300">Opened by {activeCase.openedByName}</p>
                       </div>
@@ -261,7 +299,7 @@ export default function CaseDetail() {
               </div>
               <div>
                 <dt className="text-xs text-slate-500 dark:text-slate-300">Opened On</dt>
-                <dd className="font-medium text-slate-900 dark:text-white">{format(new Date(activeCase.openedAt), 'MMMM d, yyyy h:mm a')}</dd>
+                <dd className="font-medium text-slate-900 dark:text-white">{safeFormat(activeCase.openedAt, 'MMMM d, yyyy h:mm a')}</dd>
               </div>
             </dl>
           </div>
