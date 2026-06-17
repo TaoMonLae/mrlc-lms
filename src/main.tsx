@@ -2,9 +2,16 @@ import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
+import {registerServiceWorker} from './registerSW';
+import {installAuthInterceptor} from './lib/authInterceptor';
+
+// Install before anything fetches, so expired sessions are handled everywhere.
+installAuthInterceptor();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
   </StrictMode>,
 );
+
+registerServiceWorker();

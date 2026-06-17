@@ -18,7 +18,8 @@ import {
   FileText,
   Download,
   Video,
-  BookMarked
+  BookMarked,
+  Tablet
 } from "lucide-react";
 import { UserRole } from "./permissions";
 
@@ -92,6 +93,12 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     roles: ["ADMIN"],
   },
   {
+    title: "E-Library",
+    url: "/elibrary",
+    icon: Tablet,
+    roles: ["ADMIN"],
+  },
+  {
     title: "Video Lessons",
     url: "/videos",
     icon: Video,
@@ -102,6 +109,12 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     url: "/books",
     icon: BookMarked,
     roles: ["ADMIN", "LIBRARIAN"],
+  },
+  {
+    title: "E-Library",
+    url: "/elibrary",
+    icon: Tablet,
+    roles: ["LIBRARIAN"],
   },
   {
     title: "Fees",
@@ -184,6 +197,12 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     roles: ["TEACHER"],
   },
   {
+    title: "E-Library",
+    url: "/elibrary",
+    icon: Tablet,
+    roles: ["TEACHER"],
+  },
+  {
     title: "Video Lessons",
     url: "/teacher/videos",
     icon: Video,
@@ -237,6 +256,12 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     title: "Student Library",
     url: "/student/library",
     icon: Library,
+    roles: ["STUDENT"],
+  },
+  {
+    title: "E-Library",
+    url: "/elibrary",
+    icon: Tablet,
     roles: ["STUDENT"],
   },
   {

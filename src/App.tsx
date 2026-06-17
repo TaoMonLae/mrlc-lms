@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppLayout } from "./components/layout/AppLayout";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
@@ -41,6 +42,12 @@ import LibraryList from "./pages/library/LibraryList";
 import LibraryNew from "./pages/library/LibraryNew";
 import LibraryDetail from "./pages/library/LibraryDetail";
 import LibraryEdit from "./pages/library/LibraryEdit";
+
+import EbookList from "./pages/elibrary/EbookList";
+// Lazy-loaded: pulls in pdf.js/epub.js (+ a web worker) only when reading.
+const EbookReader = lazy(() => import("./pages/elibrary/EbookReader"));
+import EbookUpload from "./pages/elibrary/EbookUpload";
+import EbookEdit from "./pages/elibrary/EbookEdit";
 
 import FeesDashboard from "./pages/fees/FeesDashboard";
 import PaymentNew from "./pages/fees/PaymentNew";
@@ -232,6 +239,23 @@ export default function App() {
                 <Route element={<ProtectedRoute requiredPermission="manage_own_library" />}>
                   <Route path="/library/new" element={<LibraryNew />} />
                   <Route path="/library/:id/edit" element={<LibraryEdit />} />
+                </Route>
+
+                {/* E-Library: read + online reader open to all authenticated users */}
+                <Route path="/elibrary" element={<EbookList />} />
+                <Route
+                  path="/elibrary/:id/read"
+                  element={
+                    <Suspense fallback={<div className="py-20 text-center text-sm text-slate-500">Loading reader…</div>}>
+                      <EbookReader />
+                    </Suspense>
+                  }
+                />
+
+                {/* E-Library: upload/edit require manage_ebooks (ADMIN, TEACHER, LIBRARIAN) */}
+                <Route element={<ProtectedRoute requiredPermission="manage_ebooks" />}>
+                  <Route path="/elibrary/upload" element={<EbookUpload />} />
+                  <Route path="/elibrary/:id/edit" element={<EbookEdit />} />
                 </Route>
 
                 {/* Video Lessons: read open to all authenticated users */}

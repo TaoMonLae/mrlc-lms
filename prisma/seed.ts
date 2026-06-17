@@ -14,17 +14,19 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log("Seeding database...");
 
-  // 1. Create School Profile
-  const school = await prisma.schoolProfile.create({
-    data: {
-      name: "Mon Refugee Learning Centre - GED School",
-      address: "Kuala Lumpur, Malaysia",
-      contactEmail: "admin@mrlc.edu",
-      contactPhone: "+60 12-345-6789",
-      establishedYear: 2024,
-    },
-  });
-  console.log(`Created school profile: ${school.name}`);
+  // 1. Create School Profile (find-or-create — no unique column to upsert on)
+  const school =
+    (await prisma.schoolProfile.findFirst()) ??
+    (await prisma.schoolProfile.create({
+      data: {
+        name: "Mon Refugee Learning Centre - GED School",
+        address: "Kuala Lumpur, Malaysia",
+        contactEmail: "admin@mrlc.edu",
+        contactPhone: "+60 12-345-6789",
+        establishedYear: 2024,
+      },
+    }));
+  console.log(`School profile: ${school.name}`);
 
   // 2. Create Initial Admin User
   const adminPassword = await bcrypt.hash("admin123", 10);
@@ -97,20 +99,22 @@ async function main() {
     throw new Error("Teacher profile was not created properly.");
   }
 
-  // 5. Create a Class
-  const preGedClass = await prisma.class.create({
-    data: {
-      name: "Pre-GED Foundation",
-      level: "Foundation",
-      academicYear: "2024-2025",
-      room: "Room A1",
-      capacity: 30,
-      teachers: {
-        create: [{ teacherId: teacherProfile.id }],
+  // 5. Create a Class (find-or-create by name)
+  const preGedClass =
+    (await prisma.class.findFirst({ where: { name: "Pre-GED Foundation" } })) ??
+    (await prisma.class.create({
+      data: {
+        name: "Pre-GED Foundation",
+        level: "Foundation",
+        academicYear: "2024-2025",
+        room: "Room A1",
+        capacity: 30,
+        teachers: {
+          create: [{ teacherId: teacherProfile.id }],
+        },
       },
-    },
-  });
-  console.log(`Created class: ${preGedClass.name}`);
+    }));
+  console.log(`Class: ${preGedClass.name}`);
 
   // Need to link the student directly since the studentProfile was created separately
   const studentProfile = await prisma.student.findUnique({
@@ -125,9 +129,11 @@ async function main() {
     console.log("Linked student to class.");
   }
 
-  // 6. Create Subjects
-  const mathSubject = await prisma.subject.create({
-    data: {
+  // 6. Create Subjects (upsert on unique code)
+  const mathSubject = await prisma.subject.upsert({
+    where: { code: "MATH101" },
+    update: {},
+    create: {
       name: "Mathematics",
       code: "MATH101",
       description: "Basic Algebra and Geometry",
@@ -136,7 +142,82 @@ async function main() {
       },
     },
   });
-  console.log(`Created subject: ${mathSubject.name}`);
+  console.log(`Subject: ${mathSubject.name}`);
+
+  // 7. GED class + the four official GED subject areas
+  const gedClass =
+    (await prisma.class.findFirst({ where: { name: "GED Preparation" } })) ??
+    (await prisma.class.create({
+      data: {
+        name: "GED Preparation",
+        level: "GED",
+        academicYear: "2024-2025",
+        room: "Room B2",
+        capacity: 30,
+        teachers: { create: [{ teacherId: teacherProfile.id }] },
+      },
+    }));
+  console.log(`Class: ${gedClass.name}`);
+
+  const gedSubjectsData = [
+    { name: "Mathematical Reasoning", code: "GED-MATH", description: "GED Mathematical Reasoning: quantitative problem solving, algebra, geometry, and data analysis." },
+    { name: "Reasoning Through Language Arts", code: "GED-RLA", description: "GED RLA: reading comprehension, language conventions, and the extended-response essay." },
+    { name: "Science", code: "GED-SCI", description: "GED Science: life science, physical science, and earth & space science." },
+    { name: "Social Studies", code: "GED-SOC", description: "GED Social Studies: civics & government, U.S. history, economics, and geography." },
+  ];
+
+  const gedSubjects = [];
+  for (const s of gedSubjectsData) {
+    const subj = await prisma.subject.upsert({
+      where: { code: s.code },
+      update: {},
+      create: { ...s, teachers: { create: [{ teacherId: teacherProfile.id }] } },
+    });
+    gedSubjects.push(subj);
+    console.log(`GED subject: ${subj.name} (${subj.code})`);
+  }
+
+  // 8. GED practice tests + the demo student's scaled scores.
+  //    GED is scored 100–200 per subject; 145 is the passing standard.
+  const gedScores: Record<string, number> = {
+    "GED-MATH": 165,
+    "GED-RLA": 152,
+    "GED-SCI": 148,
+    "GED-SOC": 158,
+  };
+
+  if (studentProfile) {
+    for (const subj of gedSubjects) {
+      const title = `${subj.name} — GED Practice Test`;
+      const exam =
+        (await prisma.exam.findFirst({ where: { title, subjectId: subj.id } })) ??
+        (await prisma.exam.create({
+          data: {
+            title,
+            type: "MOCK",
+            date: new Date("2025-04-15"),
+            durationMinutes: 120,
+            totalMarks: 200,
+            classId: gedClass.id,
+            subjectId: subj.id,
+          },
+        }));
+      const score = gedScores[subj.code] ?? 150;
+      await prisma.examAttempt.upsert({
+        where: { studentId_examId: { studentId: studentProfile.id, examId: exam.id } },
+        update: { score, isCompleted: true, completedAt: new Date("2025-04-15T11:00:00Z") },
+        create: {
+          studentId: studentProfile.id,
+          examId: exam.id,
+          score,
+          isCompleted: true,
+          startedAt: new Date("2025-04-15T09:00:00Z"),
+          completedAt: new Date("2025-04-15T11:00:00Z"),
+        },
+      });
+      console.log(`  ${subj.code}: scored ${score}/200 — ${score >= 145 ? "PASS" : "below passing"}`);
+    }
+  }
 
   console.log("Seeding complete! 🌱");
 }

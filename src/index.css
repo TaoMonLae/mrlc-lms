@@ -152,7 +152,8 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+/* Inter is loaded via a <link> in index.html (a remote @import here is invalid
+   because it would not precede the other CSS statements). */
 
 @custom-variant dark (&:is(.dark *));
 

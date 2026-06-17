@@ -6,3 +6,5 @@ coverage/
 *.log
 .env*
 !.env.example
+# Runtime uploaded e-book files (persisted via Docker volume in production)
+data/

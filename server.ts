@@ -1,5 +1,8 @@
 import express from "express";
 import path from "path";
+import fs from "fs";
+import crypto from "crypto";
+import multer from "multer";
 import { createServer as createViteServer } from "vite";
 import helmet from "helmet";
 import cors from "cors";
@@ -13,6 +16,28 @@ import { PrismaClient } from "@prisma/client";
 import dotenv from "dotenv";
 
 dotenv.config();
+
+// ─── E-Library file storage ────────────────────────────────────────────────────
+// Uploaded EPUB/PDF files live on disk (a Docker volume in production), NOT in
+// the database. Override the location with the EBOOK_DIR env var.
+const EBOOK_DIR = process.env.EBOOK_DIR || path.join(process.cwd(), "data", "ebooks");
+fs.mkdirSync(EBOOK_DIR, { recursive: true });
+
+const ebookUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, EBOOK_DIR),
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase();
+      cb(null, `${crypto.randomUUID()}${ext}`);
+    },
+  }),
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB
+  fileFilter: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (ext === ".pdf" || ext === ".epub") cb(null, true);
+    else cb(new Error("Only .pdf and .epub files are allowed"));
+  },
+});
 
 // ─── Logger ──────────────────────────────────────────────────────────────────
 const logger = winston.createLogger({
@@ -137,11 +162,37 @@ async function startServer() {
   // ── Security headers ────────────────────────────────────────────────────────
   app.use(
     helmet({
-      // Keep CSP enabled; only loosen directives that Vite/React genuinely need
+      // In production use a CSP tuned for what the app actually loads:
+      // Google Fonts, data/https images & logos, YouTube/Vimeo embeds, inline
+      // styles (React style props), and blob: for the PDF/EPUB reader.
+      // `upgrade-insecure-requests` is disabled so plain-HTTP LAN deployments work.
       contentSecurityPolicy: isProduction
-        ? undefined // use helmet defaults in prod
+        ? {
+            useDefaults: true,
+            directives: {
+              "default-src": ["'self'"],
+              "script-src": ["'self'"],
+              "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+              "font-src": ["'self'", "https://fonts.gstatic.com", "data:"],
+              "img-src": ["'self'", "data:", "https:"],
+              "media-src": ["'self'", "https:", "blob:"],
+              "connect-src": ["'self'"],
+              "worker-src": ["'self'", "blob:"],
+              "frame-src": [
+                "'self'",
+                "blob:",
+                "https://www.youtube.com",
+                "https://www.youtube-nocookie.com",
+                "https://player.vimeo.com",
+              ],
+              "object-src": ["'self'", "blob:", "data:"],
+              "upgrade-insecure-requests": null,
+            },
+          }
         : false, // relax in dev so Vite HMR works
       crossOriginEmbedderPolicy: false,
+      // Allow the SPA to embed cross-origin media (YouTube/Vimeo) without COEP blocking.
+      crossOriginResourcePolicy: { policy: "cross-origin" },
       // Keep xFrameOptions on (default is SAMEORIGIN) — blocks clickjacking
     })
   );
@@ -1817,10 +1868,296 @@ async function startServer() {
     }
   });
 
+  // ── E-Library (EPUB/PDF) API ────────────────────────────────────────────────
+  const canManageEbooks = (role: string) => role === "ADMIN" || role === "TEACHER" || role === "LIBRARIAN";
+
+  // Wrap multer so upload errors (wrong type / too large) return 400, not 500.
+  const uploadEbookFile = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    ebookUpload.single("file")(req, res, (err: any) => {
+      if (err) {
+        const message =
+          err instanceof multer.MulterError
+            ? (err.code === "LIMIT_FILE_SIZE" ? "File exceeds the 100 MB limit" : err.message)
+            : err.message || "Upload failed";
+        res.status(400).json({ error: message });
+        return;
+      }
+      next();
+    });
+  };
+
+  // Returns the ebook only if the requesting role may see it, else null.
+  const ebookVisibleTo = (role: string, visibility: string) => {
+    if (role === "ADMIN" || role === "LIBRARIAN") return true; // managers see all
+    if (role === "STUDENT") return ["ALL", "STUDENTS"].includes(visibility);
+    if (role === "TEACHER") return ["ALL", "TEACHERS_ONLY"].includes(visibility);
+    return visibility === "ALL";
+  };
+
+  const contentType = (format: string) =>
+    (format || "").toUpperCase() === "EPUB" ? "application/epub+zip" : "application/pdf";
+
+  function streamEbookFile(req: express.Request, res: express.Response, filePath: string, format: string, disposition: string) {
+    const stat = fs.statSync(filePath);
+    const total = stat.size;
+    const range = req.headers.range;
+
+    res.setHeader("Content-Type", contentType(format));
+    res.setHeader("Content-Disposition", disposition);
+    res.setHeader("Accept-Ranges", "bytes");
+
+    const pipeStream = (start?: number, end?: number) => {
+      const stream = fs.createReadStream(filePath, start === undefined ? undefined : { start, end });
+      stream.on("error", (err) => {
+        logger.error("Error reading ebook file:", err);
+        if (!res.headersSent) {
+          res.status(500).json({ error: "Could not read e-book file" });
+          return;
+        }
+        res.destroy(err);
+      });
+      stream.pipe(res);
+    };
+
+    if (!range) {
+      res.setHeader("Content-Length", total);
+      pipeStream();
+      return;
+    }
+
+    const match = /^bytes=(\d*)-(\d*)$/.exec(range);
+    if (!match) {
+      res.setHeader("Content-Range", `bytes */${total}`);
+      res.status(416).end();
+      return;
+    }
+
+    const suffixLength = !match[1] && match[2] ? Number(match[2]) : null;
+    const requestedStart = suffixLength === null ? (match[1] ? Number(match[1]) : 0) : Math.max(total - suffixLength, 0);
+    const requestedEnd = suffixLength === null ? (match[2] ? Number(match[2]) : total - 1) : total - 1;
+    const start = Math.max(0, requestedStart);
+    const end = Math.min(requestedEnd, total - 1);
+
+    if (!Number.isFinite(start) || !Number.isFinite(end) || suffixLength === 0 || start > end || start >= total) {
+      res.setHeader("Content-Range", `bytes */${total}`);
+      res.status(416).end();
+      return;
+    }
+
+    res.status(206);
+    res.setHeader("Content-Range", `bytes ${start}-${end}/${total}`);
+    res.setHeader("Content-Length", end - start + 1);
+    pipeStream(start, end);
+  }
+
+  app.get("/api/ebooks", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      let where: any = {};
+      if (jwtUser.role === "STUDENT") where = { visibility: { in: ["ALL", "STUDENTS"] } };
+      else if (jwtUser.role === "TEACHER") where = { visibility: { in: ["ALL", "TEACHERS_ONLY"] } };
+      else if (jwtUser.role !== "ADMIN" && jwtUser.role !== "LIBRARIAN") where = { visibility: "ALL" };
+      const ebooks = await prisma.ebook.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true, title: true, author: true, description: true, category: true,
+          language: true, coverUrl: true, format: true, fileSize: true,
+          visibility: true, downloadAllowed: true, uploadedByName: true, createdAt: true,
+        },
+      });
+      res.json(ebooks);
+    } catch (err) {
+      logger.error("Error fetching ebooks:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post(
+    "/api/ebooks",
+    authMiddleware,
+    (req, res, next) => {
+      const jwtUser = (req as any).user as JwtPayload;
+      if (!canManageEbooks(jwtUser.role)) {
+        res.status(403).json({ error: "Forbidden" });
+        return;
+      }
+      next();
+    },
+    uploadEbookFile,
+    async (req, res) => {
+      const jwtUser = (req as any).user as JwtPayload;
+      const file = (req as any).file as Express.Multer.File | undefined;
+      if (!file) {
+        res.status(400).json({ error: "An .epub or .pdf file is required" });
+        return;
+      }
+      const { title, author, description, category, language, visibility, downloadAllowed, coverUrl, uploadedByName } = req.body;
+      if (!title) {
+        fs.promises.unlink(file.path).catch(() => {});
+        res.status(400).json({ error: "title is required" });
+        return;
+      }
+      const format = path.extname(file.originalname).toLowerCase() === ".epub" ? "EPUB" : "PDF";
+      try {
+        const ebook = await prisma.ebook.create({
+          data: {
+            title,
+            author: author || null,
+            description: description || null,
+            category: category || null,
+            language: language || null,
+            coverUrl: coverUrl || null,
+            format,
+            fileName: file.filename,
+            originalName: file.originalname,
+            fileSize: file.size,
+            visibility: visibility || "ALL",
+            downloadAllowed: downloadAllowed === "true" || downloadAllowed === true,
+            uploadedById: jwtUser.userId,
+            uploadedByName: uploadedByName || jwtUser.email,
+          },
+        });
+        await createAuditLog(
+          jwtUser.userId, jwtUser.email, "CREATE", "EBOOK", ebook.id,
+          `E-book '${title}' (${format}) uploaded.`,
+          req.ip, req.headers["user-agent"] || null, "SUCCESS"
+        );
+        res.status(201).json(ebook);
+      } catch (err) {
+        fs.promises.unlink(file.path).catch(() => {});
+        logger.error("Error creating ebook:", err);
+        res.status(500).json({ error: "Internal Server Error" });
+      }
+    }
+  );
+
+  app.get("/api/ebooks/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const ebook = await prisma.ebook.findUnique({ where: { id: req.params.id } });
+      if (!ebook || !ebookVisibleTo(jwtUser.role, ebook.visibility)) {
+        res.status(404).json({ error: "E-book not found" });
+        return;
+      }
+      const { fileName, ...meta } = ebook;
+      res.json(meta);
+    } catch (err) {
+      logger.error("Error fetching ebook:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.put("/api/ebooks/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageEbooks(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { title, author, description, category, language, visibility, downloadAllowed, coverUrl } = req.body;
+    try {
+      const updated = await prisma.ebook.update({
+        where: { id: req.params.id },
+        data: {
+          ...(title && { title }),
+          ...(author !== undefined && { author: author || null }),
+          ...(description !== undefined && { description: description || null }),
+          ...(category !== undefined && { category: category || null }),
+          ...(language !== undefined && { language: language || null }),
+          ...(coverUrl !== undefined && { coverUrl: coverUrl || null }),
+          ...(visibility && { visibility }),
+          ...(downloadAllowed !== undefined && { downloadAllowed: Boolean(downloadAllowed) }),
+        },
+      });
+      await createAuditLog(
+        jwtUser.userId, jwtUser.email, "UPDATE", "EBOOK", updated.id,
+        `E-book '${updated.title}' updated.`,
+        req.ip, req.headers["user-agent"] || null, "SUCCESS"
+      );
+      const { fileName, ...meta } = updated;
+      res.json(meta);
+    } catch (err: any) {
+      if (err.code === "P2025") { res.status(404).json({ error: "E-book not found" }); return; }
+      logger.error("Error updating ebook:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.delete("/api/ebooks/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageEbooks(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const ebook = await prisma.ebook.findUnique({ where: { id: req.params.id } });
+      if (!ebook) { res.status(404).json({ error: "E-book not found" }); return; }
+      await prisma.ebook.delete({ where: { id: req.params.id } });
+      fs.promises.unlink(path.join(EBOOK_DIR, ebook.fileName)).catch(() => {});
+      await createAuditLog(
+        jwtUser.userId, jwtUser.email, "DELETE", "EBOOK", ebook.id,
+        `E-book '${ebook.title}' deleted.`,
+        req.ip, req.headers["user-agent"] || null, "SUCCESS"
+      );
+      res.json({ message: "E-book deleted successfully" });
+    } catch (err) {
+      logger.error("Error deleting ebook:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Inline stream for the online reader (no attachment header).
+  app.get("/api/ebooks/:id/content", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const ebook = await prisma.ebook.findUnique({ where: { id: req.params.id } });
+      if (!ebook || !ebookVisibleTo(jwtUser.role, ebook.visibility)) {
+        res.status(404).json({ error: "E-book not found" });
+        return;
+      }
+      const filePath = path.join(EBOOK_DIR, ebook.fileName);
+      if (!fs.existsSync(filePath)) { res.status(404).json({ error: "File missing" }); return; }
+      streamEbookFile(req, res, filePath, ebook.format, "inline");
+    } catch (err) {
+      logger.error("Error streaming ebook:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Download — only when the admin has allowed it for this book.
+  app.get("/api/ebooks/:id/download", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const ebook = await prisma.ebook.findUnique({ where: { id: req.params.id } });
+      if (!ebook || !ebookVisibleTo(jwtUser.role, ebook.visibility)) {
+        res.status(404).json({ error: "E-book not found" });
+        return;
+      }
+      if (!ebook.downloadAllowed && !canManageEbooks(jwtUser.role)) {
+        res.status(403).json({ error: "This e-book is read-online only." });
+        return;
+      }
+      const filePath = path.join(EBOOK_DIR, ebook.fileName);
+      if (!fs.existsSync(filePath)) { res.status(404).json({ error: "File missing" }); return; }
+      const ext = ebook.format.toUpperCase() === "EPUB" ? ".epub" : ".pdf";
+      const safeName = (ebook.originalName || `${ebook.title}${ext}`).replace(/[^\w.\- ]+/g, "_");
+      streamEbookFile(req, res, filePath, ebook.format, `attachment; filename="${safeName}"`);
+    } catch (err) {
+      logger.error("Error downloading ebook:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
   // ── Health check ────────────────────────────────────────────────────────────
-  app.get("/api/health", (req, res) => {
-    logger.info("Health check pinged");
-    res.json({ status: "ok", school: "Mon Refugee Learning Centre - GED School" });
+  app.get("/api/health", async (req, res) => {
+    try {
+      // Verify the database is reachable so orchestrators detect real outages.
+      await prisma.$queryRaw`SELECT 1`;
+      res.json({ status: "ok", db: "up", school: "Mon Refugee Learning Centre - GED School" });
+    } catch (err) {
+      logger.error("Health check failed (database unreachable):", err);
+      res.status(503).json({ status: "error", db: "down" });
+    }
   });
 
   // ── Vite / Static serving ───────────────────────────────────────────────────
@@ -1849,6 +2186,12 @@ async function startServer() {
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
     app.get("*", (req, res) => {
+      // Don't fall back to the SPA shell for unmatched API routes — return JSON
+      // so clients get a proper 404 instead of an HTML page with status 200.
+      if (req.originalUrl.startsWith("/api/")) {
+        res.status(404).json({ error: "Not found" });
+        return;
+      }
       res.sendFile(path.join(distPath, "index.html"));
     });
   }

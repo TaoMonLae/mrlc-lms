@@ -507,3 +507,36 @@ model BookLoan {
   @@index([studentId])
   @@index([status])
 }
+
+// -----------------------------------------------------------------------------
+// E-LIBRARY (online EPUB/PDF reading)
+// -----------------------------------------------------------------------------
+
+model Ebook {
+  id              String   @id @default(uuid())
+  title           String
+  author          String?
+  description     String?
+  category        String?
+  language        String?
+  coverUrl        String?
+
+  format          String   // "PDF" | "EPUB"
+  fileName        String   // stored file name on disk (uuid + ext)
+  originalName    String?  // original upload filename
+  fileSize        Int?     // bytes
+
+  visibility      String   @default("ALL")   // ALL | STUDENTS | TEACHERS_ONLY
+  downloadAllowed Boolean  @default(false)   // false = read online only
+
+  uploadedById    String?
+  uploadedByName  String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([title])
+  @@index([author])
+  @@index([category])
+  @@index([format])
+}

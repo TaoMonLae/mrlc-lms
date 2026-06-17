@@ -54,6 +54,7 @@ export type Permission =
   | 'view_videos'
   | 'manage_books'
   | 'view_books'
+  | 'manage_ebooks'
   | 'manage_all';
 
 const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
@@ -67,6 +68,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'view_reports',
     'manage_own_library',
     'view_library',
+    'manage_ebooks',
     'view_announcements',
     'manage_announcements',
     'view_documents',
@@ -89,7 +91,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   STAFF: [],
   ACCOUNTANT: ['manage_fees'],
   CASE_WORKER: ['manage_cases'],
-  LIBRARIAN: ['manage_books', 'view_books'],
+  LIBRARIAN: ['manage_books', 'view_books', 'manage_ebooks', 'view_library'],
 };
 
 export function hasPermission(user: User | null | undefined, permission: Permission): boolean {
