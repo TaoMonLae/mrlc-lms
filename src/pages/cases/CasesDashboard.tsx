@@ -27,7 +27,7 @@ export interface Case {
   openedAt: string;
 }
 
-const MOCK_CASES: Case[] = [
+const MOCK_CASES: Case[] = import.meta.env.DEV ? [
   {
     id: 'c1',
     caseNumber: 'CAS-2025-001',
@@ -49,14 +49,14 @@ const MOCK_CASES: Case[] = [
     priority: 'URGENT',
     status: 'FOLLOW_UP',
     title: 'Welfare check required at home',
-    assignedToName: 'Admin User',
+    assignedToName: 'System User',
     openedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
   },
   {
     id: 'c3',
     caseNumber: 'CAS-2025-003',
     studentId: '3',
-    studentName: 'John Doe',
+    studentName: 'Full Name',
     type: 'ACADEMIC',
     priority: 'LOW',
     status: 'RESOLVED',
@@ -64,7 +64,7 @@ const MOCK_CASES: Case[] = [
     assignedToName: 'Sarah Counselor',
     openedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15).toISOString(),
   }
-];
+] : [];
 
 export default function CasesDashboard() {
   const { hasPermission } = usePermissions();

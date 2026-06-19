@@ -25,6 +25,24 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Clock, MapPin, User, BookOpen, CalendarDays } from 'lucide-react';
 import { TimetableEntry, DayOfWeek } from '@/src/pages/timetable/TimetablePage';
 
+const CLASS_OPTIONS = import.meta.env.DEV ? [
+  { id: 'c1', name: 'Class A' },
+  { id: 'c2', name: 'Class B' },
+  { id: 'c3', name: 'Grade 11A' },
+] : [];
+const SUBJECT_OPTIONS = import.meta.env.DEV ? [
+  { id: 's1', name: 'Mathematics' },
+  { id: 's2', name: 'Physics' },
+  { id: 's3', name: 'English' },
+  { id: 's4', name: 'History' },
+] : [];
+const TEACHER_OPTIONS = import.meta.env.DEV ? [
+  { id: 't1', name: 'John Smith' },
+  { id: 't2', name: 'Sarah Wilson' },
+  { id: 't3', name: 'Jane Doe' },
+  { id: 't4', name: 'Robert Brown' },
+] : [];
+
 const timetableSchema = z.object({
   classId: z.string().min(1, 'Class is required'),
   subjectId: z.string().min(1, 'Subject is required'),
@@ -88,9 +106,9 @@ export function TimetableForm({ initialData, onSubmit, isLoading }: TimetableFor
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="c1">Grade 10A</SelectItem>
-                          <SelectItem value="c2">Grade 10B</SelectItem>
-                          <SelectItem value="c3">Grade 11A</SelectItem>
+                          {CLASS_OPTIONS.map((option) => (
+                            <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -113,10 +131,9 @@ export function TimetableForm({ initialData, onSubmit, isLoading }: TimetableFor
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="s1">Mathematics</SelectItem>
-                          <SelectItem value="s2">Physics</SelectItem>
-                          <SelectItem value="s3">English</SelectItem>
-                          <SelectItem value="s4">History</SelectItem>
+                          {SUBJECT_OPTIONS.map((option) => (
+                            <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -139,10 +156,9 @@ export function TimetableForm({ initialData, onSubmit, isLoading }: TimetableFor
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="t1">John Smith</SelectItem>
-                          <SelectItem value="t2">Sarah Wilson</SelectItem>
-                          <SelectItem value="t3">Jane Doe</SelectItem>
-                          <SelectItem value="t4">Robert Brown</SelectItem>
+                          {TEACHER_OPTIONS.map((option) => (
+                            <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />

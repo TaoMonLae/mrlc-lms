@@ -93,7 +93,7 @@ export default function StudentProfileReport() {
       ) : (
       <PrintLayout
         title="Student Profile Export"
-        preparedBy="Admin User"
+        preparedBy="System User"
         filters={{ Class: classLabel, Students: String(rows.length) }}
       >
         {rows.length === 0 ? (

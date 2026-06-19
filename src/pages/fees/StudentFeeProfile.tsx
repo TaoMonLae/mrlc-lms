@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 
-const MOCK_PAYMENTS = [
+const MOCK_PAYMENTS = import.meta.env.DEV ? [
   {
     id: 'p1',
     amount: 1000,
@@ -16,7 +16,7 @@ const MOCK_PAYMENTS = [
     paymentDate: '2025-01-15T10:00:00Z',
     receiptNumber: 'RCP-2025-001',
     status: 'PAID',
-    recordedBy: 'Admin User',
+    recordedBy: 'System User',
   },
   {
     id: 'p2',
@@ -27,16 +27,16 @@ const MOCK_PAYMENTS = [
     paymentDate: '2025-05-10T10:00:00Z',
     receiptNumber: 'RCP-2025-054',
     status: 'PAID',
-    recordedBy: 'Admin User',
+    recordedBy: 'System User',
   }
-];
+] : [];
 
 export default function StudentFeeProfile() {
   const { id } = useParams();
   const { hasPermission } = usePermissions();
 
-  const totalDue = 1500;
   const totalPaid = MOCK_PAYMENTS.reduce((sum, p) => sum + (p.status === 'PAID' ? p.amount : 0), 0);
+  const totalDue = import.meta.env.DEV ? 1500 : totalPaid;
   const balance = Math.max(0, totalDue - totalPaid);
 
   return (
@@ -47,8 +47,8 @@ export default function StudentFeeProfile() {
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Fees Dashboard
           </Button>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Fee Profile: Ali bin Ahmad</h1>
-          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">STU-2023-001 • Grade 10A</p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Fee Profile</h1>
+          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Student ID: {id}</p>
         </div>
 
         {hasPermission('manage_fees') && (

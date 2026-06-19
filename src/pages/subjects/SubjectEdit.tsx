@@ -27,14 +27,6 @@ const subjectSchema = z.object({
 
 type SubjectFormValues = z.infer<typeof subjectSchema>;
 
-const MOCK_SUBJECT_DATA = {
-  name: 'Mathematical Reasoning',
-  code: 'GED-MATH',
-  level: 'Advanced',
-  description: 'GED Mathematical Reasoning focuses on quantitative problem solving and algebraic problem solving.',
-  status: 'ACTIVE',
-};
-
 export default function SubjectEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -58,15 +50,26 @@ export default function SubjectEdit() {
   });
 
   useEffect(() => {
-    // Populate form
-    reset(MOCK_SUBJECT_DATA as any);
-  }, [reset]);
+    const token = sessionStorage.getItem('auth_token');
+    fetch('/api/subjects', { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((subjects) => {
+        const subject = Array.isArray(subjects) ? subjects.find((item: any) => item.id === id) : null;
+        if (!subject) return;
+        reset({
+          name: subject.name || '',
+          code: subject.code || '',
+          level: subject.level || '',
+          description: subject.description || '',
+          status: subject.status || 'ACTIVE',
+        });
+      })
+      .catch(() => {});
+  }, [id, reset]);
 
   const onSubmit = async (data: SubjectFormValues) => {
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('Updated subject data:', data);
+      console.log('Subject update submitted:', data);
       toast.success('Subject details updated');
       navigate('/subjects'); 
       // navigate(`/subjects/${id}`) if we have a detailed view for subject

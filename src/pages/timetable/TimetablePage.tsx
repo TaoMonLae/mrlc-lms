@@ -47,12 +47,11 @@ export interface TimetableEntry {
   notes?: string;
 }
 
-// Mock Data
-const MOCK_TIMETABLE: TimetableEntry[] = [
+const MOCK_TIMETABLE: TimetableEntry[] = import.meta.env.DEV ? [
   {
     id: 't1',
     classId: 'c1',
-    className: 'Grade 10A',
+    className: 'Class A',
     subjectId: 's1',
     subjectName: 'Mathematics',
     subjectColor: 'bg-blue-500',
@@ -66,7 +65,7 @@ const MOCK_TIMETABLE: TimetableEntry[] = [
   {
     id: 't2',
     classId: 'c1',
-    className: 'Grade 10A',
+    className: 'Class A',
     subjectId: 's2',
     subjectName: 'Physics',
     subjectColor: 'bg-purple-500',
@@ -80,7 +79,7 @@ const MOCK_TIMETABLE: TimetableEntry[] = [
   {
     id: 't3',
     classId: 'c1',
-    className: 'Grade 10A',
+    className: 'Class A',
     subjectId: 's3',
     subjectName: 'English',
     subjectColor: 'bg-emerald-500',
@@ -94,7 +93,7 @@ const MOCK_TIMETABLE: TimetableEntry[] = [
   {
     id: 't4',
     classId: 'c1',
-    className: 'Grade 10A',
+    className: 'Class A',
     subjectId: 's1',
     subjectName: 'Mathematics',
     subjectColor: 'bg-blue-500',
@@ -108,7 +107,7 @@ const MOCK_TIMETABLE: TimetableEntry[] = [
   {
     id: 't5',
     classId: 'c1',
-    className: 'Grade 10A',
+    className: 'Class A',
     subjectId: 's4',
     subjectName: 'History',
     subjectColor: 'bg-amber-500',
@@ -119,7 +118,7 @@ const MOCK_TIMETABLE: TimetableEntry[] = [
     endTime: '11:30',
     room: 'Room 105',
   }
-];
+] : [];
 
 const DAYS: DayOfWeek[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 const TIME_SLOTS = [
@@ -128,7 +127,7 @@ const TIME_SLOTS = [
 
 export default function TimetablePage() {
   const [viewType, setViewType] = useState<'class' | 'teacher'>('class');
-  const [selectedIdentifier, setSelectedIdentifier] = useState('Grade 10A');
+  const [selectedIdentifier, setSelectedIdentifier] = useState(MOCK_TIMETABLE[0]?.className || '');
   const { isAdmin, hasPermission } = usePermissions();
 
   const canManage = isAdmin || hasPermission('manage_timetable');
@@ -167,7 +166,7 @@ export default function TimetablePage() {
           <Button 
             variant={viewType === 'class' ? 'secondary' : 'ghost'} 
             size="sm" 
-            onClick={() => { setViewType('class'); setSelectedIdentifier('Grade 10A'); }}
+            onClick={() => { setViewType('class'); setSelectedIdentifier(MOCK_TIMETABLE[0]?.className || ''); }}
             className="h-8 text-xs px-4"
           >
             By Class
@@ -175,7 +174,7 @@ export default function TimetablePage() {
           <Button 
             variant={viewType === 'teacher' ? 'secondary' : 'ghost'} 
             size="sm" 
-            onClick={() => { setViewType('teacher'); setSelectedIdentifier('John Smith'); }}
+            onClick={() => { setViewType('teacher'); setSelectedIdentifier(MOCK_TIMETABLE[0]?.teacherName || ''); }}
             className="h-8 text-xs px-4"
           >
             By Teacher
@@ -189,19 +188,10 @@ export default function TimetablePage() {
             value={selectedIdentifier}
             onChange={(e) => setSelectedIdentifier(e.target.value)}
           >
-            {viewType === 'class' ? (
-              <>
-                <option value="Grade 10A">Grade 10A</option>
-                <option value="Grade 10B">Grade 10B</option>
-                <option value="Grade 11A">Grade 11A</option>
-              </>
-            ) : (
-              <>
-                <option value="John Smith">John Smith</option>
-                <option value="Sarah Wilson">Sarah Wilson</option>
-                <option value="Jane Doe">Jane Doe</option>
-              </>
-            )}
+            <option value="">No {viewType === 'class' ? 'classes' : 'teachers'} available</option>
+            {Array.from(new Set(MOCK_TIMETABLE.map((entry) => viewType === 'class' ? entry.className : entry.teacherName))).map((name) => (
+              <option key={name} value={name}>{name}</option>
+            ))}
           </select>
         </div>
       </div>

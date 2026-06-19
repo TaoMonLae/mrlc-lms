@@ -8,37 +8,6 @@ import { usePermissions, useUser } from '../../lib/permissions';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
-const MOCK_CASE = {
-  id: 'c1',
-  caseNumber: 'CAS-2025-001',
-  studentId: '1',
-  studentName: 'Ali bin Ahmad',
-  type: 'ATTENDANCE',
-  priority: 'MEDIUM',
-  status: 'OPEN',
-  title: 'Absent for 5 consecutive days',
-  description: 'Student has not attended class since last Monday. No contact from parents despite multiple phone calls.',
-  assignedToName: 'Sarah Counselor',
-  openedByName: 'John Teacher',
-  openedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-  notes: [
-    {
-      id: 'n1',
-      note: 'Called mother\'s phone number, went straight to voicemail. Left a message to call back ASAP.',
-      createdByName: 'John Teacher',
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
-      isPrivate: false,
-    },
-    {
-      id: 'n2',
-      note: 'Discussed with principal. If no response by tomorrow, we will need to schedule a home visit.',
-      createdByName: 'Sarah Counselor',
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
-      isPrivate: true,
-    }
-  ]
-};
-
 // Safely format a date — returns a placeholder instead of throwing on
 // missing/invalid values (date-fns `format` throws on Invalid Date).
 const safeFormat = (value: any, pattern: string) => {

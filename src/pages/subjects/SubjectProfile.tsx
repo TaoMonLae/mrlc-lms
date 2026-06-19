@@ -13,40 +13,54 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import { usePermissions } from '../../lib/permissions';
 
-const MOCK_SUBJECT = {
+const MOCK_SUBJECT = import.meta.env.DEV ? {
   id: 's1',
   name: 'Mathematical Reasoning',
   code: 'GED-MATH',
   level: 'Advanced',
   description: 'GED Mathematical Reasoning focuses on quantitative problem solving and algebraic problem solving. Students will cover number operations, geometry, data analysis, and basic algebra concepts necessary for passing the GED math exam.',
   status: 'ACTIVE',
-};
+} : null;
 
-const MOCK_CLASSES = [
+const MOCK_CLASSES = import.meta.env.DEV ? [
   { id: 'c1', name: 'GED Morning', term: 'Fall 2025' },
   { id: 'c2', name: 'GED Evening', term: 'Fall 2025' },
-];
+] : [];
 
-const MOCK_TEACHERS = [
+const MOCK_TEACHERS = import.meta.env.DEV ? [
   { id: 't1', name: 'Htet Wai Yan', employmentType: 'FULL_TIME' },
-];
+] : [];
 
-const MOCK_EXAMS = [
+const MOCK_EXAMS = import.meta.env.DEV ? [
   { id: 'e1', title: 'Math Midterm', date: '2025-10-15', status: 'COMPLETED' },
   { id: 'e2', title: 'Math Final Practice', date: '2025-12-01', status: 'SCHEDULED' },
-];
+] : [];
 
 export default function SubjectProfile() {
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState('overview');
 
-  // Hardcoded for demo - should come from auth
-  const userRole = 'ADMIN';
+  const { hasPermission } = usePermissions();
 
   const handleArchive = () => {
     toast.success('Subject has been archived.');
   };
+
+  if (!MOCK_SUBJECT) {
+    return (
+      <div className="space-y-6 max-w-[1200px] mx-auto pb-20">
+        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/subjects" />} nativeButton={false}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Subjects
+        </Button>
+        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-8 text-center text-slate-500">
+          Subject profile data is not available from the live API yet.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-[1200px] mx-auto pb-20">
@@ -68,7 +82,7 @@ export default function SubjectProfile() {
             <span>{MOCK_SUBJECT.level}</span>
           </p>
         </div>
-        {userRole === 'ADMIN' && (
+        {hasPermission('manage_subjects') && (
           <div className="flex gap-2">
             <Button variant="outline" render={<Link to={`/subjects/${id}/edit`} />} nativeButton={false}>
               <Edit className="mr-2 h-4 w-4" /> Edit Subject

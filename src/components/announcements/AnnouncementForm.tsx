@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -52,6 +52,7 @@ interface AnnouncementFormProps {
 }
 
 export function AnnouncementForm({ initialData, onSubmit, isLoading }: AnnouncementFormProps) {
+  const [classes, setClasses] = useState<{ id: string; name: string }[]>([]);
   const form = useForm<AnnouncementFormValues>({
     resolver: zodResolver(announcementSchema),
     defaultValues: {
@@ -65,6 +66,18 @@ export function AnnouncementForm({ initialData, onSubmit, isLoading }: Announcem
   });
 
   const watchAudience = form.watch('audience');
+
+  useEffect(() => {
+    if (watchAudience !== 'CLASS') return;
+    const token = sessionStorage.getItem('auth_token');
+    fetch('/api/classes', { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        if (!Array.isArray(data)) return;
+        setClasses(data.map((item: any) => ({ id: item.id, name: item.name || item.code || item.id })));
+      })
+      .catch(() => setClasses([]));
+  }, [watchAudience]);
 
   return (
     <Form {...form}>
@@ -178,9 +191,9 @@ export function AnnouncementForm({ initialData, onSubmit, isLoading }: Announcem
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="c1">Grade 10A</SelectItem>
-                            <SelectItem value="c2">Grade 10B</SelectItem>
-                            <SelectItem value="c3">Grade 11A</SelectItem>
+                            {classes.map((classItem) => (
+                              <SelectItem key={classItem.id} value={classItem.id}>{classItem.name}</SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />

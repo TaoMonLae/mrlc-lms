@@ -6,7 +6,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
-const MOCK_QUESTIONS = [
+const MOCK_QUESTIONS = import.meta.env.DEV ? [
   {
     id: 'q1',
     type: 'MCQ',
@@ -27,7 +27,7 @@ const MOCK_QUESTIONS = [
     choices: ['9', '15', '27', '31'],
     points: 10,
   }
-];
+] : [];
 
 export default function ExamTake() {
   const { id } = useParams();
@@ -70,6 +70,21 @@ export default function ExamTake() {
     setSubmitted(true);
   };
 
+  if (!question) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center">
+        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-8 max-w-md w-full text-center shadow-sm">
+          <AlertCircle className="w-10 h-10 text-slate-300 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Exam unavailable</h2>
+          <p className="text-sm text-slate-500 mb-6">Exam questions are not available from the live API yet.</p>
+          <Button variant="outline" className="w-full" onClick={() => navigate('/exams')}>
+            Return to Dashboard
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (submitted) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center">
@@ -102,7 +117,7 @@ export default function ExamTake() {
       {/* Header */}
       <div className="bg-white dark:bg-surface-indigo border-b border-slate-200 dark:border-surface-raised p-4 rounded-t-xl flex justify-between items-center shadow-sm">
         <div>
-          <h1 className="font-bold text-slate-900 dark:text-white">GED Math Midterm</h1>
+          <h1 className="font-bold text-slate-900 dark:text-white">Exam Preview</h1>
           <p className="text-xs text-slate-500">Student preview mode</p>
         </div>
         <div className={`flex items-center gap-2 px-4 py-2 rounded-full font-mono text-lg font-bold ${

@@ -7,8 +7,7 @@ import { usePermissions, useUser } from '../../lib/permissions';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
-// Reusing MOCK_RESOURCES logic for demo
-const MOCK_RESOURCE = {
+const MOCK_RESOURCE = import.meta.env.DEV ? {
   id: 'r3',
   title: 'Introduction to React',
   description: 'A great tutorial on React fundamentals. This covers components, state, props, and hooks. Ensure you follow along with the exercises.',
@@ -22,7 +21,7 @@ const MOCK_RESOURCE = {
   status: 'ACTIVE',
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
-};
+} : null;
 
 export default function LibraryDetail() {
   const { id } = useParams();
@@ -50,6 +49,20 @@ export default function LibraryDetail() {
     }
     return null;
   };
+
+  if (!MOCK_RESOURCE) {
+    return (
+      <div className="space-y-6 max-w-5xl mx-auto pb-10">
+        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/library" />} nativeButton={false}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Library
+        </Button>
+        <div className="rounded-xl border border-dashed border-slate-200 bg-white p-10 text-center text-slate-500 dark:bg-surface-indigo dark:border-surface-raised">
+          Resource {id} is not available from the live API yet.
+        </div>
+      </div>
+    );
+  }
 
   const canManage = isAdmin || (isTeacher && MOCK_RESOURCE.uploadedById === user?.id); // simplified
 
@@ -167,7 +180,7 @@ export default function LibraryDetail() {
                 <div>
                   <dt className="text-xs text-slate-500 dark:text-slate-300">Assigned Class</dt>
                   <dd className="font-medium text-blue-600 dark:text-blue-400">
-                    <Link to={`/classes/${MOCK_RESOURCE.classId}`} className="hover:underline">Grade 10A</Link>
+                    <Link to={`/classes/${MOCK_RESOURCE.classId}`} className="hover:underline">Class A</Link>
                   </dd>
                 </div>
               )}

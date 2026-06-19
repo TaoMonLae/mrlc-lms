@@ -210,8 +210,6 @@ export default function CaseNew() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">-- Leave Unassigned --</SelectItem>
-                    <SelectItem value="u1">Admin User (Administrator)</SelectItem>
-                    <SelectItem value="u2">Sarah Counselor (Case Worker)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

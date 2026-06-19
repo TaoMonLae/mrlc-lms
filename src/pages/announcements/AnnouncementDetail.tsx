@@ -22,50 +22,10 @@ import { Separator } from '@/components/ui/separator';
 import { usePermissions } from '@/src/lib/permissions';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { Announcement, AnnouncementAudience } from './AnnouncementsList';
+import { Announcement, AnnouncementAudience, MOCK_ANNOUNCEMENTS } from './AnnouncementsList';
 
-// Mock fetching function
 const getAnnouncement = (id: string): Announcement | undefined => {
-  const data: Announcement[] = [
-    {
-      id: 'ann-1',
-      title: 'School Reopening & Safety Guidelines',
-      body: 'Welcome back students! Please read the attached safety guidelines for the upcoming semester. We prioritize your health and safety above all else. Daily temperature checks will be mandatory. Hand sanitizers have been installed at every entrance. We request all parents to ensure their children are well-informed about the new guidelines.\n\nKey points to remember:\n1. Wear masks at all times within school premises.\n2. Maintain physical distancing in corridors and common areas.\n3. Wash hands frequently.\n4. Avoid sharing personal belongings such as stationery or water bottles.',
-      audience: 'ALL',
-      pinned: true,
-      createdById: 'u1',
-      createdByName: 'Admin User',
-      status: 'ACTIVE',
-      createdAt: '2025-05-01T08:00:00Z',
-      updatedAt: '2025-05-01T08:00:00Z',
-    },
-    {
-      id: 'ann-2',
-      title: 'Final Exam Schedule - Term 1',
-      body: 'The final exam schedule for Term 1 has been released. Please check your student portal for specific timings and room assignments. Ensure you arrive at least 15 minutes before the start time. Bring only necessary materials specified in the exam list. Electronic gadgets are strictly prohibited.',
-      audience: 'STUDENTS',
-      pinned: true,
-      expiresAt: '2025-06-15T23:59:59Z',
-      createdById: 'u1',
-      createdByName: 'Admin User',
-      status: 'ACTIVE',
-      createdAt: '2025-05-10T10:30:00Z',
-      updatedAt: '2025-05-10T10:30:00Z',
-    },
-    {
-      id: 'ann-3',
-      title: 'Staff Meeting: Curriculum Development',
-      body: 'Reminder for all teaching staff about our monthly meeting regarding curriculum updates and student progress reporting. We will be discussing the new integration of digital assessment tools. Please prepare your department progress summaries by Wednesday.',
-      audience: 'TEACHERS',
-      pinned: false,
-      createdById: 'u1',
-      createdByName: 'Admin User',
-      status: 'ACTIVE',
-      createdAt: '2025-05-12T14:00:00Z',
-      updatedAt: '2025-05-12T14:00:00Z',
-    }
-  ];
-  return data.find(a => a.id === id);
+  return MOCK_ANNOUNCEMENTS.find(a => a.id === id);
 };
 
 export default function AnnouncementDetail() {

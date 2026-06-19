@@ -23,6 +23,7 @@ interface StudentProfile {
 }
 
 export default function StudentProfilePage() {
+  const currentAcademicYear = `${new Date().getFullYear()}-${String(new Date().getFullYear() + 1).slice(-2)}`;
   const [student, setStudent] = useState<StudentProfile>({
     name: '', studentId: '', role: 'Student', status: 'Active', class: '',
     email: '', phone: '', address: '', birthDate: '', gender: '',
@@ -35,7 +36,7 @@ export default function StudentProfilePage() {
       .catch(() => {
         if (import.meta.env.DEV) {
           setStudent({
-            name: 'Min Khant', studentId: 'ST-2024-001', role: 'Student', status: 'Active', class: 'Grade 10A',
+            name: 'Min Khant', studentId: 'ST-2024-001', role: 'Student', status: 'Active', class: 'Class A',
             email: 'minkhant@school.edu', phone: '+95 9 123 456 789', address: 'Yangon, Myanmar',
             birthDate: '2008-05-15', gender: 'Male', enrollmentDate: '2024-01-10',
             guardian: { name: 'U Maung Maung', relationship: 'Father', phone: '+95 9 987 654 321', email: 'umaungmaung@gmail.com' },
@@ -61,7 +62,7 @@ export default function StudentProfilePage() {
           <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm font-medium text-slate-500 dark:text-slate-300">
             <span className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4" /> {student.studentId}</span>
             <span className="flex items-center gap-1.5"><BookOpen className="h-4 w-4" /> {student.class}</span>
-            <span className="flex items-center gap-1.5"><Calendar className="h-4 w-4" /> Joind {new Date(student.enrollmentDate).getFullYear()}</span>
+            <span className="flex items-center gap-1.5"><Calendar className="h-4 w-4" /> Joined {student.enrollmentDate ? new Date(student.enrollmentDate).getFullYear() : '—'}</span>
           </div>
         </div>
       </div>
@@ -159,7 +160,7 @@ export default function StudentProfilePage() {
               <div>
                 <div className="flex items-center justify-between text-xs mb-2 border-t border-slate-100 dark:border-surface-raised pt-3">
                   <span className="text-slate-500 font-medium font-bold uppercase tracking-tighter">Academic Year</span>
-                  <span className="text-slate-700 dark:text-slate-300 font-bold">2024-25</span>
+                  <span className="text-slate-700 dark:text-slate-300 font-bold">{currentAcademicYear}</span>
                 </div>
               </div>
             </CardContent>

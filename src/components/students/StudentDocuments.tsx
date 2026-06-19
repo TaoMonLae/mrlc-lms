@@ -71,8 +71,8 @@ const formatFileSize = (bytes: number) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
-// Mock data
-const MOCK_DOCUMENTS: StudentDocument[] = [
+// Development-only sample data. Production must not show fake documents.
+const MOCK_DOCUMENTS: StudentDocument[] = import.meta.env.DEV ? [
   {
     id: 'doc-1',
     studentId: '1',
@@ -84,7 +84,7 @@ const MOCK_DOCUMENTS: StudentDocument[] = [
     mimeType: 'application/pdf',
     expiryDate: '2026-12-31T00:00:00Z',
     uploadedById: 'u1',
-    uploadedByName: 'Admin User',
+    uploadedByName: 'System User',
     status: 'ACTIVE',
     createdAt: '2024-01-15T10:00:00Z',
   },
@@ -98,7 +98,7 @@ const MOCK_DOCUMENTS: StudentDocument[] = [
     fileSize: 1024 * 1200,
     mimeType: 'image/jpeg',
     uploadedById: 'u1',
-    uploadedByName: 'Admin User',
+    uploadedByName: 'System User',
     status: 'ACTIVE',
     createdAt: '2024-01-15T10:05:00Z',
   },
@@ -113,7 +113,7 @@ const MOCK_DOCUMENTS: StudentDocument[] = [
     mimeType: 'application/pdf',
     expiryDate: '2025-05-10T00:00:00Z', // Expired
     uploadedById: 'u1',
-    uploadedByName: 'Admin User',
+    uploadedByName: 'System User',
     status: 'ACTIVE',
     createdAt: '2024-02-20T14:30:00Z',
   },
@@ -132,7 +132,7 @@ const MOCK_DOCUMENTS: StudentDocument[] = [
     status: 'ACTIVE',
     createdAt: '2025-05-01T09:15:00Z',
   }
-];
+] : [];
 
 interface StudentDocumentsProps {
   studentId: string;

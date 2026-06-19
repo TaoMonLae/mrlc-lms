@@ -91,7 +91,7 @@ export default function UserNew() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name *</Label>
-                <Input id="name" {...register('name')} placeholder="e.g. John Doe" />
+                <Input id="name" {...register('name')} placeholder="e.g. Full Name" />
                 {errors.name && <p className="text-xs text-red-500 font-medium">{errors.name.message}</p>}
               </div>
 

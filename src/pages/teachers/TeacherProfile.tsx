@@ -21,7 +21,7 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { type Teacher, type TeacherActivity } from '../../types/teacher';
 
-const MOCK_TEACHER: Teacher = {
+const MOCK_TEACHER: Teacher | null = import.meta.env.DEV ? {
   id: 't1',
   teacherId: 'TCH-001',
   firstName: 'Htet',
@@ -41,18 +41,32 @@ const MOCK_TEACHER: Teacher = {
   photoUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Htet',
   notes: 'Highly experienced in GED preparation. Lead instructor for STEM department.',
   userId: undefined, // No user account yet
-};
+} : null;
 
-const MOCK_ACTIVITIES: TeacherActivity[] = [
+const MOCK_ACTIVITIES: TeacherActivity[] = import.meta.env.DEV ? [
   { id: 'a1', type: 'ASSIGN_CLASS', description: 'Assigned to "Standard X (Maths)"', timestamp: '2024-05-10T10:00:00Z' },
   { id: 'a2', type: 'PROFILE_UPDATE', description: 'Updated profile information', timestamp: '2024-05-08T15:30:00Z' },
   { id: 'a3', type: 'REPORT_SUBMIT', description: 'Submitted monthly attendance report', timestamp: '2024-04-30T09:15:00Z' },
-];
+] : [];
 
 export default function TeacherProfile() {
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState('overview');
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
+
+  if (!MOCK_TEACHER) {
+    return (
+      <div className="space-y-6 max-w-[1200px] mx-auto pb-20">
+        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/teachers" />} nativeButton={false}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Teachers
+        </Button>
+        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-8 text-center text-slate-500">
+          Teacher profile data is not available from the live API yet.
+        </div>
+      </div>
+    );
+  }
 
   const handleCreateAccount = () => {
     setIsCreatingAccount(true);

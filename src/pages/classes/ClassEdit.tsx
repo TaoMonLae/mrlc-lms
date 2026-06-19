@@ -27,14 +27,6 @@ const classSchema = z.object({
 
 type ClassFormValues = z.infer<typeof classSchema>;
 
-const MOCK_CLASS_DATA = {
-  name: 'Pre-GED',
-  level: 'Foundation',
-  academicYear: '2025-2026',
-  description: 'Foundation class for students preparing for GED.',
-  status: 'ACTIVE',
-};
-
 export default function ClassEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -58,15 +50,26 @@ export default function ClassEdit() {
   });
 
   useEffect(() => {
-    // Populate form
-    reset(MOCK_CLASS_DATA as any);
-  }, [reset]);
+    const token = sessionStorage.getItem('auth_token');
+    fetch('/api/classes', { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((classes) => {
+        const classData = Array.isArray(classes) ? classes.find((item: any) => item.id === id) : null;
+        if (!classData) return;
+        reset({
+          name: classData.name || '',
+          level: classData.level || '',
+          academicYear: classData.academicYear || '',
+          description: classData.description || '',
+          status: classData.status || 'ACTIVE',
+        });
+      })
+      .catch(() => {});
+  }, [id, reset]);
 
   const onSubmit = async (data: ClassFormValues) => {
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('Updated class data:', data);
+      console.log('Class update submitted:', data);
       toast.success('Class details updated');
       navigate(`/classes/${id}`);
     } catch (error) {

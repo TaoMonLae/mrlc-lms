@@ -44,16 +44,22 @@ export default function CaseEdit() {
   });
 
   useEffect(() => {
-    // Mock load data
-    reset({
-      title: 'Absent for 5 consecutive days',
-      description: 'Student has not attended class since last Monday. No contact from parents despite multiple phone calls.',
-      type: 'ATTENDANCE',
-      priority: 'MEDIUM',
-      status: 'OPEN',
-      assignedToId: 'u2',
-    });
-  }, [reset]);
+    const token = sessionStorage.getItem('auth_token');
+    fetch(`/api/cases/${id}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!data) return;
+        reset({
+          title: data.title || '',
+          description: data.description || '',
+          type: data.category || data.type || 'OTHER',
+          priority: data.priority || 'MEDIUM',
+          status: data.status || 'OPEN',
+          assignedToId: data.assignedToId || undefined,
+        });
+      })
+      .catch(() => {});
+  }, [id, reset]);
 
   const onSubmit = async (data: FormValues) => {
     try {
@@ -169,8 +175,6 @@ export default function CaseEdit() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">-- Leave Unassigned --</SelectItem>
-                    <SelectItem value="u1">Admin User (Administrator)</SelectItem>
-                    <SelectItem value="u2">Sarah Counselor (Case Worker)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

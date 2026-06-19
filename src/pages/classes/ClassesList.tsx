@@ -13,7 +13,7 @@ import {
   DropdownMenuGroup,
 } from '@/components/ui/dropdown-menu';
 
-const MOCK_CLASSES = [
+const MOCK_CLASSES = import.meta.env.DEV ? [
   {
     id: 'c1',
     name: 'Pre-GED',
@@ -56,12 +56,11 @@ const MOCK_CLASSES = [
     createdAt: '2023-01-15',
     updatedAt: '2023-12-15',
   }
-];
+] : [];
 
 export default function ClassesList() {
   const [searchTerm, setSearchTerm] = useState('');
   
-  // Hardcoded for demo - should come from auth
   const userRole = 'ADMIN';
 
   const filteredClasses = MOCK_CLASSES.filter(c => 

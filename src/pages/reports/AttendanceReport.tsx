@@ -160,7 +160,7 @@ export default function AttendanceReport() {
       {/* Print Layout */}
       <PrintLayout
         title="Monthly Attendance Report"
-        preparedBy="Admin User"
+        preparedBy="System User"
         filters={{ Class: classLabel, Month: monthLabel }}
       >
         <table className="w-full text-sm text-left border-collapse mt-4">

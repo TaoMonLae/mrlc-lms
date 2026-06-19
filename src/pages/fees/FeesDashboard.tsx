@@ -14,13 +14,13 @@ import {
 import { usePermissions } from '../../lib/permissions';
 import { format } from 'date-fns';
 
-const MOCK_FEES = [
+const MOCK_FEES = import.meta.env.DEV ? [
   {
     id: 'f1',
     studentId: '1',
     studentName: 'Ali bin Ahmad',
     studentIdNumber: 'STU-2023-001',
-    class: 'Grade 10A',
+    class: 'Class A',
     totalDue: 1500,
     totalPaid: 1500,
     balance: 0,
@@ -32,7 +32,7 @@ const MOCK_FEES = [
     studentId: '2',
     studentName: 'Sarah Lee',
     studentIdNumber: 'STU-2023-002',
-    class: 'Grade 10B',
+    class: 'Class B',
     totalDue: 1500,
     totalPaid: 500,
     balance: 1000,
@@ -42,16 +42,16 @@ const MOCK_FEES = [
   {
     id: 'f3',
     studentId: '3',
-    studentName: 'John Doe',
+    studentName: 'Full Name',
     studentIdNumber: 'STU-2023-003',
-    class: 'Grade 10A',
+    class: 'Class A',
     totalDue: 1500,
     totalPaid: 0,
     balance: 1500,
     status: 'UNPAID',
     lastPaymentDate: null,
   }
-];
+] : [];
 
 export default function FeesDashboard() {
   const { hasPermission } = usePermissions();
@@ -80,7 +80,9 @@ export default function FeesDashboard() {
           })));
         }
       })
-      .catch(() => {/* keep mock data on error */});
+      .catch(() => {
+        if (!import.meta.env.DEV) setFees([]);
+      });
   }, []);
 
   const filteredFees = fees.filter(f => {
@@ -93,6 +95,10 @@ export default function FeesDashboard() {
 
   const totalCollected = fees.reduce((sum, f) => sum + (f.totalPaid ?? 0), 0);
   const totalOutstanding = fees.reduce((sum, f) => sum + (f.balance ?? 0), 0);
+  const collectionRate = totalCollected + totalOutstanding > 0
+    ? Math.round((totalCollected / (totalCollected + totalOutstanding)) * 100)
+    : 0;
+  const classOptions = Array.from(new Set(fees.map((f) => f.class).filter((className) => className && className !== '—')));
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -127,7 +133,7 @@ export default function FeesDashboard() {
         <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised p-6 rounded-xl shadow-sm text-center">
            <p className="text-sm font-medium text-slate-500 dark:text-slate-300">Collection Rate</p>
            <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">
-             {Math.round((totalCollected / (totalCollected + totalOutstanding)) * 100)}%
+             {collectionRate}%
            </p>
         </div>
       </div>
@@ -150,8 +156,9 @@ export default function FeesDashboard() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">All Classes</SelectItem>
-                <SelectItem value="Grade 10A">Grade 10A</SelectItem>
-                <SelectItem value="Grade 10B">Grade 10B</SelectItem>
+                {classOptions.map((className) => (
+                  <SelectItem key={className} value={className}>{className}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>

@@ -31,7 +31,7 @@ import {
 } from '@/components/ui/select';
 import { type Teacher } from '../../types/teacher';
 
-const MOCK_TEACHERS: Teacher[] = [
+const MOCK_TEACHERS: Teacher[] = import.meta.env.DEV ? [
   {
     id: 't1',
     teacherId: 'TCH-001',
@@ -84,7 +84,7 @@ const MOCK_TEACHERS: Teacher[] = [
     joinedDate: '2022-09-20',
     photoUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Kyaw',
   }
-];
+] : [];
 
 export default function TeachersList() {
   const [searchTerm, setSearchTerm] = useState('');

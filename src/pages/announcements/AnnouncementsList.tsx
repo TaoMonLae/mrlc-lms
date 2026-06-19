@@ -50,8 +50,8 @@ export interface Announcement {
   updatedAt: string;
 }
 
-// Mock Data
-export const MOCK_ANNOUNCEMENTS: Announcement[] = [
+// Development-only sample data. Production must not show fake announcements.
+export const MOCK_ANNOUNCEMENTS: Announcement[] = import.meta.env.DEV ? [
   {
     id: 'ann-1',
     title: 'School Reopening & Safety Guidelines',
@@ -59,7 +59,7 @@ export const MOCK_ANNOUNCEMENTS: Announcement[] = [
     audience: 'ALL',
     pinned: true,
     createdById: 'u1',
-    createdByName: 'Admin User',
+    createdByName: 'System User',
     status: 'ACTIVE',
     createdAt: '2025-05-01T08:00:00Z',
     updatedAt: '2025-05-01T08:00:00Z',
@@ -72,7 +72,7 @@ export const MOCK_ANNOUNCEMENTS: Announcement[] = [
     pinned: true,
     expiresAt: '2025-06-15T23:59:59Z',
     createdById: 'u1',
-    createdByName: 'Admin User',
+    createdByName: 'System User',
     status: 'ACTIVE',
     createdAt: '2025-05-10T10:30:00Z',
     updatedAt: '2025-05-10T10:30:00Z',
@@ -84,18 +84,18 @@ export const MOCK_ANNOUNCEMENTS: Announcement[] = [
     audience: 'TEACHERS',
     pinned: false,
     createdById: 'u1',
-    createdByName: 'Admin User',
+    createdByName: 'System User',
     status: 'ACTIVE',
     createdAt: '2025-05-12T14:00:00Z',
     updatedAt: '2025-05-12T14:00:00Z',
   },
   {
     id: 'ann-4',
-    title: 'Mathematics Grade 10A: Quiz Tomorrow',
+    title: 'Mathematics Class A: Quiz Tomorrow',
     body: 'Don\'t forget about the surprise-not-surprise quiz on Algebra tomorrow. Review chapters 4 and 5 in your textbooks. Focus on quadratic equations and their real-world applications.',
     audience: 'CLASS',
     classId: 'c1',
-    className: 'Grade 10A',
+    className: 'Class A',
     pinned: false,
     createdById: 't1',
     createdByName: 'Teacher Jane',
@@ -103,7 +103,7 @@ export const MOCK_ANNOUNCEMENTS: Announcement[] = [
     createdAt: '2025-05-13T09:15:00Z',
     updatedAt: '2025-05-13T09:15:00Z',
   }
-];
+] : [];
 
 export default function AnnouncementsList() {
   const [searchTerm, setSearchTerm] = useState('');

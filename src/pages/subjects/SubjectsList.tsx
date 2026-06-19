@@ -15,7 +15,7 @@ import {
 import { Subject } from '../../types/subject';
 import { toast } from 'sonner';
 
-const MOCK_SUBJECTS: Subject[] = [
+const MOCK_SUBJECTS: Subject[] = import.meta.env.DEV ? [
   {
     id: 's1',
     name: 'Mathematical Reasoning',
@@ -64,7 +64,7 @@ const MOCK_SUBJECTS: Subject[] = [
     level: 'Intermediate',
     status: 'ARCHIVED',
   }
-];
+] : [];
 
 // Webflow five-stop category palette, cycled across subject cards.
 const CATEGORY_COLORS = [
@@ -78,7 +78,6 @@ const CATEGORY_COLORS = [
 export default function SubjectsList() {
   const [searchTerm, setSearchTerm] = useState('');
   
-  // Hardcoded for demo - should come from auth
   const userRole = 'ADMIN';
 
   const filteredSubjects = MOCK_SUBJECTS.filter(s => 

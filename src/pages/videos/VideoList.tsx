@@ -40,7 +40,7 @@ export interface VideoLesson {
   createdAt: string;
 }
 
-const MOCK_VIDEOS: VideoLesson[] = [
+const MOCK_VIDEOS: VideoLesson[] = import.meta.env.DEV ? [
   {
     id: 'v1',
     title: 'Introduction to GED Mathematics',
@@ -51,7 +51,7 @@ const MOCK_VIDEOS: VideoLesson[] = [
     visibility: 'ALL',
     status: 'PUBLISHED',
     uploadedById: 'u1',
-    uploadedByName: 'Admin User',
+    uploadedByName: 'System User',
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
   },
   {
@@ -91,10 +91,10 @@ const MOCK_VIDEOS: VideoLesson[] = [
     visibility: 'TEACHERS_ONLY',
     status: 'DRAFT',
     uploadedById: 'u1',
-    uploadedByName: 'Admin User',
+    uploadedByName: 'System User',
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
   },
-];
+] : [];
 
 function formatDuration(seconds?: number): string {
   if (!seconds) return '';

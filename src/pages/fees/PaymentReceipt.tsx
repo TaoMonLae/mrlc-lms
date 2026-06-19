@@ -7,12 +7,12 @@ import { usePermissions } from '../../lib/permissions';
 import { useSettings } from '../../providers/SettingsProvider';
 import { format } from 'date-fns';
 
-const MOCK_PAYMENT = {
+const MOCK_PAYMENT = import.meta.env.DEV ? {
   id: 'p1',
   studentId: '1',
   studentName: 'Ali bin Ahmad',
   studentIdNumber: 'STU-2023-001',
-  class: 'Grade 10A',
+  class: 'Class A',
   amount: 1000,
   currency: 'MYR',
   paymentType: 'Tuition Fee 2025 Term 1',
@@ -21,8 +21,8 @@ const MOCK_PAYMENT = {
   receiptNumber: 'RCP-2025-001',
   notes: 'Online transfer ref: 123456789',
   status: 'PAID',
-  recordedBy: 'Admin User',
-};
+  recordedBy: 'System User',
+} : null;
 
 export default function PaymentReceipt() {
   const { id } = useParams();
@@ -32,6 +32,20 @@ export default function PaymentReceipt() {
   const handlePrint = () => {
     window.print();
   };
+
+  if (!MOCK_PAYMENT) {
+    return (
+      <div className="space-y-6 max-w-3xl mx-auto pb-10">
+        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/fees" />} nativeButton={false}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Fees
+        </Button>
+        <div className="rounded-xl border border-dashed border-slate-200 bg-white p-10 text-center text-slate-500 dark:bg-surface-indigo dark:border-surface-raised">
+          Receipt {id} is not available from the live API yet.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto pb-10 print:max-w-none print:m-0 print:p-0">

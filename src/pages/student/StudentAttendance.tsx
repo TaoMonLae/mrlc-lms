@@ -25,25 +25,32 @@ import {
 interface AttendanceRecord { id?: string; date: string; status: string; subject: string; time?: string; remarks?: string; reason?: string; delay?: string; }
 interface AttendanceSummary { total: number; present: number; absent: number; late: number; percentage: number; }
 
-const MOCK_RECORDS: AttendanceRecord[] = [
+const MOCK_RECORDS: AttendanceRecord[] = import.meta.env.DEV ? [
   { date: '2024-05-13', status: 'PRESENT', subject: 'Mathematics', time: '08:00 AM' },
   { date: '2024-05-13', status: 'PRESENT', subject: 'Physics', time: '09:45 AM' },
   { date: '2024-05-12', status: 'ABSENT', subject: 'English', time: '08:00 AM', reason: 'Medical' },
   { date: '2024-05-11', status: 'LATE', subject: 'History', time: '10:00 AM', delay: '15 mins' },
   { date: '2024-05-10', status: 'PRESENT', subject: 'Social Studies', time: '13:00 PM' },
   { date: '2024-05-09', status: 'PRESENT', subject: 'Math', time: '08:00 AM' },
-];
-const MOCK_SUMMARY: AttendanceSummary = { total: 22, present: 19, absent: 2, late: 1, percentage: 86.4 };
+] : [];
+const MOCK_SUMMARY: AttendanceSummary = import.meta.env.DEV ? { total: 22, present: 19, absent: 2, late: 1, percentage: 86.4 } : { total: 0, present: 0, absent: 0, late: 0, percentage: 0 };
+const monthOptions = Array.from({ length: 3 }, (_, i) => {
+  const date = new Date();
+  date.setMonth(date.getMonth() - i);
+  const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+  const label = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  return { value, label };
+});
 
 export default function StudentAttendance() {
-  const [month, setMonth] = useState('May 2024');
+  const [month, setMonth] = useState(monthOptions[0]?.value || '');
   const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>([]);
   const [summary, setSummary] = useState<AttendanceSummary>({ total: 0, present: 0, absent: 0, late: 0, percentage: 0 });
 
   useEffect(() => {
     fetchOrMock<{ records: AttendanceRecord[]; summary: AttendanceSummary }>(
       '/api/student/attendance',
-      { records: MOCK_RECORDS, summary: MOCK_SUMMARY },
+      () => ({ records: MOCK_RECORDS, summary: MOCK_SUMMARY }),
       { emptyWhen: (d) => !d?.records?.length },
     ).then((r) => { setAttendanceData(r.data.records); setSummary(r.data.summary); });
   }, []);
@@ -86,9 +93,9 @@ export default function StudentAttendance() {
                 <SelectValue placeholder="Select month" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="May 2024">May 2024</SelectItem>
-                <SelectItem value="April 2024">April 2024</SelectItem>
-                <SelectItem value="March 2024">March 2024</SelectItem>
+                {monthOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

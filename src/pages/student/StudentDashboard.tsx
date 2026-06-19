@@ -32,7 +32,7 @@ interface StudentDashData {
 }
 
 const MOCK_DASH: StudentDashData = {
-  className: 'Grade 10A', currency: 'MYR',
+  className: 'Class A', currency: 'MYR',
   stats: { attendanceRate: 92, examAverage: 84.5, feeBalance: 450, classSize: 32 },
   upcomingExams: [
     { id: 1, subject: "Mathematics", date: "2024-05-20", time: "09:00 AM", type: "Midterm" },
@@ -43,6 +43,12 @@ const MOCK_DASH: StudentDashData = {
     { id: 2, subject: "History", score: "78/100", grade: "B+", date: "2024-05-08" },
   ],
 };
+const EMPTY_DASH: StudentDashData = {
+  className: 'Unassigned', currency: 'MYR',
+  stats: { attendanceRate: 0, examAverage: 0, feeBalance: 0, classSize: 0 },
+  upcomingExams: [],
+  recentResults: [],
+};
 
 type AnnouncementRow = { id: string | number; title: string; date: string; category: string };
 type LibraryResourceRow = { id: string | number; title: string; subject: string; format: string };
@@ -51,10 +57,10 @@ const announcements: AnnouncementRow[] = [];
 
 export default function StudentDashboard() {
   const { systemSettings } = useSettings();
-  const [dash, setDash] = useState<StudentDashData>(MOCK_DASH);
+  const [dash, setDash] = useState<StudentDashData>(EMPTY_DASH);
 
   useEffect(() => {
-    fetchOrMock<StudentDashData>('/api/student/dashboard', MOCK_DASH, { emptyWhen: (d) => !d?.stats })
+    fetchOrMock<StudentDashData>('/api/student/dashboard', () => MOCK_DASH, { emptyWhen: (d) => !d?.stats })
       .then((r) => setDash(r.data));
   }, []);
 
@@ -82,7 +88,7 @@ export default function StudentDashboard() {
           <p className="text-slate-500 mt-1 flex items-center gap-2">
             <span className="font-bold text-aubergine-600 dark:text-aubergine-400">{dash.className}</span>
             <span className="text-slate-300">•</span>
-            <span>Academic Year 2024-25</span>
+            <span>{dash.className === 'Unassigned' ? 'No academic year assigned' : 'Current academic year'}</span>
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -229,7 +235,7 @@ export default function StudentDashboard() {
             <AlertCircle className="h-6 w-6 text-aubergine-600 shrink-0" />
             <div>
               <h4 className="text-sm font-bold text-aubergine-900 dark:text-aubergine-400">Payment Due</h4>
-              <p className="text-xs text-aubergine-700 dark:text-aubergine-300/80 mt-1">Your term fees of {formatMoney(feeBalance, currency, { decimals: false })} are due by May 20th. Please visit the accounts office or pay online.</p>
+              <p className="text-xs text-aubergine-700 dark:text-aubergine-300/80 mt-1">Your outstanding balance is {formatMoney(feeBalance, currency, { decimals: false })}. Please visit the accounts office or pay online.</p>
               <Button variant="link" className="p-0 h-auto text-xs font-bold text-aubergine-600 mt-2 uppercase tracking-widest decoration-aubergine-600/30" render={<Link to="/student/fees" />}>
                 Go to Fees <ChevronRight className="h-3 w-3" />
               </Button>

@@ -19,7 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePermissions } from '../../lib/permissions';
 import { toast } from 'sonner';
 
-const MOCK_CLASS = {
+const MOCK_CLASS = import.meta.env.DEV ? {
   id: 'c1',
   name: 'Pre-GED',
   level: 'Foundation',
@@ -31,12 +31,12 @@ const MOCK_CLASS = {
   studentCount: 45,
   attendanceAvg: 92,
   activeExams: 2,
-};
+} : null;
 
-const MOCK_TEACHERS = [
+const MOCK_TEACHERS = import.meta.env.DEV ? [
   { id: 't1', name: 'Tao Mon Lae', role: 'Main Teacher', subject: 'Maths' },
   { id: 't2', name: 'Aye Myat Thu', role: 'Assistant', subject: 'English' },
-];
+] : [];
 
 type ClassStudentRow = {
   id: string;
@@ -47,7 +47,7 @@ type ClassStudentRow = {
 
 const MOCK_STUDENTS: ClassStudentRow[] = [];
 
-const MOCK_SUBJECTS = ['Mathematics', 'English', 'Science', 'Social Studies'];
+const MOCK_SUBJECTS = import.meta.env.DEV ? ['Mathematics', 'English', 'Science', 'Social Studies'] : [];
 
 export default function ClassProfile() {
   const { id } = useParams();
@@ -55,6 +55,20 @@ export default function ClassProfile() {
   const [activeTab, setActiveTab] = useState('overview');
   const { hasPermission } = usePermissions();
   const canManageClass = hasPermission('manage_classes');
+
+  if (!MOCK_CLASS) {
+    return (
+      <div className="space-y-6 max-w-[1200px] mx-auto pb-20">
+        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/classes" />} nativeButton={false}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Classes
+        </Button>
+        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-8 text-center text-slate-500">
+          Class profile data is not available from the live API yet.
+        </div>
+      </div>
+    );
+  }
 
   const handleArchive = () => {
     toast.success('Class has been archived.');

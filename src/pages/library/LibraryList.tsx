@@ -38,7 +38,7 @@ export interface Resource {
   updatedAt: string;
 }
 
-const MOCK_RESOURCES: Resource[] = [
+const MOCK_RESOURCES: Resource[] = import.meta.env.DEV ? [
   {
     id: 'r1',
     title: 'Grade 10 Mathematics Syllabus',
@@ -48,7 +48,7 @@ const MOCK_RESOURCES: Resource[] = [
     subjectId: 'math-10',
     visibility: 'ALL',
     uploadedById: 'u1',
-    uploadedByName: 'Admin User',
+    uploadedByName: 'System User',
     status: 'ACTIVE',
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
     updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
@@ -89,12 +89,12 @@ const MOCK_RESOURCES: Resource[] = [
     fileUrl: '/mock-files/handbook.docx',
     visibility: 'TEACHERS_ONLY',
     uploadedById: 'u1',
-    uploadedByName: 'Admin User',
+    uploadedByName: 'System User',
     status: 'ACTIVE',
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
     updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
   }
-];
+] : [];
 
 export default function LibraryList() {
   const { user } = useUser();

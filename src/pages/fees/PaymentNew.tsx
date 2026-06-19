@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Save, Receipt } from 'lucide-react';
 import { useForm } from 'react-hook-form';
@@ -16,6 +16,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+
+type StudentOption = {
+  id: string;
+  name: string;
+  code: string;
+  className: string;
+};
 
 const getNextReceiptNumber = () => {
    // In a real app, generate from backend.
@@ -38,6 +45,27 @@ export default function PaymentNew() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const initialStudentId = searchParams.get('studentId') || '';
+  const [students, setStudents] = useState<StudentOption[]>([]);
+
+  useEffect(() => {
+    const token = sessionStorage.getItem('auth_token');
+    fetch('/api/students', { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        if (!Array.isArray(data)) return;
+        setStudents(data.map((student: any) => {
+          const firstName = student.user?.firstName || student.firstName || '';
+          const lastName = student.user?.lastName || student.lastName || '';
+          return {
+            id: student.id,
+            name: `${firstName} ${lastName}`.trim() || student.studentCode || student.id,
+            code: student.studentCode || student.studentId || '',
+            className: student.class?.name || student.className || '',
+          };
+        }));
+      })
+      .catch(() => setStudents([]));
+  }, []);
 
   const {
     register,
@@ -97,9 +125,11 @@ export default function PaymentNew() {
                   <SelectValue placeholder="Select Student" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">Ali bin Ahmad (Grade 10A)</SelectItem>
-                  <SelectItem value="2">Sarah Lee (Grade 10B)</SelectItem>
-                  <SelectItem value="3">John Doe (Grade 10A)</SelectItem>
+                  {students.map((student) => (
+                    <SelectItem key={student.id} value={student.id}>
+                      {student.name}{student.className ? ` (${student.className})` : student.code ? ` (${student.code})` : ''}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               {errors.studentId && <p className="text-xs text-red-500 font-medium">{errors.studentId.message}</p>}

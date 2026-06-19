@@ -8,11 +8,11 @@ import { TimetableEntry } from './TimetablePage';
 
 // Mock fetching function
 const getTimetableItem = (id: string): TimetableEntry | undefined => {
-  const mockData: TimetableEntry[] = [
+  const mockData: TimetableEntry[] = import.meta.env.DEV ? [
     {
       id: 't1',
       classId: 'c1',
-      className: 'Grade 10A',
+      className: 'Class A',
       subjectId: 's1',
       subjectName: 'Mathematics',
       subjectColor: 'bg-blue-500',
@@ -23,7 +23,7 @@ const getTimetableItem = (id: string): TimetableEntry | undefined => {
       endTime: '09:30',
       room: 'Room 302',
     }
-  ];
+  ] : [];
   return mockData.find(t => t.id === id);
 };
 

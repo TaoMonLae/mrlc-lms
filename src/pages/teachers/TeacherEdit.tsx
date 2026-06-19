@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, UserCheck, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Save, Image as ImageIcon } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -33,21 +33,6 @@ const teacherSchema = z.object({
 
 type TeacherFormValues = z.infer<typeof teacherSchema>;
 
-// Mock data fetching
-const MOCK_TEACHER_DATA = {
-  firstName: 'Htet',
-  lastName: 'Wai Yan',
-  gender: 'MALE',
-  email: 'htetwaiyan@lms.edu',
-  phone: '09772123456',
-  address: 'No 12., Inya Lake Rd, Kamayut Tsp, Yangon, Myanmar',
-  employmentType: 'FULL_TIME',
-  status: 'ACTIVE',
-  joinedDate: '2023-01-15',
-  subjects: 'Mathematics, Physics, Advanced Algebra',
-  notes: 'Highly experienced in GED preparation. Lead instructor for STEM department.',
-};
-
 export default function TeacherEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -77,14 +62,31 @@ export default function TeacherEdit() {
   });
 
   useEffect(() => {
-    // Populate form with mock data
-    reset(MOCK_TEACHER_DATA as any);
-  }, [reset]);
+    const token = sessionStorage.getItem('auth_token');
+    fetch('/api/teachers', { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((teachers) => {
+        const teacher = Array.isArray(teachers) ? teachers.find((item: any) => item.id === id) : null;
+        if (!teacher) return;
+        reset({
+          firstName: teacher.user?.firstName || teacher.firstName || '',
+          lastName: teacher.user?.lastName || teacher.lastName || '',
+          gender: teacher.gender || 'MALE',
+          email: teacher.user?.email || teacher.email || '',
+          phone: teacher.phone || '',
+          address: teacher.address || '',
+          employmentType: teacher.employmentType || 'FULL_TIME',
+          status: teacher.status || 'ACTIVE',
+          joinedDate: teacher.joinedDate ? String(teacher.joinedDate).split('T')[0] : '',
+          subjects: Array.isArray(teacher.subjects) ? teacher.subjects.join(', ') : teacher.subjects || '',
+          notes: teacher.notes || '',
+        });
+      })
+      .catch(() => {});
+  }, [id, reset]);
 
   const onSubmit = async (data: TeacherFormValues) => {
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
       toast.success('Teacher profile updated');
       navigate(`/teachers/${id}`);
     } catch (error) {
@@ -209,7 +211,9 @@ export default function TeacherEdit() {
           <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-4">
             <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-2">Profile Picture</h2>
             <div className="relative group">
-              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Htet" alt="Profile" className="w-full aspect-square rounded-lg object-cover border" />
+              <div className="w-full aspect-square rounded-lg border bg-slate-50 dark:bg-surface-raised flex items-center justify-center text-slate-400">
+                <ImageIcon className="h-10 w-10" />
+              </div>
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg cursor-pointer">
                 <Button variant="secondary" size="sm" type="button">Change Photo</Button>
               </div>

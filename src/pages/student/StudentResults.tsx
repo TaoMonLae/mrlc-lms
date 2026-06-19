@@ -23,21 +23,22 @@ interface ResultRow {
   grade: string; date: string; feedback: string; classAverage: number;
 }
 
-const MOCK_RESULTS: ResultRow[] = [
+const MOCK_RESULTS: ResultRow[] = import.meta.env.DEV ? [
   { id: '1', title: 'Term 1 Mid-term Examination', subject: 'Mathematics', score: 92, total: 100, grade: 'A', date: '2024-05-10', feedback: 'Excellent problem-solving skills shown in the geometry section. Keep practicing calculus.', classAverage: 78 },
   { id: '2', title: 'Physics Chapter 1 Quiz', subject: 'Physics', score: 18, total: 20, grade: 'A', date: '2024-05-12', feedback: 'Great understanding of kinematic equations. Small error in unit conversion in the last question.', classAverage: 15 },
   { id: '3', title: 'History Essay Assessment', subject: 'History', score: 75, total: 100, grade: 'B+', date: '2024-05-05', feedback: 'Strong arguments, but needs more citations for primary sources.', classAverage: 72 },
-];
-const MOCK_SUMMARY = { average: 85, gpa: 3.85, credits: 18 };
+] : [];
+const EMPTY_SUMMARY = { average: 0, gpa: 0, credits: 0 };
+const MOCK_SUMMARY = import.meta.env.DEV ? { average: 85, gpa: 3.85, credits: 18 } : EMPTY_SUMMARY;
 
 export default function StudentResults() {
   const [results, setResults] = useState<ResultRow[]>([]);
-  const [perf, setPerf] = useState(MOCK_SUMMARY);
+  const [perf, setPerf] = useState(EMPTY_SUMMARY);
 
   useEffect(() => {
     fetchOrMock<{ average: number; gpa: number; credits: number; results: ResultRow[] }>(
       '/api/student/results',
-      { ...MOCK_SUMMARY, results: MOCK_RESULTS },
+      () => ({ ...MOCK_SUMMARY, results: MOCK_RESULTS }),
       { emptyWhen: (d) => !d?.results?.length },
     ).then((r) => { setResults(r.data.results); setPerf({ average: r.data.average, gpa: r.data.gpa, credits: r.data.credits }); });
   }, []);
@@ -97,7 +98,7 @@ export default function StudentResults() {
                   </div>
                 </div>
                 <p className="text-xs text-slate-500 leading-relaxed">
-                  Your performance has improved by <span className="font-bold text-emerald-600">4.2%</span> compared to the last term. You are performing particularly well in STEM subjects.
+                  Performance summary is calculated from graded assessments available in the live system.
                 </p>
               </div>
             </div>
@@ -111,24 +112,35 @@ export default function StudentResults() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600">
+            {import.meta.env.DEV ? (
+              <>
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600">
+                    <CheckCircle2 className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-900 dark:text-white">Math Olympiad Qualifier</p>
+                    <p className="text-[10px] text-slate-500">Ranked in top 5% of class</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 border-t border-slate-100 dark:border-surface-raised pt-4">
+                  <div className="h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600">
+                    <CheckCircle2 className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-900 dark:text-white">Perfect Science Quiz</p>
+                    <p className="text-[10px] text-slate-500">Scored 20/20 in Chapter 3</p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500">
                 <CheckCircle2 className="h-5 w-5" />
+                </div>
+                <p className="text-xs text-slate-500">No achievement highlights are available yet.</p>
               </div>
-              <div>
-                <p className="text-xs font-bold text-slate-900 dark:text-white">Math Olympiad Qualifier</p>
-                <p className="text-[10px] text-slate-500">Ranked in top 5% of class</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 border-t border-slate-100 dark:border-surface-raised pt-4">
-              <div className="h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600">
-                <CheckCircle2 className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-xs font-bold text-slate-900 dark:text-white">Perfect Science Quiz</p>
-                <p className="text-[10px] text-slate-500">Scored 20/20 in Chapter 3</p>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>

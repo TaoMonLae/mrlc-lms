@@ -15,7 +15,7 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import type { VideoLesson } from '../videos/VideoList';
 
-const STUDENT_VIDEOS: VideoLesson[] = [
+const STUDENT_VIDEOS: VideoLesson[] = import.meta.env.DEV ? [
   {
     id: 'v1',
     title: 'Introduction to GED Mathematics',
@@ -26,7 +26,7 @@ const STUDENT_VIDEOS: VideoLesson[] = [
     visibility: 'ALL',
     status: 'PUBLISHED',
     uploadedById: 'u1',
-    uploadedByName: 'Admin User',
+    uploadedByName: 'System User',
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
   },
   {
@@ -56,7 +56,7 @@ const STUDENT_VIDEOS: VideoLesson[] = [
     uploadedByName: 'Mr. Saw Htoo',
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
   },
-];
+] : [];
 
 function formatDuration(seconds?: number): string {
   if (!seconds) return '';
@@ -72,7 +72,7 @@ export default function StudentVideos() {
 
   useEffect(() => {
     // Live in production; mock fallback only in dev (on error or empty).
-    fetchOrMock<VideoLesson[]>('/api/videos', STUDENT_VIDEOS).then((r) => setVideos(r.data));
+    fetchOrMock<VideoLesson[]>('/api/videos', () => STUDENT_VIDEOS).then((r) => setVideos(r.data));
   }, []);
 
   const subjects = Array.from(new Set(videos.map(v => v.subjectName).filter(Boolean)));
