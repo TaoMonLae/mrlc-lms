@@ -19,29 +19,57 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useSettings } from '../../providers/SettingsProvider';
+import { formatMoney } from '../../lib/locale';
+import { fetchOrMock } from '../../lib/api';
 
-export default function StudentDashboard() {
-  const stats = [
-    { title: "Attendance", value: "92%", description: "Past 30 days", icon: CalendarCheck, color: "text-emerald-600", bg: "bg-emerald-50" },
-    { title: "Exam Average", value: "84.5", description: "All subjects", icon: FileCheck, color: "text-blue-600", bg: "bg-blue-50" },
-    { title: "Fee Balance", value: "$450", description: "Due next week", icon: Wallet, color: "text-aubergine-600", bg: "bg-aubergine-50" },
-    { title: "Class Rank", value: "8/32", description: "Grade 10A", icon: TrendingUp, color: "text-purple-600", bg: "bg-purple-50" },
-  ];
+interface StudentDashData {
+  className: string; currency: string;
+  stats: { attendanceRate: number; examAverage: number; feeBalance: number; classSize: number };
+  upcomingExams: { id: string | number; subject: string; date: string; time: string; type: string }[];
+  recentResults: { id: string | number; subject: string; score: string; grade: string; date: string }[];
+}
 
-  const upcomingExams = [
+const MOCK_DASH: StudentDashData = {
+  className: 'Grade 10A', currency: 'MYR',
+  stats: { attendanceRate: 92, examAverage: 84.5, feeBalance: 450, classSize: 32 },
+  upcomingExams: [
     { id: 1, subject: "Mathematics", date: "2024-05-20", time: "09:00 AM", type: "Midterm" },
     { id: 2, subject: "Physics", date: "2024-05-22", time: "10:30 AM", type: "Quiz" },
+  ],
+  recentResults: [
+    { id: 1, subject: "English", score: "92/100", grade: "A", date: "2024-05-10" },
+    { id: 2, subject: "History", score: "78/100", grade: "B+", date: "2024-05-08" },
+  ],
+};
+
+const announcements = [
+  { id: 1, title: "School Sports Day Postponed", date: "2024-05-12", category: "Sports" },
+  { id: 2, title: "Library Opening Hours Updated", date: "2024-05-11", category: "Library" },
+];
+
+export default function StudentDashboard() {
+  const { systemSettings } = useSettings();
+  const [dash, setDash] = useState<StudentDashData>(MOCK_DASH);
+
+  useEffect(() => {
+    fetchOrMock<StudentDashData>('/api/student/dashboard', MOCK_DASH, { emptyWhen: (d) => !d?.stats })
+      .then((r) => setDash(r.data));
+  }, []);
+
+  const currency = dash.currency || systemSettings.currency || 'MYR';
+  const feeBalance = dash.stats.feeBalance;
+
+  const stats = [
+    { title: "Attendance", value: `${dash.stats.attendanceRate}%`, description: "This term", icon: CalendarCheck, color: "text-emerald-600", bg: "bg-emerald-50" },
+    { title: "Exam Average", value: String(dash.stats.examAverage), description: "All subjects", icon: FileCheck, color: "text-blue-600", bg: "bg-blue-50" },
+    { title: "Fee Balance", value: formatMoney(feeBalance, currency, { decimals: false }), description: "Outstanding", icon: Wallet, color: "text-aubergine-600", bg: "bg-aubergine-50" },
+    { title: "Class Size", value: String(dash.stats.classSize), description: dash.className, icon: TrendingUp, color: "text-purple-600", bg: "bg-purple-50" },
   ];
 
-  const recentResults = [
-    { id: 1, subject: "English", score: "92/100", date: "2024-05-10", grade: "A" },
-    { id: 2, subject: "History", score: "78/100", date: "2024-05-08", grade: "B+" },
-  ];
-
-  const announcements = [
-    { id: 1, title: "School Sports Day Postponed", date: "2024-05-12", category: "Sports" },
-    { id: 2, title: "Library Opening Hours Updated", date: "2024-05-11", category: "Library" },
-  ];
+  const upcomingExams = dash.upcomingExams;
+  const recentResults = dash.recentResults;
 
   const libraryResources = [
     { id: 1, title: "Algebra Basics Part 2", subject: "Math", format: "PDF" },
@@ -204,7 +232,7 @@ export default function StudentDashboard() {
             <AlertCircle className="h-6 w-6 text-aubergine-600 shrink-0" />
             <div>
               <h4 className="text-sm font-bold text-aubergine-900 dark:text-aubergine-400">Payment Due</h4>
-              <p className="text-xs text-aubergine-700 dark:text-aubergine-300/80 mt-1">Your term fees of $450 are due by May 20th. Please visit the accounts office or pay online.</p>
+              <p className="text-xs text-aubergine-700 dark:text-aubergine-300/80 mt-1">Your term fees of {formatMoney(feeBalance, currency, { decimals: false })} are due by May 20th. Please visit the accounts office or pay online.</p>
               <Button variant="link" className="p-0 h-auto text-xs font-bold text-aubergine-600 mt-2 uppercase tracking-widest decoration-aubergine-600/30" render={<Link to="/student/fees" />}>
                 Go to Fees <ChevronRight className="h-3 w-3" />
               </Button>

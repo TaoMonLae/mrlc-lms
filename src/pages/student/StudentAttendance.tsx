@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { 
-  CalendarCheck, 
+import React, { useEffect, useState } from 'react';
+import { fetchOrMock } from '../../lib/api';
+import {
+  CalendarCheck,
   ChevronLeft, 
   ChevronRight, 
   Filter, 
@@ -21,25 +22,31 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 
+interface AttendanceRecord { id?: string; date: string; status: string; subject: string; time?: string; remarks?: string; reason?: string; delay?: string; }
+interface AttendanceSummary { total: number; present: number; absent: number; late: number; percentage: number; }
+
+const MOCK_RECORDS: AttendanceRecord[] = [
+  { date: '2024-05-13', status: 'PRESENT', subject: 'Mathematics', time: '08:00 AM' },
+  { date: '2024-05-13', status: 'PRESENT', subject: 'Physics', time: '09:45 AM' },
+  { date: '2024-05-12', status: 'ABSENT', subject: 'English', time: '08:00 AM', reason: 'Medical' },
+  { date: '2024-05-11', status: 'LATE', subject: 'History', time: '10:00 AM', delay: '15 mins' },
+  { date: '2024-05-10', status: 'PRESENT', subject: 'Social Studies', time: '13:00 PM' },
+  { date: '2024-05-09', status: 'PRESENT', subject: 'Math', time: '08:00 AM' },
+];
+const MOCK_SUMMARY: AttendanceSummary = { total: 22, present: 19, absent: 2, late: 1, percentage: 86.4 };
+
 export default function StudentAttendance() {
   const [month, setMonth] = useState('May 2024');
+  const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>([]);
+  const [summary, setSummary] = useState<AttendanceSummary>({ total: 0, present: 0, absent: 0, late: 0, percentage: 0 });
 
-  const attendanceData = [
-    { date: '2024-05-13', status: 'PRESENT', subject: 'Mathematics', time: '08:00 AM' },
-    { date: '2024-05-13', status: 'PRESENT', subject: 'Physics', time: '09:45 AM' },
-    { date: '2024-05-12', status: 'ABSENT', subject: 'English', time: '08:00 AM', reason: 'Medical' },
-    { date: '2024-05-11', status: 'LATE', subject: 'History', time: '10:00 AM', delay: '15 mins' },
-    { date: '2024-05-10', status: 'PRESENT', subject: 'Social Studies', time: '13:00 PM' },
-    { date: '2024-05-09', status: 'PRESENT', subject: 'Math', time: '08:00 AM' },
-  ];
-
-  const summary = {
-    total: 22,
-    present: 19,
-    absent: 2,
-    late: 1,
-    percentage: 86.4
-  };
+  useEffect(() => {
+    fetchOrMock<{ records: AttendanceRecord[]; summary: AttendanceSummary }>(
+      '/api/student/attendance',
+      { records: MOCK_RECORDS, summary: MOCK_SUMMARY },
+      { emptyWhen: (d) => !d?.records?.length },
+    ).then((r) => { setAttendanceData(r.data.records); setSummary(r.data.summary); });
+  }, []);
 
   return (
     <div className="space-y-8 pb-10">
@@ -123,7 +130,7 @@ export default function StudentAttendance() {
                     </td>
                     <td className="px-6 py-4">
                       <p className="text-xs text-slate-500 italic max-w-[200px] truncate">
-                        {record.reason || record.delay || '-'}
+                        {record.remarks || record.reason || record.delay || '-'}
                       </p>
                     </td>
                   </tr>

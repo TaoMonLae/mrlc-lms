@@ -104,7 +104,7 @@ export default function StudentProfile() {
             <Edit className="mr-2 h-4 w-4" />
             Edit Profile
           </Button>
-          <Button variant="secondary" className="text-aubergine-600 bg-aubergine-50 hover:bg-aubergine-100 dark:bg-aubergine-900/20 dark:hover:bg-aubergine-900/40">
+          <Button variant="secondary" className="text-aubergine-600 bg-aubergine-50 hover:bg-aubergine-100 dark:bg-aubergine-900/20 dark:hover:bg-aubergine-900/40" render={<Link to="/reports/students" />} nativeButton={false}>
             <FileText className="mr-2 h-4 w-4" />
             Generate Report
           </Button>

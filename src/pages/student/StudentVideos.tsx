@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Video, Search, Filter, Play, Clock, BookOpen } from 'lucide-react';
+import { fetchOrMock } from '../../lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -67,10 +68,16 @@ function formatDuration(seconds?: number): string {
 export default function StudentVideos() {
   const [searchTerm, setSearchTerm] = useState('');
   const [subjectFilter, setSubjectFilter] = useState('All');
+  const [videos, setVideos] = useState<VideoLesson[]>([]);
 
-  const subjects = Array.from(new Set(STUDENT_VIDEOS.map(v => v.subjectName).filter(Boolean)));
+  useEffect(() => {
+    // Live in production; mock fallback only in dev (on error or empty).
+    fetchOrMock<VideoLesson[]>('/api/videos', STUDENT_VIDEOS).then((r) => setVideos(r.data));
+  }, []);
 
-  const filtered = STUDENT_VIDEOS.filter(v => {
+  const subjects = Array.from(new Set(videos.map(v => v.subjectName).filter(Boolean)));
+
+  const filtered = videos.filter(v => {
     const matchesSearch =
       v.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (v.description || '').toLowerCase().includes(searchTerm.toLowerCase());

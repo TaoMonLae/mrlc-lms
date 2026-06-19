@@ -209,7 +209,7 @@ export default function StudentsList() {
                             </DropdownMenuItem>
                           </DropdownMenuGroup>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-aubergine-600">
+                          <DropdownMenuItem className="text-aubergine-600" render={<Link to="/attendance" />}>
                             Record Attendance
                           </DropdownMenuItem>
                         </DropdownMenuContent>

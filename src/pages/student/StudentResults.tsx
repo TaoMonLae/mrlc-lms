@@ -1,6 +1,7 @@
-import React from 'react';
-import { 
-  GraduationCap, 
+import React, { useEffect, useState } from 'react';
+import { fetchOrMock } from '../../lib/api';
+import {
+  GraduationCap,
   BarChart3, 
   Trophy, 
   MessageSquare, 
@@ -17,42 +18,29 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 
+interface ResultRow {
+  id: string; title: string; subject: string; score: number; total: number;
+  grade: string; date: string; feedback: string; classAverage: number;
+}
+
+const MOCK_RESULTS: ResultRow[] = [
+  { id: '1', title: 'Term 1 Mid-term Examination', subject: 'Mathematics', score: 92, total: 100, grade: 'A', date: '2024-05-10', feedback: 'Excellent problem-solving skills shown in the geometry section. Keep practicing calculus.', classAverage: 78 },
+  { id: '2', title: 'Physics Chapter 1 Quiz', subject: 'Physics', score: 18, total: 20, grade: 'A', date: '2024-05-12', feedback: 'Great understanding of kinematic equations. Small error in unit conversion in the last question.', classAverage: 15 },
+  { id: '3', title: 'History Essay Assessment', subject: 'History', score: 75, total: 100, grade: 'B+', date: '2024-05-05', feedback: 'Strong arguments, but needs more citations for primary sources.', classAverage: 72 },
+];
+const MOCK_SUMMARY = { average: 85, gpa: 3.85, credits: 18 };
+
 export default function StudentResults() {
-  const results = [
-    { 
-      id: '1', 
-      title: 'Term 1 Mid-term Examination', 
-      subject: 'Mathematics', 
-      score: 92, 
-      total: 100, 
-      grade: 'A', 
-      date: '2024-05-10',
-      feedback: 'Excellent problem-solving skills shown in the geometry section. Keep practicing calculus.',
-      classAverage: 78
-    },
-    { 
-      id: '2', 
-      title: 'Physics Chapter 1 Quiz', 
-      subject: 'Physics', 
-      score: 18, 
-      total: 20, 
-      grade: 'A', 
-      date: '2024-05-12',
-      feedback: 'Great understanding of kinematic equations. Small error in unit conversion in the last question.',
-      classAverage: 15
-    },
-    { 
-      id: '3', 
-      title: 'History Essay Assessment', 
-      subject: 'History', 
-      score: 75, 
-      total: 100, 
-      grade: 'B+', 
-      date: '2024-05-05',
-      feedback: 'Strong arguments, but needs more citations for primary sources.',
-      classAverage: 72
-    }
-  ];
+  const [results, setResults] = useState<ResultRow[]>([]);
+  const [perf, setPerf] = useState(MOCK_SUMMARY);
+
+  useEffect(() => {
+    fetchOrMock<{ average: number; gpa: number; credits: number; results: ResultRow[] }>(
+      '/api/student/results',
+      { ...MOCK_SUMMARY, results: MOCK_RESULTS },
+      { emptyWhen: (d) => !d?.results?.length },
+    ).then((r) => { setResults(r.data.results); setPerf({ average: r.data.average, gpa: r.data.gpa, credits: r.data.credits }); });
+  }, []);
 
   return (
     <div className="space-y-8 pb-10">
@@ -84,10 +72,10 @@ export default function StudentResults() {
               <div className="relative h-32 w-32 shrink-0">
                 <svg className="h-full w-full transform -rotate-90">
                   <circle cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="12" fill="transparent" className="text-slate-100 dark:text-slate-800" />
-                  <circle cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="12" fill="transparent" strokeDasharray="364.4" strokeDashoffset={364.4 * (1 - 0.85)} strokeLinecap="round" className="text-emerald-500" />
+                  <circle cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="12" fill="transparent" strokeDasharray="364.4" strokeDashoffset={364.4 * (1 - (perf.average / 100))} strokeLinecap="round" className="text-emerald-500" />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter">85%</span>
+                  <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter">{perf.average}%</span>
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">AVG</span>
                 </div>
               </div>
@@ -98,14 +86,14 @@ export default function StudentResults() {
                       <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest">GPA Equivalent</p>
                       <TrendingUp className="h-3 w-3 text-emerald-600" />
                     </div>
-                    <p className="text-lg font-black text-emerald-900 dark:text-white">3.85 / 4.0</p>
+                    <p className="text-lg font-black text-emerald-900 dark:text-white">{perf.gpa} / 4.0</p>
                   </div>
                   <div className="p-3 bg-aubergine-50 dark:bg-aubergine-900/20 rounded-xl border border-aubergine-100/50 dark:border-aubergine-900/50">
                     <div className="flex items-center justify-between mb-1">
                       <p className="text-[10px] font-bold text-aubergine-700 dark:text-aubergine-400 uppercase tracking-widest">Credits Earned</p>
                       <Trophy className="h-3 w-3 text-aubergine-600" />
                     </div>
-                    <p className="text-lg font-black text-aubergine-900 dark:text-white">18.0</p>
+                    <p className="text-lg font-black text-aubergine-900 dark:text-white">{perf.credits}</p>
                   </div>
                 </div>
                 <p className="text-xs text-slate-500 leading-relaxed">

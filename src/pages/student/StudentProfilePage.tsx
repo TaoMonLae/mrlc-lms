@@ -1,6 +1,7 @@
-import React from 'react';
-import { 
-  User, 
+import React, { useEffect, useState } from 'react';
+import { fetchOrMock } from '../../lib/api';
+import {
+  User,
   Mail, 
   Phone, 
   MapPin, 
@@ -15,26 +16,26 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 
+interface StudentProfile {
+  name: string; studentId: string; role: string; status: string; class: string;
+  email: string; phone: string; address: string; birthDate: string; gender: string;
+  enrollmentDate: string; guardian: { name: string; relationship: string; phone: string; email: string };
+}
+
+const MOCK_STUDENT: StudentProfile = {
+  name: 'Min Khant', studentId: 'ST-2024-001', role: 'Student', status: 'Active', class: 'Grade 10A',
+  email: 'minkhant@school.edu', phone: '+95 9 123 456 789', address: 'Yangon, Myanmar',
+  birthDate: '2008-05-15', gender: 'Male', enrollmentDate: '2024-01-10',
+  guardian: { name: 'U Maung Maung', relationship: 'Father', phone: '+95 9 987 654 321', email: 'umaungmaung@gmail.com' },
+};
+
 export default function StudentProfilePage() {
-  const student = {
-    name: 'Min Khant',
-    studentId: 'ST-2024-001',
-    role: 'Student',
-    status: 'Active',
-    class: 'Grade 10A',
-    email: 'minkhant@school.edu',
-    phone: '+95 9 123 456 789',
-    address: 'Yangon, Myanmar',
-    birthDate: '2008-05-15',
-    gender: 'Male',
-    enrollmentDate: '2024-01-10',
-    guardian: {
-      name: 'U Maung Maung',
-      relationship: 'Father',
-      phone: '+95 9 987 654 321',
-      email: 'umaungmaung@gmail.com'
-    }
-  };
+  const [student, setStudent] = useState<StudentProfile>(MOCK_STUDENT);
+
+  useEffect(() => {
+    fetchOrMock<StudentProfile>('/api/student/profile', MOCK_STUDENT, { emptyWhen: (d) => !d?.name })
+      .then((r) => setStudent(r.data));
+  }, []);
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-10">
