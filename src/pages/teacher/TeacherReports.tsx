@@ -12,7 +12,6 @@ import {
   Info
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
 import { useState } from "react";
 
 const reportTemplates = [
@@ -50,18 +49,6 @@ const generatedReports = [
 export default function TeacherReports() {
   const [showHistory, setShowHistory] = useState(false);
 
-  const handleGenerate = (title: string) => {
-    toast.info(`Report: "${title}"`, {
-      description: "Report generation will be available once the data API is connected. This feature is coming soon.",
-    });
-  };
-
-  const handleDownloadReport = (report: typeof generatedReports[0]) => {
-    toast.success(`Downloading "${report.title}"...`, {
-      description: "In production, this will trigger a real PDF/XLSX download from the server.",
-    });
-  };
-
   const handleRequestAccess = () => {
     window.location.href = "mailto:admin@mrlc.edu?subject=Report Access Request&body=I would like to request access to restricted reports. Please review my profile.";
   };
@@ -93,8 +80,9 @@ export default function TeacherReports() {
             <CardContent className="p-6 pt-0">
               <Button
                 id={`generate-report-${template.id}`}
-                className="w-full bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-bold text-[10px] uppercase tracking-widest h-10 shadow-md"
-                onClick={() => handleGenerate(template.title)}
+                disabled
+                title="Coming soon"
+                className="w-full bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-bold text-[10px] uppercase tracking-widest h-10 shadow-md opacity-50 cursor-not-allowed"
               >
                 Configure & Generate
               </Button>
@@ -139,17 +127,18 @@ export default function TeacherReports() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="font-bold text-[10px] uppercase tracking-widest h-9 bg-white dark:bg-transparent border-slate-200 dark:border-surface-raised"
-                          onClick={() => handleDownloadReport(report)}
+                          disabled
+                          title="Coming soon"
+                          className="font-bold text-[10px] uppercase tracking-widest h-9 bg-white dark:bg-transparent border-slate-200 dark:border-surface-raised opacity-50 cursor-not-allowed"
                         >
                             <Download className="h-3.5 w-3.5 mr-2" /> Download
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-9 w-9 text-slate-400 hover:text-aubergine-600"
-                          title="View full report"
-                          onClick={() => toast.info(`Opening full report: "${report.title}"`)}
+                          disabled
+                          className="h-9 w-9 text-slate-400 opacity-50 cursor-not-allowed"
+                          title="Coming soon"
                         >
                             <ChevronRight className="h-4 w-4" />
                         </Button>

@@ -62,7 +62,15 @@ export default function TeacherNew() {
         const err = await res.json();
         throw new Error(err.error || 'Failed to add teacher');
       }
-      toast.success('Teacher added successfully');
+      const created = await res.json().catch(() => ({}));
+      if (created?.tempPassword) {
+        toast.success('Teacher added — share their temporary password', {
+          description: `Login: ${data.email}  •  Temporary password: ${created.tempPassword}. They'll be asked to change it on first sign-in.`,
+          duration: 30000,
+        });
+      } else {
+        toast.success('Teacher added successfully');
+      }
       navigate('/teachers');
     } catch (error: any) {
       toast.error(error.message || 'Failed to add teacher');

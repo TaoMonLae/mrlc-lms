@@ -39,6 +39,7 @@ function mapApiUser(apiUser: Record<string, any>): User {
     email: apiUser.email,
     role: apiUser.role,
     status: apiUser.isActive ? 'ACTIVE' : 'DISABLED',
+    mustChangePassword: Boolean(apiUser.mustChangePassword),
     createdAt: apiUser.createdAt ?? new Date().toISOString(),
     updatedAt: apiUser.updatedAt ?? new Date().toISOString(),
   };

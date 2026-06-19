@@ -11,6 +11,7 @@ export interface User {
   email?: string;
   role: UserRole;
   status: UserStatus;
+  mustChangePassword?: boolean;
   studentId?: string;
   teacherId?: string;
   lastLoginAt?: string;

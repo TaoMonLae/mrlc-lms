@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "tsx server.ts",
     "seed": "tsx prisma/seed.ts",
+    "smoke": "node scripts/smoke-test.mjs",
     "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
-    "start": "node dist/server.cjs",
+    "start": "NODE_ENV=production node dist/server.cjs",
     "lint": "tsc --noEmit"
   },
   "prisma": {
@@ -16,7 +17,6 @@
   "dependencies": {
     "@base-ui/react": "^1.4.1",
     "@fontsource-variable/geist": "^5.2.8",
-    "@google/genai": "^1.29.0",
     "@hookform/resolvers": "^5.2.2",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",

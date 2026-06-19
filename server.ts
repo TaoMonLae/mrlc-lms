@@ -4,6 +4,7 @@ import fs from "fs";
 import crypto from "crypto";
 import multer from "multer";
 import { createServer as createViteServer } from "vite";
+import { z } from "zod";
 import helmet from "helmet";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
@@ -14,6 +15,7 @@ import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 import dotenv from "dotenv";
+import { spawn } from "child_process";
 
 dotenv.config();
 
@@ -38,6 +40,66 @@ const ebookUpload = multer({
     else cb(new Error("Only .pdf and .epub files are allowed"));
   },
 });
+
+// ─── Database backups ──────────────────────────────────────────────────────────
+// Real pg_dump backups written to disk (a Docker volume in production). Override
+// the location with BACKUP_DIR and how many to keep with BACKUP_RETENTION.
+const BACKUP_DIR = process.env.BACKUP_DIR || path.join(process.cwd(), "data", "backups");
+const BACKUP_RETENTION = Math.max(1, Number(process.env.BACKUP_RETENTION || 14));
+
+interface BackupFile { name: string; size: number; createdAt: string; }
+
+function listBackups(): BackupFile[] {
+  try {
+    if (!fs.existsSync(BACKUP_DIR)) return [];
+    return fs
+      .readdirSync(BACKUP_DIR)
+      .filter((f) => f.endsWith(".dump"))
+      .map((name) => {
+        const st = fs.statSync(path.join(BACKUP_DIR, name));
+        return { name, size: st.size, createdAt: st.mtime.toISOString() };
+      })
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  } catch {
+    return [];
+  }
+}
+
+function pruneBackups(): void {
+  const files = listBackups();
+  for (const f of files.slice(BACKUP_RETENTION)) {
+    fs.promises.unlink(path.join(BACKUP_DIR, f.name)).catch(() => {});
+  }
+}
+
+// Runs pg_dump in custom format (restore with pg_restore). Resolves with the file.
+function runBackup(): Promise<BackupFile> {
+  return new Promise((resolve, reject) => {
+    const dbUrl = process.env.DATABASE_URL;
+    if (!dbUrl) return reject(new Error("DATABASE_URL is not set"));
+    fs.mkdirSync(BACKUP_DIR, { recursive: true });
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const name = `mrlc-${stamp}.dump`;
+    const filePath = path.join(BACKUP_DIR, name);
+
+    const dump = spawn("pg_dump", ["-Fc", "--no-owner", "--no-privileges", "-f", filePath, dbUrl]);
+    let stderr = "";
+    dump.stderr.on("data", (d) => (stderr += d.toString()));
+    dump.on("error", (err) =>
+      reject(new Error(`pg_dump could not start (is postgresql-client installed?): ${err.message}`)),
+    );
+    dump.on("close", (code) => {
+      if (code !== 0) {
+        fs.promises.unlink(filePath).catch(() => {});
+        return reject(new Error(`pg_dump failed (exit ${code}): ${stderr.trim()}`));
+      }
+      let size = 0;
+      try { size = fs.statSync(filePath).size; } catch { /* ignore */ }
+      pruneBackups();
+      resolve({ name, size, createdAt: new Date().toISOString() });
+    });
+  });
+}
 
 // ─── Logger ──────────────────────────────────────────────────────────────────
 const logger = winston.createLogger({
@@ -148,6 +210,162 @@ function requireRole(role: string) {
   };
 }
 
+// ─── Request body validation (zod) ────────────────────────────────────────────
+// Validates and sanitizes req.body against a schema before the handler runs.
+// On failure returns 400 with the first offending field, so bad input never
+// reaches Prisma. Unknown keys are stripped.
+function validate(schema: z.ZodType) {
+  return (
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ): void => {
+    const result = schema.safeParse(req.body);
+    if (!result.success) {
+      const issue = result.error.issues[0];
+      const where = issue?.path?.join(".") || "body";
+      res.status(400).json({ error: `${where}: ${issue?.message || "invalid"}` });
+      return;
+    }
+    req.body = result.data;
+    next();
+  };
+}
+
+// Reusable field primitives
+const str = z.string().trim();
+const reqStr = str.min(1, "is required");
+const optStr = str.optional();
+const email = z.string().trim().email("must be a valid email");
+const num = z.union([z.string(), z.number()]); // handlers coerce with Number()
+const optNum = num.optional().nullable();
+const userRole = z.enum(["ADMIN", "TEACHER", "STUDENT", "STAFF", "ACCOUNTANT", "CASE_WORKER", "LIBRARIAN"]);
+
+function parseBoolean(value: unknown): boolean {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") return value.trim().toLowerCase() === "true";
+  return Boolean(value);
+}
+
+const schemas = {
+  login: z.object({ email, password: z.string().min(1, "is required") }),
+  verifyPassword: z.object({ password: z.string().min(1, "is required") }),
+  changePassword: z.object({
+    currentPassword: z.string().min(1, "is required"),
+    newPassword: z.string().min(8, "must be at least 8 characters"),
+  }),
+  student: z.object({
+    firstName: reqStr, lastName: reqStr,
+    email: z.union([email, z.literal("")]).optional(),
+    studentCode: optStr, dateOfBirth: optStr, guardianName: optStr,
+    guardianPhone: optStr, classId: optStr, gender: optStr, status: optStr,
+  }),
+  userCreate: z.object({
+    firstName: reqStr, lastName: reqStr, email,
+    password: z.string().min(6, "must be at least 6 characters"),
+    role: userRole, status: optStr,
+  }),
+  userUpdate: z.object({
+    firstName: optStr, lastName: optStr,
+    email: z.union([email, z.literal("")]).optional(),
+    role: userRole.optional(), status: optStr,
+  }),
+  attendance: z.object({
+    classId: reqStr,
+    date: reqStr,
+    records: z.array(z.object({
+      studentId: reqStr,
+      status: z.enum(["PRESENT", "ABSENT", "LATE", "EXCUSED"]),
+      remarks: optStr.nullable(),
+    })).min(1, "at least one record is required"),
+  }),
+  caseCreate: z.object({
+    studentId: reqStr, title: reqStr, description: reqStr,
+    priority: optStr, category: optStr,
+  }),
+  caseNote: z.object({ content: reqStr }),
+  fee: z.object({
+    studentId: reqStr, amount: num,
+    paymentType: optStr, paymentMethod: optStr, paymentDate: optStr,
+    receiptNumber: optStr, notes: optStr,
+  }),
+  exam: z.object({
+    title: reqStr, classId: reqStr, subjectId: reqStr,
+    examType: z.enum(["QUIZ", "MIDTERM", "FINAL", "MOCK"]).optional(),
+    duration: optNum, totalMarks: optNum,
+    questions: z.array(z.object({
+      questionText: optStr, type: optStr, points: optNum,
+      choices: z.any().optional(), correctAnswer: z.any().optional(),
+    })).optional(),
+  }),
+  classCreate: z.object({
+    name: reqStr, level: reqStr, academicYear: reqStr,
+    description: optStr, room: optStr, capacity: optNum,
+  }),
+  teacherCreate: z.object({
+    firstName: reqStr, lastName: reqStr, email,
+    phone: optStr, gender: optStr, address: optStr,
+    employmentType: optStr, joinedDate: optStr,
+    subjects: z.array(z.string()).optional(), notes: optStr,
+  }),
+  library: z.object({
+    title: reqStr, type: reqStr,
+    description: optStr, visibility: optStr, classId: optStr,
+    subjectId: optStr, externalUrl: optStr,
+  }),
+  video: z.object({
+    title: reqStr, videoUrl: reqStr,
+    description: optStr, thumbnailUrl: optStr, duration: optNum,
+    classId: optStr, subjectId: optStr, visibility: optStr,
+    status: optStr, uploadedByName: optStr,
+  }),
+  bookLoan: z.object({
+    borrowerName: reqStr, dueDate: reqStr,
+    borrowerType: optStr, studentId: optStr, notes: optStr,
+  }),
+
+  // ── Update / additional schemas (fields optional for partial PUTs) ──
+  studentUpdate: z.object({
+    firstName: optStr, lastName: optStr,
+    email: z.union([email, z.literal("")]).optional(),
+    studentCode: optStr, dateOfBirth: optStr, guardianName: optStr,
+    guardianPhone: optStr, classId: optStr, gender: optStr, status: optStr,
+  }),
+  libraryUpdate: z.object({
+    title: optStr, type: optStr, description: optStr, visibility: optStr,
+    classId: optStr, subjectId: optStr, externalUrl: optStr,
+  }),
+  videoUpdate: z.object({
+    title: optStr, description: optStr, videoUrl: optStr, thumbnailUrl: optStr,
+    duration: optNum, classId: optStr, subjectId: optStr, visibility: optStr, status: optStr,
+  }),
+  bookCreate: z.object({
+    title: reqStr, author: optStr, isbn: optStr, publisher: optStr,
+    publishedYear: optNum, category: optStr, language: optStr, edition: optStr,
+    shelfLocation: optStr, description: optStr, coverUrl: optStr, totalCopies: optNum,
+  }),
+  bookUpdate: z.object({
+    title: optStr, author: optStr, isbn: optStr, publisher: optStr,
+    publishedYear: optNum, category: optStr, language: optStr, edition: optStr,
+    shelfLocation: optStr, description: optStr, coverUrl: optStr, totalCopies: optNum,
+  }),
+  ebookUpdate: z.object({
+    title: optStr, author: optStr, description: optStr, category: optStr,
+    language: optStr, coverUrl: optStr,
+    visibility: z.enum(["ALL", "STUDENTS", "TEACHERS_ONLY"]).optional(),
+    downloadAllowed: z.union([z.boolean(), z.string()]).optional(),
+  }),
+  settingsUpdate: z.object({
+    name: optStr, address: optStr, email: optStr, phone: optStr,
+    logoUrl: optStr, signatureUrl: optStr, primaryColor: optStr, accentColor: optStr,
+    darkModeDefault: z.union([z.boolean(), z.string()]).optional(),
+    reportHeaderStyle: optStr,
+    timezone: optStr, dateFormat: optStr, currency: optStr, defaultLanguage: optStr,
+    fileUploadLimitMb: optNum,
+    backupEnabled: z.union([z.boolean(), z.string()]).optional(),
+  }),
+};
+
 // ─── Server bootstrap ─────────────────────────────────────────────────────────
 async function startServer() {
   const app = express();
@@ -209,18 +427,27 @@ async function startServer() {
   app.use(express.json({ limit: "10mb" }));
 
   // ── Rate limiting ───────────────────────────────────────────────────────────
+  // Generous global cap (schools often share one NAT'd IP). Health checks and
+  // e-book streaming are skipped so monitoring and reading are never throttled.
   const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 min
-    max: 100,
-    message: "Too many requests from this IP, please try again after 15 minutes",
+    max: 1000,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Too many requests, please try again later." },
+    skip: (req) =>
+      req.originalUrl === "/api/health" ||
+      /^\/api\/ebooks\/[^/]+\/(content|download)/.test(req.originalUrl),
   });
   app.use("/api/", apiLimiter);
 
-  // Stricter limit for auth endpoints to prevent brute-force
+  // Stricter limit for auth endpoints to prevent brute-force.
   const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 10,
-    message: "Too many login attempts. Please try again after 15 minutes.",
+    max: 20,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Too many login attempts. Please try again after 15 minutes." },
   });
 
   // ── Auth routes ─────────────────────────────────────────────────────────────
@@ -229,7 +456,7 @@ async function startServer() {
    * Body: { email: string, password: string }
    * Returns: { token: string, user: { id, email, role } }
    */
-  app.post("/api/auth/login", authLimiter, async (req, res) => {
+  app.post("/api/auth/login", authLimiter, validate(schemas.login), async (req, res) => {
     const { email, password } = req.body as {
       email?: string;
       password?: string;
@@ -280,6 +507,7 @@ async function startServer() {
           lastName: user.lastName,
           role: user.role,
           isActive: user.isActive,
+          mustChangePassword: user.mustChangePassword,
         },
       });
     } catch (err) {
@@ -304,6 +532,7 @@ async function startServer() {
           lastName: true,
           role: true,
           isActive: true,
+          mustChangePassword: true,
         },
       });
       if (!user || !user.isActive) {
@@ -318,11 +547,51 @@ async function startServer() {
   });
 
   /**
+   * POST /api/auth/change-password
+   * Lets the signed-in user set a new password (also clears the
+   * "must change password on first login" flag).
+   */
+  app.post("/api/auth/change-password", authMiddleware, validate(schemas.changePassword), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { currentPassword, newPassword } = req.body as { currentPassword: string; newPassword: string };
+    try {
+      const user = await prisma.user.findUnique({ where: { id: jwtUser.userId } });
+      if (!user || !user.passwordHash || !user.isActive) {
+        res.status(401).json({ error: "User not found or disabled" });
+        return;
+      }
+      const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+      if (!valid) {
+        res.status(400).json({ error: "Current password is incorrect" });
+        return;
+      }
+      if (await bcrypt.compare(newPassword, user.passwordHash)) {
+        res.status(400).json({ error: "New password must be different from the current one" });
+        return;
+      }
+      const passwordHash = await bcrypt.hash(newPassword, 10);
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { passwordHash, mustChangePassword: false },
+      });
+      await createAuditLog(
+        user.id, user.email, "PASSWORD_RESET", "USER", user.id,
+        "Password changed by user.",
+        req.ip, req.headers["user-agent"] || null, "SUCCESS"
+      );
+      res.json({ message: "Password updated successfully" });
+    } catch (err) {
+      logger.error("Change password error:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  /**
    * POST /api/auth/verify-password
    * Re-confirms the currently authenticated user's password before
    * destructive operations (e.g. database restore).
    */
-  app.post("/api/auth/verify-password", authMiddleware, async (req, res) => {
+  app.post("/api/auth/verify-password", authMiddleware, validate(schemas.verifyPassword), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { password } = req.body as { password?: string };
 
@@ -391,7 +660,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/students", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.post("/api/students", authMiddleware, requireRole("ADMIN"), validate(schemas.student), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { firstName, lastName, email, studentCode, dateOfBirth, guardianName, guardianPhone, classId, gender, status } = req.body;
     if (!firstName || !lastName || !email || !studentCode) {
@@ -477,7 +746,7 @@ async function startServer() {
     }
   });
 
-  app.put("/api/students/:id", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.put("/api/students/:id", authMiddleware, requireRole("ADMIN"), validate(schemas.studentUpdate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { id } = req.params;
     const { firstName, lastName, email, studentCode, dateOfBirth, guardianName, guardianPhone, classId, gender, status } = req.body;
@@ -584,7 +853,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/users", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.post("/api/users", authMiddleware, requireRole("ADMIN"), validate(schemas.userCreate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { firstName, lastName, email, password, role, status } = req.body;
     if (!firstName || !email || !password || !role) {
@@ -703,7 +972,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/attendance", authMiddleware, async (req, res) => {
+  app.post("/api/attendance", authMiddleware, validate(schemas.attendance), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
       res.status(403).json({ error: "Forbidden" });
@@ -796,7 +1065,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/cases", authMiddleware, async (req, res) => {
+  app.post("/api/cases", authMiddleware, validate(schemas.caseCreate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (jwtUser.role !== "ADMIN" && jwtUser.role !== "CASE_WORKER") {
       res.status(403).json({ error: "Forbidden" });
@@ -865,7 +1134,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/library", authMiddleware, async (req, res) => {
+  app.post("/api/library", authMiddleware, validate(schemas.library), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
       res.status(403).json({ error: "Forbidden" });
@@ -937,7 +1206,7 @@ async function startServer() {
     }
   });
 
-  app.put("/api/library/:id", authMiddleware, async (req, res) => {
+  app.put("/api/library/:id", authMiddleware, validate(schemas.libraryUpdate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
       res.status(403).json({ error: "Forbidden" });
@@ -1028,7 +1297,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/videos", authMiddleware, async (req, res) => {
+  app.post("/api/videos", authMiddleware, validate(schemas.video), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
       res.status(403).json({ error: "Forbidden" });
@@ -1100,7 +1369,7 @@ async function startServer() {
     }
   });
 
-  app.put("/api/videos/:id", authMiddleware, async (req, res) => {
+  app.put("/api/videos/:id", authMiddleware, validate(schemas.videoUpdate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
       res.status(403).json({ error: "Forbidden" });
@@ -1209,7 +1478,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/books", authMiddleware, async (req, res) => {
+  app.post("/api/books", authMiddleware, validate(schemas.bookCreate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (!canManageBooks(jwtUser.role)) {
       res.status(403).json({ error: "Forbidden" });
@@ -1274,7 +1543,7 @@ async function startServer() {
     }
   });
 
-  app.put("/api/books/:id", authMiddleware, async (req, res) => {
+  app.put("/api/books/:id", authMiddleware, validate(schemas.bookUpdate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (!canManageBooks(jwtUser.role)) {
       res.status(403).json({ error: "Forbidden" });
@@ -1363,7 +1632,7 @@ async function startServer() {
   });
 
   // Issue (check out) a copy of a book to a borrower.
-  app.post("/api/books/:id/loans", authMiddleware, async (req, res) => {
+  app.post("/api/books/:id/loans", authMiddleware, validate(schemas.bookLoan), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (!canManageBooks(jwtUser.role)) {
       res.status(403).json({ error: "Forbidden" });
@@ -1510,7 +1779,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/fees", authMiddleware, async (req, res) => {
+  app.post("/api/fees", authMiddleware, validate(schemas.fee), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (jwtUser.role !== "ADMIN" && jwtUser.role !== "ACCOUNTANT") {
       res.status(403).json({ error: "Forbidden" });
@@ -1603,7 +1872,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/exams", authMiddleware, async (req, res) => {
+  app.post("/api/exams", authMiddleware, validate(schemas.exam), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
       res.status(403).json({ error: "Forbidden" });
@@ -1678,7 +1947,7 @@ async function startServer() {
     }
   });
 
-  app.put("/api/users/:id", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.put("/api/users/:id", authMiddleware, requireRole("ADMIN"), validate(schemas.userUpdate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { firstName, lastName, email, role, status } = req.body;
     try {
@@ -1705,17 +1974,20 @@ async function startServer() {
   });
 
   // ── Teachers (create) ───────────────────────────────────────────────────────
-  app.post("/api/teachers", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.post("/api/teachers", authMiddleware, requireRole("ADMIN"), validate(schemas.teacherCreate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { firstName, lastName, email, phone, gender, address, employmentType, joinedDate, subjects, notes } = req.body;
     if (!firstName || !lastName || !email) {
       res.status(400).json({ error: "firstName, lastName, and email are required" }); return;
     }
     try {
+      // A shareable temporary password the admin hands to the teacher; they must
+      // change it on first login (mustChangePassword).
+      const tempPassword = `Mrlc-${crypto.randomBytes(4).toString("hex")}`;
       const result = await prisma.$transaction(async (tx) => {
-        const passwordHash = await bcrypt.hash(`${firstName.toLowerCase()}${Math.floor(Math.random()*9000+1000)}`, 10);
+        const passwordHash = await bcrypt.hash(tempPassword, 10);
         const user = await tx.user.create({
-          data: { firstName, lastName, email, passwordHash, role: "TEACHER", isActive: true },
+          data: { firstName, lastName, email, passwordHash, role: "TEACHER", isActive: true, mustChangePassword: true },
         });
         const teacherCode = `TCH-${Date.now().toString().slice(-6)}`;
         const teacher = await tx.teacher.create({
@@ -1731,7 +2003,7 @@ async function startServer() {
       });
       await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "TEACHER", result.id,
         `Teacher '${firstName} ${lastName}' added.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
-      res.status(201).json(result);
+      res.status(201).json({ ...result, tempPassword });
     } catch (err: any) {
       logger.error("Error creating teacher:", err);
       if (err.code === "P2002") { res.status(400).json({ error: "Email already exists" }); return; }
@@ -1740,7 +2012,7 @@ async function startServer() {
   });
 
   // ── Classes (create) ────────────────────────────────────────────────────────
-  app.post("/api/classes", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.post("/api/classes", authMiddleware, requireRole("ADMIN"), validate(schemas.classCreate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { name, level, academicYear, description, room, capacity } = req.body;
     if (!name || !level || !academicYear) {
@@ -1781,7 +2053,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/cases/:id/notes", authMiddleware, async (req, res) => {
+  app.post("/api/cases/:id/notes", authMiddleware, validate(schemas.caseNote), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (jwtUser.role !== "ADMIN" && jwtUser.role !== "CASE_WORKER" && jwtUser.role !== "TEACHER") {
       res.status(403).json({ error: "Forbidden" }); return;
@@ -1827,7 +2099,7 @@ async function startServer() {
     }
   });
 
-  app.put("/api/settings", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.put("/api/settings", authMiddleware, requireRole("ADMIN"), validate(schemas.settingsUpdate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const b = req.body || {};
 
@@ -1844,7 +2116,7 @@ async function startServer() {
     if (b.signatureUrl !== undefined) data.signatureUrl = b.signatureUrl;
     if (b.primaryColor !== undefined) data.primaryColor = b.primaryColor;
     if (b.accentColor !== undefined) data.accentColor = b.accentColor;
-    if (b.darkModeDefault !== undefined) data.darkModeDefault = Boolean(b.darkModeDefault);
+    if (b.darkModeDefault !== undefined) data.darkModeDefault = parseBoolean(b.darkModeDefault);
     if (b.reportHeaderStyle !== undefined) data.reportHeaderStyle = b.reportHeaderStyle;
 
     // System / localization
@@ -1853,7 +2125,7 @@ async function startServer() {
     if (b.currency !== undefined) data.currency = b.currency;
     if (b.defaultLanguage !== undefined) data.defaultLanguage = b.defaultLanguage;
     if (b.fileUploadLimitMb !== undefined) data.fileUploadLimitMb = Number(b.fileUploadLimitMb);
-    if (b.backupEnabled !== undefined) data.backupEnabled = Boolean(b.backupEnabled);
+    if (b.backupEnabled !== undefined) data.backupEnabled = parseBoolean(b.backupEnabled);
 
     try {
       const existing = await prisma.schoolProfile.findFirst();
@@ -2049,7 +2321,7 @@ async function startServer() {
     }
   });
 
-  app.put("/api/ebooks/:id", authMiddleware, async (req, res) => {
+  app.put("/api/ebooks/:id", authMiddleware, validate(schemas.ebookUpdate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (!canManageEbooks(jwtUser.role)) {
       res.status(403).json({ error: "Forbidden" });
@@ -2067,7 +2339,7 @@ async function startServer() {
           ...(language !== undefined && { language: language || null }),
           ...(coverUrl !== undefined && { coverUrl: coverUrl || null }),
           ...(visibility && { visibility }),
-          ...(downloadAllowed !== undefined && { downloadAllowed: Boolean(downloadAllowed) }),
+          ...(downloadAllowed !== undefined && { downloadAllowed: parseBoolean(downloadAllowed) }),
         },
       });
       await createAuditLog(
@@ -2147,6 +2419,49 @@ async function startServer() {
       logger.error("Error downloading ebook:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
+  });
+
+  // ── Database backups (admin) ─────────────────────────────────────────────────
+  app.get("/api/backups", authMiddleware, requireRole("ADMIN"), async (_req, res) => {
+    res.json({ backups: listBackups(), retention: BACKUP_RETENTION });
+  });
+
+  app.post("/api/backups/run", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const backup = await runBackup();
+      await createAuditLog(
+        jwtUser.userId, jwtUser.email, "BACKUP", "SYSTEM", null,
+        `Manual database backup created (${backup.name}).`,
+        req.ip, req.headers["user-agent"] || null, "SUCCESS"
+      );
+      res.status(201).json(backup);
+    } catch (err: any) {
+      logger.error("Manual backup failed:", err);
+      await createAuditLog(
+        jwtUser.userId, jwtUser.email, "BACKUP", "SYSTEM", null,
+        `Database backup failed: ${err.message}`,
+        req.ip, req.headers["user-agent"] || null, "DANGER"
+      ).catch(() => {});
+      res.status(500).json({ error: err.message || "Backup failed" });
+    }
+  });
+
+  app.get("/api/backups/:name/download", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    // Guard against path traversal — only allow our generated file names.
+    const name = req.params.name;
+    if (!/^mrlc-[\w.\-]+\.dump$/.test(name)) {
+      res.status(400).json({ error: "Invalid backup name" });
+      return;
+    }
+    const filePath = path.join(BACKUP_DIR, name);
+    if (!fs.existsSync(filePath)) {
+      res.status(404).json({ error: "Backup not found" });
+      return;
+    }
+    res.setHeader("Content-Type", "application/octet-stream");
+    res.setHeader("Content-Disposition", `attachment; filename="${name}"`);
+    fs.createReadStream(filePath).pipe(res);
   });
 
   // ── Health check ────────────────────────────────────────────────────────────
@@ -2664,13 +2979,22 @@ async function startServer() {
   const teacherOnly = reportRole(["TEACHER", "ADMIN"]);
   const teacherClassIds = async (req: express.Request): Promise<string[]> => {
     const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role === "ADMIN") {
+      const all = await prisma.class.findMany({ select: { id: true } });
+      return all.map((c) => c.id);
+    }
     const teacher = await prisma.teacher.findUnique({
       where: { userId: jwtUser.userId },
       include: { classes: true },
     });
     if (teacher) return teacher.classes.map((ct) => ct.classId);
-    const all = await prisma.class.findMany({ select: { id: true } }); // ADMIN fallback
-    return all.map((c) => c.id);
+    return [];
+  };
+  const canAccessTeacherClass = async (req: express.Request, classId: string) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role === "ADMIN") return true;
+    const ids = await teacherClassIds(req);
+    return ids.includes(classId);
   };
   const fmtDate = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
   const examStatus = (date: Date, attempts: { score: number | null }[]): string => {
@@ -2704,6 +3028,10 @@ async function startServer() {
 
   app.get("/api/teacher/classes/:id", authMiddleware, teacherOnly, async (req, res) => {
     try {
+      if (!(await canAccessTeacherClass(req, req.params.id))) {
+        res.status(403).json({ error: "Forbidden" });
+        return;
+      }
       const c = await prisma.class.findUnique({
         where: { id: req.params.id },
         include: {
@@ -2747,6 +3075,10 @@ async function startServer() {
     const { classId } = req.query as { classId?: string };
     if (!classId) { res.status(400).json({ error: "classId is required" }); return; }
     try {
+      if (!(await canAccessTeacherClass(req, classId))) {
+        res.status(403).json({ error: "Forbidden" });
+        return;
+      }
       const students = await prisma.student.findMany({
         where: { classId }, include: { user: true }, orderBy: { studentCode: "asc" },
       });
@@ -2833,6 +3165,32 @@ async function startServer() {
   });
 
   // ── Vite / Static serving ───────────────────────────────────────────────────
+  // ── Scheduled daily backup (runs only when enabled in Settings) ───────────────
+  const scheduleDailyBackup = () => {
+    const HOUR = Number(process.env.BACKUP_HOUR || 2); // local hour, default 02:00
+    const tick = async () => {
+      try {
+        const settings = await prisma.schoolProfile.findFirst({ select: { backupEnabled: true } });
+        if (settings?.backupEnabled) {
+          const backup = await runBackup();
+          logger.info(`Scheduled backup created: ${backup.name}`);
+          await createAuditLog(null, "system", "BACKUP", "SYSTEM", null,
+            `Scheduled database backup created (${backup.name}).`, null, null, "SUCCESS").catch(() => {});
+        }
+      } catch (err: any) {
+        logger.error("Scheduled backup failed:", err.message);
+      }
+    };
+    const now = new Date();
+    const next = new Date(now);
+    next.setHours(HOUR, 0, 0, 0);
+    if (next <= now) next.setDate(next.getDate() + 1);
+    const delay = next.getTime() - now.getTime();
+    setTimeout(() => { tick(); setInterval(tick, 24 * 60 * 60 * 1000); }, delay);
+    logger.info(`Daily backup scheduled for ${String(HOUR).padStart(2, "0")}:00 (when enabled in Settings).`);
+  };
+  scheduleDailyBackup();
+
   if (!isProduction) {
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -2903,6 +3261,14 @@ async function startServer() {
 
   process.on("SIGINT", shutdown);
   process.on("SIGTERM", shutdown);
+
+  // Surface stray async failures instead of letting them vanish silently.
+  process.on("unhandledRejection", (reason) => {
+    logger.error("Unhandled promise rejection:", reason);
+  });
+  process.on("uncaughtException", (err) => {
+    logger.error("Uncaught exception:", err);
+  });
 }
 
 startServer().catch((err) => {

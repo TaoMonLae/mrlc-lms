@@ -1,11 +1,19 @@
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { TopBar } from "./TopBar";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, Navigate } from "react-router-dom";
 import { motion } from "motion/react";
+import { useAuth } from "../../providers/AuthProvider";
 
 export function AppLayout() {
   const location = useLocation();
+  const { user } = useAuth();
+
+  // Force a password change before any app page is reachable.
+  if (user?.mustChangePassword) {
+    return <Navigate to="/change-password" replace />;
+  }
+
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full bg-slate-50 dark:bg-canvas font-sans text-slate-900 dark:text-white overflow-hidden">

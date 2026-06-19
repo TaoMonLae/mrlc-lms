@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Database, 
   FileJson, 
@@ -37,73 +37,85 @@ type BackupLog = {
   notes: string;
 };
 
-// Mock data
-const mockBackupLogs: BackupLog[] = [
-  {
-    id: '1',
-    type: 'Database',
-    fileName: 'mrlc_db_backup_20250512.sql',
-    fileSize: '45.2 MB',
-    createdById: 'admin_user_1',
-    createdAt: '2025-05-12T02:00:00Z',
-    status: 'SUCCESS',
-    notes: 'Scheduled auto backup'
-  },
-  {
-    id: '2',
-    type: 'JSON Export',
-    fileName: 'mrlc_data_export_20250510.json',
-    fileSize: '12.4 MB',
-    createdById: 'admin_user_1',
-    createdAt: '2025-05-10T14:30:00Z',
-    status: 'SUCCESS',
-    notes: 'Manual trigger'
-  },
-  {
-    id: '3',
-    type: 'Files Archive',
-    fileName: 'documents_archive_20250501.zip',
-    fileSize: '1.2 GB',
-    createdById: 'admin_user_1',
-    createdAt: '2025-05-01T01:00:00Z',
-    status: 'FAILED',
-    notes: 'Out of storage space'
-  }
-];
+function humanSize(bytes: number): string {
+  if (!bytes) return '0 B';
+  const mb = bytes / (1024 * 1024);
+  if (mb >= 1) return `${mb.toFixed(1)} MB`;
+  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
 
 export default function BackupAndRestore() {
-  const [logs, setLogs] = useState<BackupLog[]>(mockBackupLogs);
+  const [logs, setLogs] = useState<BackupLog[]>([]);
+  const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoreDialogOpen, setIsRestoreDialogOpen] = useState(false);
   const [adminPassword, setAdminPassword] = useState('');
   const [restoreError, setRestoreError] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isRestoring, setIsRestoring] = useState(false);
 
-  const handleBackup = (type: string, fileExt: string) => {
-    // Simulate backup process
-    toast.info(`Generating ${type} backup...`, { icon: <Clock className="h-4 w-4" /> });
-    
-    setTimeout(() => {
-      const now = new Date();
-      const timestamp = now.toISOString().replace(/[:.]/g, '-');
-      const mockFileName = `mrlc_${type.toLowerCase().replace(/\s+/g, '_')}_${timestamp}.${fileExt}`;
-      
-      const newLog: BackupLog = {
-        id: Math.random().toString(36).substr(2, 9),
-        type,
-        fileName: mockFileName,
-        fileSize: `${(Math.random() * 50 + 1).toFixed(1)} MB`,
-        createdById: 'admin_user_1',
-        createdAt: now.toISOString(),
-        status: 'SUCCESS',
-        notes: 'Manual backup'
-      };
-      
-      setLogs([newLog, ...logs]);
-      toast.success(`${type} backup created successfully!`, {
-         description: `Stored as ${mockFileName}`
+  const token = sessionStorage.getItem('auth_token');
+
+  const loadBackups = async () => {
+    try {
+      const res = await fetch('/api/backups', { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) return;
+      const data = await res.json();
+      setLogs((data.backups || []).map((b: { name: string; size: number; createdAt: string }) => ({
+        id: b.name,
+        type: 'Database',
+        fileName: b.name,
+        fileSize: humanSize(b.size),
+        createdById: '',
+        createdAt: b.createdAt,
+        status: 'SUCCESS' as const,
+        notes: 'pg_dump',
+      })));
+    } catch { /* ignore */ }
+  };
+
+  useEffect(() => { loadBackups(); }, []);
+
+  const handleBackup = async (type: string, _fileExt?: string) => {
+    // Only the database backup is wired to a real endpoint. The other export
+    // formats are not implemented yet — be honest rather than fake success.
+    if (type !== 'Database') {
+      toast.info(`${type} export is not available yet.`);
+      return;
+    }
+    setIsBackingUp(true);
+    toast.info('Creating database backup…', { icon: <Clock className="h-4 w-4" /> });
+    try {
+      const res = await fetch('/api/backups/run', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
       });
-    }, 2000);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Backup failed');
+      toast.success('Database backup created.', { description: `Stored as ${data.name}` });
+      await loadBackups();
+    } catch (e: any) {
+      toast.error(e.message || 'Backup failed');
+    } finally {
+      setIsBackingUp(false);
+    }
+  };
+
+  const handleDownloadBackup = async (name: string) => {
+    try {
+      const res = await fetch(`/api/backups/${encodeURIComponent(name)}/download`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Download failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e: any) {
+      toast.error(e.message || 'Download failed');
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -151,20 +163,18 @@ export default function BackupAndRestore() {
         return;
       }
 
-      // TODO: send selectedFile to the real restore endpoint
-      // For now we simulate the restore process
-      toast.info('Creating safety snapshot before restore...');
-      setTimeout(() => {
-        setIsRestoring(false);
-        setIsRestoreDialogOpen(false);
-        setAdminPassword('');
-        setSelectedFile(null);
-        const fileInput = document.getElementById('backup-file') as HTMLInputElement;
-        if (fileInput) fileInput.value = '';
-        toast.success('System restored successfully!', {
-          description: 'The system has been populated from your backup file.',
-        });
-      }, 3000);
+      // Restoring a production database from the browser is intentionally not
+      // supported — it must be done by an operator. Be honest instead of faking it.
+      setIsRestoring(false);
+      setIsRestoreDialogOpen(false);
+      setAdminPassword('');
+      setSelectedFile(null);
+      const fileInput = document.getElementById('backup-file') as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
+      toast.info('Restore must be run by an administrator', {
+        description: 'For safety, restore is performed on the server with pg_restore, not from the browser. See the deployment runbook.',
+        duration: 12000,
+      });
     } catch {
       setRestoreError('Unable to verify credentials. Please try again.');
       setIsRestoring(false);
@@ -300,9 +310,17 @@ export default function BackupAndRestore() {
                         <th className="px-4 py-3 font-semibold">File Name</th>
                         <th className="px-4 py-3 font-semibold">Size</th>
                         <th className="px-4 py-3 font-semibold">Status</th>
+                        <th className="px-4 py-3 font-semibold text-right">Actions</th>
                      </tr>
                   </thead>
                   <tbody>
+                     {logs.length === 0 && (
+                        <tr>
+                           <td colSpan={6} className="px-4 py-8 text-center text-slate-500 text-sm italic">
+                              No backups yet. Create one above, or enable automatic daily backups in System Settings.
+                           </td>
+                        </tr>
+                     )}
                      {logs.map((log) => (
                         <tr key={log.id} className="border-b border-slate-100 dark:border-surface-raised/50 hover:bg-slate-50 dark:hover:bg-surface-raised/20">
                            <td className="px-4 py-3 text-slate-900 dark:text-slate-300">
@@ -321,10 +339,15 @@ export default function BackupAndRestore() {
                               <div className="flex items-center gap-1.5">
                                  {getStatusIcon(log.status)}
                                  <span className={
-                                    log.status === 'SUCCESS' ? 'text-emerald-700 dark:text-emerald-400' : 
+                                    log.status === 'SUCCESS' ? 'text-emerald-700 dark:text-emerald-400' :
                                     log.status === 'FAILED' ? 'text-red-700 dark:text-red-400' : 'text-slate-700'
                                  }>{log.status}</span>
                               </div>
+                           </td>
+                           <td className="px-4 py-3 text-right">
+                              <Button variant="ghost" size="sm" className="h-8" onClick={() => handleDownloadBackup(log.fileName)}>
+                                 <Download className="h-3.5 w-3.5 mr-1.5" /> Download
+                              </Button>
                            </td>
                         </tr>
                      ))}

@@ -24,8 +24,16 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=8000
 
+# openssl/ca-certificates for Prisma; postgresql-client-16 provides a pg_dump
+# that matches the Postgres 16 server (an older client refuses a newer server).
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && apt-get install -y --no-install-recommends openssl ca-certificates curl gnupg \
+  && install -d /usr/share/postgresql-common/pgdg \
+  && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc -o /etc/apt/trusted.gpg.d/pgdg.asc \
+  && echo "deb http://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
+  && apt-get update \
+  && apt-get install -y --no-install-recommends postgresql-client-16 \
+  && apt-get purge -y curl gnupg && apt-get autoremove -y \
   && rm -rf /var/lib/apt/lists/*
 
 # Bring over the full install (prisma CLI + tsx are needed at start-up for

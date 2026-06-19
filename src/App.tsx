@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppLayout } from "./components/layout/AppLayout";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import LoginPage from "./pages/Login";
+import ChangePassword from "./pages/ChangePassword";
 import DashboardPage from "./pages/Dashboard";
 import { PlaceholderPage } from "./pages/Placeholder";
 import StudentsList from "./pages/students/StudentsList";
@@ -138,6 +139,8 @@ export default function App() {
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
             
             <Route element={<ProtectedRoute />}>
+              {/* Standalone (no app shell, bypasses the change-password gate) */}
+              <Route path="/change-password" element={<ChangePassword />} />
               <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
                 

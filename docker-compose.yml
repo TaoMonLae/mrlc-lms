@@ -31,12 +31,19 @@ services:
       SEED_ON_START: "${SEED_ON_START:-false}"
       # Where uploaded e-books are stored (mounted as a persistent volume below).
       EBOOK_DIR: "/app/data/ebooks"
+      # Where database backups are written (persistent volume below).
+      BACKUP_DIR: "/app/data/backups"
+      # How many daily backups to keep (older ones are pruned).
+      BACKUP_RETENTION: "${BACKUP_RETENTION:-14}"
     volumes:
       # Persist uploaded e-book files across container rebuilds/recreations.
       - ebook_data:/app/data/ebooks
+      # Persist database backups.
+      - backup_data:/app/data/backups
     ports:
       - "8000:8000"
 
 volumes:
   db_data:
   ebook_data:
+  backup_data:

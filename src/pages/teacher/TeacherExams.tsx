@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 import { fetchOrMock } from "../../lib/api";
 
 interface TeacherExam {
@@ -55,8 +54,9 @@ export default function TeacherExams() {
         </div>
         <Button
           id="create-assessment-btn"
-          className="h-11 px-6 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-[11px] uppercase tracking-widest shadow-lg"
-          onClick={() => toast.info('Create Assessment coming soon.', { description: 'The assessment builder will be available in the next update.' })}
+          disabled
+          title="Coming soon"
+          className="h-11 px-6 bg-primary text-primary-foreground font-bold text-[11px] uppercase tracking-widest shadow-lg opacity-50 cursor-not-allowed"
         >
           <Plus className="h-4 w-4 mr-2" /> Create New Assessment
         </Button>
@@ -141,16 +141,18 @@ export default function TeacherExams() {
                   <div className="p-5 flex-1 flex gap-2">
                     {exam.status === 'NEEDS_GRADING' ? (
                         <Button
-                          className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-[10px] uppercase tracking-widest h-10 shadow-md"
-                          onClick={() => toast.info(`Grading "${exam.title}"`, { description: 'Gradebook integration coming soon.' })}
+                          disabled
+                          title="Coming soon"
+                          className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-[10px] uppercase tracking-widest h-10 shadow-md opacity-50 cursor-not-allowed"
                         >
                             Grade Now
                         </Button>
                     ) : (
                         <Button
                           variant="outline"
-                          className="w-full border-slate-200 dark:border-surface-raised font-bold text-[10px] uppercase tracking-widest h-10"
-                          onClick={() => toast.info(`Results for "${exam.title}"`, { description: 'Detailed results view coming soon.' })}
+                          disabled
+                          title="Coming soon"
+                          className="w-full border-slate-200 dark:border-surface-raised font-bold text-[10px] uppercase tracking-widest h-10 opacity-50 cursor-not-allowed"
                         >
                             View Results
                         </Button>
@@ -158,9 +160,9 @@ export default function TeacherExams() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-10 w-10 text-slate-400 hover:text-aubergine-600 transition-colors"
-                      title="View exam details"
-                      onClick={() => toast.info(`Opening details for "${exam.title}"`)}
+                      disabled
+                      className="h-10 w-10 text-slate-400 transition-colors opacity-50 cursor-not-allowed"
+                      title="Coming soon"
                     >
                         <ChevronRight className="h-5 w-5" />
                     </Button>

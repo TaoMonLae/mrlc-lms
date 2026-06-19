@@ -28,34 +28,41 @@ async function main() {
     }));
   console.log(`School profile: ${school.name}`);
 
-  // 2. Create Initial Admin User
-  const adminPassword = await bcrypt.hash("admin123", 10);
+  // 2. Create Initial Admin User.
+  //    Passwords come from env vars when provided; otherwise a demo default is
+  //    used and the account is flagged to force a password change on first login.
+  //    The actual password is never printed to the logs.
+  const adminPw = process.env.SEED_ADMIN_PASSWORD;
+  const adminMustChange = !adminPw;
   const admin = await prisma.user.upsert({
     where: { email: "admin@mrlc.edu" },
     update: {},
     create: {
       email: "admin@mrlc.edu",
-      passwordHash: adminPassword,
+      passwordHash: await bcrypt.hash(adminPw || "admin123", 10),
       firstName: "System",
       lastName: "Admin",
       role: "ADMIN",
       isActive: true,
+      mustChangePassword: adminMustChange,
     },
   });
-  console.log(`Created admin user: ${admin.email} (Password: admin123)`);
+  console.log(`Admin user: ${admin.email}${adminMustChange ? " (demo password — must change on first login)" : ""}`);
 
   // 3. Create a Demo Teacher
-  const teacherPassword = await bcrypt.hash("teacher123", 10);
+  const teacherPw = process.env.SEED_TEACHER_PASSWORD;
+  const teacherMustChange = !teacherPw;
   const teacherUser = await prisma.user.upsert({
     where: { email: "teacher@mrlc.edu" },
     update: {},
     create: {
       email: "teacher@mrlc.edu",
-      passwordHash: teacherPassword,
+      passwordHash: await bcrypt.hash(teacherPw || "teacher123", 10),
       firstName: "Tao",
       lastName: "Mon Lae",
       role: "TEACHER",
       isActive: true,
+      mustChangePassword: teacherMustChange,
       teacherProfile: {
         create: {
           teacherCode: "T-001",
@@ -64,20 +71,22 @@ async function main() {
       },
     },
   });
-  console.log(`Created teacher user: ${teacherUser.email}`);
+  console.log(`Teacher user: ${teacherUser.email}${teacherMustChange ? " (demo password — must change on first login)" : ""}`);
 
   // 4. Create a Demo Student
-  const studentPassword = await bcrypt.hash("student123", 10);
+  const studentPw = process.env.SEED_STUDENT_PASSWORD;
+  const studentMustChange = !studentPw;
   const studentUser = await prisma.user.upsert({
     where: { email: "student@mrlc.edu" },
     update: {},
     create: {
       email: "student@mrlc.edu",
-      passwordHash: studentPassword,
+      passwordHash: await bcrypt.hash(studentPw || "student123", 10),
       firstName: "Min Khant",
       lastName: "Aung",
       role: "STUDENT",
       isActive: true,
+      mustChangePassword: studentMustChange,
       studentProfile: {
         create: {
           studentCode: "STD-2024-001",
@@ -88,7 +97,7 @@ async function main() {
       },
     },
   });
-  console.log(`Created student user: ${studentUser.email}`);
+  console.log(`Student user: ${studentUser.email}${studentMustChange ? " (demo password — must change on first login)" : ""}`);
 
   // Need to get the teacher profile ID for relations
   const teacherProfile = await prisma.teacher.findUnique({

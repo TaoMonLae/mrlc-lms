@@ -79,21 +79,9 @@ export default function ClassDetails() {
     toast.success('Roll call sheet downloaded!');
   };
 
-  const handleGroupMessage = () => {
-    toast.info('Group messaging coming soon.', {
-      description: 'This will open a broadcast message form to all students in this class.',
-    });
-  };
-
   const handleStudentProfile = (student: typeof students[0]) => {
     toast.info(`Viewing profile for ${student.name}`, {
       description: 'Student profile pages are accessible via the Admin Students module.',
-    });
-  };
-
-  const handleStudentEmail = (student: typeof students[0]) => {
-    toast.info(`Opening email for ${student.name}`, {
-      description: 'Email integration coming soon.',
     });
   };
 
@@ -133,8 +121,9 @@ export default function ClassDetails() {
           <Button
             id="group-message-btn"
             variant="outline"
-            className="h-10 px-4 font-bold text-[11px] uppercase tracking-widest border-slate-200 dark:border-surface-raised"
-            onClick={handleGroupMessage}
+            disabled
+            title="Coming soon"
+            className="h-10 px-4 font-bold text-[11px] uppercase tracking-widest border-slate-200 dark:border-surface-raised opacity-50 cursor-not-allowed"
           >
             <MessageSquare className="h-4 w-4 mr-2" /> Group Message
           </Button>
@@ -177,8 +166,9 @@ export default function ClassDetails() {
                 id="class-details-filter-btn"
                 variant="outline"
                 size="icon"
-                className="h-11 w-11 border-slate-200 dark:border-surface-raised"
-                onClick={() => toast.info('Filter options coming soon.')}
+                disabled
+                title="Coming soon"
+                className="h-11 w-11 border-slate-200 dark:border-surface-raised opacity-50 cursor-not-allowed"
               >
                 <Filter className="h-4 w-4 text-slate-500" />
               </Button>
@@ -236,9 +226,9 @@ export default function ClassDetails() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-slate-400 hover:text-blue-600"
-                      title="Email student"
-                      onClick={() => handleStudentEmail(student)}
+                      disabled
+                      className="h-8 w-8 text-slate-400 opacity-50 cursor-not-allowed"
+                      title="Coming soon"
                     >
                       <Mail className="h-3.5 w-3.5" />
                     </Button>
