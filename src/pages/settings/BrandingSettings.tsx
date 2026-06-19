@@ -23,6 +23,7 @@ export default function BrandingSettings() {
   const { schoolProfile, brandingSettings, updateBranding } = useSettings();
   const [logoPreview, setLogoPreview] = useState<string | null>(brandingSettings.logoUrl);
   const [signaturePreview, setSignaturePreview] = useState<string | null>(brandingSettings.signatureUrl);
+  const [uploadingAsset, setUploadingAsset] = useState<'logo' | 'signature' | null>(null);
 
   const {
     register,
@@ -62,25 +63,48 @@ export default function BrandingSettings() {
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, setter: (val: string) => void) => {
+  const handleFileUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setter: (val: string) => void,
+    assetType: 'logo' | 'signature',
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error('File size must be less than 2MB');
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size must be 5MB or smaller');
+      e.target.value = '';
       return;
     }
     
     if (!file.type.startsWith('image/')) {
       toast.error('File must be an image');
+      e.target.value = '';
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setter(event.target?.result as string);
-    };
-    reader.readAsDataURL(file);
+    const token = sessionStorage.getItem('auth_token');
+    const body = new FormData();
+    body.append('file', file);
+    setUploadingAsset(assetType);
+
+    try {
+      const res = await fetch('/api/settings/assets', {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body,
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload.error || 'Failed to upload image');
+      if (!payload.url) throw new Error('Upload succeeded but no file URL was returned');
+      setter(payload.url);
+      toast.success('Image uploaded. Save branding to apply it.');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to upload image');
+    } finally {
+      setUploadingAsset(null);
+      e.target.value = '';
+    }
   };
 
   const currentPrimaryColor = watch('primaryColor');
@@ -113,13 +137,13 @@ export default function BrandingSettings() {
                   <div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-surface-raised flex items-center justify-center mb-3">
                     <ImageIcon className="h-6 w-6 text-slate-400" />
                   </div>
-                  <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">PNG, JPG or SVG max 2MB.</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">PNG, JPG, WEBP, GIF, or SVG max 5MB.</p>
                   <Label htmlFor="logo-upload" className="cursor-pointer">
                     <div className="bg-white dark:bg-canvas border border-slate-200 dark:border-surface-raised px-4 py-2 rounded-md text-sm font-medium hover:bg-slate-50 dark:hover:bg-surface-indigo transition-colors flex items-center">
-                      <UploadCloud className="h-4 w-4 mr-2" /> Browse File
+                      <UploadCloud className="h-4 w-4 mr-2" /> {uploadingAsset === 'logo' ? 'Uploading...' : 'Browse File'}
                     </div>
                   </Label>
-                  <input id="logo-upload" type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, setLogoPreview)} />
+                  <input id="logo-upload" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" className="hidden" onChange={(e) => handleFileUpload(e, setLogoPreview, 'logo')} disabled={uploadingAsset !== null} />
                 </>
               )}
             </div>
@@ -138,9 +162,9 @@ export default function BrandingSettings() {
               ) : (
                 <>
                   <Label htmlFor="sig-upload" className="cursor-pointer inline-flex items-center text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
-                    <UploadCloud className="h-4 w-4 mr-2" /> Upload transparent PNG signature
+                    <UploadCloud className="h-4 w-4 mr-2" /> {uploadingAsset === 'signature' ? 'Uploading...' : 'Upload transparent PNG signature'}
                   </Label>
-                  <input id="sig-upload" type="file" accept="image/png" className="hidden" onChange={(e) => handleFileUpload(e, setSignaturePreview)} />
+                  <input id="sig-upload" type="file" accept="image/png" className="hidden" onChange={(e) => handleFileUpload(e, setSignaturePreview, 'signature')} disabled={uploadingAsset !== null} />
                 </>
               )}
             </div>

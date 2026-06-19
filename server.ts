@@ -24,6 +24,8 @@ dotenv.config();
 // the database. Override the location with the EBOOK_DIR env var.
 const EBOOK_DIR = process.env.EBOOK_DIR || path.join(process.cwd(), "data", "ebooks");
 fs.mkdirSync(EBOOK_DIR, { recursive: true });
+const BRANDING_ASSET_DIR = process.env.BRANDING_ASSET_DIR || path.join(process.cwd(), "data", "branding");
+fs.mkdirSync(BRANDING_ASSET_DIR, { recursive: true });
 
 const ebookUpload = multer({
   storage: multer.diskStorage({
@@ -38,6 +40,23 @@ const ebookUpload = multer({
     const ext = path.extname(file.originalname).toLowerCase();
     if (ext === ".pdf" || ext === ".epub") cb(null, true);
     else cb(new Error("Only .pdf and .epub files are allowed"));
+  },
+});
+
+const brandingAssetUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, BRANDING_ASSET_DIR),
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase();
+      cb(null, `${crypto.randomUUID()}${ext}`);
+    },
+  }),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+  fileFilter: (_req, file, cb) => {
+    const allowed = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"]);
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (file.mimetype.startsWith("image/") && allowed.has(ext)) cb(null, true);
+    else cb(new Error("Only PNG, JPG, WEBP, GIF, and SVG image files are allowed"));
   },
 });
 
@@ -425,6 +444,10 @@ async function startServer() {
   );
 
   app.use(express.json({ limit: "10mb" }));
+  app.use("/uploads/branding", express.static(BRANDING_ASSET_DIR, {
+    maxAge: isProduction ? "30d" : 0,
+    immutable: isProduction,
+  }));
 
   // ── Rate limiting ───────────────────────────────────────────────────────────
   // Generous global cap (schools often share one NAT'd IP). Health checks and
@@ -2139,6 +2162,26 @@ async function startServer() {
       logger.error("Error updating settings:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
+  });
+
+  const uploadBrandingAsset = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    brandingAssetUpload.single("file")(req, res, (err: any) => {
+      if (!err) return next();
+      const message =
+        err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE"
+          ? "Image file must be 5 MB or smaller"
+          : err.message || "Upload failed";
+      res.status(400).json({ error: message });
+    });
+  };
+
+  app.post("/api/settings/assets", authMiddleware, requireRole("ADMIN"), uploadBrandingAsset, async (req, res) => {
+    const file = (req as any).file as Express.Multer.File | undefined;
+    if (!file) {
+      res.status(400).json({ error: "Image file is required" });
+      return;
+    }
+    res.json({ url: `/uploads/branding/${file.filename}` });
   });
 
   // ── E-Library (EPUB/PDF) API ────────────────────────────────────────────────
