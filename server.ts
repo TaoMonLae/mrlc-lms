@@ -1609,7 +1609,7 @@ async function startServer() {
       res.status(403).json({ error: "Forbidden" });
       return;
     }
-    const { title, classId, subjectId, examType, duration, questions } = req.body;
+    const { title, classId, subjectId, examType, duration, totalMarks, questions } = req.body;
     if (!title || !classId || !subjectId) {
       res.status(400).json({ error: "title, classId, and subjectId are required" });
       return;
@@ -1624,6 +1624,7 @@ async function startServer() {
             type: examType || "FINAL",
             date: new Date(),
             durationMinutes: duration ? Number(duration) : null,
+            totalMarks: totalMarks != null ? Number(totalMarks) : null,
           }
         });
         if (questions && Array.isArray(questions)) {

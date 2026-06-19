@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Plus, Trash2, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, CheckCircle2, Loader2 } from 'lucide-react';
+import { apiGet, apiSend } from '../../lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,13 +28,23 @@ export default function ExamNew() {
   // Setup data
   const [title, setTitle] = useState('');
   const [classId, setClassId] = useState('');
-  const [subject, setSubject] = useState('');
+  const [subjectId, setSubjectId] = useState('');
   const [examType, setExamType] = useState('FINAL');
   const [duration, setDuration] = useState('60');
-  
+
+  // Reference data for the dropdowns
+  const [classes, setClasses] = useState<{ id: string; name: string }[]>([]);
+  const [subjects, setSubjects] = useState<{ id: string; name: string }[]>([]);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    apiGet<any[]>('/api/classes').then((cs) => setClasses(cs.map((c) => ({ id: c.id, name: c.name })))).catch(() => {});
+    apiGet<any[]>('/api/subjects').then((ss) => setSubjects(ss.map((s) => ({ id: s.id, name: s.name })))).catch(() => {});
+  }, []);
+
   // Questions data
   const [questions, setQuestions] = useState<ExamQuestion[]>([]);
-  
+
   // Settings data
   const [settings, setSettings] = useState<ExamSettings>(INITIAL_SETTINGS);
 
@@ -64,9 +75,34 @@ export default function ExamNew() {
     return questions.reduce((sum, q) => sum + (Number(q.points) || 0), 0);
   };
 
-  const handleSave = () => {
-    toast.success('Exam saved as draft.');
-    navigate('/exams');
+  const handleSave = async () => {
+    if (!title.trim()) { toast.error('Please enter an exam title.'); setStep(1); return; }
+    if (!classId) { toast.error('Please select a class.'); setStep(1); return; }
+    if (!subjectId) { toast.error('Please select a subject.'); setStep(1); return; }
+    setSaving(true);
+    try {
+      await apiSend('/api/exams', 'POST', {
+        title: title.trim(),
+        classId,
+        subjectId,
+        examType,
+        duration: Number(duration) || null,
+        totalMarks: calculateTotalPoints(),
+        questions: questions.map((q) => ({
+          questionText: q.questionText,
+          type: q.type,
+          points: Number(q.points) || 5,
+          choices: q.choices || null,
+          correctAnswer: q.correctAnswer,
+        })),
+      });
+      toast.success('Exam created successfully.');
+      navigate('/exams');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to create exam.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -109,15 +145,20 @@ export default function ExamNew() {
                     <SelectValue placeholder="Select class" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="c1">GED Social Studies</SelectItem>
-                    <SelectItem value="c2">Pre-GED English</SelectItem>
-                    <SelectItem value="c3">GED Math Prep</SelectItem>
+                    {classes.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label>Subject</Label>
-                <Input value={subject} onChange={e => setSubject(e.target.value)} placeholder="e.g. Math" />
+                <Select value={subjectId} onValueChange={setSubjectId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select subject" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {subjects.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -128,10 +169,10 @@ export default function ExamNew() {
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="QUIZ">Quiz</SelectItem>
                     <SelectItem value="MIDTERM">Midterm</SelectItem>
                     <SelectItem value="FINAL">Final</SelectItem>
-                    <SelectItem value="PRACTICE">Practice Test</SelectItem>
-                    <SelectItem value="QUIZ">Quiz</SelectItem>
+                    <SelectItem value="MOCK">Mock Exam</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -286,7 +327,7 @@ export default function ExamNew() {
                 </div>
                 <div className="border-b pb-2 dark:border-surface-raised">
                   <span className="text-slate-500 block mb-1">Subject</span>
-                  <span className="font-medium text-slate-900 dark:text-white">{subject || 'N/A'}</span>
+                  <span className="font-medium text-slate-900 dark:text-white">{subjects.find(s => s.id === subjectId)?.name || 'N/A'}</span>
                 </div>
                 <div className="border-b pb-2 dark:border-surface-raised">
                   <span className="text-slate-500 block mb-1">Duration</span>
@@ -320,8 +361,8 @@ export default function ExamNew() {
               Next Step
             </Button>
           ) : (
-            <Button onClick={handleSave} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-              <Save className="mr-2 h-4 w-4" /> Save Exam
+            <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+              {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} Save Exam
             </Button>
           )}
         </div>

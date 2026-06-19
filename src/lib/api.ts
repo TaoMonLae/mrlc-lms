@@ -21,6 +21,32 @@ export async function apiGet<T = any>(path: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+/** Send a write request (POST/PUT/DELETE) with auth + JSON body. */
+export async function apiSend<T = any>(
+  path: string,
+  method: 'POST' | 'PUT' | 'DELETE',
+  body?: unknown,
+): Promise<T> {
+  const res = await fetch(path, {
+    method,
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) {
+    let msg = `Request failed (${res.status})`;
+    try {
+      const b = await res.json();
+      if (b?.error) msg = b.error;
+    } catch {
+      /* non-JSON error body */
+    }
+    throw new Error(msg);
+  }
+  // Some endpoints may return no body
+  const text = await res.text();
+  return (text ? JSON.parse(text) : undefined) as T;
+}
+
 /** True only in a Vite dev build. Production never falls back to mock data. */
 export const IS_DEV: boolean = Boolean((import.meta as any)?.env?.DEV);
 

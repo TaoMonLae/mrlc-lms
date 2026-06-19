@@ -19,7 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { fetchOrMock } from "../../lib/api";
+import { apiSend, fetchOrMock } from "../../lib/api";
 
 interface RosterStudent { id: string; name: string; studentId: string; photo?: string | null; }
 
@@ -44,6 +44,7 @@ export default function TeacherAttendance() {
   const [students, setStudents] = useState<RosterStudent[]>([]);
   const [attendance, setAttendance] = useState<Record<string, 'present' | 'late' | 'absent' | 'excused'>>({});
   const [searchTerm, setSearchTerm] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetchOrMock<{ id: string; name: string }[]>('/api/teacher/classes', MOCK_CLASS_OPTIONS.map((o) => ({ id: o.value, name: o.label })))
@@ -66,10 +67,8 @@ export default function TeacherAttendance() {
     setAttendance(prev => ({ ...prev, [studentId]: status }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const markedCount = Object.keys(attendance).length;
-    const totalStudents = filteredStudents.length;
-
     if (markedCount < students.length) {
       const unmarked = students.length - markedCount;
       toast.warning(`${unmarked} student${unmarked > 1 ? 's' : ''} not yet marked.`, {
@@ -77,9 +76,30 @@ export default function TeacherAttendance() {
       });
       return;
     }
-    toast.success('Attendance saved successfully!', {
-      description: `${students.length} students recorded for ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}.`,
-    });
+    if (!selectedClass) {
+      toast.error('Please select a class first.');
+      return;
+    }
+    setSaving(true);
+    try {
+      const records = students.map((s) => ({
+        studentId: s.id,
+        status: attendance[s.id].toUpperCase(),
+        remarks: null,
+      }));
+      await apiSend('/api/attendance', 'POST', {
+        classId: selectedClass,
+        date: new Date().toISOString(),
+        records,
+      });
+      toast.success('Attendance saved successfully!', {
+        description: `${students.length} students recorded for ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}.`,
+      });
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to save attendance.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const markAllPresent = () => {
@@ -106,7 +126,7 @@ export default function TeacherAttendance() {
             <Button variant="outline" size="sm" onClick={markAllPresent} className="h-10 px-4 font-bold text-[11px] uppercase tracking-widest border-slate-200 dark:border-surface-raised">
                 Mark All Present
             </Button>
-            <Button size="sm" onClick={handleSave} className="h-10 px-6 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-[11px] uppercase tracking-widest shadow-lg">
+            <Button size="sm" onClick={handleSave} disabled={saving} className="h-10 px-6 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-[11px] uppercase tracking-widest shadow-lg">
                 <Save className="h-3.5 w-3.5 mr-2" /> Save Attendance
             </Button>
         </div>
@@ -228,8 +248,8 @@ export default function TeacherAttendance() {
                 </div>
                 <div className="flex items-center gap-3">
                     <p className="text-[10px] text-slate-400 font-medium italic">All records are logged with server timestamp.</p>
-                    <Button onClick={handleSave} className="bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-bold text-[11px] uppercase tracking-widest px-6 h-10 shadow-lg">
-                        Finalize & Submit
+                    <Button onClick={handleSave} disabled={saving} className="bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-bold text-[11px] uppercase tracking-widest px-6 h-10 shadow-lg">
+                        {saving ? 'Saving…' : 'Finalize & Submit'}
                     </Button>
                 </div>
             </div>
