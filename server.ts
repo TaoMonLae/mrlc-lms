@@ -308,11 +308,13 @@ const schemas = {
     firstName: reqStr, lastName: reqStr, email,
     password: z.string().min(6, "must be at least 6 characters"),
     role: userRole, status: optStr,
+    teacherId: nullableStr, studentId: nullableStr,
   }),
   userUpdate: z.object({
     firstName: optStr, lastName: optStr,
     email: z.union([email, z.literal("")]).optional(),
     role: userRole.optional(), status: optStr,
+    teacherId: nullableStr, studentId: nullableStr,
   }),
   attendance: z.object({
     classId: reqStr,
@@ -1047,16 +1049,28 @@ async function startServer() {
 
   app.post("/api/users", authMiddleware, requireRole("ADMIN"), validate(schemas.userCreate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
-    const { firstName, lastName, email, password, role, status } = req.body;
+    const { firstName, lastName, email, password, role, status, teacherId, studentId } = req.body;
     if (!firstName || !email || !password || !role) {
       res.status(400).json({ error: "firstName, email, password, and role are required" });
       return;
     }
     try {
       const passwordHash = await bcrypt.hash(password, 10);
-      const user = await prisma.user.create({
-        data: { firstName, lastName: lastName || "", email, passwordHash, role, isActive: status !== "DISABLED" },
-        select: { id: true, firstName: true, lastName: true, email: true, role: true, isActive: true },
+      const user = await prisma.$transaction(async (tx) => {
+        const created = await tx.user.create({
+          data: { firstName, lastName: lastName || "", email, passwordHash, role, isActive: status !== "DISABLED" },
+          select: { id: true, firstName: true, lastName: true, email: true, role: true, isActive: true },
+        });
+        // Optionally link an existing teacher/student profile to the new account.
+        if (teacherId) {
+          await tx.teacher.updateMany({ where: { userId: created.id }, data: { userId: null } });
+          await tx.teacher.update({ where: { id: teacherId }, data: { userId: created.id } });
+        }
+        if (studentId) {
+          await tx.student.updateMany({ where: { userId: created.id }, data: { userId: null } });
+          await tx.student.update({ where: { id: studentId }, data: { userId: created.id } });
+        }
+        return created;
       });
 
       await createAuditLog(
@@ -2655,7 +2669,11 @@ async function startServer() {
     try {
       const user = await prisma.user.findUnique({
         where: { id: req.params.id },
-        select: { id: true, firstName: true, lastName: true, email: true, role: true, isActive: true },
+        select: {
+          id: true, firstName: true, lastName: true, email: true, role: true, isActive: true,
+          studentProfile: { select: { id: true } },
+          teacherProfile: { select: { id: true } },
+        },
       });
       if (!user) { res.status(404).json({ error: "User not found" }); return; }
       res.json(user);
@@ -2667,18 +2685,37 @@ async function startServer() {
 
   app.put("/api/users/:id", authMiddleware, requireRole("ADMIN"), validate(schemas.userUpdate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
-    const { firstName, lastName, email, role, status } = req.body;
+    const { firstName, lastName, email, role, status, teacherId, studentId } = req.body;
+    const userId = req.params.id;
     try {
-      const user = await prisma.user.update({
-        where: { id: req.params.id },
-        data: {
-          ...(firstName && { firstName }),
-          ...(lastName !== undefined && { lastName }),
-          ...(email && { email }),
-          ...(role && { role }),
-          ...(status !== undefined && { isActive: status !== "DISABLED" }),
-        },
-        select: { id: true, firstName: true, lastName: true, email: true, role: true, isActive: true },
+      const user = await prisma.$transaction(async (tx) => {
+        const updated = await tx.user.update({
+          where: { id: userId },
+          data: {
+            ...(firstName && { firstName }),
+            ...(lastName !== undefined && { lastName }),
+            ...(email && { email }),
+            ...(role && { role }),
+            ...(status !== undefined && { isActive: status !== "DISABLED" }),
+          },
+          select: { id: true, firstName: true, lastName: true, email: true, role: true, isActive: true },
+        });
+
+        // Link / unlink a teacher profile (Teacher.userId is unique).
+        if (teacherId !== undefined) {
+          await tx.teacher.updateMany({ where: { userId }, data: { userId: null } });
+          if (teacherId) {
+            await tx.teacher.update({ where: { id: teacherId }, data: { userId } });
+          }
+        }
+        // Link / unlink a student profile (Student.userId is unique).
+        if (studentId !== undefined) {
+          await tx.student.updateMany({ where: { userId }, data: { userId: null } });
+          if (studentId) {
+            await tx.student.update({ where: { id: studentId }, data: { userId } });
+          }
+        }
+        return updated;
       });
       await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "USER", user.id,
         `User '${user.firstName} ${user.lastName}' updated.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
@@ -3380,6 +3417,60 @@ async function startServer() {
       res.json({ students, classes, exams, openCases });
     } catch (err) {
       logger.error("Error building report summary:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Aggregated data for the main School Dashboard
+  app.get("/api/dashboard", authMiddleware, reportRole(["ADMIN", "TEACHER", "STAFF", "ACCOUNTANT", "CASE_WORKER"]), async (_req, res) => {
+    try {
+      const now = new Date();
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const dayName = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][now.getDay()];
+
+      const [students, classes, openCases, weekAttendance, announcements, todaySchedule, recentCases] = await Promise.all([
+        prisma.student.count(),
+        prisma.class.count(),
+        prisma.caseRecord.count({ where: { status: { in: ["OPEN", "IN_PROGRESS"] } } }),
+        prisma.attendance.findMany({ where: { date: { gte: weekAgo } }, select: { status: true } }),
+        prisma.announcement.findMany({
+          where: { status: "ACTIVE" },
+          orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
+          take: 3,
+        }),
+        prisma.timetableEntry.findMany({ where: { dayOfWeek: dayName }, orderBy: { startTime: "asc" } }),
+        prisma.caseRecord.findMany({
+          orderBy: { createdAt: "desc" },
+          take: 5,
+          include: { student: { include: { user: true } } },
+        }),
+      ]);
+
+      const presentCount = weekAttendance.filter(a => a.status === "PRESENT" || a.status === "LATE").length;
+      const attendanceRate = weekAttendance.length > 0
+        ? Math.round((presentCount / weekAttendance.length) * 100)
+        : null;
+
+      res.json({
+        stats: { students, classes, openCases, attendanceRate },
+        announcements: announcements.map(a => ({
+          id: a.id, title: a.title, category: a.audience, pinned: a.pinned,
+          date: a.createdAt,
+        })),
+        schedule: todaySchedule.map(t => ({
+          time: t.startTime, subject: t.subjectName || "—", subjectColor: t.subjectColor || "bg-blue-500",
+          class: t.className || "—", teacher: t.teacherName || "—", room: t.room || "—",
+        })),
+        recentCases: recentCases.map(c => ({
+          id: c.id,
+          name: c.student?.user ? `${c.student.user.firstName ?? ""} ${c.student.user.lastName ?? ""}`.trim() : "Unknown",
+          detail: c.title,
+          status: c.status,
+          time: c.createdAt,
+        })),
+      });
+    } catch (err) {
+      logger.error("Error building dashboard:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });

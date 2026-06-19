@@ -48,9 +48,9 @@ export default function StudentFeeProfile() {
     fetchFeeData();
   }, [id]);
 
-  const totalPaid = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
-  // Assuming total due is calculated based on some fee structure - for now showing what's been paid
-  const totalDue = totalPaid; // This should be replaced with actual fee structure
+  const isPaid = (p: any) => p.status === 'PAID' || !!p.paidDate;
+  const totalDue = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+  const totalPaid = payments.filter(isPaid).reduce((sum, p) => sum + (p.amount || 0), 0);
   const balance = Math.max(0, totalDue - totalPaid);
 
   return (
@@ -118,7 +118,7 @@ export default function StudentFeeProfile() {
               {payments.map((payment) => (
                 <tr key={payment.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors">
                   <td className="px-6 py-4 text-slate-600 dark:text-slate-300">
-                    {payment.paymentDate ? format(new Date(payment.paymentDate), 'MMM d, yyyy') : 'N/A'}
+                    {(() => { const d = payment.paidDate || payment.createdAt; return d ? format(new Date(d), 'MMM d, yyyy') : 'N/A'; })()}
                   </td>
                   <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
                     {payment.receiptNumber || 'N/A'}

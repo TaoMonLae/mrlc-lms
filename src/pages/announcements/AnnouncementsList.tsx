@@ -295,8 +295,8 @@ export default function AnnouncementsList() {
             <Eye className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Recent Views</p>
-            <p className="text-xl font-bold text-slate-900 dark:text-white">1.2k</p>
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Total</p>
+            <p className="text-xl font-bold text-slate-900 dark:text-white">{announcements.length}</p>
           </div>
         </div>
         <div className="bg-white dark:bg-surface-indigo p-4 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex items-center gap-4">
@@ -305,7 +305,12 @@ export default function AnnouncementsList() {
           </div>
           <div>
             <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Expiring Soon</p>
-            <p className="text-xl font-bold text-slate-900 dark:text-white">3</p>
+            <p className="text-xl font-bold text-slate-900 dark:text-white">{announcements.filter(a => {
+              if (!a.expiresAt) return false;
+              const exp = new Date(a.expiresAt).getTime();
+              const now = Date.now();
+              return exp >= now && exp <= now + 7 * 24 * 60 * 60 * 1000;
+            }).length}</p>
           </div>
         </div>
       </div>

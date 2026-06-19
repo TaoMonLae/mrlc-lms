@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, ShieldAlert } from 'lucide-react';
 import { useForm } from 'react-hook-form';
@@ -28,9 +28,13 @@ const userSchema = z.object({
 
 type UserFormValues = z.infer<typeof userSchema>;
 
+interface ProfileOption { id: string; label: string }
+
 export default function UserEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [teachers, setTeachers] = useState<ProfileOption[]>([]);
+  const [students, setStudents] = useState<ProfileOption[]>([]);
 
   const {
     register,
@@ -54,7 +58,25 @@ export default function UserEdit() {
 
   useEffect(() => {
     const token = sessionStorage.getItem('auth_token');
-    fetch(`/api/users/${id}`, { headers: { Authorization: `Bearer ${token}` } })
+    const auth = { Authorization: `Bearer ${token}` };
+
+    // Load profile options for the linking dropdowns.
+    fetch('/api/teachers', { headers: auth })
+      .then(r => (r.ok ? r.json() : []))
+      .then((list: any[]) => setTeachers(list.map((t) => ({
+        id: t.id,
+        label: `${`${t.user?.firstName ?? ''} ${t.user?.lastName ?? ''}`.trim() || 'Unnamed'}${t.teacherCode ? ` (${t.teacherCode})` : ''}`,
+      }))))
+      .catch(() => {});
+    fetch('/api/students', { headers: auth })
+      .then(r => (r.ok ? r.json() : []))
+      .then((list: any[]) => setStudents(list.map((s) => ({
+        id: s.id,
+        label: `${`${s.user?.firstName ?? ''} ${s.user?.lastName ?? ''}`.trim() || 'Unnamed'}${s.studentCode ? ` (${s.studentCode})` : ''}`,
+      }))))
+      .catch(() => {});
+
+    fetch(`/api/users/${id}`, { headers: auth })
       .then(r => r.json())
       .then(u => {
         reset({
@@ -63,8 +85,8 @@ export default function UserEdit() {
           email: u.email ?? '',
           role: u.role ?? 'TEACHER',
           status: u.isActive ? 'ACTIVE' : 'DISABLED',
-          teacherId: '',
-          studentId: '',
+          teacherId: u.teacherProfile?.id ?? '',
+          studentId: u.studentProfile?.id ?? '',
         });
       })
       .catch(() => toast.error('Failed to load user'));
@@ -74,11 +96,15 @@ export default function UserEdit() {
     const token = sessionStorage.getItem('auth_token');
     const [firstName, ...rest] = data.name.trim().split(' ');
     const lastName = rest.join(' ');
+    // Send the profile link relevant to the role; clear the other so linkage
+    // stays consistent. Empty string tells the server to unlink.
+    const teacherId = data.role === 'TEACHER' ? (data.teacherId || '') : '';
+    const studentId = data.role === 'STUDENT' ? (data.studentId || '') : '';
     try {
       const res = await fetch(`/api/users/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ firstName, lastName, email: data.email, role: data.role, status: data.status }),
+        body: JSON.stringify({ firstName, lastName, email: data.email, role: data.role, status: data.status, teacherId, studentId }),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -172,16 +198,34 @@ export default function UserEdit() {
 
           <div className="pt-4 border-t border-slate-200 dark:border-surface-raised space-y-4">
              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Profile Linking (Optional)</h3>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="teacherId">Link to Teacher Profile</Label>
-                  <Input id="teacherId" {...register('teacherId')} placeholder="Teacher ID" disabled={watch('role') !== 'TEACHER'} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="studentId">Link to Student Profile</Label>
-                  <Input id="studentId" {...register('studentId')} placeholder="Student ID" disabled={watch('role') !== 'STUDENT'} />
-                </div>
-             </div>
+             <p className="text-sm text-slate-500 dark:text-slate-300 -mt-2">
+               Connect this account to a {watch('role') === 'STUDENT' ? 'student' : watch('role') === 'TEACHER' ? 'teacher' : 'student or teacher'} record so it appears in their profile.
+             </p>
+             {watch('role') === 'TEACHER' ? (
+               <div className="space-y-2 max-w-sm">
+                 <Label>Link to Teacher Profile</Label>
+                 <Select value={watch('teacherId') || 'none'} onValueChange={(val: any) => setValue('teacherId', val === 'none' ? '' : val)}>
+                   <SelectTrigger><SelectValue placeholder="Select a teacher" /></SelectTrigger>
+                   <SelectContent>
+                     <SelectItem value="none">— Not linked —</SelectItem>
+                     {teachers.map((t) => <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>)}
+                   </SelectContent>
+                 </Select>
+               </div>
+             ) : watch('role') === 'STUDENT' ? (
+               <div className="space-y-2 max-w-sm">
+                 <Label>Link to Student Profile</Label>
+                 <Select value={watch('studentId') || 'none'} onValueChange={(val: any) => setValue('studentId', val === 'none' ? '' : val)}>
+                   <SelectTrigger><SelectValue placeholder="Select a student" /></SelectTrigger>
+                   <SelectContent>
+                     <SelectItem value="none">— Not linked —</SelectItem>
+                     {students.map((s) => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}
+                   </SelectContent>
+                 </Select>
+               </div>
+             ) : (
+               <p className="text-sm text-slate-400 italic">Profile linking is only available for Teacher and Student roles.</p>
+             )}
           </div>
         </div>
 
