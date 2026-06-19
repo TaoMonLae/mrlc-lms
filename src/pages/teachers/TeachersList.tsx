@@ -80,8 +80,8 @@ export default function TeachersList() {
           address: teacher.address || '',
           subjects: Array.isArray(teacher.subjects)
             ? teacher.subjects
-            : teacher.subjects
-              ? teacher.subjects.split(',').map((s: string) => s.trim()).filter(Boolean)
+            : teacher.subjects || teacher.specialization
+              ? String(teacher.subjects || teacher.specialization).split(',').map((s: string) => s.trim()).filter(Boolean)
               : [],
           employmentType: teacher.employmentType || 'FULL_TIME',
           status: teacher.status || 'ACTIVE',

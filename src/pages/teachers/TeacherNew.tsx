@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, UserPlus, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Camera, UserPlus, Image as ImageIcon } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -16,7 +16,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { ProfilePhotoUploader } from '@/src/components/profile/ProfilePhotoUploader';
 
 const teacherSchema = z.object({
   fullName: z.string().min(2, 'Full name must be at least 2 characters'),
@@ -47,7 +46,7 @@ const EDUCATION_LEVELS = [
 export default function TeacherNew() {
   const navigate = useNavigate();
   const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
-  const [profilePhotoId, setProfilePhotoId] = useState<string | null>(null);
+  const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
   
   const {
     register,
@@ -64,6 +63,23 @@ export default function TeacherNew() {
     }
   });
 
+  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Profile picture must be 5 MB or smaller');
+      event.target.value = '';
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      toast.error('Profile picture must be an image file');
+      event.target.value = '';
+      return;
+    }
+    setProfilePhotoFile(file);
+    setProfilePhotoUrl(URL.createObjectURL(file));
+  };
+
   const onSubmit = async (data: TeacherFormValues) => {
     const token = sessionStorage.getItem('auth_token');
     try {
@@ -75,8 +91,8 @@ export default function TeacherNew() {
       const payload = {
         ...data,
         firstName,
-        lastName,
-        profilePhotoId,
+        lastName: lastName || '-',
+        subjects: data.subjects.split(',').map((subject) => subject.trim()).filter(Boolean),
       };
 
       const res = await fetch('/api/teachers', {
@@ -89,6 +105,21 @@ export default function TeacherNew() {
         throw new Error(err.error || 'Failed to add teacher');
       }
       const created = await res.json().catch(() => ({}));
+      if (profilePhotoFile && created?.id) {
+        const photoBody = new FormData();
+        photoBody.append('file', profilePhotoFile);
+        photoBody.append('targetType', 'teacher');
+        photoBody.append('targetId', created.id);
+        const photoRes = await fetch('/api/profile-photo', {
+          method: 'POST',
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          body: photoBody,
+        });
+        if (!photoRes.ok) {
+          const photoErr = await photoRes.json().catch(() => ({}));
+          toast.error(photoErr.error || 'Teacher was added, but profile photo upload failed');
+        }
+      }
       if (created?.tempPassword) {
         toast.success('Teacher added — share their temporary password', {
           description: `Login: ${data.email}  •  Temporary password: ${created.tempPassword}. They'll be asked to change it on first sign-in.`,
@@ -221,18 +252,22 @@ export default function TeacherNew() {
         <div className="space-y-6">
           <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-4">
             <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-4">Profile Picture</h2>
-            <ProfilePhotoUploader
-              currentUrl={profilePhotoUrl}
-              fallbackText="Photo"
-              targetType="teacher"
-              buttonLabel="Upload Photo"
-              onUploaded={(url) => {
-                setProfilePhotoUrl(url);
-                // Extract the ID from the URL if it's in the format /uploads/teacher/{id}
-                const match = url.match(/\/uploads\/teacher\/([a-f0-9]+)/);
-                if (match) setProfilePhotoId(match[1]);
-              }}
-            />
+            <div className="flex flex-col items-center gap-3">
+              <div className="h-24 w-24 rounded-full overflow-hidden bg-slate-100 dark:bg-surface-raised border border-slate-200 dark:border-surface-raised flex items-center justify-center text-slate-500 font-bold">
+                {profilePhotoUrl ? (
+                  <img src={profilePhotoUrl} alt="Teacher profile preview" className="h-full w-full object-cover" />
+                ) : (
+                  <ImageIcon className="h-8 w-8 text-slate-400" />
+                )}
+              </div>
+              <Label htmlFor="teacher-photo" className="cursor-pointer">
+                <div className="inline-flex items-center rounded-md border border-slate-200 dark:border-surface-raised px-3 py-2 text-sm font-medium hover:bg-slate-50 dark:hover:bg-surface-raised">
+                  <Camera className="mr-2 h-4 w-4" />
+                  Choose Photo
+                </div>
+              </Label>
+              <input id="teacher-photo" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" className="hidden" onChange={handlePhotoChange} />
+            </div>
             <p className="text-[10px] text-slate-500 text-center">JPG, PNG, WEBP, or SVG up to 5 MB.</p>
           </div>
 

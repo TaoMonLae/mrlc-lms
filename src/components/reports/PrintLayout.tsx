@@ -17,7 +17,7 @@ export function PrintLayout({ children, title, filters, preparedBy }: PrintLayou
 
   return (
     <div
-      className="report-print hidden print:block bg-white text-black p-8 mx-auto"
+      className="report-print bg-white text-black p-8 mx-auto rounded-xl border border-slate-200 shadow-sm print:rounded-none print:border-0 print:shadow-none"
       style={{ ['--report-accent' as string]: accent }}
     >
       {/* Header */}
@@ -100,8 +100,11 @@ export function PrintLayout({ children, title, filters, preparedBy }: PrintLayou
       </div>
 
       <style>{`
-        /* ----- Brand theming + neat tables (screen-agnostic; only shown in print) ----- */
-        .report-print { max-width: 210mm; }
+        /* ----- Brand theming + neat tables for screen preview and print ----- */
+        .report-print {
+          max-width: 210mm;
+          overflow-x: auto;
+        }
 
         .report-header {
           border-bottom: 3px solid var(--report-accent);
@@ -170,6 +173,9 @@ export function PrintLayout({ children, title, filters, preparedBy }: PrintLayou
             top: 0;
             width: 100%;
             margin: 0;
+            border: 0 !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
           }
 
           body { background: #ffffff; }

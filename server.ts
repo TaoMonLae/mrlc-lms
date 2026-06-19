@@ -371,7 +371,7 @@ const schemas = {
     firstName: reqStr, lastName: reqStr, email,
     phone: optStr, gender: optStr, address: optStr,
     employmentType: optStr, joinedDate: optStr,
-    subjects: z.array(z.string()).optional(), notes: optStr,
+    subjects: z.union([z.array(z.string()), optStr]).optional(), notes: optStr,
   }),
   library: z.object({
     title: reqStr, type: reqStr,
@@ -950,6 +950,109 @@ async function startServer() {
       res.json(student);
     } catch (err) {
       logger.error("Error fetching student:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/students/:id/profile-data", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { id } = req.params;
+    try {
+      const student = await prisma.student.findUnique({
+        where: { id },
+        include: { user: true, class: true },
+      });
+      if (!student) {
+        res.status(404).json({ error: "Student not found" });
+        return;
+      }
+
+      const profile = await prisma.schoolProfile.findFirst();
+      const currency = profile?.currency || "MYR";
+      const [attempts, fees, classExams] = await Promise.all([
+        prisma.examAttempt.findMany({
+          where: { studentId: id, isCompleted: true },
+          include: { exam: { include: { subject: true } } },
+          orderBy: { completedAt: "desc" },
+        }),
+        prisma.feePayment.findMany({
+          where: { studentId: id },
+          include: { student: { include: { user: true, class: true } } },
+          orderBy: [{ paidDate: "desc" }, { createdAt: "desc" }],
+        }),
+        student.classId
+          ? prisma.exam.findMany({
+              where: { classId: student.classId },
+              include: {
+                subject: true,
+                questions: true,
+                attempts: { where: { studentId: id } },
+              },
+              orderBy: { date: "asc" },
+            })
+          : Promise.resolve([]),
+      ]);
+
+      const examResults = attempts
+        .filter((attempt) => attempt.score != null)
+        .map((attempt) => {
+          const total = attempt.exam.totalMarks || 100;
+          const percentage = round1(((attempt.score || 0) / total) * 100);
+          return {
+            id: attempt.id,
+            examId: attempt.examId,
+            title: attempt.exam.title,
+            subject: attempt.exam.subject?.name || "General",
+            score: attempt.score,
+            total,
+            percentage,
+            grade: letterGrade(percentage),
+            date: (attempt.completedAt || attempt.createdAt).toISOString().slice(0, 10),
+          };
+        });
+
+      const availableExams = classExams
+        .filter((exam) => !exam.attempts.some((attempt) => attempt.isCompleted))
+        .map((exam) => ({
+          id: exam.id,
+          title: exam.title,
+          subject: exam.subject?.name || "General",
+          date: exam.date.toISOString().slice(0, 10),
+          type: exam.type,
+          durationMinutes: exam.durationMinutes,
+          totalMarks: exam.totalMarks || 0,
+          questions: exam.questions.length,
+        }));
+
+      const totalExpected = fees.reduce((sum, fee) => sum + fee.amount, 0);
+      const totalPaid = fees
+        .filter((fee) => fee.status === "PAID")
+        .reduce((sum, fee) => sum + fee.amount, 0);
+      const feeRows = fees.map((fee) => feeReceiptPayload(fee, currency));
+
+      res.json({
+        exams: {
+          average: examResults.length
+            ? round1(examResults.reduce((sum, result) => sum + result.percentage, 0) / examResults.length)
+            : null,
+          results: examResults,
+          available: availableExams,
+        },
+        fees: {
+          currency,
+          totalExpected,
+          totalPaid,
+          balance: Math.max(0, totalExpected - totalPaid),
+          paymentCount: fees.length,
+          rows: feeRows,
+        },
+      });
+    } catch (err) {
+      logger.error("Error fetching student profile data:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
@@ -2941,6 +3044,10 @@ async function startServer() {
       res.status(400).json({ error: "firstName, lastName, and email are required" }); return;
     }
     try {
+      const subjectList = Array.isArray(subjects)
+        ? subjects.map((subject: string) => subject.trim()).filter(Boolean)
+        : String(subjects || "").split(",").map((subject) => subject.trim()).filter(Boolean);
+      const specialization = subjectList.join(", ");
       // A shareable temporary password the admin hands to the teacher; they must
       // change it on first login (mustChangePassword).
       const tempPassword = `Mrlc-${crypto.randomBytes(4).toString("hex")}`;
@@ -2954,7 +3061,7 @@ async function startServer() {
           data: {
             userId: user.id,
             teacherCode,
-            specialization: subjects || null,
+            specialization: specialization || null,
             hireDate: joinedDate ? new Date(joinedDate) : new Date(),
           },
           include: { user: { select: { firstName: true, lastName: true, email: true, isActive: true } } },
