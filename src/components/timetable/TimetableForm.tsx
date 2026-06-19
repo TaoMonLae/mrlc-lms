@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -25,23 +25,14 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Clock, MapPin, User, BookOpen, CalendarDays } from 'lucide-react';
 import { TimetableEntry, DayOfWeek } from '@/src/pages/timetable/TimetablePage';
 
-const CLASS_OPTIONS = import.meta.env.DEV ? [
-  { id: 'c1', name: 'Class A' },
-  { id: 'c2', name: 'Class B' },
-  { id: 'c3', name: 'Grade 11A' },
-] : [];
-const SUBJECT_OPTIONS = import.meta.env.DEV ? [
-  { id: 's1', name: 'Mathematics' },
-  { id: 's2', name: 'Physics' },
-  { id: 's3', name: 'English' },
-  { id: 's4', name: 'History' },
-] : [];
-const TEACHER_OPTIONS = import.meta.env.DEV ? [
-  { id: 't1', name: 'John Smith' },
-  { id: 't2', name: 'Sarah Wilson' },
-  { id: 't3', name: 'Jane Doe' },
-  { id: 't4', name: 'Robert Brown' },
-] : [];
+type Option = { id: string; name: string };
+
+const SUBJECT_COLORS = ['bg-blue-500', 'bg-purple-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500', 'bg-cyan-500', 'bg-indigo-500'];
+const colorForSubject = (subjectId: string) => {
+  let hash = 0;
+  for (let i = 0; i < subjectId.length; i++) hash = (hash * 31 + subjectId.charCodeAt(i)) >>> 0;
+  return SUBJECT_COLORS[hash % SUBJECT_COLORS.length];
+};
 
 const timetableSchema = z.object({
   classId: z.string().min(1, 'Class is required'),
@@ -63,6 +54,29 @@ interface TimetableFormProps {
 }
 
 export function TimetableForm({ initialData, onSubmit, isLoading }: TimetableFormProps) {
+  const [classOptions, setClassOptions] = useState<Option[]>([]);
+  const [subjectOptions, setSubjectOptions] = useState<Option[]>([]);
+  const [teacherOptions, setTeacherOptions] = useState<Option[]>([]);
+
+  useEffect(() => {
+    const token = sessionStorage.getItem('auth_token');
+    const headers = { Authorization: `Bearer ${token}` };
+    const fullName = (u: any) => `${u?.firstName ?? ''} ${u?.lastName ?? ''}`.trim();
+    Promise.all([
+      fetch('/api/classes', { headers }).then(r => (r.ok ? r.json() : [])),
+      fetch('/api/subjects', { headers }).then(r => (r.ok ? r.json() : [])),
+      fetch('/api/teachers', { headers }).then(r => (r.ok ? r.json() : [])),
+    ]).then(([classes, subjects, teachers]) => {
+      setClassOptions((classes || []).map((c: any) => ({ id: c.id, name: c.name })));
+      setSubjectOptions((subjects || []).map((s: any) => ({ id: s.id, name: s.name })));
+      setTeacherOptions((teachers || []).map((t: any) => ({ id: t.id, name: fullName(t.user) || t.teacherCode || 'Unknown' })));
+    }).catch(() => {});
+  }, []);
+
+  const CLASS_OPTIONS = classOptions;
+  const SUBJECT_OPTIONS = subjectOptions;
+  const TEACHER_OPTIONS = teacherOptions;
+
   const form = useForm<TimetableFormValues>({
     resolver: zodResolver(timetableSchema),
     defaultValues: {
@@ -77,9 +91,19 @@ export function TimetableForm({ initialData, onSubmit, isLoading }: TimetableFor
     },
   });
 
+  const handleEnrichedSubmit = (values: TimetableFormValues) => {
+    onSubmit({
+      ...values,
+      className: classOptions.find(c => c.id === values.classId)?.name,
+      subjectName: subjectOptions.find(s => s.id === values.subjectId)?.name,
+      teacherName: teacherOptions.find(t => t.id === values.teacherId)?.name,
+      subjectColor: colorForSubject(values.subjectId),
+    } as any);
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(handleEnrichedSubmit)} className="space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Assignment Settings */}
           <div className="space-y-6">

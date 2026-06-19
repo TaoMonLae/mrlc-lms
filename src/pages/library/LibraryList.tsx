@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Search, Filter, FileText, Image as ImageIcon, Video, Link as LinkIcon, File, Download, ExternalLink, Eye, MoreVertical, Edit2, Trash2, FileCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select';
 import { usePermissions, useUser } from '../../lib/permissions';
 import { formatDistanceToNow } from 'date-fns';
+import { toast } from 'sonner';
 
 export interface Resource {
   id: string;
@@ -38,71 +39,40 @@ export interface Resource {
   updatedAt: string;
 }
 
-const MOCK_RESOURCES: Resource[] = import.meta.env.DEV ? [
-  {
-    id: 'r1',
-    title: 'Grade 10 Mathematics Syllabus',
-    description: 'Official syllabus for the current academic year.',
-    type: 'PDF',
-    fileUrl: '/mock-files/syllabus.pdf',
-    subjectId: 'math-10',
-    visibility: 'ALL',
-    uploadedById: 'u1',
-    uploadedByName: 'System User',
-    status: 'ACTIVE',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
-    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
-  },
-  {
-    id: 'r2',
-    title: 'Cell Biology Diagram',
-    description: 'Detailed diagram of a plant cell.',
-    type: 'IMAGE',
-    fileUrl: '/mock-files/cell.jpg',
-    subjectId: 'bio-10',
-    visibility: 'STUDENTS',
-    uploadedById: 't1',
-    uploadedByName: 'John Teacher',
-    status: 'ACTIVE',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-  },
-  {
-    id: 'r3',
-    title: 'Introduction to React',
-    description: 'A great tutorial on React fundamentals.',
-    type: 'VIDEO',
-    externalUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-    classId: 'c1',
-    visibility: 'ALL',
-    uploadedById: 't1',
-    uploadedByName: 'John Teacher',
-    status: 'ACTIVE',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
-    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
-  },
-  {
-    id: 'r4',
-    title: 'Teacher Handbook',
-    description: 'Guidelines and policies for staff members.',
-    type: 'DOCUMENT',
-    fileUrl: '/mock-files/handbook.docx',
-    visibility: 'TEACHERS_ONLY',
-    uploadedById: 'u1',
-    uploadedByName: 'System User',
-    status: 'ACTIVE',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
-    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
-  }
-] : [];
-
 export default function LibraryList() {
   const { user } = useUser();
   const { isAdmin, isTeacher } = usePermissions();
-  
+
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('ALL');
   const [visibilityFilter, setVisibilityFilter] = useState('ALL');
+  const [resources, setResources] = useState<Resource[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchResources = async () => {
+      try {
+        const token = sessionStorage.getItem('auth_token');
+        const res = await fetch('/api/library', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error('Failed to fetch library resources');
+        const data = await res.json();
+        setResources(
+          (Array.isArray(data) ? data : []).map((r: any) => ({
+            ...r,
+            status: r.status || 'ACTIVE',
+          }))
+        );
+      } catch (error) {
+        console.error('Error fetching library resources:', error);
+        toast.error('Failed to load library resources');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchResources();
+  }, []);
 
   const getIconForType = (type: string) => {
     switch (type) {
@@ -115,7 +85,7 @@ export default function LibraryList() {
     }
   };
 
-  const filteredResources = MOCK_RESOURCES.filter(r => {
+  const filteredResources = resources.filter(r => {
     // Role-based visibility check
     if (!isAdmin && user) {
       if (r.visibility === 'TEACHERS_ONLY' && !isTeacher) return false;
@@ -195,7 +165,12 @@ export default function LibraryList() {
         </div>
       </div>
 
-      {filteredResources.length === 0 ? (
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <span className="ml-3 text-slate-500">Loading resources...</span>
+        </div>
+      ) : filteredResources.length === 0 ? (
         <div className="text-center py-20 bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm">
           <FileText className="mx-auto h-12 w-12 text-slate-300 dark:text-slate-600 mb-4" />
           <h3 className="text-lg font-medium text-slate-900 dark:text-white">No resources found</h3>

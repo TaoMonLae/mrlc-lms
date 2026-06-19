@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { fetchOrMock } from '../../lib/api';
+import { apiGet } from '../../lib/api';
 import {
   CalendarCheck,
   ChevronLeft, 
@@ -25,15 +25,6 @@ import {
 interface AttendanceRecord { id?: string; date: string; status: string; subject: string; time?: string; remarks?: string; reason?: string; delay?: string; }
 interface AttendanceSummary { total: number; present: number; absent: number; late: number; percentage: number; }
 
-const MOCK_RECORDS: AttendanceRecord[] = import.meta.env.DEV ? [
-  { date: '2024-05-13', status: 'PRESENT', subject: 'Mathematics', time: '08:00 AM' },
-  { date: '2024-05-13', status: 'PRESENT', subject: 'Physics', time: '09:45 AM' },
-  { date: '2024-05-12', status: 'ABSENT', subject: 'English', time: '08:00 AM', reason: 'Medical' },
-  { date: '2024-05-11', status: 'LATE', subject: 'History', time: '10:00 AM', delay: '15 mins' },
-  { date: '2024-05-10', status: 'PRESENT', subject: 'Social Studies', time: '13:00 PM' },
-  { date: '2024-05-09', status: 'PRESENT', subject: 'Math', time: '08:00 AM' },
-] : [];
-const MOCK_SUMMARY: AttendanceSummary = import.meta.env.DEV ? { total: 22, present: 19, absent: 2, late: 1, percentage: 86.4 } : { total: 0, present: 0, absent: 0, late: 0, percentage: 0 };
 const monthOptions = Array.from({ length: 3 }, (_, i) => {
   const date = new Date();
   date.setMonth(date.getMonth() - i);
@@ -48,11 +39,15 @@ export default function StudentAttendance() {
   const [summary, setSummary] = useState<AttendanceSummary>({ total: 0, present: 0, absent: 0, late: 0, percentage: 0 });
 
   useEffect(() => {
-    fetchOrMock<{ records: AttendanceRecord[]; summary: AttendanceSummary }>(
-      '/api/student/attendance',
-      () => ({ records: MOCK_RECORDS, summary: MOCK_SUMMARY }),
-      { emptyWhen: (d) => !d?.records?.length },
-    ).then((r) => { setAttendanceData(r.data.records); setSummary(r.data.summary); });
+    apiGet<{ records: AttendanceRecord[]; summary: AttendanceSummary }>('/api/student/attendance')
+      .then((d) => {
+        setAttendanceData(d?.records ?? []);
+        setSummary(d?.summary ?? { total: 0, present: 0, absent: 0, late: 0, percentage: 0 });
+      })
+      .catch(() => {
+        setAttendanceData([]);
+        setSummary({ total: 0, present: 0, absent: 0, late: 0, percentage: 0 });
+      });
   }, []);
 
   return (

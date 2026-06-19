@@ -1,24 +1,126 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Edit, Play, Users, BarChart3, Clock, CheckCircle2, FileText, Settings } from 'lucide-react';
+import { ArrowLeft, Edit, Play, Users, BarChart3, Clock, CheckCircle2, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
 
-const MOCK_EXAM = {
-  id: 'e1',
-  title: 'Loading Exam...',
-  subject: '--',
-  durationMinutes: 0,
-  totalPoints: 0,
-  status: 'LOADING',
-  classId: '',
-  submissions: 0,
-  totalStudents: 0,
-  avgScore: 0,
+type SubmissionRow = {
+  id: string;
+  studentName: string;
+  studentId: string;
+  score: number | null;
+  completedAt: string | null;
+  startedAt: string | null;
 };
+
+type ExamData = {
+  id: string;
+  title: string;
+  subject: string;
+  className: string;
+  type: string;
+  durationMinutes: number;
+  totalPoints: number;
+  status: string;
+  submissions: number;
+  totalStudents: number;
+  avgScore: number;
+  recentSubmissions: SubmissionRow[];
+};
+
+const fullName = (u: any) => `${u?.firstName ?? ''} ${u?.lastName ?? ''}`.trim() || 'Unknown';
 
 export default function ExamProfile() {
   const { id } = useParams();
+  const [exam, setExam] = useState<ExamData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!id) return;
+    const fetchExam = async () => {
+      try {
+        const token = sessionStorage.getItem('auth_token');
+        const res = await fetch(`/api/exams/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) {
+          if (res.status === 404) {
+            setExam(null);
+          } else if (res.status === 401 || res.status === 403) {
+            toast.error('You do not have permission to view this exam');
+          } else {
+            throw new Error('Failed to fetch exam');
+          }
+          return;
+        }
+        const data = await res.json();
+        const attempts = data.attempts || [];
+        const completed = attempts.filter((a: any) => a.isCompleted);
+        const scored = completed.filter((a: any) => typeof a.score === 'number');
+        const avgScore = scored.length
+          ? Math.round(scored.reduce((s: number, a: any) => s + a.score, 0) / scored.length)
+          : 0;
+        const totalPoints = data.totalMarks ?? (data.questions || []).reduce((s: number, q: any) => s + (q.points || 0), 0);
+        setExam({
+          id: data.id,
+          title: data.title || 'Untitled',
+          subject: data.subject?.name || '—',
+          className: data.class?.name || '—',
+          type: data.type || '—',
+          durationMinutes: data.durationMinutes || 0,
+          totalPoints,
+          status: data.status || (data.type === 'MOCK' ? 'DRAFT' : 'PUBLISHED'),
+          submissions: completed.length,
+          totalStudents: data.class?._count?.students ?? attempts.length,
+          avgScore,
+          recentSubmissions: attempts.slice(0, 8).map((a: any) => ({
+            id: a.id,
+            studentName: fullName(a.student?.user),
+            studentId: a.studentId,
+            score: typeof a.score === 'number' ? a.score : null,
+            completedAt: a.completedAt || null,
+            startedAt: a.startedAt || null,
+          })),
+        });
+      } catch (error) {
+        console.error('Error fetching exam:', error);
+        toast.error('Failed to load exam');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchExam();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <span className="ml-3 text-slate-500">Loading exam...</span>
+      </div>
+    );
+  }
+
+  if (!exam) {
+    return (
+      <div className="space-y-6 max-w-[1600px] mx-auto">
+        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/exams" />} nativeButton={false}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Exams
+        </Button>
+        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-8 text-center text-slate-500">
+          Exam not found.
+        </div>
+      </div>
+    );
+  }
+
+  const formatTime = (start: string | null, end: string | null) => {
+    if (!start || !end) return '—';
+    const mins = Math.round((new Date(end).getTime() - new Date(start).getTime()) / 60000);
+    return mins >= 0 ? `${mins}m` : '—';
+  };
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto">
@@ -29,8 +131,8 @@ export default function ExamProfile() {
         </Button>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{MOCK_EXAM.title}</h1>
-            <Badge className="bg-emerald-500 hover:bg-emerald-600">PUBLISHED</Badge>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{exam.title}</h1>
+            <Badge className={exam.status === 'PUBLISHED' ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-amber-100 text-amber-800 hover:bg-amber-100'}>{exam.status}</Badge>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" render={<Link to={`/exams/${id}/edit`} />} nativeButton={false}>
@@ -49,7 +151,7 @@ export default function ExamProfile() {
             <Users className="h-6 w-6" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">{MOCK_EXAM.submissions} <span className="text-sm font-normal text-slate-500">/ {MOCK_EXAM.totalStudents}</span></p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">{exam.submissions} <span className="text-sm font-normal text-slate-500">/ {exam.totalStudents}</span></p>
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-1">Submitted</p>
           </div>
         </div>
@@ -58,7 +160,7 @@ export default function ExamProfile() {
             <BarChart3 className="h-6 w-6" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">{MOCK_EXAM.avgScore}%</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">{exam.avgScore}%</p>
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-1">Avg Score</p>
           </div>
         </div>
@@ -67,7 +169,7 @@ export default function ExamProfile() {
             <Clock className="h-6 w-6" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">{MOCK_EXAM.durationMinutes}m</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">{exam.durationMinutes}m</p>
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-1">Duration</p>
           </div>
         </div>
@@ -76,7 +178,7 @@ export default function ExamProfile() {
             <CheckCircle2 className="h-6 w-6" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">{MOCK_EXAM.totalPoints}</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">{exam.totalPoints}</p>
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-1">Total Points</p>
           </div>
         </div>
@@ -100,6 +202,23 @@ export default function ExamProfile() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {exam.recentSubmissions.map(sub => (
+                    <tr key={sub.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50">
+                      <td className="px-6 py-3 font-medium text-slate-900 dark:text-white">
+                        <Link to={`/students/${sub.studentId}`} className="hover:underline hover:text-aubergine-600">{sub.studentName}</Link>
+                      </td>
+                      <td className="px-6 py-3 text-slate-600 dark:text-slate-300">{sub.score !== null ? `${sub.score}` : 'In progress'}</td>
+                      <td className="px-6 py-3 text-slate-500">{formatTime(sub.startedAt, sub.completedAt)}</td>
+                      <td className="px-6 py-3 text-right">
+                        <Button variant="ghost" size="sm" render={<Link to={`/exams/${id}/results`} />} nativeButton={false}>View</Button>
+                      </td>
+                    </tr>
+                  ))}
+                  {exam.recentSubmissions.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="px-6 py-8 text-center text-slate-500">No submissions yet.</td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -114,19 +233,19 @@ export default function ExamProfile() {
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-slate-500">Class Target</span>
-                <span className="font-medium text-slate-900 dark:text-white">--</span>
+                <span className="font-medium text-slate-900 dark:text-white">{exam.className}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Subject</span>
+                <span className="font-medium text-slate-900 dark:text-white">{exam.subject}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Type</span>
-                <span className="font-medium text-slate-900 dark:text-white">--</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Auto-submit</span>
-                <span className="font-medium text-slate-900 dark:text-white">--</span>
+                <span className="font-medium text-slate-900 dark:text-white">{exam.type}</span>
               </div>
                <div className="flex justify-between">
                 <span className="text-slate-500">Timer</span>
-                <span className="font-medium text-slate-900 dark:text-white">--</span>
+                <span className="font-medium text-slate-900 dark:text-white">{exam.durationMinutes ? `${exam.durationMinutes} min` : 'None'}</span>
               </div>
             </div>
           </div>

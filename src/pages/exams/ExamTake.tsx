@@ -6,48 +6,73 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
-const MOCK_QUESTIONS = import.meta.env.DEV ? [
-  {
-    id: 'q1',
-    type: 'MCQ',
-    questionText: 'What is the value of x in the equation 2x + 5 = 15?',
-    choices: ['5', '10', '15', '20'],
-    points: 10,
-  },
-  {
-    id: 'q2',
-    type: 'WRITTEN',
-    questionText: 'Explain the significance of the quadratic formula.',
-    points: 20,
-  },
-  {
-    id: 'q3',
-    type: 'MCQ',
-    questionText: 'Which of the following is a prime number?',
-    choices: ['9', '15', '27', '31'],
-    points: 10,
-  }
-] : [];
+type TakeQuestion = {
+  id: string;
+  type: string;
+  questionText: string;
+  choices?: string[];
+  points: number;
+};
+
+const isMultipleChoice = (q: TakeQuestion) =>
+  Array.isArray(q.choices) && q.choices.length > 0;
 
 export default function ExamTake() {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+
+  const [questions, setQuestions] = useState<TakeQuestion[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [duration, setDuration] = useState(60); // minutes
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [timeLeft, setTimeLeft] = useState(60 * 60); // 60 minutes
+  const [timeLeft, setTimeLeft] = useState(60 * 60);
   const [submitted, setSubmitted] = useState(false);
 
-  const question = MOCK_QUESTIONS[currentIdx];
+  useEffect(() => {
+    if (!id) return;
+    const fetchExam = async () => {
+      try {
+        const token = sessionStorage.getItem('auth_token');
+        const res = await fetch(`/api/exams/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const mapped: TakeQuestion[] = (data.questions || []).map((q: any) => {
+          const opts = Array.isArray(q.options) ? q.options : [];
+          return {
+            id: q.id,
+            type: q.type,
+            questionText: q.text || '',
+            choices: opts.map((o: any) => (typeof o === 'string' ? o : o?.text ?? String(o))),
+            points: q.points || 0,
+          };
+        });
+        setQuestions(mapped);
+        if (data.durationMinutes) {
+          setDuration(data.durationMinutes);
+          setTimeLeft(data.durationMinutes * 60);
+        }
+      } catch (error) {
+        console.error('Error fetching exam:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchExam();
+  }, [id]);
+
+  const question = questions[currentIdx];
 
   // ─── Timer: pure countdown, no side-effects inside the setter ───────────────
   useEffect(() => {
-    if (submitted) return;
+    if (submitted || loading || questions.length === 0) return;
     const interval = setInterval(() => {
       setTimeLeft((prev) => Math.max(0, prev - 1));
     }, 1000);
     return () => clearInterval(interval);
-  }, [submitted]);
+  }, [submitted, loading, questions.length]);
 
   // Auto-submit when the clock hits zero
   useEffect(() => {
@@ -70,13 +95,22 @@ export default function ExamTake() {
     setSubmitted(true);
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <span className="ml-3 text-slate-500">Loading exam...</span>
+      </div>
+    );
+  }
+
   if (!question) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center">
         <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-8 max-w-md w-full text-center shadow-sm">
           <AlertCircle className="w-10 h-10 text-slate-300 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Exam unavailable</h2>
-          <p className="text-sm text-slate-500 mb-6">Exam questions are not available from the live API yet.</p>
+          <p className="text-sm text-slate-500 mb-6">This exam has no questions yet.</p>
           <Button variant="outline" className="w-full" onClick={() => navigate('/exams')}>
             Return to Dashboard
           </Button>
@@ -101,7 +135,7 @@ export default function ExamTake() {
             </div>
             <div className="flex justify-between">
               <span>Questions Answered:</span>
-              <span className="font-medium text-slate-900 dark:text-white">{Object.keys(answers).length} / {MOCK_QUESTIONS.length}</span>
+              <span className="font-medium text-slate-900 dark:text-white">{Object.keys(answers).length} / {questions.length}</span>
             </div>
           </div>
           <Button className="w-full bg-slate-900 text-white" onClick={() => navigate('/exams')}>
@@ -133,7 +167,7 @@ export default function ExamTake() {
         <div className="flex-1 flex flex-col">
           <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm flex-1">
             <div className="flex justify-between items-center mb-6 border-b border-slate-100 dark:border-surface-raised pb-4">
-              <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-300">Question {currentIdx + 1} of {MOCK_QUESTIONS.length}</h2>
+              <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-300">Question {currentIdx + 1} of {questions.length}</h2>
               <span className="text-sm font-medium bg-slate-100 dark:bg-surface-raised px-3 py-1 rounded-full text-slate-600 dark:text-slate-300">
                 {question.points} Points
               </span>
@@ -146,7 +180,7 @@ export default function ExamTake() {
             </div>
 
             <div className="mt-8">
-              {question.type === 'MCQ' ? (
+              {isMultipleChoice(question) ? (
                 <RadioGroup 
                   value={answers[question.id] || ''} 
                   onValueChange={handleAnswerChange}
@@ -195,13 +229,13 @@ export default function ExamTake() {
               <ChevronLeft className="mr-2 h-5 w-5" /> Previous
             </Button>
 
-            {currentIdx === MOCK_QUESTIONS.length - 1 ? (
+            {currentIdx === questions.length - 1 ? (
               <Button onClick={handleExamSubmit} className="bg-primary hover:bg-primary/90 text-primary-foreground py-6 px-10 text-lg">
                 Submit Exam
               </Button>
             ) : (
               <Button 
-                onClick={() => setCurrentIdx(prev => Math.min(MOCK_QUESTIONS.length - 1, prev + 1))}
+                onClick={() => setCurrentIdx(prev => Math.min(questions.length - 1, prev + 1))}
                 className="bg-slate-900 text-white hover:bg-slate-800 py-6 px-8"
               >
                 Next <ChevronRight className="ml-2 h-5 w-5" />
@@ -215,7 +249,7 @@ export default function ExamTake() {
           <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-4 shadow-sm">
             <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Questions</h3>
             <div className="grid grid-cols-5 md:grid-cols-4 gap-2">
-              {MOCK_QUESTIONS.map((q, idx) => (
+              {questions.map((q, idx) => (
                 <button
                   key={q.id}
                   onClick={() => setCurrentIdx(idx)}

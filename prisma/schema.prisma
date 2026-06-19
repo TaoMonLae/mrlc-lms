@@ -551,3 +551,69 @@ model Ebook {
   @@index([category])
   @@index([format])
 }
+
+model Announcement {
+  id             String    @id @default(uuid())
+  title          String
+  body           String
+  audience       String    @default("ALL") // ALL | TEACHERS | STUDENTS | CLASS
+  classId        String?
+  className      String?
+  pinned         Boolean   @default(false)
+  expiresAt      DateTime?
+  createdById    String?
+  createdByName  String?
+  status         String    @default("ACTIVE") // ACTIVE | ARCHIVED
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([audience])
+  @@index([status])
+  @@index([classId])
+}
+
+model TimetableEntry {
+  id             String   @id @default(uuid())
+  classId        String
+  className      String?
+  subjectId      String
+  subjectName    String?
+  subjectColor   String?  @default("bg-blue-500")
+  teacherId      String?
+  teacherName    String?
+  dayOfWeek      String
+  startTime      String
+  endTime        String
+  room           String?
+  notes          String?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([classId])
+  @@index([teacherId])
+  @@index([dayOfWeek])
+}
+
+model StudentDocument {
+  id             String    @id @default(uuid())
+  studentId      String
+  title          String
+  documentType   String    @default("OTHER") // UNHCR | PASSPORT | BIRTH_CERTIFICATE | SCHOOL_RECORD | GUARDIAN_DOC | MEDICAL | OTHER
+  fileUrl        String
+  fileName       String
+  fileSize       Int       @default(0)
+  mimeType       String    @default("application/octet-stream")
+  expiryDate     DateTime?
+  uploadedById   String?
+  uploadedByName String?
+  status         String    @default("ACTIVE") // ACTIVE | ARCHIVED
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([studentId])
+  @@index([documentType])
+  @@index([status])
+}

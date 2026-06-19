@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   CalendarDays, 
@@ -27,6 +27,7 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { usePermissions } from '@/src/lib/permissions';
+import { toast } from 'sonner';
 
 // Types
 export type DayOfWeek = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
@@ -47,79 +48,6 @@ export interface TimetableEntry {
   notes?: string;
 }
 
-const MOCK_TIMETABLE: TimetableEntry[] = import.meta.env.DEV ? [
-  {
-    id: 't1',
-    classId: 'c1',
-    className: 'Class A',
-    subjectId: 's1',
-    subjectName: 'Mathematics',
-    subjectColor: 'bg-blue-500',
-    teacherId: 't1',
-    teacherName: 'John Smith',
-    dayOfWeek: 'Monday',
-    startTime: '08:00',
-    endTime: '09:30',
-    room: 'Room 302',
-  },
-  {
-    id: 't2',
-    classId: 'c1',
-    className: 'Class A',
-    subjectId: 's2',
-    subjectName: 'Physics',
-    subjectColor: 'bg-purple-500',
-    teacherId: 't2',
-    teacherName: 'Sarah Wilson',
-    dayOfWeek: 'Monday',
-    startTime: '09:45',
-    endTime: '11:15',
-    room: 'Lab 1',
-  },
-  {
-    id: 't3',
-    classId: 'c1',
-    className: 'Class A',
-    subjectId: 's3',
-    subjectName: 'English',
-    subjectColor: 'bg-emerald-500',
-    teacherId: 't3',
-    teacherName: 'Jane Doe',
-    dayOfWeek: 'Tuesday',
-    startTime: '08:00',
-    endTime: '09:30',
-    room: 'Room 201',
-  },
-  {
-    id: 't4',
-    classId: 'c1',
-    className: 'Class A',
-    subjectId: 's1',
-    subjectName: 'Mathematics',
-    subjectColor: 'bg-blue-500',
-    teacherId: 't1',
-    teacherName: 'John Smith',
-    dayOfWeek: 'Wednesday',
-    startTime: '13:00',
-    endTime: '14:30',
-    room: 'Room 302',
-  },
-  {
-    id: 't5',
-    classId: 'c1',
-    className: 'Class A',
-    subjectId: 's4',
-    subjectName: 'History',
-    subjectColor: 'bg-amber-500',
-    teacherId: 't4',
-    teacherName: 'Robert Brown',
-    dayOfWeek: 'Friday',
-    startTime: '10:00',
-    endTime: '11:30',
-    room: 'Room 105',
-  }
-] : [];
-
 const DAYS: DayOfWeek[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 const TIME_SLOTS = [
   '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00'
@@ -127,12 +55,51 @@ const TIME_SLOTS = [
 
 export default function TimetablePage() {
   const [viewType, setViewType] = useState<'class' | 'teacher'>('class');
-  const [selectedIdentifier, setSelectedIdentifier] = useState(MOCK_TIMETABLE[0]?.className || '');
+  const [selectedIdentifier, setSelectedIdentifier] = useState('');
+  const [timetable, setTimetable] = useState<TimetableEntry[]>([]);
+  const [loading, setLoading] = useState(true);
   const { isAdmin, hasPermission } = usePermissions();
 
   const canManage = isAdmin || hasPermission('manage_timetable');
 
-  const filteredTimetable = MOCK_TIMETABLE.filter(entry => 
+  useEffect(() => {
+    const fetchTimetable = async () => {
+      try {
+        const token = sessionStorage.getItem('auth_token');
+        const res = await fetch('/api/timetable', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error('Failed to fetch timetable');
+        const data: TimetableEntry[] = await res.json();
+        setTimetable(Array.isArray(data) ? data : []);
+        if (data.length > 0) setSelectedIdentifier(data[0].className || '');
+      } catch (error) {
+        console.error('Error fetching timetable:', error);
+        toast.error('Failed to load timetable');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTimetable();
+  }, []);
+
+  const handleDelete = async (entryId: string) => {
+    if (!confirm('Delete this timetable slot?')) return;
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`/api/timetable/${entryId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to delete');
+      setTimetable(prev => prev.filter(e => e.id !== entryId));
+      toast.success('Timetable slot deleted');
+    } catch {
+      toast.error('Failed to delete slot');
+    }
+  };
+
+  const filteredTimetable = timetable.filter(entry =>
     viewType === 'class' ? entry.className === selectedIdentifier : entry.teacherName === selectedIdentifier
   );
 
@@ -166,7 +133,7 @@ export default function TimetablePage() {
           <Button 
             variant={viewType === 'class' ? 'secondary' : 'ghost'} 
             size="sm" 
-            onClick={() => { setViewType('class'); setSelectedIdentifier(MOCK_TIMETABLE[0]?.className || ''); }}
+            onClick={() => { setViewType('class'); setSelectedIdentifier(timetable[0]?.className || ''); }}
             className="h-8 text-xs px-4"
           >
             By Class
@@ -174,7 +141,7 @@ export default function TimetablePage() {
           <Button 
             variant={viewType === 'teacher' ? 'secondary' : 'ghost'} 
             size="sm" 
-            onClick={() => { setViewType('teacher'); setSelectedIdentifier(MOCK_TIMETABLE[0]?.teacherName || ''); }}
+            onClick={() => { setViewType('teacher'); setSelectedIdentifier(timetable[0]?.teacherName || ''); }}
             className="h-8 text-xs px-4"
           >
             By Teacher
@@ -189,7 +156,7 @@ export default function TimetablePage() {
             onChange={(e) => setSelectedIdentifier(e.target.value)}
           >
             <option value="">No {viewType === 'class' ? 'classes' : 'teachers'} available</option>
-            {Array.from(new Set(MOCK_TIMETABLE.map((entry) => viewType === 'class' ? entry.className : entry.teacherName))).map((name) => (
+            {Array.from(new Set(timetable.map((entry) => viewType === 'class' ? entry.className : entry.teacherName))).filter(Boolean).map((name) => (
               <option key={name} value={name}>{name}</option>
             ))}
           </select>
@@ -249,7 +216,7 @@ export default function TimetablePage() {
                                   <DropdownMenuItem render={<Link to={`/timetable/${entry.id}/edit`} className="w-full flex items-center" />}>
                                     <Edit className="mr-2 h-3.5 w-3.5" /> Edit
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem className="text-rose-600">
+                                  <DropdownMenuItem className="text-rose-600" onClick={() => handleDelete(entry.id)}>
                                     <Trash2 className="mr-2 h-3.5 w-3.5" /> Delete
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
@@ -299,7 +266,7 @@ export default function TimetablePage() {
                         <DropdownMenuItem render={<Link to={`/timetable/${entry.id}/edit`} className="w-full flex items-center" />}>
                           <Edit className="mr-2 h-4 w-4" /> Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-rose-600">
+                        <DropdownMenuItem className="text-rose-600" onClick={() => handleDelete(entry.id)}>
                           <Trash2 className="mr-2 h-4 w-4" /> Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   FileText, 
   Upload, 
@@ -71,82 +71,43 @@ const formatFileSize = (bytes: number) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
-// Development-only sample data. Production must not show fake documents.
-const MOCK_DOCUMENTS: StudentDocument[] = import.meta.env.DEV ? [
-  {
-    id: 'doc-1',
-    studentId: '1',
-    title: 'UNHCR ID Card',
-    documentType: 'UNHCR',
-    fileUrl: '#',
-    fileName: 'unhcr_id_min_khant.pdf',
-    fileSize: 1024 * 450,
-    mimeType: 'application/pdf',
-    expiryDate: '2026-12-31T00:00:00Z',
-    uploadedById: 'u1',
-    uploadedByName: 'System User',
-    status: 'ACTIVE',
-    createdAt: '2024-01-15T10:00:00Z',
-  },
-  {
-    id: 'doc-2',
-    studentId: '1',
-    title: 'Birth Certificate',
-    documentType: 'BIRTH_CERTIFICATE',
-    fileUrl: '#',
-    fileName: 'birth_cert.jpg',
-    fileSize: 1024 * 1200,
-    mimeType: 'image/jpeg',
-    uploadedById: 'u1',
-    uploadedByName: 'System User',
-    status: 'ACTIVE',
-    createdAt: '2024-01-15T10:05:00Z',
-  },
-  {
-    id: 'doc-3',
-    studentId: '1',
-    title: 'Previous School Transcript 2023',
-    documentType: 'SCHOOL_RECORD',
-    fileUrl: '#',
-    fileName: 'transcript_2023.pdf',
-    fileSize: 1024 * 850,
-    mimeType: 'application/pdf',
-    expiryDate: '2025-05-10T00:00:00Z', // Expired
-    uploadedById: 'u1',
-    uploadedByName: 'System User',
-    status: 'ACTIVE',
-    createdAt: '2024-02-20T14:30:00Z',
-  },
-  {
-    id: 'doc-4',
-    studentId: '1',
-    title: 'Medical Clearance',
-    documentType: 'MEDICAL',
-    fileUrl: '#',
-    fileName: 'medical_report_may.pdf',
-    fileSize: 1024 * 320,
-    mimeType: 'application/pdf',
-    expiryDate: '2026-05-20T00:00:00Z', // Expiring soon (less than 30 days)
-    uploadedById: 'u3',
-    uploadedByName: 'Staff Member',
-    status: 'ACTIVE',
-    createdAt: '2025-05-01T09:15:00Z',
-  }
-] : [];
-
 interface StudentDocumentsProps {
   studentId: string;
 }
 
 export function StudentDocuments({ studentId }: StudentDocumentsProps) {
   const { isAdmin, hasPermission } = usePermissions();
-  const [documents, setDocuments] = useState<StudentDocument[]>(MOCK_DOCUMENTS);
+  const [documents, setDocuments] = useState<StudentDocument[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isUploading, setIsUploading] = useState(false);
 
   // Filter based on user request "ADMIN can manage, TEACHER can view if allowed"
   const canManage = isAdmin || hasPermission('manage_documents');
   const canView = isAdmin || hasPermission('view_documents');
+
+  useEffect(() => {
+    if (!studentId || !canView) {
+      setLoading(false);
+      return;
+    }
+    const fetchDocuments = async () => {
+      try {
+        const token = sessionStorage.getItem('auth_token');
+        const res = await fetch(`/api/students/${studentId}/documents`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error('Failed to fetch documents');
+        const data = await res.json();
+        setDocuments(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error('Error fetching student documents:', error);
+        toast.error('Failed to load documents');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDocuments();
+  }, [studentId, canView]);
 
   const filteredDocs = documents.filter(doc => 
     doc.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -166,16 +127,28 @@ export function StudentDocuments({ studentId }: StudentDocumentsProps) {
     }).length
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this document?')) {
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this document?')) return;
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`/api/students/${studentId}/documents/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to delete');
       setDocuments(prev => prev.filter(d => d.id !== id));
       toast.success('Document deleted successfully');
+    } catch {
+      toast.error('Failed to delete document');
     }
   };
 
   const handleDownload = (doc: StudentDocument) => {
-    toast.info(`Starting download for ${doc.fileName}...`);
-    // Logic for real download would go here
+    if (doc.fileUrl && doc.fileUrl !== '#') {
+      window.open(doc.fileUrl, '_blank', 'noopener,noreferrer');
+    } else {
+      toast.info(`No file available for ${doc.fileName}`);
+    }
   };
 
   if (!canView) {
@@ -231,7 +204,14 @@ export function StudentDocuments({ studentId }: StudentDocumentsProps) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredDocs.map((doc) => {
+        {loading && (
+          <div className="col-span-full py-20 text-center text-slate-500">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-3"></div>
+            Loading documents...
+          </div>
+        )}
+
+        {!loading && filteredDocs.map((doc) => {
           const isExpired = doc.expiryDate && isPast(new Date(doc.expiryDate));
           const isExpiring = doc.expiryDate && !isExpired && isWithinInterval(new Date(doc.expiryDate), {
             start: new Date(),
@@ -324,7 +304,7 @@ export function StudentDocuments({ studentId }: StudentDocumentsProps) {
           );
         })}
 
-        {filteredDocs.length === 0 && (
+        {!loading && filteredDocs.length === 0 && (
           <div className="col-span-full py-20 text-center bg-white dark:bg-surface-indigo rounded-xl border border-dashed border-slate-300 dark:border-surface-raised">
             <FileText className="h-12 w-12 text-slate-200 mx-auto mb-4" />
             <h3 className="text-lg font-bold text-slate-900 dark:text-white">No documents found</h3>

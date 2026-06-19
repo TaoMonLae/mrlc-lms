@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Save, Receipt } from 'lucide-react';
+import { ArrowLeft, Save, Receipt, Calendar } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -32,7 +32,8 @@ const getNextReceiptNumber = () => {
 const paymentSchema = z.object({
   studentId: z.string().min(1, 'Student selection is required'),
   amount: z.any().transform((v) => Number(v)).refine((v) => !isNaN(v) && v > 0, 'Amount must be greater than 0'),
-  paymentType: z.string().min(3, 'Provide payment description (e.g. Tuition Fee)'),
+  paymentMonth: z.string().min(1, 'Payment month is required'),
+  paymentYear: z.string().min(4, 'Payment year is required'),
   paymentMethod: z.enum(['CASH', 'BANK_TRANSFER', 'OTHER']),
   paymentDate: z.string().min(1, 'Payment date is required'),
   receiptNumber: z.string(),
@@ -67,6 +68,9 @@ export default function PaymentNew() {
       .catch(() => setStudents([]));
   }, []);
 
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth() + 1;
+
   const {
     register,
     handleSubmit,
@@ -81,16 +85,29 @@ export default function PaymentNew() {
       paymentDate: new Date().toISOString().split('T')[0],
       receiptNumber: getNextReceiptNumber(),
       amount: 0,
+      paymentMonth: currentMonth.toString(),
+      paymentYear: currentYear.toString(),
     }
   });
 
   const onSubmit = async (data: FormValues) => {
     const token = sessionStorage.getItem('auth_token');
     try {
+      // Construct payment type from month and year
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      const monthName = monthNames[parseInt(data.paymentMonth) - 1];
+      const paymentType = `Monthly Fees - ${monthName} ${data.paymentYear}`;
+
+      const payload = {
+        ...data,
+        feeType: paymentType,
+        description: paymentType,
+      };
+
       const res = await fetch('/api/fees', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -146,9 +163,47 @@ export default function PaymentNew() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="paymentType">Description / Fee Type *</Label>
-              <Input id="paymentType" {...register('paymentType')} placeholder="e.g. Term 1 Tuition Fee" />
-              {errors.paymentType && <p className="text-xs text-red-500 font-medium">{errors.paymentType.message}</p>}
+              <Label>Payment Month *</Label>
+              <Select value={watch('paymentMonth')} onValueChange={(val: any) => setValue('paymentMonth', val)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Month" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">January</SelectItem>
+                  <SelectItem value="2">February</SelectItem>
+                  <SelectItem value="3">March</SelectItem>
+                  <SelectItem value="4">April</SelectItem>
+                  <SelectItem value="5">May</SelectItem>
+                  <SelectItem value="6">June</SelectItem>
+                  <SelectItem value="7">July</SelectItem>
+                  <SelectItem value="8">August</SelectItem>
+                  <SelectItem value="9">September</SelectItem>
+                  <SelectItem value="10">October</SelectItem>
+                  <SelectItem value="11">November</SelectItem>
+                  <SelectItem value="12">December</SelectItem>
+                </SelectContent>
+              </Select>
+              {errors.paymentMonth && <p className="text-xs text-red-500 font-medium">{errors.paymentMonth.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Payment Year *</Label>
+              <Select value={watch('paymentYear')} onValueChange={(val: any) => setValue('paymentYear', val)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Year" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 5 }, (_, i) => {
+                    const year = currentYear - 2 + i;
+                    return (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+              {errors.paymentYear && <p className="text-xs text-red-500 font-medium">{errors.paymentYear.message}</p>}
             </div>
 
             <div className="space-y-2">

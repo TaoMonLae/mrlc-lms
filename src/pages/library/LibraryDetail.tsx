@@ -1,33 +1,61 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit2, Trash2, Download, ExternalLink, Shield, FileText, Image as ImageIcon, Video, Link as LinkIcon, File } from 'lucide-react';
+import { ArrowLeft, Edit2, Trash2, Download, ExternalLink, FileText, Image as ImageIcon, Video, Link as LinkIcon, File } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { usePermissions, useUser } from '../../lib/permissions';
+import { usePermissions } from '../../lib/permissions';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
-const MOCK_RESOURCE = import.meta.env.DEV ? {
-  id: 'r3',
-  title: 'Introduction to React',
-  description: 'A great tutorial on React fundamentals. This covers components, state, props, and hooks. Ensure you follow along with the exercises.',
-  type: 'VIDEO',
-  externalUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-  fileUrl: undefined as string | undefined,
-  classId: 'c1',
-  visibility: 'ALL',
-  uploadedById: 't1',
-  uploadedByName: 'John Teacher',
-  status: 'ACTIVE',
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-} : null;
+type LibraryResource = {
+  id: string;
+  title: string;
+  author?: string | null;
+  description?: string | null;
+  type: string;
+  externalUrl?: string | null;
+  classId?: string | null;
+  visibility?: string | null;
+  createdAt: string;
+};
 
 export default function LibraryDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useUser();
   const { isAdmin, isTeacher } = usePermissions();
+
+  const [resource, setResource] = useState<LibraryResource | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!id) return;
+    const fetchResource = async () => {
+      try {
+        const token = sessionStorage.getItem('auth_token');
+        const res = await fetch(`/api/library/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) {
+          if (res.status === 404) {
+            setResource(null);
+          } else if (res.status === 401 || res.status === 403) {
+            toast.error('You do not have permission to view this resource');
+          } else {
+            throw new Error('Failed to fetch resource');
+          }
+          return;
+        }
+        const data = await res.json();
+        setResource(data);
+      } catch (error) {
+        console.error('Error fetching library resource:', error);
+        toast.error('Failed to load resource');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchResource();
+  }, [id]);
 
   const getIconForType = (type: string) => {
     switch (type) {
@@ -40,7 +68,7 @@ export default function LibraryDetail() {
     }
   };
 
-  const getEmbedUrl = (url: string | undefined) => {
+  const getEmbedUrl = (url: string | undefined | null) => {
     if (!url) return null;
     const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
     const match = url.match(youtubeRegex);
@@ -50,7 +78,32 @@ export default function LibraryDetail() {
     return null;
   };
 
-  if (!MOCK_RESOURCE) {
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this resource?")) return;
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`/api/library/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to delete');
+      toast.success("Resource deleted");
+      navigate("/library");
+    } catch {
+      toast.error("Failed to delete resource");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <span className="ml-3 text-slate-500">Loading resource...</span>
+      </div>
+    );
+  }
+
+  if (!resource) {
     return (
       <div className="space-y-6 max-w-5xl mx-auto pb-10">
         <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/library" />} nativeButton={false}>
@@ -58,22 +111,14 @@ export default function LibraryDetail() {
           Back to Library
         </Button>
         <div className="rounded-xl border border-dashed border-slate-200 bg-white p-10 text-center text-slate-500 dark:bg-surface-indigo dark:border-surface-raised">
-          Resource {id} is not available from the live API yet.
+          Resource not found.
         </div>
       </div>
     );
   }
 
-  const canManage = isAdmin || (isTeacher && MOCK_RESOURCE.uploadedById === user?.id); // simplified
-
-  const embedUrl = getEmbedUrl(MOCK_RESOURCE.externalUrl);
-
-  const handleDelete = () => {
-    if (confirm("Are you sure you want to delete this resource?")) {
-      toast.success("Resource deleted");
-      navigate("/library");
-    }
-  }
+  const canManage = isAdmin || isTeacher;
+  const embedUrl = getEmbedUrl(resource.externalUrl);
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-10">
@@ -85,13 +130,13 @@ export default function LibraryDetail() {
           </Button>
           <div className="flex items-center gap-3">
              <div className="p-3 bg-white dark:bg-surface-indigo rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm">
-                {getIconForType(MOCK_RESOURCE.type)}
+                {getIconForType(resource.type)}
              </div>
              <div>
-               <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{MOCK_RESOURCE.title}</h1>
+               <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{resource.title}</h1>
                <div className="flex flex-wrap items-center gap-2 mt-2">
-                 <Badge variant="secondary" className="font-normal">{MOCK_RESOURCE.type}</Badge>
-                 {MOCK_RESOURCE.visibility === 'TEACHERS_ONLY' ? (
+                 <Badge variant="secondary" className="font-normal">{resource.type}</Badge>
+                 {resource.visibility === 'TEACHERS_ONLY' ? (
                    <Badge variant="outline" className="font-normal border-amber-200 text-amber-700 dark:border-amber-900 dark:text-amber-400">
                      Internal Staff Only
                    </Badge>
@@ -107,7 +152,7 @@ export default function LibraryDetail() {
 
         {canManage && (
           <div className="flex items-center gap-2">
-            <Button variant="outline" render={<Link to={`/library/${MOCK_RESOURCE.id}/edit`} />} nativeButton={false}>
+            <Button variant="outline" render={<Link to={`/library/${resource.id}/edit`} />} nativeButton={false}>
               <Edit2 className="mr-2 h-4 w-4" /> Edit
             </Button>
             <Button variant="destructive" onClick={handleDelete}>
@@ -118,7 +163,7 @@ export default function LibraryDetail() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+
         {/* Main Content Area */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl overflow-hidden shadow-sm">
@@ -132,32 +177,24 @@ export default function LibraryDetail() {
                   allowFullScreen
                 ></iframe>
               </div>
-            ) : MOCK_RESOURCE.type === 'IMAGE' && MOCK_RESOURCE.fileUrl ? (
-               <div className="p-4 bg-slate-100 dark:bg-canvas flex justify-center">
-                 <img src={MOCK_RESOURCE.fileUrl} alt={MOCK_RESOURCE.title} className="max-w-full max-h-[600px] object-contain rounded drop-shadow-sm" />
-               </div>
             ) : (
               <div className="p-12 flex flex-col items-center justify-center text-center bg-slate-50 dark:bg-surface-indigo/50">
-                {getIconForType(MOCK_RESOURCE.type)}
+                {getIconForType(resource.type)}
                 <h3 className="mt-4 text-lg font-medium text-slate-900 dark:text-white">Preview not available</h3>
                 <p className="text-slate-500 mt-1 max-w-sm">This file type cannot be previewed directly in the browser.</p>
-                <div className="mt-6">
-                  {MOCK_RESOURCE.externalUrl ? (
-                    <Button render={<a href={MOCK_RESOURCE.externalUrl} target="_blank" rel="noopener noreferrer" />} nativeButton={false}>
+                {resource.externalUrl && (
+                  <div className="mt-6">
+                    <Button render={<a href={resource.externalUrl} target="_blank" rel="noopener noreferrer" />} nativeButton={false}>
                          <ExternalLink className="mr-2 h-4 w-4" /> Open External Link
                     </Button>
-                  ) : (
-                    <Button>
-                      <Download className="mr-2 h-4 w-4" /> Download File (12.4 MB)
-                    </Button>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             )}
-            
+
             <div className="p-6">
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Description</h3>
-              <p className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{MOCK_RESOURCE.description}</p>
+              <p className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{resource.description || 'No description available.'}</p>
             </div>
           </div>
         </div>
@@ -166,21 +203,23 @@ export default function LibraryDetail() {
         <div className="space-y-6">
           <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-6 overflow-hidden">
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider mb-4 border-b border-slate-100 dark:border-surface-raised pb-2">Information</h3>
-            
+
             <dl className="space-y-4">
-              <div>
-                <dt className="text-xs text-slate-500 dark:text-slate-300">Uploaded By</dt>
-                <dd className="font-medium text-slate-900 dark:text-white">{MOCK_RESOURCE.uploadedByName}</dd>
-              </div>
+              {resource.author && (
+                <div>
+                  <dt className="text-xs text-slate-500 dark:text-slate-300">Author</dt>
+                  <dd className="font-medium text-slate-900 dark:text-white">{resource.author}</dd>
+                </div>
+              )}
               <div>
                 <dt className="text-xs text-slate-500 dark:text-slate-300">Date Added</dt>
-                <dd className="font-medium text-slate-900 dark:text-white">{format(new Date(MOCK_RESOURCE.createdAt), 'MMMM d, yyyy')}</dd>
+                <dd className="font-medium text-slate-900 dark:text-white">{format(new Date(resource.createdAt), 'MMMM d, yyyy')}</dd>
               </div>
-              {MOCK_RESOURCE.classId && (
+              {resource.classId && (
                 <div>
                   <dt className="text-xs text-slate-500 dark:text-slate-300">Assigned Class</dt>
                   <dd className="font-medium text-blue-600 dark:text-blue-400">
-                    <Link to={`/classes/${MOCK_RESOURCE.classId}`} className="hover:underline">Class A</Link>
+                    <Link to={`/classes/${resource.classId}`} className="hover:underline">View Class</Link>
                   </dd>
                 </div>
               )}

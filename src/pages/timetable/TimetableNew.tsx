@@ -10,15 +10,26 @@ export default function TimetableNew() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (values: any) => {
+  const handleSubmit = async (values: any) => {
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      console.log('New Timetable Slot:', values);
-      setIsLoading(false);
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch('/api/timetable', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(values),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to create schedule item');
+      }
       toast.success('Schedule item created successfully');
       navigate('/timetable');
-    }, 1000);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to create schedule item');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Megaphone, 
@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { usePermissions } from '@/src/lib/permissions';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 // Types
 export type AnnouncementAudience = 'ALL' | 'TEACHERS' | 'STUDENTS' | 'CLASS';
@@ -50,68 +51,34 @@ export interface Announcement {
   updatedAt: string;
 }
 
-// Development-only sample data. Production must not show fake announcements.
-export const MOCK_ANNOUNCEMENTS: Announcement[] = import.meta.env.DEV ? [
-  {
-    id: 'ann-1',
-    title: 'School Reopening & Safety Guidelines',
-    body: 'Welcome back students! Please read the attached safety guidelines for the upcoming semester. We prioritize your health and safety above all else. Daily temperature checks will be mandatory...',
-    audience: 'ALL',
-    pinned: true,
-    createdById: 'u1',
-    createdByName: 'System User',
-    status: 'ACTIVE',
-    createdAt: '2025-05-01T08:00:00Z',
-    updatedAt: '2025-05-01T08:00:00Z',
-  },
-  {
-    id: 'ann-2',
-    title: 'Final Exam Schedule - Term 1',
-    body: 'The final exam schedule for Term 1 has been released. Please check your student portal for specific timings and room assignments. Ensure you arrive at least 15 minutes before the start time.',
-    audience: 'STUDENTS',
-    pinned: true,
-    expiresAt: '2025-06-15T23:59:59Z',
-    createdById: 'u1',
-    createdByName: 'System User',
-    status: 'ACTIVE',
-    createdAt: '2025-05-10T10:30:00Z',
-    updatedAt: '2025-05-10T10:30:00Z',
-  },
-  {
-    id: 'ann-3',
-    title: 'Staff Meeting: Curriculum Development',
-    body: 'Reminder for all teaching staff about our monthly meeting regarding curriculum updates and student progress reporting. We will be discussing the new integration of digital assessment tools.',
-    audience: 'TEACHERS',
-    pinned: false,
-    createdById: 'u1',
-    createdByName: 'System User',
-    status: 'ACTIVE',
-    createdAt: '2025-05-12T14:00:00Z',
-    updatedAt: '2025-05-12T14:00:00Z',
-  },
-  {
-    id: 'ann-4',
-    title: 'Mathematics Class A: Quiz Tomorrow',
-    body: 'Don\'t forget about the surprise-not-surprise quiz on Algebra tomorrow. Review chapters 4 and 5 in your textbooks. Focus on quadratic equations and their real-world applications.',
-    audience: 'CLASS',
-    classId: 'c1',
-    className: 'Class A',
-    pinned: false,
-    createdById: 't1',
-    createdByName: 'Teacher Jane',
-    status: 'ACTIVE',
-    createdAt: '2025-05-13T09:15:00Z',
-    updatedAt: '2025-05-13T09:15:00Z',
-  }
-] : [];
-
 export default function AnnouncementsList() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterAudience, setFilterAudience] = useState<AnnouncementAudience | 'ALL_FILT'>('ALL_FILT');
-  const [announcements, setAnnouncements] = useState(MOCK_ANNOUNCEMENTS);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [loading, setLoading] = useState(true);
   const { isAdmin, hasPermission } = usePermissions();
 
   const canManage = isAdmin || hasPermission('manage_announcements');
+
+  useEffect(() => {
+    const fetchAnnouncements = async () => {
+      try {
+        const token = sessionStorage.getItem('auth_token');
+        const res = await fetch('/api/announcements', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error('Failed to fetch announcements');
+        const data = await res.json();
+        setAnnouncements(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error('Error fetching announcements:', error);
+        toast.error('Failed to load announcements');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAnnouncements();
+  }, []);
 
   const filteredAnnouncements = announcements.filter(ann => {
     const matchesSearch = ann.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -127,10 +94,25 @@ export default function AnnouncementsList() {
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
-  const handleArchive = (id: string) => {
-    setAnnouncements(prev => prev.map(ann => 
-      ann.id === id ? { ...ann, status: ann.status === 'ACTIVE' ? 'ARCHIVED' : 'ACTIVE' } : ann
-    ));
+  const handleArchive = async (id: string) => {
+    const current = announcements.find(a => a.id === id);
+    if (!current) return;
+    const nextStatus: AnnouncementStatus = current.status === 'ACTIVE' ? 'ARCHIVED' : 'ACTIVE';
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`/api/announcements/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      if (!res.ok) throw new Error('Failed to update');
+      setAnnouncements(prev => prev.map(ann =>
+        ann.id === id ? { ...ann, status: nextStatus } : ann
+      ));
+      toast.success(nextStatus === 'ARCHIVED' ? 'Announcement archived' : 'Announcement restored');
+    } catch {
+      toast.error('Failed to update announcement');
+    }
   };
 
   const getAudienceColor = (audience: AnnouncementAudience) => {
@@ -267,7 +249,14 @@ export default function AnnouncementsList() {
           </div>
         ))}
 
-        {sortedAnnouncements.length === 0 && (
+        {loading && (
+          <div className="col-span-full py-20 text-center text-slate-500">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-3"></div>
+            Loading announcements...
+          </div>
+        )}
+
+        {!loading && sortedAnnouncements.length === 0 && (
           <div className="col-span-full py-20 text-center bg-white dark:bg-surface-indigo rounded-xl border border-dashed border-slate-300 dark:border-surface-raised">
             <Megaphone className="h-12 w-12 text-slate-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-slate-900 dark:text-white">No announcements found</h3>

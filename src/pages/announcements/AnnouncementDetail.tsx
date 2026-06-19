@@ -22,31 +22,49 @@ import { Separator } from '@/components/ui/separator';
 import { usePermissions } from '@/src/lib/permissions';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { Announcement, AnnouncementAudience, MOCK_ANNOUNCEMENTS } from './AnnouncementsList';
-
-const getAnnouncement = (id: string): Announcement | undefined => {
-  return MOCK_ANNOUNCEMENTS.find(a => a.id === id);
-};
+import { Announcement, AnnouncementAudience } from './AnnouncementsList';
 
 export default function AnnouncementDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [announcement, setAnnouncement] = useState<Announcement | null>(null);
+  const [loading, setLoading] = useState(true);
   const { isAdmin, hasPermission } = usePermissions();
 
   const canManage = isAdmin || hasPermission('manage_announcements');
 
   useEffect(() => {
-    if (id) {
-      const data = getAnnouncement(id);
-      if (data) {
-        setAnnouncement(data);
-      } else {
-        toast.error('Announcement not found');
-        navigate('/announcements');
+    if (!id) return;
+    const fetchAnnouncement = async () => {
+      try {
+        const token = sessionStorage.getItem('auth_token');
+        const res = await fetch(`/api/announcements/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) {
+          toast.error('Announcement not found');
+          navigate('/announcements');
+          return;
+        }
+        setAnnouncement(await res.json());
+      } catch (error) {
+        console.error('Error fetching announcement:', error);
+        toast.error('Failed to load announcement');
+      } finally {
+        setLoading(false);
       }
-    }
+    };
+    fetchAnnouncement();
   }, [id, navigate]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <span className="ml-3 text-slate-500">Loading announcement...</span>
+      </div>
+    );
+  }
 
   if (!announcement) return null;
 

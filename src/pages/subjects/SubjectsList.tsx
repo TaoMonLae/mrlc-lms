@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Search, BookOpen, MoreVertical, Archive, CheckCircle2, Book } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,57 +15,6 @@ import {
 import { Subject } from '../../types/subject';
 import { toast } from 'sonner';
 
-const MOCK_SUBJECTS: Subject[] = import.meta.env.DEV ? [
-  {
-    id: 's1',
-    name: 'Mathematical Reasoning',
-    code: 'GED-MATH',
-    description: 'GED Mathematical Reasoning focuses on quantitative problem solving and algebraic problem solving.',
-    level: 'Advanced',
-    status: 'ACTIVE',
-  },
-  {
-    id: 's2',
-    name: 'Reasoning Through Language Arts',
-    code: 'GED-RLA',
-    description: 'Focuses on reading comprehension, analyzing arguments, and writing skills.',
-    level: 'Advanced',
-    status: 'ACTIVE',
-  },
-  {
-    id: 's3',
-    name: 'Science',
-    code: 'GED-SCI',
-    description: 'Covers life science, physical science, and earth and space science.',
-    level: 'Advanced',
-    status: 'ACTIVE',
-  },
-  {
-    id: 's4',
-    name: 'Social Studies',
-    code: 'GED-SS',
-    description: 'Covers civics and government, US history, economics, and geography.',
-    level: 'Advanced',
-    status: 'ACTIVE',
-  },
-  {
-    id: 's5',
-    name: 'English Grammar',
-    code: 'ENG-101',
-    description: 'Foundational English grammar, vocabulary, and sentence structures.',
-    level: 'Foundation',
-    status: 'ACTIVE',
-  },
-  {
-    id: 's6',
-    name: 'Chinese',
-    code: 'CHN-101',
-    description: 'Introductory Mandarin Chinese language learning.',
-    level: 'Intermediate',
-    status: 'ARCHIVED',
-  }
-] : [];
-
 // Webflow five-stop category palette, cycled across subject cards.
 const CATEGORY_COLORS = [
   { bar: 'border-l-accent-purple', chip: 'bg-accent-purple/10', icon: 'text-accent-purple' },
@@ -77,10 +26,41 @@ const CATEGORY_COLORS = [
 
 export default function SubjectsList() {
   const [searchTerm, setSearchTerm] = useState('');
-  
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const userRole = 'ADMIN';
 
-  const filteredSubjects = MOCK_SUBJECTS.filter(s => 
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      try {
+        const token = sessionStorage.getItem('auth_token');
+        const res = await fetch('/api/subjects', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (!res.ok) {
+          if (res.status === 401 || res.status === 403) {
+            toast.error('You do not have permission to view subjects');
+          } else {
+            throw new Error('Failed to fetch subjects');
+          }
+          return;
+        }
+        const data = await res.json();
+        setSubjects(data);
+      } catch (error) {
+        console.error('Error fetching subjects:', error);
+        toast.error('Failed to load subjects');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSubjects();
+  }, []);
+
+  const filteredSubjects = subjects.filter(s =>
     s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.level.toLowerCase().includes(searchTerm.toLowerCase())
@@ -185,13 +165,18 @@ export default function SubjectsList() {
         })}
       </div>
 
-      {filteredSubjects.length === 0 && (
+      {loading ? (
+        <div className="py-20 text-center bg-white dark:bg-surface-indigo rounded-xl border border-slate-200 dark:border-surface-raised">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-lg font-medium text-slate-900 dark:text-white">Loading subjects...</p>
+        </div>
+      ) : filteredSubjects.length === 0 ? (
         <div className="py-20 text-center bg-white dark:bg-surface-indigo rounded-xl border border-dashed border-slate-200 dark:border-surface-raised">
           <BookOpen className="h-12 w-12 mx-auto text-slate-200 mb-3" />
           <p className="text-lg font-medium text-slate-900 dark:text-white">No subjects found</p>
-          <p className="text-sm text-slate-500">Try adjusting your filters or search term.</p>
+          <p className="text-sm text-slate-500">{searchTerm ? 'Try adjusting your search term.' : 'Create your first subject to get started.'}</p>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

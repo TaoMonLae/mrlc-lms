@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  Edit, 
-  Book, 
+import {
+  ArrowLeft,
+  Edit,
+  Book,
   Archive,
   BookOpen,
-  Users,
   GraduationCap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,40 +14,104 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { usePermissions } from '../../lib/permissions';
 
-const MOCK_SUBJECT = import.meta.env.DEV ? {
-  id: 's1',
-  name: 'Mathematical Reasoning',
-  code: 'GED-MATH',
-  level: 'Advanced',
-  description: 'GED Mathematical Reasoning focuses on quantitative problem solving and algebraic problem solving. Students will cover number operations, geometry, data analysis, and basic algebra concepts necessary for passing the GED math exam.',
-  status: 'ACTIVE',
-} : null;
+type SubjectClassRow = { id: string; name: string; academicYear: string };
+type SubjectTeacherRow = { id: string; name: string; employmentType: string };
+type SubjectExamRow = { id: string; title: string; date: string | null; status: string };
 
-const MOCK_CLASSES = import.meta.env.DEV ? [
-  { id: 'c1', name: 'GED Morning', term: 'Fall 2025' },
-  { id: 'c2', name: 'GED Evening', term: 'Fall 2025' },
-] : [];
+type SubjectData = {
+  id: string;
+  name: string;
+  code: string;
+  description?: string | null;
+  classes: SubjectClassRow[];
+  teachers: SubjectTeacherRow[];
+  exams: SubjectExamRow[];
+};
 
-const MOCK_TEACHERS = import.meta.env.DEV ? [
-  { id: 't1', name: 'Htet Wai Yan', employmentType: 'FULL_TIME' },
-] : [];
-
-const MOCK_EXAMS = import.meta.env.DEV ? [
-  { id: 'e1', title: 'Math Midterm', date: '2025-10-15', status: 'COMPLETED' },
-  { id: 'e2', title: 'Math Final Practice', date: '2025-12-01', status: 'SCHEDULED' },
-] : [];
+const fullName = (u: any) =>
+  `${u?.firstName ?? ''} ${u?.lastName ?? ''}`.trim() || 'Unknown';
 
 export default function SubjectProfile() {
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState('overview');
-
   const { hasPermission } = usePermissions();
+
+  const [subject, setSubject] = useState<SubjectData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!id) return;
+    const fetchSubject = async () => {
+      try {
+        const token = sessionStorage.getItem('auth_token');
+        const res = await fetch(`/api/subjects/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) {
+          if (res.status === 404) {
+            setSubject(null);
+          } else if (res.status === 401 || res.status === 403) {
+            toast.error('You do not have permission to view this subject');
+          } else {
+            throw new Error('Failed to fetch subject');
+          }
+          return;
+        }
+        const data = await res.json();
+        const teachers: SubjectTeacherRow[] = (data.teachers || []).map((st: any) => ({
+          id: st.teacher?.id || st.teacherId,
+          name: fullName(st.teacher?.user),
+          employmentType: st.teacher?.employmentType || 'FULL_TIME',
+        }));
+        const exams: SubjectExamRow[] = (data.exams || []).map((e: any) => ({
+          id: e.id,
+          title: e.title || 'Untitled',
+          date: e.scheduledAt || e.date || e.createdAt || null,
+          status: e.status || 'DRAFT',
+        }));
+        const classMap = new Map<string, SubjectClassRow>();
+        (data.exams || []).forEach((e: any) => {
+          if (e.class?.id && !classMap.has(e.class.id)) {
+            classMap.set(e.class.id, {
+              id: e.class.id,
+              name: e.class.name,
+              academicYear: e.class.academicYear || '—',
+            });
+          }
+        });
+        setSubject({
+          id: data.id,
+          name: data.name,
+          code: data.code,
+          description: data.description,
+          classes: Array.from(classMap.values()),
+          teachers,
+          exams,
+        });
+      } catch (error) {
+        console.error('Error fetching subject:', error);
+        toast.error('Failed to load subject');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSubject();
+  }, [id]);
 
   const handleArchive = () => {
     toast.success('Subject has been archived.');
   };
 
-  if (!MOCK_SUBJECT) {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <span className="ml-3 text-slate-500">Loading subject...</span>
+      </div>
+    );
+  }
+
+  if (!subject) {
     return (
       <div className="space-y-6 max-w-[1200px] mx-auto pb-20">
         <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/subjects" />} nativeButton={false}>
@@ -56,7 +119,7 @@ export default function SubjectProfile() {
           Back to Subjects
         </Button>
         <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-8 text-center text-slate-500">
-          Subject profile data is not available from the live API yet.
+          Subject not found.
         </div>
       </div>
     );
@@ -71,15 +134,10 @@ export default function SubjectProfile() {
             Back to Subjects
           </Button>
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">{MOCK_SUBJECT.name}</h1>
-            <Badge className={MOCK_SUBJECT.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-slate-500'}>
-              {MOCK_SUBJECT.status}
-            </Badge>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">{subject.name}</h1>
           </div>
           <p className="text-sm text-slate-500 flex items-center gap-2 mt-2 font-medium">
-            <span>{MOCK_SUBJECT.code}</span>
-            <span className="text-slate-300">•</span>
-            <span>{MOCK_SUBJECT.level}</span>
+            <span className="font-mono">{subject.code}</span>
           </p>
         </div>
         {hasPermission('manage_subjects') && (
@@ -100,8 +158,8 @@ export default function SubjectProfile() {
             <BookOpen className="h-6 w-6" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">{MOCK_CLASSES.length}</p>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-1">Assigned Classes</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">{subject.classes.length}</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-1">Classes</p>
           </div>
         </div>
         <div className="bg-white dark:bg-surface-indigo p-5 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex items-center gap-4">
@@ -109,7 +167,7 @@ export default function SubjectProfile() {
             <GraduationCap className="h-6 w-6" />
           </div>
           <div>
-             <p className="text-2xl font-bold text-slate-900 dark:text-white">{MOCK_TEACHERS.length}</p>
+             <p className="text-2xl font-bold text-slate-900 dark:text-white">{subject.teachers.length}</p>
              <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-1">Assigned Teachers</p>
           </div>
         </div>
@@ -118,7 +176,7 @@ export default function SubjectProfile() {
             <Book className="h-6 w-6" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">{MOCK_EXAMS.length}</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">{subject.exams.length}</p>
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-1">Related Exams</p>
           </div>
         </div>
@@ -137,7 +195,7 @@ export default function SubjectProfile() {
         <TabsContent value="overview" className="p-6 space-y-8 animate-in fade-in slide-in-from-bottom-2">
           <div className="prose dark:prose-invert max-w-none">
              <h3>Syllabus / Description</h3>
-             <p className="text-slate-600 dark:text-slate-300">{MOCK_SUBJECT.description}</p>
+             <p className="text-slate-600 dark:text-slate-300">{subject.description || 'No description available.'}</p>
           </div>
         </TabsContent>
 
@@ -146,25 +204,25 @@ export default function SubjectProfile() {
              <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-surface-raised/50">
                 <tr>
                   <th className="px-6 py-4">Class Name</th>
-                  <th className="px-6 py-4">Term</th>
+                  <th className="px-6 py-4">Academic Year</th>
                   <th className="px-6 py-4 text-right">Action</th>
                 </tr>
              </thead>
              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-               {MOCK_CLASSES.map(cls => (
+               {subject.classes.map(cls => (
                  <tr key={cls.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50">
                     <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
                       <Link to={`/classes/${cls.id}`} className="hover:underline hover:text-aubergine-600">{cls.name}</Link>
                     </td>
-                    <td className="px-6 py-4 text-slate-500">{cls.term}</td>
+                    <td className="px-6 py-4 text-slate-500">{cls.academicYear}</td>
                     <td className="px-6 py-4 text-right">
-                       <Button variant="ghost" size="sm" className="text-destructive">Unassign</Button>
+                       <Button variant="ghost" size="sm" render={<Link to={`/classes/${cls.id}`} />} nativeButton={false}>View</Button>
                     </td>
                  </tr>
                ))}
-               {MOCK_CLASSES.length === 0 && (
+               {subject.classes.length === 0 && (
                  <tr>
-                   <td colSpan={3} className="py-8 text-center text-slate-500">No classes assigned to this subject.</td>
+                   <td colSpan={3} className="py-8 text-center text-slate-500">No classes associated with this subject.</td>
                  </tr>
                )}
              </tbody>
@@ -181,7 +239,7 @@ export default function SubjectProfile() {
                 </tr>
              </thead>
              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-               {MOCK_TEACHERS.map(teacher => (
+               {subject.teachers.map(teacher => (
                  <tr key={teacher.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50">
                     <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
                       <Link to={`/teachers/${teacher.id}`} className="hover:underline hover:text-aubergine-600">{teacher.name}</Link>
@@ -192,7 +250,7 @@ export default function SubjectProfile() {
                     </td>
                  </tr>
                ))}
-               {MOCK_TEACHERS.length === 0 && (
+               {subject.teachers.length === 0 && (
                  <tr>
                    <td colSpan={3} className="py-8 text-center text-slate-500">No teachers assigned to teach this subject.</td>
                  </tr>
@@ -212,23 +270,23 @@ export default function SubjectProfile() {
                 </tr>
              </thead>
              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-               {MOCK_EXAMS.map(exam => (
+               {subject.exams.map(exam => (
                  <tr key={exam.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50">
                     <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
                       <Link to={`/exams/${exam.id}/results`} className="hover:underline hover:text-aubergine-600">{exam.title}</Link>
                     </td>
-                    <td className="px-6 py-4 text-slate-500">{new Date(exam.date).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 text-slate-500">{exam.date ? new Date(exam.date).toLocaleDateString() : '—'}</td>
                     <td className="px-6 py-4">
                       <Badge variant={exam.status === 'COMPLETED' ? 'default' : 'outline'} className={exam.status === 'COMPLETED' ? 'bg-emerald-500' : ''}>
                         {exam.status}
                       </Badge>
                     </td>
                     <td className="px-6 py-4 text-right">
-                       <Button variant="ghost" size="sm">View</Button>
+                       <Button variant="ghost" size="sm" render={<Link to={`/exams/${exam.id}/results`} />} nativeButton={false}>View</Button>
                     </td>
                  </tr>
                ))}
-               {MOCK_EXAMS.length === 0 && (
+               {subject.exams.length === 0 && (
                  <tr>
                    <td colSpan={4} className="py-8 text-center text-slate-500">No exams created for this subject yet.</td>
                  </tr>

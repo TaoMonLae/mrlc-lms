@@ -1,0 +1,109 @@
+@media print {
+  /* Hide elements that shouldn't appear in print */
+  .no-print,
+  button,
+  a:not([href^="http"]),
+  .sidebar-trigger,
+  nav,
+  [data-sidebar] {
+    display: none !important;
+  }
+
+  /* Reset body styles for print */
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt;
+  }
+
+  /* Ensure cards and sections are visible */
+  .card,
+  [class*="rounded-xl"],
+  [class*="border"] {
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+
+  /* Profile-specific print styles */
+  .bg-white,
+  .bg-surface-indigo {
+    background: white !important;
+  }
+
+  .dark\:bg-surface-indigo {
+    background: white !important;
+  }
+
+  .text-slate-900,
+  .dark\:text-white {
+    color: black !important;
+  }
+
+  .text-slate-500,
+  .dark\:text-slate-300 {
+    color: #333 !important;
+  }
+
+  /* Badge colors in print */
+  .bg-emerald-500,
+  .bg-emerald-50 {
+    background: #f0fdf4 !important;
+    color: #166534 !important;
+    border: 1px solid #166534 !important;
+  }
+
+  /* Ensure images print correctly */
+  img {
+    max-width: 200px;
+    max-height: 200px;
+  }
+
+  /* Page breaks */
+  .page-break {
+    page-break-after: always;
+  }
+
+  .avoid-break {
+    page-break-inside: avoid;
+  }
+
+  /* Links should show URL */
+  a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
+    color: #666;
+  }
+
+  /* Print-friendly headers */
+  h1, h2, h3, h4 {
+    color: black !important;
+    page-break-after: avoid;
+  }
+
+  /* Tab content - show active tab content in print */
+  [role="tabpanel"],
+  [data-state="active"] {
+    display: block !important;
+  }
+
+  [data-state="inactive"] {
+    display: none !important;
+  }
+
+  /* Ensure proper spacing */
+  .space-y-6 > * + *,
+  .space-y-8 > * + * {
+    margin-top: 1rem !important;
+  }
+
+  /* Grid layouts for print */
+  .grid {
+    display: grid !important;
+  }
+
+  @page {
+    margin: 1cm;
+    size: A4;
+  }
+}

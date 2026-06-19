@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, Printer, Download, Trash2, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,34 +6,56 @@ import { Badge } from '@/components/ui/badge';
 import { usePermissions } from '../../lib/permissions';
 import { useSettings } from '../../providers/SettingsProvider';
 import { format } from 'date-fns';
-
-const MOCK_PAYMENT = import.meta.env.DEV ? {
-  id: 'p1',
-  studentId: '1',
-  studentName: 'Ali bin Ahmad',
-  studentIdNumber: 'STU-2023-001',
-  class: 'Class A',
-  amount: 1000,
-  currency: 'MYR',
-  paymentType: 'Tuition Fee 2025 Term 1',
-  paymentMethod: 'BANK_TRANSFER',
-  paymentDate: '2025-01-15T10:00:00Z',
-  receiptNumber: 'RCP-2025-001',
-  notes: 'Online transfer ref: 123456789',
-  status: 'PAID',
-  recordedBy: 'System User',
-} : null;
+import { toast } from 'sonner';
 
 export default function PaymentReceipt() {
   const { id } = useParams();
   const { hasPermission } = usePermissions();
   const { schoolProfile, brandingSettings } = useSettings();
+  const [payment, setPayment] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPayment = async () => {
+      if (!id) return;
+      try {
+        const token = sessionStorage.getItem('auth_token');
+        const res = await fetch(`/api/fees`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const fees = await res.json();
+          const paymentData = fees.find((f: any) => f.id === id);
+          if (paymentData) {
+            setPayment(paymentData);
+          } else {
+            toast.error('Payment not found');
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching payment:', error);
+        toast.error('Failed to load payment receipt');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPayment();
+  }, [id]);
 
   const handlePrint = () => {
     window.print();
   };
 
-  if (!MOCK_PAYMENT) {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <span className="ml-3 text-slate-500">Loading receipt...</span>
+      </div>
+    );
+  }
+
+  if (!payment) {
     return (
       <div className="space-y-6 max-w-3xl mx-auto pb-10">
         <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/fees" />} nativeButton={false}>
@@ -55,11 +77,11 @@ export default function PaymentReceipt() {
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Fees
           </Button>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Receipt {MOCK_PAYMENT.receiptNumber}</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Receipt {payment.receiptNumber}</h1>
         </div>
 
         <div className="flex items-center gap-2">
-          {hasPermission('manage_fees') && MOCK_PAYMENT.status === 'PAID' && (
+          {hasPermission('manage_fees') && payment.status === 'PAID' && (
              <Button variant="outline" className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950">
                Void Payment
              </Button>
@@ -95,10 +117,10 @@ export default function PaymentReceipt() {
             <div className="text-right">
                <h1 className="text-3xl font-bold text-slate-300 uppercase tracking-widest">RECEIPT</h1>
                <div className="mt-2 text-sm text-slate-600">
-                 <p><span className="font-medium">No:</span> {MOCK_PAYMENT.receiptNumber}</p>
-                 <p><span className="font-medium">Date:</span> {format(new Date(MOCK_PAYMENT.paymentDate), 'dd MMM yyyy')}</p>
+                 <p><span className="font-medium">No:</span> {payment.receiptNumber}</p>
+                 <p><span className="font-medium">Date:</span> {format(new Date(payment.paymentDate), 'dd MMM yyyy')}</p>
                </div>
-               {MOCK_PAYMENT.status === 'VOIDED' && (
+               {payment.status === 'VOIDED' && (
                  <div className="mt-2 border-2 border-red-500 text-red-500 px-3 py-1 font-bold text-lg inline-block uppercase tracking-wider transform -rotate-12">
                    VOIDED
                  </div>
@@ -111,12 +133,12 @@ export default function PaymentReceipt() {
             <div className="grid grid-cols-2 gap-4 text-sm">
                <div>
                   <p className="text-slate-500 mb-1">Received From</p>
-                  <p className="font-semibold text-slate-900 text-lg">{MOCK_PAYMENT.studentName}</p>
+                  <p className="font-semibold text-slate-900 text-lg">{payment.studentName}</p>
                </div>
                <div className="text-right">
                   <p className="text-slate-500 mb-1">Student Details</p>
-                  <p className="font-medium text-slate-900">{MOCK_PAYMENT.studentIdNumber}</p>
-                  <p className="text-slate-600">{MOCK_PAYMENT.class}</p>
+                  <p className="font-medium text-slate-900">{payment.studentIdNumber}</p>
+                  <p className="text-slate-600">{payment.class}</p>
                </div>
             </div>
          </div>
@@ -132,16 +154,16 @@ export default function PaymentReceipt() {
                </thead>
                <tbody>
                   <tr className="border-b border-slate-100">
-                     <td className="py-4 px-4">{MOCK_PAYMENT.paymentType}</td>
+                     <td className="py-4 px-4">{payment.paymentType}</td>
                      <td className="py-4 px-4 text-right">
-                       {MOCK_PAYMENT.currency} {MOCK_PAYMENT.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                       {payment.currency} {payment.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                      </td>
                   </tr>
                   {/* Total Row */}
                   <tr className="bg-slate-50">
                      <td className="py-4 px-4 text-right font-bold text-slate-900">Total Paid</td>
                      <td className="py-4 px-4 text-right font-bold text-slate-900 text-lg">
-                       {MOCK_PAYMENT.currency} {MOCK_PAYMENT.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                       {payment.currency} {payment.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                      </td>
                   </tr>
                </tbody>
@@ -151,15 +173,15 @@ export default function PaymentReceipt() {
          <div className="grid grid-cols-2 gap-8 text-sm">
             <div>
                <h4 className="font-semibold text-slate-900 mb-2">Payment Info</h4>
-               <p className="text-slate-600"><span className="font-medium">Method:</span> {MOCK_PAYMENT.paymentMethod.replace('_', ' ')}</p>
-               {MOCK_PAYMENT.notes && <p className="text-slate-600 mt-1"><span className="font-medium">Remarks:</span> {MOCK_PAYMENT.notes}</p>}
-               {MOCK_PAYMENT.status === 'VOIDED' && <p className="text-red-500 mt-1"><span className="font-medium">Void Reason:</span> Error in amount</p>}
+               <p className="text-slate-600"><span className="font-medium">Method:</span> {payment.paymentMethod.replace('_', ' ')}</p>
+               {payment.notes && <p className="text-slate-600 mt-1"><span className="font-medium">Remarks:</span> {payment.notes}</p>}
+               {payment.status === 'VOIDED' && <p className="text-red-500 mt-1"><span className="font-medium">Void Reason:</span> Error in amount</p>}
             </div>
 
             <div className="flex flex-col items-end justify-end pt-8">
                <div className="w-48 border-t border-slate-400 pt-2 text-center">
                   <p className="font-medium text-slate-900">Authorized Signature</p>
-                  <p className="text-slate-500 text-xs mt-1">Processed by: {MOCK_PAYMENT.recordedBy}</p>
+                  <p className="text-slate-500 text-xs mt-1">Processed by: {payment.recordedBy}</p>
                </div>
             </div>
          </div>

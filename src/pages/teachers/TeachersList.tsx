@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Users, 
@@ -30,76 +30,83 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { type Teacher } from '../../types/teacher';
+import { toast } from 'sonner';
 
-const MOCK_TEACHERS: Teacher[] = import.meta.env.DEV ? [
-  {
-    id: 't1',
-    teacherId: 'TCH-001',
-    firstName: 'Htet',
-    lastName: 'Wai Yan',
-    gender: 'MALE',
-    email: 'htetwaiyan@lms.edu',
-    phone: '09772123456',
-    address: 'Yangon, Myanmar',
-    subjects: ['Mathematics', 'Physics'],
-    assignedClasses: [
-      { id: 'c1', name: 'GED Math Prep', subject: 'Math', schedule: 'Mon/Wed 9:00 AM' }
-    ],
-    employmentType: 'FULL_TIME',
-    status: 'ACTIVE',
-    joinedDate: '2023-01-15',
-    photoUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Htet',
-  },
-  {
-    id: 't2',
-    teacherId: 'TCH-002',
-    firstName: 'Aye',
-    lastName: 'Myat Thu',
-    gender: 'FEMALE',
-    email: 'ayemyatthu@lms.edu',
-    phone: '09441112233',
-    address: 'Mandalay, Myanmar',
-    subjects: ['English', 'Literature'],
-    assignedClasses: [
-      { id: 'c2', name: 'Pre-GED English', subject: 'English', schedule: 'Tue/Thu 1:00 PM' }
-    ],
-    employmentType: 'PART_TIME',
-    status: 'ACTIVE',
-    joinedDate: '2023-06-10',
-    photoUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Aye',
-  },
-  {
-    id: 't3',
-    teacherId: 'TCH-003',
-    firstName: 'Kyaw',
-    lastName: 'Swah',
-    gender: 'MALE',
-    email: 'kyawswah@lms.edu',
-    phone: '0955667788',
-    address: 'Yangon',
-    subjects: ['Social Studies', 'History'],
-    assignedClasses: [],
-    employmentType: 'VOLUNTEER',
-    status: 'INACTIVE',
-    joinedDate: '2022-09-20',
-    photoUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Kyaw',
-  }
-] : [];
+interface TeacherData {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  subjects?: string;
+  employmentType: string;
+  status: string;
+  joinedDate: string;
+  profilePhotoUrl?: string;
+  teacherId?: string;
+}
 
 export default function TeachersList() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [teachers, setTeachers] = useState<TeacherData[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredTeachers = MOCK_TEACHERS.filter(teacher => {
+  useEffect(() => {
+    const fetchTeachers = async () => {
+      try {
+        const token = sessionStorage.getItem('auth_token');
+        const res = await fetch('/api/teachers', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (!res.ok) {
+          if (res.status === 401 || res.status === 403) {
+            toast.error('You do not have permission to view teachers');
+          } else {
+            throw new Error('Failed to fetch teachers');
+          }
+          return;
+        }
+        const data = await res.json();
+        // Transform API data to match expected format
+        const transformedTeachers = data.map((teacher: any) => ({
+          id: teacher.id,
+          firstName: teacher.firstName || teacher.user?.firstName || '',
+          lastName: teacher.lastName || teacher.user?.lastName || '',
+          email: teacher.email || teacher.user?.email || '',
+          phone: teacher.phone || '',
+          address: teacher.address || '',
+          subjects: teacher.subjects ? teacher.subjects.split(',').map((s: string) => s.trim()) : [],
+          employmentType: teacher.employmentType || 'FULL_TIME',
+          status: teacher.status || 'ACTIVE',
+          joinedDate: teacher.createdAt || new Date().toISOString(),
+          profilePhotoUrl: teacher.profilePhotoUrl || teacher.user?.profilePhotoUrl || '',
+          teacherId: teacher.teacherId || `TCH-${String(teacher.id).slice(0, 4).toUpperCase()}`,
+        }));
+        setTeachers(transformedTeachers);
+      } catch (error) {
+        console.error('Error fetching teachers:', error);
+        toast.error('Failed to load teachers');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTeachers();
+  }, []);
+
+  const filteredTeachers = teachers.filter(teacher => {
     const fullName = `${teacher.firstName} ${teacher.lastName}`.toLowerCase();
-    const matchesSearch = 
-      fullName.includes(searchTerm.toLowerCase()) || 
+    const matchesSearch =
+      fullName.includes(searchTerm.toLowerCase()) ||
       teacher.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      teacher.teacherId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      teacher.subjects.some(s => s.toLowerCase().includes(searchTerm.toLowerCase()));
-    
+      teacher.teacherId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      teacher.subjects?.some((s: string) => s.toLowerCase().includes(searchTerm.toLowerCase()));
+
     const matchesStatus = statusFilter === 'all' || teacher.status === statusFilter;
-    
+
     return matchesSearch && matchesStatus;
   });
 
@@ -141,6 +148,19 @@ export default function TeachersList() {
         </div>
       </div>
 
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <span className="ml-3 text-slate-500">Loading teachers...</span>
+        </div>
+      ) : filteredTeachers.length === 0 ? (
+        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-12 text-center">
+          <Users className="h-12 w-12 mx-auto text-slate-200 mb-3" />
+          <p className="text-lg font-medium text-slate-900 dark:text-white">No teachers found</p>
+          <p className="text-sm text-slate-500">{searchTerm || statusFilter !== 'all' ? 'Try adjusting your filters.' : 'Add your first teacher to get started.'}</p>
+        </div>
+      ) : (
+        <>
       {/* Desktop Table View */}
       <div className="hidden lg:block bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl overflow-hidden shadow-sm">
         <table className="w-full text-left text-sm border-collapse">
@@ -159,7 +179,7 @@ export default function TeachersList() {
               <tr key={teacher.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors">
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
-                    <img src={teacher.photoUrl} alt={teacher.firstName} className="h-10 w-10 rounded-full border border-slate-200 dark:border-surface-raised" />
+                    <img src={teacher.profilePhotoUrl} alt={teacher.firstName} className="h-10 w-10 rounded-full border border-slate-200 dark:border-surface-raised" />
                     <div>
                       <div className="font-semibold text-slate-900 dark:text-white">{teacher.firstName} {teacher.lastName}</div>
                       <div className="text-xs text-slate-500 font-mono">{teacher.teacherId}</div>
@@ -223,24 +243,24 @@ export default function TeachersList() {
           <Link key={teacher.id} to={`/teachers/${teacher.id}`} className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-5 shadow-sm hover:border-aubergine-500 transition-colors">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
-                <img src={teacher.photoUrl} alt={teacher.firstName} className="h-12 w-12 rounded-full border" />
+                <img src={teacher.profilePhotoUrl} alt={teacher.firstName} className="h-12 w-12 rounded-full border" />
                 <div>
                   <h3 className="font-bold text-slate-900 dark:text-white leading-tight">{teacher.firstName} {teacher.lastName}</h3>
                   <span className="text-xs text-slate-500 font-mono">{teacher.teacherId}</span>
                 </div>
               </div>
-              <Badge variant={teacher.status === 'ACTIVE' ? 'default' : 'secondary'} 
+              <Badge variant={teacher.status === 'ACTIVE' ? 'default' : 'secondary'}
                 className={teacher.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-slate-500'}
               >
                 {teacher.status}
               </Badge>
             </div>
-            
+
             <div className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
               <div className="flex items-center gap-2"><Mail className="h-3 w-3 text-slate-400" /> {teacher.email}</div>
               <div className="flex items-center gap-2"><GraduationCap className="h-3 w-3 text-slate-400" /> {teacher.subjects.join(', ')}</div>
             </div>
-            
+
             <div className="mt-4 pt-4 border-t border-slate-100 dark:border-surface-raised flex justify-between items-center text-xs">
               <span className="font-medium text-slate-500 uppercase">{teacher.employmentType.replace('_', ' ')}</span>
               <span className="text-slate-400">Joined {new Date(teacher.joinedDate).toLocaleDateString()}</span>
@@ -248,6 +268,8 @@ export default function TeachersList() {
           </Link>
         ))}
       </div>
+        </>
+      )}
     </div>
   );
 }

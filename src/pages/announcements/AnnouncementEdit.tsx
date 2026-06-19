@@ -4,11 +4,7 @@ import { AnnouncementForm } from '@/src/components/announcements/AnnouncementFor
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Megaphone } from 'lucide-react';
 import { toast } from 'sonner';
-import { Announcement, MOCK_ANNOUNCEMENTS } from './AnnouncementsList';
-
-const getAnnouncement = (id: string): Announcement | undefined => {
-  return MOCK_ANNOUNCEMENTS.find(a => a.id === id);
-};
+import { Announcement } from './AnnouncementsList';
 
 export default function AnnouncementEdit() {
   const { id } = useParams();
@@ -17,24 +13,47 @@ export default function AnnouncementEdit() {
   const [announcement, setAnnouncement] = useState<Announcement | null>(null);
 
   useEffect(() => {
-    if (id) {
-      const data = getAnnouncement(id);
-      if (data) {
-        setAnnouncement(data);
-      } else {
-        toast.error('Announcement not found');
-        navigate('/announcements');
+    if (!id) return;
+    const fetchAnnouncement = async () => {
+      try {
+        const token = sessionStorage.getItem('auth_token');
+        const res = await fetch(`/api/announcements/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) {
+          toast.error('Announcement not found');
+          navigate('/announcements');
+          return;
+        }
+        setAnnouncement(await res.json());
+      } catch (error) {
+        console.error('Error fetching announcement:', error);
+        toast.error('Failed to load announcement');
       }
-    }
+    };
+    fetchAnnouncement();
   }, [id, navigate]);
 
-  const handleSubmit = (values: any) => {
+  const handleSubmit = async (values: any) => {
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`/api/announcements/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(values),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to update announcement');
+      }
       toast.success('Announcement updated successfully');
       navigate('/announcements');
-    }, 1500);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update announcement');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (!announcement) return null;

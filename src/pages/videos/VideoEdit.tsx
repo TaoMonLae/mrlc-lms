@@ -32,69 +32,25 @@ const videoSchema = z.object({
 
 type FormValues = z.infer<typeof videoSchema>;
 
-const MOCK_VIDEOS: VideoLesson[] = import.meta.env.DEV ? [
-  {
-    id: 'v1',
-    title: 'Introduction to GED Mathematics',
-    description: 'An overview of the key mathematical concepts you will need for the GED exam.',
-    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-    duration: 1845,
-    subjectName: 'Mathematics',
-    visibility: 'ALL',
-    status: 'PUBLISHED',
-    uploadedById: 'u1',
-    uploadedByName: 'System User',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
-  },
-  {
-    id: 'v2',
-    title: 'Reading Comprehension Strategies',
-    description: 'Learn how to tackle reading comprehension passages in the GED RLA section.',
-    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-    duration: 2310,
-    subjectName: 'English Language Arts',
-    visibility: 'STUDENTS',
-    status: 'PUBLISHED',
-    uploadedById: 't1',
-    uploadedByName: 'Ms. Naw Htwe',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
-  },
-  {
-    id: 'v3',
-    title: 'Science: Ecosystems & Biodiversity',
-    description: 'Covers ecosystem dynamics, food webs, and biodiversity concepts for GED Science.',
-    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-    duration: 3020,
-    subjectName: 'Science',
-    className: 'Pre-GED Class A',
-    visibility: 'ALL',
-    status: 'PUBLISHED',
-    uploadedById: 't2',
-    uploadedByName: 'Mr. Saw Htoo',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
-  },
-  {
-    id: 'v4',
-    title: 'Social Studies: US Government Overview',
-    description: 'A walkthrough of US government structure and civic concepts for GED prep.',
-    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-    duration: 2760,
-    subjectName: 'Social Studies',
-    visibility: 'TEACHERS_ONLY',
-    status: 'DRAFT',
-    uploadedById: 'u1',
-    uploadedByName: 'System User',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-  },
-] : [];
-
 export default function VideoEdit() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [classes, setClasses] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
+  const [video, setVideo] = useState<VideoLesson | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const video = MOCK_VIDEOS.find(v => v.id === id);
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<FormValues>({
+    resolver: zodResolver(videoSchema) as Resolver<FormValues>,
+    defaultValues: { visibility: 'ALL', status: 'PUBLISHED' },
+  });
 
   useEffect(() => {
     const fetchOptions = async () => {
@@ -112,28 +68,49 @@ export default function VideoEdit() {
     fetchOptions();
   }, []);
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    formState: { errors, isSubmitting },
-  } = useForm<FormValues>({
-    resolver: zodResolver(videoSchema) as Resolver<FormValues>,
-    defaultValues: video
-      ? {
-          title: video.title,
-          description: video.description || '',
-          videoUrl: video.videoUrl,
-          thumbnailUrl: video.thumbnailUrl || '',
-          duration: video.duration,
-          classId: video.classId,
-          subjectId: video.subjectId,
-          visibility: video.visibility,
-          status: video.status,
+  useEffect(() => {
+    if (!id) return;
+    const fetchVideo = async () => {
+      try {
+        const token = sessionStorage.getItem('auth_token');
+        const res = await fetch(`/api/videos/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) {
+          setVideo(null);
+          return;
         }
-      : { visibility: 'ALL', status: 'PUBLISHED' },
-  });
+        const v: VideoLesson = await res.json();
+        setVideo(v);
+        reset({
+          title: v.title,
+          description: v.description || '',
+          videoUrl: v.videoUrl,
+          thumbnailUrl: v.thumbnailUrl || '',
+          duration: v.duration,
+          classId: v.classId,
+          subjectId: v.subjectId,
+          visibility: v.visibility,
+          status: v.status,
+        });
+      } catch (error) {
+        console.error('Error fetching video:', error);
+        toast.error('Failed to load video');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchVideo();
+  }, [id, reset]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <span className="ml-3 text-slate-500">Loading video...</span>
+      </div>
+    );
+  }
 
   if (!video) {
     return (

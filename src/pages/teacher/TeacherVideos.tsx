@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { fetchOrMock } from '../../lib/api';
+import { apiGet } from '../../lib/api';
 import { Link } from 'react-router-dom';
 import { Video, Plus, Search, Play, Clock, Edit2, Trash2, MoreVertical, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,62 +17,6 @@ import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 import type { VideoLesson } from '../videos/VideoList';
 
-const MOCK_VIDEOS: VideoLesson[] = import.meta.env.DEV ? [
-  {
-    id: 'v1',
-    title: 'Introduction to GED Mathematics',
-    description: 'An overview of the key mathematical concepts for the GED exam.',
-    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-    duration: 1845,
-    subjectName: 'Mathematics',
-    visibility: 'ALL',
-    status: 'PUBLISHED',
-    uploadedById: 'u1',
-    uploadedByName: 'System User',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
-  },
-  {
-    id: 'v2',
-    title: 'Reading Comprehension Strategies',
-    description: 'Learn how to tackle reading comprehension passages in the GED RLA section.',
-    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-    duration: 2310,
-    subjectName: 'English Language Arts',
-    visibility: 'STUDENTS',
-    status: 'PUBLISHED',
-    uploadedById: 't1',
-    uploadedByName: 'Ms. Naw Htwe',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
-  },
-  {
-    id: 'v3',
-    title: 'Science: Ecosystems & Biodiversity',
-    description: 'Covers ecosystem dynamics, food webs, and biodiversity concepts.',
-    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-    duration: 3020,
-    subjectName: 'Science',
-    className: 'Pre-GED Class A',
-    visibility: 'ALL',
-    status: 'PUBLISHED',
-    uploadedById: 't2',
-    uploadedByName: 'Mr. Saw Htoo',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
-  },
-  {
-    id: 'v4',
-    title: 'Social Studies: US Government Overview',
-    description: 'A walkthrough of US government structure and civic concepts.',
-    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-    duration: 2760,
-    subjectName: 'Social Studies',
-    visibility: 'TEACHERS_ONLY',
-    status: 'DRAFT',
-    uploadedById: 'u1',
-    uploadedByName: 'System User',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-  },
-] : [];
-
 function formatDuration(seconds?: number): string {
   if (!seconds) return '';
   const m = Math.floor(seconds / 60);
@@ -86,7 +30,9 @@ export default function TeacherVideos() {
   const [videos, setVideos] = useState<VideoLesson[]>([]);
 
   useEffect(() => {
-    fetchOrMock<VideoLesson[]>('/api/videos', () => MOCK_VIDEOS).then((r) => setVideos(r.data));
+    apiGet<VideoLesson[]>('/api/videos')
+      .then((d) => setVideos(Array.isArray(d) ? d : []))
+      .catch(() => setVideos([]));
   }, []);
 
   const filtered = videos.filter(v =>

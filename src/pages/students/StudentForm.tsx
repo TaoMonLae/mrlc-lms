@@ -42,6 +42,18 @@ const ID_TYPE_OPTIONS = [
   { value: 'CCN', label: 'Community Card Number (CCN)' },
 ];
 
+const EDUCATION_LEVELS = [
+  'No Formal Education',
+  'Primary School',
+  'Secondary School',
+  'GED Preparation',
+  'GED Certificate',
+  'Some College',
+  'Bachelor\'s Degree',
+  'Master\'s Degree',
+  'Other',
+];
+
 const splitFullName = (fullName: string) => {
   const parts = fullName.trim().replace(/\s+/g, ' ').split(' ');
   if (parts.length <= 1) return { firstName: parts[0] || '', lastName: '' };
@@ -56,6 +68,7 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
   const [selectedStatus, setSelectedStatus] = useState<string>('ACTIVE');
   const [selectedCountry, setSelectedCountry] = useState<string>(initialData?.country || '');
   const [selectedIdType, setSelectedIdType] = useState<string>(initialData?.identityType || '');
+  const [selectedEducationLevel, setSelectedEducationLevel] = useState<string>(initialData?.educationLevel || '');
   const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(initialData?.profilePhotoUrl || initialData?.user?.profilePhotoUrl || null);
   const [pendingProfilePhoto, setPendingProfilePhoto] = useState<File | null>(null);
   const [pendingProfilePhotoPreview, setPendingProfilePhotoPreview] = useState<string | null>(null);
@@ -92,6 +105,7 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
       if (initialData.status) setSelectedStatus(initialData.status);
       if (initialData.country) setSelectedCountry(initialData.country);
       if (initialData.identityType) setSelectedIdType(initialData.identityType);
+      if (initialData.educationLevel) setSelectedEducationLevel(initialData.educationLevel);
       setProfilePhotoUrl(initialData.profilePhotoUrl || initialData.user?.profilePhotoUrl || null);
     }
   }, [initialData]);
@@ -154,6 +168,8 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
       const emergencyContact = (e.currentTarget.querySelector('#emergencyContact') as HTMLInputElement).value;
       const notes = (e.currentTarget.querySelector('#notes') as HTMLTextAreaElement).value;
 
+      const educationLevel = (e.currentTarget.querySelector('#educationLevel') as HTMLSelectElement)?.value || '';
+
       // Construct a valid email derived from student code/ID
       const sanitizedId = studentId.toLowerCase().replace(/[^a-z0-9]/g, '');
       const email = `${sanitizedId || 'student'}@mrlc-student.edu`;
@@ -177,6 +193,7 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
         guardianPhone,
         emergencyContact,
         notes,
+        educationLevel: educationLevel || null,
       };
 
       const token = sessionStorage.getItem('auth_token') ?? '';
@@ -375,6 +392,20 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
                 <SelectItem value="ON_LEAVE">On Leave</SelectItem>
                 <SelectItem value="GRADUATED">Graduated</SelectItem>
                 <SelectItem value="DROPPED">Dropped</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="educationLevel">Education Level</Label>
+            <Select value={selectedEducationLevel} onValueChange={setSelectedEducationLevel}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select education level" />
+              </SelectTrigger>
+              <SelectContent>
+                {EDUCATION_LEVELS.map((level) => (
+                  <SelectItem key={level} value={level}>{level}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

@@ -2,18 +2,20 @@ import React, { useEffect, useState } from 'react';
 import { apiGet } from '../../lib/api';
 import {
   User,
-  Mail, 
-  Phone, 
-  MapPin, 
-  Calendar, 
-  ShieldCheck, 
-  Users, 
-  BookOpen, 
+  Mail,
+  Phone,
+  MapPin,
+  Calendar,
+  ShieldCheck,
+  Users,
+  BookOpen,
   Briefcase,
-  AlertCircle
+  AlertCircle,
+  Printer
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ProfilePhotoUploader } from '@/src/components/profile/ProfilePhotoUploader';
 
@@ -32,6 +34,10 @@ export default function StudentProfilePage() {
     enrollmentDate: '', guardian: { name: '', relationship: '', phone: '', email: '' },
   });
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   useEffect(() => {
     apiGet<StudentProfile>('/api/student/profile')
       .then((r) => r && setStudent(r))
@@ -49,9 +55,16 @@ export default function StudentProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-10">
+      {/* Print Button - Hidden in print */}
+      <div className="flex justify-end no-print">
+        <Button variant="outline" onClick={handlePrint}>
+          <Printer className="mr-2 h-4 w-4" /> Print PDF
+        </Button>
+      </div>
+
       <div className="flex flex-col md:flex-row items-center gap-6 bg-white dark:bg-surface-indigo p-8 rounded-2xl border border-slate-200 dark:border-surface-raised shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-aubergine-500/5 rounded-full -mr-16 -mt-16" />
-        
+
         <ProfilePhotoUploader
           currentUrl={student.profilePhotoUrl}
           fallbackText={student.name.charAt(0) || 'S'}

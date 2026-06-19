@@ -14,64 +14,26 @@ import {
 import { usePermissions } from '../../lib/permissions';
 import { format } from 'date-fns';
 
-const MOCK_FEES = import.meta.env.DEV ? [
-  {
-    id: 'f1',
-    studentId: '1',
-    studentName: 'Ali bin Ahmad',
-    studentIdNumber: 'STU-2023-001',
-    class: 'Class A',
-    totalDue: 1500,
-    totalPaid: 1500,
-    balance: 0,
-    status: 'PAID',
-    lastPaymentDate: '2025-05-10T10:00:00Z',
-  },
-  {
-    id: 'f2',
-    studentId: '2',
-    studentName: 'Sarah Lee',
-    studentIdNumber: 'STU-2023-002',
-    class: 'Class B',
-    totalDue: 1500,
-    totalPaid: 500,
-    balance: 1000,
-    status: 'PARTIAL',
-    lastPaymentDate: '2025-04-15T10:00:00Z',
-  },
-  {
-    id: 'f3',
-    studentId: '3',
-    studentName: 'Full Name',
-    studentIdNumber: 'STU-2023-003',
-    class: 'Class A',
-    totalDue: 1500,
-    totalPaid: 0,
-    balance: 1500,
-    status: 'UNPAID',
-    lastPaymentDate: null,
-  }
-] : [];
-
 export default function FeesDashboard() {
   const { hasPermission } = usePermissions();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [classFilter, setClassFilter] = useState('ALL');
-  const [fees, setFees] = useState<any[]>(MOCK_FEES);
+  const [fees, setFees] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const token = sessionStorage.getItem('auth_token');
     fetch('/api/fees', { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           setFees(data.map((f: any) => ({
             id: f.id,
             studentId: f.studentId,
             studentName: f.student ? `${f.student.user?.firstName ?? ''} ${f.student.user?.lastName ?? ''}`.trim() : '—',
             studentIdNumber: f.student?.studentCode ?? '—',
-            class: f.student?.classId ?? '—',
+            class: f.student?.class?.name ?? f.student?.classId ?? '—',
             totalDue: f.amount,
             totalPaid: f.status === 'PAID' ? f.amount : 0,
             balance: f.status === 'PAID' ? 0 : f.amount,
@@ -81,8 +43,9 @@ export default function FeesDashboard() {
         }
       })
       .catch(() => {
-        if (!import.meta.env.DEV) setFees([]);
-      });
+        setFees([]);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const filteredFees = fees.filter(f => {
@@ -189,7 +152,14 @@ export default function FeesDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-              {filteredFees.map((fee) => (
+              {loading && (
+                <tr>
+                  <td colSpan={7} className="px-6 py-8 text-center text-slate-500">
+                    Loading fee records...
+                  </td>
+                </tr>
+              )}
+              {!loading && filteredFees.map((fee) => (
                 <tr key={fee.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -227,7 +197,7 @@ export default function FeesDashboard() {
                 </tr>
               ))}
               
-              {filteredFees.length === 0 && (
+              {!loading && filteredFees.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-6 py-8 text-center text-slate-500">
                     No fee records found matching your filters.

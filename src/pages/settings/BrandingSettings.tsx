@@ -70,20 +70,49 @@ export default function BrandingSettings() {
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
+
+    // Validate file size
     if (file.size > 5 * 1024 * 1024) {
       toast.error('File size must be 5MB or smaller');
       e.target.value = '';
       return;
     }
-    
-    if (!file.type.startsWith('image/')) {
-      toast.error('File must be an image');
+
+    // Validate file type for signature (PNG only for transparency)
+    const allowedTypes = assetType === 'signature'
+      ? ['image/png']
+      : ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/svg+xml'];
+
+    if (!allowedTypes.includes(file.type)) {
+      const typeMsg = assetType === 'signature'
+        ? 'Signature must be a PNG file for transparency support'
+        : 'File must be an image (PNG, JPG, WEBP, GIF, or SVG)';
+      toast.error(typeMsg);
+      e.target.value = '';
+      return;
+    }
+
+    // Validate file extension matches type
+    const ext = file.name.toLowerCase().split('.').pop();
+    const allowedExtensions = assetType === 'signature'
+      ? ['png']
+      : ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg'];
+
+    if (!ext || !allowedExtensions.includes(ext)) {
+      const extMsg = assetType === 'signature'
+        ? 'Signature file must have .png extension'
+        : 'Image file must have valid extension (.png, .jpg, .jpeg, .webp, .gif, or .svg)';
+      toast.error(extMsg);
       e.target.value = '';
       return;
     }
 
     const token = sessionStorage.getItem('auth_token');
+    if (!token) {
+      toast.error('You must be logged in to upload files');
+      return;
+    }
+
     const body = new FormData();
     body.append('file', file);
     setUploadingAsset(assetType);
@@ -91,16 +120,28 @@ export default function BrandingSettings() {
     try {
       const res = await fetch('/api/settings/assets', {
         method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        headers: { Authorization: `Bearer ${token}` },
         body,
       });
+
       const payload = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(payload.error || 'Failed to upload image');
-      if (!payload.url) throw new Error('Upload succeeded but no file URL was returned');
+
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          throw new Error('You do not have permission to upload files. Admin access required.');
+        }
+        throw new Error(payload.error || 'Failed to upload image');
+      }
+
+      if (!payload.url) {
+        throw new Error('Upload succeeded but no file URL was returned from server');
+      }
+
       setter(payload.url);
-      toast.success('Image uploaded. Save branding to apply it.');
+      toast.success('Image uploaded successfully. Save branding to apply changes.');
     } catch (error: any) {
-      toast.error(error.message || 'Failed to upload image');
+      console.error('Upload error:', error);
+      toast.error(error.message || 'Failed to upload image. Please try again.');
     } finally {
       setUploadingAsset(null);
       e.target.value = '';
@@ -164,7 +205,15 @@ export default function BrandingSettings() {
                   <Label htmlFor="sig-upload" className="cursor-pointer inline-flex items-center text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
                     <UploadCloud className="h-4 w-4 mr-2" /> {uploadingAsset === 'signature' ? 'Uploading...' : 'Upload transparent PNG signature'}
                   </Label>
-                  <input id="sig-upload" type="file" accept="image/png" className="hidden" onChange={(e) => handleFileUpload(e, setSignaturePreview, 'signature')} disabled={uploadingAsset !== null} />
+                  <input
+                    id="sig-upload"
+                    type="file"
+                    accept="image/png"
+                    className="hidden"
+                    onChange={(e) => handleFileUpload(e, setSignaturePreview, 'signature')}
+                    disabled={uploadingAsset !== null}
+                  />
+                  <p className="text-xs text-slate-500 mt-2">PNG format required for transparency support</p>
                 </>
               )}
             </div>

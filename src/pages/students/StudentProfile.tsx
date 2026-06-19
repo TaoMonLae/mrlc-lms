@@ -21,20 +21,60 @@ export default function StudentProfile() {
   const { id } = useParams<{ id: string }>();
   const [student, setStudent] = React.useState<any>(null);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [attendanceData, setAttendanceData] = React.useState<any>(null);
+  const [feesData, setFeesData] = React.useState<any>(null);
 
   React.useEffect(() => {
-    const fetchStudent = async () => {
+    const fetchStudentData = async () => {
+      if (!id) return;
       try {
         const token = sessionStorage.getItem('auth_token');
-        const res = await fetch(`/api/students/${id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+
+        // Fetch basic student data
+        const studentRes = await fetch(`/api/students/${id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (res.ok) {
-          const data = await res.json();
+        if (studentRes.ok) {
+          const data = await studentRes.json();
           setStudent(data);
         }
+
+        // Fetch attendance data for this student
+        try {
+          const attendanceRes = await fetch(`/api/reports/attendance?classId=all`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (attendanceRes.ok) {
+            const attendanceRecords = await attendanceRes.json();
+            // Filter attendance for this student and calculate rate
+            const studentAttendance = attendanceRecords.filter((a: any) => a.studentId === id);
+            if (studentAttendance.length > 0) {
+              const presentCount = studentAttendance.filter((a: any) => a.status === 'PRESENT').length;
+              const attendanceRate = Math.round((presentCount / studentAttendance.length) * 100);
+              setAttendanceData({ rate: attendanceRate, total: studentAttendance.length, present: presentCount });
+            }
+          }
+        } catch (err) {
+          console.error('Error fetching attendance:', err);
+        }
+
+        // Fetch fees data for this student
+        try {
+          const feesRes = await fetch(`/api/fees`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (feesRes.ok) {
+            const fees = await feesRes.json();
+            const studentFees = fees.filter((f: any) => f.studentId === id);
+            if (studentFees.length > 0) {
+              const totalPaid = studentFees.reduce((sum: number, f: any) => sum + (f.amount || 0), 0);
+              setFeesData({ totalPaid, paymentCount: studentFees.length });
+            }
+          }
+        } catch (err) {
+          console.error('Error fetching fees:', err);
+        }
+
       } catch (err) {
         console.error(err);
         toast.error('Failed to load student profile.');
@@ -42,7 +82,7 @@ export default function StudentProfile() {
         setIsLoading(false);
       }
     };
-    if (id) fetchStudent();
+    fetchStudentData();
   }, [id]);
 
   if (isLoading) {
@@ -224,18 +264,24 @@ export default function StudentProfile() {
                     <CheckCircle2 className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="text-xl font-bold text-slate-900 dark:text-white">96%</p>
+                    <p className="text-xl font-bold text-slate-900 dark:text-white">
+                      {attendanceData ? `${attendanceData.rate}%` : 'N/A'}
+                    </p>
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Attendance Rate</p>
+                    {attendanceData && (
+                      <p className="text-[10px] text-slate-400 mt-1">{attendanceData.present} of {attendanceData.total} days</p>
+                    )}
                   </div>
                 </div>
-                
+
                 <div className="p-4 border border-slate-200 dark:border-surface-raised rounded-lg flex items-start gap-4">
                   <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
                     <FileText className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="text-xl font-bold text-slate-900 dark:text-white">B+</p>
+                    <p className="text-xl font-bold text-slate-900 dark:text-white">N/A</p>
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Current Grade</p>
+                    <p className="text-[10px] text-slate-400 mt-1">Grades coming soon</p>
                   </div>
                 </div>
 
@@ -244,8 +290,13 @@ export default function StudentProfile() {
                     <CreditCard className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="text-xl font-bold text-slate-900 dark:text-white">Paid</p>
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Fee Status</p>
+                    <p className="text-xl font-bold text-slate-900 dark:text-white">
+                      {feesData ? `$${feesData.totalPaid}` : 'N/A'}
+                    </p>
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Paid</p>
+                    {feesData && (
+                      <p className="text-[10px] text-slate-400 mt-1">{feesData.paymentCount} payment(s)</p>
+                    )}
                   </div>
                 </div>
               </div>

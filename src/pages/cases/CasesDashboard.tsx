@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Search, Shield, ShieldAlert, ArrowUpRight, CheckCircle2, Clock, AlertTriangle, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/select';
 import { usePermissions } from '../../lib/permissions';
 import { formatDistanceToNow } from 'date-fns';
+import { toast } from 'sonner';
 
 export interface Case {
   id: string;
@@ -27,53 +28,58 @@ export interface Case {
   openedAt: string;
 }
 
-const MOCK_CASES: Case[] = import.meta.env.DEV ? [
-  {
-    id: 'c1',
-    caseNumber: 'CAS-2025-001',
-    studentId: '1',
-    studentName: 'Ali bin Ahmad',
-    type: 'ATTENDANCE',
-    priority: 'MEDIUM',
-    status: 'OPEN',
-    title: 'Absent for 5 consecutive days',
-    assignedToName: 'Sarah Counselor',
-    openedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-  },
-  {
-    id: 'c2',
-    caseNumber: 'CAS-2025-002',
-    studentId: '2',
-    studentName: 'Sarah Lee',
-    type: 'PROTECTION',
-    priority: 'URGENT',
-    status: 'FOLLOW_UP',
-    title: 'Welfare check required at home',
-    assignedToName: 'System User',
-    openedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
-  },
-  {
-    id: 'c3',
-    caseNumber: 'CAS-2025-003',
-    studentId: '3',
-    studentName: 'Full Name',
-    type: 'ACADEMIC',
-    priority: 'LOW',
-    status: 'RESOLVED',
-    title: 'Failing Math and Science',
-    assignedToName: 'Sarah Counselor',
-    openedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15).toISOString(),
-  }
-] : [];
-
 export default function CasesDashboard() {
   const { hasPermission } = usePermissions();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [priorityFilter, setPriorityFilter] = useState('ALL');
   const [typeFilter, setTypeFilter] = useState('ALL');
+  const [cases, setCases] = useState<Case[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredCases = MOCK_CASES.filter(c => {
+  useEffect(() => {
+    const fetchCases = async () => {
+      try {
+        const token = sessionStorage.getItem('auth_token');
+        const res = await fetch('/api/cases', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (!res.ok) {
+          if (res.status === 401 || res.status === 403) {
+            toast.error('You do not have permission to view cases');
+          } else {
+            throw new Error('Failed to fetch cases');
+          }
+          return;
+        }
+        const data = await res.json();
+        // Transform API data to match Case interface
+        const transformedCases = data.map((c: any) => ({
+          id: c.id,
+          caseNumber: c.caseNumber || `CAS-${new Date().getFullYear()}-${String(c.id).slice(0, 4).toUpperCase()}`,
+          studentId: c.student?.id || '',
+          studentName: c.student ? `${c.student.user?.firstName} ${c.student.user?.lastName}` : 'Unknown',
+          type: c.type,
+          priority: c.priority,
+          status: c.status,
+          title: c.title || c.description || 'Untitled Case',
+          assignedToName: c.assignedTo ? `${c.assignedTo.firstName} ${c.assignedTo.lastName}` : undefined,
+          openedAt: c.createdAt || new Date().toISOString(),
+        }));
+        setCases(transformedCases);
+      } catch (error) {
+        console.error('Error fetching cases:', error);
+        toast.error('Failed to load cases');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCases();
+  }, []);
+
+  const filteredCases = cases.filter(c => {
     const matchesSearch = c.studentName.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           c.caseNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           c.title.toLowerCase().includes(searchTerm.toLowerCase());
@@ -177,6 +183,18 @@ export default function CasesDashboard() {
           </div>
         </div>
 
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <span className="ml-3 text-slate-500">Loading cases...</span>
+          </div>
+        ) : filteredCases.length === 0 ? (
+          <div className="py-12 text-center text-slate-500">
+            <Shield className="h-12 w-12 mx-auto text-slate-200 mb-3" />
+            <p className="text-lg font-medium">No cases found</p>
+            <p className="text-sm">{searchTerm || statusFilter !== 'ALL' || priorityFilter !== 'ALL' || typeFilter !== 'ALL' ? 'Try adjusting your filters.' : 'Open your first case to get started.'}</p>
+          </div>
+        ) : (
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="text-xs text-slate-500 dark:text-slate-300 bg-slate-50 dark:bg-surface-raised uppercase">
@@ -238,8 +256,10 @@ export default function CasesDashboard() {
             </tbody>
           </table>
         </div>
+        )}
 
         {/* Mobile View */}
+        {!loading && filteredCases.length > 0 && (
         <div className="md:hidden divide-y divide-slate-200 dark:divide-slate-800">
           {filteredCases.map(c => (
             <div key={c.id} className="p-4 space-y-3">
@@ -277,12 +297,8 @@ export default function CasesDashboard() {
               </div>
             </div>
           ))}
-          {filteredCases.length === 0 && (
-            <div className="p-8 text-center text-slate-500">
-              No cases found matching your filters.
-            </div>
-          )}
         </div>
+        )}
       </div>
     </div>
   );

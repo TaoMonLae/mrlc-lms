@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Search, Moon, Sun, Monitor, Bell, Megaphone, Pin } from "lucide-react";
+import { Search, Moon, Sun, Monitor, Bell, Megaphone, Pin, Calendar, Clock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MOCK_ANNOUNCEMENTS } from "@/src/pages/announcements/AnnouncementsList";
+import type { Announcement } from "@/src/pages/announcements/AnnouncementsList";
 import { format } from "date-fns";
 import { SearchDialog } from "../SearchDialog";
 
@@ -20,14 +20,29 @@ export function TopBar() {
   const { setTheme } = useTheme();
   const [notifOpen, setNotifOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
 
-  const activeAnnouncements = MOCK_ANNOUNCEMENTS.filter(
-    (a) => a.status === "ACTIVE"
-  ).sort((a, b) => {
-    if (a.pinned && !b.pinned) return -1;
-    if (!a.pinned && b.pinned) return 1;
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-  });
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const token = sessionStorage.getItem("auth_token");
+    fetch("/api/announcements", { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setAnnouncements(Array.isArray(data) ? data : []))
+      .catch(() => setAnnouncements([]));
+  }, []);
+
+  const activeAnnouncements = announcements
+    .filter((a) => a.status === "ACTIVE")
+    .sort((a, b) => {
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
 
   return (
     <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 dark:border-white/10 bg-white dark:bg-surface-indigo px-8 md:px-8">
@@ -56,6 +71,19 @@ export function TopBar() {
       </div>
 
       <div className="flex items-center gap-4">
+        {/* Time and Date Display */}
+        <div className="hidden md:flex items-center gap-3 px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-surface-raised/50 border border-slate-200 dark:border-white/10">
+          <Calendar className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            {format(currentTime, 'EEEE, MMM d, yyyy')}
+          </span>
+          <span className="h-1 w-px bg-slate-300 dark:bg-white/20"></span>
+          <Clock className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            {format(currentTime, 'HH:mm:ss')}
+          </span>
+        </div>
+
         <DropdownMenu>
           <DropdownMenuTrigger
             render={

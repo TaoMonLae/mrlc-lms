@@ -1094,6 +1094,33 @@ async function startServer() {
     }
   });
 
+  app.get("/api/teachers/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { id } = req.params;
+    try {
+      const teacher = await prisma.teacher.findUnique({
+        where: { id },
+        include: {
+          user: true,
+          classes: { include: { class: true } },
+          subjects: { include: { subject: true } },
+        },
+      });
+      if (!teacher) {
+        res.status(404).json({ error: "Teacher not found" });
+        return;
+      }
+      res.json(teacher);
+    } catch (err) {
+      logger.error("Error fetching teacher:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
   // ── Classes & Subjects API ──────────────────────────────────────────────────
   app.get("/api/classes", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
@@ -1112,6 +1139,33 @@ async function startServer() {
     }
   });
 
+  app.get("/api/classes/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { id } = req.params;
+    try {
+      const klass = await prisma.class.findUnique({
+        where: { id },
+        include: {
+          students: { include: { user: true } },
+          teachers: { include: { teacher: { include: { user: true } } } },
+          exams: { include: { subject: true } },
+        },
+      });
+      if (!klass) {
+        res.status(404).json({ error: "Class not found" });
+        return;
+      }
+      res.json(klass);
+    } catch (err) {
+      logger.error("Error fetching class:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
   app.get("/api/subjects", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
@@ -1123,6 +1177,32 @@ async function startServer() {
       res.json(subjects);
     } catch (err) {
       logger.error("Error fetching subjects:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/subjects/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { id } = req.params;
+    try {
+      const subject = await prisma.subject.findUnique({
+        where: { id },
+        include: {
+          teachers: { include: { teacher: { include: { user: true } } } },
+          exams: { include: { class: true } },
+        },
+      });
+      if (!subject) {
+        res.status(404).json({ error: "Subject not found" });
+        return;
+      }
+      res.json(subject);
+    } catch (err) {
+      logger.error("Error fetching subject:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
@@ -1637,6 +1717,403 @@ async function startServer() {
     }
   });
 
+  // ── Announcements API ────────────────────────────────────────────────────────
+  const canManageAnnouncements = (role: string) => role === "ADMIN" || role === "TEACHER";
+
+  app.get("/api/announcements", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      // Audience filtering: students see ALL/STUDENTS (+ their class); teachers see
+      // ALL/TEACHERS/CLASS; admins see everything. Archived items are hidden from
+      // non-managers.
+      const where: any = {};
+      if (jwtUser.role === "STUDENT") {
+        where.status = "ACTIVE";
+        where.audience = { in: ["ALL", "STUDENTS", "CLASS"] };
+      } else if (jwtUser.role === "TEACHER") {
+        where.audience = { in: ["ALL", "TEACHERS", "STUDENTS", "CLASS"] };
+      }
+      const announcements = await prisma.announcement.findMany({
+        where,
+        orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
+      });
+      res.json(announcements);
+    } catch (err) {
+      logger.error("Error fetching announcements:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/announcements/:id", authMiddleware, async (req, res) => {
+    const { id } = req.params;
+    try {
+      const announcement = await prisma.announcement.findUnique({ where: { id } });
+      if (!announcement) {
+        res.status(404).json({ error: "Announcement not found" });
+        return;
+      }
+      res.json(announcement);
+    } catch (err) {
+      logger.error("Error fetching announcement:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/announcements", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageAnnouncements(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { title, body, audience, classId, className, pinned, expiresAt, status } = req.body;
+    if (!title || !body) {
+      res.status(400).json({ error: "title and body are required" });
+      return;
+    }
+    try {
+      const announcement = await prisma.announcement.create({
+        data: {
+          title,
+          body,
+          audience: audience || "ALL",
+          classId: classId || null,
+          className: className || null,
+          pinned: Boolean(pinned),
+          expiresAt: expiresAt ? new Date(expiresAt) : null,
+          status: status || "ACTIVE",
+          createdById: jwtUser.userId,
+          createdByName: jwtUser.email,
+        },
+      });
+      await createAuditLog(
+        jwtUser.userId, jwtUser.email, "CREATE", "ANNOUNCEMENT", announcement.id,
+        `Announcement '${title}' created.`, req.ip, req.headers["user-agent"] || null, "SUCCESS"
+      );
+      res.status(201).json(announcement);
+    } catch (err) {
+      logger.error("Error creating announcement:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.put("/api/announcements/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageAnnouncements(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { id } = req.params;
+    const { title, body, audience, classId, className, pinned, expiresAt, status } = req.body;
+    try {
+      const announcement = await prisma.announcement.update({
+        where: { id },
+        data: {
+          ...(title !== undefined ? { title } : {}),
+          ...(body !== undefined ? { body } : {}),
+          ...(audience !== undefined ? { audience } : {}),
+          ...(classId !== undefined ? { classId: classId || null } : {}),
+          ...(className !== undefined ? { className: className || null } : {}),
+          ...(pinned !== undefined ? { pinned: Boolean(pinned) } : {}),
+          ...(expiresAt !== undefined ? { expiresAt: expiresAt ? new Date(expiresAt) : null } : {}),
+          ...(status !== undefined ? { status } : {}),
+        },
+      });
+      await createAuditLog(
+        jwtUser.userId, jwtUser.email, "UPDATE", "ANNOUNCEMENT", id,
+        `Announcement '${announcement.title}' updated.`, req.ip, req.headers["user-agent"] || null, "SUCCESS"
+      );
+      res.json(announcement);
+    } catch (err: any) {
+      logger.error("Error updating announcement:", err);
+      if (err.code === "P2025") {
+        res.status(404).json({ error: "Announcement not found" });
+        return;
+      }
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.delete("/api/announcements/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageAnnouncements(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { id } = req.params;
+    try {
+      await prisma.announcement.delete({ where: { id } });
+      await createAuditLog(
+        jwtUser.userId, jwtUser.email, "DELETE", "ANNOUNCEMENT", id,
+        `Announcement ID ${id} deleted.`, req.ip, req.headers["user-agent"] || null, "SUCCESS"
+      );
+      res.json({ message: "Announcement deleted successfully" });
+    } catch (err: any) {
+      logger.error("Error deleting announcement:", err);
+      if (err.code === "P2025") {
+        res.status(404).json({ error: "Announcement not found" });
+        return;
+      }
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Timetable API ────────────────────────────────────────────────────────────
+  const canManageTimetable = (role: string) => role === "ADMIN" || role === "TEACHER";
+
+  app.get("/api/timetable", authMiddleware, async (req, res) => {
+    const { classId, teacherId } = req.query as { classId?: string; teacherId?: string };
+    try {
+      const where: any = {};
+      if (classId) where.classId = classId;
+      if (teacherId) where.teacherId = teacherId;
+      const entries = await prisma.timetableEntry.findMany({
+        where,
+        orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }],
+      });
+      res.json(entries);
+    } catch (err) {
+      logger.error("Error fetching timetable:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/timetable/:id", authMiddleware, async (req, res) => {
+    const { id } = req.params;
+    try {
+      const entry = await prisma.timetableEntry.findUnique({ where: { id } });
+      if (!entry) {
+        res.status(404).json({ error: "Timetable entry not found" });
+        return;
+      }
+      res.json(entry);
+    } catch (err) {
+      logger.error("Error fetching timetable entry:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/timetable", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageTimetable(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { classId, className, subjectId, subjectName, subjectColor, teacherId, teacherName, dayOfWeek, startTime, endTime, room, notes } = req.body;
+    if (!classId || !subjectId || !dayOfWeek || !startTime || !endTime) {
+      res.status(400).json({ error: "classId, subjectId, dayOfWeek, startTime and endTime are required" });
+      return;
+    }
+    try {
+      const entry = await prisma.timetableEntry.create({
+        data: {
+          classId,
+          className: className || null,
+          subjectId,
+          subjectName: subjectName || null,
+          subjectColor: subjectColor || "bg-blue-500",
+          teacherId: teacherId || null,
+          teacherName: teacherName || null,
+          dayOfWeek,
+          startTime,
+          endTime,
+          room: room || null,
+          notes: notes || null,
+        },
+      });
+      await createAuditLog(
+        jwtUser.userId, jwtUser.email, "CREATE", "TIMETABLE", entry.id,
+        `Timetable slot created for ${className || classId} on ${dayOfWeek}.`, req.ip, req.headers["user-agent"] || null, "SUCCESS"
+      );
+      res.status(201).json(entry);
+    } catch (err) {
+      logger.error("Error creating timetable entry:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.put("/api/timetable/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageTimetable(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { id } = req.params;
+    const { classId, className, subjectId, subjectName, subjectColor, teacherId, teacherName, dayOfWeek, startTime, endTime, room, notes } = req.body;
+    try {
+      const entry = await prisma.timetableEntry.update({
+        where: { id },
+        data: {
+          ...(classId !== undefined ? { classId } : {}),
+          ...(className !== undefined ? { className: className || null } : {}),
+          ...(subjectId !== undefined ? { subjectId } : {}),
+          ...(subjectName !== undefined ? { subjectName: subjectName || null } : {}),
+          ...(subjectColor !== undefined ? { subjectColor: subjectColor || "bg-blue-500" } : {}),
+          ...(teacherId !== undefined ? { teacherId: teacherId || null } : {}),
+          ...(teacherName !== undefined ? { teacherName: teacherName || null } : {}),
+          ...(dayOfWeek !== undefined ? { dayOfWeek } : {}),
+          ...(startTime !== undefined ? { startTime } : {}),
+          ...(endTime !== undefined ? { endTime } : {}),
+          ...(room !== undefined ? { room: room || null } : {}),
+          ...(notes !== undefined ? { notes: notes || null } : {}),
+        },
+      });
+      await createAuditLog(
+        jwtUser.userId, jwtUser.email, "UPDATE", "TIMETABLE", id,
+        `Timetable slot ${id} updated.`, req.ip, req.headers["user-agent"] || null, "SUCCESS"
+      );
+      res.json(entry);
+    } catch (err: any) {
+      logger.error("Error updating timetable entry:", err);
+      if (err.code === "P2025") {
+        res.status(404).json({ error: "Timetable entry not found" });
+        return;
+      }
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.delete("/api/timetable/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageTimetable(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { id } = req.params;
+    try {
+      await prisma.timetableEntry.delete({ where: { id } });
+      await createAuditLog(
+        jwtUser.userId, jwtUser.email, "DELETE", "TIMETABLE", id,
+        `Timetable slot ${id} deleted.`, req.ip, req.headers["user-agent"] || null, "SUCCESS"
+      );
+      res.json({ message: "Timetable entry deleted successfully" });
+    } catch (err: any) {
+      logger.error("Error deleting timetable entry:", err);
+      if (err.code === "P2025") {
+        res.status(404).json({ error: "Timetable entry not found" });
+        return;
+      }
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Student Documents API ────────────────────────────────────────────────────
+  // PII — only ADMIN and TEACHER may read; only ADMIN (or manage permission) may write.
+  const canManageDocuments = (role: string) => role === "ADMIN" || role === "TEACHER";
+
+  app.get("/api/students/:studentId/documents", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { studentId } = req.params;
+    try {
+      const documents = await prisma.studentDocument.findMany({
+        where: { studentId, status: { not: "ARCHIVED" } },
+        orderBy: { createdAt: "desc" },
+      });
+      res.json(documents);
+    } catch (err) {
+      logger.error("Error fetching student documents:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/students/:studentId/documents", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageDocuments(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { studentId } = req.params;
+    const { title, documentType, fileUrl, fileName, fileSize, mimeType, expiryDate } = req.body;
+    if (!title || !fileUrl || !fileName) {
+      res.status(400).json({ error: "title, fileUrl and fileName are required" });
+      return;
+    }
+    try {
+      const document = await prisma.studentDocument.create({
+        data: {
+          studentId,
+          title,
+          documentType: documentType || "OTHER",
+          fileUrl,
+          fileName,
+          fileSize: fileSize != null ? Number(fileSize) : 0,
+          mimeType: mimeType || "application/octet-stream",
+          expiryDate: expiryDate ? new Date(expiryDate) : null,
+          uploadedById: jwtUser.userId,
+          uploadedByName: jwtUser.email,
+        },
+      });
+      await createAuditLog(
+        jwtUser.userId, jwtUser.email, "CREATE", "STUDENT_DOCUMENT", document.id,
+        `Document '${title}' uploaded for student ${studentId}.`, req.ip, req.headers["user-agent"] || null, "SUCCESS"
+      );
+      res.status(201).json(document);
+    } catch (err) {
+      logger.error("Error creating student document:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.put("/api/students/:studentId/documents/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageDocuments(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { id } = req.params;
+    const { title, documentType, expiryDate, status } = req.body;
+    try {
+      const document = await prisma.studentDocument.update({
+        where: { id },
+        data: {
+          ...(title !== undefined ? { title } : {}),
+          ...(documentType !== undefined ? { documentType } : {}),
+          ...(expiryDate !== undefined ? { expiryDate: expiryDate ? new Date(expiryDate) : null } : {}),
+          ...(status !== undefined ? { status } : {}),
+        },
+      });
+      await createAuditLog(
+        jwtUser.userId, jwtUser.email, "UPDATE", "STUDENT_DOCUMENT", id,
+        `Document '${document.title}' updated.`, req.ip, req.headers["user-agent"] || null, "SUCCESS"
+      );
+      res.json(document);
+    } catch (err: any) {
+      logger.error("Error updating student document:", err);
+      if (err.code === "P2025") {
+        res.status(404).json({ error: "Document not found" });
+        return;
+      }
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.delete("/api/students/:studentId/documents/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageDocuments(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { id } = req.params;
+    try {
+      await prisma.studentDocument.delete({ where: { id } });
+      await createAuditLog(
+        jwtUser.userId, jwtUser.email, "DELETE", "STUDENT_DOCUMENT", id,
+        `Document ID ${id} deleted.`, req.ip, req.headers["user-agent"] || null, "SUCCESS"
+      );
+      res.json({ message: "Document deleted successfully" });
+    } catch (err: any) {
+      logger.error("Error deleting student document:", err);
+      if (err.code === "P2025") {
+        res.status(404).json({ error: "Document not found" });
+        return;
+      }
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
   // ── Physical Library: Book Catalog API ───────────────────────────────────────
   // Mutations are limited to ADMIN and LIBRARIAN; browsing the catalog is open
   // to any authenticated user.
@@ -1952,12 +2429,12 @@ async function startServer() {
         }
         const fees = await prisma.feePayment.findMany({
           where: { studentId: student.id },
-          include: { student: { include: { user: true } } }
+          include: { student: { include: { user: true, class: true } } }
         });
         res.json(fees);
       } else {
         const fees = await prisma.feePayment.findMany({
-          include: { student: { include: { user: true } } }
+          include: { student: { include: { user: true, class: true } } }
         });
         res.json(fees);
       }
@@ -2056,6 +2533,54 @@ async function startServer() {
       res.json(exams);
     } catch (err) {
       logger.error("Error fetching exams:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/exams/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { id } = req.params;
+    try {
+      const isStudent = jwtUser.role === "STUDENT";
+      const exam = await prisma.exam.findUnique({
+        where: { id },
+        include: {
+          class: { include: { _count: { select: { students: true } } } },
+          subject: true,
+          questions: isStudent
+            ? {
+                select: {
+                  id: true,
+                  text: true,
+                  type: true,
+                  points: true,
+                  options: true,
+                  examId: true,
+                  createdAt: true,
+                  updatedAt: true,
+                },
+              }
+            : true,
+          attempts: isStudent
+            ? false
+            : { include: { student: { include: { user: true } } } },
+        },
+      });
+      if (!exam) {
+        res.status(404).json({ error: "Exam not found" });
+        return;
+      }
+      // A student may only view an exam for their own class.
+      if (isStudent) {
+        const student = await prisma.student.findUnique({ where: { userId: jwtUser.userId } });
+        if (!student || student.classId !== exam.classId) {
+          res.status(404).json({ error: "Exam not found" });
+          return;
+        }
+      }
+      res.json(exam);
+    } catch (err) {
+      logger.error("Error fetching exam:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });

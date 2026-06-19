@@ -18,19 +18,10 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { fetchOrMock } from '../../lib/api';
+import { apiGet } from '../../lib/api';
 
 interface AvailableExam { id: string; title: string; subject: string; duration: string; questions: number; deadline: string; type: string; }
 interface SubmittedExam { id: string; title: string; subject: string; submittedAt: string; status: string; score: string | null; }
-
-const MOCK_AVAILABLE: AvailableExam[] = import.meta.env.DEV ? [
-  { id: '1', title: 'Mathematics Mid-Term Quiz', subject: 'Math', duration: '45 mins', questions: 30, deadline: '2024-05-20', type: 'Online Quiz' },
-  { id: '2', title: 'English Essay Writing', subject: 'English', duration: '90 mins', questions: 1, deadline: '2024-05-22', type: 'Submission' },
-] : [];
-const MOCK_SUBMITTED: SubmittedExam[] = import.meta.env.DEV ? [
-  { id: '3', title: 'Physics Chapter 1 Quiz', subject: 'Physics', submittedAt: '2024-05-10 09:30 AM', status: 'Grading', score: null },
-  { id: '4', title: 'History Weekly Test', subject: 'History', submittedAt: '2024-05-08 02:15 PM', status: 'Graded', score: '18/20' },
-] : [];
 
 export default function StudentExams() {
   const navigate = useNavigate();
@@ -38,11 +29,15 @@ export default function StudentExams() {
   const [submittedExams, setSubmittedExams] = useState<SubmittedExam[]>([]);
 
   useEffect(() => {
-    fetchOrMock<{ available: AvailableExam[]; submitted: SubmittedExam[] }>(
-      '/api/student/exams',
-      () => ({ available: MOCK_AVAILABLE, submitted: MOCK_SUBMITTED }),
-      { emptyWhen: (d) => !d?.available?.length && !d?.submitted?.length },
-    ).then((r) => { setAvailableExams(r.data.available); setSubmittedExams(r.data.submitted); });
+    apiGet<{ available: AvailableExam[]; submitted: SubmittedExam[] }>('/api/student/exams')
+      .then((d) => {
+        setAvailableExams(d?.available ?? []);
+        setSubmittedExams(d?.submitted ?? []);
+      })
+      .catch(() => {
+        setAvailableExams([]);
+        setSubmittedExams([]);
+      });
   }, []);
 
   const handleStartExam = (exam: any) => {

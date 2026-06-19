@@ -1,42 +1,56 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { usePermissions } from '../../lib/permissions';
 import { ArrowLeft, CheckCircle2, FileText, Printer, AlertCircle, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-
-const MOCK_PAYMENTS = import.meta.env.DEV ? [
-  {
-    id: 'p1',
-    amount: 1000,
-    currency: 'MYR',
-    paymentType: 'Tuition Fee 2025 Term 1',
-    paymentMethod: 'BANK_TRANSFER',
-    paymentDate: '2025-01-15T10:00:00Z',
-    receiptNumber: 'RCP-2025-001',
-    status: 'PAID',
-    recordedBy: 'System User',
-  },
-  {
-    id: 'p2',
-    amount: 500,
-    currency: 'MYR',
-    paymentType: 'Tuition Fee 2025 Term 2',
-    paymentMethod: 'CASH',
-    paymentDate: '2025-05-10T10:00:00Z',
-    receiptNumber: 'RCP-2025-054',
-    status: 'PAID',
-    recordedBy: 'System User',
-  }
-] : [];
+import { toast } from 'sonner';
 
 export default function StudentFeeProfile() {
   const { id } = useParams();
   const { hasPermission } = usePermissions();
+  const [payments, setPayments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [student, setStudent] = useState<any>(null);
 
-  const totalPaid = MOCK_PAYMENTS.reduce((sum, p) => sum + (p.status === 'PAID' ? p.amount : 0), 0);
-  const totalDue = import.meta.env.DEV ? 1500 : totalPaid;
+  useEffect(() => {
+    const fetchFeeData = async () => {
+      if (!id) return;
+      try {
+        const token = sessionStorage.getItem('auth_token');
+
+        // Fetch student data
+        const studentRes = await fetch(`/api/students/${id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (studentRes.ok) {
+          const studentData = await studentRes.json();
+          setStudent(studentData);
+        }
+
+        // Fetch fee payments
+        const feesRes = await fetch(`/api/fees`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (feesRes.ok) {
+          const fees = await feesRes.json();
+          const studentFees = fees.filter((f: any) => f.studentId === id);
+          setPayments(studentFees);
+        }
+      } catch (error) {
+        console.error('Error fetching fee data:', error);
+        toast.error('Failed to load fee data');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFeeData();
+  }, [id]);
+
+  const totalPaid = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+  // Assuming total due is calculated based on some fee structure - for now showing what's been paid
+  const totalDue = totalPaid; // This should be replaced with actual fee structure
   const balance = Math.max(0, totalDue - totalPaid);
 
   return (
@@ -48,7 +62,9 @@ export default function StudentFeeProfile() {
             Back to Fees Dashboard
           </Button>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Fee Profile</h1>
-          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Student ID: {id}</p>
+          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">
+            {student ? `${student.user?.firstName} ${student.user?.lastName} (${student.studentCode})` : `Student ID: ${id}`}
+          </p>
         </div>
 
         {hasPermission('manage_fees') && (
@@ -58,7 +74,14 @@ export default function StudentFeeProfile() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <span className="ml-3 text-slate-500">Loading fee data...</span>
+        </div>
+      ) : (
+        <>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised p-6 rounded-xl shadow-sm text-center">
           <p className="text-sm font-medium text-slate-500 dark:text-slate-300">Total Due</p>
           <p className="text-3xl font-bold text-slate-900 dark:text-white mt-2">MYR {totalDue.toLocaleString()}</p>
@@ -92,23 +115,23 @@ export default function StudentFeeProfile() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-              {MOCK_PAYMENTS.map((payment) => (
+              {payments.map((payment) => (
                 <tr key={payment.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors">
                   <td className="px-6 py-4 text-slate-600 dark:text-slate-300">
-                    {format(new Date(payment.paymentDate), 'MMM d, yyyy')}
+                    {payment.paymentDate ? format(new Date(payment.paymentDate), 'MMM d, yyyy') : 'N/A'}
                   </td>
                   <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
-                    {payment.receiptNumber}
+                    {payment.receiptNumber || 'N/A'}
                   </td>
                   <td className="px-6 py-4 text-slate-600 dark:text-slate-300">
-                     {payment.paymentType}
+                     {payment.feeType || payment.description || 'Fee Payment'}
                      {payment.status === 'VOIDED' && <Badge variant="destructive" className="ml-2 py-0">Voided</Badge>}
                   </td>
                   <td className="px-6 py-4 text-slate-600 dark:text-slate-300">
-                    {payment.paymentMethod.replace('_', ' ')}
+                    {payment.paymentMethod ? payment.paymentMethod.replace('_', ' ') : 'N/A'}
                   </td>
                   <td className="px-6 py-4 font-medium text-slate-900 dark:text-white text-right">
-                    {payment.amount.toLocaleString()}
+                    {payment.amount ? payment.amount.toLocaleString() : '0'}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <Button variant="ghost" size="sm" render={<Link to={`/fees/receipts/${payment.id}`} />} nativeButton={false}>
@@ -117,7 +140,7 @@ export default function StudentFeeProfile() {
                   </td>
                 </tr>
               ))}
-              {MOCK_PAYMENTS.length === 0 && (
+              {payments.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
                     No payment history found.
@@ -128,6 +151,8 @@ export default function StudentFeeProfile() {
           </table>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 }

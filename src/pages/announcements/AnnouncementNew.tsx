@@ -10,14 +10,26 @@ export default function AnnouncementNew() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (values: any) => {
+  const handleSubmit = async (values: any) => {
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch('/api/announcements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(values),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to publish announcement');
+      }
       toast.success('Announcement published successfully');
       navigate('/announcements');
-    }, 1500);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to publish announcement');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

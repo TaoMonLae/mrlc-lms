@@ -22,7 +22,7 @@ import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useSettings } from '../../providers/SettingsProvider';
 import { formatMoney } from '../../lib/locale';
-import { fetchOrMock } from '../../lib/api';
+import { apiGet } from '../../lib/api';
 
 interface StudentDashData {
   className: string; currency: string;
@@ -31,18 +31,6 @@ interface StudentDashData {
   recentResults: { id: string | number; subject: string; score: string; grade: string; date: string }[];
 }
 
-const MOCK_DASH: StudentDashData = {
-  className: 'Class A', currency: 'MYR',
-  stats: { attendanceRate: 92, examAverage: 84.5, feeBalance: 450, classSize: 32 },
-  upcomingExams: [
-    { id: 1, subject: "Mathematics", date: "2024-05-20", time: "09:00 AM", type: "Midterm" },
-    { id: 2, subject: "Physics", date: "2024-05-22", time: "10:30 AM", type: "Quiz" },
-  ],
-  recentResults: [
-    { id: 1, subject: "English", score: "92/100", grade: "A", date: "2024-05-10" },
-    { id: 2, subject: "History", score: "78/100", grade: "B+", date: "2024-05-08" },
-  ],
-};
 const EMPTY_DASH: StudentDashData = {
   className: 'Unassigned', currency: 'MYR',
   stats: { attendanceRate: 0, examAverage: 0, feeBalance: 0, classSize: 0 },
@@ -60,8 +48,9 @@ export default function StudentDashboard() {
   const [dash, setDash] = useState<StudentDashData>(EMPTY_DASH);
 
   useEffect(() => {
-    fetchOrMock<StudentDashData>('/api/student/dashboard', () => MOCK_DASH, { emptyWhen: (d) => !d?.stats })
-      .then((r) => setDash(r.data));
+    apiGet<StudentDashData>('/api/student/dashboard')
+      .then((d) => setDash(d?.stats ? d : EMPTY_DASH))
+      .catch(() => setDash(EMPTY_DASH));
   }, []);
 
   const currency = dash.currency || systemSettings.currency || 'MYR';

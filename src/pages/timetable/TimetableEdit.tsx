@@ -6,27 +6,6 @@ import { ArrowLeft, CalendarDays } from 'lucide-react';
 import { toast } from 'sonner';
 import { TimetableEntry } from './TimetablePage';
 
-// Mock fetching function
-const getTimetableItem = (id: string): TimetableEntry | undefined => {
-  const mockData: TimetableEntry[] = import.meta.env.DEV ? [
-    {
-      id: 't1',
-      classId: 'c1',
-      className: 'Class A',
-      subjectId: 's1',
-      subjectName: 'Mathematics',
-      subjectColor: 'bg-blue-500',
-      teacherId: 't1',
-      teacherName: 'John Smith',
-      dayOfWeek: 'Monday',
-      startTime: '08:00',
-      endTime: '09:30',
-      room: 'Room 302',
-    }
-  ] : [];
-  return mockData.find(t => t.id === id);
-};
-
 export default function TimetableEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -34,26 +13,47 @@ export default function TimetableEdit() {
   const [timetableItem, setTimetableItem] = useState<TimetableEntry | null>(null);
 
   useEffect(() => {
-    if (id) {
-      const data = getTimetableItem(id);
-      if (data) {
-        setTimetableItem(data);
-      } else {
-        toast.error('Schedule item not found');
-        navigate('/timetable');
+    if (!id) return;
+    const fetchItem = async () => {
+      try {
+        const token = sessionStorage.getItem('auth_token');
+        const res = await fetch(`/api/timetable/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) {
+          toast.error('Schedule item not found');
+          navigate('/timetable');
+          return;
+        }
+        setTimetableItem(await res.json());
+      } catch (error) {
+        console.error('Error fetching timetable item:', error);
+        toast.error('Failed to load schedule item');
       }
-    }
+    };
+    fetchItem();
   }, [id, navigate]);
 
-  const handleSubmit = (values: any) => {
+  const handleSubmit = async (values: any) => {
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      console.log('Updated Timetable Slot:', values);
-      setIsLoading(false);
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`/api/timetable/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(values),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to update schedule item');
+      }
       toast.success('Schedule item updated successfully');
       navigate('/timetable');
-    }, 1000);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update schedule item');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (!timetableItem) return null;

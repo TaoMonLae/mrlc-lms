@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Download, Filter, Search, Calendar as CalendarIcon, CheckCircle2, XCircle, Clock, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -10,43 +11,78 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { toast } from 'sonner';
 
 type AttendanceClass = { id: string; name: string };
 type AttendanceReportRow = {
-  id: string;
+  studentId: string;
   name: string;
-  days: string[];
+  code: string;
+  total: number;
   present: number;
   absent: number;
   late: number;
+  excused: number;
+  rate: number;
 };
-
-const CLASSES: AttendanceClass[] = [];
+type AttendanceReport = {
+  rows: AttendanceReportRow[];
+  classAverage: number;
+  perfectCount: number;
+  atRiskCount: number;
+};
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
-// Generate fake calendar data for demo
-const generateDays = () => Array.from({ length: 15 }, (_, i) => i + 1);
-const MOCK_REPORT_DATA: AttendanceReportRow[] = [];
-
 export default function AttendanceReportsPage() {
-  const [selectedClass, setSelectedClass] = useState<string>('c1');
-  const [selectedMonth, setSelectedMonth] = useState<string>('May');
+  const now = new Date();
+  const [classes, setClasses] = useState<AttendanceClass[]>([]);
+  const [selectedClass, setSelectedClass] = useState<string>('all');
+  const [selectedMonth, setSelectedMonth] = useState<string>(String(now.getMonth() + 1));
+  const [year] = useState<number>(now.getFullYear());
+  const [report, setReport] = useState<AttendanceReport | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const days = generateDays();
+  useEffect(() => {
+    const token = sessionStorage.getItem('auth_token');
+    fetch('/api/classes', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => (r.ok ? r.json() : []))
+      .then(data => {
+        if (Array.isArray(data)) {
+          setClasses(data.map((c: any) => ({ id: c.id, name: c.name })));
+        }
+      })
+      .catch(() => setClasses([]));
+  }, []);
 
-  const getStatusColor = (status: string) => {
-    switch(status) {
-      case 'P': return 'bg-emerald-100 text-emerald-700 font-bold dark:bg-emerald-900/30 dark:text-emerald-400';
-      case 'A': return 'bg-red-100 text-red-700 font-bold dark:bg-red-900/30 dark:text-red-400';
-      case 'L': return 'bg-amber-100 text-amber-700 font-bold dark:bg-amber-900/30 dark:text-amber-400';
-      case 'E': return 'bg-blue-100 text-blue-700 font-bold dark:bg-blue-900/30 dark:text-blue-400';
-      default: return 'bg-slate-100 text-slate-500';
-    }
-  };
+  useEffect(() => {
+    const fetchReport = async () => {
+      setLoading(true);
+      try {
+        const token = sessionStorage.getItem('auth_token');
+        const monthParam = `${year}-${String(selectedMonth).padStart(2, '0')}`;
+        const params = new URLSearchParams({ classId: selectedClass, month: monthParam });
+        const res = await fetch(`/api/reports/attendance?${params}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error('Failed to fetch report');
+        const data = await res.json();
+        setReport(data);
+      } catch (error) {
+        console.error('Error fetching attendance report:', error);
+        toast.error('Failed to load attendance report');
+        setReport(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchReport();
+  }, [selectedClass, selectedMonth, year]);
+
+  const rows = report?.rows ?? [];
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto">
@@ -59,7 +95,7 @@ export default function AttendanceReportsPage() {
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Attendance Reports</h1>
           <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Monthly overview of student attendance records.</p>
         </div>
-        
+
         <div className="flex gap-2">
           <Button variant="outline" className="text-slate-700">
             <Download className="mr-2 h-4 w-4" />
@@ -76,13 +112,14 @@ export default function AttendanceReportsPage() {
               <SelectValue placeholder="Select class" />
             </SelectTrigger>
             <SelectContent>
-              {CLASSES.map(c => (
+              <SelectItem value="all">All Classes</SelectItem>
+              {classes.map(c => (
                 <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-        
+
         <div className="space-y-2 w-full sm:w-[200px]">
           <Label>Month</Label>
           <Select value={selectedMonth} onValueChange={setSelectedMonth}>
@@ -90,21 +127,22 @@ export default function AttendanceReportsPage() {
               <SelectValue placeholder="Select month" />
             </SelectTrigger>
             <SelectContent>
-              {MONTHS.map(m => (
-                <SelectItem key={m} value={m}>{m}</SelectItem>
+              {MONTHS.map((m, idx) => (
+                <SelectItem key={m} value={String(idx + 1)}>{m} {year}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
 
         <div className="flex-1"></div>
-        
-        <div className="flex items-center gap-4 text-xs font-medium text-slate-600 dark:text-slate-300 flex-wrap">
-          <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-emerald-100 flex items-center justify-center text-[8px] text-emerald-700">P</span> Present</div>
-          <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-red-100 flex items-center justify-center text-[8px] text-red-700">A</span> Absent</div>
-          <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-amber-100 flex items-center justify-center text-[8px] text-amber-700">L</span> Late</div>
-          <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-blue-100 flex items-center justify-center text-[8px] text-blue-700">E</span> Excused</div>
-        </div>
+
+        {report && (
+          <div className="flex items-center gap-4 text-xs font-medium text-slate-600 dark:text-slate-300 flex-wrap">
+            <div>Class Average: <span className="font-bold text-slate-900 dark:text-white">{report.classAverage}%</span></div>
+            <div>Perfect: <span className="font-bold text-emerald-600">{report.perfectCount}</span></div>
+            <div>At Risk: <span className="font-bold text-red-600">{report.atRiskCount}</span></div>
+          </div>
+        )}
       </div>
 
       <div className="bg-white dark:bg-surface-indigo rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
@@ -112,33 +150,43 @@ export default function AttendanceReportsPage() {
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-surface-raised/50">
               <tr>
-                <th className="px-6 py-4 min-w-[200px] border-r border-slate-100 dark:border-surface-raised sticky left-0 bg-slate-50 dark:bg-surface-raised/90 z-10">Student</th>
-                {days.map(d => (
-                  <th key={d} className="px-2 py-4 text-center min-w-[40px] border-r border-slate-100 dark:border-surface-raised">{d}</th>
-                ))}
-                <th className="px-4 py-4 text-center text-emerald-600 bg-emerald-50/50 dark:bg-emerald-900/10 border-r border-emerald-100 dark:border-emerald-900/30">P</th>
-                <th className="px-4 py-4 text-center text-red-600 bg-red-50/50 dark:bg-red-900/10 border-r border-red-100 dark:border-red-900/30">A</th>
-                <th className="px-4 py-4 text-center text-amber-600 bg-amber-50/50 dark:bg-amber-900/10">L</th>
+                <th className="px-6 py-4 min-w-[200px]">Student</th>
+                <th className="px-6 py-4">Student ID</th>
+                <th className="px-4 py-4 text-center text-emerald-600">Present</th>
+                <th className="px-4 py-4 text-center text-red-600">Absent</th>
+                <th className="px-4 py-4 text-center text-amber-600">Late</th>
+                <th className="px-4 py-4 text-center text-blue-600">Excused</th>
+                <th className="px-4 py-4 text-center">Rate</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {MOCK_REPORT_DATA.map(student => (
-                <tr key={student.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors">
-                  <td className="px-6 py-3 font-semibold text-slate-900 dark:text-white border-r border-slate-100 dark:border-surface-raised sticky left-0 bg-white dark:bg-surface-indigo z-10 transition-colors group-hover:bg-slate-50 dark:group-hover:bg-slate-800/50">
-                    {student.name}
+              {loading && (
+                <tr>
+                  <td colSpan={7} className="px-6 py-8 text-center text-slate-500">Loading report...</td>
+                </tr>
+              )}
+              {!loading && rows.map(student => (
+                <tr key={student.studentId} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors">
+                  <td className="px-6 py-3 font-semibold text-slate-900 dark:text-white">
+                    <Link to={`/students/${student.studentId}`} className="hover:underline hover:text-aubergine-600">{student.name}</Link>
                   </td>
-                  {student.days.map((status, idx) => (
-                    <td key={idx} className="p-1 text-center border-r border-slate-100 dark:border-surface-raised">
-                      <div className={`w-full h-8 flex items-center justify-center rounded-sm text-[11px] ${getStatusColor(status)}`}>
-                        {status}
-                      </div>
-                    </td>
-                  ))}
-                  <td className="px-4 py-3 text-center font-bold text-emerald-600 bg-emerald-50/20 dark:bg-emerald-900/10 border-r border-emerald-100 dark:border-emerald-900/30">{student.present}</td>
-                  <td className="px-4 py-3 text-center font-bold text-red-600 bg-red-50/20 dark:bg-red-900/10 border-r border-red-100 dark:border-red-900/30">{student.absent}</td>
-                  <td className="px-4 py-3 text-center font-bold text-amber-600 bg-amber-50/20 dark:bg-amber-900/10">{student.late}</td>
+                  <td className="px-6 py-3 text-slate-500 font-mono">{student.code || '—'}</td>
+                  <td className="px-4 py-3 text-center font-bold text-emerald-600">{student.present}</td>
+                  <td className="px-4 py-3 text-center font-bold text-red-600">{student.absent}</td>
+                  <td className="px-4 py-3 text-center font-bold text-amber-600">{student.late}</td>
+                  <td className="px-4 py-3 text-center font-bold text-blue-600">{student.excused}</td>
+                  <td className="px-4 py-3 text-center">
+                    <Badge variant="outline" className={student.rate >= 80 ? 'text-emerald-600 border-emerald-200 bg-emerald-50' : 'text-red-600 border-red-200 bg-red-50'}>
+                      {student.rate}%
+                    </Badge>
+                  </td>
                 </tr>
               ))}
+              {!loading && rows.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-6 py-8 text-center text-slate-500">No attendance records found for this period.</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

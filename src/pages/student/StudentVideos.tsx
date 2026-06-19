@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Video, Search, Filter, Play, Clock, BookOpen } from 'lucide-react';
-import { fetchOrMock } from '../../lib/api';
+import { apiGet } from '../../lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -14,49 +14,6 @@ import {
 } from '@/components/ui/select';
 import { formatDistanceToNow } from 'date-fns';
 import type { VideoLesson } from '../videos/VideoList';
-
-const STUDENT_VIDEOS: VideoLesson[] = import.meta.env.DEV ? [
-  {
-    id: 'v1',
-    title: 'Introduction to GED Mathematics',
-    description: 'An overview of the key mathematical concepts you will need for the GED exam, including algebra, geometry, and data analysis.',
-    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-    duration: 1845,
-    subjectName: 'Mathematics',
-    visibility: 'ALL',
-    status: 'PUBLISHED',
-    uploadedById: 'u1',
-    uploadedByName: 'System User',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
-  },
-  {
-    id: 'v2',
-    title: 'Reading Comprehension Strategies',
-    description: 'Learn how to tackle reading comprehension passages in the GED RLA section.',
-    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-    duration: 2310,
-    subjectName: 'English Language Arts',
-    visibility: 'STUDENTS',
-    status: 'PUBLISHED',
-    uploadedById: 't1',
-    uploadedByName: 'Ms. Naw Htwe',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
-  },
-  {
-    id: 'v3',
-    title: 'Science: Ecosystems & Biodiversity',
-    description: 'Covers ecosystem dynamics, food webs, and biodiversity concepts for GED Science.',
-    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-    duration: 3020,
-    subjectName: 'Science',
-    className: 'Pre-GED Class A',
-    visibility: 'ALL',
-    status: 'PUBLISHED',
-    uploadedById: 't2',
-    uploadedByName: 'Mr. Saw Htoo',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
-  },
-] : [];
 
 function formatDuration(seconds?: number): string {
   if (!seconds) return '';
@@ -71,8 +28,9 @@ export default function StudentVideos() {
   const [videos, setVideos] = useState<VideoLesson[]>([]);
 
   useEffect(() => {
-    // Live in production; mock fallback only in dev (on error or empty).
-    fetchOrMock<VideoLesson[]>('/api/videos', () => STUDENT_VIDEOS).then((r) => setVideos(r.data));
+    apiGet<VideoLesson[]>('/api/videos')
+      .then((d) => setVideos(Array.isArray(d) ? d : []))
+      .catch(() => setVideos([]));
   }, []);
 
   const subjects = Array.from(new Set(videos.map(v => v.subjectName).filter(Boolean)));
