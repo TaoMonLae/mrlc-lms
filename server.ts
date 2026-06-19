@@ -2160,6 +2160,677 @@ async function startServer() {
     }
   });
 
+  // ── Reports API (aggregations) ───────────────────────────────────────────────
+  const letterGrade = (pct: number): string => {
+    if (pct >= 90) return "A+";
+    if (pct >= 80) return "A";
+    if (pct >= 70) return "B";
+    if (pct >= 60) return "C";
+    if (pct >= 50) return "D";
+    return "F";
+  };
+  const round1 = (n: number) => Math.round(n * 10) / 10;
+  const fullName = (u?: { firstName?: string | null; lastName?: string | null } | null) =>
+    `${u?.firstName ?? ""} ${u?.lastName ?? ""}`.trim() || "Unknown";
+  const monthRange = (month?: string): { start: Date; end: Date } | null => {
+    if (!month) return null;
+    const [y, m] = month.split("-").map(Number);
+    if (!y || !m) return null;
+    return { start: new Date(Date.UTC(y, m - 1, 1)), end: new Date(Date.UTC(y, m, 1)) };
+  };
+  const reportRole = (roles: string[]) =>
+    (req: express.Request, res: express.Response, next: express.NextFunction): void => {
+      const user = (req as any).user as JwtPayload | undefined;
+      if (!user || !roles.includes(user.role)) {
+        res.status(403).json({ error: "Forbidden: Insufficient permissions" });
+        return;
+      }
+      next();
+    };
+
+  // Lightweight KPI summary for the Reports dashboard
+  app.get("/api/reports/summary", authMiddleware, reportRole(["ADMIN", "ACCOUNTANT", "CASE_WORKER"]), async (_req, res) => {
+    try {
+      const [students, classes, exams, openCases] = await Promise.all([
+        prisma.student.count(),
+        prisma.class.count(),
+        prisma.exam.count(),
+        prisma.caseRecord.count({ where: { status: { in: ["OPEN", "IN_PROGRESS"] } } }),
+      ]);
+      res.json({ students, classes, exams, openCases });
+    } catch (err) {
+      logger.error("Error building report summary:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Attendance report: per-student rates for a class/month
+  app.get("/api/reports/attendance", authMiddleware, reportRole(["ADMIN", "TEACHER"]), async (req, res) => {
+    const { classId, month } = req.query as { classId?: string; month?: string };
+    try {
+      const where: any = {};
+      if (classId && classId !== "all") where.classId = classId;
+      const range = monthRange(month);
+      if (range) where.date = { gte: range.start, lt: range.end };
+
+      const records = await prisma.attendance.findMany({
+        where,
+        include: { student: { include: { user: true } } },
+      });
+
+      const map = new Map<string, any>();
+      for (const r of records) {
+        if (!map.has(r.studentId)) {
+          map.set(r.studentId, {
+            studentId: r.studentId,
+            name: fullName(r.student.user),
+            code: r.student.studentCode,
+            total: 0, present: 0, absent: 0, late: 0, excused: 0,
+          });
+        }
+        const row = map.get(r.studentId);
+        row.total += 1;
+        if (r.status === "PRESENT") row.present += 1;
+        else if (r.status === "ABSENT") row.absent += 1;
+        else if (r.status === "LATE") row.late += 1;
+        else if (r.status === "EXCUSED") row.excused += 1;
+      }
+
+      const rows = Array.from(map.values())
+        .map((r) => ({ ...r, rate: r.total ? round1((r.present / r.total) * 100) : 0 }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+      const classAverage = rows.length ? round1(rows.reduce((a, r) => a + r.rate, 0) / rows.length) : 0;
+      res.json({
+        rows,
+        classAverage,
+        perfectCount: rows.filter((r) => r.rate === 100).length,
+        atRiskCount: rows.filter((r) => r.rate < 80).length,
+      });
+    } catch (err) {
+      logger.error("Error building attendance report:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Fees report: per-student expected/paid/balance + totals
+  app.get("/api/reports/fees", authMiddleware, reportRole(["ADMIN", "ACCOUNTANT"]), async (req, res) => {
+    const { classId, status } = req.query as { classId?: string; status?: string };
+    try {
+      const fees = await prisma.feePayment.findMany({
+        include: { student: { include: { user: true, class: true } } },
+      });
+      const profile = await prisma.schoolProfile.findFirst();
+
+      const map = new Map<string, any>();
+      for (const f of fees) {
+        const s = f.student;
+        if (classId && classId !== "all" && s.classId !== classId) continue;
+        if (!map.has(s.id)) {
+          map.set(s.id, { studentName: fullName(s.user), className: s.class?.name || "Unassigned", expected: 0, paid: 0 });
+        }
+        const row = map.get(s.id);
+        row.expected += f.amount;
+        if (f.status === "PAID") row.paid += f.amount;
+      }
+
+      let rows = Array.from(map.values()).map((r) => {
+        const balance = Math.max(0, r.expected - r.paid);
+        let st = "UNPAID";
+        if (r.expected > 0 && r.paid >= r.expected) st = "PAID";
+        else if (r.paid > 0) st = "PARTIAL";
+        return { ...r, balance, status: st };
+      }).sort((a, b) => a.studentName.localeCompare(b.studentName));
+
+      if (status && status !== "all") rows = rows.filter((r) => r.status === status);
+
+      const totalExpected = rows.reduce((a, r) => a + r.expected, 0);
+      const totalCollected = rows.reduce((a, r) => a + r.paid, 0);
+      res.json({
+        rows,
+        totalExpected,
+        totalCollected,
+        outstanding: totalExpected - totalCollected,
+        currency: profile?.currency || "THB",
+      });
+    } catch (err) {
+      logger.error("Error building fees report:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Exam results: per-student subject averages for a class
+  app.get("/api/reports/exams", authMiddleware, reportRole(["ADMIN", "TEACHER"]), async (req, res) => {
+    const { classId } = req.query as { classId?: string };
+    try {
+      const where: any = {};
+      if (classId && classId !== "all") where.classId = classId;
+      const exams = await prisma.exam.findMany({
+        where,
+        include: { subject: true, attempts: { include: { student: { include: { user: true } } } } },
+      });
+
+      const subjectSet = new Set<string>();
+      const students = new Map<string, { name: string; subj: Map<string, number[]> }>();
+      for (const e of exams) {
+        const subj = e.subject?.name || "General";
+        subjectSet.add(subj);
+        const tm = e.totalMarks || 100;
+        for (const at of e.attempts) {
+          if (at.score == null) continue;
+          if (!students.has(at.studentId)) students.set(at.studentId, { name: fullName(at.student.user), subj: new Map() });
+          const rec = students.get(at.studentId)!;
+          if (!rec.subj.has(subj)) rec.subj.set(subj, []);
+          rec.subj.get(subj)!.push((at.score / tm) * 100);
+        }
+      }
+
+      const rows = Array.from(students.values()).map((s) => {
+        const scores: Record<string, number> = {};
+        const all: number[] = [];
+        for (const [subj, arr] of s.subj) {
+          scores[subj] = round1(arr.reduce((a, b) => a + b, 0) / arr.length);
+          all.push(...arr);
+        }
+        const average = all.length ? round1(all.reduce((a, b) => a + b, 0) / all.length) : 0;
+        return { studentName: s.name, scores, average, grade: letterGrade(average) };
+      }).sort((a, b) => a.studentName.localeCompare(b.studentName));
+
+      res.json({ subjects: Array.from(subjectSet).sort(), rows });
+    } catch (err) {
+      logger.error("Error building exam results report:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Class performance: subject averages per class + school averages
+  app.get("/api/reports/classes", authMiddleware, reportRole(["ADMIN", "TEACHER"]), async (_req, res) => {
+    try {
+      const classes = await prisma.class.findMany({
+        include: { students: true, exams: { include: { subject: true, attempts: true } } },
+      });
+
+      const subjectSet = new Set<string>();
+      const rows = classes.map((c) => {
+        const subjMap = new Map<string, number[]>();
+        for (const e of c.exams) {
+          const subj = e.subject?.name || "General";
+          subjectSet.add(subj);
+          const tm = e.totalMarks || 100;
+          for (const at of e.attempts) {
+            if (at.score == null) continue;
+            if (!subjMap.has(subj)) subjMap.set(subj, []);
+            subjMap.get(subj)!.push((at.score / tm) * 100);
+          }
+        }
+        const subjectAverages: Record<string, number> = {};
+        const all: number[] = [];
+        for (const [subj, arr] of subjMap) {
+          subjectAverages[subj] = round1(arr.reduce((a, b) => a + b, 0) / arr.length);
+          all.push(...arr);
+        }
+        return {
+          className: c.name,
+          totalStudents: c.students.length,
+          subjectAverages,
+          overall: all.length ? round1(all.reduce((a, b) => a + b, 0) / all.length) : 0,
+        };
+      }).sort((a, b) => a.className.localeCompare(b.className));
+
+      const subjects = Array.from(subjectSet).sort();
+      const schoolAverages: Record<string, number> = {};
+      for (const subj of subjects) {
+        const vals = rows.map((r) => r.subjectAverages[subj]).filter((v) => v != null) as number[];
+        schoolAverages[subj] = vals.length ? round1(vals.reduce((a, b) => a + b, 0) / vals.length) : 0;
+      }
+      const overalls = rows.map((r) => r.overall).filter((v) => v > 0);
+      const schoolOverall = overalls.length ? round1(overalls.reduce((a, b) => a + b, 0) / overalls.length) : 0;
+
+      res.json({ subjects, rows, schoolAverages, schoolOverall });
+    } catch (err) {
+      logger.error("Error building class performance report:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Monthly summary: KPIs + case breakdown
+  app.get("/api/reports/monthly-summary", authMiddleware, reportRole(["ADMIN"]), async (req, res) => {
+    const { month } = req.query as { month?: string };
+    try {
+      const range = monthRange(month);
+      const [activeStudents, activeTeachers, openCases, profile, cases] = await Promise.all([
+        prisma.student.count({ where: { status: "ACTIVE" } }),
+        prisma.teacher.count(),
+        prisma.caseRecord.count({ where: { status: { in: ["OPEN", "IN_PROGRESS"] } } }),
+        prisma.schoolProfile.findFirst(),
+        prisma.caseRecord.findMany(),
+      ]);
+
+      const attWhere: any = {};
+      if (range) attWhere.date = { gte: range.start, lt: range.end };
+      const att = await prisma.attendance.findMany({ where: attWhere });
+      const avgAttendance = att.length ? round1((att.filter((a) => a.status === "PRESENT").length / att.length) * 100) : 0;
+
+      const feeWhere: any = { status: "PAID" };
+      if (range) feeWhere.paidDate = { gte: range.start, lt: range.end };
+      const paidFees = await prisma.feePayment.findMany({ where: feeWhere });
+      const feeCollection = paidFees.reduce((a, f) => a + f.amount, 0);
+
+      const catMap = new Map<string, any>();
+      for (const c of cases) {
+        const cat = c.category || "General";
+        if (!catMap.has(cat)) catMap.set(cat, { category: cat, newCases: 0, resolved: 0, open: 0 });
+        const row = catMap.get(cat);
+        if (!range || (c.createdAt >= range.start && c.createdAt < range.end)) row.newCases += 1;
+        if (c.status === "RESOLVED" || c.status === "CLOSED") row.resolved += 1;
+        if (c.status === "OPEN" || c.status === "IN_PROGRESS") row.open += 1;
+      }
+
+      res.json({
+        activeStudents,
+        activeTeachers,
+        avgAttendance,
+        openCases,
+        feeCollection,
+        currency: profile?.currency || "THB",
+        casesByCategory: Array.from(catMap.values()),
+      });
+    } catch (err) {
+      logger.error("Error building monthly summary report:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Student profile export for a class
+  app.get("/api/reports/students", authMiddleware, reportRole(["ADMIN", "TEACHER"]), async (req, res) => {
+    const { classId } = req.query as { classId?: string };
+    try {
+      const where: any = {};
+      if (classId && classId !== "all") where.classId = classId;
+      const students = await prisma.student.findMany({ where, include: { user: true, class: true } });
+      const rows = students.map((s) => ({
+        code: s.studentCode,
+        name: fullName(s.user),
+        gender: s.gender || "—",
+        dob: s.dateOfBirth ? s.dateOfBirth.toISOString().slice(0, 10) : "—",
+        guardianName: s.guardianName || "—",
+        guardianPhone: s.guardianPhone || "—",
+        className: s.class?.name || "Unassigned",
+      })).sort((a, b) => a.name.localeCompare(b.name));
+      res.json({ rows });
+    } catch (err) {
+      logger.error("Error building student profile report:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Student portal API (scoped to the signed-in student) ─────────────────────
+  const getStudentForReq = async (req: express.Request) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    return prisma.student.findUnique({
+      where: { userId: jwtUser.userId },
+      include: { user: true, class: true },
+    });
+  };
+  const studentOnly = reportRole(["STUDENT", "ADMIN"]);
+
+  app.get("/api/student/profile", authMiddleware, studentOnly, async (req, res) => {
+    try {
+      const s = await getStudentForReq(req);
+      if (!s) { res.status(404).json({ error: "Student profile not found" }); return; }
+      const profile = await prisma.schoolProfile.findFirst();
+      const att = await prisma.attendance.findMany({ where: { studentId: s.id } });
+      const present = att.filter((a) => a.status === "PRESENT").length;
+      res.json({
+        name: fullName(s.user),
+        studentId: s.studentCode,
+        role: "Student",
+        status: s.status || "ACTIVE",
+        class: s.class?.name || "Unassigned",
+        email: s.user?.email || "",
+        phone: s.guardianPhone || "",
+        address: "",
+        birthDate: s.dateOfBirth ? s.dateOfBirth.toISOString().slice(0, 10) : "—",
+        gender: s.gender || "—",
+        enrollmentDate: s.enrollmentDate ? s.enrollmentDate.toISOString().slice(0, 10) : "—",
+        guardian: { name: s.guardianName || "—", relationship: "Guardian", phone: s.guardianPhone || "—", email: "" },
+        attendanceRate: att.length ? round1((present / att.length) * 100) : 0,
+        academicYear: s.class?.academicYear || profile?.name ? s.class?.academicYear || "" : "",
+      });
+    } catch (err) {
+      logger.error("Error building student profile:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/student/attendance", authMiddleware, studentOnly, async (req, res) => {
+    const { month } = req.query as { month?: string };
+    try {
+      const s = await getStudentForReq(req);
+      if (!s) { res.status(404).json({ error: "Student profile not found" }); return; }
+      const where: any = { studentId: s.id };
+      const range = monthRange(month);
+      if (range) where.date = { gte: range.start, lt: range.end };
+      const att = await prisma.attendance.findMany({
+        where, include: { class: true }, orderBy: { date: "desc" },
+      });
+      const records = att.map((a) => ({
+        id: a.id,
+        date: a.date.toISOString().slice(0, 10),
+        status: a.status,
+        subject: a.class?.name || "Class",
+        time: "",
+        remarks: a.remarks || "",
+      }));
+      const present = att.filter((a) => a.status === "PRESENT").length;
+      const absent = att.filter((a) => a.status === "ABSENT").length;
+      const late = att.filter((a) => a.status === "LATE").length;
+      res.json({
+        records,
+        summary: {
+          total: att.length, present, absent, late,
+          percentage: att.length ? round1((present / att.length) * 100) : 0,
+        },
+      });
+    } catch (err) {
+      logger.error("Error building student attendance:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/student/exams", authMiddleware, studentOnly, async (req, res) => {
+    try {
+      const s = await getStudentForReq(req);
+      if (!s) { res.status(404).json({ error: "Student profile not found" }); return; }
+      const exams = s.classId
+        ? await prisma.exam.findMany({
+            where: { classId: s.classId },
+            include: { subject: true, questions: true, attempts: { where: { studentId: s.id } } },
+            orderBy: { date: "asc" },
+          })
+        : [];
+      const available: any[] = [];
+      const submitted: any[] = [];
+      for (const e of exams) {
+        const attempt = e.attempts[0];
+        if (attempt && attempt.isCompleted) {
+          submitted.push({
+            id: e.id, title: e.title, subject: e.subject?.name || "General",
+            submittedAt: (attempt.completedAt || attempt.startedAt)?.toISOString().slice(0, 16).replace("T", " "),
+            status: attempt.score != null ? "Graded" : "Grading",
+            score: attempt.score != null && e.totalMarks ? `${attempt.score}/${e.totalMarks}` : null,
+          });
+        } else {
+          available.push({
+            id: e.id, title: e.title, subject: e.subject?.name || "General",
+            duration: e.durationMinutes ? `${e.durationMinutes} mins` : "—",
+            questions: e.questions.length,
+            deadline: e.date.toISOString().slice(0, 10),
+            type: e.type,
+          });
+        }
+      }
+      res.json({ available, submitted });
+    } catch (err) {
+      logger.error("Error building student exams:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/student/results", authMiddleware, studentOnly, async (req, res) => {
+    try {
+      const s = await getStudentForReq(req);
+      if (!s) { res.status(404).json({ error: "Student profile not found" }); return; }
+      const attempts = await prisma.examAttempt.findMany({
+        where: { studentId: s.id, isCompleted: true, score: { not: null } },
+        include: { exam: { include: { subject: true, attempts: true } } },
+        orderBy: { completedAt: "desc" },
+      });
+      const results = attempts.map((a) => {
+        const total = a.exam.totalMarks || 100;
+        const others = a.exam.attempts.filter((x) => x.score != null);
+        const classAverage = others.length
+          ? round1(others.reduce((acc, x) => acc + ((x.score! / total) * 100), 0) / others.length)
+          : 0;
+        const pct = round1(((a.score || 0) / total) * 100);
+        return {
+          id: a.id, title: a.exam.title, subject: a.exam.subject?.name || "General",
+          score: a.score, total, grade: letterGrade(pct),
+          date: (a.completedAt || a.createdAt).toISOString().slice(0, 10),
+          classAverage, feedback: "",
+        };
+      });
+      const average = results.length
+        ? round1(results.reduce((acc, r) => acc + ((r.score || 0) / r.total) * 100, 0) / results.length)
+        : 0;
+      res.json({ average, gpa: round1((average / 100) * 4), credits: results.length, results });
+    } catch (err) {
+      logger.error("Error building student results:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/student/dashboard", authMiddleware, studentOnly, async (req, res) => {
+    try {
+      const s = await getStudentForReq(req);
+      if (!s) { res.status(404).json({ error: "Student profile not found" }); return; }
+      const profile = await prisma.schoolProfile.findFirst();
+      const [att, attempts, fees, classmates] = await Promise.all([
+        prisma.attendance.findMany({ where: { studentId: s.id } }),
+        prisma.examAttempt.findMany({ where: { studentId: s.id, isCompleted: true }, include: { exam: { include: { subject: true } } }, orderBy: { completedAt: "desc" } }),
+        prisma.feePayment.findMany({ where: { studentId: s.id } }),
+        s.classId ? prisma.student.count({ where: { classId: s.classId } }) : Promise.resolve(0),
+      ]);
+      const present = att.filter((a) => a.status === "PRESENT").length;
+      const attendanceRate = att.length ? round1((present / att.length) * 100) : 0;
+      const graded = attempts.filter((a) => a.score != null);
+      const examAverage = graded.length
+        ? round1(graded.reduce((acc, a) => acc + ((a.score! / (a.exam.totalMarks || 100)) * 100), 0) / graded.length)
+        : 0;
+      const billed = fees.reduce((acc, f) => acc + f.amount, 0);
+      const paid = fees.filter((f) => f.status === "PAID").reduce((acc, f) => acc + f.amount, 0);
+      const upcoming = s.classId
+        ? await prisma.exam.findMany({
+            where: { classId: s.classId, date: { gte: new Date() } },
+            include: { subject: true }, orderBy: { date: "asc" }, take: 5,
+          })
+        : [];
+      res.json({
+        className: s.class?.name || "Unassigned",
+        currency: profile?.currency || "MYR",
+        stats: {
+          attendanceRate, examAverage, feeBalance: Math.max(0, billed - paid),
+          classSize: classmates,
+        },
+        upcomingExams: upcoming.map((e) => ({
+          id: e.id, subject: e.subject?.name || e.title,
+          date: e.date.toISOString().slice(0, 10),
+          time: "", type: e.type,
+        })),
+        recentResults: graded.slice(0, 5).map((a) => ({
+          id: a.id, subject: a.exam.subject?.name || a.exam.title,
+          score: a.exam.totalMarks ? `${a.score}/${a.exam.totalMarks}` : `${a.score}`,
+          grade: letterGrade(round1(((a.score || 0) / (a.exam.totalMarks || 100)) * 100)),
+          date: (a.completedAt || a.createdAt).toISOString().slice(0, 10),
+        })),
+      });
+    } catch (err) {
+      logger.error("Error building student dashboard:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Teacher portal API (scoped to the signed-in teacher; ADMIN sees all) ─────
+  const teacherOnly = reportRole(["TEACHER", "ADMIN"]);
+  const teacherClassIds = async (req: express.Request): Promise<string[]> => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const teacher = await prisma.teacher.findUnique({
+      where: { userId: jwtUser.userId },
+      include: { classes: true },
+    });
+    if (teacher) return teacher.classes.map((ct) => ct.classId);
+    const all = await prisma.class.findMany({ select: { id: true } }); // ADMIN fallback
+    return all.map((c) => c.id);
+  };
+  const fmtDate = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
+  const examStatus = (date: Date, attempts: { score: number | null }[]): string => {
+    if (attempts.length === 0) return date > new Date() ? "UPCOMING" : "DRAFT";
+    if (attempts.some((a) => a.score == null)) return "NEEDS_GRADING";
+    return "GRADED";
+  };
+
+  app.get("/api/teacher/classes", authMiddleware, teacherOnly, async (req, res) => {
+    try {
+      const ids = await teacherClassIds(req);
+      const classes = await prisma.class.findMany({
+        where: { id: { in: ids } },
+        include: { students: true, attendances: true },
+        orderBy: { name: "asc" },
+      });
+      res.json(classes.map((c) => {
+        const present = c.attendances.filter((a) => a.status === "PRESENT").length;
+        const attendance = c.attendances.length ? round1((present / c.attendances.length) * 100) : 0;
+        return {
+          id: c.id, name: c.name, level: c.level, room: c.room || "—",
+          students: c.students.length, progress: 0, schedule: "", nextLesson: "",
+          attendance: `${attendance}%`,
+        };
+      }));
+    } catch (err) {
+      logger.error("Error building teacher classes:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/teacher/classes/:id", authMiddleware, teacherOnly, async (req, res) => {
+    try {
+      const c = await prisma.class.findUnique({
+        where: { id: req.params.id },
+        include: {
+          students: {
+            include: {
+              user: true,
+              attendances: true,
+              examAttempts: { where: { score: { not: null } }, include: { exam: true }, orderBy: { completedAt: "desc" } },
+            },
+          },
+          teachers: { include: { teacher: { include: { user: true } } } },
+        },
+      });
+      if (!c) { res.status(404).json({ error: "Class not found" }); return; }
+      const lead = c.teachers[0]?.teacher?.user;
+      res.json({
+        classInfo: {
+          id: c.id, name: c.name, level: c.level, room: c.room || "—",
+          teacher: lead ? fullName(lead) : "—",
+          totalStudents: c.students.length, academicYear: c.academicYear, status: "ACTIVE",
+        },
+        students: c.students.map((s) => {
+          const present = s.attendances.filter((a) => a.status === "PRESENT").length;
+          const att = s.attendances.length ? round1((present / s.attendances.length) * 100) : 0;
+          const last = s.examAttempts[0];
+          return {
+            id: s.id, name: fullName(s.user), studentId: s.studentCode,
+            attendance: `${att}%`,
+            lastExam: last && last.score != null ? `${last.score}/${last.exam.totalMarks || 100}` : "—",
+            status: s.status || "ACTIVE",
+          };
+        }),
+      });
+    } catch (err) {
+      logger.error("Error building class detail:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/teacher/roster", authMiddleware, teacherOnly, async (req, res) => {
+    const { classId } = req.query as { classId?: string };
+    if (!classId) { res.status(400).json({ error: "classId is required" }); return; }
+    try {
+      const students = await prisma.student.findMany({
+        where: { classId }, include: { user: true }, orderBy: { studentCode: "asc" },
+      });
+      res.json(students.map((s) => ({ id: s.id, name: fullName(s.user), studentId: s.studentCode, photo: null })));
+    } catch (err) {
+      logger.error("Error building roster:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/teacher/exams", authMiddleware, teacherOnly, async (req, res) => {
+    try {
+      const ids = await teacherClassIds(req);
+      const exams = await prisma.exam.findMany({
+        where: { classId: { in: ids } },
+        include: { class: { include: { students: true } }, subject: true, attempts: true },
+        orderBy: { date: "desc" },
+      });
+      res.json(exams.map((e) => {
+        const graded = e.attempts.filter((a) => a.score != null);
+        const tm = e.totalMarks || 100;
+        const avg = graded.length ? `${round1(graded.reduce((acc, a) => acc + (a.score! / tm) * 100, 0) / graded.length)}%` : undefined;
+        return {
+          id: e.id, title: e.title, class: e.class?.name || "—", date: fmtDate(e.date),
+          duration: e.durationMinutes ? `${e.durationMinutes}m` : "N/A",
+          type: e.subject?.name || e.type,
+          status: examStatus(e.date, e.attempts),
+          submissions: e.attempts.length, total: e.class?.students.length || 0,
+          ...(avg ? { avg } : {}),
+        };
+      }));
+    } catch (err) {
+      logger.error("Error building teacher exams:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/teacher/dashboard", authMiddleware, teacherOnly, async (req, res) => {
+    try {
+      const ids = await teacherClassIds(req);
+      const classes = await prisma.class.findMany({
+        where: { id: { in: ids } },
+        include: { students: true, attendances: true },
+        orderBy: { name: "asc" },
+      });
+      const studentCount = classes.reduce((acc, c) => acc + c.students.length, 0);
+      const allAtt = classes.flatMap((c) => c.attendances);
+      const attendanceRate = allAtt.length ? round1((allAtt.filter((a) => a.status === "PRESENT").length / allAtt.length) * 100) : 0;
+
+      const upcoming = await prisma.exam.findMany({
+        where: { classId: { in: ids }, date: { gte: new Date() } },
+        include: { class: true }, orderBy: { date: "asc" }, take: 5,
+      });
+
+      // Last 5 weekdays attendance rate
+      const attendanceData: { day: string; rate: number }[] = [];
+      for (let i = 4; i >= 0; i--) {
+        const d = new Date(); d.setDate(d.getDate() - i);
+        const dayAtt = allAtt.filter((a) => a.date.toISOString().slice(0, 10) === d.toISOString().slice(0, 10));
+        const r = dayAtt.length ? round1((dayAtt.filter((a) => a.status === "PRESENT").length / dayAtt.length) * 100) : 0;
+        attendanceData.push({ day: d.toLocaleDateString("en-US", { weekday: "short" }), rate: r });
+      }
+
+      const recent = await prisma.examAttempt.findMany({
+        where: { exam: { classId: { in: ids } }, score: { not: null } },
+        include: { student: { include: { user: true } }, exam: { include: { class: true } } },
+        orderBy: { completedAt: "desc" }, take: 5,
+      });
+
+      res.json({
+        stats: { studentCount, classCount: classes.length, attendanceRate, upcomingExamCount: upcoming.length },
+        classes: classes.map((c) => ({ id: c.id, name: c.name, level: c.level, room: c.room || "—", students: c.students.length, progress: 0 })),
+        attendanceData,
+        upcomingExams: upcoming.map((e) => ({ id: e.id, title: e.title, date: fmtDate(e.date), time: "", class: e.class?.name || "—" })),
+        recentPerformance: recent.map((a) => {
+          const pct = round1(((a.score || 0) / (a.exam.totalMarks || 100)) * 100);
+          return { id: a.id, student: fullName(a.student.user), class: a.exam.class?.name || "—", score: `${pct}%`, trend: pct >= 80 ? "up" : pct >= 60 ? "stable" : "down" };
+        }),
+      });
+    } catch (err) {
+      logger.error("Error building teacher dashboard:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
   // ── Vite / Static serving ───────────────────────────────────────────────────
   if (!isProduction) {
     const vite = await createViteServer({

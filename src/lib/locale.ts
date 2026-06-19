@@ -81,6 +81,34 @@ export function getTimezones(): Option[] {
     .sort((a, b) => a.value.localeCompare(b.value));
 }
 
+/**
+ * Format a monetary amount using the school's configured ISO 4217 currency.
+ * Falls back to "CODE 1,234.00" if the runtime can't format the code.
+ */
+export function formatMoney(
+  amount: number,
+  currency: string | undefined | null,
+  opts: { decimals?: boolean } = {},
+): string {
+  const code = (currency || 'USD').toUpperCase();
+  const fractionDigits = opts.decimals === false ? 0 : 2;
+  const value = Number.isFinite(amount) ? amount : 0;
+  try {
+    return new Intl.NumberFormat('en', {
+      style: 'currency',
+      currency: code,
+      currencyDisplay: 'narrowSymbol',
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits,
+    }).format(value);
+  } catch {
+    return `${code} ${value.toLocaleString(undefined, {
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits,
+    })}`;
+  }
+}
+
 /** All ISO 4217 currencies, sorted by code, labelled "CODE — Name (symbol)". */
 export function getCurrencies(): Option[] {
   const codes = supportedValues('currency', FALLBACK_CURRENCIES);
