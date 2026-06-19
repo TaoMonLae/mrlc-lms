@@ -72,7 +72,6 @@ export default function AnnouncementEdit() {
     setIsLoading(true);
     // Simulate API call
     setTimeout(() => {
-      console.log('Updated Announcement:', values);
       setIsLoading(false);
       toast.success('Announcement updated successfully');
       navigate('/announcements');

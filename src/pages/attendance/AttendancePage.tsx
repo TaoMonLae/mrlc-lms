@@ -51,7 +51,7 @@ export default function AttendancePage() {
           }
         }
       } catch (err) {
-        console.error('Error fetching classes:', err);
+        // Silently fail - will show empty class list
       }
     };
     fetchClasses();
@@ -116,8 +116,7 @@ export default function AttendancePage() {
           setIsEditing(true);
         }
       } catch (err) {
-        console.error('Error fetching attendance details:', err);
-        toast.error('Error loading attendance logs');
+        toast.error('Failed to load attendance data. Please try again.');
       } finally {
         setIsLoading(false);
       }

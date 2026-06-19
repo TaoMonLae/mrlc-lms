@@ -14,10 +14,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MOCK_ANNOUNCEMENTS } from "@/src/pages/announcements/AnnouncementsList";
 import { format } from "date-fns";
+import { SearchDialog } from "../SearchDialog";
 
 export function TopBar() {
   const { setTheme } = useTheme();
   const [notifOpen, setNotifOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const activeAnnouncements = MOCK_ANNOUNCEMENTS.filter(
     (a) => a.status === "ACTIVE"
@@ -39,7 +41,18 @@ export function TopBar() {
             className="block w-full rounded-md border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-surface-raised dark:text-white py-2 pl-10 pr-3 text-sm placeholder-slate-400 focus:border-aubergine-500 focus:outline-none focus:ring-1 focus:ring-aubergine-500 transition-all"
           />
         </div>
-        <SidebarTrigger className="md:hidden bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-surface-raised dark:text-slate-300" />
+        <div className="flex items-center gap-2 md:hidden">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10"
+            aria-label="Open search"
+            onClick={() => setSearchOpen(true)}
+          >
+            <Search className="h-5 w-5" />
+          </Button>
+          <SidebarTrigger className="bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-surface-raised dark:text-slate-300" aria-label="Toggle sidebar navigation" />
+        </div>
       </div>
 
       <div className="flex items-center gap-4">
@@ -50,6 +63,7 @@ export function TopBar() {
                 variant="ghost"
                 size="icon"
                 className="h-10 w-10 text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-surface-raised rounded-full transition-colors"
+                aria-label="Toggle theme between light and dark mode"
               />
             }
             nativeButton={true}
@@ -82,6 +96,7 @@ export function TopBar() {
                 variant="ghost"
                 size="icon"
                 className="relative h-10 w-10 text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-surface-raised rounded-full transition-colors hidden sm:flex"
+                aria-label={`View ${activeAnnouncements.length} announcements`}
               />
             }
             nativeButton={true}
@@ -155,6 +170,9 @@ export function TopBar() {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      {/* Mobile Search Dialog */}
+      <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
     </header>
   );
 }

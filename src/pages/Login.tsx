@@ -65,6 +65,11 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 font-sans">
+      {/* Skip navigation for accessibility */}
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4">
+        Skip to main content
+      </a>
+      <main id="main-content" className="w-full" role="main">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -97,43 +102,47 @@ export default function LoginPage() {
               Enter your credentials to access the school portal
             </CardDescription>
           </CardHeader>
-          <form onSubmit={handleSubmit(onSubmit)} className="mt-2">
+          <form onSubmit={handleSubmit(onSubmit)} className="mt-2" noValidate>
             <CardContent className="space-y-4">
               {serverError && (
-                <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                  <AlertCircle className="h-4 w-4 shrink-0" />
+                <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert" aria-live="polite">
+                  <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
                   <span>{serverError}</span>
                 </div>
               )}
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                  Email Address
+                  Email Address <span className="text-red-500" aria-hidden="true">*</span>
                 </Label>
                 <Input
                   id="email"
                   type="email"
                   placeholder="admin@mrlc.edu"
                   autoComplete="email"
+                  aria-invalid={!!errors.email}
+                  aria-describedby={errors.email ? "email-error" : undefined}
                   className="h-11 border-slate-200 bg-slate-50/50 text-slate-900 placeholder:text-slate-400 focus:bg-white transition-all dark:bg-slate-50/50 dark:border-slate-200 dark:text-slate-900"
                   {...register("email")}
                 />
                 {errors.email && (
-                  <p className="text-xs text-red-500 font-medium">{errors.email.message}</p>
+                  <p id="email-error" className="text-xs text-red-500 font-medium" role="alert">{errors.email.message}</p>
                 )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                  Password
+                  Password <span className="text-red-500" aria-hidden="true">*</span>
                 </Label>
                 <Input
                   id="password"
                   type="password"
                   autoComplete="current-password"
+                  aria-invalid={!!errors.password}
+                  aria-describedby={errors.password ? "password-error" : undefined}
                   className="h-11 border-slate-200 bg-slate-50/50 text-slate-900 placeholder:text-slate-400 focus:bg-white transition-all dark:bg-slate-50/50 dark:border-slate-200 dark:text-slate-900"
                   {...register("password")}
                 />
                 {errors.password && (
-                  <p className="text-xs text-red-500 font-medium">{errors.password.message}</p>
+                  <p id="password-error" className="text-xs text-red-500 font-medium" role="alert">{errors.password.message}</p>
                 )}
               </div>
             </CardContent>
@@ -143,6 +152,7 @@ export default function LoginPage() {
                 id="login-submit-btn"
                 disabled={isSubmitting}
                 className="w-full h-12 text-sm font-bold bg-primary hover:bg-primary/90 text-primary-foreground transition-all group"
+                aria-label="Sign in to dashboard"
               >
                 {isSubmitting ? (
                   <span className="flex items-center gap-2">
@@ -169,6 +179,7 @@ export default function LoginPage() {
           </p>
         </div>
       </motion.div>
+      </main>
     </div>
   );
 }

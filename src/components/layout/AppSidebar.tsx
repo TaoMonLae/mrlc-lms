@@ -40,7 +40,7 @@ export function AppSidebar() {
   });
 
   return (
-    <Sidebar collapsible="icon" className="bg-canvas text-white/80 border-r border-white/10 [&>[data-slot=sidebar-inner]]:bg-canvas [&>[data-slot=sidebar-inner]]:text-white/80">
+    <Sidebar collapsible="icon" className="bg-canvas text-white/80 border-r border-white/10 [&>[data-slot=sidebar-inner]]:bg-canvas [&>[data-slot=sidebar-inner]]:text-white/80" aria-label="Main application navigation">
       <SidebarHeader className="h-16 flex items-center px-6 border-b border-white/10">
         <div className="flex items-center gap-3 font-semibold">
           {brandingSettings.logoUrl ? (
@@ -80,7 +80,7 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter className="p-4 border-t border-white/10">
         <DropdownMenu>
-          <DropdownMenuTrigger render={<SidebarMenuButton size="lg" className="h-12 w-full justify-start gap-3 px-2 hover:bg-white/10 transition-all duration-200" />} nativeButton={true}>
+          <DropdownMenuTrigger render={<SidebarMenuButton size="lg" className="h-12 w-full justify-start gap-3 px-2 hover:bg-white/10 transition-all duration-200" aria-label="Open user menu" />} nativeButton={true}>
               <Avatar className="h-9 w-9 rounded-full border border-white/20 bg-white/15">
                 <AvatarFallback className="bg-white/15 text-white">
                   {user?.name?.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase() || 'U'}
@@ -105,6 +105,7 @@ export function AppSidebar() {
               id="logout-btn"
               className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
               onClick={handleLogout}
+              aria-label="Log out of application"
             >
               <LogOut className="mr-2 h-4 w-4" />
               Log out

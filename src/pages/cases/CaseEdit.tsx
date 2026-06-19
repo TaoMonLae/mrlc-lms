@@ -58,7 +58,6 @@ export default function CaseEdit() {
   const onSubmit = async (data: FormValues) => {
     try {
       await new Promise(resolve => setTimeout(resolve, 1500));
-      console.log('Updated Case data:', data);
       toast.success('Case updated successfully');
       navigate(`/cases/${id}`);
     } catch (error) {

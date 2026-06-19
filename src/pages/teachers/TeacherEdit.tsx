@@ -85,7 +85,6 @@ export default function TeacherEdit() {
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('Updated teacher data:', data);
       toast.success('Teacher profile updated');
       navigate(`/teachers/${id}`);
     } catch (error) {

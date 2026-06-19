@@ -46,7 +46,7 @@ export default function CaseNew() {
           setStudents(data);
         }
       } catch (err) {
-        console.error('Error fetching students:', err);
+        toast.error('Failed to load students');
       }
     };
     fetchStudents();
@@ -92,7 +92,6 @@ export default function CaseNew() {
       toast.success('Case created successfully.');
       navigate('/cases');
     } catch (error: any) {
-      console.error(error);
       toast.error(error.message || 'Failed to create case');
     }
   };

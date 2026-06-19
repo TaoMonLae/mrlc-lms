@@ -1,0 +1,32 @@
+[Unit]
+Description=MRLC-LMS Learning Management System
+Documentation=https://github.com/your-org/mrlc-lms
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/mrlc-lms
+Environment=NODE_ENV=production
+EnvironmentFile=/opt/mrlc-lms/.env
+ExecStart=/usr/bin/node dist/server.cjs
+Restart=on-failure
+RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=mrlc-lms
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/mrlc-lms/data
+
+# Resource limits
+LimitNOFILE=65535
+MemoryLimit=512M
+
+[Install]
+WantedBy=multi-user.target
