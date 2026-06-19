@@ -74,7 +74,7 @@ export default function LoginPage() {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4 }}
-        className="w-full max-w-md"
+        className="mx-auto w-full max-w-md"
       >
         <div className="flex flex-col items-center gap-6 mb-8">
           {logoUrl ? (
@@ -96,7 +96,7 @@ export default function LoginPage() {
         </div>
 
         <Card className="bg-white text-slate-900 ring-slate-200 border-slate-200 shadow-xl shadow-slate-200/50">
-          <CardHeader className="space-y-1">
+          <CardHeader className="space-y-1 text-center">
             <CardTitle className="text-xl font-bold text-slate-900">Sign in</CardTitle>
             <CardDescription className="text-slate-500 font-medium">
               Enter your credentials to access the school portal
@@ -105,7 +105,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit(onSubmit)} className="mt-2" noValidate>
             <CardContent className="space-y-4">
               {serverError && (
-                <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert" aria-live="polite">
+                <div className="flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert" aria-live="polite">
                   <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
                   <span>{serverError}</span>
                 </div>
