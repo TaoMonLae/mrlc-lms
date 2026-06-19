@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Printer, FileSpreadsheet, Filter } from 'lucide-react';
+import { ArrowLeft, Printer, Filter, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -9,15 +9,52 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { toast } from 'sonner';
 import { PrintLayout } from '../../components/reports/PrintLayout';
+import { apiGet, qs } from '../../lib/api';
+
+interface ClassOption { id: string; name: string; }
+interface FeeRow { studentName: string; className: string; expected: number; paid: number; balance: number; status: string; }
+interface FeesReportData { rows: FeeRow[]; totalExpected: number; totalCollected: number; outstanding: number; currency: string; }
+
+const money = (n: number) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const statusColor: Record<string, string> = { PAID: 'text-emerald-600', PARTIAL: 'text-amber-600', UNPAID: 'text-red-600' };
 
 export default function FeesReport() {
-  const [classFilter, setClassFilter] = useState('All Classes');
-  const [statusFilter, setStatusFilter] = useState('All Statuses');
+  const [classes, setClasses] = useState<ClassOption[]>([]);
+  const [classFilter, setClassFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
 
-  const handlePrint = () => {
-    window.print();
+  const [data, setData] = useState<FeesReportData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    apiGet<any[]>('/api/classes')
+      .then((cs) => setClasses(cs.map((c) => ({ id: c.id, name: c.name }))))
+      .catch(() => {});
+  }, []);
+
+  const load = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await apiGet<FeesReportData>(`/api/reports/fees${qs({ classId: classFilter, status: statusFilter })}`);
+      setData(res);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load report');
+      toast.error('Failed to load fees report.');
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, []);
+
+  const classLabel = classFilter === 'all' ? 'All Classes' : classes.find((c) => c.id === classFilter)?.name || '—';
+  const statusLabel = statusFilter === 'all' ? 'All Statuses' : statusFilter;
+  const cur = data?.currency || 'THB';
+  const rows = data?.rows ?? [];
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-10">
@@ -31,10 +68,7 @@ export default function FeesReport() {
         </div>
 
         <div className="flex items-center gap-2">
-           <Button variant="outline">
-             <FileSpreadsheet className="mr-2 h-4 w-4" /> Export CSV
-           </Button>
-           <Button onClick={handlePrint} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+           <Button onClick={() => window.print()} disabled={isLoading || !rows.length} className="bg-primary hover:bg-primary/90 text-primary-foreground">
              <Printer className="mr-2 h-4 w-4" /> Print / PDF
            </Button>
         </div>
@@ -44,94 +78,85 @@ export default function FeesReport() {
          <div className="space-y-1.5 flex-1 min-w-[200px]">
            <label className="text-xs font-semibold text-slate-500 uppercase">Class</label>
            <Select value={classFilter} onValueChange={setClassFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Class" />
-              </SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Select Class" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="All Classes">All Classes</SelectItem>
-                <SelectItem value="Grade 10A">Grade 10A</SelectItem>
-                <SelectItem value="Grade 10B">Grade 10B</SelectItem>
+                <SelectItem value="all">All Classes</SelectItem>
+                {classes.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
          </div>
          <div className="space-y-1.5 flex-1 min-w-[200px]">
            <label className="text-xs font-semibold text-slate-500 uppercase">Payment Status</label>
            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Status" />
-              </SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Select Status" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="All Statuses">All Statuses</SelectItem>
-                <SelectItem value="Fully Paid">Fully Paid</SelectItem>
-                <SelectItem value="Partial Payment">Partial Payment</SelectItem>
-                <SelectItem value="Unpaid">Unpaid</SelectItem>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="PAID">Fully Paid</SelectItem>
+                <SelectItem value="PARTIAL">Partial Payment</SelectItem>
+                <SelectItem value="UNPAID">Unpaid</SelectItem>
               </SelectContent>
             </Select>
          </div>
-         <Button variant="secondary" className="mb-0.5">
+         <Button variant="secondary" className="mb-0.5" onClick={load} disabled={isLoading}>
            <Filter className="mr-2 h-4 w-4" /> Apply
          </Button>
       </div>
 
-      <PrintLayout 
-        title="Fee Collection Summary" 
+      {isLoading ? (
+        <div className="print:hidden flex items-center justify-center py-12 text-slate-500"><Loader2 className="h-5 w-5 animate-spin mr-2" /> Loading…</div>
+      ) : error ? (
+        <div className="print:hidden py-12 text-center text-sm text-red-600">{error}</div>
+      ) : (
+      <PrintLayout
+        title="Fee Collection Summary"
         preparedBy="Finance Admin"
-        filters={{ 'Class': classFilter, 'Status': statusFilter }}
+        filters={{ Class: classLabel, Status: statusLabel }}
       >
         <div className="mb-8 grid grid-cols-3 gap-6">
            <div className="border border-slate-300 p-4 rounded">
              <p className="text-xs text-slate-500 uppercase font-bold">Total Expected</p>
-             <p className="text-xl font-bold text-slate-900 mt-1">MYR 4,500.00</p>
+             <p className="text-xl font-bold text-slate-900 mt-1">{cur} {money(data?.totalExpected ?? 0)}</p>
            </div>
            <div className="border border-slate-300 p-4 rounded bg-slate-50">
              <p className="text-xs text-slate-500 uppercase font-bold">Total Collected</p>
-             <p className="text-xl font-bold text-slate-900 mt-1">MYR 2,000.00</p>
+             <p className="text-xl font-bold text-slate-900 mt-1">{cur} {money(data?.totalCollected ?? 0)}</p>
            </div>
            <div className="border border-slate-300 p-4 rounded">
              <p className="text-xs text-slate-500 uppercase font-bold">Outstanding</p>
-             <p className="text-xl font-bold text-slate-900 mt-1 text-red-600">MYR 2,500.00</p>
+             <p className="text-xl font-bold text-slate-900 mt-1 text-red-600">{cur} {money(data?.outstanding ?? 0)}</p>
            </div>
         </div>
 
+        {rows.length === 0 ? (
+          <p className="text-sm text-slate-500 py-6 text-center">No fee records match this filter.</p>
+        ) : (
         <table className="w-full text-sm text-left border-collapse">
-            <thead className="bg-slate-100">
+            <thead>
               <tr>
-                <th className="px-4 py-3 border border-slate-300 font-semibold text-slate-900 w-[30%]">Student Name</th>
-                <th className="px-4 py-3 border border-slate-300 font-semibold text-slate-900">Class</th>
-                <th className="px-4 py-3 border border-slate-300 font-semibold text-slate-900 text-right">Expected (MYR)</th>
-                <th className="px-4 py-3 border border-slate-300 font-semibold text-slate-900 text-right">Paid (MYR)</th>
-                <th className="px-4 py-3 border border-slate-300 font-semibold text-slate-900 text-right">Balance (MYR)</th>
-                <th className="px-4 py-3 border border-slate-300 font-semibold text-slate-900">Status</th>
+                <th className="px-4 py-3 border font-semibold w-[30%]">Student Name</th>
+                <th className="px-4 py-3 border font-semibold">Class</th>
+                <th className="px-4 py-3 border font-semibold text-right">Expected ({cur})</th>
+                <th className="px-4 py-3 border font-semibold text-right">Paid ({cur})</th>
+                <th className="px-4 py-3 border font-semibold text-right">Balance ({cur})</th>
+                <th className="px-4 py-3 border font-semibold">Status</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td className="px-4 py-3 border border-slate-300 font-medium text-slate-900">Ali bin Ahmad</td>
-                <td className="px-4 py-3 border border-slate-300 text-slate-700">10A</td>
-                <td className="px-4 py-3 border border-slate-300 text-right text-slate-700">1,500.00</td>
-                <td className="px-4 py-3 border border-slate-300 text-right text-slate-700">1,500.00</td>
-                <td className="px-4 py-3 border border-slate-300 text-right text-slate-700">0.00</td>
-                <td className="px-4 py-3 border border-slate-300 font-bold text-emerald-600">PAID</td>
-              </tr>
-              <tr>
-                <td className="px-4 py-3 border border-slate-300 font-medium text-slate-900">Sarah Lee</td>
-                <td className="px-4 py-3 border border-slate-300 text-slate-700">10B</td>
-                <td className="px-4 py-3 border border-slate-300 text-right text-slate-700">1,500.00</td>
-                <td className="px-4 py-3 border border-slate-300 text-right text-slate-700">500.00</td>
-                <td className="px-4 py-3 border border-slate-300 text-right text-slate-700 font-bold text-amber-600">1,000.00</td>
-                <td className="px-4 py-3 border border-slate-300 font-bold text-amber-600">PARTIAL</td>
-              </tr>
-              <tr>
-                <td className="px-4 py-3 border border-slate-300 font-medium text-slate-900">John Doe</td>
-                <td className="px-4 py-3 border border-slate-300 text-slate-700">10A</td>
-                <td className="px-4 py-3 border border-slate-300 text-right text-slate-700">1,500.00</td>
-                <td className="px-4 py-3 border border-slate-300 text-right text-slate-700">0.00</td>
-                <td className="px-4 py-3 border border-slate-300 text-right text-slate-700 font-bold text-red-600">1,500.00</td>
-                <td className="px-4 py-3 border border-slate-300 font-bold text-red-600">UNPAID</td>
-              </tr>
+              {rows.map((r, i) => (
+                <tr key={i}>
+                  <td className="px-4 py-3 border font-medium text-slate-900">{r.studentName}</td>
+                  <td className="px-4 py-3 border text-slate-700">{r.className}</td>
+                  <td className="px-4 py-3 border text-right text-slate-700">{money(r.expected)}</td>
+                  <td className="px-4 py-3 border text-right text-slate-700">{money(r.paid)}</td>
+                  <td className={`px-4 py-3 border text-right ${r.balance > 0 ? 'font-bold text-amber-600' : 'text-slate-700'}`}>{money(r.balance)}</td>
+                  <td className={`px-4 py-3 border font-bold ${statusColor[r.status] || ''}`}>{r.status}</td>
+                </tr>
+              ))}
             </tbody>
         </table>
+        )}
       </PrintLayout>
+      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Printer, FileSpreadsheet, Filter } from 'lucide-react';
+import { ArrowLeft, Printer, Filter, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -9,15 +9,47 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { toast } from 'sonner';
 import { PrintLayout } from '../../components/reports/PrintLayout';
+import { apiGet, qs } from '../../lib/api';
+
+interface ClassOption { id: string; name: string; }
+interface ExamRow { studentName: string; scores: Record<string, number>; average: number; grade: string; }
+interface ExamReportData { subjects: string[]; rows: ExamRow[]; }
 
 export default function ExamResultsReport() {
-  const [classFilter, setClassFilter] = useState('Grade 10A');
-  const [termFilter, setTermFilter] = useState('Term 1 - 2025');
+  const [classes, setClasses] = useState<ClassOption[]>([]);
+  const [classFilter, setClassFilter] = useState('all');
 
-  const handlePrint = () => {
-    window.print();
+  const [data, setData] = useState<ExamReportData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    apiGet<any[]>('/api/classes')
+      .then((cs) => setClasses(cs.map((c) => ({ id: c.id, name: c.name }))))
+      .catch(() => {});
+  }, []);
+
+  const load = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await apiGet<ExamReportData>(`/api/reports/exams${qs({ classId: classFilter })}`);
+      setData(res);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load report');
+      toast.error('Failed to load exam results report.');
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, []);
+
+  const classLabel = classFilter === 'all' ? 'All Classes' : classes.find((c) => c.id === classFilter)?.name || '—';
+  const subjects = data?.subjects ?? [];
+  const rows = data?.rows ?? [];
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-10">
@@ -31,10 +63,7 @@ export default function ExamResultsReport() {
         </div>
 
         <div className="flex items-center gap-2">
-           <Button variant="outline">
-             <FileSpreadsheet className="mr-2 h-4 w-4" /> Export CSV
-           </Button>
-           <Button onClick={handlePrint} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+           <Button onClick={() => window.print()} disabled={isLoading || !rows.length} className="bg-primary hover:bg-primary/90 text-primary-foreground">
              <Printer className="mr-2 h-4 w-4" /> Print / PDF
            </Button>
         </div>
@@ -45,78 +74,54 @@ export default function ExamResultsReport() {
          <div className="space-y-1.5 flex-1 min-w-[200px]">
            <label className="text-xs font-semibold text-slate-500 uppercase">Class</label>
            <Select value={classFilter} onValueChange={setClassFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Class" />
-              </SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Select Class" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="All Classes">All Classes</SelectItem>
-                <SelectItem value="Grade 10A">Grade 10A</SelectItem>
-                <SelectItem value="Grade 10B">Grade 10B</SelectItem>
+                <SelectItem value="all">All Classes</SelectItem>
+                {classes.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
          </div>
-         <div className="space-y-1.5 flex-1 min-w-[200px]">
-           <label className="text-xs font-semibold text-slate-500 uppercase">Term</label>
-           <Select value={termFilter} onValueChange={setTermFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Term" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Term 1 - 2025">Term 1 - 2025</SelectItem>
-                <SelectItem value="Midterm - 2025">Midterm - 2025</SelectItem>
-                <SelectItem value="Finals - 2025">Finals - 2025</SelectItem>
-              </SelectContent>
-            </Select>
-         </div>
-         <Button variant="secondary" className="mb-0.5">
+         <Button variant="secondary" className="mb-0.5" onClick={load} disabled={isLoading}>
            <Filter className="mr-2 h-4 w-4" /> Apply Filters
          </Button>
       </div>
 
-      <PrintLayout 
-        title={`Exam Results - ${termFilter}`} 
+      {isLoading ? (
+        <div className="print:hidden flex items-center justify-center py-12 text-slate-500"><Loader2 className="h-5 w-5 animate-spin mr-2" /> Loading…</div>
+      ) : error ? (
+        <div className="print:hidden py-12 text-center text-sm text-red-600">{error}</div>
+      ) : (
+      <PrintLayout
+        title="Exam Results Summary"
         preparedBy="Academic Admin"
-        filters={{ 'Class': classFilter, 'Term': termFilter }}
+        filters={{ Class: classLabel }}
       >
+        {rows.length === 0 ? (
+          <p className="text-sm text-slate-500 py-6 text-center">No graded exam attempts found for this class.</p>
+        ) : (
         <table className="w-full text-sm text-center border-collapse mt-4">
-            <thead className="bg-slate-100">
+            <thead>
               <tr>
-                <th className="px-4 py-3 border border-slate-300 font-semibold text-slate-900 text-left">Student Name</th>
-                <th className="px-4 py-3 border border-slate-300 font-semibold text-slate-900">Mathematics</th>
-                <th className="px-4 py-3 border border-slate-300 font-semibold text-slate-900">Science</th>
-                <th className="px-4 py-3 border border-slate-300 font-semibold text-slate-900">English</th>
-                <th className="px-4 py-3 border border-slate-300 font-semibold text-slate-900 text-right bg-slate-200">Average (%)</th>
-                <th className="px-4 py-3 border border-slate-300 font-semibold text-slate-900 text-right bg-slate-200">Grade</th>
+                <th className="px-4 py-3 border font-semibold text-left">Student Name</th>
+                {subjects.map((s) => <th key={s} className="px-4 py-3 border font-semibold">{s}</th>)}
+                <th className="px-4 py-3 border font-semibold text-right">Average (%)</th>
+                <th className="px-4 py-3 border font-semibold text-right">Grade</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td className="px-4 py-3 border border-slate-300 font-medium text-slate-900 text-left">Ali bin Ahmad</td>
-                <td className="px-4 py-3 border border-slate-300 text-slate-700">85</td>
-                <td className="px-4 py-3 border border-slate-300 text-slate-700">78</td>
-                <td className="px-4 py-3 border border-slate-300 text-slate-700">92</td>
-                <td className="px-4 py-3 border border-slate-300 text-right font-bold text-slate-900 bg-slate-50">85.0</td>
-                <td className="px-4 py-3 border border-slate-300 text-right font-bold text-slate-900 bg-slate-50">A</td>
-              </tr>
-              <tr>
-                <td className="px-4 py-3 border border-slate-300 font-medium text-slate-900 text-left">Sarah Lee</td>
-                <td className="px-4 py-3 border border-slate-300 text-slate-700">95</td>
-                <td className="px-4 py-3 border border-slate-300 text-slate-700">91</td>
-                <td className="px-4 py-3 border border-slate-300 text-slate-700">88</td>
-                <td className="px-4 py-3 border border-slate-300 text-right font-bold text-slate-900 bg-slate-50">91.3</td>
-                <td className="px-4 py-3 border border-slate-300 text-right font-bold text-slate-900 bg-slate-50">A+</td>
-              </tr>
-              <tr>
-                <td className="px-4 py-3 border border-slate-300 font-medium text-slate-900 text-left">John Doe</td>
-                <td className="px-4 py-3 border border-slate-300 text-slate-700">45</td>
-                <td className="px-4 py-3 border border-slate-300 text-slate-700">55</td>
-                <td className="px-4 py-3 border border-slate-300 text-slate-700">60</td>
-                <td className="px-4 py-3 border border-slate-300 text-right font-bold text-slate-900 bg-slate-50 text-aubergine-600">53.3</td>
-                <td className="px-4 py-3 border border-slate-300 text-right font-bold text-slate-900 bg-slate-50 text-aubergine-600">C</td>
-              </tr>
+              {rows.map((r, i) => (
+                <tr key={i}>
+                  <td className="px-4 py-3 border font-medium text-slate-900 text-left">{r.studentName}</td>
+                  {subjects.map((s) => <td key={s} className="px-4 py-3 border text-slate-700">{r.scores[s] != null ? r.scores[s] : '—'}</td>)}
+                  <td className="px-4 py-3 border text-right font-bold text-slate-900">{r.average}</td>
+                  <td className="px-4 py-3 border text-right font-bold text-slate-900">{r.grade}</td>
+                </tr>
+              ))}
             </tbody>
         </table>
+        )}
       </PrintLayout>
+      )}
     </div>
   );
 }

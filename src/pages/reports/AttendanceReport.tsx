@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Printer, Download, Filter, FileSpreadsheet } from 'lucide-react';
+import { ArrowLeft, Printer, Filter, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -9,15 +9,70 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { toast } from 'sonner';
 import { PrintLayout } from '../../components/reports/PrintLayout';
+import { apiGet, qs } from '../../lib/api';
+
+interface ClassOption { id: string; name: string; }
+interface AttendanceRow {
+  studentId: string; name: string; code: string;
+  total: number; present: number; absent: number; late: number; excused: number; rate: number;
+}
+interface AttendanceReportData {
+  rows: AttendanceRow[]; classAverage: number; perfectCount: number; atRiskCount: number;
+}
+
+function recentMonths(count = 12): { value: string; label: string }[] {
+  const out: { value: string; label: string }[] = [];
+  const now = new Date();
+  for (let i = 0; i < count; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const label = d.toLocaleString('default', { month: 'long', year: 'numeric' });
+    out.push({ value, label });
+  }
+  return out;
+}
 
 export default function AttendanceReport() {
-  const [classFilter, setClassFilter] = useState('Grade 10A');
-  const [monthFilter, setMonthFilter] = useState('May 2025');
+  const months = useMemo(() => recentMonths(), []);
+  const [classes, setClasses] = useState<ClassOption[]>([]);
+  const [classFilter, setClassFilter] = useState('all');
+  const [monthFilter, setMonthFilter] = useState(months[0].value);
 
-  const handlePrint = () => {
-    window.print();
+  const [data, setData] = useState<AttendanceReportData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    apiGet<any[]>('/api/classes')
+      .then((cs) => setClasses(cs.map((c) => ({ id: c.id, name: c.name }))))
+      .catch(() => { /* dropdown stays at "All Classes" */ });
+  }, []);
+
+  const load = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await apiGet<AttendanceReportData>(
+        `/api/reports/attendance${qs({ classId: classFilter, month: monthFilter })}`
+      );
+      setData(res);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load report');
+      toast.error('Failed to load attendance report.');
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, []);
+
+  const classLabel = classFilter === 'all'
+    ? 'All Classes'
+    : classes.find((c) => c.id === classFilter)?.name || '—';
+  const monthLabel = months.find((m) => m.value === monthFilter)?.label || monthFilter;
+  const rows = data?.rows ?? [];
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-10">
@@ -31,10 +86,7 @@ export default function AttendanceReport() {
         </div>
 
         <div className="flex items-center gap-2">
-           <Button variant="outline">
-             <FileSpreadsheet className="mr-2 h-4 w-4" /> Export CSV
-           </Button>
-           <Button onClick={handlePrint} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+           <Button onClick={() => window.print()} disabled={isLoading || !rows.length} className="bg-primary hover:bg-primary/90 text-primary-foreground">
              <Printer className="mr-2 h-4 w-4" /> Print / PDF
            </Button>
         </div>
@@ -45,30 +97,23 @@ export default function AttendanceReport() {
          <div className="space-y-1.5 flex-1 min-w-[200px]">
            <label className="text-xs font-semibold text-slate-500 uppercase">Class</label>
            <Select value={classFilter} onValueChange={setClassFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Class" />
-              </SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Select Class" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="All Classes">All Classes</SelectItem>
-                <SelectItem value="Grade 10A">Grade 10A</SelectItem>
-                <SelectItem value="Grade 10B">Grade 10B</SelectItem>
+                <SelectItem value="all">All Classes</SelectItem>
+                {classes.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
          </div>
          <div className="space-y-1.5 flex-1 min-w-[200px]">
            <label className="text-xs font-semibold text-slate-500 uppercase">Month</label>
            <Select value={monthFilter} onValueChange={setMonthFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Month" />
-              </SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Select Month" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="April 2025">April 2025</SelectItem>
-                <SelectItem value="May 2025">May 2025</SelectItem>
-                <SelectItem value="June 2025">June 2025</SelectItem>
+                {months.map((m) => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
               </SelectContent>
             </Select>
          </div>
-         <Button variant="secondary" className="mb-0.5">
+         <Button variant="secondary" className="mb-0.5" onClick={load} disabled={isLoading}>
            <Filter className="mr-2 h-4 w-4" /> Apply Filters
          </Button>
       </div>
@@ -76,7 +121,14 @@ export default function AttendanceReport() {
       {/* Screen Preview */}
       <div className="print:hidden bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm overflow-x-auto">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Preview</h3>
-        <table className="w-full text-sm text-left border-collapse">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12 text-slate-500"><Loader2 className="h-5 w-5 animate-spin mr-2" /> Loading…</div>
+        ) : error ? (
+          <div className="py-12 text-center text-sm text-red-600">{error}</div>
+        ) : rows.length === 0 ? (
+          <div className="py-12 text-center text-sm text-slate-500">No attendance records for this class and month.</div>
+        ) : (
+          <table className="w-full text-sm text-left border-collapse">
             <thead className="bg-slate-50 dark:bg-surface-raised">
               <tr>
                 <th className="px-4 py-3 border border-slate-200 dark:border-surface-raised font-semibold">Student Name</th>
@@ -89,80 +141,69 @@ export default function AttendanceReport() {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised font-medium">Ali bin Ahmad</td>
-                <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised">STU-2023-001</td>
-                <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised text-center">20</td>
-                <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised text-center">15</td>
-                <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised text-center">5</td>
-                <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised text-center">0</td>
-                <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised text-center font-semibold text-aubergine-600">75%</td>
-              </tr>
-              <tr>
-                <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised font-medium">Sarah Lee</td>
-                <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised">STU-2023-002</td>
-                <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised text-center">20</td>
-                <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised text-center">19</td>
-                <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised text-center">0</td>
-                <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised text-center">1</td>
-                <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised text-center font-semibold text-emerald-600">95%</td>
-              </tr>
+              {rows.map((r) => (
+                <tr key={r.studentId}>
+                  <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised font-medium">{r.name}</td>
+                  <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised">{r.code}</td>
+                  <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised text-center">{r.total}</td>
+                  <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised text-center">{r.present}</td>
+                  <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised text-center">{r.absent}</td>
+                  <td className="px-4 py-3 border border-slate-200 dark:border-surface-raised text-center">{r.late}</td>
+                  <td className={`px-4 py-3 border border-slate-200 dark:border-surface-raised text-center font-semibold ${r.rate < 80 ? 'text-red-600' : 'text-emerald-600'}`}>{r.rate}%</td>
+                </tr>
+              ))}
             </tbody>
-        </table>
+          </table>
+        )}
       </div>
 
       {/* Print Layout */}
-      <PrintLayout 
-        title="Monthly Attendance Report" 
+      <PrintLayout
+        title="Monthly Attendance Report"
         preparedBy="Admin User"
-        filters={{ 'Class': classFilter, 'Month': monthFilter }}
+        filters={{ Class: classLabel, Month: monthLabel }}
       >
         <table className="w-full text-sm text-left border-collapse mt-4">
-            <thead className="bg-slate-100">
+            <thead>
               <tr>
-                <th className="px-4 py-3 border border-slate-300 font-semibold text-slate-900 w-[30%]">Student Name</th>
-                <th className="px-4 py-3 border border-slate-300 font-semibold text-slate-900 whitespace-nowrap">ID</th>
-                <th className="px-4 py-3 border border-slate-300 font-semibold text-slate-900 text-center">Days</th>
-                <th className="px-4 py-3 border border-slate-300 font-semibold text-slate-900 text-center">Present</th>
-                <th className="px-4 py-3 border border-slate-300 font-semibold text-slate-900 text-center">Absent</th>
-                <th className="px-4 py-3 border border-slate-300 font-semibold text-slate-900 text-center">Late</th>
-                <th className="px-4 py-3 border border-slate-300 font-semibold text-slate-900 text-center">Rate</th>
+                <th className="px-4 py-3 border font-semibold w-[28%]">Student Name</th>
+                <th className="px-4 py-3 border font-semibold whitespace-nowrap">ID</th>
+                <th className="px-4 py-3 border font-semibold text-center">Days</th>
+                <th className="px-4 py-3 border font-semibold text-center">Present</th>
+                <th className="px-4 py-3 border font-semibold text-center">Absent</th>
+                <th className="px-4 py-3 border font-semibold text-center">Late</th>
+                <th className="px-4 py-3 border font-semibold text-center">Excused</th>
+                <th className="px-4 py-3 border font-semibold text-center">Rate</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td className="px-4 py-3 border border-slate-300 font-medium text-slate-900">Ali bin Ahmad</td>
-                <td className="px-4 py-3 border border-slate-300 text-slate-700">STU-2023-001</td>
-                <td className="px-4 py-3 border border-slate-300 text-center text-slate-700">20</td>
-                <td className="px-4 py-3 border border-slate-300 text-center text-slate-700">15</td>
-                <td className="px-4 py-3 border border-slate-300 text-center text-slate-700 font-bold">5</td>
-                <td className="px-4 py-3 border border-slate-300 text-center text-slate-700">0</td>
-                <td className="px-4 py-3 border border-slate-300 text-center font-bold">75%</td>
-              </tr>
-              <tr>
-                <td className="px-4 py-3 border border-slate-300 font-medium text-slate-900">Sarah Lee</td>
-                <td className="px-4 py-3 border border-slate-300 text-slate-700">STU-2023-002</td>
-                <td className="px-4 py-3 border border-slate-300 text-center text-slate-700">20</td>
-                <td className="px-4 py-3 border border-slate-300 text-center text-slate-700">19</td>
-                <td className="px-4 py-3 border border-slate-300 text-center text-slate-700">0</td>
-                <td className="px-4 py-3 border border-slate-300 text-center text-slate-700">1</td>
-                <td className="px-4 py-3 border border-slate-300 text-center font-bold">95%</td>
-              </tr>
+              {rows.map((r) => (
+                <tr key={r.studentId}>
+                  <td className="px-4 py-3 border font-medium">{r.name}</td>
+                  <td className="px-4 py-3 border">{r.code}</td>
+                  <td className="px-4 py-3 border text-center">{r.total}</td>
+                  <td className="px-4 py-3 border text-center">{r.present}</td>
+                  <td className="px-4 py-3 border text-center font-bold">{r.absent}</td>
+                  <td className="px-4 py-3 border text-center">{r.late}</td>
+                  <td className="px-4 py-3 border text-center">{r.excused}</td>
+                  <td className="px-4 py-3 border text-center font-bold">{r.rate}%</td>
+                </tr>
+              ))}
             </tbody>
         </table>
 
         <div className="mt-8 grid grid-cols-3 gap-6">
            <div className="border border-slate-300 p-4 rounded text-center">
              <p className="text-xs text-slate-500 uppercase font-bold">Class Average</p>
-             <p className="text-2xl font-bold text-slate-900 mt-1">85%</p>
+             <p className="text-2xl font-bold text-slate-900 mt-1">{data?.classAverage ?? 0}%</p>
            </div>
            <div className="border border-slate-300 p-4 rounded text-center">
              <p className="text-xs text-slate-500 uppercase font-bold">Perfect Attendance</p>
-             <p className="text-2xl font-bold text-slate-900 mt-1">0</p>
+             <p className="text-2xl font-bold text-slate-900 mt-1">{data?.perfectCount ?? 0}</p>
            </div>
            <div className="border border-slate-300 p-4 rounded text-center">
              <p className="text-xs text-slate-500 uppercase font-bold">At Risk (&lt;80%)</p>
-             <p className="text-2xl font-bold text-slate-900 mt-1">1</p>
+             <p className="text-2xl font-bold text-slate-900 mt-1">{data?.atRiskCount ?? 0}</p>
            </div>
         </div>
       </PrintLayout>
