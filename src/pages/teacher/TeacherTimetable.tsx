@@ -16,10 +16,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { IS_DEV } from "../../lib/api";
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-const teacherSchedule = [
+// No timetable model exists in the backend yet, so this sample schedule is shown
+// only in development. In production the grid stays empty until a Timetable
+// model + API are added.
+const MOCK_SCHEDULE = [
   { day: 'Monday', time: '09:00 - 11:00', subject: 'GED Social Studies', room: 'Room 102', classId: 'c1', color: 'bg-blue-500' },
   { day: 'Monday', time: '13:00 - 15:00', subject: 'History of SEA', room: 'Room 105', classId: 'c4', color: 'bg-purple-500' },
   { day: 'Tuesday', time: '10:30 - 12:30', subject: 'Pre-GED English', room: 'Room 105', classId: 'c2', color: 'bg-emerald-500' },
@@ -27,6 +31,8 @@ const teacherSchedule = [
   { day: 'Thursday', time: '10:30 - 12:30', subject: 'Pre-GED English', room: 'Room 105', classId: 'c2', color: 'bg-emerald-500' },
   { day: 'Friday', time: '13:00 - 15:00', subject: 'GED Math Prep', room: 'Lab A', classId: 'c3', color: 'bg-aubergine-500' },
 ];
+
+const teacherSchedule = IS_DEV ? MOCK_SCHEDULE : [];
 
 /** Returns the Monday of the week containing `date`. */
 function getWeekStart(date: Date): Date {
@@ -105,8 +111,9 @@ export default function TeacherTimetable() {
         </div>
       </div>
 
-      <Card className="border-slate-200 dark:border-surface-raised overflow-hidden bg-white dark:bg-surface-indigo shadow-sm">
-        <div className="p-4 border-b border-slate-100 dark:border-surface-raised flex items-center justify-between bg-slate-50/50 dark:bg-surface-raised/30">
+      <Card className="timetable-print-area border-slate-200 dark:border-surface-raised overflow-hidden bg-white dark:bg-surface-indigo shadow-sm">
+        <div className="hidden print:block px-4 pt-4 text-lg font-bold text-slate-900">Teaching Schedule — {weekLabel}</div>
+        <div className="p-4 border-b border-slate-100 dark:border-surface-raised flex items-center justify-between bg-slate-50/50 dark:bg-surface-raised/30 print:hidden">
             <div className="flex items-center gap-1 bg-white dark:bg-surface-indigo p-1 rounded-lg border border-slate-200 dark:border-surface-raised">
                 <Button 
                     variant={view === 'week' ? 'secondary' : 'ghost'} 
@@ -275,6 +282,23 @@ export default function TeacherTimetable() {
               </CardContent>
           </Card>
       </div>
+
+      <style>{`
+        @media print {
+          /* Print only the weekly schedule, not the app shell. */
+          body * { visibility: hidden; }
+          .timetable-print-area, .timetable-print-area * { visibility: visible; }
+          .timetable-print-area {
+            position: absolute; left: 0; top: 0; width: 100%;
+            box-shadow: none !important; border: none !important;
+          }
+          /* Let the grid expand so the whole week fits on the page. */
+          .timetable-print-area .min-w-\\[1000px\\] { min-width: 0 !important; }
+          .timetable-print-area .overflow-x-auto { overflow: visible !important; }
+          .timetable-print-area .h-\\[600px\\] { height: auto !important; }
+          @page { size: A4 landscape; margin: 12mm; }
+        }
+      `}</style>
     </div>
   );
 }

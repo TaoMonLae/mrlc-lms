@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Users, BookOpen, Clock, CheckCircle2, GraduationCap, Calendar, ArrowRight, MoreHorizontal } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -5,72 +6,61 @@ import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { fetchOrMock } from "../../lib/api";
 
-const teacherStats = [
-  {
-    title: "My Students",
-    value: "56",
-    description: "Across 4 classes",
-    icon: Users,
-    color: "text-blue-500",
-    bgColor: "bg-blue-500/10",
-  },
-  {
-    title: "Attendance",
-    value: "94.2%",
-    description: "Average this month",
-    icon: CheckCircle2,
-    color: "text-emerald-500",
-    bgColor: "bg-emerald-500/10",
-  },
-  {
-    title: "Next Class",
-    value: "14:00",
-    description: "GED Social Studies",
-    icon: Clock,
-    color: "text-aubergine-500",
-    bgColor: "bg-aubergine-500/10",
-  },
-  {
-    title: "Exams Slated",
-    value: "2",
-    description: "In the next 7 days",
-    icon: GraduationCap,
-    color: "text-purple-500",
-    bgColor: "bg-purple-500/10",
-  },
-];
+interface DashStats { studentCount: number; classCount: number; attendanceRate: number; upcomingExamCount: number; }
+interface DashboardData {
+  stats: DashStats;
+  classes: { id: string; name: string; level: string; room: string; students: number; progress: number }[];
+  attendanceData: { day: string; rate: number }[];
+  upcomingExams: { id: string | number; title: string; date: string; time: string; class: string }[];
+  recentPerformance: { id: string | number; student: string; class: string; score: string; trend: string }[];
+}
 
-// IDs aligned with TeacherClasses & TeacherTimetable (string IDs: c1–c4)
-const assignedClasses = [
-  { id: "c1", name: "GED Social Studies", level: "GED", room: "Room 102", students: 24, progress: 75 },
-  { id: "c2", name: "Pre-GED English", level: "Pre-GED", room: "Room 105", students: 18, progress: 60 },
-  { id: "c3", name: "GED Math Prep", level: "GED", room: "Lab A", students: 12, progress: 90 },
-  { id: "c4", name: "History of SEA", level: "Pre-GED", room: "Room 102", students: 22, progress: 45 },
-];
-
-const attendanceData = [
-  { day: 'Mon', rate: 95 },
-  { day: 'Tue', rate: 92 },
-  { day: 'Wed', rate: 88 },
-  { day: 'Thu', rate: 96 },
-  { day: 'Fri', rate: 94 },
-];
-
-const upcomingExams = [
-  { id: 1, title: "Social Studies Final", date: "May 15", time: "09:00", class: "GED Social Studies" },
-  { id: 2, title: "English Proficiency", date: "May 18", time: "11:30", class: "Pre-GED English" },
-];
-
-const recentPerformance = [
-  { id: 1, student: "Min Khant", class: "GED Social Studies", score: "88%", trend: "up" },
-  { id: 2, student: "Zun Pwint", class: "Pre-GED English", score: "72%", trend: "down" },
-  { id: 3, student: "Aung Ko", class: "GED Social Studies", score: "94%", trend: "up" },
-  { id: 4, student: "May Mon", class: "Pre-GED English", score: "81%", trend: "stable" },
-];
+const MOCK_DASHBOARD: DashboardData = {
+  stats: { studentCount: 56, classCount: 4, attendanceRate: 94.2, upcomingExamCount: 2 },
+  classes: [
+    { id: "c1", name: "GED Social Studies", level: "GED", room: "Room 102", students: 24, progress: 75 },
+    { id: "c2", name: "Pre-GED English", level: "Pre-GED", room: "Room 105", students: 18, progress: 60 },
+    { id: "c3", name: "GED Math Prep", level: "GED", room: "Lab A", students: 12, progress: 90 },
+    { id: "c4", name: "History of SEA", level: "Pre-GED", room: "Room 102", students: 22, progress: 45 },
+  ],
+  attendanceData: [
+    { day: 'Mon', rate: 95 }, { day: 'Tue', rate: 92 }, { day: 'Wed', rate: 88 },
+    { day: 'Thu', rate: 96 }, { day: 'Fri', rate: 94 },
+  ],
+  upcomingExams: [
+    { id: 1, title: "Social Studies Final", date: "May 15", time: "09:00", class: "GED Social Studies" },
+    { id: 2, title: "English Proficiency", date: "May 18", time: "11:30", class: "Pre-GED English" },
+  ],
+  recentPerformance: [
+    { id: 1, student: "Min Khant", class: "GED Social Studies", score: "88%", trend: "up" },
+    { id: 2, student: "Zun Pwint", class: "Pre-GED English", score: "72%", trend: "down" },
+    { id: 3, student: "Aung Ko", class: "GED Social Studies", score: "94%", trend: "up" },
+    { id: 4, student: "May Mon", class: "Pre-GED English", score: "81%", trend: "stable" },
+  ],
+};
 
 export default function TeacherDashboard() {
   const navigate = useNavigate();
+  const [data, setData] = useState<DashboardData>({
+    stats: { studentCount: 0, classCount: 0, attendanceRate: 0, upcomingExamCount: 0 },
+    classes: [], attendanceData: [], upcomingExams: [], recentPerformance: [],
+  });
+
+  useEffect(() => {
+    fetchOrMock<DashboardData>('/api/teacher/dashboard', MOCK_DASHBOARD, {
+      emptyWhen: (d) => !d?.classes?.length,
+    }).then((r) => setData(r.data));
+  }, []);
+
+  const { stats, classes: assignedClasses, attendanceData, upcomingExams, recentPerformance } = data;
+  const teacherStats = [
+    { title: "My Students", value: String(stats.studentCount), description: `Across ${stats.classCount} classes`, icon: Users, color: "text-blue-500", bgColor: "bg-blue-500/10" },
+    { title: "Attendance", value: `${stats.attendanceRate}%`, description: "Average this period", icon: CheckCircle2, color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
+    { title: "My Classes", value: String(stats.classCount), description: "Assigned to you", icon: BookOpen, color: "text-aubergine-500", bgColor: "bg-aubergine-500/10" },
+    { title: "Exams Slated", value: String(stats.upcomingExamCount), description: "Upcoming exams", icon: GraduationCap, color: "text-purple-500", bgColor: "bg-purple-500/10" },
+  ];
 
   return (
     <div className="space-y-8 max-w-[1600px] mx-auto">

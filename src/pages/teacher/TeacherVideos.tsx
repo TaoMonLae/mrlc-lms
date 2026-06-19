@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { fetchOrMock } from '../../lib/api';
 import { Link } from 'react-router-dom';
 import { Video, Plus, Search, Play, Clock, Edit2, Trash2, MoreVertical, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -82,8 +83,13 @@ function formatDuration(seconds?: number): string {
 export default function TeacherVideos() {
   const { user } = useUser();
   const [searchTerm, setSearchTerm] = useState('');
+  const [videos, setVideos] = useState<VideoLesson[]>([]);
 
-  const filtered = MOCK_VIDEOS.filter(v =>
+  useEffect(() => {
+    fetchOrMock<VideoLesson[]>('/api/videos', MOCK_VIDEOS).then((r) => setVideos(r.data));
+  }, []);
+
+  const filtered = videos.filter(v =>
     v.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (v.description || '').toLowerCase().includes(searchTerm.toLowerCase())
   );

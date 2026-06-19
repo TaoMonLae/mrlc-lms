@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,8 +19,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { fetchOrMock } from "../../lib/api";
 
-const students = [
+interface RosterStudent { id: string; name: string; studentId: string; photo?: string | null; }
+
+const MOCK_STUDENTS: RosterStudent[] = [
   { id: "s1", name: "Min Khant", studentId: "STU-2023-001", photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Min" },
   { id: "s2", name: "Zun Pwint", studentId: "STU-2023-002", photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Zun" },
   { id: "s3", name: "Aung Ko", studentId: "STU-2023-003", photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Aung" },
@@ -29,16 +32,35 @@ const students = [
   { id: "s6", name: "Khin Myat", studentId: "STU-2023-006", photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Khin" },
 ];
 
-export default function TeacherAttendance() {
-  const CLASS_OPTIONS = [
-    { value: 'c1', label: 'GED Social Studies' },
-    { value: 'c2', label: 'Pre-GED English' },
-    { value: 'c3', label: 'GED Math Prep' },
-  ];
+const MOCK_CLASS_OPTIONS = [
+  { value: 'c1', label: 'GED Social Studies' },
+  { value: 'c2', label: 'Pre-GED English' },
+  { value: 'c3', label: 'GED Math Prep' },
+];
 
-  const [selectedClass, setSelectedClass] = useState("c1");
+export default function TeacherAttendance() {
+  const [classOptions, setClassOptions] = useState<{ value: string; label: string }[]>([]);
+  const [selectedClass, setSelectedClass] = useState("");
+  const [students, setStudents] = useState<RosterStudent[]>([]);
   const [attendance, setAttendance] = useState<Record<string, 'present' | 'late' | 'absent' | 'excused'>>({});
   const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    fetchOrMock<{ id: string; name: string }[]>('/api/teacher/classes', MOCK_CLASS_OPTIONS.map((o) => ({ id: o.value, name: o.label })))
+      .then((r) => {
+        const opts = r.data.map((c) => ({ value: c.id, label: c.name }));
+        setClassOptions(opts);
+        setSelectedClass((prev) => prev || opts[0]?.value || "");
+      });
+  }, []);
+
+  useEffect(() => {
+    if (!selectedClass) return;
+    setAttendance({});
+    fetchOrMock<RosterStudent[]>(`/api/teacher/roster?classId=${selectedClass}`, MOCK_STUDENTS).then((r) => setStudents(r.data));
+  }, [selectedClass]);
+
+  const CLASS_OPTIONS = classOptions;
 
   const handleStatusChange = (studentId: string, status: 'present' | 'late' | 'absent' | 'excused') => {
     setAttendance(prev => ({ ...prev, [studentId]: status }));

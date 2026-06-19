@@ -1,11 +1,18 @@
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Users, BookOpen, Clock, CheckCircle2, GraduationCap, Calendar, ArrowRight, MoreHorizontal, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { fetchOrMock } from "../../lib/api";
 
-const assignedClasses = [
+interface TeacherClass {
+  id: string; name: string; level: string; room: string; students: number;
+  progress: number; schedule: string; nextLesson: string; attendance: string;
+}
+
+const MOCK_CLASSES: TeacherClass[] = [
   { 
     id: "c1", 
     name: "GED Social Studies", 
@@ -43,6 +50,12 @@ const assignedClasses = [
 
 export default function TeacherClasses() {
   const navigate = useNavigate();
+  const [assignedClasses, setAssignedClasses] = useState<TeacherClass[]>([]);
+
+  useEffect(() => {
+    fetchOrMock<TeacherClass[]>('/api/teacher/classes', MOCK_CLASSES).then((r) => setAssignedClasses(r.data));
+  }, []);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

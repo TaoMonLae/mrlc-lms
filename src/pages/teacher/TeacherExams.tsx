@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,8 +18,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { fetchOrMock } from "../../lib/api";
 
-const teacherExams = [
+interface TeacherExam {
+  id: string; title: string; class: string; date: string; duration: string;
+  type: string; status: string; submissions: number; total: number; avg?: string;
+}
+
+const MOCK_EXAMS: TeacherExam[] = [
   { id: "e1", title: "Social Studies Mid-Term", class: "GED Social Studies", date: "May 15, 2024", duration: "120m", type: "Digital", status: "UPCOMING", submissions: 0, total: 24 },
   { id: "e2", title: "English Essay Review", class: "Pre-GED English", date: "May 01, 2024", duration: "60m", type: "Handwritten", status: "NEEDS_GRADING", submissions: 18, total: 18 },
   { id: "e3", title: "Weekly Math Quiz #4", class: "GED Math Prep", date: "Apr 28, 2024", duration: "30m", type: "Digital", status: "GRADED", submissions: 12, total: 12, avg: "85%" },
@@ -29,8 +35,13 @@ const teacherExams = [
 export default function TeacherExams() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  const [teacherExams, setTeacherExams] = useState<TeacherExam[]>([]);
 
-  const filteredExams = teacherExams.filter(e => 
+  useEffect(() => {
+    fetchOrMock<TeacherExam[]>('/api/teacher/exams', MOCK_EXAMS).then((r) => setTeacherExams(r.data));
+  }, []);
+
+  const filteredExams = teacherExams.filter(e =>
     e.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     e.class.toLowerCase().includes(searchTerm.toLowerCase())
   );

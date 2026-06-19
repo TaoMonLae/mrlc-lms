@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,19 +20,22 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { fetchOrMock } from "../../lib/api";
 
-const classInfo = {
-  id: "c1",
-  name: "GED Social Studies",
-  level: "GED",
-  room: "Room 102",
-  teacher: "John Smith",
-  totalStudents: 24,
-  academicYear: "2024-2025",
-  status: "ACTIVE"
+interface ClassInfo {
+  id: string; name: string; level: string; room: string; teacher: string;
+  totalStudents: number; academicYear: string; status: string;
+}
+interface ClassStudent {
+  id: string; name: string; studentId: string; attendance: string; lastExam: string; status: string;
+}
+
+const MOCK_CLASS_INFO: ClassInfo = {
+  id: "c1", name: "GED Social Studies", level: "GED", room: "Room 102",
+  teacher: "John Smith", totalStudents: 24, academicYear: "2024-2025", status: "ACTIVE",
 };
 
-const students = [
+const MOCK_STUDENTS: ClassStudent[] = [
   { id: "s1", name: "Min Khant", studentId: "STU-2023-001", attendance: "98%", lastExam: "85/100", status: "ACTIVE" },
   { id: "s2", name: "Zun Pwint", studentId: "STU-2023-002", attendance: "85%", lastExam: "72/100", status: "ACTIVE" },
   { id: "s3", name: "Aung Ko", studentId: "STU-2023-003", attendance: "95%", lastExam: "94/100", status: "ACTIVE" },
@@ -44,8 +47,19 @@ export default function ClassDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  const [classInfo, setClassInfo] = useState<ClassInfo>(MOCK_CLASS_INFO);
+  const [students, setStudents] = useState<ClassStudent[]>([]);
 
-  const filteredStudents = students.filter(s => 
+  useEffect(() => {
+    if (!id) return;
+    fetchOrMock<{ classInfo: ClassInfo; students: ClassStudent[] }>(
+      `/api/teacher/classes/${id}`,
+      { classInfo: MOCK_CLASS_INFO, students: MOCK_STUDENTS },
+      { emptyWhen: (d) => !d?.classInfo },
+    ).then((r) => { setClassInfo(r.data.classInfo); setStudents(r.data.students); });
+  }, [id]);
+
+  const filteredStudents = students.filter(s =>
     s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.studentId.toLowerCase().includes(searchTerm.toLowerCase())
   );
