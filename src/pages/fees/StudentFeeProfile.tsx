@@ -6,10 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { formatMoney } from '../../lib/locale';
+import { useSettings } from '../../providers/SettingsProvider';
 
 export default function StudentFeeProfile() {
   const { id } = useParams();
   const { hasPermission } = usePermissions();
+  const { systemSettings } = useSettings();
   const [payments, setPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [student, setStudent] = useState<any>(null);
@@ -52,6 +55,7 @@ export default function StudentFeeProfile() {
   const totalDue = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
   const totalPaid = payments.filter(isPaid).reduce((sum, p) => sum + (p.amount || 0), 0);
   const balance = Math.max(0, totalDue - totalPaid);
+  const currency = payments.find((p) => p.currency)?.currency || systemSettings.currency || 'MYR';
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-10">
@@ -84,16 +88,16 @@ export default function StudentFeeProfile() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised p-6 rounded-xl shadow-sm text-center">
           <p className="text-sm font-medium text-slate-500 dark:text-slate-300">Total Due</p>
-          <p className="text-3xl font-bold text-slate-900 dark:text-white mt-2">MYR {totalDue.toLocaleString()}</p>
+          <p className="text-3xl font-bold text-slate-900 dark:text-white mt-2">{formatMoney(totalDue, currency)}</p>
         </div>
         <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised p-6 rounded-xl shadow-sm text-center">
            <p className="text-sm font-medium text-slate-500 dark:text-slate-300">Total Paid</p>
-           <p className="text-3xl font-bold text-slate-900 dark:text-white mt-2">MYR {totalPaid.toLocaleString()}</p>
+           <p className="text-3xl font-bold text-slate-900 dark:text-white mt-2">{formatMoney(totalPaid, currency)}</p>
         </div>
         <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised p-6 rounded-xl shadow-sm text-center">
            <p className="text-sm font-medium text-slate-500 dark:text-slate-300">Outstanding Balance</p>
            <p className={`text-3xl font-bold mt-2 ${balance === 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-             MYR {balance.toLocaleString()}
+             {formatMoney(balance, currency)}
            </p>
         </div>
       </div>
@@ -110,7 +114,7 @@ export default function StudentFeeProfile() {
                 <th className="px-6 py-4 font-medium">Receipt No</th>
                 <th className="px-6 py-4 font-medium">Description</th>
                 <th className="px-6 py-4 font-medium">Method</th>
-                <th className="px-6 py-4 font-medium text-right">Amount (MYR)</th>
+                <th className="px-6 py-4 font-medium text-right">Amount</th>
                 <th className="px-6 py-4 font-medium text-right">Actions</th>
               </tr>
             </thead>
@@ -131,7 +135,7 @@ export default function StudentFeeProfile() {
                     {payment.paymentMethod ? payment.paymentMethod.replace('_', ' ') : 'N/A'}
                   </td>
                   <td className="px-6 py-4 font-medium text-slate-900 dark:text-white text-right">
-                    {payment.amount ? payment.amount.toLocaleString() : '0'}
+                    {formatMoney(payment.amount || 0, payment.currency || currency)}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <Button variant="ghost" size="sm" render={<Link to={`/fees/receipts/${payment.id}`} />} nativeButton={false}>

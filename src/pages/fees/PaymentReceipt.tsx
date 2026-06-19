@@ -7,11 +7,12 @@ import { usePermissions } from '../../lib/permissions';
 import { useSettings } from '../../providers/SettingsProvider';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { formatMoney } from '../../lib/locale';
 
 export default function PaymentReceipt() {
   const { id } = useParams();
   const { hasPermission } = usePermissions();
-  const { schoolProfile, brandingSettings } = useSettings();
+  const { schoolProfile, brandingSettings, systemSettings } = useSettings();
   const [payment, setPayment] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -20,17 +21,14 @@ export default function PaymentReceipt() {
       if (!id) return;
       try {
         const token = sessionStorage.getItem('auth_token');
-        const res = await fetch(`/api/fees`, {
+        const res = await fetch(`/api/fees/${id}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {
-          const fees = await res.json();
-          const paymentData = fees.find((f: any) => f.id === id);
-          if (paymentData) {
-            setPayment(paymentData);
-          } else {
-            toast.error('Payment not found');
-          }
+          setPayment(await res.json());
+        } else {
+          const body = await res.json().catch(() => ({}));
+          toast.error(body.error || 'Payment not found');
         }
       } catch (error) {
         console.error('Error fetching payment:', error);
@@ -118,7 +116,7 @@ export default function PaymentReceipt() {
                <h1 className="text-3xl font-bold text-slate-300 uppercase tracking-widest">RECEIPT</h1>
                <div className="mt-2 text-sm text-slate-600">
                  <p><span className="font-medium">No:</span> {payment.receiptNumber}</p>
-                 <p><span className="font-medium">Date:</span> {format(new Date(payment.paymentDate), 'dd MMM yyyy')}</p>
+                 <p><span className="font-medium">Date:</span> {format(new Date(payment.paymentDate || payment.paidDate || payment.createdAt), 'dd MMM yyyy')}</p>
                </div>
                {payment.status === 'VOIDED' && (
                  <div className="mt-2 border-2 border-red-500 text-red-500 px-3 py-1 font-bold text-lg inline-block uppercase tracking-wider transform -rotate-12">
@@ -133,12 +131,12 @@ export default function PaymentReceipt() {
             <div className="grid grid-cols-2 gap-4 text-sm">
                <div>
                   <p className="text-slate-500 mb-1">Received From</p>
-                  <p className="font-semibold text-slate-900 text-lg">{payment.studentName}</p>
+                  <p className="font-semibold text-slate-900 text-lg">{payment.studentName || 'Unknown Student'}</p>
                </div>
                <div className="text-right">
                   <p className="text-slate-500 mb-1">Student Details</p>
-                  <p className="font-medium text-slate-900">{payment.studentIdNumber}</p>
-                  <p className="text-slate-600">{payment.class}</p>
+                  <p className="font-medium text-slate-900">{payment.studentIdNumber || '—'}</p>
+                  <p className="text-slate-600">{payment.class || '—'}</p>
                </div>
             </div>
          </div>
@@ -154,16 +152,16 @@ export default function PaymentReceipt() {
                </thead>
                <tbody>
                   <tr className="border-b border-slate-100">
-                     <td className="py-4 px-4">{payment.paymentType}</td>
+                     <td className="py-4 px-4">{payment.paymentType || payment.description || 'Fee Payment'}</td>
                      <td className="py-4 px-4 text-right">
-                       {payment.currency} {payment.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                       {formatMoney(Number(payment.amount || 0), payment.currency || systemSettings.currency || 'MYR')}
                      </td>
                   </tr>
                   {/* Total Row */}
                   <tr className="bg-slate-50">
                      <td className="py-4 px-4 text-right font-bold text-slate-900">Total Paid</td>
                      <td className="py-4 px-4 text-right font-bold text-slate-900 text-lg">
-                       {payment.currency} {payment.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                       {formatMoney(Number(payment.amount || 0), payment.currency || systemSettings.currency || 'MYR')}
                      </td>
                   </tr>
                </tbody>
@@ -173,7 +171,7 @@ export default function PaymentReceipt() {
          <div className="grid grid-cols-2 gap-8 text-sm">
             <div>
                <h4 className="font-semibold text-slate-900 mb-2">Payment Info</h4>
-               <p className="text-slate-600"><span className="font-medium">Method:</span> {payment.paymentMethod.replace('_', ' ')}</p>
+               <p className="text-slate-600"><span className="font-medium">Method:</span> {(payment.paymentMethod || 'CASH').replace('_', ' ')}</p>
                {payment.notes && <p className="text-slate-600 mt-1"><span className="font-medium">Remarks:</span> {payment.notes}</p>}
                {payment.status === 'VOIDED' && <p className="text-red-500 mt-1"><span className="font-medium">Void Reason:</span> Error in amount</p>}
             </div>
@@ -181,7 +179,7 @@ export default function PaymentReceipt() {
             <div className="flex flex-col items-end justify-end pt-8">
                <div className="w-48 border-t border-slate-400 pt-2 text-center">
                   <p className="font-medium text-slate-900">Authorized Signature</p>
-                  <p className="text-slate-500 text-xs mt-1">Processed by: {payment.recordedBy}</p>
+                  <p className="text-slate-500 text-xs mt-1">Processed by: {payment.recordedBy || 'Finance Office'}</p>
                </div>
             </div>
          </div>

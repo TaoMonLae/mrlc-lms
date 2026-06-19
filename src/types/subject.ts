@@ -7,4 +7,8 @@ export interface Subject {
   description?: string;
   level: string;
   status: SubjectStatus;
+  _count?: {
+    teachers?: number;
+    exams?: number;
+  };
 }

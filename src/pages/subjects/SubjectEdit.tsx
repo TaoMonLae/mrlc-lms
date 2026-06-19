@@ -26,6 +26,7 @@ const subjectSchema = z.object({
 });
 
 type SubjectFormValues = z.infer<typeof subjectSchema>;
+const LEVEL_OPTIONS = ['Pre-GED', 'GED', 'Foundation', 'Intermediate', 'Advanced'];
 
 export default function SubjectEdit() {
   const { id } = useParams();
@@ -43,7 +44,7 @@ export default function SubjectEdit() {
     defaultValues: {
       name: '',
       code: '',
-      level: '',
+      level: 'GED',
       description: '',
       status: 'ACTIVE',
     }
@@ -51,15 +52,14 @@ export default function SubjectEdit() {
 
   useEffect(() => {
     const token = sessionStorage.getItem('auth_token');
-    fetch('/api/subjects', { headers: { Authorization: `Bearer ${token}` } })
-      .then((res) => (res.ok ? res.json() : []))
-      .then((subjects) => {
-        const subject = Array.isArray(subjects) ? subjects.find((item: any) => item.id === id) : null;
+    fetch(`/api/subjects/${id}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((subject) => {
         if (!subject) return;
         reset({
           name: subject.name || '',
           code: subject.code || '',
-          level: subject.level || '',
+          level: subject.level || 'GED',
           description: subject.description || '',
           status: subject.status || 'ACTIVE',
         });
@@ -69,12 +69,20 @@ export default function SubjectEdit() {
 
   const onSubmit = async (data: SubjectFormValues) => {
     try {
-      console.log('Subject update submitted:', data);
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`/api/subjects/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to update subject');
+      }
       toast.success('Subject details updated');
       navigate('/subjects'); 
-      // navigate(`/subjects/${id}`) if we have a detailed view for subject
-    } catch (error) {
-      toast.error('Failed to update subject');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update subject');
     }
   };
 
@@ -110,9 +118,9 @@ export default function SubjectEdit() {
                   <SelectValue placeholder="Select level" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Foundation">Foundation</SelectItem>
-                  <SelectItem value="Intermediate">Intermediate</SelectItem>
-                  <SelectItem value="Advanced">Advanced</SelectItem>
+                  {LEVEL_OPTIONS.map((level) => (
+                    <SelectItem key={level} value={level}>{level}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               {errors.level && <p className="text-xs text-red-500 font-medium">{errors.level.message}</p>}

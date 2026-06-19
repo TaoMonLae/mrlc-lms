@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { useSettings } from '../../providers/SettingsProvider';
 
 type StudentOption = {
   id: string;
@@ -25,8 +26,9 @@ type StudentOption = {
 };
 
 const getNextReceiptNumber = () => {
-   // In a real app, generate from backend.
-   return `RCP-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+   const now = new Date();
+   const stamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${now.getTime().toString().slice(-6)}`;
+   return `RCP-${stamp}`;
 };
 
 const paymentSchema = z.object({
@@ -44,6 +46,7 @@ type FormValues = z.infer<typeof paymentSchema>;
 
 export default function PaymentNew() {
   const navigate = useNavigate();
+  const { systemSettings } = useSettings();
   const [searchParams] = useSearchParams();
   const initialStudentId = searchParams.get('studentId') || '';
   const [students, setStudents] = useState<StudentOption[]>([]);
@@ -70,6 +73,7 @@ export default function PaymentNew() {
 
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth() + 1;
+  const currency = systemSettings.currency || 'MYR';
 
   const {
     register,
@@ -100,8 +104,7 @@ export default function PaymentNew() {
 
       const payload = {
         ...data,
-        feeType: paymentType,
-        description: paymentType,
+        paymentType,
       };
 
       const res = await fetch('/api/fees', {
@@ -153,11 +156,11 @@ export default function PaymentNew() {
             </div>
 
             <div className="space-y-2 text-slate-500 font-medium md:col-span-2">
-               <span className="text-sm">Currency: MYR (Malaysian Ringgit)</span>
+               <span className="text-sm">Currency: {currency}</span>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="amount">Amount (MYR) *</Label>
+              <Label htmlFor="amount">Amount ({currency}) *</Label>
               <Input id="amount" type="number" step="0.01" {...register('amount')} />
               {errors.amount && <p className="text-xs text-red-500 font-medium">{errors.amount.message}</p>}
             </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Filter, DollarSign, ArrowUpRight, CheckCircle2, AlertCircle, FileText, Download, User, Printer } from 'lucide-react';
+import { Search, DollarSign, ArrowUpRight, CheckCircle2, AlertCircle, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -13,9 +13,12 @@ import {
 } from '@/components/ui/select';
 import { usePermissions } from '../../lib/permissions';
 import { format } from 'date-fns';
+import { formatMoney } from '../../lib/locale';
+import { useSettings } from '../../providers/SettingsProvider';
 
 export default function FeesDashboard() {
   const { hasPermission } = usePermissions();
+  const { systemSettings } = useSettings();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [classFilter, setClassFilter] = useState('ALL');
@@ -37,6 +40,7 @@ export default function FeesDashboard() {
             totalDue: f.amount,
             totalPaid: f.status === 'PAID' ? f.amount : 0,
             balance: f.status === 'PAID' ? 0 : f.amount,
+            currency: f.currency,
             status: f.status ?? 'UNPAID',
             lastPaymentDate: f.paidDate ?? null,
           })));
@@ -62,6 +66,7 @@ export default function FeesDashboard() {
     ? Math.round((totalCollected / (totalCollected + totalOutstanding)) * 100)
     : 0;
   const classOptions = Array.from(new Set(fees.map((f) => f.class).filter((className) => className && className !== '—')));
+  const currency = fees.find((f) => f.currency)?.currency || systemSettings.currency || 'MYR';
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -87,11 +92,11 @@ export default function FeesDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised p-6 rounded-xl shadow-sm text-center">
           <p className="text-sm font-medium text-slate-500 dark:text-slate-300">Total Collected</p>
-          <p className="text-3xl font-bold text-slate-900 dark:text-white mt-2">MYR {totalCollected.toLocaleString()}</p>
+          <p className="text-3xl font-bold text-slate-900 dark:text-white mt-2">{formatMoney(totalCollected, currency)}</p>
         </div>
         <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised p-6 rounded-xl shadow-sm text-center">
            <p className="text-sm font-medium text-slate-500 dark:text-slate-300">Total Outstanding</p>
-           <p className="text-3xl font-bold text-slate-900 dark:text-white mt-2">MYR {totalOutstanding.toLocaleString()}</p>
+           <p className="text-3xl font-bold text-slate-900 dark:text-white mt-2">{formatMoney(totalOutstanding, currency)}</p>
         </div>
         <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised p-6 rounded-xl shadow-sm text-center">
            <p className="text-sm font-medium text-slate-500 dark:text-slate-300">Collection Rate</p>
@@ -181,10 +186,10 @@ export default function FeesDashboard() {
                     {fee.status === 'UNPAID' && <Badge className="bg-red-100 text-red-800 hover:bg-red-100 border-0 dark:bg-red-900/30 dark:text-red-400 py-0.5"><AlertCircle className="h-3 w-3 mr-1"/> Unpaid</Badge>}
                   </td>
                   <td className="px-6 py-4 font-medium text-slate-900 dark:text-white text-right">
-                    {fee.totalDue.toLocaleString()}
+                    {formatMoney(fee.totalDue, fee.currency || currency)}
                   </td>
                   <td className="px-6 py-4 font-medium text-slate-900 dark:text-white text-right">
-                    {fee.balance.toLocaleString()}
+                    {formatMoney(fee.balance, fee.currency || currency)}
                   </td>
                   <td className="px-6 py-4 text-slate-500 dark:text-slate-300">
                     {fee.lastPaymentDate ? format(new Date(fee.lastPaymentDate), 'MMM d, yyyy') : '-'}

@@ -8,7 +8,7 @@ import { usePermissions } from "@/src/lib/permissions";
 import { toast } from "sonner";
 
 interface DashboardData {
-  stats: { students: number; classes: number; openCases: number; attendanceRate: number | null };
+  stats: { students: number; classes: number; openCases: number; attendanceRate: number | null; attendanceRecords?: number };
   announcements: { id: string; title: string; category: string; pinned: boolean; date: string }[];
   schedule: { time: string; subject: string; subjectColor: string; class: string; teacher: string; room: string }[];
   recentCases: { id: string; name: string; detail: string; status: string; time: string }[];
@@ -20,7 +20,7 @@ const formatDate = (value: string) => {
 };
 
 export default function DashboardPage() {
-  const { isStudent } = usePermissions();
+  const { isStudent, hasPermission, isAdmin } = usePermissions();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -68,7 +68,7 @@ export default function DashboardPage() {
     {
       title: "Daily Attendance",
       value: loading ? "--" : (data?.stats.attendanceRate != null ? `${data.stats.attendanceRate}%` : "—"),
-      description: "Average this week",
+      description: data?.stats.attendanceRecords ? `${data.stats.attendanceRecords} records today` : "No records today",
       icon: TrendingUp,
       color: "text-accent-green",
       chip: "bg-accent-green/10",
@@ -97,12 +97,16 @@ export default function DashboardPage() {
           <p className="text-sm text-slate-500 mt-1">Overview of Mon Refugee Learning Centre - GED School</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" size="sm" className="bg-white border-slate-200 text-slate-700 shadow-sm hover:bg-slate-50 px-4 py-2 font-semibold text-xs" render={<Link to="/reports" />} nativeButton={false}>
-            Export Reports
-          </Button>
-          <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm px-4 py-2 font-semibold text-xs" render={<Link to="/students/new" />} nativeButton={false}>
-            + New Registration
-          </Button>
+          {hasPermission("view_reports") && (
+            <Button variant="outline" size="sm" className="bg-white border-slate-200 text-slate-700 shadow-sm hover:bg-slate-50 px-4 py-2 font-semibold text-xs" render={<Link to="/reports" />} nativeButton={false}>
+              Export Reports
+            </Button>
+          )}
+          {isAdmin && (
+            <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm px-4 py-2 font-semibold text-xs" render={<Link to="/students/new" />} nativeButton={false}>
+              + New Registration
+            </Button>
+          )}
         </div>
       </div>
 

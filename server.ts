@@ -28,6 +28,8 @@ const BRANDING_ASSET_DIR = process.env.BRANDING_ASSET_DIR || path.join(process.c
 fs.mkdirSync(BRANDING_ASSET_DIR, { recursive: true });
 const PROFILE_PHOTO_DIR = process.env.PROFILE_PHOTO_DIR || path.join(process.cwd(), "data", "profile-photos");
 fs.mkdirSync(PROFILE_PHOTO_DIR, { recursive: true });
+const LIBRARY_FILE_DIR = process.env.LIBRARY_FILE_DIR || path.join(process.cwd(), "data", "library");
+fs.mkdirSync(LIBRARY_FILE_DIR, { recursive: true });
 
 const ebookUpload = multer({
   storage: multer.diskStorage({
@@ -79,6 +81,23 @@ const profilePhotoUpload = multer({
   }),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: imageUploadFilter,
+});
+
+const libraryFileUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, LIBRARY_FILE_DIR),
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase();
+      cb(null, `${crypto.randomUUID()}${ext}`);
+    },
+  }),
+  limits: { fileSize: 50 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = new Set([".pdf", ".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx", ".png", ".jpg", ".jpeg", ".webp", ".gif", ".txt"]);
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowed.has(ext)) cb(null, true);
+    else cb(new Error("Only PDF, Office documents, images, and text files are allowed"));
+  },
 });
 
 // ─── Database backups ──────────────────────────────────────────────────────────
@@ -380,6 +399,12 @@ const schemas = {
     emergencyContact: optStr, notes: optStr,
     classId: optStr, gender: optStr, status: optStr,
   }),
+  subjectCreate: z.object({
+    name: reqStr, code: reqStr, level: optStr, description: optStr, status: optStr,
+  }),
+  subjectUpdate: z.object({
+    name: optStr, code: optStr, level: optStr, description: optStr, status: optStr,
+  }),
   libraryUpdate: z.object({
     title: optStr, type: optStr, description: optStr, visibility: optStr,
     classId: optStr, subjectId: optStr, externalUrl: optStr,
@@ -479,6 +504,10 @@ async function startServer() {
     immutable: isProduction,
   }));
   app.use("/uploads/profile-photos", express.static(PROFILE_PHOTO_DIR, {
+    maxAge: isProduction ? "30d" : 0,
+    immutable: isProduction,
+  }));
+  app.use("/uploads/library", express.static(LIBRARY_FILE_DIR, {
     maxAge: isProduction ? "30d" : 0,
     immutable: isProduction,
   }));
@@ -1192,10 +1221,45 @@ async function startServer() {
       return;
     }
     try {
-      const subjects = await prisma.subject.findMany();
+      const subjects = await prisma.subject.findMany({
+        include: { _count: { select: { teachers: true, exams: true } } },
+        orderBy: { name: "asc" },
+      });
       res.json(subjects);
     } catch (err) {
       logger.error("Error fetching subjects:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/subjects", authMiddleware, validate(schemas.subjectCreate), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { name, code, level, description, status } = req.body;
+    try {
+      const subject = await prisma.subject.create({
+        data: {
+          name,
+          code,
+          level: level || "GED",
+          description: description || null,
+          status: status || "ACTIVE",
+        },
+      });
+      await createAuditLog(
+        jwtUser.userId, jwtUser.email, "CREATE", "SUBJECT", subject.id,
+        `Subject '${name}' created.`, req.ip, req.headers["user-agent"] || null, "SUCCESS"
+      );
+      res.status(201).json(subject);
+    } catch (err: any) {
+      logger.error("Error creating subject:", err);
+      if (err.code === "P2002") {
+        res.status(400).json({ error: "Subject code already exists" });
+        return;
+      }
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
@@ -1222,6 +1286,44 @@ async function startServer() {
       res.json(subject);
     } catch (err) {
       logger.error("Error fetching subject:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.put("/api/subjects/:id", authMiddleware, validate(schemas.subjectUpdate), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { id } = req.params;
+    const { name, code, level, description, status } = req.body;
+    try {
+      const subject = await prisma.subject.update({
+        where: { id },
+        data: {
+          ...(name !== undefined ? { name } : {}),
+          ...(code !== undefined ? { code } : {}),
+          ...(level !== undefined ? { level: level || "GED" } : {}),
+          ...(description !== undefined ? { description: description || null } : {}),
+          ...(status !== undefined ? { status: status || "ACTIVE" } : {}),
+        },
+      });
+      await createAuditLog(
+        jwtUser.userId, jwtUser.email, "UPDATE", "SUBJECT", id,
+        `Subject '${subject.name}' updated.`, req.ip, req.headers["user-agent"] || null, "SUCCESS"
+      );
+      res.json(subject);
+    } catch (err: any) {
+      logger.error("Error updating subject:", err);
+      if (err.code === "P2025") {
+        res.status(404).json({ error: "Subject not found" });
+        return;
+      }
+      if (err.code === "P2002") {
+        res.status(400).json({ error: "Subject code already exists" });
+        return;
+      }
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
@@ -1399,6 +1501,17 @@ async function startServer() {
   });
 
   // ── Library API ─────────────────────────────────────────────────────────────
+  const uploadLibraryFile = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    libraryFileUpload.single("file")(req, res, (err: any) => {
+      if (!err) return next();
+      const message =
+        err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE"
+          ? "Library files must be 50 MB or smaller"
+          : err.message || "Upload failed";
+      res.status(400).json({ error: message });
+    });
+  };
+
   app.get("/api/library", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
@@ -1419,6 +1532,25 @@ async function startServer() {
       logger.error("Error fetching library resources:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
+  });
+
+  app.post("/api/library/files", authMiddleware, uploadLibraryFile, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const file = (req as any).file as Express.Multer.File | undefined;
+    if (!file) {
+      res.status(400).json({ error: "File is required" });
+      return;
+    }
+    res.json({
+      url: `/uploads/library/${file.filename}`,
+      originalName: file.originalname,
+      size: file.size,
+      mimeType: file.mimetype,
+    });
   });
 
   app.post("/api/library", authMiddleware, validate(schemas.library), async (req, res) => {
@@ -2435,9 +2567,28 @@ async function startServer() {
   });
 
   // ── Fees API ────────────────────────────────────────────────────────────────
+  const feeReceiptPayload = (fee: any, fallbackCurrency = "MYR") => {
+    const studentUser = fee.student?.user;
+    const studentName = `${studentUser?.firstName ?? ""} ${studentUser?.lastName ?? ""}`.trim() || "Unknown";
+    const paidDate = fee.paidDate ?? fee.createdAt;
+
+    return {
+      ...fee,
+      currency: fee.currency || fallbackCurrency,
+      paymentDate: paidDate,
+      paymentType: fee.description || "Fee Payment",
+      studentName,
+      studentIdNumber: fee.student?.studentCode ?? "—",
+      class: fee.student?.class?.name ?? fee.student?.classId ?? "—",
+      recordedBy: "Finance Office",
+    };
+  };
+
   app.get("/api/fees", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
+      const profile = await prisma.schoolProfile.findFirst();
+      const fallbackCurrency = profile?.currency || "MYR";
       if (jwtUser.role === "STUDENT") {
         const student = await prisma.student.findUnique({
           where: { userId: jwtUser.userId }
@@ -2450,15 +2601,42 @@ async function startServer() {
           where: { studentId: student.id },
           include: { student: { include: { user: true, class: true } } }
         });
-        res.json(fees);
+        res.json(fees.map((fee) => feeReceiptPayload(fee, fallbackCurrency)));
       } else {
         const fees = await prisma.feePayment.findMany({
           include: { student: { include: { user: true, class: true } } }
         });
-        res.json(fees);
+        res.json(fees.map((fee) => feeReceiptPayload(fee, fallbackCurrency)));
       }
     } catch (err) {
       logger.error("Error fetching fees:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/fees/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { id } = req.params;
+    try {
+      const fee = await prisma.feePayment.findUnique({
+        where: { id },
+        include: { student: { include: { user: true, class: true } } }
+      });
+      const profile = await prisma.schoolProfile.findFirst();
+      if (!fee) {
+        res.status(404).json({ error: "Fee receipt not found" });
+        return;
+      }
+      if (jwtUser.role === "STUDENT") {
+        const student = await prisma.student.findUnique({ where: { userId: jwtUser.userId } });
+        if (!student || fee.studentId !== student.id) {
+          res.status(403).json({ error: "Forbidden" });
+          return;
+        }
+      }
+      res.json(feeReceiptPayload(fee, profile?.currency || "MYR"));
+    } catch (err) {
+      logger.error("Error fetching fee receipt:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
@@ -2479,10 +2657,12 @@ async function startServer() {
       return;
     }
     try {
+      const profile = await prisma.schoolProfile.findFirst();
       const fee = await prisma.feePayment.create({
         data: {
           studentId,
           amount: Number(amount),
+          currency: profile?.currency || "MYR",
           description: paymentType || "Tuition Fee",
           paymentMethod: paymentMethod || "CASH",
           paidDate: paymentDate ? new Date(paymentDate) : new Date(),
@@ -2491,7 +2671,7 @@ async function startServer() {
           receiptNumber: receiptNumber || `RCP-${Date.now()}`,
           notes,
         },
-        include: { student: { include: { user: true } } }
+        include: { student: { include: { user: true, class: true } } }
       });
 
       await createAuditLog(
@@ -2506,7 +2686,7 @@ async function startServer() {
         "SUCCESS"
       );
 
-      res.status(201).json(fee);
+      res.status(201).json(feeReceiptPayload(fee, profile?.currency || "MYR"));
     } catch (err) {
       logger.error("Error creating fee payment:", err);
       res.status(500).json({ error: "Internal Server Error" });
@@ -2881,10 +3061,12 @@ async function startServer() {
         name: profile?.name || null,
         logoUrl: profile?.logoUrl || null,
         primaryColor: profile?.primaryColor || null,
+        contactEmail: profile?.contactEmail || null,
+        contactPhone: profile?.contactPhone || null,
       });
     } catch (err) {
       logger.error("Error fetching public branding:", err);
-      res.json({ name: null, logoUrl: null, primaryColor: null });
+      res.json({ name: null, logoUrl: null, primaryColor: null, contactEmail: null, contactPhone: null });
     }
   });
 
@@ -2964,9 +3146,10 @@ async function startServer() {
   // ── Data Export (CSV / JSON) ─────────────────────────────────────────────────
   const toCsv = (rows: Record<string, any>[]): string => {
     if (!rows.length) return "";
-    const headers = Array.from(
-      rows.reduce((set, row) => { Object.keys(row).forEach(k => set.add(k)); return set; }, new Set<string>())
-    );
+    const headers = Array.from(rows.reduce<Set<string>>((set, row) => {
+      Object.keys(row).forEach((key) => set.add(key));
+      return set;
+    }, new Set<string>()));
     const escape = (val: any) => {
       if (val === null || val === undefined) return "";
       const s = val instanceof Date ? val.toISOString() : String(val);
@@ -3001,10 +3184,14 @@ async function startServer() {
       title: e.title, type: e.type, date: e.date, class: e.class?.name ?? "", subject: e.subject?.name ?? "",
       totalMarks: e.totalMarks ?? "", durationMinutes: e.durationMinutes ?? "",
     })),
-    fees: async () => (await prisma.feePayment.findMany({ include: { student: { include: { user: true } } } })).map(f => ({
-      receiptNumber: f.receiptNumber ?? "", student: exFullName(f.student?.user), amount: f.amount, currency: f.currency,
-      status: f.status, dueDate: f.dueDate, paidDate: f.paidDate ?? "", paymentMethod: f.paymentMethod ?? "", description: f.description ?? "",
-    })),
+    fees: async () => {
+      const profile = await prisma.schoolProfile.findFirst();
+      const fallbackCurrency = profile?.currency || "MYR";
+      return (await prisma.feePayment.findMany({ include: { student: { include: { user: true } } } })).map(f => ({
+        receiptNumber: f.receiptNumber ?? "", student: exFullName(f.student?.user), amount: f.amount, currency: f.currency || fallbackCurrency,
+        status: f.status, dueDate: f.dueDate, paidDate: f.paidDate ?? "", paymentMethod: f.paymentMethod ?? "", description: f.description ?? "",
+      }));
+    },
     library: async () => (await prisma.libraryResource.findMany()).map(r => ({
       title: r.title, author: r.author ?? "", isbn: r.isbn ?? "", type: r.type,
       totalCopies: r.totalCopies, availableCopies: r.availableCopies, visibility: r.visibility ?? "",
@@ -3406,15 +3593,40 @@ async function startServer() {
     };
 
   // Lightweight KPI summary for the Reports dashboard
-  app.get("/api/reports/summary", authMiddleware, reportRole(["ADMIN", "ACCOUNTANT", "CASE_WORKER"]), async (_req, res) => {
+  app.get("/api/reports/summary", authMiddleware, reportRole(["ADMIN", "TEACHER", "ACCOUNTANT", "CASE_WORKER"]), async (_req, res) => {
     try {
-      const [students, classes, exams, openCases] = await Promise.all([
+      const now = new Date();
+      const todayStart = new Date(now);
+      todayStart.setHours(0, 0, 0, 0);
+      const tomorrowStart = new Date(todayStart);
+      tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+
+      const [students, classes, exams, openCases, attendance, fees, monthlyFees] = await Promise.all([
         prisma.student.count(),
         prisma.class.count(),
         prisma.exam.count(),
         prisma.caseRecord.count({ where: { status: { in: ["OPEN", "IN_PROGRESS"] } } }),
+        prisma.attendance.findMany({ where: { date: { gte: todayStart, lt: tomorrowStart } }, select: { status: true } }),
+        prisma.feePayment.findMany({ select: { amount: true, status: true } }),
+        prisma.feePayment.findMany({
+          where: { status: "PAID", paidDate: { gte: todayStart, lt: tomorrowStart } },
+          select: { amount: true },
+        }),
       ]);
-      res.json({ students, classes, exams, openCases });
+      const present = attendance.filter(a => a.status === "PRESENT" || a.status === "LATE").length;
+      const paid = fees.filter(f => f.status === "PAID").reduce((sum, f) => sum + f.amount, 0);
+      const expected = fees.reduce((sum, f) => sum + f.amount, 0);
+      res.json({
+        students,
+        classes,
+        exams,
+        openCases,
+        attendanceRecords: attendance.length,
+        attendanceRate: attendance.length ? Math.round((present / attendance.length) * 100) : null,
+        feePayments: fees.length,
+        feeCollectionRate: expected ? Math.round((paid / expected) * 100) : null,
+        todaysFeeCollection: monthlyFees.reduce((sum, f) => sum + f.amount, 0),
+      });
     } catch (err) {
       logger.error("Error building report summary:", err);
       res.status(500).json({ error: "Internal Server Error" });
@@ -3425,14 +3637,17 @@ async function startServer() {
   app.get("/api/dashboard", authMiddleware, reportRole(["ADMIN", "TEACHER", "STAFF", "ACCOUNTANT", "CASE_WORKER"]), async (_req, res) => {
     try {
       const now = new Date();
-      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const todayStart = new Date(now);
+      todayStart.setHours(0, 0, 0, 0);
+      const tomorrowStart = new Date(todayStart);
+      tomorrowStart.setDate(tomorrowStart.getDate() + 1);
       const dayName = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][now.getDay()];
 
-      const [students, classes, openCases, weekAttendance, announcements, todaySchedule, recentCases] = await Promise.all([
+      const [students, classes, openCases, todayAttendance, announcements, todaySchedule, recentCases] = await Promise.all([
         prisma.student.count(),
         prisma.class.count(),
         prisma.caseRecord.count({ where: { status: { in: ["OPEN", "IN_PROGRESS"] } } }),
-        prisma.attendance.findMany({ where: { date: { gte: weekAgo } }, select: { status: true } }),
+        prisma.attendance.findMany({ where: { date: { gte: todayStart, lt: tomorrowStart } }, select: { status: true } }),
         prisma.announcement.findMany({
           where: { status: "ACTIVE" },
           orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
@@ -3446,13 +3661,13 @@ async function startServer() {
         }),
       ]);
 
-      const presentCount = weekAttendance.filter(a => a.status === "PRESENT" || a.status === "LATE").length;
-      const attendanceRate = weekAttendance.length > 0
-        ? Math.round((presentCount / weekAttendance.length) * 100)
+      const presentCount = todayAttendance.filter(a => a.status === "PRESENT" || a.status === "LATE").length;
+      const attendanceRate = todayAttendance.length > 0
+        ? Math.round((presentCount / todayAttendance.length) * 100)
         : null;
 
       res.json({
-        stats: { students, classes, openCases, attendanceRate },
+        stats: { students, classes, openCases, attendanceRate, attendanceRecords: todayAttendance.length },
         announcements: announcements.map(a => ({
           id: a.id, title: a.title, category: a.audience, pinned: a.pinned,
           date: a.createdAt,
@@ -3561,7 +3776,7 @@ async function startServer() {
         totalExpected,
         totalCollected,
         outstanding: totalExpected - totalCollected,
-        currency: profile?.currency || "THB",
+        currency: profile?.currency || "MYR",
       });
     } catch (err) {
       logger.error("Error building fees report:", err);
@@ -3702,7 +3917,7 @@ async function startServer() {
         avgAttendance,
         openCases,
         feeCollection,
-        currency: profile?.currency || "THB",
+        currency: profile?.currency || "MYR",
         casesByCategory: Array.from(catMap.values()),
       });
     } catch (err) {

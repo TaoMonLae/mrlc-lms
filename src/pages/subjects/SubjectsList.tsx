@@ -63,7 +63,7 @@ export default function SubjectsList() {
   const filteredSubjects = subjects.filter(s =>
     s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.level.toLowerCase().includes(searchTerm.toLowerCase())
+    (s.level || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -110,7 +110,7 @@ export default function SubjectsList() {
                     </h3>
                     <div className="flex items-center gap-2 mt-1">
                       <Badge variant="outline" className="text-xs text-slate-500 font-normal">{sub.code}</Badge>
-                      <span className="text-xs text-slate-400">• {sub.level}</span>
+                      <span className="text-xs text-slate-400">• {sub.level || 'GED'}</span>
                     </div>
                   </div>
                 </div>
@@ -155,9 +155,8 @@ export default function SubjectsList() {
                 {sub.status}
               </Badge>
               <div className="flex space-x-3 text-xs text-slate-500">
-                 {/* Placeholders for assigned classes/teachers counts */}
-                 <span>2 Classes</span>
-                 <span>3 Teachers</span>
+                 <span>{sub._count?.exams ?? 0} Exams</span>
+                 <span>{sub._count?.teachers ?? 0} Teachers</span>
               </div>
             </div>
           </div>

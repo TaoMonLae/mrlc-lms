@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Filter, FileText, Image as ImageIcon, Video, Link as LinkIcon, File, Download, ExternalLink, Eye, MoreVertical, Edit2, Trash2, FileCheck } from 'lucide-react';
+import { Plus, Search, Filter, FileText, Image as ImageIcon, Video, Link as LinkIcon, File, Download, ExternalLink, MoreVertical, Edit2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -62,6 +62,7 @@ export default function LibraryList() {
           (Array.isArray(data) ? data : []).map((r: any) => ({
             ...r,
             status: r.status || 'ACTIVE',
+            uploadedByName: r.uploadedByName || 'School Library',
           }))
         );
       } catch (error) {
@@ -224,9 +225,26 @@ export default function LibraryList() {
                 </div>
               </div>
               
-              <div className="bg-slate-50 dark:bg-surface-raised/50 p-4 border-t border-slate-100 dark:border-surface-raised flex items-center justify-between text-xs text-slate-500">
-                <span className="truncate max-w-[120px]">By {resource.uploadedByName}</span>
-                <span>{formatDistanceToNow(new Date(resource.createdAt))} ago</span>
+              <div className="bg-slate-50 dark:bg-surface-raised/50 p-4 border-t border-slate-100 dark:border-surface-raised flex items-center justify-between gap-3 text-xs text-slate-500">
+                <div className="min-w-0">
+                  <span className="block truncate max-w-[140px]">By {resource.uploadedByName || 'School Library'}</span>
+                  <span>{formatDistanceToNow(new Date(resource.createdAt))} ago</span>
+                </div>
+                {resource.externalUrl && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 shrink-0"
+                    render={<a href={resource.externalUrl} target="_blank" rel="noopener noreferrer" />}
+                    nativeButton={false}
+                  >
+                    {resource.type === 'LINK' || resource.type === 'VIDEO' ? (
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    ) : (
+                      <Download className="h-3.5 w-3.5" />
+                    )}
+                  </Button>
+                )}
               </div>
             </div>
           ))}

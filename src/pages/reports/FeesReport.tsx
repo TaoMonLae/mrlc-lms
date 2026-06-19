@@ -12,12 +12,12 @@ import {
 import { toast } from 'sonner';
 import { PrintLayout } from '../../components/reports/PrintLayout';
 import { apiGet, qs } from '../../lib/api';
+import { formatMoney } from '../../lib/locale';
 
 interface ClassOption { id: string; name: string; }
 interface FeeRow { studentName: string; className: string; expected: number; paid: number; balance: number; status: string; }
 interface FeesReportData { rows: FeeRow[]; totalExpected: number; totalCollected: number; outstanding: number; currency: string; }
 
-const money = (n: number) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const statusColor: Record<string, string> = { PAID: 'text-emerald-600', PARTIAL: 'text-amber-600', UNPAID: 'text-red-600' };
 
 export default function FeesReport() {
@@ -53,7 +53,7 @@ export default function FeesReport() {
 
   const classLabel = classFilter === 'all' ? 'All Classes' : classes.find((c) => c.id === classFilter)?.name || '—';
   const statusLabel = statusFilter === 'all' ? 'All Statuses' : statusFilter;
-  const cur = data?.currency || 'THB';
+  const cur = data?.currency || 'MYR';
   const rows = data?.rows ?? [];
 
   return (
@@ -115,15 +115,15 @@ export default function FeesReport() {
         <div className="mb-8 grid grid-cols-3 gap-6">
            <div className="border border-slate-300 p-4 rounded">
              <p className="text-xs text-slate-500 uppercase font-bold">Total Expected</p>
-             <p className="text-xl font-bold text-slate-900 mt-1">{cur} {money(data?.totalExpected ?? 0)}</p>
+             <p className="text-xl font-bold text-slate-900 mt-1">{formatMoney(data?.totalExpected ?? 0, cur)}</p>
            </div>
            <div className="border border-slate-300 p-4 rounded bg-slate-50">
              <p className="text-xs text-slate-500 uppercase font-bold">Total Collected</p>
-             <p className="text-xl font-bold text-slate-900 mt-1">{cur} {money(data?.totalCollected ?? 0)}</p>
+             <p className="text-xl font-bold text-slate-900 mt-1">{formatMoney(data?.totalCollected ?? 0, cur)}</p>
            </div>
            <div className="border border-slate-300 p-4 rounded">
              <p className="text-xs text-slate-500 uppercase font-bold">Outstanding</p>
-             <p className="text-xl font-bold text-slate-900 mt-1 text-red-600">{cur} {money(data?.outstanding ?? 0)}</p>
+             <p className="text-xl font-bold text-slate-900 mt-1 text-red-600">{formatMoney(data?.outstanding ?? 0, cur)}</p>
            </div>
         </div>
 
@@ -146,9 +146,9 @@ export default function FeesReport() {
                 <tr key={i}>
                   <td className="px-4 py-3 border font-medium text-slate-900">{r.studentName}</td>
                   <td className="px-4 py-3 border text-slate-700">{r.className}</td>
-                  <td className="px-4 py-3 border text-right text-slate-700">{money(r.expected)}</td>
-                  <td className="px-4 py-3 border text-right text-slate-700">{money(r.paid)}</td>
-                  <td className={`px-4 py-3 border text-right ${r.balance > 0 ? 'font-bold text-amber-600' : 'text-slate-700'}`}>{money(r.balance)}</td>
+                  <td className="px-4 py-3 border text-right text-slate-700">{formatMoney(r.expected, cur)}</td>
+                  <td className="px-4 py-3 border text-right text-slate-700">{formatMoney(r.paid, cur)}</td>
+                  <td className={`px-4 py-3 border text-right ${r.balance > 0 ? 'font-bold text-amber-600' : 'text-slate-700'}`}>{formatMoney(r.balance, cur)}</td>
                   <td className={`px-4 py-3 border font-bold ${statusColor[r.status] || ''}`}>{r.status}</td>
                 </tr>
               ))}

@@ -1,11 +1,37 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Users, Calendar, GraduationCap, DollarSign, Activity, FileSpreadsheet, HardHat } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Users, Calendar, GraduationCap, DollarSign, Activity, FileSpreadsheet, Loader2 } from 'lucide-react';
 import { usePermissions } from '../../lib/permissions';
+import { apiGet } from '../../lib/api';
+
+interface ReportSummary {
+  students: number;
+  classes: number;
+  exams: number;
+  openCases: number;
+  attendanceRecords: number;
+  attendanceRate: number | null;
+  feePayments: number;
+  feeCollectionRate: number | null;
+  todaysFeeCollection: number;
+}
 
 export default function ReportsDashboard() {
   const { hasPermission, isAdmin } = usePermissions();
+  const [summary, setSummary] = useState<ReportSummary | null>(null);
+  const [isLoadingSummary, setIsLoadingSummary] = useState(true);
+
+  useEffect(() => {
+    apiGet<ReportSummary>('/api/reports/summary')
+      .then(setSummary)
+      .catch(() => setSummary(null))
+      .finally(() => setIsLoadingSummary(false));
+  }, []);
+
+  const metric = (value: number | string | null | undefined) => {
+    if (isLoadingSummary) return <Loader2 className="h-4 w-4 animate-spin text-slate-400" />;
+    return value ?? '—';
+  };
 
   const reports = [
     {
@@ -16,6 +42,8 @@ export default function ReportsDashboard() {
       path: '/reports/students',
       color: 'bg-blue-50 dark:bg-blue-900/20',
       allowed: true,
+      metricLabel: 'Students',
+      metricValue: summary?.students,
     },
     {
       id: 'attendance',
@@ -25,6 +53,8 @@ export default function ReportsDashboard() {
       path: '/reports/attendance',
       color: 'bg-emerald-50 dark:bg-emerald-900/20',
       allowed: true,
+      metricLabel: 'Today',
+      metricValue: summary?.attendanceRate != null ? `${summary.attendanceRate}%` : summary?.attendanceRecords ? `${summary.attendanceRecords} records` : null,
     },
     {
       id: 'exams',
@@ -34,6 +64,8 @@ export default function ReportsDashboard() {
       path: '/reports/exams',
       color: 'bg-purple-50 dark:bg-purple-900/20',
       allowed: true,
+      metricLabel: 'Exams',
+      metricValue: summary?.exams,
     },
     {
       id: 'classes',
@@ -43,6 +75,8 @@ export default function ReportsDashboard() {
       path: '/reports/classes',
       color: 'bg-aubergine-50 dark:bg-aubergine-900/20',
       allowed: true,
+      metricLabel: 'Classes',
+      metricValue: summary?.classes,
     },
     {
       id: 'fees',
@@ -52,6 +86,8 @@ export default function ReportsDashboard() {
       path: '/reports/fees',
       color: 'bg-amber-50 dark:bg-amber-900/20',
       allowed: hasPermission('manage_fees') || isAdmin,
+      metricLabel: 'Collection',
+      metricValue: summary?.feeCollectionRate != null ? `${summary.feeCollectionRate}%` : summary?.feePayments ? `${summary.feePayments} payments` : null,
     },
     {
       id: 'monthly-summary',
@@ -61,6 +97,8 @@ export default function ReportsDashboard() {
       path: '/reports/monthly-summary',
       color: 'bg-aubergine-50 dark:bg-aubergine-900/20',
       allowed: isAdmin,
+      metricLabel: 'Active Cases',
+      metricValue: summary?.openCases,
     }
   ];
 
@@ -86,6 +124,10 @@ export default function ReportsDashboard() {
               <p className="text-sm text-slate-500 dark:text-slate-300 flex-1">
                 {report.description}
               </p>
+              <div className="mt-5 rounded-md border border-slate-100 dark:border-surface-raised bg-slate-50 dark:bg-surface-raised/40 px-3 py-2">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{report.metricLabel}</p>
+                <div className="mt-1 text-lg font-bold text-slate-900 dark:text-white">{metric(report.metricValue)}</div>
+              </div>
               <div className="mt-6 pt-4 border-t border-slate-100 dark:border-surface-raised text-sm font-medium text-slate-900 dark:text-white flex items-center">
                 Generate Report &rarr;
               </div>

@@ -185,7 +185,7 @@ export default function LibraryDetail() {
                 {resource.externalUrl && (
                   <div className="mt-6">
                     <Button render={<a href={resource.externalUrl} target="_blank" rel="noopener noreferrer" />} nativeButton={false}>
-                         <ExternalLink className="mr-2 h-4 w-4" /> Open External Link
+                         <ExternalLink className="mr-2 h-4 w-4" /> {resource.type === 'LINK' || resource.type === 'VIDEO' ? 'Open Link' : 'Open File'}
                     </Button>
                   </div>
                 )}

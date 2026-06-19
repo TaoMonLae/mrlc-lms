@@ -26,6 +26,7 @@ const subjectSchema = z.object({
 });
 
 type SubjectFormValues = z.infer<typeof subjectSchema>;
+const LEVEL_OPTIONS = ['Pre-GED', 'GED', 'Foundation', 'Intermediate', 'Advanced'];
 
 export default function SubjectNew() {
   const navigate = useNavigate();
@@ -41,7 +42,7 @@ export default function SubjectNew() {
     defaultValues: {
       name: '',
       code: '',
-      level: '',
+      level: 'GED',
       description: '',
       status: 'ACTIVE',
     }
@@ -49,13 +50,20 @@ export default function SubjectNew() {
 
   const onSubmit = async (data: SubjectFormValues) => {
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('New subject data:', data);
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch('/api/subjects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to create subject');
+      }
       toast.success('Subject created successfully');
       navigate('/subjects');
-    } catch (error) {
-      toast.error('Failed to create subject');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to create subject');
     }
   };
 
@@ -91,9 +99,9 @@ export default function SubjectNew() {
                   <SelectValue placeholder="Select level" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Foundation">Foundation</SelectItem>
-                  <SelectItem value="Intermediate">Intermediate</SelectItem>
-                  <SelectItem value="Advanced">Advanced</SelectItem>
+                  {LEVEL_OPTIONS.map((level) => (
+                    <SelectItem key={level} value={level}>{level}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               {errors.level && <p className="text-xs text-red-500 font-medium">{errors.level.message}</p>}

@@ -12,6 +12,7 @@ import {
 import { toast } from 'sonner';
 import { PrintLayout } from '../../components/reports/PrintLayout';
 import { apiGet, qs } from '../../lib/api';
+import { formatMoney } from '../../lib/locale';
 
 interface CaseCat { category: string; newCases: number; resolved: number; open: number; }
 interface MonthlyData {
@@ -31,8 +32,6 @@ function recentMonths(count = 12): { value: string; label: string }[] {
   }
   return out;
 }
-
-const compact = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : `${n}`);
 
 export default function MonthlySummaryReport() {
   const months = useMemo(() => recentMonths(), []);
@@ -58,7 +57,7 @@ export default function MonthlySummaryReport() {
   useEffect(() => { load(); /* eslint-disable-next-line */ }, []);
 
   const monthLabel = months.find((m) => m.value === monthFilter)?.label || monthFilter;
-  const cur = data?.currency || 'THB';
+  const cur = data?.currency || 'MYR';
   const cats = data?.casesByCategory ?? [];
 
   return (
@@ -120,7 +119,7 @@ export default function MonthlySummaryReport() {
               </div>
               <div className="border border-slate-300 p-4 rounded text-center bg-slate-50">
                  <p className="text-xs text-slate-500 uppercase font-bold">Fee Collection</p>
-                 <p className="text-2xl font-bold text-slate-900 mt-1">{cur} {compact(data?.feeCollection ?? 0)}</p>
+                 <p className="text-2xl font-bold text-slate-900 mt-1">{formatMoney(data?.feeCollection ?? 0, cur, { decimals: false })}</p>
               </div>
            </div>
 

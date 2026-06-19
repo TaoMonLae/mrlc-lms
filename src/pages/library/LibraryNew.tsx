@@ -80,6 +80,23 @@ export default function LibraryNew() {
       }
 
       const token = sessionStorage.getItem('auth_token');
+      let uploadedUrl: string | null = null;
+      if (activeTab === 'upload' && file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const uploadRes = await fetch('/api/library/files', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: formData,
+        });
+        if (!uploadRes.ok) {
+          const errData = await uploadRes.json().catch(() => ({}));
+          throw new Error(errData.error || 'Failed to upload file');
+        }
+        const uploaded = await uploadRes.json();
+        uploadedUrl = uploaded.url;
+      }
+
       const payload = {
         title: data.title,
         description: data.description,
@@ -87,7 +104,7 @@ export default function LibraryNew() {
         visibility: data.visibility,
         classId: data.classId || null,
         subjectId: data.subjectId || null,
-        externalUrl: activeTab === 'upload' ? null : data.externalUrl,
+        externalUrl: activeTab === 'upload' ? uploadedUrl : data.externalUrl,
       };
 
       const res = await fetch('/api/library', {
@@ -173,7 +190,7 @@ export default function LibraryNew() {
                       </div>
                       <p className="font-medium text-slate-900 dark:text-white">{file.name}</p>
                       <p className="text-xs text-slate-500">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
-                      <Button variant="ghost" size="sm" onClick={() => setFile(null)} className="mt-2 text-red-500 hover:text-red-600">Remove</Button>
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setFile(null)} className="mt-2 text-red-500 hover:text-red-600">Remove</Button>
                     </div>
                   ) : (
                     <>
@@ -185,7 +202,7 @@ export default function LibraryNew() {
                           Browse Files
                         </div>
                       </Label>
-                      <input id="file-upload" type="file" className="hidden" onChange={(e) => {
+                      <input id="file-upload" type="file" className="hidden" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.png,.jpg,.jpeg,.webp,.gif,.txt" onChange={(e) => {
                         if (e.target.files?.[0]) setFile(e.target.files[0]);
                       }} />
                     </>

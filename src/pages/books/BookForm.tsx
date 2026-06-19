@@ -34,6 +34,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Save } from 'lucide-react';
 
 interface BookFormProps {
@@ -46,13 +53,39 @@ interface BookFormProps {
 
 const inputClass = 'space-y-2';
 const labelText = 'text-sm font-medium text-slate-700 dark:text-slate-300';
+const CATEGORY_OPTIONS = [
+  'Academic',
+  'Biography',
+  'Children',
+  'Drama',
+  'Fiction',
+  'GED Preparation',
+  'History',
+  'Language Learning',
+  'Mathematics',
+  'Poetry',
+  'Reference',
+  'Religion',
+  'Science',
+  'Social Studies',
+  'Technology',
+] as const;
+const OTHER_CATEGORY = '__OTHER__';
 
 export default function BookForm({ initial, submitting, submitLabel = 'Save Book', onSubmit, onCancel }: BookFormProps) {
   const [values, setValues] = useState<BookFormValues>({ ...EMPTY, ...initial });
   const [errors, setErrors] = useState<Partial<Record<keyof BookFormValues, string>>>({});
+  const [customCategory, setCustomCategory] = useState(
+    Boolean(initial?.category && !CATEGORY_OPTIONS.includes(initial.category as any))
+  );
 
   const set = (key: keyof BookFormValues) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setValues((v) => ({ ...v, [key]: e.target.value }));
+  const selectedCategory = customCategory
+    ? OTHER_CATEGORY
+    : CATEGORY_OPTIONS.includes(values.category as any)
+    ? values.category
+    : '';
 
   const validate = (): boolean => {
     const next: Partial<Record<keyof BookFormValues, string>> = {};
@@ -109,7 +142,33 @@ export default function BookForm({ initial, submitting, submitLabel = 'Save Book
           </div>
           <div className={inputClass}>
             <Label htmlFor="category" className={labelText}>Category / Genre</Label>
-            <Input id="category" value={values.category} onChange={set('category')} placeholder="e.g. Science, Fiction, Reference" />
+            <Select
+              value={selectedCategory}
+              onValueChange={(value) => {
+                const isOther = value === OTHER_CATEGORY;
+                setCustomCategory(isOther);
+                setValues((v) => ({ ...v, category: isOther ? '' : value }));
+              }}
+            >
+              <SelectTrigger id="category">
+                <SelectValue placeholder="Select category / genre" />
+              </SelectTrigger>
+              <SelectContent>
+                {CATEGORY_OPTIONS.map((category) => (
+                  <SelectItem key={category} value={category}>{category}</SelectItem>
+                ))}
+                <SelectItem value={OTHER_CATEGORY}>Other</SelectItem>
+              </SelectContent>
+            </Select>
+            {customCategory && (
+              <Input
+                className="mt-2"
+                value={values.category}
+                onChange={set('category')}
+                placeholder="Enter new category / genre"
+                aria-label="New category or genre"
+              />
+            )}
           </div>
           <div className={inputClass}>
             <Label htmlFor="language" className={labelText}>Language</Label>

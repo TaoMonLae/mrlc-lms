@@ -24,6 +24,8 @@ export default function LoginPage() {
   const [serverError, setServerError] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [schoolName, setSchoolName] = useState<string>("Mon Refugee Learning Centre");
+  const [contactEmail, setContactEmail] = useState<string | null>(null);
+  const [contactPhone, setContactPhone] = useState<string | null>(null);
 
   // Pull the school's branding (logo + name) from the public endpoint so the
   // login screen reflects the configured school. Falls back to the icon below.
@@ -33,6 +35,8 @@ export default function LoginPage() {
       .then((data) => {
         if (data?.logoUrl) setLogoUrl(data.logoUrl);
         if (data?.name) setSchoolName(data.name);
+        if (data?.contactEmail) setContactEmail(data.contactEmail);
+        if (data?.contactPhone) setContactPhone(data.contactPhone);
       })
       .catch(() => {/* keep defaults */});
   }, []);
@@ -95,7 +99,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <Card className="bg-white text-slate-900 ring-slate-200 border-slate-200 shadow-xl shadow-slate-200/50">
+        <Card className="bg-white text-slate-900 ring-slate-200 border-slate-200 shadow-xl shadow-slate-200/50 dark:bg-white dark:text-slate-900 dark:ring-slate-200 dark:border-slate-200">
           <CardHeader className="space-y-1 text-center">
             <CardTitle className="text-xl font-bold text-slate-900">Sign in</CardTitle>
             <CardDescription className="text-slate-500 font-medium">
@@ -146,12 +150,12 @@ export default function LoginPage() {
                 )}
               </div>
             </CardContent>
-            <CardFooter>
+            <CardFooter className="border-t border-slate-200 bg-white px-4 pb-4 pt-4 dark:border-slate-200 dark:bg-white">
               <Button
                 type="submit"
                 id="login-submit-btn"
                 disabled={isSubmitting}
-                className="w-full h-12 text-sm font-bold bg-primary hover:bg-primary/90 text-primary-foreground transition-all group"
+                className="w-full h-12 text-sm font-bold bg-primary hover:bg-primary/90 text-primary-foreground transition-all group disabled:opacity-70"
                 aria-label="Sign in to dashboard"
               >
                 {isSubmitting ? (
@@ -174,9 +178,21 @@ export default function LoginPage() {
           <p className="text-xs text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
             Protected area for authorized personnel only
           </p>
-          <p className="text-sm text-slate-500">
-            Need help? <span className="text-aubergine-600 font-bold">Contact school admin</span>
-          </p>
+          {(contactEmail || contactPhone) && (
+            <p className="text-sm text-slate-500">
+              Need help?{" "}
+              {contactEmail ? (
+                <a className="font-bold text-aubergine-600 hover:text-aubergine-700 hover:underline" href={`mailto:${contactEmail}`}>
+                  {contactEmail}
+                </a>
+              ) : (
+                <a className="font-bold text-aubergine-600 hover:text-aubergine-700 hover:underline" href={`tel:${contactPhone}`}>
+                  {contactPhone}
+                </a>
+              )}
+              {contactEmail && contactPhone ? <span className="text-slate-400"> · {contactPhone}</span> : null}
+            </p>
+          )}
         </div>
       </motion.div>
       </main>

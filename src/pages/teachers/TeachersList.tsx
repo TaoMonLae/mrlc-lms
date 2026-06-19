@@ -29,7 +29,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { type Teacher } from '../../types/teacher';
 import { toast } from 'sonner';
 
 interface TeacherData {
@@ -39,7 +38,7 @@ interface TeacherData {
   email: string;
   phone?: string;
   address?: string;
-  subjects?: string;
+  subjects: string[];
   employmentType: string;
   status: string;
   joinedDate: string;
@@ -79,7 +78,11 @@ export default function TeachersList() {
           email: teacher.email || teacher.user?.email || '',
           phone: teacher.phone || '',
           address: teacher.address || '',
-          subjects: teacher.subjects ? teacher.subjects.split(',').map((s: string) => s.trim()) : [],
+          subjects: Array.isArray(teacher.subjects)
+            ? teacher.subjects
+            : teacher.subjects
+              ? teacher.subjects.split(',').map((s: string) => s.trim()).filter(Boolean)
+              : [],
           employmentType: teacher.employmentType || 'FULL_TIME',
           status: teacher.status || 'ACTIVE',
           joinedDate: teacher.createdAt || new Date().toISOString(),

@@ -45,13 +45,19 @@ export default function StudentProfile() {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (attendanceRes.ok) {
-            const attendanceRecords = await attendanceRes.json();
-            // Filter attendance for this student and calculate rate
-            const studentAttendance = attendanceRecords.filter((a: any) => a.studentId === id);
-            if (studentAttendance.length > 0) {
-              const presentCount = studentAttendance.filter((a: any) => a.status === 'PRESENT').length;
-              const attendanceRate = Math.round((presentCount / studentAttendance.length) * 100);
-              setAttendanceData({ rate: attendanceRate, total: studentAttendance.length, present: presentCount });
+            const attendanceReport = await attendanceRes.json();
+            const studentAttendance = Array.isArray(attendanceReport?.rows)
+              ? attendanceReport.rows.find((a: any) => a.studentId === id)
+              : null;
+            if (studentAttendance) {
+              setAttendanceData({
+                rate: studentAttendance.rate,
+                total: studentAttendance.total,
+                present: studentAttendance.present,
+                absent: studentAttendance.absent,
+                late: studentAttendance.late,
+                excused: studentAttendance.excused,
+              });
             }
           }
         } catch (err) {
@@ -302,11 +308,33 @@ export default function StudentProfile() {
               </div>
             </TabsContent>
 
-            <TabsContent value="attendance" className="p-6 m-0 border-none min-h-[300px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-0">
-               <div className="text-center text-slate-500">
-                  <CalendarDays className="h-10 w-10 mx-auto text-slate-300 mb-2" />
-                  <p>Attendance records will be displayed here.</p>
-               </div>
+            <TabsContent value="attendance" className="p-6 m-0 border-none min-h-[300px] focus-visible:outline-none focus-visible:ring-0">
+              {attendanceData ? (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                    {[
+                      { label: 'Attendance Rate', value: `${attendanceData.rate}%` },
+                      { label: 'Total Records', value: attendanceData.total },
+                      { label: 'Present', value: attendanceData.present },
+                      { label: 'Late', value: attendanceData.late },
+                      { label: 'Absent', value: attendanceData.absent },
+                    ].map((item) => (
+                      <div key={item.label} className="rounded-lg border border-slate-200 dark:border-surface-raised p-4">
+                        <p className="text-2xl font-bold text-slate-900 dark:text-white">{item.value}</p>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{item.label}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-sm text-slate-500">Attendance summary is calculated from saved attendance records.</p>
+                </div>
+              ) : (
+                <div className="min-h-[240px] flex items-center justify-center text-center text-slate-500">
+                  <div>
+                    <CalendarDays className="h-10 w-10 mx-auto text-slate-300 mb-2" />
+                    <p>No attendance records found for this student.</p>
+                  </div>
+                </div>
+              )}
             </TabsContent>
             
             <TabsContent value="exams" className="p-6 m-0 border-none min-h-[300px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-0">

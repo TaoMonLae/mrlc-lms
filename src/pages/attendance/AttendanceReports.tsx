@@ -83,6 +83,8 @@ export default function AttendanceReportsPage() {
   }, [selectedClass, selectedMonth, year]);
 
   const rows = report?.rows ?? [];
+  const classLabel = selectedClass === 'all' ? 'All Classes' : classes.find((c) => c.id === selectedClass)?.name || 'Selected Class';
+  const monthLabel = `${MONTHS[Number(selectedMonth) - 1]} ${year}`;
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto">
@@ -97,7 +99,7 @@ export default function AttendanceReportsPage() {
         </div>
 
         <div className="flex gap-2">
-          <Button variant="outline" className="text-slate-700">
+          <Button variant="outline" className="text-slate-700" onClick={() => window.print()} disabled={loading || rows.length === 0}>
             <Download className="mr-2 h-4 w-4" />
             Export PDF
           </Button>
@@ -146,6 +148,10 @@ export default function AttendanceReportsPage() {
       </div>
 
       <div className="bg-white dark:bg-surface-indigo rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
+        <div className="hidden print:block p-6 border-b">
+          <h2 className="text-xl font-bold text-slate-900">Attendance Report</h2>
+          <p className="text-sm text-slate-600">{classLabel} · {monthLabel}</p>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-surface-raised/50">
@@ -191,6 +197,16 @@ export default function AttendanceReportsPage() {
           </table>
         </div>
       </div>
+      <style>{`
+        @media print {
+          nav, aside, header, .print\\:hidden {
+            display: none !important;
+          }
+          body {
+            background: white !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

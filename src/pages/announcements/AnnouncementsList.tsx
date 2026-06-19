@@ -11,12 +11,9 @@ import {
   MoreVertical, 
   Edit, 
   Archive, 
-  Eye,
   Calendar,
   ChevronRight,
-  TrendingUp,
   CheckCircle2,
-  AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -93,6 +90,17 @@ export default function AnnouncementsList() {
     if (!a.pinned && b.pinned) return 1;
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
+
+  const now = Date.now();
+  const weekFromNow = now + 7 * 24 * 60 * 60 * 1000;
+  const activeCount = announcements.filter(a => a.status === 'ACTIVE').length;
+  const pinnedCount = announcements.filter(a => a.pinned).length;
+  const totalRecordsCount = announcements.length;
+  const expiringSoonCount = announcements.filter(a => {
+    if (!a.expiresAt || a.status !== 'ACTIVE') return false;
+    const expiresAt = new Date(a.expiresAt).getTime();
+    return expiresAt >= now && expiresAt <= weekFromNow;
+  }).length;
 
   const handleArchive = async (id: string) => {
     const current = announcements.find(a => a.id === id);
@@ -260,7 +268,9 @@ export default function AnnouncementsList() {
           <div className="col-span-full py-20 text-center bg-white dark:bg-surface-indigo rounded-xl border border-dashed border-slate-300 dark:border-surface-raised">
             <Megaphone className="h-12 w-12 text-slate-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-slate-900 dark:text-white">No announcements found</h3>
-            <p className="text-sm text-slate-500 mt-1">Try adjusting your search or filters.</p>
+            <p className="text-sm text-slate-500 mt-1">
+              {announcements.length === 0 ? 'No announcements have been created yet.' : 'Try adjusting your search or filters.'}
+            </p>
             {canManage && (
               <Button render={<Link to="/announcements/new" />} variant="outline" className="mt-6">
                 Create First Announcement
@@ -278,7 +288,7 @@ export default function AnnouncementsList() {
           </div>
           <div>
             <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Active</p>
-            <p className="text-xl font-bold text-slate-900 dark:text-white">{announcements.filter(a => a.status === 'ACTIVE').length}</p>
+            <p className="text-xl font-bold text-slate-900 dark:text-white">{activeCount}</p>
           </div>
         </div>
         <div className="bg-white dark:bg-surface-indigo p-4 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex items-center gap-4">
@@ -287,16 +297,16 @@ export default function AnnouncementsList() {
           </div>
           <div>
             <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Pinned</p>
-            <p className="text-xl font-bold text-slate-900 dark:text-white">{announcements.filter(a => a.pinned).length}</p>
+            <p className="text-xl font-bold text-slate-900 dark:text-white">{pinnedCount}</p>
           </div>
         </div>
         <div className="bg-white dark:bg-surface-indigo p-4 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex items-center gap-4">
           <div className="h-10 w-10 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-            <Eye className="h-5 w-5" />
+            <CheckCircle2 className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Total</p>
-            <p className="text-xl font-bold text-slate-900 dark:text-white">{announcements.length}</p>
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Records</p>
+            <p className="text-xl font-bold text-slate-900 dark:text-white">{totalRecordsCount}</p>
           </div>
         </div>
         <div className="bg-white dark:bg-surface-indigo p-4 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex items-center gap-4">
@@ -305,12 +315,7 @@ export default function AnnouncementsList() {
           </div>
           <div>
             <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Expiring Soon</p>
-            <p className="text-xl font-bold text-slate-900 dark:text-white">{announcements.filter(a => {
-              if (!a.expiresAt) return false;
-              const exp = new Date(a.expiresAt).getTime();
-              const now = Date.now();
-              return exp >= now && exp <= now + 7 * 24 * 60 * 60 * 1000;
-            }).length}</p>
+            <p className="text-xl font-bold text-slate-900 dark:text-white">{expiringSoonCount}</p>
           </div>
         </div>
       </div>

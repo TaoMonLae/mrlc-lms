@@ -20,9 +20,30 @@ interface Book {
   author?: string | null;
   isbn?: string | null;
   category?: string | null;
+  coverUrl?: string | null;
   shelfLocation?: string | null;
   totalCopies: number;
   availableCopies: number;
+}
+
+function BookCover({ title, coverUrl }: { title: string; coverUrl?: string | null }) {
+  const [hasError, setHasError] = useState(false);
+  if (coverUrl && !hasError) {
+    return (
+      <img
+        src={coverUrl}
+        alt={`${title} cover`}
+        className="h-14 w-10 rounded-md border border-slate-200 bg-slate-100 object-cover shadow-sm dark:border-surface-raised"
+        loading="lazy"
+        onError={() => setHasError(true)}
+      />
+    );
+  }
+  return (
+    <div className="flex h-14 w-10 items-center justify-center rounded-md border border-slate-200 bg-slate-100 text-slate-400 dark:border-surface-raised dark:bg-surface-raised">
+      <BookMarked className="h-5 w-5" />
+    </div>
+  );
 }
 
 export default function BooksList() {
@@ -125,6 +146,7 @@ export default function BooksList() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[72px]">Cover</TableHead>
                 <TableHead>Title</TableHead>
                 <TableHead>Author</TableHead>
                 <TableHead className="hidden md:table-cell">Category</TableHead>
@@ -139,6 +161,9 @@ export default function BooksList() {
                   className="cursor-pointer"
                   onClick={() => navigate(`/books/${b.id}`)}
                 >
+                  <TableCell>
+                    <BookCover title={b.title} coverUrl={b.coverUrl} />
+                  </TableCell>
                   <TableCell className="font-medium text-slate-900 dark:text-white">{b.title}</TableCell>
                   <TableCell className="text-slate-600 dark:text-slate-300">{b.author || '—'}</TableCell>
                   <TableCell className="hidden md:table-cell text-slate-600 dark:text-slate-300">{b.category || '—'}</TableCell>
