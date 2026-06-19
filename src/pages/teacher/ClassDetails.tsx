@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { fetchOrMock } from "../../lib/api";
+import { apiGet } from "../../lib/api";
 
 interface ClassInfo {
   id: string; name: string; level: string; room: string; teacher: string;
@@ -30,33 +30,40 @@ interface ClassStudent {
   id: string; name: string; studentId: string; attendance: string; lastExam: string; status: string;
 }
 
-const MOCK_CLASS_INFO: ClassInfo = {
-  id: "c1", name: "GED Social Studies", level: "GED", room: "Room 102",
-  teacher: "John Smith", totalStudents: 24, academicYear: "2024-2025", status: "ACTIVE",
-};
-
-const MOCK_STUDENTS: ClassStudent[] = [
-  { id: "s1", name: "Min Khant", studentId: "STU-2023-001", attendance: "98%", lastExam: "85/100", status: "ACTIVE" },
-  { id: "s2", name: "Zun Pwint", studentId: "STU-2023-002", attendance: "85%", lastExam: "72/100", status: "ACTIVE" },
-  { id: "s3", name: "Aung Ko", studentId: "STU-2023-003", attendance: "95%", lastExam: "94/100", status: "ACTIVE" },
-  { id: "s4", name: "May Mon", studentId: "STU-2023-004", attendance: "88%", lastExam: "81/100", status: "ACTIVE" },
-  { id: "s5", name: "Htet Aung", studentId: "STU-2023-005", attendance: "92%", lastExam: "78/100", status: "ON_LEAVE" },
-];
-
 export default function ClassDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [classInfo, setClassInfo] = useState<ClassInfo>(MOCK_CLASS_INFO);
+  const [classInfo, setClassInfo] = useState<ClassInfo>({
+    id: "", name: "", level: "", room: "",
+    teacher: "", totalStudents: 0, academicYear: "", status: "",
+  });
   const [students, setStudents] = useState<ClassStudent[]>([]);
 
   useEffect(() => {
     if (!id) return;
-    fetchOrMock<{ classInfo: ClassInfo; students: ClassStudent[] }>(
-      `/api/teacher/classes/${id}`,
-      { classInfo: MOCK_CLASS_INFO, students: MOCK_STUDENTS },
-      { emptyWhen: (d) => !d?.classInfo },
-    ).then((r) => { setClassInfo(r.data.classInfo); setStudents(r.data.students); });
+    apiGet<{ classInfo: ClassInfo; students: ClassStudent[] }>(`/api/teacher/classes/${id}`)
+      .then((r) => {
+        if (r) {
+          setClassInfo(r.classInfo);
+          setStudents(r.students);
+        }
+      })
+      .catch(() => {
+        if (import.meta.env.DEV) {
+          setClassInfo({
+            id: "c1", name: "GED Social Studies", level: "GED", room: "Room 102",
+            teacher: "John Smith", totalStudents: 24, academicYear: "2024-2025", status: "ACTIVE",
+          });
+          setStudents([
+            { id: "s1", name: "Min Khant", studentId: "STU-2023-001", attendance: "98%", lastExam: "85/100", status: "ACTIVE" },
+            { id: "s2", name: "Zun Pwint", studentId: "STU-2023-002", attendance: "85%", lastExam: "72/100", status: "ACTIVE" },
+            { id: "s3", name: "Aung Ko", studentId: "STU-2023-003", attendance: "95%", lastExam: "94/100", status: "ACTIVE" },
+            { id: "s4", name: "May Mon", studentId: "STU-2023-004", attendance: "88%", lastExam: "81/100", status: "ACTIVE" },
+            { id: "s5", name: "Htet Aung", studentId: "STU-2023-005", attendance: "92%", lastExam: "78/100", status: "ON_LEAVE" },
+          ]);
+        }
+      });
   }, [id]);
 
   const filteredStudents = students.filter(s =>

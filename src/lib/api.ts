@@ -48,7 +48,15 @@ export async function apiSend<T = any>(
 }
 
 /** True only in a Vite dev build. Production never falls back to mock data. */
-export const IS_DEV: boolean = Boolean((import.meta as any)?.env?.DEV);
+export const IS_DEV: boolean = import.meta.env.DEV;
+
+/**
+ * Helper to define mock data that only exists in development builds.
+ * In production, this returns undefined and the mock data is tree-shaken.
+ */
+export function devMock<T>(mock: T): T | undefined {
+  return IS_DEV ? mock : undefined;
+}
 
 /**
  * Fetch real data from the API, with a development-only mock fallback.
@@ -59,10 +67,13 @@ export const IS_DEV: boolean = Boolean((import.meta as any)?.env?.DEV);
  *   data, the provided `mock` is returned instead so demos/tests stay populated.
  *
  * The returned `source` lets a page show a subtle "Sample data" hint in dev.
+ *
+ * IMPORTANT: Pass mock data as a function to ensure it's only evaluated in dev.
+ * Example: fetchOrMock('/api/data', () => ({ mock: 'data' }))
  */
 export async function fetchOrMock<T>(
   path: string,
-  mock: T,
+  mock: T | (() => T),
   opts: { emptyWhen?: (data: T) => boolean } = {},
 ): Promise<{ data: T; source: 'live' | 'mock' }> {
   const isEmpty =
@@ -70,10 +81,10 @@ export async function fetchOrMock<T>(
     ((d: T) => (Array.isArray(d) ? d.length === 0 : d == null));
   try {
     const data = await apiGet<T>(path);
-    if (IS_DEV && isEmpty(data)) return { data: mock, source: 'mock' };
+    if (IS_DEV && isEmpty(data)) return { data: typeof mock === 'function' ? (mock as () => T)() : mock, source: 'mock' };
     return { data, source: 'live' };
   } catch (err) {
-    if (IS_DEV) return { data: mock, source: 'mock' };
+    if (IS_DEV) return { data: typeof mock === 'function' ? (mock as () => T)() : mock, source: 'mock' };
     throw err;
   }
 }

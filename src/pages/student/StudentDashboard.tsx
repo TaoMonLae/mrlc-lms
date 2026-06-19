@@ -44,10 +44,10 @@ const MOCK_DASH: StudentDashData = {
   ],
 };
 
-const announcements = [
-  { id: 1, title: "School Sports Day Postponed", date: "2024-05-12", category: "Sports" },
-  { id: 2, title: "Library Opening Hours Updated", date: "2024-05-11", category: "Library" },
-];
+type AnnouncementRow = { id: string | number; title: string; date: string; category: string };
+type LibraryResourceRow = { id: string | number; title: string; subject: string; format: string };
+
+const announcements: AnnouncementRow[] = [];
 
 export default function StudentDashboard() {
   const { systemSettings } = useSettings();
@@ -71,19 +71,16 @@ export default function StudentDashboard() {
   const upcomingExams = dash.upcomingExams;
   const recentResults = dash.recentResults;
 
-  const libraryResources = [
-    { id: 1, title: "Algebra Basics Part 2", subject: "Math", format: "PDF" },
-    { id: 2, title: "Energy and Motion", subject: "Physics", format: "Video" },
-  ];
+  const libraryResources: LibraryResourceRow[] = [];
 
   return (
     <div className="space-y-8 pb-10">
       {/* Welcome Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Welcome back, Min Khant! 👋</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Welcome back! 👋</h1>
           <p className="text-slate-500 mt-1 flex items-center gap-2">
-            <span className="font-bold text-aubergine-600 dark:text-aubergine-400">Grade 10A</span>
+            <span className="font-bold text-aubergine-600 dark:text-aubergine-400">{dash.className}</span>
             <span className="text-slate-300">•</span>
             <span>Academic Year 2024-25</span>
           </p>

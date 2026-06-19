@@ -11,11 +11,17 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-const CLASSES = [
-  { id: 'c1', name: 'GED Social Studies' },
-  { id: 'c2', name: 'Pre-GED English' },
-  { id: 'c3', name: 'GED Math Prep' },
-];
+type AttendanceClass = { id: string; name: string };
+type AttendanceReportRow = {
+  id: string;
+  name: string;
+  days: string[];
+  present: number;
+  absent: number;
+  late: number;
+};
+
+const CLASSES: AttendanceClass[] = [];
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -24,12 +30,7 @@ const MONTHS = [
 
 // Generate fake calendar data for demo
 const generateDays = () => Array.from({ length: 15 }, (_, i) => i + 1);
-const MOCK_REPORT_DATA = [
-  { id: 's1', name: 'Min Khant Aung', present: 13, absent: 1, late: 1, excused: 0, days: generateDays().map(() => Math.random() > 0.1 ? 'P' : Math.random() > 0.5 ? 'A' : 'L') },
-  { id: 's2', name: 'Zun Pwint Phyu', present: 14, absent: 0, late: 0, excused: 1, days: generateDays().map(() => Math.random() > 0.05 ? 'P' : 'E') },
-  { id: 's3', name: 'Aung Ko Myat', present: 11, absent: 2, late: 2, excused: 0, days: generateDays().map(() => Math.random() > 0.2 ? 'P' : Math.random() > 0.5 ? 'A' : 'L') },
-  { id: 's5', name: 'Kyaw Zin Latt', present: 15, absent: 0, late: 0, excused: 0, days: generateDays().map(() => 'P') },
-];
+const MOCK_REPORT_DATA: AttendanceReportRow[] = [];
 
 export default function AttendanceReportsPage() {
   const [selectedClass, setSelectedClass] = useState<string>('c1');

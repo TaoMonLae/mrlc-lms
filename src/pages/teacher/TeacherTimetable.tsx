@@ -23,16 +23,14 @@ const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
 // No timetable model exists in the backend yet, so this sample schedule is shown
 // only in development. In production the grid stays empty until a Timetable
 // model + API are added.
-const MOCK_SCHEDULE = [
+const teacherSchedule = IS_DEV ? [
   { day: 'Monday', time: '09:00 - 11:00', subject: 'GED Social Studies', room: 'Room 102', classId: 'c1', color: 'bg-blue-500' },
   { day: 'Monday', time: '13:00 - 15:00', subject: 'History of SEA', room: 'Room 105', classId: 'c4', color: 'bg-purple-500' },
   { day: 'Tuesday', time: '10:30 - 12:30', subject: 'Pre-GED English', room: 'Room 105', classId: 'c2', color: 'bg-emerald-500' },
   { day: 'Wednesday', time: '09:00 - 11:00', subject: 'GED Social Studies', room: 'Room 102', classId: 'c1', color: 'bg-blue-500' },
   { day: 'Thursday', time: '10:30 - 12:30', subject: 'Pre-GED English', room: 'Room 105', classId: 'c2', color: 'bg-emerald-500' },
   { day: 'Friday', time: '13:00 - 15:00', subject: 'GED Math Prep', room: 'Lab A', classId: 'c3', color: 'bg-aubergine-500' },
-];
-
-const teacherSchedule = IS_DEV ? MOCK_SCHEDULE : [];
+] : [];
 
 /** Returns the Monday of the week containing `date`. */
 function getWeekStart(date: Date): Date {

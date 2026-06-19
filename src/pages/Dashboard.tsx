@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Link, Navigate } from "react-router-dom";
 import { usePermissions } from "@/src/lib/permissions";
 
-// Webflow five-stop category palette mapped onto the dashboard metrics.
+// Dashboard metrics - to be populated from API
 const stats = [
   {
     title: "Total Students",
-    value: "148",
+    value: "--",
     description: "Active this semester",
     icon: Users,
     color: "text-accent-blue",
@@ -18,7 +18,7 @@ const stats = [
   },
   {
     title: "Classes",
-    value: "12",
+    value: "--",
     description: "GED & Pre-GED levels",
     icon: BookOpen,
     color: "text-accent-purple",
@@ -27,7 +27,7 @@ const stats = [
   },
   {
     title: "Daily Attendance",
-    value: "92%",
+    value: "--",
     description: "Average this week",
     icon: TrendingUp,
     color: "text-accent-green",
@@ -36,7 +36,7 @@ const stats = [
   },
   {
     title: "Active Cases",
-    value: "4",
+    value: "--",
     description: "Pending attention",
     icon: AlertCircle,
     color: "text-accent-orange",
@@ -45,12 +45,7 @@ const stats = [
   },
 ];
 
-const recentActivities = [
-  { id: 1, type: "registration", user: "John Doe", detail: "Registered for GED Social Studies", time: "2 hours ago" },
-  { id: 2, type: "attendance", user: "Teacher Mary", detail: "Marked attendance for Pre-GED Math", time: "3 hours ago" },
-  { id: 3, type: "exam", user: "Sarah Lee", detail: "Submitted Science mock exam", time: "5 hours ago" },
-  { id: 4, type: "fee", user: "David Mon", detail: "Paid May tuition fee", time: "1 day ago" },
-];
+const recentActivities: never[] = [];
 
 export default function DashboardPage() {
   const { isStudent } = usePermissions();
@@ -104,11 +99,9 @@ export default function DashboardPage() {
           </Button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[
-            { id: 'ann-1', title: 'School Reopening & Safety Guidelines', date: 'May 1', category: 'GENERAL', pinned: true },
-            { id: 'ann-2', title: 'Final Exam Schedule - Term 1', date: 'May 10', category: 'EXAMS', pinned: true },
-            { id: 'ann-3', title: 'Mathematics Grade 10A Quiz', date: 'Today', category: 'ACADEMIC', pinned: false },
-          ].map((ann) => (
+          {(
+            []
+          ).map((ann) => (
             <Link 
               key={ann.id} 
               to={`/announcements/${ann.id}`}
@@ -153,12 +146,9 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {[
-                  { time: "08:00 - 09:30", subject: "Mathematics", subjectColor: "bg-blue-500", class: "Grade 10A", teacher: "Mr. John", room: "Room 302" },
-                  { time: "09:45 - 11:15", subject: "Physics", subjectColor: "bg-purple-500", class: "Grade 10A", teacher: "Ms. Sarah", room: "Lab 1" },
-                  { time: "13:00 - 14:30", subject: "English", subjectColor: "bg-emerald-500", class: "Grade 11B", teacher: "Mrs. Jane", room: "Room 201" },
-                  { time: "14:45 - 16:15", subject: "History", subjectColor: "bg-amber-500", class: "Grade 12C", teacher: "Mr. Robert", room: "Room 105" },
-                ].map((cls, i) => (
+                {(
+                  []
+                ).map((cls, i) => (
                   <tr key={i} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors group">
                     <td className="px-6 py-4 font-bold text-aubergine-600 dark:text-aubergine-400">{cls.time}</td>
                     <td className="px-6 py-4 font-bold text-slate-800 dark:text-white">
@@ -185,11 +175,9 @@ export default function DashboardPage() {
           </div>
           <CardContent className="p-4 flex-1">
             <div className="space-y-5">
-              {[
-                { name: "Min Khant", class: "GED A", detail: "Missing identity documents for official GED registration. Requires follow-up with UN agency.", time: "2 HOURS AGO", color: "bg-red-500" },
-                { name: "Zun Pwint", class: "Pre-GED", detail: "Extended medical leave (3 days). Student reported minor illness.", time: "YESTERDAY", color: "bg-amber-500" },
-                { name: "Aung Ko", class: "GED B", detail: "Applied for financial assistance for exam fees. Documents submitted for review.", time: "DEC 12, 2023", color: "bg-blue-500" },
-              ].map((activity, i) => (
+              {(
+                []
+              ).map((activity, i) => (
                 <div key={i} className="flex gap-3 items-start">
                   <div className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${activity.color}`}></div>
                   <div className="space-y-1">

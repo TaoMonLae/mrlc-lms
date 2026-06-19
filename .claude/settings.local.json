@@ -15,7 +15,10 @@
       "Bash(kill 8279)",
       "Bash(npm run *)",
       "Bash(chmod +x *)",
-      "Bash(grep *)"
+      "Bash(grep *)",
+      "Bash(vite --version)",
+      "Bash(npm list *)",
+      "Bash(node *)"
     ]
   }
 }

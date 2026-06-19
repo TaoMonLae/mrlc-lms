@@ -1,18 +1,18 @@
 import { useEffect, useState } from 'react';
-import { fetchOrMock } from '../../lib/api';
+import { apiGet } from '../../lib/api';
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { 
-  FileText, 
-  Download, 
-  Share2, 
-  MoreHorizontal, 
-  Search, 
-  Upload, 
-  File, 
-  Image as ImageIcon, 
-  Video, 
+import {
+  FileText,
+  Download,
+  Share2,
+  MoreHorizontal,
+  Search,
+  Upload,
+  File,
+  Image as ImageIcon,
+  Video,
   Filter,
   Eye,
   Lock,
@@ -27,14 +27,6 @@ interface ResourceRow {
   id: string; title: string; type: string; size: string; uploadedBy: string;
   date: string; visibility: string; downloads: number; url: string | null;
 }
-
-const MOCK_RESOURCES: ResourceRow[] = [
-  { id: "r1", title: "GED Social Studies Study Guide", type: "PDF", size: "2.4 MB", uploadedBy: "You", date: "May 10, 2024", visibility: "PUBLIC", downloads: 45, url: null },
-  { id: "r2", title: "Chemistry Lab Safety Video", type: "VIDEO", size: "45.1 MB", uploadedBy: "Sarah Wilson", date: "May 08, 2024", visibility: "TEACHERS", downloads: 12, url: null },
-  { id: "r3", title: "Grade 10 Math Exercises", type: "DOCX", size: "1.1 MB", uploadedBy: "You", date: "May 05, 2024", visibility: "PRIVATE", downloads: 0, url: null },
-  { id: "r4", title: "Historical Maps Collection", type: "ZIP", size: "128.5 MB", uploadedBy: "Robert Brown", date: "Apr 28, 2024", visibility: "PUBLIC", downloads: 89, url: null },
-  { id: "r5", title: "English Grammar Worksheet", type: "PDF", size: "0.8 MB", uploadedBy: "You", date: "Apr 22, 2024", visibility: "PUBLIC", downloads: 156, url: null },
-];
 
 // Map a LibraryResource row from /api/library into this page's display shape.
 function mapLibraryResource(r: any): ResourceRow {
@@ -57,9 +49,21 @@ export default function TeacherLibrary() {
   const [resources, setResources] = useState<ResourceRow[]>([]);
 
   useEffect(() => {
-    fetchOrMock<any[]>('/api/library', MOCK_RESOURCES).then((r) => {
-      setResources(r.source === 'live' ? r.data.map(mapLibraryResource) : (r.data as ResourceRow[]));
-    });
+    apiGet<any[]>('/api/library')
+      .then((r) => {
+        setResources((r ?? []).map(mapLibraryResource));
+      })
+      .catch(() => {
+        if (import.meta.env.DEV) {
+          setResources([
+            { id: "r1", title: "GED Social Studies Study Guide", type: "PDF", size: "2.4 MB", uploadedBy: "You", date: "May 10, 2024", visibility: "PUBLIC", downloads: 45, url: null },
+            { id: "r2", title: "Chemistry Lab Safety Video", type: "VIDEO", size: "45.1 MB", uploadedBy: "Sarah Wilson", date: "May 08, 2024", visibility: "TEACHERS", downloads: 12, url: null },
+            { id: "r3", title: "Grade 10 Math Exercises", type: "DOCX", size: "1.1 MB", uploadedBy: "You", date: "May 05, 2024", visibility: "PRIVATE", downloads: 0, url: null },
+            { id: "r4", title: "Historical Maps Collection", type: "ZIP", size: "128.5 MB", uploadedBy: "Robert Brown", date: "Apr 28, 2024", visibility: "PUBLIC", downloads: 89, url: null },
+            { id: "r5", title: "English Grammar Worksheet", type: "PDF", size: "0.8 MB", uploadedBy: "You", date: "Apr 22, 2024", visibility: "PUBLIC", downloads: 156, url: null },
+          ]);
+        }
+      });
   }, []);
 
   const filteredResources = resources.filter(r => 

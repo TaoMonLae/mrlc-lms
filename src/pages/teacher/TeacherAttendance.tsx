@@ -19,24 +19,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { apiSend, fetchOrMock } from "../../lib/api";
+import { apiGet, apiSend } from "../../lib/api";
 
 interface RosterStudent { id: string; name: string; studentId: string; photo?: string | null; }
-
-const MOCK_STUDENTS: RosterStudent[] = [
-  { id: "s1", name: "Min Khant", studentId: "STU-2023-001", photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Min" },
-  { id: "s2", name: "Zun Pwint", studentId: "STU-2023-002", photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Zun" },
-  { id: "s3", name: "Aung Ko", studentId: "STU-2023-003", photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Aung" },
-  { id: "s4", name: "May Mon", studentId: "STU-2023-004", photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=May" },
-  { id: "s5", name: "Htet Aung", studentId: "STU-2023-005", photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Htet" },
-  { id: "s6", name: "Khin Myat", studentId: "STU-2023-006", photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Khin" },
-];
-
-const MOCK_CLASS_OPTIONS = [
-  { value: 'c1', label: 'GED Social Studies' },
-  { value: 'c2', label: 'Pre-GED English' },
-  { value: 'c3', label: 'GED Math Prep' },
-];
 
 export default function TeacherAttendance() {
   const [classOptions, setClassOptions] = useState<{ value: string; label: string }[]>([]);
@@ -47,18 +32,42 @@ export default function TeacherAttendance() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetchOrMock<{ id: string; name: string }[]>('/api/teacher/classes', MOCK_CLASS_OPTIONS.map((o) => ({ id: o.value, name: o.label })))
+    apiGet<{ id: string; name: string }[]>('/api/teacher/classes')
       .then((r) => {
-        const opts = r.data.map((c) => ({ value: c.id, label: c.name }));
+        const opts = (r ?? []).map((c) => ({ value: c.id, label: c.name }));
         setClassOptions(opts);
         setSelectedClass((prev) => prev || opts[0]?.value || "");
+      })
+      .catch(() => {
+        if (import.meta.env.DEV) {
+          const opts = [
+            { id: 'c1', name: 'GED Social Studies' },
+            { id: 'c2', name: 'Pre-GED English' },
+            { id: 'c3', name: 'GED Math Prep' },
+          ].map((c) => ({ value: c.id, label: c.name }));
+          setClassOptions(opts);
+          setSelectedClass(opts[0]?.value || "");
+        }
       });
   }, []);
 
   useEffect(() => {
     if (!selectedClass) return;
     setAttendance({});
-    fetchOrMock<RosterStudent[]>(`/api/teacher/roster?classId=${selectedClass}`, MOCK_STUDENTS).then((r) => setStudents(r.data));
+    apiGet<RosterStudent[]>(`/api/teacher/roster?classId=${selectedClass}`)
+      .then((r) => setStudents(r ?? []))
+      .catch(() => {
+        if (import.meta.env.DEV) {
+          setStudents([
+            { id: "s1", name: "Min Khant", studentId: "STU-2023-001", photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Min" },
+            { id: "s2", name: "Zun Pwint", studentId: "STU-2023-002", photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Zun" },
+            { id: "s3", name: "Aung Ko", studentId: "STU-2023-003", photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Aung" },
+            { id: "s4", name: "May Mon", studentId: "STU-2023-004", photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=May" },
+            { id: "s5", name: "Htet Aung", studentId: "STU-2023-005", photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Htet" },
+            { id: "s6", name: "Khin Myat", studentId: "STU-2023-006", photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Khin" },
+          ]);
+        }
+      });
   }, [selectedClass]);
 
   const CLASS_OPTIONS = classOptions;

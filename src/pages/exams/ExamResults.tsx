@@ -44,33 +44,6 @@ export default function ExamResults() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              <tr className="hover:bg-slate-50 dark:hover:bg-surface-raised/50">
-                <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">Min Khant Aung</td>
-                <td className="px-6 py-4"><Badge className="bg-emerald-500">GRADED</Badge></td>
-                <td className="px-6 py-4 text-emerald-600 font-bold">95 / 100</td>
-                <td className="px-6 py-4 text-slate-500">45m 12s</td>
-                <td className="px-6 py-4 text-right">
-                  <Button variant="ghost" size="sm">Review</Button>
-                </td>
-              </tr>
-              <tr className="hover:bg-slate-50 dark:hover:bg-surface-raised/50">
-                <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">Zun Pwint Phyu</td>
-                <td className="px-6 py-4"><Badge variant="secondary" className="bg-amber-100 text-amber-800">NEEDS GRADING</Badge></td>
-                <td className="px-6 py-4 text-amber-600 font-bold">-- / 100</td>
-                <td className="px-6 py-4 text-slate-500">59m 40s</td>
-                <td className="px-6 py-4 text-right">
-                  <Button variant="outline" size="sm" className="text-aubergine-600 border-aubergine-200 hover:bg-aubergine-50">Grade Now</Button>
-                </td>
-              </tr>
-              <tr className="hover:bg-slate-50 dark:hover:bg-surface-raised/50">
-                <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">Aung Ko Myat</td>
-                <td className="px-6 py-4"><Badge variant="outline">NOT STARTED</Badge></td>
-                <td className="px-6 py-4 text-slate-400 font-bold">-- / 100</td>
-                <td className="px-6 py-4 text-slate-400">--</td>
-                <td className="px-6 py-4 text-right">
-                  <Button variant="ghost" size="sm" disabled>Review</Button>
-                </td>
-              </tr>
             </tbody>
           </table>
         </div>

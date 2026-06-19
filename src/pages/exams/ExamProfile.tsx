@@ -6,15 +6,15 @@ import { Badge } from '@/components/ui/badge';
 
 const MOCK_EXAM = {
   id: 'e1',
-  title: 'GED Math Midterm',
-  subject: 'Math',
-  durationMinutes: 60,
-  totalPoints: 100,
-  status: 'PUBLISHED',
-  classId: 'c1',
-  submissions: 15,
-  totalStudents: 20,
-  avgScore: 78,
+  title: 'Loading Exam...',
+  subject: '--',
+  durationMinutes: 0,
+  totalPoints: 0,
+  status: 'LOADING',
+  classId: '',
+  submissions: 0,
+  totalStudents: 0,
+  avgScore: 0,
 };
 
 export default function ExamProfile() {
@@ -100,22 +100,6 @@ export default function ExamProfile() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  <tr className="hover:bg-slate-50 dark:hover:bg-surface-raised/50">
-                    <td className="px-6 py-3 font-medium text-slate-900 dark:text-white">Min Khant Aung</td>
-                    <td className="px-6 py-3 text-emerald-600 font-medium">95 / 100</td>
-                    <td className="px-6 py-3 text-slate-500">45m 12s</td>
-                    <td className="px-6 py-3 text-right">
-                      <Button variant="ghost" size="sm">Details</Button>
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-slate-50 dark:hover:bg-surface-raised/50">
-                    <td className="px-6 py-3 font-medium text-slate-900 dark:text-white">Zun Pwint Phyu</td>
-                    <td className="px-6 py-3 text-amber-600 font-medium">Needs Grading</td>
-                    <td className="px-6 py-3 text-slate-500">59m 40s</td>
-                    <td className="px-6 py-3 text-right">
-                      <Button variant="outline" size="sm" className="text-aubergine-600 border-aubergine-200 hover:bg-aubergine-50">Grade Now</Button>
-                    </td>
-                  </tr>
                 </tbody>
               </table>
             </div>
@@ -130,19 +114,19 @@ export default function ExamProfile() {
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-slate-500">Class Target</span>
-                <span className="font-medium text-slate-900 dark:text-white">GED Social Studies</span>
+                <span className="font-medium text-slate-900 dark:text-white">--</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Type</span>
-                <span className="font-medium text-slate-900 dark:text-white">Midterm</span>
+                <span className="font-medium text-slate-900 dark:text-white">--</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Auto-submit</span>
-                <span className="font-medium text-slate-900 dark:text-white">Enabled</span>
+                <span className="font-medium text-slate-900 dark:text-white">--</span>
               </div>
                <div className="flex justify-between">
                 <span className="text-slate-500">Timer</span>
-                <span className="font-medium text-slate-900 dark:text-white">Enabled (60m)</span>
+                <span className="font-medium text-slate-900 dark:text-white">--</span>
               </div>
             </div>
           </div>

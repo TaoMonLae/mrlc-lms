@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { fetchOrMock } from '../../lib/api';
+import { apiGet } from '../../lib/api';
 import {
   User,
   Mail, 
@@ -22,19 +22,26 @@ interface StudentProfile {
   enrollmentDate: string; guardian: { name: string; relationship: string; phone: string; email: string };
 }
 
-const MOCK_STUDENT: StudentProfile = {
-  name: 'Min Khant', studentId: 'ST-2024-001', role: 'Student', status: 'Active', class: 'Grade 10A',
-  email: 'minkhant@school.edu', phone: '+95 9 123 456 789', address: 'Yangon, Myanmar',
-  birthDate: '2008-05-15', gender: 'Male', enrollmentDate: '2024-01-10',
-  guardian: { name: 'U Maung Maung', relationship: 'Father', phone: '+95 9 987 654 321', email: 'umaungmaung@gmail.com' },
-};
-
 export default function StudentProfilePage() {
-  const [student, setStudent] = useState<StudentProfile>(MOCK_STUDENT);
+  const [student, setStudent] = useState<StudentProfile>({
+    name: '', studentId: '', role: 'Student', status: 'Active', class: '',
+    email: '', phone: '', address: '', birthDate: '', gender: '',
+    enrollmentDate: '', guardian: { name: '', relationship: '', phone: '', email: '' },
+  });
 
   useEffect(() => {
-    fetchOrMock<StudentProfile>('/api/student/profile', MOCK_STUDENT, { emptyWhen: (d) => !d?.name })
-      .then((r) => setStudent(r.data));
+    apiGet<StudentProfile>('/api/student/profile')
+      .then((r) => r && setStudent(r))
+      .catch(() => {
+        if (import.meta.env.DEV) {
+          setStudent({
+            name: 'Min Khant', studentId: 'ST-2024-001', role: 'Student', status: 'Active', class: 'Grade 10A',
+            email: 'minkhant@school.edu', phone: '+95 9 123 456 789', address: 'Yangon, Myanmar',
+            birthDate: '2008-05-15', gender: 'Male', enrollmentDate: '2024-01-10',
+            guardian: { name: 'U Maung Maung', relationship: 'Father', phone: '+95 9 987 654 321', email: 'umaungmaung@gmail.com' },
+          });
+        }
+      });
   }, []);
 
   return (

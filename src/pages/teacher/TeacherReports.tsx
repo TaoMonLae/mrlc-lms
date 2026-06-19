@@ -41,10 +41,15 @@ const reportTemplates = [
   },
 ];
 
-const generatedReports = [
-  { id: "g1", title: "GED Social Studies - May Attendance", date: "May 12, 2024", format: "PDF", size: "1.2 MB", status: "READY" },
-  { id: "g2", title: "Pre-GED English - Midterm Analysis", date: "May 10, 2024", format: "XLSX", size: "450 KB", status: "READY" },
-];
+type GeneratedReport = {
+  id: string;
+  title: string;
+  date: string;
+  format: string;
+  size: string;
+};
+
+const generatedReports: GeneratedReport[] = [];
 
 export default function TeacherReports() {
   const [showHistory, setShowHistory] = useState(false);

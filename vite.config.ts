@@ -11,6 +11,10 @@ export default defineConfig(() => {
         '@': path.resolve(__dirname, '.'),
       },
     },
+    define: {
+      // Ensure DEV is false in production builds for tree-shaking
+      'import.meta.env.DEV': process.env.NODE_ENV === 'development' ? 'true' : 'false',
+    },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
       // Do not modifyâfile watching is disabled to prevent flickering during agent edits.

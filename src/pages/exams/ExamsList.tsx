@@ -12,11 +12,17 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 
-const MOCK_EXAMS = [
-  { id: 'e1', title: 'GED Math Midterm', subject: 'Math', durationMinutes: 60, totalPoints: 100, status: 'PUBLISHED', classId: 'c1', className: 'Pre-GED Foundation' },
-  { id: 'e2', title: 'GED RLA Practice Test 1', subject: 'English', durationMinutes: 90, totalPoints: 150, status: 'DRAFT', classId: 'c2', className: 'GED Level A' },
-  { id: 'e3', title: 'Social Studies Final', subject: 'Social Studies', durationMinutes: 120, totalPoints: 200, status: 'CLOSED', classId: 'c3', className: 'GED Level B' },
-];
+type ExamListRow = {
+  id: string;
+  title: string;
+  subject: string;
+  durationMinutes: number;
+  totalPoints: number;
+  status: string;
+  className: string;
+};
+
+const MOCK_EXAMS: ExamListRow[] = [];
 
 export default function ExamsList() {
   return (

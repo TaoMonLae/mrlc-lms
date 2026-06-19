@@ -17,19 +17,12 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
-import { fetchOrMock } from "../../lib/api";
+import { apiGet } from "../../lib/api";
 
 interface TeacherExam {
   id: string; title: string; class: string; date: string; duration: string;
   type: string; status: string; submissions: number; total: number; avg?: string;
 }
-
-const MOCK_EXAMS: TeacherExam[] = [
-  { id: "e1", title: "Social Studies Mid-Term", class: "GED Social Studies", date: "May 15, 2024", duration: "120m", type: "Digital", status: "UPCOMING", submissions: 0, total: 24 },
-  { id: "e2", title: "English Essay Review", class: "Pre-GED English", date: "May 01, 2024", duration: "60m", type: "Handwritten", status: "NEEDS_GRADING", submissions: 18, total: 18 },
-  { id: "e3", title: "Weekly Math Quiz #4", class: "GED Math Prep", date: "Apr 28, 2024", duration: "30m", type: "Digital", status: "GRADED", submissions: 12, total: 12, avg: "85%" },
-  { id: "e4", title: "History Final Project", class: "History of SEA", date: "Jun 10, 2024", duration: "N/A", type: "Submission", status: "DRAFT", submissions: 0, total: 22 },
-];
 
 export default function TeacherExams() {
   const navigate = useNavigate();
@@ -37,7 +30,18 @@ export default function TeacherExams() {
   const [teacherExams, setTeacherExams] = useState<TeacherExam[]>([]);
 
   useEffect(() => {
-    fetchOrMock<TeacherExam[]>('/api/teacher/exams', MOCK_EXAMS).then((r) => setTeacherExams(r.data));
+    apiGet<TeacherExam[]>('/api/teacher/exams')
+      .then((r) => setTeacherExams(r ?? []))
+      .catch(() => {
+        if (import.meta.env.DEV) {
+          setTeacherExams([
+            { id: "e1", title: "Social Studies Mid-Term", class: "GED Social Studies", date: "May 15, 2024", duration: "120m", type: "Digital", status: "UPCOMING", submissions: 0, total: 24 },
+            { id: "e2", title: "English Essay Review", class: "Pre-GED English", date: "May 01, 2024", duration: "60m", type: "Handwritten", status: "NEEDS_GRADING", submissions: 18, total: 18 },
+            { id: "e3", title: "Weekly Math Quiz #4", class: "GED Math Prep", date: "Apr 28, 2024", duration: "30m", type: "Digital", status: "GRADED", submissions: 12, total: 12, avg: "85%" },
+            { id: "e4", title: "History Final Project", class: "History of SEA", date: "Jun 10, 2024", duration: "N/A", type: "Submission", status: "DRAFT", submissions: 0, total: 22 },
+          ]);
+        }
+      });
   }, []);
 
   const filteredExams = teacherExams.filter(e =>

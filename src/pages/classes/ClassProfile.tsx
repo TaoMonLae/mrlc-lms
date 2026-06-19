@@ -38,10 +38,14 @@ const MOCK_TEACHERS = [
   { id: 't2', name: 'Aye Myat Thu', role: 'Assistant', subject: 'English' },
 ];
 
-const MOCK_STUDENTS = [
-  { id: 's1', name: 'Min Khant Aung', studentId: 'STD-2024-001', attendance: '95%' },
-  { id: 's2', name: 'Zun Pwint Phyu', studentId: 'STD-2024-002', attendance: '88%' },
-];
+type ClassStudentRow = {
+  id: string;
+  name: string;
+  studentId: string;
+  attendance: string;
+};
+
+const MOCK_STUDENTS: ClassStudentRow[] = [];
 
 const MOCK_SUBJECTS = ['Mathematics', 'English', 'Science', 'Social Studies'];
 
