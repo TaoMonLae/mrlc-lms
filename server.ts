@@ -276,6 +276,7 @@ function validate(schema: z.ZodType) {
 const str = z.string().trim();
 const reqStr = str.min(1, "is required");
 const optStr = str.optional();
+const nullableStr = str.nullable().optional(); // accepts string | null | undefined
 const email = z.string().trim().email("must be a valid email");
 const num = z.union([z.string(), z.number()]); // handlers coerce with Number()
 const optNum = num.optional().nullable();
@@ -403,7 +404,7 @@ const schemas = {
   }),
   settingsUpdate: z.object({
     name: optStr, address: optStr, email: optStr, phone: optStr,
-    logoUrl: optStr, signatureUrl: optStr, primaryColor: optStr, accentColor: optStr,
+    logoUrl: nullableStr, signatureUrl: nullableStr, primaryColor: optStr, accentColor: optStr,
     darkModeDefault: z.union([z.boolean(), z.string()]).optional(),
     reportHeaderStyle: optStr,
     timezone: optStr, dateFormat: optStr, currency: optStr, defaultLanguage: optStr,
@@ -1030,7 +1031,11 @@ async function startServer() {
   app.get("/api/users", authMiddleware, requireRole("ADMIN"), async (req, res) => {
     try {
       const users = await prisma.user.findMany({
-        select: { id: true, firstName: true, lastName: true, email: true, role: true, isActive: true, createdAt: true },
+        select: {
+          id: true, firstName: true, lastName: true, email: true, role: true, isActive: true, createdAt: true,
+          studentProfile: { select: { id: true } },
+          teacherProfile: { select: { id: true } },
+        },
         orderBy: { createdAt: "desc" },
       });
       res.json(users);
@@ -2686,6 +2691,31 @@ async function startServer() {
     }
   });
 
+  // Admin resets a user's password directly to a chosen value.
+  app.post("/api/users/:id/reset-password", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const newPassword = (req.body?.newPassword ?? "").toString();
+    if (newPassword.length < 6) {
+      res.status(400).json({ error: "Password must be at least 6 characters" });
+      return;
+    }
+    try {
+      const passwordHash = await bcrypt.hash(newPassword, 10);
+      const user = await prisma.user.update({
+        where: { id: req.params.id },
+        data: { passwordHash, mustChangePassword: true },
+        select: { id: true, firstName: true, lastName: true, email: true },
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "USER", user.id,
+        `Password reset for user '${user.firstName} ${user.lastName}'.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.json({ success: true });
+    } catch (err: any) {
+      logger.error("Error resetting password:", err);
+      if (err.code === "P2025") { res.status(404).json({ error: "User not found" }); return; }
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
   // ── Teachers (create) ───────────────────────────────────────────────────────
   app.post("/api/teachers", authMiddleware, requireRole("ADMIN"), validate(schemas.teacherCreate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
@@ -2762,6 +2792,26 @@ async function startServer() {
       res.json(caseRecord);
     } catch (err) {
       logger.error("Error fetching case:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Delete a case (and its notes via cascade). Admin or case worker only.
+  app.delete("/api/cases/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "CASE_WORKER") {
+      res.status(403).json({ error: "Forbidden" }); return;
+    }
+    try {
+      const existing = await prisma.caseRecord.findUnique({ where: { id: req.params.id } });
+      if (!existing) { res.status(404).json({ error: "Case not found" }); return; }
+      await prisma.caseRecord.delete({ where: { id: req.params.id } });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "DELETE", "CASE", req.params.id,
+        `Case '${existing.title}' deleted.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.json({ success: true });
+    } catch (err: any) {
+      logger.error("Error deleting case:", err);
+      if (err.code === "P2025") { res.status(404).json({ error: "Case not found" }); return; }
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
@@ -2872,6 +2922,87 @@ async function startServer() {
       return;
     }
     res.json({ url: `/uploads/branding/${file.filename}` });
+  });
+
+  // ── Data Export (CSV / JSON) ─────────────────────────────────────────────────
+  const toCsv = (rows: Record<string, any>[]): string => {
+    if (!rows.length) return "";
+    const headers = Array.from(
+      rows.reduce((set, row) => { Object.keys(row).forEach(k => set.add(k)); return set; }, new Set<string>())
+    );
+    const escape = (val: any) => {
+      if (val === null || val === undefined) return "";
+      const s = val instanceof Date ? val.toISOString() : String(val);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const lines = [headers.join(",")];
+    for (const row of rows) lines.push(headers.map(h => escape(row[h])).join(","));
+    return lines.join("\n");
+  };
+
+  const exFullName = (u: any) => `${u?.firstName ?? ""} ${u?.lastName ?? ""}`.trim();
+
+  const exportLoaders: Record<string, () => Promise<Record<string, any>[]>> = {
+    students: async () => (await prisma.student.findMany({ include: { user: true, class: true } })).map(s => ({
+      studentCode: s.studentCode, firstName: s.user?.firstName ?? "", lastName: s.user?.lastName ?? "",
+      email: s.user?.email ?? "", gender: s.gender ?? "", status: s.status ?? "", class: s.class?.name ?? "",
+      guardianName: s.guardianName ?? "", guardianPhone: s.guardianPhone ?? "", contactNumber: s.contactNumber ?? "",
+      country: s.country ?? "", enrollmentDate: s.enrollmentDate,
+    })),
+    teachers: async () => (await prisma.teacher.findMany({ include: { user: true } })).map(t => ({
+      teacherCode: t.teacherCode, name: exFullName(t.user), email: t.user?.email ?? "",
+      specialization: t.specialization ?? "", hireDate: t.hireDate,
+    })),
+    classes: async () => (await prisma.class.findMany({ include: { students: true } })).map(c => ({
+      name: c.name, level: c.level, academicYear: c.academicYear, room: c.room ?? "",
+      capacity: c.capacity ?? "", studentCount: c.students.length, createdAt: c.createdAt,
+    })),
+    attendance: async () => (await prisma.attendance.findMany({ include: { student: { include: { user: true } }, class: true } })).map(a => ({
+      date: a.date, status: a.status, student: exFullName(a.student?.user), class: a.class?.name ?? "", remarks: a.remarks ?? "",
+    })),
+    exams: async () => (await prisma.exam.findMany({ include: { class: true, subject: true } })).map(e => ({
+      title: e.title, type: e.type, date: e.date, class: e.class?.name ?? "", subject: e.subject?.name ?? "",
+      totalMarks: e.totalMarks ?? "", durationMinutes: e.durationMinutes ?? "",
+    })),
+    fees: async () => (await prisma.feePayment.findMany({ include: { student: { include: { user: true } } } })).map(f => ({
+      receiptNumber: f.receiptNumber ?? "", student: exFullName(f.student?.user), amount: f.amount, currency: f.currency,
+      status: f.status, dueDate: f.dueDate, paidDate: f.paidDate ?? "", paymentMethod: f.paymentMethod ?? "", description: f.description ?? "",
+    })),
+    library: async () => (await prisma.libraryResource.findMany()).map(r => ({
+      title: r.title, author: r.author ?? "", isbn: r.isbn ?? "", type: r.type,
+      totalCopies: r.totalCopies, availableCopies: r.availableCopies, visibility: r.visibility ?? "",
+    })),
+    cases: async () => (await prisma.caseRecord.findMany({ include: { student: { include: { user: true } } } })).map(c => ({
+      title: c.title, status: c.status, priority: c.priority, category: c.category ?? "",
+      student: exFullName(c.student?.user), description: c.description, createdAt: c.createdAt,
+    })),
+  };
+
+  app.get("/api/export/:module", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const moduleId = req.params.module;
+    const format = (req.query.format === "json" ? "json" : "csv") as "json" | "csv";
+    const loader = exportLoaders[moduleId];
+    if (!loader) { res.status(404).json({ error: "Unknown export module" }); return; }
+    try {
+      const rows = await loader();
+      await createAuditLog(jwtUser.userId, jwtUser.email, "EXPORT", "DATA", moduleId,
+        `Exported ${moduleId} (${rows.length} rows) as ${format.toUpperCase()}.`,
+        req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      const stamp = new Date().toISOString().slice(0, 10);
+      if (format === "json") {
+        res.setHeader("Content-Type", "application/json");
+        res.setHeader("Content-Disposition", `attachment; filename="${moduleId}-${stamp}.json"`);
+        res.send(JSON.stringify(rows, null, 2));
+      } else {
+        res.setHeader("Content-Type", "text/csv");
+        res.setHeader("Content-Disposition", `attachment; filename="${moduleId}-${stamp}.csv"`);
+        res.send(toCsv(rows));
+      }
+    } catch (err) {
+      logger.error(`Error exporting ${moduleId}:`, err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
   });
 
   // ── E-Library (EPUB/PDF) API ────────────────────────────────────────────────

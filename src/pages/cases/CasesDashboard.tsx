@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Shield, ShieldAlert, ArrowUpRight, CheckCircle2, Clock, AlertTriangle, Filter } from 'lucide-react';
+import { Plus, Search, Shield, ShieldAlert, ArrowUpRight, CheckCircle2, Clock, AlertTriangle, Filter, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { usePermissions } from '../../lib/permissions';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
@@ -36,6 +44,8 @@ export default function CasesDashboard() {
   const [typeFilter, setTypeFilter] = useState('ALL');
   const [cases, setCases] = useState<Case[]>([]);
   const [loading, setLoading] = useState(true);
+  const [caseToDelete, setCaseToDelete] = useState<Case | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const fetchCases = async () => {
@@ -78,6 +88,29 @@ export default function CasesDashboard() {
     };
     fetchCases();
   }, []);
+
+  const handleDeleteCase = async () => {
+    if (!caseToDelete) return;
+    setIsDeleting(true);
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`/api/cases/${caseToDelete.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to delete case');
+      }
+      setCases(prev => prev.filter(c => c.id !== caseToDelete.id));
+      toast.success('Case deleted.');
+      setCaseToDelete(null);
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to delete case');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const filteredCases = cases.filter(c => {
     const matchesSearch = c.studentName.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -239,9 +272,22 @@ export default function CasesDashboard() {
                     {formatDistanceToNow(new Date(c.openedAt))} ago
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <Button variant="ghost" size="sm" render={<Link to={`/cases/${c.id}`} />} nativeButton={false}>
-                       View <ArrowUpRight className="ml-1 h-3 w-3" />
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button variant="ghost" size="sm" render={<Link to={`/cases/${c.id}`} />} nativeButton={false}>
+                         View <ArrowUpRight className="ml-1 h-3 w-3" />
+                      </Button>
+                      {hasPermission('manage_cases') && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          aria-label={`Delete case ${c.caseNumber}`}
+                          onClick={() => setCaseToDelete(c)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -291,15 +337,47 @@ export default function CasesDashboard() {
                     {formatDistanceToNow(new Date(c.openedAt))} ago
                   </span>
                 </div>
-                <Button variant="outline" size="sm" render={<Link to={`/cases/${c.id}`} />} nativeButton={false}>
-                  View Details
-                </Button>
+                <div className="flex items-center gap-2">
+                  {hasPermission('manage_cases') && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 border-red-200 hover:bg-red-50 dark:border-red-900 dark:hover:bg-red-900/20"
+                      aria-label={`Delete case ${c.caseNumber}`}
+                      onClick={() => setCaseToDelete(c)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                  <Button variant="outline" size="sm" render={<Link to={`/cases/${c.id}`} />} nativeButton={false}>
+                    View Details
+                  </Button>
+                </div>
               </div>
             </div>
           ))}
         </div>
         )}
       </div>
+
+      <Dialog open={caseToDelete !== null} onOpenChange={(open) => { if (!open) setCaseToDelete(null); }}>
+        <DialogContent className="sm:max-w-[440px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="h-5 w-5" /> Delete Case
+            </DialogTitle>
+            <DialogDescription className="pt-1">
+              Are you sure you want to permanently delete <strong className="text-slate-900 dark:text-white">{caseToDelete?.title}</strong> ({caseToDelete?.caseNumber})? This will also remove all case notes and cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCaseToDelete(null)} disabled={isDeleting}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDeleteCase} disabled={isDeleting}>
+              {isDeleting ? 'Deleting…' : 'Delete Case'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

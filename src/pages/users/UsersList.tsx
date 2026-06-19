@@ -19,6 +19,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { User } from '../../lib/permissions';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
@@ -31,6 +40,8 @@ interface ApiUser {
   role: User['role'];
   isActive: boolean;
   createdAt?: string;
+  studentProfile?: { id: string } | null;
+  teacherProfile?: { id: string } | null;
 }
 
 function mapUser(u: ApiUser): User {
@@ -41,6 +52,8 @@ function mapUser(u: ApiUser): User {
     email: u.email,
     role: u.role,
     status: u.isActive ? 'ACTIVE' : 'DISABLED',
+    studentId: u.studentProfile?.id,
+    teacherId: u.teacherProfile?.id,
     createdAt: u.createdAt ?? new Date().toISOString(),
     updatedAt: u.createdAt ?? new Date().toISOString(),
   };
@@ -52,6 +65,9 @@ export default function UsersList() {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [resetUser, setResetUser] = useState<User | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [resetting, setResetting] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -110,8 +126,32 @@ export default function UsersList() {
     }
   };
 
-  const handleResetPassword = () => {
-    toast.success('Password reset link has been generated.');
+  const handleResetPassword = async () => {
+    if (!resetUser) return;
+    if (newPassword.length < 6) {
+      toast.error('Password must be at least 6 characters.');
+      return;
+    }
+    setResetting(true);
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`/api/users/${resetUser.id}/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ newPassword }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to reset password');
+      }
+      toast.success(`Password reset for ${resetUser.name}. They must change it on next login.`);
+      setResetUser(null);
+      setNewPassword('');
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to reset password');
+    } finally {
+      setResetting(false);
+    }
   };
 
   const getRoleBadgeColor = (role: string) => {
@@ -237,7 +277,7 @@ export default function UsersList() {
                           <DropdownMenuItem render={<Link to={`/users/${user.id}/edit`} className="flex w-full" />} nativeButton={false}>
                             <Edit2 className="mr-2 h-4 w-4" /> Edit User
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={handleResetPassword}>
+                          <DropdownMenuItem onClick={() => { setResetUser(user); setNewPassword(''); }}>
                             <ShieldAlert className="mr-2 h-4 w-4" /> Reset Password
                           </DropdownMenuItem>
                         </DropdownMenuGroup>
@@ -274,6 +314,37 @@ export default function UsersList() {
           </table>
         </div>
       </div>
+
+      <Dialog open={resetUser !== null} onOpenChange={(open) => { if (!open) { setResetUser(null); setNewPassword(''); } }}>
+        <DialogContent className="sm:max-w-[440px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldAlert className="h-5 w-5 text-amber-600" />
+              Reset Password
+            </DialogTitle>
+            <DialogDescription className="pt-1">
+              Set a new password for <strong className="text-slate-900 dark:text-white">{resetUser?.name}</strong>. They will be required to change it on their next login.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="new-password">New password</Label>
+            <Input
+              id="new-password"
+              type="text"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="At least 6 characters"
+              autoComplete="new-password"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setResetUser(null); setNewPassword(''); }}>Cancel</Button>
+            <Button onClick={handleResetPassword} disabled={resetting}>
+              {resetting ? 'Resetting…' : 'Reset Password'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

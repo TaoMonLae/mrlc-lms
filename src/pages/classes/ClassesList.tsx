@@ -20,7 +20,7 @@ interface Class {
   level: string;
   academicYear: string;
   description: string;
-  status: string;
+  status?: string;
   students: any[];
   createdAt: string;
   updatedAt: string;
@@ -123,7 +123,7 @@ export default function ClassesList() {
                     {userRole === 'ADMIN' && (
                       <React.Fragment>
                         <DropdownMenuSeparator />
-                        {cls.status === 'ACTIVE' ? (
+                        {(cls.status || 'ACTIVE') === 'ACTIVE' ? (
                           <DropdownMenuItem className="text-amber-600 focus:text-amber-600 focus:bg-amber-50">
                             <Archive className="mr-2 h-4 w-4" /> Archive Class
                           </DropdownMenuItem>
@@ -155,17 +155,17 @@ export default function ClassesList() {
                     <CheckCircle2 className="h-4 w-4" />
                     <span className="text-xs font-medium uppercase">Status</span>
                   </div>
-                  <p className="text-lg font-bold text-slate-900 dark:text-white capitalize">{cls.status.toLowerCase()}</p>
+                  <p className="text-lg font-bold text-slate-900 dark:text-white capitalize">{(cls.status || 'ACTIVE').toLowerCase()}</p>
                 </div>
               </div>
             </div>
 
             <div className="bg-slate-50 dark:bg-surface-raised/30 p-4 border-t border-slate-100 dark:border-surface-raised flex justify-between items-center text-sm">
               <div className="flex items-center gap-2">
-                <Badge variant={cls.status === 'ACTIVE' ? 'default' : 'secondary'}
-                  className={cls.status === 'ACTIVE' ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-slate-500 hover:bg-slate-600'}
+                <Badge variant={(cls.status || 'ACTIVE') === 'ACTIVE' ? 'default' : 'secondary'}
+                  className={(cls.status || 'ACTIVE') === 'ACTIVE' ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-slate-500 hover:bg-slate-600'}
                 >
-                  {cls.status}
+                  {cls.status || 'ACTIVE'}
                 </Badge>
               </div>
               <div className="text-xs text-slate-500">

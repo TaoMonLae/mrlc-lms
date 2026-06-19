@@ -50,11 +50,39 @@ export default function ExportDataPage() {
     }
   };
 
-  const runExport = (moduleId: string) => {
-    // TODO: Replace with real API call when backend is ready
-    toast.success(`Exporting ${moduleId} as ${format.toUpperCase()}...`, {
-      description: "This action has been logged in the Audit Log.",
-    });
+  const runExport = async (moduleId: string) => {
+    const token = sessionStorage.getItem("auth_token");
+    if (!token) {
+      toast.error("You must be logged in to export data.");
+      return;
+    }
+    try {
+      const res = await fetch(`/api/export/${moduleId}?format=${format}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          throw new Error("You do not have permission to export data.");
+        }
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to export data");
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const stamp = new Date().toISOString().slice(0, 10);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${moduleId}-${stamp}.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success(`Exported ${moduleId} as ${format.toUpperCase()}.`, {
+        description: "This action has been logged in the Audit Log.",
+      });
+    } catch (error: any) {
+      toast.error(error.message || "Failed to export data. Please try again.");
+    }
   };
 
   const confirmSensitiveExport = () => {

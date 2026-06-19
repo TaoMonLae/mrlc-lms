@@ -31,12 +31,13 @@ export default function StudentsList() {
   const [classFilter, setClassFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [students, setStudents] = useState<any[]>([]);
+  const [classes, setClasses] = useState<{ id: string; name: string }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    const token = sessionStorage.getItem('auth_token');
     const fetchStudents = async () => {
       try {
-        const token = sessionStorage.getItem('auth_token');
         const res = await fetch('/api/students', {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -51,7 +52,20 @@ export default function StudentsList() {
         setIsLoading(false);
       }
     };
+    const fetchClasses = async () => {
+      try {
+        const res = await fetch('/api/classes', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        setClasses(data.map((c: any) => ({ id: c.id, name: c.name })));
+      } catch {
+        /* leave class filter with just "All Classes" on error */
+      }
+    };
     fetchStudents();
+    fetchClasses();
   }, []);
 
   const mappedStudents = students.map((s: any) => ({
@@ -125,9 +139,9 @@ export default function StudentsList() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">All Classes</SelectItem>
-                <SelectItem value="GED Social Studies">GED Social Studies</SelectItem>
-                <SelectItem value="Pre-GED English">Pre-GED English</SelectItem>
-                <SelectItem value="GED Math Prep">GED Math Prep</SelectItem>
+                {classes.map((c) => (
+                  <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>

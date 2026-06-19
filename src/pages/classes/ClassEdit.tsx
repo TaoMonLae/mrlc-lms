@@ -104,9 +104,11 @@ export default function ClassEdit() {
                   <SelectValue placeholder="Select level" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Foundation">Foundation</SelectItem>
-                  <SelectItem value="Intermediate">Intermediate</SelectItem>
-                  <SelectItem value="Advanced">Advanced</SelectItem>
+                  {Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`).map((g) => (
+                    <SelectItem key={g} value={g}>{g}</SelectItem>
+                  ))}
+                  <SelectItem value="GED">GED</SelectItem>
+                  <SelectItem value="IGCSE">IGCSE</SelectItem>
                 </SelectContent>
               </Select>
               {errors.level && <p className="text-xs text-red-500 font-medium">{errors.level.message}</p>}

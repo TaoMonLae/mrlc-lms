@@ -1,9 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit2, ShieldAlert, Shield, Clock, CheckCircle2, AlertTriangle, MessageSquare, AlertCircle, Plus, FileText, User } from 'lucide-react';
+import { ArrowLeft, Edit2, ShieldAlert, Shield, Clock, CheckCircle2, AlertTriangle, MessageSquare, AlertCircle, Plus, FileText, User, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { usePermissions, useUser } from '../../lib/permissions';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -24,6 +32,9 @@ export default function CaseDetail() {
   const [isPrivateNote, setIsPrivateNote] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [caseData, setCaseData] = useState<any>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { hasPermission } = usePermissions();
 
   useEffect(() => {
     const token = sessionStorage.getItem('auth_token');
@@ -77,6 +88,27 @@ export default function CaseDetail() {
       toast.error(e.message || 'Failed to add note');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteCase = async () => {
+    setIsDeleting(true);
+    const token = sessionStorage.getItem('auth_token');
+    try {
+      const res = await fetch(`/api/cases/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to delete case');
+      }
+      toast.success('Case deleted.');
+      navigate('/cases');
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to delete case');
+      setIsDeleting(false);
+      setConfirmDelete(false);
     }
   };
 
@@ -144,8 +176,36 @@ export default function CaseDetail() {
            <Button variant="outline" render={<Link to={`/cases/${id}/edit`} />} nativeButton={false}>
              <Edit2 className="mr-2 h-4 w-4" /> Edit Details
            </Button>
+           {hasPermission('manage_cases') && (
+             <Button
+               variant="outline"
+               className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 dark:border-red-900 dark:hover:bg-red-900/20"
+               onClick={() => setConfirmDelete(true)}
+             >
+               <Trash2 className="mr-2 h-4 w-4" /> Delete Case
+             </Button>
+           )}
         </div>
       </div>
+
+      <Dialog open={confirmDelete} onOpenChange={(open) => { if (!open) setConfirmDelete(false); }}>
+        <DialogContent className="sm:max-w-[440px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="h-5 w-5" /> Delete Case
+            </DialogTitle>
+            <DialogDescription className="pt-1">
+              Are you sure you want to permanently delete <strong className="text-slate-900 dark:text-white">{activeCase.title}</strong>? This will also remove all case notes and cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmDelete(false)} disabled={isDeleting}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDeleteCase} disabled={isDeleting}>
+              {isDeleting ? 'Deleting…' : 'Delete Case'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
