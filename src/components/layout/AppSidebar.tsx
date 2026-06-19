@@ -19,6 +19,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { usePermissions, useUser } from "@/src/lib/permissions";
 import { useSettings } from "@/src/providers/SettingsProvider";
 import { useAuth } from "@/src/providers/AuthProvider";
+import { ProfilePhotoUploader } from "@/src/components/profile/ProfilePhotoUploader";
 
 export function AppSidebar() {
   const location = useLocation();
@@ -82,6 +83,7 @@ export function AppSidebar() {
         <DropdownMenu>
           <DropdownMenuTrigger render={<SidebarMenuButton size="lg" className="h-12 w-full justify-start gap-3 px-2 hover:bg-white/10 transition-all duration-200" aria-label="Open user menu" />} nativeButton={true}>
               <Avatar className="h-9 w-9 rounded-full border border-white/20 bg-white/15">
+                <AvatarImage src={user?.profilePhotoUrl || undefined} />
                 <AvatarFallback className="bg-white/15 text-white">
                   {user?.name?.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase() || 'U'}
                 </AvatarFallback>
@@ -94,6 +96,16 @@ export function AppSidebar() {
           <DropdownMenuContent className="w-56" align="end" side="right" sideOffset={10}>
             <DropdownMenuGroup>
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <div className="px-2 py-3">
+                <ProfilePhotoUploader
+                  currentUrl={user?.profilePhotoUrl}
+                  fallbackText={user?.name?.split(' ').map(w => w[0]).join('') || 'U'}
+                  targetType="user"
+                  imageClassName="h-16 w-16 rounded-full"
+                  buttonLabel="Change Picture"
+                  onUploaded={() => window.location.reload()}
+                />
+              </div>
               <DropdownMenuSeparator />
               <DropdownMenuItem render={<Link to="/settings" className="w-full flex items-center" />}>
                 <User className="mr-2 h-4 w-4" />

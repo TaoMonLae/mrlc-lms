@@ -37,6 +37,7 @@ function mapApiUser(apiUser: Record<string, any>): User {
     name: `${apiUser.firstName ?? ''} ${apiUser.lastName ?? ''}`.trim() || apiUser.email,
     username: apiUser.email,
     email: apiUser.email,
+    profilePhotoUrl: apiUser.profilePhotoUrl ?? null,
     role: apiUser.role,
     status: apiUser.isActive ? 'ACTIVE' : 'DISABLED',
     mustChangePassword: Boolean(apiUser.mustChangePassword),

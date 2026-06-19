@@ -9,6 +9,7 @@ export interface User {
   name: string;
   username: string;
   email?: string;
+  profilePhotoUrl?: string | null;
   role: UserRole;
   status: UserStatus;
   mustChangePassword?: boolean;

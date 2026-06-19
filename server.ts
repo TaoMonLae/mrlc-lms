@@ -26,6 +26,8 @@ const EBOOK_DIR = process.env.EBOOK_DIR || path.join(process.cwd(), "data", "ebo
 fs.mkdirSync(EBOOK_DIR, { recursive: true });
 const BRANDING_ASSET_DIR = process.env.BRANDING_ASSET_DIR || path.join(process.cwd(), "data", "branding");
 fs.mkdirSync(BRANDING_ASSET_DIR, { recursive: true });
+const PROFILE_PHOTO_DIR = process.env.PROFILE_PHOTO_DIR || path.join(process.cwd(), "data", "profile-photos");
+fs.mkdirSync(PROFILE_PHOTO_DIR, { recursive: true });
 
 const ebookUpload = multer({
   storage: multer.diskStorage({
@@ -58,6 +60,25 @@ const brandingAssetUpload = multer({
     if (file.mimetype.startsWith("image/") && allowed.has(ext)) cb(null, true);
     else cb(new Error("Only PNG, JPG, WEBP, GIF, and SVG image files are allowed"));
   },
+});
+
+const imageUploadFilter = (_req: express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  const allowed = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"]);
+  const ext = path.extname(file.originalname).toLowerCase();
+  if (file.mimetype.startsWith("image/") && allowed.has(ext)) cb(null, true);
+  else cb(new Error("Only PNG, JPG, WEBP, GIF, and SVG image files are allowed"));
+};
+
+const profilePhotoUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, PROFILE_PHOTO_DIR),
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase();
+      cb(null, `${crypto.randomUUID()}${ext}`);
+    },
+  }),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: imageUploadFilter,
 });
 
 // ─── Database backups ──────────────────────────────────────────────────────────
@@ -277,7 +298,10 @@ const schemas = {
     firstName: reqStr, lastName: reqStr,
     email: z.union([email, z.literal("")]).optional(),
     studentCode: optStr, dateOfBirth: optStr, guardianName: optStr,
-    guardianPhone: optStr, classId: optStr, gender: optStr, status: optStr,
+    guardianPhone: optStr, contactNumber: optStr, country: optStr,
+    identityType: optStr, identityNumber: optStr, address: optStr,
+    emergencyContact: optStr, notes: optStr,
+    classId: optStr, gender: optStr, status: optStr,
   }),
   userCreate: z.object({
     firstName: reqStr, lastName: reqStr, email,
@@ -348,7 +372,10 @@ const schemas = {
     firstName: optStr, lastName: optStr,
     email: z.union([email, z.literal("")]).optional(),
     studentCode: optStr, dateOfBirth: optStr, guardianName: optStr,
-    guardianPhone: optStr, classId: optStr, gender: optStr, status: optStr,
+    guardianPhone: optStr, contactNumber: optStr, country: optStr,
+    identityType: optStr, identityNumber: optStr, address: optStr,
+    emergencyContact: optStr, notes: optStr,
+    classId: optStr, gender: optStr, status: optStr,
   }),
   libraryUpdate: z.object({
     title: optStr, type: optStr, description: optStr, visibility: optStr,
@@ -448,6 +475,10 @@ async function startServer() {
     maxAge: isProduction ? "30d" : 0,
     immutable: isProduction,
   }));
+  app.use("/uploads/profile-photos", express.static(PROFILE_PHOTO_DIR, {
+    maxAge: isProduction ? "30d" : 0,
+    immutable: isProduction,
+  }));
 
   // ── Rate limiting ───────────────────────────────────────────────────────────
   // Generous global cap (schools often share one NAT'd IP). Health checks and
@@ -528,6 +559,7 @@ async function startServer() {
           email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
+          profilePhotoUrl: (user as any).profilePhotoUrl || null,
           role: user.role,
           isActive: user.isActive,
           mustChangePassword: user.mustChangePassword,
@@ -553,6 +585,7 @@ async function startServer() {
           email: true,
           firstName: true,
           lastName: true,
+          profilePhotoUrl: true,
           role: true,
           isActive: true,
           mustChangePassword: true,
@@ -565,6 +598,114 @@ async function startServer() {
       res.json({ user });
     } catch (err) {
       logger.error("Error fetching user profile:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  const uploadProfilePhoto = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    profilePhotoUpload.single("file")(req, res, (err: any) => {
+      if (!err) return next();
+      const message =
+        err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE"
+          ? "Profile picture must be 5 MB or smaller"
+          : err.message || "Upload failed";
+      res.status(400).json({ error: message });
+    });
+  };
+
+  app.post("/api/profile-photo", authMiddleware, uploadProfilePhoto, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const file = (req as any).file as Express.Multer.File | undefined;
+    const targetType = String(req.body?.targetType || "user");
+    const requestedTargetId = req.body?.targetId ? String(req.body.targetId) : null;
+
+    if (!file) {
+      res.status(400).json({ error: "Profile picture file is required" });
+      return;
+    }
+
+    const photoUrl = `/uploads/profile-photos/${file.filename}`;
+    const deleteUploaded = () => fs.promises.unlink(file.path).catch(() => {});
+
+    try {
+      if (targetType === "student") {
+        const student = requestedTargetId
+          ? await prisma.student.findUnique({ where: { id: requestedTargetId } })
+          : await prisma.student.findUnique({ where: { userId: jwtUser.userId } });
+        if (!student) {
+          await deleteUploaded();
+          res.status(404).json({ error: "Student profile not found" });
+          return;
+        }
+        if (jwtUser.role !== "ADMIN" && student.userId !== jwtUser.userId) {
+          await deleteUploaded();
+          res.status(403).json({ error: "You can only update your own profile picture" });
+          return;
+        }
+        await prisma.$transaction(async (tx) => {
+          await tx.student.update({ where: { id: student.id }, data: { profilePhotoUrl: photoUrl } });
+          if (student.userId) {
+            await tx.user.update({ where: { id: student.userId }, data: { profilePhotoUrl: photoUrl } });
+          }
+        });
+        res.json({ url: photoUrl, targetType: "student", targetId: student.id });
+        return;
+      }
+
+      if (targetType === "teacher") {
+        const teacher = requestedTargetId
+          ? await prisma.teacher.findUnique({ where: { id: requestedTargetId } })
+          : await prisma.teacher.findUnique({ where: { userId: jwtUser.userId } });
+        if (!teacher) {
+          await deleteUploaded();
+          res.status(404).json({ error: "Teacher profile not found" });
+          return;
+        }
+        if (jwtUser.role !== "ADMIN" && teacher.userId !== jwtUser.userId) {
+          await deleteUploaded();
+          res.status(403).json({ error: "You can only update your own profile picture" });
+          return;
+        }
+        await prisma.$transaction(async (tx) => {
+          await tx.teacher.update({ where: { id: teacher.id }, data: { profilePhotoUrl: photoUrl } });
+          if (teacher.userId) {
+            await tx.user.update({ where: { id: teacher.userId }, data: { profilePhotoUrl: photoUrl } });
+          }
+        });
+        res.json({ url: photoUrl, targetType: "teacher", targetId: teacher.id });
+        return;
+      }
+
+      const targetUserId = jwtUser.role === "ADMIN" && requestedTargetId ? requestedTargetId : jwtUser.userId;
+      if (jwtUser.role !== "ADMIN" && requestedTargetId && requestedTargetId !== jwtUser.userId) {
+        await deleteUploaded();
+        res.status(403).json({ error: "You can only update your own profile picture" });
+        return;
+      }
+
+      const user = await prisma.user.findUnique({
+        where: { id: targetUserId },
+        include: { studentProfile: true, teacherProfile: true },
+      });
+      if (!user) {
+        await deleteUploaded();
+        res.status(404).json({ error: "User not found" });
+        return;
+      }
+
+      await prisma.$transaction(async (tx) => {
+        await tx.user.update({ where: { id: user.id }, data: { profilePhotoUrl: photoUrl } });
+        if (user.studentProfile) {
+          await tx.student.update({ where: { id: user.studentProfile.id }, data: { profilePhotoUrl: photoUrl } });
+        }
+        if (user.teacherProfile) {
+          await tx.teacher.update({ where: { id: user.teacherProfile.id }, data: { profilePhotoUrl: photoUrl } });
+        }
+      });
+      res.json({ url: photoUrl, targetType: "user", targetId: user.id });
+    } catch (err) {
+      await deleteUploaded();
+      logger.error("Error uploading profile photo:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
@@ -670,6 +811,7 @@ async function startServer() {
               firstName: true,
               lastName: true,
               email: true,
+              profilePhotoUrl: true,
               isActive: true,
             }
           },
@@ -685,7 +827,11 @@ async function startServer() {
 
   app.post("/api/students", authMiddleware, requireRole("ADMIN"), validate(schemas.student), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
-    const { firstName, lastName, email, studentCode, dateOfBirth, guardianName, guardianPhone, classId, gender, status } = req.body;
+    const {
+      firstName, lastName, email, studentCode, dateOfBirth, guardianName,
+      guardianPhone, contactNumber, country, identityType, identityNumber,
+      address, emergencyContact, notes, classId, gender, status,
+    } = req.body;
     if (!firstName || !lastName || !email || !studentCode) {
       res.status(400).json({ error: "First name, last name, email, and student code are required" });
       return;
@@ -708,6 +854,13 @@ async function startServer() {
             dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
             guardianName,
             guardianPhone,
+            contactNumber,
+            country,
+            identityType,
+            identityNumber,
+            address,
+            emergencyContact,
+            notes,
             classId: classId || null,
             gender,
             status: status || "ACTIVE",
@@ -772,7 +925,11 @@ async function startServer() {
   app.put("/api/students/:id", authMiddleware, requireRole("ADMIN"), validate(schemas.studentUpdate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { id } = req.params;
-    const { firstName, lastName, email, studentCode, dateOfBirth, guardianName, guardianPhone, classId, gender, status } = req.body;
+    const {
+      firstName, lastName, email, studentCode, dateOfBirth, guardianName,
+      guardianPhone, contactNumber, country, identityType, identityNumber,
+      address, emergencyContact, notes, classId, gender, status,
+    } = req.body;
     try {
       const existingStudent = await prisma.student.findUnique({ where: { id } });
       if (!existingStudent) {
@@ -797,6 +954,13 @@ async function startServer() {
             dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
             guardianName,
             guardianPhone,
+            contactNumber,
+            country,
+            identityType,
+            identityNumber,
+            address,
+            emergencyContact,
+            notes,
             classId: classId || null,
             gender,
             status,
@@ -917,6 +1081,7 @@ async function startServer() {
               firstName: true,
               lastName: true,
               email: true,
+              profilePhotoUrl: true,
               isActive: true,
             }
           }
@@ -2810,6 +2975,10 @@ async function startServer() {
         code: s.studentCode,
         name: fullName(s.user),
         gender: s.gender || "—",
+        country: s.country || "—",
+        identityType: s.identityType || "",
+        identityNumber: s.identityNumber || "",
+        contactNumber: s.contactNumber || "",
         dob: s.dateOfBirth ? s.dateOfBirth.toISOString().slice(0, 10) : "—",
         guardianName: s.guardianName || "—",
         guardianPhone: s.guardianPhone || "—",
@@ -2843,11 +3012,12 @@ async function startServer() {
         name: fullName(s.user),
         studentId: s.studentCode,
         role: "Student",
+        profilePhotoUrl: s.profilePhotoUrl || s.user?.profilePhotoUrl || null,
         status: s.status || "ACTIVE",
         class: s.class?.name || "Unassigned",
         email: s.user?.email || "",
-        phone: s.guardianPhone || "",
-        address: "",
+        phone: s.contactNumber || s.guardianPhone || "",
+        address: s.address || "",
         birthDate: s.dateOfBirth ? s.dateOfBirth.toISOString().slice(0, 10) : "—",
         gender: s.gender || "—",
         enrollmentDate: s.enrollmentDate ? s.enrollmentDate.toISOString().slice(0, 10) : "—",
@@ -3125,7 +3295,12 @@ async function startServer() {
       const students = await prisma.student.findMany({
         where: { classId }, include: { user: true }, orderBy: { studentCode: "asc" },
       });
-      res.json(students.map((s) => ({ id: s.id, name: fullName(s.user), studentId: s.studentCode, photo: null })));
+      res.json(students.map((s) => ({
+        id: s.id,
+        name: fullName(s.user),
+        studentId: s.studentCode,
+        photo: s.profilePhotoUrl || s.user?.profilePhotoUrl || null,
+      })));
     } catch (err) {
       logger.error("Error building roster:", err);
       res.status(500).json({ error: "Internal Server Error" });

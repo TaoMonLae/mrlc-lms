@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { ProfilePhotoUploader } from '@/src/components/profile/ProfilePhotoUploader';
 
 const teacherSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
@@ -36,6 +37,7 @@ type TeacherFormValues = z.infer<typeof teacherSchema>;
 export default function TeacherEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [profilePhotoUrl, setProfilePhotoUrl] = React.useState<string | null>(null);
   
   const {
     register,
@@ -68,6 +70,7 @@ export default function TeacherEdit() {
       .then((teachers) => {
         const teacher = Array.isArray(teachers) ? teachers.find((item: any) => item.id === id) : null;
         if (!teacher) return;
+        setProfilePhotoUrl(teacher.profilePhotoUrl || teacher.user?.profilePhotoUrl || null);
         reset({
           firstName: teacher.user?.firstName || teacher.firstName || '',
           lastName: teacher.user?.lastName || teacher.lastName || '',
@@ -210,14 +213,14 @@ export default function TeacherEdit() {
         <div className="space-y-6">
           <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-4">
             <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-2">Profile Picture</h2>
-            <div className="relative group">
-              <div className="w-full aspect-square rounded-lg border bg-slate-50 dark:bg-surface-raised flex items-center justify-center text-slate-400">
-                <ImageIcon className="h-10 w-10" />
-              </div>
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg cursor-pointer">
-                <Button variant="secondary" size="sm" type="button">Change Photo</Button>
-              </div>
-            </div>
+            <ProfilePhotoUploader
+              currentUrl={profilePhotoUrl}
+              fallbackText={`${watch('firstName')?.[0] || ''}${watch('lastName')?.[0] || ''}`}
+              targetType="teacher"
+              targetId={id}
+              onUploaded={setProfilePhotoUrl}
+              imageClassName="w-full aspect-square rounded-lg"
+            />
             <p className="text-[10px] text-slate-500 text-center uppercase tracking-wider font-bold">Current Photo</p>
           </div>
 

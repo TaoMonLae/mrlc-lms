@@ -24,6 +24,7 @@ export interface Teacher {
   status: TeacherStatus;
   joinedDate: string;
   photoUrl?: string;
+  profilePhotoUrl?: string | null;
   notes?: string;
   userId?: string; // Linked user account ID
 }

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { StudentDocuments } from '@/src/components/students/StudentDocuments';
 import { toast } from 'sonner';
+import { ProfilePhotoUploader } from '@/src/components/profile/ProfilePhotoUploader';
 import {
   Tabs,
   TabsContent,
@@ -75,12 +76,16 @@ export default function StudentProfile() {
     gender: student.gender || 'MALE',
     enrollmentDate: student.enrollmentDate || new Date().toISOString(),
     dateOfBirth: student.dateOfBirth || new Date().toISOString(),
-    nationality: student.nationality || 'Myanmar',
+    country: student.country || 'Unspecified',
+    identityType: student.identityType || '',
+    identityNumber: student.identityNumber || 'Unspecified',
+    contactNumber: student.contactNumber || 'Unspecified',
     address: student.address || 'Unspecified',
     guardianName: student.guardianName || 'Unspecified',
     guardianPhone: student.guardianPhone || 'Unspecified',
     emergencyContact: student.emergencyContact || 'Unspecified',
-    notes: student.notes || 'No notes available.'
+    notes: student.notes || 'No notes available.',
+    profilePhotoUrl: student.profilePhotoUrl || student.user?.profilePhotoUrl || null,
   };
 
   return (
@@ -116,9 +121,15 @@ export default function StudentProfile() {
         {/* Left Sidebar Info Card */}
         <div className="space-y-6">
           <div className="bg-white dark:bg-surface-indigo rounded-xl border border-slate-200 dark:border-surface-raised p-6 shadow-sm flex flex-col items-center">
-            <div className="h-24 w-24 rounded-full bg-slate-100 dark:bg-surface-raised flex items-center justify-center text-4xl text-slate-500 font-medium mb-4 ring-4 ring-white dark:ring-slate-900 shadow-sm">
-              {s.firstName.charAt(0)}{s.lastName.charAt(0)}
-            </div>
+            <ProfilePhotoUploader
+              currentUrl={s.profilePhotoUrl}
+              fallbackText={`${s.firstName.charAt(0)}${s.lastName.charAt(0)}`}
+              targetType="student"
+              targetId={s.id}
+              imageClassName="h-24 w-24 rounded-full"
+              buttonLabel="Change Picture"
+              onUploaded={(url) => setStudent((prev: any) => prev ? { ...prev, profilePhotoUrl: url } : prev)}
+            />
             <h2 className="font-bold text-lg text-slate-900 dark:text-white">{s.firstName} {s.lastName}</h2>
             <p className="font-semibold text-slate-500 text-sm">{s.class}</p>
             
@@ -132,8 +143,12 @@ export default function StudentProfile() {
                 <span className="font-medium text-slate-900 dark:text-slate-300">{new Date(s.dateOfBirth).toLocaleDateString()}</span>
               </div>
               <div className="flex justify-between items-center text-sm">
-                <span className="text-slate-500">Nationality</span>
-                <span className="font-medium text-slate-900 dark:text-slate-300">{s.nationality}</span>
+                <span className="text-slate-500">Country</span>
+                <span className="font-medium text-slate-900 dark:text-slate-300">{s.country}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-slate-500">{s.identityType ? s.identityType.replace('_', ' ') : 'ID Number'}</span>
+                <span className="font-medium text-slate-900 dark:text-slate-300">{s.identityNumber}</span>
               </div>
             </div>
           </div>
@@ -150,7 +165,17 @@ export default function StudentProfile() {
               </div>
               <div className="flex gap-3">
                 <Phone className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
-                <span className="text-slate-700 dark:text-slate-300">{s.guardianPhone}</span>
+                <div>
+                  <p className="text-slate-700 dark:text-slate-300">{s.contactNumber}</p>
+                  <p className="text-slate-500 text-xs">Student Contact</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <Phone className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-slate-700 dark:text-slate-300">{s.guardianPhone}</p>
+                  <p className="text-slate-500 text-xs">Guardian Phone</p>
+                </div>
               </div>
               <div className="flex gap-3">
                 <AlertTriangle className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />

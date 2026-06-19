@@ -15,9 +15,11 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { ProfilePhotoUploader } from '@/src/components/profile/ProfilePhotoUploader';
 
 interface StudentProfile {
   name: string; studentId: string; role: string; status: string; class: string;
+  profilePhotoUrl?: string | null;
   email: string; phone: string; address: string; birthDate: string; gender: string;
   enrollmentDate: string; guardian: { name: string; relationship: string; phone: string; email: string };
 }
@@ -50,9 +52,14 @@ export default function StudentProfilePage() {
       <div className="flex flex-col md:flex-row items-center gap-6 bg-white dark:bg-surface-indigo p-8 rounded-2xl border border-slate-200 dark:border-surface-raised shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-aubergine-500/5 rounded-full -mr-16 -mt-16" />
         
-        <div className="h-24 w-24 rounded-2xl bg-aubergine-100 dark:bg-aubergine-900/30 flex items-center justify-center text-aubergine-600 dark:text-aubergine-400 font-bold text-3xl shadow-inner shrink-0">
-          {student.name.charAt(0)}
-        </div>
+        <ProfilePhotoUploader
+          currentUrl={student.profilePhotoUrl}
+          fallbackText={student.name.charAt(0) || 'S'}
+          targetType="student"
+          onUploaded={(url) => setStudent((prev) => ({ ...prev, profilePhotoUrl: url }))}
+          imageClassName="h-24 w-24 rounded-2xl"
+          buttonLabel="Change Picture"
+        />
         
         <div className="flex-1 text-center md:text-left">
           <div className="flex flex-col md:flex-row md:items-center gap-2 mb-2 justify-center md:justify-start">

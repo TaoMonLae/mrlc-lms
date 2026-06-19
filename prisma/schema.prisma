@@ -86,6 +86,7 @@ model User {
   passwordHash  String?
   firstName     String
   lastName      String
+  profilePhotoUrl String?
   role          Role      @default(STUDENT)
   isActive      Boolean   @default(true)
   mustChangePassword Boolean @default(false)
@@ -139,7 +140,15 @@ model Student {
   enrollmentDate DateTime @default(now())
   guardianName   String?
   guardianPhone  String?
+  contactNumber  String?
+  country        String?
+  identityType   String?
+  identityNumber String?
+  address        String?
+  emergencyContact String?
+  notes          String?
   gender         String?
+  profilePhotoUrl String?
   status         String?  @default("ACTIVE")
   
   classId        String?
@@ -164,6 +173,7 @@ model Teacher {
   teacherCode    String   @unique
   hireDate       DateTime @default(now())
   specialization String?
+  profilePhotoUrl String?
 
   classes        ClassTeacher[]
   subjects       SubjectTeacher[]
