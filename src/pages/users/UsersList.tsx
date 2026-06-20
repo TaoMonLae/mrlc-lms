@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, MoreVertical, Edit2, ShieldAlert, CheckCircle2, UserX, UserCheck, Shield } from 'lucide-react';
+import { Plus, Search, MoreVertical, Edit2, ShieldAlert, CheckCircle2, UserX, UserCheck, Shield, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -31,6 +31,8 @@ import { Label } from '@/components/ui/label';
 import { User } from '../../lib/permissions';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
+import RoleManagement from './RoleManagement';
+import RoleBadge from '../../components/users/RoleBadge';
 
 interface ApiUser {
   id: string;
@@ -68,6 +70,7 @@ export default function UsersList() {
   const [resetUser, setResetUser] = useState<User | null>(null);
   const [newPassword, setNewPassword] = useState('');
   const [resetting, setResetting] = useState(false);
+  const [roleManagementOpen, setRoleManagementOpen] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -171,8 +174,8 @@ export default function UsersList() {
           <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Manage user accounts and roles for the school system.</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
-          <Button variant="outline" render={<Link to="/settings/roles" />} nativeButton={false}>
-            <Shield className="mr-2 h-4 w-4" />
+          <Button variant="outline" onClick={() => setRoleManagementOpen(true)}>
+            <Settings className="mr-2 h-4 w-4" />
             Roles & Permissions
           </Button>
           <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto" render={<Link to="/users/new" />} nativeButton={false}>
@@ -242,9 +245,7 @@ export default function UsersList() {
                     <div className="text-xs text-slate-500 mt-1">@{user.username} {user.email && `• ${user.email}`}</div>
                   </td>
                   <td className="px-6 py-4">
-                    <Badge variant="outline" className={getRoleBadgeColor(user.role)}>
-                      {user.role}
-                    </Badge>
+                    <RoleBadge role={user.role} />
                   </td>
                   <td className="px-6 py-4">
                     <Badge variant={user.status === 'ACTIVE' ? 'default' : 'secondary'} className={user.status === 'ACTIVE' ? 'bg-emerald-500 text-white hover:bg-emerald-600' : 'bg-slate-500 text-white hover:bg-slate-600'}>
@@ -345,6 +346,16 @@ export default function UsersList() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <RoleManagement
+        open={roleManagementOpen}
+        onClose={() => setRoleManagementOpen(false)}
+        onSave={(roleConfig) => {
+          // Handle role configuration save
+          console.log('Role configuration saved:', roleConfig);
+          // In a real implementation, this would save to backend
+        }}
+      />
     </div>
   );
 }

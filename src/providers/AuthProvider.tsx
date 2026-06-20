@@ -99,6 +99,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         sessionStorage.setItem('auth_token', data.token);
         sessionStorage.setItem('auth_user', JSON.stringify(data.user));
         setUser(mapApiUser(data.user));
+
+        // Dispatch custom event for other providers to listen to
+        window.dispatchEvent(new Event('auth-state-changed'));
+
         return { success: true };
       } catch {
         return { success: false, error: 'Unable to connect to the server. Please try again.' };
@@ -111,6 +115,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     sessionStorage.removeItem('auth_token');
     sessionStorage.removeItem('auth_user');
     setUser(null);
+
+    // Dispatch custom event for other providers to listen to
+    window.dispatchEvent(new Event('auth-state-changed'));
   }, []);
 
   return (

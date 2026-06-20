@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, Info } from 'lucide-react';
+import { ArrowLeft, Save, Info, Upload, X, Film } from 'lucide-react';
 import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -39,6 +39,11 @@ export default function VideoEdit() {
   const [subjects, setSubjects] = useState<any[]>([]);
   const [video, setVideo] = useState<VideoLesson | null>(null);
   const [loading, setLoading] = useState(true);
+  const [uploadMethod, setUploadMethod] = useState<'url' | 'file'>('url');
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string | null>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   const {
     register,
@@ -51,6 +56,74 @@ export default function VideoEdit() {
     resolver: zodResolver(videoSchema) as Resolver<FormValues>,
     defaultValues: { visibility: 'ALL', status: 'PUBLISHED' },
   });
+
+  const handleVideoFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file size (500MB limit)
+    if (file.size > 500 * 1024 * 1024) {
+      toast.error('Video file must be 500 MB or smaller');
+      event.target.value = '';
+      return;
+    }
+
+    // Validate file type
+    const allowedTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska', 'video/x-flv', 'video/x-ms-wmv'];
+    if (!allowedTypes.includes(file.type) && !file.name.match(/\.(mp4|webm|mov|avi|mkv|flv|wmv)$/i)) {
+      toast.error('Only video files (MP4, WebM, MOV, AVI, MKV, FLV, WMV) are allowed');
+      event.target.value = '';
+      return;
+    }
+
+    setVideoFile(file);
+
+    // Auto-upload the file
+    await uploadVideoFile(file);
+  };
+
+  const uploadVideoFile = async (file: File) => {
+    const token = sessionStorage.getItem('auth_token');
+    const formData = new FormData();
+    formData.append('video', file);
+
+    setUploadingVideo(true);
+    try {
+      const res = await fetch('/api/videos/files', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to upload video file');
+      }
+
+      const data = await res.json();
+      setUploadedVideoUrl(data.url);
+      setValue('videoUrl', data.url); // Auto-fill the URL field
+
+      toast.success('Video file uploaded successfully');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to upload video file');
+      setVideoFile(null);
+    } finally {
+      setUploadingVideo(false);
+      if (videoInputRef.current) {
+        videoInputRef.current.value = '';
+      }
+    }
+  };
+
+  const removeUploadedVideo = () => {
+    setVideoFile(null);
+    setUploadedVideoUrl(null);
+    setValue('videoUrl', '');
+    if (videoInputRef.current) {
+      videoInputRef.current.value = '';
+    }
+  };
 
   useEffect(() => {
     const fetchOptions = async () => {
@@ -173,15 +246,107 @@ export default function VideoEdit() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-6">
 
-          <div className="space-y-2">
-            <Label htmlFor="videoUrl">Video URL *</Label>
-            <Input id="videoUrl" {...register('videoUrl')} placeholder="https://www.youtube.com/watch?v=..." />
-            {errors.videoUrl && <p className="text-xs text-red-500 font-medium">{errors.videoUrl.message}</p>}
-            <div className="flex items-start gap-2 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 p-3 rounded-lg text-xs border border-blue-100 dark:border-blue-900">
-              <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
-              <span>Supported: YouTube, Vimeo, or direct .mp4/.webm URLs.</span>
+          {/* Upload Method Selector */}
+          <div className="space-y-3">
+            <Label>How do you want to add the video?</Label>
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={() => setUploadMethod('url')}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 text-sm font-medium transition-colors ${
+                  uploadMethod === 'url'
+                    ? 'border-aubergine-600 bg-aubergine-50 text-aubergine-700 dark:bg-aubergine-900/20 dark:text-aubergine-300'
+                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-surface-raised dark:bg-surface-indigo dark:text-slate-300 dark:hover:bg-surface-raised'
+                }`}
+              >
+                <Film className="h-4 w-4" />
+                Video URL
+              </button>
+              <button
+                type="button"
+                onClick={() => setUploadMethod('file')}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 text-sm font-medium transition-colors ${
+                  uploadMethod === 'file'
+                    ? 'border-aubergine-600 bg-aubergine-50 text-aubergine-700 dark:bg-aubergine-900/20 dark:text-aubergine-300'
+                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-surface-raised dark:bg-surface-indigo dark:text-slate-300 dark:hover:bg-surface-raised'
+                }`}
+              >
+                <Upload className="h-4 w-4" />
+                Upload File
+              </button>
             </div>
           </div>
+
+          {/* Video URL Input */}
+          {uploadMethod === 'url' && (
+            <div className="space-y-2">
+              <Label htmlFor="videoUrl">Video URL *</Label>
+              <Input id="videoUrl" {...register('videoUrl')} placeholder="https://www.youtube.com/watch?v=..." />
+              {errors.videoUrl && <p className="text-xs text-red-500 font-medium">{errors.videoUrl.message}</p>}
+              <div className="flex items-start gap-2 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 p-3 rounded-lg text-xs border border-blue-100 dark:border-blue-900">
+                <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                <span>Supported: YouTube, Vimeo, or direct .mp4/.webm URLs.</span>
+              </div>
+            </div>
+          )}
+
+          {/* Video File Upload */}
+          {uploadMethod === 'file' && (
+            <div className="space-y-2">
+              <Label htmlFor="videoFile">Upload Video File *</Label>
+              <div className="space-y-3">
+                {!uploadedVideoUrl ? (
+                  <>
+                    <input
+                      ref={videoInputRef}
+                      type="file"
+                      accept="video/mp4,video/webm,video/quicktime,video/x-msvideo,video/x-matroska,video/x-flv,video/x-ms-wmv,.mp4,.webm,.mov,.avi,.mkv,.flv,.wmv"
+                      className="hidden"
+                      onChange={handleVideoFileChange}
+                      disabled={uploadingVideo}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => videoInputRef.current?.click()}
+                      disabled={uploadingVideo}
+                      className="w-full"
+                    >
+                      <Upload className="mr-2 h-4 w-4" />
+                      {uploadingVideo ? 'Uploading...' : 'Choose Video File'}
+                    </Button>
+                    <p className="text-xs text-slate-500">
+                      Supports MP4, WebM, MOV, AVI, MKV, FLV, WMV files up to 500MB
+                    </p>
+                  </>
+                ) : (
+                  <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Film className="h-4 w-4 text-green-600 dark:text-green-400" />
+                      <span className="text-sm text-green-700 dark:text-green-300">
+                        {videoFile?.name || 'Video uploaded successfully'}
+                      </span>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={removeUploadedVideo}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+                <Input
+                  type="hidden"
+                  {...register('videoUrl')}
+                  value={uploadedVideoUrl || watch('videoUrl') || ''}
+                />
+                {errors.videoUrl && <p className="text-xs text-red-500 font-medium">{errors.videoUrl.message}</p>}
+              </div>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="title">Title *</Label>

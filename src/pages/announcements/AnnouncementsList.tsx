@@ -1,19 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  Megaphone, 
-  Plus, 
-  Search, 
-  Filter, 
-  Pin, 
-  Clock, 
-  Users, 
-  MoreVertical, 
-  Edit, 
-  Archive, 
+import {
+  Megaphone,
+  Plus,
+  Search,
+  Filter,
+  Pin,
+  Clock,
+  Users,
+  MoreVertical,
+  Edit,
+  Archive,
   Calendar,
   ChevronRight,
   CheckCircle2,
+  Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -120,6 +121,30 @@ export default function AnnouncementsList() {
       toast.success(nextStatus === 'ARCHIVED' ? 'Announcement archived' : 'Announcement restored');
     } catch {
       toast.error('Failed to update announcement');
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    const current = announcements.find(a => a.id === id);
+    if (!current) return;
+
+    if (!confirm(`Are you sure you want to delete "${current.title}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`/api/announcements/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to delete announcement');
+
+      setAnnouncements(prev => prev.filter(ann => ann.id !== id));
+      toast.success('Announcement deleted successfully');
+    } catch (error) {
+      console.error('Error deleting announcement:', error);
+      toast.error('Failed to delete announcement');
     }
   };
 
@@ -249,6 +274,9 @@ export default function AnnouncementsList() {
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleArchive(ann.id)} className={ann.status === 'ARCHIVED' ? 'text-aubergine-600' : 'text-amber-600'}>
                       <Archive className="mr-2 h-4 w-4" /> {ann.status === 'ARCHIVED' ? 'Unarchive' : 'Archive'}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDelete(ann.id)} className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/20">
+                      <Trash2 className="mr-2 h-4 w-4" /> Delete
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

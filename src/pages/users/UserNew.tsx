@@ -16,6 +16,16 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 
+const ROLE_DESCRIPTIONS: Record<string, string> = {
+  ADMIN: 'Full system access including user management, settings, and all features',
+  TEACHER: 'Can manage classes, students, attendance, exams, and create educational content',
+  STUDENT: 'Can view their own grades, attendance, fees, and access educational materials',
+  STAFF: 'Basic access to view information and assist with administrative tasks',
+  ACCOUNTANT: 'Can manage fees, payments, and financial records',
+  CASE_WORKER: 'Can manage student cases, counseling records, and support services',
+  LIBRARIAN: 'Can manage library resources, books, and digital content',
+};
+
 const userSchema = z.object({
   name: z.string().min(2, 'Name is required'),
   username: z.string().min(3, 'Username must be at least 3 characters'),
@@ -166,6 +176,11 @@ export default function UserNew() {
                   </SelectContent>
                 </Select>
                 {errors.role && <p className="text-xs text-red-500 font-medium">{errors.role.message}</p>}
+                {watch('role') && (
+                  <p className="text-xs text-slate-500 mt-1">
+                    {ROLE_DESCRIPTIONS[watch('role')]}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">

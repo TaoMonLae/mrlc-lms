@@ -24,7 +24,20 @@ function getEmbedUrl(url: string): string | null {
     if (u.hostname.includes('youtube.com') || u.hostname.includes('youtu.be')) {
       let videoId = u.searchParams.get('v');
       if (!videoId && u.hostname === 'youtu.be') videoId = u.pathname.slice(1);
-      if (videoId) return `https://www.youtube.com/embed/${videoId}?rel=0`;
+      if (videoId) {
+        // Use privacy-enhanced embed and comprehensive parameters to avoid Error 153
+        const params = new URLSearchParams({
+          rel: '0',              // Don't show related videos from other channels
+          enablejsapi: '1',      // Enable JavaScript API
+          widgetid: '1',         // Widget identifier
+          origin: window.location.origin, // Current origin for security
+          autoplay: '0',         // Don't autoplay
+          modestbranding: '1',   // Minimal branding
+          playsinline: '1',      // Play inline on mobile
+          fs: '1',               // Allow fullscreen
+        });
+        return `https://www.youtube-nocookie.com/embed/${videoId}?${params.toString()}`;
+      }
     }
     // Vimeo
     if (u.hostname.includes('vimeo.com')) {

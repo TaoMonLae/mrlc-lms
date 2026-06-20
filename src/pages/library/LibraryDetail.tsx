@@ -70,10 +70,49 @@ export default function LibraryDetail() {
 
   const getEmbedUrl = (url: string | undefined | null) => {
     if (!url) return null;
-    const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
-    const match = url.match(youtubeRegex);
-    if (match && match[1]) {
-      return `https://www.youtube.com/embed/${match[1]}`;
+    try {
+      const u = new URL(url);
+      // YouTube
+      if (u.hostname.includes('youtube.com') || u.hostname.includes('youtu.be')) {
+        let videoId = u.searchParams.get('v');
+        if (!videoId && u.hostname === 'youtu.be') videoId = u.pathname.slice(1);
+        if (videoId) {
+          // Use privacy-enhanced embed and comprehensive parameters to avoid Error 153
+          const params = new URLSearchParams({
+            rel: '0',              // Don't show related videos from other channels
+            enablejsapi: '1',      // Enable JavaScript API
+            widgetid: '1',         // Widget identifier
+            origin: window.location.origin, // Current origin for security
+            autoplay: '0',         // Don't autoplay
+            modestbranding: '1',   // Minimal branding
+            playsinline: '1',      // Play inline on mobile
+            fs: '1',               // Allow fullscreen
+          });
+          return `https://www.youtube-nocookie.com/embed/${videoId}?${params.toString()}`;
+        }
+      }
+      // Vimeo
+      if (u.hostname.includes('vimeo.com')) {
+        const videoId = u.pathname.split('/').pop();
+        if (videoId) return `https://player.vimeo.com/video/${videoId}`;
+      }
+    } catch {
+      // Fallback to regex for URL strings that can't be parsed
+      const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+      const match = url.match(youtubeRegex);
+      if (match && match[1]) {
+        const params = new URLSearchParams({
+          rel: '0',
+          enablejsapi: '1',
+          widgetid: '1',
+          origin: window.location.origin,
+          autoplay: '0',
+          modestbranding: '1',
+          playsinline: '1',
+          fs: '1',
+        });
+        return `https://www.youtube-nocookie.com/embed/${match[1]}?${params.toString()}`;
+      }
     }
     return null;
   };

@@ -18,7 +18,9 @@
       "Bash(grep *)",
       "Bash(vite --version)",
       "Bash(npm list *)",
-      "Bash(node *)"
+      "Bash(node *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
     ]
   }
 }

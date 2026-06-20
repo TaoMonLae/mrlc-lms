@@ -28,10 +28,6 @@ const BRANDING_ASSET_DIR = process.env.BRANDING_ASSET_DIR || path.join(process.c
 fs.mkdirSync(BRANDING_ASSET_DIR, { recursive: true });
 const PROFILE_PHOTO_DIR = process.env.PROFILE_PHOTO_DIR || path.join(process.cwd(), "data", "profile-photos");
 fs.mkdirSync(PROFILE_PHOTO_DIR, { recursive: true });
-const LIBRARY_FILE_DIR = process.env.LIBRARY_FILE_DIR || path.join(process.cwd(), "data", "library");
-fs.mkdirSync(LIBRARY_FILE_DIR, { recursive: true });
-const VIDEO_FILES_DIR = process.env.VIDEO_FILES_DIR || path.join(process.cwd(), "data", "videos");
-fs.mkdirSync(VIDEO_FILES_DIR, { recursive: true });
 
 const ebookUpload = multer({
   storage: multer.diskStorage({
@@ -83,40 +79,6 @@ const profilePhotoUpload = multer({
   }),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: imageUploadFilter,
-});
-
-const libraryFileUpload = multer({
-  storage: multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, LIBRARY_FILE_DIR),
-    filename: (_req, file, cb) => {
-      const ext = path.extname(file.originalname).toLowerCase();
-      cb(null, `${crypto.randomUUID()}${ext}`);
-    },
-  }),
-  limits: { fileSize: 50 * 1024 * 1024 },
-  fileFilter: (_req, file, cb) => {
-    const allowed = new Set([".pdf", ".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx", ".png", ".jpg", ".jpeg", ".webp", ".gif", ".txt"]);
-    const ext = path.extname(file.originalname).toLowerCase();
-    if (allowed.has(ext)) cb(null, true);
-    else cb(new Error("Only PDF, Office documents, images, and text files are allowed"));
-  },
-});
-
-const videoFileUpload = multer({
-  storage: multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, VIDEO_FILES_DIR),
-    filename: (_req, file, cb) => {
-      const ext = path.extname(file.originalname).toLowerCase();
-      cb(null, `${crypto.randomUUID()}${ext}`);
-    },
-  }),
-  limits: { fileSize: 500 * 1024 * 1024 }, // 500MB for video files
-  fileFilter: (_req, file, cb) => {
-    const allowed = new Set([".mp4", ".webm", ".mov", ".avi", ".mkv", ".flv", ".wmv"]);
-    const ext = path.extname(file.originalname).toLowerCase();
-    if (allowed.has(ext)) cb(null, true);
-    else cb(new Error("Only video files (MP4, WebM, MOV, AVI, MKV, FLV, WMV) are allowed"));
-  },
 });
 
 // ─── Database backups ──────────────────────────────────────────────────────────
@@ -314,7 +276,6 @@ function validate(schema: z.ZodType) {
 const str = z.string().trim();
 const reqStr = str.min(1, "is required");
 const optStr = str.optional();
-const nullableStr = str.nullable().optional(); // accepts string | null | undefined
 const email = z.string().trim().email("must be a valid email");
 const num = z.union([z.string(), z.number()]); // handlers coerce with Number()
 const optNum = num.optional().nullable();
@@ -346,13 +307,11 @@ const schemas = {
     firstName: reqStr, lastName: reqStr, email,
     password: z.string().min(6, "must be at least 6 characters"),
     role: userRole, status: optStr,
-    teacherId: nullableStr, studentId: nullableStr,
   }),
   userUpdate: z.object({
     firstName: optStr, lastName: optStr,
     email: z.union([email, z.literal("")]).optional(),
     role: userRole.optional(), status: optStr,
-    teacherId: nullableStr, studentId: nullableStr,
   }),
   attendance: z.object({
     classId: reqStr,
@@ -390,7 +349,7 @@ const schemas = {
     firstName: reqStr, lastName: reqStr, email,
     phone: optStr, gender: optStr, address: optStr,
     employmentType: optStr, joinedDate: optStr,
-    subjects: z.union([z.array(z.string()), optStr]).optional(), notes: optStr,
+    subjects: z.array(z.string()).optional(), notes: optStr,
   }),
   library: z.object({
     title: reqStr, type: reqStr,
@@ -418,12 +377,6 @@ const schemas = {
     emergencyContact: optStr, notes: optStr,
     classId: optStr, gender: optStr, status: optStr,
   }),
-  subjectCreate: z.object({
-    name: reqStr, code: reqStr, level: optStr, description: optStr, status: optStr,
-  }),
-  subjectUpdate: z.object({
-    name: optStr, code: optStr, level: optStr, description: optStr, status: optStr,
-  }),
   libraryUpdate: z.object({
     title: optStr, type: optStr, description: optStr, visibility: optStr,
     classId: optStr, subjectId: optStr, externalUrl: optStr,
@@ -450,7 +403,7 @@ const schemas = {
   }),
   settingsUpdate: z.object({
     name: optStr, address: optStr, email: optStr, phone: optStr,
-    logoUrl: nullableStr, signatureUrl: nullableStr, primaryColor: optStr, accentColor: optStr,
+    logoUrl: optStr, signatureUrl: optStr, primaryColor: optStr, accentColor: optStr,
     darkModeDefault: z.union([z.boolean(), z.string()]).optional(),
     reportHeaderStyle: optStr,
     timezone: optStr, dateFormat: optStr, currency: optStr, defaultLanguage: optStr,
@@ -523,14 +476,6 @@ async function startServer() {
     immutable: isProduction,
   }));
   app.use("/uploads/profile-photos", express.static(PROFILE_PHOTO_DIR, {
-    maxAge: isProduction ? "30d" : 0,
-    immutable: isProduction,
-  }));
-  app.use("/uploads/library", express.static(LIBRARY_FILE_DIR, {
-    maxAge: isProduction ? "30d" : 0,
-    immutable: isProduction,
-  }));
-  app.use("/uploads/videos", express.static(VIDEO_FILES_DIR, {
     maxAge: isProduction ? "30d" : 0,
     immutable: isProduction,
   }));
@@ -977,109 +922,6 @@ async function startServer() {
     }
   });
 
-  app.get("/api/students/:id/profile-data", authMiddleware, async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
-      res.status(403).json({ error: "Forbidden" });
-      return;
-    }
-    const { id } = req.params;
-    try {
-      const student = await prisma.student.findUnique({
-        where: { id },
-        include: { user: true, class: true },
-      });
-      if (!student) {
-        res.status(404).json({ error: "Student not found" });
-        return;
-      }
-
-      const profile = await prisma.schoolProfile.findFirst();
-      const currency = profile?.currency || "MYR";
-      const [attempts, fees, classExams] = await Promise.all([
-        prisma.examAttempt.findMany({
-          where: { studentId: id, isCompleted: true },
-          include: { exam: { include: { subject: true } } },
-          orderBy: { completedAt: "desc" },
-        }),
-        prisma.feePayment.findMany({
-          where: { studentId: id },
-          include: { student: { include: { user: true, class: true } } },
-          orderBy: [{ paidDate: "desc" }, { createdAt: "desc" }],
-        }),
-        student.classId
-          ? prisma.exam.findMany({
-              where: { classId: student.classId },
-              include: {
-                subject: true,
-                questions: true,
-                attempts: { where: { studentId: id } },
-              },
-              orderBy: { date: "asc" },
-            })
-          : Promise.resolve([]),
-      ]);
-
-      const examResults = attempts
-        .filter((attempt) => attempt.score != null)
-        .map((attempt) => {
-          const total = attempt.exam.totalMarks || 100;
-          const percentage = round1(((attempt.score || 0) / total) * 100);
-          return {
-            id: attempt.id,
-            examId: attempt.examId,
-            title: attempt.exam.title,
-            subject: attempt.exam.subject?.name || "General",
-            score: attempt.score,
-            total,
-            percentage,
-            grade: letterGrade(percentage),
-            date: (attempt.completedAt || attempt.createdAt).toISOString().slice(0, 10),
-          };
-        });
-
-      const availableExams = classExams
-        .filter((exam) => !exam.attempts.some((attempt) => attempt.isCompleted))
-        .map((exam) => ({
-          id: exam.id,
-          title: exam.title,
-          subject: exam.subject?.name || "General",
-          date: exam.date.toISOString().slice(0, 10),
-          type: exam.type,
-          durationMinutes: exam.durationMinutes,
-          totalMarks: exam.totalMarks || 0,
-          questions: exam.questions.length,
-        }));
-
-      const totalExpected = fees.reduce((sum, fee) => sum + fee.amount, 0);
-      const totalPaid = fees
-        .filter((fee) => fee.status === "PAID")
-        .reduce((sum, fee) => sum + fee.amount, 0);
-      const feeRows = fees.map((fee) => feeReceiptPayload(fee, currency));
-
-      res.json({
-        exams: {
-          average: examResults.length
-            ? round1(examResults.reduce((sum, result) => sum + result.percentage, 0) / examResults.length)
-            : null,
-          results: examResults,
-          available: availableExams,
-        },
-        fees: {
-          currency,
-          totalExpected,
-          totalPaid,
-          balance: Math.max(0, totalExpected - totalPaid),
-          paymentCount: fees.length,
-          rows: feeRows,
-        },
-      });
-    } catch (err) {
-      logger.error("Error fetching student profile data:", err);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  });
-
   app.put("/api/students/:id", authMiddleware, requireRole("ADMIN"), validate(schemas.studentUpdate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { id } = req.params;
@@ -1188,11 +1030,7 @@ async function startServer() {
   app.get("/api/users", authMiddleware, requireRole("ADMIN"), async (req, res) => {
     try {
       const users = await prisma.user.findMany({
-        select: {
-          id: true, firstName: true, lastName: true, email: true, role: true, isActive: true, createdAt: true,
-          studentProfile: { select: { id: true } },
-          teacherProfile: { select: { id: true } },
-        },
+        select: { id: true, firstName: true, lastName: true, email: true, role: true, isActive: true, createdAt: true },
         orderBy: { createdAt: "desc" },
       });
       res.json(users);
@@ -1204,28 +1042,16 @@ async function startServer() {
 
   app.post("/api/users", authMiddleware, requireRole("ADMIN"), validate(schemas.userCreate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
-    const { firstName, lastName, email, password, role, status, teacherId, studentId } = req.body;
+    const { firstName, lastName, email, password, role, status } = req.body;
     if (!firstName || !email || !password || !role) {
       res.status(400).json({ error: "firstName, email, password, and role are required" });
       return;
     }
     try {
       const passwordHash = await bcrypt.hash(password, 10);
-      const user = await prisma.$transaction(async (tx) => {
-        const created = await tx.user.create({
-          data: { firstName, lastName: lastName || "", email, passwordHash, role, isActive: status !== "DISABLED" },
-          select: { id: true, firstName: true, lastName: true, email: true, role: true, isActive: true },
-        });
-        // Optionally link an existing teacher/student profile to the new account.
-        if (teacherId) {
-          await tx.teacher.updateMany({ where: { userId: created.id }, data: { userId: null } });
-          await tx.teacher.update({ where: { id: teacherId }, data: { userId: created.id } });
-        }
-        if (studentId) {
-          await tx.student.updateMany({ where: { userId: created.id }, data: { userId: null } });
-          await tx.student.update({ where: { id: studentId }, data: { userId: created.id } });
-        }
-        return created;
+      const user = await prisma.user.create({
+        data: { firstName, lastName: lastName || "", email, passwordHash, role, isActive: status !== "DISABLED" },
+        select: { id: true, firstName: true, lastName: true, email: true, role: true, isActive: true },
       });
 
       await createAuditLog(
@@ -1264,33 +1090,6 @@ async function startServer() {
       res.json(teachers);
     } catch (err) {
       logger.error("Error fetching teachers:", err);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  });
-
-  app.get("/api/teachers/:id", authMiddleware, async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
-      res.status(403).json({ error: "Forbidden" });
-      return;
-    }
-    const { id } = req.params;
-    try {
-      const teacher = await prisma.teacher.findUnique({
-        where: { id },
-        include: {
-          user: true,
-          classes: { include: { class: true } },
-          subjects: { include: { subject: true } },
-        },
-      });
-      if (!teacher) {
-        res.status(404).json({ error: "Teacher not found" });
-        return;
-      }
-      res.json(teacher);
-    } catch (err) {
-      logger.error("Error fetching teacher:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
@@ -1347,45 +1146,10 @@ async function startServer() {
       return;
     }
     try {
-      const subjects = await prisma.subject.findMany({
-        include: { _count: { select: { teachers: true, exams: true } } },
-        orderBy: { name: "asc" },
-      });
+      const subjects = await prisma.subject.findMany();
       res.json(subjects);
     } catch (err) {
       logger.error("Error fetching subjects:", err);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  });
-
-  app.post("/api/subjects", authMiddleware, validate(schemas.subjectCreate), async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    if (jwtUser.role !== "ADMIN") {
-      res.status(403).json({ error: "Forbidden" });
-      return;
-    }
-    const { name, code, level, description, status } = req.body;
-    try {
-      const subject = await prisma.subject.create({
-        data: {
-          name,
-          code,
-          level: level || "GED",
-          description: description || null,
-          status: status || "ACTIVE",
-        },
-      });
-      await createAuditLog(
-        jwtUser.userId, jwtUser.email, "CREATE", "SUBJECT", subject.id,
-        `Subject '${name}' created.`, req.ip, req.headers["user-agent"] || null, "SUCCESS"
-      );
-      res.status(201).json(subject);
-    } catch (err: any) {
-      logger.error("Error creating subject:", err);
-      if (err.code === "P2002") {
-        res.status(400).json({ error: "Subject code already exists" });
-        return;
-      }
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
@@ -1412,44 +1176,6 @@ async function startServer() {
       res.json(subject);
     } catch (err) {
       logger.error("Error fetching subject:", err);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  });
-
-  app.put("/api/subjects/:id", authMiddleware, validate(schemas.subjectUpdate), async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    if (jwtUser.role !== "ADMIN") {
-      res.status(403).json({ error: "Forbidden" });
-      return;
-    }
-    const { id } = req.params;
-    const { name, code, level, description, status } = req.body;
-    try {
-      const subject = await prisma.subject.update({
-        where: { id },
-        data: {
-          ...(name !== undefined ? { name } : {}),
-          ...(code !== undefined ? { code } : {}),
-          ...(level !== undefined ? { level: level || "GED" } : {}),
-          ...(description !== undefined ? { description: description || null } : {}),
-          ...(status !== undefined ? { status: status || "ACTIVE" } : {}),
-        },
-      });
-      await createAuditLog(
-        jwtUser.userId, jwtUser.email, "UPDATE", "SUBJECT", id,
-        `Subject '${subject.name}' updated.`, req.ip, req.headers["user-agent"] || null, "SUCCESS"
-      );
-      res.json(subject);
-    } catch (err: any) {
-      logger.error("Error updating subject:", err);
-      if (err.code === "P2025") {
-        res.status(404).json({ error: "Subject not found" });
-        return;
-      }
-      if (err.code === "P2002") {
-        res.status(400).json({ error: "Subject code already exists" });
-        return;
-      }
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
@@ -1627,28 +1353,6 @@ async function startServer() {
   });
 
   // ── Library API ─────────────────────────────────────────────────────────────
-  const uploadLibraryFile = (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    libraryFileUpload.single("file")(req, res, (err: any) => {
-      if (!err) return next();
-      const message =
-        err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE"
-          ? "Library files must be 50 MB or smaller"
-          : err.message || "Upload failed";
-      res.status(400).json({ error: message });
-    });
-  };
-
-  const uploadVideoFile = (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    videoFileUpload.single("video")(req, res, (err: any) => {
-      if (!err) return next();
-      const message =
-        err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE"
-          ? "Video files must be 500 MB or smaller"
-          : err.message || "Upload failed";
-      res.status(400).json({ error: message });
-    });
-  };
-
   app.get("/api/library", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
@@ -1669,25 +1373,6 @@ async function startServer() {
       logger.error("Error fetching library resources:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
-  });
-
-  app.post("/api/library/files", authMiddleware, uploadLibraryFile, async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
-      res.status(403).json({ error: "Forbidden" });
-      return;
-    }
-    const file = (req as any).file as Express.Multer.File | undefined;
-    if (!file) {
-      res.status(400).json({ error: "File is required" });
-      return;
-    }
-    res.json({
-      url: `/uploads/library/${file.filename}`,
-      originalName: file.originalname,
-      size: file.size,
-      mimeType: file.mimetype,
-    });
   });
 
   app.post("/api/library", authMiddleware, validate(schemas.library), async (req, res) => {
@@ -1833,26 +1518,6 @@ async function startServer() {
   });
 
   // ── Video Lessons API ────────────────────────────────────────────────────────
-  // Video file upload endpoint
-  app.post("/api/videos/files", authMiddleware, uploadVideoFile, async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
-      res.status(403).json({ error: "Forbidden" });
-      return;
-    }
-    const file = (req as any).file as Express.Multer.File | undefined;
-    if (!file) {
-      res.status(400).json({ error: "Video file is required" });
-      return;
-    }
-    res.json({
-      url: `/uploads/videos/${file.filename}`,
-      originalName: file.originalname,
-      size: file.size,
-      mimeType: file.mimetype,
-    });
-  });
-
   app.get("/api/videos", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
@@ -2019,403 +1684,6 @@ async function startServer() {
       logger.error("Error deleting video lesson:", err);
       if (err.code === "P2025") {
         res.status(404).json({ error: "Video lesson not found" });
-        return;
-      }
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  });
-
-  // ── Announcements API ────────────────────────────────────────────────────────
-  const canManageAnnouncements = (role: string) => role === "ADMIN" || role === "TEACHER";
-
-  app.get("/api/announcements", authMiddleware, async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    try {
-      // Audience filtering: students see ALL/STUDENTS (+ their class); teachers see
-      // ALL/TEACHERS/CLASS; admins see everything. Archived items are hidden from
-      // non-managers.
-      const where: any = {};
-      if (jwtUser.role === "STUDENT") {
-        where.status = "ACTIVE";
-        where.audience = { in: ["ALL", "STUDENTS", "CLASS"] };
-      } else if (jwtUser.role === "TEACHER") {
-        where.audience = { in: ["ALL", "TEACHERS", "STUDENTS", "CLASS"] };
-      }
-      const announcements = await prisma.announcement.findMany({
-        where,
-        orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
-      });
-      res.json(announcements);
-    } catch (err) {
-      logger.error("Error fetching announcements:", err);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  });
-
-  app.get("/api/announcements/:id", authMiddleware, async (req, res) => {
-    const { id } = req.params;
-    try {
-      const announcement = await prisma.announcement.findUnique({ where: { id } });
-      if (!announcement) {
-        res.status(404).json({ error: "Announcement not found" });
-        return;
-      }
-      res.json(announcement);
-    } catch (err) {
-      logger.error("Error fetching announcement:", err);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  });
-
-  app.post("/api/announcements", authMiddleware, async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    if (!canManageAnnouncements(jwtUser.role)) {
-      res.status(403).json({ error: "Forbidden" });
-      return;
-    }
-    const { title, body, audience, classId, className, pinned, expiresAt, status } = req.body;
-    if (!title || !body) {
-      res.status(400).json({ error: "title and body are required" });
-      return;
-    }
-    try {
-      const announcement = await prisma.announcement.create({
-        data: {
-          title,
-          body,
-          audience: audience || "ALL",
-          classId: classId || null,
-          className: className || null,
-          pinned: Boolean(pinned),
-          expiresAt: expiresAt ? new Date(expiresAt) : null,
-          status: status || "ACTIVE",
-          createdById: jwtUser.userId,
-          createdByName: jwtUser.email,
-        },
-      });
-      await createAuditLog(
-        jwtUser.userId, jwtUser.email, "CREATE", "ANNOUNCEMENT", announcement.id,
-        `Announcement '${title}' created.`, req.ip, req.headers["user-agent"] || null, "SUCCESS"
-      );
-      res.status(201).json(announcement);
-    } catch (err) {
-      logger.error("Error creating announcement:", err);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  });
-
-  app.put("/api/announcements/:id", authMiddleware, async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    if (!canManageAnnouncements(jwtUser.role)) {
-      res.status(403).json({ error: "Forbidden" });
-      return;
-    }
-    const { id } = req.params;
-    const { title, body, audience, classId, className, pinned, expiresAt, status } = req.body;
-    try {
-      const announcement = await prisma.announcement.update({
-        where: { id },
-        data: {
-          ...(title !== undefined ? { title } : {}),
-          ...(body !== undefined ? { body } : {}),
-          ...(audience !== undefined ? { audience } : {}),
-          ...(classId !== undefined ? { classId: classId || null } : {}),
-          ...(className !== undefined ? { className: className || null } : {}),
-          ...(pinned !== undefined ? { pinned: Boolean(pinned) } : {}),
-          ...(expiresAt !== undefined ? { expiresAt: expiresAt ? new Date(expiresAt) : null } : {}),
-          ...(status !== undefined ? { status } : {}),
-        },
-      });
-      await createAuditLog(
-        jwtUser.userId, jwtUser.email, "UPDATE", "ANNOUNCEMENT", id,
-        `Announcement '${announcement.title}' updated.`, req.ip, req.headers["user-agent"] || null, "SUCCESS"
-      );
-      res.json(announcement);
-    } catch (err: any) {
-      logger.error("Error updating announcement:", err);
-      if (err.code === "P2025") {
-        res.status(404).json({ error: "Announcement not found" });
-        return;
-      }
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  });
-
-  app.delete("/api/announcements/:id", authMiddleware, async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    if (!canManageAnnouncements(jwtUser.role)) {
-      res.status(403).json({ error: "Forbidden" });
-      return;
-    }
-    const { id } = req.params;
-    try {
-      await prisma.announcement.delete({ where: { id } });
-      await createAuditLog(
-        jwtUser.userId, jwtUser.email, "DELETE", "ANNOUNCEMENT", id,
-        `Announcement ID ${id} deleted.`, req.ip, req.headers["user-agent"] || null, "SUCCESS"
-      );
-      res.json({ message: "Announcement deleted successfully" });
-    } catch (err: any) {
-      logger.error("Error deleting announcement:", err);
-      if (err.code === "P2025") {
-        res.status(404).json({ error: "Announcement not found" });
-        return;
-      }
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  });
-
-  // ── Timetable API ────────────────────────────────────────────────────────────
-  const canManageTimetable = (role: string) => role === "ADMIN" || role === "TEACHER";
-
-  app.get("/api/timetable", authMiddleware, async (req, res) => {
-    const { classId, teacherId } = req.query as { classId?: string; teacherId?: string };
-    try {
-      const where: any = {};
-      if (classId) where.classId = classId;
-      if (teacherId) where.teacherId = teacherId;
-      const entries = await prisma.timetableEntry.findMany({
-        where,
-        orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }],
-      });
-      res.json(entries);
-    } catch (err) {
-      logger.error("Error fetching timetable:", err);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  });
-
-  app.get("/api/timetable/:id", authMiddleware, async (req, res) => {
-    const { id } = req.params;
-    try {
-      const entry = await prisma.timetableEntry.findUnique({ where: { id } });
-      if (!entry) {
-        res.status(404).json({ error: "Timetable entry not found" });
-        return;
-      }
-      res.json(entry);
-    } catch (err) {
-      logger.error("Error fetching timetable entry:", err);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  });
-
-  app.post("/api/timetable", authMiddleware, async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    if (!canManageTimetable(jwtUser.role)) {
-      res.status(403).json({ error: "Forbidden" });
-      return;
-    }
-    const { classId, className, subjectId, subjectName, subjectColor, teacherId, teacherName, dayOfWeek, startTime, endTime, room, notes } = req.body;
-    if (!classId || !subjectId || !dayOfWeek || !startTime || !endTime) {
-      res.status(400).json({ error: "classId, subjectId, dayOfWeek, startTime and endTime are required" });
-      return;
-    }
-    try {
-      const entry = await prisma.timetableEntry.create({
-        data: {
-          classId,
-          className: className || null,
-          subjectId,
-          subjectName: subjectName || null,
-          subjectColor: subjectColor || "bg-blue-500",
-          teacherId: teacherId || null,
-          teacherName: teacherName || null,
-          dayOfWeek,
-          startTime,
-          endTime,
-          room: room || null,
-          notes: notes || null,
-        },
-      });
-      await createAuditLog(
-        jwtUser.userId, jwtUser.email, "CREATE", "TIMETABLE", entry.id,
-        `Timetable slot created for ${className || classId} on ${dayOfWeek}.`, req.ip, req.headers["user-agent"] || null, "SUCCESS"
-      );
-      res.status(201).json(entry);
-    } catch (err) {
-      logger.error("Error creating timetable entry:", err);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  });
-
-  app.put("/api/timetable/:id", authMiddleware, async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    if (!canManageTimetable(jwtUser.role)) {
-      res.status(403).json({ error: "Forbidden" });
-      return;
-    }
-    const { id } = req.params;
-    const { classId, className, subjectId, subjectName, subjectColor, teacherId, teacherName, dayOfWeek, startTime, endTime, room, notes } = req.body;
-    try {
-      const entry = await prisma.timetableEntry.update({
-        where: { id },
-        data: {
-          ...(classId !== undefined ? { classId } : {}),
-          ...(className !== undefined ? { className: className || null } : {}),
-          ...(subjectId !== undefined ? { subjectId } : {}),
-          ...(subjectName !== undefined ? { subjectName: subjectName || null } : {}),
-          ...(subjectColor !== undefined ? { subjectColor: subjectColor || "bg-blue-500" } : {}),
-          ...(teacherId !== undefined ? { teacherId: teacherId || null } : {}),
-          ...(teacherName !== undefined ? { teacherName: teacherName || null } : {}),
-          ...(dayOfWeek !== undefined ? { dayOfWeek } : {}),
-          ...(startTime !== undefined ? { startTime } : {}),
-          ...(endTime !== undefined ? { endTime } : {}),
-          ...(room !== undefined ? { room: room || null } : {}),
-          ...(notes !== undefined ? { notes: notes || null } : {}),
-        },
-      });
-      await createAuditLog(
-        jwtUser.userId, jwtUser.email, "UPDATE", "TIMETABLE", id,
-        `Timetable slot ${id} updated.`, req.ip, req.headers["user-agent"] || null, "SUCCESS"
-      );
-      res.json(entry);
-    } catch (err: any) {
-      logger.error("Error updating timetable entry:", err);
-      if (err.code === "P2025") {
-        res.status(404).json({ error: "Timetable entry not found" });
-        return;
-      }
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  });
-
-  app.delete("/api/timetable/:id", authMiddleware, async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    if (!canManageTimetable(jwtUser.role)) {
-      res.status(403).json({ error: "Forbidden" });
-      return;
-    }
-    const { id } = req.params;
-    try {
-      await prisma.timetableEntry.delete({ where: { id } });
-      await createAuditLog(
-        jwtUser.userId, jwtUser.email, "DELETE", "TIMETABLE", id,
-        `Timetable slot ${id} deleted.`, req.ip, req.headers["user-agent"] || null, "SUCCESS"
-      );
-      res.json({ message: "Timetable entry deleted successfully" });
-    } catch (err: any) {
-      logger.error("Error deleting timetable entry:", err);
-      if (err.code === "P2025") {
-        res.status(404).json({ error: "Timetable entry not found" });
-        return;
-      }
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  });
-
-  // ── Student Documents API ────────────────────────────────────────────────────
-  // PII — only ADMIN and TEACHER may read; only ADMIN (or manage permission) may write.
-  const canManageDocuments = (role: string) => role === "ADMIN" || role === "TEACHER";
-
-  app.get("/api/students/:studentId/documents", authMiddleware, async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
-      res.status(403).json({ error: "Forbidden" });
-      return;
-    }
-    const { studentId } = req.params;
-    try {
-      const documents = await prisma.studentDocument.findMany({
-        where: { studentId, status: { not: "ARCHIVED" } },
-        orderBy: { createdAt: "desc" },
-      });
-      res.json(documents);
-    } catch (err) {
-      logger.error("Error fetching student documents:", err);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  });
-
-  app.post("/api/students/:studentId/documents", authMiddleware, async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    if (!canManageDocuments(jwtUser.role)) {
-      res.status(403).json({ error: "Forbidden" });
-      return;
-    }
-    const { studentId } = req.params;
-    const { title, documentType, fileUrl, fileName, fileSize, mimeType, expiryDate } = req.body;
-    if (!title || !fileUrl || !fileName) {
-      res.status(400).json({ error: "title, fileUrl and fileName are required" });
-      return;
-    }
-    try {
-      const document = await prisma.studentDocument.create({
-        data: {
-          studentId,
-          title,
-          documentType: documentType || "OTHER",
-          fileUrl,
-          fileName,
-          fileSize: fileSize != null ? Number(fileSize) : 0,
-          mimeType: mimeType || "application/octet-stream",
-          expiryDate: expiryDate ? new Date(expiryDate) : null,
-          uploadedById: jwtUser.userId,
-          uploadedByName: jwtUser.email,
-        },
-      });
-      await createAuditLog(
-        jwtUser.userId, jwtUser.email, "CREATE", "STUDENT_DOCUMENT", document.id,
-        `Document '${title}' uploaded for student ${studentId}.`, req.ip, req.headers["user-agent"] || null, "SUCCESS"
-      );
-      res.status(201).json(document);
-    } catch (err) {
-      logger.error("Error creating student document:", err);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  });
-
-  app.put("/api/students/:studentId/documents/:id", authMiddleware, async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    if (!canManageDocuments(jwtUser.role)) {
-      res.status(403).json({ error: "Forbidden" });
-      return;
-    }
-    const { id } = req.params;
-    const { title, documentType, expiryDate, status } = req.body;
-    try {
-      const document = await prisma.studentDocument.update({
-        where: { id },
-        data: {
-          ...(title !== undefined ? { title } : {}),
-          ...(documentType !== undefined ? { documentType } : {}),
-          ...(expiryDate !== undefined ? { expiryDate: expiryDate ? new Date(expiryDate) : null } : {}),
-          ...(status !== undefined ? { status } : {}),
-        },
-      });
-      await createAuditLog(
-        jwtUser.userId, jwtUser.email, "UPDATE", "STUDENT_DOCUMENT", id,
-        `Document '${document.title}' updated.`, req.ip, req.headers["user-agent"] || null, "SUCCESS"
-      );
-      res.json(document);
-    } catch (err: any) {
-      logger.error("Error updating student document:", err);
-      if (err.code === "P2025") {
-        res.status(404).json({ error: "Document not found" });
-        return;
-      }
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  });
-
-  app.delete("/api/students/:studentId/documents/:id", authMiddleware, async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    if (!canManageDocuments(jwtUser.role)) {
-      res.status(403).json({ error: "Forbidden" });
-      return;
-    }
-    const { id } = req.params;
-    try {
-      await prisma.studentDocument.delete({ where: { id } });
-      await createAuditLog(
-        jwtUser.userId, jwtUser.email, "DELETE", "STUDENT_DOCUMENT", id,
-        `Document ID ${id} deleted.`, req.ip, req.headers["user-agent"] || null, "SUCCESS"
-      );
-      res.json({ message: "Document deleted successfully" });
-    } catch (err: any) {
-      logger.error("Error deleting student document:", err);
-      if (err.code === "P2025") {
-        res.status(404).json({ error: "Document not found" });
         return;
       }
       res.status(500).json({ error: "Internal Server Error" });
@@ -2724,28 +1992,9 @@ async function startServer() {
   });
 
   // ── Fees API ────────────────────────────────────────────────────────────────
-  const feeReceiptPayload = (fee: any, fallbackCurrency = "MYR") => {
-    const studentUser = fee.student?.user;
-    const studentName = `${studentUser?.firstName ?? ""} ${studentUser?.lastName ?? ""}`.trim() || "Unknown";
-    const paidDate = fee.paidDate ?? fee.createdAt;
-
-    return {
-      ...fee,
-      currency: fee.currency || fallbackCurrency,
-      paymentDate: paidDate,
-      paymentType: fee.description || "Fee Payment",
-      studentName,
-      studentIdNumber: fee.student?.studentCode ?? "—",
-      class: fee.student?.class?.name ?? fee.student?.classId ?? "—",
-      recordedBy: "Finance Office",
-    };
-  };
-
   app.get("/api/fees", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
-      const profile = await prisma.schoolProfile.findFirst();
-      const fallbackCurrency = profile?.currency || "MYR";
       if (jwtUser.role === "STUDENT") {
         const student = await prisma.student.findUnique({
           where: { userId: jwtUser.userId }
@@ -2756,44 +2005,17 @@ async function startServer() {
         }
         const fees = await prisma.feePayment.findMany({
           where: { studentId: student.id },
-          include: { student: { include: { user: true, class: true } } }
+          include: { student: { include: { user: true } } }
         });
-        res.json(fees.map((fee) => feeReceiptPayload(fee, fallbackCurrency)));
+        res.json(fees);
       } else {
         const fees = await prisma.feePayment.findMany({
-          include: { student: { include: { user: true, class: true } } }
+          include: { student: { include: { user: true } } }
         });
-        res.json(fees.map((fee) => feeReceiptPayload(fee, fallbackCurrency)));
+        res.json(fees);
       }
     } catch (err) {
       logger.error("Error fetching fees:", err);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  });
-
-  app.get("/api/fees/:id", authMiddleware, async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    const { id } = req.params;
-    try {
-      const fee = await prisma.feePayment.findUnique({
-        where: { id },
-        include: { student: { include: { user: true, class: true } } }
-      });
-      const profile = await prisma.schoolProfile.findFirst();
-      if (!fee) {
-        res.status(404).json({ error: "Fee receipt not found" });
-        return;
-      }
-      if (jwtUser.role === "STUDENT") {
-        const student = await prisma.student.findUnique({ where: { userId: jwtUser.userId } });
-        if (!student || fee.studentId !== student.id) {
-          res.status(403).json({ error: "Forbidden" });
-          return;
-        }
-      }
-      res.json(feeReceiptPayload(fee, profile?.currency || "MYR"));
-    } catch (err) {
-      logger.error("Error fetching fee receipt:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
@@ -2814,12 +2036,10 @@ async function startServer() {
       return;
     }
     try {
-      const profile = await prisma.schoolProfile.findFirst();
       const fee = await prisma.feePayment.create({
         data: {
           studentId,
           amount: Number(amount),
-          currency: profile?.currency || "MYR",
           description: paymentType || "Tuition Fee",
           paymentMethod: paymentMethod || "CASH",
           paidDate: paymentDate ? new Date(paymentDate) : new Date(),
@@ -2828,7 +2048,7 @@ async function startServer() {
           receiptNumber: receiptNumber || `RCP-${Date.now()}`,
           notes,
         },
-        include: { student: { include: { user: true, class: true } } }
+        include: { student: { include: { user: true } } }
       });
 
       await createAuditLog(
@@ -2843,7 +2063,7 @@ async function startServer() {
         "SUCCESS"
       );
 
-      res.status(201).json(feeReceiptPayload(fee, profile?.currency || "MYR"));
+      res.status(201).json(fee);
     } catch (err) {
       logger.error("Error creating fee payment:", err);
       res.status(500).json({ error: "Internal Server Error" });
@@ -2889,54 +2109,6 @@ async function startServer() {
       res.json(exams);
     } catch (err) {
       logger.error("Error fetching exams:", err);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  });
-
-  app.get("/api/exams/:id", authMiddleware, async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    const { id } = req.params;
-    try {
-      const isStudent = jwtUser.role === "STUDENT";
-      const exam = await prisma.exam.findUnique({
-        where: { id },
-        include: {
-          class: { include: { _count: { select: { students: true } } } },
-          subject: true,
-          questions: isStudent
-            ? {
-                select: {
-                  id: true,
-                  text: true,
-                  type: true,
-                  points: true,
-                  options: true,
-                  examId: true,
-                  createdAt: true,
-                  updatedAt: true,
-                },
-              }
-            : true,
-          attempts: isStudent
-            ? false
-            : { include: { student: { include: { user: true } } } },
-        },
-      });
-      if (!exam) {
-        res.status(404).json({ error: "Exam not found" });
-        return;
-      }
-      // A student may only view an exam for their own class.
-      if (isStudent) {
-        const student = await prisma.student.findUnique({ where: { userId: jwtUser.userId } });
-        if (!student || student.classId !== exam.classId) {
-          res.status(404).json({ error: "Exam not found" });
-          return;
-        }
-      }
-      res.json(exam);
-    } catch (err) {
-      logger.error("Error fetching exam:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
@@ -3006,11 +2178,7 @@ async function startServer() {
     try {
       const user = await prisma.user.findUnique({
         where: { id: req.params.id },
-        select: {
-          id: true, firstName: true, lastName: true, email: true, role: true, isActive: true,
-          studentProfile: { select: { id: true } },
-          teacherProfile: { select: { id: true } },
-        },
+        select: { id: true, firstName: true, lastName: true, email: true, role: true, isActive: true },
       });
       if (!user) { res.status(404).json({ error: "User not found" }); return; }
       res.json(user);
@@ -3022,37 +2190,18 @@ async function startServer() {
 
   app.put("/api/users/:id", authMiddleware, requireRole("ADMIN"), validate(schemas.userUpdate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
-    const { firstName, lastName, email, role, status, teacherId, studentId } = req.body;
-    const userId = req.params.id;
+    const { firstName, lastName, email, role, status } = req.body;
     try {
-      const user = await prisma.$transaction(async (tx) => {
-        const updated = await tx.user.update({
-          where: { id: userId },
-          data: {
-            ...(firstName && { firstName }),
-            ...(lastName !== undefined && { lastName }),
-            ...(email && { email }),
-            ...(role && { role }),
-            ...(status !== undefined && { isActive: status !== "DISABLED" }),
-          },
-          select: { id: true, firstName: true, lastName: true, email: true, role: true, isActive: true },
-        });
-
-        // Link / unlink a teacher profile (Teacher.userId is unique).
-        if (teacherId !== undefined) {
-          await tx.teacher.updateMany({ where: { userId }, data: { userId: null } });
-          if (teacherId) {
-            await tx.teacher.update({ where: { id: teacherId }, data: { userId } });
-          }
-        }
-        // Link / unlink a student profile (Student.userId is unique).
-        if (studentId !== undefined) {
-          await tx.student.updateMany({ where: { userId }, data: { userId: null } });
-          if (studentId) {
-            await tx.student.update({ where: { id: studentId }, data: { userId } });
-          }
-        }
-        return updated;
+      const user = await prisma.user.update({
+        where: { id: req.params.id },
+        data: {
+          ...(firstName && { firstName }),
+          ...(lastName !== undefined && { lastName }),
+          ...(email && { email }),
+          ...(role && { role }),
+          ...(status !== undefined && { isActive: status !== "DISABLED" }),
+        },
+        select: { id: true, firstName: true, lastName: true, email: true, role: true, isActive: true },
       });
       await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "USER", user.id,
         `User '${user.firstName} ${user.lastName}' updated.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
@@ -3060,31 +2209,6 @@ async function startServer() {
     } catch (err: any) {
       logger.error("Error updating user:", err);
       if (err.code === "P2002") { res.status(400).json({ error: "Email already in use" }); return; }
-      if (err.code === "P2025") { res.status(404).json({ error: "User not found" }); return; }
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  });
-
-  // Admin resets a user's password directly to a chosen value.
-  app.post("/api/users/:id/reset-password", authMiddleware, requireRole("ADMIN"), async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    const newPassword = (req.body?.newPassword ?? "").toString();
-    if (newPassword.length < 6) {
-      res.status(400).json({ error: "Password must be at least 6 characters" });
-      return;
-    }
-    try {
-      const passwordHash = await bcrypt.hash(newPassword, 10);
-      const user = await prisma.user.update({
-        where: { id: req.params.id },
-        data: { passwordHash, mustChangePassword: true },
-        select: { id: true, firstName: true, lastName: true, email: true },
-      });
-      await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "USER", user.id,
-        `Password reset for user '${user.firstName} ${user.lastName}'.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
-      res.json({ success: true });
-    } catch (err: any) {
-      logger.error("Error resetting password:", err);
       if (err.code === "P2025") { res.status(404).json({ error: "User not found" }); return; }
       res.status(500).json({ error: "Internal Server Error" });
     }
@@ -3098,10 +2222,6 @@ async function startServer() {
       res.status(400).json({ error: "firstName, lastName, and email are required" }); return;
     }
     try {
-      const subjectList = Array.isArray(subjects)
-        ? subjects.map((subject: string) => subject.trim()).filter(Boolean)
-        : String(subjects || "").split(",").map((subject) => subject.trim()).filter(Boolean);
-      const specialization = subjectList.join(", ");
       // A shareable temporary password the admin hands to the teacher; they must
       // change it on first login (mustChangePassword).
       const tempPassword = `Mrlc-${crypto.randomBytes(4).toString("hex")}`;
@@ -3115,7 +2235,7 @@ async function startServer() {
           data: {
             userId: user.id,
             teacherCode,
-            specialization: specialization || null,
+            specialization: subjects || null,
             hireDate: joinedDate ? new Date(joinedDate) : new Date(),
           },
           include: { user: { select: { firstName: true, lastName: true, email: true, isActive: true } } },
@@ -3174,26 +2294,6 @@ async function startServer() {
     }
   });
 
-  // Delete a case (and its notes via cascade). Admin or case worker only.
-  app.delete("/api/cases/:id", authMiddleware, async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "CASE_WORKER") {
-      res.status(403).json({ error: "Forbidden" }); return;
-    }
-    try {
-      const existing = await prisma.caseRecord.findUnique({ where: { id: req.params.id } });
-      if (!existing) { res.status(404).json({ error: "Case not found" }); return; }
-      await prisma.caseRecord.delete({ where: { id: req.params.id } });
-      await createAuditLog(jwtUser.userId, jwtUser.email, "DELETE", "CASE", req.params.id,
-        `Case '${existing.title}' deleted.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
-      res.json({ success: true });
-    } catch (err: any) {
-      logger.error("Error deleting case:", err);
-      if (err.code === "P2025") { res.status(404).json({ error: "Case not found" }); return; }
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  });
-
   app.post("/api/cases/:id/notes", authMiddleware, validate(schemas.caseNote), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (jwtUser.role !== "ADMIN" && jwtUser.role !== "CASE_WORKER" && jwtUser.role !== "TEACHER") {
@@ -3222,12 +2322,10 @@ async function startServer() {
         name: profile?.name || null,
         logoUrl: profile?.logoUrl || null,
         primaryColor: profile?.primaryColor || null,
-        contactEmail: profile?.contactEmail || null,
-        contactPhone: profile?.contactPhone || null,
       });
     } catch (err) {
       logger.error("Error fetching public branding:", err);
-      res.json({ name: null, logoUrl: null, primaryColor: null, contactEmail: null, contactPhone: null });
+      res.json({ name: null, logoUrl: null, primaryColor: null });
     }
   });
 
@@ -3302,92 +2400,6 @@ async function startServer() {
       return;
     }
     res.json({ url: `/uploads/branding/${file.filename}` });
-  });
-
-  // ── Data Export (CSV / JSON) ─────────────────────────────────────────────────
-  const toCsv = (rows: Record<string, any>[]): string => {
-    if (!rows.length) return "";
-    const headers = Array.from(rows.reduce<Set<string>>((set, row) => {
-      Object.keys(row).forEach((key) => set.add(key));
-      return set;
-    }, new Set<string>()));
-    const escape = (val: any) => {
-      if (val === null || val === undefined) return "";
-      const s = val instanceof Date ? val.toISOString() : String(val);
-      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-    };
-    const lines = [headers.join(",")];
-    for (const row of rows) lines.push(headers.map(h => escape(row[h])).join(","));
-    return lines.join("\n");
-  };
-
-  const exFullName = (u: any) => `${u?.firstName ?? ""} ${u?.lastName ?? ""}`.trim();
-
-  const exportLoaders: Record<string, () => Promise<Record<string, any>[]>> = {
-    students: async () => (await prisma.student.findMany({ include: { user: true, class: true } })).map(s => ({
-      studentCode: s.studentCode, firstName: s.user?.firstName ?? "", lastName: s.user?.lastName ?? "",
-      email: s.user?.email ?? "", gender: s.gender ?? "", status: s.status ?? "", class: s.class?.name ?? "",
-      guardianName: s.guardianName ?? "", guardianPhone: s.guardianPhone ?? "", contactNumber: s.contactNumber ?? "",
-      country: s.country ?? "", enrollmentDate: s.enrollmentDate,
-    })),
-    teachers: async () => (await prisma.teacher.findMany({ include: { user: true } })).map(t => ({
-      teacherCode: t.teacherCode, name: exFullName(t.user), email: t.user?.email ?? "",
-      specialization: t.specialization ?? "", hireDate: t.hireDate,
-    })),
-    classes: async () => (await prisma.class.findMany({ include: { students: true } })).map(c => ({
-      name: c.name, level: c.level, academicYear: c.academicYear, room: c.room ?? "",
-      capacity: c.capacity ?? "", studentCount: c.students.length, createdAt: c.createdAt,
-    })),
-    attendance: async () => (await prisma.attendance.findMany({ include: { student: { include: { user: true } }, class: true } })).map(a => ({
-      date: a.date, status: a.status, student: exFullName(a.student?.user), class: a.class?.name ?? "", remarks: a.remarks ?? "",
-    })),
-    exams: async () => (await prisma.exam.findMany({ include: { class: true, subject: true } })).map(e => ({
-      title: e.title, type: e.type, date: e.date, class: e.class?.name ?? "", subject: e.subject?.name ?? "",
-      totalMarks: e.totalMarks ?? "", durationMinutes: e.durationMinutes ?? "",
-    })),
-    fees: async () => {
-      const profile = await prisma.schoolProfile.findFirst();
-      const fallbackCurrency = profile?.currency || "MYR";
-      return (await prisma.feePayment.findMany({ include: { student: { include: { user: true } } } })).map(f => ({
-        receiptNumber: f.receiptNumber ?? "", student: exFullName(f.student?.user), amount: f.amount, currency: f.currency || fallbackCurrency,
-        status: f.status, dueDate: f.dueDate, paidDate: f.paidDate ?? "", paymentMethod: f.paymentMethod ?? "", description: f.description ?? "",
-      }));
-    },
-    library: async () => (await prisma.libraryResource.findMany()).map(r => ({
-      title: r.title, author: r.author ?? "", isbn: r.isbn ?? "", type: r.type,
-      totalCopies: r.totalCopies, availableCopies: r.availableCopies, visibility: r.visibility ?? "",
-    })),
-    cases: async () => (await prisma.caseRecord.findMany({ include: { student: { include: { user: true } } } })).map(c => ({
-      title: c.title, status: c.status, priority: c.priority, category: c.category ?? "",
-      student: exFullName(c.student?.user), description: c.description, createdAt: c.createdAt,
-    })),
-  };
-
-  app.get("/api/export/:module", authMiddleware, requireRole("ADMIN"), async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    const moduleId = req.params.module;
-    const format = (req.query.format === "json" ? "json" : "csv") as "json" | "csv";
-    const loader = exportLoaders[moduleId];
-    if (!loader) { res.status(404).json({ error: "Unknown export module" }); return; }
-    try {
-      const rows = await loader();
-      await createAuditLog(jwtUser.userId, jwtUser.email, "EXPORT", "DATA", moduleId,
-        `Exported ${moduleId} (${rows.length} rows) as ${format.toUpperCase()}.`,
-        req.ip, req.headers["user-agent"] || null, "SUCCESS");
-      const stamp = new Date().toISOString().slice(0, 10);
-      if (format === "json") {
-        res.setHeader("Content-Type", "application/json");
-        res.setHeader("Content-Disposition", `attachment; filename="${moduleId}-${stamp}.json"`);
-        res.send(JSON.stringify(rows, null, 2));
-      } else {
-        res.setHeader("Content-Type", "text/csv");
-        res.setHeader("Content-Disposition", `attachment; filename="${moduleId}-${stamp}.csv"`);
-        res.send(toCsv(rows));
-      }
-    } catch (err) {
-      logger.error(`Error exporting ${moduleId}:`, err);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
   });
 
   // ── E-Library (EPUB/PDF) API ────────────────────────────────────────────────
@@ -3754,99 +2766,17 @@ async function startServer() {
     };
 
   // Lightweight KPI summary for the Reports dashboard
-  app.get("/api/reports/summary", authMiddleware, reportRole(["ADMIN", "TEACHER", "ACCOUNTANT", "CASE_WORKER"]), async (_req, res) => {
+  app.get("/api/reports/summary", authMiddleware, reportRole(["ADMIN", "ACCOUNTANT", "CASE_WORKER"]), async (_req, res) => {
     try {
-      const now = new Date();
-      const todayStart = new Date(now);
-      todayStart.setHours(0, 0, 0, 0);
-      const tomorrowStart = new Date(todayStart);
-      tomorrowStart.setDate(tomorrowStart.getDate() + 1);
-
-      const [students, classes, exams, openCases, attendance, fees, monthlyFees] = await Promise.all([
+      const [students, classes, exams, openCases] = await Promise.all([
         prisma.student.count(),
         prisma.class.count(),
         prisma.exam.count(),
         prisma.caseRecord.count({ where: { status: { in: ["OPEN", "IN_PROGRESS"] } } }),
-        prisma.attendance.findMany({ where: { date: { gte: todayStart, lt: tomorrowStart } }, select: { status: true } }),
-        prisma.feePayment.findMany({ select: { amount: true, status: true } }),
-        prisma.feePayment.findMany({
-          where: { status: "PAID", paidDate: { gte: todayStart, lt: tomorrowStart } },
-          select: { amount: true },
-        }),
       ]);
-      const present = attendance.filter(a => a.status === "PRESENT" || a.status === "LATE").length;
-      const paid = fees.filter(f => f.status === "PAID").reduce((sum, f) => sum + f.amount, 0);
-      const expected = fees.reduce((sum, f) => sum + f.amount, 0);
-      res.json({
-        students,
-        classes,
-        exams,
-        openCases,
-        attendanceRecords: attendance.length,
-        attendanceRate: attendance.length ? Math.round((present / attendance.length) * 100) : null,
-        feePayments: fees.length,
-        feeCollectionRate: expected ? Math.round((paid / expected) * 100) : null,
-        todaysFeeCollection: monthlyFees.reduce((sum, f) => sum + f.amount, 0),
-      });
+      res.json({ students, classes, exams, openCases });
     } catch (err) {
       logger.error("Error building report summary:", err);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  });
-
-  // Aggregated data for the main School Dashboard
-  app.get("/api/dashboard", authMiddleware, reportRole(["ADMIN", "TEACHER", "STAFF", "ACCOUNTANT", "CASE_WORKER"]), async (_req, res) => {
-    try {
-      const now = new Date();
-      const todayStart = new Date(now);
-      todayStart.setHours(0, 0, 0, 0);
-      const tomorrowStart = new Date(todayStart);
-      tomorrowStart.setDate(tomorrowStart.getDate() + 1);
-      const dayName = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][now.getDay()];
-
-      const [students, classes, openCases, todayAttendance, announcements, todaySchedule, recentCases] = await Promise.all([
-        prisma.student.count(),
-        prisma.class.count(),
-        prisma.caseRecord.count({ where: { status: { in: ["OPEN", "IN_PROGRESS"] } } }),
-        prisma.attendance.findMany({ where: { date: { gte: todayStart, lt: tomorrowStart } }, select: { status: true } }),
-        prisma.announcement.findMany({
-          where: { status: "ACTIVE" },
-          orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
-          take: 3,
-        }),
-        prisma.timetableEntry.findMany({ where: { dayOfWeek: dayName }, orderBy: { startTime: "asc" } }),
-        prisma.caseRecord.findMany({
-          orderBy: { createdAt: "desc" },
-          take: 5,
-          include: { student: { include: { user: true } } },
-        }),
-      ]);
-
-      const presentCount = todayAttendance.filter(a => a.status === "PRESENT" || a.status === "LATE").length;
-      const attendanceRate = todayAttendance.length > 0
-        ? Math.round((presentCount / todayAttendance.length) * 100)
-        : null;
-
-      res.json({
-        stats: { students, classes, openCases, attendanceRate, attendanceRecords: todayAttendance.length },
-        announcements: announcements.map(a => ({
-          id: a.id, title: a.title, category: a.audience, pinned: a.pinned,
-          date: a.createdAt,
-        })),
-        schedule: todaySchedule.map(t => ({
-          time: t.startTime, subject: t.subjectName || "—", subjectColor: t.subjectColor || "bg-blue-500",
-          class: t.className || "—", teacher: t.teacherName || "—", room: t.room || "—",
-        })),
-        recentCases: recentCases.map(c => ({
-          id: c.id,
-          name: c.student?.user ? `${c.student.user.firstName ?? ""} ${c.student.user.lastName ?? ""}`.trim() : "Unknown",
-          detail: c.title,
-          status: c.status,
-          time: c.createdAt,
-        })),
-      });
-    } catch (err) {
-      logger.error("Error building dashboard:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
@@ -3937,7 +2867,7 @@ async function startServer() {
         totalExpected,
         totalCollected,
         outstanding: totalExpected - totalCollected,
-        currency: profile?.currency || "MYR",
+        currency: profile?.currency || "THB",
       });
     } catch (err) {
       logger.error("Error building fees report:", err);
@@ -4078,7 +3008,7 @@ async function startServer() {
         avgAttendance,
         openCases,
         feeCollection,
-        currency: profile?.currency || "MYR",
+        currency: profile?.currency || "THB",
         casesByCategory: Array.from(catMap.values()),
       });
     } catch (err) {

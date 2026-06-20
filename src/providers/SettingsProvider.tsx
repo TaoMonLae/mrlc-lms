@@ -8,6 +8,7 @@ interface SettingsContextType {
   updateSchoolProfile: (data: Partial<SchoolProfile>) => Promise<void>;
   updateBranding: (data: Partial<BrandingSettings>) => Promise<void>;
   updateSystem: (data: Partial<SystemSettings>) => Promise<void>;
+  reloadSettings: () => Promise<void>;
 }
 
 const DEFAULT_SCHOOL: SchoolProfile = {
@@ -48,6 +49,7 @@ const SettingsContext = createContext<SettingsContextType>({
   updateSchoolProfile: async () => {},
   updateBranding: async () => {},
   updateSystem: async () => {},
+  reloadSettings: async () => {},
 });
 
 export const useSettings = () => useContext(SettingsContext);
@@ -90,19 +92,60 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [schoolProfile, setSchoolProfile] = useState<SchoolProfile>(DEFAULT_SCHOOL);
   const [brandingSettings, setBrandingSettings] = useState<BrandingSettings>(DEFAULT_BRANDING);
   const [systemSettings, setSystemSettings] = useState<SystemSettings>(DEFAULT_SYSTEM);
+  const [triggerReload, setTriggerReload] = useState(0);
 
-  useEffect(() => {
+  // Reload settings function
+  const reloadSettings = async () => {
     const token = sessionStorage.getItem('auth_token');
-    if (!token) return;
-    fetch('/api/settings', { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
+    if (!token) {
+      // Reset to defaults when logged out
+      setSchoolProfile(DEFAULT_SCHOOL);
+      setBrandingSettings(DEFAULT_BRANDING);
+      setSystemSettings(DEFAULT_SYSTEM);
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/settings', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
         if (data && data.name) {
           applyServerData(data, setSchoolProfile, setBrandingSettings, setSystemSettings);
         }
-      })
-      .catch(() => {/* keep defaults on error */});
+      }
+    } catch (error) {
+      console.error('Failed to reload settings:', error);
+    }
+  };
+
+  // Initial load and watch for auth changes
+  useEffect(() => {
+    const handleAuthChange = () => {
+      // Trigger settings reload when auth state changes
+      setTriggerReload(prev => prev + 1);
+    };
+
+    // Listen for storage changes (for cross-tab login/logout)
+    window.addEventListener('storage', handleAuthChange);
+
+    // Custom event listener for same-window login/logout
+    window.addEventListener('auth-state-changed', handleAuthChange);
+
+    // Initial load
+    reloadSettings();
+
+    return () => {
+      window.removeEventListener('storage', handleAuthChange);
+      window.removeEventListener('auth-state-changed', handleAuthChange);
+    };
   }, []);
+
+  // Reload settings when trigger changes
+  useEffect(() => {
+    reloadSettings();
+  }, [triggerReload]);
 
   const save = async (payload: Record<string, any>) => {
     const token = sessionStorage.getItem('auth_token');
@@ -143,7 +186,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     });
 
   return (
-    <SettingsContext.Provider value={{ schoolProfile, brandingSettings, systemSettings, updateSchoolProfile, updateBranding, updateSystem }}>
+    <SettingsContext.Provider value={{ schoolProfile, brandingSettings, systemSettings, updateSchoolProfile, updateBranding, updateSystem, reloadSettings }}>
       {children}
     </SettingsContext.Provider>
   );
