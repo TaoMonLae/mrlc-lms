@@ -3795,8 +3795,10 @@ async function startServer() {
   });
 
   // Aggregated data for the main School Dashboard
-  app.get("/api/dashboard", authMiddleware, reportRole(["ADMIN", "TEACHER", "STAFF", "ACCOUNTANT", "CASE_WORKER"]), async (_req, res) => {
+  app.get("/api/dashboard", authMiddleware, reportRole(["ADMIN", "TEACHER", "STAFF", "ACCOUNTANT", "CASE_WORKER"]), async (req, res) => {
     try {
+      const role = ((req as any).user as JwtPayload)?.role;
+      const canSeeCases = role === "ADMIN" || role === "CASE_WORKER";
       const now = new Date();
       const todayStart = new Date(now);
       todayStart.setHours(0, 0, 0, 0);
@@ -3815,11 +3817,13 @@ async function startServer() {
           take: 3,
         }),
         prisma.timetableEntry.findMany({ where: { dayOfWeek: dayName }, orderBy: { startTime: "asc" } }),
-        prisma.caseRecord.findMany({
-          orderBy: { createdAt: "desc" },
-          take: 5,
-          include: { student: { include: { user: true } } },
-        }),
+        canSeeCases
+          ? prisma.caseRecord.findMany({
+              orderBy: { createdAt: "desc" },
+              take: 5,
+              include: { student: { include: { user: true } } },
+            })
+          : Promise.resolve([] as any[]),
       ]);
 
       const presentCount = todayAttendance.filter(a => a.status === "PRESENT" || a.status === "LATE").length;
