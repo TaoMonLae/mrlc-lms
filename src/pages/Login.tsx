@@ -1,9 +1,19 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { GraduationCap, ArrowRight, AlertCircle } from "lucide-react";
+import {
+  GraduationCap,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  LogIn,
+  HelpCircle,
+  Users,
+  BookOpen,
+  ShieldCheck,
+  AlertCircle,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
 import { useForm } from "react-hook-form";
@@ -18,6 +28,10 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
+// Drop a classroom/hero photo at public/login-hero.jpg to use it as the
+// background. If it's missing we fall back to a branded gradient.
+const HERO_IMAGE = "/login-hero.jpg";
+
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -26,9 +40,11 @@ export default function LoginPage() {
   const [schoolName, setSchoolName] = useState<string>("Mon Refugee Learning Centre");
   const [contactEmail, setContactEmail] = useState<string | null>(null);
   const [contactPhone, setContactPhone] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
+  const [heroOk, setHeroOk] = useState(false);
 
-  // Pull the school's branding (logo + name) from the public endpoint so the
-  // login screen reflects the configured school. Falls back to the icon below.
+  // Pull the school's branding (logo + name + contact) from the public endpoint.
   useEffect(() => {
     fetch("/api/public/branding")
       .then((r) => (r.ok ? r.json() : null))
@@ -39,6 +55,14 @@ export default function LoginPage() {
         if (data?.contactPhone) setContactPhone(data.contactPhone);
       })
       .catch(() => {/* keep defaults */});
+  }, []);
+
+  // Probe for the optional hero image so a 404 doesn't show a broken graphic.
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => setHeroOk(true);
+    img.onerror = () => setHeroOk(false);
+    img.src = HERO_IMAGE;
   }, []);
 
   const {
@@ -55,146 +79,255 @@ export default function LoginPage() {
     if (!result.success) {
       setServerError(result.error ?? "Login failed. Please try again.");
     } else {
-      // Route each role to a sensible landing page.
       let destination = "/dashboard";
       try {
         const stored = JSON.parse(sessionStorage.getItem("auth_user") || "{}");
         if (stored.role === "LIBRARIAN") destination = "/books";
       } catch {
-        // fall back to the default destination
+        /* fall back to the default destination */
       }
       navigate(destination);
     }
   };
 
+  const helpHref = contactEmail
+    ? `mailto:${contactEmail}`
+    : contactPhone
+    ? `tel:${contactPhone}`
+    : "#";
+
+  const Logo = (
+    <div className="flex items-center gap-3">
+      {logoUrl ? (
+        <img
+          src={logoUrl}
+          alt={`${schoolName} logo`}
+          className="h-12 w-12 rounded-xl object-contain bg-white/80 ring-1 ring-slate-200 p-1"
+          onError={() => setLogoUrl(null)}
+        />
+      ) : (
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-700 text-white shadow-lg shadow-blue-700/20">
+          <GraduationCap className="h-7 w-7" />
+        </div>
+      )}
+      <div className="leading-tight">
+        <p className="text-sm font-extrabold uppercase tracking-tight text-slate-900">{schoolName}</p>
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-600">GED School LMS Portal</p>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 font-sans">
-      {/* Skip navigation for accessibility */}
-      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4">
+    <div className="relative min-h-screen w-full overflow-hidden bg-slate-100 font-sans">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 z-50">
         Skip to main content
       </a>
-      <main id="main-content" className="w-full" role="main">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.4 }}
-        className="mx-auto w-full max-w-md"
-      >
-        <div className="flex flex-col items-center gap-6 mb-8">
-          {logoUrl ? (
-            <img
-              src={logoUrl}
-              alt={`${schoolName} logo`}
-              className="h-16 w-16 rounded-2xl object-contain bg-white shadow-xl ring-1 ring-slate-200"
-              onError={() => setLogoUrl(null)}
-            />
-          ) : (
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-aubergine-600 text-white shadow-xl shadow-aubergine-600/20">
-              <GraduationCap className="h-10 w-10" />
+
+      {/* Background: hero photo if present, otherwise a branded gradient */}
+      <div className="absolute inset-0 -z-10">
+        {heroOk ? (
+          <img src={HERO_IMAGE} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <div className="h-full w-full bg-gradient-to-br from-blue-100 via-slate-100 to-emerald-50" />
+        )}
+        {/* Lighten toward the right so the content column stays readable */}
+        <div className="absolute inset-0 bg-gradient-to-r from-white/20 via-white/55 to-white/90" />
+        <div className="absolute inset-0 bg-gradient-to-t from-white/70 via-transparent to-transparent" />
+      </div>
+
+      <main id="main-content" role="main" className="relative z-10 flex min-h-screen flex-col">
+        {/* Top bar: logo (right on desktop, centered on mobile) */}
+        <header className="flex items-center justify-center px-6 pt-6 md:justify-end md:px-12 md:pt-8">
+          {Logo}
+        </header>
+
+        {/* Body */}
+        <div className="flex flex-1 items-center">
+          <div className="ml-auto w-full px-6 md:px-12 lg:w-[55%] xl:w-1/2">
+            <div className="mx-auto flex max-w-xl flex-col gap-8 lg:ml-auto lg:mr-0">
+              {/* Hero text */}
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+                className="hidden sm:block"
+              >
+                <h1 className="text-5xl font-extrabold leading-[1.05] tracking-tight xl:text-6xl">
+                  <span className="block text-blue-700">Learn.</span>
+                  <span className="block text-emerald-600">Grow.</span>
+                  <span className="block text-blue-700">Achieve.</span>
+                </h1>
+                <div className="mt-5 h-1 w-12 rounded-full bg-blue-700" />
+                <p className="mt-5 max-w-sm text-base font-medium text-slate-600">
+                  Empowering refugee learners through quality education and accessible
+                  learning every day.
+                </p>
+              </motion.div>
+
+              {/* Login card */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.97 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4, delay: 0.1 }}
+                className="w-full rounded-2xl border border-slate-200/70 bg-white/95 p-8 shadow-2xl shadow-slate-400/20 backdrop-blur-sm"
+              >
+                <div className="text-center">
+                  <h2 className="text-2xl font-extrabold text-blue-800">Welcome Back</h2>
+                  <p className="mt-1 text-sm font-medium text-slate-500">Access your GED Learning Portal</p>
+                </div>
+
+                <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4" noValidate>
+                  {serverError && (
+                    <div
+                      className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                      role="alert"
+                      aria-live="polite"
+                    >
+                      <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+                      <span>{serverError}</span>
+                    </div>
+                  )}
+
+                  {/* Email */}
+                  <div className="space-y-1.5">
+                    <label htmlFor="email" className="sr-only">Email address</label>
+                    <div className="relative">
+                      <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="Enter your email"
+                        autoComplete="email"
+                        aria-invalid={!!errors.email}
+                        aria-describedby={errors.email ? "email-error" : undefined}
+                        className="h-12 border-slate-200 bg-slate-50/70 pl-10 text-slate-900 placeholder:text-slate-400 focus:bg-white dark:bg-slate-50/70 dark:border-slate-200 dark:text-slate-900"
+                        {...register("email")}
+                      />
+                    </div>
+                    {errors.email && (
+                      <p id="email-error" className="text-xs font-medium text-red-500" role="alert">{errors.email.message}</p>
+                    )}
+                  </div>
+
+                  {/* Password */}
+                  <div className="space-y-1.5">
+                    <label htmlFor="password" className="sr-only">Password</label>
+                    <div className="relative">
+                      <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Enter your password"
+                        autoComplete="current-password"
+                        aria-invalid={!!errors.password}
+                        aria-describedby={errors.password ? "password-error" : undefined}
+                        className="h-12 border-slate-200 bg-slate-50/70 px-10 text-slate-900 placeholder:text-slate-400 focus:bg-white dark:bg-slate-50/70 dark:border-slate-200 dark:text-slate-900"
+                        {...register("password")}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((s) => !s)}
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-600"
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    {errors.password && (
+                      <p id="password-error" className="text-xs font-medium text-red-500" role="alert">{errors.password.message}</p>
+                    )}
+                  </div>
+
+                  {/* Remember + Forgot */}
+                  <div className="flex items-center justify-between">
+                    <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-600 select-none">
+                      <input
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
+                        className="h-4 w-4 rounded border-slate-300 text-blue-700 focus:ring-blue-600"
+                      />
+                      Remember me
+                    </label>
+                    <a href={helpHref} className="text-sm font-semibold text-blue-700 hover:text-blue-800 hover:underline">
+                      Forgot Password?
+                    </a>
+                  </div>
+
+                  {/* Sign in */}
+                  <Button
+                    type="submit"
+                    id="login-submit-btn"
+                    disabled={isSubmitting}
+                    className="h-12 w-full bg-blue-700 text-sm font-bold text-white transition-all hover:bg-blue-800 disabled:opacity-70"
+                    aria-label="Sign in"
+                  >
+                    {isSubmitting ? (
+                      <span className="flex items-center gap-2">
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        Signing in...
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        <LogIn className="h-4 w-4" />
+                        Sign In
+                      </span>
+                    )}
+                  </Button>
+
+                  {/* Divider */}
+                  <div className="flex items-center gap-3 py-1 text-xs font-medium text-slate-400">
+                    <span className="h-px flex-1 bg-slate-200" />
+                    or
+                    <span className="h-px flex-1 bg-slate-200" />
+                  </div>
+
+                  {/* Help */}
+                  <a
+                    href={helpHref}
+                    className="flex h-12 w-full items-center justify-center gap-2 rounded-lg border border-blue-200 bg-white text-sm font-bold text-blue-700 transition-colors hover:bg-blue-50"
+                  >
+                    <HelpCircle className="h-4 w-4" />
+                    Help &amp; Support
+                  </a>
+                </form>
+              </motion.div>
             </div>
-          )}
-          <div className="text-center">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 uppercase">{schoolName}</h1>
-            <p className="text-xs text-slate-500 mt-1 uppercase tracking-[0.2em] font-bold">GED School LMS Portal</p>
           </div>
         </div>
 
-        <Card className="bg-white text-slate-900 ring-slate-200 border-slate-200 shadow-xl shadow-slate-200/50 dark:bg-white dark:text-slate-900 dark:ring-slate-200 dark:border-slate-200">
-          <CardHeader className="space-y-1 text-center">
-            <CardTitle className="text-xl font-bold text-slate-900">Sign in</CardTitle>
-            <CardDescription className="text-slate-500 font-medium">
-              Enter your credentials to access the school portal
-            </CardDescription>
-          </CardHeader>
-          <form onSubmit={handleSubmit(onSubmit)} className="mt-2" noValidate>
-            <CardContent className="space-y-4">
-              {serverError && (
-                <div className="flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert" aria-live="polite">
-                  <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
-                  <span>{serverError}</span>
-                </div>
-              )}
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                  Email Address <span className="text-red-500" aria-hidden="true">*</span>
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="admin@mrlc.edu"
-                  autoComplete="email"
-                  aria-invalid={!!errors.email}
-                  aria-describedby={errors.email ? "email-error" : undefined}
-                  className="h-11 border-slate-200 bg-slate-50/50 text-slate-900 placeholder:text-slate-400 focus:bg-white transition-all dark:bg-slate-50/50 dark:border-slate-200 dark:text-slate-900"
-                  {...register("email")}
-                />
-                {errors.email && (
-                  <p id="email-error" className="text-xs text-red-500 font-medium" role="alert">{errors.email.message}</p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                  Password <span className="text-red-500" aria-hidden="true">*</span>
-                </Label>
-                <Input
-                  id="password"
-                  type="password"
-                  autoComplete="current-password"
-                  aria-invalid={!!errors.password}
-                  aria-describedby={errors.password ? "password-error" : undefined}
-                  className="h-11 border-slate-200 bg-slate-50/50 text-slate-900 placeholder:text-slate-400 focus:bg-white transition-all dark:bg-slate-50/50 dark:border-slate-200 dark:text-slate-900"
-                  {...register("password")}
-                />
-                {errors.password && (
-                  <p id="password-error" className="text-xs text-red-500 font-medium" role="alert">{errors.password.message}</p>
-                )}
-              </div>
-            </CardContent>
-            <CardFooter className="border-t border-slate-200 bg-white px-4 pb-4 pt-4 dark:border-slate-200 dark:bg-white">
-              <Button
-                type="submit"
-                id="login-submit-btn"
-                disabled={isSubmitting}
-                className="w-full h-12 text-sm font-bold bg-primary hover:bg-primary/90 text-primary-foreground transition-all group disabled:opacity-70"
-                aria-label="Sign in to dashboard"
-              >
-                {isSubmitting ? (
-                  <span className="flex items-center gap-2">
-                    <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                    SIGNING IN...
-                  </span>
-                ) : (
-                  <>
-                    CONTINUE TO DASHBOARD
-                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                  </>
-                )}
-              </Button>
-            </CardFooter>
-          </form>
-        </Card>
+        {/* Footer */}
+        <footer className="px-6 pb-6 md:px-12 md:pb-8">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            {/* Feature pills */}
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl bg-white/70 px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur-sm md:gap-x-8">
+              <span className="flex items-center gap-2"><GraduationCap className="h-4 w-4 text-blue-700" /> Quality Education</span>
+              <span className="hidden h-4 w-px bg-slate-300 sm:block" />
+              <span className="flex items-center gap-2"><Users className="h-4 w-4 text-blue-700" /> Community Support</span>
+              <span className="hidden h-4 w-px bg-slate-300 sm:block" />
+              <span className="flex items-center gap-2"><BookOpen className="h-4 w-4 text-blue-700" /> Bright Futures</span>
+            </div>
 
-        <div className="text-center mt-8 space-y-4">
-          <p className="text-xs text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
-            Protected area for authorized personnel only
-          </p>
-          {(contactEmail || contactPhone) && (
-            <p className="text-sm text-slate-500">
-              Need help?{" "}
-              {contactEmail ? (
-                <a className="font-bold text-aubergine-600 hover:text-aubergine-700 hover:underline" href={`mailto:${contactEmail}`}>
-                  {contactEmail}
-                </a>
-              ) : (
-                <a className="font-bold text-aubergine-600 hover:text-aubergine-700 hover:underline" href={`tel:${contactPhone}`}>
-                  {contactPhone}
-                </a>
+            {/* Contact / protected note */}
+            <div className="text-left md:text-right">
+              <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-500 md:justify-end">
+                <ShieldCheck className="h-4 w-4" /> Protected area for authorized personnel only
+              </p>
+              {(contactEmail || contactPhone) && (
+                <p className="mt-1 text-sm text-slate-500">
+                  Need help?{" "}
+                  {contactEmail && (
+                    <a className="font-bold text-blue-700 hover:underline" href={`mailto:${contactEmail}`}>{contactEmail}</a>
+                  )}
+                  {contactEmail && contactPhone ? <span className="text-slate-400"> &nbsp;•&nbsp; </span> : null}
+                  {contactPhone && (
+                    <a className="font-bold text-slate-600 hover:underline" href={`tel:${contactPhone}`}>{contactPhone}</a>
+                  )}
+                </p>
               )}
-              {contactEmail && contactPhone ? <span className="text-slate-400"> · {contactPhone}</span> : null}
-            </p>
-          )}
-        </div>
-      </motion.div>
+            </div>
+          </div>
+        </footer>
       </main>
     </div>
   );
