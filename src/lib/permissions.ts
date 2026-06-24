@@ -30,6 +30,8 @@ export type Permission =
   | 'manage_students'
   | 'view_students'
   | 'view_own_student'
+  | 'manage_admissions'
+  | 'view_admissions'
   // Teacher Management
   | 'manage_teachers'
   | 'view_teachers'
@@ -136,6 +138,8 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   ],
   STAFF: [
     'view_students',
+    'view_admissions',
+    'manage_admissions',
     'view_teachers',
     'view_classes',
     'view_subjects',
@@ -228,7 +232,7 @@ export function usePermissions() {
 // Permission categories for UI organization
 export const PERMISSION_CATEGORIES = {
   USER_MANAGEMENT: ['manage_users', 'manage_roles', 'view_users', 'reset_passwords'],
-  STUDENT_MANAGEMENT: ['manage_students', 'view_students', 'view_own_student'],
+  STUDENT_MANAGEMENT: ['manage_students', 'view_students', 'view_own_student', 'manage_admissions', 'view_admissions'],
   TEACHER_MANAGEMENT: ['manage_teachers', 'view_teachers'],
   ACADEMIC_MANAGEMENT: ['manage_classes', 'view_classes', 'manage_subjects', 'view_subjects'],
   EXAM_MANAGEMENT: ['manage_exams', 'manage_assigned_exams', 'view_exams', 'view_own_exams', 'view_own_results', 'manage_results', 'view_results', 'view_assigned_reports'],
@@ -251,6 +255,8 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   'manage_students': 'Manage Students',
   'view_students': 'View Students',
   'view_own_student': 'View Own Profile',
+  'manage_admissions': 'Manage Admissions',
+  'view_admissions': 'View Admissions',
   'manage_teachers': 'Manage Teachers',
   'view_teachers': 'View Teachers',
   'view_assigned_classes': 'View Assigned Classes',

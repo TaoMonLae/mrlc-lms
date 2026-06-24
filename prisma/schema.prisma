@@ -551,19 +551,109 @@ model BookLoan {
 
 model AdmissionApplication {
   id              String   @id @default(uuid())
+  applicationNo   String?  @unique
   applicantName   String
-  guardianName    String?
-  contactNumber   String?
+  preferredName   String?
+  email           String?
+  dateOfBirth     DateTime?
+  gender          String?
   country         String?
+  address         String?
+  contactNumber   String?
+
   targetLevel     String?
-  status          String   @default("NEW") // NEW | REVIEWING | ACCEPTED | WAITLISTED | REJECTED
+  targetClassId   String?
+  previousSchool  String?
+  previousEducationLevel String?
+  previousEducationNotes String?
+
+  guardianName    String?
+  guardianRelationship String?
+  guardianPhone   String?
+  guardianEmail   String?
+  emergencyContactName String?
+  emergencyContactPhone String?
+  emergencyContactRelationship String?
+
+  identityType    String?
+  identityNumber  String?
+  legalDocumentationStatus String? @default("PENDING") // PENDING | VERIFIED | MISSING | EXPIRED
+  boardingType    String?  @default("DAY") // DAY | BOARDING
+  medicalInformation String?
+  allergies       String?
+  medicationNotes String?
+
+  interviewAt     DateTime?
+  interviewMode   String?
+  interviewLocation String?
+  interviewNotes  String?
+  decisionAt      DateTime?
+  decisionById    String?
+  decisionByName  String?
+  decisionNotes   String?
+  status          String   @default("SUBMITTED") // SUBMITTED | DOCUMENTS_PENDING | INTERVIEW_SCHEDULED | UNDER_REVIEW | APPROVED | WAITLISTED | REJECTED | ENROLLED | WITHDRAWN
+  priority        String?  @default("NORMAL") // LOW | NORMAL | HIGH
   notes           String?
+
+  convertedStudentId String?
+  convertedUserId String?
+  convertedAt     DateTime?
   submittedAt     DateTime @default(now())
+  createdById      String?
+  createdByName    String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  documents       AdmissionDocument[]
+  timeline        AdmissionTimelineEvent[]
+
+  @@index([applicationNo])
+  @@index([status])
+  @@index([targetLevel])
+  @@index([targetClassId])
+  @@index([convertedStudentId])
+}
+
+model AdmissionDocument {
+  id              String   @id @default(uuid())
+  applicationId   String
+  application     AdmissionApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  title           String
+  documentType    String   @default("OTHER") // UNHCR | PASSPORT | BIRTH_CERTIFICATE | SCHOOL_RECORD | GUARDIAN_DOC | MEDICAL | PHOTO | OTHER
+  checklistStatus String   @default("PENDING") // PENDING | RECEIVED | VERIFIED | REJECTED | NOT_REQUIRED
+  fileUrl         String?
+  fileName        String?
+  fileSize        Int      @default(0)
+  mimeType        String   @default("application/octet-stream")
+  notes           String?
+  uploadedById    String?
+  uploadedByName  String?
+  verifiedById    String?
+  verifiedByName  String?
+  verifiedAt      DateTime?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  @@index([status])
-  @@index([targetLevel])
+  @@index([applicationId])
+  @@index([documentType])
+  @@index([checklistStatus])
+}
+
+model AdmissionTimelineEvent {
+  id              String   @id @default(uuid())
+  applicationId   String
+  application     AdmissionApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  eventType       String
+  title           String
+  description     String?
+  fromStatus      String?
+  toStatus        String?
+  createdById     String?
+  createdByName   String?
+  createdAt       DateTime @default(now())
+
+  @@index([applicationId])
+  @@index([eventType])
 }
 
 model AcademicCalendarEvent {

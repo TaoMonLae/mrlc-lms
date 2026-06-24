@@ -20,7 +20,8 @@ import {
   Video,
   BookMarked,
   Tablet,
-  ClipboardList
+  ClipboardList,
+  UserPlus
 } from "lucide-react";
 import { UserRole } from "./permissions";
 
@@ -56,6 +57,12 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     url: "/students",
     icon: Users,
     roles: ["ADMIN"],
+  },
+  {
+    title: "Admissions",
+    url: "/admissions",
+    icon: UserPlus,
+    roles: ["ADMIN", "STAFF"],
   },
   {
     title: "Teachers",

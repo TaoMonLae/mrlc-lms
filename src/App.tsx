@@ -68,6 +68,8 @@ import ExamResultsReport from "./pages/reports/ExamResultsReport";
 import ClassPerformanceReport from "./pages/reports/ClassPerformanceReport";
 import MonthlySummaryReport from "./pages/reports/MonthlySummaryReport";
 import SchoolOperations from "./pages/operations/SchoolOperations";
+import AdmissionsList from "./pages/admissions/AdmissionsList";
+import AdmissionDetail from "./pages/admissions/AdmissionDetail";
 
 import RolesPermissions from "./pages/settings/RolesPermissions";
 import SettingsLayout from "./pages/settings/SettingsLayout";
@@ -236,6 +238,11 @@ export default function App() {
                     <Route path="audit-log" element={<AuditLogPage />} />
                     <Route path="export" element={<ExportDataPage />} />
                   </Route>
+                </Route>
+
+                <Route element={<ProtectedRoute requiredPermission="view_admissions" />}>
+                  <Route path="/admissions" element={<AdmissionsList />} />
+                  <Route path="/admissions/:id" element={<AdmissionDetail />} />
                 </Route>
 
                 {/* Library: read routes open to all authenticated users */}

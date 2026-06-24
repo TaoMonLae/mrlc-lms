@@ -32,6 +32,8 @@ const LIBRARY_FILE_DIR = process.env.LIBRARY_FILE_DIR || path.join(process.cwd()
 fs.mkdirSync(LIBRARY_FILE_DIR, { recursive: true });
 const VIDEO_FILES_DIR = process.env.VIDEO_FILES_DIR || path.join(process.cwd(), "data", "videos");
 fs.mkdirSync(VIDEO_FILES_DIR, { recursive: true });
+const ADMISSION_FILE_DIR = process.env.ADMISSION_FILE_DIR || path.join(process.cwd(), "data", "admissions");
+fs.mkdirSync(ADMISSION_FILE_DIR, { recursive: true });
 
 const ebookUpload = multer({
   storage: multer.diskStorage({
@@ -99,6 +101,23 @@ const libraryFileUpload = multer({
     const ext = path.extname(file.originalname).toLowerCase();
     if (allowed.has(ext)) cb(null, true);
     else cb(new Error("Only PDF, Office documents, images, and text files are allowed"));
+  },
+});
+
+const admissionFileUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, ADMISSION_FILE_DIR),
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase();
+      cb(null, `${crypto.randomUUID()}${ext}`);
+    },
+  }),
+  limits: { fileSize: 25 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = new Set([".pdf", ".doc", ".docx", ".png", ".jpg", ".jpeg", ".webp", ".txt"]);
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowed.has(ext)) cb(null, true);
+    else cb(new Error("Only PDF, Word, image, and text files are allowed"));
   },
 });
 
@@ -319,6 +338,18 @@ const email = z.string().trim().email("must be a valid email");
 const num = z.union([z.string(), z.number()]); // handlers coerce with Number()
 const optNum = num.optional().nullable();
 const userRole = z.enum(["ADMIN", "TEACHER", "STUDENT", "STAFF", "ACCOUNTANT", "CASE_WORKER", "LIBRARIAN"]);
+const admissionStatus = z.enum([
+  "SUBMITTED",
+  "DOCUMENTS_PENDING",
+  "INTERVIEW_SCHEDULED",
+  "UNDER_REVIEW",
+  "APPROVED",
+  "WAITLISTED",
+  "REJECTED",
+  "ENROLLED",
+  "WITHDRAWN",
+]);
+const checklistStatus = z.enum(["PENDING", "RECEIVED", "VERIFIED", "REJECTED", "NOT_REQUIRED"]);
 
 function parseBoolean(value: unknown): boolean {
   if (typeof value === "boolean") return value;
@@ -450,12 +481,65 @@ const schemas = {
   }),
   admissionApplication: z.object({
     applicantName: reqStr,
+    preferredName: optStr,
+    email: z.union([email, z.literal("")]).optional(),
+    dateOfBirth: optStr,
+    gender: optStr,
+    address: optStr,
+    targetClassId: nullableStr,
+    previousSchool: optStr,
+    previousEducationLevel: optStr,
+    previousEducationNotes: optStr,
     guardianName: optStr,
+    guardianRelationship: optStr,
+    guardianPhone: optStr,
+    guardianEmail: z.union([email, z.literal("")]).optional(),
+    emergencyContactName: optStr,
+    emergencyContactPhone: optStr,
+    emergencyContactRelationship: optStr,
     contactNumber: optStr,
     country: optStr,
     targetLevel: optStr,
-    status: optStr,
+    identityType: optStr,
+    identityNumber: optStr,
+    legalDocumentationStatus: optStr,
+    boardingType: optStr,
+    medicalInformation: optStr,
+    allergies: optStr,
+    medicationNotes: optStr,
+    interviewAt: optStr,
+    interviewMode: optStr,
+    interviewLocation: optStr,
+    interviewNotes: optStr,
+    status: admissionStatus.optional(),
+    priority: optStr,
     notes: optStr,
+  }),
+  admissionStatusUpdate: z.object({
+    status: admissionStatus,
+    notes: optStr,
+  }),
+  admissionInterview: z.object({
+    interviewAt: reqStr,
+    interviewMode: optStr,
+    interviewLocation: optStr,
+    interviewNotes: optStr,
+  }),
+  admissionDecision: z.object({
+    status: z.enum(["APPROVED", "WAITLISTED", "REJECTED"]),
+    decisionNotes: optStr,
+  }),
+  admissionDocument: z.object({
+    title: reqStr,
+    documentType: optStr,
+    checklistStatus: checklistStatus.optional(),
+    notes: optStr,
+  }),
+  admissionConvert: z.object({
+    classId: nullableStr,
+    enrollmentDate: optStr,
+    studentCode: optStr,
+    password: z.string().min(8, "must be at least 8 characters").optional(),
   }),
   calendarEvent: z.object({
     title: reqStr,
@@ -585,6 +669,10 @@ async function startServer() {
     immutable: isProduction,
   }));
   app.use("/uploads/videos", express.static(VIDEO_FILES_DIR, {
+    maxAge: isProduction ? "30d" : 0,
+    immutable: isProduction,
+  }));
+  app.use("/uploads/admissions", express.static(ADMISSION_FILE_DIR, {
     maxAge: isProduction ? "30d" : 0,
     immutable: isProduction,
   }));
@@ -1702,6 +1790,574 @@ async function startServer() {
       res.status(400).json({ error: message });
     });
   };
+
+  const uploadAdmissionFile = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    admissionFileUpload.single("file")(req, res, (err: any) => {
+      if (!err) return next();
+      const message =
+        err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE"
+          ? "Admission documents must be 25 MB or smaller"
+          : err.message || "Upload failed";
+      res.status(400).json({ error: message });
+    });
+  };
+
+  // ── Admissions & Enrollment API ────────────────────────────────────────────
+  const canManageAdmissions = (role: string) => role === "ADMIN" || role === "STAFF";
+  const admissionDb = prisma as any;
+  const requiredAdmissionDocuments = [
+    { title: "Identity / UNHCR / PPN / CCN", documentType: "IDENTITY" },
+    { title: "Previous education record", documentType: "SCHOOL_RECORD" },
+    { title: "Guardian document", documentType: "GUARDIAN_DOC" },
+    { title: "Medical information", documentType: "MEDICAL" },
+    { title: "Student photo", documentType: "PHOTO" },
+  ];
+
+  const parseAdmissionDate = (value: unknown): Date | null => {
+    if (!value || typeof value !== "string") return null;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+  };
+
+  const splitApplicantName = (name: string) => {
+    const parts = name.trim().replace(/\s+/g, " ").split(" ").filter(Boolean);
+    if (parts.length <= 1) return { firstName: parts[0] || "Student", lastName: "" };
+    return { firstName: parts.slice(0, -1).join(" "), lastName: parts.at(-1) || "" };
+  };
+
+  const nextAdmissionNo = async (tx: any) => {
+    const year = new Date().getFullYear();
+    const count = await tx.admissionApplication.count({
+      where: { applicationNo: { startsWith: `APP-${year}-` } },
+    });
+    return `APP-${year}-${String(count + 1).padStart(4, "0")}`;
+  };
+
+  const nextStudentCode = async (tx: any) => {
+    const year = new Date().getFullYear();
+    const count = await tx.student.count({
+      where: { studentCode: { startsWith: `ST-${year}-` } },
+    });
+    return `ST-${year}-${String(count + 1).padStart(3, "0")}`;
+  };
+
+  const addAdmissionTimeline = async (
+    tx: any,
+    applicationId: string,
+    eventType: string,
+    title: string,
+    description: string | null,
+    fromStatus: string | null,
+    toStatus: string | null,
+    jwtUser: JwtPayload,
+  ) => tx.admissionTimelineEvent.create({
+    data: {
+      applicationId,
+      eventType,
+      title,
+      description,
+      fromStatus,
+      toStatus,
+      createdById: jwtUser.userId,
+      createdByName: jwtUser.email,
+    },
+  });
+
+  const admissionInclude = {
+    documents: { orderBy: { createdAt: "asc" } },
+    timeline: { orderBy: { createdAt: "asc" } },
+  };
+
+  app.get("/api/admissions", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageAdmissions(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { status, q, targetLevel, boardingType, legalDocumentationStatus } = req.query as Record<string, string | undefined>;
+    try {
+      const applications = await admissionDb.admissionApplication.findMany({
+        where: {
+          ...(status && status !== "all" ? { status } : {}),
+          ...(targetLevel && targetLevel !== "all" ? { targetLevel } : {}),
+          ...(boardingType && boardingType !== "all" ? { boardingType } : {}),
+          ...(legalDocumentationStatus && legalDocumentationStatus !== "all" ? { legalDocumentationStatus } : {}),
+          ...(q
+            ? {
+                OR: [
+                  { applicantName: { contains: q, mode: "insensitive" } },
+                  { applicationNo: { contains: q, mode: "insensitive" } },
+                  { guardianName: { contains: q, mode: "insensitive" } },
+                  { identityNumber: { contains: q, mode: "insensitive" } },
+                ],
+              }
+            : {}),
+        },
+        include: { documents: true },
+        orderBy: [{ submittedAt: "desc" }, { createdAt: "desc" }],
+      });
+      res.json(applications);
+    } catch (err) {
+      logger.error("Error fetching admissions:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/admissions", authMiddleware, validate(schemas.admissionApplication), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageAdmissions(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const application = await prisma.$transaction(async (tx) => {
+        const applicationNo = await nextAdmissionNo(tx);
+        const created = await (tx as any).admissionApplication.create({
+          data: {
+            applicationNo,
+            applicantName: req.body.applicantName,
+            preferredName: req.body.preferredName || null,
+            email: req.body.email || null,
+            dateOfBirth: parseAdmissionDate(req.body.dateOfBirth),
+            gender: req.body.gender || null,
+            country: req.body.country || null,
+            address: req.body.address || null,
+            contactNumber: req.body.contactNumber || null,
+            targetLevel: req.body.targetLevel || null,
+            targetClassId: req.body.targetClassId || null,
+            previousSchool: req.body.previousSchool || null,
+            previousEducationLevel: req.body.previousEducationLevel || null,
+            previousEducationNotes: req.body.previousEducationNotes || null,
+            guardianName: req.body.guardianName || null,
+            guardianRelationship: req.body.guardianRelationship || null,
+            guardianPhone: req.body.guardianPhone || null,
+            guardianEmail: req.body.guardianEmail || null,
+            emergencyContactName: req.body.emergencyContactName || null,
+            emergencyContactPhone: req.body.emergencyContactPhone || null,
+            emergencyContactRelationship: req.body.emergencyContactRelationship || null,
+            identityType: req.body.identityType || null,
+            identityNumber: req.body.identityNumber || null,
+            legalDocumentationStatus: req.body.legalDocumentationStatus || "PENDING",
+            boardingType: req.body.boardingType || "DAY",
+            medicalInformation: req.body.medicalInformation || null,
+            allergies: req.body.allergies || null,
+            medicationNotes: req.body.medicationNotes || null,
+            interviewAt: parseAdmissionDate(req.body.interviewAt),
+            interviewMode: req.body.interviewMode || null,
+            interviewLocation: req.body.interviewLocation || null,
+            interviewNotes: req.body.interviewNotes || null,
+            status: req.body.status || "SUBMITTED",
+            priority: req.body.priority || "NORMAL",
+            notes: req.body.notes || null,
+            createdById: jwtUser.userId,
+            createdByName: jwtUser.email,
+          },
+        });
+        await (tx as any).admissionDocument.createMany({
+          data: requiredAdmissionDocuments.map((doc) => ({
+            applicationId: created.id,
+            ...doc,
+            checklistStatus: "PENDING",
+          })),
+        });
+        await addAdmissionTimeline(tx, created.id, "CREATED", "Application submitted", `Application ${applicationNo} created.`, null, created.status, jwtUser);
+        return (tx as any).admissionApplication.findUnique({ where: { id: created.id }, include: admissionInclude });
+      });
+
+      await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "ADMISSION", application.id, `Admission application ${application.applicationNo} created.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.status(201).json(application);
+    } catch (err: any) {
+      logger.error("Error creating admission application:", err);
+      if (err.code === "P2002") {
+        res.status(409).json({ error: "Admission application number already exists" });
+        return;
+      }
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/admissions/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageAdmissions(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const application = await admissionDb.admissionApplication.findUnique({
+        where: { id: req.params.id },
+        include: admissionInclude,
+      });
+      if (!application) {
+        res.status(404).json({ error: "Admission application not found" });
+        return;
+      }
+      res.json(application);
+    } catch (err) {
+      logger.error("Error fetching admission application:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.put("/api/admissions/:id", authMiddleware, validate(schemas.admissionApplication), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageAdmissions(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const updated = await admissionDb.admissionApplication.update({
+        where: { id: req.params.id },
+        data: {
+          applicantName: req.body.applicantName,
+          preferredName: req.body.preferredName || null,
+          email: req.body.email || null,
+          dateOfBirth: parseAdmissionDate(req.body.dateOfBirth),
+          gender: req.body.gender || null,
+          country: req.body.country || null,
+          address: req.body.address || null,
+          contactNumber: req.body.contactNumber || null,
+          targetLevel: req.body.targetLevel || null,
+          targetClassId: req.body.targetClassId || null,
+          previousSchool: req.body.previousSchool || null,
+          previousEducationLevel: req.body.previousEducationLevel || null,
+          previousEducationNotes: req.body.previousEducationNotes || null,
+          guardianName: req.body.guardianName || null,
+          guardianRelationship: req.body.guardianRelationship || null,
+          guardianPhone: req.body.guardianPhone || null,
+          guardianEmail: req.body.guardianEmail || null,
+          emergencyContactName: req.body.emergencyContactName || null,
+          emergencyContactPhone: req.body.emergencyContactPhone || null,
+          emergencyContactRelationship: req.body.emergencyContactRelationship || null,
+          identityType: req.body.identityType || null,
+          identityNumber: req.body.identityNumber || null,
+          legalDocumentationStatus: req.body.legalDocumentationStatus || "PENDING",
+          boardingType: req.body.boardingType || "DAY",
+          medicalInformation: req.body.medicalInformation || null,
+          allergies: req.body.allergies || null,
+          medicationNotes: req.body.medicationNotes || null,
+          priority: req.body.priority || "NORMAL",
+          notes: req.body.notes || null,
+        },
+        include: admissionInclude,
+      });
+      await admissionDb.admissionTimelineEvent.create({
+        data: {
+          applicationId: req.params.id,
+          eventType: "UPDATED",
+          title: "Application updated",
+          description: "Application profile information was updated.",
+          createdById: jwtUser.userId,
+          createdByName: jwtUser.email,
+        },
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "ADMISSION", updated.id, `Admission application ${updated.applicationNo || updated.id} updated.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.json(updated);
+    } catch (err: any) {
+      logger.error("Error updating admission application:", err);
+      if (err.code === "P2025") {
+        res.status(404).json({ error: "Admission application not found" });
+        return;
+      }
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/admissions/:id/status", authMiddleware, validate(schemas.admissionStatusUpdate), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageAdmissions(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const result = await prisma.$transaction(async (tx) => {
+        const current = await (tx as any).admissionApplication.findUnique({ where: { id: req.params.id } });
+        if (!current) throw Object.assign(new Error("Admission application not found"), { http: 404 });
+        const updated = await (tx as any).admissionApplication.update({
+          where: { id: req.params.id },
+          data: { status: req.body.status },
+          include: admissionInclude,
+        });
+        await addAdmissionTimeline(tx, req.params.id, "STATUS", "Status changed", req.body.notes || null, current.status, req.body.status, jwtUser);
+        return updated;
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "STATUS", "ADMISSION", result.id, `Admission status changed to ${result.status}.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.json(result);
+    } catch (err: any) {
+      if (err.http === 404) {
+        res.status(404).json({ error: err.message });
+        return;
+      }
+      logger.error("Error updating admission status:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/admissions/:id/interview", authMiddleware, validate(schemas.admissionInterview), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageAdmissions(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const interviewAt = parseAdmissionDate(req.body.interviewAt);
+    if (!interviewAt) {
+      res.status(400).json({ error: "interviewAt: invalid date" });
+      return;
+    }
+    try {
+      const result = await prisma.$transaction(async (tx) => {
+        const current = await (tx as any).admissionApplication.findUnique({ where: { id: req.params.id } });
+        if (!current) throw Object.assign(new Error("Admission application not found"), { http: 404 });
+        const updated = await (tx as any).admissionApplication.update({
+          where: { id: req.params.id },
+          data: {
+            interviewAt,
+            interviewMode: req.body.interviewMode || null,
+            interviewLocation: req.body.interviewLocation || null,
+            interviewNotes: req.body.interviewNotes || null,
+            status: "INTERVIEW_SCHEDULED",
+          },
+          include: admissionInclude,
+        });
+        await addAdmissionTimeline(tx, req.params.id, "INTERVIEW", "Interview scheduled", req.body.interviewNotes || null, current.status, "INTERVIEW_SCHEDULED", jwtUser);
+        return updated;
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "SCHEDULE", "ADMISSION", result.id, `Interview scheduled for ${result.applicationNo || result.id}.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.json(result);
+    } catch (err: any) {
+      if (err.http === 404) {
+        res.status(404).json({ error: err.message });
+        return;
+      }
+      logger.error("Error scheduling admission interview:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/admissions/:id/decision", authMiddleware, validate(schemas.admissionDecision), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageAdmissions(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const result = await prisma.$transaction(async (tx) => {
+        const current = await (tx as any).admissionApplication.findUnique({ where: { id: req.params.id } });
+        if (!current) throw Object.assign(new Error("Admission application not found"), { http: 404 });
+        const updated = await (tx as any).admissionApplication.update({
+          where: { id: req.params.id },
+          data: {
+            status: req.body.status,
+            decisionAt: new Date(),
+            decisionById: jwtUser.userId,
+            decisionByName: jwtUser.email,
+            decisionNotes: req.body.decisionNotes || null,
+          },
+          include: admissionInclude,
+        });
+        await addAdmissionTimeline(tx, req.params.id, "DECISION", `Decision: ${req.body.status}`, req.body.decisionNotes || null, current.status, req.body.status, jwtUser);
+        return updated;
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "DECISION", "ADMISSION", result.id, `Admission decision set to ${result.status}.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.json(result);
+    } catch (err: any) {
+      if (err.http === 404) {
+        res.status(404).json({ error: err.message });
+        return;
+      }
+      logger.error("Error recording admission decision:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/admissions/:id/documents", authMiddleware, uploadAdmissionFile, validate(schemas.admissionDocument), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageAdmissions(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const file = (req as any).file as Express.Multer.File | undefined;
+    try {
+      const document = await admissionDb.admissionDocument.create({
+        data: {
+          applicationId: req.params.id,
+          title: req.body.title,
+          documentType: req.body.documentType || "OTHER",
+          checklistStatus: req.body.checklistStatus || (file ? "RECEIVED" : "PENDING"),
+          fileUrl: file ? `/uploads/admissions/${file.filename}` : null,
+          fileName: file?.originalname || null,
+          fileSize: file?.size || 0,
+          mimeType: file?.mimetype || "application/octet-stream",
+          notes: req.body.notes || null,
+          uploadedById: jwtUser.userId,
+          uploadedByName: jwtUser.email,
+        },
+      });
+      await admissionDb.admissionTimelineEvent.create({
+        data: {
+          applicationId: req.params.id,
+          eventType: "DOCUMENT",
+          title: file ? "Document uploaded" : "Checklist item added",
+          description: document.title,
+          createdById: jwtUser.userId,
+          createdByName: jwtUser.email,
+        },
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "ADMISSION_DOCUMENT", document.id, `Admission document '${document.title}' added.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.status(201).json(document);
+    } catch (err: any) {
+      logger.error("Error creating admission document:", err);
+      if (err.code === "P2003") {
+        res.status(404).json({ error: "Admission application not found" });
+        return;
+      }
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.put("/api/admissions/:id/documents/:documentId", authMiddleware, validate(schemas.admissionDocument), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageAdmissions(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const document = await admissionDb.admissionDocument.update({
+        where: { id: req.params.documentId },
+        data: {
+          title: req.body.title,
+          documentType: req.body.documentType || "OTHER",
+          checklistStatus: req.body.checklistStatus || "PENDING",
+          notes: req.body.notes || null,
+          ...(req.body.checklistStatus === "VERIFIED"
+            ? { verifiedAt: new Date(), verifiedById: jwtUser.userId, verifiedByName: jwtUser.email }
+            : {}),
+        },
+      });
+      await admissionDb.admissionTimelineEvent.create({
+        data: {
+          applicationId: req.params.id,
+          eventType: "DOCUMENT",
+          title: "Document checklist updated",
+          description: `${document.title}: ${document.checklistStatus}`,
+          createdById: jwtUser.userId,
+          createdByName: jwtUser.email,
+        },
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "ADMISSION_DOCUMENT", document.id, `Admission document '${document.title}' updated.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.json(document);
+    } catch (err: any) {
+      logger.error("Error updating admission document:", err);
+      if (err.code === "P2025") {
+        res.status(404).json({ error: "Admission document not found" });
+        return;
+      }
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/admissions/:id/convert", authMiddleware, requireRole("ADMIN"), validate(schemas.admissionConvert), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const result = await prisma.$transaction(async (tx) => {
+        const application = await (tx as any).admissionApplication.findUnique({
+          where: { id: req.params.id },
+          include: { documents: true },
+        });
+        if (!application) throw Object.assign(new Error("Admission application not found"), { http: 404 });
+        if (application.status !== "APPROVED") throw Object.assign(new Error("Only approved applications can be enrolled"), { http: 400 });
+        if (application.convertedStudentId) throw Object.assign(new Error("Application is already enrolled"), { http: 400 });
+
+        const studentCode = req.body.studentCode || await nextStudentCode(tx);
+        const { firstName, lastName } = splitApplicantName(application.applicantName);
+        const emailAddress = application.email || `${studentCode.toLowerCase().replace(/[^a-z0-9]/g, "")}@mrlc-student.edu`;
+        const password = req.body.password || "Student123!";
+        const user = await tx.user.create({
+          data: {
+            firstName,
+            lastName,
+            email: emailAddress,
+            passwordHash: await bcrypt.hash(password, 10),
+            role: "STUDENT",
+            mustChangePassword: !req.body.password,
+          },
+        });
+        const student = await tx.student.create({
+          data: {
+            userId: user.id,
+            studentCode,
+            dateOfBirth: application.dateOfBirth,
+            guardianName: application.guardianName,
+            guardianPhone: application.guardianPhone || application.contactNumber,
+            contactNumber: application.contactNumber,
+            country: application.country,
+            identityType: application.identityType,
+            identityNumber: application.identityNumber,
+            address: application.address,
+            emergencyContact: [application.emergencyContactName, application.emergencyContactPhone, application.emergencyContactRelationship].filter(Boolean).join(" | ") || null,
+            notes: [
+              application.notes ? `Admission notes: ${application.notes}` : null,
+              application.previousEducationLevel ? `Previous education: ${application.previousEducationLevel}` : null,
+              application.previousSchool ? `Previous school: ${application.previousSchool}` : null,
+              application.boardingType ? `Boarding/day: ${application.boardingType}` : null,
+              application.legalDocumentationStatus ? `Legal documentation: ${application.legalDocumentationStatus}` : null,
+              application.medicalInformation ? `Medical: ${application.medicalInformation}` : null,
+              application.allergies ? `Allergies: ${application.allergies}` : null,
+              application.medicationNotes ? `Medication: ${application.medicationNotes}` : null,
+            ].filter(Boolean).join("\n"),
+            classId: req.body.classId || application.targetClassId || null,
+            gender: application.gender,
+            status: "ACTIVE",
+            enrollmentDate: req.body.enrollmentDate ? new Date(req.body.enrollmentDate) : new Date(),
+          },
+          include: { user: true, class: true },
+        });
+
+        for (const document of application.documents.filter((doc: any) => doc.fileUrl)) {
+          await tx.studentDocument.create({
+            data: {
+              studentId: student.id,
+              title: document.title,
+              documentType: document.documentType,
+              fileUrl: document.fileUrl,
+              fileName: document.fileName || document.title,
+              fileSize: document.fileSize || 0,
+              mimeType: document.mimeType || "application/octet-stream",
+              uploadedById: document.uploadedById,
+              uploadedByName: document.uploadedByName,
+              status: "ACTIVE",
+            },
+          });
+        }
+
+        const updatedApplication = await (tx as any).admissionApplication.update({
+          where: { id: application.id },
+          data: {
+            status: "ENROLLED",
+            convertedStudentId: student.id,
+            convertedUserId: user.id,
+            convertedAt: new Date(),
+          },
+          include: admissionInclude,
+        });
+        await addAdmissionTimeline(tx, application.id, "ENROLLED", "Converted to student", `Created student ${student.studentCode}.`, application.status, "ENROLLED", jwtUser);
+        return { application: updatedApplication, student };
+      });
+
+      await createAuditLog(jwtUser.userId, jwtUser.email, "CONVERT", "ADMISSION", result.application.id, `Admission ${result.application.applicationNo} converted to student ${result.student.studentCode}.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.status(201).json(result);
+    } catch (err: any) {
+      logger.error("Error converting admission application:", err);
+      if (err.http) {
+        res.status(err.http).json({ error: err.message });
+        return;
+      }
+      if (err.code === "P2002") {
+        res.status(409).json({ error: "Student code or email already exists" });
+        return;
+      }
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
 
   app.get("/api/library", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
