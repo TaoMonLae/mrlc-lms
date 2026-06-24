@@ -1,0 +1,425 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: mrlc-lms\n"
+"Language: en\n"
+"Language-Team: English\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+# This is the source/template catalog. English is the default language and is
+# served directly from the source strings, so the msgstr values here are left
+# empty. To add a new language, copy this file to e.g. `fr.po`, set the
+# Language header, and fill in each msgstr.
+
+# ── Navigation ──────────────────────────────────────────────
+msgid "Main Navigation"
+msgstr ""
+
+msgid "Dashboard"
+msgstr ""
+
+msgid "Timetable"
+msgstr ""
+
+msgid "Announcements"
+msgstr ""
+
+msgid "Students"
+msgstr ""
+
+msgid "Teachers"
+msgstr ""
+
+msgid "Classes"
+msgstr ""
+
+msgid "Subjects"
+msgstr ""
+
+msgid "Attendance"
+msgstr ""
+
+msgid "Exams"
+msgstr ""
+
+msgid "Library"
+msgstr ""
+
+msgid "E-Library"
+msgstr ""
+
+msgid "Video Lessons"
+msgstr ""
+
+msgid "Book Catalog"
+msgstr ""
+
+msgid "Fees"
+msgstr ""
+
+msgid "Cases"
+msgstr ""
+
+msgid "Reports"
+msgstr ""
+
+msgid "Users"
+msgstr ""
+
+msgid "Audit Log"
+msgstr ""
+
+msgid "Export Data"
+msgstr ""
+
+msgid "Settings"
+msgstr ""
+
+msgid "My Account"
+msgstr ""
+
+msgid "Profile Settings"
+msgstr ""
+
+msgid "My Classes"
+msgstr ""
+
+msgid "My Results"
+msgstr ""
+
+msgid "Take Attendance"
+msgstr ""
+
+msgid "Student Dashboard"
+msgstr ""
+
+msgid "Teacher Dashboard"
+msgstr ""
+
+# ── Common actions / buttons ────────────────────────────────
+msgid "Save"
+msgstr ""
+
+msgid "Save Changes"
+msgstr ""
+
+msgid "Cancel"
+msgstr ""
+
+msgid "Edit"
+msgstr ""
+
+msgid "Delete"
+msgstr ""
+
+msgid "Remove"
+msgstr ""
+
+msgid "View"
+msgstr ""
+
+msgid "Add"
+msgstr ""
+
+msgid "Search"
+msgstr ""
+
+msgid "Next"
+msgstr ""
+
+msgid "Previous"
+msgstr ""
+
+msgid "Next Step"
+msgstr ""
+
+msgid "Export PDF"
+msgstr ""
+
+msgid "Export Reports"
+msgstr ""
+
+msgid "Add Teacher"
+msgstr ""
+
+msgid "Create Exam"
+msgstr ""
+
+msgid "Add Video"
+msgstr ""
+
+msgid "Upload Resource"
+msgstr ""
+
+msgid "Record Payment"
+msgstr ""
+
+msgid "Submit Exam"
+msgstr ""
+
+msgid "Save Exam"
+msgstr ""
+
+# ── Common labels ───────────────────────────────────────────
+msgid "Status"
+msgstr ""
+
+msgid "Action"
+msgstr ""
+
+msgid "Actions"
+msgstr ""
+
+msgid "Description"
+msgstr ""
+
+msgid "Type"
+msgstr ""
+
+msgid "Title"
+msgstr ""
+
+msgid "Date"
+msgstr ""
+
+msgid "Month"
+msgstr ""
+
+msgid "Time"
+msgstr ""
+
+msgid "Room"
+msgstr ""
+
+msgid "Class"
+msgstr ""
+
+msgid "Subject"
+msgstr ""
+
+msgid "Student"
+msgstr ""
+
+msgid "Teacher"
+msgstr ""
+
+msgid "Name"
+msgstr ""
+
+msgid "Email Address"
+msgstr ""
+
+msgid "Phone"
+msgstr ""
+
+msgid "Phone Number"
+msgstr ""
+
+msgid "Gender"
+msgstr ""
+
+msgid "Male"
+msgstr ""
+
+msgid "Female"
+msgstr ""
+
+msgid "Category"
+msgstr ""
+
+msgid "Author"
+msgstr ""
+
+msgid "Amount"
+msgstr ""
+
+msgid "Score"
+msgstr ""
+
+msgid "Rate"
+msgstr ""
+
+msgid "Points"
+msgstr ""
+
+msgid "Total Points"
+msgstr ""
+
+msgid "Total Due"
+msgstr ""
+
+msgid "Total Paid"
+msgstr ""
+
+msgid "Duration"
+msgstr ""
+
+msgid "Questions"
+msgstr ""
+
+msgid "Overview"
+msgstr ""
+
+msgid "Preview"
+msgstr ""
+
+msgid "Student ID"
+msgstr ""
+
+msgid "Student Name"
+msgstr ""
+
+msgid "Class Name"
+msgstr ""
+
+msgid "Joined Date"
+msgstr ""
+
+msgid "Academic Year"
+msgstr ""
+
+msgid "Academic Level"
+msgstr ""
+
+msgid "Language"
+msgstr ""
+
+# ── Statuses ────────────────────────────────────────────────
+msgid "Active"
+msgstr ""
+
+msgid "Inactive"
+msgstr ""
+
+msgid "Archived"
+msgstr ""
+
+msgid "Draft"
+msgstr ""
+
+msgid "Published"
+msgstr ""
+
+msgid "Closed"
+msgstr ""
+
+msgid "Present"
+msgstr ""
+
+msgid "Absent"
+msgstr ""
+
+msgid "Late"
+msgstr ""
+
+msgid "Excused"
+msgstr ""
+
+msgid "Unpaid"
+msgstr ""
+
+msgid "Graduated"
+msgstr ""
+
+msgid "Dropped"
+msgstr ""
+
+msgid "On Leave"
+msgstr ""
+
+# ── Visibility / audience ───────────────────────────────────
+msgid "Everyone"
+msgstr ""
+
+msgid "Students Only"
+msgstr ""
+
+msgid "Teachers Only"
+msgstr ""
+
+msgid "All Classes"
+msgstr ""
+
+msgid "All Status"
+msgstr ""
+
+# ── Roles ───────────────────────────────────────────────────
+msgid "Admin"
+msgstr ""
+
+msgid "Librarian"
+msgstr ""
+
+msgid "Accountant"
+msgstr ""
+
+msgid "Case Worker"
+msgstr ""
+
+msgid "Volunteer"
+msgstr ""
+
+msgid "Staff"
+msgstr ""
+
+# ── Dashboard ───────────────────────────────────────────────
+msgid "School Dashboard"
+msgstr ""
+
+msgid "Total Students"
+msgstr ""
+
+msgid "Daily Attendance"
+msgstr ""
+
+msgid "Active Cases"
+msgstr ""
+
+msgid "Important Announcements"
+msgstr ""
+
+msgid "View All Announcements"
+msgstr ""
+
+msgid "Today's Schedule"
+msgstr ""
+
+msgid "Full Timetable"
+msgstr ""
+
+msgid "Recent Student Cases"
+msgstr ""
+
+msgid "View Case Management"
+msgstr ""
+
+msgid "+ New Registration"
+msgstr ""
+
+msgid "Active this semester"
+msgstr ""
+
+msgid "GED & Pre-GED levels"
+msgstr ""
+
+msgid "Pending attention"
+msgstr ""
+
+msgid "No active announcements."
+msgstr ""
+
+msgid "No classes scheduled for today."
+msgstr ""
+
+msgid "No recent cases."
+msgstr ""
+
+msgid "No records today"
+msgstr ""
+
+msgid "Search students, classes, records..."
+msgstr ""
+
+msgid "Overview of Mon Refugee Learning Centre - GED School"
+msgstr ""

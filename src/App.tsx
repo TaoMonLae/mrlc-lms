@@ -123,12 +123,14 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { SettingsProvider } from "./providers/SettingsProvider";
 import { AuthProvider } from "./providers/AuthProvider";
+import { I18nProvider } from "./i18n/I18nProvider";
 
 import LandingPage from "./pages/Landing";
 
 export default function App() {
   return (
     <ThemeProvider defaultTheme="light" storageKey="mrlc-lms-theme">
+      <I18nProvider>
       <AuthProvider>
         <SettingsProvider>
         <TooltipProvider>
@@ -315,6 +317,7 @@ export default function App() {
         </TooltipProvider>
       </SettingsProvider>
       </AuthProvider>
+      </I18nProvider>
     </ThemeProvider>
   );
 }

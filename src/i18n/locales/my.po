@@ -1,0 +1,420 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: mrlc-lms\n"
+"Language: my\n"
+"Language-Team: မြန်မာ (Burmese)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+# ── Navigation ──────────────────────────────────────────────
+msgid "Main Navigation"
+msgstr "ပင်မလမ်းညွှန်"
+
+msgid "Dashboard"
+msgstr "ဒက်ရှ်ဘုတ်"
+
+msgid "Timetable"
+msgstr "အချိန်ဇယား"
+
+msgid "Announcements"
+msgstr "ကြေညာချက်များ"
+
+msgid "Students"
+msgstr "ကျောင်းသားများ"
+
+msgid "Teachers"
+msgstr "ဆရာများ"
+
+msgid "Classes"
+msgstr "အတန်းများ"
+
+msgid "Subjects"
+msgstr "ဘာသာရပ်များ"
+
+msgid "Attendance"
+msgstr "တက်ရောက်မှု"
+
+msgid "Exams"
+msgstr "စာမေးပွဲများ"
+
+msgid "Library"
+msgstr "စာကြည့်တိုက်"
+
+msgid "E-Library"
+msgstr "အီ-စာကြည့်တိုက်"
+
+msgid "Video Lessons"
+msgstr "ဗီဒီယိုသင်ခန်းစာများ"
+
+msgid "Book Catalog"
+msgstr "စာအုပ်စာရင်း"
+
+msgid "Fees"
+msgstr "ကြေးငွေများ"
+
+msgid "Cases"
+msgstr "အမှုများ"
+
+msgid "Reports"
+msgstr "အစီရင်ခံစာများ"
+
+msgid "Users"
+msgstr "အသုံးပြုသူများ"
+
+msgid "Audit Log"
+msgstr "စစ်ဆေးမှတ်တမ်း"
+
+msgid "Export Data"
+msgstr "ဒေတာထုတ်ယူခြင်း"
+
+msgid "Settings"
+msgstr "ဆက်တင်များ"
+
+msgid "My Account"
+msgstr "ကျွန်ုပ်၏အကောင့်"
+
+msgid "Profile Settings"
+msgstr "ပရိုဖိုင်ဆက်တင်များ"
+
+msgid "My Classes"
+msgstr "ကျွန်ုပ်၏အတန်းများ"
+
+msgid "My Results"
+msgstr "ကျွန်ုပ်၏ရလဒ်များ"
+
+msgid "Take Attendance"
+msgstr "တက်ရောက်မှုမှတ်တမ်းတင်ရန်"
+
+msgid "Student Dashboard"
+msgstr "ကျောင်းသားဒက်ရှ်ဘုတ်"
+
+msgid "Teacher Dashboard"
+msgstr "ဆရာဒက်ရှ်ဘုတ်"
+
+# ── Common actions / buttons ────────────────────────────────
+msgid "Save"
+msgstr "သိမ်းမည်"
+
+msgid "Save Changes"
+msgstr "ပြောင်းလဲမှုများသိမ်းမည်"
+
+msgid "Cancel"
+msgstr "ပယ်ဖျက်မည်"
+
+msgid "Edit"
+msgstr "ပြင်ဆင်မည်"
+
+msgid "Delete"
+msgstr "ဖျက်မည်"
+
+msgid "Remove"
+msgstr "ဖယ်ရှားမည်"
+
+msgid "View"
+msgstr "ကြည့်ရှုမည်"
+
+msgid "Add"
+msgstr "ထည့်မည်"
+
+msgid "Search"
+msgstr "ရှာဖွေမည်"
+
+msgid "Next"
+msgstr "ရှေ့သို့"
+
+msgid "Previous"
+msgstr "ယခင်သို့"
+
+msgid "Next Step"
+msgstr "နောက်တစ်ဆင့်"
+
+msgid "Export PDF"
+msgstr "PDF ထုတ်ယူမည်"
+
+msgid "Export Reports"
+msgstr "အစီရင်ခံစာထုတ်ယူမည်"
+
+msgid "Add Teacher"
+msgstr "ဆရာထည့်မည်"
+
+msgid "Create Exam"
+msgstr "စာမေးပွဲဖန်တီးမည်"
+
+msgid "Add Video"
+msgstr "ဗီဒီယိုထည့်မည်"
+
+msgid "Upload Resource"
+msgstr "အရင်းအမြစ်တင်မည်"
+
+msgid "Record Payment"
+msgstr "ငွေပေးချေမှုမှတ်တမ်းတင်မည်"
+
+msgid "Submit Exam"
+msgstr "စာမေးပွဲတင်သွင်းမည်"
+
+msgid "Save Exam"
+msgstr "စာမေးပွဲသိမ်းမည်"
+
+# ── Common labels ───────────────────────────────────────────
+msgid "Status"
+msgstr "အခြေအနေ"
+
+msgid "Action"
+msgstr "လုပ်ဆောင်ချက်"
+
+msgid "Actions"
+msgstr "လုပ်ဆောင်ချက်များ"
+
+msgid "Description"
+msgstr "ဖော်ပြချက်"
+
+msgid "Type"
+msgstr "အမျိုးအစား"
+
+msgid "Title"
+msgstr "ခေါင်းစဉ်"
+
+msgid "Date"
+msgstr "ရက်စွဲ"
+
+msgid "Month"
+msgstr "လ"
+
+msgid "Time"
+msgstr "အချိန်"
+
+msgid "Room"
+msgstr "အခန်း"
+
+msgid "Class"
+msgstr "အတန်း"
+
+msgid "Subject"
+msgstr "ဘာသာရပ်"
+
+msgid "Student"
+msgstr "ကျောင်းသား"
+
+msgid "Teacher"
+msgstr "ဆရာ"
+
+msgid "Name"
+msgstr "အမည်"
+
+msgid "Email Address"
+msgstr "အီးမေးလ်လိပ်စာ"
+
+msgid "Phone"
+msgstr "ဖုန်း"
+
+msgid "Phone Number"
+msgstr "ဖုန်းနံပါတ်"
+
+msgid "Gender"
+msgstr "ကျား/မ"
+
+msgid "Male"
+msgstr "ကျား"
+
+msgid "Female"
+msgstr "မ"
+
+msgid "Category"
+msgstr "အမျိုးအစား"
+
+msgid "Author"
+msgstr "စာရေးသူ"
+
+msgid "Amount"
+msgstr "ပမာဏ"
+
+msgid "Score"
+msgstr "ရမှတ်"
+
+msgid "Rate"
+msgstr "နှုန်း"
+
+msgid "Points"
+msgstr "အမှတ်"
+
+msgid "Total Points"
+msgstr "စုစုပေါင်းအမှတ်"
+
+msgid "Total Due"
+msgstr "ပေးရန်စုစုပေါင်း"
+
+msgid "Total Paid"
+msgstr "ပေးပြီးစုစုပေါင်း"
+
+msgid "Duration"
+msgstr "ကြာချိန်"
+
+msgid "Questions"
+msgstr "မေးခွန်းများ"
+
+msgid "Overview"
+msgstr "ခြုံငုံသုံးသပ်ချက်"
+
+msgid "Preview"
+msgstr "အစမ်းကြည့်ရှုခြင်း"
+
+msgid "Student ID"
+msgstr "ကျောင်းသားအိုင်ဒီ"
+
+msgid "Student Name"
+msgstr "ကျောင်းသားအမည်"
+
+msgid "Class Name"
+msgstr "အတန်းအမည်"
+
+msgid "Joined Date"
+msgstr "ဝင်ရောက်သည့်ရက်"
+
+msgid "Academic Year"
+msgstr "ပညာသင်နှစ်"
+
+msgid "Academic Level"
+msgstr "ပညာရေးအဆင့်"
+
+msgid "Language"
+msgstr "ဘာသာစကား"
+
+# ── Statuses ────────────────────────────────────────────────
+msgid "Active"
+msgstr "အသုံးပြုဆဲ"
+
+msgid "Inactive"
+msgstr "ရပ်ဆိုင်း"
+
+msgid "Archived"
+msgstr "သိမ်းဆည်းပြီး"
+
+msgid "Draft"
+msgstr "မူကြမ်း"
+
+msgid "Published"
+msgstr "ထုတ်ဝေပြီး"
+
+msgid "Closed"
+msgstr "ပိတ်ထား"
+
+msgid "Present"
+msgstr "တက်ရောက်"
+
+msgid "Absent"
+msgstr "ပျက်ကွက်"
+
+msgid "Late"
+msgstr "နောက်ကျ"
+
+msgid "Excused"
+msgstr "ခွင့်ပြု"
+
+msgid "Unpaid"
+msgstr "မပေးရသေး"
+
+msgid "Graduated"
+msgstr "ဘွဲ့ရ"
+
+msgid "Dropped"
+msgstr "ထွက်ခွာ"
+
+msgid "On Leave"
+msgstr "ခွင့်ယူ"
+
+# ── Visibility / audience ───────────────────────────────────
+msgid "Everyone"
+msgstr "အားလုံး"
+
+msgid "Students Only"
+msgstr "ကျောင်းသားများသာ"
+
+msgid "Teachers Only"
+msgstr "ဆရာများသာ"
+
+msgid "All Classes"
+msgstr "အတန်းအားလုံး"
+
+msgid "All Status"
+msgstr "အခြေအနေအားလုံး"
+
+# ── Roles ───────────────────────────────────────────────────
+msgid "Admin"
+msgstr "စီမံခန့်ခွဲသူ"
+
+msgid "Librarian"
+msgstr "စာကြည့်တိုက်မှူး"
+
+msgid "Accountant"
+msgstr "စာရင်းကိုင်"
+
+msgid "Case Worker"
+msgstr "အမှုဆောင်ဝန်ထမ်း"
+
+msgid "Volunteer"
+msgstr "စေတနာ့ဝန်ထမ်း"
+
+msgid "Staff"
+msgstr "ဝန်ထမ်း"
+
+# ── Dashboard ───────────────────────────────────────────────
+msgid "School Dashboard"
+msgstr "ကျောင်းဒက်ရှ်ဘုတ်"
+
+msgid "Total Students"
+msgstr "ကျောင်းသားစုစုပေါင်း"
+
+msgid "Daily Attendance"
+msgstr "နေ့စဉ်တက်ရောက်မှု"
+
+msgid "Active Cases"
+msgstr "ဆောင်ရွက်ဆဲအမှုများ"
+
+msgid "Important Announcements"
+msgstr "အရေးကြီးကြေညာချက်များ"
+
+msgid "View All Announcements"
+msgstr "ကြေညာချက်အားလုံးကြည့်ရန်"
+
+msgid "Today's Schedule"
+msgstr "ယနေ့အချိန်ဇယား"
+
+msgid "Full Timetable"
+msgstr "အချိန်ဇယားအပြည့်အစုံ"
+
+msgid "Recent Student Cases"
+msgstr "မကြာသေးမီကကျောင်းသားအမှုများ"
+
+msgid "View Case Management"
+msgstr "အမှုစီမံခန့်ခွဲမှုကြည့်ရန်"
+
+msgid "+ New Registration"
+msgstr "+ အသစ်စာရင်းသွင်းရန်"
+
+msgid "Active this semester"
+msgstr "ဤစာသင်နှစ်ဝက်တွင်သုံးစွဲဆဲ"
+
+msgid "GED & Pre-GED levels"
+msgstr "GED နှင့် Pre-GED အဆင့်များ"
+
+msgid "Pending attention"
+msgstr "ဆောင်ရွက်ရန်ကျန်"
+
+msgid "No active announcements."
+msgstr "ဆောင်ရွက်ဆဲကြေညာချက်မရှိပါ။"
+
+msgid "No classes scheduled for today."
+msgstr "ယနေ့အတွက်အတန်းမသတ်မှတ်ထားပါ။"
+
+msgid "No recent cases."
+msgstr "မကြာသေးမီကအမှုမရှိပါ။"
+
+msgid "No records today"
+msgstr "ယနေ့မှတ်တမ်းမရှိပါ"
+
+msgid "Search students, classes, records..."
+msgstr "ကျောင်းသား၊ အတန်း၊ မှတ်တမ်းများရှာဖွေရန်..."
+
+msgid "Overview of Mon Refugee Learning Centre - GED School"
+msgstr "မွန်ဒုက္ခသည်သင်ကြားရေးစင်တာ - GED ကျောင်း၏ ခြုံငုံသုံးသပ်ချက်"

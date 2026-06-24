@@ -15,6 +15,7 @@ import {
 import type { Announcement } from "@/src/pages/announcements/AnnouncementsList";
 import { format } from "date-fns";
 import { SearchDialog } from "../SearchDialog";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 export function TopBar() {
   const { setTheme } = useTheme();
@@ -118,6 +119,8 @@ export function TopBar() {
             {format(currentTime, 'HH:mm:ss')}
           </span>
         </div>
+
+        <LanguageSwitcher />
 
         <DropdownMenu>
           <DropdownMenuTrigger
