@@ -166,33 +166,3 @@ export function useAllVideoProgress() {
 
   return { progressMap, loading };
 }
-
-/**
- * Hook to fetch all video progress for the current user.
- * Returns a map of video IDs to their progress data, useful for displaying
- * progress indicators across multiple video cards.
- *
- * @returns Object containing progress data and loading state
- * @returns progressMap - A map of video ID to progress data
- * @returns loading - Whether progress data is being loaded
- *
- * @example
- * ```tsx
- * function VideoList() {
- *   const { progressMap } = useAllVideoProgress();
- *
- *   return (
- *     <div>
- *       {videos.map(video => (
- *         <VideoCard
- *           key={video.id}
- *           video={video}
- *           progress={progressMap[video.id]}
- *         />
- *       ))}
- *     </div>
- *   );
- * }
- * ```
- */
-export function useAllVideoProgress() {
