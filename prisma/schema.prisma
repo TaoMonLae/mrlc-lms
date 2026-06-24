@@ -159,7 +159,9 @@ model Student {
   examAttempts   ExamAttempt[]
   feePayments    FeePayment[]
   caseRecords    CaseRecord[]
-  
+  grades         Grade[]
+  gedReadiness   GedReadiness[]
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -197,7 +199,9 @@ model Class {
   teachers       ClassTeacher[]
   exams          Exam[]
   attendances    Attendance[]
-  
+  gradeItems     GradeItem[]
+  categoryWeights CategoryWeight[]
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
@@ -224,7 +228,8 @@ model Subject {
 
   teachers       SubjectTeacher[]
   exams          Exam[]
-  
+  gradeItems     GradeItem[]
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
@@ -855,4 +860,99 @@ model StudentDocument {
   @@index([studentId])
   @@index([documentType])
   @@index([status])
+}
+
+// ── Gradebook & GED readiness ────────────────────────────────────────────────
+enum GradeCategoryType {
+  ASSIGNMENT
+  QUIZ
+  MIDTERM
+  FINAL
+  MOCK_GED
+}
+
+enum GedSubjectArea {
+  RLA
+  MATH
+  SCIENCE
+  SOCIAL_STUDIES
+}
+
+enum GedReadinessStatus {
+  NOT_READY
+  DEVELOPING
+  NEAR_READY
+  READY
+  TEST_SCHEDULED
+  PASSED
+}
+
+model GradeItem {
+  id           String            @id @default(uuid())
+  title        String
+  category     GradeCategoryType
+  maxMarks     Float             @default(100)
+  date         DateTime          @default(now())
+
+  classId      String
+  class        Class             @relation(fields: [classId], references: [id])
+  subjectId    String?
+  subject      Subject?          @relation(fields: [subjectId], references: [id])
+
+  createdById  String?
+  grades       Grade[]
+
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@index([classId])
+  @@index([subjectId])
+  @@index([category])
+}
+
+model Grade {
+  id           String     @id @default(uuid())
+  gradeItemId  String
+  gradeItem    GradeItem  @relation(fields: [gradeItemId], references: [id], onDelete: Cascade)
+  studentId    String
+  student      Student    @relation(fields: [studentId], references: [id])
+  marks        Float?
+  comment      String?
+  gradedById   String?
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([gradeItemId, studentId])
+  @@index([studentId])
+}
+
+model CategoryWeight {
+  id         String            @id @default(uuid())
+  classId    String
+  class      Class             @relation(fields: [classId], references: [id])
+  category   GradeCategoryType
+  weight     Int               @default(0)
+
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  @@unique([classId, category])
+  @@index([classId])
+}
+
+model GedReadiness {
+  id           String              @id @default(uuid())
+  studentId    String
+  student      Student             @relation(fields: [studentId], references: [id])
+  subject      GedSubjectArea
+  status       GedReadinessStatus  @default(NOT_READY)
+  note         String?
+  updatedById  String?
+
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  @@unique([studentId, subject])
+  @@index([studentId])
 }

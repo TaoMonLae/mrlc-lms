@@ -5780,6 +5780,479 @@ async function startServer() {
     }
   });
 
+  // ── Gradebook & GED readiness API ────────────────────────────────────────────
+  const GRADE_CATEGORIES = ["ASSIGNMENT", "QUIZ", "MIDTERM", "FINAL", "MOCK_GED"] as const;
+  const GED_SUBJECTS = ["RLA", "MATH", "SCIENCE", "SOCIAL_STUDIES"] as const;
+  const GED_STATUSES = ["NOT_READY", "DEVELOPING", "NEAR_READY", "READY", "TEST_SCHEDULED", "PASSED"] as const;
+  const DEFAULT_WEIGHTS: Record<string, number> = {
+    ASSIGNMENT: 20, QUIZ: 20, MIDTERM: 25, FINAL: 25, MOCK_GED: 10,
+  };
+  const WARNING_THRESHOLD = 60; // overall % below which an academic warning is raised
+  const canManageGrades = (role: string) => role === "ADMIN" || role === "TEACHER";
+
+  // Returns a {category: weight} map for a class (configured rows override defaults).
+  const weightsForClass = async (classId: string): Promise<Record<string, number>> => {
+    const rows = await prisma.categoryWeight.findMany({ where: { classId } });
+    if (!rows.length) return { ...DEFAULT_WEIGHTS };
+    const map: Record<string, number> = { ...DEFAULT_WEIGHTS };
+    for (const r of rows) map[r.category] = r.weight;
+    return map;
+  };
+
+  // Compute a student's category averages + weighted overall % for a set of items.
+  const computeOverall = (
+    items: { id: string; category: string; maxMarks: number }[],
+    gradesByItem: Record<string, { marks: number | null }>,
+    weights: Record<string, number>,
+  ) => {
+    const catTotals: Record<string, { earned: number; max: number }> = {};
+    for (const it of items) {
+      const g = gradesByItem[it.id];
+      if (!g || g.marks == null) continue;
+      const c = it.category;
+      if (!catTotals[c]) catTotals[c] = { earned: 0, max: 0 };
+      catTotals[c].earned += g.marks;
+      catTotals[c].max += it.maxMarks || 0;
+    }
+    const categoryAverages: Record<string, number> = {};
+    let weightedSum = 0;
+    let weightTotal = 0;
+    for (const c of Object.keys(catTotals)) {
+      const t = catTotals[c];
+      const pct = t.max > 0 ? (t.earned / t.max) * 100 : 0;
+      categoryAverages[c] = round1(pct);
+      const w = weights[c] ?? 0;
+      weightedSum += pct * w;
+      weightTotal += w;
+    }
+    const overall = weightTotal > 0 ? round1(weightedSum / weightTotal) : null;
+    return { categoryAverages, overall };
+  };
+
+  // GET gradebook matrix for a class (optionally filtered to one subject).
+  app.get("/api/gradebook", authMiddleware, reportRole(["ADMIN", "TEACHER"]), async (req, res) => {
+    const { classId, subjectId } = req.query as { classId?: string; subjectId?: string };
+    if (!classId) { res.status(400).json({ error: "classId is required" }); return; }
+    try {
+      const [students, items, weights] = await Promise.all([
+        prisma.student.findMany({ where: { classId }, include: { user: true }, orderBy: { studentCode: "asc" } }),
+        prisma.gradeItem.findMany({
+          where: { classId, ...(subjectId ? { subjectId } : {}) },
+          orderBy: [{ date: "asc" }, { createdAt: "asc" }],
+        }),
+        weightsForClass(classId),
+      ]);
+      const itemIds = items.map((i: any) => i.id);
+      const grades = itemIds.length
+        ? await prisma.grade.findMany({ where: { gradeItemId: { in: itemIds } } })
+        : [];
+      const byStudent: Record<string, Record<string, any>> = {};
+      for (const g of grades) {
+        (byStudent[g.studentId] ||= {})[g.gradeItemId] = { marks: g.marks, comment: g.comment };
+      }
+      const rows = students.map((s: any) => {
+        const gradesByItem = byStudent[s.id] || {};
+        const { categoryAverages, overall } = computeOverall(items as any, gradesByItem, weights);
+        return {
+          studentId: s.id,
+          name: fullName(s.user),
+          code: s.studentCode,
+          grades: gradesByItem,
+          categoryAverages,
+          overall,
+          letter: overall != null ? letterGrade(overall) : null,
+          warning: overall != null && overall < WARNING_THRESHOLD,
+        };
+      });
+      res.json({
+        items: items.map((i: any) => ({
+          id: i.id, title: i.title, category: i.category, maxMarks: i.maxMarks,
+          date: i.date, subjectId: i.subjectId,
+        })),
+        weights,
+        rows,
+        categories: GRADE_CATEGORIES,
+      });
+    } catch (err: any) {
+      if (err?.code === "P2021" || err?.code === "P2022") {
+        logger.warn("Gradebook tables missing — run `prisma migrate deploy`. Returning empty gradebook.");
+        res.json({ items: [], weights: { ...DEFAULT_WEIGHTS }, rows: [], categories: GRADE_CATEGORIES });
+        return;
+      }
+      logger.error("Error building gradebook:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/grade-items", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageGrades(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    const { title, category, maxMarks, date, classId, subjectId } = req.body || {};
+    if (!title || !category || !classId) { res.status(400).json({ error: "title, category and classId are required" }); return; }
+    if (!GRADE_CATEGORIES.includes(category)) { res.status(400).json({ error: "Invalid category" }); return; }
+    try {
+      const item = await prisma.gradeItem.create({
+        data: {
+          title, category,
+          maxMarks: maxMarks != null ? Number(maxMarks) : 100,
+          date: date ? new Date(date) : new Date(),
+          classId, subjectId: subjectId || null, createdById: jwtUser.userId,
+        },
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "GRADE_ITEM", item.id,
+        `Grade item '${title}' (${category}) created.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.status(201).json(item);
+    } catch (err) {
+      logger.error("Error creating grade item:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.put("/api/grade-items/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageGrades(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    const { id } = req.params;
+    const { title, category, maxMarks, date, subjectId } = req.body || {};
+    try {
+      const item = await prisma.gradeItem.update({
+        where: { id },
+        data: {
+          ...(title !== undefined ? { title } : {}),
+          ...(category !== undefined ? { category } : {}),
+          ...(maxMarks !== undefined ? { maxMarks: Number(maxMarks) } : {}),
+          ...(date !== undefined ? { date: date ? new Date(date) : new Date() } : {}),
+          ...(subjectId !== undefined ? { subjectId: subjectId || null } : {}),
+        },
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "GRADE_ITEM", id,
+        `Grade item '${item.title}' updated.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.json(item);
+    } catch (err: any) {
+      if (err?.code === "P2025") { res.status(404).json({ error: "Grade item not found" }); return; }
+      logger.error("Error updating grade item:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.delete("/api/grade-items/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageGrades(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    const { id } = req.params;
+    try {
+      await prisma.gradeItem.delete({ where: { id } });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "DELETE", "GRADE_ITEM", id,
+        `Grade item ${id} deleted.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.json({ message: "Grade item deleted" });
+    } catch (err: any) {
+      if (err?.code === "P2025") { res.status(404).json({ error: "Grade item not found" }); return; }
+      logger.error("Error deleting grade item:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Bulk upsert grades for one grade item; logs an audit entry for each changed mark.
+  app.post("/api/grades/bulk", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageGrades(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    const { gradeItemId, entries } = req.body as {
+      gradeItemId: string;
+      entries: Array<{ studentId: string; marks: number | null; comment?: string }>;
+    };
+    if (!gradeItemId || !Array.isArray(entries)) { res.status(400).json({ error: "gradeItemId and entries[] are required" }); return; }
+    try {
+      const item = await prisma.gradeItem.findUnique({ where: { id: gradeItemId } });
+      if (!item) { res.status(404).json({ error: "Grade item not found" }); return; }
+      const existing = await prisma.grade.findMany({ where: { gradeItemId } });
+      const prevByStudent: Record<string, any> = {};
+      for (const g of existing) prevByStudent[g.studentId] = g;
+
+      let changed = 0;
+      await prisma.$transaction(
+        entries.map((e) => {
+          const marks = e.marks == null || (e.marks as any) === "" ? null : Number(e.marks);
+          const prev = prevByStudent[e.studentId];
+          if (!prev || prev.marks !== marks || (prev.comment || "") !== (e.comment || "")) changed += 1;
+          return prisma.grade.upsert({
+            where: { gradeItemId_studentId: { gradeItemId, studentId: e.studentId } },
+            update: { marks, comment: e.comment || null, gradedById: jwtUser.userId },
+            create: { gradeItemId, studentId: e.studentId, marks, comment: e.comment || null, gradedById: jwtUser.userId },
+          });
+        })
+      );
+
+      // Per-mark audit for changed entries (capped to avoid log floods).
+      const changedEntries = entries.filter((e) => {
+        const marks = e.marks == null || (e.marks as any) === "" ? null : Number(e.marks);
+        const prev = prevByStudent[e.studentId];
+        return !prev || prev.marks !== marks;
+      }).slice(0, 50);
+      for (const e of changedEntries) {
+        const prev = prevByStudent[e.studentId];
+        const marks = e.marks == null || (e.marks as any) === "" ? null : Number(e.marks);
+        await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "GRADE", `${gradeItemId}:${e.studentId}`,
+          `Grade for student ${e.studentId} on '${item.title}': ${prev?.marks ?? "—"} → ${marks ?? "—"}`,
+          req.ip, req.headers["user-agent"] || null, "SUCCESS").catch(() => {});
+      }
+      res.json({ success: true, saved: entries.length, changed });
+    } catch (err) {
+      logger.error("Error saving grades:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/category-weights", authMiddleware, reportRole(["ADMIN", "TEACHER"]), async (req, res) => {
+    const { classId } = req.query as { classId?: string };
+    if (!classId) { res.status(400).json({ error: "classId is required" }); return; }
+    try {
+      res.json(await weightsForClass(classId));
+    } catch (err: any) {
+      if (err?.code === "P2021" || err?.code === "P2022") { res.json({ ...DEFAULT_WEIGHTS }); return; }
+      logger.error("Error fetching category weights:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.put("/api/category-weights", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageGrades(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    const { classId, weights } = req.body as { classId: string; weights: Record<string, number> };
+    if (!classId || !weights) { res.status(400).json({ error: "classId and weights are required" }); return; }
+    try {
+      await prisma.$transaction(
+        GRADE_CATEGORIES.filter((c) => weights[c] != null).map((c) =>
+          prisma.categoryWeight.upsert({
+            where: { classId_category: { classId, category: c } },
+            update: { weight: Number(weights[c]) },
+            create: { classId, category: c, weight: Number(weights[c]) },
+          })
+        )
+      );
+      await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "CATEGORY_WEIGHT", classId,
+        `Category weights updated for class ${classId}.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.json(await weightsForClass(classId));
+    } catch (err) {
+      logger.error("Error saving category weights:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Build a full progress payload for one student (used by teacher + student views).
+  const buildStudentProgress = async (studentId: string) => {
+    const student = await prisma.student.findUnique({ where: { id: studentId }, include: { user: true, class: true } });
+    if (!student) return null;
+    const classId = student.classId;
+    const items = classId
+      ? await prisma.gradeItem.findMany({ where: { classId }, include: { subject: true }, orderBy: [{ date: "asc" }] })
+      : [];
+    const itemIds = items.map((i: any) => i.id);
+    const grades = itemIds.length
+      ? await prisma.grade.findMany({ where: { gradeItemId: { in: itemIds }, studentId } })
+      : [];
+    const gByItem: Record<string, any> = {};
+    for (const g of grades) gByItem[g.gradeItemId] = { marks: g.marks, comment: g.comment };
+    const weights = classId ? await weightsForClass(classId) : { ...DEFAULT_WEIGHTS };
+
+    // Group items by subject.
+    const bySubject: Record<string, { name: string; items: any[] }> = {};
+    for (const it of items) {
+      const key = it.subjectId || "__general__";
+      (bySubject[key] ||= { name: it.subject?.name || "General", items: [] }).items.push(it);
+    }
+    const subjects = Object.entries(bySubject).map(([subjectId, grp]) => {
+      const { categoryAverages, overall } = computeOverall(grp.items, gByItem, weights);
+      return {
+        subjectId, name: grp.name, categoryAverages, average: overall,
+        letter: overall != null ? letterGrade(overall) : null,
+        warning: overall != null && overall < WARNING_THRESHOLD,
+      };
+    });
+    const graded = subjects.filter((s) => s.average != null);
+    const termAverage = graded.length ? round1(graded.reduce((a, s) => a + (s.average || 0), 0) / graded.length) : null;
+
+    // Trend: each graded item's percentage over time.
+    const trend = items
+      .filter((it: any) => gByItem[it.id]?.marks != null && it.maxMarks > 0)
+      .map((it: any) => ({
+        date: it.date, title: it.title, category: it.category,
+        percent: round1((gByItem[it.id].marks / it.maxMarks) * 100),
+      }));
+
+    const comments = items
+      .filter((it: any) => gByItem[it.id]?.comment)
+      .map((it: any) => ({ item: it.title, subject: it.subject?.name || "General", comment: gByItem[it.id].comment }));
+
+    const readiness = await prisma.gedReadiness.findMany({ where: { studentId } });
+    const readinessBySubject: Record<string, any> = {};
+    for (const r of readiness) readinessBySubject[r.subject] = { status: r.status, note: r.note, updatedAt: r.updatedAt };
+
+    return {
+      student: { id: student.id, name: fullName(student.user), code: student.studentCode, className: student.class?.name || "Unassigned" },
+      subjects, termAverage,
+      letter: termAverage != null ? letterGrade(termAverage) : null,
+      warnings: subjects.filter((s) => s.warning).map((s) => s.name),
+      trend, comments, weights,
+      gedReadiness: GED_SUBJECTS.map((sub) => ({
+        subject: sub, status: readinessBySubject[sub]?.status || "NOT_READY",
+        note: readinessBySubject[sub]?.note || null, updatedAt: readinessBySubject[sub]?.updatedAt || null,
+      })),
+    };
+  };
+
+  app.get("/api/gradebook/student/:studentId", authMiddleware, reportRole(["ADMIN", "TEACHER"]), async (req, res) => {
+    try {
+      const data = await buildStudentProgress(req.params.studentId);
+      if (!data) { res.status(404).json({ error: "Student not found" }); return; }
+      res.json(data);
+    } catch (err: any) {
+      if (err?.code === "P2021" || err?.code === "P2022") { res.status(503).json({ error: "Gradebook not migrated yet" }); return; }
+      logger.error("Error building student progress:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/student/grades", authMiddleware, studentOnly, async (req, res) => {
+    try {
+      const s = await getStudentForReq(req);
+      if (!s) { res.status(404).json({ error: "Student profile not found" }); return; }
+      const data = await buildStudentProgress(s.id);
+      res.json(data);
+    } catch (err: any) {
+      if (err?.code === "P2021" || err?.code === "P2022") { res.json(null); return; }
+      logger.error("Error building own progress:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // GED readiness matrix for a class.
+  app.get("/api/ged-readiness", authMiddleware, reportRole(["ADMIN", "TEACHER"]), async (req, res) => {
+    const { classId } = req.query as { classId?: string };
+    if (!classId) { res.status(400).json({ error: "classId is required" }); return; }
+    try {
+      const students = await prisma.student.findMany({ where: { classId }, include: { user: true }, orderBy: { studentCode: "asc" } });
+      const records = await prisma.gedReadiness.findMany({ where: { studentId: { in: students.map((s: any) => s.id) } } });
+      const byStudent: Record<string, Record<string, string>> = {};
+      for (const r of records) (byStudent[r.studentId] ||= {})[r.subject] = r.status;
+      res.json({
+        subjects: GED_SUBJECTS,
+        statuses: GED_STATUSES,
+        rows: students.map((s: any) => ({
+          studentId: s.id, name: fullName(s.user), code: s.studentCode,
+          readiness: Object.fromEntries(GED_SUBJECTS.map((sub) => [sub, byStudent[s.id]?.[sub] || "NOT_READY"])),
+        })),
+      });
+    } catch (err: any) {
+      if (err?.code === "P2021" || err?.code === "P2022") {
+        res.json({ subjects: GED_SUBJECTS, statuses: GED_STATUSES, rows: [] });
+        return;
+      }
+      logger.error("Error fetching GED readiness:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.put("/api/ged-readiness", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageGrades(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    const { studentId, subject, status, note } = req.body || {};
+    if (!studentId || !subject || !status) { res.status(400).json({ error: "studentId, subject and status are required" }); return; }
+    if (!GED_SUBJECTS.includes(subject) || !GED_STATUSES.includes(status)) { res.status(400).json({ error: "Invalid subject or status" }); return; }
+    try {
+      const existing = await prisma.gedReadiness.findUnique({ where: { studentId_subject: { studentId, subject } } });
+      const record = await prisma.gedReadiness.upsert({
+        where: { studentId_subject: { studentId, subject } },
+        update: { status, note: note ?? undefined, updatedById: jwtUser.userId },
+        create: { studentId, subject, status, note: note || null, updatedById: jwtUser.userId },
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "STATUS_CHANGE", "GED_READINESS", `${studentId}:${subject}`,
+        `GED ${subject} readiness: ${existing?.status || "NOT_READY"} → ${status}`,
+        req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.json(record);
+    } catch (err) {
+      logger.error("Error updating GED readiness:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/student/ged-readiness", authMiddleware, studentOnly, async (req, res) => {
+    try {
+      const s = await getStudentForReq(req);
+      if (!s) { res.status(404).json({ error: "Student profile not found" }); return; }
+      const records = await prisma.gedReadiness.findMany({ where: { studentId: s.id } });
+      const bySub: Record<string, any> = {};
+      for (const r of records) bySub[r.subject] = r;
+      res.json(GED_SUBJECTS.map((sub) => ({ subject: sub, status: bySub[sub]?.status || "NOT_READY", note: bySub[sub]?.note || null })));
+    } catch (err: any) {
+      if (err?.code === "P2021" || err?.code === "P2022") { res.json([]); return; }
+      logger.error("Error fetching own GED readiness:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Class performance report: per-category + overall class averages, grade
+  // distribution, and GED readiness distribution.
+  app.get("/api/reports/class-performance", authMiddleware, reportRole(["ADMIN", "TEACHER"]), async (req, res) => {
+    const { classId, subjectId } = req.query as { classId?: string; subjectId?: string };
+    if (!classId) { res.status(400).json({ error: "classId is required" }); return; }
+    try {
+      const [students, items, weights] = await Promise.all([
+        prisma.student.findMany({ where: { classId }, include: { user: true } }),
+        prisma.gradeItem.findMany({ where: { classId, ...(subjectId ? { subjectId } : {}) } }),
+        weightsForClass(classId),
+      ]);
+      const itemIds = items.map((i: any) => i.id);
+      const grades = itemIds.length ? await prisma.grade.findMany({ where: { gradeItemId: { in: itemIds } } }) : [];
+      const byStudent: Record<string, Record<string, any>> = {};
+      for (const g of grades) (byStudent[g.studentId] ||= {})[g.gradeItemId] = { marks: g.marks };
+
+      const overalls: number[] = [];
+      const distribution: Record<string, number> = { "A+": 0, A: 0, B: 0, C: 0, D: 0, F: 0 };
+      const catSums: Record<string, { sum: number; n: number }> = {};
+      let warnings = 0;
+      for (const s of students) {
+        const { categoryAverages, overall } = computeOverall(items as any, byStudent[s.id] || {}, weights);
+        if (overall != null) {
+          overalls.push(overall);
+          distribution[letterGrade(overall)] = (distribution[letterGrade(overall)] || 0) + 1;
+          if (overall < WARNING_THRESHOLD) warnings += 1;
+        }
+        for (const c of Object.keys(categoryAverages)) {
+          (catSums[c] ||= { sum: 0, n: 0 });
+          catSums[c].sum += categoryAverages[c];
+          catSums[c].n += 1;
+        }
+      }
+      const categoryAverages: Record<string, number | null> = {};
+      for (const c of GRADE_CATEGORIES) categoryAverages[c] = catSums[c]?.n ? round1(catSums[c].sum / catSums[c].n) : null;
+
+      const readiness = await prisma.gedReadiness.findMany({ where: { studentId: { in: students.map((s: any) => s.id) } } });
+      const readinessDist: Record<string, Record<string, number>> = {};
+      for (const sub of GED_SUBJECTS) {
+        readinessDist[sub] = Object.fromEntries(GED_STATUSES.map((st) => [st, 0]));
+      }
+      for (const r of readiness) {
+        if (readinessDist[r.subject]) readinessDist[r.subject][r.status] = (readinessDist[r.subject][r.status] || 0) + 1;
+      }
+
+      res.json({
+        studentCount: students.length,
+        gradedCount: overalls.length,
+        classAverage: overalls.length ? round1(overalls.reduce((a, b) => a + b, 0) / overalls.length) : null,
+        categoryAverages,
+        distribution,
+        warnings,
+        readinessDistribution: readinessDist,
+        weights,
+      });
+    } catch (err: any) {
+      if (err?.code === "P2021" || err?.code === "P2022") {
+        res.json({ studentCount: 0, gradedCount: 0, classAverage: null, categoryAverages: {}, distribution: {}, warnings: 0, readinessDistribution: {}, weights: { ...DEFAULT_WEIGHTS } });
+        return;
+      }
+      logger.error("Error building class performance:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
   // ── Vite / Static serving ───────────────────────────────────────────────────
   // ── Scheduled daily backup (runs only when enabled in Settings) ───────────────
   const scheduleDailyBackup = () => {

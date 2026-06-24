@@ -95,6 +95,24 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     roles: ["ADMIN"],
   },
   {
+    title: "Gradebook",
+    url: "/gradebook",
+    icon: ClipboardList,
+    roles: ["ADMIN", "TEACHER"],
+  },
+  {
+    title: "GED Readiness",
+    url: "/gradebook/ged-readiness",
+    icon: GraduationCap,
+    roles: ["ADMIN", "TEACHER"],
+  },
+  {
+    title: "Class Performance",
+    url: "/gradebook/reports",
+    icon: BarChart3,
+    roles: ["ADMIN", "TEACHER"],
+  },
+  {
     title: "Library",
     url: "/library",
     icon: Library,
@@ -258,6 +276,12 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     title: "My Results",
     url: "/student/results",
     icon: GraduationCap,
+    roles: ["STUDENT"],
+  },
+  {
+    title: "My Progress",
+    url: "/student/grades",
+    icon: ClipboardList,
     roles: ["STUDENT"],
   },
   {

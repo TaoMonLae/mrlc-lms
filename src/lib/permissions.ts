@@ -51,6 +51,11 @@ export type Permission =
   | 'manage_results'
   | 'view_results'
   | 'view_assigned_reports'
+  // Gradebook & GED readiness
+  | 'manage_grades'
+  | 'view_grades'
+  | 'view_own_grades'
+  | 'manage_ged_readiness'
   // Attendance
   | 'manage_attendance'
   | 'manage_assigned_attendance'
@@ -115,6 +120,9 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     // Management for assigned content
     'manage_assigned_attendance',
     'manage_assigned_exams',
+    'manage_grades',
+    'view_grades',
+    'manage_ged_readiness',
     'manage_own_library',
     'manage_ebooks',
     'manage_announcements',
@@ -135,6 +143,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'view_own_attendance',
     'view_own_exams',
     'view_own_results',
+    'view_own_grades',
   ],
   STAFF: [
     'view_students',

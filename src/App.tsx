@@ -85,6 +85,11 @@ import AnnouncementNew from "./pages/announcements/AnnouncementNew";
 import AnnouncementDetail from "./pages/announcements/AnnouncementDetail";
 import AnnouncementEdit from "./pages/announcements/AnnouncementEdit";
 
+import GradebookPage from "./pages/gradebook/Gradebook";
+import GedReadinessPage from "./pages/gradebook/GedReadiness";
+import StudentProgress from "./pages/gradebook/StudentProgress";
+import GradebookClassReport from "./pages/gradebook/GradebookClassReport";
+
 import TimetablePage from "./pages/timetable/TimetablePage";
 import TimetableNew from "./pages/timetable/TimetableNew";
 import TimetableEdit from "./pages/timetable/TimetableEdit";
@@ -169,6 +174,7 @@ export default function App() {
                   <Route path="/student/attendance" element={<StudentAttendance />} />
                   <Route path="/student/exams" element={<StudentExams />} />
                   <Route path="/student/results" element={<StudentResults />} />
+                  <Route path="/student/grades" element={<StudentProgress />} />
                   <Route path="/student/library" element={<StudentLibrary />} />
                   <Route path="/student/fees" element={<StudentFees />} />
                   <Route path="/student/videos" element={<StudentVideos />} />
@@ -212,6 +218,12 @@ export default function App() {
                   <Route path="/teachers/new" element={<TeacherNew />} />
                   <Route path="/teachers/:id" element={<TeacherProfile />} />
                   <Route path="/teachers/:id/edit" element={<TeacherEdit />} />
+
+                  {/* Gradebook & GED readiness (ADMIN/TEACHER) */}
+                  <Route path="/gradebook" element={<GradebookPage />} />
+                  <Route path="/gradebook/ged-readiness" element={<GedReadinessPage />} />
+                  <Route path="/gradebook/reports" element={<GradebookClassReport />} />
+                  <Route path="/gradebook/students/:studentId" element={<StudentProgress />} />
                 </Route>
 
                 {/* Exam take/results: accessible to all authenticated roles */}
