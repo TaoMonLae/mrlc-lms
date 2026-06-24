@@ -49,6 +49,12 @@ export default function ExamNew() {
   // Settings data
   const [settings, setSettings] = useState<ExamSettings>(INITIAL_SETTINGS);
 
+  // Math equation tools only make sense for Math subjects, so show them only
+  // when the selected subject looks like Mathematics (e.g. "Math",
+  // "Mathematics", "Mathematical Reasoning", "GED Math").
+  const selectedSubjectName = subjects.find((s) => s.id === subjectId)?.name ?? '';
+  const isMathSubject = /math/i.test(selectedSubjectName);
+
   const addQuestion = () => {
     setQuestions([
       ...questions,
@@ -239,11 +245,19 @@ export default function ExamNew() {
                         onChange={(val) => updateQuestion(q.id, { questionText: val })}
                         multiline
                         rows={3}
-                        placeholder={'Type the question. Use the toolbar or wrap math in $…$, e.g. Solve $2x + 5 = 15$'}
+                        enabled={isMathSubject}
+                        showToolbar={isMathSubject}
+                        placeholder={
+                          isMathSubject
+                            ? 'Type the question. Use the toolbar or wrap math in $…$, e.g. Solve $2x + 5 = 15$'
+                            : 'Type the question text'
+                        }
                       />
-                      <p className="text-[11px] text-slate-400">
-                        Tip: wrap formulas in <code className="font-mono">$…$</code> for inline math or <code className="font-mono">$$…$$</code> for a centered equation.
-                      </p>
+                      {isMathSubject && (
+                        <p className="text-[11px] text-slate-400">
+                          Tip: wrap formulas in <code className="font-mono">$…$</code> for inline math or <code className="font-mono">$$…$$</code> for a centered equation.
+                        </p>
+                      )}
                     </div>
 
                     {q.type === 'MCQ' && q.choices && (
@@ -261,13 +275,18 @@ export default function ExamNew() {
                             <div className="flex-1">
                               <MathField
                                 value={choice}
+                                enabled={isMathSubject}
                                 showToolbar={false}
                                 onChange={(val) => {
                                   const newChoices = [...q.choices!];
                                   newChoices[cIndex] = val;
                                   updateQuestion(q.id, { choices: newChoices });
                                 }}
-                                placeholder={`Choice ${cIndex + 1} — math allowed, e.g. $x = 5$`}
+                                placeholder={
+                                  isMathSubject
+                                    ? `Choice ${cIndex + 1} — math allowed, e.g. $x = 5$`
+                                    : `Choice ${cIndex + 1}`
+                                }
                               />
                             </div>
                           </div>

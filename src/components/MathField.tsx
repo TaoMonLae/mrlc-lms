@@ -11,6 +11,12 @@ interface MathFieldProps {
   rows?: number;
   placeholder?: string;
   showToolbar?: boolean;
+  /**
+   * Master switch for math behaviour. When false the component is a plain
+   * input/textarea with no toolbar and no live math preview (used for
+   * non-Math subjects). Defaults to true.
+   */
+  enabled?: boolean;
 }
 
 /** label shown on the button, and the LaTeX snippet it inserts. */
@@ -41,6 +47,7 @@ export function MathField({
   rows = 3,
   placeholder,
   showToolbar = true,
+  enabled = true,
 }: MathFieldProps) {
   const ref = useRef<HTMLTextAreaElement | HTMLInputElement | null>(null);
 
@@ -67,11 +74,11 @@ export function MathField({
     });
   };
 
-  const hasMath = value.includes('$');
+  const hasMath = enabled && value.includes('$');
 
   return (
     <div className="space-y-2">
-      {showToolbar && (
+      {enabled && showToolbar && (
         <div className="flex flex-wrap items-center gap-1 rounded-md border border-slate-200 dark:border-surface-raised bg-slate-50 dark:bg-surface-raised/40 p-1.5">
           <button
             type="button"

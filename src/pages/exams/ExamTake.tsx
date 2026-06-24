@@ -23,6 +23,7 @@ export default function ExamTake() {
   const navigate = useNavigate();
 
   const [questions, setQuestions] = useState<TakeQuestion[]>([]);
+  const [isMathExam, setIsMathExam] = useState(false);
   const [loading, setLoading] = useState(true);
   const [duration, setDuration] = useState(60); // minutes
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -51,6 +52,7 @@ export default function ExamTake() {
           };
         });
         setQuestions(mapped);
+        setIsMathExam(/math/i.test(data.subject?.name ?? ''));
         if (data.durationMinutes) {
           setDuration(data.durationMinutes);
           setTimeLeft(data.durationMinutes * 60);
@@ -176,7 +178,7 @@ export default function ExamTake() {
             
             <div className="prose dark:prose-invert max-w-none mb-8">
               <p className="text-xl font-medium text-slate-900 dark:text-white leading-relaxed">
-                <MathText>{question.questionText}</MathText>
+                {isMathExam ? <MathText>{question.questionText}</MathText> : question.questionText}
               </p>
             </div>
 
@@ -199,7 +201,7 @@ export default function ExamTake() {
                     >
                       <RadioGroupItem value={choice} id={`choice-${idx}`} className="text-aubergine-600" />
                       <Label htmlFor={`choice-${idx}`} className="flex-1 cursor-pointer text-base font-normal">
-                        <MathText>{choice}</MathText>
+                        {isMathExam ? <MathText>{choice}</MathText> : choice}
                       </Label>
                     </div>
                   ))}
