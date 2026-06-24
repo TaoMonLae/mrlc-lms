@@ -595,6 +595,62 @@ const schemas = {
     fileUploadLimitMb: optNum,
     backupEnabled: z.union([z.boolean(), z.string()]).optional(),
   }),
+  timetable: z.object({
+    classId: nullableStr,
+    className: optStr,
+    subjectId: nullableStr,
+    subjectName: optStr,
+    subjectColor: optStr,
+    teacherId: nullableStr,
+    teacherName: nullableStr,
+    substituteTeacherId: nullableStr,
+    substituteTeacherName: nullableStr,
+    academicYear: optStr,
+    term: optStr,
+    dayOfWeek: z.enum(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]),
+    startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "must be HH:mm"),
+    endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "must be HH:mm"),
+    room: nullableStr,
+    scheduleType: z.enum(["CLASS", "HOLIDAY", "SPECIAL_EVENT", "EXAM", "MEETING"]).optional(),
+    recurrence: z.enum(["ONCE", "WEEKLY", "BIWEEKLY"]).optional(),
+    effectiveFrom: optStr,
+    effectiveUntil: optStr,
+    eventDate: optStr,
+    notes: optStr,
+  }),
+  timetableUpdate: z.object({
+    classId: optStr,
+    className: nullableStr,
+    subjectId: optStr,
+    subjectName: nullableStr,
+    subjectColor: optStr,
+    teacherId: nullableStr,
+    teacherName: nullableStr,
+    substituteTeacherId: nullableStr,
+    substituteTeacherName: nullableStr,
+    academicYear: optStr,
+    term: optStr,
+    dayOfWeek: z.enum(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]).optional(),
+    startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "must be HH:mm").optional(),
+    endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "must be HH:mm").optional(),
+    room: nullableStr,
+    scheduleType: z.enum(["CLASS", "HOLIDAY", "SPECIAL_EVENT", "EXAM", "MEETING"]).optional(),
+    recurrence: z.enum(["ONCE", "WEEKLY", "BIWEEKLY"]).optional(),
+    effectiveFrom: optStr,
+    effectiveUntil: optStr,
+    eventDate: optStr,
+    status: z.enum(["ACTIVE", "CANCELLED", "SUBSTITUTED"]).optional(),
+    cancellationReason: nullableStr,
+    notes: optStr,
+  }),
+  timetableSubstitution: z.object({
+    substituteTeacherId: reqStr,
+    substituteTeacherName: optStr,
+    notes: optStr,
+  }),
+  timetableCancellation: z.object({
+    reason: optStr,
+  }),
 };
 
 // ─── Server bootstrap ─────────────────────────────────────────────────────────
@@ -3008,14 +3064,79 @@ async function startServer() {
 
   // ── Timetable API ────────────────────────────────────────────────────────────
   const canManageTimetable = (role: string) => role === "ADMIN" || role === "TEACHER";
+  const timetableDb = prisma as any;
+  const timeToMinutes = (value: string) => {
+    const [hour, minute] = value.split(":").map(Number);
+    return hour * 60 + minute;
+  };
+  const rangesOverlap = (startA: string, endA: string, startB: string, endB: string) =>
+    timeToMinutes(startA) < timeToMinutes(endB) && timeToMinutes(startB) < timeToMinutes(endA);
+  const parseScheduleDate = (value: unknown): Date | null => {
+    if (!value || typeof value !== "string") return null;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+  };
+  const findTimetableConflicts = async (entry: any, ignoreId?: string) => {
+    if (entry.scheduleType && entry.scheduleType !== "CLASS" && entry.scheduleType !== "EXAM" && entry.scheduleType !== "MEETING") {
+      return [];
+    }
+    const sameDay = await timetableDb.timetableEntry.findMany({
+      where: {
+        dayOfWeek: entry.dayOfWeek,
+        status: { not: "CANCELLED" },
+        ...(entry.academicYear ? { academicYear: entry.academicYear } : {}),
+        ...(entry.term ? { term: entry.term } : {}),
+        ...(ignoreId ? { id: { not: ignoreId } } : {}),
+      },
+    });
+    return sameDay
+      .filter((candidate: any) => rangesOverlap(entry.startTime, entry.endTime, candidate.startTime, candidate.endTime))
+      .flatMap((candidate: any) => {
+        const conflicts: string[] = [];
+        if (entry.teacherId && candidate.teacherId === entry.teacherId) conflicts.push(`Teacher conflict with ${candidate.className || candidate.classId}`);
+        if (entry.substituteTeacherId && candidate.teacherId === entry.substituteTeacherId) conflicts.push(`Substitute teacher conflict with ${candidate.className || candidate.classId}`);
+        if (entry.classId && candidate.classId === entry.classId) conflicts.push(`Class conflict with ${candidate.subjectName || candidate.subjectId}`);
+        if (entry.room && candidate.room && candidate.room.toLowerCase() === entry.room.toLowerCase()) conflicts.push(`Room conflict with ${candidate.className || candidate.classId}`);
+        return conflicts.map((message) => ({ entryId: candidate.id, message }));
+      });
+  };
+  const currentAcademicYear = () => {
+    const now = new Date();
+    const start = now.getMonth() >= 5 ? now.getFullYear() : now.getFullYear() - 1;
+    return `${start}-${start + 1}`;
+  };
 
   app.get("/api/timetable", authMiddleware, async (req, res) => {
-    const { classId, teacherId } = req.query as { classId?: string; teacherId?: string };
+    const jwtUser = (req as any).user as JwtPayload;
+    const { classId, teacherId, academicYear, term, status, scheduleType } = req.query as Record<string, string | undefined>;
     try {
-      const where: any = {};
-      if (classId) where.classId = classId;
-      if (teacherId) where.teacherId = teacherId;
-      const entries = await prisma.timetableEntry.findMany({
+      const where: any = {
+        ...(classId ? { classId } : {}),
+        ...(teacherId ? { OR: [{ teacherId }, { substituteTeacherId: teacherId }] } : {}),
+        ...(academicYear ? { academicYear } : {}),
+        ...(term ? { term } : {}),
+        ...(status && status !== "all" ? { status } : {}),
+        ...(scheduleType && scheduleType !== "all" ? { scheduleType } : {}),
+      };
+
+      if (jwtUser.role === "TEACHER") {
+        const teacher = await prisma.teacher.findUnique({ where: { userId: jwtUser.userId } });
+        if (!teacher) {
+          res.json([]);
+          return;
+        }
+        where.OR = [{ teacherId: teacher.id }, { substituteTeacherId: teacher.id }];
+      }
+      if (jwtUser.role === "STUDENT") {
+        const student = await prisma.student.findUnique({ where: { userId: jwtUser.userId } });
+        if (!student?.classId) {
+          res.json([]);
+          return;
+        }
+        where.OR = [{ classId: student.classId }, { scheduleType: { in: ["HOLIDAY", "SPECIAL_EVENT"] } }];
+      }
+
+      const entries = await timetableDb.timetableEntry.findMany({
         where,
         orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }],
       });
@@ -3034,7 +3155,7 @@ async function startServer() {
   app.get("/api/timetable/:id", authMiddleware, async (req, res) => {
     const { id } = req.params;
     try {
-      const entry = await prisma.timetableEntry.findUnique({ where: { id } });
+      const entry = await timetableDb.timetableEntry.findUnique({ where: { id } });
       if (!entry) {
         res.status(404).json({ error: "Timetable entry not found" });
         return;
@@ -3046,37 +3167,62 @@ async function startServer() {
     }
   });
 
-  app.post("/api/timetable", authMiddleware, async (req, res) => {
+  app.post("/api/timetable", authMiddleware, validate(schemas.timetable), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (!canManageTimetable(jwtUser.role)) {
       res.status(403).json({ error: "Forbidden" });
       return;
     }
-    const { classId, className, subjectId, subjectName, subjectColor, teacherId, teacherName, dayOfWeek, startTime, endTime, room, notes } = req.body;
-    if (!classId || !subjectId || !dayOfWeek || !startTime || !endTime) {
-      res.status(400).json({ error: "classId, subjectId, dayOfWeek, startTime and endTime are required" });
+    const scheduleType = req.body.scheduleType || "CLASS";
+    if (["CLASS", "EXAM"].includes(scheduleType) && (!req.body.classId || !req.body.subjectId)) {
+      res.status(400).json({ error: "classId and subjectId are required for class and exam schedules" });
+      return;
+    }
+    if (timeToMinutes(req.body.startTime) >= timeToMinutes(req.body.endTime)) {
+      res.status(400).json({ error: "endTime must be after startTime" });
       return;
     }
     try {
-      const entry = await prisma.timetableEntry.create({
+      const candidate = {
+        ...req.body,
+        academicYear: req.body.academicYear || currentAcademicYear(),
+        term: req.body.term || "Term 1",
+        scheduleType,
+        recurrence: req.body.recurrence || "WEEKLY",
+      };
+      const conflicts = await findTimetableConflicts(candidate);
+      if (conflicts.length > 0) {
+        res.status(409).json({ error: "Schedule conflict detected", conflicts });
+        return;
+      }
+      const entry = await timetableDb.timetableEntry.create({
         data: {
-          classId,
-          className: className || null,
-          subjectId,
-          subjectName: subjectName || null,
-          subjectColor: subjectColor || "bg-blue-500",
-          teacherId: teacherId || null,
-          teacherName: teacherName || null,
-          dayOfWeek,
-          startTime,
-          endTime,
-          room: room || null,
-          notes: notes || null,
+          classId: candidate.classId || null,
+          className: candidate.className || null,
+          subjectId: candidate.subjectId || null,
+          subjectName: candidate.subjectName || null,
+          subjectColor: candidate.subjectColor || "bg-blue-500",
+          teacherId: candidate.teacherId || null,
+          teacherName: candidate.teacherName || null,
+          substituteTeacherId: candidate.substituteTeacherId || null,
+          substituteTeacherName: candidate.substituteTeacherName || null,
+          academicYear: candidate.academicYear,
+          term: candidate.term,
+          dayOfWeek: candidate.dayOfWeek,
+          startTime: candidate.startTime,
+          endTime: candidate.endTime,
+          room: candidate.room || null,
+          scheduleType: candidate.scheduleType,
+          recurrence: candidate.recurrence,
+          effectiveFrom: parseScheduleDate(candidate.effectiveFrom),
+          effectiveUntil: parseScheduleDate(candidate.effectiveUntil),
+          eventDate: parseScheduleDate(candidate.eventDate),
+          notes: candidate.notes || null,
         },
       });
       await createAuditLog(
         jwtUser.userId, jwtUser.email, "CREATE", "TIMETABLE", entry.id,
-        `Timetable slot created for ${className || classId} on ${dayOfWeek}.`, req.ip, req.headers["user-agent"] || null, "SUCCESS"
+        `Timetable slot created for ${entry.className || entry.classId} on ${entry.dayOfWeek}.`, req.ip, req.headers["user-agent"] || null, "SUCCESS"
       );
       res.status(201).json(entry);
     } catch (err) {
@@ -3085,30 +3231,59 @@ async function startServer() {
     }
   });
 
-  app.put("/api/timetable/:id", authMiddleware, async (req, res) => {
+  app.put("/api/timetable/:id", authMiddleware, validate(schemas.timetableUpdate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (!canManageTimetable(jwtUser.role)) {
       res.status(403).json({ error: "Forbidden" });
       return;
     }
     const { id } = req.params;
-    const { classId, className, subjectId, subjectName, subjectColor, teacherId, teacherName, dayOfWeek, startTime, endTime, room, notes } = req.body;
     try {
-      const entry = await prisma.timetableEntry.update({
+      const current = await timetableDb.timetableEntry.findUnique({ where: { id } });
+      if (!current) {
+        res.status(404).json({ error: "Timetable entry not found" });
+        return;
+      }
+      const candidate = { ...current, ...req.body };
+      if (["CLASS", "EXAM"].includes(candidate.scheduleType) && (!candidate.classId || !candidate.subjectId)) {
+        res.status(400).json({ error: "classId and subjectId are required for class and exam schedules" });
+        return;
+      }
+      if (timeToMinutes(candidate.startTime) >= timeToMinutes(candidate.endTime)) {
+        res.status(400).json({ error: "endTime must be after startTime" });
+        return;
+      }
+      const conflicts = await findTimetableConflicts(candidate, id);
+      if (conflicts.length > 0) {
+        res.status(409).json({ error: "Schedule conflict detected", conflicts });
+        return;
+      }
+      const entry = await timetableDb.timetableEntry.update({
         where: { id },
         data: {
-          ...(classId !== undefined ? { classId } : {}),
-          ...(className !== undefined ? { className: className || null } : {}),
-          ...(subjectId !== undefined ? { subjectId } : {}),
-          ...(subjectName !== undefined ? { subjectName: subjectName || null } : {}),
-          ...(subjectColor !== undefined ? { subjectColor: subjectColor || "bg-blue-500" } : {}),
-          ...(teacherId !== undefined ? { teacherId: teacherId || null } : {}),
-          ...(teacherName !== undefined ? { teacherName: teacherName || null } : {}),
-          ...(dayOfWeek !== undefined ? { dayOfWeek } : {}),
-          ...(startTime !== undefined ? { startTime } : {}),
-          ...(endTime !== undefined ? { endTime } : {}),
-          ...(room !== undefined ? { room: room || null } : {}),
-          ...(notes !== undefined ? { notes: notes || null } : {}),
+          ...(req.body.classId !== undefined ? { classId: req.body.classId } : {}),
+          ...(req.body.className !== undefined ? { className: req.body.className || null } : {}),
+          ...(req.body.subjectId !== undefined ? { subjectId: req.body.subjectId } : {}),
+          ...(req.body.subjectName !== undefined ? { subjectName: req.body.subjectName || null } : {}),
+          ...(req.body.subjectColor !== undefined ? { subjectColor: req.body.subjectColor || "bg-blue-500" } : {}),
+          ...(req.body.teacherId !== undefined ? { teacherId: req.body.teacherId || null } : {}),
+          ...(req.body.teacherName !== undefined ? { teacherName: req.body.teacherName || null } : {}),
+          ...(req.body.substituteTeacherId !== undefined ? { substituteTeacherId: req.body.substituteTeacherId || null } : {}),
+          ...(req.body.substituteTeacherName !== undefined ? { substituteTeacherName: req.body.substituteTeacherName || null } : {}),
+          ...(req.body.academicYear !== undefined ? { academicYear: req.body.academicYear || null } : {}),
+          ...(req.body.term !== undefined ? { term: req.body.term || null } : {}),
+          ...(req.body.dayOfWeek !== undefined ? { dayOfWeek: req.body.dayOfWeek } : {}),
+          ...(req.body.startTime !== undefined ? { startTime: req.body.startTime } : {}),
+          ...(req.body.endTime !== undefined ? { endTime: req.body.endTime } : {}),
+          ...(req.body.room !== undefined ? { room: req.body.room || null } : {}),
+          ...(req.body.scheduleType !== undefined ? { scheduleType: req.body.scheduleType } : {}),
+          ...(req.body.recurrence !== undefined ? { recurrence: req.body.recurrence } : {}),
+          ...(req.body.effectiveFrom !== undefined ? { effectiveFrom: parseScheduleDate(req.body.effectiveFrom) } : {}),
+          ...(req.body.effectiveUntil !== undefined ? { effectiveUntil: parseScheduleDate(req.body.effectiveUntil) } : {}),
+          ...(req.body.eventDate !== undefined ? { eventDate: parseScheduleDate(req.body.eventDate) } : {}),
+          ...(req.body.status !== undefined ? { status: req.body.status } : {}),
+          ...(req.body.cancellationReason !== undefined ? { cancellationReason: req.body.cancellationReason || null } : {}),
+          ...(req.body.notes !== undefined ? { notes: req.body.notes || null } : {}),
         },
       });
       await createAuditLog(
@@ -3126,6 +3301,66 @@ async function startServer() {
     }
   });
 
+  app.post("/api/timetable/:id/substitution", authMiddleware, validate(schemas.timetableSubstitution), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageTimetable(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { id } = req.params;
+    try {
+      const current = await timetableDb.timetableEntry.findUnique({ where: { id } });
+      if (!current) {
+        res.status(404).json({ error: "Timetable entry not found" });
+        return;
+      }
+      const candidate = { ...current, substituteTeacherId: req.body.substituteTeacherId };
+      const conflicts = await findTimetableConflicts(candidate, id);
+      if (conflicts.length > 0) {
+        res.status(409).json({ error: "Schedule conflict detected", conflicts });
+        return;
+      }
+      const entry = await timetableDb.timetableEntry.update({
+        where: { id },
+        data: {
+          substituteTeacherId: req.body.substituteTeacherId,
+          substituteTeacherName: req.body.substituteTeacherName || null,
+          status: "SUBSTITUTED",
+          notes: req.body.notes || current.notes,
+        },
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "SUBSTITUTE", "TIMETABLE", id, `Substitution assigned for timetable slot ${id}.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.json(entry);
+    } catch (err) {
+      logger.error("Error assigning substitution:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/timetable/:id/cancel", authMiddleware, validate(schemas.timetableCancellation), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageTimetable(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { id } = req.params;
+    try {
+      const entry = await timetableDb.timetableEntry.update({
+        where: { id },
+        data: { status: "CANCELLED", cancellationReason: req.body.reason || null },
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "CANCEL", "TIMETABLE", id, `Timetable slot ${id} cancelled.`, req.ip, req.headers["user-agent"] || null, "WARNING");
+      res.json(entry);
+    } catch (err: any) {
+      logger.error("Error cancelling timetable entry:", err);
+      if (err.code === "P2025") {
+        res.status(404).json({ error: "Timetable entry not found" });
+        return;
+      }
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
   app.delete("/api/timetable/:id", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (!canManageTimetable(jwtUser.role)) {
@@ -3134,7 +3369,7 @@ async function startServer() {
     }
     const { id } = req.params;
     try {
-      await prisma.timetableEntry.delete({ where: { id } });
+      await timetableDb.timetableEntry.delete({ where: { id } });
       await createAuditLog(
         jwtUser.userId, jwtUser.email, "DELETE", "TIMETABLE", id,
         `Timetable slot ${id} deleted.`, req.ip, req.headers["user-agent"] || null, "SUCCESS"

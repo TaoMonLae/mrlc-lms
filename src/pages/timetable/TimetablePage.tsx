@@ -1,87 +1,137 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  CalendarDays, 
-  Plus, 
-  Search, 
-  Filter, 
-  ChevronLeft, 
-  ChevronRight, 
-  Clock, 
-  MapPin, 
-  User, 
+import {
   BookOpen,
-  MoreVertical,
+  CalendarDays,
   Edit,
-  Trash2,
+  Filter,
+  MapPin,
+  MoreVertical,
+  Plus,
   Printer,
-  Download
+  Trash2,
+  User,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { usePermissions } from '@/src/lib/permissions';
-import { toast } from 'sonner';
+import { qs } from '../../lib/api';
 
-// Types
 export type DayOfWeek = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
 
 export interface TimetableEntry {
   id: string;
-  classId: string;
-  className: string;
-  subjectId: string;
-  subjectName: string;
-  subjectColor: string;
-  teacherId: string;
-  teacherName: string;
+  classId: string | null;
+  className: string | null;
+  subjectId: string | null;
+  subjectName: string | null;
+  subjectColor: string | null;
+  teacherId: string | null;
+  teacherName: string | null;
+  substituteTeacherId?: string | null;
+  substituteTeacherName?: string | null;
+  academicYear?: string | null;
+  term?: string | null;
   dayOfWeek: DayOfWeek;
-  startTime: string; // HH:mm
-  endTime: string;   // HH:mm
-  room: string;
-  notes?: string;
+  startTime: string;
+  endTime: string;
+  room: string | null;
+  scheduleType?: 'CLASS' | 'HOLIDAY' | 'SPECIAL_EVENT' | 'EXAM' | 'MEETING';
+  recurrence?: 'ONCE' | 'WEEKLY' | 'BIWEEKLY';
+  status?: 'ACTIVE' | 'CANCELLED' | 'SUBSTITUTED';
+  cancellationReason?: string | null;
+  eventDate?: string | null;
+  notes?: string | null;
 }
 
-const DAYS: DayOfWeek[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-const TIME_SLOTS = [
-  '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00'
-];
+const DAYS: DayOfWeek[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+const entryTitle = (entry: TimetableEntry) => {
+  if (entry.scheduleType === 'HOLIDAY') return entry.notes || 'School Holiday';
+  if (entry.scheduleType === 'SPECIAL_EVENT') return entry.notes || 'Special Event';
+  return entry.subjectName || entry.subjectId || 'Scheduled Period';
+};
+
+const colorClass = (entry: TimetableEntry) => {
+  if (entry.status === 'CANCELLED') return 'bg-slate-500';
+  if (entry.scheduleType === 'HOLIDAY') return 'bg-rose-500';
+  if (entry.scheduleType === 'SPECIAL_EVENT') return 'bg-amber-500';
+  if (entry.scheduleType === 'EXAM') return 'bg-purple-500';
+  if (entry.scheduleType === 'MEETING') return 'bg-cyan-500';
+  return entry.subjectColor || 'bg-blue-500';
+};
 
 export default function TimetablePage() {
-  const [viewType, setViewType] = useState<'class' | 'teacher'>('class');
+  const [viewType, setViewType] = useState<'class' | 'teacher' | 'room'>('class');
   const [selectedIdentifier, setSelectedIdentifier] = useState('');
+  const [academicYear, setAcademicYear] = useState('');
+  const [term, setTerm] = useState('');
+  const [status, setStatus] = useState('ACTIVE');
+  const [scheduleType, setScheduleType] = useState('all');
   const [timetable, setTimetable] = useState<TimetableEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const { isAdmin, hasPermission } = usePermissions();
+  const { isAdmin, hasPermission, isTeacher, isStudent } = usePermissions();
 
   const canManage = isAdmin || hasPermission('manage_timetable');
 
-  useEffect(() => {
-    const fetchTimetable = async () => {
-      try {
-        const token = sessionStorage.getItem('auth_token');
-        const res = await fetch('/api/timetable', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error('Failed to fetch timetable');
-        const data: TimetableEntry[] = await res.json();
-        setTimetable(Array.isArray(data) ? data : []);
-        if (data.length > 0) setSelectedIdentifier(data[0].className || '');
-      } catch (error) {
-        console.error('Error fetching timetable:', error);
-        toast.error('Failed to load timetable');
-      } finally {
-        setLoading(false);
+  const loadTimetable = async () => {
+    setLoading(true);
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`/api/timetable${qs({ academicYear, term, status, scheduleType })}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to fetch timetable');
+      const data: TimetableEntry[] = await res.json();
+      setTimetable(Array.isArray(data) ? data : []);
+      if (!selectedIdentifier && data.length > 0 && !isTeacher && !isStudent) {
+        setSelectedIdentifier(data[0].className || data[0].classId || '');
       }
-    };
-    fetchTimetable();
+    } catch (error) {
+      console.error('Error fetching timetable:', error);
+      toast.error('Failed to load timetable');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadTimetable();
   }, []);
+
+  const identifiers = useMemo(() => {
+    const values = timetable.map((entry) => {
+      if (viewType === 'teacher') return entry.teacherName || entry.teacherId || '';
+      if (viewType === 'room') return entry.room || '';
+      return entry.className || entry.classId || '';
+    });
+    return Array.from(new Set(values)).filter(Boolean);
+  }, [timetable, viewType]);
+
+  useEffect(() => {
+    if (identifiers.length > 0 && !identifiers.includes(selectedIdentifier) && !isTeacher && !isStudent) {
+      setSelectedIdentifier(identifiers[0]);
+    }
+  }, [identifiers, selectedIdentifier, isTeacher, isStudent]);
+
+  const filteredTimetable = useMemo(() => {
+    if (isTeacher || isStudent) return timetable;
+    if (!selectedIdentifier) return timetable;
+    return timetable.filter((entry) => {
+      if (viewType === 'teacher') return (entry.teacherName || entry.teacherId) === selectedIdentifier;
+      if (viewType === 'room') return entry.room === selectedIdentifier;
+      return (entry.className || entry.classId) === selectedIdentifier;
+    });
+  }, [timetable, selectedIdentifier, viewType, isTeacher, isStudent]);
+
+  const timeSlots = useMemo(() => Array.from(new Set(filteredTimetable.map((entry) => entry.startTime))).sort(), [filteredTimetable]);
 
   const handleDelete = async (entryId: string) => {
     if (!confirm('Delete this timetable slot?')) return;
@@ -92,233 +142,205 @@ export default function TimetablePage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error('Failed to delete');
-      setTimetable(prev => prev.filter(e => e.id !== entryId));
+      setTimetable((prev) => prev.filter((entry) => entry.id !== entryId));
       toast.success('Timetable slot deleted');
     } catch {
       toast.error('Failed to delete slot');
     }
   };
 
-  const filteredTimetable = timetable.filter(entry =>
-    viewType === 'class' ? entry.className === selectedIdentifier : entry.teacherName === selectedIdentifier
-  );
-
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-6 print:bg-white">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between print:hidden">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
             <CalendarDays className="h-6 w-6 text-aubergine-600" />
             School Timetable
           </h1>
           <p className="text-sm text-slate-500">
-            Weekly schedule for classes and teachers.
+            Weekly class periods, teacher assignments, rooms, holidays, events, substitutions, and cancellations.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
-            <Printer className="mr-2 h-4 w-4" /> Print
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => window.print()}>
+            <Printer className="mr-2 h-4 w-4" />
+            Print / PDF
           </Button>
           {canManage && (
-            <Button render={<Link to="/timetable/new" />} nativeButton={false} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-              <Plus className="mr-2 h-4 w-4" /> Add Slot
+            <Button render={<Link to="/timetable/new" />} nativeButton={false}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Slot
             </Button>
           )}
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-4 items-center bg-white dark:bg-surface-indigo p-4 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm">
-        <div className="flex items-center gap-2 bg-slate-100 dark:bg-surface-raised p-1 rounded-lg">
-          <Button 
-            variant={viewType === 'class' ? 'secondary' : 'ghost'} 
-            size="sm" 
-            onClick={() => { setViewType('class'); setSelectedIdentifier(timetable[0]?.className || ''); }}
-            className="h-8 text-xs px-4"
-          >
-            By Class
-          </Button>
-          <Button 
-            variant={viewType === 'teacher' ? 'secondary' : 'ghost'} 
-            size="sm" 
-            onClick={() => { setViewType('teacher'); setSelectedIdentifier(timetable[0]?.teacherName || ''); }}
-            className="h-8 text-xs px-4"
-          >
-            By Teacher
-          </Button>
-        </div>
-        
-        <div className="flex items-center gap-2 flex-1 w-full md:w-auto">
-          <Filter className="h-4 w-4 text-slate-400" />
-          <select 
-            className="h-10 px-3 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo text-sm focus:ring-2 focus:ring-aubergine-600 outline-none flex-1 md:flex-none min-w-[200px]"
-            value={selectedIdentifier}
-            onChange={(e) => setSelectedIdentifier(e.target.value)}
-          >
-            <option value="">No {viewType === 'class' ? 'classes' : 'teachers'} available</option>
-            {Array.from(new Set(timetable.map((entry) => viewType === 'class' ? entry.className : entry.teacherName))).filter(Boolean).map((name) => (
-              <option key={name} value={name}>{name}</option>
-            ))}
+      <div className="hidden print:block">
+        <h1 className="text-xl font-bold">MRLC Weekly Timetable</h1>
+        <p className="text-sm">{academicYear || 'All years'} - {term || 'All terms'} - {selectedIdentifier || 'My schedule'}</p>
+      </div>
+
+      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-surface-raised dark:bg-surface-indigo print:hidden">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[auto_1fr_140px_130px_150px_auto]">
+          {!isTeacher && !isStudent && (
+            <div className="flex items-center gap-2 rounded-lg bg-slate-100 p-1 dark:bg-surface-raised">
+              {(['class', 'teacher', 'room'] as const).map((mode) => (
+                <Button
+                  key={mode}
+                  variant={viewType === mode ? 'secondary' : 'ghost'}
+                  size="sm"
+                  onClick={() => {
+                    setViewType(mode);
+                    setSelectedIdentifier('');
+                  }}
+                  className="h-8 px-3 text-xs capitalize"
+                >
+                  {mode}
+                </Button>
+              ))}
+            </div>
+          )}
+
+          {!isTeacher && !isStudent && (
+            <select
+              className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm dark:border-surface-raised dark:bg-surface-indigo dark:text-white"
+              value={selectedIdentifier}
+              onChange={(event) => setSelectedIdentifier(event.target.value)}
+            >
+              <option value="">All {viewType}s</option>
+              {identifiers.map((name) => (
+                <option key={name} value={name}>{name}</option>
+              ))}
+            </select>
+          )}
+
+          <input
+            value={academicYear}
+            onChange={(event) => setAcademicYear(event.target.value)}
+            placeholder="Academic year"
+            className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm dark:border-surface-raised dark:bg-surface-indigo dark:text-white"
+          />
+          <input
+            value={term}
+            onChange={(event) => setTerm(event.target.value)}
+            placeholder="Term"
+            className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm dark:border-surface-raised dark:bg-surface-indigo dark:text-white"
+          />
+          <select value={status} onChange={(event) => setStatus(event.target.value)} className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm dark:border-surface-raised dark:bg-surface-indigo dark:text-white">
+            <option value="ACTIVE">Active</option>
+            <option value="SUBSTITUTED">Substituted</option>
+            <option value="CANCELLED">Cancelled</option>
+            <option value="all">All statuses</option>
           </select>
+          <select value={scheduleType} onChange={(event) => setScheduleType(event.target.value)} className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm dark:border-surface-raised dark:bg-surface-indigo dark:text-white">
+            <option value="all">All types</option>
+            <option value="CLASS">Class periods</option>
+            <option value="EXAM">Exams</option>
+            <option value="MEETING">Meetings</option>
+            <option value="HOLIDAY">Holidays</option>
+            <option value="SPECIAL_EVENT">Special events</option>
+          </select>
+          <Button type="button" variant="outline" onClick={loadTimetable} disabled={loading}>
+            <Filter className="mr-2 h-4 w-4" />
+            Apply
+          </Button>
         </div>
       </div>
 
-      {/* Desktop Grid View */}
-      <div className="hidden lg:block bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl overflow-hidden shadow-sm">
-        <div className="grid grid-cols-6 border-b border-slate-200 dark:border-surface-raised">
-          <div className="p-4 bg-slate-50 dark:bg-surface-raised/50 border-r border-slate-200 dark:border-surface-raised text-xs font-bold text-slate-500 uppercase tracking-wider text-center">
-            Time
-          </div>
-          {DAYS.map(day => (
-            <div key={day} className="p-4 bg-slate-50 dark:bg-surface-raised/50 border-r last:border-r-0 border-slate-200 dark:border-surface-raised text-xs font-bold text-slate-500 uppercase tracking-wider text-center">
-              {day}
-            </div>
+      <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-surface-raised dark:bg-surface-indigo lg:block print:block print:border-slate-300">
+        <div className="grid grid-cols-8 border-b border-slate-200 bg-slate-50 text-center text-xs font-bold uppercase tracking-wider text-slate-500 dark:border-surface-raised dark:bg-surface-raised/50">
+          <div className="border-r border-slate-200 p-3 dark:border-surface-raised">Time</div>
+          {DAYS.map((day) => (
+            <div key={day} className="border-r border-slate-200 p-3 last:border-r-0 dark:border-surface-raised">{day}</div>
           ))}
         </div>
 
-        <div className="relative">
-          {TIME_SLOTS.map((time, idx) => (
-            <div key={time} className="grid grid-cols-6 border-b last:border-b-0 border-slate-100 dark:border-surface-raised/50 min-h-[100px]">
-              <div className="p-3 border-r border-slate-200 dark:border-surface-raised text-[10px] font-bold text-slate-400 text-center flex flex-col justify-between">
-                <span>{time}</span>
-                <span className="opacity-0">.</span>
-              </div>
-              {DAYS.map(day => {
-                const entry = filteredTimetable.find(e => e.dayOfWeek === day && e.startTime.startsWith(time.split(':')[0]));
+        {loading ? (
+          <div className="p-10 text-center text-sm text-slate-500">Loading timetable...</div>
+        ) : timeSlots.length === 0 ? (
+          <div className="p-10 text-center text-sm text-slate-500">No timetable entries found.</div>
+        ) : (
+          timeSlots.map((time) => (
+            <div key={time} className="grid min-h-[108px] grid-cols-8 border-b border-slate-100 last:border-b-0 dark:border-surface-raised/50">
+              <div className="border-r border-slate-200 p-3 text-center text-xs font-bold text-slate-400 dark:border-surface-raised">{time}</div>
+              {DAYS.map((day) => {
+                const entries = filteredTimetable.filter((entry) => entry.dayOfWeek === day && entry.startTime === time);
                 return (
-                  <div key={`${day}-${time}`} className="relative p-1 border-r last:border-r-0 border-slate-100 dark:border-surface-raised/50 group">
-                    {entry && (
-                      <div className={`h-full w-full rounded-lg p-3 ${entry.subjectColor} text-white shadow-sm overflow-hidden flex flex-col justify-between group/card relative`}>
-                        <div>
-                          <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-1">{entry.startTime} - {entry.endTime}</p>
-                          <h4 className="text-sm font-bold truncate leading-tight mb-1">{entry.subjectName}</h4>
-                          <p className="text-[10px] flex items-center gap-1 opacity-90">
-                            <MapPin className="h-2.5 w-2.5" /> {entry.room}
-                          </p>
-                        </div>
-                        
-                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/20">
-                          <p className="text-[10px] font-medium truncate flex items-center gap-1">
-                            {viewType === 'class' ? (
-                              <><User className="h-2.5 w-2.5" /> {entry.teacherName}</>
-                            ) : (
-                              <><BookOpen className="h-2.5 w-2.5" /> {entry.className}</>
-                            )}
-                          </p>
-                          
-                          {canManage && (
-                            <div className="absolute top-1 right-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20 rounded-full" />}>
-                                  <MoreVertical className="h-3 w-3" />
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-32">
-                                  <DropdownMenuItem render={<Link to={`/timetable/${entry.id}/edit`} className="w-full flex items-center" />}>
-                                    <Edit className="mr-2 h-3.5 w-3.5" /> Edit
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem className="text-rose-600" onClick={() => handleDelete(entry.id)}>
-                                    <Trash2 className="mr-2 h-3.5 w-3.5" /> Delete
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
+                  <div key={`${day}-${time}`} className="space-y-2 border-r border-slate-100 p-1 last:border-r-0 dark:border-surface-raised/50">
+                    {entries.map((entry) => (
+                      <ScheduleCard key={entry.id} entry={entry} viewType={viewType} canManage={canManage} onDelete={handleDelete} />
+                    ))}
                   </div>
                 );
               })}
             </div>
-          ))}
-        </div>
+          ))
+        )}
       </div>
 
-      {/* Mobile Day Cards */}
-      <div className="lg:hidden space-y-6">
-        {DAYS.map(day => (
-          <div key={day} className="space-y-3">
-            <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest pl-2 border-l-4 border-aubergine-500">{day}</h3>
-            <div className="space-y-3">
-              {filteredTimetable.filter(e => e.dayOfWeek === day).sort((a,b) => a.startTime.localeCompare(b.startTime)).map(entry => (
-                <div key={entry.id} className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-4 shadow-sm flex items-center gap-4 group">
-                  <div className={`w-2 h-12 rounded-full ${entry.subjectColor}`} />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-bold text-aubergine-600 dark:text-aubergine-400">{entry.startTime} - {entry.endTime}</span>
-                      <Badge variant="outline" className="text-[10px] h-5 border-slate-200 dark:border-surface-raised">{entry.room}</Badge>
-                    </div>
-                    <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate">{entry.subjectName}</h4>
-                    <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
-                      {viewType === 'class' ? (
-                        <><User className="h-3 w-3" /> {entry.teacherName}</>
-                      ) : (
-                        <><BookOpen className="h-3 w-3" /> {entry.className}</>
-                      )}
-                    </p>
-                  </div>
-                  {canManage && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400" />}>
-                        <MoreVertical className="h-4 w-4" />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem render={<Link to={`/timetable/${entry.id}/edit`} className="w-full flex items-center" />}>
-                          <Edit className="mr-2 h-4 w-4" /> Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-rose-600" onClick={() => handleDelete(entry.id)}>
-                          <Trash2 className="mr-2 h-4 w-4" /> Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
-                </div>
-              ))}
-              {filteredTimetable.filter(e => e.dayOfWeek === day).length === 0 && (
-                <p className="text-center py-4 text-xs text-slate-400 italic bg-slate-50 dark:bg-surface-raised/30 rounded-xl border border-dashed border-slate-200 dark:border-surface-raised">No classes scheduled</p>
-              )}
-            </div>
-          </div>
-        ))}
+      <div className="space-y-4 lg:hidden print:hidden">
+        {DAYS.map((day) => {
+          const entries = filteredTimetable.filter((entry) => entry.dayOfWeek === day).sort((a, b) => a.startTime.localeCompare(b.startTime));
+          if (entries.length === 0) return null;
+          return (
+            <section key={day} className="space-y-3">
+              <h2 className="border-l-4 border-aubergine-500 pl-2 text-sm font-bold uppercase tracking-widest text-slate-500">{day}</h2>
+              {entries.map((entry) => <ScheduleCard key={entry.id} entry={entry} viewType={viewType} canManage={canManage} onDelete={handleDelete} mobile />)}
+            </section>
+          );
+        })}
       </div>
+    </div>
+  );
+}
 
-      {/* Legend & Info */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-surface-indigo p-6 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm">
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-            <BookOpen className="h-4 w-4 text-aubergine-600" />
-            Subject Legend
-          </h3>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-blue-500" />
-              <span className="text-xs font-medium text-slate-600 dark:text-slate-300">Mathematics</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-purple-500" />
-              <span className="text-xs font-medium text-slate-600 dark:text-slate-300">Physics</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-emerald-500" />
-              <span className="text-xs font-medium text-slate-600 dark:text-slate-300">English</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-amber-500" />
-              <span className="text-xs font-medium text-slate-600 dark:text-slate-300">History</span>
-            </div>
-          </div>
+function ScheduleCard({ entry, viewType, canManage, onDelete, mobile = false }: {
+  entry: TimetableEntry;
+  viewType: 'class' | 'teacher' | 'room';
+  canManage: boolean;
+  onDelete: (id: string) => void;
+  mobile?: boolean;
+}) {
+  return (
+    <div className={`${colorClass(entry)} rounded-lg p-3 text-white shadow-sm ${mobile ? 'flex gap-3' : 'min-h-[92px]'} print:bg-white print:text-slate-900 print:shadow-none print:ring-1 print:ring-slate-300`}>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-[10px] font-bold uppercase tracking-widest opacity-85">{entry.startTime} - {entry.endTime}</p>
+          <Badge variant="outline" className="h-5 border-white/40 bg-white/10 text-[10px] text-white print:border-slate-300 print:text-slate-700">
+            {entry.status || 'ACTIVE'}
+          </Badge>
         </div>
-        
-        <div className="bg-aubergine-50 dark:bg-aubergine-900/10 p-6 rounded-xl border border-aubergine-100 dark:border-aubergine-900/30">
-          <h3 className="text-sm font-bold text-aubergine-900 dark:text-aubergine-400 mb-2 flex items-center gap-2">
-             <Clock className="h-4 w-4" />
-             Schedule Information
-          </h3>
-          <p className="text-xs text-aubergine-700 dark:text-aubergine-300 leading-relaxed">
-            The school schedule operates on a weekly cycle. Teachers should ensure rooms are booked through the admin portal if they need to change locations. Students are advised to check the timetable daily for any updates.
+        <h3 className="mt-1 truncate text-sm font-bold">{entryTitle(entry)}</h3>
+        <div className="mt-2 space-y-1 text-[11px] opacity-90">
+          <p className="flex items-center gap-1"><MapPin className="h-3 w-3" />{entry.room || 'No room'}</p>
+          <p className="flex items-center gap-1">
+            {viewType === 'teacher' ? <BookOpen className="h-3 w-3" /> : <User className="h-3 w-3" />}
+            {viewType === 'teacher' ? entry.className || entry.classId : entry.teacherName || 'Unassigned'}
           </p>
+          {entry.substituteTeacherName && <p>Sub: {entry.substituteTeacherName}</p>}
+          {entry.scheduleType && entry.scheduleType !== 'CLASS' && <p>{entry.scheduleType.replaceAll('_', ' ')}</p>}
+          {entry.cancellationReason && <p>Reason: {entry.cancellationReason}</p>}
         </div>
       </div>
+      {canManage && (
+        <div className="print:hidden">
+          <DropdownMenu>
+            <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-7 w-7 text-white hover:bg-white/20" />}>
+              <MoreVertical className="h-4 w-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-36">
+              <DropdownMenuItem render={<Link to={`/timetable/${entry.id}/edit`} className="flex w-full items-center" />}>
+                <Edit className="mr-2 h-3.5 w-3.5" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-rose-600" onClick={() => onDelete(entry.id)}>
+                <Trash2 className="mr-2 h-3.5 w-3.5" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
     </div>
   );
 }

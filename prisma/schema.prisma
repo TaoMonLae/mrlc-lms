@@ -797,17 +797,28 @@ model Announcement {
 
 model TimetableEntry {
   id             String   @id @default(uuid())
-  classId        String
+  classId        String?
   className      String?
-  subjectId      String
+  subjectId      String?
   subjectName    String?
   subjectColor   String?  @default("bg-blue-500")
   teacherId      String?
   teacherName    String?
+  substituteTeacherId String?
+  substituteTeacherName String?
+  academicYear   String?
+  term           String?
   dayOfWeek      String
   startTime      String
   endTime        String
   room           String?
+  scheduleType   String   @default("CLASS") // CLASS | HOLIDAY | SPECIAL_EVENT | EXAM | MEETING
+  recurrence     String   @default("WEEKLY") // ONCE | WEEKLY | BIWEEKLY
+  effectiveFrom  DateTime?
+  effectiveUntil DateTime?
+  status         String   @default("ACTIVE") // ACTIVE | CANCELLED | SUBSTITUTED
+  cancellationReason String?
+  eventDate      DateTime?
   notes          String?
 
   createdAt      DateTime @default(now())
@@ -815,7 +826,13 @@ model TimetableEntry {
 
   @@index([classId])
   @@index([teacherId])
+  @@index([substituteTeacherId])
   @@index([dayOfWeek])
+  @@index([academicYear])
+  @@index([term])
+  @@index([room])
+  @@index([status])
+  @@index([scheduleType])
 }
 
 model StudentDocument {

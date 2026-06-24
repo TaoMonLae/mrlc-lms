@@ -35,14 +35,28 @@ const colorForSubject = (subjectId: string) => {
 };
 
 const timetableSchema = z.object({
-  classId: z.string().min(1, 'Class is required'),
-  subjectId: z.string().min(1, 'Subject is required'),
-  teacherId: z.string().min(1, 'Teacher is required'),
+  classId: z.string().optional(),
+  subjectId: z.string().optional(),
+  teacherId: z.string().optional(),
+  substituteTeacherId: z.string().optional(),
+  academicYear: z.string().min(1, 'Academic year is required'),
+  term: z.string().min(1, 'Term is required'),
   dayOfWeek: z.enum(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']),
   startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format (HH:mm)'),
   endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format (HH:mm)'),
   room: z.string().min(1, 'Room is required'),
+  scheduleType: z.enum(['CLASS', 'HOLIDAY', 'SPECIAL_EVENT', 'EXAM', 'MEETING']),
+  recurrence: z.enum(['ONCE', 'WEEKLY', 'BIWEEKLY']),
+  effectiveFrom: z.string().optional(),
+  effectiveUntil: z.string().optional(),
+  eventDate: z.string().optional(),
   notes: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (['CLASS', 'EXAM'].includes(data.scheduleType)) {
+    if (!data.classId) ctx.addIssue({ code: 'custom', path: ['classId'], message: 'Class is required' });
+    if (!data.subjectId) ctx.addIssue({ code: 'custom', path: ['subjectId'], message: 'Subject is required' });
+    if (!data.teacherId) ctx.addIssue({ code: 'custom', path: ['teacherId'], message: 'Teacher is required' });
+  }
 });
 
 type TimetableFormValues = z.infer<typeof timetableSchema>;
@@ -83,10 +97,18 @@ export function TimetableForm({ initialData, onSubmit, isLoading }: TimetableFor
       classId: initialData?.classId || '',
       subjectId: initialData?.subjectId || '',
       teacherId: initialData?.teacherId || '',
+      substituteTeacherId: (initialData as any)?.substituteTeacherId || '',
+      academicYear: (initialData as any)?.academicYear || `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`,
+      term: (initialData as any)?.term || 'Term 1',
       dayOfWeek: initialData?.dayOfWeek || 'Monday',
       startTime: initialData?.startTime || '',
       endTime: initialData?.endTime || '',
       room: initialData?.room || '',
+      scheduleType: (initialData as any)?.scheduleType || 'CLASS',
+      recurrence: (initialData as any)?.recurrence || 'WEEKLY',
+      effectiveFrom: (initialData as any)?.effectiveFrom?.slice(0, 10) || '',
+      effectiveUntil: (initialData as any)?.effectiveUntil?.slice(0, 10) || '',
+      eventDate: (initialData as any)?.eventDate?.slice(0, 10) || '',
       notes: initialData?.notes || '',
     },
   });
@@ -97,7 +119,8 @@ export function TimetableForm({ initialData, onSubmit, isLoading }: TimetableFor
       className: classOptions.find(c => c.id === values.classId)?.name,
       subjectName: subjectOptions.find(s => s.id === values.subjectId)?.name,
       teacherName: teacherOptions.find(t => t.id === values.teacherId)?.name,
-      subjectColor: colorForSubject(values.subjectId),
+      substituteTeacherName: teacherOptions.find(t => t.id === values.substituteTeacherId)?.name,
+      subjectColor: values.subjectId ? colorForSubject(values.subjectId) : 'bg-amber-500',
     } as any);
   };
 
@@ -189,6 +212,29 @@ export function TimetableForm({ initialData, onSubmit, isLoading }: TimetableFor
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                  control={form.control}
+                  name="substituteTeacherId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Substitute Teacher</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ""}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Optional substitute" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {TEACHER_OPTIONS.map((option) => (
+                            <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </CardContent>
             </Card>
 
@@ -213,6 +259,31 @@ export function TimetableForm({ initialData, onSubmit, isLoading }: TimetableFor
                     </FormItem>
                   )}
                 />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="academicYear"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Academic Year</FormLabel>
+                        <FormControl><Input placeholder="2026-2027" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="term"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Term</FormLabel>
+                        <FormControl><Input placeholder="Term 1" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 <FormField
                   control={form.control}
@@ -275,6 +346,47 @@ export function TimetableForm({ initialData, onSubmit, isLoading }: TimetableFor
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
+                    name="scheduleType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Schedule Type</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || "CLASS"}>
+                          <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                          <SelectContent>
+                            <SelectItem value="CLASS">Class period</SelectItem>
+                            <SelectItem value="EXAM">Exam</SelectItem>
+                            <SelectItem value="MEETING">Meeting</SelectItem>
+                            <SelectItem value="HOLIDAY">School holiday</SelectItem>
+                            <SelectItem value="SPECIAL_EVENT">Special event</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="recurrence"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Recurrence</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || "WEEKLY"}>
+                          <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                          <SelectContent>
+                            <SelectItem value="ONCE">One time</SelectItem>
+                            <SelectItem value="WEEKLY">Weekly</SelectItem>
+                            <SelectItem value="BIWEEKLY">Biweekly</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
                     name="startTime"
                     render={({ field }) => (
                       <FormItem>
@@ -296,6 +408,42 @@ export function TimetableForm({ initialData, onSubmit, isLoading }: TimetableFor
                         <FormControl>
                           <Input type="time" {...field} />
                         </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="effectiveFrom"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Effective From</FormLabel>
+                        <FormControl><Input type="date" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="effectiveUntil"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Effective Until</FormLabel>
+                        <FormControl><Input type="date" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="eventDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Event Date</FormLabel>
+                        <FormControl><Input type="date" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}

@@ -45,7 +45,8 @@ export default function TimetableEdit() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'Failed to update schedule item');
+        const details = Array.isArray(err.conflicts) ? `: ${err.conflicts.map((conflict: any) => conflict.message).join(', ')}` : '';
+        throw new Error(`${err.error || 'Failed to update schedule item'}${details}`);
       }
       toast.success('Schedule item updated successfully');
       navigate('/timetable');
