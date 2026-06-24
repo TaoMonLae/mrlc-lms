@@ -93,6 +93,7 @@ import GradebookClassReport from "./pages/gradebook/GradebookClassReport";
 import DocumentsPage from "./pages/documents/Documents";
 import DocumentPrint from "./pages/documents/DocumentPrint";
 import VerifyDocument from "./pages/documents/VerifyDocument";
+import StudentDocumentsPage from "./pages/student/StudentDocuments";
 
 import TimetablePage from "./pages/timetable/TimetablePage";
 import TimetableNew from "./pages/timetable/TimetableNew";
@@ -183,6 +184,7 @@ export default function App() {
                   <Route path="/student/exams" element={<StudentExams />} />
                   <Route path="/student/results" element={<StudentResults />} />
                   <Route path="/student/grades" element={<StudentProgress />} />
+                  <Route path="/student/documents" element={<StudentDocumentsPage />} />
                   <Route path="/student/library" element={<StudentLibrary />} />
                   <Route path="/student/fees" element={<StudentFees />} />
                   <Route path="/student/videos" element={<StudentVideos />} />

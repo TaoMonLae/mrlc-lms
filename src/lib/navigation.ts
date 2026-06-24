@@ -291,6 +291,12 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     roles: ["STUDENT"],
   },
   {
+    title: "My Documents",
+    url: "/student/documents",
+    icon: FileText,
+    roles: ["STUDENT"],
+  },
+  {
     title: "Student Fees",
     url: "/student/fees",
     icon: Wallet,
