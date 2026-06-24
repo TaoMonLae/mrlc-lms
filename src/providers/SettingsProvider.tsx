@@ -65,28 +65,28 @@ function applyServerData(
   setSchool(prev => ({
     ...prev,
     name: data.name ?? prev.name,
-    address: data.address ?? prev.address,
-    phone: data.contactPhone ?? prev.phone,
-    email: data.contactEmail ?? prev.email,
+    address: data.address !== undefined ? data.address : prev.address,
+    phone: data.contactPhone !== undefined ? data.contactPhone : prev.phone,
+    email: data.contactEmail !== undefined ? data.contactEmail : prev.email,
   }));
   setBranding(prev => ({
     ...prev,
-    logoUrl: data.logoUrl ?? prev.logoUrl,
-    signatureUrl: data.signatureUrl ?? prev.signatureUrl,
-    loginHeroUrl: data.loginHeroUrl ?? prev.loginHeroUrl,
-    primaryColor: data.primaryColor ?? prev.primaryColor,
-    accentColor: data.accentColor ?? prev.accentColor,
-    darkModeDefault: data.darkModeDefault ?? prev.darkModeDefault,
-    reportHeaderStyle: data.reportHeaderStyle ?? prev.reportHeaderStyle,
+    logoUrl: data.logoUrl !== undefined ? data.logoUrl : prev.logoUrl,
+    signatureUrl: data.signatureUrl !== undefined ? data.signatureUrl : prev.signatureUrl,
+    loginHeroUrl: data.loginHeroUrl !== undefined ? data.loginHeroUrl : prev.loginHeroUrl,
+    primaryColor: data.primaryColor !== undefined ? data.primaryColor : prev.primaryColor,
+    accentColor: data.accentColor !== undefined ? data.accentColor : prev.accentColor,
+    darkModeDefault: data.darkModeDefault !== undefined ? data.darkModeDefault : prev.darkModeDefault,
+    reportHeaderStyle: data.reportHeaderStyle !== undefined ? data.reportHeaderStyle : prev.reportHeaderStyle,
   }));
   setSystem(prev => ({
     ...prev,
-    timezone: data.timezone ?? prev.timezone,
-    dateFormat: data.dateFormat ?? prev.dateFormat,
-    currency: data.currency ?? prev.currency,
-    defaultLanguage: data.defaultLanguage ?? prev.defaultLanguage,
-    fileUploadLimitMb: data.fileUploadLimitMb ?? prev.fileUploadLimitMb,
-    backupEnabled: data.backupEnabled ?? prev.backupEnabled,
+    timezone: data.timezone !== undefined ? data.timezone : prev.timezone,
+    dateFormat: data.dateFormat !== undefined ? data.dateFormat : prev.dateFormat,
+    currency: data.currency !== undefined ? data.currency : prev.currency,
+    defaultLanguage: data.defaultLanguage !== undefined ? data.defaultLanguage : prev.defaultLanguage,
+    fileUploadLimitMb: data.fileUploadLimitMb !== undefined ? data.fileUploadLimitMb : prev.fileUploadLimitMb,
+    backupEnabled: data.backupEnabled !== undefined ? data.backupEnabled : prev.backupEnabled,
   }));
 }
 

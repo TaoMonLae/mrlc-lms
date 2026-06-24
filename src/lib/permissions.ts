@@ -33,6 +33,8 @@ export type Permission =
   // Teacher Management
   | 'manage_teachers'
   | 'view_teachers'
+  | 'view_assigned_classes'
+  | 'view_assigned_students'
   // Academic Management
   | 'manage_classes'
   | 'view_classes'
@@ -172,6 +174,16 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   ],
 };
 
+export const ROLE_LABELS: Record<UserRole, string> = {
+  ADMIN: 'Administrator',
+  TEACHER: 'Teacher',
+  STUDENT: 'Student',
+  STAFF: 'Staff',
+  ACCOUNTANT: 'Accountant',
+  CASE_WORKER: 'Case Worker',
+  LIBRARIAN: 'Librarian',
+};
+
 // Export ROLE_PERMISSIONS for use in role management UI
 export { ROLE_PERMISSIONS };
 
@@ -241,6 +253,8 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   'view_own_student': 'View Own Profile',
   'manage_teachers': 'Manage Teachers',
   'view_teachers': 'View Teachers',
+  'view_assigned_classes': 'View Assigned Classes',
+  'view_assigned_students': 'View Assigned Students',
   'manage_classes': 'Manage Classes',
   'view_classes': 'View Classes',
   'manage_subjects': 'Manage Subjects',

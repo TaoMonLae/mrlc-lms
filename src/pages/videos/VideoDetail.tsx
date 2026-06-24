@@ -7,6 +7,7 @@ import { usePermissions, useUser } from '../../lib/permissions';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import type { VideoLesson } from './VideoList';
+import { getVideoEmbedUrl, getVideoPlaybackSrc, isDirectVideoUrl } from '../../lib/video';
 
 function formatDuration(seconds?: number): string {
   if (!seconds) return 'Unknown';
@@ -15,37 +16,6 @@ function formatDuration(seconds?: number): string {
   const s = seconds % 60;
   if (h > 0) return `${h}h ${m}m ${s}s`;
   return `${m}m ${s}s`;
-}
-
-function getEmbedUrl(url: string): string | null {
-  try {
-    const u = new URL(url);
-    // YouTube
-    if (u.hostname.includes('youtube.com') || u.hostname.includes('youtu.be')) {
-      let videoId = u.searchParams.get('v');
-      if (!videoId && u.hostname === 'youtu.be') videoId = u.pathname.slice(1);
-      if (videoId) {
-        // Use privacy-enhanced embed and comprehensive parameters to avoid Error 153
-        const params = new URLSearchParams({
-          rel: '0',              // Don't show related videos from other channels
-          enablejsapi: '1',      // Enable JavaScript API
-          widgetid: '1',         // Widget identifier
-          origin: window.location.origin, // Current origin for security
-          autoplay: '0',         // Don't autoplay
-          modestbranding: '1',   // Minimal branding
-          playsinline: '1',      // Play inline on mobile
-          fs: '1',               // Allow fullscreen
-        });
-        return `https://www.youtube-nocookie.com/embed/${videoId}?${params.toString()}`;
-      }
-    }
-    // Vimeo
-    if (u.hostname.includes('vimeo.com')) {
-      const videoId = u.pathname.split('/').pop();
-      if (videoId) return `https://player.vimeo.com/video/${videoId}`;
-    }
-  } catch {}
-  return null;
 }
 
 export default function VideoDetail() {
@@ -111,8 +81,9 @@ export default function VideoDetail() {
   }
 
   const canManage = isAdmin || (isTeacher && (video.uploadedById === user?.id || video.uploadedById === user?.teacherId));
-  const embedUrl = getEmbedUrl(video.videoUrl);
-  const isDirectVideo = !embedUrl && (video.videoUrl.endsWith('.mp4') || video.videoUrl.endsWith('.webm'));
+  const embedUrl = getVideoEmbedUrl(video.videoUrl);
+  const isDirectVideo = !embedUrl && isDirectVideoUrl(video.videoUrl);
+  const playbackSrc = getVideoPlaybackSrc(video.videoUrl);
 
   return (
     <div className="space-y-6 max-w-[900px] mx-auto pb-10">
@@ -148,10 +119,11 @@ export default function VideoDetail() {
             title={video.title}
             className="w-full h-full"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            referrerPolicy="strict-origin-when-cross-origin"
             allowFullScreen
           />
         ) : isDirectVideo ? (
-          <video controls className="w-full h-full" src={video.videoUrl} />
+          <video controls className="w-full h-full" src={playbackSrc} />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center gap-4 text-slate-400">
             <p className="text-sm">Preview not available for this URL.</p>

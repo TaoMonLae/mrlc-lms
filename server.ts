@@ -3216,6 +3216,9 @@ async function startServer() {
 
   // ── Public branding (no auth) — used by the login screen ─────────────────────
   app.get("/api/public/branding", async (req, res) => {
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.set("Pragma", "no-cache");
+    res.set("Expires", "0");
     try {
       const profile = await prisma.schoolProfile.findFirst();
       res.json({

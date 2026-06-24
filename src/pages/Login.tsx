@@ -49,14 +49,14 @@ export default function LoginPage() {
   // Pull the school's branding (logo + name + contact + login background) from
   // the public endpoint.
   useEffect(() => {
-    fetch("/api/public/branding")
+    fetch(`/api/public/branding?t=${Date.now()}`, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data?.logoUrl) setLogoUrl(data.logoUrl);
         if (data?.name) setSchoolName(data.name);
         if (data?.contactEmail) setContactEmail(data.contactEmail);
         if (data?.contactPhone) setContactPhone(data.contactPhone);
-        if (data?.loginHeroUrl) setHeroUrl(data.loginHeroUrl);
+        setHeroUrl(data?.loginHeroUrl || HERO_FALLBACK);
       })
       .catch(() => {/* keep defaults */});
   }, []);

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { UserRole, Permission, PERMISSION_LABELS, ROLE_PERMISSIONS } from '@/src/lib/permissions';
+import { UserRole, Permission, PERMISSION_LABELS, ROLE_LABELS, ROLE_PERMISSIONS } from '@/src/lib/permissions';
 import { Check, X } from 'lucide-react';
 
 interface PermissionMatrixProps {

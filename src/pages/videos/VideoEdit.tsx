@@ -17,11 +17,17 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import type { VideoLesson } from './VideoList';
+import { isValidVideoSourceUrl } from '../../lib/video';
+
+const videoUrlSchema = z.string().min(1, 'Video URL is required').refine(
+  isValidVideoSourceUrl,
+  'Must be a YouTube, Vimeo, direct video URL, or uploaded video file'
+);
 
 const videoSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
   description: z.string().optional(),
-  videoUrl: z.string().url('Must be a valid URL'),
+  videoUrl: videoUrlSchema,
   thumbnailUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
   duration: z.coerce.number().int().min(0).optional(),
   classId: z.string().optional(),
