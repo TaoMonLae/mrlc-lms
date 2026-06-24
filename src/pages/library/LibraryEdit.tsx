@@ -17,15 +17,34 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 
-const resourceSchema = z.object({
-  title: z.string().min(3, 'Title must be at least 3 characters'),
-  description: z.string().min(10, 'Provide a brief description'),
-  type: z.enum(['PDF', 'IMAGE', 'VIDEO', 'LINK', 'DOCUMENT', 'OTHER']),
-  visibility: z.enum(['TEACHERS_ONLY', 'STUDENTS', 'ALL']),
-  classId: z.string().optional(),
-  subjectId: z.string().optional(),
-  externalUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
-});
+const resourceSchema = z
+  .object({
+    title: z.string().min(3, 'Title must be at least 3 characters'),
+    description: z.string().min(10, 'Provide a brief description'),
+    type: z.enum(['PDF', 'IMAGE', 'VIDEO', 'LINK', 'DOCUMENT', 'OTHER']),
+    visibility: z.enum(['TEACHERS_ONLY', 'STUDENTS', 'ALL']),
+    classId: z.string().optional(),
+    subjectId: z.string().optional(),
+    // Accept any stored value here; only VIDEO/LINK require a real URL (checked below).
+    externalUrl: z.string().optional().or(z.literal('')),
+  })
+  .superRefine((data, ctx) => {
+    if ((data.type === 'VIDEO' || data.type === 'LINK')) {
+      const url = (data.externalUrl || '').trim();
+      if (url) {
+        try {
+          // eslint-disable-next-line no-new
+          new URL(url);
+        } catch {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['externalUrl'],
+            message: 'Must be a valid URL',
+          });
+        }
+      }
+    }
+  });
 
 type FormValues = z.infer<typeof resourceSchema>;
 
@@ -85,6 +104,11 @@ export default function LibraryEdit() {
     fetchOptionsAndData();
   }, [id, reset]);
 
+  const onInvalid = (formErrors: typeof errors) => {
+    const first = Object.values(formErrors)[0] as { message?: string } | undefined;
+    toast.error(first?.message || 'Please fix the highlighted fields before saving.');
+  };
+
   const onSubmit = async (data: FormValues) => {
     try {
       const token = sessionStorage.getItem('auth_token');
@@ -95,6 +119,8 @@ export default function LibraryEdit() {
         visibility: data.visibility,
         classId: data.classId || null,
         subjectId: data.subjectId || null,
+        // Preserve whatever was stored (uploaded file URL for PDFs/images, or the
+        // external link for VIDEO/LINK). Never wipe it on an unrelated edit.
         externalUrl: data.externalUrl || null,
       };
 
@@ -141,7 +167,7 @@ export default function LibraryEdit() {
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Edit Resource</h1>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-6">
         <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl overflow-hidden shadow-sm p-6 space-y-6">
             
           <div className="space-y-2">

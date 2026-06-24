@@ -68,6 +68,11 @@ export default function LibraryNew() {
     }
   });
 
+  const onInvalid = (formErrors: typeof errors) => {
+    const first = Object.values(formErrors)[0] as { message?: string } | undefined;
+    toast.error(first?.message || 'Please fix the highlighted fields before saving.');
+  };
+
   const onSubmit = async (data: FormValues) => {
     try {
       if (activeTab === 'upload' && !file) {
@@ -142,7 +147,7 @@ export default function LibraryNew() {
         <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Upload files or link external content to the central library.</p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-6">
         <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl overflow-hidden shadow-sm">
            
           {/* Tabs */}
