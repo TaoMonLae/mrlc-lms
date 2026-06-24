@@ -61,6 +61,20 @@ export default function VideoNew() {
   const [uploadMethod, setUploadMethod] = useState<'url' | 'file'>('url');
 
   const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<FormValues>({
+    resolver: zodResolver(videoSchema) as Resolver<FormValues>,
+    defaultValues: {
+      visibility: 'ALL',
+      status: 'PUBLISHED',
+    },
+  });
+
+  const {
     file: videoFile,
     uploading: uploadingVideo,
     uploadedUrl: uploadedVideoUrl,
@@ -104,20 +118,6 @@ export default function VideoNew() {
       }
     }
   }, [videoUrl, thumbnailUrl, setValue]);
-
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    formState: { errors, isSubmitting },
-  } = useForm<FormValues>({
-    resolver: zodResolver(videoSchema) as Resolver<FormValues>,
-    defaultValues: {
-      visibility: 'ALL',
-      status: 'PUBLISHED',
-    },
-  });
 
   const onSubmit = async (data: FormValues) => {
     try {
@@ -234,7 +234,7 @@ export default function VideoNew() {
                       type="file"
                       accept="video/mp4,video/webm,video/quicktime,video/x-msvideo,video/x-matroska,video/x-flv,video/x-ms-wmv,.mp4,.webm,.mov,.avi,.mkv,.flv,.wmv"
                       className="hidden"
-                      onChange={handleVideoFileChange}
+                      onChange={handleFileChange}
                       disabled={uploadingVideo}
                     />
                     <Button

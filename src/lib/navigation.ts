@@ -19,7 +19,8 @@ import {
   Download,
   Video,
   BookMarked,
-  Tablet
+  Tablet,
+  ClipboardList
 } from "lucide-react";
 import { UserRole } from "./permissions";
 
@@ -127,6 +128,12 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     url: "/cases",
     icon: AlertCircle,
     roles: ["ADMIN", "CASE_WORKER"],
+  },
+  {
+    title: "Operations",
+    url: "/operations",
+    icon: ClipboardList,
+    roles: ["ADMIN"],
   },
   {
     title: "Reports",

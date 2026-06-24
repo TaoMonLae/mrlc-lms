@@ -448,6 +448,60 @@ const schemas = {
     visibility: z.enum(["ALL", "STUDENTS", "TEACHERS_ONLY"]).optional(),
     downloadAllowed: z.union([z.boolean(), z.string()]).optional(),
   }),
+  admissionApplication: z.object({
+    applicantName: reqStr,
+    guardianName: optStr,
+    contactNumber: optStr,
+    country: optStr,
+    targetLevel: optStr,
+    status: optStr,
+    notes: optStr,
+  }),
+  calendarEvent: z.object({
+    title: reqStr,
+    eventType: optStr,
+    startDate: reqStr,
+    endDate: optStr,
+    audience: optStr,
+    location: optStr,
+    notes: optStr,
+  }),
+  assignment: z.object({
+    title: reqStr,
+    description: optStr,
+    classId: nullableStr,
+    subjectId: nullableStr,
+    dueDate: optStr,
+    status: optStr,
+  }),
+  certificateRecord: z.object({
+    studentId: nullableStr,
+    studentName: reqStr,
+    certificateType: reqStr,
+    issueDate: optStr,
+    status: optStr,
+    referenceNo: optStr,
+    notes: optStr,
+  }),
+  communicationLog: z.object({
+    title: reqStr,
+    channel: optStr,
+    audience: optStr,
+    contactName: optStr,
+    contactInfo: optStr,
+    message: reqStr,
+    followUpDate: optStr,
+    status: optStr,
+  }),
+  inventoryItem: z.object({
+    name: reqStr,
+    category: optStr,
+    quantity: optNum,
+    condition: optStr,
+    location: optStr,
+    assignedTo: optStr,
+    notes: optStr,
+  }),
   settingsUpdate: z.object({
     name: optStr, address: optStr, email: optStr, phone: optStr,
     logoUrl: nullableStr, signatureUrl: nullableStr, loginHeroUrl: nullableStr, primaryColor: optStr, accentColor: optStr,
@@ -2855,6 +2909,191 @@ async function startServer() {
       res.json(loans);
     } catch (err) {
       logger.error("Error fetching book loans:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── School Operations API ───────────────────────────────────────────────────
+  const toOptionalDate = (value: string | null | undefined): Date | null => {
+    if (!value) return null;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+  };
+
+  app.get("/api/operations/overview", authMiddleware, async (_req, res) => {
+    try {
+      const db = prisma as any;
+      const [admissions, calendarEvents, assignments, certificates, communications, inventory] = await Promise.all([
+        db.admissionApplication.findMany({ orderBy: { submittedAt: "desc" }, take: 12 }),
+        db.academicCalendarEvent.findMany({ orderBy: { startDate: "asc" }, take: 12 }),
+        db.assignment.findMany({ orderBy: { dueDate: "asc" }, take: 12 }),
+        db.certificateRecord.findMany({ orderBy: { issueDate: "desc" }, take: 12 }),
+        db.communicationLog.findMany({ orderBy: { createdAt: "desc" }, take: 12 }),
+        db.inventoryItem.findMany({ orderBy: { updatedAt: "desc" }, take: 12 }),
+      ]);
+      res.json({
+        admissions,
+        calendarEvents,
+        assignments,
+        certificates,
+        communications,
+        inventory,
+        counts: {
+          admissions: admissions.length,
+          calendarEvents: calendarEvents.length,
+          assignments: assignments.length,
+          certificates: certificates.length,
+          communications: communications.length,
+          inventory: inventory.length,
+        },
+      });
+    } catch (err) {
+      logger.error("Error fetching school operations overview:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/operations/admissions", authMiddleware, requireRole("ADMIN"), validate(schemas.admissionApplication), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const record = await (prisma as any).admissionApplication.create({
+        data: {
+          applicantName: req.body.applicantName,
+          guardianName: req.body.guardianName || null,
+          contactNumber: req.body.contactNumber || null,
+          country: req.body.country || null,
+          targetLevel: req.body.targetLevel || null,
+          status: req.body.status || "NEW",
+          notes: req.body.notes || null,
+        },
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "AdmissionApplication", record.id, `Created admission application for ${record.applicantName}`, req.ip, req.get("user-agent") || null);
+      res.status(201).json(record);
+    } catch (err) {
+      logger.error("Error creating admission application:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/operations/calendar-events", authMiddleware, requireRole("ADMIN"), validate(schemas.calendarEvent), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const startDate = toOptionalDate(req.body.startDate);
+    if (!startDate) {
+      res.status(400).json({ error: "startDate: invalid date" });
+      return;
+    }
+    try {
+      const record = await (prisma as any).academicCalendarEvent.create({
+        data: {
+          title: req.body.title,
+          eventType: req.body.eventType || "SCHOOL",
+          startDate,
+          endDate: toOptionalDate(req.body.endDate),
+          audience: req.body.audience || "ALL",
+          location: req.body.location || null,
+          notes: req.body.notes || null,
+        },
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "AcademicCalendarEvent", record.id, `Created calendar event ${record.title}`, req.ip, req.get("user-agent") || null);
+      res.status(201).json(record);
+    } catch (err) {
+      logger.error("Error creating calendar event:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/operations/assignments", authMiddleware, requireRole("ADMIN"), validate(schemas.assignment), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const record = await (prisma as any).assignment.create({
+        data: {
+          title: req.body.title,
+          description: req.body.description || null,
+          classId: req.body.classId || null,
+          subjectId: req.body.subjectId || null,
+          dueDate: toOptionalDate(req.body.dueDate),
+          status: req.body.status || "OPEN",
+          createdById: jwtUser.userId,
+          createdByName: jwtUser.email,
+        },
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "Assignment", record.id, `Created assignment ${record.title}`, req.ip, req.get("user-agent") || null);
+      res.status(201).json(record);
+    } catch (err) {
+      logger.error("Error creating assignment:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/operations/certificates", authMiddleware, requireRole("ADMIN"), validate(schemas.certificateRecord), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const record = await (prisma as any).certificateRecord.create({
+        data: {
+          studentId: req.body.studentId || null,
+          studentName: req.body.studentName,
+          certificateType: req.body.certificateType,
+          issueDate: toOptionalDate(req.body.issueDate) || new Date(),
+          status: req.body.status || "ISSUED",
+          referenceNo: req.body.referenceNo || null,
+          notes: req.body.notes || null,
+        },
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "CertificateRecord", record.id, `Created certificate for ${record.studentName}`, req.ip, req.get("user-agent") || null);
+      res.status(201).json(record);
+    } catch (err: any) {
+      logger.error("Error creating certificate record:", err);
+      if (err.code === "P2002") {
+        res.status(409).json({ error: "referenceNo: already exists" });
+        return;
+      }
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/operations/communications", authMiddleware, requireRole("ADMIN"), validate(schemas.communicationLog), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const record = await (prisma as any).communicationLog.create({
+        data: {
+          title: req.body.title,
+          channel: req.body.channel || "PHONE",
+          audience: req.body.audience || "GUARDIAN",
+          contactName: req.body.contactName || null,
+          contactInfo: req.body.contactInfo || null,
+          message: req.body.message,
+          followUpDate: toOptionalDate(req.body.followUpDate),
+          status: req.body.status || "LOGGED",
+          createdById: jwtUser.userId,
+          createdByName: jwtUser.email,
+        },
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "CommunicationLog", record.id, `Logged communication ${record.title}`, req.ip, req.get("user-agent") || null);
+      res.status(201).json(record);
+    } catch (err) {
+      logger.error("Error creating communication log:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/operations/inventory", authMiddleware, requireRole("ADMIN"), validate(schemas.inventoryItem), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const record = await (prisma as any).inventoryItem.create({
+        data: {
+          name: req.body.name,
+          category: req.body.category || "GENERAL",
+          quantity: Math.max(0, Number(req.body.quantity ?? 1)),
+          condition: req.body.condition || "GOOD",
+          location: req.body.location || null,
+          assignedTo: req.body.assignedTo || null,
+          notes: req.body.notes || null,
+        },
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "InventoryItem", record.id, `Created inventory item ${record.name}`, req.ip, req.get("user-agent") || null);
+      res.status(201).json(record);
+    } catch (err) {
+      logger.error("Error creating inventory item:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });

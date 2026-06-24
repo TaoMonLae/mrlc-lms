@@ -546,6 +546,112 @@ model BookLoan {
 }
 
 // -----------------------------------------------------------------------------
+// SCHOOL OPERATIONS
+// -----------------------------------------------------------------------------
+
+model AdmissionApplication {
+  id              String   @id @default(uuid())
+  applicantName   String
+  guardianName    String?
+  contactNumber   String?
+  country         String?
+  targetLevel     String?
+  status          String   @default("NEW") // NEW | REVIEWING | ACCEPTED | WAITLISTED | REJECTED
+  notes           String?
+  submittedAt     DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([status])
+  @@index([targetLevel])
+}
+
+model AcademicCalendarEvent {
+  id          String   @id @default(uuid())
+  title       String
+  eventType   String   @default("SCHOOL") // SCHOOL | HOLIDAY | EXAM | MEETING | ACTIVITY
+  startDate   DateTime
+  endDate     DateTime?
+  audience    String   @default("ALL") // ALL | STUDENTS | TEACHERS | STAFF
+  location    String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([startDate])
+  @@index([eventType])
+}
+
+model Assignment {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  classId     String?
+  subjectId   String?
+  dueDate     DateTime?
+  status      String   @default("OPEN") // OPEN | CLOSED | ARCHIVED
+  createdById String?
+  createdByName String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([classId])
+  @@index([subjectId])
+  @@index([status])
+}
+
+model CertificateRecord {
+  id          String   @id @default(uuid())
+  studentId   String?
+  studentName String
+  certificateType String
+  issueDate   DateTime @default(now())
+  status      String   @default("ISSUED") // DRAFT | ISSUED | REVOKED
+  referenceNo String?  @unique
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([studentId])
+  @@index([status])
+}
+
+model CommunicationLog {
+  id          String   @id @default(uuid())
+  title       String
+  channel     String   @default("PHONE") // PHONE | SMS | EMAIL | MEETING | HOME_VISIT | OTHER
+  audience    String   @default("GUARDIAN") // GUARDIAN | STUDENT | TEACHER | STAFF | COMMUNITY
+  contactName String?
+  contactInfo String?
+  message     String
+  followUpDate DateTime?
+  status      String   @default("LOGGED") // LOGGED | NEEDS_FOLLOW_UP | RESOLVED
+  createdById String?
+  createdByName String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([channel])
+  @@index([status])
+}
+
+model InventoryItem {
+  id          String   @id @default(uuid())
+  name        String
+  category    String   @default("GENERAL")
+  quantity    Int      @default(1)
+  condition   String   @default("GOOD") // NEW | GOOD | NEEDS_REPAIR | LOST | RETIRED
+  location    String?
+  assignedTo  String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+  @@index([condition])
+}
+
+// -----------------------------------------------------------------------------
 // E-LIBRARY (online EPUB/PDF reading)
 // -----------------------------------------------------------------------------
 

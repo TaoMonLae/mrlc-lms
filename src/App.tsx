@@ -67,6 +67,7 @@ import StudentProfileReport from "./pages/reports/StudentProfileReport";
 import ExamResultsReport from "./pages/reports/ExamResultsReport";
 import ClassPerformanceReport from "./pages/reports/ClassPerformanceReport";
 import MonthlySummaryReport from "./pages/reports/MonthlySummaryReport";
+import SchoolOperations from "./pages/operations/SchoolOperations";
 
 import RolesPermissions from "./pages/settings/RolesPermissions";
 import SettingsLayout from "./pages/settings/SettingsLayout";
@@ -224,6 +225,7 @@ export default function App() {
 
                 {/* Admin only */}
                 <Route element={<ProtectedRoute requiredPermission="manage_all" />}>
+                  <Route path="/operations" element={<SchoolOperations />} />
                   <Route path="/settings" element={<SettingsLayout />}>
                     <Route index element={<Navigate to="/settings/school" replace />} />
                     <Route path="school" element={<SchoolSettings />} />
@@ -321,4 +323,3 @@ export default function App() {
     </ThemeProvider>
   );
 }
-
