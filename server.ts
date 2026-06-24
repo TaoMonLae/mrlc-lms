@@ -1860,7 +1860,7 @@ async function startServer() {
       if (jwtUser.role === "STUDENT") {
         where = { visibility: { in: ["ALL", "STUDENTS"] }, status: "PUBLISHED" };
       } else if (jwtUser.role === "TEACHER") {
-        where = { visibility: { in: ["ALL", "TEACHERS_ONLY"] } };
+        where = { visibility: { in: ["ALL", "STUDENTS", "TEACHERS_ONLY"] } };
       }
       const videos = await prisma.videoLesson.findMany({
         where,
@@ -1934,7 +1934,7 @@ async function startServer() {
         res.status(404).json({ error: "Video lesson not found" });
         return;
       }
-      if (jwtUser.role === "TEACHER" && !["ALL", "TEACHERS_ONLY"].includes(video.visibility)) {
+      if (jwtUser.role === "TEACHER" && !["ALL", "STUDENTS", "TEACHERS_ONLY"].includes(video.visibility)) {
         res.status(404).json({ error: "Video lesson not found" });
         return;
       }
@@ -1954,6 +1954,28 @@ async function startServer() {
     const { id } = req.params;
     const { title, description, videoUrl, thumbnailUrl, duration, classId, subjectId, visibility, status } = req.body;
     try {
+      // First, get the current video to check if videoUrl is changing
+      const currentVideo = await prisma.videoLesson.findUnique({ where: { id } });
+      if (!currentVideo) {
+        res.status(404).json({ error: "Video lesson not found" });
+        return;
+      }
+
+      // If videoUrl is changing and the old URL was an uploaded file, delete the old file
+      if (videoUrl && videoUrl !== currentVideo.videoUrl && currentVideo.videoUrl.startsWith("/uploads/videos/")) {
+        const filename = currentVideo.videoUrl.replace("/uploads/videos/", "");
+        const filePath = path.join(VIDEO_FILES_DIR, filename);
+        if (fs.existsSync(filePath)) {
+          try {
+            fs.unlinkSync(filePath);
+            logger.info(`Deleted old video file: ${filePath}`);
+          } catch (err) {
+            logger.error(`Failed to delete old video file: ${filePath}`, err);
+            // Continue with update even if file deletion fails
+          }
+        }
+      }
+
       const updated = await prisma.videoLesson.update({
         where: { id },
         data: {
@@ -2000,6 +2022,28 @@ async function startServer() {
     }
     const { id } = req.params;
     try {
+      // First, get the video to check if it has an uploaded file
+      const video = await prisma.videoLesson.findUnique({ where: { id } });
+      if (!video) {
+        res.status(404).json({ error: "Video lesson not found" });
+        return;
+      }
+
+      // Delete the video file from disk if it's an uploaded file
+      if (video.videoUrl.startsWith("/uploads/videos/")) {
+        const filename = video.videoUrl.replace("/uploads/videos/", "");
+        const filePath = path.join(VIDEO_FILES_DIR, filename);
+        if (fs.existsSync(filePath)) {
+          try {
+            fs.unlinkSync(filePath);
+            logger.info(`Deleted video file: ${filePath}`);
+          } catch (err) {
+            logger.error(`Failed to delete video file: ${filePath}`, err);
+            // Continue with database deletion even if file deletion fails
+          }
+        }
+      }
+
       await prisma.videoLesson.delete({ where: { id } });
 
       await createAuditLog(
@@ -2021,6 +2065,86 @@ async function startServer() {
         res.status(404).json({ error: "Video lesson not found" });
         return;
       }
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Video Progress API ────────────────────────────────────────────────────────
+  // Get progress for all videos (for the current user)
+  app.get("/api/videos/progress", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const progress = await prisma.videoProgress.findMany({
+        where: { userId: jwtUser.userId },
+        include: { video: { select: { id: true, title: true, thumbnailUrl: true, duration: true } } },
+        orderBy: { lastWatchedAt: "desc" },
+      });
+      res.json(progress);
+    } catch (err) {
+      logger.error("Error fetching video progress:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Get progress for a specific video
+  app.get("/api/videos/:id/progress", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { id } = req.params;
+    try {
+      const progress = await prisma.videoProgress.findUnique({
+        where: { userId_videoId: { userId: jwtUser.userId, videoId: id } },
+      });
+      res.json(progress || { currentPosition: 0, isCompleted: false });
+    } catch (err) {
+      logger.error("Error fetching video progress:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Save/update progress for a video
+  app.post("/api/videos/:id/progress", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { id } = req.params;
+    const { currentPosition, isCompleted } = req.body;
+
+    // Validate input
+    if (typeof currentPosition !== "number" || currentPosition < 0) {
+      res.status(400).json({ error: "currentPosition must be a non-negative number" });
+      return;
+    }
+    if (typeof isCompleted !== "boolean") {
+      res.status(400).json({ error: "isCompleted must be a boolean" });
+      return;
+    }
+
+    try {
+      // Check if video exists
+      const video = await prisma.videoLesson.findUnique({ where: { id } });
+      if (!video) {
+        res.status(404).json({ error: "Video not found" });
+        return;
+      }
+
+      // Upsert progress
+      const progress = await prisma.videoProgress.upsert({
+        where: { userId_videoId: { userId: jwtUser.userId, videoId: id } },
+        create: {
+          userId: jwtUser.userId,
+          videoId: id,
+          currentPosition,
+          isCompleted,
+          lastWatchedAt: new Date(),
+        },
+        update: {
+          currentPosition,
+          isCompleted,
+          lastWatchedAt: new Date(),
+        },
+      });
+
+      res.json(progress);
+    } catch (err) {
+      logger.error("Error saving video progress:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });

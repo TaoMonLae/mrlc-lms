@@ -16,8 +16,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import type { VideoLesson } from './VideoList';
-import { isValidVideoSourceUrl } from '../../lib/video';
+import { isValidVideoSourceUrl, getVideoThumbnailUrl } from '../../lib/video';
+import {
+  MAX_VIDEO_FILE_SIZE,
+  MAX_VIDEO_FILE_SIZE_DISPLAY,
+  ALLOWED_VIDEO_EXTENSIONS,
+} from '../../lib/video/constants';
+import type { VideoVisibility, VideoStatus, VideoLesson } from '../../lib/video/types';
+import { useVideoFileUpload } from '../../hooks/useVideoFileUpload';
 
 const videoUrlSchema = z.string().min(1, 'Video URL is required').refine(
   isValidVideoSourceUrl,
@@ -32,8 +38,16 @@ const videoSchema = z.object({
   duration: z.coerce.number().int().min(0).optional(),
   classId: z.string().optional(),
   subjectId: z.string().optional(),
-  visibility: z.enum(['ALL', 'STUDENTS', 'TEACHERS_ONLY']),
-  status: z.enum(['PUBLISHED', 'DRAFT', 'ARCHIVED']),
+  visibility: z.union([
+    z.literal('ALL' as const),
+    z.literal('STUDENTS' as const),
+    z.literal('TEACHERS_ONLY' as const),
+  ]),
+  status: z.union([
+    z.literal('PUBLISHED' as const),
+    z.literal('DRAFT' as const),
+    z.literal('ARCHIVED' as const),
+  ]),
 });
 
 type FormValues = z.infer<typeof videoSchema>;
@@ -46,10 +60,18 @@ export default function VideoEdit() {
   const [video, setVideo] = useState<VideoLesson | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploadMethod, setUploadMethod] = useState<'url' | 'file'>('url');
-  const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [uploadingVideo, setUploadingVideo] = useState(false);
-  const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string | null>(null);
-  const videoInputRef = useRef<HTMLInputElement>(null);
+
+  const {
+    file: videoFile,
+    uploading: uploadingVideo,
+    uploadedUrl: uploadedVideoUrl,
+    inputRef: videoInputRef,
+    handleFileChange,
+    removeUploaded,
+    triggerFileSelect,
+  } = useVideoFileUpload({
+    onUploadComplete: (url) => setValue('videoUrl', url),
+  });
 
   const {
     register,
@@ -63,73 +85,20 @@ export default function VideoEdit() {
     defaultValues: { visibility: 'ALL', status: 'PUBLISHED' },
   });
 
-  const handleVideoFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  // Auto-fill thumbnail for YouTube/Vimeo videos when URL changes
+  const videoUrl = watch('videoUrl');
+  const thumbnailUrl = watch('thumbnailUrl');
 
-    // Validate file size (500MB limit)
-    if (file.size > 500 * 1024 * 1024) {
-      toast.error('Video file must be 500 MB or smaller');
-      event.target.value = '';
-      return;
-    }
-
-    // Validate file type
-    const allowedTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska', 'video/x-flv', 'video/x-ms-wmv'];
-    if (!allowedTypes.includes(file.type) && !file.name.match(/\.(mp4|webm|mov|avi|mkv|flv|wmv)$/i)) {
-      toast.error('Only video files (MP4, WebM, MOV, AVI, MKV, FLV, WMV) are allowed');
-      event.target.value = '';
-      return;
-    }
-
-    setVideoFile(file);
-
-    // Auto-upload the file
-    await uploadVideoFile(file);
-  };
-
-  const uploadVideoFile = async (file: File) => {
-    const token = sessionStorage.getItem('auth_token');
-    const formData = new FormData();
-    formData.append('video', file);
-
-    setUploadingVideo(true);
-    try {
-      const res = await fetch('/api/videos/files', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || 'Failed to upload video file');
-      }
-
-      const data = await res.json();
-      setUploadedVideoUrl(data.url);
-      setValue('videoUrl', data.url); // Auto-fill the URL field
-
-      toast.success('Video file uploaded successfully');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to upload video file');
-      setVideoFile(null);
-    } finally {
-      setUploadingVideo(false);
-      if (videoInputRef.current) {
-        videoInputRef.current.value = '';
+  useEffect(() => {
+    // Only auto-fill if thumbnail is empty and videoUrl is a YouTube/Vimeo URL
+    if (videoUrl && !thumbnailUrl) {
+      const autoThumb = getVideoThumbnailUrl(videoUrl);
+      if (autoThumb) {
+        setValue('thumbnailUrl', autoThumb);
+        toast.info('Auto-fetched video thumbnail');
       }
     }
-  };
-
-  const removeUploadedVideo = () => {
-    setVideoFile(null);
-    setUploadedVideoUrl(null);
-    setValue('videoUrl', '');
-    if (videoInputRef.current) {
-      videoInputRef.current.value = '';
-    }
-  };
+  }, [videoUrl, thumbnailUrl, setValue]);
 
   useEffect(() => {
     const fetchOptions = async () => {
@@ -308,13 +277,13 @@ export default function VideoEdit() {
                       type="file"
                       accept="video/mp4,video/webm,video/quicktime,video/x-msvideo,video/x-matroska,video/x-flv,video/x-ms-wmv,.mp4,.webm,.mov,.avi,.mkv,.flv,.wmv"
                       className="hidden"
-                      onChange={handleVideoFileChange}
+                      onChange={handleFileChange}
                       disabled={uploadingVideo}
                     />
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => videoInputRef.current?.click()}
+                      onClick={triggerFileSelect}
                       disabled={uploadingVideo}
                       className="w-full"
                     >
@@ -322,7 +291,7 @@ export default function VideoEdit() {
                       {uploadingVideo ? 'Uploading...' : 'Choose Video File'}
                     </Button>
                     <p className="text-xs text-slate-500">
-                      Supports MP4, WebM, MOV, AVI, MKV, FLV, WMV files up to 500MB
+                      Supports {ALLOWED_VIDEO_EXTENSIONS.map((e) => e.replace('.', '').toUpperCase()).join(', ')} files up to {MAX_VIDEO_FILE_SIZE_DISPLAY}
                     </p>
                   </>
                 ) : (
@@ -337,7 +306,7 @@ export default function VideoEdit() {
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={removeUploadedVideo}
+                      onClick={removeUploaded}
                       className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
                     >
                       <X className="h-4 w-4" />
@@ -347,7 +316,6 @@ export default function VideoEdit() {
                 <Input
                   type="hidden"
                   {...register('videoUrl')}
-                  value={uploadedVideoUrl || watch('videoUrl') || ''}
                 />
                 {errors.videoUrl && <p className="text-xs text-red-500 font-medium">{errors.videoUrl.message}</p>}
               </div>

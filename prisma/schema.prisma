@@ -440,9 +440,32 @@ model VideoLesson {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  progressRecords VideoProgress[]
+
   @@index([classId])
   @@index([subjectId])
   @@index([uploadedById])
+}
+
+model VideoProgress {
+  id            String   @id @default(uuid())
+  userId        String
+  videoId       String
+  video         VideoLesson @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  // Position in seconds where the user stopped watching
+  currentPosition   Int      @default(0)
+  // Whether the user has completed the video (watched 90%+)
+  isCompleted       Boolean  @default(false)
+  // Last time this progress was updated
+  lastWatchedAt     DateTime @default(now())
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, videoId])
+  @@index([userId])
+  @@index([videoId])
 }
 
 model AuditLog {

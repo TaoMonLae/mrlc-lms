@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Video, Search, Filter, Play, Clock, BookOpen } from 'lucide-react';
+import { Video, Search, Filter, Play, Clock, BookOpen, Check } from 'lucide-react';
 import { apiGet } from '../../lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,35 +13,45 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { formatDistanceToNow } from 'date-fns';
-import type { VideoLesson } from '../videos/VideoList';
-
-function formatDuration(seconds?: number): string {
-  if (!seconds) return '';
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${String(s).padStart(2, '0')}`;
-}
+import { formatDuration } from '../../lib/video';
+import { useAllVideoProgress } from '../../hooks/useVideoProgress';
+import type { VideoLesson } from '../../lib/video/types';
 
 export default function StudentVideos() {
   const [searchTerm, setSearchTerm] = useState('');
   const [subjectFilter, setSubjectFilter] = useState('All');
   const [videos, setVideos] = useState<VideoLesson[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { progressMap } = useAllVideoProgress();
 
   useEffect(() => {
     apiGet<VideoLesson[]>('/api/videos')
       .then((d) => setVideos(Array.isArray(d) ? d : []))
-      .catch(() => setVideos([]));
+      .catch(() => setVideos([]))
+      .finally(() => setLoading(false));
   }, []);
 
-  const subjects = Array.from(new Set(videos.map(v => v.subjectName).filter(Boolean)));
+  // Build unique subjects list with both ID and name for proper filtering
+  const subjectsMap = React.useMemo(() => {
+    const map = new Map<string, string>();
+    videos.forEach(v => {
+      if (v.subjectId && v.subjectName && !map.has(v.subjectId)) {
+        map.set(v.subjectId, v.subjectName);
+      }
+    });
+    return map;
+  }, [videos]);
 
   const filtered = videos.filter(v => {
     const matchesSearch =
       v.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (v.description || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesSubject = subjectFilter === 'All' || v.subjectName === subjectFilter;
+    const matchesSubject = subjectFilter === 'All' || v.subjectId === subjectFilter;
     return matchesSearch && matchesSubject && v.status === 'PUBLISHED' && v.visibility !== 'TEACHERS_ONLY';
   });
+
+  const hasActiveFilters = searchTerm !== '' || subjectFilter !== 'All';
+  const hasNoVideos = videos.length === 0;
 
   return (
     <div className="space-y-8 pb-10">
@@ -74,51 +84,93 @@ export default function StudentVideos() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="All">All Subjects</SelectItem>
-            {subjects.map(s => (
-              <SelectItem key={s} value={s!}>{s}</SelectItem>
+            {Array.from(subjectsMap.entries()).map(([id, name]) => (
+              <SelectItem key={id} value={id}>{name}</SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <span className="ml-3 text-slate-500">Loading videos...</span>
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="col-span-full py-20 text-center bg-white dark:bg-surface-indigo rounded-2xl border border-dashed border-slate-200 dark:border-surface-raised">
           <Video className="h-12 w-12 text-slate-200 dark:text-slate-700 mx-auto mb-4" />
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white">No videos found</h3>
-          <p className="text-sm text-slate-500 mt-1">Try adjusting your search or filter.</p>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+            {hasNoVideos ? 'No videos available yet' : 'No videos found'}
+          </h3>
+          <p className="text-sm text-slate-500 mt-1">
+            {hasNoVideos
+              ? 'Check back later for new video lessons from your teachers.'
+              : 'Try adjusting your search or filter to find what you\'re looking for.'}
+          </p>
+          {hasActiveFilters && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-4"
+              onClick={() => {
+                setSearchTerm('');
+                setSubjectFilter('All');
+              }}
+            >
+              Clear filters
+            </Button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filtered.map(video => (
-            <Link
-              key={video.id}
-              to={`/videos/${video.id}`}
-              className="group bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl overflow-hidden hover:shadow-md transition-shadow flex flex-col"
-            >
-              {/* Thumbnail */}
-              <div className="relative bg-slate-900 aspect-video overflow-hidden">
-                {video.thumbnailUrl ? (
-                  <img
-                    src={video.thumbnailUrl}
-                    alt={video.title}
-                    className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-aubergine-900 to-slate-900">
-                    <Video className="h-10 w-10 text-slate-600" />
+          {filtered.map(video => {
+            const progress = progressMap[video.id];
+            const progressPercent = progress && video.duration
+              ? Math.min(100, (progress.currentPosition / video.duration) * 100)
+              : 0;
+
+            return (
+              <Link
+                key={video.id}
+                to={`/videos/${video.id}`}
+                className="group bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl overflow-hidden hover:shadow-md transition-shadow flex flex-col"
+              >
+                {/* Thumbnail */}
+                <div className="relative bg-slate-900 aspect-video overflow-hidden">
+                  {video.thumbnailUrl ? (
+                    <img
+                      src={video.thumbnailUrl}
+                      alt={video.title}
+                      className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-aubergine-900 to-slate-900">
+                      <Video className="h-10 w-10 text-slate-600" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
+                      <Play className="h-6 w-6 text-white fill-white" />
+                    </div>
                   </div>
-                )}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
-                    <Play className="h-6 w-6 text-white fill-white" />
-                  </div>
+                  {video.duration && (
+                    <span className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded font-mono">
+                      {formatDuration(video.duration)}
+                    </span>
+                  )}
+                  {/* Progress indicator */}
+                  {progress?.isCompleted && (
+                    <div className="absolute top-2 right-2 bg-green-600/90 text-white px-2 py-0.5 rounded text-[10px] font-medium flex items-center gap-1">
+                      <Check className="h-2.5 w-2.5" />
+                      Completed
+                    </div>
+                  )}
+                  {progress && !progress.isCompleted && progressPercent > 0 && (
+                    <div className="absolute top-2 right-2 bg-blue-600/90 text-white px-2 py-0.5 rounded text-[10px] font-medium">
+                      {Math.round(progressPercent)}%
+                    </div>
+                  )}
                 </div>
-                {video.duration && (
-                  <span className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded font-mono">
-                    {formatDuration(video.duration)}
-                  </span>
-                )}
-              </div>
 
               {/* Info */}
               <div className="p-4 flex-1 flex flex-col">
@@ -143,6 +195,19 @@ export default function StudentVideos() {
                 </div>
               </div>
 
+              {/* Progress bar */}
+              {progress && !progress.isCompleted && progressPercent > 0 && (
+                <div className="h-1 bg-slate-100 dark:bg-slate-700">
+                  <div
+                    className="h-full bg-blue-500 transition-all duration-300"
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+              )}
+              {progress?.isCompleted && (
+                <div className="h-1 bg-green-500" />
+              )}
+
               <div className="bg-slate-50 dark:bg-surface-raised/50 px-4 py-3 border-t border-slate-100 dark:border-surface-raised flex items-center justify-between text-xs text-slate-500">
                 <span className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />
@@ -151,7 +216,8 @@ export default function StudentVideos() {
                 <span className="truncate max-w-[100px]">By {video.uploadedByName}</span>
               </div>
             </Link>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

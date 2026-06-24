@@ -1,22 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit2, Clock, BookOpen, Calendar, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Edit2, Clock, BookOpen, Calendar, ExternalLink, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { usePermissions, useUser } from '../../lib/permissions';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import type { VideoLesson } from './VideoList';
-import { getVideoEmbedUrl, getVideoPlaybackSrc, isDirectVideoUrl } from '../../lib/video';
-
-function formatDuration(seconds?: number): string {
-  if (!seconds) return 'Unknown';
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  if (h > 0) return `${h}h ${m}m ${s}s`;
-  return `${m}m ${s}s`;
-}
+import { getVideoEmbedUrl, getVideoPlaybackSrc, isDirectVideoUrl, formatDurationVerbose } from '../../lib/video';
+import { apiGet } from '../../lib/api';
+import { useVideoProgress } from '../../hooks/useVideoProgress';
+import { VideoPlayerControls } from '../../components/VideoPlayerControls';
+import { VIDEO_RESUME_MIN_SECONDS } from '../../lib/video/constants';
+import type { VideoLesson } from '../../lib/video/types';
 
 export default function VideoDetail() {
   const { id } = useParams<{ id: string }>();
@@ -26,30 +21,94 @@ export default function VideoDetail() {
 
   const [video, setVideo] = useState<VideoLesson | null>(null);
   const [loading, setLoading] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Enable progress tracking for students and teachers (not admins)
+  const shouldTrackProgress = !isAdmin;
+  const {
+    progress,
+    saveProgress,
+    saveProgressImmediate,
+    startPosition,
+    isCompleted,
+  } = useVideoProgress({ videoId: id || '', enabled: shouldTrackProgress && !!id });
 
   useEffect(() => {
     if (!id) return;
     const fetchVideo = async () => {
       try {
-        const token = sessionStorage.getItem('auth_token');
-        const res = await fetch(`/api/videos/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) {
-          if (res.status !== 404) toast.error('Failed to load video');
-          setVideo(null);
-          return;
-        }
-        setVideo(await res.json());
+        const v = await apiGet<VideoLesson>(`/api/videos/${id}`);
+        setVideo(v);
       } catch (error) {
         console.error('Error fetching video:', error);
-        toast.error('Failed to load video');
+        if ((error as Error).message !== 'Request failed (404)') {
+          toast.error('Failed to load video');
+        }
+        setVideo(null);
       } finally {
         setLoading(false);
       }
     };
     fetchVideo();
   }, [id]);
+
+  // Set up video element event listeners for progress tracking
+  useEffect(() => {
+    const videoEl = videoRef.current;
+    if (!videoEl || !shouldTrackProgress) return;
+
+    const handleTimeUpdate = () => {
+      if (videoEl.duration && videoEl.currentTime > 0) {
+        saveProgress(videoEl.currentTime);
+      }
+    };
+
+    const handlePause = () => {
+      if (videoEl.currentTime > 0) {
+        saveProgressImmediate(videoEl.currentTime, isCompleted);
+      }
+    };
+
+    const handleEnded = () => {
+      saveProgressImmediate(videoEl.duration || 0, true);
+      toast.success('Video completed! 🎉');
+    };
+
+    videoEl.addEventListener('timeupdate', handleTimeUpdate);
+    videoEl.addEventListener('pause', handlePause);
+    videoEl.addEventListener('ended', handleEnded);
+
+    return () => {
+      videoEl.removeEventListener('timeupdate', handleTimeUpdate);
+      videoEl.removeEventListener('pause', handlePause);
+      videoEl.removeEventListener('ended', handleEnded);
+    };
+  }, [shouldTrackProgress, saveProgress, saveProgressImmediate, isCompleted]);
+
+  // Set initial video time from saved progress
+  useEffect(() => {
+    const videoEl = videoRef.current;
+    if (!videoEl || startPosition === 0) return;
+
+    // Wait for video metadata to load before seeking
+    const handleLoadedMetadata = () => {
+      if (startPosition > 0) {
+        videoEl.currentTime = startPosition;
+      }
+      videoEl.removeEventListener('loadedmetadata', handleLoadedMetadata);
+    };
+
+    if (videoEl.readyState >= 1) {
+      // Metadata already loaded
+      videoEl.currentTime = startPosition;
+    } else {
+      videoEl.addEventListener('loadedmetadata', handleLoadedMetadata);
+    }
+
+    return () => {
+      videoEl.removeEventListener('loadedmetadata', handleLoadedMetadata);
+    };
+  }, [startPosition]);
 
   if (loading) {
     return (
@@ -112,7 +171,7 @@ export default function VideoDetail() {
       </div>
 
       {/* Video Player */}
-      <div className="bg-black rounded-xl overflow-hidden aspect-video w-full shadow-lg">
+      <div className="bg-black rounded-xl overflow-hidden aspect-video w-full shadow-lg relative group">
         {embedUrl ? (
           <iframe
             src={embedUrl}
@@ -123,7 +182,39 @@ export default function VideoDetail() {
             allowFullScreen
           />
         ) : isDirectVideo ? (
-          <video controls className="w-full h-full" src={playbackSrc} />
+          <>
+            <video
+              ref={videoRef}
+              className="w-full h-full object-contain"
+              src={playbackSrc}
+              onClick={(e) => {
+                const video = e.currentTarget;
+                if (video.paused) {
+                  video.play();
+                } else {
+                  video.pause();
+                }
+              }}
+            />
+            {/* Custom Controls */}
+            <VideoPlayerControls
+              videoRef={videoRef}
+              duration={video.duration || undefined}
+              onProgress={saveProgress}
+            />
+            {/* Resume indicator */}
+            {startPosition > VIDEO_RESUME_MIN_SECONDS && !isCompleted && (
+              <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 backdrop-blur-sm">
+                <RotateCcw className="h-3 w-3" />
+                Resuming from {Math.floor(startPosition / 60)}:{String(Math.floor(startPosition % 60)).padStart(2, '0')}
+              </div>
+            )}
+            {isCompleted && (
+              <div className="absolute top-4 right-4 bg-green-600/90 text-white px-3 py-1.5 rounded-lg text-xs font-medium backdrop-blur-sm">
+                ✓ Completed
+              </div>
+            )}
+          </>
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center gap-4 text-slate-400">
             <p className="text-sm">Preview not available for this URL.</p>
@@ -157,7 +248,7 @@ export default function VideoDetail() {
                   <span>·</span>
                   <span className="flex items-center gap-1">
                     <Clock className="h-3.5 w-3.5" />
-                    {formatDuration(video.duration)}
+                    {formatDurationVerbose(video.duration)}
                   </span>
                 </>
               )}

@@ -15,19 +15,25 @@ import {
 import { useUser } from '../../lib/permissions';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
-import type { VideoLesson } from '../videos/VideoList';
-
-function formatDuration(seconds?: number): string {
-  if (!seconds) return '';
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${String(s).padStart(2, '0')}`;
-}
+import { formatDuration } from '../../lib/video';
+import { apiGet, apiSend } from '../../lib/api';
+import type { VideoLesson } from '../../lib/video/types';
 
 export default function TeacherVideos() {
   const { user } = useUser();
   const [searchTerm, setSearchTerm] = useState('');
   const [videos, setVideos] = useState<VideoLesson[]>([]);
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this video?')) return;
+    try {
+      await apiSend(`/api/videos/${id}`, 'DELETE');
+      setVideos(prev => prev.filter(v => v.id !== id));
+      toast.success('Video deleted');
+    } catch {
+      toast.error('Failed to delete video');
+    }
+  };
 
   useEffect(() => {
     apiGet<VideoLesson[]>('/api/videos')
@@ -132,7 +138,7 @@ export default function TeacherVideos() {
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             className="text-red-600"
-                            onClick={() => toast.error('Delete not connected to API yet.')}
+                            onClick={() => handleDelete(video.id)}
                           >
                             <Trash2 className="h-4 w-4 mr-2" /> Delete
                           </DropdownMenuItem>

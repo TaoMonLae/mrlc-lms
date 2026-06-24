@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Filter, Video, Play, Clock, MoreVertical, Edit2, Trash2, Eye, BookOpen } from 'lucide-react';
+import { Plus, Search, Filter, Video, Play, Clock, MoreVertical, Edit2, Trash2, Eye, BookOpen, CheckSquare, Square, Archive } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,34 +22,9 @@ import {
 import { usePermissions, useUser } from '../../lib/permissions';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
-
-export interface VideoLesson {
-  id: string;
-  title: string;
-  description?: string;
-  videoUrl: string;
-  thumbnailUrl?: string;
-  duration?: number;
-  classId?: string;
-  className?: string;
-  subjectId?: string;
-  subjectName?: string;
-  visibility: 'ALL' | 'STUDENTS' | 'TEACHERS_ONLY';
-  status: 'PUBLISHED' | 'DRAFT' | 'ARCHIVED';
-  uploadedById: string;
-  uploadedByName: string;
-  createdAt: string;
-}
-
-function formatDuration(seconds?: number): string {
-  if (!seconds) return '';
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  const mm = String(m).padStart(h > 0 ? 2 : 1, '0');
-  const ss = String(s).padStart(2, '0');
-  return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
-}
+import { formatDuration } from '../../lib/video';
+import { apiGet, apiSend } from '../../lib/api';
+import type { VideoLesson } from '../../lib/video/types';
 
 export default function VideoList() {
   const { user } = useUser();
@@ -59,16 +35,12 @@ export default function VideoList() {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [videos, setVideos] = useState<VideoLesson[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const fetchVideos = async () => {
       try {
-        const token = sessionStorage.getItem('auth_token');
-        const res = await fetch('/api/videos', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error('Failed to fetch videos');
-        const data = await res.json();
+        const data = await apiGet<VideoLesson[]>('/api/videos');
         setVideos(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error('Error fetching videos:', error);
@@ -93,6 +65,9 @@ export default function VideoList() {
     return matchesSearch && matchesSubject && matchesStatus;
   });
 
+  const hasActiveFilters = searchTerm !== '' || subjectFilter !== 'ALL' || statusFilter !== 'ALL';
+  const hasNoVideos = videos.length === 0;
+
   const canManage = (video: VideoLesson) => {
     if (isAdmin) return true;
     if (isTeacher && (video.uploadedById === user?.id || video.uploadedById === user?.teacherId)) return true;
@@ -102,16 +77,79 @@ export default function VideoList() {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this video?')) return;
     try {
-      const token = sessionStorage.getItem('auth_token');
-      const res = await fetch(`/api/videos/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error('Failed to delete');
+      await apiSend(`/api/videos/${id}`, 'DELETE');
       setVideos(prev => prev.filter(v => v.id !== id));
       toast.success('Video deleted');
     } catch {
       toast.error('Failed to delete video');
+    }
+  };
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (selectedIds.size === filteredVideos.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredVideos.map(v => v.id)));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`Are you sure you want to delete ${selectedIds.size} video${selectedIds.size > 1 ? 's' : ''}?`)) return;
+
+    try {
+      await Promise.all(Array.from(selectedIds).map(id => apiSend(`/api/videos/${id}`, 'DELETE')));
+      setVideos(prev => prev.filter(v => !selectedIds.has(v.id)));
+      setSelectedIds(new Set());
+      toast.success(`${selectedIds.size} video${selectedIds.size > 1 ? 's' : ''} deleted`);
+    } catch {
+      toast.error('Failed to delete some videos');
+    }
+  };
+
+  const handleBulkArchive = async () => {
+    if (selectedIds.size === 0) return;
+
+    try {
+      await Promise.all(Array.from(selectedIds).map(id =>
+        apiSend(`/api/videos/${id}`, 'PUT', { status: 'ARCHIVED' })
+      ));
+      setVideos(prev => prev.map(v =>
+        selectedIds.has(v.id) ? { ...v, status: 'ARCHIVED' as const } : v
+      ));
+      setSelectedIds(new Set());
+      toast.success(`${selectedIds.size} video${selectedIds.size > 1 ? 's' : ''} archived`);
+    } catch {
+      toast.error('Failed to archive some videos');
+    }
+  };
+
+  const handleBulkPublish = async () => {
+    if (selectedIds.size === 0) return;
+
+    try {
+      await Promise.all(Array.from(selectedIds).map(id =>
+        apiSend(`/api/videos/${id}`, 'PUT', { status: 'PUBLISHED' })
+      ));
+      setVideos(prev => prev.map(v =>
+        selectedIds.has(v.id) ? { ...v, status: 'PUBLISHED' as const } : v
+      ));
+      setSelectedIds(new Set());
+      toast.success(`${selectedIds.size} video${selectedIds.size > 1 ? 's' : ''} published`);
+    } catch {
+      toast.error('Failed to publish some videos');
     }
   };
 
@@ -136,7 +174,45 @@ export default function VideoList() {
         )}
       </div>
 
+      {/* Bulk actions bar */}
+      {selectedIds.size > 0 && (isAdmin || isTeacher) && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 flex items-center justify-between">
+          <span className="text-sm text-blue-700 dark:text-blue-300 font-medium">
+            {selectedIds.size} video{selectedIds.size > 1 ? 's' : ''} selected
+          </span>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={handleBulkPublish}>
+              Publish
+            </Button>
+            <Button size="sm" variant="outline" onClick={handleBulkArchive}>
+              <Archive className="h-4 w-4 mr-1" />
+              Archive
+            </Button>
+            <Button size="sm" variant="destructive" onClick={handleBulkDelete}>
+              <Trash2 className="h-4 w-4 mr-1" />
+              Delete
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white dark:bg-surface-indigo p-4 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex flex-col md:flex-row gap-4 items-center">
+        {(isAdmin || isTeacher) && (
+          <button
+            onClick={toggleAll}
+            className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+          >
+            {selectedIds.size === filteredVideos.length && filteredVideos.length > 0 ? (
+              <CheckSquare className="h-4 w-4" />
+            ) : (
+              <Square className="h-4 w-4" />
+            )}
+            <span>Select All</span>
+          </button>
+        )}
         <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
@@ -186,36 +262,75 @@ export default function VideoList() {
       ) : filteredVideos.length === 0 ? (
         <div className="text-center py-20 bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm">
           <Video className="mx-auto h-12 w-12 text-slate-300 dark:text-slate-600 mb-4" />
-          <h3 className="text-lg font-medium text-slate-900 dark:text-white">No videos found</h3>
-          <p className="text-slate-500 mt-1">Try adjusting your filters or search query.</p>
+          <h3 className="text-lg font-medium text-slate-900 dark:text-white">
+            {hasNoVideos ? 'No videos yet' : 'No videos found'}
+          </h3>
+          <p className="text-slate-500 mt-1">
+            {hasNoVideos
+              ? 'Add your first video lesson to get started.'
+              : 'Try adjusting your filters or search query.'}
+          </p>
+          {hasActiveFilters && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-4"
+              onClick={() => {
+                setSearchTerm('');
+                setSubjectFilter('ALL');
+                setStatusFilter('ALL');
+              }}
+            >
+              Clear all filters
+            </Button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredVideos.map((video) => (
             <div
               key={video.id}
-              className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl overflow-hidden hover:shadow-md transition-shadow group flex flex-col"
+              className={`bg-white dark:bg-surface-indigo border rounded-xl overflow-hidden hover:shadow-md transition-shadow group flex flex-col ${
+                selectedIds.has(video.id) ? 'border-blue-500 ring-2 ring-blue-500 ring-opacity-50' : 'border-slate-200 dark:border-surface-raised'
+              }`}
             >
-              {/* Thumbnail */}
-              <Link to={`/videos/${video.id}`} className="relative block bg-slate-900 aspect-video overflow-hidden">
-                {video.thumbnailUrl ? (
-                  <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-700 to-slate-900">
-                    <Video className="h-10 w-10 text-slate-500" />
-                  </div>
+              {/* Thumbnail with checkbox overlay */}
+              <div className="relative block bg-slate-900 aspect-video overflow-hidden">
+                {(isAdmin || isTeacher) && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      toggleSelection(video.id);
+                    }}
+                    className="absolute top-2 left-2 z-10 p-1 bg-black/50 rounded hover:bg-black/70 transition-colors"
+                  >
+                    {selectedIds.has(video.id) ? (
+                      <CheckSquare className="h-4 w-4 text-white" />
+                    ) : (
+                      <Square className="h-4 w-4 text-white/70" />
+                    )}
+                  </button>
                 )}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
-                    <Play className="h-6 w-6 text-white fill-white" />
+                <Link to={`/videos/${video.id}`} className="block w-full h-full">
+                  {video.thumbnailUrl ? (
+                    <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-700 to-slate-900">
+                      <Video className="h-10 w-10 text-slate-500" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
+                      <Play className="h-6 w-6 text-white fill-white" />
+                    </div>
                   </div>
-                </div>
-                {video.duration && (
-                  <span className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded font-mono">
-                    {formatDuration(video.duration)}
-                  </span>
-                )}
-              </Link>
+                  {video.duration && (
+                    <span className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded font-mono">
+                      {formatDuration(video.duration)}
+                    </span>
+                  )}
+                </Link>
+              </div>
 
               {/* Info */}
               <div className="p-4 flex-1 flex flex-col">
