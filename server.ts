@@ -2046,7 +2046,14 @@ async function startServer() {
         orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
       });
       res.json(announcements);
-    } catch (err) {
+    } catch (err: any) {
+      // If the migration hasn't been applied yet the table won't exist; degrade
+      // gracefully to an empty list rather than breaking the page.
+      if (err?.code === "P2021" || err?.code === "P2022") {
+        logger.warn("Announcement table/columns missing — run `prisma migrate deploy`. Returning empty list.");
+        res.json([]);
+        return;
+      }
       logger.error("Error fetching announcements:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
@@ -2179,7 +2186,12 @@ async function startServer() {
         orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }],
       });
       res.json(entries);
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.code === "P2021" || err?.code === "P2022") {
+        logger.warn("TimetableEntry table/columns missing — run `prisma migrate deploy`. Returning empty list.");
+        res.json([]);
+        return;
+      }
       logger.error("Error fetching timetable:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }

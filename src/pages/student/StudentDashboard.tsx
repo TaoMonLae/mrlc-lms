@@ -41,16 +41,34 @@ const EMPTY_DASH: StudentDashData = {
 type AnnouncementRow = { id: string | number; title: string; date: string; category: string };
 type LibraryResourceRow = { id: string | number; title: string; subject: string; format: string };
 
-const announcements: AnnouncementRow[] = [];
-
 export default function StudentDashboard() {
   const { systemSettings } = useSettings();
   const [dash, setDash] = useState<StudentDashData>(EMPTY_DASH);
+  const [announcements, setAnnouncements] = useState<AnnouncementRow[]>([]);
 
   useEffect(() => {
     apiGet<StudentDashData>('/api/student/dashboard')
       .then((d) => setDash(d?.stats ? d : EMPTY_DASH))
       .catch(() => setDash(EMPTY_DASH));
+  }, []);
+
+  // Secondary widget — never block the dashboard if announcements fail/empty.
+  useEffect(() => {
+    apiGet<any[]>('/api/announcements')
+      .then((data) =>
+        setAnnouncements(
+          (Array.isArray(data) ? data : [])
+            .filter((a) => (a.status ?? 'ACTIVE') === 'ACTIVE')
+            .slice(0, 4)
+            .map((a) => ({
+              id: a.id,
+              title: a.title,
+              date: a.createdAt ? new Date(a.createdAt).toLocaleDateString() : '',
+              category: a.audience === 'CLASS' ? (a.className || 'Class') : (a.audience || 'General'),
+            }))
+        )
+      )
+      .catch(() => setAnnouncements([]));
   }, []);
 
   const currency = dash.currency || systemSettings.currency || 'MYR';
@@ -203,19 +221,23 @@ export default function StudentDashboard() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4 pt-0">
-              {announcements.map((ann, idx) => (
-                <div key={idx} className="group cursor-pointer">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h5 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-aubergine-600 transition-colors line-clamp-1">{ann.title}</h5>
-                      <span className="text-[10px] text-slate-400 mt-1 flex items-center gap-1 font-medium">
-                        {ann.date} • {ann.category}
-                      </span>
+              {announcements.length === 0 ? (
+                <p className="text-xs text-slate-400">No announcements right now.</p>
+              ) : (
+                announcements.map((ann) => (
+                  <Link to={`/announcements/${ann.id}`} key={ann.id} className="group block cursor-pointer">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h5 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-aubergine-600 transition-colors line-clamp-1">{ann.title}</h5>
+                        <span className="text-[10px] text-slate-400 mt-1 flex items-center gap-1 font-medium">
+                          {ann.date} • {ann.category}
+                        </span>
+                      </div>
+                      <ChevronRight className="h-3 w-3 text-slate-300 group-hover:text-aubergine-400 transition-all" />
                     </div>
-                    <ChevronRight className="h-3 w-3 text-slate-300 group-hover:text-aubergine-400 transition-all" />
-                  </div>
-                </div>
-              ))}
+                  </Link>
+                ))
+              )}
             </CardContent>
           </Card>
 
