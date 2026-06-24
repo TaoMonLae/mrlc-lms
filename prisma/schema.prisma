@@ -114,6 +114,7 @@ model SchoolProfile {
   // Branding
   logoUrl           String?
   signatureUrl      String?
+  loginHeroUrl      String?
   primaryColor      String?  @default("#5865f2")
   accentColor       String?  @default("#3b82f6")
   darkModeDefault   Boolean  @default(false)

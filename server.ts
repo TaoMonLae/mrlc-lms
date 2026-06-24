@@ -450,7 +450,7 @@ const schemas = {
   }),
   settingsUpdate: z.object({
     name: optStr, address: optStr, email: optStr, phone: optStr,
-    logoUrl: nullableStr, signatureUrl: nullableStr, primaryColor: optStr, accentColor: optStr,
+    logoUrl: nullableStr, signatureUrl: nullableStr, loginHeroUrl: nullableStr, primaryColor: optStr, accentColor: optStr,
     darkModeDefault: z.union([z.boolean(), z.string()]).optional(),
     reportHeaderStyle: optStr,
     timezone: optStr, dateFormat: optStr, currency: optStr, defaultLanguage: optStr,
@@ -3221,13 +3221,14 @@ async function startServer() {
       res.json({
         name: profile?.name || null,
         logoUrl: profile?.logoUrl || null,
+        loginHeroUrl: profile?.loginHeroUrl || null,
         primaryColor: profile?.primaryColor || null,
         contactEmail: profile?.contactEmail || null,
         contactPhone: profile?.contactPhone || null,
       });
     } catch (err) {
       logger.error("Error fetching public branding:", err);
-      res.json({ name: null, logoUrl: null, primaryColor: null, contactEmail: null, contactPhone: null });
+      res.json({ name: null, logoUrl: null, loginHeroUrl: null, primaryColor: null, contactEmail: null, contactPhone: null });
     }
   });
 
@@ -3257,6 +3258,7 @@ async function startServer() {
     // Branding
     if (b.logoUrl !== undefined) data.logoUrl = b.logoUrl;
     if (b.signatureUrl !== undefined) data.signatureUrl = b.signatureUrl;
+    if (b.loginHeroUrl !== undefined) data.loginHeroUrl = b.loginHeroUrl;
     if (b.primaryColor !== undefined) data.primaryColor = b.primaryColor;
     if (b.accentColor !== undefined) data.accentColor = b.accentColor;
     if (b.darkModeDefault !== undefined) data.darkModeDefault = parseBoolean(b.darkModeDefault);

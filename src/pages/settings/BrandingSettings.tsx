@@ -23,7 +23,8 @@ export default function BrandingSettings() {
   const { schoolProfile, brandingSettings, updateBranding } = useSettings();
   const [logoPreview, setLogoPreview] = useState<string | null>(brandingSettings.logoUrl);
   const [signaturePreview, setSignaturePreview] = useState<string | null>(brandingSettings.signatureUrl);
-  const [uploadingAsset, setUploadingAsset] = useState<'logo' | 'signature' | null>(null);
+  const [heroPreview, setHeroPreview] = useState<string | null>(brandingSettings.loginHeroUrl);
+  const [uploadingAsset, setUploadingAsset] = useState<'logo' | 'signature' | 'hero' | null>(null);
 
   const {
     register,
@@ -52,11 +53,12 @@ export default function BrandingSettings() {
     });
     setLogoPreview(brandingSettings.logoUrl);
     setSignaturePreview(brandingSettings.signatureUrl);
+    setHeroPreview(brandingSettings.loginHeroUrl);
   }, [brandingSettings, reset]);
 
   const onSubmit = async (data: FormValues) => {
     try {
-      await updateBranding({ ...data, logoUrl: logoPreview, signatureUrl: signaturePreview });
+      await updateBranding({ ...data, logoUrl: logoPreview, signatureUrl: signaturePreview, loginHeroUrl: heroPreview });
       toast.success('Branding settings updated successfully');
     } catch (error: any) {
       toast.error(error.message || 'Failed to update branding settings');
@@ -66,7 +68,7 @@ export default function BrandingSettings() {
   const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
     setter: (val: string) => void,
-    assetType: 'logo' | 'signature',
+    assetType: 'logo' | 'signature' | 'hero',
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -214,6 +216,34 @@ export default function BrandingSettings() {
                     disabled={uploadingAsset !== null}
                   />
                   <p className="text-xs text-slate-500 mt-2">PNG format required for transparency support</p>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <Label>Login Page Background</Label>
+            <div className="border-2 border-dashed border-slate-200 dark:border-surface-raised rounded-xl p-4 flex flex-col items-center justify-center text-center max-w-sm">
+              {heroPreview ? (
+                <div className="relative group w-full">
+                  <img src={heroPreview} alt="Login background preview" className="h-28 w-full object-cover rounded-lg" />
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-lg">
+                    <Button type="button" variant="secondary" size="sm" onClick={() => setHeroPreview(null)}>Remove</Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-surface-raised flex items-center justify-center mb-3">
+                    <ImageIcon className="h-6 w-6 text-slate-400" />
+                  </div>
+                  <p className="text-sm text-slate-600 dark:text-slate-300 mb-1">Shown behind the login screen.</p>
+                  <p className="text-xs text-slate-500 mb-4">Use a wide photo (e.g. 1600×900). PNG, JPG or WEBP, max 5MB.</p>
+                  <Label htmlFor="hero-upload" className="cursor-pointer">
+                    <div className="bg-white dark:bg-canvas border border-slate-200 dark:border-surface-raised px-4 py-2 rounded-md text-sm font-medium hover:bg-slate-50 dark:hover:bg-surface-indigo transition-colors flex items-center">
+                      <UploadCloud className="h-4 w-4 mr-2" /> {uploadingAsset === 'hero' ? 'Uploading...' : 'Browse File'}
+                    </div>
+                  </Label>
+                  <input id="hero-upload" type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(e) => handleFileUpload(e, setHeroPreview, 'hero')} disabled={uploadingAsset !== null} />
                 </>
               )}
             </div>

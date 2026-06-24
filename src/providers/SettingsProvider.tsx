@@ -31,6 +31,7 @@ const DEFAULT_BRANDING: BrandingSettings = {
   darkModeDefault: false,
   reportHeaderStyle: 'standard',
   signatureUrl: null,
+  loginHeroUrl: null,
 };
 
 const DEFAULT_SYSTEM: SystemSettings = {
@@ -72,6 +73,7 @@ function applyServerData(
     ...prev,
     logoUrl: data.logoUrl ?? prev.logoUrl,
     signatureUrl: data.signatureUrl ?? prev.signatureUrl,
+    loginHeroUrl: data.loginHeroUrl ?? prev.loginHeroUrl,
     primaryColor: data.primaryColor ?? prev.primaryColor,
     accentColor: data.accentColor ?? prev.accentColor,
     darkModeDefault: data.darkModeDefault ?? prev.darkModeDefault,
@@ -169,6 +171,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     save({
       logoUrl: data.logoUrl,
       signatureUrl: data.signatureUrl,
+      loginHeroUrl: data.loginHeroUrl,
       primaryColor: data.primaryColor,
       accentColor: data.accentColor,
       darkModeDefault: data.darkModeDefault,

@@ -28,9 +28,10 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-// Drop a classroom/hero photo at public/login-hero.jpg to use it as the
-// background. If it's missing we fall back to a branded gradient.
-const HERO_IMAGE = "/login-hero.jpg";
+// The login background comes from Settings → Branding (loginHeroUrl). As a
+// fallback, a file at public/login-hero.jpg is used; otherwise a branded
+// gradient is shown.
+const HERO_FALLBACK = "/login-hero.jpg";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -42,9 +43,11 @@ export default function LoginPage() {
   const [contactPhone, setContactPhone] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
+  const [heroUrl, setHeroUrl] = useState<string>(HERO_FALLBACK);
   const [heroOk, setHeroOk] = useState(false);
 
-  // Pull the school's branding (logo + name + contact) from the public endpoint.
+  // Pull the school's branding (logo + name + contact + login background) from
+  // the public endpoint.
   useEffect(() => {
     fetch("/api/public/branding")
       .then((r) => (r.ok ? r.json() : null))
@@ -53,17 +56,23 @@ export default function LoginPage() {
         if (data?.name) setSchoolName(data.name);
         if (data?.contactEmail) setContactEmail(data.contactEmail);
         if (data?.contactPhone) setContactPhone(data.contactPhone);
+        if (data?.loginHeroUrl) setHeroUrl(data.loginHeroUrl);
       })
       .catch(() => {/* keep defaults */});
   }, []);
 
-  // Probe for the optional hero image so a 404 doesn't show a broken graphic.
+  // Probe whichever hero image we ended up with so a 404 doesn't show a broken
+  // graphic — fall back to the gradient if it can't load.
   useEffect(() => {
+    if (!heroUrl) {
+      setHeroOk(false);
+      return;
+    }
     const img = new Image();
     img.onload = () => setHeroOk(true);
     img.onerror = () => setHeroOk(false);
-    img.src = HERO_IMAGE;
-  }, []);
+    img.src = heroUrl;
+  }, [heroUrl]);
 
   const {
     register,
@@ -126,7 +135,7 @@ export default function LoginPage() {
       {/* Background: hero photo if present, otherwise a branded gradient */}
       <div className="absolute inset-0 -z-10">
         {heroOk ? (
-          <img src={HERO_IMAGE} alt="" className="h-full w-full object-cover" />
+          <img src={heroUrl} alt="" className="h-full w-full object-cover" />
         ) : (
           <div className="h-full w-full bg-gradient-to-br from-blue-100 via-slate-100 to-emerald-50" />
         )}

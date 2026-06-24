@@ -18,6 +18,7 @@ export interface BrandingSettings {
   darkModeDefault: boolean;
   reportHeaderStyle: 'standard' | 'minimal' | 'elegant';
   signatureUrl: string | null;
+  loginHeroUrl: string | null;
 }
 
 export interface SystemSettings {
