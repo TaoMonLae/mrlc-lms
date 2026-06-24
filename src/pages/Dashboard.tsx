@@ -98,7 +98,7 @@ export default function DashboardPage() {
         </div>
         <div className="flex gap-3">
           {hasPermission("view_reports") && (
-            <Button variant="outline" size="sm" className="bg-white border-slate-200 text-slate-700 shadow-sm hover:bg-slate-50 px-4 py-2 font-semibold text-xs" render={<Link to="/reports" />} nativeButton={false}>
+            <Button variant="outline" size="sm" className="bg-white dark:bg-surface-indigo border-slate-200 dark:border-surface-raised text-slate-700 dark:text-slate-200 shadow-sm hover:bg-slate-50 dark:hover:bg-surface-raised px-4 py-2 font-semibold text-xs" render={<Link to="/reports" />} nativeButton={false}>
               Export Reports
             </Button>
           )}
@@ -112,14 +112,14 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat) => (
-          <Card key={stat.title} className={`rounded-md border border-slate-200 border-t-4 ${stat.bar} bg-white p-5 shadow-sm transition-all hover:shadow-md`}>
+          <Card key={stat.title} className={`rounded-md border border-slate-200 dark:border-surface-raised border-t-4 ${stat.bar} bg-white dark:bg-surface-indigo p-5 shadow-sm transition-all hover:shadow-md`}>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 whitespace-nowrap">{stat.title}</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 whitespace-nowrap">{stat.title}</span>
               <div className={`rounded-md p-2 ${stat.chip} ${stat.color}`}>
                 <stat.icon className="h-4 w-4" />
               </div>
             </div>
-            <div className="text-3xl font-bold text-slate-900 dark:text-slate-900">{stat.value}</div>
+            <div className="text-3xl font-bold text-slate-900 dark:text-white">{stat.value}</div>
             <p className={`mt-1 text-xs font-semibold ${stat.title === 'Active Cases' ? 'text-aubergine-500' : 'text-green-600'}`}>
               {stat.description}
             </p>
@@ -214,28 +214,28 @@ export default function DashboardPage() {
           </div>
         </Card>
 
-        <Card className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden flex flex-col">
-          <div className="border-b px-6 py-4">
-            <h3 className="font-bold text-slate-800 text-sm">Recent Student Cases</h3>
+        <Card className="rounded-xl border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-sm overflow-hidden flex flex-col">
+          <div className="border-b border-slate-100 dark:border-surface-raised px-6 py-4">
+            <h3 className="font-bold text-slate-800 dark:text-white text-sm">Recent Student Cases</h3>
           </div>
           <CardContent className="p-4 flex-1">
             <div className="space-y-5">
               {recentCases.length === 0 ? (
-                <p className="text-xs text-slate-400">{loading ? "Loading…" : "No recent cases."}</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500">{loading ? "Loading…" : "No recent cases."}</p>
               ) : recentCases.map((activity) => (
                 <Link to={`/cases/${activity.id}`} key={activity.id} className="flex gap-3 items-start group">
                   <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-aubergine-500"></div>
                   <div className="space-y-1">
-                    <p className="text-xs font-bold text-slate-800 uppercase tracking-tight group-hover:text-aubergine-600">{activity.name}</p>
-                    <p className="text-[11px] leading-relaxed text-slate-500 font-medium">{activity.detail}</p>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{activity.status} · {formatDate(activity.time)}</p>
+                    <p className="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-tight group-hover:text-aubergine-600 dark:group-hover:text-aubergine-400">{activity.name}</p>
+                    <p className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-300 font-medium">{activity.detail}</p>
+                    <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{activity.status} · {formatDate(activity.time)}</p>
                   </div>
                 </Link>
               ))}
             </div>
           </CardContent>
           <div className="p-4 pt-0">
-            <Button variant="ghost" className="w-full bg-slate-50 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors uppercase tracking-wider" nativeButton={false} render={<Link to="/cases" />}>
+            <Button variant="ghost" className="w-full bg-slate-50 dark:bg-surface-raised py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-surface-raised/70 transition-colors uppercase tracking-wider" nativeButton={false} render={<Link to="/cases" />}>
               View Case Management
             </Button>
           </div>

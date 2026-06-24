@@ -394,14 +394,14 @@ const schemas = {
   }),
   library: z.object({
     title: reqStr, type: reqStr,
-    description: optStr, visibility: optStr, classId: optStr,
-    subjectId: optStr, externalUrl: optStr,
+    description: nullableStr, visibility: nullableStr, classId: nullableStr,
+    subjectId: nullableStr, externalUrl: nullableStr,
   }),
   video: z.object({
     title: reqStr, videoUrl: reqStr,
-    description: optStr, thumbnailUrl: optStr, duration: optNum,
-    classId: optStr, subjectId: optStr, visibility: optStr,
-    status: optStr, uploadedByName: optStr,
+    description: nullableStr, thumbnailUrl: nullableStr, duration: optNum,
+    classId: nullableStr, subjectId: nullableStr, visibility: nullableStr,
+    status: nullableStr, uploadedByName: nullableStr,
   }),
   bookLoan: z.object({
     borrowerName: reqStr, dueDate: reqStr,
@@ -425,12 +425,12 @@ const schemas = {
     name: optStr, code: optStr, level: optStr, description: optStr, status: optStr,
   }),
   libraryUpdate: z.object({
-    title: optStr, type: optStr, description: optStr, visibility: optStr,
-    classId: optStr, subjectId: optStr, externalUrl: optStr,
+    title: optStr, type: optStr, description: nullableStr, visibility: nullableStr,
+    classId: nullableStr, subjectId: nullableStr, externalUrl: nullableStr,
   }),
   videoUpdate: z.object({
-    title: optStr, description: optStr, videoUrl: optStr, thumbnailUrl: optStr,
-    duration: optNum, classId: optStr, subjectId: optStr, visibility: optStr, status: optStr,
+    title: optStr, description: nullableStr, videoUrl: optStr, thumbnailUrl: nullableStr,
+    duration: optNum, classId: nullableStr, subjectId: nullableStr, visibility: nullableStr, status: nullableStr,
   }),
   bookCreate: z.object({
     title: reqStr, author: optStr, isbn: optStr, publisher: optStr,

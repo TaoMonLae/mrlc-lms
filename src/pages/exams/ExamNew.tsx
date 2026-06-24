@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { type Exam, type ExamQuestion, type ExamSettings } from '../../types/exam';
+import MathField from '../../components/MathField';
 
 const INITIAL_SETTINGS: ExamSettings = {
   enableTimer: true,
@@ -233,30 +234,42 @@ export default function ExamNew() {
 
                     <div className="space-y-2">
                       <Label>Question Text</Label>
-                      <Textarea value={q.questionText} onChange={e => updateQuestion(q.id, { questionText: e.target.value })} rows={3} />
+                      <MathField
+                        value={q.questionText}
+                        onChange={(val) => updateQuestion(q.id, { questionText: val })}
+                        multiline
+                        rows={3}
+                        placeholder={'Type the question. Use the toolbar or wrap math in $…$, e.g. Solve $2x + 5 = 15$'}
+                      />
+                      <p className="text-[11px] text-slate-400">
+                        Tip: wrap formulas in <code className="font-mono">$…$</code> for inline math or <code className="font-mono">$$…$$</code> for a centered equation.
+                      </p>
                     </div>
 
                     {q.type === 'MCQ' && q.choices && (
                       <div className="space-y-3">
                         <Label>Choices & Correct Answer</Label>
                         {q.choices.map((choice, cIndex) => (
-                          <div key={cIndex} className="flex items-center gap-3">
-                            <input 
-                              type="radio" 
-                              name={`correct_${q.id}`} 
+                          <div key={cIndex} className="flex items-start gap-3">
+                            <input
+                              type="radio"
+                              name={`correct_${q.id}`}
                               checked={q.correctAnswer === cIndex.toString()}
                               onChange={() => updateQuestion(q.id, { correctAnswer: cIndex.toString() })}
-                              className="h-4 w-4 text-aubergine-600"
+                              className="h-4 w-4 mt-2.5 text-aubergine-600"
                             />
-                            <Input 
-                              value={choice} 
-                              onChange={e => {
-                                const newChoices = [...q.choices!];
-                                newChoices[cIndex] = e.target.value;
-                                updateQuestion(q.id, { choices: newChoices });
-                              }}
-                              placeholder={`Choice ${cIndex + 1}`}
-                            />
+                            <div className="flex-1">
+                              <MathField
+                                value={choice}
+                                showToolbar={false}
+                                onChange={(val) => {
+                                  const newChoices = [...q.choices!];
+                                  newChoices[cIndex] = val;
+                                  updateQuestion(q.id, { choices: newChoices });
+                                }}
+                                placeholder={`Choice ${cIndex + 1} — math allowed, e.g. $x = 5$`}
+                              />
+                            </div>
                           </div>
                         ))}
                       </div>

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import MathText from '../../components/MathText';
 
 type TakeQuestion = {
   id: string;
@@ -175,7 +176,7 @@ export default function ExamTake() {
             
             <div className="prose dark:prose-invert max-w-none mb-8">
               <p className="text-xl font-medium text-slate-900 dark:text-white leading-relaxed">
-                {question.questionText}
+                <MathText>{question.questionText}</MathText>
               </p>
             </div>
 
@@ -198,7 +199,7 @@ export default function ExamTake() {
                     >
                       <RadioGroupItem value={choice} id={`choice-${idx}`} className="text-aubergine-600" />
                       <Label htmlFor={`choice-${idx}`} className="flex-1 cursor-pointer text-base font-normal">
-                        {choice}
+                        <MathText>{choice}</MathText>
                       </Label>
                     </div>
                   ))}
