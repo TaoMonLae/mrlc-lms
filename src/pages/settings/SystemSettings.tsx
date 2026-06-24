@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { getTimezones, getCurrencies } from '../../lib/locale';
 import { useSettings } from '../../providers/SettingsProvider';
+import { LANGUAGES } from '../../i18n/catalog';
+import { useI18n } from '../../i18n/I18nProvider';
 
 const systemSchema = z.object({
   timezone: z.string(),
@@ -27,6 +29,7 @@ export default function SystemSettings() {
   const timezones = useMemo(() => getTimezones(), []);
   const currencies = useMemo(() => getCurrencies(), []);
   const { systemSettings, updateSystem } = useSettings();
+  const { setLang } = useI18n();
 
   const {
     register,
@@ -115,14 +118,24 @@ export default function SystemSettings() {
                </div>
                <div className="space-y-2">
                  <Label>Language</Label>
-                 <Select value={watch('defaultLanguage')} onValueChange={(v: any) => setValue('defaultLanguage', v, { shouldDirty: true })}>
+                 <Select
+                   value={watch('defaultLanguage')}
+                   onValueChange={(v: any) => {
+                     setValue('defaultLanguage', v, { shouldDirty: true });
+                     // Apply immediately so the choice is visible right away.
+                     setLang(v);
+                   }}
+                 >
                    <SelectTrigger className="w-full">
-                     <SelectValue />
+                     <SelectValue placeholder="Select language">
+                       {LANGUAGES.find((l) => l.code === watch('defaultLanguage'))?.label
+                         ?? watch('defaultLanguage')}
+                     </SelectValue>
                    </SelectTrigger>
-                   <SelectContent>
-                     <SelectItem value="en">English</SelectItem>
-                     <SelectItem value="es">Spanish</SelectItem>
-                     <SelectItem value="fr">French</SelectItem>
+                   <SelectContent data-no-i18n>
+                     {LANGUAGES.map((l) => (
+                       <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>
+                     ))}
                    </SelectContent>
                  </Select>
                </div>
