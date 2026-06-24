@@ -161,6 +161,7 @@ model Student {
   caseRecords    CaseRecord[]
   grades         Grade[]
   gedReadiness   GedReadiness[]
+  documents      GeneratedDocument[]
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -955,4 +956,50 @@ model GedReadiness {
 
   @@unique([studentId, subject])
   @@index([studentId])
+}
+
+// ── Official documents (report cards, transcripts, certificates) ─────────────
+enum DocumentType {
+  REPORT_CARD
+  TRANSCRIPT
+  ENROLLMENT_CONFIRMATION
+  COMPLETION_CERTIFICATE
+  PROGRESS_REPORT
+}
+
+enum DocumentStatus {
+  ACTIVE
+  CANCELLED
+  REISSUED
+}
+
+model GeneratedDocument {
+  id             String         @id @default(uuid())
+  documentNumber String         @unique
+  verifyToken    String         @unique
+  type           DocumentType
+  status         DocumentStatus @default(ACTIVE)
+
+  studentId      String
+  student        Student        @relation(fields: [studentId], references: [id])
+  studentName    String
+  studentCode    String
+  className      String?
+  term           String?
+
+  payload        Json?
+  issuedById     String?
+  issuedByName   String?
+  issueDate      DateTime       @default(now())
+
+  reissuedFromId String?
+  cancelledReason String?
+  downloadCount  Int            @default(0)
+
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([studentId])
+  @@index([type])
+  @@index([status])
 }

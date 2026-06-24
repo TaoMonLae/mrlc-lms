@@ -90,6 +90,10 @@ import GedReadinessPage from "./pages/gradebook/GedReadiness";
 import StudentProgress from "./pages/gradebook/StudentProgress";
 import GradebookClassReport from "./pages/gradebook/GradebookClassReport";
 
+import DocumentsPage from "./pages/documents/Documents";
+import DocumentPrint from "./pages/documents/DocumentPrint";
+import VerifyDocument from "./pages/documents/VerifyDocument";
+
 import TimetablePage from "./pages/timetable/TimetablePage";
 import TimetableNew from "./pages/timetable/TimetableNew";
 import TimetableEdit from "./pages/timetable/TimetableEdit";
@@ -147,10 +151,14 @@ export default function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
+            {/* Public document verification — no authentication required */}
+            <Route path="/verify/:token" element={<VerifyDocument />} />
             
             <Route element={<ProtectedRoute />}>
               {/* Standalone (no app shell, bypasses the change-password gate) */}
               <Route path="/change-password" element={<ChangePassword />} />
+              {/* Printable document view — standalone for clean PDF output */}
+              <Route path="/documents/:id/print" element={<DocumentPrint />} />
               <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
                 
@@ -224,6 +232,9 @@ export default function App() {
                   <Route path="/gradebook/ged-readiness" element={<GedReadinessPage />} />
                   <Route path="/gradebook/reports" element={<GradebookClassReport />} />
                   <Route path="/gradebook/students/:studentId" element={<StudentProgress />} />
+
+                  {/* Official documents (ADMIN/TEACHER) */}
+                  <Route path="/documents" element={<DocumentsPage />} />
                 </Route>
 
                 {/* Exam take/results: accessible to all authenticated roles */}

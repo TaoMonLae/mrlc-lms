@@ -113,6 +113,12 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     roles: ["ADMIN", "TEACHER"],
   },
   {
+    title: "Documents",
+    url: "/documents",
+    icon: FileText,
+    roles: ["ADMIN", "TEACHER"],
+  },
+  {
     title: "Library",
     url: "/library",
     icon: Library,

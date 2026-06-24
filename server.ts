@@ -6253,6 +6253,266 @@ async function startServer() {
     }
   });
 
+  // ── Official documents (report cards, transcripts, certificates) ─────────────
+  const DOC_PREFIX: Record<string, string> = {
+    REPORT_CARD: "RC", TRANSCRIPT: "TR", ENROLLMENT_CONFIRMATION: "EN",
+    COMPLETION_CERTIFICATE: "CC", PROGRESS_REPORT: "PR",
+  };
+  const DOC_TYPES = Object.keys(DOC_PREFIX);
+  const canIssueDocs = (role: string) => role === "ADMIN" || role === "TEACHER";
+
+  const attendanceSummary = async (studentId: string) => {
+    const att = await prisma.attendance.findMany({ where: { studentId } });
+    const total = att.length;
+    const present = att.filter((a) => a.status === "PRESENT").length;
+    const absent = att.filter((a) => a.status === "ABSENT").length;
+    const late = att.filter((a) => a.status === "LATE").length;
+    const excused = att.filter((a) => a.status === "EXCUSED").length;
+    return { total, present, absent, late, excused, rate: total ? round1((present / total) * 100) : 0 };
+  };
+
+  const academicStatus = (termAverage: number | null, warnings: string[]) => {
+    if (termAverage == null) return "In Progress";
+    if (warnings.length > 0 || termAverage < WARNING_THRESHOLD) return "Academic Warning";
+    if (termAverage >= 85) return "Honor Roll";
+    return "Good Standing";
+  };
+
+  // Builds an immutable snapshot for a document at issue time.
+  const buildDocumentSnapshot = async (type: string, studentId: string, term?: string) => {
+    const student = await prisma.student.findUnique({ where: { id: studentId }, include: { user: true, class: true } });
+    if (!student) return null;
+    const profile = await prisma.schoolProfile.findFirst();
+    const school = {
+      name: profile?.name || "School",
+      address: profile?.address || null,
+      contactEmail: profile?.contactEmail || null,
+      contactPhone: profile?.contactPhone || null,
+    };
+    const base: any = {
+      school,
+      student: {
+        name: fullName(student.user), code: student.studentCode,
+        className: student.class?.name || "Unassigned",
+        gender: student.gender || null,
+        enrollmentDate: student.enrollmentDate, status: student.status || "ACTIVE",
+        academicYear: student.class?.academicYear || null,
+        level: student.class?.level || null,
+      },
+      term: term || student.class?.academicYear || null,
+    };
+
+    if (type === "ENROLLMENT_CONFIRMATION") return base;
+
+    const progress = await buildStudentProgress(studentId).catch(() => null);
+    const attendance = await attendanceSummary(studentId);
+    if (type === "COMPLETION_CERTIFICATE") {
+      return {
+        ...base,
+        gedReadiness: progress?.gedReadiness || [],
+        passedSubjects: (progress?.gedReadiness || []).filter((g: any) => g.status === "PASSED").map((g: any) => g.subject),
+        termAverage: progress?.termAverage ?? null,
+        letter: progress?.letter ?? null,
+      };
+    }
+    // REPORT_CARD / PROGRESS_REPORT / TRANSCRIPT
+    return {
+      ...base,
+      subjects: progress?.subjects || [],
+      termAverage: progress?.termAverage ?? null,
+      letter: progress?.letter ?? null,
+      warnings: progress?.warnings || [],
+      academicStatus: academicStatus(progress?.termAverage ?? null, progress?.warnings || []),
+      comments: progress?.comments || [],
+      trend: progress?.trend || [],
+      gedReadiness: progress?.gedReadiness || [],
+      attendance,
+    };
+  };
+
+  const makeDocumentNumber = async (type: string) => {
+    const profile = await prisma.schoolProfile.findFirst();
+    const schoolCode = ((profile?.name || "School").split(/\s+/).map((w: string) => w[0]).join("").slice(0, 5).toUpperCase()) || "SCH";
+    const year = new Date().getFullYear();
+    const count = await prisma.generatedDocument.count({ where: { type: type as any } });
+    return `${schoolCode}-${DOC_PREFIX[type]}-${year}-${String(count + 1).padStart(5, "0")}`;
+  };
+
+  app.post("/api/documents", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canIssueDocs(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    const { type, studentId, term } = req.body || {};
+    if (!type || !studentId) { res.status(400).json({ error: "type and studentId are required" }); return; }
+    if (!DOC_TYPES.includes(type)) { res.status(400).json({ error: "Invalid document type" }); return; }
+    try {
+      const snapshot = await buildDocumentSnapshot(type, studentId, term);
+      if (!snapshot) { res.status(404).json({ error: "Student not found" }); return; }
+      const documentNumber = await makeDocumentNumber(type);
+      const verifyToken = crypto.randomBytes(16).toString("hex");
+      const doc = await prisma.generatedDocument.create({
+        data: {
+          documentNumber, verifyToken, type, status: "ACTIVE",
+          studentId, studentName: snapshot.student.name, studentCode: snapshot.student.code,
+          className: snapshot.student.className, term: snapshot.term,
+          payload: snapshot, issuedById: jwtUser.userId, issuedByName: jwtUser.email,
+        },
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "GENERATE", "DOCUMENT", doc.id,
+        `${type} ${documentNumber} generated for ${snapshot.student.name}.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.status(201).json(doc);
+    } catch (err) {
+      logger.error("Error generating document:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/documents", authMiddleware, reportRole(["ADMIN", "TEACHER"]), async (req, res) => {
+    const { studentId, type, status } = req.query as { studentId?: string; type?: string; status?: string };
+    try {
+      const where: any = {};
+      if (studentId) where.studentId = studentId;
+      if (type) where.type = type;
+      if (status) where.status = status;
+      const docs = await prisma.generatedDocument.findMany({ where, orderBy: { createdAt: "desc" }, take: 300 });
+      res.json(docs);
+    } catch (err: any) {
+      if (err?.code === "P2021" || err?.code === "P2022") { res.json([]); return; }
+      logger.error("Error listing documents:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/student/documents", authMiddleware, studentOnly, async (req, res) => {
+    try {
+      const s = await getStudentForReq(req);
+      if (!s) { res.status(404).json({ error: "Student profile not found" }); return; }
+      const docs = await prisma.generatedDocument.findMany({ where: { studentId: s.id, status: { not: "CANCELLED" } }, orderBy: { createdAt: "desc" } });
+      res.json(docs);
+    } catch (err: any) {
+      if (err?.code === "P2021" || err?.code === "P2022") { res.json([]); return; }
+      logger.error("Error listing own documents:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/documents/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const doc = await prisma.generatedDocument.findUnique({ where: { id: req.params.id } });
+      if (!doc) { res.status(404).json({ error: "Document not found" }); return; }
+      // Students may only view their own document.
+      if (jwtUser.role === "STUDENT") {
+        const s = await prisma.student.findUnique({ where: { userId: jwtUser.userId } });
+        if (!s || s.id !== doc.studentId) { res.status(403).json({ error: "Forbidden" }); return; }
+      } else if (!canIssueDocs(jwtUser.role)) {
+        res.status(403).json({ error: "Forbidden" });
+        return;
+      }
+      res.json(doc);
+    } catch (err) {
+      logger.error("Error fetching document:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/documents/:id/download", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const doc = await prisma.generatedDocument.findUnique({ where: { id: req.params.id } });
+      if (!doc) { res.status(404).json({ error: "Document not found" }); return; }
+      if (jwtUser.role === "STUDENT") {
+        const s = await prisma.student.findUnique({ where: { userId: jwtUser.userId } });
+        if (!s || s.id !== doc.studentId) { res.status(403).json({ error: "Forbidden" }); return; }
+      }
+      await prisma.generatedDocument.update({ where: { id: doc.id }, data: { downloadCount: { increment: 1 } } });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "DOWNLOAD", "DOCUMENT", doc.id,
+        `${doc.type} ${doc.documentNumber} downloaded.`, req.ip, req.headers["user-agent"] || null, "INFO");
+      res.json({ success: true });
+    } catch (err) {
+      logger.error("Error recording download:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/documents/:id/cancel", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { reason } = req.body || {};
+    try {
+      const doc = await prisma.generatedDocument.update({
+        where: { id: req.params.id },
+        data: { status: "CANCELLED", cancelledReason: reason || null },
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "CANCEL", "DOCUMENT", doc.id,
+        `${doc.type} ${doc.documentNumber} cancelled. ${reason ? `Reason: ${reason}` : ""}`.trim(),
+        req.ip, req.headers["user-agent"] || null, "WARNING");
+      res.json(doc);
+    } catch (err: any) {
+      if (err?.code === "P2025") { res.status(404).json({ error: "Document not found" }); return; }
+      logger.error("Error cancelling document:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Reissue: re-generate from a fresh snapshot, mark the old one REISSUED, link them.
+  app.post("/api/documents/:id/reissue", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const old = await prisma.generatedDocument.findUnique({ where: { id: req.params.id } });
+      if (!old) { res.status(404).json({ error: "Document not found" }); return; }
+      const snapshot = await buildDocumentSnapshot(old.type, old.studentId, old.term || undefined);
+      if (!snapshot) { res.status(404).json({ error: "Student not found" }); return; }
+      const documentNumber = await makeDocumentNumber(old.type);
+      const verifyToken = crypto.randomBytes(16).toString("hex");
+      const fresh = await prisma.$transaction(async (tx) => {
+        const created = await tx.generatedDocument.create({
+          data: {
+            documentNumber, verifyToken, type: old.type, status: "ACTIVE",
+            studentId: old.studentId, studentName: snapshot.student.name, studentCode: snapshot.student.code,
+            className: snapshot.student.className, term: snapshot.term, payload: snapshot,
+            issuedById: jwtUser.userId, issuedByName: jwtUser.email, reissuedFromId: old.id,
+          },
+        });
+        await tx.generatedDocument.update({ where: { id: old.id }, data: { status: "REISSUED" } });
+        return created;
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "REISSUE", "DOCUMENT", fresh.id,
+        `${old.type} reissued: ${old.documentNumber} → ${documentNumber}.`, req.ip, req.headers["user-agent"] || null, "WARNING");
+      res.status(201).json(fresh);
+    } catch (err) {
+      logger.error("Error reissuing document:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // PUBLIC verification — reveals only non-sensitive info (no grades/attendance).
+  app.get("/api/verify/:token", async (req, res) => {
+    try {
+      const doc = await prisma.generatedDocument.findUnique({ where: { verifyToken: req.params.token } });
+      if (!doc) { res.status(404).json({ valid: false, error: "Document not found" }); return; }
+      const profile = await prisma.schoolProfile.findFirst();
+      const TYPE_LABELS: Record<string, string> = {
+        REPORT_CARD: "Term Report Card", TRANSCRIPT: "Academic Transcript",
+        ENROLLMENT_CONFIRMATION: "Enrollment Confirmation", COMPLETION_CERTIFICATE: "Completion Certificate",
+        PROGRESS_REPORT: "Student Progress Report",
+      };
+      res.json({
+        valid: doc.status === "ACTIVE",
+        status: doc.status,
+        documentNumber: doc.documentNumber,
+        documentType: TYPE_LABELS[doc.type] || doc.type,
+        studentName: doc.studentName,
+        term: doc.term,
+        issueDate: doc.issueDate,
+        school: { name: profile?.name || "School", logoUrl: profile?.logoUrl || null },
+        cancelledReason: doc.status === "CANCELLED" ? doc.cancelledReason : null,
+      });
+    } catch (err: any) {
+      if (err?.code === "P2021" || err?.code === "P2022") { res.status(404).json({ valid: false, error: "Verification unavailable" }); return; }
+      logger.error("Error verifying document:", err);
+      res.status(500).json({ valid: false, error: "Internal Server Error" });
+    }
+  });
+
   // ── Vite / Static serving ───────────────────────────────────────────────────
   // ── Scheduled daily backup (runs only when enabled in Settings) ───────────────
   const scheduleDailyBackup = () => {

@@ -56,6 +56,9 @@ export type Permission =
   | 'view_grades'
   | 'view_own_grades'
   | 'manage_ged_readiness'
+  // Official documents (report cards, transcripts, certificates)
+  | 'issue_documents'
+  | 'view_own_documents'
   // Attendance
   | 'manage_attendance'
   | 'manage_assigned_attendance'
@@ -123,6 +126,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'manage_grades',
     'view_grades',
     'manage_ged_readiness',
+    'issue_documents',
     'manage_own_library',
     'manage_ebooks',
     'manage_announcements',
@@ -144,6 +148,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'view_own_exams',
     'view_own_results',
     'view_own_grades',
+    'view_own_documents',
   ],
   STAFF: [
     'view_students',
