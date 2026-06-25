@@ -21,10 +21,10 @@ export async function apiGet<T = any>(path: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-/** Send a write request (POST/PUT/DELETE) with auth + JSON body. */
+/** Send a write request (POST/PUT/PATCH/DELETE) with auth + JSON body. */
 export async function apiSend<T = any>(
   path: string,
-  method: 'POST' | 'PUT' | 'DELETE',
+  method: 'POST' | 'PUT' | 'PATCH' | 'DELETE',
   body?: unknown,
 ): Promise<T> {
   const res = await fetch(path, {

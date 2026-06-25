@@ -91,7 +91,8 @@ export default function ExamScheduling() {
         </div>
       </section>
 
-      <div className="flex gap-3 text-sm">
+      <div className="flex flex-wrap gap-3 text-sm">
+        <Link className="text-aubergine-600 font-semibold" to={`/exam2/${examId}/author`}>Author content →</Link>
         <Link className="text-aubergine-600 font-semibold" to={`/exam2/${examId}/invigilator`}>Invigilator dashboard →</Link>
         <Link className="text-aubergine-600 font-semibold" to={`/exam2/${examId}/analytics`}>Analytics →</Link>
         <Link className="text-aubergine-600 font-semibold" to={`/exam2/${examId}/print`}>Print export →</Link>

@@ -32,6 +32,7 @@ const QuestionAnalytics = lazy(() => import("./pages/exam2/QuestionAnalytics"));
 const InvigilatorDashboard = lazy(() => import("./pages/exam2/InvigilatorDashboard"));
 const AccommodationManagement = lazy(() => import("./pages/exam2/AccommodationManagement"));
 const PrintableExport = lazy(() => import("./pages/exam2/PrintableExport"));
+const ExamAuthoring = lazy(() => import("./pages/exam2/ExamAuthoring"));
 
 import TeachersList from "./pages/teachers/TeachersList";
 import TeacherNew from "./pages/teachers/TeacherNew";
@@ -249,6 +250,7 @@ export default function App() {
                   <Route path="/teachers/:id/edit" element={<TeacherEdit />} />
 
                   {/* Phase 2 advanced exam admin (ADMIN/TEACHER) */}
+                  <Route path="/exam2/:examId/author" element={<ExamAuthoring />} />
                   <Route path="/exam2/:examId/schedule" element={<ExamScheduling />} />
                   <Route path="/exam2/:examId/invigilator" element={<InvigilatorDashboard />} />
                   <Route path="/exam2/:examId/analytics" element={<ExamAnalytics />} />

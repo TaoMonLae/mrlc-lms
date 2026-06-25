@@ -704,6 +704,174 @@ export function registerExamPhase2Routes(deps: Deps): void {
   // The grading/analysis/invigilator/export routes are registered by a second
   // function to keep each module focused.
   registerGradingAndOps({ ...deps, helpers: { user, isTeacher, ipOf, uaOf, num, teacherGuard, gradingLimiter, studentForReq } });
+  // Authoring CRUD (sections, stimuli, groups, rubrics, question structure).
+  registerAuthoringRoutes({ ...deps, helpers: { user, ipOf, uaOf, num, teacherGuard } });
+}
+
+// =============================================================================
+// AUTHORING — sections · stimuli · question groups · rubrics · question config
+// =============================================================================
+function registerAuthoringRoutes(deps: any) {
+  const { app, prisma, authMiddleware, createAuditLog, logger, helpers } = deps;
+  const { user, ipOf, uaOf, num, teacherGuard } = helpers;
+  const audit = (req: any, action: string, type: string, id: string | null, desc: string) =>
+    createAuditLog(user(req).userId, user(req).email, action, type, id, desc, ipOf(req), uaOf(req), "SUCCESS");
+  const degrade = (err: any, res: any, empty: any) => {
+    if (err?.code === "P2021" || err?.code === "P2022") { res.json(empty); return true; }
+    return false;
+  };
+
+  // ── Teacher question list (full — includes correct answers + structure) ─────
+  app.get("/api/exams/:id/questions", authMiddleware, teacherGuard, async (req: any, res: any) => {
+    try {
+      const questions = await prisma.question.findMany({ where: { examId: req.params.id }, orderBy: { orderIndex: "asc" } });
+      res.json(questions);
+    } catch (err: any) { if (degrade(err, res, [])) return; logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
+  });
+
+  // Update a question's structure (section/group/stimulus/order) + scoring config + content.
+  app.patch("/api/questions/:id", authMiddleware, teacherGuard, async (req: any, res: any) => {
+    const b = req.body || {};
+    const data: any = {};
+    const passthrough = ["text", "correctAnswer", "explanation"];
+    for (const k of passthrough) if (b[k] !== undefined) data[k] = b[k];
+    if (b.points !== undefined) data.points = num(b.points);
+    if (b.orderIndex !== undefined) data.orderIndex = num(b.orderIndex) ?? 0;
+    if (b.sectionId !== undefined) data.sectionId = b.sectionId || null;
+    if (b.groupId !== undefined) data.groupId = b.groupId || null;
+    if (b.stimulusId !== undefined) data.stimulusId = b.stimulusId || null;
+    if (b.options !== undefined) data.options = b.options ?? null;
+    if (b.correctAnswers !== undefined) data.correctAnswers = b.correctAnswers ?? null;
+    if (b.optionWeights !== undefined) data.optionWeights = b.optionWeights ?? null;
+    if (b.negativePoints !== undefined) data.negativePoints = num(b.negativePoints);
+    if (b.minScore !== undefined) data.minScore = num(b.minScore);
+    if (b.numericTolerance !== undefined) data.numericTolerance = num(b.numericTolerance);
+    if (b.caseSensitive !== undefined) data.caseSensitive = !!b.caseSensitive;
+    if (b.partialCredit !== undefined) data.partialCredit = !!b.partialCredit;
+    if (b.requiresManualGrading !== undefined) data.requiresManualGrading = !!b.requiresManualGrading;
+    try {
+      const q = await prisma.question.update({ where: { id: req.params.id }, data });
+      await audit(req, "UPDATE", "QUESTION", q.id, `Question config updated.`);
+      res.json(q);
+    } catch (err: any) {
+      if (err?.code === "P2025") { res.status(404).json({ error: "Question not found" }); return; }
+      logger.error(err); res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Sections ────────────────────────────────────────────────────────────────
+  app.get("/api/exams/:id/sections", authMiddleware, teacherGuard, async (req: any, res: any) => {
+    try { res.json(await prisma.examSection.findMany({ where: { examId: req.params.id }, orderBy: { orderIndex: "asc" } })); }
+    catch (err: any) { if (degrade(err, res, [])) return; logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
+  });
+  const sectionData = (b: any) => ({
+    title: b.title || "Untitled section", description: b.description || null, instructions: b.instructions || null,
+    orderIndex: num(b.orderIndex) ?? 0, timeLimitMinutes: num(b.timeLimitMinutes),
+    shuffleQuestions: !!b.shuffleQuestions, questionsToPick: num(b.questionsToPick),
+  });
+  app.post("/api/exams/:id/sections", authMiddleware, teacherGuard, async (req: any, res: any) => {
+    try { const row = await prisma.examSection.create({ data: { examId: req.params.id, ...sectionData(req.body || {}) } }); await audit(req, "CREATE", "EXAM_SECTION", row.id, `Section '${row.title}' created.`); res.status(201).json(row); }
+    catch (err) { logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
+  });
+  app.put("/api/sections/:id", authMiddleware, teacherGuard, async (req: any, res: any) => {
+    try { const row = await prisma.examSection.update({ where: { id: req.params.id }, data: sectionData(req.body || {}) }); await audit(req, "UPDATE", "EXAM_SECTION", row.id, `Section updated.`); res.json(row); }
+    catch (err: any) { if (err?.code === "P2025") { res.status(404).json({ error: "Not found" }); return; } logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
+  });
+  app.delete("/api/sections/:id", authMiddleware, teacherGuard, async (req: any, res: any) => {
+    try { await prisma.question.updateMany({ where: { sectionId: req.params.id }, data: { sectionId: null } }); await prisma.examSection.delete({ where: { id: req.params.id } }); await audit(req, "DELETE", "EXAM_SECTION", req.params.id, `Section removed.`); res.json({ ok: true }); }
+    catch (err: any) { if (err?.code === "P2025") { res.status(404).json({ error: "Not found" }); return; } logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
+  });
+
+  // ── Stimuli (passages / media) ───────────────────────────────────────────────
+  app.get("/api/exams/:id/stimuli", authMiddleware, teacherGuard, async (req: any, res: any) => {
+    try { res.json(await prisma.stimulus.findMany({ where: { examId: req.params.id }, orderBy: { createdAt: "asc" } })); }
+    catch (err: any) { if (degrade(err, res, [])) return; logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
+  });
+  const STIMULUS_TYPES = ["TEXT", "IMAGE", "AUDIO", "VIDEO", "TABLE", "CHART", "DOCUMENT"];
+  const stimulusData = (b: any) => ({
+    type: STIMULUS_TYPES.includes(b.type) ? b.type : "TEXT", title: b.title || null,
+    content: b.content || null, mediaUrl: b.mediaUrl || null, caption: b.caption || null, data: b.data ?? null,
+  });
+  app.post("/api/exams/:id/stimuli", authMiddleware, teacherGuard, async (req: any, res: any) => {
+    try { const row = await prisma.stimulus.create({ data: { examId: req.params.id, ...stimulusData(req.body || {}) } }); await audit(req, "CREATE", "STIMULUS", row.id, `Stimulus '${row.title || row.type}' created.`); res.status(201).json(row); }
+    catch (err) { logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
+  });
+  app.put("/api/stimuli/:id", authMiddleware, teacherGuard, async (req: any, res: any) => {
+    try { const row = await prisma.stimulus.update({ where: { id: req.params.id }, data: stimulusData(req.body || {}) }); await audit(req, "UPDATE", "STIMULUS", row.id, `Stimulus updated.`); res.json(row); }
+    catch (err: any) { if (err?.code === "P2025") { res.status(404).json({ error: "Not found" }); return; } logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
+  });
+  app.delete("/api/stimuli/:id", authMiddleware, teacherGuard, async (req: any, res: any) => {
+    try { await prisma.question.updateMany({ where: { stimulusId: req.params.id }, data: { stimulusId: null } }); await prisma.questionGroup.updateMany({ where: { stimulusId: req.params.id }, data: { stimulusId: null } }); await prisma.stimulus.delete({ where: { id: req.params.id } }); await audit(req, "DELETE", "STIMULUS", req.params.id, `Stimulus removed.`); res.json({ ok: true }); }
+    catch (err: any) { if (err?.code === "P2025") { res.status(404).json({ error: "Not found" }); return; } logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
+  });
+
+  // ── Question groups (passage-based sets) ─────────────────────────────────────
+  app.get("/api/exams/:id/question-groups", authMiddleware, teacherGuard, async (req: any, res: any) => {
+    try { res.json(await prisma.questionGroup.findMany({ where: { examId: req.params.id }, include: { stimulus: true }, orderBy: { orderIndex: "asc" } })); }
+    catch (err: any) { if (degrade(err, res, [])) return; logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
+  });
+  const groupData = (b: any) => ({ sectionId: b.sectionId || null, stimulusId: b.stimulusId || null, title: b.title || null, instructions: b.instructions || null, orderIndex: num(b.orderIndex) ?? 0 });
+  app.post("/api/exams/:id/question-groups", authMiddleware, teacherGuard, async (req: any, res: any) => {
+    try { const row = await prisma.questionGroup.create({ data: { examId: req.params.id, ...groupData(req.body || {}) } }); await audit(req, "CREATE", "QUESTION_GROUP", row.id, `Question group created.`); res.status(201).json(row); }
+    catch (err) { logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
+  });
+  app.put("/api/question-groups/:id", authMiddleware, teacherGuard, async (req: any, res: any) => {
+    try { const row = await prisma.questionGroup.update({ where: { id: req.params.id }, data: groupData(req.body || {}) }); await audit(req, "UPDATE", "QUESTION_GROUP", row.id, `Question group updated.`); res.json(row); }
+    catch (err: any) { if (err?.code === "P2025") { res.status(404).json({ error: "Not found" }); return; } logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
+  });
+  app.delete("/api/question-groups/:id", authMiddleware, teacherGuard, async (req: any, res: any) => {
+    try { await prisma.question.updateMany({ where: { groupId: req.params.id }, data: { groupId: null } }); await prisma.questionGroup.delete({ where: { id: req.params.id } }); await audit(req, "DELETE", "QUESTION_GROUP", req.params.id, `Question group removed.`); res.json({ ok: true }); }
+    catch (err: any) { if (err?.code === "P2025") { res.status(404).json({ error: "Not found" }); return; } logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
+  });
+
+  // ── Rubrics + criteria ───────────────────────────────────────────────────────
+  app.get("/api/exams/:id/rubrics", authMiddleware, teacherGuard, async (req: any, res: any) => {
+    const { questionId } = req.query as Record<string, string>;
+    try { res.json(await prisma.gradingRubric.findMany({ where: { examId: req.params.id, ...(questionId ? { questionId } : {}) }, include: { criteria: { orderBy: { orderIndex: "asc" } } }, orderBy: { createdAt: "asc" } })); }
+    catch (err: any) { if (degrade(err, res, [])) return; logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
+  });
+  // Create rubric with nested criteria; maxScore is summed from criteria.
+  app.post("/api/exams/:id/rubrics", authMiddleware, teacherGuard, async (req: any, res: any) => {
+    const b = req.body || {};
+    const criteria: any[] = Array.isArray(b.criteria) ? b.criteria : [];
+    const maxScore = criteria.reduce((s, c) => s + (num(c.maxScore) || 0), 0);
+    try {
+      const row = await prisma.gradingRubric.create({
+        data: {
+          examId: req.params.id, questionId: b.questionId || null, title: b.title || "Rubric", description: b.description || null, maxScore,
+          criteria: { create: criteria.map((c, i) => ({ label: c.label || `Criterion ${i + 1}`, description: c.description || null, maxScore: num(c.maxScore) || 0, orderIndex: i, levels: c.levels ?? null })) },
+        },
+        include: { criteria: true },
+      });
+      await audit(req, "CREATE", "GRADING_RUBRIC", row.id, `Rubric '${row.title}' created.`);
+      res.status(201).json(row);
+    } catch (err) { logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
+  });
+  // Replace rubric + criteria wholesale (transactional).
+  app.put("/api/rubrics/:id", authMiddleware, teacherGuard, async (req: any, res: any) => {
+    const b = req.body || {};
+    const criteria: any[] = Array.isArray(b.criteria) ? b.criteria : [];
+    const maxScore = criteria.reduce((s, c) => s + (num(c.maxScore) || 0), 0);
+    try {
+      const row = await prisma.$transaction(async (tx: any) => {
+        await tx.rubricCriterion.deleteMany({ where: { rubricId: req.params.id } });
+        return tx.gradingRubric.update({
+          where: { id: req.params.id },
+          data: {
+            title: b.title || "Rubric", description: b.description || null, questionId: b.questionId ?? undefined, maxScore,
+            criteria: { create: criteria.map((c, i) => ({ label: c.label || `Criterion ${i + 1}`, description: c.description || null, maxScore: num(c.maxScore) || 0, orderIndex: i, levels: c.levels ?? null })) },
+          },
+          include: { criteria: true },
+        });
+      });
+      await audit(req, "UPDATE", "GRADING_RUBRIC", row.id, `Rubric updated.`);
+      res.json(row);
+    } catch (err: any) { if (err?.code === "P2025") { res.status(404).json({ error: "Not found" }); return; } logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
+  });
+  app.delete("/api/rubrics/:id", authMiddleware, teacherGuard, async (req: any, res: any) => {
+    try { await prisma.gradingRubric.delete({ where: { id: req.params.id } }); await audit(req, "DELETE", "GRADING_RUBRIC", req.params.id, `Rubric removed.`); res.json({ ok: true }); }
+    catch (err: any) { if (err?.code === "P2025") { res.status(404).json({ error: "Not found" }); return; } logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
+  });
 }
 
 // =============================================================================
