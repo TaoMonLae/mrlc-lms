@@ -50,6 +50,12 @@ type LockdownPolicy = {
   instructions: string;
 };
 
+type RuntimeExamSettings = {
+  enableTimer?: boolean;
+  autoSubmit?: boolean;
+  showScoreAfterSubmit?: boolean;
+};
+
 const DEFAULT_LOCKDOWN_POLICY: LockdownPolicy = {
   enabled: true,
   requireFullscreen: true,
@@ -73,6 +79,7 @@ export default function ExamTake() {
   const [isMathExam, setIsMathExam] = useState(false);
   const [loading, setLoading] = useState(true);
   const [duration, setDuration] = useState(60);
+  const [examSettings, setExamSettings] = useState<RuntimeExamSettings>({ enableTimer: true, autoSubmit: true });
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [timeLeft, setTimeLeft] = useState(60 * 60);
@@ -136,6 +143,7 @@ export default function ExamTake() {
         });
         setExamTitle(data.title || 'Secure Exam');
         setLockdownPolicy({ ...DEFAULT_LOCKDOWN_POLICY, ...(data.lockdownPolicy || {}) });
+        setExamSettings({ enableTimer: true, autoSubmit: true, ...(data.settings || {}) });
         setQuestions(mapped);
         setIsMathExam(/math/i.test(data.subject?.name ?? ''));
         if (data.durationMinutes) {
@@ -216,18 +224,18 @@ export default function ExamTake() {
   }, [id, questions.length]);
 
   useEffect(() => {
-    if (submitted || loading || !started || questions.length === 0) return;
+    if (submitted || loading || !started || questions.length === 0 || examSettings.enableTimer === false) return;
     const interval = setInterval(() => {
       setTimeLeft((prev) => Math.max(0, prev - 1));
     }, 1000);
     return () => clearInterval(interval);
-  }, [submitted, loading, started, questions.length]);
+  }, [submitted, loading, started, questions.length, examSettings.enableTimer]);
 
   useEffect(() => {
-    if (timeLeft === 0 && started && !submitted) {
+    if (timeLeft === 0 && started && !submitted && examSettings.autoSubmit !== false) {
       submitExam(true);
     }
-  }, [timeLeft, started, submitted, submitExam]);
+  }, [timeLeft, started, submitted, submitExam, examSettings.autoSubmit]);
 
   useEffect(() => {
     if (securityLocked && !submitted) {
@@ -429,10 +437,12 @@ export default function ExamTake() {
                   : 'Security events are not configured to auto-submit this attempt.'}
               </span>
             </div>
-            <div className="flex items-start gap-3 rounded-lg bg-slate-50 dark:bg-surface-raised/50 p-3">
-              <Clock className="mt-0.5 h-4 w-4" />
-              <span>Time limit: {duration} minutes.</span>
-            </div>
+            {examSettings.enableTimer !== false ? (
+              <div className="flex items-start gap-3 rounded-lg bg-slate-50 dark:bg-surface-raised/50 p-3">
+                <Clock className="mt-0.5 h-4 w-4" />
+                <span>Time limit: {duration} minutes.</span>
+              </div>
+            ) : null}
           </div>
           <Button onClick={startSecureExam} className="mt-8 w-full bg-slate-900 text-white hover:bg-slate-800 py-6">
             {lockdownPolicy.enabled ? 'Start Secure Exam' : 'Start Exam'}
@@ -465,12 +475,14 @@ export default function ExamTake() {
               <Maximize2 className="mr-2 h-4 w-4" /> Restore Fullscreen
             </Button>
           ) : null}
-          <div className={`flex items-center gap-2 px-4 py-2 rounded-full font-mono text-lg font-bold ${
-            timeLeft < 300 ? 'bg-red-100 text-red-600' : 'bg-slate-100 dark:bg-surface-raised text-slate-700 dark:text-slate-300'
-          }`}>
-            <Clock className="w-5 h-5" />
-            {formatTime(timeLeft)}
-          </div>
+          {examSettings.enableTimer !== false ? (
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-full font-mono text-lg font-bold ${
+              timeLeft < 300 ? 'bg-red-100 text-red-600' : 'bg-slate-100 dark:bg-surface-raised text-slate-700 dark:text-slate-300'
+            }`}>
+              <Clock className="w-5 h-5" />
+              {formatTime(timeLeft)}
+            </div>
+          ) : null}
         </div>
       </div>
 

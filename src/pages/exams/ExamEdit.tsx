@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import MathField from '../../components/MathField';
-import { type ExamQuestion } from '../../types/exam';
+import { type ExamQuestion, type ExamSettings } from '../../types/exam';
 
 interface LoadedExam {
   id: string;
@@ -18,6 +18,8 @@ interface LoadedExam {
   type: string;
   durationMinutes?: number | null;
   totalMarks?: number | null;
+  status?: string | null;
+  settings?: ExamSettings | null;
   questions: Array<{
     id: string;
     text: string;
@@ -39,6 +41,8 @@ export default function ExamEdit() {
   const [subjectId, setSubjectId] = useState('');
   const [examType, setExamType] = useState('FINAL');
   const [duration, setDuration] = useState('60');
+  const [status, setStatus] = useState('PUBLISHED');
+  const [settings, setSettings] = useState<ExamSettings | null>(null);
   const [classes, setClasses] = useState<{ id: string; name: string }[]>([]);
   const [subjects, setSubjects] = useState<{ id: string; name: string }[]>([]);
   const [questions, setQuestions] = useState<ExamQuestion[]>([]);
@@ -61,6 +65,8 @@ export default function ExamEdit() {
         setSubjectId(exam.subjectId || '');
         setExamType(exam.type || 'FINAL');
         setDuration(String(exam.durationMinutes || 60));
+        setStatus(exam.status || 'PUBLISHED');
+        setSettings(exam.settings || null);
         setHasAttempts(Boolean(exam.attempts?.length));
         setQuestions((exam.questions || []).map((q, index) => ({
           id: q.id || `q_${Date.now()}_${index}`,
@@ -111,6 +117,15 @@ export default function ExamEdit() {
     if (!title.trim()) { toast.error('Please enter an exam title.'); return; }
     if (!classId) { toast.error('Please select a class.'); return; }
     if (!subjectId) { toast.error('Please select a subject.'); return; }
+    if (!hasAttempts) {
+      if (questions.length === 0) { toast.error('Please add at least one question.'); return; }
+      const invalidQuestion = questions.find((q) => !q.questionText.trim());
+      if (invalidQuestion) { toast.error('Every question needs question text.'); return; }
+      const invalidMcq = questions.find((q) =>
+        q.type === 'MCQ' && (!q.choices?.length || q.choices.some((choice) => !choice.trim()) || q.correctAnswer == null)
+      );
+      if (invalidMcq) { toast.error('Multiple choice questions need all choices and one correct answer.'); return; }
+    }
 
     setSaving(true);
     try {
@@ -119,8 +134,10 @@ export default function ExamEdit() {
         classId,
         subjectId,
         examType,
+        status,
         duration: Number(duration) || null,
         totalMarks: totalPoints,
+        settings,
         questions: questions.map((q) => ({
           questionText: q.questionText,
           type: q.type,
@@ -199,6 +216,17 @@ export default function ExamEdit() {
             <div className="space-y-2">
               <Label>Duration (Minutes)</Label>
               <Input type="number" value={duration} onChange={(e) => setDuration(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="DRAFT">Draft</SelectItem>
+                  <SelectItem value="PUBLISHED">Published</SelectItem>
+                  <SelectItem value="CLOSED">Closed</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </section>

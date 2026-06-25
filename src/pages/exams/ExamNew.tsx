@@ -86,6 +86,13 @@ export default function ExamNew() {
     if (!title.trim()) { toast.error('Please enter an exam title.'); setStep(1); return; }
     if (!classId) { toast.error('Please select a class.'); setStep(1); return; }
     if (!subjectId) { toast.error('Please select a subject.'); setStep(1); return; }
+    if (questions.length === 0) { toast.error('Please add at least one question.'); setStep(2); return; }
+    const invalidQuestion = questions.find((q) => !q.questionText.trim());
+    if (invalidQuestion) { toast.error('Every question needs question text.'); setStep(2); return; }
+    const invalidMcq = questions.find((q) =>
+      q.type === 'MCQ' && (!q.choices?.length || q.choices.some((choice) => !choice.trim()) || q.correctAnswer == null)
+    );
+    if (invalidMcq) { toast.error('Multiple choice questions need all choices and one correct answer.'); setStep(2); return; }
     setSaving(true);
     try {
       await apiSend('/api/exams', 'POST', {
@@ -93,13 +100,15 @@ export default function ExamNew() {
         classId,
         subjectId,
         examType,
+        status: 'PUBLISHED',
         duration: Number(duration) || null,
         totalMarks: calculateTotalPoints(),
+        settings,
         questions: questions.map((q) => ({
           questionText: q.questionText,
           type: q.type,
           points: Number(q.points) || 5,
-          choices: q.choices || null,
+          choices: q.type === 'MCQ' ? q.choices || [] : null,
           correctAnswer: q.correctAnswer,
         })),
       });

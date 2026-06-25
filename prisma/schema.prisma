@@ -298,9 +298,11 @@ model Exam {
   id             String   @id @default(uuid())
   title          String
   type           ExamType
+  status         String   @default("PUBLISHED")
   date           DateTime
   durationMinutes Int?
   totalMarks     Float?
+  settings       Json?
   
   classId        String
   class          Class    @relation(fields: [classId], references: [id])
@@ -342,6 +344,9 @@ model ExamAttempt {
   isCompleted    Boolean  @default(false)
   startedAt      DateTime @default(now())
   completedAt    DateTime?
+  securityWarnings Int     @default(0)
+  autoSubmitted   Boolean @default(false)
+  integrityEvents Json?
   
   studentId      String
   student        Student  @relation(fields: [studentId], references: [id])

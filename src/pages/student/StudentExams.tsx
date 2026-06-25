@@ -22,17 +22,28 @@ import { apiGet } from '../../lib/api';
 
 interface AvailableExam { id: string; title: string; subject: string; duration: string; questions: number; deadline: string; type: string; }
 interface SubmittedExam { id: string; title: string; subject: string; submittedAt: string; status: string; score: string | null; }
+interface LockdownSettings {
+  lockdownBrowserEnabled?: boolean;
+  lockdownAutoSubmitOnViolation?: boolean;
+  lockdownMaxWarnings?: number;
+  lockdownInstructions?: string | null;
+}
 
 export default function StudentExams() {
   const navigate = useNavigate();
   const [availableExams, setAvailableExams] = useState<AvailableExam[]>([]);
   const [submittedExams, setSubmittedExams] = useState<SubmittedExam[]>([]);
+  const [lockdownSettings, setLockdownSettings] = useState<LockdownSettings | null>(null);
 
   useEffect(() => {
-    apiGet<{ available: AvailableExam[]; submitted: SubmittedExam[] }>('/api/student/exams')
-      .then((d) => {
+    Promise.all([
+      apiGet<{ available: AvailableExam[]; submitted: SubmittedExam[] }>('/api/student/exams'),
+      apiGet<LockdownSettings>('/api/settings').catch(() => null),
+    ])
+      .then(([d, settings]) => {
         setAvailableExams(d?.available ?? []);
         setSubmittedExams(d?.submitted ?? []);
+        setLockdownSettings(settings);
       })
       .catch(() => {
         setAvailableExams([]);
@@ -180,7 +191,10 @@ export default function StudentExams() {
         <div>
           <h4 className="text-sm font-bold text-amber-900 dark:text-amber-400 uppercase tracking-widest mb-1">Integrity Policy</h4>
           <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
-            Exams are monitored. Switching tabs, using developer tools, or attempting to access unauthorized materials during an exam is strictly prohibited and will result in automatic disqualification. By starting an exam, you agree to these terms.
+            {lockdownSettings?.lockdownBrowserEnabled === false
+              ? 'Lockdown monitoring is currently disabled by the school. Follow your teacher’s exam instructions.'
+              : lockdownSettings?.lockdownInstructions ||
+                `Exams are monitored. Stay on the exam page during the attempt.${lockdownSettings?.lockdownAutoSubmitOnViolation === false ? '' : ` The attempt may auto-submit after ${lockdownSettings?.lockdownMaxWarnings || 3} warning(s).`}`}
           </p>
         </div>
       </div>

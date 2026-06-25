@@ -446,7 +446,8 @@ const schemas = {
   exam: z.object({
     title: reqStr, classId: reqStr, subjectId: reqStr,
     examType: z.enum(["QUIZ", "MIDTERM", "FINAL", "MOCK"]).optional(),
-    duration: optNum, totalMarks: optNum,
+    duration: optNum, totalMarks: optNum, status: optStr,
+    settings: z.any().optional(),
     questions: z.array(z.object({
       questionText: optStr, type: optStr, points: optNum,
       choices: z.any().optional(), correctAnswer: z.any().optional(),
@@ -461,6 +462,13 @@ const schemas = {
     })).optional(),
     securityWarnings: z.number().int().min(0).optional(),
     autoSubmitted: z.boolean().optional(),
+  }),
+  examGrade: z.object({
+    answers: z.array(z.object({
+      answerId: reqStr,
+      pointsAwarded: z.union([z.string(), z.number()]).nullable(),
+      isCorrect: z.boolean().nullable().optional(),
+    })).min(1, "at least one answer grade is required"),
   }),
   classCreate: z.object({
     name: reqStr, level: reqStr, academicYear: reqStr,
@@ -4305,6 +4313,16 @@ async function startServer() {
   });
 
   // ── Exams API ───────────────────────────────────────────────────────────────
+  async function canManageExamClass(jwtUser: JwtPayload, classId: string): Promise<boolean> {
+    if (jwtUser.role === "ADMIN") return true;
+    if (jwtUser.role !== "TEACHER") return false;
+    const teacher = await prisma.teacher.findUnique({
+      where: { userId: jwtUser.userId },
+      include: { classes: true },
+    });
+    return Boolean(teacher?.classes.some((ct) => ct.classId === classId));
+  }
+
   app.get("/api/exams", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
@@ -4387,6 +4405,15 @@ async function startServer() {
           res.status(404).json({ error: "Exam not found" });
           return;
         }
+        if (exam.status !== "PUBLISHED") {
+          const attempt = await prisma.examAttempt.findUnique({
+            where: { studentId_examId: { studentId: student.id, examId: exam.id } },
+          });
+          if (!attempt?.isCompleted) {
+            res.status(404).json({ error: "Exam not found" });
+            return;
+          }
+        }
       }
       const profile = await prisma.schoolProfile.findFirst();
       res.json({ ...exam, lockdownPolicy: lockdownBrowserPolicy(profile) });
@@ -4402,12 +4429,16 @@ async function startServer() {
       res.status(403).json({ error: "Forbidden" });
       return;
     }
-    const { title, classId, subjectId, examType, duration, totalMarks, questions } = req.body;
+    const { title, classId, subjectId, examType, duration, totalMarks, questions, settings, status } = req.body;
     if (!title || !classId || !subjectId) {
       res.status(400).json({ error: "title, classId, and subjectId are required" });
       return;
     }
     try {
+      if (!(await canManageExamClass(jwtUser, classId))) {
+        res.status(403).json({ error: "Forbidden: You cannot create exams for this class" });
+        return;
+      }
       const result = await prisma.$transaction(async (tx) => {
         const exam = await tx.exam.create({
           data: {
@@ -4415,9 +4446,11 @@ async function startServer() {
             classId,
             subjectId,
             type: examType || "FINAL",
+            status: status || "PUBLISHED",
             date: new Date(),
             durationMinutes: duration ? Number(duration) : null,
             totalMarks: totalMarks != null ? Number(totalMarks) : null,
+            settings: settings || null,
           }
         });
         if (questions && Array.isArray(questions)) {
@@ -4463,12 +4496,25 @@ async function startServer() {
       return;
     }
     const { id } = req.params;
-    const { title, classId, subjectId, examType, duration, totalMarks, questions } = req.body;
+    const { title, classId, subjectId, examType, duration, totalMarks, questions, settings, status } = req.body;
     if (!title || !classId || !subjectId) {
       res.status(400).json({ error: "title, classId, and subjectId are required" });
       return;
     }
     try {
+      if (!(await canManageExamClass(jwtUser, classId))) {
+        res.status(403).json({ error: "Forbidden: You cannot update exams for this class" });
+        return;
+      }
+      const existingForAccess = await prisma.exam.findUnique({ where: { id }, select: { classId: true } });
+      if (!existingForAccess) {
+        res.status(404).json({ error: "Exam not found" });
+        return;
+      }
+      if (!(await canManageExamClass(jwtUser, existingForAccess.classId))) {
+        res.status(403).json({ error: "Forbidden: You cannot update this exam" });
+        return;
+      }
       const result = await prisma.$transaction(async (tx) => {
         const existing = await tx.exam.findUnique({
           where: { id },
@@ -4483,8 +4529,10 @@ async function startServer() {
             classId,
             subjectId,
             type: examType || "FINAL",
+            status: status || existing.status || "PUBLISHED",
             durationMinutes: duration ? Number(duration) : null,
             totalMarks: totalMarks != null ? Number(totalMarks) : null,
+            settings: settings !== undefined ? settings : existing.settings,
           },
         });
 
@@ -4563,6 +4611,10 @@ async function startServer() {
         res.status(404).json({ error: "Exam not found" });
         return;
       }
+      if (exam.status !== "PUBLISHED") {
+        res.status(403).json({ error: "This exam is not open for submissions" });
+        return;
+      }
 
       const existingCompleted = await prisma.examAttempt.findUnique({
         where: { studentId_examId: { studentId: student.id, examId: id } },
@@ -4576,13 +4628,21 @@ async function startServer() {
         const attempt = existingCompleted
           ? await tx.examAttempt.update({
               where: { id: existingCompleted.id },
-              data: { isCompleted: false },
+              data: {
+                isCompleted: false,
+                securityWarnings,
+                autoSubmitted,
+                integrityEvents,
+              },
             })
           : await tx.examAttempt.create({
               data: {
                 studentId: student.id,
                 examId: id,
                 isCompleted: false,
+                securityWarnings,
+                autoSubmitted,
+                integrityEvents,
               },
             });
 
@@ -4633,6 +4693,9 @@ async function startServer() {
             score,
             isCompleted: true,
             completedAt: new Date(),
+            securityWarnings,
+            autoSubmitted,
+            integrityEvents,
           },
         });
 
@@ -4666,6 +4729,162 @@ async function startServer() {
       });
     } catch (err) {
       logger.error("Error submitting exam:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/exams/:id/results", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { id } = req.params;
+    try {
+      const exam = await prisma.exam.findUnique({
+        where: { id },
+        include: {
+          class: { include: { students: { include: { user: true } } } },
+          subject: true,
+          questions: { orderBy: { createdAt: "asc" } },
+          attempts: {
+            include: {
+              student: { include: { user: true } },
+              answers: { include: { question: true }, orderBy: { createdAt: "asc" } },
+            },
+            orderBy: { completedAt: "desc" },
+          },
+        },
+      });
+      if (!exam) {
+        res.status(404).json({ error: "Exam not found" });
+        return;
+      }
+
+      let scopedAttempts = exam.attempts;
+      let canGrade = jwtUser.role === "ADMIN" || jwtUser.role === "TEACHER";
+      if (jwtUser.role === "TEACHER") {
+        if (!(await canManageExamClass(jwtUser, exam.classId))) {
+          res.status(403).json({ error: "Forbidden" });
+          return;
+        }
+      } else if (jwtUser.role === "STUDENT") {
+        const student = await prisma.student.findUnique({ where: { userId: jwtUser.userId } });
+        if (!student || student.classId !== exam.classId) {
+          res.status(404).json({ error: "Exam not found" });
+          return;
+        }
+        scopedAttempts = exam.attempts.filter((a) => a.studentId === student.id);
+        canGrade = false;
+      } else if (!canGrade) {
+        res.status(403).json({ error: "Forbidden" });
+        return;
+      }
+
+      const totalMarks = Number(exam.totalMarks || exam.questions.reduce((sum, q) => sum + Number(q.points || 0), 0) || 0);
+      res.json({
+        userRole: jwtUser.role,
+        canGrade,
+        exam: {
+          id: exam.id,
+          title: exam.title,
+          status: exam.status,
+          type: exam.type,
+          totalMarks,
+          durationMinutes: exam.durationMinutes,
+          subject: exam.subject?.name || "General",
+          className: exam.class?.name || "—",
+          studentCount: exam.class?.students.length || 0,
+        },
+        attempts: scopedAttempts.map((attempt) => ({
+          id: attempt.id,
+          studentId: attempt.studentId,
+          studentName: fullName(attempt.student.user),
+          studentCode: attempt.student.studentCode,
+          score: attempt.score,
+          percent: attempt.score != null && totalMarks > 0 ? round1((Number(attempt.score) / totalMarks) * 100) : null,
+          status: attempt.isCompleted ? (attempt.answers.some((a) => a.answerText && a.pointsAwarded == null) ? "NEEDS_GRADING" : "GRADED") : "IN_PROGRESS",
+          startedAt: attempt.startedAt,
+          completedAt: attempt.completedAt,
+          securityWarnings: attempt.securityWarnings,
+          autoSubmitted: attempt.autoSubmitted,
+          integrityEvents: attempt.integrityEvents || [],
+          answers: attempt.answers.map((answer) => ({
+            id: answer.id,
+            questionId: answer.questionId,
+            questionText: answer.question.text,
+            questionType: answer.question.type,
+            maxPoints: answer.question.points,
+            answerText: answer.answerText,
+            isCorrect: answer.isCorrect,
+            pointsAwarded: answer.pointsAwarded,
+          })),
+        })),
+      });
+    } catch (err) {
+      logger.error("Error fetching exam results:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.put("/api/exam-attempts/:attemptId/grade", authMiddleware, validate(schemas.examGrade), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { attemptId } = req.params;
+    const grades = req.body.answers as Array<{ answerId: string; pointsAwarded: string | number | null; isCorrect?: boolean | null }>;
+    try {
+      const attempt = await prisma.examAttempt.findUnique({
+        where: { id: attemptId },
+        include: { exam: true, answers: { include: { question: true } }, student: true },
+      });
+      if (!attempt) {
+        res.status(404).json({ error: "Attempt not found" });
+        return;
+      }
+      if (!(await canManageExamClass(jwtUser, attempt.exam.classId))) {
+        res.status(403).json({ error: "Forbidden" });
+        return;
+      }
+
+      const allowedAnswerIds = new Set(attempt.answers.map((a) => a.id));
+      const result = await prisma.$transaction(async (tx) => {
+        for (const grade of grades) {
+          if (!allowedAnswerIds.has(grade.answerId)) continue;
+          const points = grade.pointsAwarded == null ? null : Number(grade.pointsAwarded);
+          if (points != null && !Number.isFinite(points)) {
+            throw Object.assign(new Error("pointsAwarded must be a number"), { http: 400 });
+          }
+          await tx.examAnswer.update({
+            where: { id: grade.answerId },
+            data: {
+              pointsAwarded: points,
+              isCorrect: grade.isCorrect ?? (points != null ? points > 0 : null),
+            },
+          });
+        }
+        const refreshed = await tx.examAnswer.findMany({ where: { attemptId } });
+        const score = refreshed.reduce((sum, answer) => sum + Number(answer.pointsAwarded || 0), 0);
+        return tx.examAttempt.update({ where: { id: attemptId }, data: { score, isCompleted: true } });
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "GRADE",
+        "EXAM_ATTEMPT",
+        attemptId,
+        `Graded exam attempt for student ${attempt.student.studentCode}.`,
+        req.ip,
+        req.headers["user-agent"] || null,
+        "SUCCESS"
+      );
+
+      res.json(result);
+    } catch (err: any) {
+      logger.error("Error grading exam attempt:", err);
+      if (err.http) {
+        res.status(err.http).json({ error: err.message });
+        return;
+      }
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
@@ -5977,7 +6196,7 @@ async function startServer() {
             status: attempt.score != null ? "Graded" : "Grading",
             score: attempt.score != null && e.totalMarks ? `${attempt.score}/${e.totalMarks}` : null,
           });
-        } else {
+        } else if (e.status === "PUBLISHED") {
           available.push({
             id: e.id, title: e.title, subject: e.subject?.name || "General",
             duration: e.durationMinutes ? `${e.durationMinutes} mins` : "—",
@@ -6229,7 +6448,7 @@ async function startServer() {
           id: e.id, title: e.title, class: e.class?.name || "—", date: fmtDate(e.date),
           duration: e.durationMinutes ? `${e.durationMinutes}m` : "N/A",
           type: e.subject?.name || e.type,
-          status: examStatus(e.date, e.attempts),
+          status: e.status === "DRAFT" || e.status === "CLOSED" ? e.status : examStatus(e.date, e.attempts),
           submissions: e.attempts.length, total: e.class?.students.length || 0,
           ...(avg ? { avg } : {}),
         };

@@ -59,7 +59,10 @@ export default function ExamProfile() {
         const completed = attempts.filter((a: any) => a.isCompleted);
         const scored = completed.filter((a: any) => typeof a.score === 'number');
         const avgScore = scored.length
-          ? Math.round(scored.reduce((s: number, a: any) => s + a.score, 0) / scored.length)
+          ? Math.round(scored.reduce((s: number, a: any) => {
+              const total = data.totalMarks || 100;
+              return s + ((a.score / total) * 100);
+            }, 0) / scored.length)
           : 0;
         const totalPoints = data.totalMarks ?? (data.questions || []).reduce((s: number, q: any) => s + (q.points || 0), 0);
         setExam({
