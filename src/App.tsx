@@ -117,6 +117,7 @@ import TeacherLibrary from "./pages/teacher/TeacherLibrary";
 import TeacherReports from "./pages/teacher/TeacherReports";
 import TeacherTimetable from "./pages/teacher/TeacherTimetable";
 import TeacherVideos from "./pages/teacher/TeacherVideos";
+import LessonPlanner from "./pages/teacher/LessonPlanner";
 
 import VideoList from "./pages/videos/VideoList";
 import VideoNew from "./pages/videos/VideoNew";
@@ -174,6 +175,7 @@ export default function App() {
                   <Route path="/teacher/reports" element={<TeacherReports />} />
                   <Route path="/teacher/timetable" element={<TeacherTimetable />} />
                   <Route path="/teacher/videos" element={<TeacherVideos />} />
+                  <Route path="/teacher/planner" element={<LessonPlanner />} />
                 </Route>
                 
                 {/* Student Portal Routes */}

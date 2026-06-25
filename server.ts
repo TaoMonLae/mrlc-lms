@@ -5310,10 +5310,29 @@ async function startServer() {
 
   // Attendance report: per-student rates for a class/month
   app.get("/api/reports/attendance", authMiddleware, reportRole(["ADMIN", "TEACHER"]), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
     const { classId, month } = req.query as { classId?: string; month?: string };
     try {
       const where: any = {};
-      if (classId && classId !== "all") where.classId = classId;
+
+      // For teachers, scope to their classes unless they're admins
+      if (jwtUser.role === "TEACHER") {
+        const teacherClassIds = await getTeacherClassIds(jwtUser.userId);
+        if (classId && classId !== "all") {
+          // Verify teacher has access to requested class
+          if (!teacherClassIds.includes(classId)) {
+            res.status(403).json({ error: "Forbidden: Not your class" });
+            return;
+          }
+          where.classId = classId;
+        } else {
+          // Scope to all teacher's classes
+          where.classId = { in: teacherClassIds };
+        }
+      } else if (classId && classId !== "all") {
+        where.classId = classId;
+      }
+
       const range = monthRange(month);
       if (range) where.date = { gte: range.start, lt: range.end };
 
@@ -5404,10 +5423,28 @@ async function startServer() {
 
   // Exam results: per-student subject averages for a class
   app.get("/api/reports/exams", authMiddleware, reportRole(["ADMIN", "TEACHER"]), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
     const { classId } = req.query as { classId?: string };
     try {
       const where: any = {};
-      if (classId && classId !== "all") where.classId = classId;
+
+      // For teachers, scope to their classes unless they're admins
+      if (jwtUser.role === "TEACHER") {
+        const teacherClassIds = await getTeacherClassIds(jwtUser.userId);
+        if (classId && classId !== "all") {
+          // Verify teacher has access to requested class
+          if (!teacherClassIds.includes(classId)) {
+            res.status(403).json({ error: "Forbidden: Not your class" });
+            return;
+          }
+          where.classId = classId;
+        } else {
+          // Scope to all teacher's classes
+          where.classId = { in: teacherClassIds };
+        }
+      } else if (classId && classId !== "all") {
+        where.classId = classId;
+      }
       const exams = await prisma.exam.findMany({
         where,
         include: { subject: true, attempts: { include: { student: { include: { user: true } } } } },
@@ -5546,10 +5583,28 @@ async function startServer() {
 
   // Student profile export for a class
   app.get("/api/reports/students", authMiddleware, reportRole(["ADMIN", "TEACHER"]), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
     const { classId } = req.query as { classId?: string };
     try {
       const where: any = {};
-      if (classId && classId !== "all") where.classId = classId;
+
+      // For teachers, scope to their classes unless they're admins
+      if (jwtUser.role === "TEACHER") {
+        const teacherClassIds = await getTeacherClassIds(jwtUser.userId);
+        if (classId && classId !== "all") {
+          // Verify teacher has access to requested class
+          if (!teacherClassIds.includes(classId)) {
+            res.status(403).json({ error: "Forbidden: Not your class" });
+            return;
+          }
+          where.classId = classId;
+        } else {
+          // Scope to all teacher's classes
+          where.classId = { in: teacherClassIds };
+        }
+      } else if (classId && classId !== "all") {
+        where.classId = classId;
+      }
       const students = await prisma.student.findMany({ where, include: { user: true, class: true } });
       const rows = students.map((s) => ({
         code: s.studentCode,
@@ -5789,6 +5844,14 @@ async function startServer() {
     const ids = await teacherClassIds(req);
     return ids.includes(classId);
   };
+
+  const getTeacherClassIds = async (userId: string): Promise<string[]> => {
+    const teacher = await prisma.teacher.findUnique({
+      where: { userId },
+      include: { classes: true },
+    });
+    return teacher?.classes.map((ct) => ct.classId) || [];
+  };
   const fmtDate = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
   const examStatus = (date: Date, attempts: { score: number | null }[]): string => {
     if (attempts.length === 0) return date > new Date() ? "UPCOMING" : "DRAFT";
@@ -5830,7 +5893,16 @@ async function startServer() {
         include: {
           students: {
             include: {
-              user: true,
+              user: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  email: true,
+                  profilePhotoUrl: true,
+                  isActive: true
+                }
+              },
               attendances: true,
               examAttempts: { where: { score: { not: null } }, include: { exam: true }, orderBy: { completedAt: "desc" } },
             },
@@ -5844,7 +5916,7 @@ async function startServer() {
         classInfo: {
           id: c.id, name: c.name, level: c.level, room: c.room || "—",
           teacher: lead ? fullName(lead) : "—",
-          totalStudents: c.students.length, academicYear: c.academicYear, status: "ACTIVE",
+          totalStudents: c.students.length, academicYear: c.academicYear,
         },
         students: c.students.map((s) => {
           const present = s.attendances.filter((a) => a.status === "PRESENT").length;
@@ -5854,7 +5926,7 @@ async function startServer() {
             id: s.id, name: fullName(s.user), studentId: s.studentCode,
             attendance: `${att}%`,
             lastExam: last && last.score != null ? `${last.score}/${last.exam.totalMarks || 100}` : "—",
-            status: s.status || "ACTIVE",
+            profilePhotoUrl: s.user.profilePhotoUrl,
           };
         }),
       });
@@ -5948,7 +6020,7 @@ async function startServer() {
 
       res.json({
         stats: { studentCount, classCount: classes.length, attendanceRate, upcomingExamCount: upcoming.length },
-        classes: classes.map((c) => ({ id: c.id, name: c.name, level: c.level, room: c.room || "—", students: c.students.length, progress: 0 })),
+        classes: classes.map((c) => ({ id: c.id, name: c.name, level: c.level, room: c.room || "—", students: c.students.length })),
         attendanceData,
         upcomingExams: upcoming.map((e) => ({ id: e.id, title: e.title, date: fmtDate(e.date), time: "", class: e.class?.name || "—" })),
         recentPerformance: recent.map((a) => {
@@ -6756,6 +6828,650 @@ async function startServer() {
       res.sendFile(path.join(distPath, "index.html"));
     });
   }
+
+  // ── Messaging System API ─────────────────────────────────────────────────────
+  app.get("/api/messages", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const messages = await prisma.message.findMany({
+        where: {
+          senderId: jwtUser.userId,
+          OR: [
+            { recipients: { some: { recipientId: jwtUser.userId } } }
+          ]
+        },
+        include: {
+          sender: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              profilePhotoUrl: true
+            }
+          },
+          recipients: {
+            include: {
+              recipient: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  email: true,
+                  profilePhotoUrl: true
+                }
+              }
+            }
+          }
+        },
+        orderBy: { sentAt: 'desc' }
+      });
+
+      const formattedMessages = messages.map(msg => ({
+        id: msg.id,
+        subject: msg.subject,
+        body: msg.body,
+        sentAt: msg.sentAt,
+        sender: {
+          id: msg.sender.id,
+          name: fullName(msg.sender),
+          email: msg.sender.email,
+          profilePhotoUrl: msg.sender.profilePhotoUrl
+        },
+        recipients: msg.recipients.map(rec => ({
+          id: rec.recipient.id,
+          name: fullName(rec.recipient),
+          email: rec.recipient.email,
+          readAt: rec.readAt
+        })),
+        isReadByAll: msg.recipients.every(rec => rec.readAt !== null)
+      }));
+
+      res.json(formattedMessages);
+    } catch (err) {
+      logger.error("Error fetching messages:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/messages/:id", authMiddleware, async (req, res) => {
+    const { id } = req.params;
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const message = await prisma.message.findFirst({
+        where: {
+          id,
+          OR: [
+            { senderId: jwtUser.userId },
+            { recipients: { some: { recipientId: jwtUser.userId } } }
+          ]
+        },
+        include: {
+          sender: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              profilePhotoUrl: true
+            }
+          },
+          recipients: {
+            include: {
+              recipient: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  email: true,
+                  profilePhotoUrl: true
+                }
+              }
+            }
+          }
+        }
+      });
+
+      if (!message) {
+        res.status(404).json({ error: "Message not found" });
+        return;
+      }
+
+      const formattedMessage = {
+        id: message.id,
+        subject: message.subject,
+        body: message.body,
+        sentAt: message.sentAt,
+        sender: {
+          id: message.sender.id,
+          name: fullName(message.sender),
+          email: message.sender.email,
+          profilePhotoUrl: message.sender.profilePhotoUrl
+        },
+        recipients: message.recipients.map(rec => ({
+          id: rec.recipient.id,
+          name: fullName(rec.recipient),
+          email: rec.recipient.email,
+          readAt: rec.readAt
+        }))
+      };
+
+      res.json(formattedMessage);
+    } catch (err) {
+      logger.error("Error fetching message:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/messages", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { subject, body, recipientIds } = req.body;
+
+    if (!subject || !body || !recipientIds || !Array.isArray(recipientIds)) {
+      res.status(400).json({ error: "Subject, body, and recipientIds array are required" });
+      return;
+    }
+
+    try {
+      const message = await prisma.message.create({
+        data: {
+          subject,
+          body,
+          senderId: jwtUser.userId,
+          recipients: {
+            create: recipientIds.map((recipientId: string) => ({
+              recipientId
+            }))
+          }
+        },
+        include: {
+          sender: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true
+            }
+          },
+          recipients: {
+            include: {
+              recipient: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  email: true
+                }
+              }
+            }
+          }
+        }
+      });
+
+      res.status(201).json({
+        id: message.id,
+        subject: message.subject,
+        body: message.body,
+        sentAt: message.sentAt,
+        sender: {
+          id: message.sender.id,
+          name: fullName(message.sender),
+          email: message.sender.email
+        },
+        recipients: message.recipients.map(rec => ({
+          id: rec.recipient.id,
+          name: fullName(rec.recipient),
+          email: rec.recipient.email
+        }))
+      });
+    } catch (err) {
+      logger.error("Error creating message:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/messages/:id/read", authMiddleware, async (req, res) => {
+    const { id } = req.params;
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const recipient = await prisma.messageRecipient.findFirst({
+        where: {
+          messageId: id,
+          recipientId: jwtUser.userId
+        }
+      });
+
+      if (!recipient) {
+        res.status(404).json({ error: "Message recipient not found" });
+        return;
+      }
+
+      await prisma.messageRecipient.update({
+        where: { id: recipient.id },
+        data: { readAt: new Date() }
+      });
+
+      res.json({ success: true, readAt: new Date() });
+    } catch (err) {
+      logger.error("Error marking message as read:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.delete("/api/messages/:id", authMiddleware, async (req, res) => {
+    const { id } = req.params;
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const message = await prisma.message.findFirst({
+        where: {
+          id,
+          senderId: jwtUser.userId
+        }
+      });
+
+      if (!message) {
+        res.status(404).json({ error: "Message not found or not authorized to delete" });
+        return;
+      }
+
+      await prisma.message.delete({
+        where: { id }
+      });
+
+      res.json({ success: true });
+    } catch (err) {
+      logger.error("Error deleting message:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Library Resources API (Enhanced) ─────────────────────────────────────────────
+  app.get("/api/library", authMiddleware, async (req, res) => {
+    try {
+      const resources = await prisma.libraryResource.findMany({
+        orderBy: { createdAt: 'desc' }
+      });
+
+      const formattedResources = resources.map(resource => ({
+        id: resource.id,
+        title: resource.title,
+        author: resource.author || '—',
+        type: (resource.type || 'FILE').toUpperCase(),
+        description: resource.description,
+        externalUrl: resource.externalUrl,
+        fileSize: resource.fileSize || null,
+        downloadCount: resource.downloadCount || 0,
+        lastDownloaded: resource.lastDownloaded || null,
+        category: resource.category || null,
+        tags: resource.tags || [],
+        visibility: resource.visibility || 'ALL',
+        createdAt: resource.createdAt
+      }));
+
+      res.json(formattedResources);
+    } catch (err) {
+      logger.error("Error fetching library resources:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/library/:id/download", authMiddleware, async (req, res) => {
+    const { id } = req.params;
+    try {
+      const resource = await prisma.libraryResource.update({
+        where: { id },
+        data: {
+          downloadCount: { increment: 1 },
+          lastDownloaded: new Date()
+        }
+      });
+
+      if (!resource.externalUrl) {
+        res.status(404).json({ error: "Resource has no download URL" });
+        return;
+      }
+
+      res.json({
+        url: resource.externalUrl,
+        downloadCount: resource.downloadCount,
+        lastDownloaded: resource.lastDownloaded
+      });
+    } catch (err) {
+      logger.error("Error tracking library download:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Generated Reports API ─────────────────────────────────────────────────────
+  app.get("/api/reports/saved", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const savedReports = await prisma.savedReport.findMany({
+        where: { generatedById: jwtUser.userId },
+        orderBy: { updatedAt: 'desc' }
+      });
+
+      const formattedReports = savedReports.map(report => ({
+        id: report.id,
+        name: report.name,
+        description: report.description,
+        reportType: report.reportType,
+        filters: report.filters,
+        lastGeneratedAt: report.lastGeneratedAt,
+        generationCount: report.generationCount,
+        createdAt: report.createdAt,
+        updatedAt: report.updatedAt
+      }));
+
+      res.json(formattedReports);
+    } catch (err) {
+      logger.error("Error fetching saved reports:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/reports/save", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { name, description, reportType, filters } = req.body;
+
+    if (!name || !reportType) {
+      res.status(400).json({ error: "Name and reportType are required" });
+      return;
+    }
+
+    try {
+      const savedReport = await prisma.savedReport.create({
+        data: {
+          name,
+          description,
+          reportType,
+          filters: filters || {},
+          generatedById: jwtUser.userId,
+          generatedByName: jwtUser.email
+        }
+      });
+
+      res.status(201).json(savedReport);
+    } catch (err) {
+      logger.error("Error saving report:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/reports/generate/:id", authMiddleware, async (req, res) => {
+    const { id } = req.params;
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const savedReport = await prisma.savedReport.findFirst({
+        where: {
+          id,
+          generatedById: jwtUser.userId
+        }
+      });
+
+      if (!savedReport) {
+        res.status(404).json({ error: "Saved report not found" });
+        return;
+      }
+
+      // Create a report generation record
+      const generation = await prisma.reportGeneration.create({
+        data: {
+          savedReportId: savedReport.id,
+          reportType: savedReport.reportType,
+          reportName: savedReport.name,
+          filters: savedReport.filters,
+          generatedById: jwtUser.userId,
+          generatedByName: jwtUser.email,
+          status: "COMPLETED"
+        }
+      });
+
+      // Update the saved report
+      await prisma.savedReport.update({
+        where: { id: savedReport.id },
+        data: {
+          lastGeneratedAt: new Date(),
+          generationCount: { increment: 1 }
+        }
+      });
+
+      res.status(201).json(generation);
+    } catch (err) {
+      logger.error("Error generating report:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/reports/generations", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const generations = await prisma.reportGeneration.findMany({
+        where: { generatedById: jwtUser.userId },
+        orderBy: { createdAt: 'desc' },
+        take: 20
+      });
+
+      const formattedGenerations = generations.map(gen => ({
+        id: gen.id,
+        reportType: gen.reportType,
+        reportName: gen.reportName,
+        status: gen.status,
+        fileUrl: gen.fileUrl,
+        fileSize: gen.fileSize,
+        createdAt: gen.createdAt,
+        generatedByName: gen.generatedByName
+      }));
+
+      res.json(formattedGenerations);
+    } catch (err) {
+      logger.error("Error fetching report generations:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Lesson Planning API ─────────────────────────────────────────────────────
+  app.get("/api/lesson-plans", authMiddleware, teacherOnly, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { classId, upcoming } = req.query;
+    try {
+      const teacher = await prisma.teacher.findUnique({
+        where: { userId: jwtUser.userId }
+      });
+
+      if (!teacher) {
+        res.status(404).json({ error: "Teacher profile not found" });
+        return;
+      }
+
+      const where: any = { teacherId: teacher.id };
+
+      if (classId && typeof classId === 'string') {
+        where.classId = classId;
+      }
+
+      if (upcoming === 'true') {
+        where.plannedDate = { gte: new Date() };
+      }
+
+      const lessonPlans = await prisma.lessonPlan.findMany({
+        where,
+        include: {
+          class: {
+            select: {
+              id: true,
+              name: true,
+              level: true
+            }
+          },
+          subject: {
+            select: {
+              id: true,
+              name: true,
+              code: true
+            }
+          }
+        },
+        orderBy: { plannedDate: 'asc' }
+      });
+
+      const formattedPlans = lessonPlans.map(plan => ({
+        id: plan.id,
+        title: plan.title,
+        description: plan.description,
+        class: plan.class,
+        subject: plan.subject,
+        plannedDate: plan.plannedDate,
+        duration: plan.duration,
+        room: plan.room,
+        objectives: plan.objectives || [],
+        materials: plan.materials || [],
+        activities: plan.activities || [],
+        assessment: plan.assessment,
+        status: plan.status
+      }));
+
+      res.json(formattedPlans);
+    } catch (err) {
+      logger.error("Error fetching lesson plans:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/lesson-plans", authMiddleware, teacherOnly, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const {
+      title,
+      description,
+      classId,
+      subjectId,
+      plannedDate,
+      duration,
+      room,
+      objectives,
+      materials,
+      activities,
+      assessment
+    } = req.body;
+
+    if (!title || !classId || !plannedDate) {
+      res.status(400).json({ error: "Title, classId, and plannedDate are required" });
+      return;
+    }
+
+    try {
+      const teacher = await prisma.teacher.findUnique({
+        where: { userId: jwtUser.userId }
+      });
+
+      if (!teacher) {
+        res.status(404).json({ error: "Teacher profile not found" });
+        return;
+      }
+
+      const lessonPlan = await prisma.lessonPlan.create({
+        data: {
+          title,
+          description,
+          classId,
+          subjectId,
+          plannedDate: new Date(plannedDate),
+          duration: duration || 60,
+          room,
+          objectives: objectives || [],
+          materials: materials || [],
+          activities: activities || [],
+          assessment,
+          teacherId: teacher.id
+        },
+        include: {
+          class: {
+            select: {
+              id: true,
+              name: true,
+              level: true
+            }
+          },
+          subject: {
+            select: {
+              id: true,
+              name: true,
+              code: true
+            }
+          }
+        }
+      });
+
+      res.status(201).json(lessonPlan);
+    } catch (err) {
+      logger.error("Error creating lesson plan:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/lesson-plans/:id", authMiddleware, teacherOnly, async (req, res) => {
+    const { id } = req.params;
+    try {
+      const lessonPlan = await prisma.lessonPlan.findFirst({
+        where: { id },
+        include: {
+          class: true,
+          subject: true,
+          teacher: {
+            include: {
+              user: true
+            }
+          },
+          progress: true
+        }
+      });
+
+      if (!lessonPlan) {
+        res.status(404).json({ error: "Lesson plan not found" });
+        return;
+      }
+
+      res.json(lessonPlan);
+    } catch (err) {
+      logger.error("Error fetching lesson plan:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.put("/api/lesson-plans/:id", authMiddleware, teacherOnly, async (req, res) => {
+    const { id } = req.params;
+    const jwtUser = (req as any).user as JwtPayload;
+    const updates = req.body;
+
+    try {
+      const existing = await prisma.lessonPlan.findFirst({
+        where: { id }
+      });
+
+      if (!existing) {
+        res.status(404).json({ error: "Lesson plan not found" });
+        return;
+      }
+
+      const updated = await prisma.lessonPlan.update({
+        where: { id },
+        data: {
+          ...updates,
+          plannedDate: updates.plannedDate ? new Date(updates.plannedDate) : existing.plannedDate
+        },
+        include: {
+          class: true,
+          subject: true,
+          progress: true
+        }
+      });
+
+      res.json(updated);
+    } catch (err) {
+      logger.error("Error updating lesson plan:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
 
   // ── Global error handler ────────────────────────────────────────────────────
   app.use(

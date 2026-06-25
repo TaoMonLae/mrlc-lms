@@ -1,19 +1,21 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { 
-  BarChart3, 
-  Download, 
-  FileText, 
-  Calendar, 
-  Users, 
-  TrendingUp, 
+import {
+  FileText,
+  Calendar,
+  Users,
+  TrendingUp,
+  Info,
+  Download,
   ChevronRight,
   ChevronDown,
-  Info
+  BarChart3
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiGet } from "../../lib/api";
+import { toast } from "sonner";
 
 const reportTemplates = [
   {
@@ -47,17 +49,30 @@ const reportTemplates = [
 
 type GeneratedReport = {
   id: string;
-  title: string;
-  date: string;
-  format: string;
-  size: string;
+  reportType: string;
+  reportName: string;
+  status: string;
+  fileUrl?: string;
+  fileSize?: number;
+  createdAt: string;
+  generatedByName: string;
 };
-
-const generatedReports: GeneratedReport[] = [];
 
 export default function TeacherReports() {
   const [showHistory, setShowHistory] = useState(false);
+  const [generatedReports, setGeneratedReports] = useState<GeneratedReport[]>([]);
   const navigate = useNavigate();
+
+  // Fetch generated reports on component mount
+  useEffect(() => {
+    apiGet<GeneratedReport[]>('/api/reports/generations')
+      .then((data) => {
+        setGeneratedReports(data || []);
+      })
+      .catch(() => {
+        setGeneratedReports([]);
+      });
+  }, []);
 
   const handleRequestAccess = () => {
     window.location.href = "mailto:admin@mrlc.edu?subject=Report Access Request&body=I would like to request access to restricted reports. Please review my profile.";
@@ -124,11 +139,13 @@ export default function TeacherReports() {
                             <BarChart3 className="h-5 w-5" />
                         </div>
                         <div>
-                            <h5 className="font-bold text-slate-800 dark:text-white uppercase text-xs">{report.title}</h5>
+                            <h5 className="font-bold text-slate-800 dark:text-white uppercase text-xs">{report.reportName}</h5>
                             <div className="flex items-center gap-3 mt-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                <span>{report.date}</span>
+                                <span>{new Date(report.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</span>
                                 <span className="h-1 w-1 rounded-full bg-slate-300" />
-                                <span>{report.format} • {report.size}</span>
+                                <span>{report.reportType}</span>
+                                <span className="h-1 w-1 rounded-full bg-slate-300" />
+                                <span>by {report.generatedByName}</span>
                             </div>
                         </div>
                     </div>
@@ -136,24 +153,34 @@ export default function TeacherReports() {
                         <Button
                           variant="outline"
                           size="sm"
-                          disabled
-                          title="Coming soon"
-                          className="font-bold text-[10px] uppercase tracking-widest h-9 bg-white dark:bg-transparent border-slate-200 dark:border-surface-raised opacity-50 cursor-not-allowed"
+                          disabled={!report.fileUrl}
+                          className="font-bold text-[10px] uppercase tracking-widest h-9 bg-white dark:bg-transparent border-slate-200 dark:border-surface-raised"
+                          onClick={() => {
+                            if (report.fileUrl) {
+                              window.open(report.fileUrl, '_blank');
+                            } else {
+                              toast.info('Report file not available');
+                            }
+                          }}
                         >
                             <Download className="h-3.5 w-3.5 mr-2" /> Download
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
-                          disabled
-                          className="h-9 w-9 text-slate-400 opacity-50 cursor-not-allowed"
-                          title="Coming soon"
+                          className="h-9 w-9 text-slate-400 hover:text-aubergine-600"
+                          title="View report details"
                         >
                             <ChevronRight className="h-4 w-4" />
                         </Button>
                     </div>
                 </div>
             ))}
+            {generatedReports.length === 0 && (
+                <div className="text-center py-8 text-slate-400 text-sm">
+                    No reports generated yet. Use the options above to create your first report.
+                </div>
+            )}
           </div>
         )}
       </div>

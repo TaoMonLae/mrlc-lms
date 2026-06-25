@@ -96,6 +96,8 @@ model User {
   teacherProfile Teacher?
   recordedAttendances Attendance[] @relation("RecordedBy")
   caseNotes      CaseNote[]
+  sentMessages   Message[] @relation("SentMessages")
+  receivedMessages MessageRecipient[] @relation("ReceivedMessages")
   
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -193,6 +195,7 @@ model Teacher {
 
   classes        ClassTeacher[]
   subjects       SubjectTeacher[]
+  lessonPlans    LessonPlan[]
   
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -214,6 +217,7 @@ model Class {
   attendances    Attendance[]
   gradeItems     GradeItem[]
   categoryWeights CategoryWeight[]
+  lessonPlans    LessonPlan[]
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -242,6 +246,7 @@ model Subject {
   teachers       SubjectTeacher[]
   exams          Exam[]
   gradeItems     GradeItem[]
+  lessonPlans    LessonPlan[]
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -377,7 +382,23 @@ model LibraryResource {
   classId        String?
   subjectId      String?
   externalUrl    String?
-  
+
+  // Enhanced metadata
+  fileSize        Int?
+  mimeType        String?
+  downloadCount   Int      @default(0)
+  lastDownloaded  DateTime?
+
+  // Organization
+  category        String?
+  tags            String[]
+  subjectAreas    String[]
+  gradeLevels     String[]
+
+  // Audit
+  uploadedById    String?
+  uploadedByName  String?
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
@@ -1014,4 +1035,162 @@ model GeneratedDocument {
   @@index([studentId])
   @@index([type])
   @@index([status])
+}
+
+// ── Messaging System ─────────────────────────────────────────────────────────
+
+model Message {
+  id             String   @id @default(uuid())
+  subject        String
+  body           String
+  sentAt         DateTime @default(now())
+
+  senderId       String
+  sender         User     @relation("SentMessages", fields: [senderId], references: [id])
+
+  recipients     MessageRecipient[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([senderId])
+  @@index([sentAt])
+}
+
+model MessageRecipient {
+  id             String   @id @default(uuid())
+  messageId      String
+  message        Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  recipientId    String
+  recipient      User     @relation("ReceivedMessages", fields: [recipientId], references: [id])
+
+  readAt         DateTime?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([messageId, recipientId])
+  @@index([messageId])
+  @@index([recipientId])
+  @@index([readAt])
+}
+
+// ── Generated Reports Tracking ───────────────────────────────────────────────
+
+model SavedReport {
+  id              String   @id @default(uuid())
+  name            String
+  description     String?
+  reportType      String   // "attendance" | "exams" | "students" | "fees"
+
+  // Report configuration
+  filters         Json     // Store query parameters (classId, month, etc.)
+
+  // Audit
+  generatedById   String
+  generatedByName  String?
+
+  // Generation tracking
+  lastGeneratedAt DateTime?
+  generationCount Int      @default(0)
+
+  generations    ReportGeneration[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([reportType])
+  @@index([generatedById])
+}
+
+model ReportGeneration {
+  id              String   @id @default(uuid())
+  savedReportId   String?
+  savedReport     SavedReport? @relation(fields: [savedReportId], references: [id])
+
+  reportType      String
+  reportName      String
+  filters         Json
+
+  // Status
+  status          String   @default("COMPLETED") // PENDING | COMPLETED | FAILED
+
+  // Output
+  fileUrl         String?
+  fileSize        Int?
+
+  // Audit
+  generatedById   String
+  generatedByName  String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([savedReportId])
+  @@index([reportType])
+  @@index([generatedById])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ── Lesson Planning System ────────────────────────────────────────────────────
+
+model LessonPlan {
+  id              String   @id @default(uuid())
+  title           String
+  description     String?
+
+  classId         String
+  class           Class    @relation(fields: [classId], references: [id])
+
+  subjectId       String?
+  subject         Subject? @relation(fields: [subjectId], references: [id])
+
+  // Schedule
+  plannedDate     DateTime
+  duration        Int      @default(60) // minutes
+  room            String?
+
+  // Content
+  objectives      String[]
+  materials       String[]
+  activities      String[]
+  assessment      String?
+
+  // Status
+  status          String   @default("DRAFT") // DRAFT | SCHEDULED | COMPLETED | CANCELLED
+
+  // Audit
+  teacherId       String
+  teacher         Teacher  @relation(fields: [teacherId], references: [id])
+
+  progress        LessonPlanProgress[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([classId])
+  @@index([subjectId])
+  @@index([teacherId])
+  @@index([plannedDate])
+  @@index([status])
+}
+
+model LessonPlanProgress {
+  id              String   @id @default(uuid())
+  lessonPlanId    String
+  lessonPlan      LessonPlan @relation(fields: [lessonPlanId], references: [id], onDelete: Cascade)
+
+  week            Int
+  topicsCovered   String[]
+  notes           String?
+  completed       Boolean  @default(false)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([lessonPlanId, week])
+  @@index([lessonPlanId])
+  @@index([week])
 }

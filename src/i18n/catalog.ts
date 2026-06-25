@@ -21,6 +21,7 @@ const files = import.meta.glob('./locales/*.po', {
 const KNOWN_NAMES: Record<string, string> = {
   en: 'English',
   my: 'မြန်မာ (Burmese)',
+  mnw: 'ဘာသာမန် (Mon)',
   th: 'ไทย (Thai)',
   km: 'ខ្មែរ (Khmer)',
   fr: 'Français',

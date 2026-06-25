@@ -4,6 +4,12 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   FileText,
   Download,
   Share2,
@@ -13,10 +19,12 @@ import {
   File,
   Image as ImageIcon,
   Video,
-  Filter,
   Eye,
   Lock,
-  Globe
+  Globe,
+  Link2,
+  Edit,
+  Trash2
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -24,8 +32,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 
 interface ResourceRow {
-  id: string; title: string; type: string; size: string; uploadedBy: string;
-  date: string; visibility: string; downloads: number; url: string | null;
+  id: string; title: string; type: string; uploadedBy: string;
+  date: string; visibility: string; url: string | null;
+  fileSize: number | null;
+  downloadCount: number;
+  lastDownloaded: string | null;
 }
 
 // Map a LibraryResource row from /api/library into this page's display shape.
@@ -34,12 +45,13 @@ function mapLibraryResource(r: any): ResourceRow {
     id: r.id,
     title: r.title,
     type: (r.type || 'FILE').toUpperCase(),
-    size: '—',
     uploadedBy: r.author || '—',
     date: r.createdAt ? new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : '—',
     visibility: r.visibility || 'PUBLIC',
-    downloads: 0,
     url: r.externalUrl || null,
+    fileSize: r.fileSize || null,
+    downloadCount: r.downloadCount || 0,
+    lastDownloaded: r.lastDownloaded || null,
   };
 }
 
@@ -56,10 +68,46 @@ export default function TeacherLibrary() {
       .catch(() => setResources([]));
   }, []);
 
-  const filteredResources = resources.filter(r => 
+  const filteredResources = resources.filter(r =>
     r.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
     (typeFilter === "all" || r.type === typeFilter)
   );
+
+  const handleDownload = async (resourceId: string, resourceUrl: string) => {
+    try {
+      const response = await fetch(`/api/library/${resourceId}/download`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${sessionStorage.getItem('auth_token')}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Update the local state to reflect the new download count
+        setResources(resources.map(r =>
+          r.id === resourceId
+            ? { ...r, downloadCount: r.downloadCount + 1, lastDownloaded: new Date().toISOString() }
+            : r
+        ));
+        // Open the resource URL
+        window.open(resourceUrl, '_blank');
+      } else {
+        toast.error('Failed to track download');
+      }
+    } catch (error) {
+      console.error('Download tracking error:', error);
+      // Still open the URL even if tracking fails
+      window.open(resourceUrl, '_blank');
+    }
+  };
+
+  const formatFileSize = (bytes: number | null): string => {
+    if (!bytes) return '—';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
 
   const getFileIcon = (type: string) => {
     switch (type) {
@@ -69,21 +117,6 @@ export default function TeacherLibrary() {
       case 'DOCX': return <File className="h-5 w-5 text-blue-600" />;
       case 'ZIP': return <File className="h-5 w-5 text-amber-600" />;
       default: return <File className="h-5 w-5 text-slate-400" />;
-    }
-  };
-
-  const handleDownload = (resource: typeof resources[0]) => {
-    if (resource.url) {
-      // Real file — trigger browser download
-      const a = document.createElement('a');
-      a.href = resource.url;
-      a.download = resource.title;
-      a.click();
-    } else {
-      // Mock data — files not yet stored in backend
-      toast.info(`"${resource.title}" is not yet stored on the server.`, {
-        description: "File downloads will work once resources are uploaded through the Upload form.",
-      });
     }
   };
 
@@ -136,9 +169,6 @@ export default function TeacherLibrary() {
               <SelectItem value="ZIP">Archives</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="icon" className="h-11 w-11 shrink-0 border-slate-200 dark:border-surface-raised">
-            <Filter className="h-4 w-4 text-slate-500" />
-          </Button>
         </div>
       </div>
 
@@ -155,7 +185,7 @@ export default function TeacherLibrary() {
                   <div className="flex items-center gap-3 mt-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">
                     <span>{resource.type}</span>
                     <span className="h-1 w-1 rounded-full bg-slate-300" />
-                    <span>{resource.size}</span>
+                    <span>{formatFileSize(resource.fileSize)}</span>
                     <span className="h-1 w-1 rounded-full bg-slate-300" />
                     <div className="flex items-center gap-1">
                         {resource.visibility === 'PUBLIC' ? <Globe className="h-3 w-3" /> : resource.visibility === 'PRIVATE' ? <Lock className="h-3 w-3" /> : <Eye className="h-3 w-3 text-emerald-500" />}
@@ -172,7 +202,7 @@ export default function TeacherLibrary() {
                 </div>
                 <div className="text-left sm:text-right">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Downloads</p>
-                    <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{resource.downloads}</p>
+                    <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{resource.downloadCount}</p>
                 </div>
                 <div className="flex items-center gap-2 ml-4">
                     <Button
@@ -180,7 +210,13 @@ export default function TeacherLibrary() {
                       size="icon"
                       className="h-9 w-9 text-slate-400 hover:text-aubergine-600"
                       title="Download resource"
-                      onClick={() => handleDownload(resource)}
+                      onClick={() => {
+                        if (resource.url) {
+                          handleDownload(resource.id, resource.url);
+                        } else {
+                          toast.info(`"${resource.title}" is not yet stored on the server.`);
+                        }
+                      }}
                     >
                         <Download className="h-4 w-4" />
                     </Button>
@@ -195,15 +231,56 @@ export default function TeacherLibrary() {
                             <Share2 className="h-4 w-4" />
                         </Button>
                     )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-9 w-9 text-slate-400"
-                      title="More options"
-                      onClick={() => toast.info("More options coming soon.")}
-                    >
-                        <MoreHorizontal className="h-4 w-4" />
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-9 w-9 text-slate-400 hover:text-aubergine-600"
+                          title="More options"
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => {
+                          if (resource.url) {
+                            navigator.clipboard.writeText(resource.url);
+                            toast.success('Link copied to clipboard!');
+                          } else {
+                            toast.error('No URL available for this resource');
+                          }
+                        }}>
+                          <Link2 className="h-4 w-4 mr-2" />
+                          Copy Link
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                          if (resource.url) {
+                            handleDownload(resource.id, resource.url);
+                          } else {
+                            toast.error('No URL available for this resource');
+                          }
+                        }}>
+                          <Download className="h-4 w-4 mr-2" />
+                          Download
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => toast.info('Edit functionality coming soon.')}
+                          disabled={!resource.url}
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit Details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => toast.info('Delete functionality coming soon.')}
+                          disabled
+                          className="text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete (Coming Soon)
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
               </div>
             </CardContent>

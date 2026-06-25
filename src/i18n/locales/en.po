@@ -423,3 +423,179 @@ msgstr ""
 
 msgid "Overview of Mon Refugee Learning Centre - GED School"
 msgstr ""
+
+# ── Teacher Portal ──────────────────────────────────────────
+
+msgid "Class Attendance Monthly"
+msgstr ""
+
+msgid "Detailed attendance breakdown per student for the current month."
+msgstr ""
+
+msgid "Exam Performance Analysis"
+msgstr ""
+
+msgid "Statistical summary of recent exam scores with class average comparison."
+msgstr ""
+
+msgid "Student Progress Report"
+msgstr ""
+
+msgid "Comprehensive progress tracking for individual students in your classes."
+msgstr ""
+
+msgid "Configure & Generate"
+msgstr ""
+
+msgid "Generate insights and reports for your assigned modules and students."
+msgstr ""
+
+msgid "Need Access to Sensitive Data?"
+msgstr ""
+
+msgid "No sessions scheduled yet"
+msgstr ""
+
+msgid "Add your class periods so they appear on the weekly grid."
+msgstr ""
+
+msgid "Schedule Session"
+msgstr ""
+
+msgid "Schedule a Session"
+msgstr ""
+
+msgid "Teaching Schedule"
+msgstr ""
+
+msgid "Your assigned teaching sessions and availability across the week."
+msgstr ""
+
+msgid "Teaching Hours Summary"
+msgstr ""
+
+msgid "Sessions"
+msgstr ""
+
+msgid "Weekly Load"
+msgstr ""
+
+msgid "Scheduled Period"
+msgstr ""
+
+msgid "No classes assigned to you yet."
+msgstr ""
+
+msgid "No announcements yet."
+msgstr ""
+
+msgid "My Assigned Classes"
+msgstr ""
+
+msgid "Performance Snapshot"
+msgstr ""
+
+msgid "My Students"
+msgstr ""
+
+msgid "Exams Slated"
+msgstr ""
+
+msgid "Upcoming Exams"
+msgstr ""
+
+msgid "View class details"
+msgstr ""
+
+msgid "Record daily attendance for your assigned classes."
+msgstr ""
+
+msgid "Please select a class first."
+msgstr ""
+
+msgid "Please mark attendance for all students before submitting."
+msgstr ""
+
+msgid "Failed to save attendance."
+msgstr ""
+
+msgid "Finalize & Submit"
+msgstr ""
+
+msgid "Session Date"
+msgstr ""
+
+msgid "Select Class"
+msgstr ""
+
+msgid "Find student..."
+msgstr ""
+
+msgid "Filter exams by title or class..."
+msgstr ""
+
+msgid "No exams found"
+msgstr ""
+
+msgid "Try adjusting your search or filters."
+msgstr ""
+
+msgid "Drafts"
+msgstr ""
+
+msgid "Open exam"
+msgstr ""
+
+msgid "Viewing classes assigned to you for the current academic year."
+msgstr ""
+
+msgid "View timetable"
+msgstr ""
+
+msgid "Monthly Attendance Tracking"
+msgstr ""
+
+msgid "No attendance records available for this class."
+msgstr ""
+
+msgid "Last Exam"
+msgstr ""
+
+msgid "Submissions"
+msgstr ""
+
+msgid "View exam details"
+msgstr ""
+
+msgid "Roll call sheet downloaded!"
+msgstr ""
+
+msgid "Teaching Resources"
+msgstr ""
+
+msgid "PDF Documents"
+msgstr ""
+
+msgid "Word Docs"
+msgstr ""
+
+msgid "Videos"
+msgstr ""
+
+msgid "Search filenames, tags..."
+msgstr ""
+
+msgid "Download resource"
+msgstr ""
+
+msgid "Downloads"
+msgstr ""
+
+msgid "More options coming soon."
+msgstr ""
+
+msgid "Resource link copied to clipboard!"
+msgstr ""
+
+msgid "File downloads will work once resources are uploaded through the Upload form."
+msgstr ""

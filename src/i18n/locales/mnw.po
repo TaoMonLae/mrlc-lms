@@ -1,0 +1,601 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: mrlc-lms\n"
+"Language: mnw\n"
+"Language-Team: ဘာသာမန် (Mon)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+# This is the source/template catalog. English is the default language and is
+# served directly from the source strings, so the msgstr values here are left
+# empty. To add a new language, copy this file to e.g. `fr.po`, set the
+# Language header, and fill in each msgstr.
+
+# ── Navigation ──────────────────────────────────────────────
+msgid "Main Navigation"
+msgstr "သ္ကုတ်လံၚ်ညး"
+
+msgid "Dashboard"
+msgstr "ဒက်ရှ်ဘုတ်"
+
+msgid "Timetable"
+msgstr "ဇယားအခိၚ်"
+
+msgid "Announcements"
+msgstr "လိက်လလောၚ်တြး"
+
+msgid "Students"
+msgstr "ကောန်ကွးဘာဂမၠိုၚ်"
+
+msgid "Teachers"
+msgstr "อစာဂမၠိုၚ်"
+
+msgid "Classes"
+msgstr "တန်ဘာဂမၠိုၚ်"
+
+msgid "Subjects"
+msgstr "ဘာသာလ္ၚတ်ဂမၠိုၚ်"
+
+msgid "Attendance"
+msgstr "တိုန်ဘာ"
+
+msgid "Exams"
+msgstr "စမ်ၜတ်ဂမၠိုၚ်"
+
+msgid "Library"
+msgstr "တိုက်လိက်"
+
+msgid "E-Library"
+msgstr "အဳ-တိုက်လိက်"
+
+msgid "Video Lessons"
+msgstr "ဗဳဒဳယဝ်ဗ္တောန်လိက်"
+
+msgid "Book Catalog"
+msgstr "စရင်လိက်အုပ်"
+
+msgid "Fees"
+msgstr "သြန်တိုန်ဘာ"
+
+msgid "Cases"
+msgstr "ကိစ္စဂမၠိုၚ်"
+
+msgid "Reports"
+msgstr "လိက်ဒင်စရင်"
+
+msgid "Users"
+msgstr "ညးမရပ်စပ်ဂမၠိုၚ်"
+
+msgid "Audit Log"
+msgstr "စရင်စၟဳစၟတ်"
+
+msgid "Export Data"
+msgstr "ပ္တိတ်ဒေတာ"
+
+msgid "Settings"
+msgstr "ပလေဝ်ပလေတ်ဂမၠိုၚ်"
+
+msgid "My Account"
+msgstr "အကောင့်မၞိဟ်"
+
+msgid "Profile Settings"
+msgstr "ပလေဝ်ပရိုဖိုင်"
+
+msgid "My Classes"
+msgstr "တန်ဘာမၞိဟ်"
+
+msgid "My Results"
+msgstr "ရလဒ်မၞိဟ်"
+
+msgid "Take Attendance"
+msgstr "ကေတ်စရင်တိုန်ဘာ"
+
+msgid "Student Dashboard"
+msgstr "မှုခမုက်ကောန်ကွးဘာ"
+
+msgid "Teacher Dashboard"
+msgstr "မှုခမုက်အစာ"
+
+# ── Common actions / buttons ────────────────────────────────
+msgid "Save"
+msgstr "ဂိုၚ်ဒေပ်"
+
+msgid "Save Changes"
+msgstr "ဂိုၚ်ဒေပ်ဒၞာဲပြံၚ်လှာဲ"
+
+msgid "Cancel"
+msgstr "ပဲါကၠေံ"
+
+msgid "Edit"
+msgstr "ပလေဝ်"
+
+msgid "Delete"
+msgstr "ဇိုတ်ကၠေံ"
+
+msgid "Remove"
+msgstr "ပဲါကၠေံ"
+
+msgid "View"
+msgstr "ရံၚ်"
+
+msgid "Add"
+msgstr "ထပ်"
+
+msgid "Search"
+msgstr "ဂၠာဲ"
+
+msgid "Next"
+msgstr "ဂတ"
+
+msgid "Previous"
+msgstr "လက်ကရဴ"
+
+msgid "Next Step"
+msgstr "လဂါံဂတ"
+
+msgid "Export PDF"
+msgstr "ပ္တိတ် PDF"
+
+msgid "Export Reports"
+msgstr "ပ္တိတ်လိက်စရင်"
+
+msgid "Add Teacher"
+msgstr "ထပ်စုတ်အစာ"
+
+msgid "Create Exam"
+msgstr "ကၠောန်စမ်ၜတ်"
+
+msgid "Add Video"
+msgstr "ထပ်ဗဳဒဳယဝ်"
+
+msgid "Upload Resource"
+msgstr "ပ္တိုန်အရင်းအမြစ်"
+
+msgid "Record Payment"
+msgstr "ချူစရင်သြန်စောဲ"
+
+msgid "Submit Exam"
+msgstr "အပ်စမ်ၜတ်လိက်"
+
+msgid "Save Exam"
+msgstr "ဂိုၚ်ဒေပ်စမ်ၜတ်လိက်"
+
+# ── Common labels ───────────────────────────────────────────
+msgid "Status"
+msgstr "အကာဲအရာ"
+
+msgid "Action"
+msgstr "ကမၠောန်"
+
+msgid "Actions"
+msgstr "ကမၠောန်ဂမၠိုၚ်"
+
+msgid "Description"
+msgstr "ဗွဟ်လးလး"
+
+msgid "Type"
+msgstr "ဂကူ"
+
+msgid "Title"
+msgstr "က္ဍိုပ်လိက်"
+
+msgid "Date"
+msgstr "စၟတ်တ္ၚဲ"
+
+msgid "Month"
+msgstr "ဂိတု"
+
+msgid "Time"
+msgstr "အခိၚ်"
+
+msgid "Room"
+msgstr "ခန်"
+
+msgid "Class"
+msgstr "တန်ဘာ"
+
+msgid "Subject"
+msgstr "ဘာသာလ္ၚတ်"
+
+msgid "Student"
+msgstr "ကောန်ကွးဘာ"
+
+msgid "Teacher"
+msgstr "အစာ"
+
+msgid "Name"
+msgstr "ယၟု"
+
+msgid "Email Address"
+msgstr "အဳမေလ်"
+
+msgid "Phone"
+msgstr "ဖုန်"
+
+msgid "Phone Number"
+msgstr "လၟေၚ်ဖုန်"
+
+msgid "Gender"
+msgstr "လိၚ်"
+
+msgid "Male"
+msgstr "မၞိဟ်တြုဟ်"
+
+msgid "Female"
+msgstr "မၞိဟ်ဗြဴ"
+
+msgid "Category"
+msgstr "ကဏ္ဍ"
+
+msgid "Author"
+msgstr "ညးချူလိက်"
+
+msgid "Amount"
+msgstr "လၟိဟ်သြန်"
+
+msgid "Score"
+msgstr "ရမှတ်"
+
+msgid "Rate"
+msgstr "နှုန်း"
+
+msgid "Points"
+msgstr "မှတ်"
+
+msgid "Total Points"
+msgstr "မှတ်ဖအိုတ်"
+
+msgid "Total Due"
+msgstr "သြန်ဒးကဵုဖအိုတ်"
+
+msgid "Total Paid"
+msgstr "သြန်ကဵုပြီးဖအိုတ်"
+
+msgid "Duration"
+msgstr "ကြာချိန်"
+
+msgid "Questions"
+msgstr "သၟာန်ဂမၠိုၚ်"
+
+msgid "Overview"
+msgstr "ခြုံငုံသုံးသပ်ချက်"
+
+msgid "Preview"
+msgstr "ရံၚ်စမ်"
+
+msgid "Student ID"
+msgstr "ကောန်ကွးဘာ ID"
+
+msgid "Student Name"
+msgstr "ယၟုကောန်ကွးဘာ"
+
+msgid "Class Name"
+msgstr "ယၟုတန်ဘာ"
+
+msgid "Joined Date"
+msgstr "စၟတ်တ္ၚဲစပ်ဘာ"
+
+msgid "Academic Year"
+msgstr "သၞာံပညာသင်"
+
+msgid "Academic Level"
+msgstr "တန်ပညာ"
+
+msgid "Language"
+msgstr "ဘာသာစကား"
+
+# ── Statuses ────────────────────────────────────────────────
+msgid "Active"
+msgstr "ချဳဒရာၚ်"
+
+msgid "Inactive"
+msgstr "ဟွံချဳဒရာၚ်"
+
+msgid "Archived"
+msgstr "ဂိုၚ်ဒေပ်လဝ်"
+
+msgid "Draft"
+msgstr "မူကြမ်း"
+
+msgid "Published"
+msgstr "တြးပြီး"
+
+msgid "Closed"
+msgstr "ပိတ်ထားသည်"
+
+msgid "Present"
+msgstr "တိုန်"
+
+msgid "Absent"
+msgstr "ဟွံတိုန်"
+
+msgid "Late"
+msgstr "လဇုဲ"
+
+msgid "Excused"
+msgstr "ကဵုအခေါၚ်"
+
+msgid "Unpaid"
+msgstr "ဟွံကဵုသြန်ဏီ"
+
+msgid "Graduated"
+msgstr "ဘွဲ့ရပြီး"
+
+msgid "Dropped"
+msgstr "ပဲါထွက်"
+
+msgid "On Leave"
+msgstr "ကေတ်အခေါၚ်"
+
+# ── Visibility / audience ───────────────────────────────────
+msgid "Everyone"
+msgstr "ညးဂမၠိုၚ်ဖအိုတ်"
+
+msgid "Students Only"
+msgstr "ဆကောန်ကွးဘာဟေၚ်"
+
+msgid "Teachers Only"
+msgstr "ဆအစာဟေၚ်"
+
+msgid "All Classes"
+msgstr "တန်ဘာဖအိုတ်"
+
+msgid "All Status"
+msgstr "အကာဲအရာဖအိုတ်"
+
+# ── Roles ───────────────────────────────────────────────────
+msgid "Admin"
+msgstr "ညးမအုပ်ချုပ်"
+
+msgid "Librarian"
+msgstr "ညးမအုပ်ချုပ်တိုက်လိက်"
+
+msgid "Accountant"
+msgstr "ညးထိၚ်သြန်စရင်"
+
+msgid "Case Worker"
+msgstr "ညးမရပ်စပ်ကိစ္စ"
+
+msgid "Volunteer"
+msgstr "ညးဆန္ဒအရပ်"
+
+msgid "Staff"
+msgstr "ကောန်ကမၠောန်"
+
+# ── Dashboard ───────────────────────────────────────────────
+msgid "School Dashboard"
+msgstr "မှုခမုက်ဘာ"
+
+msgid "Total Students"
+msgstr "ကောန်ကွးဘာဖအိုတ်"
+
+msgid "Daily Attendance"
+msgstr "တိုန်ဘာနေ့စဉ်"
+
+msgid "Active Cases"
+msgstr "ကိစ္စမချဳဒရာၚ်ဆဲ"
+
+msgid "Important Announcements"
+msgstr "လိက်လလောၚ်တြးမကိစ္စဇၞော်"
+
+msgid "View All Announcements"
+msgstr "ရံၚ်လိက်လလောၚ်တြးဖအိုတ်"
+
+msgid "Today's Schedule"
+msgstr "ဇယားအခိၚ်တ္ၚဲဏံ"
+
+msgid "Full Timetable"
+msgstr "ဇယားအခိၚ်ဖအိုတ်"
+
+msgid "Recent Student Cases"
+msgstr "ကိစ္စကောန်ကွးဘာမကြာမီဏံ"
+
+msgid "View Case Management"
+msgstr "ရံၚ်ညးမရပ်စပ်ကိစ္စ"
+
+msgid "+ New Registration"
+msgstr "+ ထပ်စပ်ယၟုတၟိ"
+
+msgid "Active this semester"
+msgstr "ချဳဒရာၚ်ပ္ဍဲသင်တန်းဝွံ"
+
+msgid "GED & Pre-GED levels"
+msgstr "အဆင့် GED & Pre-GED"
+
+msgid "Pending attention"
+msgstr "မစၟဳစၟတ်ရံၚ်"
+
+msgid "No active announcements."
+msgstr "ဟွံမွဲလိက်လလောၚ်တြးမချဳဒရာၚ်ဏီ။"
+
+msgid "No classes scheduled for today."
+msgstr "တ္ၚဲဏံဟွံမွဲတန်ဘာဇယားအခိၚ်။"
+
+msgid "No recent cases."
+msgstr "ဟွံမွဲကိစ္စမကြာမီဏံ။"
+
+msgid "No records today"
+msgstr "ဟွံမွဲစရင်တ္ၚဲဏံ"
+
+msgid "Search students, classes, records..."
+msgstr "ဂၠာဲကောန်ကွးဘာ၊ တန်ဘာ၊ စရင်ဂမၠိုၚ်..."
+
+msgid "Overview of Mon Refugee Learning Centre - GED School"
+msgstr "ရံၚ်အလုံ ဒေသဒုက္ခသည်ကောန်ဂကူမန် - ဘာပညာ GED"
+
+# ── Teacher Portal ──────────────────────────────────────────
+
+msgid "Class Attendance Monthly"
+msgstr "လစဉ် တက်ရောက်မှု တန်ဘာ"
+
+msgid "Detailed attendance breakdown per student for the current month."
+msgstr "စရင်တိုန်ဘာအသေးစိတ် ကောန်ကွးဘာမွဲမွဲ ယခုဂိတုဏံ။"
+
+msgid "Exam Performance Analysis"
+msgstr "ဆန်းစစ်ချက်စွမ်းဆောင်ရည် စမ်ၜတ်လိက်"
+
+msgid "Statistical summary of recent exam scores with class average comparison."
+msgstr "စရင်အနှစ်ချုပ် စမ်ၜတ်လိက်မကြာမီဏံ နှိုင်းယှဉ်ကဵုပျမ်းမျှတန်ဘာ။"
+
+msgid "Student Progress Report"
+msgstr "လိက်ဒင်စရင်တိုးတက်မှု ကောန်ကွးဘာ"
+
+msgid "Comprehensive progress tracking for individual students in your classes."
+msgstr "ခြေရာခံတိုးတက်မှု အလုံကောန်ကွးဘာမွဲမွဲ ပ္ဍဲတန်ဘာမၞိဟ်။"
+
+msgid "Configure & Generate"
+msgstr "ပြင်ဆင်ကၠောန်ပ္တိတ်"
+
+msgid "Generate insights and reports for your assigned modules and students."
+msgstr "ကၠောန်ပ္တိတ်ဆန်းစစ်ချက် ကဵုလိက်ဒင်စရင် သွက်တန်ဘာကဵုကောန်ကွးဘာ။"
+
+msgid "Need Access to Sensitive Data?"
+msgstr "နွံပၟိက်အခေါၚ်ကြည့်ရှု ဒေတာကိစ္စဇၞော်ဟာ?"
+
+msgid "No sessions scheduled yet"
+msgstr "ဟွံမွဲတန်ဘာဇယားအခိၚ်ဏီ"
+
+msgid "Add your class periods so they appear on the weekly grid."
+msgstr "ထပ်စုတ်အခိၚ်တန်ဘာ သွက်ဂွံပေါ်ပ္ဍဲဇယားအပတ်စဉ်။"
+
+msgid "Schedule Session"
+msgstr "သတ်မှတ်ဇယားအခိၚ်"
+
+msgid "Schedule a Session"
+msgstr "သတ်မှတ်ဇယားအခိၚ်"
+
+msgid "Teaching Schedule"
+msgstr "ဇယားအခိၚ်သင်ကြား"
+
+msgid "Your assigned teaching sessions and availability across the week."
+msgstr "အခိၚ်သင်ကြား သတ်မှတ်လဝ်ကဵုသင် ကဵုအခိၚ်လၟေၚ်အပတ်ဏံ။"
+
+msgid "Teaching Hours Summary"
+msgstr "အနှစ်ချုပ်နာရီသင်ကြား"
+
+msgid "Sessions"
+msgstr "အခိၚ်သင်တန်းဂမၠိုၚ်"
+
+msgid "Weekly Load"
+msgstr "သင်ကြားမှုအပတ်စဉ်ဝန်"
+
+msgid "Scheduled Period"
+msgstr "အခိၚ်သတ်မှတ်လဝ်"
+
+msgid "No classes assigned to you yet."
+msgstr "ဟွံမွဲတန်ဘာခွဲဝေလဝ် ကဵုမၞိဟ်ဏီ။"
+
+msgid "No announcements yet."
+msgstr "ဟွံမွဲလိက်လလောၚ်တြးဏီ။"
+
+msgid "My Assigned Classes"
+msgstr "တန်ဘာခွဲဝေလဝ် သွက်မၞိဟ်"
+
+msgid "Performance Snapshot"
+msgstr "ခြုံငုံစွမ်းဆောင်ရည်"
+
+msgid "My Students"
+msgstr "ကောန်ကွးဘာမၞိဟ်"
+
+msgid "Exams Slated"
+msgstr "စမ်ၜတ်လိက်သတ်မှတ်လဝ်"
+
+msgid "Upcoming Exams"
+msgstr "စမ်ၜတ်လိက်လာမည့်"
+
+msgid "View class details"
+msgstr "ရံၚ်အသေးစိတ်တန်ဘာ"
+
+msgid "Record daily attendance for your assigned classes."
+msgstr "စၟတ်စရင်တိုန်ဘာနေ့စဉ် သွက်တန်ဘာခွဲဝေလဝ်။"
+
+msgid "Please select a class first."
+msgstr "ကျေးဇူးပြု၍ ရွေးတန်ဘာကၠာတေံ။"
+
+msgid "Please mark attendance for all students before submitting."
+msgstr "ကျေးဇူးပြု၍ စၟတ်တိုန်ဘာ ကောန်ကွးဘာအလုံ ကၠာဟွံတင်သွင်း။"
+
+msgid "Failed to save attendance."
+msgstr "သိမ်းဆည်းစရင်တိုန်ဘာ ဟွံအောင်မြင်။"
+
+msgid "Finalize & Submit"
+msgstr "အတည်ပြုကဵုတင်သွင်း"
+
+msgid "Session Date"
+msgstr "စၟတ်တ္ၚဲသင်တန်း"
+
+msgid "Select Class"
+msgstr "ရွေးတန်ဘာ"
+
+msgid "Find student..."
+msgstr "ဂၠာဲကောန်ကွးဘာ..."
+
+msgid "Filter exams by title or class..."
+msgstr "စစ်ထုတ်စမ်ၜတ်လိက် က္ဍိုပ်လိက် သို့မဟုတ် တန်ဘာ..."
+
+msgid "No exams found"
+msgstr "ဟွံမွဲစမ်ၜတ်လိက်မတွေ့"
+
+msgid "Try adjusting your search or filters."
+msgstr "စမ်းသပ်ပြောင်းလဲ ရှာဖွေ သို့မဟုတ် စစ်ထုတ်။"
+
+msgid "Drafts"
+msgstr "လိက်ကြမ်းဂမၠိုၚ်"
+
+msgid "Open exam"
+msgstr "ဖွင့်စမ်ၜတ်လိက်"
+
+msgid "Viewing classes assigned to you for the current academic year."
+msgstr "ကြည့်ရှုတန်ဘာခွဲဝေလဝ် သွက်မၞိဟ် သၞာံပညာသင်ဏံ။"
+
+msgid "View timetable"
+msgstr "ရံၚ်ဇယားအခိၚ်"
+
+msgid "Monthly Attendance Tracking"
+msgstr "ခြေရာခံတိုန်ဘာလစဉ်"
+
+msgid "No attendance records available for this class."
+msgstr "ဟွံမွဲစရင်တိုန်ဘာ သွက်တန်ဘာဝွံ။"
+
+msgid "Last Exam"
+msgstr "စမ်ၜတ်လိက်နောက်ဆုံး"
+
+msgid "Submissions"
+msgstr "အပ်ပြောင်းလဝ်ဂမၠိုၚ်"
+
+msgid "View exam details"
+msgstr "ရံၚ်အသေးစိတ်စမ်ၜတ်လိက်"
+
+msgid "Roll call sheet downloaded!"
+msgstr "ဒေါင်းလုဒ်စရင်တိုန်ဘာပြီးပြီး။"
+
+msgid "Teaching Resources"
+msgstr "အရင်းအမြစ်သင်ကြားရေးဂမၠိုၚ်"
+
+msgid "PDF Documents"
+msgstr "လိက်စရွက် PDF ဂမၠိုၚ်"
+
+msgid "Word Docs"
+msgstr "လိက်စရွက် Word ဂမၠိုၚ်"
+
+msgid "Videos"
+msgstr "ဗီဒီယိုဂမၠိုၚ်"
+
+msgid "Search filenames, tags..."
+msgstr "ဂၠာဲယၟုဖိုင်၊ တဂ်ဂမၠိုၚ်..."
+
+msgid "Download resource"
+msgstr "ဒေါင်းလုဒ်အရင်းအမြစ်"
+
+msgid "Downloads"
+msgstr "ဒေါင်းလုဒ်ဂမၠိုၚ်"
+
+msgid "More options coming soon."
+msgstr "ရွေးချယ်စရာတခြား မကြာမီလာမည်။"
+
+msgid "Resource link copied to clipboard!"
+msgstr "ကူးယူလင့်ခ်အရင်းအမြစ်ပြီးပြီး။"
+
+msgid "File downloads will work once resources are uploaded through the Upload form."
+msgstr "ဒေါင်းလုဒ်ဖိုင်အဆင်ပြေ သွက်တင်ပြီးအရင်းအမြစ်။"
+

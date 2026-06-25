@@ -11,7 +11,7 @@ import { apiGet } from "../../lib/api";
 interface DashStats { studentCount: number; classCount: number; attendanceRate: number; upcomingExamCount: number; }
 interface DashboardData {
   stats: DashStats;
-  classes: { id: string; name: string; level: string; room: string; students: number; progress: number }[];
+  classes: { id: string; name: string; level: string; room: string; students: number }[];
   attendanceData: { day: string; rate: number }[];
   upcomingExams: { id: string | number; title: string; date: string; time: string; class: string }[];
   recentPerformance: { id: string | number; student: string; class: string; score: string; trend: string }[];
@@ -69,6 +69,15 @@ export default function TeacherDashboard() {
             Mark Attendance
           </Button>
           <Button
+            id="dashboard-planner-btn"
+            variant="outline"
+            size="sm"
+            className="bg-white border-slate-200 text-slate-700 shadow-sm font-bold text-[11px] uppercase tracking-wider h-10 px-4"
+            onClick={() => navigate('/teacher/planner')}
+          >
+            Lesson Planner
+          </Button>
+          <Button
             id="dashboard-new-assessment-btn"
             size="sm"
             className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm font-bold text-[11px] uppercase tracking-wider h-10 px-4"
@@ -115,7 +124,6 @@ export default function TeacherDashboard() {
                   <th className="px-6 py-3">Module Name</th>
                   <th className="px-6 py-3">Location</th>
                   <th className="px-6 py-3">Size</th>
-                  <th className="px-6 py-3">Curriculum Progress</th>
                   <th className="px-6 py-3 text-right">Action</th>
                 </tr>
               </thead>
@@ -128,17 +136,6 @@ export default function TeacherDashboard() {
                     </td>
                     <td className="px-6 py-4 text-slate-600 dark:text-slate-300 font-medium">{cls.room}</td>
                     <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{cls.students} Learners</td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="h-1.5 w-full max-w-[100px] rounded-full bg-slate-100 dark:bg-surface-raised overflow-hidden">
-                          <div 
-                            className="h-full bg-aubergine-500 rounded-full transition-all duration-500" 
-                            style={{ width: `${cls.progress}%` }}
-                          />
-                        </div>
-                        <span className="text-xs font-bold text-slate-500">{cls.progress}%</span>
-                      </div>
-                    </td>
                     <td className="px-6 py-4 text-right">
                       <Button
                         variant="ghost"
