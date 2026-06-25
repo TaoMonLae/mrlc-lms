@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Filter,
+  Plus,
   Users
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -177,13 +178,42 @@ export default function TeacherTimetable() {
             </Button>
             <Button
               id="export-calendar-btn"
-              className="h-10 px-6 bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-bold text-[10px] uppercase tracking-widest shadow-lg"
+              variant="outline"
+              size="sm"
+              className="h-10 px-4 font-bold text-[10px] uppercase tracking-widest border-slate-200 dark:border-surface-raised"
               onClick={handleExportCsv}
             >
-                <Download className="h-4 w-4 mr-2" /> Export Calendar
+                <Download className="h-4 w-4 mr-2" /> Export
+            </Button>
+            <Button
+              id="schedule-session-btn"
+              className="h-10 px-6 bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-bold text-[10px] uppercase tracking-widest shadow-lg"
+              onClick={() => navigate('/timetable/new')}
+            >
+                <Plus className="h-4 w-4 mr-2" /> Schedule Session
             </Button>
         </div>
       </div>
+
+      {teacherSchedule.length === 0 && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-dashed border-aubergine-200 dark:border-surface-raised bg-aubergine-50/40 dark:bg-surface-raised/20 px-6 py-5 print:hidden">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 shrink-0 rounded-xl bg-white dark:bg-surface-indigo border border-aubergine-100 dark:border-surface-raised flex items-center justify-center text-aubergine-600">
+              <CalendarIcon className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-slate-800 dark:text-white">No sessions scheduled yet</p>
+              <p className="text-xs text-slate-500 dark:text-slate-300 font-medium">Add your class periods so they appear on the weekly grid.</p>
+            </div>
+          </div>
+          <Button
+            className="h-10 px-6 bg-aubergine-600 hover:bg-aubergine-700 text-white font-bold text-[10px] uppercase tracking-widest shadow-sm shrink-0"
+            onClick={() => navigate('/timetable/new')}
+          >
+            <Plus className="h-4 w-4 mr-2" /> Schedule a Session
+          </Button>
+        </div>
+      )}
 
       <Card className="timetable-print-area border-slate-200 dark:border-surface-raised overflow-hidden bg-white dark:bg-surface-indigo shadow-sm">
         <div className="hidden print:block px-4 pt-4 text-lg font-bold text-slate-900">Teaching Schedule — {weekLabel}</div>
