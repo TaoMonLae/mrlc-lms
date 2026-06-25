@@ -437,7 +437,7 @@ export default function ClassDetails() {
                       size="icon"
                       className="h-8 w-8 text-slate-400 hover:text-aubergine-600"
                       title="View exam details"
-                      onClick={() => navigate(`/exams/${exam.id}/results`)}
+                      onClick={() => navigate(`/exam2/${exam.id}/analytics`)}
                     >
                       <ChevronRight className="h-4 w-4" />
                     </Button>

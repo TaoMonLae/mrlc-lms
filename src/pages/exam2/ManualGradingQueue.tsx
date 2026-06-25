@@ -1,18 +1,23 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { apiGet } from '../../lib/api';
 import { Badge } from '@/components/ui/badge';
 import { ClipboardCheck } from 'lucide-react';
 
 export default function ManualGradingQueue() {
+  const [params] = useSearchParams();
+  const examId = params.get('examId') || '';
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('PENDING');
 
   useEffect(() => {
     setLoading(true);
-    apiGet(`/api/grading/queue${filter ? `?status=${filter}` : ''}`).then((d) => setRows(d || [])).catch(() => setRows([])).finally(() => setLoading(false));
-  }, [filter]);
+    const qs = new URLSearchParams();
+    if (filter) qs.set('status', filter);
+    if (examId) qs.set('examId', examId);
+    apiGet(`/api/grading/queue?${qs}`).then((d) => setRows(d || [])).catch(() => setRows([])).finally(() => setLoading(false));
+  }, [filter, examId]);
 
   return (
     <div className="max-w-4xl mx-auto space-y-5">

@@ -135,7 +135,7 @@ export default function TeacherExams() {
                   <div className="p-5 flex-1 flex gap-2">
                     {exam.status === 'NEEDS_GRADING' ? (
                         <Button
-                          onClick={() => navigate(`/exams/${exam.id}/results`)}
+                          onClick={() => navigate(`/exam2/${exam.id}/analytics`)}
                           className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-[10px] uppercase tracking-widest h-10 shadow-md"
                         >
                             Grade Now
@@ -151,7 +151,7 @@ export default function TeacherExams() {
                     ) : (
                         <Button
                           variant="outline"
-                          onClick={() => navigate(`/exams/${exam.id}/results`)}
+                          onClick={() => navigate(`/exam2/${exam.id}/analytics`)}
                           className="w-full border-slate-200 dark:border-surface-raised font-bold text-[10px] uppercase tracking-widest h-10"
                         >
                             View Results

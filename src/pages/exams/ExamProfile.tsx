@@ -198,7 +198,7 @@ export default function ExamProfile() {
           <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl overflow-hidden shadow-sm">
             <div className="p-4 border-b border-slate-200 dark:border-surface-raised flex justify-between items-center">
               <h2 className="font-semibold text-slate-900 dark:text-white">Recent Submissions</h2>
-              <Button variant="ghost" size="sm" render={<Link to={`/exams/${id}/results`} />} nativeButton={false}>View All Results</Button>
+              <Button variant="ghost" size="sm" render={<Link to={`/exam2/${id}/analytics`} />} nativeButton={false}>View All Results</Button>
             </div>
             <div className="p-0">
                <table className="w-full text-left text-sm">
@@ -219,7 +219,7 @@ export default function ExamProfile() {
                       <td className="px-6 py-3 text-slate-600 dark:text-slate-300">{sub.score !== null ? `${sub.score}` : 'In progress'}</td>
                       <td className="px-6 py-3 text-slate-500">{formatTime(sub.startedAt, sub.completedAt)}</td>
                       <td className="px-6 py-3 text-right">
-                        <Button variant="ghost" size="sm" render={<Link to={`/exams/${id}/results`} />} nativeButton={false}>View</Button>
+                        <Button variant="ghost" size="sm" render={<Link to={`/exam2/${id}/analytics`} />} nativeButton={false}>View</Button>
                       </td>
                     </tr>
                   ))}

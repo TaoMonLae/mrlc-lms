@@ -4851,6 +4851,9 @@ async function startServer() {
     }
   });
 
+  // DEPRECATED: manual grading is now handled by the grading queue + rubric flow
+  // (GET /api/grading/queue, POST /api/grading/:attemptId/:questionId, finalize).
+  // Retained for backward compatibility; the app UI no longer calls this.
   app.put("/api/exam-attempts/:attemptId/grade", authMiddleware, validate(schemas.examGrade), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
@@ -6224,7 +6227,7 @@ async function startServer() {
         const attempt = e.attempts[0];
         if (attempt && attempt.isCompleted) {
           submitted.push({
-            id: e.id, title: e.title, subject: e.subject?.name || "General",
+            id: e.id, attemptId: attempt.id, title: e.title, subject: e.subject?.name || "General",
             submittedAt: (attempt.completedAt || attempt.startedAt)?.toISOString().slice(0, 16).replace("T", " "),
             status: attempt.score != null ? "Graded" : "Grading",
             score: attempt.score != null && e.totalMarks ? `${attempt.score}/${e.totalMarks}` : null,

@@ -273,7 +273,7 @@ export default function SubjectProfile() {
                {subject.exams.map(exam => (
                  <tr key={exam.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50">
                     <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
-                      <Link to={`/exams/${exam.id}/results`} className="hover:underline hover:text-aubergine-600">{exam.title}</Link>
+                      <Link to={`/exam2/${exam.id}/analytics`} className="hover:underline hover:text-aubergine-600">{exam.title}</Link>
                     </td>
                     <td className="px-6 py-4 text-slate-500">{exam.date ? new Date(exam.date).toLocaleDateString() : '—'}</td>
                     <td className="px-6 py-4">
@@ -282,7 +282,7 @@ export default function SubjectProfile() {
                       </Badge>
                     </td>
                     <td className="px-6 py-4 text-right">
-                       <Button variant="ghost" size="sm" render={<Link to={`/exams/${exam.id}/results`} />} nativeButton={false}>View</Button>
+                       <Button variant="ghost" size="sm" render={<Link to={`/exam2/${exam.id}/analytics`} />} nativeButton={false}>View</Button>
                     </td>
                  </tr>
                ))}

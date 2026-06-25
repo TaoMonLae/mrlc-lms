@@ -21,7 +21,7 @@ import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../lib/api';
 
 interface AvailableExam { id: string; title: string; subject: string; duration: string; questions: number; deadline: string; type: string; }
-interface SubmittedExam { id: string; title: string; subject: string; submittedAt: string; status: string; score: string | null; }
+interface SubmittedExam { id: string; attemptId?: string; title: string; subject: string; submittedAt: string; status: string; score: string | null; }
 interface LockdownSettings {
   lockdownBrowserEnabled?: boolean;
   lockdownAutoSubmitOnViolation?: boolean;
@@ -57,7 +57,8 @@ export default function StudentExams() {
   };
 
   const handleViewDetails = (exam: any) => {
-    navigate(`/exams/${exam.id}/results`);
+    if (exam.attemptId) navigate(`/exam2/attempts/${exam.attemptId}/result`);
+    else navigate('/exam2/resume');
   };
 
   return (

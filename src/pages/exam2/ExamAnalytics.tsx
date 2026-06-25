@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { apiGet, apiSend } from '../../lib/api';
-import { BarChart3, RefreshCw } from 'lucide-react';
+import { BarChart3, RefreshCw, ClipboardCheck } from 'lucide-react';
 
 const FLAG_LABEL: Record<string, string> = {
   TOO_EASY: 'Too easy', TOO_HARD: 'Too difficult', POOR_DISCRIMINATION: 'Poor discrimination',
@@ -31,8 +31,11 @@ export default function ExamAnalytics() {
   return (
     <div className="max-w-5xl mx-auto space-y-5">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2"><BarChart3 className="h-6 w-6 text-aubergine-600" /> Exam Analytics</h1>
-        <Button onClick={recompute} disabled={busy} variant="outline"><RefreshCw className={`h-4 w-4 mr-1 ${busy ? 'animate-spin' : ''}`} /> Recompute</Button>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2"><BarChart3 className="h-6 w-6 text-aubergine-600" /> Exam Results &amp; Analytics</h1>
+        <div className="flex gap-2">
+          <Button variant="outline" render={<Link to={`/exam2/grading?examId=${examId}`} />} nativeButton={false}><ClipboardCheck className="h-4 w-4 mr-1" /> Grading queue</Button>
+          <Button onClick={recompute} disabled={busy} variant="outline"><RefreshCw className={`h-4 w-4 mr-1 ${busy ? 'animate-spin' : ''}`} /> Recompute</Button>
+        </div>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[['Attempts', data.attempts], ['Avg score', r1(data.avgScore)], ['Median', r1(data.medianScore)], ['Pass rate', data.passRate != null ? `${Math.round(data.passRate * 100)}%` : '—']].map(([l, v]) => (
