@@ -1,25 +1,29 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: mrlc-lms\n"
-"Language: mnw\n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
 "Language-Team: ဘာသာမန် (Mon)\n"
+"Language: mnw\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.9\n"
+
 # This is the source/template catalog. English is the default language and is
 # served directly from the source strings, so the msgstr values here are left
 # empty. To add a new language, copy this file to e.g. `fr.po`, set the
 # Language header, and fill in each msgstr.
-
 # ── Navigation ──────────────────────────────────────────────
 msgid "Main Navigation"
 msgstr "သ္ကုတ်လံၚ်ညး"
 
 msgid "Dashboard"
-msgstr "ဒက်ရှ်ဘုတ်"
+msgstr "ဒက်ယှ်ဗတ်"
 
 msgid "Timetable"
-msgstr "ဇယားအခိၚ်"
+msgstr "ခံက်အၚ်အခိၚ်"
 
 msgid "Announcements"
 msgstr "လိက်လလောၚ်တြး"
@@ -28,40 +32,40 @@ msgid "Students"
 msgstr "ကောန်ကွးဘာဂမၠိုၚ်"
 
 msgid "Teachers"
-msgstr "อစာဂမၠိုၚ်"
+msgstr "အ္စာဂမၠိုၚ်"
 
 msgid "Classes"
-msgstr "တန်ဘာဂမၠိုၚ်"
+msgstr "တန်ဗ္တောန်ဘာဂမၠိုၚ်"
 
 msgid "Subjects"
 msgstr "ဘာသာလ္ၚတ်ဂမၠိုၚ်"
 
 msgid "Attendance"
-msgstr "တိုန်ဘာ"
+msgstr "စရၚ်တိုန်ဘာ"
 
 msgid "Exams"
-msgstr "စမ်ၜတ်ဂမၠိုၚ်"
+msgstr "သၟာန်စမ်ၜတ်လိက်ဂမၠိုၚ်"
 
 msgid "Library"
 msgstr "တိုက်လိက်"
 
 msgid "E-Library"
-msgstr "အဳ-တိုက်လိက်"
+msgstr "တိုက်လိက် - အဳ"
 
 msgid "Video Lessons"
-msgstr "ဗဳဒဳယဝ်ဗ္တောန်လိက်"
+msgstr "ခန်လ္ၚတ် ဗဳဒဳယဵုဂမၠိုၚ်"
 
 msgid "Book Catalog"
 msgstr "စရင်လိက်အုပ်"
 
 msgid "Fees"
-msgstr "သြန်တိုန်ဘာ"
+msgstr "စရိတ်ဘာ"
 
 msgid "Cases"
-msgstr "ကိစ္စဂမၠိုၚ်"
+msgstr "အမှုဂမၠိုၚ်"
 
 msgid "Reports"
-msgstr "လိက်ဒင်စရင်"
+msgstr "လိက်ဒုၚ်စဳရေၚ်ဂမၠိုၚ်"
 
 msgid "Users"
 msgstr "ညးမရပ်စပ်ဂမၠိုၚ်"
@@ -76,35 +80,35 @@ msgid "Settings"
 msgstr "ပလေဝ်ပလေတ်ဂမၠိုၚ်"
 
 msgid "My Account"
-msgstr "အကောင့်မၞိဟ်"
+msgstr "အကံက်အဲ"
 
 msgid "Profile Settings"
-msgstr "ပလေဝ်ပရိုဖိုင်"
+msgstr "ပလေဝ်ပရဵုဝှါၚ်"
 
 msgid "My Classes"
-msgstr "တန်ဘာမၞိဟ်"
+msgstr "တန်ဗ္တောန်အဲဂမၠိုၚ်"
 
 msgid "My Results"
-msgstr "ရလဒ်မၞိဟ်"
+msgstr "စၟတ်သွဟ်လိက်အဲဂမၠိုၚ်"
 
 msgid "Take Attendance"
-msgstr "ကေတ်စရင်တိုန်ဘာ"
+msgstr "ကေတ်စရၚ်တိုန်ဘာ"
 
 msgid "Student Dashboard"
-msgstr "မှုခမုက်ကောန်ကွးဘာ"
+msgstr "မုက်လိက်ကောန်ကွးဘာ"
 
 msgid "Teacher Dashboard"
-msgstr "မှုခမုက်အစာ"
+msgstr "မုက်လိက်အ္စာ"
 
 # ── Common actions / buttons ────────────────────────────────
 msgid "Save"
 msgstr "ဂိုၚ်ဒေပ်"
 
 msgid "Save Changes"
-msgstr "ဂိုၚ်ဒေပ်ဒၞာဲပြံၚ်လှာဲ"
+msgstr "ဂိုၚ်ဒေပ်ပရေၚ်ပြံၚ်သၠာဲ"
 
 msgid "Cancel"
-msgstr "ပဲါကၠေံ"
+msgstr "တးပါဲ"
 
 msgid "Edit"
 msgstr "ပလေဝ်"
@@ -137,19 +141,19 @@ msgid "Export PDF"
 msgstr "ပ္တိတ် PDF"
 
 msgid "Export Reports"
-msgstr "ပ္တိတ်လိက်စရင်"
+msgstr "ပ္တိတ်လိက်စရၚ်"
 
 msgid "Add Teacher"
-msgstr "ထပ်စုတ်အစာ"
+msgstr "ထပ်စုတ်အ္စာ"
 
 msgid "Create Exam"
-msgstr "ကၠောန်စမ်ၜတ်"
+msgstr "ကၠောန်သၟာန်စမ်ၜတ်"
 
 msgid "Add Video"
-msgstr "ထပ်ဗဳဒဳယဝ်"
+msgstr "ထပ်ဗဳဒဳယဵု"
 
 msgid "Upload Resource"
-msgstr "ပ္တိုန်အရင်းအမြစ်"
+msgstr "ပ္တိုန်"
 
 msgid "Record Payment"
 msgstr "ချူစရင်သြန်စောဲ"
@@ -234,74 +238,74 @@ msgid "Amount"
 msgstr "လၟိဟ်သြန်"
 
 msgid "Score"
-msgstr "ရမှတ်"
+msgstr "စၟတ်"
 
 msgid "Rate"
-msgstr "နှုန်း"
+msgstr "က္ဍိုပ်ကၠံ"
 
 msgid "Points"
-msgstr "မှတ်"
+msgstr "စၟတ်"
 
 msgid "Total Points"
-msgstr "မှတ်ဖအိုတ်"
+msgstr "စၟတ်ဖအိုတ်"
 
 msgid "Total Due"
 msgstr "သြန်ဒးကဵုဖအိုတ်"
 
 msgid "Total Paid"
-msgstr "သြန်ကဵုပြီးဖအိုတ်"
+msgstr "သြန်ကဵုတုဲဖအိုတ်"
 
 msgid "Duration"
-msgstr "ကြာချိန်"
+msgstr "လလအ်"
 
 msgid "Questions"
 msgstr "သၟာန်ဂမၠိုၚ်"
 
 msgid "Overview"
-msgstr "ခြုံငုံသုံးသပ်ချက်"
+msgstr "သရောပ်"
 
 msgid "Preview"
-msgstr "ရံၚ်စမ်"
+msgstr "ဗဵုစမ်ၜတ်"
 
 msgid "Student ID"
-msgstr "ကောန်ကွးဘာ ID"
+msgstr "ID ကောန်ကွးဘာ"
 
 msgid "Student Name"
 msgstr "ယၟုကောန်ကွးဘာ"
 
 msgid "Class Name"
-msgstr "ယၟုတန်ဘာ"
+msgstr "ယၟုတန်ဗ္တောန်"
 
 msgid "Joined Date"
-msgstr "စၟတ်တ္ၚဲစပ်ဘာ"
+msgstr "စၟတ်တ္ၚဲအပ်ဘာ"
 
 msgid "Academic Year"
-msgstr "သၞာံပညာသင်"
+msgstr "သၞာံဗ္တောန်ပညာ"
 
 msgid "Academic Level"
-msgstr "တန်ပညာ"
+msgstr "က္ဆံၚ်ဗ္တောန်ပညာ"
 
 msgid "Language"
-msgstr "ဘာသာစကား"
+msgstr "အရေဝ်ဘာသာ"
 
 # ── Statuses ────────────────────────────────────────────────
 msgid "Active"
-msgstr "ချဳဒရာၚ်"
+msgstr "ဂျိုၚ်"
 
 msgid "Inactive"
-msgstr "ဟွံချဳဒရာၚ်"
+msgstr "ဟွံဂျိုၚ်"
 
 msgid "Archived"
 msgstr "ဂိုၚ်ဒေပ်လဝ်"
 
 msgid "Draft"
-msgstr "မူကြမ်း"
+msgstr "မူအပြောံ"
 
 msgid "Published"
-msgstr "တြးပြီး"
+msgstr "တြးတုဲ"
 
 msgid "Closed"
-msgstr "ပိတ်ထားသည်"
+msgstr "ကၟာတ်လဝ်"
 
 msgid "Present"
 msgstr "တိုန်"
@@ -319,100 +323,100 @@ msgid "Unpaid"
 msgstr "ဟွံကဵုသြန်ဏီ"
 
 msgid "Graduated"
-msgstr "ဘွဲ့ရပြီး"
+msgstr "ဘာတုဲ"
 
 msgid "Dropped"
-msgstr "ပဲါထွက်"
+msgstr "တိတ်အာဘာ"
 
 msgid "On Leave"
-msgstr "ကေတ်အခေါၚ်"
+msgstr "ကေတ်လဝ်အခေါၚ်"
 
 # ── Visibility / audience ───────────────────────────────────
 msgid "Everyone"
-msgstr "ညးဂမၠိုၚ်ဖအိုတ်"
+msgstr "ညးဖအိုတ်"
 
 msgid "Students Only"
 msgstr "ဆကောန်ကွးဘာဟေၚ်"
 
 msgid "Teachers Only"
-msgstr "ဆအစာဟေၚ်"
+msgstr "ဆအ္စာဟေၚ်"
 
 msgid "All Classes"
-msgstr "တန်ဘာဖအိုတ်"
+msgstr "တန်သီုဖအိုတ်"
 
 msgid "All Status"
 msgstr "အကာဲအရာဖအိုတ်"
 
 # ── Roles ───────────────────────────────────────────────────
 msgid "Admin"
-msgstr "ညးမအုပ်ချုပ်"
+msgstr "ညးအုပ်ဓုပ်"
 
 msgid "Librarian"
-msgstr "ညးမအုပ်ချုပ်တိုက်လိက်"
+msgstr "ညးအုပ်ဓုပ်တိုက်လိက်"
 
 msgid "Accountant"
-msgstr "ညးထိၚ်သြန်စရင်"
+msgstr "ညးထိၚ်စရၚ်သြန်"
 
 msgid "Case Worker"
-msgstr "ညးမရပ်စပ်ကိစ္စ"
+msgstr "ညးမရပ်စပ်ပၟိက်ကွးဘာ"
 
 msgid "Volunteer"
-msgstr "ညးဆန္ဒအရပ်"
+msgstr "ညးအာရီုဗၚ်ကမၠောန်"
 
 msgid "Staff"
 msgstr "ကောန်ကမၠောန်"
 
 # ── Dashboard ───────────────────────────────────────────────
 msgid "School Dashboard"
-msgstr "မှုခမုက်ဘာ"
+msgstr "မုက်လိက်ဘာ"
 
 msgid "Total Students"
 msgstr "ကောန်ကွးဘာဖအိုတ်"
 
 msgid "Daily Attendance"
-msgstr "တိုန်ဘာနေ့စဉ်"
+msgstr "စရၚ်တိုန်ဘာအရိုဟ်တ္ၚြ"
 
 msgid "Active Cases"
-msgstr "ကိစ္စမချဳဒရာၚ်ဆဲ"
+msgstr "ပၟိက်အမှုနွံဒၟံၚ်"
 
 msgid "Important Announcements"
-msgstr "လိက်လလောၚ်တြးမကိစ္စဇၞော်"
+msgstr "လိက်လလောၚ်တြးမပၟိက်ဇၞော်"
 
 msgid "View All Announcements"
 msgstr "ရံၚ်လိက်လလောၚ်တြးဖအိုတ်"
 
 msgid "Today's Schedule"
-msgstr "ဇယားအခိၚ်တ္ၚဲဏံ"
+msgstr "ခံက်အၚ်အခိၚ်တ္ၚဲဏံ"
 
 msgid "Full Timetable"
-msgstr "ဇယားအခိၚ်ဖအိုတ်"
+msgstr "ခံက်အၚ်အခိၚ်ဖအိုတ်"
 
 msgid "Recent Student Cases"
-msgstr "ကိစ္စကောန်ကွးဘာမကြာမီဏံ"
+msgstr "ကိစ္စကောန်ကွးဘာအကြာတဏံ"
 
 msgid "View Case Management"
-msgstr "ရံၚ်ညးမရပ်စပ်ကိစ္စ"
+msgstr "ရံၚ်စရၚ်အမှု"
 
 msgid "+ New Registration"
-msgstr "+ ထပ်စပ်ယၟုတၟိ"
+msgstr "+ ထပ်စပ်မၞိဟ်တၟိ"
 
 msgid "Active this semester"
 msgstr "ချဳဒရာၚ်ပ္ဍဲသင်တန်းဝွံ"
 
 msgid "GED & Pre-GED levels"
-msgstr "အဆင့် GED & Pre-GED"
+msgstr "က္ဆံၚ် GED & Pre-GED"
 
 msgid "Pending attention"
 msgstr "မစၟဳစၟတ်ရံၚ်"
 
 msgid "No active announcements."
-msgstr "ဟွံမွဲလိက်လလောၚ်တြးမချဳဒရာၚ်ဏီ။"
+msgstr "လိက်လလောၚ်တြးဟွံမွဲဏီ"
 
 msgid "No classes scheduled for today."
-msgstr "တ္ၚဲဏံဟွံမွဲတန်ဘာဇယားအခိၚ်။"
+msgstr "တန်ဗ္တောန် စၟတ်လဝ်သွက်တ္ၚဲဏအ်ဟွံမွဲ"
 
 msgid "No recent cases."
-msgstr "ဟွံမွဲကိစ္စမကြာမီဏံ။"
+msgstr "အမှုအကြာဏအ်ဟွံမွဲ"
 
 msgid "No records today"
 msgstr "ဟွံမွဲစရင်တ္ၚဲဏံ"
@@ -424,12 +428,11 @@ msgid "Overview of Mon Refugee Learning Centre - GED School"
 msgstr "ရံၚ်အလုံ ဒေသဒုက္ခသည်ကောန်ဂကူမန် - ဘာပညာ GED"
 
 # ── Teacher Portal ──────────────────────────────────────────
-
 msgid "Class Attendance Monthly"
 msgstr "လစဉ် တက်ရောက်မှု တန်ဘာ"
 
 msgid "Detailed attendance breakdown per student for the current month."
-msgstr "စရင်တိုန်ဘာအသေးစိတ် ကောန်ကွးဘာမွဲမွဲ ယခုဂိတုဏံ။"
+msgstr "စရၚ်ကွးဘာတိုန်စိုပ်သောဲသောဲပြောဲပြောဲပွိုၚ်မွဲဂိတု"
 
 msgid "Exam Performance Analysis"
 msgstr "ဆန်းစစ်ချက်စွမ်းဆောင်ရည် စမ်ၜတ်လိက်"
@@ -598,4 +601,3 @@ msgstr "ကူးယူလင့်ခ်အရင်းအမြစ်ပြီ
 
 msgid "File downloads will work once resources are uploaded through the Upload form."
 msgstr "ဒေါင်းလုဒ်ဖိုင်အဆင်ပြေ သွက်တင်ပြီးအရင်းအမြစ်။"
-
