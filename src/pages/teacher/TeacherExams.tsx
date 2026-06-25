@@ -32,16 +32,7 @@ export default function TeacherExams() {
   useEffect(() => {
     apiGet<TeacherExam[]>('/api/teacher/exams')
       .then((r) => setTeacherExams(r ?? []))
-      .catch(() => {
-        if (import.meta.env.DEV) {
-          setTeacherExams([
-            { id: "e1", title: "Social Studies Mid-Term", class: "GED Social Studies", date: "May 15, 2024", duration: "120m", type: "Digital", status: "UPCOMING", submissions: 0, total: 24 },
-            { id: "e2", title: "English Essay Review", class: "Pre-GED English", date: "May 01, 2024", duration: "60m", type: "Handwritten", status: "NEEDS_GRADING", submissions: 18, total: 18 },
-            { id: "e3", title: "Weekly Math Quiz #4", class: "GED Math Prep", date: "Apr 28, 2024", duration: "30m", type: "Digital", status: "GRADED", submissions: 12, total: 12, avg: "85%" },
-            { id: "e4", title: "History Final Project", class: "History of SEA", date: "Jun 10, 2024", duration: "N/A", type: "Submission", status: "DRAFT", submissions: 0, total: 22 },
-          ]);
-        }
-      });
+      .catch(() => setTeacherExams([]));
   }, []);
 
   const filteredExams = teacherExams.filter(e =>
@@ -58,9 +49,8 @@ export default function TeacherExams() {
         </div>
         <Button
           id="create-assessment-btn"
-          disabled
-          title="Coming soon"
-          className="h-11 px-6 bg-primary text-primary-foreground font-bold text-[11px] uppercase tracking-widest shadow-lg opacity-50 cursor-not-allowed"
+          onClick={() => navigate('/exams/new')}
+          className="h-11 px-6 bg-primary text-primary-foreground font-bold text-[11px] uppercase tracking-widest shadow-lg"
         >
           <Plus className="h-4 w-4 mr-2" /> Create New Assessment
         </Button>
@@ -145,18 +135,24 @@ export default function TeacherExams() {
                   <div className="p-5 flex-1 flex gap-2">
                     {exam.status === 'NEEDS_GRADING' ? (
                         <Button
-                          disabled
-                          title="Coming soon"
-                          className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-[10px] uppercase tracking-widest h-10 shadow-md opacity-50 cursor-not-allowed"
+                          onClick={() => navigate(`/exams/${exam.id}/results`)}
+                          className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-[10px] uppercase tracking-widest h-10 shadow-md"
                         >
                             Grade Now
+                        </Button>
+                    ) : exam.status === 'DRAFT' ? (
+                        <Button
+                          variant="outline"
+                          onClick={() => navigate(`/exams/${exam.id}/edit`)}
+                          className="w-full border-slate-200 dark:border-surface-raised font-bold text-[10px] uppercase tracking-widest h-10"
+                        >
+                            Edit Draft
                         </Button>
                     ) : (
                         <Button
                           variant="outline"
-                          disabled
-                          title="Coming soon"
-                          className="w-full border-slate-200 dark:border-surface-raised font-bold text-[10px] uppercase tracking-widest h-10 opacity-50 cursor-not-allowed"
+                          onClick={() => navigate(`/exams/${exam.id}/results`)}
+                          className="w-full border-slate-200 dark:border-surface-raised font-bold text-[10px] uppercase tracking-widest h-10"
                         >
                             View Results
                         </Button>
@@ -164,9 +160,9 @@ export default function TeacherExams() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      disabled
-                      className="h-10 w-10 text-slate-400 transition-colors opacity-50 cursor-not-allowed"
-                      title="Coming soon"
+                      onClick={() => navigate(`/exams/${exam.id}`)}
+                      className="h-10 w-10 text-slate-400 hover:text-aubergine-600 transition-colors"
+                      title="Open exam"
                     >
                         <ChevronRight className="h-5 w-5" />
                     </Button>
@@ -185,9 +181,14 @@ export default function TeacherExams() {
                     <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-tight">No exams found</h4>
                     <p className="text-xs text-slate-500 font-medium mt-1">Try adjusting your search or filters.</p>
                 </div>
-                <Button variant="outline" onClick={() => setSearchTerm("")} className="font-bold text-[10px] uppercase tracking-widest h-9">
-                    Clear Search
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => setSearchTerm("")} className="font-bold text-[10px] uppercase tracking-widest h-9">
+                      Clear Search
+                  </Button>
+                  <Button onClick={() => navigate('/exams/new')} className="bg-primary text-primary-foreground font-bold text-[10px] uppercase tracking-widest h-9">
+                      <Plus className="h-3.5 w-3.5 mr-2" /> Create Assessment
+                  </Button>
+                </div>
              </div>
           )}
         </TabsContent>

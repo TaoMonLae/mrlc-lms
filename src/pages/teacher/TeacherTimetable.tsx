@@ -1,12 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { 
-  Calendar as CalendarIcon, 
-  Clock, 
-  MapPin, 
-  MoreHorizontal, 
-  Download, 
+import {
+  Calendar as CalendarIcon,
+  Clock,
+  MapPin,
+  MoreHorizontal,
+  Download,
   Printer,
   ChevronLeft,
   ChevronRight,
@@ -16,21 +16,45 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { IS_DEV } from "../../lib/api";
+import { apiGet } from "../../lib/api";
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const DAY_FROM_API: Record<string, string> = {
+  MONDAY: 'Monday', TUESDAY: 'Tuesday', WEDNESDAY: 'Wednesday',
+  THURSDAY: 'Thursday', FRIDAY: 'Friday', SATURDAY: 'Saturday', SUNDAY: 'Sunday',
+};
 
-// No timetable model exists in the backend yet, so this sample schedule is shown
-// only in development. In production the grid stays empty until a Timetable
-// model + API are added.
-const teacherSchedule = IS_DEV ? [
-  { day: 'Monday', time: '09:00 - 11:00', subject: 'GED Social Studies', room: 'Room 102', classId: 'c1', color: 'bg-blue-500' },
-  { day: 'Monday', time: '13:00 - 15:00', subject: 'History of SEA', room: 'Room 105', classId: 'c4', color: 'bg-purple-500' },
-  { day: 'Tuesday', time: '10:30 - 12:30', subject: 'Pre-GED English', room: 'Room 105', classId: 'c2', color: 'bg-emerald-500' },
-  { day: 'Wednesday', time: '09:00 - 11:00', subject: 'GED Social Studies', room: 'Room 102', classId: 'c1', color: 'bg-blue-500' },
-  { day: 'Thursday', time: '10:30 - 12:30', subject: 'Pre-GED English', room: 'Room 105', classId: 'c2', color: 'bg-emerald-500' },
-  { day: 'Friday', time: '13:00 - 15:00', subject: 'GED Math Prep', room: 'Lab A', classId: 'c3', color: 'bg-aubergine-500' },
-] : [];
+interface TimetableEntry {
+  id: string;
+  classId: string | null;
+  className: string | null;
+  subjectName: string | null;
+  subjectColor: string | null;
+  dayOfWeek: string;
+  startTime: string;
+  endTime: string;
+  room: string | null;
+  status: string;
+  scheduleType: string;
+}
+
+interface ScheduleSession {
+  id: string;
+  day: string;
+  time: string;
+  startTime: string;
+  endTime: string;
+  subject: string;
+  room: string;
+  classId: string | null;
+  color: string;
+}
+
+/** Parse "HH:MM" into minutes for sorting/duration math. */
+function toMinutes(t: string): number {
+  const [h, m] = t.split(':').map(Number);
+  return (h || 0) * 60 + (m || 0);
+}
 
 /** Returns the Monday of the week containing `date`. */
 function getWeekStart(date: Date): Date {
@@ -52,7 +76,59 @@ function formatWeekLabel(weekStart: Date): string {
 export default function TeacherTimetable() {
   const [view, setView] = useState<'week' | 'day'>('week');
   const [weekOffset, setWeekOffset] = useState(0); // 0 = current week
+  const [teacherSchedule, setTeacherSchedule] = useState<ScheduleSession[]>([]);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // /api/timetable auto-filters to the signed-in teacher's entries.
+    apiGet<TimetableEntry[]>('/api/timetable')
+      .then((rows) => {
+        const sessions = (rows ?? [])
+          .filter((e) => e.status !== 'CANCELLED' && e.scheduleType === 'CLASS')
+          .map<ScheduleSession>((e) => ({
+            id: e.id,
+            day: DAY_FROM_API[e.dayOfWeek] || e.dayOfWeek,
+            time: `${e.startTime} - ${e.endTime}`,
+            startTime: e.startTime,
+            endTime: e.endTime,
+            subject: e.subjectName || e.className || 'Scheduled Period',
+            room: e.room || '—',
+            classId: e.classId,
+            color: e.subjectColor || 'bg-blue-500',
+          }))
+          .sort((a, b) => toMinutes(a.startTime) - toMinutes(b.startTime));
+        setTeacherSchedule(sessions);
+      })
+      .catch(() => setTeacherSchedule([]));
+  }, []);
+
+  // Derived summary stats from the real schedule.
+  const weeklyHours = useMemo(
+    () => teacherSchedule.reduce((acc, s) => acc + (toMinutes(s.endTime) - toMinutes(s.startTime)) / 60, 0),
+    [teacherSchedule]
+  );
+  const activeModules = useMemo(
+    () => new Set(teacherSchedule.map((s) => s.classId || s.subject)).size,
+    [teacherSchedule]
+  );
+  // Next upcoming session: today's remaining sessions, else the next day's first.
+  const upcomingSession = useMemo(() => {
+    const now = new Date();
+    const todayName = now.toLocaleDateString('en-US', { weekday: 'long' });
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const todayLater = teacherSchedule
+      .filter((s) => s.day === todayName && toMinutes(s.startTime) >= nowMin)
+      .sort((a, b) => toMinutes(a.startTime) - toMinutes(b.startTime));
+    if (todayLater.length) return { session: todayLater[0], label: `Today, ${todayLater[0].startTime}` };
+    const order = DAYS;
+    const todayIdx = order.indexOf(todayName);
+    for (let i = 1; i <= order.length; i++) {
+      const dayName = order[(todayIdx + i) % order.length];
+      const next = teacherSchedule.filter((s) => s.day === dayName).sort((a, b) => toMinutes(a.startTime) - toMinutes(b.startTime));
+      if (next.length) return { session: next[0], label: `${dayName}, ${next[0].startTime}` };
+    }
+    return null;
+  }, [teacherSchedule]);
 
   const baseWeekStart = getWeekStart(new Date());
   const currentWeekStart = new Date(baseWeekStart);
@@ -183,9 +259,9 @@ export default function TeacherTimetable() {
                         <div key={day} className="border-r border-slate-100 dark:border-surface-raised last:border-r-0 p-3 space-y-3 relative bg-slate-50/20 dark:bg-surface-indigo/10">
                             {teacherSchedule
                                 .filter(session => session.day === day)
-                                .map((session, i) => (
+                                .map((session) => (
                                     <div
-                                      key={i}
+                                      key={session.id}
                                       className="group relative p-3 rounded-xl bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised shadow-sm hover:border-aubergine-300 hover:shadow-md transition-all cursor-pointer"
                                       onClick={() => navigate(`/teacher/classes/${session.classId}`)}
                                       title={`Open ${session.subject}`}
@@ -227,24 +303,31 @@ export default function TeacherTimetable() {
             </CardHeader>
             <CardContent className="p-5">
                 <div className="space-y-4">
-                    <div className="p-4 rounded-xl bg-slate-900 text-white shadow-xl dark:bg-slate-100 dark:text-slate-900 relative overflow-hidden group">
-                        <div className="absolute right-0 top-0 h-full w-24 bg-aubergine-600/20 translate-x-8 -skew-x-12 group-hover:translate-x-4 transition-transform duration-500" />
-                        <div className="relative z-10 space-y-2">
-                            <Badge className="bg-aubergine-600 text-white border-none font-black text-[8px] uppercase tracking-widest h-5">Today, 14:00</Badge>
-                            <h4 className="text-lg font-bold tracking-tight uppercase">GED Social Studies</h4>
-                            <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest opacity-70">
-                                <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> Room 102</span>
-                                <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" /> 24 Students</span>
-                            </div>
-                            <Button
-                              size="sm"
-                              className="w-full mt-4 bg-white text-slate-900 hover:bg-slate-100 dark:bg-surface-indigo dark:text-white font-bold text-[10px] uppercase tracking-widest h-9"
-                              onClick={() => navigate('/teacher/attendance')}
-                            >
-                                Start Session Roll Call
-                            </Button>
-                        </div>
-                    </div>
+                    {upcomingSession ? (
+                      <div className="p-4 rounded-xl bg-slate-900 text-white shadow-xl dark:bg-slate-100 dark:text-slate-900 relative overflow-hidden group">
+                          <div className="absolute right-0 top-0 h-full w-24 bg-aubergine-600/20 translate-x-8 -skew-x-12 group-hover:translate-x-4 transition-transform duration-500" />
+                          <div className="relative z-10 space-y-2">
+                              <Badge className="bg-aubergine-600 text-white border-none font-black text-[8px] uppercase tracking-widest h-5">{upcomingSession.label}</Badge>
+                              <h4 className="text-lg font-bold tracking-tight uppercase">{upcomingSession.session.subject}</h4>
+                              <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest opacity-70">
+                                  <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {upcomingSession.session.room}</span>
+                                  <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {upcomingSession.session.time}</span>
+                              </div>
+                              <Button
+                                size="sm"
+                                className="w-full mt-4 bg-white text-slate-900 hover:bg-slate-100 dark:bg-surface-indigo dark:text-white font-bold text-[10px] uppercase tracking-widest h-9"
+                                onClick={() => navigate('/teacher/attendance')}
+                              >
+                                  Start Session Roll Call
+                              </Button>
+                          </div>
+                      </div>
+                    ) : (
+                      <div className="p-6 rounded-xl border border-dashed border-slate-200 dark:border-surface-raised text-center text-slate-400">
+                          <CalendarIcon className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                          <p className="text-xs font-semibold">No upcoming sessions scheduled.</p>
+                      </div>
+                    )}
                 </div>
             </CardContent>
           </Card>
@@ -257,15 +340,15 @@ export default function TeacherTimetable() {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
                     <div className="space-y-1">
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Weekly Load</p>
-                        <p className="text-2xl font-black text-slate-900 dark:text-white">18 Hours</p>
+                        <p className="text-2xl font-black text-slate-900 dark:text-white">{Math.round(weeklyHours)} Hours</p>
                     </div>
                     <div className="space-y-1">
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Modules</p>
-                        <p className="text-2xl font-black text-slate-900 dark:text-white">4 Classes</p>
+                        <p className="text-2xl font-black text-slate-900 dark:text-white">{activeModules} {activeModules === 1 ? 'Class' : 'Classes'}</p>
                     </div>
                     <div className="space-y-1">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Contact Hours</p>
-                        <p className="text-2xl font-black text-emerald-600">82% Load</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sessions</p>
+                        <p className="text-2xl font-black text-emerald-600">{teacherSchedule.length} / Week</p>
                     </div>
                     <div className="space-y-1 text-right">
                         <Button

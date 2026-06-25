@@ -16,6 +16,7 @@ interface DashboardData {
   upcomingExams: { id: string | number; title: string; date: string; time: string; class: string }[];
   recentPerformance: { id: string | number; student: string; class: string; score: string; trend: string }[];
 }
+interface AnnouncementItem { id: string; title: string; body: string; createdAt: string; }
 
 export default function TeacherDashboard() {
   const navigate = useNavigate();
@@ -24,39 +25,18 @@ export default function TeacherDashboard() {
     classes: [], attendanceData: [], upcomingExams: [], recentPerformance: [],
   });
 
+  const [announcements, setAnnouncements] = useState<AnnouncementItem[]>([]);
+
   useEffect(() => {
     apiGet<DashboardData>('/api/teacher/dashboard')
       .then((r) => setData(r ?? {
         stats: { studentCount: 0, classCount: 0, attendanceRate: 0, upcomingExamCount: 0 },
         classes: [], attendanceData: [], upcomingExams: [], recentPerformance: [],
       }))
-      .catch(() => {
-        if (import.meta.env.DEV) {
-          setData({
-            stats: { studentCount: 56, classCount: 4, attendanceRate: 94.2, upcomingExamCount: 2 },
-            classes: [
-              { id: "c1", name: "GED Social Studies", level: "GED", room: "Room 102", students: 24, progress: 75 },
-              { id: "c2", name: "Pre-GED English", level: "Pre-GED", room: "Room 105", students: 18, progress: 60 },
-              { id: "c3", name: "GED Math Prep", level: "GED", room: "Lab A", students: 12, progress: 90 },
-              { id: "c4", name: "History of SEA", level: "Pre-GED", room: "Room 102", students: 22, progress: 45 },
-            ],
-            attendanceData: [
-              { day: 'Mon', rate: 95 }, { day: 'Tue', rate: 92 }, { day: 'Wed', rate: 88 },
-              { day: 'Thu', rate: 96 }, { day: 'Fri', rate: 94 },
-            ],
-            upcomingExams: [
-              { id: 1, title: "Social Studies Final", date: "May 15", time: "09:00", class: "GED Social Studies" },
-              { id: 2, title: "English Proficiency", date: "May 18", time: "11:30", class: "Pre-GED English" },
-            ],
-            recentPerformance: [
-              { id: 1, student: "Min Khant", class: "GED Social Studies", score: "88%", trend: "up" },
-              { id: 2, student: "Zun Pwint", class: "Pre-GED English", score: "72%", trend: "down" },
-              { id: 3, student: "Aung Ko", class: "GED Social Studies", score: "94%", trend: "up" },
-              { id: 4, student: "May Mon", class: "Pre-GED English", score: "81%", trend: "stable" },
-            ],
-          });
-        }
-      });
+      .catch(() => {});
+    apiGet<AnnouncementItem[]>('/api/announcements')
+      .then((r) => setAnnouncements((r ?? []).slice(0, 4)))
+      .catch(() => setAnnouncements([]));
   }, []);
 
   const { stats, classes: assignedClasses, attendanceData, upcomingExams, recentPerformance } = data;
@@ -72,7 +52,11 @@ export default function TeacherDashboard() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight dark:text-white">Teacher Dashboard</h1>
-          <p className="text-sm text-slate-500 mt-1 font-medium">Managing 4 assigned modules for GED &amp; Pre-GED levels.</p>
+          <p className="text-sm text-slate-500 mt-1 font-medium">
+            {stats.classCount > 0
+              ? `Managing ${stats.classCount} assigned ${stats.classCount === 1 ? 'class' : 'classes'} with ${stats.studentCount} students.`
+              : 'No classes assigned to you yet.'}
+          </p>
         </div>
         <div className="flex gap-2">
           <Button
@@ -88,7 +72,7 @@ export default function TeacherDashboard() {
             id="dashboard-new-assessment-btn"
             size="sm"
             className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm font-bold text-[11px] uppercase tracking-wider h-10 px-4"
-            onClick={() => navigate('/teacher/exams')}
+            onClick={() => navigate('/exams/new')}
           >
             New Assessment
           </Button>
@@ -296,47 +280,45 @@ export default function TeacherDashboard() {
 
         <Card className="lg:col-span-2 rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden dark:bg-surface-indigo/50 dark:border-surface-raised flex flex-col">
           <div className="border-b px-6 py-4 dark:border-surface-raised flex items-center justify-between">
-            <h3 className="font-bold text-slate-800 text-sm dark:text-slate-100">Teaching Resources &amp; Notifications</h3>
-            <Badge variant="secondary" className="font-bold text-[10px] tracking-widest uppercase">7 Updates</Badge>
+            <h3 className="font-bold text-slate-800 text-sm dark:text-slate-100">Announcements</h3>
+            {announcements.length > 0 && (
+              <Badge variant="secondary" className="font-bold text-[10px] tracking-widest uppercase">{announcements.length} Recent</Badge>
+            )}
           </div>
-          <CardContent className="p-6 grid md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div className="flex gap-4 items-start">
-                <div className="h-10 w-10 shrink-0 rounded-xl bg-aubergine-50 dark:bg-aubergine-900/20 flex items-center justify-center text-aubergine-600">
-                  <BookOpen className="h-5 w-5" />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase">New curriculum available</p>
-                  <p className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-300 font-medium">Updated Social Studies module for the 2024 GED standards has been uploaded to the shared drive.</p>
-                </div>
+          <CardContent className="p-6 space-y-4">
+            {announcements.length === 0 ? (
+              <div className="py-8 flex flex-col items-center justify-center text-center text-slate-400">
+                <BookOpen className="h-8 w-8 mb-2 opacity-40" />
+                <p className="text-xs font-semibold">No announcements yet.</p>
               </div>
-              <div className="flex gap-4 items-start">
-                <div className="h-10 w-10 shrink-0 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600">
-                  <Users className="h-5 w-5" />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase">Student Registration Update</p>
-                  <p className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-300 font-medium">3 new students have been added to your GED Math Prep module. Please review records.</p>
-                </div>
-              </div>
-            </div>
-            <div className="p-4 rounded-xl border border-dashed border-slate-200 dark:border-surface-raised flex flex-col items-center justify-center text-center space-y-3 bg-slate-50/30 dark:bg-surface-raised/10">
-              <div className="h-12 w-12 rounded-full border-4 border-aubergine-500/10 border-t-aubergine-500 flex items-center justify-center">
-                <Clock className="h-5 w-5 text-aubergine-500" />
-              </div>
-              <div>
-                <p className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase tracking-tight">Lesson Planning Reminder</p>
-                <p className="text-[10px] text-slate-500 font-medium mt-1">Submit your next week's session plans by Friday 5PM.</p>
-              </div>
-              <Button
-                id="dashboard-planner-btn"
-                size="sm"
-                className="bg-slate-900 text-white hover:bg-slate-800 text-[10px] font-bold uppercase tracking-widest px-6 dark:bg-slate-100 dark:text-slate-900"
-                onClick={() => navigate('/teacher/timetable')}
-              >
-                Planner
-              </Button>
-            </div>
+            ) : (
+              announcements.map((ann) => (
+                <button
+                  key={ann.id}
+                  onClick={() => navigate(`/announcements/${ann.id}`)}
+                  className="w-full text-left flex gap-4 items-start group focus:outline-none"
+                >
+                  <div className="h-10 w-10 shrink-0 rounded-xl bg-aubergine-50 dark:bg-aubergine-900/20 flex items-center justify-center text-aubergine-600">
+                    <BookOpen className="h-5 w-5" />
+                  </div>
+                  <div className="space-y-1 min-w-0">
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase truncate group-hover:text-aubergine-600 transition-colors">{ann.title}</p>
+                    <p className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-300 font-medium line-clamp-2">{ann.body}</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">
+                      {new Date(ann.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </p>
+                  </div>
+                </button>
+              ))
+            )}
+            <Button
+              id="dashboard-announcements-btn"
+              variant="ghost"
+              className="w-full mt-2 text-[10px] font-bold text-slate-500 hover:text-aubergine-600 uppercase tracking-widest h-8"
+              onClick={() => navigate('/announcements')}
+            >
+              View All Announcements
+            </Button>
           </CardContent>
         </Card>
       </div>

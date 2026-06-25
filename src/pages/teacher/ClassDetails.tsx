@@ -49,21 +49,7 @@ export default function ClassDetails() {
           setStudents(r.students);
         }
       })
-      .catch(() => {
-        if (import.meta.env.DEV) {
-          setClassInfo({
-            id: "c1", name: "GED Social Studies", level: "GED", room: "Room 102",
-            teacher: "John Smith", totalStudents: 24, academicYear: "2024-2025", status: "ACTIVE",
-          });
-          setStudents([
-            { id: "s1", name: "Min Khant", studentId: "STU-2023-001", attendance: "98%", lastExam: "85/100", status: "ACTIVE" },
-            { id: "s2", name: "Zun Pwint", studentId: "STU-2023-002", attendance: "85%", lastExam: "72/100", status: "ACTIVE" },
-            { id: "s3", name: "Aung Ko", studentId: "STU-2023-003", attendance: "95%", lastExam: "94/100", status: "ACTIVE" },
-            { id: "s4", name: "May Mon", studentId: "STU-2023-004", attendance: "88%", lastExam: "81/100", status: "ACTIVE" },
-            { id: "s5", name: "Htet Aung", studentId: "STU-2023-005", attendance: "92%", lastExam: "78/100", status: "ON_LEAVE" },
-          ]);
-        }
-      });
+      .catch(() => {});
   }, [id]);
 
   const filteredStudents = students.filter(s =>

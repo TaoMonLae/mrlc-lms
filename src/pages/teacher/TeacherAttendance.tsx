@@ -38,17 +38,7 @@ export default function TeacherAttendance() {
         setClassOptions(opts);
         setSelectedClass((prev) => prev || opts[0]?.value || "");
       })
-      .catch(() => {
-        if (import.meta.env.DEV) {
-          const opts = [
-            { id: 'c1', name: 'GED Social Studies' },
-            { id: 'c2', name: 'Pre-GED English' },
-            { id: 'c3', name: 'GED Math Prep' },
-          ].map((c) => ({ value: c.id, label: c.name }));
-          setClassOptions(opts);
-          setSelectedClass(opts[0]?.value || "");
-        }
-      });
+      .catch(() => { setClassOptions([]); setSelectedClass(""); });
   }, []);
 
   useEffect(() => {
@@ -56,18 +46,7 @@ export default function TeacherAttendance() {
     setAttendance({});
     apiGet<RosterStudent[]>(`/api/teacher/roster?classId=${selectedClass}`)
       .then((r) => setStudents(r ?? []))
-      .catch(() => {
-        if (import.meta.env.DEV) {
-          setStudents([
-            { id: "s1", name: "Min Khant", studentId: "STU-2023-001", photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Min" },
-            { id: "s2", name: "Zun Pwint", studentId: "STU-2023-002", photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Zun" },
-            { id: "s3", name: "Aung Ko", studentId: "STU-2023-003", photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Aung" },
-            { id: "s4", name: "May Mon", studentId: "STU-2023-004", photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=May" },
-            { id: "s5", name: "Htet Aung", studentId: "STU-2023-005", photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Htet" },
-            { id: "s6", name: "Khin Myat", studentId: "STU-2023-006", photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Khin" },
-          ]);
-        }
-      });
+      .catch(() => setStudents([]));
   }, [selectedClass]);
 
   const CLASS_OPTIONS = classOptions;

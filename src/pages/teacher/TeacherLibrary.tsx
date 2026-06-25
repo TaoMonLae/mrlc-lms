@@ -53,17 +53,7 @@ export default function TeacherLibrary() {
       .then((r) => {
         setResources((r ?? []).map(mapLibraryResource));
       })
-      .catch(() => {
-        if (import.meta.env.DEV) {
-          setResources([
-            { id: "r1", title: "GED Social Studies Study Guide", type: "PDF", size: "2.4 MB", uploadedBy: "You", date: "May 10, 2024", visibility: "PUBLIC", downloads: 45, url: null },
-            { id: "r2", title: "Chemistry Lab Safety Video", type: "VIDEO", size: "45.1 MB", uploadedBy: "Sarah Wilson", date: "May 08, 2024", visibility: "TEACHERS", downloads: 12, url: null },
-            { id: "r3", title: "Grade 10 Math Exercises", type: "DOCX", size: "1.1 MB", uploadedBy: "You", date: "May 05, 2024", visibility: "PRIVATE", downloads: 0, url: null },
-            { id: "r4", title: "Historical Maps Collection", type: "ZIP", size: "128.5 MB", uploadedBy: "Robert Brown", date: "Apr 28, 2024", visibility: "PUBLIC", downloads: 89, url: null },
-            { id: "r5", title: "English Grammar Worksheet", type: "PDF", size: "0.8 MB", uploadedBy: "You", date: "Apr 22, 2024", visibility: "PUBLIC", downloads: 156, url: null },
-          ]);
-        }
-      });
+      .catch(() => setResources([]));
   }, []);
 
   const filteredResources = resources.filter(r => 

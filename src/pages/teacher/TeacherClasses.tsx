@@ -19,45 +19,7 @@ export default function TeacherClasses() {
   useEffect(() => {
     apiGet<TeacherClass[]>('/api/teacher/classes')
       .then((r) => setAssignedClasses(r ?? []))
-      .catch(() => {
-        if (import.meta.env.DEV) {
-          setAssignedClasses([
-            {
-              id: "c1",
-              name: "GED Social Studies",
-              level: "GED",
-              room: "Room 102",
-              students: 24,
-              progress: 75,
-              schedule: "Mon, Wed (09:00 - 11:00)",
-              nextLesson: "May 15, 09:00",
-              attendance: "92%"
-            },
-            {
-              id: "c2",
-              name: "Pre-GED English",
-              level: "Pre-GED",
-              room: "Room 105",
-              students: 18,
-              progress: 60,
-              schedule: "Tue, Thu (10:30 - 12:30)",
-              nextLesson: "May 14, 10:30",
-              attendance: "88%"
-            },
-            {
-              id: "c3",
-              name: "GED Math Prep",
-              level: "GED",
-              room: "Lab A",
-              students: 12,
-              progress: 90,
-              schedule: "Fri (13:00 - 15:00)",
-              nextLesson: "May 17, 13:00",
-              attendance: "95%"
-            },
-          ]);
-        }
-      });
+      .catch(() => setAssignedClasses([]));
   }, []);
 
   return (
