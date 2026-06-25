@@ -376,6 +376,19 @@ function parseBoolean(value: unknown): boolean {
   return Boolean(value);
 }
 
+function lockdownBrowserPolicy(profile?: Record<string, any> | null) {
+  return {
+    enabled: profile?.lockdownBrowserEnabled ?? true,
+    requireFullscreen: profile?.lockdownRequireFullscreen ?? true,
+    blockClipboard: profile?.lockdownBlockClipboard ?? true,
+    blockContextMenu: profile?.lockdownBlockContextMenu ?? true,
+    blockShortcuts: profile?.lockdownBlockShortcuts ?? true,
+    autoSubmitOnViolation: profile?.lockdownAutoSubmitOnViolation ?? true,
+    maxWarnings: Math.max(1, Number(profile?.lockdownMaxWarnings ?? 3)),
+    instructions: profile?.lockdownInstructions || "",
+  };
+}
+
 const schemas = {
   login: z.object({ email, password: z.string().min(1, "is required") }),
   verifyPassword: z.object({ password: z.string().min(1, "is required") }),
@@ -438,6 +451,16 @@ const schemas = {
       questionText: optStr, type: optStr, points: optNum,
       choices: z.any().optional(), correctAnswer: z.any().optional(),
     })).optional(),
+  }),
+  examSubmit: z.object({
+    answers: z.record(z.string(), z.string()).optional(),
+    integrityEvents: z.array(z.object({
+      type: reqStr,
+      message: optStr,
+      at: reqStr,
+    })).optional(),
+    securityWarnings: z.number().int().min(0).optional(),
+    autoSubmitted: z.boolean().optional(),
   }),
   classCreate: z.object({
     name: reqStr, level: reqStr, academicYear: reqStr,
@@ -627,6 +650,14 @@ const schemas = {
     timezone: optStr, dateFormat: optStr, currency: optStr, defaultLanguage: optStr,
     fileUploadLimitMb: optNum,
     backupEnabled: z.union([z.boolean(), z.string()]).optional(),
+    lockdownBrowserEnabled: z.union([z.boolean(), z.string()]).optional(),
+    lockdownRequireFullscreen: z.union([z.boolean(), z.string()]).optional(),
+    lockdownBlockClipboard: z.union([z.boolean(), z.string()]).optional(),
+    lockdownBlockContextMenu: z.union([z.boolean(), z.string()]).optional(),
+    lockdownBlockShortcuts: z.union([z.boolean(), z.string()]).optional(),
+    lockdownAutoSubmitOnViolation: z.union([z.boolean(), z.string()]).optional(),
+    lockdownMaxWarnings: optNum,
+    lockdownInstructions: nullableStr,
   }),
   timetable: z.object({
     classId: nullableStr,
@@ -4357,7 +4388,8 @@ async function startServer() {
           return;
         }
       }
-      res.json(exam);
+      const profile = await prisma.schoolProfile.findFirst();
+      res.json({ ...exam, lockdownPolicy: lockdownBrowserPolicy(profile) });
     } catch (err) {
       logger.error("Error fetching exam:", err);
       res.status(500).json({ error: "Internal Server Error" });
@@ -4420,6 +4452,220 @@ async function startServer() {
       res.status(201).json(result);
     } catch (err) {
       logger.error("Error creating exam:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.put("/api/exams/:id", authMiddleware, validate(schemas.exam), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { id } = req.params;
+    const { title, classId, subjectId, examType, duration, totalMarks, questions } = req.body;
+    if (!title || !classId || !subjectId) {
+      res.status(400).json({ error: "title, classId, and subjectId are required" });
+      return;
+    }
+    try {
+      const result = await prisma.$transaction(async (tx) => {
+        const existing = await tx.exam.findUnique({
+          where: { id },
+          include: { attempts: { select: { id: true } } },
+        });
+        if (!existing) throw Object.assign(new Error("Exam not found"), { http: 404 });
+
+        const exam = await tx.exam.update({
+          where: { id },
+          data: {
+            title,
+            classId,
+            subjectId,
+            type: examType || "FINAL",
+            durationMinutes: duration ? Number(duration) : null,
+            totalMarks: totalMarks != null ? Number(totalMarks) : null,
+          },
+        });
+
+        if (existing.attempts.length === 0) {
+          await tx.question.deleteMany({ where: { examId: id } });
+          if (questions && Array.isArray(questions)) {
+            for (const q of questions) {
+              await tx.question.create({
+                data: {
+                  examId: id,
+                  text: q.questionText,
+                  type: q.type || "MCQ",
+                  points: Number(q.points) || 5,
+                  options: q.choices || null,
+                  correctAnswer: q.correctAnswer !== undefined ? String(q.correctAnswer) : null,
+                },
+              });
+            }
+          }
+        }
+
+        return exam;
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "UPDATE",
+        "EXAM",
+        result.id,
+        `Exam '${title}' updated.`,
+        req.ip,
+        req.headers["user-agent"] || null,
+        "SUCCESS"
+      );
+
+      res.json(result);
+    } catch (err: any) {
+      logger.error("Error updating exam:", err);
+      if (err.http === 404) {
+        res.status(404).json({ error: err.message });
+        return;
+      }
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/exams/:id/submit", authMiddleware, validate(schemas.examSubmit), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "STUDENT") {
+      res.status(403).json({ error: "Only students can submit exam attempts" });
+      return;
+    }
+
+    const { id } = req.params;
+    const answers = (req.body.answers || {}) as Record<string, string>;
+    const integrityEvents = Array.isArray(req.body.integrityEvents) ? req.body.integrityEvents : [];
+    const securityWarnings = Number(req.body.securityWarnings || 0);
+    const autoSubmitted = Boolean(req.body.autoSubmitted);
+
+    try {
+      const student = await prisma.student.findUnique({
+        where: { userId: jwtUser.userId },
+        include: { user: true },
+      });
+      if (!student || !student.classId) {
+        res.status(403).json({ error: "Student profile is not assigned to a class" });
+        return;
+      }
+
+      const exam = await prisma.exam.findUnique({
+        where: { id },
+        include: { questions: true, class: true, subject: true },
+      });
+      if (!exam || exam.classId !== student.classId) {
+        res.status(404).json({ error: "Exam not found" });
+        return;
+      }
+
+      const existingCompleted = await prisma.examAttempt.findUnique({
+        where: { studentId_examId: { studentId: student.id, examId: id } },
+      });
+      if (existingCompleted?.isCompleted) {
+        res.status(409).json({ error: "This exam has already been submitted" });
+        return;
+      }
+
+      const result = await prisma.$transaction(async (tx) => {
+        const attempt = existingCompleted
+          ? await tx.examAttempt.update({
+              where: { id: existingCompleted.id },
+              data: { isCompleted: false },
+            })
+          : await tx.examAttempt.create({
+              data: {
+                studentId: student.id,
+                examId: id,
+                isCompleted: false,
+              },
+            });
+
+        await tx.examAnswer.deleteMany({ where: { attemptId: attempt.id } });
+
+        let score = 0;
+        let autoGradedCount = 0;
+        let manualGradingCount = 0;
+        let answeredCount = 0;
+
+        for (const question of exam.questions) {
+          const answerText = answers[question.id]?.trim();
+          if (answerText) answeredCount += 1;
+
+          let isCorrect: boolean | null = null;
+          let pointsAwarded: number | null = null;
+          const options = Array.isArray(question.options) ? question.options : [];
+          const hasAutoAnswer = question.correctAnswer != null && options.length > 0;
+
+          if (answerText && hasAutoAnswer) {
+            const correctAnswer = String(question.correctAnswer);
+            const optionIndex = Number(correctAnswer);
+            const expectedOption = Number.isInteger(optionIndex)
+              ? String(options[optionIndex] ?? "")
+              : correctAnswer;
+            isCorrect = answerText === correctAnswer || answerText === expectedOption;
+            pointsAwarded = isCorrect ? Number(question.points || 0) : 0;
+            score += pointsAwarded;
+            autoGradedCount += 1;
+          } else if (answerText) {
+            manualGradingCount += 1;
+          }
+
+          await tx.examAnswer.create({
+            data: {
+              attemptId: attempt.id,
+              questionId: question.id,
+              answerText: answerText || null,
+              isCorrect,
+              pointsAwarded,
+            },
+          });
+        }
+
+        const completedAttempt = await tx.examAttempt.update({
+          where: { id: attempt.id },
+          data: {
+            score,
+            isCompleted: true,
+            completedAt: new Date(),
+          },
+        });
+
+        return {
+          attemptId: completedAttempt.id,
+          score,
+          totalMarks: exam.totalMarks,
+          answeredCount,
+          questionCount: exam.questions.length,
+          autoGradedCount,
+          manualGradingCount,
+        };
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "SUBMIT",
+        "EXAM",
+        id,
+        `Student ${student.studentCode} submitted '${exam.title}' with ${securityWarnings} security warning(s) and ${integrityEvents.length} integrity event(s).`,
+        req.ip,
+        req.headers["user-agent"] || null,
+        autoSubmitted || securityWarnings > 0 ? "WARNING" : "SUCCESS"
+      );
+
+      res.json({
+        ...result,
+        securityWarnings,
+        autoSubmitted,
+      });
+    } catch (err) {
+      logger.error("Error submitting exam:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
@@ -4722,6 +4968,14 @@ async function startServer() {
     if (b.defaultLanguage !== undefined) data.defaultLanguage = b.defaultLanguage;
     if (b.fileUploadLimitMb !== undefined) data.fileUploadLimitMb = Number(b.fileUploadLimitMb);
     if (b.backupEnabled !== undefined) data.backupEnabled = parseBoolean(b.backupEnabled);
+    if (b.lockdownBrowserEnabled !== undefined) data.lockdownBrowserEnabled = parseBoolean(b.lockdownBrowserEnabled);
+    if (b.lockdownRequireFullscreen !== undefined) data.lockdownRequireFullscreen = parseBoolean(b.lockdownRequireFullscreen);
+    if (b.lockdownBlockClipboard !== undefined) data.lockdownBlockClipboard = parseBoolean(b.lockdownBlockClipboard);
+    if (b.lockdownBlockContextMenu !== undefined) data.lockdownBlockContextMenu = parseBoolean(b.lockdownBlockContextMenu);
+    if (b.lockdownBlockShortcuts !== undefined) data.lockdownBlockShortcuts = parseBoolean(b.lockdownBlockShortcuts);
+    if (b.lockdownAutoSubmitOnViolation !== undefined) data.lockdownAutoSubmitOnViolation = parseBoolean(b.lockdownAutoSubmitOnViolation);
+    if (b.lockdownMaxWarnings !== undefined) data.lockdownMaxWarnings = Math.max(1, Number(b.lockdownMaxWarnings));
+    if (b.lockdownInstructions !== undefined) data.lockdownInstructions = b.lockdownInstructions;
 
     try {
       const existing = await prisma.schoolProfile.findFirst();

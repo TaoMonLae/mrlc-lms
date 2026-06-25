@@ -129,6 +129,14 @@ model SchoolProfile {
   defaultLanguage   String?  @default("en")
   fileUploadLimitMb Int      @default(10)
   backupEnabled     Boolean  @default(true)
+  lockdownBrowserEnabled Boolean @default(true)
+  lockdownRequireFullscreen Boolean @default(true)
+  lockdownBlockClipboard Boolean @default(true)
+  lockdownBlockContextMenu Boolean @default(true)
+  lockdownBlockShortcuts Boolean @default(true)
+  lockdownAutoSubmitOnViolation Boolean @default(true)
+  lockdownMaxWarnings Int @default(3)
+  lockdownInstructions String?
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

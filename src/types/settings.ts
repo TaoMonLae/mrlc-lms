@@ -28,4 +28,12 @@ export interface SystemSettings {
   defaultLanguage: string;
   fileUploadLimitMb: number;
   backupEnabled: boolean;
+  lockdownBrowserEnabled: boolean;
+  lockdownRequireFullscreen: boolean;
+  lockdownBlockClipboard: boolean;
+  lockdownBlockContextMenu: boolean;
+  lockdownBlockShortcuts: boolean;
+  lockdownAutoSubmitOnViolation: boolean;
+  lockdownMaxWarnings: number;
+  lockdownInstructions: string;
 }

@@ -41,6 +41,14 @@ const DEFAULT_SYSTEM: SystemSettings = {
   defaultLanguage: 'en',
   fileUploadLimitMb: 10,
   backupEnabled: true,
+  lockdownBrowserEnabled: true,
+  lockdownRequireFullscreen: true,
+  lockdownBlockClipboard: true,
+  lockdownBlockContextMenu: true,
+  lockdownBlockShortcuts: true,
+  lockdownAutoSubmitOnViolation: true,
+  lockdownMaxWarnings: 3,
+  lockdownInstructions: '',
 };
 
 const SettingsContext = createContext<SettingsContextType>({
@@ -87,6 +95,14 @@ function applyServerData(
     defaultLanguage: data.defaultLanguage !== undefined ? data.defaultLanguage : prev.defaultLanguage,
     fileUploadLimitMb: data.fileUploadLimitMb !== undefined ? data.fileUploadLimitMb : prev.fileUploadLimitMb,
     backupEnabled: data.backupEnabled !== undefined ? data.backupEnabled : prev.backupEnabled,
+    lockdownBrowserEnabled: data.lockdownBrowserEnabled !== undefined ? data.lockdownBrowserEnabled : prev.lockdownBrowserEnabled,
+    lockdownRequireFullscreen: data.lockdownRequireFullscreen !== undefined ? data.lockdownRequireFullscreen : prev.lockdownRequireFullscreen,
+    lockdownBlockClipboard: data.lockdownBlockClipboard !== undefined ? data.lockdownBlockClipboard : prev.lockdownBlockClipboard,
+    lockdownBlockContextMenu: data.lockdownBlockContextMenu !== undefined ? data.lockdownBlockContextMenu : prev.lockdownBlockContextMenu,
+    lockdownBlockShortcuts: data.lockdownBlockShortcuts !== undefined ? data.lockdownBlockShortcuts : prev.lockdownBlockShortcuts,
+    lockdownAutoSubmitOnViolation: data.lockdownAutoSubmitOnViolation !== undefined ? data.lockdownAutoSubmitOnViolation : prev.lockdownAutoSubmitOnViolation,
+    lockdownMaxWarnings: data.lockdownMaxWarnings !== undefined ? data.lockdownMaxWarnings : prev.lockdownMaxWarnings,
+    lockdownInstructions: data.lockdownInstructions !== undefined ? data.lockdownInstructions || '' : prev.lockdownInstructions,
   }));
 }
 
@@ -186,6 +202,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       defaultLanguage: data.defaultLanguage,
       fileUploadLimitMb: data.fileUploadLimitMb,
       backupEnabled: data.backupEnabled,
+      lockdownBrowserEnabled: data.lockdownBrowserEnabled,
+      lockdownRequireFullscreen: data.lockdownRequireFullscreen,
+      lockdownBlockClipboard: data.lockdownBlockClipboard,
+      lockdownBlockContextMenu: data.lockdownBlockContextMenu,
+      lockdownBlockShortcuts: data.lockdownBlockShortcuts,
+      lockdownAutoSubmitOnViolation: data.lockdownAutoSubmitOnViolation,
+      lockdownMaxWarnings: data.lockdownMaxWarnings,
+      lockdownInstructions: data.lockdownInstructions,
     });
 
   return (
