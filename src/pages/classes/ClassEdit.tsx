@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Users } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { TeacherAssignSelect } from '@/src/components/classes/TeacherAssignSelect';
 
 const classSchema = z.object({
   name: z.string().min(2, 'Class name must be at least 2 characters'),
@@ -30,6 +31,8 @@ type ClassFormValues = z.infer<typeof classSchema>;
 export default function ClassEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [teacherIds, setTeacherIds] = useState<string[]>([]);
+  const [originalTeacherIds, setOriginalTeacherIds] = useState<string[]>([]);
 
   const {
     register,
@@ -50,11 +53,11 @@ export default function ClassEdit() {
   });
 
   useEffect(() => {
+    if (!id) return;
     const token = sessionStorage.getItem('auth_token');
-    fetch('/api/classes', { headers: { Authorization: `Bearer ${token}` } })
-      .then((res) => (res.ok ? res.json() : []))
-      .then((classes) => {
-        const classData = Array.isArray(classes) ? classes.find((item: any) => item.id === id) : null;
+    fetch(`/api/classes/${id}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((classData) => {
         if (!classData) return;
         reset({
           name: classData.name || '',
@@ -63,17 +66,47 @@ export default function ClassEdit() {
           description: classData.description || '',
           status: classData.status || 'ACTIVE',
         });
+        const ids = (classData.teachers || []).map((ct: any) => ct.teacher?.id || ct.teacherId);
+        setTeacherIds(ids);
+        setOriginalTeacherIds(ids);
       })
       .catch(() => {});
   }, [id, reset]);
 
   const onSubmit = async (data: ClassFormValues) => {
+    const token = sessionStorage.getItem('auth_token');
     try {
-      console.log('Class update submitted:', data);
+      const res = await fetch(`/api/classes/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to update class');
+      }
+      // Sync teacher assignments (diff against the originally loaded set).
+      const added = teacherIds.filter((t) => !originalTeacherIds.includes(t));
+      const removed = originalTeacherIds.filter((t) => !teacherIds.includes(t));
+      await Promise.all([
+        ...added.map((teacherId) =>
+          fetch(`/api/classes/${id}/teachers`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ teacherId }),
+          })
+        ),
+        ...removed.map((teacherId) =>
+          fetch(`/api/classes/${id}/teachers/${teacherId}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` },
+          })
+        ),
+      ]);
       toast.success('Class details updated');
       navigate(`/classes/${id}`);
-    } catch (error) {
-      toast.error('Failed to update class');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update class');
     }
   };
 
@@ -143,6 +176,11 @@ export default function ClassEdit() {
               </SelectContent>
             </Select>
             {errors.status && <p className="text-xs text-red-500 font-medium">{errors.status.message}</p>}
+          </div>
+
+          <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-surface-raised">
+            <Label className="flex items-center gap-2"><Users className="h-4 w-4 text-aubergine-600" /> Assigned Teachers</Label>
+            <TeacherAssignSelect value={teacherIds} onChange={setTeacherIds} />
           </div>
         </div>
 

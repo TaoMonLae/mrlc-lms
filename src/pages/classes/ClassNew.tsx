@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Plus } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Users } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { TeacherAssignSelect } from '@/src/components/classes/TeacherAssignSelect';
 
 const classSchema = z.object({
   name: z.string().min(2, 'Class name must be at least 2 characters'),
@@ -29,7 +30,8 @@ type ClassFormValues = z.infer<typeof classSchema>;
 
 export default function ClassNew() {
   const navigate = useNavigate();
-  
+  const [teacherIds, setTeacherIds] = useState<string[]>([]);
+
   const {
     register,
     handleSubmit,
@@ -58,6 +60,19 @@ export default function ClassNew() {
       if (!res.ok) {
         const err = await res.json();
         throw new Error(err.error || 'Failed to create class');
+      }
+      const created = await res.json().catch(() => null);
+      // Assign any selected teachers to the new class.
+      if (created?.id && teacherIds.length) {
+        await Promise.all(
+          teacherIds.map((teacherId) =>
+            fetch(`/api/classes/${created.id}/teachers`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ teacherId }),
+            })
+          )
+        );
       }
       toast.success('Class created successfully');
       navigate('/classes');
@@ -132,6 +147,11 @@ export default function ClassNew() {
               </SelectContent>
             </Select>
             {errors.status && <p className="text-xs text-red-500 font-medium">{errors.status.message}</p>}
+          </div>
+
+          <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-surface-raised">
+            <Label className="flex items-center gap-2"><Users className="h-4 w-4 text-aubergine-600" /> Assigned Teachers</Label>
+            <TeacherAssignSelect value={teacherIds} onChange={setTeacherIds} />
           </div>
         </div>
 

@@ -4575,6 +4575,31 @@ async function startServer() {
     }
   });
 
+  app.put("/api/classes/:id", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { id } = req.params;
+    const { name, level, academicYear, room, capacity } = req.body || {};
+    try {
+      const cls = await prisma.class.update({
+        where: { id },
+        data: {
+          ...(name !== undefined ? { name } : {}),
+          ...(level !== undefined ? { level } : {}),
+          ...(academicYear !== undefined ? { academicYear } : {}),
+          ...(room !== undefined ? { room: room || null } : {}),
+          ...(capacity !== undefined ? { capacity: capacity ? Number(capacity) : null } : {}),
+        },
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "CLASS", id,
+        `Class '${cls.name}' updated.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.json(cls);
+    } catch (err: any) {
+      if (err?.code === "P2025") { res.status(404).json({ error: "Class not found" }); return; }
+      logger.error("Error updating class:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
   // ── Cases (single + notes) ──────────────────────────────────────────────────
   app.get("/api/cases/:id", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
