@@ -13,31 +13,35 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const reportTemplates = [
-  { 
-    id: "r1", 
-    title: "Class Attendance Monthly", 
+  {
+    id: "r1",
+    title: "Class Attendance Monthly",
     description: "Detailed attendance breakdown per student for the current month.",
     icon: Calendar,
     type: "Attendance",
-    permission: "view_assigned_reports"
+    permission: "view_assigned_reports",
+    route: "/attendance/reports",
   },
-  { 
-    id: "r2", 
-    title: "Exam Performance Analysis", 
+  {
+    id: "r2",
+    title: "Exam Performance Analysis",
     description: "Statistical summary of recent exam scores with class average comparison.",
     icon: TrendingUp,
     type: "Academic",
-    permission: "view_assigned_reports"
+    permission: "view_assigned_reports",
+    route: "/reports/exams",
   },
-  { 
-    id: "r3", 
-    title: "Student Progress Report", 
+  {
+    id: "r3",
+    title: "Student Progress Report",
     description: "Comprehensive progress tracking for individual students in your classes.",
     icon: FileText,
     type: "Comprehensive",
-    permission: "view_assigned_reports"
+    permission: "view_assigned_reports",
+    route: "/reports/students",
   },
 ];
 
@@ -53,6 +57,7 @@ const generatedReports: GeneratedReport[] = [];
 
 export default function TeacherReports() {
   const [showHistory, setShowHistory] = useState(false);
+  const navigate = useNavigate();
 
   const handleRequestAccess = () => {
     window.location.href = "mailto:admin@mrlc.edu?subject=Report Access Request&body=I would like to request access to restricted reports. Please review my profile.";
@@ -85,9 +90,8 @@ export default function TeacherReports() {
             <CardContent className="p-6 pt-0">
               <Button
                 id={`generate-report-${template.id}`}
-                disabled
-                title="Coming soon"
-                className="w-full bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-bold text-[10px] uppercase tracking-widest h-10 shadow-md opacity-50 cursor-not-allowed"
+                onClick={() => navigate(template.route)}
+                className="w-full bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-bold text-[10px] uppercase tracking-widest h-10 shadow-md hover:bg-slate-800"
               >
                 Configure & Generate
               </Button>

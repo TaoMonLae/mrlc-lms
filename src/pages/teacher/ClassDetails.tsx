@@ -73,9 +73,7 @@ export default function ClassDetails() {
   };
 
   const handleStudentProfile = (student: typeof students[0]) => {
-    toast.info(`Viewing profile for ${student.name}`, {
-      description: 'Student profile pages are accessible via the Admin Students module.',
-    });
+    navigate(`/students/${student.id}`);
   };
 
   const handleAddStudent = () => {
