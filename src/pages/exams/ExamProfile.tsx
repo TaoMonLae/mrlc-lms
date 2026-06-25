@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Edit, Play, Users, BarChart3, Clock, CheckCircle2, Settings } from 'lucide-react';
+import { Link, useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Edit, Play, Users, BarChart3, Clock, CheckCircle2, Settings, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { apiSend } from '../../lib/api';
 
 type SubmissionRow = {
   id: string;
@@ -33,8 +34,20 @@ const fullName = (u: any) => `${u?.firstName ?? ''} ${u?.lastName ?? ''}`.trim()
 
 export default function ExamProfile() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [exam, setExam] = useState<ExamData | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const handleDelete = async () => {
+    if (!confirm('Delete this exam? This permanently removes the exam, its questions and all student attempts. This cannot be undone.')) return;
+    try {
+      await apiSend(`/api/exams/${id}`, 'DELETE');
+      toast.success('Exam deleted');
+      navigate('/exams');
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to delete exam');
+    }
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -149,6 +162,9 @@ export default function ExamProfile() {
             </Button>
             <Button variant="secondary" className="text-aubergine-600 bg-aubergine-50 hover:bg-aubergine-100 dark:bg-aubergine-900/20 dark:hover:bg-aubergine-900/40" render={<Link to={`/exams/${id}/take`} />} nativeButton={false}>
               <Play className="mr-2 h-4 w-4" /> Preview
+            </Button>
+            <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50 dark:border-red-900/40 dark:hover:bg-red-900/20" onClick={handleDelete}>
+              <Trash2 className="mr-2 h-4 w-4" /> Delete
             </Button>
           </div>
         </div>

@@ -4582,6 +4582,39 @@ async function startServer() {
     }
   });
 
+  // Delete an exam (ADMIN or TEACHER). Removes the exam and its dependent records
+  // (attempts → answers/events/snapshots/grades, sections, stimuli, links, rules,
+  // policy, stats, and exam-owned questions) in a transaction. Reusable bank
+  // questions (examId = null) are NOT deleted.
+  app.delete("/api/exams/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { id } = req.params;
+    try {
+      const exam = await prisma.exam.findUnique({ where: { id } });
+      if (!exam) { res.status(404).json({ error: "Exam not found" }); return; }
+      await prisma.$transaction(async (tx) => {
+        // Attempts don't cascade from Exam, so clear them first (their answers,
+        // events, snapshots and manual grades cascade from ExamAttempt).
+        await tx.examAttempt.deleteMany({ where: { examId: id } });
+        // The rest (sections, stimuli, groups, examQuestions, blueprintRules,
+        // resultPolicy, questionStats, assignments, exam-owned questions) cascade.
+        await tx.exam.delete({ where: { id } });
+      });
+      await createAuditLog(
+        jwtUser.userId, jwtUser.email, "DELETE", "EXAM", id,
+        `Exam '${exam.title}' deleted.`, req.ip, req.headers["user-agent"] || null, "WARNING",
+      );
+      res.json({ ok: true });
+    } catch (err: any) {
+      logger.error("Error deleting exam:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
   // DEPRECATED: the unified delivery path is the Phase 2 lifecycle
   // (POST /api/exam2/:id/start → /api/attempts/:id/save → /submit). This legacy
   // one-shot submit is retained only for backward compatibility with any old

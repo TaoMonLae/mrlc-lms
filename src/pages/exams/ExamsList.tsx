@@ -12,6 +12,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
+import { apiSend } from '../../lib/api';
 
 type ExamListRow = {
   id: string;
@@ -27,6 +28,17 @@ export default function ExamsList() {
   const [exams, setExams] = useState<ExamListRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+
+  const handleDelete = async (exam: ExamListRow) => {
+    if (!confirm(`Delete "${exam.title}"? This permanently removes the exam, its questions and all student attempts. This cannot be undone.`)) return;
+    try {
+      await apiSend(`/api/exams/${exam.id}`, 'DELETE');
+      setExams((prev) => prev.filter((e) => e.id !== exam.id));
+      toast.success('Exam deleted');
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to delete exam');
+    }
+  };
 
   useEffect(() => {
     const fetchExams = async () => {
@@ -128,6 +140,8 @@ export default function ExamsList() {
                       <DropdownMenuItem render={<Link to={`/exam2/${exam.id}/schedule`} />} nativeButton={false}>Schedule &amp; release</DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem render={<Link to={`/exams/${exam.id}/take`} />} nativeButton={false}>Preview (Take Exam)</DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(exam)}>Delete exam</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>

@@ -16,6 +16,10 @@ import { Clock, Save, Flag, Pause, Send, AlertTriangle, Loader2 } from 'lucide-r
 type Q = { id: string; text: string; type: string; points: number; options: any; partialCredit?: boolean };
 type Answer = { answerText?: string; selectedOptions?: string[]; flaggedForReview?: boolean };
 
+// Written-answer types always render a free-text box (never multiple choice),
+// even if stray options exist on the record.
+const TEXT_ANSWER_TYPES = ['SHORT_ANSWER', 'ESSAY', 'WRITTEN'];
+
 export default function ExamPlayer() {
   const { attemptId } = useParams();
   const navigate = useNavigate();
@@ -149,8 +153,8 @@ export default function ExamPlayer() {
         </div>
         <p className="text-base font-medium text-slate-900 dark:text-white whitespace-pre-wrap">{q?.text}</p>
 
-        {/* answer input by type */}
-        {Array.isArray(q?.options) && q.options.length ? (
+        {/* answer input by type: written types always get a text box, never options */}
+        {!TEXT_ANSWER_TYPES.includes(q?.type) && Array.isArray(q?.options) && q.options.length ? (
           <div className="space-y-2">
             {(q.options as any[]).map((opt, i) => {
               const val = String(typeof opt === 'object' ? opt.value ?? opt.text ?? i : opt);
