@@ -84,6 +84,26 @@ enum AttemptState {
   INVALIDATED
 }
 
+// ── Phase 3 (reusable question bank) enums ───────────────────────────────────
+enum QuestionDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum QuestionStatus {
+  DRAFT
+  UNDER_REVIEW
+  APPROVED
+  RETIRED
+  ARCHIVED
+}
+
+enum ExamQuestionSource {
+  FIXED
+  RANDOM
+}
+
 enum CaseStatus {
   OPEN
   IN_PROGRESS
@@ -346,6 +366,9 @@ model Exam {
   negativeMarking      Boolean  @default(false)
   passMark             Float?
 
+  // Phase 3: cloning provenance
+  clonedFromId   String?
+
   classId        String
   class          Class    @relation(fields: [classId], references: [id])
   subjectId      String
@@ -363,6 +386,10 @@ model Exam {
   rubrics        GradingRubric[]
   resultPolicy   ExamResultPolicy?
   questionStats  QuestionStatistic[]
+
+  // Phase 3 relations
+  examQuestions  ExamQuestion[]
+  blueprintRules ExamBlueprintRule[]
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -402,13 +429,37 @@ model Question {
   partialCredit    Boolean  @default(false)
   requiresManualGrading Boolean @default(false)
 
-  examId         String
-  exam           Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  // Legacy ownership kept for backward compatibility. New *bank* questions have
+  // examId = null and are linked to exams through ExamQuestion. Existing rows
+  // keep their examId so historic exams/attempts are untouched.
+  examId         String?
+  exam           Exam?    @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  // Phase 3: reusable question bank fields
+  bankId             String?
+  bank               QuestionBank? @relation(fields: [bankId], references: [id])
+  subjectId          String?
+  topicId            String?
+  topic              QuestionTopic? @relation(fields: [topicId], references: [id])
+  subtopic           String?
+  difficulty         QuestionDifficulty?
+  defaultPoints      Float?
+  estimatedTimeSeconds Int?
+  status             QuestionStatus @default(DRAFT)
+  version            Int      @default(1)
+  tags               String[] @default([])
+  language           String?
+  createdById        String?
+  reviewedById       String?
+  approvedAt         DateTime?
+  archivedAt         DateTime?
 
   answers        ExamAnswer[]
   rubrics        GradingRubric[]
   manualGrades   ManualGrade[]
   statistic      QuestionStatistic?
+  optionRows     QuestionOption[]
+  examLinks      ExamQuestion[]
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -417,6 +468,11 @@ model Question {
   @@index([sectionId])
   @@index([groupId])
   @@index([stimulusId])
+  @@index([bankId])
+  @@index([subjectId])
+  @@index([topicId])
+  @@index([status])
+  @@index([difficulty])
 }
 
 model ExamAttempt {
@@ -451,6 +507,12 @@ model ExamAttempt {
   ipAddress      String?
   userAgent      String?
   deviceInfo     Json?
+
+  // Phase 3: randomized-selection freezing (set once at start, never regenerated)
+  selectedQuestionIds Json?      // the exact question IDs chosen for this attempt
+  optionOrder         Json?      // { questionId: [optionId|value, ...] } shuffled order
+  randomSeed          String?    // reproducible seed used for this attempt
+  frozenContent       Json?      // snapshot of question text + options as shown (historic fidelity)
 
   studentId      String
   student        Student  @relation(fields: [studentId], references: [id])
@@ -1350,6 +1412,8 @@ model ExamSection {
 
   questions      Question[]
   questionGroups QuestionGroup[]
+  examQuestions  ExamQuestion[]
+  blueprintRules ExamBlueprintRule[]
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -1616,4 +1680,101 @@ model QuestionStatistic {
   computedAt     DateTime @default(now())
 
   @@index([examId])
+}
+
+// =============================================================================
+// PHASE 3 — REUSABLE QUESTION BANK
+// =============================================================================
+
+// An optional grouping/container of bank questions (e.g. per subject or course).
+model QuestionBank {
+  id          String   @id @default(uuid())
+  name        String
+  subjectId   String?
+  description String?
+  createdById String?
+
+  questions   Question[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([subjectId])
+}
+
+// Hierarchical topic taxonomy. parentId set → it is a subtopic.
+model QuestionTopic {
+  id        String   @id @default(uuid())
+  name      String
+  code      String?
+  subjectId String?
+  parentId  String?
+  parent    QuestionTopic?  @relation("TopicTree", fields: [parentId], references: [id])
+  children  QuestionTopic[] @relation("TopicTree")
+
+  questions Question[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([parentId])
+  @@index([subjectId])
+}
+
+// Structured option rows for bank questions (legacy questions keep options Json).
+model QuestionOption {
+  id         String   @id @default(uuid())
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  text       String
+  isCorrect  Boolean  @default(false)
+  weight     Float?   // for partial-credit / multi-select scoring
+  orderIndex Int      @default(0)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([questionId])
+}
+
+// Many-to-many link of bank questions to exams (FIXED) plus per-exam overrides.
+model ExamQuestion {
+  id           String   @id @default(uuid())
+  examId       String
+  exam         Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  questionId   String
+  question     Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  sectionId    String?
+  section      ExamSection? @relation(fields: [sectionId], references: [id])
+  pointsOverride Float?
+  displayOrder Int      @default(0)
+  required     Boolean  @default(true)
+  sourceType   ExamQuestionSource @default(FIXED)
+
+  createdAt    DateTime @default(now())
+
+  @@unique([examId, questionId])
+  @@index([examId])
+  @@index([questionId])
+  @@index([sectionId])
+}
+
+// A quota rule for randomized selection (by subject / topic / difficulty / type).
+model ExamBlueprintRule {
+  id         String   @id @default(uuid())
+  examId     String
+  exam       Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  sectionId  String?
+  section    ExamSection? @relation(fields: [sectionId], references: [id])
+  subjectId  String?
+  topicId    String?
+  difficulty QuestionDifficulty?
+  type       QuestionType?
+  count      Int      @default(1)
+  pointsEach Float?
+
+  createdAt  DateTime @default(now())
+
+  @@index([examId])
+  @@index([sectionId])
 }

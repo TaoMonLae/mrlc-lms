@@ -17,6 +17,7 @@ import { PrismaClient } from "@prisma/client";
 import dotenv from "dotenv";
 import { spawn } from "child_process";
 import { registerExamPhase2Routes } from "./examPhase2";
+import { registerExamBankRoutes } from "./examBank";
 
 dotenv.config();
 
@@ -7297,6 +7298,8 @@ async function startServer() {
 
   // ── Phase 2 advanced exam routes (registered before the SPA catch-all) ──────
   registerExamPhase2Routes({ app, prisma, authMiddleware, createAuditLog, logger });
+  // ── Phase 3 reusable question bank routes ───────────────────────────────────
+  registerExamBankRoutes({ app, prisma, authMiddleware, createAuditLog, logger });
 
   if (!isProduction) {
     const vite = await createViteServer({

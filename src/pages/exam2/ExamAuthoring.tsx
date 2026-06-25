@@ -1,18 +1,20 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { apiGet, apiSend } from '../../lib/api';
-import { Layers, FileText, Group, ListChecks, Plus, Trash2, Save, PencilRuler } from 'lucide-react';
+import { Layers, FileText, Group, ListChecks, Plus, Trash2, Save, PencilRuler, Library, Shuffle, Copy } from 'lucide-react';
 
-type Tab = 'sections' | 'passages' | 'groups' | 'rubrics' | 'questions';
+type Tab = 'sections' | 'passages' | 'groups' | 'rubrics' | 'questions' | 'bank' | 'random';
 const STIMULUS_TYPES = ['TEXT', 'IMAGE', 'AUDIO', 'VIDEO', 'TABLE', 'CHART', 'DOCUMENT'];
+const DIFFICULTY = ['EASY', 'MEDIUM', 'HARD'];
 
 export default function ExamAuthoring() {
   const { examId } = useParams();
+  const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>('sections');
   const [sections, setSections] = useState<any[]>([]);
   const [stimuli, setStimuli] = useState<any[]>([]);
@@ -32,19 +34,29 @@ export default function ExamAuthoring() {
   }, [examId]);
   useEffect(() => { reload(); }, [reload]);
 
+  const clone = async () => {
+    if (!confirm('Clone this exam? A new DRAFT copy is created (no attempts/results copied).')) return;
+    try { const ex = await apiSend(`/api/exams/${examId}/clone`, 'POST'); toast.success('Exam cloned'); navigate(`/exam2/${ex.id}/author`); }
+    catch (e: any) { toast.error(e.message || 'Clone failed'); }
+  };
+
   const TABS: [Tab, string, any][] = [
     ['sections', 'Sections', Layers], ['passages', 'Passages', FileText],
     ['groups', 'Question Groups', Group], ['rubrics', 'Rubrics', ListChecks], ['questions', 'Organize Questions', PencilRuler],
+    ['bank', 'From Bank', Library], ['random', 'Random Rules', Shuffle],
   ];
 
   return (
     <div className="max-w-4xl mx-auto space-y-5 pb-12">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Exam Authoring</h1>
           <p className="text-sm text-slate-500 mt-1">Build sections, passages, grouped questions and grading rubrics.</p>
         </div>
-        <Link to={`/exam2/${examId}/schedule`} className="text-aubergine-600 text-sm font-semibold">Scheduling →</Link>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button variant="outline" size="sm" onClick={clone}><Copy className="h-4 w-4 mr-1" /> Clone</Button>
+          <Link to={`/exam2/${examId}/schedule`} className="text-aubergine-600 text-sm font-semibold">Scheduling →</Link>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-1 border-b border-slate-200 dark:border-surface-raised">
@@ -60,6 +72,8 @@ export default function ExamAuthoring() {
       {tab === 'groups' && <Groups examId={examId!} rows={groups} sections={sections} stimuli={stimuli} reload={reload} />}
       {tab === 'rubrics' && <Rubrics examId={examId!} rows={rubrics} questions={questions} reload={reload} />}
       {tab === 'questions' && <Organize questions={questions} sections={sections} groups={groups} stimuli={stimuli} reload={reload} />}
+      {tab === 'bank' && <FromBank examId={examId!} sections={sections} />}
+      {tab === 'random' && <RandomRules examId={examId!} sections={sections} />}
     </div>
   );
 }
@@ -227,6 +241,111 @@ function Organize({ questions, sections, groups, stimuli, reload }: any) {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+// ── Fixed questions from the bank ─────────────────────────────────────────────
+function FromBank({ examId, sections }: any) {
+  const [linked, setLinked] = useState<any[]>([]);
+  const [results, setResults] = useState<any[]>([]);
+  const [q, setQ] = useState('');
+  const [sectionId, setSectionId] = useState('');
+
+  const loadLinked = () => apiGet(`/api/exams/${examId}/bank-questions`).then(setLinked).catch(() => setLinked([]));
+  useEffect(() => { loadLinked(); }, [examId]);
+
+  const search = async () => {
+    const p = new URLSearchParams({ status: 'APPROVED' }); if (q) p.set('q', q);
+    try { const r = await apiGet(`/api/question-bank?${p}`); setResults(r.items || []); } catch { setResults([]); }
+  };
+  const add = async (questionId: string) => { try { await apiSend(`/api/exams/${examId}/questions`, 'POST', { questionId, sectionId: sectionId || undefined }); toast.success('Added'); loadLinked(); } catch (e: any) { toast.error(e.message); } };
+  const remove = async (id: string) => { await apiSend(`/api/exam-questions/${id}`, 'DELETE'); loadLinked(); };
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <h3 className="font-bold text-sm uppercase tracking-widest text-slate-800 dark:text-white">Add approved bank questions</h3>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Input placeholder="Search approved questions…" value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && search()} />
+          <select className="h-10 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-2 text-sm" value={sectionId} onChange={(e) => setSectionId(e.target.value)}>
+            <option value="">No section</option>{sections.map((s: any) => <option key={s.id} value={s.id}>{s.title}</option>)}
+          </select>
+          <Button onClick={search} className="bg-primary text-primary-foreground shrink-0">Search</Button>
+        </div>
+        {results.map((r) => (
+          <div key={r.id} className="flex items-center justify-between gap-2 border-t border-slate-100 dark:border-surface-raised pt-2">
+            <p className="text-sm text-slate-700 dark:text-slate-200 line-clamp-1">{r.text}</p>
+            <Button variant="outline" size="sm" className="shrink-0" onClick={() => add(r.id)}><Plus className="h-3.5 w-3.5" /></Button>
+          </div>
+        ))}
+      </Card>
+      <div className="space-y-2">
+        <Label>Linked questions ({linked.length})</Label>
+        {linked.map((l) => (
+          <div key={l.id} className="flex items-center justify-between bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-3">
+            <p className="text-sm text-slate-800 dark:text-slate-200 line-clamp-1">{l.question?.text}</p>
+            <Button variant="ghost" size="icon" className="text-red-500" onClick={() => remove(l.id)}><Trash2 className="h-4 w-4" /></Button>
+          </div>
+        ))}
+        {linked.length === 0 && <Empty label="No bank questions linked yet." />}
+      </div>
+    </div>
+  );
+}
+
+// ── Random-selection blueprint rules ──────────────────────────────────────────
+function RandomRules({ examId, sections }: any) {
+  const [rules, setRules] = useState<any[]>([]);
+  const [topics, setTopics] = useState<any[]>([]);
+  const [preview, setPreview] = useState<any>(null);
+  const [f, setF] = useState<any>({ topicId: '', difficulty: '', count: 5, sectionId: '', pointsEach: '' });
+
+  const load = () => apiGet(`/api/exams/${examId}/blueprint`).then(setRules).catch(() => setRules([]));
+  useEffect(() => { load(); apiGet('/api/question-topics').then(setTopics).catch(() => {}); }, [examId]);
+
+  const add = async () => {
+    try { await apiSend(`/api/exams/${examId}/blueprint`, 'POST', { ...f, count: Number(f.count) || 1, pointsEach: f.pointsEach ? Number(f.pointsEach) : null }); setF({ topicId: '', difficulty: '', count: 5, sectionId: '', pointsEach: '' }); load(); }
+    catch (e: any) { toast.error(e.message); }
+  };
+  const del = async (id: string) => { await apiSend(`/api/blueprint-rules/${id}`, 'DELETE'); load(); };
+  const doPreview = async () => { try { setPreview(await apiGet(`/api/exams/${examId}/blueprint/preview`)); } catch (e: any) { toast.error(e.message); } };
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <h3 className="font-bold text-sm uppercase tracking-widest text-slate-800 dark:text-white">Random selection quota</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div><Label>Topic</Label><select className="w-full h-10 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-2 text-sm" value={f.topicId} onChange={(e) => setF({ ...f, topicId: e.target.value })}><option value="">Any</option>{topics.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select></div>
+          <div><Label>Difficulty</Label><select className="w-full h-10 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-2 text-sm" value={f.difficulty} onChange={(e) => setF({ ...f, difficulty: e.target.value })}><option value="">Any</option>{DIFFICULTY.map((d) => <option key={d} value={d}>{d}</option>)}</select></div>
+          <div><Label>Count</Label><Input type="number" value={f.count} onChange={(e) => setF({ ...f, count: e.target.value })} /></div>
+          <div><Label>Section</Label><select className="w-full h-10 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-2 text-sm" value={f.sectionId} onChange={(e) => setF({ ...f, sectionId: e.target.value })}><option value="">—</option>{sections.map((s: any) => <option key={s.id} value={s.id}>{s.title}</option>)}</select></div>
+        </div>
+        <Button onClick={add} className="bg-primary text-primary-foreground"><Plus className="h-4 w-4 mr-1" /> Add rule</Button>
+      </Card>
+
+      {rules.map((r) => (
+        <div key={r.id} className="flex items-center justify-between bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-4">
+          <p className="text-sm text-slate-800 dark:text-slate-200"><b>{r.count}</b> question(s) · {topics.find((t) => t.id === r.topicId)?.name || 'any topic'} · {r.difficulty || 'any difficulty'}</p>
+          <Button variant="ghost" size="icon" className="text-red-500" onClick={() => del(r.id)}><Trash2 className="h-4 w-4" /></Button>
+        </div>
+      ))}
+      {rules.length === 0 && <Empty label="No random rules yet. Questions stay fixed." />}
+
+      <div className="flex items-center gap-2">
+        <Button variant="outline" onClick={doPreview}><Shuffle className="h-4 w-4 mr-1" /> Preview generated set</Button>
+        {preview && <span className="text-sm text-slate-500">{preview.count} questions selected</span>}
+      </div>
+      {preview && (
+        <div className="space-y-1">
+          {preview.questions.map((q: any, i: number) => (
+            <div key={q.id} className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-lg p-3 text-sm flex items-center justify-between">
+              <span className="line-clamp-1">{i + 1}. {q.text}</span>
+              <Badge variant="outline" className="text-[9px] shrink-0">{q.source}</Badge>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -16,6 +16,7 @@ import express from "express";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import rateLimit from "express-rate-limit";
+import { composeQuestionSet, freezeAttempt } from "./examBank";
 
 interface JwtPayload { userId: string; role: string; email: string; }
 
@@ -367,9 +368,13 @@ export function registerExamPhase2Routes(deps: Deps): void {
       const effMin = effectiveDuration(baseMin, accom);
       const serverDeadline = new Date(now + effMin * 60000 + (exam.gracePeriodMinutes || 0) * 60000);
 
-      // Freeze randomized question order for this attempt.
-      let order = exam.questions.map((q: any) => q.id);
-      if (exam.shuffleQuestions) order = seededShuffle(order, `${student.id}:${examId}:${used + 1}`);
+      // Compose the question set (FIXED links + RANDOM blueprint, else legacy) and
+      // freeze the selection + order + shuffled option order onto the attempt so it
+      // is reproducible and never regenerates. Two students get different seeds.
+      const randomSeed = `${student.id}:${examId}:${used + 1}:${crypto.randomUUID().slice(0, 8)}`;
+      const composed = await composeQuestionSet(prisma, examId, randomSeed);
+      const { questionOrder: order, optionOrder, frozenContent } = freezeAttempt(composed, exam, randomSeed);
+      const selectedQuestionIds = order;
 
       const sessionToken = crypto.randomUUID();
       const attempt = await prisma.examAttempt.create({
@@ -378,6 +383,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
           accommodationId: accom?.id || null, attemptNumber: used + 1,
           state: "IN_PROGRESS", startedAt: new Date(now), serverDeadline,
           effectiveDurationMinutes: effMin, sessionToken, questionOrder: order,
+          selectedQuestionIds, optionOrder, randomSeed, frozenContent,
           lastSavedAt: new Date(now), ipAddress: ipOf(req), userAgent: uaOf(req),
           deviceInfo: b.deviceInfo || undefined,
         },
@@ -394,11 +400,22 @@ export function registerExamPhase2Routes(deps: Deps): void {
 
   // Build the student-facing attempt payload (sanitized questions in frozen order).
   async function attemptPayload(attempt: any, exam: any, studentId: string) {
-    const questions = exam.questions || (await prisma.question.findMany({ where: { examId: exam.id } }));
-    const byId: Record<string, any> = {};
-    for (const q of questions) byId[q.id] = q;
-    const order: string[] = (attempt.questionOrder as string[]) || questions.map((q: any) => q.id);
-    const ordered = order.map((id) => byId[id]).filter(Boolean).map(sanitizeQuestion);
+    let ordered: any[];
+    if (Array.isArray(attempt.frozenContent) && attempt.frozenContent.length) {
+      // Render from the immutable snapshot taken at start (historic fidelity +
+      // shuffled option order). Correct answers are NOT in frozenContent.
+      ordered = attempt.frozenContent.map((q: any) => ({
+        id: q.id, text: q.text, type: q.type, points: q.points,
+        options: Array.isArray(q.options) ? q.options.map((o: any) => ({ value: o.key, text: o.text })) : null,
+        partialCredit: false,
+      }));
+    } else {
+      const questions = exam.questions || (await prisma.question.findMany({ where: { examId: exam.id } }));
+      const byId: Record<string, any> = {};
+      for (const q of questions) byId[q.id] = q;
+      const order: string[] = (attempt.questionOrder as string[]) || questions.map((q: any) => q.id);
+      ordered = order.map((id) => byId[id]).filter(Boolean).map(sanitizeQuestion);
+    }
     const answers = await prisma.examAnswer.findMany({ where: { attemptId: attempt.id } });
     return {
       attempt: {
@@ -567,13 +584,38 @@ export function registerExamPhase2Routes(deps: Deps): void {
       if (!attempt) throw new Error("attempt missing");
       if (!["IN_PROGRESS", "PAUSED"].includes(attempt.state)) return attempt; // idempotent
 
-      const qById: Record<string, any> = {};
-      for (const q of attempt.exam.questions) qById[q.id] = q;
+      // Score over the FROZEN selected set when present (randomized/bank attempts),
+      // else the legacy exam-owned questions. This guarantees a student is graded
+      // only on the questions they were actually shown.
+      const selectedIds: string[] | null = Array.isArray(attempt.selectedQuestionIds) ? attempt.selectedQuestionIds : null;
+      let scoringQuestions: any[];
+      if (selectedIds && selectedIds.length) {
+        scoringQuestions = await tx.question.findMany({ where: { id: { in: selectedIds } }, include: { optionRows: true } });
+      } else {
+        scoringQuestions = attempt.exam.questions;
+      }
+      // Points actually shown (honours per-link/blueprint overrides via frozenContent).
+      const maxByQ: Record<string, number> = {};
+      if (Array.isArray(attempt.frozenContent)) for (const f of attempt.frozenContent) maxByQ[f.id] = f.points;
+      // Adapt bank questions (QuestionOption rows) into the shape scoreObjective expects.
+      const prep = (q: any) => {
+        const max = maxByQ[q.id] ?? q.defaultPoints ?? q.points ?? 0;
+        if (Array.isArray(q.optionRows) && q.optionRows.length) {
+          const correct = q.optionRows.filter((o: any) => o.isCorrect).map((o: any) => o.id);
+          const weights: Record<string, number> = {};
+          let hasWeights = false;
+          for (const o of q.optionRows) if (o.weight != null) { weights[o.id] = o.weight; hasWeights = true; }
+          return { ...q, points: max, correctAnswer: correct[0] ?? q.correctAnswer, correctAnswers: correct.length ? correct : q.correctAnswers, optionWeights: hasWeights ? weights : q.optionWeights };
+        }
+        return { ...q, points: max };
+      };
+
       const ansByQ: Record<string, any> = {};
       for (const a of attempt.answers) ansByQ[a.questionId] = a;
 
       let total = 0; let needsManual = false;
-      for (const q of attempt.exam.questions) {
+      for (const q0 of scoringQuestions) {
+        const q = prep(q0);
         const a = ansByQ[q.id];
         const r = scoreObjective(q, a || {});
         if (r.manual) { needsManual = true; }
