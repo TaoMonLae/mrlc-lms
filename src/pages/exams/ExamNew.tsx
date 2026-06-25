@@ -95,7 +95,7 @@ export default function ExamNew() {
     if (invalidMcq) { toast.error('Multiple choice questions need all choices and one correct answer.'); setStep(2); return; }
     setSaving(true);
     try {
-      await apiSend('/api/exams', 'POST', {
+      const created = await apiSend('/api/exams', 'POST', {
         title: title.trim(),
         classId,
         subjectId,
@@ -112,8 +112,10 @@ export default function ExamNew() {
           correctAnswer: q.correctAnswer,
         })),
       });
-      toast.success('Exam created successfully.');
-      navigate('/exams');
+      toast.success('Exam created. Configure sections, bank questions and scheduling next.');
+      // Hand off to the unified authoring flow.
+      if (created?.id) navigate(`/exam2/${created.id}/author`);
+      else navigate('/exams');
     } catch (err: any) {
       toast.error(err.message || 'Failed to create exam.');
     } finally {

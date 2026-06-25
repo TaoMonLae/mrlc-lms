@@ -4582,6 +4582,10 @@ async function startServer() {
     }
   });
 
+  // DEPRECATED: the unified delivery path is the Phase 2 lifecycle
+  // (POST /api/exam2/:id/start → /api/attempts/:id/save → /submit). This legacy
+  // one-shot submit is retained only for backward compatibility with any old
+  // client/bookmark and is no longer used by the app UI.
   app.post("/api/exams/:id/submit", authMiddleware, validate(schemas.examSubmit), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (jwtUser.role !== "STUDENT") {

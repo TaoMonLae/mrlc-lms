@@ -137,9 +137,15 @@ export default function ExamProfile() {
             <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{exam.title}</h1>
             <Badge className={exam.status === 'PUBLISHED' ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-amber-100 text-amber-800 hover:bg-amber-100'}>{exam.status}</Badge>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button variant="outline" render={<Link to={`/exams/${id}/edit`} />} nativeButton={false}>
               <Edit className="mr-2 h-4 w-4" /> Edit
+            </Button>
+            <Button variant="outline" render={<Link to={`/exam2/${id}/author`} />} nativeButton={false}>
+              Author content
+            </Button>
+            <Button variant="outline" render={<Link to={`/exam2/${id}/schedule`} />} nativeButton={false}>
+              Schedule
             </Button>
             <Button variant="secondary" className="text-aubergine-600 bg-aubergine-50 hover:bg-aubergine-100 dark:bg-aubergine-900/20 dark:hover:bg-aubergine-900/40" render={<Link to={`/exams/${id}/take`} />} nativeButton={false}>
               <Play className="mr-2 h-4 w-4" /> Preview
