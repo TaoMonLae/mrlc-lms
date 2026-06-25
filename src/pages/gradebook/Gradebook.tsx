@@ -178,13 +178,13 @@ export default function GradebookPage() {
         </div>
         <div className="flex flex-wrap gap-3">
           <Select value={classId} onValueChange={setClassId}>
-            <SelectTrigger className="w-[200px]"><SelectValue placeholder="Class" /></SelectTrigger>
+            <SelectTrigger className="w-[200px]"><SelectValue placeholder="Class">{classes.find((c) => c.id === classId)?.name || 'Class'}</SelectValue></SelectTrigger>
             <SelectContent>
               {classes.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={subjectId} onValueChange={setSubjectId}>
-            <SelectTrigger className="w-[200px]"><SelectValue placeholder="Subject" /></SelectTrigger>
+            <SelectTrigger className="w-[200px]"><SelectValue placeholder="Subject">{subjectId === 'all' ? 'All Subjects' : (subjects.find((s) => s.id === subjectId)?.name || 'Subject')}</SelectValue></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Subjects</SelectItem>
               {subjects.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
@@ -255,7 +255,7 @@ export default function GradebookPage() {
               <div className="space-y-1.5">
                 <Label>Category</Label>
                 <Select value={newItem.category} onValueChange={(v) => setNewItem({ ...newItem, category: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger><SelectValue>{CATEGORY_LABELS[newItem.category]}</SelectValue></SelectTrigger>
                   <SelectContent>
                     {Object.entries(CATEGORY_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
                   </SelectContent>
@@ -276,7 +276,11 @@ export default function GradebookPage() {
             <div className="flex flex-wrap items-center gap-3">
               <Label className="shrink-0">Enter marks for:</Label>
               <Select value={activeItemId} onValueChange={setActiveItemId}>
-                <SelectTrigger className="w-[320px]"><SelectValue placeholder="Select a grade item" /></SelectTrigger>
+                <SelectTrigger className="w-[320px]">
+                  <SelectValue placeholder="Select a grade item">
+                    {activeItem ? `${CATEGORY_LABELS[activeItem.category]} · ${activeItem.title} (/${activeItem.maxMarks})` : 'Select a grade item'}
+                  </SelectValue>
+                </SelectTrigger>
                 <SelectContent>
                   {data?.items.map((i) => <SelectItem key={i.id} value={i.id}>{CATEGORY_LABELS[i.category]} · {i.title} (/{i.maxMarks})</SelectItem>)}
                 </SelectContent>

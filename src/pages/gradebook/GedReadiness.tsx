@@ -87,7 +87,7 @@ export default function GedReadinessPage() {
           <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Track each student's readiness across the four GED subjects.</p>
         </div>
         <Select value={classId} onValueChange={setClassId}>
-          <SelectTrigger className="w-[220px]"><SelectValue placeholder="Class" /></SelectTrigger>
+          <SelectTrigger className="w-[220px]"><SelectValue placeholder="Class">{classes.find((c) => c.id === classId)?.name || 'Class'}</SelectValue></SelectTrigger>
           <SelectContent>
             {classes.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
           </SelectContent>

@@ -109,7 +109,11 @@ export default function DocumentsPage() {
           <div className="space-y-1.5">
             <Label>Student</Label>
             <Select value={studentId} onValueChange={setStudentId}>
-              <SelectTrigger><SelectValue placeholder="Select student" /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder="Select student">
+                  {students.find((s) => s.id === studentId)?.name || 'Select student'}
+                </SelectValue>
+              </SelectTrigger>
               <SelectContent>
                 {students.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
               </SelectContent>
@@ -118,7 +122,7 @@ export default function DocumentsPage() {
           <div className="space-y-1.5">
             <Label>Document Type</Label>
             <Select value={docType} onValueChange={setDocType}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger><SelectValue>{TYPE_LABELS[docType]}</SelectValue></SelectTrigger>
               <SelectContent>
                 {Object.entries(TYPE_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
               </SelectContent>
@@ -139,7 +143,7 @@ export default function DocumentsPage() {
         <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-surface-raised">
           <h3 className="font-semibold text-slate-900 dark:text-white text-sm">Issued Documents</h3>
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-[200px] h-9"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-[200px] h-9"><SelectValue>{typeFilter === 'all' ? 'All Types' : TYPE_LABELS[typeFilter]}</SelectValue></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>
               {Object.entries(TYPE_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
