@@ -61,6 +61,29 @@ enum FeeStatus {
   WAIVED
 }
 
+// ── Phase 2 advanced exam enums ──────────────────────────────────────────────
+enum StimulusType {
+  TEXT
+  IMAGE
+  AUDIO
+  VIDEO
+  TABLE
+  CHART
+  DOCUMENT
+}
+
+enum AttemptState {
+  NOT_STARTED
+  IN_PROGRESS
+  PAUSED
+  SUBMITTED
+  AUTO_SUBMITTED
+  PENDING_GRADING
+  FINALIZED
+  RELEASED
+  INVALIDATED
+}
+
 enum CaseStatus {
   OPEN
   IN_PROGRESS
@@ -184,6 +207,8 @@ model Student {
   grades         Grade[]
   gedReadiness   GedReadiness[]
   documents      GeneratedDocument[]
+  examAssignments    ExamAssignment[]
+  examAccommodations ExamAccommodation[]
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -298,25 +323,55 @@ model Exam {
   id             String   @id @default(uuid())
   title          String
   type           ExamType
-  status         String   @default("PUBLISHED")
+  status         String   @default("PUBLISHED") // DRAFT | SCHEDULED | ACTIVE | CLOSED | ARCHIVED | PUBLISHED
   date           DateTime
   durationMinutes Int?
   totalMarks     Float?
   settings       Json?
-  
+
+  // Phase 2 scheduling
+  availableFrom        DateTime?
+  availableUntil       DateTime?
+  resultReleaseAt      DateTime?
+  attemptLimit         Int      @default(1)
+  gracePeriodMinutes   Int      @default(0)
+  allowLateStart       Boolean  @default(true)
+  requiresAccessCode   Boolean  @default(false)
+  accessCodeHash       String?
+  requiresInvigilator  Boolean  @default(false)
+
+  // Phase 2 delivery / scoring options
+  shuffleQuestions     Boolean  @default(false)
+  shuffleOptions       Boolean  @default(false)
+  negativeMarking      Boolean  @default(false)
+  passMark             Float?
+
   classId        String
   class          Class    @relation(fields: [classId], references: [id])
   subjectId      String
   subject        Subject  @relation(fields: [subjectId], references: [id])
-  
+
   questions      Question[]
   attempts       ExamAttempt[]
-  
+
+  // Phase 2 relations
+  sections       ExamSection[]
+  stimuli        Stimulus[]
+  questionGroups QuestionGroup[]
+  assignments    ExamAssignment[]
+  accommodations ExamAccommodation[]
+  rubrics        GradingRubric[]
+  resultPolicy   ExamResultPolicy?
+  questionStats  QuestionStatistic[]
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   @@index([classId])
   @@index([subjectId])
+  @@index([status])
+  @@index([availableFrom])
+  @@index([availableUntil])
 }
 
 model Question {
@@ -326,16 +381,42 @@ model Question {
   points         Float
   options        Json?    // Optional for multiple choice
   correctAnswer  String?  // Can be an option string or detailed answer
-  
+  explanation    String?  // Shown only after result release
+
+  // Phase 2: structure
+  orderIndex     Int      @default(0)
+  sectionId      String?
+  section        ExamSection?   @relation(fields: [sectionId], references: [id])
+  groupId        String?
+  group          QuestionGroup? @relation(fields: [groupId], references: [id])
+  stimulusId     String?
+  stimulus       Stimulus?      @relation(fields: [stimulusId], references: [id])
+
+  // Phase 2: partial-credit / scoring config
+  correctAnswers   Json?    // multiple accepted text answers
+  optionWeights    Json?    // per-option weighting for multi-select partial scoring
+  negativePoints   Float?   // negative marking magnitude (positive number)
+  minScore         Float?   // minimum score floor for this question
+  numericTolerance Float?   // tolerance for numeric answers
+  caseSensitive    Boolean  @default(false)
+  partialCredit    Boolean  @default(false)
+  requiresManualGrading Boolean @default(false)
+
   examId         String
   exam           Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
-  
+
   answers        ExamAnswer[]
+  rubrics        GradingRubric[]
+  manualGrades   ManualGrade[]
+  statistic      QuestionStatistic?
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   @@index([examId])
+  @@index([sectionId])
+  @@index([groupId])
+  @@index([stimulusId])
 }
 
 model ExamAttempt {
@@ -347,33 +428,74 @@ model ExamAttempt {
   securityWarnings Int     @default(0)
   autoSubmitted   Boolean @default(false)
   integrityEvents Json?
-  
+
+  // Phase 2: lifecycle state machine
+  state          AttemptState @default(NOT_STARTED)
+  attemptNumber  Int      @default(1)
+
+  // Phase 2: server-authoritative timing
+  serverDeadline DateTime?       // absolute time the attempt must end (authoritative)
+  effectiveDurationMinutes Int?  // base duration + accommodation extra time
+  pausedAt       DateTime?
+  accumulatedPauseSeconds Int @default(0)
+  lastSavedAt    DateTime?
+  submittedAt    DateTime?
+  gradedAt       DateTime?
+  releasedAt     DateTime?
+  invalidatedAt  DateTime?
+  gradingStatus  String?         // PENDING | IN_REVIEW | COMPLETE
+
+  // Phase 2: single-session + integrity
+  sessionToken   String?         // active session; mismatched tokens are rejected
+  questionOrder  Json?           // frozen randomized order for this attempt
+  ipAddress      String?
+  userAgent      String?
+  deviceInfo     Json?
+
   studentId      String
   student        Student  @relation(fields: [studentId], references: [id])
   examId         String
   exam           Exam     @relation(fields: [examId], references: [id])
-  
+  assignmentId   String?
+  assignment     ExamAssignment? @relation(fields: [assignmentId], references: [id])
+  accommodationId String?
+  accommodation  ExamAccommodation? @relation(fields: [accommodationId], references: [id])
+
   answers        ExamAnswer[]
-  
+  events         AttemptEvent[]
+  snapshots      AttemptSnapshot[]
+  manualGrades   ManualGrade[]
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  @@unique([studentId, examId])
+  @@unique([studentId, examId, attemptNumber])
   @@index([studentId])
   @@index([examId])
+  @@index([state])
+  @@index([assignmentId])
 }
 
 model ExamAnswer {
   id             String   @id @default(uuid())
   answerText     String?
+  selectedOptions Json?   // for multi-select questions
   isCorrect      Boolean?
-  pointsAwarded  Float?
-  
+  pointsAwarded  Float?   // final awarded points (auto + manual)
+  autoScore      Float?   // machine-scored component
+  manualScore    Float?   // grader-assigned component
+  maxPoints      Float?
+  flaggedForReview Boolean @default(false) // student self-flag
+  timeSpentSeconds Int?
+  gradingState   String?  // NOT_REQUIRED | PENDING | GRADED
+
   attemptId      String
   attempt        ExamAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
   questionId     String
   question       Question    @relation(fields: [questionId], references: [id])
-  
+
+  manualGrades   ManualGrade[]
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -1206,4 +1328,292 @@ model LessonPlanProgress {
   @@unique([lessonPlanId, week])
   @@index([lessonPlanId])
   @@index([week])
+}
+
+// =============================================================================
+// PHASE 2 — ADVANCED EXAM SYSTEM
+// =============================================================================
+
+// A logical division of an exam (e.g. "Section 1: Reading"). Sections carry
+// their own instructions, optional time limit and optional random subset size.
+model ExamSection {
+  id             String   @id @default(uuid())
+  examId         String
+  exam           Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  title          String
+  description    String?
+  instructions   String?
+  orderIndex     Int      @default(0)
+  timeLimitMinutes Int?
+  shuffleQuestions Boolean @default(false)
+  questionsToPick  Int?    // if set, randomly pick N questions from the section pool
+
+  questions      Question[]
+  questionGroups QuestionGroup[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([examId])
+  @@index([orderIndex])
+}
+
+// A shared passage/media resource that one or more questions reference.
+model Stimulus {
+  id             String   @id @default(uuid())
+  examId         String
+  exam           Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  type           StimulusType @default(TEXT)
+  title          String?
+  content        String?  // text / markdown / HTML body
+  mediaUrl       String?  // image/audio/video/document URL
+  caption        String?
+  data           Json?    // structured payload for TABLE / CHART types
+
+  questions      Question[]
+  questionGroups QuestionGroup[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([examId])
+  @@index([type])
+}
+
+// Groups questions that share a single stimulus (passage-based question set).
+model QuestionGroup {
+  id             String   @id @default(uuid())
+  examId         String
+  exam           Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  sectionId      String?
+  section        ExamSection? @relation(fields: [sectionId], references: [id])
+  stimulusId     String?
+  stimulus       Stimulus?    @relation(fields: [stimulusId], references: [id])
+  title          String?
+  instructions   String?
+  orderIndex     Int      @default(0)
+
+  questions      Question[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([examId])
+  @@index([sectionId])
+  @@index([stimulusId])
+}
+
+// Assigns an exam to a specific student, with optional per-assignment overrides.
+model ExamAssignment {
+  id             String   @id @default(uuid())
+  examId         String
+  exam           Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  studentId      String
+  student        Student  @relation(fields: [studentId], references: [id])
+  accommodationId String?
+  accommodation  ExamAccommodation? @relation(fields: [accommodationId], references: [id])
+
+  availableFromOverride  DateTime?
+  availableUntilOverride DateTime?
+  attemptLimitOverride   Int?
+  accessCodeOverride     String?
+  invigilatorId  String?  // User.id of assigned invigilator (no FK by design)
+  status         String   @default("ASSIGNED") // ASSIGNED | STARTED | COMPLETED | INVALIDATED
+
+  attempts       ExamAttempt[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([examId, studentId])
+  @@index([examId])
+  @@index([studentId])
+  @@index([invigilatorId])
+}
+
+// Per-student accommodations. examId null = applies to all of the student's exams.
+model ExamAccommodation {
+  id             String   @id @default(uuid())
+  studentId      String
+  student        Student  @relation(fields: [studentId], references: [id])
+  examId         String?
+  exam           Exam?    @relation(fields: [examId], references: [id])
+
+  extraTimePercent Float?
+  extraTimeMinutes Int?
+  largerText       Boolean @default(false)
+  highContrast     Boolean @default(false)
+  screenReader     Boolean @default(false)
+  reducedDistraction Boolean @default(false)
+  calculatorAllowed  Boolean @default(false)
+  additionalBreaks   Boolean @default(false)
+  separateRoom       Boolean @default(false)
+  readerSupport      Boolean @default(false)
+  scribeSupport      Boolean @default(false)
+  notes              String?
+
+  assignments    ExamAssignment[]
+  attempts       ExamAttempt[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([studentId])
+  @@index([examId])
+}
+
+// A reusable rubric attached to an exam or a single question.
+model GradingRubric {
+  id             String   @id @default(uuid())
+  examId         String?
+  exam           Exam?    @relation(fields: [examId], references: [id])
+  questionId     String?
+  question       Question? @relation(fields: [questionId], references: [id])
+  title          String
+  description    String?
+  maxScore       Float    @default(0)
+
+  criteria       RubricCriterion[]
+  manualGrades   ManualGrade[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([examId])
+  @@index([questionId])
+}
+
+model RubricCriterion {
+  id             String   @id @default(uuid())
+  rubricId       String
+  rubric         GradingRubric @relation(fields: [rubricId], references: [id], onDelete: Cascade)
+  label          String
+  description    String?
+  maxScore       Float    @default(0)
+  orderIndex     Int      @default(0)
+  levels         Json?    // optional scoring bands: [{label, points, descriptor}]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([rubricId])
+}
+
+// A manual grading record for a single answer requiring human marking.
+model ManualGrade {
+  id             String   @id @default(uuid())
+  attemptId      String
+  attempt        ExamAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId     String
+  question       Question @relation(fields: [questionId], references: [id])
+  answerId       String?
+  answer         ExamAnswer? @relation(fields: [answerId], references: [id])
+  rubricId       String?
+  rubric         GradingRubric? @relation(fields: [rubricId], references: [id])
+
+  assignedGraderId String?  // User.id the item is queued to
+  graderId         String?  // User.id who graded
+  criterionScores  Json?    // { rubricCriterionId: score }
+  score            Float?
+  inlineFeedback   Json?    // [{ anchor, comment }]
+  overallComment   String?
+  scoreOverride    Float?
+  overrideReason   String?
+  secondMarkerId   String?
+  secondMarkerScore Float?
+  moderationComment String?
+  status           String   @default("PENDING") // PENDING | IN_REVIEW | GRADED | MODERATED | FINALIZED
+  isFinalized      Boolean  @default(false)
+  finalizedAt      DateTime?
+  finalizedById    String?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([attemptId])
+  @@index([questionId])
+  @@index([answerId])
+  @@index([assignedGraderId])
+  @@index([status])
+}
+
+// Append-only log of significant attempt events (autosave, navigation, pause,
+// invigilator actions, integrity signals). Never updated after insert.
+model AttemptEvent {
+  id             String   @id @default(uuid())
+  attemptId      String
+  attempt        ExamAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  type           String   // AUTOSAVE | NAVIGATE | PAUSE | RESUME | SUBMIT | AUTO_SUBMIT | DISCONNECT | RECONNECT | FOCUS_LOST | EXTRA_TIME | FORCE_SUBMIT | REOPEN | INVALIDATE | INCIDENT_NOTE | SESSION_TAKEOVER
+  actorId        String?  // User.id; null = the student/system
+  actorRole      String?
+  payload        Json?
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
+
+  @@index([attemptId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// Immutable snapshots of answer state for crash recovery + audit.
+model AttemptSnapshot {
+  id             String   @id @default(uuid())
+  attemptId      String
+  attempt        ExamAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  reason         String   // AUTOSAVE | NAVIGATE | PAUSE | SUBMIT | FINAL
+  answers        Json     // frozen copy of all answers at snapshot time
+  questionOrder  Json?
+  remainingSeconds Int?
+  createdAt      DateTime @default(now())
+
+  @@index([attemptId])
+  @@index([createdAt])
+}
+
+// Controls how and when results become visible to the student.
+model ExamResultPolicy {
+  id             String   @id @default(uuid())
+  examId         String   @unique
+  exam           Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  showScore          Boolean @default(true)
+  showPassFail       Boolean @default(true)
+  showCorrectAnswers Boolean @default(false)
+  showExplanations   Boolean @default(false)
+  showTeacherFeedback Boolean @default(true)
+  releaseMode    String   @default("IMMEDIATE") // IMMEDIATE | SCHEDULED | AFTER_GRADING | HIDDEN
+  releaseAt      DateTime?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([examId])
+}
+
+// Computed psychometric statistics per question (refreshed on demand).
+model QuestionStatistic {
+  id             String   @id @default(uuid())
+  questionId     String   @unique
+  question       Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  examId         String
+  exam           Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  attempts           Int     @default(0)
+  correctCount       Int     @default(0)
+  incorrectCount     Int     @default(0)
+  blankCount         Int     @default(0)
+  avgResponseSeconds Float?
+  difficultyIndex    Float?  // p-value (mean proportion correct)
+  discriminationIndex Float? // point-biserial / upper-lower
+  distractorRates    Json?   // { option: rate }
+  avgScore           Float?
+  medianScore        Float?
+  stdDev             Float?
+  passRate           Float?
+  scoreDistribution  Json?   // histogram buckets
+  flags              String[] @default([]) // TOO_EASY | TOO_HARD | POOR_DISCRIMINATION | UNUSED_DISTRACTOR | SLOW | ABNORMAL_PATTERN
+
+  computedAt     DateTime @default(now())
+
+  @@index([examId])
 }

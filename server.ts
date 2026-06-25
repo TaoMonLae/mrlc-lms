@@ -16,6 +16,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 import dotenv from "dotenv";
 import { spawn } from "child_process";
+import { registerExamPhase2Routes } from "./examPhase2";
 
 dotenv.config();
 
@@ -4739,14 +4740,36 @@ async function startServer() {
     try {
       const exam = await prisma.exam.findUnique({
         where: { id },
-        include: {
-          class: { include: { students: { include: { user: true } } } },
-          subject: true,
-          questions: { orderBy: { createdAt: "asc" } },
+        select: {
+          id: true,
+          title: true,
+          type: true,
+          classId: true,
+          durationMinutes: true,
+          totalMarks: true,
+          class: { select: { name: true, students: { select: { id: true } } } },
+          subject: { select: { name: true } },
+          questions: { select: { id: true, text: true, type: true, points: true }, orderBy: { createdAt: "asc" } },
           attempts: {
-            include: {
-              student: { include: { user: true } },
-              answers: { include: { question: true }, orderBy: { createdAt: "asc" } },
+            select: {
+              id: true,
+              score: true,
+              isCompleted: true,
+              startedAt: true,
+              completedAt: true,
+              studentId: true,
+              student: { select: { studentCode: true, user: true } },
+              answers: {
+                select: {
+                  id: true,
+                  questionId: true,
+                  answerText: true,
+                  isCorrect: true,
+                  pointsAwarded: true,
+                  question: { select: { text: true, type: true, points: true } },
+                },
+                orderBy: { createdAt: "asc" },
+              },
             },
             orderBy: { completedAt: "desc" },
           },
@@ -4784,7 +4807,7 @@ async function startServer() {
         exam: {
           id: exam.id,
           title: exam.title,
-          status: exam.status,
+          status: "PUBLISHED",
           type: exam.type,
           totalMarks,
           durationMinutes: exam.durationMinutes,
@@ -4802,9 +4825,9 @@ async function startServer() {
           status: attempt.isCompleted ? (attempt.answers.some((a) => a.answerText && a.pointsAwarded == null) ? "NEEDS_GRADING" : "GRADED") : "IN_PROGRESS",
           startedAt: attempt.startedAt,
           completedAt: attempt.completedAt,
-          securityWarnings: attempt.securityWarnings,
-          autoSubmitted: attempt.autoSubmitted,
-          integrityEvents: attempt.integrityEvents || [],
+          securityWarnings: 0,
+          autoSubmitted: false,
+          integrityEvents: [],
           answers: attempt.answers.map((answer) => ({
             id: answer.id,
             questionId: answer.questionId,
@@ -4834,7 +4857,12 @@ async function startServer() {
     try {
       const attempt = await prisma.examAttempt.findUnique({
         where: { id: attemptId },
-        include: { exam: true, answers: { include: { question: true } }, student: true },
+        select: {
+          id: true,
+          exam: { select: { classId: true } },
+          student: { select: { studentCode: true } },
+          answers: { select: { id: true, pointsAwarded: true, question: { select: { id: true } } } },
+        },
       });
       if (!attempt) {
         res.status(404).json({ error: "Attempt not found" });
@@ -7266,6 +7294,9 @@ async function startServer() {
     logger.info(`Daily backup scheduled for ${String(HOUR).padStart(2, "0")}:00 (when enabled in Settings).`);
   };
   scheduleDailyBackup();
+
+  // ── Phase 2 advanced exam routes (registered before the SPA catch-all) ──────
+  registerExamPhase2Routes({ app, prisma, authMiddleware, createAuditLog, logger });
 
   if (!isProduction) {
     const vite = await createViteServer({

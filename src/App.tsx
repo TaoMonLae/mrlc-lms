@@ -20,6 +20,19 @@ import ExamTake from "./pages/exams/ExamTake";
 import ExamResults from "./pages/exams/ExamResults";
 import ExamsList from "./pages/exams/ExamsList";
 
+// Phase 2 advanced exam system (lazy-loaded)
+const ExamPlayer = lazy(() => import("./pages/exam2/ExamPlayer"));
+const ResumeAttempt = lazy(() => import("./pages/exam2/ResumeAttempt"));
+const ExamResultView = lazy(() => import("./pages/exam2/ExamResultView"));
+const ExamScheduling = lazy(() => import("./pages/exam2/ExamScheduling"));
+const ManualGradingQueue = lazy(() => import("./pages/exam2/ManualGradingQueue"));
+const RubricGrading = lazy(() => import("./pages/exam2/RubricGrading"));
+const ExamAnalytics = lazy(() => import("./pages/exam2/ExamAnalytics"));
+const QuestionAnalytics = lazy(() => import("./pages/exam2/QuestionAnalytics"));
+const InvigilatorDashboard = lazy(() => import("./pages/exam2/InvigilatorDashboard"));
+const AccommodationManagement = lazy(() => import("./pages/exam2/AccommodationManagement"));
+const PrintableExport = lazy(() => import("./pages/exam2/PrintableExport"));
+
 import TeachersList from "./pages/teachers/TeachersList";
 import TeacherNew from "./pages/teachers/TeacherNew";
 import TeacherProfile from "./pages/teachers/TeacherProfile";
@@ -190,6 +203,10 @@ export default function App() {
                   <Route path="/student/library" element={<StudentLibrary />} />
                   <Route path="/student/fees" element={<StudentFees />} />
                   <Route path="/student/videos" element={<StudentVideos />} />
+                  {/* Phase 2 exam taking (student) */}
+                  <Route path="/exam2/resume" element={<ResumeAttempt />} />
+                  <Route path="/exam2/attempts/:attemptId/play" element={<ExamPlayer />} />
+                  <Route path="/exam2/attempts/:attemptId/result" element={<ExamResultView />} />
                 </Route>
                 
                 <Route path="/announcements" element={<AnnouncementsList />} />
@@ -230,6 +247,16 @@ export default function App() {
                   <Route path="/teachers/new" element={<TeacherNew />} />
                   <Route path="/teachers/:id" element={<TeacherProfile />} />
                   <Route path="/teachers/:id/edit" element={<TeacherEdit />} />
+
+                  {/* Phase 2 advanced exam admin (ADMIN/TEACHER) */}
+                  <Route path="/exam2/:examId/schedule" element={<ExamScheduling />} />
+                  <Route path="/exam2/:examId/invigilator" element={<InvigilatorDashboard />} />
+                  <Route path="/exam2/:examId/analytics" element={<ExamAnalytics />} />
+                  <Route path="/exam2/:examId/questions/:qid/analytics" element={<QuestionAnalytics />} />
+                  <Route path="/exam2/:examId/print" element={<PrintableExport />} />
+                  <Route path="/exam2/grading" element={<ManualGradingQueue />} />
+                  <Route path="/exam2/grade/:attemptId/:questionId" element={<RubricGrading />} />
+                  <Route path="/exam2/accommodations" element={<AccommodationManagement />} />
 
                   {/* Gradebook & GED readiness (ADMIN/TEACHER) */}
                   <Route path="/gradebook" element={<GradebookPage />} />
