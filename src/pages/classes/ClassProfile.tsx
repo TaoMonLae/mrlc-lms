@@ -15,6 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePermissions } from '../../lib/permissions';
 import { toast } from 'sonner';
 
@@ -61,63 +62,97 @@ export default function ClassProfile() {
   const [klass, setKlass] = useState<ClassData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  // Teacher assignment
+  const [allTeachers, setAllTeachers] = useState<{ id: string; name: string }[]>([]);
+  const [assignOpen, setAssignOpen] = useState(false);
+  const [assignTeacherId, setAssignTeacherId] = useState('');
+  const [assigning, setAssigning] = useState(false);
+
+  const loadClass = async () => {
     if (!id) return;
-    const fetchClass = async () => {
-      try {
-        const token = sessionStorage.getItem('auth_token');
-        const res = await fetch(`/api/classes/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) {
-          if (res.status === 404) {
-            setKlass(null);
-          } else if (res.status === 401 || res.status === 403) {
-            toast.error('You do not have permission to view this class');
-          } else {
-            throw new Error('Failed to fetch class');
-          }
-          return;
-        }
-        const data = await res.json();
-        const students: ClassStudentRow[] = (data.students || []).map((s: any) => ({
-          id: s.id,
-          name: fullName(s.user),
-          studentCode: s.studentCode || '—',
-        }));
-        const teachers: ClassTeacherRow[] = (data.teachers || []).map((ct: any) => ({
-          id: ct.teacher?.id || ct.teacherId,
-          name: fullName(ct.teacher?.user),
-        }));
-        const exams: ClassExamRow[] = (data.exams || []).map((e: any) => ({
-          id: e.id,
-          title: e.title || 'Untitled',
-          subjectName: e.subject?.name || '—',
-        }));
-        const subjects = Array.from(
-          new Set((data.exams || []).map((e: any) => e.subject?.name).filter(Boolean))
-        ) as string[];
-        setKlass({
-          id: data.id,
-          name: data.name,
-          level: data.level,
-          academicYear: data.academicYear,
-          room: data.room,
-          capacity: data.capacity,
-          students,
-          teachers,
-          exams,
-          subjects,
-        });
-      } catch (error) {
-        console.error('Error fetching class:', error);
-        toast.error('Failed to load class');
-      } finally {
-        setLoading(false);
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`/api/classes/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) {
+        if (res.status === 404) setKlass(null);
+        else if (res.status === 401 || res.status === 403) toast.error('You do not have permission to view this class');
+        else throw new Error('Failed to fetch class');
+        return;
       }
-    };
-    fetchClass();
-  }, [id]);
+      const data = await res.json();
+      const students: ClassStudentRow[] = (data.students || []).map((s: any) => ({
+        id: s.id, name: fullName(s.user), studentCode: s.studentCode || '—',
+      }));
+      const teachers: ClassTeacherRow[] = (data.teachers || []).map((ct: any) => ({
+        id: ct.teacher?.id || ct.teacherId, name: fullName(ct.teacher?.user),
+      }));
+      const exams: ClassExamRow[] = (data.exams || []).map((e: any) => ({
+        id: e.id, title: e.title || 'Untitled', subjectName: e.subject?.name || '—',
+      }));
+      const subjects = Array.from(new Set((data.exams || []).map((e: any) => e.subject?.name).filter(Boolean))) as string[];
+      setKlass({
+        id: data.id, name: data.name, level: data.level, academicYear: data.academicYear,
+        room: data.room, capacity: data.capacity, students, teachers, exams, subjects,
+      });
+    } catch (error) {
+      console.error('Error fetching class:', error);
+      toast.error('Failed to load class');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { loadClass(); /* eslint-disable-next-line */ }, [id]);
+
+  // Load all teachers for the assignment picker (admins only).
+  useEffect(() => {
+    if (!canManageClass) return;
+    const token = sessionStorage.getItem('auth_token');
+    fetch('/api/teachers', { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setAllTeachers((Array.isArray(data) ? data : []).map((t: any) => ({
+        id: t.id, name: `${t.user?.firstName ?? ''} ${t.user?.lastName ?? ''}`.trim() || t.teacherCode,
+      }))))
+      .catch(() => {});
+  }, [canManageClass]);
+
+  const assignTeacher = async () => {
+    if (!assignTeacherId) { toast.error('Select a teacher'); return; }
+    setAssigning(true);
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`/api/classes/${id}/teachers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ teacherId: assignTeacherId }),
+      });
+      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Failed to assign'); }
+      toast.success('Teacher assigned');
+      setAssignOpen(false);
+      setAssignTeacherId('');
+      await loadClass();
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to assign teacher');
+    } finally {
+      setAssigning(false);
+    }
+  };
+
+  const removeTeacher = async (teacherId: string) => {
+    if (!confirm('Remove this teacher from the class?')) return;
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`/api/classes/${id}/teachers/${teacherId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to remove');
+      toast.success('Teacher removed');
+      await loadClass();
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to remove teacher');
+    }
+  };
 
   const handleArchive = () => {
     toast.success('Class has been archived.');
@@ -290,14 +325,16 @@ export default function ClassProfile() {
         </TabsContent>
 
         <TabsContent value="teachers" className="p-0 animate-in fade-in slide-in-from-bottom-2">
-          <div className="p-4 border-b border-slate-200 dark:border-surface-raised flex justify-end">
-            <Button size="sm"><Plus className="w-4 h-4 mr-2" /> Assign Teacher</Button>
-          </div>
+          {canManageClass && (
+            <div className="p-4 border-b border-slate-200 dark:border-surface-raised flex justify-end">
+              <Button size="sm" onClick={() => setAssignOpen(true)}><Plus className="w-4 h-4 mr-2" /> Assign Teacher</Button>
+            </div>
+          )}
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-surface-raised/50">
               <tr>
                 <th className="px-6 py-4">Teacher</th>
-                <th className="px-6 py-4 text-right">Action</th>
+                {canManageClass && <th className="px-6 py-4 text-right">Action</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -306,9 +343,11 @@ export default function ClassProfile() {
                   <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
                     <Link to={`/teachers/${teacher.id}`} className="hover:underline hover:text-aubergine-600">{teacher.name}</Link>
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <Button variant="ghost" size="sm" className="text-destructive">Remove</Button>
-                  </td>
+                  {canManageClass && (
+                    <td className="px-6 py-4 text-right">
+                      <Button variant="ghost" size="sm" className="text-destructive" onClick={() => removeTeacher(teacher.id)}>Remove</Button>
+                    </td>
+                  )}
                 </tr>
               ))}
               {klass.teachers.length === 0 && (
@@ -318,6 +357,39 @@ export default function ClassProfile() {
               )}
             </tbody>
           </table>
+
+          {/* Assign teacher dialog */}
+          {assignOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => !assigning && setAssignOpen(false)}>
+              <div className="w-full max-w-md bg-white dark:bg-surface-indigo rounded-xl shadow-2xl p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Assign Teacher</h3>
+                <div className="space-y-1.5">
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Teacher</span>
+                  <Select value={assignTeacherId} onValueChange={setAssignTeacherId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a teacher">
+                        {allTeachers.find((t) => t.id === assignTeacherId)?.name || 'Select a teacher'}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {allTeachers
+                        .filter((t) => !klass.teachers.some((kt) => kt.id === t.id))
+                        .map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  {allTeachers.filter((t) => !klass.teachers.some((kt) => kt.id === t.id)).length === 0 && (
+                    <p className="text-xs text-slate-400">All teachers are already assigned to this class.</p>
+                  )}
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button variant="outline" onClick={() => setAssignOpen(false)} disabled={assigning}>Cancel</Button>
+                  <Button className="bg-primary text-primary-foreground" onClick={assignTeacher} disabled={assigning}>
+                    {assigning ? 'Assigning…' : 'Assign'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="subjects" className="p-6 animate-in fade-in slide-in-from-bottom-2">

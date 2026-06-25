@@ -1607,6 +1607,50 @@ async function startServer() {
     }
   });
 
+  // Assign a teacher to a class.
+  app.post("/api/classes/:id/teachers", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { id } = req.params;
+    const { teacherId } = req.body || {};
+    if (!teacherId) { res.status(400).json({ error: "teacherId is required" }); return; }
+    try {
+      const [klass, teacher] = await Promise.all([
+        prisma.class.findUnique({ where: { id } }),
+        prisma.teacher.findUnique({ where: { id: teacherId }, include: { user: true } }),
+      ]);
+      if (!klass) { res.status(404).json({ error: "Class not found" }); return; }
+      if (!teacher) { res.status(404).json({ error: "Teacher not found" }); return; }
+      await prisma.classTeacher.upsert({
+        where: { classId_teacherId: { classId: id, teacherId } },
+        update: {},
+        create: { classId: id, teacherId },
+      });
+      const teacherName = `${teacher.user?.firstName ?? ""} ${teacher.user?.lastName ?? ""}`.trim() || teacher.teacherCode;
+      await createAuditLog(jwtUser.userId, jwtUser.email, "ASSIGN", "CLASS_TEACHER", id,
+        `Teacher '${teacherName}' assigned to class '${klass.name}'.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.status(201).json({ success: true });
+    } catch (err) {
+      logger.error("Error assigning teacher to class:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Remove a teacher from a class.
+  app.delete("/api/classes/:id/teachers/:teacherId", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { id, teacherId } = req.params;
+    try {
+      await prisma.classTeacher.delete({ where: { classId_teacherId: { classId: id, teacherId } } });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "UNASSIGN", "CLASS_TEACHER", id,
+        `Teacher ${teacherId} removed from class ${id}.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.json({ success: true });
+    } catch (err: any) {
+      if (err?.code === "P2025") { res.status(404).json({ error: "Assignment not found" }); return; }
+      logger.error("Error removing teacher from class:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
   app.get("/api/subjects", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
