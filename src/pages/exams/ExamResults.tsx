@@ -58,6 +58,7 @@ export default function ExamResults() {
   const [data, setData] = useState<ResultsPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState('');
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [grades, setGrades] = useState<Record<string, string>>({});
@@ -65,6 +66,7 @@ export default function ExamResults() {
   const load = async () => {
     if (!id) return;
     setLoading(true);
+    setLoadError('');
     try {
       const payload = await apiGet<ResultsPayload>(`/api/exams/${id}/results`);
       setData(payload);
@@ -77,7 +79,10 @@ export default function ExamResults() {
       });
       setGrades(nextGrades);
     } catch (error: any) {
-      toast.error(error.message || 'Failed to load exam results');
+      const message = error.message || 'Failed to load exam results';
+      setLoadError(message);
+      setData(null);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -154,7 +159,8 @@ export default function ExamResults() {
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
         </Button>
         <div className="rounded-xl border border-slate-200 p-8 text-center text-slate-500 dark:border-surface-raised">
-          Results unavailable.
+          <p className="mb-4">{loadError || 'Results unavailable.'}</p>
+          <Button variant="outline" onClick={load}>Retry</Button>
         </div>
       </div>
     );
