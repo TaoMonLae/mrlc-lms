@@ -107,6 +107,16 @@ environment. The production server serves the static client from `dist/`.
 - JWT auth with server-side role checks; passwords hashed with bcrypt.
 - Structured logging via `winston`; error responses are sanitized.
 
+## Multi-language support
+
+The LMS has built-in internationalization (i18n) support driven by standard `.po` files. It translates the entire user interface dynamically on the client side:
+- **Available languages**:
+  - English (`en.po` - Default)
+  - Burmese (`my.po` - မြန်မာ)
+  - Mon (`mnw.po` - ဘာသာမန်)
+- **Adding new languages**: Simply drop a new `.po` translation file under `src/i18n/locales/` (e.g., `th.po` for Thai). The switcher and settings will automatically register and display it.
+- To change the system-wide default language, navigate to **Settings -> System Settings -> Language**.
+
 ## Tech stack
 
 React 19 · Vite 6 · Tailwind CSS v4 · Express 4 · Prisma 7 · PostgreSQL ·
