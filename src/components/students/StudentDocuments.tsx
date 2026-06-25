@@ -81,6 +81,13 @@ export function StudentDocuments({ studentId }: StudentDocumentsProps) {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Upload dialog
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [upload, setUpload] = useState<{ title: string; documentType: DocumentType; expiryDate: string; file: File | null }>(
+    { title: '', documentType: 'OTHER', expiryDate: '', file: null }
+  );
+
   // Filter based on user request "ADMIN can manage, TEACHER can view if allowed"
   const canManage = isAdmin || hasPermission('manage_documents');
   const canView = isAdmin || hasPermission('view_documents');
@@ -151,6 +158,37 @@ export function StudentDocuments({ studentId }: StudentDocumentsProps) {
     }
   };
 
+  const handleUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!upload.file) { toast.error('Choose a file to upload'); return; }
+    if (!upload.title.trim()) { toast.error('Enter a document title'); return; }
+    if (upload.file.size > 25 * 1024 * 1024) { toast.error('File must be 25 MB or smaller'); return; }
+    setUploading(true);
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const body = new FormData();
+      body.append('file', upload.file);
+      body.append('title', upload.title.trim());
+      body.append('documentType', upload.documentType);
+      if (upload.expiryDate) body.append('expiryDate', upload.expiryDate);
+      const res = await fetch(`/api/students/${studentId}/documents/upload`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body,
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload.error || 'Upload failed');
+      setDocuments((prev) => [payload, ...prev]);
+      toast.success('Document uploaded');
+      setUploadOpen(false);
+      setUpload({ title: '', documentType: 'OTHER', expiryDate: '', file: null });
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to upload document');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   if (!canView) {
     return (
       <div className="p-8 text-center bg-slate-50 dark:bg-surface-indigo/50 rounded-xl border border-dashed border-slate-300 dark:border-surface-raised">
@@ -196,7 +234,7 @@ export function StudentDocuments({ studentId }: StudentDocumentsProps) {
           )}
 
           {canManage && (
-            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground h-11" onClick={() => toast.info('Upload feature would open here')}>
+            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground h-11" onClick={() => setUploadOpen(true)}>
               <Plus className="mr-2 h-4 w-4" /> Upload Document
             </Button>
           )}
@@ -310,7 +348,7 @@ export function StudentDocuments({ studentId }: StudentDocumentsProps) {
             <h3 className="text-lg font-bold text-slate-900 dark:text-white">No documents found</h3>
             <p className="text-sm text-slate-500 mt-2">Upload student documents to keep them organized.</p>
             {canManage && (
-              <Button variant="outline" className="mt-6 font-bold" onClick={() => toast.info('Upload feature')}>
+              <Button variant="outline" className="mt-6 font-bold" onClick={() => setUploadOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" /> Upload First Document
               </Button>
             )}
@@ -326,6 +364,63 @@ export function StudentDocuments({ studentId }: StudentDocumentsProps) {
           <p>These documents contain PII (Personally Identifiable Information). Access is logged, and unauthorized downloads are strictly prohibited as per school policy.</p>
         </div>
       </div>
+
+      {/* Upload dialog */}
+      {uploadOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => !uploading && setUploadOpen(false)}>
+          <form
+            onSubmit={handleUpload}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md bg-white dark:bg-surface-indigo rounded-xl shadow-2xl p-6 space-y-4"
+          >
+            <div className="flex items-center gap-2">
+              <Upload className="h-5 w-5 text-aubergine-600" />
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Upload Document</h3>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Title</label>
+              <Input value={upload.title} onChange={(e) => setUpload({ ...upload, title: e.target.value })} placeholder="e.g. UNHCR ID Card" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Type</label>
+                <select
+                  value={upload.documentType}
+                  onChange={(e) => setUpload({ ...upload, documentType: e.target.value as DocumentType })}
+                  className="h-10 w-full rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo px-3 text-sm"
+                >
+                  {['UNHCR', 'PASSPORT', 'BIRTH_CERTIFICATE', 'SCHOOL_RECORD', 'GUARDIAN_DOC', 'MEDICAL', 'OTHER'].map((t) => (
+                    <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Expiry (optional)</label>
+                <Input type="date" value={upload.expiryDate} onChange={(e) => setUpload({ ...upload, expiryDate: e.target.value })} />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">File</label>
+              <Input
+                type="file"
+                accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp,.gif,.txt"
+                onChange={(e) => setUpload({ ...upload, file: e.target.files?.[0] || null })}
+              />
+              <p className="text-xs text-slate-400">PDF, Word, image or text. Max 25 MB.</p>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => setUploadOpen(false)} disabled={uploading}>Cancel</Button>
+              <Button type="submit" className="bg-primary text-primary-foreground" disabled={uploading}>
+                {uploading ? 'Uploading…' : 'Upload'}
+              </Button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

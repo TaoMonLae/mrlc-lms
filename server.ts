@@ -34,6 +34,8 @@ const VIDEO_FILES_DIR = process.env.VIDEO_FILES_DIR || path.join(process.cwd(), 
 fs.mkdirSync(VIDEO_FILES_DIR, { recursive: true });
 const ADMISSION_FILE_DIR = process.env.ADMISSION_FILE_DIR || path.join(process.cwd(), "data", "admissions");
 fs.mkdirSync(ADMISSION_FILE_DIR, { recursive: true });
+const STUDENT_DOC_DIR = process.env.STUDENT_DOC_DIR || path.join(process.cwd(), "data", "student-docs");
+fs.mkdirSync(STUDENT_DOC_DIR, { recursive: true });
 
 const ebookUpload = multer({
   storage: multer.diskStorage({
@@ -115,6 +117,23 @@ const admissionFileUpload = multer({
   limits: { fileSize: 25 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     const allowed = new Set([".pdf", ".doc", ".docx", ".png", ".jpg", ".jpeg", ".webp", ".txt"]);
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowed.has(ext)) cb(null, true);
+    else cb(new Error("Only PDF, Word, image, and text files are allowed"));
+  },
+});
+
+const studentDocUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, STUDENT_DOC_DIR),
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase();
+      cb(null, `${crypto.randomUUID()}${ext}`);
+    },
+  }),
+  limits: { fileSize: 25 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = new Set([".pdf", ".doc", ".docx", ".png", ".jpg", ".jpeg", ".webp", ".gif", ".txt"]);
     const ext = path.extname(file.originalname).toLowerCase();
     if (allowed.has(ext)) cb(null, true);
     else cb(new Error("Only PDF, Word, image, and text files are allowed"));
@@ -367,10 +386,17 @@ const schemas = {
   student: z.object({
     firstName: reqStr, lastName: reqStr,
     email: z.union([email, z.literal("")]).optional(),
-    studentCode: optStr, dateOfBirth: optStr, guardianName: optStr,
-    guardianPhone: optStr, contactNumber: optStr, country: optStr,
-    identityType: optStr, identityNumber: optStr, address: optStr,
-    emergencyContact: optStr, notes: optStr,
+    studentCode: optStr, preferredName: nullableStr, dateOfBirth: optStr,
+    enrollmentDate: optStr,
+    guardianName: optStr, guardianRelationship: nullableStr, guardianPhone: optStr,
+    guardianEmail: nullableStr,
+    contactNumber: optStr, country: optStr,
+    identityType: optStr, identityNumber: optStr, legalDocumentationStatus: nullableStr,
+    address: optStr,
+    emergencyContact: optStr, emergencyContactName: nullableStr,
+    emergencyContactPhone: nullableStr, emergencyContactRelationship: nullableStr,
+    previousSchool: nullableStr, previousEducationLevel: nullableStr, educationLevel: nullableStr,
+    medicalInformation: nullableStr, allergies: nullableStr, notes: optStr,
     classId: optStr, gender: optStr, status: optStr,
   }),
   userCreate: z.object({
@@ -443,10 +469,17 @@ const schemas = {
   studentUpdate: z.object({
     firstName: optStr, lastName: optStr,
     email: z.union([email, z.literal("")]).optional(),
-    studentCode: optStr, dateOfBirth: optStr, guardianName: optStr,
-    guardianPhone: optStr, contactNumber: optStr, country: optStr,
-    identityType: optStr, identityNumber: optStr, address: optStr,
-    emergencyContact: optStr, notes: optStr,
+    studentCode: optStr, preferredName: nullableStr, dateOfBirth: optStr,
+    enrollmentDate: optStr,
+    guardianName: optStr, guardianRelationship: nullableStr, guardianPhone: optStr,
+    guardianEmail: nullableStr,
+    contactNumber: optStr, country: optStr,
+    identityType: optStr, identityNumber: optStr, legalDocumentationStatus: nullableStr,
+    address: optStr,
+    emergencyContact: optStr, emergencyContactName: nullableStr,
+    emergencyContactPhone: nullableStr, emergencyContactRelationship: nullableStr,
+    previousSchool: nullableStr, previousEducationLevel: nullableStr, educationLevel: nullableStr,
+    medicalInformation: nullableStr, allergies: nullableStr, notes: optStr,
     classId: optStr, gender: optStr, status: optStr,
   }),
   subjectCreate: z.object({
@@ -729,6 +762,10 @@ async function startServer() {
     immutable: isProduction,
   }));
   app.use("/uploads/admissions", express.static(ADMISSION_FILE_DIR, {
+    maxAge: isProduction ? "30d" : 0,
+    immutable: isProduction,
+  }));
+  app.use("/uploads/student-docs", express.static(STUDENT_DOC_DIR, {
     maxAge: isProduction ? "30d" : 0,
     immutable: isProduction,
   }));
@@ -1081,9 +1118,12 @@ async function startServer() {
   app.post("/api/students", authMiddleware, requireRole("ADMIN"), validate(schemas.student), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const {
-      firstName, lastName, email, studentCode, dateOfBirth, guardianName,
-      guardianPhone, contactNumber, country, identityType, identityNumber,
-      address, emergencyContact, notes, classId, gender, status,
+      firstName, lastName, email, studentCode, preferredName, dateOfBirth, enrollmentDate,
+      guardianName, guardianRelationship, guardianPhone, guardianEmail,
+      contactNumber, country, identityType, identityNumber, legalDocumentationStatus,
+      address, emergencyContact, emergencyContactName, emergencyContactPhone, emergencyContactRelationship,
+      previousSchool, previousEducationLevel, educationLevel, medicalInformation, allergies,
+      notes, classId, gender, status,
     } = req.body;
     if (!firstName || !lastName || !email || !studentCode) {
       res.status(400).json({ error: "First name, last name, email, and student code are required" });
@@ -1104,15 +1144,28 @@ async function startServer() {
           data: {
             userId: user.id,
             studentCode,
+            preferredName: preferredName || null,
             dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+            ...(enrollmentDate ? { enrollmentDate: new Date(enrollmentDate) } : {}),
             guardianName,
+            guardianRelationship: guardianRelationship || null,
             guardianPhone,
+            guardianEmail: guardianEmail || null,
             contactNumber,
             country,
             identityType,
             identityNumber,
+            legalDocumentationStatus: legalDocumentationStatus || null,
             address,
             emergencyContact,
+            emergencyContactName: emergencyContactName || null,
+            emergencyContactPhone: emergencyContactPhone || null,
+            emergencyContactRelationship: emergencyContactRelationship || null,
+            previousSchool: previousSchool || null,
+            previousEducationLevel: previousEducationLevel || null,
+            educationLevel: educationLevel || null,
+            medicalInformation: medicalInformation || null,
+            allergies: allergies || null,
             notes,
             classId: classId || null,
             gender,
@@ -1282,9 +1335,12 @@ async function startServer() {
     const jwtUser = (req as any).user as JwtPayload;
     const { id } = req.params;
     const {
-      firstName, lastName, email, studentCode, dateOfBirth, guardianName,
-      guardianPhone, contactNumber, country, identityType, identityNumber,
-      address, emergencyContact, notes, classId, gender, status,
+      firstName, lastName, email, studentCode, preferredName, dateOfBirth, enrollmentDate,
+      guardianName, guardianRelationship, guardianPhone, guardianEmail,
+      contactNumber, country, identityType, identityNumber, legalDocumentationStatus,
+      address, emergencyContact, emergencyContactName, emergencyContactPhone, emergencyContactRelationship,
+      previousSchool, previousEducationLevel, educationLevel, medicalInformation, allergies,
+      notes, classId, gender, status,
     } = req.body;
     try {
       const existingStudent = await prisma.student.findUnique({ where: { id } });
@@ -1307,15 +1363,28 @@ async function startServer() {
           where: { id },
           data: {
             studentCode,
+            preferredName: preferredName ?? null,
             dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+            ...(enrollmentDate ? { enrollmentDate: new Date(enrollmentDate) } : {}),
             guardianName,
+            guardianRelationship: guardianRelationship ?? null,
             guardianPhone,
+            guardianEmail: guardianEmail ?? null,
             contactNumber,
             country,
             identityType,
             identityNumber,
+            legalDocumentationStatus: legalDocumentationStatus ?? null,
             address,
             emergencyContact,
+            emergencyContactName: emergencyContactName ?? null,
+            emergencyContactPhone: emergencyContactPhone ?? null,
+            emergencyContactRelationship: emergencyContactRelationship ?? null,
+            previousSchool: previousSchool ?? null,
+            previousEducationLevel: previousEducationLevel ?? null,
+            educationLevel: educationLevel ?? null,
+            medicalInformation: medicalInformation ?? null,
+            allergies: allergies ?? null,
             notes,
             classId: classId || null,
             gender,
@@ -3404,6 +3473,50 @@ async function startServer() {
       res.json(documents);
     } catch (err) {
       logger.error("Error fetching student documents:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Multipart upload: stores the file and creates the StudentDocument in one call.
+  const uploadStudentDoc = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    studentDocUpload.single("file")(req, res, (err: any) => {
+      if (!err) return next();
+      const message =
+        err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE"
+          ? "Document must be 25 MB or smaller"
+          : err.message || "Upload failed";
+      res.status(400).json({ error: message });
+    });
+  };
+
+  app.post("/api/students/:studentId/documents/upload", authMiddleware, uploadStudentDoc, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageDocuments(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    const { studentId } = req.params;
+    const file = (req as any).file as Express.Multer.File | undefined;
+    const { title, documentType, expiryDate } = req.body || {};
+    if (!file) { res.status(400).json({ error: "A file is required" }); return; }
+    if (!title) { res.status(400).json({ error: "title is required" }); return; }
+    try {
+      const document = await prisma.studentDocument.create({
+        data: {
+          studentId,
+          title,
+          documentType: documentType || "OTHER",
+          fileUrl: `/uploads/student-docs/${file.filename}`,
+          fileName: file.originalname,
+          fileSize: file.size,
+          mimeType: file.mimetype || "application/octet-stream",
+          expiryDate: expiryDate ? new Date(expiryDate) : null,
+          uploadedById: jwtUser.userId,
+          uploadedByName: jwtUser.email,
+        },
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "STUDENT_DOCUMENT", document.id,
+        `Document '${title}' uploaded for student ${studentId}.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.status(201).json(document);
+    } catch (err) {
+      logger.error("Error uploading student document:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });

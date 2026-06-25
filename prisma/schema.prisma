@@ -137,16 +137,28 @@ model Student {
   userId         String?  @unique
   user           User?    @relation(fields: [userId], references: [id])
   studentCode    String   @unique
+  preferredName  String?
   dateOfBirth    DateTime?
   enrollmentDate DateTime @default(now())
   guardianName   String?
+  guardianRelationship String?
   guardianPhone  String?
+  guardianEmail  String?
   contactNumber  String?
   country        String?
   identityType   String?
   identityNumber String?
+  legalDocumentationStatus String?
   address        String?
   emergencyContact String?
+  emergencyContactName String?
+  emergencyContactPhone String?
+  emergencyContactRelationship String?
+  previousSchool String?
+  previousEducationLevel String?
+  educationLevel String?
+  medicalInformation String?
+  allergies      String?
   notes          String?
   gender         String?
   profilePhotoUrl String?
