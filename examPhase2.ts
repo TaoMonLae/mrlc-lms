@@ -321,6 +321,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
       if (!student) { res.status(403).json({ error: "No student profile" }); return; }
       const exam = await prisma.exam.findUnique({ where: { id: examId }, include: { questions: true } });
       if (!exam) { res.status(404).json({ error: "Exam not found" }); return; }
+      if (exam.status === "ARCHIVED") { res.status(403).json({ error: "This exam has been archived" }); return; }
 
       // If assignments exist for this exam, the student must be assigned.
       const assignment = await prisma.examAssignment.findUnique({ where: { examId_studentId: { examId, studentId: student.id } } }).catch(() => null);

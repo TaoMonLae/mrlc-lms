@@ -28,23 +28,35 @@ export default function ExamsList() {
   const [exams, setExams] = useState<ExamListRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showArchived, setShowArchived] = useState(false);
 
-  const handleDelete = async (exam: ExamListRow) => {
-    if (!confirm(`Delete "${exam.title}"? This permanently removes the exam, its questions and all student attempts. This cannot be undone.`)) return;
+  const handleArchive = async (exam: ExamListRow) => {
+    if (!confirm(`Archive "${exam.title}"? It will be hidden and can no longer be started, but the exam and all attempts are preserved. You can restore it from "Show archived".`)) return;
     try {
       await apiSend(`/api/exams/${exam.id}`, 'DELETE');
       setExams((prev) => prev.filter((e) => e.id !== exam.id));
-      toast.success('Exam deleted');
+      toast.success('Exam archived');
     } catch (e: any) {
-      toast.error(e.message || 'Failed to delete exam');
+      toast.error(e.message || 'Failed to archive exam');
+    }
+  };
+
+  const handleRestore = async (exam: ExamListRow) => {
+    try {
+      await apiSend(`/api/exams/${exam.id}/restore`, 'POST');
+      setExams((prev) => prev.filter((e) => e.id !== exam.id));
+      toast.success('Exam restored to draft');
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to restore exam');
     }
   };
 
   useEffect(() => {
     const fetchExams = async () => {
+      setLoading(true);
       try {
         const token = sessionStorage.getItem('auth_token');
-        const res = await fetch('/api/exams', {
+        const res = await fetch(`/api/exams${showArchived ? '?archived=1' : ''}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) {
@@ -73,7 +85,7 @@ export default function ExamsList() {
       }
     };
     fetchExams();
-  }, []);
+  }, [showArchived]);
 
   const filteredExams = exams.filter(e => {
     const q = searchTerm.toLowerCase();
@@ -87,10 +99,17 @@ export default function ExamsList() {
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Exams</h1>
           <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Manage assessments, quizzes, and standard tests.</p>
         </div>
-        <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto" render={<Link to="/exams/new" />} nativeButton={false}>
-          <Plus className="mr-2 h-4 w-4" />
-          Create Exam
-        </Button>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button variant="outline" className={showArchived ? 'border-aubergine-400 text-aubergine-600' : ''} onClick={() => setShowArchived((v) => !v)}>
+            {showArchived ? 'Show active' : 'Show archived'}
+          </Button>
+          {!showArchived && (
+            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto" render={<Link to="/exams/new" />} nativeButton={false}>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Exam
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="bg-white dark:bg-surface-indigo p-4 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex flex-col sm:flex-row gap-4 items-center">
@@ -141,7 +160,11 @@ export default function ExamsList() {
                       <DropdownMenuSeparator />
                       <DropdownMenuItem render={<Link to={`/exams/${exam.id}/take`} />} nativeButton={false}>Preview (Take Exam)</DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(exam)}>Delete exam</DropdownMenuItem>
+                      {showArchived ? (
+                        <DropdownMenuItem className="text-emerald-600" onClick={() => handleRestore(exam)}>Restore exam</DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem className="text-red-600" onClick={() => handleArchive(exam)}>Archive exam</DropdownMenuItem>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>

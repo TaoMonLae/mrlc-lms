@@ -4327,6 +4327,9 @@ async function startServer() {
 
   app.get("/api/exams", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
+    // Archived exams are hidden by default; teachers/admins can opt in with ?archived=1.
+    const showArchived = (req.query.archived === "1" || req.query.archived === "true") && jwtUser.role !== "STUDENT";
+    const statusFilter = showArchived ? { status: "ARCHIVED" } : { status: { not: "ARCHIVED" } };
     try {
       let exams;
       if (jwtUser.role === "STUDENT") {
@@ -4337,7 +4340,7 @@ async function startServer() {
         }
         // Students must never receive correctAnswer for exam questions.
         exams = await prisma.exam.findMany({
-          where: { classId: student.classId },
+          where: { classId: student.classId, status: { not: "ARCHIVED" } },
           include: {
             class: true,
             subject: true,
@@ -4357,6 +4360,7 @@ async function startServer() {
         });
       } else {
         exams = await prisma.exam.findMany({
+          where: statusFilter,
           include: { class: true, subject: true, questions: true }
         });
       }
@@ -4582,10 +4586,9 @@ async function startServer() {
     }
   });
 
-  // Delete an exam (ADMIN or TEACHER). Removes the exam and its dependent records
-  // (attempts → answers/events/snapshots/grades, sections, stimuli, links, rules,
-  // policy, stats, and exam-owned questions) in a transaction. Reusable bank
-  // questions (examId = null) are NOT deleted.
+  // Archive an exam (ADMIN or TEACHER). Soft delete: sets status = ARCHIVED so it
+  // disappears from normal lists and can no longer be started, while preserving
+  // the exam, its questions and all student attempt history. Reversible via restore.
   app.delete("/api/exams/:id", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
@@ -4596,21 +4599,36 @@ async function startServer() {
     try {
       const exam = await prisma.exam.findUnique({ where: { id } });
       if (!exam) { res.status(404).json({ error: "Exam not found" }); return; }
-      await prisma.$transaction(async (tx) => {
-        // Attempts don't cascade from Exam, so clear them first (their answers,
-        // events, snapshots and manual grades cascade from ExamAttempt).
-        await tx.examAttempt.deleteMany({ where: { examId: id } });
-        // The rest (sections, stimuli, groups, examQuestions, blueprintRules,
-        // resultPolicy, questionStats, assignments, exam-owned questions) cascade.
-        await tx.exam.delete({ where: { id } });
-      });
+      await prisma.exam.update({ where: { id }, data: { status: "ARCHIVED" } });
       await createAuditLog(
-        jwtUser.userId, jwtUser.email, "DELETE", "EXAM", id,
-        `Exam '${exam.title}' deleted.`, req.ip, req.headers["user-agent"] || null, "WARNING",
+        jwtUser.userId, jwtUser.email, "ARCHIVE", "EXAM", id,
+        `Exam '${exam.title}' archived.`, req.ip, req.headers["user-agent"] || null, "WARNING",
       );
-      res.json({ ok: true });
+      res.json({ ok: true, status: "ARCHIVED" });
     } catch (err: any) {
-      logger.error("Error deleting exam:", err);
+      logger.error("Error archiving exam:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Restore an archived exam back to DRAFT (ADMIN or TEACHER).
+  app.post("/api/exams/:id/restore", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { id } = req.params;
+    try {
+      const exam = await prisma.exam.update({ where: { id }, data: { status: "DRAFT" } });
+      await createAuditLog(
+        jwtUser.userId, jwtUser.email, "RESTORE", "EXAM", id,
+        `Exam '${exam.title}' restored to DRAFT.`, req.ip, req.headers["user-agent"] || null, "SUCCESS",
+      );
+      res.json({ ok: true, status: "DRAFT" });
+    } catch (err: any) {
+      if (err?.code === "P2025") { res.status(404).json({ error: "Exam not found" }); return; }
+      logger.error("Error restoring exam:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });

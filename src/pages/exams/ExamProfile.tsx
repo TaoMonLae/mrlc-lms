@@ -39,13 +39,13 @@ export default function ExamProfile() {
   const [loading, setLoading] = useState(true);
 
   const handleDelete = async () => {
-    if (!confirm('Delete this exam? This permanently removes the exam, its questions and all student attempts. This cannot be undone.')) return;
+    if (!confirm('Archive this exam? It will be hidden from lists and can no longer be started, but the exam and all student attempts are preserved. You can restore it later.')) return;
     try {
       await apiSend(`/api/exams/${id}`, 'DELETE');
-      toast.success('Exam deleted');
+      toast.success('Exam archived');
       navigate('/exams');
     } catch (e: any) {
-      toast.error(e.message || 'Failed to delete exam');
+      toast.error(e.message || 'Failed to archive exam');
     }
   };
 
@@ -164,7 +164,7 @@ export default function ExamProfile() {
               <Play className="mr-2 h-4 w-4" /> Preview
             </Button>
             <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50 dark:border-red-900/40 dark:hover:bg-red-900/20" onClick={handleDelete}>
-              <Trash2 className="mr-2 h-4 w-4" /> Delete
+              <Trash2 className="mr-2 h-4 w-4" /> Archive
             </Button>
           </div>
         </div>
