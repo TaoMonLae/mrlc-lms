@@ -453,6 +453,8 @@ const schemas = {
     questions: z.array(z.object({
       questionText: optStr, type: optStr, points: optNum,
       choices: z.any().optional(), correctAnswer: z.any().optional(),
+      passageText: optStr.optional().nullable(),
+      explanation: optStr.optional().nullable(),
     })).optional(),
   }),
   examSubmit: z.object({
@@ -4469,6 +4471,8 @@ async function startServer() {
                 points: Number(q.points) || 5,
                 options: q.choices || null,
                 correctAnswer: q.correctAnswer !== undefined ? String(q.correctAnswer) : null,
+                passageText: q.passageText || null,
+                explanation: q.explanation || null,
               }
             });
           }
@@ -4554,6 +4558,8 @@ async function startServer() {
                   points: Number(q.points) || 5,
                   options: q.choices || null,
                   correctAnswer: q.correctAnswer !== undefined ? String(q.correctAnswer) : null,
+                  passageText: q.passageText || null,
+                  explanation: q.explanation || null,
                 },
               });
             }

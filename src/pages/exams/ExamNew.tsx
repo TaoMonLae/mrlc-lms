@@ -22,6 +22,8 @@ const INITIAL_SETTINGS: ExamSettings = {
   allowedAttempts: 1,
 };
 
+const isChoiceType = (type: string) => type === 'MCQ' || type.startsWith('GED_');
+
 export default function ExamNew() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
@@ -62,6 +64,8 @@ export default function ExamNew() {
         id: `q_${Date.now()}`,
         type: 'MCQ',
         questionText: '',
+        passageText: '',
+        explanation: '',
         choices: ['', '', '', ''],
         correctAnswer: '0',
         points: 5,
@@ -90,7 +94,7 @@ export default function ExamNew() {
     const invalidQuestion = questions.find((q) => !q.questionText.trim());
     if (invalidQuestion) { toast.error('Every question needs question text.'); setStep(2); return; }
     const invalidMcq = questions.find((q) =>
-      q.type === 'MCQ' && (!q.choices?.length || q.choices.some((choice) => !choice.trim()) || q.correctAnswer == null)
+      isChoiceType(q.type) && (!q.choices?.length || q.choices.some((choice) => !choice.trim()) || q.correctAnswer == null)
     );
     if (invalidMcq) { toast.error('Multiple choice questions need all choices and one correct answer.'); setStep(2); return; }
     setSaving(true);
@@ -108,8 +112,10 @@ export default function ExamNew() {
           questionText: q.questionText,
           type: q.type,
           points: Number(q.points) || 5,
-          choices: q.type === 'MCQ' ? q.choices || [] : null,
+          choices: isChoiceType(q.type) ? q.choices || [] : null,
           correctAnswer: q.correctAnswer,
+          passageText: q.passageText || null,
+          explanation: q.explanation || null,
         })),
       });
       toast.success('Exam created. Configure sections, bank questions and scheduling next.');
@@ -229,17 +235,34 @@ export default function ExamNew() {
                       </Button>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                          <Label>Type</Label>
-                         <Select value={q.type} onValueChange={(val: any) => updateQuestion(q.id, { type: val })}>
+                         <Select
+                          value={q.type}
+                          onValueChange={(val: any) => {
+                            const updates: Partial<ExamQuestion> = { type: val };
+                            if (val === 'GED_RLA_PASSAGE' && !q.passageText) {
+                              updates.passageText = 'Type passage here...';
+                            }
+                            if (isChoiceType(val) && (!q.choices || q.choices.length === 0)) {
+                              updates.choices = ['', '', '', ''];
+                              updates.correctAnswer = '0';
+                            }
+                            updateQuestion(q.id, updates);
+                          }}
+                        >
                           <SelectTrigger>
                             <SelectValue placeholder="Select type" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="MCQ">Multiple Choice</SelectItem>
+                            <SelectItem value="MCQ">Multiple Choice (MCQ)</SelectItem>
                             <SelectItem value="SHORT_ANSWER">Short Answer</SelectItem>
                             <SelectItem value="WRITTEN">Written / Essay</SelectItem>
+                            <SelectItem value="GED_RLA_PASSAGE">GED RLA (with Passage)</SelectItem>
+                            <SelectItem value="GED_MATH">GED Mathematical Reasoning</SelectItem>
+                            <SelectItem value="GED_SCIENCE">GED Science</SelectItem>
+                            <SelectItem value="GED_SOCIAL_STUDIES">GED Social Studies</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -271,7 +294,35 @@ export default function ExamNew() {
                       )}
                     </div>
 
-                    {q.type === 'MCQ' && q.choices && (
+                    <div className="flex items-center gap-2 py-1">
+                      <input
+                        type="checkbox"
+                        id={`has_passage_${q.id}`}
+                        checked={q.passageText !== undefined && q.passageText !== null && q.passageText !== ''}
+                        onChange={(e) => {
+                          updateQuestion(q.id, { passageText: e.target.checked ? 'Type passage here...' : '' });
+                        }}
+                        className="rounded border-slate-300 text-aubergine-600 focus:ring-aubergine-500 h-4 w-4"
+                      />
+                      <label htmlFor={`has_passage_${q.id}`} className="text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer">
+                        Include passage / stimulus text (split layout)
+                      </label>
+                    </div>
+
+                    {(q.passageText !== undefined && q.passageText !== null && q.passageText !== '') && (
+                      <div className="space-y-2">
+                        <Label>Passage / Stimulus Text</Label>
+                        <Textarea
+                          value={q.passageText}
+                          onChange={(e) => updateQuestion(q.id, { passageText: e.target.value })}
+                          rows={4}
+                          placeholder="Type or paste the passage/stimulus text here. This will be shown on the left pane in a split layout."
+                          className="bg-white dark:bg-canvas text-sm border-slate-200 dark:border-surface-raised"
+                        />
+                      </div>
+                    )}
+
+                    {isChoiceType(q.type) && q.choices && (
                       <div className="space-y-3">
                         <Label>Choices & Correct Answer</Label>
                         {q.choices.map((choice, cIndex) => (
@@ -304,6 +355,17 @@ export default function ExamNew() {
                         ))}
                       </div>
                     )}
+
+                    <div className="space-y-2">
+                      <Label>Explanation / Rationale</Label>
+                      <Textarea
+                        value={q.explanation || ''}
+                        onChange={(e) => updateQuestion(q.id, { explanation: e.target.value })}
+                        rows={2}
+                        placeholder="Explain the correct answer. This will be shown to students after results are released."
+                        className="bg-white dark:bg-canvas text-sm border-slate-200 dark:border-surface-raised"
+                      />
+                    </div>
                   </div>
                 ))}
                 

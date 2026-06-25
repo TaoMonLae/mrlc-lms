@@ -13,7 +13,7 @@ import { Clock, Save, Flag, Pause, Send, AlertTriangle, Loader2 } from 'lucide-r
  *    is re-synced on every save; the browser timer is display-only.
  *  - Handles SESSION_CONFLICT (another session) and TIME_EXPIRED (auto-submit).
  */
-type Q = { id: string; text: string; type: string; points: number; options: any; partialCredit?: boolean };
+type Q = { id: string; text: string; type: string; points: number; options: any; partialCredit?: boolean; passageText?: string | null };
 type Answer = { answerText?: string; selectedOptions?: string[]; flaggedForReview?: boolean };
 
 // Written-answer types always render a free-text box (never multiple choice),
@@ -132,8 +132,42 @@ export default function ExamPlayer() {
   const ss = String(remaining % 60).padStart(2, '0');
   const low = remaining <= 60;
 
+  const renderAnswerInput = () => {
+    if (!TEXT_ANSWER_TYPES.includes(q?.type) && Array.isArray(q?.options) && q.options.length) {
+      return (
+        <div className="space-y-2">
+          {(q.options as any[]).map((opt, i) => {
+            const val = String(typeof opt === 'object' ? opt.value ?? opt.text ?? i : opt);
+            const multi = q.partialCredit;
+            const selected = multi ? (answers[q.id]?.selectedOptions || []).includes(val) : answers[q.id]?.answerText === val;
+            return (
+              <button key={i} type="button"
+                onClick={() => multi
+                  ? setAnswer(q.id, { selectedOptions: selected ? (answers[q.id]?.selectedOptions || []).filter((v) => v !== val) : [...(answers[q.id]?.selectedOptions || []), val] })
+                  : setAnswer(q.id, { answerText: val })}
+                className={`w-full text-left px-4 py-3 rounded-lg border transition-colors ${selected ? 'border-aubergine-500 bg-aubergine-50 dark:bg-aubergine-900/20' : 'border-slate-200 dark:border-surface-raised hover:border-slate-300'}`}>
+                <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{String(typeof opt === 'object' ? opt.text ?? opt.value : opt)}</span>
+              </button>
+            );
+          })}
+        </div>
+      );
+    }
+
+    return (
+      <textarea
+        className="w-full min-h-[140px] rounded-lg border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas p-3 text-sm"
+        placeholder="Type your answer…"
+        value={answers[q?.id]?.answerText || ''}
+        onChange={(e) => setAnswer(q.id, { answerText: e.target.value })}
+      />
+    );
+  };
+
+  const hasPassage = Boolean(q?.passageText);
+
   return (
-    <div className="max-w-3xl mx-auto pb-24" data-no-i18n>
+    <div className={`${hasPassage ? 'max-w-6xl' : 'max-w-3xl'} mx-auto pb-24`} data-no-i18n>
       <div className="sticky top-0 z-10 bg-white/90 dark:bg-canvas/90 backdrop-blur border-b border-slate-200 dark:border-surface-raised py-3 mb-6 flex items-center justify-between">
         <div>
           <h1 className="font-bold text-slate-900 dark:text-white">{examTitle}</h1>
@@ -144,42 +178,40 @@ export default function ExamPlayer() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-5">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Question {idx + 1} of {questions.length} · {q?.points} pts</span>
-          <Button variant="ghost" size="sm" onClick={() => setAnswer(q.id, { flaggedForReview: !answers[q.id]?.flaggedForReview })} className={answers[q.id]?.flaggedForReview ? 'text-amber-600' : 'text-slate-400'}>
-            <Flag className="h-4 w-4 mr-1" /> {answers[q.id]?.flaggedForReview ? 'Flagged' : 'Flag'}
-          </Button>
-        </div>
-        <p className="text-base font-medium text-slate-900 dark:text-white whitespace-pre-wrap">{q?.text}</p>
-
-        {/* answer input by type: written types always get a text box, never options */}
-        {!TEXT_ANSWER_TYPES.includes(q?.type) && Array.isArray(q?.options) && q.options.length ? (
-          <div className="space-y-2">
-            {(q.options as any[]).map((opt, i) => {
-              const val = String(typeof opt === 'object' ? opt.value ?? opt.text ?? i : opt);
-              const multi = q.partialCredit;
-              const selected = multi ? (answers[q.id]?.selectedOptions || []).includes(val) : answers[q.id]?.answerText === val;
-              return (
-                <button key={i} type="button"
-                  onClick={() => multi
-                    ? setAnswer(q.id, { selectedOptions: selected ? (answers[q.id]?.selectedOptions || []).filter((v) => v !== val) : [...(answers[q.id]?.selectedOptions || []), val] })
-                    : setAnswer(q.id, { answerText: val })}
-                  className={`w-full text-left px-4 py-3 rounded-lg border transition-colors ${selected ? 'border-aubergine-500 bg-aubergine-50 dark:bg-aubergine-900/20' : 'border-slate-200 dark:border-surface-raised hover:border-slate-300'}`}>
-                  <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{String(typeof opt === 'object' ? opt.text ?? opt.value : opt)}</span>
-                </button>
-              );
-            })}
+      {hasPassage ? (
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+          {/* Left Column: Passage */}
+          <div className="md:col-span-6 bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-4 max-h-[60vh] md:max-h-[70vh] overflow-y-auto sticky top-20">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b pb-2 dark:border-surface-raised">Passage</h3>
+            <div className="text-sm text-slate-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
+              {q.passageText}
+            </div>
           </div>
-        ) : (
-          <textarea
-            className="w-full min-h-[140px] rounded-lg border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas p-3 text-sm"
-            placeholder="Type your answer…"
-            value={answers[q?.id]?.answerText || ''}
-            onChange={(e) => setAnswer(q.id, { answerText: e.target.value })}
-          />
-        )}
-      </div>
+
+          {/* Right Column: Question & Answer */}
+          <div className="md:col-span-6 bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Question {idx + 1} of {questions.length} · {q?.points} pts</span>
+              <Button variant="ghost" size="sm" onClick={() => setAnswer(q.id, { flaggedForReview: !answers[q.id]?.flaggedForReview })} className={answers[q.id]?.flaggedForReview ? 'text-amber-600' : 'text-slate-400'}>
+                <Flag className="h-4 w-4 mr-1" /> {answers[q.id]?.flaggedForReview ? 'Flagged' : 'Flag'}
+              </Button>
+            </div>
+            <p className="text-base font-medium text-slate-900 dark:text-white whitespace-pre-wrap">{q?.text}</p>
+            {renderAnswerInput()}
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Question {idx + 1} of {questions.length} · {q?.points} pts</span>
+            <Button variant="ghost" size="sm" onClick={() => setAnswer(q.id, { flaggedForReview: !answers[q.id]?.flaggedForReview })} className={answers[q.id]?.flaggedForReview ? 'text-amber-600' : 'text-slate-400'}>
+              <Flag className="h-4 w-4 mr-1" /> {answers[q.id]?.flaggedForReview ? 'Flagged' : 'Flag'}
+            </Button>
+          </div>
+          <p className="text-base font-medium text-slate-900 dark:text-white whitespace-pre-wrap">{q?.text}</p>
+          {renderAnswerInput()}
+        </div>
+      )}
 
       {/* question navigator */}
       <div className="flex flex-wrap gap-1.5 mt-4">

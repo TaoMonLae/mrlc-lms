@@ -6,9 +6,12 @@ import { apiGet, apiSend } from '../../lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import MathField from '../../components/MathField';
 import { type ExamQuestion, type ExamSettings } from '../../types/exam';
+
+const isChoiceType = (type: string) => type === 'MCQ' || type.startsWith('GED_');
 
 interface LoadedExam {
   id: string;
@@ -27,6 +30,8 @@ interface LoadedExam {
     points: number;
     options?: string[] | null;
     correctAnswer?: string | null;
+    passageText?: string | null;
+    explanation?: string | null;
   }>;
   attempts?: any[];
 }
@@ -72,6 +77,8 @@ export default function ExamEdit() {
           id: q.id || `q_${Date.now()}_${index}`,
           type: q.type || 'MCQ',
           questionText: q.text || '',
+          passageText: q.passageText || '',
+          explanation: q.explanation || '',
           choices: Array.isArray(q.options) ? q.options : ['', '', '', ''],
           correctAnswer: q.correctAnswer ?? '0',
           points: Number(q.points) || 5,
@@ -96,6 +103,8 @@ export default function ExamEdit() {
         id: `q_${Date.now()}`,
         type: 'MCQ',
         questionText: '',
+        passageText: '',
+        explanation: '',
         choices: ['', '', '', ''],
         correctAnswer: '0',
         points: 5,
@@ -122,7 +131,7 @@ export default function ExamEdit() {
       const invalidQuestion = questions.find((q) => !q.questionText.trim());
       if (invalidQuestion) { toast.error('Every question needs question text.'); return; }
       const invalidMcq = questions.find((q) =>
-        q.type === 'MCQ' && (!q.choices?.length || q.choices.some((choice) => !choice.trim()) || q.correctAnswer == null)
+        isChoiceType(q.type) && (!q.choices?.length || q.choices.some((choice) => !choice.trim()) || q.correctAnswer == null)
       );
       if (invalidMcq) { toast.error('Multiple choice questions need all choices and one correct answer.'); return; }
     }
@@ -142,8 +151,10 @@ export default function ExamEdit() {
           questionText: q.questionText,
           type: q.type,
           points: Number(q.points) || 5,
-          choices: q.type === 'MCQ' ? q.choices || [] : null,
+          choices: isChoiceType(q.type) ? q.choices || [] : null,
           correctAnswer: q.correctAnswer,
+          passageText: q.passageText || null,
+          explanation: q.explanation || null,
         })),
       });
       toast.success(hasAttempts ? 'Exam details updated. Questions are locked because students have attempts.' : 'Exam updated successfully.');
@@ -260,12 +271,30 @@ export default function ExamEdit() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Type</Label>
-                      <Select value={q.type} onValueChange={(val: any) => updateQuestion(q.id, { type: val })} disabled={hasAttempts}>
+                      <Select
+                        value={q.type}
+                        disabled={hasAttempts}
+                        onValueChange={(val: any) => {
+                          const updates: Partial<ExamQuestion> = { type: val };
+                          if (val === 'GED_RLA_PASSAGE' && !q.passageText) {
+                            updates.passageText = 'Type passage here...';
+                          }
+                          if (isChoiceType(val) && (!q.choices || q.choices.length === 0)) {
+                            updates.choices = ['', '', '', ''];
+                            updates.correctAnswer = '0';
+                          }
+                          updateQuestion(q.id, updates);
+                        }}
+                      >
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="MCQ">Multiple Choice</SelectItem>
+                          <SelectItem value="MCQ">Multiple Choice (MCQ)</SelectItem>
                           <SelectItem value="SHORT_ANSWER">Short Answer</SelectItem>
                           <SelectItem value="WRITTEN">Written / Essay</SelectItem>
+                          <SelectItem value="GED_RLA_PASSAGE">GED RLA (with Passage)</SelectItem>
+                          <SelectItem value="GED_MATH">GED Mathematical Reasoning</SelectItem>
+                          <SelectItem value="GED_SCIENCE">GED Science</SelectItem>
+                          <SelectItem value="GED_SOCIAL_STUDIES">GED Social Studies</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -274,11 +303,43 @@ export default function ExamEdit() {
                       <Input type="number" value={q.points} disabled={hasAttempts} onChange={(e) => updateQuestion(q.id, { points: Number(e.target.value) })} />
                     </div>
                   </div>
+
                   <div className="space-y-2">
                     <Label>Question Text</Label>
                     <MathField value={q.questionText} onChange={(val) => updateQuestion(q.id, { questionText: val })} multiline rows={3} enabled={isMathSubject && !hasAttempts} showToolbar={isMathSubject && !hasAttempts} placeholder="Type the question text" />
                   </div>
-                  {q.type === 'MCQ' && q.choices && (
+
+                  <div className="flex items-center gap-2 py-1">
+                    <input
+                      type="checkbox"
+                      id={`has_passage_${q.id}`}
+                      disabled={hasAttempts}
+                      checked={q.passageText !== undefined && q.passageText !== null && q.passageText !== ''}
+                      onChange={(e) => {
+                        updateQuestion(q.id, { passageText: e.target.checked ? 'Type passage here...' : '' });
+                      }}
+                      className="rounded border-slate-300 text-aubergine-600 focus:ring-aubergine-500 h-4 w-4"
+                    />
+                    <label htmlFor={`has_passage_${q.id}`} className="text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer">
+                      Include passage / stimulus text (split layout)
+                    </label>
+                  </div>
+
+                  {(q.passageText !== undefined && q.passageText !== null && q.passageText !== '') && (
+                    <div className="space-y-2">
+                      <Label>Passage / Stimulus Text</Label>
+                      <Textarea
+                        value={q.passageText}
+                        disabled={hasAttempts}
+                        onChange={(e) => updateQuestion(q.id, { passageText: e.target.value })}
+                        rows={4}
+                        placeholder="Type or paste the passage/stimulus text here. This will be shown on the left pane in a split layout."
+                        className="bg-white dark:bg-canvas text-sm border-slate-200 dark:border-surface-raised"
+                      />
+                    </div>
+                  )}
+
+                  {isChoiceType(q.type) && q.choices && (
                     <div className="space-y-3">
                       <Label>Choices & Correct Answer</Label>
                       {q.choices.map((choice, choiceIndex) => (
@@ -301,6 +362,18 @@ export default function ExamEdit() {
                       ))}
                     </div>
                   )}
+
+                  <div className="space-y-2">
+                    <Label>Explanation / Rationale</Label>
+                    <Textarea
+                      value={q.explanation || ''}
+                      disabled={hasAttempts}
+                      onChange={(e) => updateQuestion(q.id, { explanation: e.target.value })}
+                      rows={2}
+                      placeholder="Explain the correct answer. This will be shown to students after results are released."
+                      className="bg-white dark:bg-canvas text-sm border-slate-200 dark:border-surface-raised"
+                    />
+                  </div>
                 </div>
               ))}
               <Button onClick={addQuestion} variant="outline" disabled={hasAttempts} className="w-full border-dashed">

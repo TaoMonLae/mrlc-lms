@@ -35,6 +35,12 @@ export default function ExamResultView() {
         <div className="space-y-3">
           {data.questions.map((q: any) => (
             <div key={q.id} className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-5">
+              {q.passageText && (
+                <div className="mb-4 p-3 bg-slate-50 dark:bg-canvas rounded-lg border border-slate-100 dark:border-surface-raised max-h-48 overflow-y-auto text-xs text-slate-600 dark:text-slate-400 whitespace-pre-wrap leading-relaxed">
+                  <span className="font-bold block mb-1 uppercase tracking-wider text-[10px] text-slate-400">Passage</span>
+                  {q.passageText}
+                </div>
+              )}
               <p className="font-medium text-slate-900 dark:text-white">{q.text}</p>
               <p className="text-sm text-slate-500 mt-2">Your answer: <span className="font-semibold">{q.yourAnswer || '—'}</span></p>
               {q.correctAnswer != null && <p className="text-sm text-emerald-600 mt-1">Correct: {q.correctAnswer}</p>}

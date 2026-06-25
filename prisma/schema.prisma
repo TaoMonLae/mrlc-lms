@@ -409,6 +409,7 @@ model Question {
   options        Json?    // Optional for multiple choice
   correctAnswer  String?  // Can be an option string or detailed answer
   explanation    String?  // Shown only after result release
+  passageText    String?  // Optional passage text (e.g. for GED RLA/Science/Social Studies split layout)
 
   // Phase 2: structure
   orderIndex     Int      @default(0)

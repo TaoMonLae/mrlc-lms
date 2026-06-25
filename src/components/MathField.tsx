@@ -20,9 +20,9 @@ interface MathFieldProps {
 }
 
 /** label shown on the button, and the LaTeX snippet it inserts. */
-const SYMBOLS: { label: string; snippet: string; title: string }[] = [
-  { label: 'x²', snippet: '^{2}', title: 'Exponent / power' },
-  { label: 'xₙ', snippet: '_{n}', title: 'Subscript' },
+const SYMBOLS: { label: string; snippet: string; standalone: string; title: string }[] = [
+  { label: 'x²', snippet: '^{2}', standalone: 'x^{2}', title: 'Exponent / power' },
+  { label: 'xₙ', snippet: '_{n}', standalone: 'x_{n}', title: 'Subscript' },
   { label: 'a∕b', snippet: '\\frac{a}{b}', title: 'Fraction' },
   { label: '√', snippet: '\\sqrt{x}', title: 'Square root' },
   { label: 'ⁿ√', snippet: '\\sqrt[n]{x}', title: 'nth root' },
@@ -37,8 +37,8 @@ const SYMBOLS: { label: string; snippet: string; title: string }[] = [
   { label: '∑', snippet: '\\sum_{i=1}^{n}', title: 'Summation' },
   { label: '∫', snippet: '\\int_{a}^{b}', title: 'Integral' },
   { label: '∞', snippet: '\\infty', title: 'Infinity' },
-  { label: '°', snippet: '^{\\circ}', title: 'Degree' },
-];
+  { label: '°', snippet: '^{\\circ}', standalone: 'x^{\\circ}', title: 'Degree' },
+].map((symbol) => ({ standalone: symbol.snippet, ...symbol }));
 
 export function MathField({
   value,
@@ -50,6 +50,11 @@ export function MathField({
   enabled = true,
 }: MathFieldProps) {
   const ref = useRef<HTMLTextAreaElement | HTMLInputElement | null>(null);
+
+  const cursorIsInsideMath = (position: number) => {
+    const beforeCursor = value.slice(0, position).replace(/\\\$/g, '');
+    return (beforeCursor.match(/\$/g) || []).length % 2 === 1;
+  };
 
   const insertAtCursor = (snippet: string, wrap = false) => {
     const el = ref.current;
@@ -74,6 +79,25 @@ export function MathField({
     });
   };
 
+  const insertMathSnippet = (snippet: string, standalone: string) => {
+    const el = ref.current;
+    const start = el?.selectionStart ?? value.length;
+    const end = el?.selectionEnd ?? value.length;
+    const selected = value.slice(start, end);
+    const insideMath = cursorIsInsideMath(start);
+
+    if (insideMath) {
+      insertAtCursor(snippet, false);
+      return;
+    }
+
+    const body =
+      selected && (snippet.startsWith('^') || snippet.startsWith('_'))
+        ? `${selected}${snippet}`
+        : selected || standalone;
+    insertAtCursor(body, true);
+  };
+
   const hasMath = enabled && value.includes('$');
 
   return (
@@ -93,7 +117,7 @@ export function MathField({
             <button
               key={sym.label}
               type="button"
-              onClick={() => insertAtCursor(sym.snippet)}
+              onClick={() => insertMathSnippet(sym.snippet, sym.standalone)}
               title={`${sym.title} — ${sym.snippet}`}
               className="min-w-[28px] h-7 px-1.5 rounded text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised hover:bg-slate-100 dark:hover:bg-surface-raised transition-colors"
             >

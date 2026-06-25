@@ -77,6 +77,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
       groupId: q.groupId ?? null,
       stimulusId: q.stimulusId ?? null,
       partialCredit: q.partialCredit ?? false,
+      passageText: q.passageText ?? null,
       // NEVER: correctAnswer, correctAnswers, optionWeights, explanation,
       //        negativePoints, numericTolerance, requiresManualGrading internals.
     };
@@ -691,7 +692,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
         const ansByQ: Record<string, any> = {};
         for (const a of attempt.answers) ansByQ[a.questionId] = a;
         questions = qs.map((q: any) => ({
-          id: q.id, text: q.text,
+          id: q.id, text: q.text, passageText: q.passageText ?? null,
           ...(showCorrect ? { correctAnswer: q.correctAnswer, correctAnswers: q.correctAnswers } : {}),
           ...(showExpl ? { explanation: q.explanation } : {}),
           yourAnswer: ansByQ[q.id]?.answerText ?? null,
