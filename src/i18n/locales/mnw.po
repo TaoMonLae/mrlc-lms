@@ -468,7 +468,7 @@ msgid "Schedule a Session"
 msgstr "သတ်မှတ်ဇယားအခိၚ်"
 
 msgid "Teaching Schedule"
-msgstr "ဇယားအခိၚ်သင်ကြား"
+msgstr "ခံက်အၚ်အခိၚ်တန်ဗ္တောန်"
 
 msgid "Your assigned teaching sessions and availability across the week."
 msgstr "အခိၚ်သင်ကြား သတ်မှတ်လဝ်ကဵုသင် ကဵုအခိၚ်လၟေၚ်အပတ်ဏံ။"

@@ -19,6 +19,16 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ProfilePhotoUploader } from '@/src/components/profile/ProfilePhotoUploader';
 
+function sanitizeText(text: string): string {
+  if (!text) return text;
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+}
+
 interface StudentProfile {
   name: string; studentId: string; role: string; status: string; class: string;
   profilePhotoUrl?: string | null;
@@ -76,8 +86,8 @@ export default function StudentProfilePage() {
         
         <div className="flex-1 text-center md:text-left">
           <div className="flex flex-col md:flex-row md:items-center gap-2 mb-2 justify-center md:justify-start">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{student.name}</h1>
-            <Badge className="w-fit mx-auto md:mx-0 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/50 uppercase font-bold text-[10px] tracking-widest">{student.status}</Badge>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{sanitizeText(student.name)}</h1>
+            <Badge className="w-fit mx-auto md:mx-0 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/50 uppercase font-bold text-[10px] tracking-widest">{sanitizeText(student.status)}</Badge>
           </div>
           <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm font-medium text-slate-500 dark:text-slate-300">
             <span className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4" /> {student.studentId}</span>
@@ -192,10 +202,11 @@ export default function StudentProfilePage() {
 }
 
 function InfoItem({ label, value }: { label: string; value: string }) {
+  const sanitizedValue = value ? sanitizeText(value) : value;
   return (
     <div className="space-y-1">
-      <p className="text-[10px] uppercase font-bold tracking-widest text-slate-400 leading-none mb-1.5">{label}</p>
-      <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{value}</p>
+      <p className="text-[10px] uppercase font-bold tracking-widest text-slate-400 leading-none mb-1.5">{sanitizeText(label)}</p>
+      <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{sanitizedValue}</p>
     </div>
   );
 }

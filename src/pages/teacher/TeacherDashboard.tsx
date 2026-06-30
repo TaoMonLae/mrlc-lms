@@ -8,6 +8,16 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { apiGet } from "../../lib/api";
 
+function sanitizeText(text: string): string {
+  if (!text) return text;
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+}
+
 interface DashStats { studentCount: number; classCount: number; attendanceRate: number; upcomingExamCount: number; }
 interface DashboardData {
   stats: DashStats;
@@ -131,10 +141,10 @@ export default function TeacherDashboard() {
                 {assignedClasses.map((cls) => (
                   <tr key={cls.id} className="hover:bg-slate-50 transition-colors group dark:hover:bg-surface-raised/50">
                     <td className="px-6 py-4">
-                      <div className="font-bold text-slate-800 dark:text-slate-200">{cls.name}</div>
-                      <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">{cls.level}</div>
+                      <div className="font-bold text-slate-800 dark:text-slate-200">{sanitizeText(cls.name)}</div>
+                      <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">{sanitizeText(cls.level)}</div>
                     </td>
-                    <td className="px-6 py-4 text-slate-600 dark:text-slate-300 font-medium">{cls.room}</td>
+                    <td className="px-6 py-4 text-slate-600 dark:text-slate-300 font-medium">{sanitizeText(cls.room)}</td>
                     <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{cls.students} Learners</td>
                     <td className="px-6 py-4 text-right">
                       <Button
@@ -211,8 +221,8 @@ export default function TeacherDashboard() {
               {upcomingExams.map((exam) => (
                 <div key={exam.id} className="p-3 rounded-lg bg-slate-50 dark:bg-surface-raised/30 border border-slate-100 dark:border-surface-raised flex justify-between items-center group hover:border-aubergine-200 transition-colors">
                   <div className="space-y-1">
-                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase">{exam.title}</p>
-                    <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-tight">{exam.class}</p>
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase">{sanitizeText(exam.title)}</p>
+                    <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-tight">{sanitizeText(exam.class)}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-xs font-bold text-aubergine-600 uppercase">{exam.date}</p>
@@ -243,8 +253,8 @@ export default function TeacherDashboard() {
               {recentPerformance.map((item) => (
                 <div key={item.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors dark:hover:bg-surface-raised/50">
                   <div className="space-y-0.5">
-                    <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{item.student}</p>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{item.class}</p>
+                    <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{sanitizeText(item.student)}</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{sanitizeText(item.class)}</p>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="text-right">
@@ -299,8 +309,8 @@ export default function TeacherDashboard() {
                     <BookOpen className="h-5 w-5" />
                   </div>
                   <div className="space-y-1 min-w-0">
-                    <p className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase truncate group-hover:text-aubergine-600 transition-colors">{ann.title}</p>
-                    <p className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-300 font-medium line-clamp-2">{ann.body}</p>
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase truncate group-hover:text-aubergine-600 transition-colors">{sanitizeText(ann.title)}</p>
+                    <p className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-300 font-medium line-clamp-2">{sanitizeText(ann.body)}</p>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">
                       {new Date(ann.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </p>

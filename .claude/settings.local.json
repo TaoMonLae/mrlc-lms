@@ -22,7 +22,15 @@
       "Bash(git add *)",
       "Bash(git commit *)",
       "Bash(psql postgres *)",
-      "Bash(psql *)"
+      "Bash(psql *)",
+      "Bash(curl -s http://localhost:8000/api/health)",
+      "Bash(curl -s http://localhost:8000/api/student/dashboard)",
+      "Bash(curl -s http://localhost:8000/api/announcements)",
+      "Bash(curl -s http://localhost:8000/)",
+      "Bash(curl *)",
+      "Bash(npm install *)",
+      "Skill(code-review)",
+      "Bash(git diff *)"
     ]
   }
 }

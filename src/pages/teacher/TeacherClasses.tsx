@@ -7,6 +7,16 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { apiGet } from "../../lib/api";
 
+function sanitizeText(text: string): string {
+  if (!text) return text;
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+}
+
 interface TeacherClass {
   id: string; name: string; level: string; room: string; students: number;
   progress: number; schedule: string; nextLesson: string; attendance: string;
@@ -37,18 +47,18 @@ export default function TeacherClasses() {
             <CardHeader className="bg-slate-50 dark:bg-surface-raised/50 border-b border-slate-100 dark:border-surface-raised p-5">
               <div className="flex justify-between items-start">
                 <Badge variant="outline" className="bg-white dark:bg-surface-indigo text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 border-slate-200 dark:border-surface-raised">
-                  {cls.level}
+                  {sanitizeText(cls.level)}
                 </Badge>
                 <div className="flex items-center gap-1.5 text-slate-500">
                   <MapPin className="h-3 w-3" />
-                  <span className="text-[10px] font-bold uppercase">{cls.room}</span>
+                  <span className="text-[10px] font-bold uppercase">{sanitizeText(cls.room)}</span>
                 </div>
               </div>
               <CardTitle className="mt-4 text-lg font-bold text-slate-900 dark:text-white group-hover:text-aubergine-600 transition-colors">
-                {cls.name}
+                {sanitizeText(cls.name)}
               </CardTitle>
               <CardDescription className="text-xs font-medium text-slate-500 line-clamp-1">
-                {cls.schedule}
+                {sanitizeText(cls.schedule)}
               </CardDescription>
             </CardHeader>
             <CardContent className="p-5 space-y-5">

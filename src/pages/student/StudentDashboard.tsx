@@ -1,12 +1,12 @@
 import React from 'react';
-import { 
-  LayoutDashboard, 
-  BookOpen, 
-  CalendarCheck, 
-  FileCheck, 
-  Wallet, 
-  Bell, 
-  Clock, 
+import {
+  LayoutDashboard,
+  BookOpen,
+  CalendarCheck,
+  FileCheck,
+  Wallet,
+  Bell,
+  Clock,
   ChevronRight,
   TrendingUp,
   User,
@@ -23,6 +23,16 @@ import { useEffect, useState } from 'react';
 import { useSettings } from '../../providers/SettingsProvider';
 import { formatMoney } from '../../lib/locale';
 import { apiGet } from '../../lib/api';
+
+function sanitizeText(text: string): string {
+  if (!text) return text;
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+}
 
 interface StudentDashData {
   className: string; currency: string;
@@ -93,7 +103,7 @@ export default function StudentDashboard() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Welcome back! 👋</h1>
           <p className="text-slate-500 mt-1 flex items-center gap-2">
-            <span className="font-bold text-aubergine-600 dark:text-aubergine-400">{dash.className}</span>
+            <span className="font-bold text-aubergine-600 dark:text-aubergine-400">{sanitizeText(dash.className)}</span>
             <span className="text-slate-300">•</span>
             <span>{dash.className === 'Unassigned' ? 'No academic year assigned' : 'Current academic year'}</span>
           </p>
@@ -152,10 +162,10 @@ export default function StudentDashboard() {
                 <div key={idx} className="flex items-center justify-between p-4 border-b last:border-0 border-slate-50 dark:border-surface-raised/50 hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors">
                   <div className="flex items-center gap-4">
                     <div className="h-10 w-10 flex items-center justify-center bg-aubergine-100 dark:bg-aubergine-900/30 text-aubergine-700 dark:text-aubergine-400 rounded-full font-bold text-xs uppercase">
-                      {exam.subject.substring(0, 2)}
+                      {sanitizeText(exam.subject.substring(0, 2))}
                     </div>
                     <div>
-                      <h4 className="font-bold text-slate-900 dark:text-white text-sm">{exam.subject}</h4>
+                      <h4 className="font-bold text-slate-900 dark:text-white text-sm">{sanitizeText(exam.subject)}</h4>
                       <div className="flex items-center gap-3 mt-1 text-[11px] text-slate-500">
                         <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {exam.time}</span>
                         <span className="flex items-center gap-1"><CalendarCheck className="h-3 w-3" /> {exam.date}</span>
@@ -163,7 +173,7 @@ export default function StudentDashboard() {
                     </div>
                   </div>
                   <Badge variant="secondary" className="bg-aubergine-50 text-aubergine-700 dark:bg-aubergine-900/20 dark:text-aubergine-400 font-bold text-[10px] uppercase">
-                    {exam.type}
+                    {sanitizeText(exam.type)}
                   </Badge>
                 </div>
               ))}
@@ -194,7 +204,7 @@ export default function StudentDashboard() {
                       {result.grade}
                     </div>
                     <div>
-                      <h4 className="font-bold text-slate-900 dark:text-white text-sm">{result.subject}</h4>
+                      <h4 className="font-bold text-slate-900 dark:text-white text-sm">{sanitizeText(result.subject)}</h4>
                       <p className="text-[11px] text-slate-500 mt-1">Released on {result.date}</p>
                     </div>
                   </div>
@@ -228,9 +238,9 @@ export default function StudentDashboard() {
                   <Link to={`/announcements/${ann.id}`} key={ann.id} className="group block cursor-pointer">
                     <div className="flex items-start justify-between">
                       <div>
-                        <h5 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-aubergine-600 transition-colors line-clamp-1">{ann.title}</h5>
+                        <h5 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-aubergine-600 transition-colors line-clamp-1">{sanitizeText(ann.title)}</h5>
                         <span className="text-[10px] text-slate-400 mt-1 flex items-center gap-1 font-medium">
-                          {ann.date} • {ann.category}
+                          {ann.date} • {sanitizeText(ann.category)}
                         </span>
                       </div>
                       <ChevronRight className="h-3 w-3 text-slate-300 group-hover:text-aubergine-400 transition-all" />
@@ -267,11 +277,11 @@ export default function StudentDashboard() {
               {libraryResources.map((res, idx) => (
                 <div key={idx} className="p-4 border-b last:border-0 border-slate-100 dark:border-surface-raised/50 flex items-center justify-between">
                   <div>
-                    <h5 className="text-xs font-bold text-slate-800 dark:text-white leading-tight">{res.title}</h5>
-                    <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-tighter font-bold">{res.subject}</p>
+                    <h5 className="text-xs font-bold text-slate-800 dark:text-white leading-tight">{sanitizeText(res.title)}</h5>
+                    <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-tighter font-bold">{sanitizeText(res.subject)}</p>
                   </div>
                   <Badge variant="outline" className="text-[9px] h-5 border-slate-200 dark:border-surface-raised h-5 px-1 bg-white dark:bg-surface-raised">
-                    {res.format}
+                    {sanitizeText(res.format)}
                   </Badge>
                 </div>
               ))}

@@ -8376,7 +8376,7 @@ async function startServer() {
   });
 
   // ── Sticker packs ────────────────────────────────────────────────────────────
-  const STICKER_EXTS = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif"]);
+  const STICKER_EXTS = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"]);
   const isStickerFile = (f: string) => STICKER_EXTS.has(path.extname(f).toLowerCase());
   const encPath = (...segs: string[]) => segs.map((s) => encodeURIComponent(s)).join("/");
 

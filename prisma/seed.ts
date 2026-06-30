@@ -212,18 +212,27 @@ async function main() {
           },
         }));
       const score = gedScores[subj.code] ?? 150;
-      await prisma.examAttempt.upsert({
-        where: { studentId_examId: { studentId: studentProfile.id, examId: exam.id } },
-        update: { score, isCompleted: true, completedAt: new Date("2025-04-15T11:00:00Z") },
-        create: {
+      const existingAttempt = await prisma.examAttempt.findFirst({
+        where: { studentId: studentProfile.id, examId: exam.id },
+        orderBy: { attemptNumber: "desc" },
+      });
+      if (existingAttempt) {
+        await prisma.examAttempt.update({
+          where: { id: existingAttempt.id },
+          data: { score, isCompleted: true, completedAt: new Date("2025-04-15T11:00:00Z") },
+        });
+      } else {
+        await prisma.examAttempt.create({
+          data: {
           studentId: studentProfile.id,
           examId: exam.id,
           score,
           isCompleted: true,
           startedAt: new Date("2025-04-15T09:00:00Z"),
           completedAt: new Date("2025-04-15T11:00:00Z"),
-        },
-      });
+          },
+        });
+      }
       console.log(`  ${subj.code}: scored ${score}/200 — ${score >= 145 ? "PASS" : "below passing"}`);
     }
   }

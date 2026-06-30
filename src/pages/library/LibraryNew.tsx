@@ -135,6 +135,16 @@ export default function LibraryNew() {
   };
 
   const resourceType = watch('type');
+  const selectedClassId = watch('classId') || 'none';
+  const selectedSubjectId = watch('subjectId') || 'none';
+  const selectedClassLabel =
+    selectedClassId === 'none'
+      ? '-- Global (All Classes) --'
+      : classes.find((c) => c.id === selectedClassId)?.name || 'Select class';
+  const selectedSubjectLabel =
+    selectedSubjectId === 'none'
+      ? '-- General System --'
+      : subjects.find((s) => s.id === selectedSubjectId)?.name || 'Select subject';
 
   return (
     <div className="space-y-6 max-w-[800px] mx-auto pb-10">
@@ -276,9 +286,9 @@ export default function LibraryNew() {
 
                 <div className="space-y-2">
                   <Label>Assign to Class (Optional)</Label>
-                  <Select value={watch('classId') || "none"} onValueChange={(val) => setValue('classId', val === "none" ? undefined : val)}>
+                  <Select value={selectedClassId} onValueChange={(val) => setValue('classId', val === "none" ? undefined : val)}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Global Resource" />
+                      <SelectValue placeholder="Global Resource">{selectedClassLabel}</SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">-- Global (All Classes) --</SelectItem>
@@ -291,9 +301,9 @@ export default function LibraryNew() {
 
                 <div className="space-y-2">
                   <Label>Assign to Subject (Optional)</Label>
-                  <Select value={watch('subjectId') || "none"} onValueChange={(val) => setValue('subjectId', val === "none" ? undefined : val)}>
+                  <Select value={selectedSubjectId} onValueChange={(val) => setValue('subjectId', val === "none" ? undefined : val)}>
                     <SelectTrigger>
-                      <SelectValue placeholder="General Resource" />
+                      <SelectValue placeholder="General Resource">{selectedSubjectLabel}</SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">-- General System --</SelectItem>
