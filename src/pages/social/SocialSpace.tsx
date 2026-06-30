@@ -92,20 +92,20 @@ export default function SocialSpace() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div className="flex items-center gap-3">
-        <div className="rounded-lg bg-aubergine-100 p-2 text-aubergine-700"><Sparkles className="h-5 w-5" /></div>
+        <div className="rounded-lg bg-aubergine-100 p-2 text-aubergine-700 dark:bg-aubergine-900/30 dark:text-aubergine-400"><Sparkles className="h-5 w-5" /></div>
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">Social Space</h1>
-          <p className="text-sm text-slate-500">Share a photo or a thought with the school. Everything disappears after 24 hours.</p>
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Social Space</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Share a photo or a thought with the school. Everything disappears after 24 hours.</p>
         </div>
       </div>
 
       {/* Composer */}
-      <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
+      <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-surface-raised dark:bg-surface-indigo">
         <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={2} maxLength={1000} placeholder="What's happening?" className="resize-none" />
         {photo && (
           <div className="relative inline-block">
             <img src={photo.url} alt="preview" className="max-h-48 rounded-lg" />
-            <button onClick={() => setPhoto(null)} className="absolute -top-2 -right-2 rounded-full bg-white p-0.5 shadow ring-1 ring-slate-200"><X className="h-4 w-4 text-rose-500" /></button>
+            <button onClick={() => setPhoto(null)} className="absolute -top-2 -right-2 rounded-full bg-white p-0.5 shadow ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-600"><X className="h-4 w-4 text-rose-500" /></button>
           </div>
         )}
         <div className="flex items-center justify-between">
@@ -119,47 +119,47 @@ export default function SocialSpace() {
       </div>
 
       {/* Feed */}
-      {loading ? <p className="text-sm text-slate-400">Loading…</p> :
-        posts.length === 0 ? <div className="rounded-xl border border-dashed border-slate-200 py-16 text-center text-sm text-slate-400">Nothing here yet. Be the first to post!</div> :
+      {loading ? <p className="text-sm text-slate-400 dark:text-slate-500">Loading…</p> :
+        posts.length === 0 ? <div className="rounded-xl border border-dashed border-slate-200 py-16 text-center text-sm text-slate-400 dark:border-slate-700 dark:text-slate-500">Nothing here yet. Be the first to post!</div> :
         <div className="space-y-4">
           {posts.map((p) => (
-            <div key={p.id} className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+            <div key={p.id} className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-surface-raised dark:bg-surface-indigo">
               <div className="flex items-center justify-between p-3">
                 <div className="flex items-center gap-2">
-                  <div className="grid h-9 w-9 place-items-center overflow-hidden rounded-full bg-aubergine-100 text-xs font-bold text-aubergine-700">
+                  <div className="grid h-9 w-9 place-items-center overflow-hidden rounded-full bg-aubergine-100 text-xs font-bold text-aubergine-700 dark:bg-aubergine-900/30 dark:text-aubergine-400">
                     {p.author.photo ? <img src={p.author.photo} alt="" className="h-full w-full object-cover" /> : p.author.name.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-slate-900">{p.author.name} <Badge variant="outline" className="ml-1 text-[9px] uppercase">{roleLabel(p.author.role)}</Badge></p>
-                    <p className="flex items-center gap-1 text-[10px] text-slate-400"><Clock className="h-3 w-3" /> {timeLeft(p.expiresAt)}</p>
+                    <p className="text-sm font-medium text-slate-900 dark:text-white">{p.author.name} <Badge variant="outline" className="ml-1 text-[9px] uppercase dark:border-slate-600 dark:text-slate-300">{roleLabel(p.author.role)}</Badge></p>
+                    <p className="flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500"><Clock className="h-3 w-3" /> {timeLeft(p.expiresAt)}</p>
                   </div>
                 </div>
-                {(p.mine || isAdmin) && <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => removePost(p.id)}><Trash2 className="h-4 w-4 text-slate-400" /></Button>}
+                {(p.mine || isAdmin) && <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => removePost(p.id)}><Trash2 className="h-4 w-4 text-slate-400 dark:text-slate-500" /></Button>}
               </div>
 
-              {p.body && <p className="whitespace-pre-wrap px-3 pb-3 text-sm text-slate-800">{p.body}</p>}
+              {p.body && <p className="whitespace-pre-wrap px-3 pb-3 text-sm text-slate-800 dark:text-slate-200">{p.body}</p>}
               {p.imageUrl && <img src={p.imageUrl} alt="post" className="max-h-[28rem] w-full object-cover" />}
 
               <div className="flex items-center gap-4 p-3">
-                <button onClick={() => toggleLike(p)} className={`flex items-center gap-1 text-sm ${p.likedByMe ? 'text-rose-600' : 'text-slate-500 hover:text-rose-600'}`}>
-                  <Heart className={`h-5 w-5 ${p.likedByMe ? 'fill-rose-500 text-rose-500' : ''}`} /> {p.likeCount > 0 && p.likeCount}
+                <button onClick={() => toggleLike(p)} className={`flex items-center gap-1 text-sm ${p.likedByMe ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400'}`}>
+                  <Heart className={`h-5 w-5 ${p.likedByMe ? 'fill-rose-500 text-rose-500 dark:fill-rose-400 dark:text-rose-400' : ''}`} /> {p.likeCount > 0 && p.likeCount}
                 </button>
-                <button onClick={() => setOpenComments((o) => ({ ...o, [p.id]: !o[p.id] }))} className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700">
+                <button onClick={() => setOpenComments((o) => ({ ...o, [p.id]: !o[p.id] }))} className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
                   <MessageCircle className="h-5 w-5" /> {p.commentCount > 0 && p.commentCount}
                 </button>
               </div>
 
               {openComments[p.id] && (
-                <div className="space-y-2 border-t border-slate-100 p-3">
+                <div className="space-y-2 border-t border-slate-100 p-3 dark:border-slate-700">
                   {p.comments.map((c) => (
                     <div key={c.id} className="group flex items-start justify-between gap-2 text-sm">
-                      <p><span className="font-medium text-slate-800">{c.user.name}</span> <span className="text-slate-600">{c.body}</span></p>
-                      {(c.mine || isAdmin) && <button onClick={() => removeComment(p.id, c.id)} className="opacity-0 group-hover:opacity-100"><Trash2 className="h-3.5 w-3.5 text-slate-400" /></button>}
+                      <p><span className="font-medium text-slate-800 dark:text-slate-200">{c.user.name}</span> <span className="text-slate-600 dark:text-slate-400">{c.body}</span></p>
+                      {(c.mine || isAdmin) && <button onClick={() => removeComment(p.id, c.id)} className="opacity-0 group-hover:opacity-100"><Trash2 className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" /></button>}
                     </div>
                   ))}
                   <div className="flex items-center gap-2 pt-1">
                     <Input value={commentDraft[p.id] || ''} onChange={(e) => setCommentDraft((d) => ({ ...d, [p.id]: e.target.value }))}
-                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addComment(p); } }} placeholder="Add a comment…" className="h-9" />
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addComment(p); } }} placeholder="Add a comment…" className="h-9 dark:bg-slate-800 dark:border-slate-600 dark:text-white" />
                     <Button size="icon" className="h-9 w-9 shrink-0" onClick={() => addComment(p)} disabled={!(commentDraft[p.id] || '').trim()}><Send className="h-4 w-4" /></Button>
                   </div>
                 </div>
