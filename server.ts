@@ -8829,6 +8829,40 @@ async function startServer() {
     }
   });
 
+  // Permanently delete a conversation and everything in it (messages, participants,
+  // reports) plus its uploaded image files — keeps the DB and disk from bloating.
+  // Admins may delete any conversation; teachers may delete ones they're part of.
+  app.delete("/api/chat/conversations/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const conv = await prisma.conversation.findUnique({
+        where: { id: req.params.id },
+        include: { participants: { select: { userId: true } } },
+      });
+      if (!conv) { res.status(404).json({ error: "Conversation not found" }); return; }
+      const isAdmin = jwtUser.role === "ADMIN";
+      const isParticipant = conv.participants.some((p) => p.userId === jwtUser.userId);
+      if (!isAdmin && !(jwtUser.role === "TEACHER" && isParticipant)) { res.status(403).json({ error: "Forbidden" }); return; }
+
+      // Collect uploaded image files (skip shared stickers) to remove from disk.
+      const withFiles = await prisma.chatMessage.findMany({ where: { conversationId: conv.id, attachmentUrl: { not: null } }, select: { attachmentUrl: true } });
+      await prisma.conversation.delete({ where: { id: conv.id } }); // cascades participants, messages, reports
+      for (const m of withFiles) {
+        if (m.attachmentUrl && m.attachmentUrl.startsWith("/uploads/chat-media/")) {
+          try { const fp = path.join(CHAT_MEDIA_DIR, path.basename(m.attachmentUrl)); if (fs.existsSync(fp)) fs.unlinkSync(fp); } catch { /* ignore */ }
+        }
+      }
+      // Tell participants' open clients to drop it from their lists.
+      chatNotify(conv.participants.map((p) => p.userId), { type: "conversation-deleted", conversationId: conv.id });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "DELETE", "CONVERSATION", conv.id,
+        `Deleted conversation ${conv.id} (${withFiles.length} attachment file(s) cleared).`, req.ip, req.headers["user-agent"] || null, "WARNING");
+      res.json({ success: true });
+    } catch (err) {
+      logger.error("Error deleting conversation:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
   app.delete("/api/chat/messages/:id", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MessageSquare, Plus, Send, Search, Flag, ArrowLeft, ShieldAlert, ImagePlus, X, Loader2, Sticker, Camera, Download, Clock } from 'lucide-react';
+import { MessageSquare, Plus, Send, Search, Flag, ArrowLeft, ShieldAlert, ImagePlus, X, Loader2, Sticker, Camera, Download, Clock, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePermissions } from '../../lib/permissions';
 import { Input } from '@/components/ui/input';
@@ -49,6 +49,7 @@ export default function ChatPage() {
   const { user } = useAuth();
   const myId = user?.id;
   const canSave = user?.role === 'ADMIN' || user?.role === 'TEACHER';
+  const canDeleteConv = user?.role === 'ADMIN' || user?.role === 'TEACHER';
   const [conversations, setConversations] = useState<ConvSummary[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [detail, setDetail] = useState<ConvDetail | null>(null);
@@ -171,6 +172,20 @@ export default function ChatPage() {
       setDetail((d) => (d && d.id === activeId ? { ...d, messages: [...d.messages, msg] } : d));
       loadList();
     } catch (err: any) { toast.error(err.message || 'Could not send photo'); }
+  }
+
+  async function deleteConversation() {
+    if (!activeId) return;
+    if (!window.confirm('Permanently delete this conversation? All messages and photos in it are cleared and cannot be recovered.')) return;
+    const id = activeId;
+    try {
+      await apiSend(`/api/chat/conversations/${id}`, 'DELETE');
+      toast.success('Conversation deleted');
+      setActiveId(null);
+      setDetail(null);
+      setConversations((prev) => prev.filter((c) => c.id !== id));
+      loadList();
+    } catch (err: any) { toast.error(err.message || 'Could not delete conversation'); }
   }
 
   async function report(messageId: string) {
@@ -314,6 +329,11 @@ export default function ChatPage() {
                 })()}
               </div>
               {detail.oversight && <Badge className="ml-auto bg-amber-100 text-amber-700"><ShieldAlert className="mr-1 h-3 w-3" /> Oversight</Badge>}
+              {canDeleteConv && (
+                <Button variant="ghost" size="icon" className={`h-8 w-8 ${detail.oversight ? '' : 'ml-auto'}`} title="Delete conversation" onClick={deleteConversation}>
+                  <Trash2 className="h-4 w-4 text-rose-500" />
+                </Button>
+              )}
             </div>
 
             <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto p-4">
