@@ -1,123 +1,247 @@
 # MRLC LMS — Mon Refugee Learning Centre
 
-A single-school Learning Management System for the Mon Refugee Learning Centre
-(GED School). It covers students, teachers, classes, subjects, attendance,
-exams, a digital library, a physical book catalog with borrowing, fees, case
-management, announcements, role-based access, and configurable school
-branding/settings.
+> A comprehensive Learning Management System for the Mon Refugee Learning Centre (GED School)
 
-The app runs as one Node/Express server (built with `esbuild`) that also serves
-the compiled Vite/React frontend, backed by PostgreSQL via Prisma.
-
-The app listens on **http://localhost:8000** by default (override with the
-`PORT` environment variable).
+**Developed by Tao Mon Lae**
 
 ---
 
-## Run locally
+## Overview
 
-**Prerequisites:** Node.js 18+ and a PostgreSQL instance.
+MRLC LMS is a full-featured, single-school Learning Management System designed specifically for the Mon Refugee Learning Centre. It provides a complete digital platform for managing students, teachers, classes, subjects, attendance, examinations, digital library resources, physical book catalog with borrowing management, fee tracking, case management, announcements, role-based access control, and configurable school branding.
 
-1. Copy `.env.example` to `.env` and set at least:
+The application is built as a unified Node.js/Express server that serves both the API and the compiled Vite/React frontend, backed by a PostgreSQL database managed through Prisma ORM.
+
+**Server:** `http://localhost:8000` (configurable via `PORT` environment variable)
+
+---
+
+## Features
+
+### Core Functionality
+
+| Module | Description |
+|--------|-------------|
+| **User Management** | Role-based access for Admin, Teacher, Student, Librarian, HR, and Finance users with granular permissions |
+| **Student Management** | Comprehensive student profiles, enrollment tracking, and academic history |
+| **Teacher Management** | Teacher profiles, class assignments, and workload tracking |
+| **Class Management** | Class creation, enrollment, teacher assignment, and scheduling |
+| **Subject Management** | Subject catalog with prerequisites and difficulty levels |
+| **Attendance** | Daily attendance tracking with reporting and analytics |
+| **Examinations** | Exam creation, scheduling, proctoring, and automated grading |
+| **Gradebook** | Student progress tracking, grade reports, and performance analytics |
+| **Digital Library** | E-book (EPUB/PDF) collection with reading progress tracking |
+| **Physical Library** | Book catalog, borrowing system, and due date management |
+| **Fee Management** | Fee structure, payment tracking, and receipt generation |
+| **Case Management** | Student case notes, interventions, and follow-up tracking |
+| **Announcements** | School-wide announcements with rich text and media support |
+| **Timetable** | Class scheduling with conflict detection and calendar view |
+| **Reports** | Comprehensive reporting across all modules with export options |
+| **Settings** | School branding, system configuration, and backup management |
+
+### Specialized Features
+
+- **Chat System**: Real-time messaging between users with sticker support
+- **Social Space**: Community feed for sharing updates and media
+- **Video Management**: Educational video library with categories
+- **Document Management**: Secure document generation and printing
+- **Lesson Planner**: Teacher lesson planning and resource management
+- **Admissions**: Student application and enrollment workflow
+- **HR & Payroll**: Staff management and payroll processing
+- **Bank Integration**: Fee payment tracking and reconciliation
+
+### Multi-Language Support
+
+The LMS includes built-in internationalization (i18n) with support for:
+
+- **English** (`en.po`) – Default language
+- **Burmese** (`my.po`) – မြန်မာ
+- **Mon** (`mnw.po`) – ဘာသာမန်
+
+Adding new languages is straightforward—simply add a `.po` file to `src/i18n/locales/` and the system will automatically register it. The default language can be configured in **Settings → System Settings → Language**.
+
+---
+
+## Tech Stack
+
+- **Frontend**: React 19 · Vite 6 · TypeScript · Tailwind CSS v4 · Radix UI · Lucide Icons
+- **Backend**: Express 4 · Node.js · Winston logging · JWT authentication
+- **Database**: PostgreSQL · Prisma 7 ORM
+- **File Processing**: Multer (uploads) · epubjs (e-books) · react-pdf (PDFs)
+- **Security**: Helmet · CORS · Express rate-limiting · bcrypt password hashing · DOMPurify (XSS prevention)
+- **Build Tools**: esbuild (server bundle) · Vite (client bundle)
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- **Node.js** 18 or higher
+- **PostgreSQL** database server
+
+### Installation
+
+1. **Clone and setup environment**
+   ```bash
+   git clone <repository-url>
+   cd mrlc-lms
+   cp .env.example .env
+   ```
+
+2. **Configure environment variables**
+   Edit `.env` and set at minimum:
    ```
    DATABASE_URL="postgresql://USER:PASSWORD@localhost:5432/school_lms"
    SESSION_SECRET="a-random-string-at-least-16-characters"
    ```
-   `SESSION_SECRET` **must be 16+ characters** or the server refuses to start.
+   
+   > **Important**: `SESSION_SECRET` must be 16+ characters or the server will refuse to start. Generate with: `openssl rand -base64 48`
 
-2. Install dependencies:
+3. **Install dependencies**
    ```bash
    npm install
    ```
 
-3. Apply database migrations and generate the Prisma client:
+4. **Setup database**
    ```bash
+   # Apply migrations and generate Prisma client
    npx prisma migrate deploy
    npx prisma generate
-   ```
-
-4. (First run) create the starter accounts:
-   ```bash
+   
+   # Create starter accounts (first run only)
    npm run seed
    ```
 
-5. Start the dev server:
+5. **Start development server**
    ```bash
    npm run dev
    ```
-   Open **http://localhost:8000**.
+   
+   Open **http://localhost:8000**
 
-To run a port other than 8000, set `PORT` (e.g. PowerShell: `$env:PORT=3000; npm run dev`).
+### Seeded Accounts
 
-### Seeded logins
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | admin@mrlc.edu | admin123 |
+| Teacher | teacher@mrlc.edu | teacher123 |
+| Student | student@mrlc.edu | student123 |
 
-| Role    | Email             | Password   |
-|---------|-------------------|------------|
-| Admin   | admin@mrlc.edu    | admin123   |
-| Teacher | teacher@mrlc.edu  | teacher123 |
-| Student | student@mrlc.edu  | student123 |
-
-Create a **Librarian** user from Users → Create User to access the Book Catalog.
+> **Note**: A **Librarian** user can be created from Users → Create User to access the Book Catalog features.
 
 ---
 
-## Run with Docker
+## Deployment
 
-The fastest way to get everything (app + database) running. See **DOCKER.md**
-for details. In short, from the project root:
+### Docker Deployment (Recommended)
+
+The fastest way to deploy the complete stack (application + database):
 
 ```bash
-# first run — also creates the starter accounts
+# First run — builds containers and creates starter accounts
 SEED_ON_START=true docker compose up --build
 
-# after that
+# Subsequent runs
 docker compose up
 ```
 
-Open **http://localhost:8000**. Migrations run automatically on container start.
+See **DOCKER.md** for detailed deployment instructions.
 
----
-
-## Production build (without Docker)
+### Production Build (Without Docker)
 
 ```bash
-npm run build     # builds the client (dist/) and server (dist/server.cjs)
-npm run start     # NODE_ENV=production node dist/server.cjs
+# Build client and server bundles
+npm run build
+
+# Start production server
+NODE_ENV=production npm run start
 ```
 
-Set `NODE_ENV=production` and a real `DATABASE_URL` / `SESSION_SECRET` in the
-environment. The production server serves the static client from `dist/`.
+**Production requirements:**
+- Set `NODE_ENV=production`
+- Configure production `DATABASE_URL` and `SESSION_SECRET`
+- The production server serves static assets from `dist/`
+
+### Useful Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server with hot reload |
+| `npm run build` | Build production bundles (client + server) |
+| `npm run start` | Run production build |
+| `npm run seed` | Create starter admin/teacher/student accounts |
+| `npm run lint` | Type-check with TypeScript compiler |
 
 ---
 
-## Useful scripts
+## Security Features
 
-| Command          | Description |
-|------------------|-------------|
-| `npm run dev`    | Dev server (Express + Vite middleware) on port 8000 |
-| `npm run build`  | Build client and server bundles |
-| `npm run start`  | Run the production build |
-| `npm run seed`   | Seed starter admin/teacher/student accounts |
-| `npm run lint`   | Type-check with `tsc --noEmit` |
+- **Authentication**: JWT-based auth with secure token storage
+- **Authorization**: Server-side role checks on all protected endpoints
+- **Password Security**: bcrypt hashing with salt rounds
+- **XSS Protection**: DOMPurify sanitization on all user-generated content
+- **Rate Limiting**: Configurable rate limits on sensitive endpoints
+- **Secure Headers**: Helmet middleware for security headers
+- **CORS**: Configurable cross-origin resource sharing
+- **Proxy Support**: `trust proxy` enabled for reverse proxy deployments
 
-## Production hardening
+---
 
-- Security middleware (helmet, CORS, rate-limiting) is enabled in `server.ts`.
-- `app.set("trust proxy", 1)` so rate limiting / client IPs work behind a proxy.
-- JWT auth with server-side role checks; passwords hashed with bcrypt.
-- Structured logging via `winston`; error responses are sanitized.
+## Project Structure
 
-## Multi-language support
+```
+mrlc-lms/
+├── src/
+│   ├── pages/          # Route components (student, teacher, admin, etc.)
+│   ├── components/     # Reusable UI components
+│   ├── lib/            # API clients, utilities, helpers
+│   ├── i18n/           # Internationalization files (.po)
+│   ├── hooks/          # Custom React hooks
+│   ├── providers/      # Context providers
+│   └── types/          # TypeScript type definitions
+├── prisma/
+│   ├── schema.prisma   # Database schema
+│   ├── migrations/     # Database migration files
+│   └── seed.ts         # Seed script for starter accounts
+├── public/
+│   └── stickers/       # Built-in sticker packs for chat
+├── data/               # Runtime data directory (uploads, backups, etc.)
+├── deploy/             # Deployment configurations
+└── server.ts           # Express server entry point
+```
 
-The LMS has built-in internationalization (i18n) support driven by standard `.po` files. It translates the entire user interface dynamically on the client side:
-- **Available languages**:
-  - English (`en.po` - Default)
-  - Burmese (`my.po` - မြန်မာ)
-  - Mon (`mnw.po` - ဘာသာမန်)
-- **Adding new languages**: Simply drop a new `.po` translation file under `src/i18n/locales/` (e.g., `th.po` for Thai). The switcher and settings will automatically register and display it.
-- To change the system-wide default language, navigate to **Settings -> System Settings -> Language**.
+---
 
-## Tech stack
+## Configuration
 
-React 19 · Vite 6 · Tailwind CSS v4 · Express 4 · Prisma 7 · PostgreSQL ·
-TypeScript · Inter (Webflow-inspired theme).
+### Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `DATABASE_URL` | Yes | — | PostgreSQL connection string |
+| `SESSION_SECRET` | Yes | — | Secret for signing JWT tokens (≥16 chars) |
+| `APP_URL` | No | `http://localhost:8000` | Public origin for CORS |
+| `PORT` | No | `8000` | Server listening port |
+| `EBOOK_DIR` | No | `./data/ebooks` | E-book storage location |
+| `BACKUP_DIR` | No | `./data/backups` | Database backup location |
+| `BACKUP_RETENTION` | No | `14` | Number of backups to retain |
+| `BACKUP_HOUR` | No | `2` | Hour for daily backup (0-23) |
+
+### Backup Configuration
+
+Automatic database backups can be enabled in **Settings → System Settings**. Backups use `pg_dump` and are stored in `BACKUP_DIR` with retention based on `BACKUP_RETENTION`.
+
+---
+
+## Support & Contributing
+
+For issues, questions, or contributions related to MRLC LMS, please refer to the project repository or contact the development team.
+
+---
+
+**License:** All rights reserved
+
+**Developed by Tao Mon Lae**
+
+© 2024 Mon Refugee Learning Centre
