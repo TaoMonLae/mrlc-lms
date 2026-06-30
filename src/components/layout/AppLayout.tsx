@@ -4,6 +4,8 @@ import { TopBar } from "./TopBar";
 import { Outlet, useLocation, Navigate } from "react-router-dom";
 import { motion } from "motion/react";
 import { useAuth } from "../../providers/AuthProvider";
+import ChatWidget from "../chat/ChatWidget";
+import { ChatProvider } from "../../providers/ChatProvider";
 
 export function AppLayout() {
   const location = useLocation();
@@ -15,6 +17,7 @@ export function AppLayout() {
   }
 
   return (
+    <ChatProvider>
     <SidebarProvider>
       <div className="flex h-screen w-full bg-slate-50 dark:bg-canvas font-sans text-slate-900 dark:text-white overflow-hidden">
         {/* Skip navigation link for keyboard users */}
@@ -39,7 +42,9 @@ export function AppLayout() {
             </motion.div>
           </main>
         </SidebarInset>
+        <ChatWidget />
       </div>
     </SidebarProvider>
+    </ChatProvider>
   );
 }

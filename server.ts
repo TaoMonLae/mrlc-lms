@@ -8236,40 +8236,9 @@ async function startServer() {
   // ── Phase 3 reusable question bank routes ───────────────────────────────────
   registerExamBankRoutes({ app, prisma, authMiddleware, createAuditLog, logger });
 
-  if (!isProduction) {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
-    app.get("*", async (req, res, next) => {
-      const url = req.originalUrl;
-      if (url.startsWith("/api/")) {
-        return next();
-      }
-      try {
-        const fs = await import("fs");
-        let template = fs.readFileSync(path.resolve(__dirname, "index.html"), "utf-8");
-        template = await vite.transformIndexHtml(url, template);
-        res.status(200).set({ "Content-Type": "text/html" }).end(template);
-      } catch (e) {
-        vite.ssrFixStacktrace(e as Error);
-        next(e);
-      }
-    });
-  } else {
-    const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
-    app.get("*", (req, res) => {
-      // Don't fall back to the SPA shell for unmatched API routes — return JSON
-      // so clients get a proper 404 instead of an HTML page with status 200.
-      if (req.originalUrl.startsWith("/api/")) {
-        res.status(404).json({ error: "Not found" });
-        return;
-      }
-      res.sendFile(path.join(distPath, "index.html"));
-    });
-  }
+  // NOTE: the SPA catch-all (Vite middleware in dev / static dist in prod) is
+  // registered at the very end of startServer, AFTER every /api route, so it can
+  // never shadow an API endpoint. See setupSpaFallback() just before app.listen.
 
   // ── Chat API (conversation-based) ────────────────────────────────────────────
   // Hierarchical rule: every conversation must include at least one staff member.
@@ -8320,19 +8289,50 @@ async function startServer() {
     req.on("close", () => { clearInterval(ping); set!.delete(res); if (set!.size === 0) chatStreams.delete(user.userId); });
   });
 
+  // Presence: who currently has at least one live stream open (i.e. the app open).
+  app.get("/api/chat/presence", authMiddleware, async (_req, res) => {
+    const online: string[] = [];
+    for (const [uid, set] of chatStreams) if (set.size > 0) online.push(uid);
+    res.json({ online });
+  });
+
   // Who the signed-in user may start a conversation with.
   app.get("/api/chat/contacts", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
+    const ADMIN_STAFF = ["ADMIN", "STAFF", "ACCOUNTANT", "CASE_WORKER", "LIBRARIAN"];
+    const sel = { id: true, firstName: true, lastName: true, role: true, profilePhotoUrl: true } as const;
     try {
-      const where: any = { id: { not: jwtUser.userId }, isActive: true };
-      // Students may only contact staff; staff may contact anyone.
-      if (!isStaffRole(jwtUser.role)) where.role = { in: CHAT_STAFF_ROLES };
-      const users = await prisma.user.findMany({
-        where,
-        select: { id: true, firstName: true, lastName: true, role: true, profilePhotoUrl: true },
-        orderBy: [{ role: "asc" }, { firstName: "asc" }],
+      const groups: { key: string; label: string; contacts: any[] }[] = [];
+
+      // Staff & teachers — everyone can contact these.
+      const staff = await prisma.user.findMany({
+        where: { id: { not: jwtUser.userId }, isActive: true, role: { in: CHAT_STAFF_ROLES } },
+        select: sel, orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
       });
-      res.json(users.map(userBrief));
+      const teachers = staff.filter((u) => u.role === "TEACHER").map(userBrief);
+      const admins = staff.filter((u) => ADMIN_STAFF.includes(u.role)).map(userBrief);
+      if (teachers.length) groups.push({ key: "teachers", label: "Teachers", contacts: teachers });
+      if (admins.length) groups.push({ key: "admin", label: "Administration & staff", contacts: admins });
+
+      // Students — only staff/teachers/admin may contact them, grouped by class.
+      if (isStaffRole(jwtUser.role)) {
+        const classes = await prisma.class.findMany({
+          orderBy: { name: "asc" },
+          include: { students: { where: { userId: { not: null }, user: { isActive: true } }, include: { user: { select: sel } }, orderBy: { user: { firstName: "asc" } } } },
+        });
+        for (const c of classes) {
+          const contacts = c.students.filter((s) => s.user && s.user.id !== jwtUser.userId).map((s) => userBrief(s.user));
+          if (contacts.length) groups.push({ key: `class:${c.id}`, label: c.name, contacts });
+        }
+        const unassigned = await prisma.student.findMany({
+          where: { classId: null, userId: { not: null }, user: { isActive: true } },
+          include: { user: { select: sel } }, orderBy: { user: { firstName: "asc" } },
+        });
+        const others = unassigned.filter((s) => s.user && s.user.id !== jwtUser.userId).map((s) => userBrief(s.user));
+        if (others.length) groups.push({ key: "unassigned", label: "Students (no class)", contacts: others });
+      }
+
+      res.json({ groups });
     } catch (err) {
       logger.error("Error fetching chat contacts:", err);
       res.status(500).json({ error: "Internal Server Error" });
@@ -8488,7 +8488,7 @@ async function startServer() {
       res.json({
         id: conv.id, type: conv.type,
         title: conv.title,
-        participants: conv.participants.map((x) => userBrief(x.user)),
+        participants: conv.participants.map((x) => ({ ...userBrief(x.user), lastReadAt: x.lastReadAt })),
         oversight: !part && isAdmin,
         messages: messages.map((m) => ({
           id: m.id, body: m.body, attachmentUrl: m.attachmentUrl,
@@ -9276,6 +9276,42 @@ async function startServer() {
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
+
+  // ── SPA fallback — registered AFTER every /api route so it never shadows one ──
+  if (!isProduction) {
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: "spa",
+    });
+    app.use(vite.middlewares);
+    app.get("*", async (req, res, next) => {
+      const url = req.originalUrl;
+      if (url.startsWith("/api/")) {
+        res.status(404).json({ error: "Not found" });
+        return;
+      }
+      try {
+        const fs = await import("fs");
+        let template = fs.readFileSync(path.resolve(__dirname, "index.html"), "utf-8");
+        template = await vite.transformIndexHtml(url, template);
+        res.status(200).set({ "Content-Type": "text/html" }).end(template);
+      } catch (e) {
+        vite.ssrFixStacktrace(e as Error);
+        next(e);
+      }
+    });
+  } else {
+    const distPath = path.join(process.cwd(), "dist");
+    app.use(express.static(distPath));
+    app.get("*", (req, res) => {
+      // Unmatched API routes get a JSON 404 instead of the HTML shell.
+      if (req.originalUrl.startsWith("/api/")) {
+        res.status(404).json({ error: "Not found" });
+        return;
+      }
+      res.sendFile(path.join(distPath, "index.html"));
+    });
+  }
 
   // ── Global error handler ────────────────────────────────────────────────────
   app.use(

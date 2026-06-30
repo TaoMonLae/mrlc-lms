@@ -19,6 +19,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { usePermissions, useUser } from "@/src/lib/permissions";
 import { useSettings } from "@/src/providers/SettingsProvider";
 import { useAuth } from "@/src/providers/AuthProvider";
+import { useChat } from "@/src/providers/ChatProvider";
 import { ProfilePhotoUploader } from "@/src/components/profile/ProfilePhotoUploader";
 
 export function AppSidebar() {
@@ -28,6 +29,7 @@ export function AppSidebar() {
   const { logout } = useAuth();
   const { isAdmin, isTeacher, isStudent, hasPermission } = usePermissions();
   const { schoolProfile, brandingSettings } = useSettings();
+  const { unreadCount } = useChat();
 
   const handleLogout = () => {
     logout();
@@ -72,6 +74,11 @@ export function AppSidebar() {
                   >
                     <item.icon className="h-4 w-4 opacity-70" />
                     <span className="text-sm font-medium">{item.title}</span>
+                    {item.url === '/chat' && unreadCount > 0 && (
+                      <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
+                    )}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}

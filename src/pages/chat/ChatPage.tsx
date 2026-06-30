@@ -12,15 +12,19 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { format, isToday } from 'date-fns';
 import { apiGet, apiSend } from '../../lib/api';
+import { useChat } from '../../providers/ChatProvider';
+import { useAuth } from '../../providers/AuthProvider';
 
 interface Contact { id: string; name: string; role: string; profilePhotoUrl?: string | null }
+interface Participant extends Contact { lastReadAt?: string | null }
+interface ContactGroup { key: string; label: string; contacts: Contact[] }
 interface ConvSummary {
   id: string; type: string; title: string; unread: number; lastMessageAt: string;
   participants: Contact[];
   lastMessage: { body: string; senderName: string; createdAt: string } | null;
 }
 interface ChatMsg { id: string; body: string; attachmentUrl?: string | null; sender: Contact; createdAt: string; mine: boolean }
-interface ConvDetail { id: string; type: string; title: string | null; participants: Contact[]; oversight: boolean; messages: ChatMsg[] }
+interface ConvDetail { id: string; type: string; title: string | null; participants: Participant[]; oversight: boolean; messages: ChatMsg[] }
 
 const POLL_MS = 7000;
 const roleLabel = (r: string) => r.charAt(0) + r.slice(1).toLowerCase().replace('_', ' ');
@@ -33,6 +37,9 @@ function timeLabel(iso: string) {
 export default function ChatPage() {
   const { hasPermission } = usePermissions();
   const isAdmin = hasPermission('manage_all');
+  const { onlineUserIds, eventTick, setActiveConversation } = useChat();
+  const { user } = useAuth();
+  const myId = user?.id;
   const [conversations, setConversations] = useState<ConvSummary[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [detail, setDetail] = useState<ConvDetail | null>(null);
@@ -47,7 +54,7 @@ export default function ChatPage() {
 
   // New conversation dialog
   const [newOpen, setNewOpen] = useState(false);
-  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [contactGroups, setContactGroups] = useState<ContactGroup[]>([]);
   const [contactSearch, setContactSearch] = useState('');
   const [picked, setPicked] = useState<Record<string, Contact>>({});
   const [groupTitle, setGroupTitle] = useState('');
@@ -83,23 +90,16 @@ export default function ChatPage() {
     return () => clearInterval(t);
   }, [activeId]);
 
-  // Real-time push via SSE; on any event, refresh the list and the open thread.
-  // If the stream fails the browser auto-reconnects and polling covers the gap.
+  // React to the app-wide live connection (ChatProvider owns the single stream).
   useEffect(() => {
-    const token = sessionStorage.getItem('auth_token');
-    if (!token || typeof EventSource === 'undefined') return;
-    let es: EventSource | null = null;
-    try {
-      es = new EventSource(`/api/chat/stream?token=${encodeURIComponent(token)}`);
-      es.onmessage = () => {
-        loadList();
-        const id = activeIdRef.current;
-        if (id) apiGet<ConvDetail>(`/api/chat/conversations/${id}/messages`).then(setDetail).catch(() => {});
-      };
-      es.onerror = () => { /* auto-reconnect; polling backstops */ };
-    } catch { /* ignore */ }
-    return () => es?.close();
-  }, []);
+    if (eventTick === 0) return;
+    loadList();
+    const id = activeIdRef.current;
+    if (id) apiGet<ConvDetail>(`/api/chat/conversations/${id}/messages`).then(setDetail).catch(() => {});
+  }, [eventTick]);
+
+  // Tell the provider which thread is focused so it won't toast for it.
+  useEffect(() => { setActiveConversation(activeId); return () => setActiveConversation(null); }, [activeId, setActiveConversation]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -147,8 +147,10 @@ export default function ChatPage() {
   async function openNew() {
     setNewOpen(true);
     setPicked({}); setGroupTitle(''); setContactSearch('');
-    try { setContacts(await apiGet<Contact[]>('/api/chat/contacts')); }
-    catch (err: any) { toast.error(err.message || 'Could not load contacts'); }
+    try {
+      const data = await apiGet<{ groups: ContactGroup[] }>('/api/chat/contacts');
+      setContactGroups(data?.groups ?? []);
+    } catch (err: any) { toast.error(err.message || 'Could not load contacts'); }
   }
 
   async function startConversation() {
@@ -164,10 +166,15 @@ export default function ChatPage() {
     } catch (err: any) { toast.error(err.message || 'Could not start conversation'); }
   }
 
-  const filteredContacts = useMemo(() => {
+  const filteredGroups = useMemo(() => {
     const q = contactSearch.toLowerCase();
-    return contacts.filter((c) => !q || c.name.toLowerCase().includes(q) || roleLabel(c.role).toLowerCase().includes(q));
-  }, [contacts, contactSearch]);
+    if (!q) return contactGroups;
+    return contactGroups
+      .map((g) => ({ ...g, contacts: g.contacts.filter((c) => c.name.toLowerCase().includes(q) || roleLabel(c.role).toLowerCase().includes(q) || g.label.toLowerCase().includes(q)) }))
+      .filter((g) => g.contacts.length > 0);
+  }, [contactGroups, contactSearch]);
+
+  const totalContacts = useMemo(() => contactGroups.reduce((n, g) => n + g.contacts.length, 0), [contactGroups]);
 
   return (
     <div className="flex h-[calc(100vh-9rem)] gap-4">
@@ -190,19 +197,25 @@ export default function ChatPage() {
               {Object.keys(picked).length > 1 && (
                 <div className="space-y-1"><Label>Group name (optional)</Label><Input value={groupTitle} onChange={(e) => setGroupTitle(e.target.value)} placeholder="e.g. Grade 10 project" /></div>
               )}
-              <div className="max-h-72 space-y-1 overflow-y-auto">
-                {filteredContacts.length === 0 ? <p className="py-6 text-center text-sm text-slate-400">No contacts</p> :
-                  filteredContacts.map((c) => {
-                    const on = !!picked[c.id];
-                    return (
-                      <button key={c.id} type="button"
-                        onClick={() => setPicked((p) => { const n = { ...p }; if (n[c.id]) delete n[c.id]; else n[c.id] = c; return n; })}
-                        className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-sm ${on ? 'border-aubergine-300 bg-aubergine-50 dark:bg-aubergine-900/20' : 'border-slate-200 dark:border-surface-raised hover:bg-slate-50 dark:hover:bg-surface-raised/40'}`}>
-                        <span className="font-medium text-slate-800 dark:text-slate-200">{c.name}</span>
-                        <Badge variant="outline" className="text-[10px] uppercase">{roleLabel(c.role)}</Badge>
-                      </button>
-                    );
-                  })}
+              <div className="max-h-80 space-y-3 overflow-y-auto">
+                {totalContacts === 0 ? <p className="py-6 text-center text-sm text-slate-400">No people available to message</p> :
+                  filteredGroups.length === 0 ? <p className="py-6 text-center text-sm text-slate-400">No matches</p> :
+                  filteredGroups.map((g) => (
+                    <div key={g.key} className="space-y-1">
+                      <p className="px-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">{g.label} · {g.contacts.length}</p>
+                      {g.contacts.map((c) => {
+                        const on = !!picked[c.id];
+                        return (
+                          <button key={c.id} type="button"
+                            onClick={() => setPicked((p) => { const n = { ...p }; if (n[c.id]) delete n[c.id]; else n[c.id] = c; return n; })}
+                            className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-sm ${on ? 'border-aubergine-300 bg-aubergine-50 dark:bg-aubergine-900/20' : 'border-slate-200 dark:border-surface-raised hover:bg-slate-50 dark:hover:bg-surface-raised/40'}`}>
+                            <span className="font-medium text-slate-800 dark:text-slate-200">{c.name}</span>
+                            <Badge variant="outline" className="text-[10px] uppercase">{roleLabel(c.role)}</Badge>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ))}
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setNewOpen(false)}>Cancel</Button>
@@ -218,8 +231,13 @@ export default function ChatPage() {
             conversations.map((c) => (
               <button key={c.id} onClick={() => openConversation(c.id)}
                 className={`flex w-full items-start gap-3 border-b border-slate-50 dark:border-surface-raised/50 p-3 text-left hover:bg-slate-50 dark:hover:bg-surface-raised/40 ${activeId === c.id ? 'bg-slate-50 dark:bg-surface-raised/40' : ''}`}>
-                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-aubergine-100 text-sm font-bold text-aubergine-700">
-                  {c.title.charAt(0).toUpperCase()}
+                <div className="relative shrink-0">
+                  <div className="grid h-10 w-10 place-items-center rounded-full bg-aubergine-100 text-sm font-bold text-aubergine-700">
+                    {c.title.charAt(0).toUpperCase()}
+                  </div>
+                  {c.participants?.some((p) => p.id !== myId && onlineUserIds.has(p.id)) && (
+                    <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-surface-indigo" />
+                  )}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
@@ -245,8 +263,17 @@ export default function ChatPage() {
             <div className="flex items-center gap-2 border-b border-slate-100 dark:border-surface-raised p-3">
               <Button variant="ghost" size="sm" className="md:hidden -ml-2" onClick={() => { setActiveId(null); setDetail(null); }}><ArrowLeft className="h-4 w-4" /></Button>
               <div className="min-w-0">
-                <p className="truncate font-semibold text-slate-900 dark:text-white">{detail.title || detail.participants.map((p) => p.name).join(', ')}</p>
-                <p className="truncate text-xs text-slate-400">{detail.participants.map((p) => p.name).join(', ')}</p>
+                <p className="truncate font-semibold text-slate-900 dark:text-white">{detail.title || detail.participants.filter((p) => p.id !== myId).map((p) => p.name).join(', ')}</p>
+                {(() => {
+                  const others = detail.participants.filter((p) => p.id !== myId);
+                  const anyOnline = others.some((o) => onlineUserIds.has(o.id));
+                  return (
+                    <p className="flex items-center gap-1.5 truncate text-xs text-slate-400">
+                      <span className={`inline-block h-2 w-2 rounded-full ${anyOnline ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                      {anyOnline ? 'Active now' : 'Offline'}
+                    </p>
+                  );
+                })()}
               </div>
               {detail.oversight && <Badge className="ml-auto bg-amber-100 text-amber-700"><ShieldAlert className="mr-1 h-3 w-3" /> Oversight</Badge>}
             </div>
@@ -266,6 +293,13 @@ export default function ChatPage() {
                     </div>
                   </div>
                 ))}
+              {(() => {
+                const last = detail.messages[detail.messages.length - 1];
+                if (!last?.mine) return null;
+                const others = detail.participants.filter((p) => p.id !== myId);
+                const seen = others.some((o) => o.lastReadAt && new Date(o.lastReadAt) >= new Date(last.createdAt));
+                return <p className="pr-1 text-right text-[11px] text-slate-400">{seen ? 'Seen' : 'Sent'}</p>;
+              })()}
             </div>
 
             {detail.oversight ? (
