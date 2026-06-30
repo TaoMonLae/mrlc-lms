@@ -16,6 +16,7 @@ import { useChat } from '../../providers/ChatProvider';
 import { useAuth } from '../../providers/AuthProvider';
 import { StickerPicker, isStickerUrl } from '../../components/chat/StickerPicker';
 import CameraCapture from '../../components/CameraCapture';
+import DOMPurify from 'dompurify';
 
 interface Contact { id: string; name: string; role: string; profilePhotoUrl?: string | null }
 interface Participant extends Contact { lastReadAt?: string | null }
@@ -78,6 +79,13 @@ export default function ChatPage() {
     finally { setLoadingList(false); }
   }
 
+  async function loadMessages(id: string) {
+    try {
+      const data = await apiGet<ConvDetail>(`/api/chat/conversations/${id}/messages`);
+      setDetail(data);
+    } catch { /* keep prior */ }
+  }
+
   async function openConversation(id: string) {
     setActiveId(id);
     try {
@@ -94,19 +102,26 @@ export default function ChatPage() {
 
   // Poll the list always, and the open thread when one is active (fallback).
   useEffect(() => {
+    let cancelled = false;
     const t = setInterval(() => {
+      if (cancelled) return;
       loadList();
-      if (activeId) apiGet<ConvDetail>(`/api/chat/conversations/${activeId}/messages`).then(setDetail).catch(() => {});
+      if (activeId && !cancelled) loadMessages(activeId);
     }, POLL_MS);
-    return () => clearInterval(t);
+    return () => {
+      cancelled = true;
+      clearInterval(t);
+    };
   }, [activeId]);
 
   // React to the app-wide live connection (ChatProvider owns the single stream).
   useEffect(() => {
     if (eventTick === 0) return;
+    let cancelled = false;
     loadList();
     const id = activeIdRef.current;
-    if (id) apiGet<ConvDetail>(`/api/chat/conversations/${id}/messages`).then(setDetail).catch(() => {});
+    if (id && !cancelled) loadMessages(id);
+    return () => { cancelled = true; };
   }, [eventTick]);
 
   // Tell the provider which thread is focused so it won't toast for it.
@@ -138,6 +153,9 @@ export default function ChatPage() {
     const body = draft.trim();
     if ((!body && !attachment) || !activeId) return;
     const att = attachment;
+    const originalDraft = draft;
+    const originalAttachment = attachment;
+
     setDraft(''); setAttachment(null);
     try {
       const msg = await apiSend<ChatMsg>(`/api/chat/conversations/${activeId}/messages`, 'POST', { body, attachmentUrl: att });
@@ -145,7 +163,7 @@ export default function ChatPage() {
       loadList();
     } catch (err: any) {
       toast.error(err.message || 'Could not send');
-      setDraft(body); setAttachment(att);
+      setDraft(originalDraft); setAttachment(originalAttachment);
     }
   }
 
@@ -159,8 +177,11 @@ export default function ChatPage() {
   }
 
   async function sendCameraPhoto(blob: Blob) {
+    if (!activeId) {
+      toast.error('Please open a conversation first');
+      return;
+    }
     setCamera(false);
-    if (!activeId) return;
     try {
       const fd = new FormData();
       fd.append('file', blob, 'photo.jpg');
@@ -207,12 +228,17 @@ export default function ChatPage() {
     const ids = Object.keys(picked);
     if (ids.length === 0) { toast.error('Pick at least one person'); return; }
     try {
-      const r = await apiSend<{ id: string }>('/api/chat/conversations', 'POST', {
+      const r = await apiSend<{ id: string; reused?: boolean; message?: string }>('/api/chat/conversations', 'POST', {
         participantIds: ids, title: ids.length > 1 ? (groupTitle.trim() || null) : null,
       });
       setNewOpen(false);
       await loadList();
       openConversation(r.id);
+
+      // Show notification if conversation was reused
+      if (r.reused && r.message) {
+        toast.info(r.message);
+      }
     } catch (err: any) { toast.error(err.message || 'Could not start conversation'); }
   }
 
@@ -351,7 +377,7 @@ export default function ChatPage() {
                           {canSave && m.attachmentUrl && <a href={m.attachmentUrl} download className="inline-flex items-center gap-0.5 underline"><Download className="h-3 w-3" /> Save</a>}
                         </div>
                       )}
-                      {m.body && <p className="whitespace-pre-wrap break-words">{m.body}</p>}
+                      {m.body && <p className="whitespace-pre-wrap break-words" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(m.body) }} />}
                       <div className={`mt-0.5 flex items-center gap-2 text-[10px] ${sticker ? 'text-slate-400' : m.mine ? 'text-white/70' : 'text-slate-400'} ${m.mine ? 'justify-end' : ''}`}>
                         <span>{timeLabel(m.createdAt)}</span>
                         {!m.mine && <button onClick={() => report(m.id)} className="opacity-0 group-hover:opacity-100" title="Report"><Flag className="h-3 w-3" /></button>}

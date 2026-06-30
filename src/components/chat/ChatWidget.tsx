@@ -4,11 +4,13 @@ import { MessageSquare, X, ArrowLeft, Send, Maximize2, Camera, Clock, Download }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { format, isToday } from 'date-fns';
+import { toast } from 'sonner';
 import { apiGet, apiSend } from '../../lib/api';
 import { useChat } from '../../providers/ChatProvider';
 import { useAuth } from '../../providers/AuthProvider';
 import { StickerPicker, isStickerUrl } from './StickerPicker';
 import CameraCapture from '../CameraCapture';
+import DOMPurify from 'dompurify';
 
 const timeLeftShort = (iso: string) => { const m = Math.max(0, Math.round((new Date(iso).getTime() - Date.now()) / 60000)); return m < 60 ? `${m}m` : `${Math.round(m / 60)}h`; };
 
@@ -63,21 +65,32 @@ export default function ChatWidget() {
   // Poll the open thread when active (the full /chat page handles its own).
   useEffect(() => {
     if (isChatRoute) return;
+    let cancelled = false;
     loadList();
     const t = setInterval(() => {
+      if (cancelled) return;
       loadList();
       const id = activeIdRef.current;
-      if (id && open) apiGet<ConvDetail>(`/api/chat/conversations/${id}/messages`).then(setDetail).catch(() => {});
+      if (id && open && !cancelled) {
+        apiGet<ConvDetail>(`/api/chat/conversations/${id}/messages`).then(setDetail).catch(() => {});
+      }
     }, POLL_MS);
-    return () => clearInterval(t);
+    return () => {
+      cancelled = true;
+      clearInterval(t);
+    };
   }, [open, isChatRoute]);
 
   // React to the app-wide live connection (provided by ChatProvider).
   useEffect(() => {
     if (isChatRoute || eventTick === 0) return;
+    let cancelled = false;
     loadList();
     const id = activeIdRef.current;
-    if (id) apiGet<ConvDetail>(`/api/chat/conversations/${id}/messages`).then(setDetail).catch(() => {});
+    if (id && !cancelled) {
+      apiGet<ConvDetail>(`/api/chat/conversations/${id}/messages`).then(setDetail).catch(() => {});
+    }
+    return () => { cancelled = true; };
   }, [eventTick, isChatRoute]);
 
   // Tell the provider which thread is open so it suppresses its toast for it.
@@ -93,12 +106,16 @@ export default function ChatWidget() {
   async function send() {
     const body = draft.trim();
     if (!body || !activeId) return;
+    const originalDraft = draft;
     setDraft('');
     try {
       const msg = await apiSend<ChatMsg>(`/api/chat/conversations/${activeId}/messages`, 'POST', { body });
       setDetail((d) => (d && d.id === activeId ? { ...d, messages: [...d.messages, msg] } : d));
       loadList();
-    } catch { setDraft(body); }
+    } catch (err: any) {
+      toast.error(err.message || 'Could not send message');
+      setDraft(originalDraft);
+    }
   }
 
   async function sendSticker(url: string) {
@@ -111,8 +128,11 @@ export default function ChatWidget() {
   }
 
   async function sendCameraPhoto(blob: Blob) {
+    if (!activeId) {
+      toast.error('Please open a conversation first');
+      return;
+    }
     setCamera(false);
-    if (!activeId) return;
     try {
       const fd = new FormData();
       fd.append('file', blob, 'photo.jpg');
@@ -123,7 +143,9 @@ export default function ChatWidget() {
       const msg = await apiSend<ChatMsg>(`/api/chat/conversations/${activeId}/messages`, 'POST', { attachmentUrl: up.url, ephemeral: true });
       setDetail((d) => (d && d.id === activeId ? { ...d, messages: [...d.messages, msg] } : d));
       loadList();
-    } catch { /* ignore */ }
+    } catch (err: any) {
+      toast.error(err.message || 'Could not send photo');
+    }
   }
 
   // The full chat page has its own UI; don't double up there.
@@ -215,7 +237,7 @@ export default function ChatWidget() {
                         {canSave && m.attachmentUrl && <a href={m.attachmentUrl} download className="inline-flex items-center gap-0.5 underline"><Download className="h-3 w-3" /> Save</a>}
                       </div>
                     )}
-                    {m.body && <p className="whitespace-pre-wrap break-words">{m.body}</p>}
+                    {m.body && <p className="whitespace-pre-wrap break-words" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(m.body) }} />}
                     <p className={`mt-0.5 text-[9px] ${m.mine ? 'text-right text-slate-400' : 'text-slate-400'} ${sticker ? '' : m.mine ? 'text-white/70' : ''}`}>{timeLabel(m.createdAt)}</p>
                   </div>
                 </div>

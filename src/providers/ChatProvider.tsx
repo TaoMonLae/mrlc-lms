@@ -69,9 +69,28 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const token = sessionStorage.getItem('auth_token');
     if (!token || typeof EventSource === 'undefined') return;
+
+    // Set an httpOnly cookie by making a request to a special endpoint
+    const setupCookie = async () => {
+      try {
+        await fetch('/api/set-chat-cookie', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+      } catch (error) {
+        console.error('Failed to set chat cookie:', error);
+      }
+    };
+
+    setupCookie();
+
     let es: EventSource | null = null;
     try {
-      es = new EventSource(`/api/chat/stream?token=${encodeURIComponent(token)}`);
+      es = new EventSource('/api/chat/stream');
       es.onmessage = () => { setEventTick((t) => t + 1); loadList(); };
       es.onopen = () => loadPresence();
     } catch { /* ignore */ }

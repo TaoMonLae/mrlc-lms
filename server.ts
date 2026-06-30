@@ -18,6 +18,7 @@ import dotenv from "dotenv";
 import { spawn } from "child_process";
 import { registerExamPhase2Routes } from "./examPhase2";
 import { registerExamBankRoutes } from "./examBank";
+import cookieParser from "cookie-parser";
 
 dotenv.config();
 
@@ -49,7 +50,27 @@ fs.mkdirSync(STICKER_UPLOAD_DIR, { recursive: true });
 const SOCIAL_DIR = process.env.SOCIAL_DIR || path.join(process.cwd(), "data", "social");
 fs.mkdirSync(SOCIAL_DIR, { recursive: true });
 const EPHEMERAL_TTL_MS = 24 * 60 * 60 * 1000; // social posts + ephemeral chat photos live 24h
-const sanitizePack = (s: string) => String(s || "").replace(/[^a-zA-Z0-9 _-]/g, "").trim().slice(0, 60);
+const sanitizePack = (s: string) => {
+  const cleaned = String(s || "").replace(/[^a-zA-Z0-9 _-]/g, "").trim().slice(0, 60);
+  if (!cleaned) return null;
+  // Additional safety check: ensure no path traversal patterns
+  if (cleaned.includes('..') || cleaned.includes('/') || cleaned.includes('\\')) {
+    return null;
+  }
+  return cleaned;
+};
+
+const sanitizeFile = (s: string) => {
+  const cleaned = String(s || "").replace(/[^a-zA-Z0-9._-]/g, "").trim().slice(0, 100);
+  if (!cleaned) return null;
+  // Additional safety check: ensure no path traversal patterns
+  if (cleaned.includes('..') || cleaned.includes('/') || cleaned.includes('\\')) {
+    return null;
+  }
+  // Ensure the filename has an extension
+  if (!cleaned.includes('.')) return null;
+  return cleaned;
+};
 
 const ebookUpload = multer({
   storage: multer.diskStorage({
@@ -899,6 +920,7 @@ async function startServer() {
   );
 
   app.use(express.json({ limit: "10mb" }));
+  app.use(cookieParser());
   app.use("/uploads/branding", express.static(BRANDING_ASSET_DIR, {
     maxAge: isProduction ? "30d" : 0,
     immutable: isProduction,
@@ -961,6 +983,31 @@ async function startServer() {
     standardHeaders: true,
     legacyHeaders: false,
     message: { error: "Too many login attempts. Please try again after 15 minutes." },
+  });
+
+  // Rate limiters for chat endpoints to prevent spam and DoS
+  const chatMessageLimiter = rateLimit({
+    windowMs: 1 * 60 * 1000, // 1 minute
+    max: 30, // 30 messages per minute
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Too many messages. Please wait before sending more." },
+    keyGenerator: (req) => {
+      const jwtUser = (req as any).user as JwtPayload;
+      return jwtUser?.userId || req.ip;
+    },
+  });
+
+  const chatUploadLimiter = rateLimit({
+    windowMs: 5 * 60 * 1000, // 5 minutes
+    max: 10, // 10 uploads per 5 minutes
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Too many uploads. Please wait before uploading more files." },
+    keyGenerator: (req) => {
+      const jwtUser = (req as any).user as JwtPayload;
+      return jwtUser?.userId || req.ip;
+    },
   });
 
   // ── Auth routes ─────────────────────────────────────────────────────────────
@@ -8322,14 +8369,14 @@ async function startServer() {
       res.status(400).json({ error: message });
     });
   };
-  app.post("/api/chat-media", authMiddleware, uploadChatMedia, async (req, res) => {
+  app.post("/api/chat-media", authMiddleware, chatUploadLimiter, uploadChatMedia, async (req, res) => {
     const file = (req as any).file as Express.Multer.File | undefined;
     if (!file) { res.status(400).json({ error: "Image file is required" }); return; }
     res.status(201).json({ url: `/uploads/chat-media/${file.filename}` });
   });
 
   // ── Sticker packs ────────────────────────────────────────────────────────────
-  const STICKER_EXTS = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"]);
+  const STICKER_EXTS = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif"]);
   const isStickerFile = (f: string) => STICKER_EXTS.has(path.extname(f).toLowerCase());
   const encPath = (...segs: string[]) => segs.map((s) => encodeURIComponent(s)).join("/");
 
@@ -8374,7 +8421,14 @@ async function startServer() {
     const name = sanitizePack(req.body?.name);
     if (!name) { res.status(400).json({ error: "A valid pack name is required" }); return; }
     try {
-      fs.mkdirSync(path.join(STICKER_UPLOAD_DIR, name), { recursive: true });
+      const packPath = path.join(STICKER_UPLOAD_DIR, name);
+      // Validate the resolved path is still within the upload directory
+      const resolvedPath = path.resolve(packPath);
+      if (!resolvedPath.startsWith(path.resolve(STICKER_UPLOAD_DIR))) {
+        res.status(400).json({ error: "Invalid pack name" });
+        return;
+      }
+      fs.mkdirSync(packPath, { recursive: true });
       res.status(201).json({ name });
     } catch (err) {
       logger.error("Error creating sticker pack:", err);
@@ -8391,16 +8445,38 @@ async function startServer() {
       }
       const files = ((req as any).files as Express.Multer.File[]) || [];
       if (!files.length) { res.status(400).json({ error: "No images uploaded" }); return; }
+
       const pack = sanitizePack(req.params.pack) || "Custom";
+      if (!pack) {
+        res.status(400).json({ error: "Invalid pack name" });
+        return;
+      }
+
+      // Validate pack path is safe
+      const packPath = path.join(STICKER_UPLOAD_DIR, pack);
+      const resolvedPath = path.resolve(packPath);
+      if (!resolvedPath.startsWith(path.resolve(STICKER_UPLOAD_DIR))) {
+        res.status(400).json({ error: "Invalid pack path" });
+        return;
+      }
+
       res.status(201).json({ pack, urls: files.map((f) => `/uploads/stickers/${encPath(pack, f.filename)}`) });
     });
   });
 
   app.delete("/api/chat/sticker-packs/:pack/stickers/:file", authMiddleware, requireRole("ADMIN"), async (req, res) => {
     const pack = sanitizePack(req.params.pack);
-    const file = path.basename(req.params.file); // prevent traversal
+    const file = sanitizeFile(req.params.file);
+    if (!pack || !file) { res.status(400).json({ error: "Invalid pack or file name" }); return; }
+
     try {
       const fp = path.join(STICKER_UPLOAD_DIR, pack, file);
+      // Validate the resolved path is still within the upload directory
+      const resolvedPath = path.resolve(fp);
+      if (!resolvedPath.startsWith(path.resolve(STICKER_UPLOAD_DIR))) {
+        res.status(400).json({ error: "Invalid file path" });
+        return;
+      }
       if (fs.existsSync(fp)) fs.unlinkSync(fp);
       res.json({ success: true });
     } catch (err) {
@@ -8411,8 +8487,16 @@ async function startServer() {
 
   app.delete("/api/chat/sticker-packs/:pack", authMiddleware, requireRole("ADMIN"), async (req, res) => {
     const pack = sanitizePack(req.params.pack);
+    if (!pack) { res.status(400).json({ error: "Invalid pack name" }); return; }
+
     try {
       const dir = path.join(STICKER_UPLOAD_DIR, pack);
+      // Validate the resolved path is still within the upload directory
+      const resolvedPath = path.resolve(dir);
+      if (!resolvedPath.startsWith(path.resolve(STICKER_UPLOAD_DIR))) {
+        res.status(400).json({ error: "Invalid pack path" });
+        return;
+      }
       if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
       res.json({ success: true });
     } catch (err) {
@@ -8547,18 +8631,54 @@ async function startServer() {
   // Additive over the client's polling: a broken/closed stream simply falls back
   // to polling. Keyed by userId → open responses (a user may have several tabs).
   const chatStreams = new Map<string, Set<express.Response>>();
+
+  // Set httpOnly cookie for SSE authentication (prevents token exposure in URL)
+  app.post("/api/set-chat-cookie", authMiddleware, (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    if (!token) { res.status(400).json({ error: "Token required" }); return; }
+
+    res.cookie("auth_token", token, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "strict",
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      path: "/api/chat/stream"
+    });
+    res.json({ success: true });
+  });
   function chatNotify(userIds: string[], payload: any) {
     const data = `data: ${JSON.stringify(payload)}\n\n`;
     for (const uid of new Set(userIds)) {
       const set = chatStreams.get(uid);
-      if (set) for (const r of set) { try { r.write(data); } catch { /* dropped */ } }
+      if (!set) continue;
+
+      const dead: express.Response[] = [];
+      for (const r of set) {
+        try {
+          r.write(data);
+        } catch (err) {
+          dead.push(r);
+        }
+      }
+
+      // Remove dead connections
+      for (const r of dead) {
+        set.delete(r);
+        try { r.end(); } catch { /* ignore */ }
+      }
+
+      // Clean up empty sets
+      if (set.size === 0) {
+        chatStreams.delete(uid);
+      }
     }
   }
   // EventSource cannot send Authorization headers, so this endpoint authenticates
-  // from a short-lived query token (same JWT) instead of authMiddleware.
+  // from an httpOnly cookie instead of authMiddleware.
   app.get("/api/chat/stream", (req, res) => {
     let user: JwtPayload;
-    try { user = verifyToken(String(req.query.token || "")); }
+    try { user = verifyToken(String(req.cookies?.auth_token || "")); }
     catch { res.status(401).end(); return; }
     res.set({ "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive", "X-Accel-Buffering": "no" });
     (res as any).flushHeaders?.();
@@ -8566,8 +8686,29 @@ async function startServer() {
     let set = chatStreams.get(user.userId);
     if (!set) { set = new Set(); chatStreams.set(user.userId, set); }
     set.add(res);
-    const ping = setInterval(() => { try { res.write(": ping\n\n"); } catch { /* ignore */ } }, 25000);
-    req.on("close", () => { clearInterval(ping); set!.delete(res); if (set!.size === 0) chatStreams.delete(user.userId); });
+    const ping = setInterval(() => {
+      try {
+        res.write(": ping\n\n");
+      } catch (err) {
+        // Connection is dead, clean up
+        clearInterval(ping);
+        set!.delete(res);
+        if (set!.size === 0) chatStreams.delete(user.userId);
+        try { res.end(); } catch { /* ignore */ }
+      }
+    }, 25000);
+
+    // Enhanced cleanup on connection close
+    const cleanup = () => {
+      clearInterval(ping);
+      set!.delete(res);
+      if (set!.size === 0) chatStreams.delete(user.userId);
+      try { res.end(); } catch { /* ignore */ }
+    };
+
+    req.on("close", cleanup);
+    req.on("error", cleanup);
+    res.on("error", cleanup);
   });
 
   // Presence: who currently has at least one live stream open (i.e. the app open).
@@ -8684,9 +8825,18 @@ async function startServer() {
       if (type === "DIRECT") {
         const existing = await prisma.conversation.findFirst({
           where: { type: "DIRECT", AND: ids.map((uid) => ({ participants: { some: { userId: uid } } })) },
-          include: { participants: true },
+          include: { participants: { include: { user: { select: { firstName: true, lastName: true } } } } },
         });
-        if (existing && existing.participants.length === 2) { res.json({ id: existing.id, reused: true }); return; }
+        if (existing && existing.participants.length === 2) {
+          const otherParticipant = existing.participants.find(p => p.userId !== jwtUser.userId);
+          const otherName = otherParticipant ? fullName(otherParticipant.user) : 'the other person';
+          res.json({
+            id: existing.id,
+            reused: true,
+            message: `You already have a conversation with ${otherName}. You've been reconnected.`
+          });
+          return;
+        }
       }
 
       const conv = await prisma.conversation.create({
@@ -8733,7 +8883,18 @@ async function startServer() {
         const existing = await prisma.conversationParticipant.findMany({ where: { conversationId: conv.id }, select: { userId: true } });
         const have = new Set(existing.map((e) => e.userId));
         const toAdd = Array.from(memberIds).filter((uid) => !have.has(uid));
+        const toRemove = existing.filter((e) => !memberIds.has(e.userId)).map((e) => e.userId);
+
+        // Add new members
         if (toAdd.length) await prisma.conversationParticipant.createMany({ data: toAdd.map((uid) => ({ conversationId: conv!.id, userId: uid })), skipDuplicates: true });
+
+        // Remove departed members (soft delete by setting leftAt)
+        if (toRemove.length) {
+          await prisma.conversationParticipant.updateMany({
+            where: { conversationId: conv.id, userId: { in: toRemove } },
+            data: { leftAt: new Date() }
+          });
+        }
       }
       res.json({ id: conv.id });
     } catch (err) {
@@ -8767,6 +8928,14 @@ async function startServer() {
         take: 500,
         include: { sender: { select: { id: true, firstName: true, lastName: true, role: true, profilePhotoUrl: true } } },
       });
+
+      // Audit log for admin oversight access
+      if (!part && isAdmin) {
+        await createAuditLog(jwtUser.userId, jwtUser.email, "READ", "CONVERSATION_OVERSIGHT", conv.id,
+          `Admin accessed conversation ${conv.id} (${conv.type}) via oversight mode. Participants: ${conv.participants.length}, Messages: ${messages.length}`,
+          req.ip, req.headers["user-agent"] || null, "INFO");
+      }
+
       res.json({
         id: conv.id, type: conv.type,
         title: conv.title,
@@ -8783,7 +8952,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/chat/conversations/:id/messages", authMiddleware, async (req, res) => {
+  app.post("/api/chat/conversations/:id/messages", authMiddleware, chatMessageLimiter, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const body: string = (req.body?.body ?? "").toString().trim();
     const attachmentUrl: string | null = req.body?.attachmentUrl || null;
@@ -8846,17 +9015,41 @@ async function startServer() {
 
       // Collect uploaded image files (skip shared stickers) to remove from disk.
       const withFiles = await prisma.chatMessage.findMany({ where: { conversationId: conv.id, attachmentUrl: { not: null } }, select: { attachmentUrl: true } });
-      await prisma.conversation.delete({ where: { id: conv.id } }); // cascades participants, messages, reports
+
+      // Use transaction to ensure atomic operation
+      await prisma.$transaction(async (tx) => {
+        await tx.conversation.delete({ where: { id: conv.id } }); // cascades participants, messages, reports
+      });
+
+      // Clean up files after successful database deletion
+      const cleanupErrors: string[] = [];
       for (const m of withFiles) {
         if (m.attachmentUrl && m.attachmentUrl.startsWith("/uploads/chat-media/")) {
-          try { const fp = path.join(CHAT_MEDIA_DIR, path.basename(m.attachmentUrl)); if (fs.existsSync(fp)) fs.unlinkSync(fp); } catch { /* ignore */ }
+          try {
+            const fp = path.join(CHAT_MEDIA_DIR, path.basename(m.attachmentUrl));
+            if (fs.existsSync(fp)) {
+              fs.unlinkSync(fp);
+              logger.info(`Cleaned up chat media file: ${fp}`);
+            }
+          } catch (err) {
+            const errorMsg = `Failed to delete file ${m.attachmentUrl}: ${err}`;
+            cleanupErrors.push(errorMsg);
+            logger.error(errorMsg);
+          }
         }
       }
+
       // Tell participants' open clients to drop it from their lists.
       chatNotify(conv.participants.map((p) => p.userId), { type: "conversation-deleted", conversationId: conv.id });
       await createAuditLog(jwtUser.userId, jwtUser.email, "DELETE", "CONVERSATION", conv.id,
-        `Deleted conversation ${conv.id} (${withFiles.length} attachment file(s) cleared).`, req.ip, req.headers["user-agent"] || null, "WARNING");
-      res.json({ success: true });
+        `Deleted conversation ${conv.id} (${withFiles.length} attachment file(s) cleared${cleanupErrors.length > 0 ? `, ${cleanupErrors.length} cleanup error(s)` : ''}).`,
+        req.ip, req.headers["user-agent"] || null, "WARNING");
+
+      if (cleanupErrors.length > 0) {
+        res.json({ success: true, warning: `${cleanupErrors.length} file(s) could not be deleted` });
+      } else {
+        res.json({ success: true });
+      }
     } catch (err) {
       logger.error("Error deleting conversation:", err);
       res.status(500).json({ error: "Internal Server Error" });
