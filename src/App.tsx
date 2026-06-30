@@ -92,7 +92,9 @@ import Leave from "./pages/hr/Leave";
 import PayslipPrint from "./pages/hr/PayslipPrint";
 import PayrollRunPrint from "./pages/hr/PayrollRunPrint";
 import ChatPage from "./pages/chat/ChatPage";
+import SnapsPage from "./pages/snaps/SnapsPage";
 import ChatModeration from "./pages/chat/ChatModeration";
+import ChatStickers from "./pages/chat/ChatStickers";
 import AdmissionsList from "./pages/admissions/AdmissionsList";
 import AdmissionDetail from "./pages/admissions/AdmissionDetail";
 
@@ -223,6 +225,9 @@ export default function App() {
                 {/* Chat — available to every authenticated role */}
                 <Route path="/chat" element={<ChatPage />} />
 
+                {/* Work Snaps — students post; staff view */}
+                <Route path="/snaps" element={<SnapsPage />} />
+
                 <Route path="/timetable" element={<TimetablePage />} />
 
                 <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'TEACHER']} />}>
@@ -295,6 +300,7 @@ export default function App() {
                 <Route element={<ProtectedRoute requiredPermission="manage_all" />}>
                   <Route path="/operations" element={<SchoolOperations />} />
                   <Route path="/chat/moderation" element={<ChatModeration />} />
+                  <Route path="/chat/stickers" element={<ChatStickers />} />
                   <Route path="/staff" element={<StaffDirectory />} />
                   <Route path="/staff/departments" element={<Departments />} />
                   <Route path="/staff/:id" element={<StaffProfile />} />

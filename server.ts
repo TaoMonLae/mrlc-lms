@@ -42,6 +42,14 @@ const EXAM_MEDIA_DIR = process.env.EXAM_MEDIA_DIR || path.join(process.cwd(), "d
 fs.mkdirSync(EXAM_MEDIA_DIR, { recursive: true });
 const CHAT_MEDIA_DIR = process.env.CHAT_MEDIA_DIR || path.join(process.cwd(), "data", "chat-media");
 fs.mkdirSync(CHAT_MEDIA_DIR, { recursive: true });
+// Admin-uploaded sticker packs live here (served at /uploads/stickers); built-in
+// packs ship in public/stickers (served at /stickers).
+const STICKER_UPLOAD_DIR = process.env.STICKER_UPLOAD_DIR || path.join(process.cwd(), "data", "stickers");
+fs.mkdirSync(STICKER_UPLOAD_DIR, { recursive: true });
+const SNAP_DIR = process.env.SNAP_DIR || path.join(process.cwd(), "data", "snaps");
+fs.mkdirSync(SNAP_DIR, { recursive: true });
+const SNAP_TTL_MS = 24 * 60 * 60 * 1000; // work snaps live 24 hours
+const sanitizePack = (s: string) => String(s || "").replace(/[^a-zA-Z0-9 _-]/g, "").trim().slice(0, 60);
 
 const ebookUpload = multer({
   storage: multer.diskStorage({
@@ -112,6 +120,35 @@ const chatMediaUpload = multer({
     destination: (_req, _file, cb) => cb(null, CHAT_MEDIA_DIR),
     filename: (_req, file, cb) => {
       const ext = path.extname(file.originalname).toLowerCase();
+      cb(null, `${crypto.randomUUID()}${ext}`);
+    },
+  }),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: imageUploadFilter,
+});
+
+const stickerUpload = multer({
+  storage: multer.diskStorage({
+    destination: (req, _file, cb) => {
+      const pack = sanitizePack((req.params as any).pack) || "Custom";
+      const dir = path.join(STICKER_UPLOAD_DIR, pack);
+      fs.mkdirSync(dir, { recursive: true });
+      cb(null, dir);
+    },
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase();
+      cb(null, `${crypto.randomUUID()}${ext}`);
+    },
+  }),
+  limits: { fileSize: 5 * 1024 * 1024, files: 50 },
+  fileFilter: imageUploadFilter,
+});
+
+const snapUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, SNAP_DIR),
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase() || ".jpg";
       cb(null, `${crypto.randomUUID()}${ext}`);
     },
   }),
@@ -877,6 +914,13 @@ async function startServer() {
   app.use("/uploads/chat-media", express.static(CHAT_MEDIA_DIR, {
     maxAge: isProduction ? "30d" : 0,
     immutable: isProduction,
+  }));
+  app.use("/uploads/stickers", express.static(STICKER_UPLOAD_DIR, {
+    maxAge: isProduction ? "30d" : 0,
+    immutable: isProduction,
+  }));
+  app.use("/uploads/snaps", express.static(SNAP_DIR, {
+    maxAge: isProduction ? "1d" : 0,
   }));
   app.use("/uploads/library", express.static(LIBRARY_FILE_DIR, {
     maxAge: isProduction ? "30d" : 0,
@@ -8231,6 +8275,19 @@ async function startServer() {
   };
   scheduleDailyBackup();
 
+  // Sweep expired work snaps (rows + files) hourly, and once at startup.
+  const cleanupExpiredSnaps = async () => {
+    try {
+      const expired = await prisma.workSnap.findMany({ where: { expiresAt: { lte: new Date() } }, select: { id: true, imageUrl: true } });
+      if (!expired.length) return;
+      await prisma.workSnap.deleteMany({ where: { id: { in: expired.map((e) => e.id) } } });
+      for (const e of expired) { try { const fp = path.join(SNAP_DIR, path.basename(e.imageUrl)); if (fs.existsSync(fp)) fs.unlinkSync(fp); } catch { /* ignore */ } }
+      logger.info(`Removed ${expired.length} expired work snap(s).`);
+    } catch (err) { logger.error("Work snap cleanup failed:", err); }
+  };
+  cleanupExpiredSnaps();
+  setInterval(cleanupExpiredSnaps, 60 * 60 * 1000);
+
   // ── Phase 2 advanced exam routes (registered before the SPA catch-all) ──────
   registerExamPhase2Routes({ app, prisma, authMiddleware, createAuditLog, logger });
   // ── Phase 3 reusable question bank routes ───────────────────────────────────
@@ -8260,6 +8317,171 @@ async function startServer() {
     const file = (req as any).file as Express.Multer.File | undefined;
     if (!file) { res.status(400).json({ error: "Image file is required" }); return; }
     res.status(201).json({ url: `/uploads/chat-media/${file.filename}` });
+  });
+
+  // ── Sticker packs ────────────────────────────────────────────────────────────
+  const STICKER_EXTS = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"]);
+  const isStickerFile = (f: string) => STICKER_EXTS.has(path.extname(f).toLowerCase());
+  const encPath = (...segs: string[]) => segs.map((s) => encodeURIComponent(s)).join("/");
+
+  // Discover packs from the built-in dir (public in dev / dist in prod) and the
+  // admin-uploaded dir. Each subfolder is a pack; loose files form "Default".
+  function scanStickerDir(baseDir: string, urlPrefix: string, editable: boolean, includeEmpty = false) {
+    const out: { name: string; editable: boolean; stickers: string[] }[] = [];
+    if (!fs.existsSync(baseDir)) return out;
+    const entries = fs.readdirSync(baseDir, { withFileTypes: true });
+    const loose = entries.filter((e) => e.isFile() && isStickerFile(e.name)).map((e) => `${urlPrefix}/${encPath(e.name)}`);
+    if (loose.length) out.push({ name: "Default", editable: false, stickers: loose });
+    for (const d of entries.filter((e) => e.isDirectory())) {
+      try {
+        const files = fs.readdirSync(path.join(baseDir, d.name)).filter(isStickerFile).map((f) => `${urlPrefix}/${encPath(d.name, f)}`);
+        // Keep empty editable packs so admins can see and upload into them.
+        if (files.length || includeEmpty) out.push({ name: d.name, editable, stickers: files });
+      } catch { /* skip */ }
+    }
+    return out;
+  }
+
+  app.get("/api/chat/stickers", authMiddleware, async (_req, res) => {
+    try {
+      const builtinDir = path.join(process.cwd(), isProduction ? "dist" : "public", "stickers");
+      const builtin = scanStickerDir(builtinDir, "/stickers", false);
+      const uploaded = scanStickerDir(STICKER_UPLOAD_DIR, "/uploads/stickers", true, true);
+      // Merge by pack name (uploaded extends built-in of same name).
+      const byName = new Map<string, { name: string; editable: boolean; stickers: string[] }>();
+      for (const p of [...builtin, ...uploaded]) {
+        const ex = byName.get(p.name);
+        if (ex) { ex.stickers.push(...p.stickers); ex.editable = ex.editable || p.editable; }
+        else byName.set(p.name, { ...p });
+      }
+      res.json({ packs: Array.from(byName.values()) });
+    } catch (err) {
+      logger.error("Error listing stickers:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/chat/sticker-packs", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const name = sanitizePack(req.body?.name);
+    if (!name) { res.status(400).json({ error: "A valid pack name is required" }); return; }
+    try {
+      fs.mkdirSync(path.join(STICKER_UPLOAD_DIR, name), { recursive: true });
+      res.status(201).json({ name });
+    } catch (err) {
+      logger.error("Error creating sticker pack:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/chat/sticker-packs/:pack/stickers", authMiddleware, requireRole("ADMIN"), (req, res) => {
+    stickerUpload.array("files", 50)(req, res, (err: any) => {
+      if (err) {
+        const msg = err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE" ? "Each sticker must be 5 MB or smaller" : err.message || "Upload failed";
+        res.status(400).json({ error: msg });
+        return;
+      }
+      const files = ((req as any).files as Express.Multer.File[]) || [];
+      if (!files.length) { res.status(400).json({ error: "No images uploaded" }); return; }
+      const pack = sanitizePack(req.params.pack) || "Custom";
+      res.status(201).json({ pack, urls: files.map((f) => `/uploads/stickers/${encPath(pack, f.filename)}`) });
+    });
+  });
+
+  app.delete("/api/chat/sticker-packs/:pack/stickers/:file", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const pack = sanitizePack(req.params.pack);
+    const file = path.basename(req.params.file); // prevent traversal
+    try {
+      const fp = path.join(STICKER_UPLOAD_DIR, pack, file);
+      if (fs.existsSync(fp)) fs.unlinkSync(fp);
+      res.json({ success: true });
+    } catch (err) {
+      logger.error("Error deleting sticker:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.delete("/api/chat/sticker-packs/:pack", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const pack = sanitizePack(req.params.pack);
+    try {
+      const dir = path.join(STICKER_UPLOAD_DIR, pack);
+      if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
+      res.json({ success: true });
+    } catch (err) {
+      logger.error("Error deleting sticker pack:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Work Snaps (ephemeral 24h student work photos) ───────────────────────────
+  // Students post; only staff/teachers/admins (and the poster) can view; all
+  // snaps auto-expire after 24h and are swept by cleanupExpiredSnaps().
+  const uploadSnap: express.RequestHandler = (req, res, next) => {
+    snapUpload.single("file")(req, res, (err: any) => {
+      if (!err) return next();
+      const msg = err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE" ? "Image must be 10 MB or smaller" : err.message || "Upload failed";
+      res.status(400).json({ error: msg });
+    });
+  };
+
+  app.post("/api/snaps", authMiddleware, uploadSnap, async (req, res) => {
+    try {
+      const student = await getStudentForReq(req);
+      if (!student) { res.status(403).json({ error: "Only students can post work snaps" }); return; }
+      const file = (req as any).file as Express.Multer.File | undefined;
+      if (!file) { res.status(400).json({ error: "Image is required" }); return; }
+      const caption = (req.body?.caption ?? "").toString().trim().slice(0, 200) || null;
+      const snap = await prisma.workSnap.create({
+        data: { studentId: student.id, imageUrl: `/uploads/snaps/${file.filename}`, caption, expiresAt: new Date(Date.now() + SNAP_TTL_MS) },
+      });
+      res.status(201).json({ id: snap.id, imageUrl: snap.imageUrl, caption: snap.caption, createdAt: snap.createdAt, expiresAt: snap.expiresAt, mine: true });
+    } catch (err) {
+      logger.error("Error creating work snap:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/snaps", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const now = new Date();
+    try {
+      if (isStaffRole(jwtUser.role)) {
+        const snaps = await prisma.workSnap.findMany({
+          where: { expiresAt: { gt: now } },
+          orderBy: { createdAt: "desc" },
+          include: { student: { include: { user: { select: { firstName: true, lastName: true, profilePhotoUrl: true } }, class: { select: { name: true } } } } },
+        });
+        res.json(snaps.map((s) => ({
+          id: s.id, imageUrl: s.imageUrl, caption: s.caption, createdAt: s.createdAt, expiresAt: s.expiresAt,
+          student: { name: fullName(s.student.user), className: s.student.class?.name ?? null, photo: s.student.user?.profilePhotoUrl ?? null },
+        })));
+        return;
+      }
+      const student = await getStudentForReq(req);
+      if (!student) { res.json([]); return; }
+      const snaps = await prisma.workSnap.findMany({ where: { studentId: student.id, expiresAt: { gt: now } }, orderBy: { createdAt: "desc" } });
+      res.json(snaps.map((s) => ({ id: s.id, imageUrl: s.imageUrl, caption: s.caption, createdAt: s.createdAt, expiresAt: s.expiresAt, mine: true })));
+    } catch (err) {
+      logger.error("Error listing work snaps:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.delete("/api/snaps/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const snap = await prisma.workSnap.findUnique({ where: { id: req.params.id } });
+      if (!snap) { res.status(404).json({ error: "Snap not found" }); return; }
+      if (jwtUser.role !== "ADMIN") {
+        const student = await getStudentForReq(req);
+        if (!student || student.id !== snap.studentId) { res.status(403).json({ error: "Forbidden" }); return; }
+      }
+      await prisma.workSnap.delete({ where: { id: snap.id } });
+      try { const fp = path.join(SNAP_DIR, path.basename(snap.imageUrl)); if (fs.existsSync(fp)) fs.unlinkSync(fp); } catch { /* ignore */ }
+      res.json({ success: true });
+    } catch (err) {
+      logger.error("Error deleting work snap:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
   });
 
   // ── Real-time push (Server-Sent Events) ──────────────────────────────────────
@@ -9292,7 +9514,7 @@ async function startServer() {
       }
       try {
         const fs = await import("fs");
-        let template = fs.readFileSync(path.resolve(__dirname, "index.html"), "utf-8");
+        let template = fs.readFileSync(path.resolve(process.cwd(), "index.html"), "utf-8");
         template = await vite.transformIndexHtml(url, template);
         res.status(200).set({ "Content-Type": "text/html" }).end(template);
       } catch (e) {

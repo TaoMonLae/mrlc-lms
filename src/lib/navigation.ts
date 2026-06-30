@@ -13,6 +13,7 @@ import {
   Briefcase,
   Megaphone,
   MessageSquare,
+  Camera,
   CalendarDays,
   GraduationCap,
   UserCheck,
@@ -57,6 +58,12 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     title: "Chat",
     url: "/chat",
     icon: MessageSquare,
+    roles: ["ADMIN", "TEACHER", "STUDENT", "STAFF", "ACCOUNTANT", "CASE_WORKER", "LIBRARIAN"],
+  },
+  {
+    title: "Work Snaps",
+    url: "/snaps",
+    icon: Camera,
     roles: ["ADMIN", "TEACHER", "STUDENT", "STAFF", "ACCOUNTANT", "CASE_WORKER", "LIBRARIAN"],
   },
   {

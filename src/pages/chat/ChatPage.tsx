@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MessageSquare, Plus, Send, Search, Flag, ArrowLeft, ShieldAlert, ImagePlus, X, Loader2 } from 'lucide-react';
+import { MessageSquare, Plus, Send, Search, Flag, ArrowLeft, ShieldAlert, ImagePlus, X, Loader2, Sticker } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePermissions } from '../../lib/permissions';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,7 @@ import { format, isToday } from 'date-fns';
 import { apiGet, apiSend } from '../../lib/api';
 import { useChat } from '../../providers/ChatProvider';
 import { useAuth } from '../../providers/AuthProvider';
+import { StickerPicker, isStickerUrl } from '../../components/chat/StickerPicker';
 
 interface Contact { id: string; name: string; role: string; profilePhotoUrl?: string | null }
 interface Participant extends Contact { lastReadAt?: string | null }
@@ -138,6 +139,15 @@ export default function ChatPage() {
     }
   }
 
+  async function sendSticker(url: string) {
+    if (!activeId) return;
+    try {
+      const msg = await apiSend<ChatMsg>(`/api/chat/conversations/${activeId}/messages`, 'POST', { body: '', attachmentUrl: url });
+      setDetail((d) => (d && d.id === activeId ? { ...d, messages: [...d.messages, msg] } : d));
+      loadList();
+    } catch (err: any) { toast.error(err.message || 'Could not send sticker'); }
+  }
+
   async function report(messageId: string) {
     if (!window.confirm('Report this message to an administrator?')) return;
     try { await apiSend(`/api/chat/messages/${messageId}/report`, 'POST', {}); toast.success('Reported to admin'); }
@@ -183,6 +193,9 @@ export default function ChatPage() {
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-surface-raised p-3">
           <h1 className="flex items-center gap-2 font-semibold text-slate-900 dark:text-white"><MessageSquare className="h-5 w-5 text-aubergine-600" /> Chat</h1>
           <div className="flex items-center gap-1">
+          {isAdmin && (
+            <Button size="sm" variant="ghost" title="Sticker packs" render={<Link to="/chat/stickers" />}><Sticker className="h-4 w-4 text-aubergine-600" /></Button>
+          )}
           {isAdmin && (
             <Button size="sm" variant="ghost" title="Moderation" render={<Link to="/chat/moderation" />}><ShieldAlert className="h-4 w-4 text-amber-600" /></Button>
           )}
@@ -280,19 +293,22 @@ export default function ChatPage() {
 
             <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto p-4">
               {detail.messages.length === 0 ? <p className="py-10 text-center text-sm text-slate-400">No messages yet. Say hello.</p> :
-                detail.messages.map((m) => (
+                detail.messages.map((m) => {
+                  const sticker = isStickerUrl(m.attachmentUrl) && !m.body;
+                  return (
                   <div key={m.id} className={`group flex ${m.mine ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[78%] rounded-2xl px-3 py-2 text-sm ${m.mine ? 'bg-aubergine-600 text-white' : 'bg-slate-100 dark:bg-surface-raised text-slate-800 dark:text-slate-200'}`}>
-                      {!m.mine && <p className="mb-0.5 text-[10px] font-bold uppercase tracking-wide opacity-70">{m.sender.name}</p>}
-                      {m.attachmentUrl && <img src={m.attachmentUrl} alt="attachment" className="mb-1 max-h-60 rounded-lg" />}
+                    <div className={`max-w-[78%] text-sm ${sticker ? '' : `rounded-2xl px-3 py-2 ${m.mine ? 'bg-aubergine-600 text-white' : 'bg-slate-100 dark:bg-surface-raised text-slate-800 dark:text-slate-200'}`}`}>
+                      {!m.mine && !sticker && <p className="mb-0.5 text-[10px] font-bold uppercase tracking-wide opacity-70">{m.sender.name}</p>}
+                      {m.attachmentUrl && <img src={m.attachmentUrl} alt={sticker ? 'sticker' : 'attachment'} className={sticker ? 'h-28 w-28' : 'mb-1 max-h-60 rounded-lg'} />}
                       {m.body && <p className="whitespace-pre-wrap break-words">{m.body}</p>}
-                      <div className={`mt-0.5 flex items-center gap-2 text-[10px] ${m.mine ? 'text-white/70' : 'text-slate-400'}`}>
+                      <div className={`mt-0.5 flex items-center gap-2 text-[10px] ${sticker ? 'text-slate-400' : m.mine ? 'text-white/70' : 'text-slate-400'} ${m.mine ? 'justify-end' : ''}`}>
                         <span>{timeLabel(m.createdAt)}</span>
                         {!m.mine && <button onClick={() => report(m.id)} className="opacity-0 group-hover:opacity-100" title="Report"><Flag className="h-3 w-3" /></button>}
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               {(() => {
                 const last = detail.messages[detail.messages.length - 1];
                 if (!last?.mine) return null;
@@ -319,6 +335,7 @@ export default function ChatPage() {
                   <Button variant="ghost" size="icon" className="shrink-0" title="Attach image" onClick={() => fileRef.current?.click()} disabled={uploading}>
                     {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4 text-slate-500" />}
                   </Button>
+                  <StickerPicker onSelect={sendSticker} />
                   <Input value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} placeholder="Type a message…" />
                   <Button onClick={send} disabled={!draft.trim() && !attachment}><Send className="h-4 w-4" /></Button>
                 </div>

@@ -7,6 +7,7 @@ import { format, isToday } from 'date-fns';
 import { apiGet, apiSend } from '../../lib/api';
 import { useChat } from '../../providers/ChatProvider';
 import { useAuth } from '../../providers/AuthProvider';
+import { StickerPicker, isStickerUrl } from './StickerPicker';
 
 interface Contact { id: string; name: string; role: string }
 interface Participant extends Contact { lastReadAt?: string | null }
@@ -95,6 +96,15 @@ export default function ChatWidget() {
     } catch { setDraft(body); }
   }
 
+  async function sendSticker(url: string) {
+    if (!activeId) return;
+    try {
+      const msg = await apiSend<ChatMsg>(`/api/chat/conversations/${activeId}/messages`, 'POST', { body: '', attachmentUrl: url });
+      setDetail((d) => (d && d.id === activeId ? { ...d, messages: [...d.messages, msg] } : d));
+      loadList();
+    } catch { /* ignore */ }
+  }
+
   // The full chat page has its own UI; don't double up there.
   if (location.pathname.startsWith('/chat')) return null;
 
@@ -171,16 +181,19 @@ export default function ChatWidget() {
         <>
           <div ref={scrollRef} className="flex-1 space-y-2 overflow-y-auto p-3">
             {detail.messages.length === 0 ? <p className="py-8 text-center text-xs text-slate-400">No messages yet.</p> :
-              detail.messages.map((m) => (
+              detail.messages.map((m) => {
+                const sticker = isStickerUrl(m.attachmentUrl) && !m.body;
+                return (
                 <div key={m.id} className={`flex ${m.mine ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[80%] rounded-2xl px-3 py-1.5 text-sm ${m.mine ? 'bg-aubergine-600 text-white' : 'bg-slate-100 text-slate-800 dark:bg-surface-raised dark:text-slate-200'}`}>
-                    {!m.mine && <p className="mb-0.5 text-[10px] font-bold uppercase tracking-wide opacity-70">{m.sender.name}</p>}
-                    {m.attachmentUrl && <img src={m.attachmentUrl} alt="attachment" className="mb-1 max-h-40 rounded-lg" />}
+                  <div className={`max-w-[80%] text-sm ${sticker ? '' : `rounded-2xl px-3 py-1.5 ${m.mine ? 'bg-aubergine-600 text-white' : 'bg-slate-100 text-slate-800 dark:bg-surface-raised dark:text-slate-200'}`}`}>
+                    {!m.mine && !sticker && <p className="mb-0.5 text-[10px] font-bold uppercase tracking-wide opacity-70">{m.sender.name}</p>}
+                    {m.attachmentUrl && <img src={m.attachmentUrl} alt={sticker ? 'sticker' : 'attachment'} className={sticker ? 'h-24 w-24' : 'mb-1 max-h-40 rounded-lg'} />}
                     {m.body && <p className="whitespace-pre-wrap break-words">{m.body}</p>}
-                    <p className={`mt-0.5 text-[9px] ${m.mine ? 'text-white/70' : 'text-slate-400'}`}>{timeLabel(m.createdAt)}</p>
+                    <p className={`mt-0.5 text-[9px] ${m.mine ? 'text-right text-slate-400' : 'text-slate-400'} ${sticker ? '' : m.mine ? 'text-white/70' : ''}`}>{timeLabel(m.createdAt)}</p>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             {(() => {
               const last = detail.messages[detail.messages.length - 1];
               if (!last?.mine) return null;
@@ -192,7 +205,8 @@ export default function ChatWidget() {
           {detail.oversight ? (
             <div className="border-t border-slate-100 p-2 text-center text-[11px] text-slate-400 dark:border-surface-raised">Admin oversight — read only</div>
           ) : (
-            <div className="flex items-center gap-2 border-t border-slate-100 p-2 dark:border-surface-raised">
+            <div className="flex items-center gap-1 border-t border-slate-100 p-2 dark:border-surface-raised">
+              <StickerPicker onSelect={sendSticker} />
               <Input value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} placeholder="Type a message…" className="h-9" />
               <Button size="icon" className="h-9 w-9 shrink-0" onClick={send} disabled={!draft.trim()}><Send className="h-4 w-4" /></Button>
             </div>

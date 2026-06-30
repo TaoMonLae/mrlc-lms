@@ -224,6 +224,7 @@ model Student {
   documents      GeneratedDocument[]
   examAssignments    ExamAssignment[]
   examAccommodations ExamAccommodation[]
+  workSnaps      WorkSnap[]
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -1880,6 +1881,23 @@ model LeaveRequest {
 
   @@index([employeeId])
   @@index([status])
+}
+
+// -----------------------------------------------------------------------------
+// WORK SNAPS (ephemeral 24h photos of student work, visible to staff)
+// -----------------------------------------------------------------------------
+
+model WorkSnap {
+  id         String   @id @default(uuid())
+  studentId  String
+  student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  imageUrl   String
+  caption    String?
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
+
+  @@index([studentId])
+  @@index([expiresAt])
 }
 
 // -----------------------------------------------------------------------------
