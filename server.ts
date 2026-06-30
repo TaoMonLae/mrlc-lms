@@ -7,7 +7,7 @@ import { createServer as createViteServer } from "vite";
 import { z } from "zod";
 import helmet from "helmet";
 import cors from "cors";
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import winston from "winston";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
@@ -995,7 +995,7 @@ async function startServer() {
     message: { error: "Too many messages. Please wait before sending more." },
     keyGenerator: (req) => {
       const jwtUser = (req as any).user as JwtPayload;
-      return jwtUser?.userId || req.ip;
+      return jwtUser?.userId || ipKeyGenerator(req);
     },
   });
 
@@ -1007,7 +1007,7 @@ async function startServer() {
     message: { error: "Too many uploads. Please wait before uploading more files." },
     keyGenerator: (req) => {
       const jwtUser = (req as any).user as JwtPayload;
-      return jwtUser?.userId || req.ip;
+      return jwtUser?.userId || ipKeyGenerator(req);
     },
   });
 
