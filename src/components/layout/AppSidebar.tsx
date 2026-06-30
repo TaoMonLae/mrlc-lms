@@ -44,23 +44,23 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="bg-canvas text-white/80 border-r border-white/10 [&>[data-slot=sidebar-inner]]:bg-canvas [&>[data-slot=sidebar-inner]]:text-white/80" aria-label="Main application navigation">
-      <SidebarHeader className="h-16 flex items-center px-6 border-b border-white/10">
-        <div className="flex items-center gap-3 font-semibold">
+      <SidebarHeader className="h-16 flex items-center px-6 border-b border-white/10 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
+        <div className="flex items-center gap-3 font-semibold group-data-[collapsible=icon]:gap-0">
           {brandingSettings.logoUrl ? (
-            <img src={brandingSettings.logoUrl} alt={schoolProfile.shortName} className="h-8 w-8 object-contain" />
+            <img src={brandingSettings.logoUrl} alt={schoolProfile.shortName} className="h-8 w-8 object-contain shrink-0" />
           ) : (
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg text-white font-bold text-lg" style={{ backgroundColor: brandingSettings.primaryColor }}>
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white font-bold text-lg" style={{ backgroundColor: brandingSettings.primaryColor }}>
               {schoolProfile.name.charAt(0)}
             </div>
           )}
-          <div className="flex flex-col gap-0.5 leading-tight transition-all duration-300 group-data-[collapsible=icon]:opacity-0">
+          <div className="flex flex-col gap-0.5 leading-tight transition-all duration-300 overflow-hidden group-data-[collapsible=icon]:w-0 group-data-[collapsible=icon]:opacity-0">
             <span className="text-[10px] font-bold text-white tracking-tight uppercase leading-tight line-clamp-2 max-w-[150px]">{schoolProfile.name}</span>
             <span className="text-[10px] font-bold text-white/55 tracking-tight uppercase leading-none">{schoolProfile.shortName}</span>
           </div>
         </div>
       </SidebarHeader>
-      <SidebarContent className="px-3 py-4">
-        <SidebarGroup>
+      <SidebarContent className="px-3 py-4 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:items-center">
+        <SidebarGroup className="group-data-[collapsible=icon]:p-0">
           <SidebarGroupLabel className="group-data-[collapsible=icon]:opacity-0 text-white/50 text-[10px] uppercase font-bold tracking-widest px-3 mb-2">Main Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
@@ -75,7 +75,7 @@ export function AppSidebar() {
                     <item.icon className="h-4 w-4 opacity-70" />
                     <span className="text-sm font-medium">{item.title}</span>
                     {item.url === '/chat' && unreadCount > 0 && (
-                      <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
+                      <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white group-data-[collapsible=icon]:hidden">
                         {unreadCount > 99 ? '99+' : unreadCount}
                       </span>
                     )}
@@ -86,10 +86,10 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="p-4 border-t border-white/10">
+      <SidebarFooter className="p-4 border-t border-white/10 group-data-[collapsible=icon]:p-2">
         <DropdownMenu>
-          <DropdownMenuTrigger render={<SidebarMenuButton size="lg" className="h-12 w-full justify-start gap-3 px-2 hover:bg-white/10 transition-all duration-200" aria-label="Open user menu" />} nativeButton={true}>
-              <Avatar className="h-9 w-9 rounded-full border border-white/20 bg-white/15">
+          <DropdownMenuTrigger render={<SidebarMenuButton size="lg" className="h-12 w-full justify-start gap-3 px-2 hover:bg-white/10 transition-all duration-200 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:gap-0" aria-label="Open user menu" />} nativeButton={true}>
+              <Avatar className="h-9 w-9 shrink-0 rounded-full border border-white/20 bg-white/15 group-data-[collapsible=icon]:h-7 group-data-[collapsible=icon]:w-7">
                 <AvatarImage src={user?.profilePhotoUrl || undefined} />
                 <AvatarFallback className="bg-white/15 text-white">
                   {user?.name?.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase() || 'U'}
