@@ -46,9 +46,9 @@ fs.mkdirSync(CHAT_MEDIA_DIR, { recursive: true });
 // packs ship in public/stickers (served at /stickers).
 const STICKER_UPLOAD_DIR = process.env.STICKER_UPLOAD_DIR || path.join(process.cwd(), "data", "stickers");
 fs.mkdirSync(STICKER_UPLOAD_DIR, { recursive: true });
-const SNAP_DIR = process.env.SNAP_DIR || path.join(process.cwd(), "data", "snaps");
-fs.mkdirSync(SNAP_DIR, { recursive: true });
-const SNAP_TTL_MS = 24 * 60 * 60 * 1000; // work snaps live 24 hours
+const SOCIAL_DIR = process.env.SOCIAL_DIR || path.join(process.cwd(), "data", "social");
+fs.mkdirSync(SOCIAL_DIR, { recursive: true });
+const EPHEMERAL_TTL_MS = 24 * 60 * 60 * 1000; // social posts + ephemeral chat photos live 24h
 const sanitizePack = (s: string) => String(s || "").replace(/[^a-zA-Z0-9 _-]/g, "").trim().slice(0, 60);
 
 const ebookUpload = multer({
@@ -144,9 +144,9 @@ const stickerUpload = multer({
   fileFilter: imageUploadFilter,
 });
 
-const snapUpload = multer({
+const socialUpload = multer({
   storage: multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, SNAP_DIR),
+    destination: (_req, _file, cb) => cb(null, SOCIAL_DIR),
     filename: (_req, file, cb) => {
       const ext = path.extname(file.originalname).toLowerCase() || ".jpg";
       cb(null, `${crypto.randomUUID()}${ext}`);
@@ -919,7 +919,7 @@ async function startServer() {
     maxAge: isProduction ? "30d" : 0,
     immutable: isProduction,
   }));
-  app.use("/uploads/snaps", express.static(SNAP_DIR, {
+  app.use("/uploads/social", express.static(SOCIAL_DIR, {
     maxAge: isProduction ? "1d" : 0,
   }));
   app.use("/uploads/library", express.static(LIBRARY_FILE_DIR, {
@@ -8275,18 +8275,27 @@ async function startServer() {
   };
   scheduleDailyBackup();
 
-  // Sweep expired work snaps (rows + files) hourly, and once at startup.
-  const cleanupExpiredSnaps = async () => {
+  // Sweep expired social posts and ephemeral chat photos (rows + files) hourly.
+  const cleanupEphemeral = async () => {
     try {
-      const expired = await prisma.workSnap.findMany({ where: { expiresAt: { lte: new Date() } }, select: { id: true, imageUrl: true } });
-      if (!expired.length) return;
-      await prisma.workSnap.deleteMany({ where: { id: { in: expired.map((e) => e.id) } } });
-      for (const e of expired) { try { const fp = path.join(SNAP_DIR, path.basename(e.imageUrl)); if (fs.existsSync(fp)) fs.unlinkSync(fp); } catch { /* ignore */ } }
-      logger.info(`Removed ${expired.length} expired work snap(s).`);
-    } catch (err) { logger.error("Work snap cleanup failed:", err); }
+      const now = new Date();
+      // Social posts (likes/comments cascade).
+      const posts = await prisma.socialPost.findMany({ where: { expiresAt: { lte: now } }, select: { id: true, imageUrl: true } });
+      if (posts.length) {
+        await prisma.socialPost.deleteMany({ where: { id: { in: posts.map((p) => p.id) } } });
+        for (const p of posts) if (p.imageUrl) { try { const fp = path.join(SOCIAL_DIR, path.basename(p.imageUrl)); if (fs.existsSync(fp)) fs.unlinkSync(fp); } catch { /* ignore */ } }
+      }
+      // Ephemeral chat photos.
+      const msgs = await prisma.chatMessage.findMany({ where: { expiresAt: { lte: now } }, select: { id: true, attachmentUrl: true } });
+      if (msgs.length) {
+        await prisma.chatMessage.deleteMany({ where: { id: { in: msgs.map((m) => m.id) } } });
+        for (const m of msgs) if (m.attachmentUrl) { try { const fp = path.join(CHAT_MEDIA_DIR, path.basename(m.attachmentUrl)); if (fs.existsSync(fp)) fs.unlinkSync(fp); } catch { /* ignore */ } }
+      }
+      if (posts.length || msgs.length) logger.info(`Removed ${posts.length} expired post(s) and ${msgs.length} expired chat photo(s).`);
+    } catch (err) { logger.error("Ephemeral cleanup failed:", err); }
   };
-  cleanupExpiredSnaps();
-  setInterval(cleanupExpiredSnaps, 60 * 60 * 1000);
+  cleanupEphemeral();
+  setInterval(cleanupEphemeral, 60 * 60 * 1000);
 
   // ── Phase 2 advanced exam routes (registered before the SPA catch-all) ──────
   registerExamPhase2Routes({ app, prisma, authMiddleware, createAuditLog, logger });
@@ -8412,74 +8421,124 @@ async function startServer() {
     }
   });
 
-  // ── Work Snaps (ephemeral 24h student work photos) ───────────────────────────
-  // Students post; only staff/teachers/admins (and the poster) can view; all
-  // snaps auto-expire after 24h and are swept by cleanupExpiredSnaps().
-  const uploadSnap: express.RequestHandler = (req, res, next) => {
-    snapUpload.single("file")(req, res, (err: any) => {
+  // ── Social Space (ephemeral 24h community posts + likes + comments) ──────────
+  // Any signed-in user can post (image and/or text), like, and comment; everyone
+  // sees the feed. Posts auto-expire after 24h (cleanupExpiredSocial sweeps them).
+  const uploadSocial: express.RequestHandler = (req, res, next) => {
+    socialUpload.single("file")(req, res, (err: any) => {
       if (!err) return next();
       const msg = err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE" ? "Image must be 10 MB or smaller" : err.message || "Upload failed";
       res.status(400).json({ error: msg });
     });
   };
 
-  app.post("/api/snaps", authMiddleware, uploadSnap, async (req, res) => {
+  app.post("/api/social", authMiddleware, uploadSocial, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const file = (req as any).file as Express.Multer.File | undefined;
+    const body = (req.body?.body ?? "").toString().trim().slice(0, 1000) || null;
+    if (!file && !body) { res.status(400).json({ error: "Add a photo or some text" }); return; }
     try {
-      const student = await getStudentForReq(req);
-      if (!student) { res.status(403).json({ error: "Only students can post work snaps" }); return; }
-      const file = (req as any).file as Express.Multer.File | undefined;
-      if (!file) { res.status(400).json({ error: "Image is required" }); return; }
-      const caption = (req.body?.caption ?? "").toString().trim().slice(0, 200) || null;
-      const snap = await prisma.workSnap.create({
-        data: { studentId: student.id, imageUrl: `/uploads/snaps/${file.filename}`, caption, expiresAt: new Date(Date.now() + SNAP_TTL_MS) },
+      const post = await prisma.socialPost.create({
+        data: {
+          authorId: jwtUser.userId, body,
+          imageUrl: file ? `/uploads/social/${file.filename}` : null,
+          expiresAt: new Date(Date.now() + EPHEMERAL_TTL_MS),
+        },
       });
-      res.status(201).json({ id: snap.id, imageUrl: snap.imageUrl, caption: snap.caption, createdAt: snap.createdAt, expiresAt: snap.expiresAt, mine: true });
+      res.status(201).json({ id: post.id });
     } catch (err) {
-      logger.error("Error creating work snap:", err);
+      logger.error("Error creating social post:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
 
-  app.get("/api/snaps", authMiddleware, async (req, res) => {
+  app.get("/api/social", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
-    const now = new Date();
     try {
-      if (isStaffRole(jwtUser.role)) {
-        const snaps = await prisma.workSnap.findMany({
-          where: { expiresAt: { gt: now } },
-          orderBy: { createdAt: "desc" },
-          include: { student: { include: { user: { select: { firstName: true, lastName: true, profilePhotoUrl: true } }, class: { select: { name: true } } } } },
-        });
-        res.json(snaps.map((s) => ({
-          id: s.id, imageUrl: s.imageUrl, caption: s.caption, createdAt: s.createdAt, expiresAt: s.expiresAt,
-          student: { name: fullName(s.student.user), className: s.student.class?.name ?? null, photo: s.student.user?.profilePhotoUrl ?? null },
-        })));
-        return;
-      }
-      const student = await getStudentForReq(req);
-      if (!student) { res.json([]); return; }
-      const snaps = await prisma.workSnap.findMany({ where: { studentId: student.id, expiresAt: { gt: now } }, orderBy: { createdAt: "desc" } });
-      res.json(snaps.map((s) => ({ id: s.id, imageUrl: s.imageUrl, caption: s.caption, createdAt: s.createdAt, expiresAt: s.expiresAt, mine: true })));
+      const posts = await prisma.socialPost.findMany({
+        where: { expiresAt: { gt: new Date() } },
+        orderBy: { createdAt: "desc" },
+        take: 100,
+        include: {
+          author: { select: { id: true, firstName: true, lastName: true, role: true, profilePhotoUrl: true } },
+          _count: { select: { likes: true, comments: true } },
+          likes: { where: { userId: jwtUser.userId }, select: { id: true } },
+          comments: { orderBy: { createdAt: "asc" }, include: { user: { select: { id: true, firstName: true, lastName: true, role: true } } } },
+        },
+      });
+      res.json(posts.map((p) => ({
+        id: p.id, body: p.body, imageUrl: p.imageUrl, createdAt: p.createdAt, expiresAt: p.expiresAt,
+        author: { id: p.author.id, name: fullName(p.author), role: p.author.role, photo: p.author.profilePhotoUrl ?? null },
+        mine: p.authorId === jwtUser.userId,
+        likeCount: p._count.likes, commentCount: p._count.comments, likedByMe: p.likes.length > 0,
+        comments: p.comments.map((c) => ({ id: c.id, body: c.body, createdAt: c.createdAt, user: { id: c.user.id, name: fullName(c.user), role: c.user.role }, mine: c.userId === jwtUser.userId })),
+      })));
     } catch (err) {
-      logger.error("Error listing work snaps:", err);
+      logger.error("Error listing social posts:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
 
-  app.delete("/api/snaps/:id", authMiddleware, async (req, res) => {
+  app.delete("/api/social/:id", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
-      const snap = await prisma.workSnap.findUnique({ where: { id: req.params.id } });
-      if (!snap) { res.status(404).json({ error: "Snap not found" }); return; }
-      if (jwtUser.role !== "ADMIN") {
-        const student = await getStudentForReq(req);
-        if (!student || student.id !== snap.studentId) { res.status(403).json({ error: "Forbidden" }); return; }
-      }
-      await prisma.workSnap.delete({ where: { id: snap.id } });
-      try { const fp = path.join(SNAP_DIR, path.basename(snap.imageUrl)); if (fs.existsSync(fp)) fs.unlinkSync(fp); } catch { /* ignore */ }
+      const post = await prisma.socialPost.findUnique({ where: { id: req.params.id } });
+      if (!post) { res.status(404).json({ error: "Post not found" }); return; }
+      if (post.authorId !== jwtUser.userId && jwtUser.role !== "ADMIN") { res.status(403).json({ error: "Forbidden" }); return; }
+      await prisma.socialPost.delete({ where: { id: post.id } }); // likes/comments cascade
+      if (post.imageUrl) { try { const fp = path.join(SOCIAL_DIR, path.basename(post.imageUrl)); if (fs.existsSync(fp)) fs.unlinkSync(fp); } catch { /* ignore */ } }
       res.json({ success: true });
     } catch (err) {
-      logger.error("Error deleting work snap:", err);
+      logger.error("Error deleting social post:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/social/:id/like", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const existing = await prisma.socialLike.findUnique({ where: { postId_userId: { postId: req.params.id, userId: jwtUser.userId } } });
+      if (existing) {
+        await prisma.socialLike.delete({ where: { id: existing.id } });
+        res.json({ liked: false });
+      } else {
+        await prisma.socialLike.create({ data: { postId: req.params.id, userId: jwtUser.userId } });
+        res.json({ liked: true });
+      }
+    } catch (err: any) {
+      if (err?.code === "P2003") { res.status(404).json({ error: "Post not found" }); return; }
+      logger.error("Error toggling like:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/social/:id/comments", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const body = (req.body?.body ?? "").toString().trim().slice(0, 500);
+    if (!body) { res.status(400).json({ error: "Comment cannot be empty" }); return; }
+    try {
+      const c = await prisma.socialComment.create({
+        data: { postId: req.params.id, userId: jwtUser.userId, body },
+        include: { user: { select: { id: true, firstName: true, lastName: true, role: true } } },
+      });
+      res.status(201).json({ id: c.id, body: c.body, createdAt: c.createdAt, user: { id: c.user.id, name: fullName(c.user), role: c.user.role }, mine: true });
+    } catch (err: any) {
+      if (err?.code === "P2003") { res.status(404).json({ error: "Post not found" }); return; }
+      logger.error("Error adding comment:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.delete("/api/social/comments/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const c = await prisma.socialComment.findUnique({ where: { id: req.params.id } });
+      if (!c) { res.status(404).json({ error: "Comment not found" }); return; }
+      if (c.userId !== jwtUser.userId && jwtUser.role !== "ADMIN") { res.status(403).json({ error: "Forbidden" }); return; }
+      await prisma.socialComment.delete({ where: { id: c.id } });
+      res.json({ success: true });
+    } catch (err) {
+      logger.error("Error deleting comment:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
@@ -8702,7 +8761,8 @@ async function startServer() {
       });
       if (!conv) { res.status(404).json({ error: "Conversation not found" }); return; }
       const messages = await prisma.chatMessage.findMany({
-        where: { conversationId: req.params.id, deletedAt: null },
+        // Hide already-expired ephemeral photos even before cleanup runs.
+        where: { conversationId: req.params.id, deletedAt: null, OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] },
         orderBy: { createdAt: "asc" },
         take: 500,
         include: { sender: { select: { id: true, firstName: true, lastName: true, role: true, profilePhotoUrl: true } } },
@@ -8713,7 +8773,7 @@ async function startServer() {
         participants: conv.participants.map((x) => ({ ...userBrief(x.user), lastReadAt: x.lastReadAt })),
         oversight: !part && isAdmin,
         messages: messages.map((m) => ({
-          id: m.id, body: m.body, attachmentUrl: m.attachmentUrl,
+          id: m.id, body: m.body, attachmentUrl: m.attachmentUrl, expiresAt: m.expiresAt,
           sender: userBrief(m.sender), createdAt: m.createdAt, mine: m.senderId === jwtUser.userId,
         })),
       });
@@ -8727,6 +8787,9 @@ async function startServer() {
     const jwtUser = (req as any).user as JwtPayload;
     const body: string = (req.body?.body ?? "").toString().trim();
     const attachmentUrl: string | null = req.body?.attachmentUrl || null;
+    // Camera photos are ephemeral — they vanish after 24h.
+    const ephemeral = Boolean(req.body?.ephemeral) && !!attachmentUrl;
+    const expiresAt = ephemeral ? new Date(Date.now() + EPHEMERAL_TTL_MS) : null;
     if (!body && !attachmentUrl) { res.status(400).json({ error: "Message cannot be empty" }); return; }
     try {
       const part = await prisma.conversationParticipant.findUnique({
@@ -8734,7 +8797,7 @@ async function startServer() {
       });
       if (!part || part.leftAt) { res.status(403).json({ error: "You are not part of this conversation" }); return; }
       const msg = await prisma.chatMessage.create({
-        data: { conversationId: req.params.id, senderId: jwtUser.userId, body, attachmentUrl },
+        data: { conversationId: req.params.id, senderId: jwtUser.userId, body, attachmentUrl, expiresAt },
         include: { sender: { select: { id: true, firstName: true, lastName: true, role: true, profilePhotoUrl: true } } },
       });
       await prisma.conversation.update({ where: { id: req.params.id }, data: { lastMessageAt: msg.createdAt } });
@@ -8745,7 +8808,7 @@ async function startServer() {
       // Push to every participant's open streams (snappy delivery; polling backstops).
       const others = await prisma.conversationParticipant.findMany({ where: { conversationId: req.params.id }, select: { userId: true } });
       chatNotify(others.map((p) => p.userId), { type: "message", conversationId: req.params.id });
-      res.status(201).json({ id: msg.id, body: msg.body, attachmentUrl: msg.attachmentUrl, sender: userBrief(msg.sender), createdAt: msg.createdAt, mine: true });
+      res.status(201).json({ id: msg.id, body: msg.body, attachmentUrl: msg.attachmentUrl, expiresAt: msg.expiresAt, sender: userBrief(msg.sender), createdAt: msg.createdAt, mine: true });
     } catch (err) {
       logger.error("Error sending chat message:", err);
       res.status(500).json({ error: "Internal Server Error" });
@@ -9553,9 +9616,20 @@ async function startServer() {
     logger.info(`Mode: ${process.env.NODE_ENV || "development"}`);
   });
 
+  let shuttingDown = false;
   const shutdown = async () => {
+    if (shuttingDown) return; // ignore repeated Ctrl+C
+    shuttingDown = true;
     logger.info("Shutting down server...");
+    // End long-lived SSE chat streams; otherwise they keep the server open.
+    for (const set of chatStreams.values()) for (const r of set) { try { r.end(); } catch { /* ignore */ } }
+    // Force-close lingering keep-alive sockets so server.close() can complete.
+    (server as any).closeAllConnections?.();
+    // Hard stop if something still hangs.
+    const force = setTimeout(() => { logger.warn("Forcing shutdown."); process.exit(0); }, 3000);
+    if (typeof (force as any).unref === "function") (force as any).unref();
     server.close(async () => {
+      clearTimeout(force);
       try {
         await prisma.$disconnect();
         await pool.end();

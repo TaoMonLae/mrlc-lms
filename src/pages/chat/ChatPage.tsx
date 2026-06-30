@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MessageSquare, Plus, Send, Search, Flag, ArrowLeft, ShieldAlert, ImagePlus, X, Loader2, Sticker } from 'lucide-react';
+import { MessageSquare, Plus, Send, Search, Flag, ArrowLeft, ShieldAlert, ImagePlus, X, Loader2, Sticker, Camera, Download, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePermissions } from '../../lib/permissions';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,7 @@ import { apiGet, apiSend } from '../../lib/api';
 import { useChat } from '../../providers/ChatProvider';
 import { useAuth } from '../../providers/AuthProvider';
 import { StickerPicker, isStickerUrl } from '../../components/chat/StickerPicker';
+import CameraCapture from '../../components/CameraCapture';
 
 interface Contact { id: string; name: string; role: string; profilePhotoUrl?: string | null }
 interface Participant extends Contact { lastReadAt?: string | null }
@@ -24,7 +25,7 @@ interface ConvSummary {
   participants: Contact[];
   lastMessage: { body: string; senderName: string; createdAt: string } | null;
 }
-interface ChatMsg { id: string; body: string; attachmentUrl?: string | null; sender: Contact; createdAt: string; mine: boolean }
+interface ChatMsg { id: string; body: string; attachmentUrl?: string | null; expiresAt?: string | null; sender: Contact; createdAt: string; mine: boolean }
 interface ConvDetail { id: string; type: string; title: string | null; participants: Participant[]; oversight: boolean; messages: ChatMsg[] }
 
 const POLL_MS = 7000;
@@ -35,18 +36,26 @@ function timeLabel(iso: string) {
   return isToday(d) ? format(d, 'HH:mm') : format(d, 'd MMM');
 }
 
+function timeLeftShort(iso: string) {
+  const mins = Math.max(0, Math.round((new Date(iso).getTime() - Date.now()) / 60000));
+  if (mins < 60) return `${mins}m`;
+  return `${Math.round(mins / 60)}h`;
+}
+
 export default function ChatPage() {
   const { hasPermission } = usePermissions();
   const isAdmin = hasPermission('manage_all');
   const { onlineUserIds, eventTick, setActiveConversation } = useChat();
   const { user } = useAuth();
   const myId = user?.id;
+  const canSave = user?.role === 'ADMIN' || user?.role === 'TEACHER';
   const [conversations, setConversations] = useState<ConvSummary[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [detail, setDetail] = useState<ConvDetail | null>(null);
   const [draft, setDraft] = useState('');
   const [attachment, setAttachment] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [camera, setCamera] = useState(false);
   const [loadingList, setLoadingList] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -146,6 +155,22 @@ export default function ChatPage() {
       setDetail((d) => (d && d.id === activeId ? { ...d, messages: [...d.messages, msg] } : d));
       loadList();
     } catch (err: any) { toast.error(err.message || 'Could not send sticker'); }
+  }
+
+  async function sendCameraPhoto(blob: Blob) {
+    setCamera(false);
+    if (!activeId) return;
+    try {
+      const fd = new FormData();
+      fd.append('file', blob, 'photo.jpg');
+      const token = sessionStorage.getItem('auth_token');
+      const upRes = await fetch('/api/chat-media', { method: 'POST', headers: token ? { Authorization: `Bearer ${token}` } : {}, body: fd });
+      const up = await upRes.json().catch(() => ({}));
+      if (!upRes.ok) throw new Error(up.error || 'Upload failed');
+      const msg = await apiSend<ChatMsg>(`/api/chat/conversations/${activeId}/messages`, 'POST', { attachmentUrl: up.url, ephemeral: true });
+      setDetail((d) => (d && d.id === activeId ? { ...d, messages: [...d.messages, msg] } : d));
+      loadList();
+    } catch (err: any) { toast.error(err.message || 'Could not send photo'); }
   }
 
   async function report(messageId: string) {
@@ -300,6 +325,12 @@ export default function ChatPage() {
                     <div className={`max-w-[78%] text-sm ${sticker ? '' : `rounded-2xl px-3 py-2 ${m.mine ? 'bg-aubergine-600 text-white' : 'bg-slate-100 dark:bg-surface-raised text-slate-800 dark:text-slate-200'}`}`}>
                       {!m.mine && !sticker && <p className="mb-0.5 text-[10px] font-bold uppercase tracking-wide opacity-70">{m.sender.name}</p>}
                       {m.attachmentUrl && <img src={m.attachmentUrl} alt={sticker ? 'sticker' : 'attachment'} className={sticker ? 'h-28 w-28' : 'mb-1 max-h-60 rounded-lg'} />}
+                      {m.expiresAt && (
+                        <div className={`mb-1 flex items-center gap-2 text-[10px] ${m.mine ? 'text-white/80' : 'text-slate-500'}`}>
+                          <Clock className="h-3 w-3" /> Disappears in {timeLeftShort(m.expiresAt)}
+                          {canSave && m.attachmentUrl && <a href={m.attachmentUrl} download className="inline-flex items-center gap-0.5 underline"><Download className="h-3 w-3" /> Save</a>}
+                        </div>
+                      )}
                       {m.body && <p className="whitespace-pre-wrap break-words">{m.body}</p>}
                       <div className={`mt-0.5 flex items-center gap-2 text-[10px] ${sticker ? 'text-slate-400' : m.mine ? 'text-white/70' : 'text-slate-400'} ${m.mine ? 'justify-end' : ''}`}>
                         <span>{timeLabel(m.createdAt)}</span>
@@ -335,6 +366,9 @@ export default function ChatPage() {
                   <Button variant="ghost" size="icon" className="shrink-0" title="Attach image" onClick={() => fileRef.current?.click()} disabled={uploading}>
                     {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4 text-slate-500" />}
                   </Button>
+                  <Button variant="ghost" size="icon" className="shrink-0" title="Camera (disappears in 24h)" onClick={() => setCamera(true)}>
+                    <Camera className="h-4 w-4 text-slate-500" />
+                  </Button>
                   <StickerPicker onSelect={sendSticker} />
                   <Input value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} placeholder="Type a message…" />
                   <Button onClick={send} disabled={!draft.trim() && !attachment}><Send className="h-4 w-4" /></Button>
@@ -344,6 +378,8 @@ export default function ChatPage() {
           </>
         )}
       </div>
+
+      {camera && <CameraCapture onCapture={sendCameraPhoto} onClose={() => setCamera(false)} />}
     </div>
   );
 }

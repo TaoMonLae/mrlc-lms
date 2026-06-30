@@ -92,7 +92,7 @@ import Leave from "./pages/hr/Leave";
 import PayslipPrint from "./pages/hr/PayslipPrint";
 import PayrollRunPrint from "./pages/hr/PayrollRunPrint";
 import ChatPage from "./pages/chat/ChatPage";
-import SnapsPage from "./pages/snaps/SnapsPage";
+import SocialSpace from "./pages/social/SocialSpace";
 import ChatModeration from "./pages/chat/ChatModeration";
 import ChatStickers from "./pages/chat/ChatStickers";
 import AdmissionsList from "./pages/admissions/AdmissionsList";
@@ -225,8 +225,8 @@ export default function App() {
                 {/* Chat — available to every authenticated role */}
                 <Route path="/chat" element={<ChatPage />} />
 
-                {/* Work Snaps — students post; staff view */}
-                <Route path="/snaps" element={<SnapsPage />} />
+                {/* Social Space — ephemeral 24h community feed */}
+                <Route path="/social" element={<SocialSpace />} />
 
                 <Route path="/timetable" element={<TimetablePage />} />
 

@@ -13,7 +13,7 @@ import {
   Briefcase,
   Megaphone,
   MessageSquare,
-  Camera,
+  Sparkles,
   CalendarDays,
   GraduationCap,
   UserCheck,
@@ -61,9 +61,9 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     roles: ["ADMIN", "TEACHER", "STUDENT", "STAFF", "ACCOUNTANT", "CASE_WORKER", "LIBRARIAN"],
   },
   {
-    title: "Work Snaps",
-    url: "/snaps",
-    icon: Camera,
+    title: "Social Space",
+    url: "/social",
+    icon: Sparkles,
     roles: ["ADMIN", "TEACHER", "STUDENT", "STAFF", "ACCOUNTANT", "CASE_WORKER", "LIBRARIAN"],
   },
   {
