@@ -151,7 +151,8 @@ const chatMediaUpload = multer({
 const stickerUpload = multer({
   storage: multer.diskStorage({
     destination: (req, _file, cb) => {
-      const pack = sanitizePack((req.params as any).pack) || "Custom";
+      // Use pack name stored on request by route handler
+      const pack = (req as any).stickerPack || "Custom";
       const dir = path.join(STICKER_UPLOAD_DIR, pack);
       fs.mkdirSync(dir, { recursive: true });
       cb(null, dir);
@@ -8437,6 +8438,8 @@ async function startServer() {
   });
 
   app.post("/api/chat/sticker-packs/:pack/stickers", authMiddleware, requireRole("ADMIN"), (req, res) => {
+    // Store pack name on request for multer storage to access
+    (req as any).stickerPack = sanitizePack(req.params.pack) || "Custom";
     stickerUpload.array("files", 50)(req, res, (err: any) => {
       if (err) {
         const msg = err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE" ? "Each sticker must be 5 MB or smaller" : err.message || "Upload failed";
