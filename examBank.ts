@@ -1,20 +1,3 @@
-/**
- * Phase 3 — Reusable Question Bank, topics, exam-question linking, randomized
- * blueprint selection and exam cloning.
- *
- * Registered from server.ts inside startServer() (before the SPA catch-all).
- *
- * Authorization model:
- *  - ADMIN: full access.
- *  - TEACHER: create/edit/approve questions only for their assigned subjects.
- *  - STUDENT: no access to any bank endpoint (none are mounted for students).
- *  - Only APPROVED questions may be added to a PUBLISHED/ACTIVE exam.
- *  - Only ADMIN may archive or restore an APPROVED question.
- *
- * Compatibility: exams without ExamQuestion links or blueprint rules keep using
- * their legacy exam-owned Question rows unchanged. Randomized selection freezes
- * the chosen set + order onto the attempt so historic attempts never change.
- */
 import express from "express";
 
 interface JwtPayload { userId: string; role: string; email: string; }
@@ -33,7 +16,6 @@ interface Deps {
 
 const ACTIVE_EXAM_STATUSES = ["PUBLISHED", "ACTIVE", "SCHEDULED"];
 
-// ── seeded RNG (mulberry32 over a hashed string seed) ──────────────────────────
 export function seededRng(seed: string): () => number {
   let h = 1779033703 ^ seed.length;
   for (let i = 0; i < seed.length; i++) { h = Math.imul(h ^ seed.charCodeAt(i), 3432918353); h = (h << 13) | (h >>> 19); }
@@ -46,19 +28,12 @@ export function seededShuffle<T>(arr: T[], seed: string): T[] {
   return a;
 }
 
-/**
- * Compose the question set for an attempt from FIXED links + RANDOM blueprint
- * rules (falling back to legacy exam-owned questions). Excludes RETIRED/ARCHIVED,
- * never repeats a question, and is reproducible for a given seed.
- * Returns ordered question objects (full DB rows).
- */
 export async function composeQuestionSet(prisma: any, examId: string, seed: string): Promise<any[]> {
   const fixedLinks: any[] = await prisma.examQuestion
     .findMany({ where: { examId }, include: { question: { include: { optionRows: { orderBy: { orderIndex: "asc" } } } } }, orderBy: { displayOrder: "asc" } })
     .catch(() => [] as any[]);
   const rules: any[] = await prisma.examBlueprintRule.findMany({ where: { examId } }).catch(() => [] as any[]);
 
-  // No bank composition configured → legacy path (exam-owned questions).
   if (!fixedLinks.length && !rules.length) {
     return prisma.question.findMany({ where: { examId }, orderBy: { orderIndex: "asc" } });
   }
@@ -74,7 +49,6 @@ export async function composeQuestionSet(prisma: any, examId: string, seed: stri
     }
   }
 
-  // RANDOM rules — seeded, deduped, only APPROVED & not retired/archived.
   let ruleIdx = 0;
   for (const r of rules) {
     const candidates: any[] = await prisma.question.findMany({
@@ -98,11 +72,6 @@ export async function composeQuestionSet(prisma: any, examId: string, seed: stri
   return chosen;
 }
 
-/**
- * Freeze the per-attempt content: question order (optionally shuffled), per-
- * question option order (optionally shuffled), and a content snapshot so the
- * exact text/options shown survive later edits to the bank.
- */
 export function freezeAttempt(questions: any[], exam: any, seed: string) {
   let order = questions.map((q) => q.id);
   if (exam.shuffleQuestions) order = seededShuffle(order, `${seed}:q`);
@@ -115,7 +84,6 @@ export function freezeAttempt(questions: any[], exam: any, seed: string) {
   for (const qid of order) {
     const q = byId[qid];
     if (!q) continue;
-    // Normalize options to [{key, text}] from either QuestionOption rows or legacy Json.
     let opts: { key: string; text: string; correct?: boolean; weight?: number | null }[] = [];
     if (Array.isArray(q.optionRows) && q.optionRows.length) {
       opts = q.optionRows.map((o: any) => ({ key: o.id, text: o.text, correct: o.isCorrect, weight: o.weight }));
@@ -127,7 +95,8 @@ export function freezeAttempt(questions: any[], exam: any, seed: string) {
     frozenContent.push({
       id: q.id, text: q.text, type: q.type,
       points: q.pointsOverride ?? q.defaultPoints ?? q.points ?? 0,
-      // Student-facing: strip correctness here; correctness stays server-side.
+      passageText: q.passageText ?? null,
+      imageUrl: q.imageUrl ?? null,
       options: opts.map((o) => ({ key: o.key, text: o.text })),
     });
   }
@@ -149,7 +118,16 @@ export function registerExamBankRoutes(deps: Deps): void {
   const teacherGuard: express.RequestHandler = (req, res, next) => { if (!isTeacher(req)) { res.status(403).json({ error: "Forbidden" }); return; } next(); };
   const adminGuard: express.RequestHandler = (req, res, next) => { if (!isAdmin(req)) { res.status(403).json({ error: "Admin only" }); return; } next(); };
 
-  // Subjects a teacher may author for (ADMIN → null = unrestricted).
+  function sanitizeHTML(text: string): string {
+    if (!text) return text;
+    return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#x27;");
+  }
+
   async function allowedSubjectIds(req: express.Request): Promise<string[] | null> {
     if (isAdmin(req)) return null;
     const teacher = await prisma.teacher.findUnique({ where: { userId: user(req).userId } }).catch(() => null);
@@ -160,14 +138,18 @@ export function registerExamBankRoutes(deps: Deps): void {
   async function canEditSubject(req: express.Request, subjectId: string | null | undefined): Promise<boolean> {
     const ids = await allowedSubjectIds(req);
     if (ids === null) return true;
-    if (!subjectId) return true; // ungrouped questions editable by any teacher
+    if (!subjectId) return true;
     return ids.includes(subjectId);
   }
 
-  // ── Topics ──────────────────────────────────────────────────────────────────
   app.get("/api/question-topics", authMiddleware, teacherGuard, async (req: any, res: any) => {
     const { subjectId } = req.query as Record<string, string>;
-    try { res.json(await prisma.questionTopic.findMany({ where: { ...(subjectId ? { subjectId } : {}) }, orderBy: { name: "asc" } })); }
+    try {
+      const ids = await allowedSubjectIds(req);
+      if (ids !== null && subjectId && !ids.includes(subjectId)) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+      res.json(await prisma.questionTopic.findMany({ where: { ...(subjectId ? { subjectId } : {}) }, orderBy: { name: "asc" } })); }
     catch (err: any) { if (degrade(err, res, [])) return; logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
   app.post("/api/question-topics", authMiddleware, teacherGuard, async (req: any, res: any) => {
@@ -188,7 +170,6 @@ export function registerExamBankRoutes(deps: Deps): void {
     catch (err: any) { if (err?.code === "P2025") { res.status(404).json({ error: "Not found" }); return; } logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
 
-  // ── Banks (optional grouping) ─────────────────────────────────────────────────
   app.get("/api/question-banks", authMiddleware, teacherGuard, async (_req: any, res: any) => {
     try { res.json(await prisma.questionBank.findMany({ orderBy: { name: "asc" } })); }
     catch (err: any) { if (degrade(err, res, [])) return; logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
@@ -199,13 +180,11 @@ export function registerExamBankRoutes(deps: Deps): void {
     catch (err) { logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
 
-  // ── Question bank: list + detail ──────────────────────────────────────────────
   app.get("/api/question-bank", authMiddleware, teacherGuard, async (req: any, res: any) => {
     const { subjectId, topicId, difficulty, status, type, q, bankId, page } = req.query as Record<string, string>;
     const take = 50; const skip = (Math.max(1, Number(page) || 1) - 1) * take;
     try {
       const where: any = {
-        // bank questions only (legacy exam-owned still listed if they have no exam? no — restrict to bank-capable)
         ...(subjectId ? { subjectId } : {}),
         ...(topicId ? { topicId } : {}),
         ...(difficulty ? { difficulty } : {}),
@@ -214,7 +193,6 @@ export function registerExamBankRoutes(deps: Deps): void {
         ...(bankId ? { bankId } : {}),
         ...(q ? { text: { contains: q, mode: "insensitive" } } : {}),
       };
-      // Teachers see only their subjects' questions (+ ungrouped).
       const ids = await allowedSubjectIds(req);
       if (ids !== null) where.OR = [{ subjectId: { in: ids } }, { subjectId: null }];
       const [items, total] = await Promise.all([
@@ -233,7 +211,6 @@ export function registerExamBankRoutes(deps: Deps): void {
     } catch (err) { logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
 
-  // ── Create / update question (+options) ───────────────────────────────────────
   const DIFFICULTY = ["EASY", "MEDIUM", "HARD"];
   app.post("/api/question-bank", authMiddleware, teacherGuard, async (req: any, res: any) => {
     const b = req.body || {};
@@ -243,18 +220,18 @@ export function registerExamBankRoutes(deps: Deps): void {
     try {
       const row = await prisma.question.create({
         data: {
-          text: b.text, type: b.type, points: num(b.defaultPoints) ?? 1,
+          text: sanitizeHTML(b.text), type: b.type, points: num(b.defaultPoints) ?? 1,
           subjectId: b.subjectId || null, topicId: b.topicId || null, subtopic: b.subtopic || null,
           bankId: b.bankId || null, difficulty: DIFFICULTY.includes(b.difficulty) ? b.difficulty : null,
           defaultPoints: num(b.defaultPoints), estimatedTimeSeconds: num(b.estimatedTimeSeconds),
-          explanation: b.explanation || null, status: "DRAFT", version: 1,
+          explanation: sanitizeHTML(b.explanation) || null, status: "DRAFT", version: 1,
           tags: Array.isArray(b.tags) ? b.tags : [], language: b.language || null,
           correctAnswer: b.correctAnswer || null, correctAnswers: b.correctAnswers ?? null,
           partialCredit: !!b.partialCredit, caseSensitive: !!b.caseSensitive,
-          requiresManualGrading: !!b.requiresManualGrading, numericTolerance: num(b.numericTolerance),
+          requiresManualGrading: !!b.requiresManualGrading,
+          numericTolerance: (num(b.numericTolerance) !== null && num(b.numericTolerance) >= 0) ? num(b.numericTolerance) : null,
           createdById: user(req).userId,
-          // examId stays null → this is a reusable bank question.
-          optionRows: { create: options.map((o, i) => ({ text: o.text || "", isCorrect: !!o.isCorrect, weight: num(o.weight), orderIndex: i })) },
+          optionRows: { create: options.map((o, i) => ({ text: sanitizeHTML(o.text) || "", isCorrect: !!o.isCorrect, weight: num(o.weight), orderIndex: i })) },
         },
         include: { optionRows: true },
       });
@@ -272,7 +249,9 @@ export function registerExamBankRoutes(deps: Deps): void {
       if (existing.status === "ARCHIVED" && !isAdmin(req)) { res.status(409).json({ error: "Archived — restore first (admin)" }); return; }
 
       const data: any = {};
-      for (const k of ["text", "explanation", "subtopic", "language", "correctAnswer"]) if (b[k] !== undefined) data[k] = b[k] || null;
+      for (const k of ["text", "explanation", "subtopic", "language", "correctAnswer"]) if (b[k] !== undefined) {
+        data[k] = (k === "text" || k === "explanation") ? sanitizeHTML(b[k] || "") : (b[k] || null);
+      }
       if (b.type !== undefined) data.type = b.type;
       if (b.subjectId !== undefined) data.subjectId = b.subjectId || null;
       if (b.topicId !== undefined) data.topicId = b.topicId || null;
@@ -286,7 +265,6 @@ export function registerExamBankRoutes(deps: Deps): void {
       if (b.caseSensitive !== undefined) data.caseSensitive = !!b.caseSensitive;
       if (b.requiresManualGrading !== undefined) data.requiresManualGrading = !!b.requiresManualGrading;
       if (b.numericTolerance !== undefined) data.numericTolerance = num(b.numericTolerance);
-      // Editing an APPROVED question sends it back to review and bumps the version.
       if (existing.status === "APPROVED" && (b.text !== undefined || b.options !== undefined || b.correctAnswer !== undefined)) {
         data.status = "UNDER_REVIEW"; data.version = (existing.version || 1) + 1; data.approvedAt = null;
       }
@@ -306,7 +284,6 @@ export function registerExamBankRoutes(deps: Deps): void {
     } catch (err: any) { if (err?.code === "P2025") { res.status(404).json({ error: "Not found" }); return; } logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
 
-  // ── Approve / archive / restore ───────────────────────────────────────────────
   app.post("/api/question-bank/:id/approve", authMiddleware, teacherGuard, async (req: any, res: any) => {
     try {
       const q = await prisma.question.findUnique({ where: { id: req.params.id } });
@@ -322,7 +299,6 @@ export function registerExamBankRoutes(deps: Deps): void {
     try {
       const q = await prisma.question.findUnique({ where: { id: req.params.id } });
       if (!q) { res.status(404).json({ error: "Not found" }); return; }
-      // Only ADMIN may archive an APPROVED question.
       if (q.status === "APPROVED" && !isAdmin(req)) { res.status(403).json({ error: "Only admin may archive an approved question" }); return; }
       if (!(await canEditSubject(req, q.subjectId))) { res.status(403).json({ error: "Not your subject" }); return; }
       const row = await prisma.question.update({ where: { id: req.params.id }, data: { status: "ARCHIVED", archivedAt: new Date() } });
@@ -339,7 +315,6 @@ export function registerExamBankRoutes(deps: Deps): void {
     } catch (err: any) { if (err?.code === "P2025") { res.status(404).json({ error: "Not found" }); return; } logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
 
-  // ── Exam ↔ bank linking ───────────────────────────────────────────────────────
   app.get("/api/exams/:id/bank-questions", authMiddleware, teacherGuard, async (req: any, res: any) => {
     try { res.json(await prisma.examQuestion.findMany({ where: { examId: req.params.id }, include: { question: { include: { optionRows: true } } }, orderBy: { displayOrder: "asc" } })); }
     catch (err: any) { if (degrade(err, res, [])) return; logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
@@ -383,7 +358,6 @@ export function registerExamBankRoutes(deps: Deps): void {
     } catch (err) { logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
 
-  // ── Blueprint (random-selection) rules ────────────────────────────────────────
   app.get("/api/exams/:id/blueprint", authMiddleware, teacherGuard, async (req: any, res: any) => {
     try { res.json(await prisma.examBlueprintRule.findMany({ where: { examId: req.params.id }, orderBy: { createdAt: "asc" } })); }
     catch (err: any) { if (degrade(err, res, [])) return; logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
@@ -401,7 +375,6 @@ export function registerExamBankRoutes(deps: Deps): void {
     catch (err: any) { if (err?.code === "P2025") { res.status(404).json({ error: "Not found" }); return; } logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
 
-  // Preview a generated set (does NOT persist; uses a throwaway seed).
   app.get("/api/exams/:id/blueprint/preview", authMiddleware, teacherGuard, async (req: any, res: any) => {
     try {
       const set = await composeQuestionSet(prisma, req.params.id, `preview:${Date.now()}`);
@@ -409,9 +382,6 @@ export function registerExamBankRoutes(deps: Deps): void {
     } catch (err: any) { if (degrade(err, res, { count: 0, questions: [] })) return; logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
 
-  // ── Clone exam ────────────────────────────────────────────────────────────────
-  // Copies metadata, sections, FIXED question links and blueprint rules into a new
-  // DRAFT exam. Never copies attempts/answers/results.
   app.post("/api/exams/:id/clone", authMiddleware, teacherGuard, async (req: any, res: any) => {
     try {
       const src = await prisma.exam.findUnique({ where: { id: req.params.id }, include: { sections: true, examQuestions: true, blueprintRules: true } });
@@ -425,17 +395,14 @@ export function registerExamBankRoutes(deps: Deps): void {
           attemptLimit: src.attemptLimit, gracePeriodMinutes: src.gracePeriodMinutes, allowLateStart: src.allowLateStart,
           requiresAccessCode: false, requiresInvigilator: src.requiresInvigilator, clonedFromId: src.id,
         }});
-        // Sections (remap old→new id for links).
         const sectionMap: Record<string, string> = {};
         for (const s of src.sections) {
           const ns = await tx.examSection.create({ data: { examId: exam.id, title: s.title, description: s.description, instructions: s.instructions, orderIndex: s.orderIndex, timeLimitMinutes: s.timeLimitMinutes, shuffleQuestions: s.shuffleQuestions, questionsToPick: s.questionsToPick } });
           sectionMap[s.id] = ns.id;
         }
-        // FIXED question links.
         for (const eq of src.examQuestions) {
           await tx.examQuestion.create({ data: { examId: exam.id, questionId: eq.questionId, sectionId: eq.sectionId ? sectionMap[eq.sectionId] || null : null, pointsOverride: eq.pointsOverride, displayOrder: eq.displayOrder, required: eq.required, sourceType: eq.sourceType } });
         }
-        // Blueprint rules.
         for (const r of src.blueprintRules) {
           await tx.examBlueprintRule.create({ data: { examId: exam.id, sectionId: r.sectionId ? sectionMap[r.sectionId] || null : null, subjectId: r.subjectId, topicId: r.topicId, difficulty: r.difficulty, type: r.type, count: r.count, pointsEach: r.pointsEach } });
         }

@@ -4,12 +4,8 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  // Connection URL is managed via prisma.config.ts (Prisma 7+)
 }
 
-// -----------------------------------------------------------------------------
-// ENUMS
-// -----------------------------------------------------------------------------
 
 enum Role {
   ADMIN
@@ -61,7 +57,6 @@ enum FeeStatus {
   WAIVED
 }
 
-// ── Phase 2 advanced exam enums ──────────────────────────────────────────────
 enum StimulusType {
   TEXT
   IMAGE
@@ -84,7 +79,6 @@ enum AttemptState {
   INVALIDATED
 }
 
-// ── Phase 3 (reusable question bank) enums ───────────────────────────────────
 enum QuestionDifficulty {
   EASY
   MEDIUM
@@ -119,9 +113,6 @@ enum CasePriority {
   URGENT
 }
 
-// -----------------------------------------------------------------------------
-// MODELS
-// -----------------------------------------------------------------------------
 
 model User {
   id            String    @id @default(uuid())
@@ -134,9 +125,9 @@ model User {
   isActive      Boolean   @default(true)
   mustChangePassword Boolean @default(false)
 
-  // Relations
   studentProfile Student?
   teacherProfile Teacher?
+  employeeProfile Employee?
   recordedAttendances Attendance[] @relation("RecordedBy")
   caseNotes      CaseNote[]
   sentMessages   Message[] @relation("SentMessages")
@@ -245,10 +236,13 @@ model Teacher {
   hireDate       DateTime @default(now())
   specialization String?
   profilePhotoUrl String?
+  baseSalary     Float    @default(0)
+  currency       String   @default("MYR")
 
   classes        ClassTeacher[]
   subjects       SubjectTeacher[]
   lessonPlans    LessonPlan[]
+  payslips       Payslip[]
   
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -410,6 +404,7 @@ model Question {
   correctAnswer  String?  // Can be an option string or detailed answer
   explanation    String?  // Shown only after result release
   passageText    String?  // Optional passage text (e.g. for GED RLA/Science/Social Studies split layout)
+  imageUrl       String?  // Optional image/media shown with the question
 
   // Phase 2: structure
   orderIndex     Int      @default(0)
@@ -430,9 +425,6 @@ model Question {
   partialCredit    Boolean  @default(false)
   requiresManualGrading Boolean @default(false)
 
-  // Legacy ownership kept for backward compatibility. New *bank* questions have
-  // examId = null and are linked to exams through ExamQuestion. Existing rows
-  // keep their examId so historic exams/attempts are untouched.
   examId         String?
   exam           Exam?    @relation(fields: [examId], references: [id], onDelete: Cascade)
 
@@ -723,9 +715,6 @@ model AuditLog {
   @@index([entityType])
 }
 
-// -----------------------------------------------------------------------------
-// PHYSICAL LIBRARY (book catalog + borrowing)
-// -----------------------------------------------------------------------------
 
 model Book {
   id              String   @id @default(uuid())
@@ -759,8 +748,6 @@ model BookLoan {
   bookId         String
   book           Book           @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
-  // Borrower is stored denormalized (matches AuditLog / VideoLesson pattern) so
-  // loans can be issued to students, staff, or external members alike.
   studentId      String?
   borrowerName   String
   borrowerType   String?        // e.g. STUDENT, TEACHER, STAFF, OTHER
@@ -782,9 +769,6 @@ model BookLoan {
   @@index([status])
 }
 
-// -----------------------------------------------------------------------------
-// SCHOOL OPERATIONS
-// -----------------------------------------------------------------------------
 
 model AdmissionApplication {
   id              String   @id @default(uuid())
@@ -978,9 +962,6 @@ model InventoryItem {
   @@index([condition])
 }
 
-// -----------------------------------------------------------------------------
-// E-LIBRARY (online EPUB/PDF reading)
-// -----------------------------------------------------------------------------
 
 model Ebook {
   id              String   @id @default(uuid())
@@ -1094,7 +1075,6 @@ model StudentDocument {
   @@index([status])
 }
 
-// ── Gradebook & GED readiness ────────────────────────────────────────────────
 enum GradeCategoryType {
   ASSIGNMENT
   QUIZ
@@ -1189,7 +1169,6 @@ model GedReadiness {
   @@index([studentId])
 }
 
-// ── Official documents (report cards, transcripts, certificates) ─────────────
 enum DocumentType {
   REPORT_CARD
   TRANSCRIPT
@@ -1235,7 +1214,6 @@ model GeneratedDocument {
   @@index([status])
 }
 
-// ── Messaging System ─────────────────────────────────────────────────────────
 
 model Message {
   id             String   @id @default(uuid())
@@ -1274,7 +1252,6 @@ model MessageRecipient {
   @@index([readAt])
 }
 
-// ── Generated Reports Tracking ───────────────────────────────────────────────
 
 model SavedReport {
   id              String   @id @default(uuid())
@@ -1332,7 +1309,6 @@ model ReportGeneration {
   @@index([createdAt])
 }
 
-// ── Lesson Planning System ────────────────────────────────────────────────────
 
 model LessonPlan {
   id              String   @id @default(uuid())
@@ -1393,12 +1369,7 @@ model LessonPlanProgress {
   @@index([week])
 }
 
-// =============================================================================
-// PHASE 2 — ADVANCED EXAM SYSTEM
-// =============================================================================
 
-// A logical division of an exam (e.g. "Section 1: Reading"). Sections carry
-// their own instructions, optional time limit and optional random subset size.
 model ExamSection {
   id             String   @id @default(uuid())
   examId         String
@@ -1423,7 +1394,6 @@ model ExamSection {
   @@index([orderIndex])
 }
 
-// A shared passage/media resource that one or more questions reference.
 model Stimulus {
   id             String   @id @default(uuid())
   examId         String
@@ -1445,7 +1415,6 @@ model Stimulus {
   @@index([type])
 }
 
-// Groups questions that share a single stimulus (passage-based question set).
 model QuestionGroup {
   id             String   @id @default(uuid())
   examId         String
@@ -1468,7 +1437,6 @@ model QuestionGroup {
   @@index([stimulusId])
 }
 
-// Assigns an exam to a specific student, with optional per-assignment overrides.
 model ExamAssignment {
   id             String   @id @default(uuid())
   examId         String
@@ -1496,7 +1464,6 @@ model ExamAssignment {
   @@index([invigilatorId])
 }
 
-// Per-student accommodations. examId null = applies to all of the student's exams.
 model ExamAccommodation {
   id             String   @id @default(uuid())
   studentId      String
@@ -1527,7 +1494,6 @@ model ExamAccommodation {
   @@index([examId])
 }
 
-// A reusable rubric attached to an exam or a single question.
 model GradingRubric {
   id             String   @id @default(uuid())
   examId         String?
@@ -1564,7 +1530,6 @@ model RubricCriterion {
   @@index([rubricId])
 }
 
-// A manual grading record for a single answer requiring human marking.
 model ManualGrade {
   id             String   @id @default(uuid())
   attemptId      String
@@ -1602,8 +1567,6 @@ model ManualGrade {
   @@index([status])
 }
 
-// Append-only log of significant attempt events (autosave, navigation, pause,
-// invigilator actions, integrity signals). Never updated after insert.
 model AttemptEvent {
   id             String   @id @default(uuid())
   attemptId      String
@@ -1621,7 +1584,6 @@ model AttemptEvent {
   @@index([createdAt])
 }
 
-// Immutable snapshots of answer state for crash recovery + audit.
 model AttemptSnapshot {
   id             String   @id @default(uuid())
   attemptId      String
@@ -1636,7 +1598,6 @@ model AttemptSnapshot {
   @@index([createdAt])
 }
 
-// Controls how and when results become visible to the student.
 model ExamResultPolicy {
   id             String   @id @default(uuid())
   examId         String   @unique
@@ -1655,7 +1616,6 @@ model ExamResultPolicy {
   @@index([examId])
 }
 
-// Computed psychometric statistics per question (refreshed on demand).
 model QuestionStatistic {
   id             String   @id @default(uuid())
   questionId     String   @unique
@@ -1683,11 +1643,7 @@ model QuestionStatistic {
   @@index([examId])
 }
 
-// =============================================================================
-// PHASE 3 — REUSABLE QUESTION BANK
-// =============================================================================
 
-// An optional grouping/container of bank questions (e.g. per subject or course).
 model QuestionBank {
   id          String   @id @default(uuid())
   name        String
@@ -1703,7 +1659,6 @@ model QuestionBank {
   @@index([subjectId])
 }
 
-// Hierarchical topic taxonomy. parentId set → it is a subtopic.
 model QuestionTopic {
   id        String   @id @default(uuid())
   name      String
@@ -1722,7 +1677,6 @@ model QuestionTopic {
   @@index([subjectId])
 }
 
-// Structured option rows for bank questions (legacy questions keep options Json).
 model QuestionOption {
   id         String   @id @default(uuid())
   questionId String
@@ -1738,7 +1692,6 @@ model QuestionOption {
   @@index([questionId])
 }
 
-// Many-to-many link of bank questions to exams (FIXED) plus per-exam overrides.
 model ExamQuestion {
   id           String   @id @default(uuid())
   examId       String
@@ -1760,7 +1713,6 @@ model ExamQuestion {
   @@index([sectionId])
 }
 
-// A quota rule for randomized selection (by subject / topic / difficulty / type).
 model ExamBlueprintRule {
   id         String   @id @default(uuid())
   examId     String
@@ -1778,4 +1730,150 @@ model ExamBlueprintRule {
 
   @@index([examId])
   @@index([sectionId])
+}
+
+
+enum EmployeeStatus {
+  ACTIVE
+  ON_LEAVE
+  SUSPENDED
+  TERMINATED
+}
+
+enum PayrollStatus {
+  DRAFT     // run created, payslips editable
+  APPROVED  // locked, ready to pay
+  PAID      // disbursed
+}
+
+enum LeaveRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+model Department {
+  id           String   @id @default(uuid())
+  name         String   @unique
+  code         String?  @unique
+  description  String?
+  employees    Employee[]
+  designations Designation[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Designation {
+  id           String   @id @default(uuid())
+  title        String
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+  employees    Employee[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([departmentId])
+}
+
+model Employee {
+  id              String   @id @default(uuid())
+  userId          String?  @unique
+  user            User?    @relation(fields: [userId], references: [id])
+  employeeCode    String   @unique
+  firstName       String
+  lastName        String
+  email           String?
+  phone           String?
+  status          EmployeeStatus @default(ACTIVE)
+  hireDate        DateTime @default(now())
+  terminationDate DateTime?
+  baseSalary      Float    @default(0)
+  currency        String   @default("MYR")
+  profilePhotoUrl String?
+
+  departmentId    String?
+  department      Department? @relation(fields: [departmentId], references: [id])
+  designationId   String?
+  designation     Designation? @relation(fields: [designationId], references: [id])
+
+  payslips        Payslip[]
+  leaveRequests   LeaveRequest[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([employeeCode])
+  @@index([departmentId])
+  @@index([status])
+}
+
+model PayrollRun {
+  id          String   @id @default(uuid())
+  periodMonth Int      // 1-12
+  periodYear  Int
+  status      PayrollStatus @default(DRAFT)
+  notes       String?
+  createdById String?
+  payslips    Payslip[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([periodYear, periodMonth])
+  @@index([status])
+}
+
+model Payslip {
+  id           String   @id @default(uuid())
+  payrollRunId String
+  payrollRun   PayrollRun @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
+  employeeId   String?
+  employee     Employee? @relation(fields: [employeeId], references: [id])
+  teacherId    String?
+  teacher      Teacher?  @relation(fields: [teacherId], references: [id])
+  baseSalary   Float    @default(0)
+  allowances   Float    @default(0)
+  deductions   Float    @default(0)
+  netPay       Float    @default(0)
+  currency     String   @default("MYR")
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([payrollRunId, employeeId])
+  @@unique([payrollRunId, teacherId])
+  @@index([employeeId])
+  @@index([teacherId])
+}
+
+model LeaveType {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  daysPerYear Int      @default(0) // 0 = uncapped / unpaid
+  paid        Boolean  @default(true)
+  requests    LeaveRequest[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model LeaveRequest {
+  id             String   @id @default(uuid())
+  employeeId     String
+  employee       Employee @relation(fields: [employeeId], references: [id])
+  leaveTypeId    String
+  leaveType      LeaveType @relation(fields: [leaveTypeId], references: [id])
+  startDate      DateTime
+  endDate        DateTime
+  days           Float
+  reason         String?
+  status         LeaveRequestStatus @default(PENDING)
+  reviewedById   String?
+  reviewedByName String?
+  reviewedAt     DateTime?
+  reviewNote     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([employeeId])
+  @@index([status])
 }

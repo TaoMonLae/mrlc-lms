@@ -14,6 +14,7 @@ export interface ExamQuestion {
   type: QuestionType;
   questionText: string;
   passageText?: string;
+  imageUrl?: string | null;
   choices?: string[];
   correctAnswer?: string;
   explanation?: string;

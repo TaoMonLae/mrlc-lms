@@ -167,6 +167,24 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     roles: ["ADMIN"],
   },
   {
+    title: "Staff",
+    url: "/staff",
+    icon: UserSquare2,
+    roles: ["ADMIN"],
+  },
+  {
+    title: "Payroll",
+    url: "/payroll",
+    icon: Wallet,
+    roles: ["ADMIN", "ACCOUNTANT"],
+  },
+  {
+    title: "Leave",
+    url: "/leave",
+    icon: CalendarCheck,
+    roles: ["ADMIN"],
+  },
+  {
     title: "Reports",
     url: "/reports",
     icon: BarChart3,

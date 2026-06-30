@@ -160,7 +160,7 @@ export default function ExamProfile() {
             <Button variant="outline" render={<Link to={`/exam2/${id}/schedule`} />} nativeButton={false}>
               Schedule
             </Button>
-            <Button variant="secondary" className="text-aubergine-600 bg-aubergine-50 hover:bg-aubergine-100 dark:bg-aubergine-900/20 dark:hover:bg-aubergine-900/40" render={<Link to={`/exams/${id}/take`} />} nativeButton={false}>
+            <Button variant="secondary" className="text-aubergine-600 bg-aubergine-50 hover:bg-aubergine-100 dark:bg-aubergine-900/20 dark:hover:bg-aubergine-900/40" render={<Link to={`/exams/${id}/preview`} />} nativeButton={false}>
               <Play className="mr-2 h-4 w-4" /> Preview
             </Button>
             <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50 dark:border-red-900/40 dark:hover:bg-red-900/20" onClick={handleDelete}>

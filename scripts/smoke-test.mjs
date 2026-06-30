@@ -1,22 +1,4 @@
 #!/usr/bin/env node
-/**
- * Smoke test for the MRLC LMS API.
- *
- * Exercises auth, the core list endpoints, the full e-book lifecycle
- * (upload → fetch → stream → download permission → delete), and a couple of
- * validation/authorization guards against a *running, seeded* server.
- *
- * Usage:
- *   # start the server first (npm run dev), seed the DB (npm run seed), then:
- *   node scripts/smoke-test.mjs
- *
- * Config via env:
- *   BASE_URL         default http://localhost:8000
- *   SMOKE_EMAIL      default admin@mrlc.edu
- *   SMOKE_PASSWORD   default admin123   (matches the demo seed)
- *
- * Requires Node 18+ (global fetch / FormData / Blob). Exits non-zero on failure.
- */
 
 const BASE = (process.env.BASE_URL || 'http://localhost:8000').replace(/\/$/, '');
 const EMAIL = process.env.SMOKE_EMAIL || 'admin@mrlc.edu';
@@ -90,6 +72,8 @@ async function main() {
     '/api/exams', '/api/library', '/api/videos', '/api/books',
     '/api/fees', '/api/cases', '/api/users', '/api/audit-logs',
     '/api/settings', '/api/ebooks',
+    '/api/employees', '/api/departments', '/api/designations',
+    '/api/payroll-runs', '/api/leave-types', '/api/leave-requests',
   ];
   for (const p of lists) await expectStatus(`GET ${p}`, 'GET', p, 200);
 
@@ -116,6 +100,79 @@ async function main() {
   } else {
     bad('upload e-book', `got ${up.status} (is the Ebook table migrated?)`);
   }
+
+  // ── HR / Payroll / Leave lifecycle ──
+  console.log('\nHR / Payroll / Leave lifecycle');
+  // department → designation → employee → payroll run (auto-payslip) → payslip edit
+  // → leave type → leave request → approve → balance.
+  let hrOk = true;
+  const depRes = await req('POST', '/api/departments', { body: { name: `Smoke Dept ${Date.now()}` } });
+  if (depRes.status === 201) {
+    ok('create department (201)');
+    const dep = await depRes.json();
+    const desRes = await req('POST', '/api/designations', { body: { title: 'Smoke Officer', departmentId: dep.id } });
+    const des = desRes.status === 201 ? await desRes.json() : null;
+    desRes.status === 201 ? ok('create designation (201)') : bad('create designation', `got ${desRes.status}`);
+
+    const empRes = await req('POST', '/api/employees', {
+      body: { firstName: 'Smoke', lastName: 'Staff', baseSalary: 1000, departmentId: dep.id, designationId: des?.id },
+    });
+    if (empRes.status === 201) {
+      ok('create employee (201)');
+      const emp = await empRes.json();
+
+      const ym = { periodYear: 2999, periodMonth: 1 };
+      const runRes = await req('POST', '/api/payroll-runs', { body: ym });
+      if (runRes.status === 201) {
+        ok('create payroll run (201)');
+        const run = await runRes.json();
+        const detRes = await req('GET', `/api/payroll-runs/${run.id}`);
+        const detail = await detRes.json();
+        const slip = (detail.payslips || []).find((p) => p.employeeId === emp.id);
+        slip ? ok('payslip auto-seeded for active employee') : bad('payslip auto-seed', 'no payslip for new employee');
+        if (slip) {
+          const slipRes = await req('PUT', `/api/payslips/${slip.id}`, { body: { allowances: 200, deductions: 50 } });
+          const updated = slipRes.status === 200 ? await slipRes.json() : null;
+          (updated && updated.netPay === 1150)
+            ? ok('payslip netPay recomputed (1000 + 200 − 50 = 1150)')
+            : bad('payslip recompute', `expected 1150, got ${updated?.netPay}`);
+        }
+        // approve, then assert payslips lock
+        await expectStatus('approve payroll run', 'PUT', `/api/payroll-runs/${run.id}/status`, 200, { body: { status: 'APPROVED' } });
+        if (slip) await expectStatus('payslip edit blocked once APPROVED', 'PUT', `/api/payslips/${slip.id}`, 400, { body: { allowances: 1 } });
+      } else if (runRes.status === 409) {
+        ok('payroll run duplicate guard (409 — rerun)');
+      } else { bad('create payroll run', `got ${runRes.status}`); hrOk = false; }
+
+      const ltRes = await req('POST', '/api/leave-types', { body: { name: `Smoke Leave ${Date.now()}`, daysPerYear: 10 } });
+      if (ltRes.status === 201) {
+        ok('create leave type (201)');
+        const lt = await ltRes.json();
+        const year = new Date().getFullYear();
+        const lrRes = await req('POST', '/api/leave-requests', {
+          body: { employeeId: emp.id, leaveTypeId: lt.id, startDate: `${year}-06-01`, endDate: `${year}-06-03` },
+        });
+        if (lrRes.status === 201) {
+          const lr = await lrRes.json();
+          lr.days === 3 ? ok('leave request days computed (3)') : bad('leave days', `expected 3, got ${lr.days}`);
+          await expectStatus('approve leave request', 'PUT', `/api/leave-requests/${lr.id}/status`, 200, { body: { status: 'APPROVED' } });
+          const balRes = await req('GET', `/api/employees/${emp.id}/leave-balance`);
+          const bal = await balRes.json();
+          const row = (bal.balance || []).find((b) => b.leaveTypeId === lt.id);
+          (row && row.used === 3 && row.remaining === 7)
+            ? ok('leave balance reflects approval (used 3, remaining 7)')
+            : bad('leave balance', `got used=${row?.used} remaining=${row?.remaining}`);
+        } else { bad('create leave request', `got ${lrRes.status}`); }
+      } else { bad('create leave type', `got ${ltRes.status}`); }
+
+      // soft-delete employee (terminate)
+      await expectStatus('terminate employee (soft delete)', 'DELETE', `/api/employees/${emp.id}`, 200);
+    } else { bad('create employee', `got ${empRes.status}`); hrOk = false; }
+  } else {
+    bad('create department', `got ${depRes.status} (is the HR migration applied?)`);
+    hrOk = false;
+  }
+  if (hrOk) ok('HR lifecycle completed');
 
   summary();
 }

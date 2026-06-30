@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { authHeaders } from '../../lib/api';
 import { Clock, Save, Flag, Pause, Send, AlertTriangle, Loader2 } from 'lucide-react';
+import MathText from '../../components/MathText';
 
 /**
  * Server-authoritative exam player.
@@ -13,7 +14,7 @@ import { Clock, Save, Flag, Pause, Send, AlertTriangle, Loader2 } from 'lucide-r
  *    is re-synced on every save; the browser timer is display-only.
  *  - Handles SESSION_CONFLICT (another session) and TIME_EXPIRED (auto-submit).
  */
-type Q = { id: string; text: string; type: string; points: number; options: any; partialCredit?: boolean; passageText?: string | null };
+type Q = { id: string; text: string; type: string; points: number; options: any; partialCredit?: boolean; passageText?: string | null; imageUrl?: string | null };
 type Answer = { answerText?: string; selectedOptions?: string[]; flaggedForReview?: boolean };
 
 // Written-answer types always render a free-text box (never multiple choice),
@@ -146,7 +147,7 @@ export default function ExamPlayer() {
                   ? setAnswer(q.id, { selectedOptions: selected ? (answers[q.id]?.selectedOptions || []).filter((v) => v !== val) : [...(answers[q.id]?.selectedOptions || []), val] })
                   : setAnswer(q.id, { answerText: val })}
                 className={`w-full text-left px-4 py-3 rounded-lg border transition-colors ${selected ? 'border-aubergine-500 bg-aubergine-50 dark:bg-aubergine-900/20' : 'border-slate-200 dark:border-surface-raised hover:border-slate-300'}`}>
-                <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{String(typeof opt === 'object' ? opt.text ?? opt.value : opt)}</span>
+                <MathText className="text-sm font-medium text-slate-800 dark:text-slate-200">{String(typeof opt === 'object' ? opt.text ?? opt.value : opt)}</MathText>
               </button>
             );
           })}
@@ -184,7 +185,7 @@ export default function ExamPlayer() {
           <div className="md:col-span-6 bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-4 max-h-[60vh] md:max-h-[70vh] overflow-y-auto sticky top-20">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b pb-2 dark:border-surface-raised">Passage</h3>
             <div className="text-sm text-slate-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
-              {q.passageText}
+              <MathText>{q.passageText || ''}</MathText>
             </div>
           </div>
 
@@ -196,7 +197,8 @@ export default function ExamPlayer() {
                 <Flag className="h-4 w-4 mr-1" /> {answers[q.id]?.flaggedForReview ? 'Flagged' : 'Flag'}
               </Button>
             </div>
-            <p className="text-base font-medium text-slate-900 dark:text-white whitespace-pre-wrap">{q?.text}</p>
+            <p className="text-base font-medium text-slate-900 dark:text-white whitespace-pre-wrap"><MathText>{q?.text || ''}</MathText></p>
+            {q?.imageUrl && <img src={q.imageUrl} alt="Question media" className="max-h-72 rounded-lg border border-slate-200 dark:border-surface-raised" />}
             {renderAnswerInput()}
           </div>
         </div>

@@ -38,6 +38,8 @@ const ADMISSION_FILE_DIR = process.env.ADMISSION_FILE_DIR || path.join(process.c
 fs.mkdirSync(ADMISSION_FILE_DIR, { recursive: true });
 const STUDENT_DOC_DIR = process.env.STUDENT_DOC_DIR || path.join(process.cwd(), "data", "student-docs");
 fs.mkdirSync(STUDENT_DOC_DIR, { recursive: true });
+const EXAM_MEDIA_DIR = process.env.EXAM_MEDIA_DIR || path.join(process.cwd(), "data", "exam-media");
+fs.mkdirSync(EXAM_MEDIA_DIR, { recursive: true });
 
 const ebookUpload = multer({
   storage: multer.diskStorage({
@@ -88,6 +90,18 @@ const profilePhotoUpload = multer({
     },
   }),
   limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: imageUploadFilter,
+});
+
+const examMediaUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, EXAM_MEDIA_DIR),
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase();
+      cb(null, `${crypto.randomUUID()}${ext}`);
+    },
+  }),
+  limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: imageUploadFilter,
 });
 
@@ -445,6 +459,50 @@ const schemas = {
     paymentType: optStr, paymentMethod: optStr, paymentDate: optStr,
     receiptNumber: optStr, notes: optStr,
   }),
+  department: z.object({
+    name: reqStr, code: nullableStr, description: nullableStr,
+  }),
+  designation: z.object({
+    title: reqStr, departmentId: nullableStr,
+  }),
+  employee: z.object({
+    firstName: reqStr, lastName: reqStr,
+    email: z.union([email, z.literal("")]).optional(),
+    phone: optStr, status: optStr,
+    departmentId: nullableStr, designationId: nullableStr,
+    baseSalary: optNum, currency: optStr, hireDate: optStr,
+  }),
+  employeeUpdate: z.object({
+    firstName: optStr, lastName: optStr,
+    email: z.union([email, z.literal("")]).optional(),
+    phone: nullableStr, status: optStr,
+    departmentId: nullableStr, designationId: nullableStr,
+    baseSalary: optNum, currency: optStr, hireDate: optStr,
+    terminationDate: nullableStr,
+  }),
+  payrollRun: z.object({
+    periodYear: num, periodMonth: num, notes: optStr,
+  }),
+  payrollStatus: z.object({
+    status: z.enum(["DRAFT", "APPROVED", "PAID"]),
+  }),
+  payrollRunUpdate: z.object({
+    periodYear: optNum, periodMonth: optNum, notes: nullableStr,
+  }),
+  payslipUpdate: z.object({
+    baseSalary: optNum, allowances: optNum, deductions: optNum, notes: nullableStr,
+  }),
+  leaveType: z.object({
+    name: reqStr, daysPerYear: optNum, paid: z.boolean().optional(),
+  }),
+  leaveRequest: z.object({
+    employeeId: reqStr, leaveTypeId: reqStr,
+    startDate: reqStr, endDate: reqStr, reason: optStr,
+  }),
+  leaveDecision: z.object({
+    status: z.enum(["APPROVED", "REJECTED", "CANCELLED"]),
+    reviewNote: optStr,
+  }),
   exam: z.object({
     title: reqStr, classId: reqStr, subjectId: reqStr,
     examType: z.enum(["QUIZ", "MIDTERM", "FINAL", "MOCK"]).optional(),
@@ -455,6 +513,7 @@ const schemas = {
       choices: z.any().optional(), correctAnswer: z.any().optional(),
       passageText: optStr.optional().nullable(),
       explanation: optStr.optional().nullable(),
+      imageUrl: nullableStr,
     })).optional(),
   }),
   examSubmit: z.object({
@@ -483,6 +542,7 @@ const schemas = {
     phone: optStr, gender: optStr, address: optStr,
     employmentType: optStr, joinedDate: optStr,
     subjects: z.union([z.array(z.string()), optStr]).optional(), notes: optStr,
+    baseSalary: optNum,
   }),
   library: z.object({
     title: reqStr, type: reqStr,
@@ -793,6 +853,10 @@ async function startServer() {
     immutable: isProduction,
   }));
   app.use("/uploads/profile-photos", express.static(PROFILE_PHOTO_DIR, {
+    maxAge: isProduction ? "30d" : 0,
+    immutable: isProduction,
+  }));
+  app.use("/uploads/exam-media", express.static(EXAM_MEDIA_DIR, {
     maxAge: isProduction ? "30d" : 0,
     immutable: isProduction,
   }));
@@ -1858,7 +1922,19 @@ async function startServer() {
     }
     try {
       const parsedDate = new Date(date);
-      const startOfDay = new Date(parsedDate.setUTCHours(0, 0, 0, 0));
+
+      // Validate date is not in the future
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const attendanceDate = new Date(parsedDate);
+      attendanceDate.setHours(0, 0, 0, 0);
+
+      if (attendanceDate > today) {
+        res.status(400).json({ error: "Cannot mark attendance for future dates" });
+        return;
+      }
+
+      const startOfDay = new Date(attendanceDate.setUTCHours(0, 0, 0, 0));
       const results = await prisma.$transaction(
         records.map((rec) =>
           prisma.attendance.upsert({
@@ -1871,7 +1947,7 @@ async function startServer() {
             },
             update: {
               status: rec.status,
-              remarks: rec.remarks || null,
+              remarks: rec.remarks ? rec.remarks.substring(0, 500) : null,
               recordedById: jwtUser.userId,
             },
             create: {
@@ -1879,7 +1955,7 @@ async function startServer() {
               classId,
               date: startOfDay,
               status: rec.status,
-              remarks: rec.remarks || null,
+              remarks: rec.remarks ? rec.remarks.substring(0, 500) : null,
               recordedById: jwtUser.userId,
             }
           })
@@ -4316,6 +4392,665 @@ async function startServer() {
     }
   });
 
+  // ── HR / Payroll / Leave API ─────────────────────────────────────────────────
+  // Admin manages everything; ACCOUNTANT may view/manage payroll. Writes are
+  // guarded inline so we can allow more than one role where appropriate.
+  const hrCanManage = (role: string) => role === "ADMIN";
+  const payrollCanManage = (role: string) => role === "ADMIN" || role === "ACCOUNTANT";
+
+  // Inclusive whole-day count between two dates (calendar days, min 1).
+  function countLeaveDays(start: Date, end: Date): number {
+    const ms = end.getTime() - start.getTime();
+    if (Number.isNaN(ms) || ms < 0) return 0;
+    return Math.floor(ms / 86_400_000) + 1;
+  }
+
+  // ---- Departments ----
+  app.get("/api/departments", authMiddleware, async (_req, res) => {
+    try {
+      const departments = await prisma.department.findMany({
+        orderBy: { name: "asc" },
+        include: { designations: true, _count: { select: { employees: true } } },
+      });
+      res.json(departments);
+    } catch (err) {
+      logger.error("Error listing departments:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/departments", authMiddleware, validate(schemas.department), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!hrCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    const { name, code, description } = req.body;
+    try {
+      const department = await prisma.department.create({
+        data: { name, code: code || null, description: description || null },
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "DEPARTMENT", department.id,
+        `Created department ${name}.`, req.ip, req.headers["user-agent"] || null, "INFO");
+      res.status(201).json(department);
+    } catch (err: any) {
+      if (err?.code === "P2002") { res.status(409).json({ error: "A department with that name or code already exists" }); return; }
+      logger.error("Error creating department:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.put("/api/departments/:id", authMiddleware, validate(schemas.department), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!hrCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    const { name, code, description } = req.body;
+    try {
+      const department = await prisma.department.update({
+        where: { id: req.params.id },
+        data: { name, code: code || null, description: description || null },
+      });
+      res.json(department);
+    } catch (err: any) {
+      if (err?.code === "P2025") { res.status(404).json({ error: "Department not found" }); return; }
+      if (err?.code === "P2002") { res.status(409).json({ error: "A department with that name or code already exists" }); return; }
+      logger.error("Error updating department:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.delete("/api/departments/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!hrCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    try {
+      const employees = await prisma.employee.count({ where: { departmentId: req.params.id } });
+      if (employees > 0) { res.status(409).json({ error: "Cannot delete a department that still has employees" }); return; }
+      await prisma.department.delete({ where: { id: req.params.id } });
+      res.json({ success: true });
+    } catch (err: any) {
+      if (err?.code === "P2025") { res.status(404).json({ error: "Department not found" }); return; }
+      logger.error("Error deleting department:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ---- Designations ----
+  app.get("/api/designations", authMiddleware, async (req, res) => {
+    try {
+      const where = req.query.departmentId ? { departmentId: String(req.query.departmentId) } : {};
+      const designations = await prisma.designation.findMany({
+        where, orderBy: { title: "asc" }, include: { department: true },
+      });
+      res.json(designations);
+    } catch (err) {
+      logger.error("Error listing designations:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/designations", authMiddleware, validate(schemas.designation), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!hrCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    const { title, departmentId } = req.body;
+    try {
+      const designation = await prisma.designation.create({
+        data: { title, departmentId: departmentId || null },
+        include: { department: true },
+      });
+      res.status(201).json(designation);
+    } catch (err) {
+      logger.error("Error creating designation:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.put("/api/designations/:id", authMiddleware, validate(schemas.designation), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!hrCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    const { title, departmentId } = req.body;
+    try {
+      const designation = await prisma.designation.update({
+        where: { id: req.params.id },
+        data: { title, departmentId: departmentId || null },
+        include: { department: true },
+      });
+      res.json(designation);
+    } catch (err: any) {
+      if (err?.code === "P2025") { res.status(404).json({ error: "Designation not found" }); return; }
+      logger.error("Error updating designation:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.delete("/api/designations/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!hrCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    try {
+      const employees = await prisma.employee.count({ where: { designationId: req.params.id } });
+      if (employees > 0) { res.status(409).json({ error: "Cannot delete a designation still assigned to employees" }); return; }
+      await prisma.designation.delete({ where: { id: req.params.id } });
+      res.json({ success: true });
+    } catch (err: any) {
+      if (err?.code === "P2025") { res.status(404).json({ error: "Designation not found" }); return; }
+      logger.error("Error deleting designation:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ---- Employees ----
+  app.get("/api/employees", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!hrCanManage(jwtUser.role) && !payrollCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    try {
+      const where: any = {};
+      if (req.query.status && req.query.status !== "ALL") where.status = String(req.query.status);
+      if (req.query.departmentId && req.query.departmentId !== "ALL") where.departmentId = String(req.query.departmentId);
+      if (req.query.q) {
+        const q = String(req.query.q);
+        where.OR = [
+          { firstName: { contains: q, mode: "insensitive" } },
+          { lastName: { contains: q, mode: "insensitive" } },
+          { employeeCode: { contains: q, mode: "insensitive" } },
+          { email: { contains: q, mode: "insensitive" } },
+        ];
+      }
+      const employees = await prisma.employee.findMany({
+        where, orderBy: { createdAt: "desc" },
+        include: { department: true, designation: true },
+      });
+      res.json(employees);
+    } catch (err) {
+      logger.error("Error listing employees:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/employees/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!hrCanManage(jwtUser.role) && !payrollCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    try {
+      const employee = await prisma.employee.findUnique({
+        where: { id: req.params.id },
+        include: {
+          department: true, designation: true,
+          payslips: { orderBy: { createdAt: "desc" }, include: { payrollRun: true } },
+          leaveRequests: { orderBy: { startDate: "desc" }, include: { leaveType: true } },
+        },
+      });
+      if (!employee) { res.status(404).json({ error: "Employee not found" }); return; }
+      res.json(employee);
+    } catch (err) {
+      logger.error("Error fetching employee:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/employees", authMiddleware, validate(schemas.employee), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!hrCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    const { firstName, lastName, email, phone, status, departmentId, designationId, baseSalary, currency, hireDate } = req.body;
+    try {
+      const profile = await prisma.schoolProfile.findFirst();
+      const employeeCode = `EMP-${Date.now().toString().slice(-6)}`;
+      const employee = await prisma.employee.create({
+        data: {
+          employeeCode,
+          firstName, lastName,
+          email: email || null,
+          phone: phone || null,
+          status: (status as any) || "ACTIVE",
+          departmentId: departmentId || null,
+          designationId: designationId || null,
+          baseSalary: baseSalary != null ? Number(baseSalary) : 0,
+          currency: currency || profile?.currency || "MYR",
+          hireDate: hireDate ? new Date(hireDate) : new Date(),
+        },
+        include: { department: true, designation: true },
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "EMPLOYEE", employee.id,
+        `Created employee ${firstName} ${lastName} (${employeeCode}).`, req.ip, req.headers["user-agent"] || null, "INFO");
+      res.status(201).json(employee);
+    } catch (err) {
+      logger.error("Error creating employee:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.put("/api/employees/:id", authMiddleware, validate(schemas.employeeUpdate), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!hrCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    const b = req.body;
+    try {
+      const data: any = {};
+      if (b.firstName !== undefined) data.firstName = b.firstName;
+      if (b.lastName !== undefined) data.lastName = b.lastName;
+      if (b.email !== undefined) data.email = b.email || null;
+      if (b.phone !== undefined) data.phone = b.phone || null;
+      if (b.status !== undefined) data.status = b.status;
+      if (b.departmentId !== undefined) data.departmentId = b.departmentId || null;
+      if (b.designationId !== undefined) data.designationId = b.designationId || null;
+      if (b.baseSalary !== undefined && b.baseSalary !== null) data.baseSalary = Number(b.baseSalary);
+      if (b.currency !== undefined) data.currency = b.currency || "MYR";
+      if (b.hireDate) data.hireDate = new Date(b.hireDate);
+      if (b.terminationDate !== undefined) data.terminationDate = b.terminationDate ? new Date(b.terminationDate) : null;
+      const employee = await prisma.employee.update({
+        where: { id: req.params.id }, data,
+        include: { department: true, designation: true },
+      });
+      res.json(employee);
+    } catch (err: any) {
+      if (err?.code === "P2025") { res.status(404).json({ error: "Employee not found" }); return; }
+      logger.error("Error updating employee:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Soft delete: mark terminated rather than removing payroll/leave history.
+  app.delete("/api/employees/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!hrCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    try {
+      const employee = await prisma.employee.update({
+        where: { id: req.params.id },
+        data: { status: "TERMINATED", terminationDate: new Date() },
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "DELETE", "EMPLOYEE", employee.id,
+        `Terminated employee ${employee.employeeCode}.`, req.ip, req.headers["user-agent"] || null, "WARNING");
+      res.json({ success: true });
+    } catch (err: any) {
+      if (err?.code === "P2025") { res.status(404).json({ error: "Employee not found" }); return; }
+      logger.error("Error terminating employee:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ---- Payroll ----
+  app.get("/api/payroll-runs", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!payrollCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    try {
+      const where = req.query.year ? { periodYear: Number(req.query.year) } : {};
+      const runs = await prisma.payrollRun.findMany({
+        where, orderBy: [{ periodYear: "desc" }, { periodMonth: "desc" }],
+        include: { _count: { select: { payslips: true } } },
+      });
+      res.json(runs);
+    } catch (err) {
+      logger.error("Error listing payroll runs:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/payroll-runs/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!payrollCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    try {
+      const run = await prisma.payrollRun.findUnique({
+        where: { id: req.params.id },
+        include: {
+          payslips: {
+            orderBy: { createdAt: "asc" },
+            include: {
+              employee: { include: { department: true, designation: true } },
+              teacher: { include: { user: true } },
+            },
+          },
+        },
+      });
+      if (!run) { res.status(404).json({ error: "Payroll run not found" }); return; }
+      const totalNet = run.payslips.reduce((sum, p) => sum + p.netPay, 0);
+      res.json({ ...run, totalNet });
+    } catch (err) {
+      logger.error("Error fetching payroll run:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Create a DRAFT run and auto-seed one payslip per ACTIVE employee.
+  app.post("/api/payroll-runs", authMiddleware, validate(schemas.payrollRun), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!payrollCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    const periodYear = Number(req.body.periodYear);
+    const periodMonth = Number(req.body.periodMonth);
+    if (!periodYear || periodMonth < 1 || periodMonth > 12) {
+      res.status(400).json({ error: "Valid periodYear and periodMonth (1-12) are required" });
+      return;
+    }
+    try {
+      const existing = await prisma.payrollRun.findUnique({ where: { periodYear_periodMonth: { periodYear, periodMonth } } });
+      if (existing) { res.status(409).json({ error: "A payroll run already exists for that month" }); return; }
+      // Seed a payslip for every active non-teaching employee AND every teacher.
+      const employees = await prisma.employee.findMany({ where: { status: "ACTIVE" } });
+      const teachers = await prisma.teacher.findMany();
+      const seeded = [
+        ...employees.map((e) => ({
+          employeeId: e.id,
+          baseSalary: e.baseSalary, allowances: 0, deductions: 0,
+          netPay: e.baseSalary, currency: e.currency,
+        })),
+        ...teachers.map((t) => ({
+          teacherId: t.id,
+          baseSalary: t.baseSalary, allowances: 0, deductions: 0,
+          netPay: t.baseSalary, currency: t.currency,
+        })),
+      ];
+      const run = await prisma.payrollRun.create({
+        data: {
+          periodYear, periodMonth, notes: req.body.notes || null, createdById: jwtUser.userId,
+          payslips: { create: seeded },
+        },
+        include: { _count: { select: { payslips: true } } },
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "PAYROLL_RUN", run.id,
+        `Created payroll run ${periodMonth}/${periodYear} with ${seeded.length} payslips (${employees.length} staff, ${teachers.length} teachers).`, req.ip, req.headers["user-agent"] || null, "INFO");
+      res.status(201).json(run);
+    } catch (err) {
+      logger.error("Error creating payroll run:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.put("/api/payroll-runs/:id/status", authMiddleware, validate(schemas.payrollStatus), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!payrollCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    const next = req.body.status as "DRAFT" | "APPROVED" | "PAID";
+    try {
+      const run = await prisma.payrollRun.findUnique({ where: { id: req.params.id } });
+      if (!run) { res.status(404).json({ error: "Payroll run not found" }); return; }
+      const allowed: Record<string, string[]> = {
+        DRAFT: ["APPROVED"],
+        APPROVED: ["PAID", "DRAFT"],
+        PAID: [],
+      };
+      if (!allowed[run.status].includes(next)) {
+        res.status(400).json({ error: `Cannot move payroll run from ${run.status} to ${next}` });
+        return;
+      }
+      const updated = await prisma.payrollRun.update({ where: { id: run.id }, data: { status: next } });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "PAYROLL_RUN", run.id,
+        `Payroll run ${run.periodMonth}/${run.periodYear} status ${run.status} → ${next}.`, req.ip, req.headers["user-agent"] || null, "INFO");
+      res.json(updated);
+    } catch (err) {
+      logger.error("Error updating payroll run status:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Edit a run's period/notes — only while DRAFT.
+  app.put("/api/payroll-runs/:id", authMiddleware, validate(schemas.payrollRunUpdate), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!payrollCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    try {
+      const run = await prisma.payrollRun.findUnique({ where: { id: req.params.id } });
+      if (!run) { res.status(404).json({ error: "Payroll run not found" }); return; }
+      if (run.status !== "DRAFT") {
+        res.status(400).json({ error: "Only DRAFT payroll runs can be edited" });
+        return;
+      }
+      const periodYear = req.body.periodYear != null ? Number(req.body.periodYear) : run.periodYear;
+      const periodMonth = req.body.periodMonth != null ? Number(req.body.periodMonth) : run.periodMonth;
+      if (periodMonth < 1 || periodMonth > 12) { res.status(400).json({ error: "periodMonth must be 1-12" }); return; }
+      if (periodYear !== run.periodYear || periodMonth !== run.periodMonth) {
+        const clash = await prisma.payrollRun.findUnique({ where: { periodYear_periodMonth: { periodYear, periodMonth } } });
+        if (clash && clash.id !== run.id) { res.status(409).json({ error: "A payroll run already exists for that month" }); return; }
+      }
+      const updated = await prisma.payrollRun.update({
+        where: { id: run.id },
+        data: { periodYear, periodMonth, notes: req.body.notes !== undefined ? (req.body.notes || null) : run.notes },
+      });
+      res.json(updated);
+    } catch (err) {
+      logger.error("Error updating payroll run:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Delete a run (and its payslips) — blocked once PAID to protect records.
+  app.delete("/api/payroll-runs/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!payrollCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    try {
+      const run = await prisma.payrollRun.findUnique({ where: { id: req.params.id } });
+      if (!run) { res.status(404).json({ error: "Payroll run not found" }); return; }
+      if (run.status === "PAID") {
+        res.status(400).json({ error: "A PAID payroll run cannot be deleted" });
+        return;
+      }
+      await prisma.payrollRun.delete({ where: { id: run.id } }); // payslips cascade
+      await createAuditLog(jwtUser.userId, jwtUser.email, "DELETE", "PAYROLL_RUN", run.id,
+        `Deleted payroll run ${run.periodMonth}/${run.periodYear}.`, req.ip, req.headers["user-agent"] || null, "WARNING");
+      res.json({ success: true });
+    } catch (err) {
+      logger.error("Error deleting payroll run:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Edit a payslip — only while its run is still DRAFT. netPay recomputed server-side.
+  app.put("/api/payslips/:id", authMiddleware, validate(schemas.payslipUpdate), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!payrollCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    try {
+      const payslip = await prisma.payslip.findUnique({ where: { id: req.params.id }, include: { payrollRun: true } });
+      if (!payslip) { res.status(404).json({ error: "Payslip not found" }); return; }
+      if (payslip.payrollRun.status !== "DRAFT") {
+        res.status(400).json({ error: "Payslips can only be edited while the payroll run is in DRAFT" });
+        return;
+      }
+      const baseSalary = req.body.baseSalary != null ? Number(req.body.baseSalary) : payslip.baseSalary;
+      const allowances = req.body.allowances != null ? Number(req.body.allowances) : payslip.allowances;
+      const deductions = req.body.deductions != null ? Number(req.body.deductions) : payslip.deductions;
+      const netPay = baseSalary + allowances - deductions;
+      const updated = await prisma.payslip.update({
+        where: { id: payslip.id },
+        data: { baseSalary, allowances, deductions, netPay, notes: req.body.notes !== undefined ? (req.body.notes || null) : payslip.notes },
+      });
+      // Remember the base salary on the payee's master record so future runs
+      // seed from the latest figure (only when it actually changed).
+      if (baseSalary !== payslip.baseSalary) {
+        if (payslip.employeeId) {
+          await prisma.employee.update({ where: { id: payslip.employeeId }, data: { baseSalary } }).catch(() => {});
+        } else if (payslip.teacherId) {
+          await prisma.teacher.update({ where: { id: payslip.teacherId }, data: { baseSalary } }).catch(() => {});
+        }
+      }
+      res.json(updated);
+    } catch (err) {
+      logger.error("Error updating payslip:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Single payslip with full context — used by the printable payslip view.
+  app.get("/api/payslips/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!payrollCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    try {
+      const payslip = await prisma.payslip.findUnique({
+        where: { id: req.params.id },
+        include: {
+          payrollRun: true,
+          employee: { include: { department: true, designation: true } },
+          teacher: { include: { user: true } },
+        },
+      });
+      if (!payslip) { res.status(404).json({ error: "Payslip not found" }); return; }
+      res.json(payslip);
+    } catch (err) {
+      logger.error("Error fetching payslip:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ---- Leave types ----
+  app.get("/api/leave-types", authMiddleware, async (_req, res) => {
+    try {
+      const types = await prisma.leaveType.findMany({ orderBy: { name: "asc" } });
+      res.json(types);
+    } catch (err) {
+      logger.error("Error listing leave types:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/leave-types", authMiddleware, validate(schemas.leaveType), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!hrCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    try {
+      const type = await prisma.leaveType.create({
+        data: {
+          name: req.body.name,
+          daysPerYear: req.body.daysPerYear != null ? Number(req.body.daysPerYear) : 0,
+          paid: req.body.paid !== undefined ? Boolean(req.body.paid) : true,
+        },
+      });
+      res.status(201).json(type);
+    } catch (err: any) {
+      if (err?.code === "P2002") { res.status(409).json({ error: "A leave type with that name already exists" }); return; }
+      logger.error("Error creating leave type:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.put("/api/leave-types/:id", authMiddleware, validate(schemas.leaveType), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!hrCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    try {
+      const type = await prisma.leaveType.update({
+        where: { id: req.params.id },
+        data: {
+          name: req.body.name,
+          daysPerYear: req.body.daysPerYear != null ? Number(req.body.daysPerYear) : 0,
+          paid: req.body.paid !== undefined ? Boolean(req.body.paid) : true,
+        },
+      });
+      res.json(type);
+    } catch (err: any) {
+      if (err?.code === "P2025") { res.status(404).json({ error: "Leave type not found" }); return; }
+      logger.error("Error updating leave type:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.delete("/api/leave-types/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!hrCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    try {
+      const used = await prisma.leaveRequest.count({ where: { leaveTypeId: req.params.id } });
+      if (used > 0) { res.status(409).json({ error: "Cannot delete a leave type that has requests" }); return; }
+      await prisma.leaveType.delete({ where: { id: req.params.id } });
+      res.json({ success: true });
+    } catch (err: any) {
+      if (err?.code === "P2025") { res.status(404).json({ error: "Leave type not found" }); return; }
+      logger.error("Error deleting leave type:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ---- Leave requests ----
+  app.get("/api/leave-requests", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!hrCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    try {
+      const where: any = {};
+      if (req.query.employeeId) where.employeeId = String(req.query.employeeId);
+      if (req.query.status && req.query.status !== "ALL") where.status = String(req.query.status);
+      const requests = await prisma.leaveRequest.findMany({
+        where, orderBy: { createdAt: "desc" },
+        include: { leaveType: true, employee: { include: { department: true } } },
+      });
+      res.json(requests);
+    } catch (err) {
+      logger.error("Error listing leave requests:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/leave-requests", authMiddleware, validate(schemas.leaveRequest), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!hrCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    const start = new Date(req.body.startDate);
+    const end = new Date(req.body.endDate);
+    const days = countLeaveDays(start, end);
+    if (days <= 0) { res.status(400).json({ error: "endDate must be on or after startDate" }); return; }
+    try {
+      const request = await prisma.leaveRequest.create({
+        data: {
+          employeeId: req.body.employeeId,
+          leaveTypeId: req.body.leaveTypeId,
+          startDate: start, endDate: end, days,
+          reason: req.body.reason || null,
+        },
+        include: { leaveType: true, employee: true },
+      });
+      res.status(201).json(request);
+    } catch (err) {
+      logger.error("Error creating leave request:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.put("/api/leave-requests/:id/status", authMiddleware, validate(schemas.leaveDecision), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!hrCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    const next = req.body.status as "APPROVED" | "REJECTED" | "CANCELLED";
+    try {
+      const request = await prisma.leaveRequest.findUnique({ where: { id: req.params.id } });
+      if (!request) { res.status(404).json({ error: "Leave request not found" }); return; }
+      if (request.status !== "PENDING") {
+        res.status(400).json({ error: `Leave request is already ${request.status}` });
+        return;
+      }
+      const updated = await prisma.leaveRequest.update({
+        where: { id: request.id },
+        data: {
+          status: next,
+          reviewedById: jwtUser.userId,
+          reviewedByName: jwtUser.email,
+          reviewedAt: new Date(),
+          reviewNote: req.body.reviewNote || null,
+        },
+        include: { leaveType: true, employee: true },
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "LEAVE_REQUEST", request.id,
+        `Leave request ${next.toLowerCase()} for employee ${request.employeeId}.`, req.ip, req.headers["user-agent"] || null, "INFO");
+      res.json(updated);
+    } catch (err) {
+      logger.error("Error updating leave request:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Remaining balance per leave type for the current calendar year.
+  app.get("/api/employees/:id/leave-balance", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!hrCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    try {
+      const year = req.query.year ? Number(req.query.year) : new Date().getFullYear();
+      const yearStart = new Date(year, 0, 1);
+      const yearEnd = new Date(year + 1, 0, 1);
+      const types = await prisma.leaveType.findMany({ orderBy: { name: "asc" } });
+      const approved = await prisma.leaveRequest.findMany({
+        where: {
+          employeeId: req.params.id,
+          status: "APPROVED",
+          startDate: { gte: yearStart, lt: yearEnd },
+        },
+      });
+      const balance = types.map((t) => {
+        const used = approved.filter((r) => r.leaveTypeId === t.id).reduce((sum, r) => sum + r.days, 0);
+        return {
+          leaveTypeId: t.id,
+          name: t.name,
+          daysPerYear: t.daysPerYear,
+          paid: t.paid,
+          used,
+          remaining: t.daysPerYear > 0 ? t.daysPerYear - used : null, // null = uncapped
+        };
+      });
+      res.json({ year, balance });
+    } catch (err) {
+      logger.error("Error computing leave balance:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
   // ── Exams API ───────────────────────────────────────────────────────────────
   async function canManageExamClass(jwtUser: JwtPayload, classId: string): Promise<boolean> {
     if (jwtUser.role === "ADMIN") return true;
@@ -4349,13 +5084,7 @@ async function startServer() {
             questions: {
               select: {
                 id: true,
-                text: true,
-                type: true,
                 points: true,
-                options: true,
-                examId: true,
-                createdAt: true,
-                updatedAt: true,
               },
             },
           },
@@ -4363,7 +5092,16 @@ async function startServer() {
       } else {
         exams = await prisma.exam.findMany({
           where: statusFilter,
-          include: { class: true, subject: true, questions: true }
+          include: {
+            class: true,
+            subject: true,
+            questions: {
+              select: {
+                id: true,
+                points: true,
+              },
+            },
+          }
         });
       }
       res.json(exams);
@@ -4391,12 +5129,30 @@ async function startServer() {
                   type: true,
                   points: true,
                   options: true,
+                  passageText: true,
+                  explanation: true,
+                  imageUrl: true,
                   examId: true,
                   createdAt: true,
                   updatedAt: true,
                 },
               }
-            : true,
+            : {
+                select: {
+                  id: true,
+                  text: true,
+                  type: true,
+                  points: true,
+                  options: true,
+                  correctAnswer: true,
+                  passageText: true,
+                  explanation: true,
+                  imageUrl: true,
+                  examId: true,
+                  createdAt: true,
+                  updatedAt: true,
+                },
+              },
           attempts: isStudent
             ? false
             : { include: { student: { include: { user: true } } } },
@@ -4406,6 +5162,21 @@ async function startServer() {
         res.status(404).json({ error: "Exam not found" });
         return;
       }
+      if (exam.status === "ARCHIVED" && isStudent) {
+        const student = await prisma.student.findUnique({ where: { userId: jwtUser.userId } });
+        if (!student || student.classId !== exam.classId) {
+          res.status(404).json({ error: "Exam not found" });
+          return;
+        }
+        const attempt = await prisma.examAttempt.findFirst({
+          where: { studentId: student.id, examId: exam.id, isCompleted: true },
+          orderBy: { attemptNumber: "desc" },
+        });
+        if (!attempt) {
+          res.status(404).json({ error: "Exam not found" });
+          return;
+        }
+      }
       // A student may only view an exam for their own class.
       if (isStudent) {
         const student = await prisma.student.findUnique({ where: { userId: jwtUser.userId } });
@@ -4414,8 +5185,9 @@ async function startServer() {
           return;
         }
         if (exam.status !== "PUBLISHED") {
-          const attempt = await prisma.examAttempt.findUnique({
-            where: { studentId_examId: { studentId: student.id, examId: exam.id } },
+          const attempt = await prisma.examAttempt.findFirst({
+            where: { studentId: student.id, examId: exam.id },
+            orderBy: { attemptNumber: "desc" },
           });
           if (!attempt?.isCompleted) {
             res.status(404).json({ error: "Exam not found" });
@@ -4429,6 +5201,29 @@ async function startServer() {
       logger.error("Error fetching exam:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
+  });
+
+  // Upload an image to attach to an exam question. Teacher/admin only.
+  const uploadExamMedia: express.RequestHandler = (req, res, next) => {
+    examMediaUpload.single("file")(req, res, (err: any) => {
+      if (!err) return next();
+      const message =
+        err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE"
+          ? "Image must be 10 MB or smaller"
+          : err.message || "Upload failed";
+      res.status(400).json({ error: message });
+    });
+  };
+
+  app.post("/api/exam-media", authMiddleware, uploadExamMedia, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const file = (req as any).file as Express.Multer.File | undefined;
+    if (!file) { res.status(400).json({ error: "Image file is required" }); return; }
+    res.status(201).json({ url: `/uploads/exam-media/${file.filename}` });
   });
 
   app.post("/api/exams", authMiddleware, validate(schemas.exam), async (req, res) => {
@@ -4473,6 +5268,7 @@ async function startServer() {
                 correctAnswer: q.correctAnswer !== undefined ? String(q.correctAnswer) : null,
                 passageText: q.passageText || null,
                 explanation: q.explanation || null,
+                imageUrl: q.imageUrl || null,
               }
             });
           }
@@ -4560,6 +5356,7 @@ async function startServer() {
                   correctAnswer: q.correctAnswer !== undefined ? String(q.correctAnswer) : null,
                   passageText: q.passageText || null,
                   explanation: q.explanation || null,
+                  imageUrl: q.imageUrl || null,
                 },
               });
             }
@@ -4605,6 +5402,14 @@ async function startServer() {
     try {
       const exam = await prisma.exam.findUnique({ where: { id } });
       if (!exam) { res.status(404).json({ error: "Exam not found" }); return; }
+      if (!(await canManageExamClass(jwtUser, exam.classId))) {
+        res.status(403).json({ error: "Forbidden: You cannot archive this exam" });
+        return;
+      }
+      if (exam.status === "ARCHIVED") {
+        res.json({ ok: true, status: "ARCHIVED" });
+        return;
+      }
       await prisma.exam.update({ where: { id }, data: { status: "ARCHIVED" } });
       await createAuditLog(
         jwtUser.userId, jwtUser.email, "ARCHIVE", "EXAM", id,
@@ -4626,7 +5431,15 @@ async function startServer() {
     }
     const { id } = req.params;
     try {
-      const exam = await prisma.exam.update({ where: { id }, data: { status: "DRAFT" } });
+      const existing = await prisma.exam.findUnique({ where: { id } });
+      if (!existing) { res.status(404).json({ error: "Exam not found" }); return; }
+      if (!(await canManageExamClass(jwtUser, existing.classId))) {
+        res.status(403).json({ error: "Forbidden: You cannot restore this exam" });
+        return;
+      }
+      const exam = existing.status === "DRAFT"
+        ? existing
+        : await prisma.exam.update({ where: { id }, data: { status: "DRAFT" } });
       await createAuditLog(
         jwtUser.userId, jwtUser.email, "RESTORE", "EXAM", id,
         `Exam '${exam.title}' restored to DRAFT.`, req.ip, req.headers["user-agent"] || null, "SUCCESS",
@@ -4679,8 +5492,9 @@ async function startServer() {
         return;
       }
 
-      const existingCompleted = await prisma.examAttempt.findUnique({
-        where: { studentId_examId: { studentId: student.id, examId: id } },
+      const existingCompleted = await prisma.examAttempt.findFirst({
+        where: { studentId: student.id, examId: id },
+        orderBy: { attemptNumber: "desc" },
       });
       if (existingCompleted?.isCompleted) {
         res.status(409).json({ error: "This exam has already been submitted" });
@@ -5074,7 +5888,7 @@ async function startServer() {
   // ── Teachers (create) ───────────────────────────────────────────────────────
   app.post("/api/teachers", authMiddleware, requireRole("ADMIN"), validate(schemas.teacherCreate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
-    const { firstName, lastName, email, phone, gender, address, employmentType, joinedDate, subjects, notes } = req.body;
+    const { firstName, lastName, email, phone, gender, address, employmentType, joinedDate, subjects, notes, baseSalary } = req.body;
     if (!firstName || !lastName || !email) {
       res.status(400).json({ error: "firstName, lastName, and email are required" }); return;
     }
@@ -5098,6 +5912,7 @@ async function startServer() {
             teacherCode,
             specialization: specialization || null,
             hireDate: joinedDate ? new Date(joinedDate) : new Date(),
+            baseSalary: baseSalary != null ? Number(baseSalary) : 0,
           },
           include: { user: { select: { firstName: true, lastName: true, email: true, isActive: true } } },
         });
@@ -6267,34 +7082,64 @@ async function startServer() {
     }
   });
 
+  // Whether a student may see their result yet, per the exam's ExamResultPolicy.
+  // Mirrors the gating in GET /api/attempts/:attemptId/result so the result
+  // lists never reveal a score the result view itself would withhold.
+  function isResultReleased(attempt: any, policy: any): boolean {
+    const mode = policy?.releaseMode || "IMMEDIATE";
+    if (mode === "IMMEDIATE") return ["SUBMITTED", "AUTO_SUBMITTED", "FINALIZED", "RELEASED"].includes(attempt.state);
+    if (mode === "SCHEDULED") return !!(policy?.releaseAt && Date.now() >= new Date(policy.releaseAt).getTime());
+    if (mode === "AFTER_GRADING") return ["FINALIZED", "RELEASED"].includes(attempt.state);
+    return false; // HIDDEN or unknown
+  }
+
   app.get("/api/student/exams", authMiddleware, studentOnly, async (req, res) => {
     try {
       const s = await getStudentForReq(req);
       if (!s) { res.status(404).json({ error: "Student profile not found" }); return; }
       const exams = s.classId
         ? await prisma.exam.findMany({
-            where: { classId: s.classId },
-            include: { subject: true, questions: true, attempts: { where: { studentId: s.id } } },
+            where: { classId: s.classId, status: { not: "ARCHIVED" } },
+            include: {
+              subject: true,
+              questions: { select: { id: true } },
+              attempts: { where: { studentId: s.id } },
+              resultPolicy: true,
+            },
             orderBy: { date: "asc" },
           })
         : [];
+      const now = Date.now();
       const available: any[] = [];
       const submitted: any[] = [];
       for (const e of exams) {
         const attempt = e.attempts[0];
         if (attempt && attempt.isCompleted) {
+          const released = isResultReleased(attempt, e.resultPolicy);
+          const showScore = e.resultPolicy?.showScore !== false;
+          const scoreVisible = released && showScore && attempt.score != null && e.totalMarks;
           submitted.push({
             id: e.id, attemptId: attempt.id, title: e.title, subject: e.subject?.name || "General",
             submittedAt: (attempt.completedAt || attempt.startedAt)?.toISOString().slice(0, 16).replace("T", " "),
-            status: attempt.score != null ? "Graded" : "Grading",
-            score: attempt.score != null && e.totalMarks ? `${attempt.score}/${e.totalMarks}` : null,
+            status: !released ? "Submitted" : (attempt.score != null ? "Graded" : "Grading"),
+            score: scoreVisible ? `${attempt.score}/${e.totalMarks}` : null,
           });
         } else if (e.status === "PUBLISHED") {
+          // Skip exams whose window has fully closed and can't be late-started.
+          if (e.availableUntil && now > new Date(e.availableUntil).getTime() && !e.allowLateStart) continue;
+          // Show the real close date when scheduled; otherwise there is no deadline.
+          const deadline = e.availableUntil
+            ? new Date(e.availableUntil).toISOString().slice(0, 10)
+            : "No deadline";
+          const opensAt = e.availableFrom && now < new Date(e.availableFrom).getTime()
+            ? new Date(e.availableFrom).toISOString().slice(0, 10)
+            : null;
           available.push({
             id: e.id, title: e.title, subject: e.subject?.name || "General",
             duration: e.durationMinutes ? `${e.durationMinutes} mins` : "—",
             questions: e.questions.length,
-            deadline: e.date.toISOString().slice(0, 10),
+            deadline,
+            opensAt, // non-null when the exam hasn't opened yet
             type: e.type,
           });
         }
@@ -6312,10 +7157,14 @@ async function startServer() {
       if (!s) { res.status(404).json({ error: "Student profile not found" }); return; }
       const attempts = await prisma.examAttempt.findMany({
         where: { studentId: s.id, isCompleted: true, score: { not: null } },
-        include: { exam: { include: { subject: true, attempts: true } } },
+        include: { exam: { include: { subject: true, attempts: true, resultPolicy: true } } },
         orderBy: { completedAt: "desc" },
       });
-      const results = attempts.map((a) => {
+      // Only surface results the exam's release policy has actually released.
+      const releasedAttempts = attempts.filter(
+        (a) => isResultReleased(a, a.exam.resultPolicy) && a.exam.resultPolicy?.showScore !== false,
+      );
+      const results = releasedAttempts.map((a) => {
         const total = a.exam.totalMarks || 100;
         const others = a.exam.attempts.filter((x) => x.score != null);
         const classAverage = others.length
@@ -6529,7 +7378,7 @@ async function startServer() {
     try {
       const ids = await teacherClassIds(req);
       const exams = await prisma.exam.findMany({
-        where: { classId: { in: ids } },
+        where: { classId: { in: ids }, status: { not: "ARCHIVED" } },
         include: { class: { include: { students: true } }, subject: true, attempts: true },
         orderBy: { date: "desc" },
       });
@@ -6565,7 +7414,7 @@ async function startServer() {
       const attendanceRate = allAtt.length ? round1((allAtt.filter((a) => a.status === "PRESENT").length / allAtt.length) * 100) : 0;
 
       const upcoming = await prisma.exam.findMany({
-        where: { classId: { in: ids }, date: { gte: new Date() } },
+        where: { classId: { in: ids }, date: { gte: new Date() }, status: { not: "ARCHIVED" } },
         include: { class: true }, orderBy: { date: "asc" }, take: 5,
       });
 

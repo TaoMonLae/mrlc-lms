@@ -19,8 +19,8 @@ import ExamEdit from "./pages/exams/ExamEdit";
 import ExamTake from "./pages/exams/ExamTake";
 import ExamResults from "./pages/exams/ExamResults";
 import ExamsList from "./pages/exams/ExamsList";
+import ExamPreview from "./pages/exams/ExamPreview";
 
-// Phase 2 advanced exam system (lazy-loaded)
 const ExamPlayer = lazy(() => import("./pages/exam2/ExamPlayer"));
 const ResumeAttempt = lazy(() => import("./pages/exam2/ResumeAttempt"));
 const ExamResultView = lazy(() => import("./pages/exam2/ExamResultView"));
@@ -62,7 +62,6 @@ import LibraryDetail from "./pages/library/LibraryDetail";
 import LibraryEdit from "./pages/library/LibraryEdit";
 
 import EbookList from "./pages/elibrary/EbookList";
-// Lazy-loaded: pulls in pdf.js/epub.js (+ a web worker) only when reading.
 const EbookReader = lazy(() => import("./pages/elibrary/EbookReader"));
 import EbookUpload from "./pages/elibrary/EbookUpload";
 import EbookEdit from "./pages/elibrary/EbookEdit";
@@ -85,6 +84,13 @@ import ExamResultsReport from "./pages/reports/ExamResultsReport";
 import ClassPerformanceReport from "./pages/reports/ClassPerformanceReport";
 import MonthlySummaryReport from "./pages/reports/MonthlySummaryReport";
 import SchoolOperations from "./pages/operations/SchoolOperations";
+import StaffDirectory from "./pages/hr/StaffDirectory";
+import StaffProfile from "./pages/hr/StaffProfile";
+import Departments from "./pages/hr/Departments";
+import Payroll from "./pages/hr/Payroll";
+import Leave from "./pages/hr/Leave";
+import PayslipPrint from "./pages/hr/PayslipPrint";
+import PayrollRunPrint from "./pages/hr/PayrollRunPrint";
 import AdmissionsList from "./pages/admissions/AdmissionsList";
 import AdmissionDetail from "./pages/admissions/AdmissionDetail";
 
@@ -170,18 +176,16 @@ export default function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
-            {/* Public document verification — no authentication required */}
             <Route path="/verify/:token" element={<VerifyDocument />} />
             
             <Route element={<ProtectedRoute />}>
-              {/* Standalone (no app shell, bypasses the change-password gate) */}
               <Route path="/change-password" element={<ChangePassword />} />
-              {/* Printable document view — standalone for clean PDF output */}
               <Route path="/documents/:id/print" element={<DocumentPrint />} />
+              <Route path="/payroll/payslips/:id/print" element={<PayslipPrint />} />
+              <Route path="/payroll/runs/:id/print" element={<PayrollRunPrint />} />
               <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
-                
-                {/* Teacher Portal Routes */}
+
                 <Route element={<ProtectedRoute allowedRoles={['TEACHER', 'ADMIN']} />}>
                   <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
                   <Route path="/teacher/classes" element={<TeacherClasses />} />
@@ -194,8 +198,7 @@ export default function App() {
                   <Route path="/teacher/videos" element={<TeacherVideos />} />
                   <Route path="/teacher/planner" element={<LessonPlanner />} />
                 </Route>
-                
-                {/* Student Portal Routes */}
+
                 <Route element={<ProtectedRoute allowedRoles={['STUDENT', 'ADMIN']} />}>
                   <Route path="/student/dashboard" element={<StudentDashboard />} />
                   <Route path="/student/profile" element={<StudentProfilePage />} />
@@ -207,7 +210,6 @@ export default function App() {
                   <Route path="/student/library" element={<StudentLibrary />} />
                   <Route path="/student/fees" element={<StudentFees />} />
                   <Route path="/student/videos" element={<StudentVideos />} />
-                  {/* Phase 2 exam taking (student) */}
                   <Route path="/exam2/resume" element={<ResumeAttempt />} />
                   <Route path="/exam2/attempts/:attemptId/play" element={<ExamPlayer />} />
                   <Route path="/exam2/attempts/:attemptId/result" element={<ExamResultView />} />
@@ -218,7 +220,6 @@ export default function App() {
 
                 <Route path="/timetable" element={<TimetablePage />} />
 
-                {/* Admin/Teacher routes */}
                 <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'TEACHER']} />}>
                   <Route path="/announcements/new" element={<AnnouncementNew />} />
                   <Route path="/announcements/:id/edit" element={<AnnouncementEdit />} />
@@ -246,19 +247,18 @@ export default function App() {
                   <Route path="/exams/new" element={<ExamNew />} />
                   <Route path="/exams/:id" element={<ExamProfile />} />
                   <Route path="/exams/:id/edit" element={<ExamEdit />} />
+                  <Route path="/exams/:id/preview" element={<ExamPreview />} />
                   
                   <Route path="/teachers" element={<TeachersList />} />
                   <Route path="/teachers/new" element={<TeacherNew />} />
                   <Route path="/teachers/:id" element={<TeacherProfile />} />
                   <Route path="/teachers/:id/edit" element={<TeacherEdit />} />
 
-                  {/* Phase 3 question bank (ADMIN/TEACHER) */}
                   <Route path="/bank" element={<QuestionBank />} />
                   <Route path="/bank/topics" element={<TopicManager />} />
                   <Route path="/bank/new" element={<QuestionEditor />} />
                   <Route path="/bank/:id" element={<QuestionEditor />} />
 
-                  {/* Phase 2 advanced exam admin (ADMIN/TEACHER) */}
                   <Route path="/exam2/:examId/author" element={<ExamAuthoring />} />
                   <Route path="/exam2/:examId/schedule" element={<ExamScheduling />} />
                   <Route path="/exam2/:examId/invigilator" element={<InvigilatorDashboard />} />
@@ -269,7 +269,6 @@ export default function App() {
                   <Route path="/exam2/grade/:attemptId/:questionId" element={<RubricGrading />} />
                   <Route path="/exam2/accommodations" element={<AccommodationManagement />} />
 
-                  {/* Gradebook & GED readiness (ADMIN/TEACHER) */}
                   <Route path="/gradebook" element={<GradebookPage />} />
                   <Route path="/gradebook/ged-readiness" element={<GedReadinessPage />} />
                   <Route path="/gradebook/reports" element={<GradebookClassReport />} />
@@ -279,20 +278,21 @@ export default function App() {
                   <Route path="/documents" element={<DocumentsPage />} />
                 </Route>
 
-                {/* Exam take/results: accessible to all authenticated roles */}
                 <Route path="/exams/:id/take" element={<ExamTake />} />
                 <Route path="/exams/:id/results" element={<ExamResults />} />
 
-                {/* Users module - Admin only */}
                 <Route element={<ProtectedRoute requiredPermission="manage_users" />}>
                   <Route path="/users" element={<UsersList />} />
                   <Route path="/users/new" element={<UserNew />} />
                   <Route path="/users/:id/edit" element={<UserEdit />} />
                 </Route>
 
-                {/* Admin only */}
                 <Route element={<ProtectedRoute requiredPermission="manage_all" />}>
                   <Route path="/operations" element={<SchoolOperations />} />
+                  <Route path="/staff" element={<StaffDirectory />} />
+                  <Route path="/staff/departments" element={<Departments />} />
+                  <Route path="/staff/:id" element={<StaffProfile />} />
+                  <Route path="/leave" element={<Leave />} />
                   <Route path="/settings" element={<SettingsLayout />}>
                     <Route index element={<Navigate to="/settings/school" replace />} />
                     <Route path="school" element={<SchoolSettings />} />
@@ -310,17 +310,14 @@ export default function App() {
                   <Route path="/admissions/:id" element={<AdmissionDetail />} />
                 </Route>
 
-                {/* Library: read routes open to all authenticated users */}
                 <Route path="/library" element={<LibraryList />} />
                 <Route path="/library/:id" element={<LibraryDetail />} />
 
-                {/* Library: write routes require manage_own_library (ADMIN, TEACHER) */}
                 <Route element={<ProtectedRoute requiredPermission="manage_own_library" />}>
                   <Route path="/library/new" element={<LibraryNew />} />
                   <Route path="/library/:id/edit" element={<LibraryEdit />} />
                 </Route>
 
-                {/* E-Library: read + online reader open to all authenticated users */}
                 <Route path="/elibrary" element={<EbookList />} />
                 <Route
                   path="/elibrary/:id/read"
@@ -331,23 +328,19 @@ export default function App() {
                   }
                 />
 
-                {/* E-Library: upload/edit require manage_ebooks (ADMIN, TEACHER, LIBRARIAN) */}
                 <Route element={<ProtectedRoute requiredPermission="manage_ebooks" />}>
                   <Route path="/elibrary/upload" element={<EbookUpload />} />
                   <Route path="/elibrary/:id/edit" element={<EbookEdit />} />
                 </Route>
 
-                {/* Video Lessons: read open to all authenticated users */}
                 <Route path="/videos" element={<VideoList />} />
                 <Route path="/videos/:id" element={<VideoDetail />} />
 
-                {/* Video Lessons: write requires manage_videos (ADMIN, TEACHER) */}
                 <Route element={<ProtectedRoute requiredPermission="manage_videos" />}>
                   <Route path="/videos/new" element={<VideoNew />} />
                   <Route path="/videos/:id/edit" element={<VideoEdit />} />
                 </Route>
 
-                {/* Physical Book Catalog: ADMIN + LIBRARIAN (via manage_books) */}
                 <Route element={<ProtectedRoute requiredPermission="manage_books" />}>
                   <Route path="/books" element={<BooksList />} />
                   <Route path="/books/new" element={<BookNew />} />
@@ -356,9 +349,9 @@ export default function App() {
                 </Route>
 
                 <Route element={<ProtectedRoute requiredPermission="manage_fees" />}>
+                  <Route path="/payroll" element={<Payroll />} />
                   <Route path="/fees" element={<FeesDashboard />} />
                   <Route path="/fees/payments/new" element={<PaymentNew />} />
-                  {/* Fee detail pages also contain sensitive financial data */}
                   <Route path="/fees/students/:id" element={<StudentFeeProfile />} />
                   <Route path="/fees/receipts/:id" element={<PaymentReceipt />} />
                 </Route>

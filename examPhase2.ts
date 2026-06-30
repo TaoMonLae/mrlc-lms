@@ -1,17 +1,3 @@
-/**
- * Phase 2 — Advanced Exam System routes.
- *
- * Registered from server.ts inside startServer() with shared dependencies so it
- * has access to the same prisma client, auth middleware, audit log and logger.
- *
- * Security model (see SECURITY notes in each handler):
- *  - Students only ever receive sanitized questions (no correct answers / weights
- *    / explanations) until results are released by policy.
- *  - Every attempt mutation validates ownership and a server-authoritative clock.
- *  - Finalized manual grades are immutable.
- *  - Submission + final scoring run in transactions.
- *  - Grading, score changes, release, reopen and invalidation are audit-logged.
- */
 import express from "express";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
@@ -34,20 +20,28 @@ interface Deps {
 
 const TEACHER_ROLES = ["ADMIN", "TEACHER"];
 
+function sanitizeHTML(text: string): string {
+  if (!text) return text;
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+}
+
 export function registerExamPhase2Routes(deps: Deps): void {
   const { app, prisma, authMiddleware, createAuditLog, logger } = deps;
 
-  // ── small helpers ──────────────────────────────────────────────────────────
   const user = (req: express.Request) => (req as any).user as JwtPayload;
   const isTeacher = (req: express.Request) => TEACHER_ROLES.includes(user(req).role);
   const ipOf = (req: express.Request) => (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.ip || null;
   const uaOf = (req: express.Request) => (req.headers["user-agent"] as string) || null;
   const num = (v: any): number | null => (v === null || v === undefined || v === "" || isNaN(Number(v)) ? null : Number(v));
 
-  // Rate limiter for sensitive exam endpoints (start/save/submit/grade).
   const examLimiter = rateLimit({
     windowMs: 60 * 1000,
-    max: 120, // generous enough for ~2s autosave but bounded
+    max: 120,
     standardHeaders: true,
     legacyHeaders: false,
     message: { error: "Too many requests, slow down." },
@@ -59,12 +53,10 @@ export function registerExamPhase2Routes(deps: Deps): void {
     next();
   };
 
-  // Resolve the Student row for the signed-in user (students act on their own attempts).
   async function studentForReq(req: express.Request) {
     return prisma.student.findUnique({ where: { userId: user(req).userId } });
   }
 
-  // Strip everything a student must not see from a question.
   function sanitizeQuestion(q: any) {
     return {
       id: q.id,
@@ -78,16 +70,13 @@ export function registerExamPhase2Routes(deps: Deps): void {
       stimulusId: q.stimulusId ?? null,
       partialCredit: q.partialCredit ?? false,
       passageText: q.passageText ?? null,
-      // NEVER: correctAnswer, correctAnswers, optionWeights, explanation,
-      //        negativePoints, numericTolerance, requiresManualGrading internals.
+      imageUrl: q.imageUrl ?? null,
     };
   }
 
-  // Server-authoritative remaining time. Returns whole seconds (>= 0).
   function remainingSeconds(attempt: any): number {
     if (!attempt.serverDeadline) return 0;
     if (attempt.state === "PAUSED") {
-      // Frozen: remaining is whatever was left when paused.
       const base = new Date(attempt.serverDeadline).getTime() - new Date(attempt.pausedAt || attempt.updatedAt).getTime();
       return Math.max(0, Math.floor(base / 1000));
     }
@@ -95,13 +84,11 @@ export function registerExamPhase2Routes(deps: Deps): void {
   }
   const isExpired = (attempt: any) => attempt.serverDeadline && attempt.state !== "PAUSED" && Date.now() > new Date(attempt.serverDeadline).getTime();
 
-  // Resolve the accommodation that applies to a student for an exam (exam-specific wins).
   async function accommodationFor(studentId: string, examId: string) {
     const rows = await prisma.examAccommodation.findMany({ where: { studentId, OR: [{ examId }, { examId: null }] } });
     return rows.find((r: any) => r.examId === examId) || rows.find((r: any) => r.examId === null) || null;
   }
 
-  // ── deterministic shuffle (seeded) so a resumed attempt keeps its order ──────
   function seededShuffle<T>(arr: T[], seed: string): T[] {
     const a = [...arr];
     let h = 0;
@@ -111,9 +98,6 @@ export function registerExamPhase2Routes(deps: Deps): void {
     return a;
   }
 
-  // ===========================================================================
-  // SCHEDULING + RESULT POLICY (teacher/admin)
-  // ===========================================================================
   app.put("/api/exams/:id/schedule", authMiddleware, teacherGuard, async (req, res) => {
     const { id } = req.params;
     const b = req.body || {};
@@ -134,7 +118,6 @@ export function registerExamPhase2Routes(deps: Deps): void {
         durationMinutes: num(b.durationMinutes) ?? undefined,
         status: b.status || undefined,
       };
-      // Only (re)hash the access code when a new one is supplied.
       if (b.accessCode) data.accessCodeHash = await bcrypt.hash(String(b.accessCode), 10);
       else if (b.requiresAccessCode === false) data.accessCodeHash = null;
 
@@ -188,9 +171,6 @@ export function registerExamPhase2Routes(deps: Deps): void {
     } catch (err) { logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
 
-  // ===========================================================================
-  // ACCOMMODATIONS (teacher/admin)
-  // ===========================================================================
   app.get("/api/accommodations", authMiddleware, teacherGuard, async (req, res) => {
     const { studentId, examId } = req.query as Record<string, string>;
     try {
@@ -253,9 +233,6 @@ export function registerExamPhase2Routes(deps: Deps): void {
     }
   });
 
-  // ===========================================================================
-  // ASSIGNMENTS (teacher/admin)
-  // ===========================================================================
   app.get("/api/exams/:id/assignments", authMiddleware, teacherGuard, async (req, res) => {
     try {
       const rows = await prisma.examAssignment.findMany({
@@ -299,11 +276,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
     }
   });
 
-  // ===========================================================================
-  // STUDENT ATTEMPT LIFECYCLE  (server-authoritative)
-  // ===========================================================================
 
-  // Compute effective duration (minutes) including accommodation extra time.
   function effectiveDuration(baseMin: number, accom: any): number {
     let mins = baseMin;
     if (accom?.extraTimePercent) mins += (baseMin * accom.extraTimePercent) / 100;
@@ -311,8 +284,6 @@ export function registerExamPhase2Routes(deps: Deps): void {
     return Math.round(mins);
   }
 
-  // START or RESUME an attempt. SECURITY: validates window, access code, attempt
-  // limit, single active session; returns sanitized questions only.
   app.post("/api/exam2/:examId/start", authMiddleware, examLimiter, async (req, res) => {
     if (isTeacher(req)) { res.status(403).json({ error: "Only students take exams" }); return; }
     const { examId } = req.params;
@@ -351,51 +322,88 @@ export function registerExamPhase2Routes(deps: Deps): void {
         const sessionToken = crypto.randomUUID();
         const resumed = await prisma.examAttempt.update({
           where: { id: existing.id },
-          data: { sessionToken, state: existing.state === "PAUSED" ? "PAUSED" : "IN_PROGRESS", ipAddress: ipOf(req), userAgent: uaOf(req), deviceInfo: b.deviceInfo || undefined },
+          data: { sessionToken, state: "IN_PROGRESS", ipAddress: ipOf(req), userAgent: uaOf(req), deviceInfo: b.deviceInfo || undefined },
         });
         await prisma.attemptEvent.create({ data: { attemptId: existing.id, type: "RECONNECT", actorRole: "STUDENT", ipAddress: ipOf(req), userAgent: uaOf(req) } }).catch(() => {});
         return res.json(await attemptPayload(resumed, exam, student.id));
       }
 
-      // Enforce attempt limit.
       const limit = assignment?.attemptLimitOverride ?? exam.attemptLimit ?? 1;
-      const used = await prisma.examAttempt.count({ where: { studentId: student.id, examId } });
-      if (used >= limit) { res.status(403).json({ error: "No attempts remaining" }); return; }
-
-      // Build server-authoritative timing.
-      const accom = assignment?.accommodationId
-        ? await prisma.examAccommodation.findUnique({ where: { id: assignment.accommodationId } })
-        : await accommodationFor(student.id, examId);
-      const baseMin = exam.durationMinutes || 60;
-      const effMin = effectiveDuration(baseMin, accom);
-      const serverDeadline = new Date(now + effMin * 60000 + (exam.gracePeriodMinutes || 0) * 60000);
-
-      // Compose the question set (FIXED links + RANDOM blueprint, else legacy) and
-      // freeze the selection + order + shuffled option order onto the attempt so it
-      // is reproducible and never regenerates. Two students get different seeds.
-      const randomSeed = `${student.id}:${examId}:${used + 1}:${crypto.randomUUID().slice(0, 8)}`;
-      const composed = await composeQuestionSet(prisma, examId, randomSeed);
-      const { questionOrder: order, optionOrder, frozenContent } = freezeAttempt(composed, exam, randomSeed);
-      const selectedQuestionIds = order;
 
       const sessionToken = crypto.randomUUID();
-      const attempt = await prisma.examAttempt.create({
-        data: {
-          studentId: student.id, examId, assignmentId: assignment?.id || null,
-          accommodationId: accom?.id || null, attemptNumber: used + 1,
-          state: "IN_PROGRESS", startedAt: new Date(now), serverDeadline,
-          effectiveDurationMinutes: effMin, sessionToken, questionOrder: order,
-          selectedQuestionIds, optionOrder, randomSeed, frozenContent,
-          lastSavedAt: new Date(now), ipAddress: ipOf(req), userAgent: uaOf(req),
-          deviceInfo: b.deviceInfo || undefined,
-        },
+      const randomSeed = `${student.id}:${examId}:${Date.now()}:${Math.random().toString(36).substring(7)}`;
+
+      const attempt = await prisma.$transaction(async (tx: any) => {
+        const used = await tx.examAttempt.count({ where: { studentId: student.id, examId } });
+        if (used >= limit) throw new Error("No attempts remaining");
+
+        const accom = assignment?.accommodationId
+          ? await tx.examAccommodation.findUnique({ where: { id: assignment.accommodationId } })
+          : await accommodationFor(student.id, examId);
+        const baseMin = exam.durationMinutes || 60;
+        const effMin = effectiveDuration(baseMin, accom);
+        const serverDeadline = new Date(now + effMin * 60000 + (exam.gracePeriodMinutes || 0) * 60000);
+
+        const composed = await composeQuestionSet(tx, examId, randomSeed);
+        const { questionOrder: order, optionOrder, frozenContent } = freezeAttempt(composed, exam, randomSeed);
+        const selectedQuestionIds = order;
+
+        const newAttempt = await tx.examAttempt.create({
+          data: {
+            studentId: student.id, examId, assignmentId: assignment?.id || null,
+            accommodationId: accom?.id || null, attemptNumber: used + 1,
+            state: "IN_PROGRESS", startedAt: new Date(now), serverDeadline,
+            effectiveDurationMinutes: effMin, sessionToken, questionOrder: order,
+            selectedQuestionIds, optionOrder, randomSeed, frozenContent,
+            lastSavedAt: new Date(now), ipAddress: ipOf(req), userAgent: uaOf(req),
+            deviceInfo: b.deviceInfo || undefined,
+          },
+        });
+        await tx.attemptEvent.create({ data: { attemptId: newAttempt.id, type: "START", actorRole: "STUDENT", ipAddress: ipOf(req), userAgent: uaOf(req) } }).catch(() => {});
+        if (assignment) await tx.examAssignment.update({ where: { id: assignment.id }, data: { status: "STARTED" } }).catch(() => {});
+        return newAttempt;
       });
-      await prisma.attemptEvent.create({ data: { attemptId: attempt.id, type: "START", actorRole: "STUDENT", ipAddress: ipOf(req), userAgent: uaOf(req) } }).catch(() => {});
-      if (assignment) await prisma.examAssignment.update({ where: { id: assignment.id }, data: { status: "STARTED" } }).catch(() => {});
+
       res.status(201).json(await attemptPayload(attempt, exam, student.id));
     } catch (err: any) {
       if (err?.code === "P2021" || err?.code === "P2022") { res.status(503).json({ error: "Exam system not migrated yet" }); return; }
       logger.error("start attempt failed", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // TEACHER PREVIEW — render the exam exactly as a student would see it, but
+  // read-only: no attempt is created, no scoring, no timer. Correct answers are
+  // stripped so the preview matches the student view.
+  app.get("/api/exams/:examId/preview", authMiddleware, teacherGuard, async (req, res) => {
+    const { examId } = req.params;
+    try {
+      const exam = await prisma.exam.findUnique({ where: { id: examId } });
+      if (!exam) { res.status(404).json({ error: "Exam not found" }); return; }
+      const composed = await composeQuestionSet(prisma, examId, `preview:${examId}`);
+      const questions = composed.map((q: any) => {
+        let options: { value: string; text: string }[] | null = null;
+        if (Array.isArray(q.optionRows) && q.optionRows.length) {
+          options = q.optionRows.map((o: any) => ({ value: o.id, text: o.text }));
+        } else if (Array.isArray(q.options)) {
+          options = (q.options as any[]).map((o, i) => ({
+            value: String(typeof o === "object" ? o.value ?? o.text ?? i : o),
+            text: String(typeof o === "object" ? o.text ?? o.value : o),
+          }));
+        }
+        return {
+          id: q.id, text: q.text, type: q.type,
+          points: q.pointsOverride ?? q.defaultPoints ?? q.points ?? 0,
+          options, passageText: q.passageText ?? null, imageUrl: q.imageUrl ?? null,
+        };
+      });
+      res.json({
+        exam: { id: exam.id, title: exam.title, status: exam.status, durationMinutes: exam.durationMinutes, totalMarks: exam.totalMarks },
+        questions,
+      });
+    } catch (err: any) {
+      if (err?.code === "P2021" || err?.code === "P2022") { res.status(503).json({ error: "Exam system not migrated yet" }); return; }
+      logger.error("exam preview failed", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
@@ -409,6 +417,8 @@ export function registerExamPhase2Routes(deps: Deps): void {
       ordered = attempt.frozenContent.map((q: any) => ({
         id: q.id, text: q.text, type: q.type, points: q.points,
         options: Array.isArray(q.options) ? q.options.map((o: any) => ({ value: o.key, text: o.text })) : null,
+        passageText: q.passageText ?? null,
+        imageUrl: q.imageUrl ?? null,
         partialCredit: false,
       }));
     } else {
@@ -478,27 +488,32 @@ export function registerExamPhase2Routes(deps: Deps): void {
       const answers: any[] = Array.isArray(b.answers) ? b.answers : [];
       const now = new Date();
       await prisma.$transaction(async (tx: any) => {
-        for (const a of answers) {
-          if (!a.questionId) continue;
-          await tx.examAnswer.upsert({
-            where: { attemptId_questionId: { attemptId: attempt.id, questionId: a.questionId } },
-            create: {
-              attemptId: attempt.id, questionId: a.questionId,
-              answerText: a.answerText ?? null, selectedOptions: a.selectedOptions ?? null,
-              flaggedForReview: !!a.flaggedForReview, timeSpentSeconds: num(a.timeSpentSeconds) ?? null,
-            },
-            update: {
-              answerText: a.answerText ?? null, selectedOptions: a.selectedOptions ?? null,
-              flaggedForReview: !!a.flaggedForReview,
-              timeSpentSeconds: a.timeSpentSeconds !== undefined ? num(a.timeSpentSeconds) : undefined,
-            },
-          });
+        try {
+          for (const a of answers) {
+            if (!a.questionId) continue;
+            await tx.examAnswer.upsert({
+              where: { attemptId_questionId: { attemptId: attempt.id, questionId: a.questionId } },
+              create: {
+                attemptId: attempt.id, questionId: a.questionId,
+                answerText: a.answerText ?? null, selectedOptions: a.selectedOptions ?? null,
+                flaggedForReview: !!a.flaggedForReview, timeSpentSeconds: num(a.timeSpentSeconds) ?? null,
+              },
+              update: {
+                answerText: a.answerText ?? null, selectedOptions: a.selectedOptions ?? null,
+                flaggedForReview: !!a.flaggedForReview,
+                timeSpentSeconds: a.timeSpentSeconds !== undefined ? num(a.timeSpentSeconds) : undefined,
+              },
+            });
+          }
+          await tx.examAttempt.update({ where: { id: attempt.id }, data: { lastSavedAt: now } });
+          // Lightweight immutable snapshot for recovery/audit.
+          const snap = await tx.examAnswer.findMany({ where: { attemptId: attempt.id }, select: { questionId: true, answerText: true, selectedOptions: true, flaggedForReview: true } });
+          await tx.attemptSnapshot.create({ data: { attemptId: attempt.id, reason: (b.reason || "AUTOSAVE").toUpperCase(), answers: snap, questionOrder: attempt.questionOrder ?? undefined, remainingSeconds: remainingSeconds(attempt) } });
+          await tx.attemptEvent.create({ data: { attemptId: attempt.id, type: (b.reason || "AUTOSAVE").toUpperCase(), actorRole: "STUDENT", ipAddress: ipOf(req), userAgent: uaOf(req) } });
+        } catch (err: any) {
+          logger.error("Transaction failed during autosave:", err);
+          throw err;
         }
-        await tx.examAttempt.update({ where: { id: attempt.id }, data: { lastSavedAt: now } });
-        // Lightweight immutable snapshot for recovery/audit.
-        const snap = await tx.examAnswer.findMany({ where: { attemptId: attempt.id }, select: { questionId: true, answerText: true, selectedOptions: true, flaggedForReview: true } });
-        await tx.attemptSnapshot.create({ data: { attemptId: attempt.id, reason: (b.reason || "AUTOSAVE").toUpperCase(), answers: snap, questionOrder: attempt.questionOrder ?? undefined, remainingSeconds: remainingSeconds(attempt) } });
-        await tx.attemptEvent.create({ data: { attemptId: attempt.id, type: (b.reason || "AUTOSAVE").toUpperCase(), actorRole: "STUDENT", ipAddress: ipOf(req), userAgent: uaOf(req) } });
       });
       res.json({ ok: true, lastSavedAt: now.toISOString(), remainingSeconds: remainingSeconds({ ...attempt }), serverTime: new Date().toISOString() });
     } catch (err: any) {
@@ -567,7 +582,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
     if (!given.trim()) return { score: 0, correct: false, manual: false }; // blank
 
     // numeric tolerance
-    if (q.numericTolerance != null && accepted.length && !isNaN(Number(given))) {
+    if (q.numericTolerance != null && q.numericTolerance >= 0 && accepted.length && !isNaN(Number(given))) {
       const g = Number(given);
       const hit = accepted.some((a) => !isNaN(Number(a)) && Math.abs(g - Number(a)) <= q.numericTolerance);
       if (hit) return { score: max, correct: true, manual: false };
@@ -608,6 +623,18 @@ export function registerExamPhase2Routes(deps: Deps): void {
           let hasWeights = false;
           for (const o of q.optionRows) if (o.weight != null) { weights[o.id] = o.weight; hasWeights = true; }
           return { ...q, points: max, correctAnswer: correct[0] ?? q.correctAnswer, correctAnswers: correct.length ? correct : q.correctAnswers, optionWeights: hasWeights ? weights : q.optionWeights };
+        }
+        // Legacy Json options: the player submits the option's *text* (the frozen
+        // option key), but basic-creator exams store correctAnswer as the option
+        // *index*. Accept either form so MCQs auto-grade correctly.
+        if (Array.isArray(q.options) && q.options.length && q.correctAnswer != null && (!Array.isArray(q.correctAnswers) || !q.correctAnswers.length)) {
+          const accepted = [String(q.correctAnswer)];
+          const idx = Number(q.correctAnswer);
+          if (Number.isInteger(idx) && q.options[idx] != null) {
+            const opt = q.options[idx];
+            accepted.push(String(typeof opt === "object" ? (opt.value ?? opt.text ?? idx) : opt));
+          }
+          return { ...q, points: max, correctAnswers: accepted };
         }
         return { ...q, points: max };
       };
@@ -778,7 +805,13 @@ function registerAuthoringRoutes(deps: any) {
     const b = req.body || {};
     const data: any = {};
     const passthrough = ["text", "correctAnswer", "explanation"];
-    for (const k of passthrough) if (b[k] !== undefined) data[k] = b[k];
+    for (const k of passthrough) if (b[k] !== undefined) {
+      if (k === "text" || k === "explanation") {
+        data[k] = sanitizeHTML(b[k]);
+      } else {
+        data[k] = b[k];
+      }
+    }
     if (b.points !== undefined) data.points = num(b.points);
     if (b.orderIndex !== undefined) data.orderIndex = num(b.orderIndex) ?? 0;
     if (b.sectionId !== undefined) data.sectionId = b.sectionId || null;
@@ -789,7 +822,10 @@ function registerAuthoringRoutes(deps: any) {
     if (b.optionWeights !== undefined) data.optionWeights = b.optionWeights ?? null;
     if (b.negativePoints !== undefined) data.negativePoints = num(b.negativePoints);
     if (b.minScore !== undefined) data.minScore = num(b.minScore);
-    if (b.numericTolerance !== undefined) data.numericTolerance = num(b.numericTolerance);
+    if (b.numericTolerance !== undefined) {
+      const tolerance = num(b.numericTolerance);
+      data.numericTolerance = (tolerance !== null && tolerance >= 0) ? tolerance : null;
+    }
     if (b.caseSensitive !== undefined) data.caseSensitive = !!b.caseSensitive;
     if (b.partialCredit !== undefined) data.partialCredit = !!b.partialCredit;
     if (b.requiresManualGrading !== undefined) data.requiresManualGrading = !!b.requiresManualGrading;

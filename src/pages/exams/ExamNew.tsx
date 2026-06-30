@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { type Exam, type ExamQuestion, type ExamSettings } from '../../types/exam';
 import MathField from '../../components/MathField';
+import QuestionImageField from '../../components/QuestionImageField';
 
 const INITIAL_SETTINGS: ExamSettings = {
   enableTimer: true,
@@ -51,9 +52,14 @@ export default function ExamNew() {
   // Settings data
   const [settings, setSettings] = useState<ExamSettings>(INITIAL_SETTINGS);
 
+  // Whether the exam is visible to students immediately. When off it is saved as
+  // a DRAFT so the teacher can finish authoring/scheduling before publishing.
+  const [publishNow, setPublishNow] = useState(true);
+
   // Math equation tools only make sense for Math subjects, so show them only
   // when the selected subject looks like Mathematics (e.g. "Math",
   // "Mathematics", "Mathematical Reasoning", "GED Math").
+  const selectedClassName = classes.find((c) => c.id === classId)?.name ?? '';
   const selectedSubjectName = subjects.find((s) => s.id === subjectId)?.name ?? '';
   const isMathSubject = /math/i.test(selectedSubjectName);
 
@@ -104,7 +110,7 @@ export default function ExamNew() {
         classId,
         subjectId,
         examType,
-        status: 'PUBLISHED',
+        status: publishNow ? 'PUBLISHED' : 'DRAFT',
         duration: Number(duration) || null,
         totalMarks: calculateTotalPoints(),
         settings,
@@ -116,6 +122,7 @@ export default function ExamNew() {
           correctAnswer: q.correctAnswer,
           passageText: q.passageText || null,
           explanation: q.explanation || null,
+          imageUrl: q.imageUrl || null,
         })),
       });
       toast.success('Exam created. Configure sections, bank questions and scheduling next.');
@@ -166,7 +173,7 @@ export default function ExamNew() {
                 <Label>Class</Label>
                  <Select value={classId} onValueChange={setClassId}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select class" />
+                    <SelectValue placeholder="Select class">{selectedClassName || 'Select class'}</SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {classes.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
@@ -177,7 +184,7 @@ export default function ExamNew() {
                 <Label>Subject</Label>
                 <Select value={subjectId} onValueChange={setSubjectId}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select subject" />
+                    <SelectValue placeholder="Select subject">{selectedSubjectName || 'Select subject'}</SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {subjects.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
@@ -294,6 +301,14 @@ export default function ExamNew() {
                       )}
                     </div>
 
+                    <div className="space-y-2">
+                      <Label>Image (optional)</Label>
+                      <QuestionImageField
+                        value={q.imageUrl}
+                        onChange={(url) => updateQuestion(q.id, { imageUrl: url })}
+                      />
+                    </div>
+
                     <div className="flex items-center gap-2 py-1">
                       <input
                         type="checkbox"
@@ -338,7 +353,7 @@ export default function ExamNew() {
                               <MathField
                                 value={choice}
                                 enabled={isMathSubject}
-                                showToolbar={false}
+                                showToolbar={isMathSubject}
                                 onChange={(val) => {
                                   const newChoices = [...q.choices!];
                                   newChoices[cIndex] = val;
@@ -450,9 +465,21 @@ export default function ExamNew() {
                 </div>
                  <div className="border-b pb-2 dark:border-surface-raised">
                   <span className="text-slate-500 block mb-1">Status</span>
-                  <span className="font-medium text-slate-900 dark:text-white">Draft</span>
+                  <span className="font-medium text-slate-900 dark:text-white">{publishNow ? 'Published' : 'Draft'}</span>
                 </div>
               </div>
+            </div>
+
+            <div className="flex items-center justify-between p-4 border border-slate-200 dark:border-surface-raised rounded-lg">
+              <div className="space-y-0.5">
+                <Label className="text-base">Publish now</Label>
+                <p className="text-sm text-slate-500">
+                  {publishNow
+                    ? 'Students in this class can start the exam as soon as it is saved.'
+                    : 'Saved as a draft — hidden from students until you publish it from the exam page.'}
+                </p>
+              </div>
+              <Switch checked={publishNow} onCheckedChange={setPublishNow} />
             </div>
           </div>
         )}

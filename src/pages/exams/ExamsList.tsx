@@ -158,7 +158,7 @@ export default function ExamsList() {
                       <DropdownMenuItem render={<Link to={`/exam2/${exam.id}/author`} />} nativeButton={false}>Author content</DropdownMenuItem>
                       <DropdownMenuItem render={<Link to={`/exam2/${exam.id}/schedule`} />} nativeButton={false}>Schedule &amp; release</DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem render={<Link to={`/exams/${exam.id}/take`} />} nativeButton={false}>Preview (Take Exam)</DropdownMenuItem>
+                      <DropdownMenuItem render={<Link to={`/exams/${exam.id}/preview`} />} nativeButton={false}>Preview</DropdownMenuItem>
                       <DropdownMenuSeparator />
                       {showArchived ? (
                         <DropdownMenuItem className="text-emerald-600" onClick={() => handleRestore(exam)}>Restore exam</DropdownMenuItem>

@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import MathField from '../../components/MathField';
+import QuestionImageField from '../../components/QuestionImageField';
 import { type ExamQuestion, type ExamSettings } from '../../types/exam';
 
 const isChoiceType = (type: string) => type === 'MCQ' || type.startsWith('GED_');
@@ -32,6 +33,7 @@ interface LoadedExam {
     correctAnswer?: string | null;
     passageText?: string | null;
     explanation?: string | null;
+    imageUrl?: string | null;
   }>;
   attempts?: any[];
 }
@@ -78,6 +80,7 @@ export default function ExamEdit() {
           type: q.type || 'MCQ',
           questionText: q.text || '',
           passageText: q.passageText || '',
+          imageUrl: q.imageUrl ?? null,
           explanation: q.explanation || '',
           choices: Array.isArray(q.options) ? q.options : ['', '', '', ''],
           correctAnswer: q.correctAnswer ?? '0',
@@ -92,6 +95,7 @@ export default function ExamEdit() {
       .finally(() => setLoading(false));
   }, [id, navigate]);
 
+  const selectedClassName = classes.find((c) => c.id === classId)?.name ?? '';
   const selectedSubjectName = subjects.find((s) => s.id === subjectId)?.name ?? '';
   const isMathSubject = /math/i.test(selectedSubjectName);
   const totalPoints = questions.reduce((sum, q) => sum + (Number(q.points) || 0), 0);
@@ -155,6 +159,7 @@ export default function ExamEdit() {
           correctAnswer: q.correctAnswer,
           passageText: q.passageText || null,
           explanation: q.explanation || null,
+          imageUrl: q.imageUrl || null,
         })),
       });
       toast.success(hasAttempts ? 'Exam details updated. Questions are locked because students have attempts.' : 'Exam updated successfully.');
@@ -201,14 +206,14 @@ export default function ExamEdit() {
             <div className="space-y-2">
               <Label>Class</Label>
               <Select value={classId} onValueChange={setClassId}>
-                <SelectTrigger><SelectValue placeholder="Select class" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select class">{selectedClassName || 'Select class'}</SelectValue></SelectTrigger>
                 <SelectContent>{classes.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
               <Label>Subject</Label>
               <Select value={subjectId} onValueChange={setSubjectId}>
-                <SelectTrigger><SelectValue placeholder="Select subject" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select subject">{selectedSubjectName || 'Select subject'}</SelectValue></SelectTrigger>
                 <SelectContent>{subjects.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
@@ -309,6 +314,11 @@ export default function ExamEdit() {
                     <MathField value={q.questionText} onChange={(val) => updateQuestion(q.id, { questionText: val })} multiline rows={3} enabled={isMathSubject && !hasAttempts} showToolbar={isMathSubject && !hasAttempts} placeholder="Type the question text" />
                   </div>
 
+                  <div className="space-y-2">
+                    <Label>Image (optional)</Label>
+                    <QuestionImageField value={q.imageUrl} onChange={(url) => updateQuestion(q.id, { imageUrl: url })} disabled={hasAttempts} />
+                  </div>
+
                   <div className="flex items-center gap-2 py-1">
                     <input
                       type="checkbox"
@@ -349,7 +359,7 @@ export default function ExamEdit() {
                             <MathField
                               value={choice}
                               enabled={isMathSubject && !hasAttempts}
-                              showToolbar={false}
+                              showToolbar={isMathSubject && !hasAttempts}
                               onChange={(val) => {
                                 const nextChoices = [...q.choices!];
                                 nextChoices[choiceIndex] = val;

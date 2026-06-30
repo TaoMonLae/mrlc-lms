@@ -20,7 +20,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../lib/api';
 
-interface AvailableExam { id: string; title: string; subject: string; duration: string; questions: number; deadline: string; type: string; }
+interface AvailableExam { id: string; title: string; subject: string; duration: string; questions: number; deadline: string; opensAt?: string | null; type: string; }
 interface SubmittedExam { id: string; attemptId?: string; title: string; subject: string; submittedAt: string; status: string; score: string | null; }
 interface LockdownSettings {
   lockdownBrowserEnabled?: boolean;
@@ -91,7 +91,7 @@ export default function StudentExams() {
                       {exam.subject}
                     </Badge>
                     <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1 uppercase tracking-tighter">
-                      <Clock className="h-3 w-3" /> Due {exam.deadline}
+                      <Clock className="h-3 w-3" /> {exam.opensAt ? `Opens ${exam.opensAt}` : `Due ${exam.deadline}`}
                     </span>
                   </div>
                   <CardTitle className="text-lg group-hover:text-aubergine-600 dark:group-hover:text-aubergine-400 transition-colors">{exam.title}</CardTitle>
@@ -113,8 +113,8 @@ export default function StudentExams() {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <Button className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-bold uppercase tracking-widest text-xs h-10" onClick={() => handleStartExam(exam)}>
-                      <Play className="mr-2 h-3 w-3" /> Start Exam
+                    <Button disabled={Boolean(exam.opensAt)} className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-bold uppercase tracking-widest text-xs h-10" onClick={() => handleStartExam(exam)}>
+                      <Play className="mr-2 h-3 w-3" /> {exam.opensAt ? 'Not open yet' : 'Start Exam'}
                     </Button>
                     <Button variant="outline" size="icon" className="h-10 w-10 shrink-0 border-slate-200 dark:border-surface-raised">
                       <HelpCircle className="h-4 w-4 text-slate-500" />
