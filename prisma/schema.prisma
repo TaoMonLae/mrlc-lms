@@ -132,7 +132,11 @@ model User {
   caseNotes      CaseNote[]
   sentMessages   Message[] @relation("SentMessages")
   receivedMessages MessageRecipient[] @relation("ReceivedMessages")
-  
+
+  conversationsCreated     Conversation[] @relation("ConversationCreatedBy")
+  conversationParticipations ConversationParticipant[]
+  chatMessages   ChatMessage[]
+
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -1876,4 +1880,88 @@ model LeaveRequest {
 
   @@index([employeeId])
   @@index([status])
+}
+
+// -----------------------------------------------------------------------------
+// CHAT (conversation-based messaging)
+// -----------------------------------------------------------------------------
+
+enum ConversationType {
+  DIRECT
+  GROUP
+  CLASS_CHANNEL
+}
+
+enum ChatReportStatus {
+  OPEN
+  REVIEWED
+  ACTIONED
+  DISMISSED
+}
+
+model Conversation {
+  id            String   @id @default(uuid())
+  type          ConversationType @default(DIRECT)
+  title         String?
+  classId       String?
+  createdById   String
+  createdBy     User     @relation("ConversationCreatedBy", fields: [createdById], references: [id])
+  lastMessageAt DateTime @default(now())
+
+  participants  ConversationParticipant[]
+  messages      ChatMessage[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([classId])
+  @@index([lastMessageAt])
+}
+
+model ConversationParticipant {
+  id             String   @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  lastReadAt     DateTime?
+  isMuted        Boolean  @default(false)
+  leftAt         DateTime?
+  createdAt      DateTime @default(now())
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+}
+
+model ChatMessage {
+  id             String   @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User     @relation(fields: [senderId], references: [id])
+  body           String
+  attachmentUrl  String?
+  deletedAt      DateTime?
+
+  reports        ChatMessageReport[]
+
+  createdAt      DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([senderId])
+}
+
+model ChatMessageReport {
+  id            String   @id @default(uuid())
+  messageId     String
+  message       ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  reportedById  String
+  reason        String?
+  status        ChatReportStatus @default(OPEN)
+  reviewedById  String?
+  reviewedAt    DateTime?
+  createdAt     DateTime @default(now())
+
+  @@index([status])
+  @@index([messageId])
 }

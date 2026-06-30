@@ -40,6 +40,8 @@ const STUDENT_DOC_DIR = process.env.STUDENT_DOC_DIR || path.join(process.cwd(), 
 fs.mkdirSync(STUDENT_DOC_DIR, { recursive: true });
 const EXAM_MEDIA_DIR = process.env.EXAM_MEDIA_DIR || path.join(process.cwd(), "data", "exam-media");
 fs.mkdirSync(EXAM_MEDIA_DIR, { recursive: true });
+const CHAT_MEDIA_DIR = process.env.CHAT_MEDIA_DIR || path.join(process.cwd(), "data", "chat-media");
+fs.mkdirSync(CHAT_MEDIA_DIR, { recursive: true });
 
 const ebookUpload = multer({
   storage: multer.diskStorage({
@@ -96,6 +98,18 @@ const profilePhotoUpload = multer({
 const examMediaUpload = multer({
   storage: multer.diskStorage({
     destination: (_req, _file, cb) => cb(null, EXAM_MEDIA_DIR),
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase();
+      cb(null, `${crypto.randomUUID()}${ext}`);
+    },
+  }),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: imageUploadFilter,
+});
+
+const chatMediaUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, CHAT_MEDIA_DIR),
     filename: (_req, file, cb) => {
       const ext = path.extname(file.originalname).toLowerCase();
       cb(null, `${crypto.randomUUID()}${ext}`);
@@ -857,6 +871,10 @@ async function startServer() {
     immutable: isProduction,
   }));
   app.use("/uploads/exam-media", express.static(EXAM_MEDIA_DIR, {
+    maxAge: isProduction ? "30d" : 0,
+    immutable: isProduction,
+  }));
+  app.use("/uploads/chat-media", express.static(CHAT_MEDIA_DIR, {
     maxAge: isProduction ? "30d" : 0,
     immutable: isProduction,
   }));
@@ -5105,7 +5123,8 @@ async function startServer() {
         });
       }
       res.json(exams);
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.code === "P2021" || err?.code === "P2022") { res.status(503).json({ error: "Exam database is out of date — run `npx prisma migrate deploy` then restart the server." }); return; }
       logger.error("Error fetching exams:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
@@ -5197,7 +5216,8 @@ async function startServer() {
       }
       const profile = await prisma.schoolProfile.findFirst();
       res.json({ ...exam, lockdownPolicy: lockdownBrowserPolicy(profile) });
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.code === "P2021" || err?.code === "P2022") { res.status(503).json({ error: "Exam database is out of date — run `npx prisma migrate deploy` then restart the server." }); return; }
       logger.error("Error fetching exam:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
@@ -5289,7 +5309,8 @@ async function startServer() {
       );
 
       res.status(201).json(result);
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.code === "P2021" || err?.code === "P2022") { res.status(503).json({ error: "Exam database is out of date — run `npx prisma migrate deploy` then restart the server." }); return; }
       logger.error("Error creating exam:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
@@ -5380,6 +5401,7 @@ async function startServer() {
 
       res.json(result);
     } catch (err: any) {
+      if (err?.code === "P2021" || err?.code === "P2022") { res.status(503).json({ error: "Exam database is out of date — run `npx prisma migrate deploy` then restart the server." }); return; }
       logger.error("Error updating exam:", err);
       if (err.http === 404) {
         res.status(404).json({ error: err.message });
@@ -7338,7 +7360,7 @@ async function startServer() {
           const att = s.attendances.length ? round1((present / s.attendances.length) * 100) : 0;
           const last = s.examAttempts[0];
           return {
-            id: s.id, name: fullName(s.user), studentId: s.studentCode,
+            id: s.id, userId: s.userId, name: fullName(s.user), studentId: s.studentCode,
             attendance: `${att}%`,
             lastExam: last && last.score != null ? `${last.score}/${last.exam.totalMarks || 100}` : "—",
             profilePhotoUrl: s.user.profilePhotoUrl,
@@ -8249,6 +8271,355 @@ async function startServer() {
     });
   }
 
+  // ── Chat API (conversation-based) ────────────────────────────────────────────
+  // Hierarchical rule: every conversation must include at least one staff member.
+  // Students therefore can never have a student-only (peer-to-peer) conversation.
+  const CHAT_STAFF_ROLES = ["ADMIN", "TEACHER", "STAFF", "ACCOUNTANT", "CASE_WORKER", "LIBRARIAN"];
+  const isStaffRole = (role: string) => CHAT_STAFF_ROLES.includes(role);
+  const userBrief = (u: any) => ({ id: u.id, name: fullName(u), role: u.role, profilePhotoUrl: u.profilePhotoUrl ?? null });
+
+  // Upload an image to attach to a chat message.
+  const uploadChatMedia: express.RequestHandler = (req, res, next) => {
+    chatMediaUpload.single("file")(req, res, (err: any) => {
+      if (!err) return next();
+      const message = err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE"
+        ? "Image must be 10 MB or smaller" : err.message || "Upload failed";
+      res.status(400).json({ error: message });
+    });
+  };
+  app.post("/api/chat-media", authMiddleware, uploadChatMedia, async (req, res) => {
+    const file = (req as any).file as Express.Multer.File | undefined;
+    if (!file) { res.status(400).json({ error: "Image file is required" }); return; }
+    res.status(201).json({ url: `/uploads/chat-media/${file.filename}` });
+  });
+
+  // ── Real-time push (Server-Sent Events) ──────────────────────────────────────
+  // Additive over the client's polling: a broken/closed stream simply falls back
+  // to polling. Keyed by userId → open responses (a user may have several tabs).
+  const chatStreams = new Map<string, Set<express.Response>>();
+  function chatNotify(userIds: string[], payload: any) {
+    const data = `data: ${JSON.stringify(payload)}\n\n`;
+    for (const uid of new Set(userIds)) {
+      const set = chatStreams.get(uid);
+      if (set) for (const r of set) { try { r.write(data); } catch { /* dropped */ } }
+    }
+  }
+  // EventSource cannot send Authorization headers, so this endpoint authenticates
+  // from a short-lived query token (same JWT) instead of authMiddleware.
+  app.get("/api/chat/stream", (req, res) => {
+    let user: JwtPayload;
+    try { user = verifyToken(String(req.query.token || "")); }
+    catch { res.status(401).end(); return; }
+    res.set({ "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive", "X-Accel-Buffering": "no" });
+    (res as any).flushHeaders?.();
+    res.write(": connected\n\n");
+    let set = chatStreams.get(user.userId);
+    if (!set) { set = new Set(); chatStreams.set(user.userId, set); }
+    set.add(res);
+    const ping = setInterval(() => { try { res.write(": ping\n\n"); } catch { /* ignore */ } }, 25000);
+    req.on("close", () => { clearInterval(ping); set!.delete(res); if (set!.size === 0) chatStreams.delete(user.userId); });
+  });
+
+  // Who the signed-in user may start a conversation with.
+  app.get("/api/chat/contacts", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const where: any = { id: { not: jwtUser.userId }, isActive: true };
+      // Students may only contact staff; staff may contact anyone.
+      if (!isStaffRole(jwtUser.role)) where.role = { in: CHAT_STAFF_ROLES };
+      const users = await prisma.user.findMany({
+        where,
+        select: { id: true, firstName: true, lastName: true, role: true, profilePhotoUrl: true },
+        orderBy: [{ role: "asc" }, { firstName: "asc" }],
+      });
+      res.json(users.map(userBrief));
+    } catch (err) {
+      logger.error("Error fetching chat contacts:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // My conversations, newest activity first, with unread counts + last message.
+  app.get("/api/chat/conversations", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const parts = await prisma.conversationParticipant.findMany({
+        where: { userId: jwtUser.userId, leftAt: null },
+        include: {
+          conversation: {
+            include: {
+              participants: { include: { user: { select: { id: true, firstName: true, lastName: true, role: true, profilePhotoUrl: true } } } },
+              messages: { where: { deletedAt: null }, orderBy: { createdAt: "desc" }, take: 1, include: { sender: { select: { id: true, firstName: true, lastName: true } } } },
+            },
+          },
+        },
+      });
+      const items = await Promise.all(parts.map(async (p) => {
+        const c = p.conversation;
+        const unread = await prisma.chatMessage.count({
+          where: {
+            conversationId: c.id,
+            deletedAt: null,
+            senderId: { not: jwtUser.userId },
+            ...(p.lastReadAt ? { createdAt: { gt: p.lastReadAt } } : {}),
+          },
+        });
+        const last = c.messages[0];
+        const others = c.participants.filter((x) => x.userId !== jwtUser.userId).map((x) => userBrief(x.user));
+        const title = c.title || (c.type === "DIRECT" ? (others[0]?.name ?? "Conversation") : others.map((o) => o.name).join(", "));
+        return {
+          id: c.id, type: c.type, title,
+          participants: c.participants.map((x) => userBrief(x.user)),
+          lastMessage: last ? { body: last.body, senderId: last.senderId, senderName: fullName(last.sender), createdAt: last.createdAt } : null,
+          lastMessageAt: c.lastMessageAt, unread,
+        };
+      }));
+      items.sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime());
+      res.json(items);
+    } catch (err) {
+      logger.error("Error fetching conversations:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Create (or reuse) a conversation. Body: { participantIds: string[], title?, type? }
+  app.post("/api/chat/conversations", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const participantIds: string[] = Array.isArray(req.body?.participantIds) ? req.body.participantIds : [];
+    const title: string | null = req.body?.title?.trim() || null;
+    try {
+      const ids = Array.from(new Set([jwtUser.userId, ...participantIds.filter((x) => typeof x === "string" && x)]));
+      if (ids.length < 2) { res.status(400).json({ error: "Pick at least one person to message" }); return; }
+      const users = await prisma.user.findMany({ where: { id: { in: ids }, isActive: true }, select: { id: true, role: true } });
+      if (users.length !== ids.length) { res.status(400).json({ error: "One or more recipients are invalid" }); return; }
+      // Hierarchical guard: at least one staff participant.
+      if (!users.some((u) => isStaffRole(u.role))) {
+        res.status(403).json({ error: "A conversation must include a teacher or staff member" });
+        return;
+      }
+      const type = ids.length === 2 ? "DIRECT" : "GROUP";
+
+      // Reuse an existing DIRECT conversation between the same two people.
+      if (type === "DIRECT") {
+        const existing = await prisma.conversation.findFirst({
+          where: { type: "DIRECT", AND: ids.map((uid) => ({ participants: { some: { userId: uid } } })) },
+          include: { participants: true },
+        });
+        if (existing && existing.participants.length === 2) { res.json({ id: existing.id, reused: true }); return; }
+      }
+
+      const conv = await prisma.conversation.create({
+        data: {
+          type: type as any, title, createdById: jwtUser.userId,
+          participants: { create: ids.map((uid) => ({ userId: uid, lastReadAt: uid === jwtUser.userId ? new Date() : null })) },
+        },
+      });
+      res.status(201).json({ id: conv.id, reused: false });
+    } catch (err) {
+      logger.error("Error creating conversation:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Create or reuse a class group channel (staff only). Includes every student
+  // in the class that has an account, plus the class teachers and the creator.
+  app.post("/api/chat/class-channel", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const classId = req.body?.classId;
+    if (!classId) { res.status(400).json({ error: "classId is required" }); return; }
+    // Only an admin or a teacher who teaches this class may open its channel.
+    if (!(await canAccessTeacherClass(req, classId))) { res.status(403).json({ error: "Forbidden" }); return; }
+    try {
+      const klass = await prisma.class.findUnique({
+        where: { id: classId },
+        include: { students: { select: { userId: true } }, teachers: { include: { teacher: { select: { userId: true } } } } },
+      });
+      if (!klass) { res.status(404).json({ error: "Class not found" }); return; }
+      const memberIds = new Set<string>([jwtUser.userId]);
+      for (const s of klass.students) if (s.userId) memberIds.add(s.userId);
+      for (const t of klass.teachers) if (t.teacher?.userId) memberIds.add(t.teacher.userId);
+
+      let conv = await prisma.conversation.findFirst({ where: { type: "CLASS_CHANNEL", classId } });
+      if (!conv) {
+        conv = await prisma.conversation.create({
+          data: {
+            type: "CLASS_CHANNEL", classId, title: klass.name, createdById: jwtUser.userId,
+            participants: { create: Array.from(memberIds).map((uid) => ({ userId: uid, lastReadAt: uid === jwtUser.userId ? new Date() : null })) },
+          },
+        });
+      } else {
+        // Keep membership in sync as students/teachers come and go.
+        const existing = await prisma.conversationParticipant.findMany({ where: { conversationId: conv.id }, select: { userId: true } });
+        const have = new Set(existing.map((e) => e.userId));
+        const toAdd = Array.from(memberIds).filter((uid) => !have.has(uid));
+        if (toAdd.length) await prisma.conversationParticipant.createMany({ data: toAdd.map((uid) => ({ conversationId: conv!.id, userId: uid })), skipDuplicates: true });
+      }
+      res.json({ id: conv.id });
+    } catch (err) {
+      logger.error("Error creating class channel:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Resolve a participant row (auth) for a conversation; admins get oversight access.
+  async function chatAccess(jwtUser: JwtPayload, conversationId: string) {
+    const part = await prisma.conversationParticipant.findUnique({
+      where: { conversationId_userId: { conversationId, userId: jwtUser.userId } },
+    });
+    return { part, isAdmin: jwtUser.role === "ADMIN" };
+  }
+
+  app.get("/api/chat/conversations/:id/messages", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const { part, isAdmin } = await chatAccess(jwtUser, req.params.id);
+      if (!part && !isAdmin) { res.status(403).json({ error: "Forbidden" }); return; }
+      const conv = await prisma.conversation.findUnique({
+        where: { id: req.params.id },
+        include: { participants: { include: { user: { select: { id: true, firstName: true, lastName: true, role: true, profilePhotoUrl: true } } } } },
+      });
+      if (!conv) { res.status(404).json({ error: "Conversation not found" }); return; }
+      const messages = await prisma.chatMessage.findMany({
+        where: { conversationId: req.params.id, deletedAt: null },
+        orderBy: { createdAt: "asc" },
+        take: 500,
+        include: { sender: { select: { id: true, firstName: true, lastName: true, role: true, profilePhotoUrl: true } } },
+      });
+      res.json({
+        id: conv.id, type: conv.type,
+        title: conv.title,
+        participants: conv.participants.map((x) => userBrief(x.user)),
+        oversight: !part && isAdmin,
+        messages: messages.map((m) => ({
+          id: m.id, body: m.body, attachmentUrl: m.attachmentUrl,
+          sender: userBrief(m.sender), createdAt: m.createdAt, mine: m.senderId === jwtUser.userId,
+        })),
+      });
+    } catch (err) {
+      logger.error("Error fetching messages:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/chat/conversations/:id/messages", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const body: string = (req.body?.body ?? "").toString().trim();
+    const attachmentUrl: string | null = req.body?.attachmentUrl || null;
+    if (!body && !attachmentUrl) { res.status(400).json({ error: "Message cannot be empty" }); return; }
+    try {
+      const part = await prisma.conversationParticipant.findUnique({
+        where: { conversationId_userId: { conversationId: req.params.id, userId: jwtUser.userId } },
+      });
+      if (!part || part.leftAt) { res.status(403).json({ error: "You are not part of this conversation" }); return; }
+      const msg = await prisma.chatMessage.create({
+        data: { conversationId: req.params.id, senderId: jwtUser.userId, body, attachmentUrl },
+        include: { sender: { select: { id: true, firstName: true, lastName: true, role: true, profilePhotoUrl: true } } },
+      });
+      await prisma.conversation.update({ where: { id: req.params.id }, data: { lastMessageAt: msg.createdAt } });
+      await prisma.conversationParticipant.update({
+        where: { conversationId_userId: { conversationId: req.params.id, userId: jwtUser.userId } },
+        data: { lastReadAt: msg.createdAt },
+      });
+      // Push to every participant's open streams (snappy delivery; polling backstops).
+      const others = await prisma.conversationParticipant.findMany({ where: { conversationId: req.params.id }, select: { userId: true } });
+      chatNotify(others.map((p) => p.userId), { type: "message", conversationId: req.params.id });
+      res.status(201).json({ id: msg.id, body: msg.body, attachmentUrl: msg.attachmentUrl, sender: userBrief(msg.sender), createdAt: msg.createdAt, mine: true });
+    } catch (err) {
+      logger.error("Error sending chat message:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/chat/conversations/:id/read", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      await prisma.conversationParticipant.updateMany({
+        where: { conversationId: req.params.id, userId: jwtUser.userId },
+        data: { lastReadAt: new Date() },
+      });
+      res.json({ success: true });
+    } catch (err) {
+      logger.error("Error marking conversation read:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.delete("/api/chat/messages/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const msg = await prisma.chatMessage.findUnique({ where: { id: req.params.id } });
+      if (!msg) { res.status(404).json({ error: "Message not found" }); return; }
+      if (msg.senderId !== jwtUser.userId && jwtUser.role !== "ADMIN") { res.status(403).json({ error: "Forbidden" }); return; }
+      await prisma.chatMessage.update({ where: { id: req.params.id }, data: { deletedAt: new Date() } });
+      res.json({ success: true });
+    } catch (err) {
+      logger.error("Error deleting chat message:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/chat/messages/:id/report", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const msg = await prisma.chatMessage.findUnique({ where: { id: req.params.id } });
+      if (!msg) { res.status(404).json({ error: "Message not found" }); return; }
+      // Only someone in the conversation (or an admin) may report a message.
+      const { part, isAdmin } = await chatAccess(jwtUser, msg.conversationId);
+      if (!part && !isAdmin) { res.status(403).json({ error: "Forbidden" }); return; }
+      await prisma.chatMessageReport.create({
+        data: { messageId: req.params.id, reportedById: jwtUser.userId, reason: (req.body?.reason ?? "").toString().slice(0, 500) || null },
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "CHAT_REPORT", req.params.id,
+        `Reported chat message ${req.params.id}.`, req.ip, req.headers["user-agent"] || null, "WARNING");
+      res.status(201).json({ success: true });
+    } catch (err) {
+      logger.error("Error reporting chat message:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Chat moderation (ADMIN) ──────────────────────────────────────────────────
+  app.get("/api/chat/reports", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    try {
+      const status = req.query.status ? String(req.query.status) : "OPEN";
+      const reports = await prisma.chatMessageReport.findMany({
+        where: status === "ALL" ? {} : { status: status as any },
+        orderBy: { createdAt: "desc" },
+        include: {
+          message: { include: { sender: { select: { id: true, firstName: true, lastName: true, role: true } }, conversation: { select: { id: true, type: true, title: true } } } },
+        },
+      });
+      res.json(reports.map((r) => ({
+        id: r.id, status: r.status, reason: r.reason, createdAt: r.createdAt,
+        conversationId: r.message.conversationId,
+        message: { id: r.message.id, body: r.message.deletedAt ? "(deleted)" : r.message.body, sender: r.message.sender ? fullName(r.message.sender) : "—", createdAt: r.message.createdAt },
+      })));
+    } catch (err) {
+      logger.error("Error listing chat reports:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/chat/reports/:id/resolve", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const action = String(req.body?.action || "DISMISSED"); // ACTIONED | DISMISSED
+    try {
+      const report = await prisma.chatMessageReport.findUnique({ where: { id: req.params.id } });
+      if (!report) { res.status(404).json({ error: "Report not found" }); return; }
+      if (action === "ACTIONED") {
+        await prisma.chatMessage.update({ where: { id: report.messageId }, data: { deletedAt: new Date() } }).catch(() => {});
+      }
+      const updated = await prisma.chatMessageReport.update({
+        where: { id: req.params.id },
+        data: { status: action === "ACTIONED" ? "ACTIONED" : "DISMISSED", reviewedById: jwtUser.userId, reviewedAt: new Date() },
+      });
+      res.json(updated);
+    } catch (err) {
+      logger.error("Error resolving chat report:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
   // ── Messaging System API ─────────────────────────────────────────────────────
   app.get("/api/messages", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
@@ -8393,13 +8764,26 @@ async function startServer() {
     }
 
     try {
+      // Recipients must be valid User ids. Filter to existing users (and dedupe)
+      // so a stray student-id or removed account can't fail the whole send.
+      const uniqueIds = Array.from(new Set(recipientIds.filter((x: any) => typeof x === "string" && x)));
+      const validUsers = await prisma.user.findMany({
+        where: { id: { in: uniqueIds }, isActive: true },
+        select: { id: true },
+      });
+      const validIds = validUsers.map((u) => u.id);
+      if (validIds.length === 0) {
+        res.status(400).json({ error: "No valid recipients found for this message" });
+        return;
+      }
+
       const message = await prisma.message.create({
         data: {
           subject,
           body,
           senderId: jwtUser.userId,
           recipients: {
-            create: recipientIds.map((recipientId: string) => ({
+            create: validIds.map((recipientId: string) => ({
               recipientId
             }))
           }

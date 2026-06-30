@@ -63,7 +63,8 @@ export default function ExamsList() {
           if (res.status === 401 || res.status === 403) {
             toast.error('You do not have permission to view exams');
           } else {
-            throw new Error('Failed to fetch exams');
+            const body = await res.json().catch(() => ({}));
+            throw new Error(body.error || 'Failed to fetch exams');
           }
           return;
         }
@@ -77,9 +78,9 @@ export default function ExamsList() {
           status: e.status || (e.type === 'MOCK' ? 'DRAFT' : 'PUBLISHED'),
           className: e.class?.name || '—',
         })));
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching exams:', error);
-        toast.error('Failed to load exams');
+        toast.error(error?.message || 'Failed to load exams');
       } finally {
         setLoading(false);
       }

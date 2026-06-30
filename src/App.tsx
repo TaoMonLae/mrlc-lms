@@ -91,6 +91,8 @@ import Payroll from "./pages/hr/Payroll";
 import Leave from "./pages/hr/Leave";
 import PayslipPrint from "./pages/hr/PayslipPrint";
 import PayrollRunPrint from "./pages/hr/PayrollRunPrint";
+import ChatPage from "./pages/chat/ChatPage";
+import ChatModeration from "./pages/chat/ChatModeration";
 import AdmissionsList from "./pages/admissions/AdmissionsList";
 import AdmissionDetail from "./pages/admissions/AdmissionDetail";
 
@@ -218,6 +220,9 @@ export default function App() {
                 <Route path="/announcements" element={<AnnouncementsList />} />
                 <Route path="/announcements/:id" element={<AnnouncementDetail />} />
 
+                {/* Chat — available to every authenticated role */}
+                <Route path="/chat" element={<ChatPage />} />
+
                 <Route path="/timetable" element={<TimetablePage />} />
 
                 <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'TEACHER']} />}>
@@ -289,6 +294,7 @@ export default function App() {
 
                 <Route element={<ProtectedRoute requiredPermission="manage_all" />}>
                   <Route path="/operations" element={<SchoolOperations />} />
+                  <Route path="/chat/moderation" element={<ChatModeration />} />
                   <Route path="/staff" element={<StaffDirectory />} />
                   <Route path="/staff/departments" element={<Departments />} />
                   <Route path="/staff/:id" element={<StaffProfile />} />

@@ -12,6 +12,7 @@ import {
   Settings,
   Briefcase,
   Megaphone,
+  MessageSquare,
   CalendarDays,
   GraduationCap,
   UserCheck,
@@ -51,6 +52,12 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     url: "/announcements",
     icon: Megaphone,
     roles: ["ADMIN", "TEACHER", "STUDENT"],
+  },
+  {
+    title: "Chat",
+    url: "/chat",
+    icon: MessageSquare,
+    roles: ["ADMIN", "TEACHER", "STUDENT", "STAFF", "ACCOUNTANT", "CASE_WORKER", "LIBRARIAN"],
   },
   {
     title: "Students",

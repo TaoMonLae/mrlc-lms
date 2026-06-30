@@ -27,14 +27,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { apiGet } from "../../lib/api";
+import { apiGet, apiSend } from "../../lib/api";
 
 interface ClassInfo {
   id: string; name: string; level: string; room: string; teacher: string;
   totalStudents: number; academicYear: string;
 }
 interface ClassStudent {
-  id: string; name: string; studentId: string; attendance: string; lastExam: string;
+  id: string; userId?: string | null; name: string; studentId: string; attendance: string; lastExam: string;
   profilePhotoUrl?: string | null;
 }
 
@@ -161,31 +161,32 @@ export default function ClassDetails() {
     setShowMessageModal(true);
   };
 
-  const handleStudentMessage = (studentId: string) => {
-    setSelectedStudentId(studentId);
+  const handleStudentMessage = (userId: string | null | undefined) => {
+    if (!userId) { toast.error('This student has no account to message'); return; }
+    setSelectedStudentId(userId);
     setShowMessageModal(true);
   };
 
-  const handleSendMessage = async (messageData: { subject: string; body: string; recipientIds: string[] }) => {
+  // Sends through the chat system: a single student → a direct conversation,
+  // the whole class → the class group channel (created/reused server-side).
+  const handleSendMessage = async (subject: string, body: string) => {
+    const text = subject ? `${subject}\n${body}` : body;
     try {
-      const response = await fetch('/api/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${sessionStorage.getItem('auth_token')}`
-        },
-        body: JSON.stringify(messageData)
-      });
-
-      if (response.ok) {
-        toast.success('Message sent successfully!');
-        setShowMessageModal(false);
-        setSelectedStudentId(null);
+      let convId: string;
+      if (selectedStudentId) {
+        const conv = await apiSend<{ id: string }>('/api/chat/conversations', 'POST', { participantIds: [selectedStudentId] });
+        convId = conv.id;
       } else {
-        toast.error('Failed to send message');
+        const conv = await apiSend<{ id: string }>('/api/chat/class-channel', 'POST', { classId: id });
+        convId = conv.id;
       }
-    } catch (error) {
-      toast.error('Error sending message');
+      await apiSend(`/api/chat/conversations/${convId}/messages`, 'POST', { body: text });
+      toast.success('Message sent');
+      setShowMessageModal(false);
+      setSelectedStudentId(null);
+      navigate('/chat');
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to send message');
     }
   };
 
@@ -345,7 +346,7 @@ export default function ClassDetails() {
                       size="icon"
                       className="h-8 w-8 text-slate-400 hover:text-aubergine-600"
                       title="Send message"
-                      onClick={() => handleStudentMessage(student.id)}
+                      onClick={() => handleStudentMessage(student.userId)}
                     >
                       <Mail className="h-3.5 w-3.5" />
                     </Button>
@@ -489,19 +490,11 @@ export default function ClassDetails() {
                     const subject = (document.getElementById('message-subject') as HTMLInputElement)?.value || '';
                     const body = (document.getElementById('message-body') as HTMLTextAreaElement)?.value || '';
 
-                    if (!subject || !body) {
-                      toast.error('Please provide both subject and message');
+                    if (!body) {
+                      toast.error('Please type a message');
                       return;
                     }
-
-                    const recipientIds = selectedStudentId
-                      ? [selectedStudentId]
-                      : students.map(s => {
-                          // For now, we'll use a simple approach - in reality you'd need to map student IDs to user IDs
-                          return s.id; // This should be the userId in reality
-                        });
-
-                    handleSendMessage({ subject, body, recipientIds });
+                    handleSendMessage(subject, body);
                   }}
                 >
                   Send Message

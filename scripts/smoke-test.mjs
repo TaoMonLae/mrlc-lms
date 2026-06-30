@@ -174,6 +174,43 @@ async function main() {
   }
   if (hrOk) ok('HR lifecycle completed');
 
+  // ── Chat lifecycle ──
+  console.log('\nChat');
+  await expectStatus('GET /api/chat/contacts', 'GET', '/api/chat/contacts', 200);
+  await expectStatus('GET /api/chat/conversations', 'GET', '/api/chat/conversations', 200);
+  const contactsRes = await req('GET', '/api/chat/contacts');
+  const contacts = contactsRes.ok ? await contactsRes.json() : [];
+  if (Array.isArray(contacts) && contacts.length) {
+    const other = contacts[0];
+    const convRes = await req('POST', '/api/chat/conversations', { body: { participantIds: [other.id] } });
+    if (convRes.status === 201 || convRes.status === 200) {
+      ok(`create/reuse conversation (${convRes.status})`);
+      const conv = await convRes.json();
+      const sendRes = await req('POST', `/api/chat/conversations/${conv.id}/messages`, { body: { body: 'Smoke test hello' } });
+      const msg = sendRes.status === 201 ? await sendRes.json() : null;
+      sendRes.status === 201 ? ok('send chat message') : bad('send chat message', `got ${sendRes.status}`);
+
+      // Attachment upload
+      const afd = new FormData();
+      afd.append('file', new Blob([Uint8Array.from([0x89,0x50,0x4e,0x47])], { type: 'image/png' }), 'pixel.png');
+      const upRes = await req('POST', '/api/chat-media', { body: afd });
+      (upRes.status === 201) ? ok('upload chat image') : bad('upload chat image', `got ${upRes.status}`);
+      if (upRes.status === 201) {
+        const { url } = await upRes.json();
+        await expectStatus('send message with attachment', 'POST', `/api/chat/conversations/${conv.id}/messages`, 201, { body: { attachmentUrl: url } });
+      }
+      await expectStatus('fetch thread', 'GET', `/api/chat/conversations/${conv.id}/messages`, 200);
+      await expectStatus('mark conversation read', 'POST', `/api/chat/conversations/${conv.id}/read`, 200);
+      if (msg) {
+        await expectStatus('report message', 'POST', `/api/chat/messages/${msg.id}/report`, 201);
+        await expectStatus('admin reports queue', 'GET', '/api/chat/reports', 200);
+        await expectStatus('delete own message', 'DELETE', `/api/chat/messages/${msg.id}`, 200);
+      }
+    } else { bad('create conversation', `got ${convRes.status} (is the chat migration applied?)`); }
+  } else {
+    bad('chat contacts', 'no contacts returned to start a conversation');
+  }
+
   summary();
 }
 
