@@ -419,8 +419,6 @@ msgstr "ကျောင်းသား၊ အတန်း၊ မှတ်တမ�
 msgid "Overview of Mon Refugee Learning Centre - GED School"
 msgstr "မွန်ဒုက္ခသည်သင်ကြားရေးစင်တာ - GED ကျောင်း၏ ခြုံငုံသုံးသပ်ချက်"
 
-# ── Teacher Portal ──────────────────────────────────────────
-
 msgid "Class Attendance Monthly"
 msgstr "လစဉ် အတန်းတက်ရောက်မှု"
 
@@ -594,3 +592,8240 @@ msgstr "အရင်းအမြစ်လင့်ခ်ကို ကလစ်�
 
 msgid "File downloads will work once resources are uploaded through the Upload form."
 msgstr "Upload ဖောင်မှတစ်ဆင့် အရင်းအမြစ်များကို တင်ပြီးမှသာ ဖိုင်ဒေါင်းလုဒ်လုပ်ခြင်း အဆင်ပြေမည်ဖြစ်သည်။"
+
+# Extracted string
+msgid "./pages/exam2/ExamPlayer"
+msgstr ""
+
+# Extracted string
+msgid "./pages/exam2/ResumeAttempt"
+msgstr ""
+
+# Extracted string
+msgid "./pages/exam2/ExamResultView"
+msgstr ""
+
+# Extracted string
+msgid "./pages/exam2/ExamScheduling"
+msgstr ""
+
+# Extracted string
+msgid "./pages/exam2/ManualGradingQueue"
+msgstr ""
+
+# Extracted string
+msgid "./pages/exam2/RubricGrading"
+msgstr ""
+
+# Extracted string
+msgid "./pages/exam2/ExamAnalytics"
+msgstr ""
+
+# Extracted string
+msgid "./pages/exam2/QuestionAnalytics"
+msgstr ""
+
+# Extracted string
+msgid "./pages/exam2/InvigilatorDashboard"
+msgstr ""
+
+# Extracted string
+msgid "./pages/exam2/AccommodationManagement"
+msgstr ""
+
+# Extracted string
+msgid "./pages/exam2/PrintableExport"
+msgstr ""
+
+# Extracted string
+msgid "./pages/exam2/ExamAuthoring"
+msgstr ""
+
+# Extracted string
+msgid "./pages/bank/QuestionBank"
+msgstr ""
+
+# Extracted string
+msgid "./pages/bank/QuestionEditor"
+msgstr ""
+
+# Extracted string
+msgid "./pages/bank/TopicManager"
+msgstr ""
+
+# Extracted string
+msgid "./pages/elibrary/EbookReader"
+msgstr ""
+
+# Extracted string
+msgid "Loading reader…"
+msgstr ""
+
+# Extracted string
+msgid "Insert inline math: $...$"
+msgstr ""
+
+# Extracted string
+msgid "Math"
+msgstr ""
+
+# Extracted string
+msgid "Question media"
+msgstr ""
+
+# Extracted string
+msgid "Remove image"
+msgstr ""
+
+# Extracted string
+msgid "Search students, classes..."
+msgstr ""
+
+# Extracted string
+msgid "Searching..."
+msgstr ""
+
+# Extracted string
+msgid "No results found"
+msgstr ""
+
+# Extracted string
+msgid "Try different keywords"
+msgstr ""
+
+# Extracted string
+msgid "Type to search"
+msgstr ""
+
+# Extracted string
+msgid "Search students and classes"
+msgstr ""
+
+# Extracted string
+msgid "Press"
+msgstr ""
+
+# Extracted string
+msgid "ESC"
+msgstr ""
+
+# Extracted string
+msgid "to close"
+msgstr ""
+
+# Extracted string
+msgid "Something went wrong"
+msgstr ""
+
+# Extracted string
+msgid "Try Again"
+msgstr ""
+
+# Extracted string
+msgid "Video playback controls"
+msgstr ""
+
+# Extracted string
+msgid "Volume controls"
+msgstr ""
+
+# Extracted string
+msgid "Volume"
+msgstr ""
+
+# Extracted string
+msgid "Playback speed options"
+msgstr ""
+
+# Extracted string
+msgid "Restart video"
+msgstr ""
+
+# Extracted string
+msgid "Toggle fullscreen"
+msgstr ""
+
+# Extracted string
+msgid "e.g., Annual Sports Day 2025"
+msgstr ""
+
+# Extracted string
+msgid "Write your announcement details here..."
+msgstr ""
+
+# Extracted string
+msgid "Select audience"
+msgstr ""
+
+# Extracted string
+msgid "Choose a class"
+msgstr ""
+
+# Extracted string
+msgid "A clear and concise heading for the announcement."
+msgstr ""
+
+# Extracted string
+msgid "Message Body"
+msgstr ""
+
+# Extracted string
+msgid "Provide all necessary details. You can use multiple paragraphs."
+msgstr ""
+
+# Extracted string
+msgid "Communication Policy"
+msgstr ""
+
+# Extracted string
+msgid "Announcements are visible to the selected audience immediately upon publishing. Ensure the content follows school guidelines for professional communication."
+msgstr ""
+
+# Extracted string
+msgid "Target Audience"
+msgstr ""
+
+# Extracted string
+msgid "Broadcast To"
+msgstr ""
+
+# Extracted string
+msgid "Everyone (Public)"
+msgstr ""
+
+# Extracted string
+msgid "Specific Class"
+msgstr ""
+
+# Extracted string
+msgid "Options & Visibility"
+msgstr ""
+
+# Extracted string
+msgid "Pin to Top"
+msgstr ""
+
+# Extracted string
+msgid "Always appears at the top of lists."
+msgstr ""
+
+# Extracted string
+msgid "Expiry Date (Optional)"
+msgstr ""
+
+# Extracted string
+msgid "Announcement will be archived after this date."
+msgstr ""
+
+# Extracted string
+msgid "Processing..."
+msgstr ""
+
+# Extracted string
+msgid "Secure School Broadcast"
+msgstr ""
+
+# Extracted string
+msgid "Verifying session…"
+msgstr ""
+
+# Extracted string
+msgid "No teachers assigned yet."
+msgstr ""
+
+# Extracted string
+msgid "Skip to main content"
+msgstr ""
+
+# Extracted string
+msgid "Main application navigation"
+msgstr ""
+
+# Extracted string
+msgid "Open user menu"
+msgstr ""
+
+# Extracted string
+msgid "Log out of application"
+msgstr ""
+
+# Extracted string
+msgid "Log out"
+msgstr ""
+
+# Extracted string
+msgid "Change language"
+msgstr ""
+
+# Extracted string
+msgid "Open search"
+msgstr ""
+
+# Extracted string
+msgid "Toggle sidebar navigation"
+msgstr ""
+
+# Extracted string
+msgid "Toggle theme between light and dark mode"
+msgstr ""
+
+# Extracted string
+msgid "Toggle theme"
+msgstr ""
+
+# Extracted string
+msgid "Light"
+msgstr ""
+
+# Extracted string
+msgid "Dark"
+msgstr ""
+
+# Extracted string
+msgid "System"
+msgstr ""
+
+# Extracted string
+msgid "Mark all as read"
+msgstr ""
+
+# Extracted string
+msgid "No announcements"
+msgstr ""
+
+# Extracted string
+msgid "View all announcements →"
+msgstr ""
+
+# Extracted string
+msgid "Profile picture must be 5 MB or smaller"
+msgstr ""
+
+# Extracted string
+msgid "Profile picture must be an image file"
+msgstr ""
+
+# Extracted string
+msgid "Profile picture updated"
+msgstr ""
+
+# Extracted string
+msgid "Profile"
+msgstr ""
+
+# Extracted string
+msgid ") : fallbackText ? ("
+msgstr ""
+
+# Extracted string
+msgid "Signature"
+msgstr ""
+
+# Extracted string
+msgid "Report Parameters"
+msgstr ""
+
+# Extracted string
+msgid "Prepared By"
+msgstr ""
+
+# Extracted string
+msgid "Verified By"
+msgstr ""
+
+# Extracted string
+msgid "Principal / Administrator"
+msgstr ""
+
+# Extracted string
+msgid "Students imported successfully."
+msgstr ""
+
+# Extracted string
+msgid "Import CSV"
+msgstr ""
+
+# Extracted string
+msgid "Import Students"
+msgstr ""
+
+# Extracted string
+msgid "Download Template"
+msgstr ""
+
+# Extracted string
+msgid "Import Errors:"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load documents"
+msgstr ""
+
+# Extracted string
+msgid "Document deleted successfully"
+msgstr ""
+
+# Extracted string
+msgid "Failed to delete document"
+msgstr ""
+
+# Extracted string
+msgid "No file available for ${doc.fileName}"
+msgstr ""
+
+# Extracted string
+msgid "Choose a file to upload"
+msgstr ""
+
+# Extracted string
+msgid "Enter a document title"
+msgstr ""
+
+# Extracted string
+msgid "File must be 25 MB or smaller"
+msgstr ""
+
+# Extracted string
+msgid "Document uploaded"
+msgstr ""
+
+# Extracted string
+msgid "Rename logic"
+msgstr ""
+
+# Extracted string
+msgid "Are you sure you want to delete this document?"
+msgstr ""
+
+# Extracted string
+msgid "Search documents by title or file name..."
+msgstr ""
+
+# Extracted string
+msgid "e.g. UNHCR ID Card"
+msgstr ""
+
+# Extracted string
+msgid "Strict Access Only"
+msgstr ""
+
+# Extracted string
+msgid "You don't have permission to view this student's private documents."
+msgstr ""
+
+# Extracted string
+msgid "Upload Document"
+msgstr ""
+
+# Extracted string
+msgid "Loading documents..."
+msgstr ""
+
+# Extracted string
+msgid "Download"
+msgstr ""
+
+# Extracted string
+msgid "Rename"
+msgstr ""
+
+# Extracted string
+msgid "Uploaded"
+msgstr ""
+
+# Extracted string
+msgid "Expiry"
+msgstr ""
+
+# Extracted string
+msgid "Expired"
+msgstr ""
+
+# Extracted string
+msgid "Due Soon"
+msgstr ""
+
+# Extracted string
+msgid "No expiry"
+msgstr ""
+
+# Extracted string
+msgid "No documents found"
+msgstr ""
+
+# Extracted string
+msgid "Upload student documents to keep them organized."
+msgstr ""
+
+# Extracted string
+msgid "Upload First Document"
+msgstr ""
+
+# Extracted string
+msgid "Security Notice"
+msgstr ""
+
+# Extracted string
+msgid "These documents contain PII (Personally Identifiable Information). Access is logged, and unauthorized downloads are strictly prohibited as per school policy."
+msgstr ""
+
+# Extracted string
+msgid "Expiry (optional)"
+msgstr ""
+
+# Extracted string
+msgid "File"
+msgstr ""
+
+# Extracted string
+msgid "PDF, Word, image or text. Max 25 MB."
+msgstr ""
+
+# Extracted string
+msgid "Select a class"
+msgstr ""
+
+# Extracted string
+msgid "Select a subject"
+msgstr ""
+
+# Extracted string
+msgid "Assign a teacher"
+msgstr ""
+
+# Extracted string
+msgid "Optional substitute"
+msgstr ""
+
+# Extracted string
+msgid "e.g., Room 302 or Lab 1"
+msgstr ""
+
+# Extracted string
+msgid "Term 1"
+msgstr ""
+
+# Extracted string
+msgid "Any specific instructions for this slot..."
+msgstr ""
+
+# Extracted string
+msgid "Choose day"
+msgstr ""
+
+# Extracted string
+msgid "Primary Assignment"
+msgstr ""
+
+# Extracted string
+msgid "Substitute Teacher"
+msgstr ""
+
+# Extracted string
+msgid "Location & Notes"
+msgstr ""
+
+# Extracted string
+msgid "Room / Lab Name"
+msgstr ""
+
+# Extracted string
+msgid "Term"
+msgstr ""
+
+# Extracted string
+msgid "Remarks (Optional)"
+msgstr ""
+
+# Extracted string
+msgid "Schedule Timing"
+msgstr ""
+
+# Extracted string
+msgid "Day of the Week"
+msgstr ""
+
+# Extracted string
+msgid "Monday"
+msgstr ""
+
+# Extracted string
+msgid "Tuesday"
+msgstr ""
+
+# Extracted string
+msgid "Wednesday"
+msgstr ""
+
+# Extracted string
+msgid "Thursday"
+msgstr ""
+
+# Extracted string
+msgid "Friday"
+msgstr ""
+
+# Extracted string
+msgid "Saturday"
+msgstr ""
+
+# Extracted string
+msgid "Sunday"
+msgstr ""
+
+# Extracted string
+msgid "Schedule Type"
+msgstr ""
+
+# Extracted string
+msgid "Class period"
+msgstr ""
+
+# Extracted string
+msgid "Exam"
+msgstr ""
+
+# Extracted string
+msgid "Meeting"
+msgstr ""
+
+# Extracted string
+msgid "School holiday"
+msgstr ""
+
+# Extracted string
+msgid "Special event"
+msgstr ""
+
+# Extracted string
+msgid "Recurrence"
+msgstr ""
+
+# Extracted string
+msgid "One time"
+msgstr ""
+
+# Extracted string
+msgid "Weekly"
+msgstr ""
+
+# Extracted string
+msgid "Biweekly"
+msgstr ""
+
+# Extracted string
+msgid "Start Time"
+msgstr ""
+
+# Extracted string
+msgid "End Time"
+msgstr ""
+
+# Extracted string
+msgid "Effective From"
+msgstr ""
+
+# Extracted string
+msgid "Effective Until"
+msgstr ""
+
+# Extracted string
+msgid "Event Date"
+msgstr ""
+
+# Extracted string
+msgid "Check for scheduling conflicts before publishing. The system will alert you if the room or teacher is already occupied at this time."
+msgstr ""
+
+# Extracted string
+msgid "| React.FC"
+msgstr ""
+
+# Extracted string
+msgid "Clear search"
+msgstr ""
+
+# Extracted string
+msgid "Loading..."
+msgstr ""
+
+# Extracted string
+msgid "Overview of role permissions across the system. Green checkmarks indicate access."
+msgstr ""
+
+# Extracted string
+msgid "Role"
+msgstr ""
+
+# Extracted string
+msgid "Has Permission"
+msgstr ""
+
+# Extracted string
+msgid "No Permission"
+msgstr ""
+
+# Extracted string
+msgid "Completed"
+msgstr ""
+
+# Extracted string
+msgid "Promise"
+msgstr ""
+
+# Extracted string
+msgid "): Promise"
+msgstr ""
+
+# Extracted string
+msgid "Video file uploaded successfully"
+msgstr ""
+
+# Extracted string
+msgid "(path: string): Promise"
+msgstr ""
+
+# Extracted string
+msgid "en-US', { timeZone: tz, timeZoneName: 'shortOffset' }) .formatToParts(new Date()) .find((p) => p.type === 'timeZoneName"
+msgstr ""
+
+# Extracted string
+msgid "en', { style: 'currency', currency: code, currencyDisplay: 'narrowSymbol' }) .formatToParts(0) .find((p) => p.type === 'currency"
+msgstr ""
+
+# Extracted string
+msgid "Change your password"
+msgstr ""
+
+# Extracted string
+msgid "MRLC LMS"
+msgstr ""
+
+# Extracted string
+msgid "Current password"
+msgstr ""
+
+# Extracted string
+msgid "New password"
+msgstr ""
+
+# Extracted string
+msgid "At least 8 characters."
+msgstr ""
+
+# Extracted string
+msgid "Confirm new password"
+msgstr ""
+
+# Extracted string
+msgid "Update password"
+msgstr ""
+
+# Extracted string
+msgid "Sign out instead"
+msgstr ""
+
+# Extracted string
+msgid "Read more →"
+msgstr ""
+
+# Extracted string
+msgid "Dashboard Preview"
+msgstr ""
+
+# Extracted string
+msgid "Login"
+msgstr ""
+
+# Extracted string
+msgid "Purpose-Built for One School"
+msgstr ""
+
+# Extracted string
+msgid "Simple school management for"
+msgstr ""
+
+# Extracted string
+msgid "MRLC GED School"
+msgstr ""
+
+# Extracted string
+msgid "Manage students, classes, attendance, exams, reports, and learning resources in one secure system. Designed exclusively for refugee learners in Malaysia."
+msgstr ""
+
+# Extracted string
+msgid "Go to Dashboard"
+msgstr ""
+
+# Extracted string
+msgid "Login to Dashboard"
+msgstr ""
+
+# Extracted string
+msgid "View Features"
+msgstr ""
+
+# Extracted string
+msgid "Comprehensive Modules"
+msgstr ""
+
+# Extracted string
+msgid "Everything needed to run MRLC smoothly, neatly compartmentalized and easy to use."
+msgstr ""
+
+# Extracted string
+msgid "Tailored Experiences"
+msgstr ""
+
+# Extracted string
+msgid "Three distinct views to ensure everyone has exactly what they need—and nothing they don't."
+msgstr ""
+
+# Extracted string
+msgid "Administrators"
+msgstr ""
+
+# Extracted string
+msgid "Complete oversight and control over school operations."
+msgstr ""
+
+# Extracted string
+msgid "Core User"
+msgstr ""
+
+# Extracted string
+msgid "Focused tools to manage classes and evaluate student progress."
+msgstr ""
+
+# Extracted string
+msgid "Students &amp; Parents"
+msgstr ""
+
+# Extracted string
+msgid "Transparent access to academic history and standing."
+msgstr ""
+
+# Extracted string
+msgid "The GED Workflow"
+msgstr ""
+
+# Extracted string
+msgid "Built Specifically for MRLC"
+msgstr ""
+
+# Extracted string
+msgid "Unlike bloated enterprise software or complex SaaS platforms, this system is designed specifically for the unique needs of a single, focused institution supporting refugee learners."
+msgstr ""
+
+# Extracted string
+msgid "Security & Privacy First"
+msgstr ""
+
+# Extracted string
+msgid "Operating an educational facility requires stringent data protection. MRLC LMS ensures student data remains private and secure."
+msgstr ""
+
+# Extracted string
+msgid "Ready to manage your school more easily?"
+msgstr ""
+
+# Extracted string
+msgid "Log in to access the MRLC School LMS dashboard. Secure access is restricted to authorized personnel and enrolled students."
+msgstr ""
+
+# Extracted string
+msgid "Privacy"
+msgstr ""
+
+# Extracted string
+msgid "Terms"
+msgstr ""
+
+# Extracted string
+msgid "Enter your email"
+msgstr ""
+
+# Extracted string
+msgid "Enter your password"
+msgstr ""
+
+# Extracted string
+msgid "Sign in"
+msgstr ""
+
+# Extracted string
+msgid "GED School LMS Portal"
+msgstr ""
+
+# Extracted string
+msgid "Quality Education"
+msgstr ""
+
+# Extracted string
+msgid "Community Support"
+msgstr ""
+
+# Extracted string
+msgid "Bright Futures"
+msgstr ""
+
+# Extracted string
+msgid "Learn."
+msgstr ""
+
+# Extracted string
+msgid "Grow."
+msgstr ""
+
+# Extracted string
+msgid "Achieve."
+msgstr ""
+
+# Extracted string
+msgid "Welcome Back"
+msgstr ""
+
+# Extracted string
+msgid "Access your GED Learning Portal"
+msgstr ""
+
+# Extracted string
+msgid "Email address"
+msgstr ""
+
+# Extracted string
+msgid "Password"
+msgstr ""
+
+# Extracted string
+msgid "Remember me"
+msgstr ""
+
+# Extracted string
+msgid "Forgot Password?"
+msgstr ""
+
+# Extracted string
+msgid "Signing in..."
+msgstr ""
+
+# Extracted string
+msgid "Sign In"
+msgstr ""
+
+# Extracted string
+msgid "or"
+msgstr ""
+
+# Extracted string
+msgid "Help &amp; Support"
+msgstr ""
+
+# Extracted string
+msgid "Protected area for authorized personnel only"
+msgstr ""
+
+# Extracted string
+msgid "&nbsp;•&nbsp;"
+msgstr ""
+
+# Extracted string
+msgid "This module is currently under development."
+msgstr ""
+
+# Extracted string
+msgid "Access Denied"
+msgstr ""
+
+# Extracted string
+msgid "You don't have permission to access this page. Please contact your administrator if you believe this is a mistake."
+msgstr ""
+
+# Extracted string
+msgid "Return to Dashboard"
+msgstr ""
+
+# Extracted string
+msgid "Interview scheduled"
+msgstr ""
+
+# Extracted string
+msgid "Decision recorded"
+msgstr ""
+
+# Extracted string
+msgid "Document saved"
+msgstr ""
+
+# Extracted string
+msgid "Checklist updated"
+msgstr ""
+
+# Extracted string
+msgid "Enrolled as ${result.student.studentCode}"
+msgstr ""
+
+# Extracted string
+msgid "Application Profile"
+msgstr ""
+
+# Extracted string
+msgid "Document title"
+msgstr ""
+
+# Extracted string
+msgid "Document type"
+msgstr ""
+
+# Extracted string
+msgid "Document notes"
+msgstr ""
+
+# Extracted string
+msgid "Status Timeline"
+msgstr ""
+
+# Extracted string
+msgid "Interview"
+msgstr ""
+
+# Extracted string
+msgid "Interview notes"
+msgstr ""
+
+# Extracted string
+msgid "Admission Decision"
+msgstr ""
+
+# Extracted string
+msgid "Decision notes"
+msgstr ""
+
+# Extracted string
+msgid "Enrollment Conversion"
+msgstr ""
+
+# Extracted string
+msgid "Leave blank to generate"
+msgstr ""
+
+# Extracted string
+msgid "Optional"
+msgstr ""
+
+# Extracted string
+msgid "Leave blank to force default change"
+msgstr ""
+
+# Extracted string
+msgid "Back to Admissions"
+msgstr ""
+
+# Extracted string
+msgid "Open Student Profile"
+msgstr ""
+
+# Extracted string
+msgid "Open document"
+msgstr ""
+
+# Extracted string
+msgid "Upload or add checklist item"
+msgstr ""
+
+# Extracted string
+msgid "Only approved, not-yet-enrolled applications can be converted."
+msgstr ""
+
+# Extracted string
+msgid "Application submitted"
+msgstr ""
+
+# Extracted string
+msgid "Search name, application no, guardian, ID..."
+msgstr ""
+
+# Extracted string
+msgid "Target level"
+msgstr ""
+
+# Extracted string
+msgid "Admissions & Enrollment"
+msgstr ""
+
+# Extracted string
+msgid "Submit applications, review documents, schedule interviews, decide, waitlist, and enroll approved students."
+msgstr ""
+
+# Extracted string
+msgid "New Application"
+msgstr ""
+
+# Extracted string
+msgid "No demo data is used; this creates a real admissions record."
+msgstr ""
+
+# Extracted string
+msgid "Applicant"
+msgstr ""
+
+# Extracted string
+msgid "Academic"
+msgstr ""
+
+# Extracted string
+msgid "Guardian & Emergency"
+msgstr ""
+
+# Extracted string
+msgid "Legal, Boarding & Medical"
+msgstr ""
+
+# Extracted string
+msgid ") : applications.length === 0 ? ("
+msgstr ""
+
+# Extracted string
+msgid "No admission applications found."
+msgstr ""
+
+# Extracted string
+msgid "Select"
+msgstr ""
+
+# Extracted string
+msgid "Announcement not found"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load announcement"
+msgstr ""
+
+# Extracted string
+msgid "Link copied to clipboard"
+msgstr ""
+
+# Extracted string
+msgid "Loading announcement..."
+msgstr ""
+
+# Extracted string
+msgid "Announcement Details"
+msgstr ""
+
+# Extracted string
+msgid "Share"
+msgstr ""
+
+# Extracted string
+msgid "Print"
+msgstr ""
+
+# Extracted string
+msgid "Published By"
+msgstr ""
+
+# Extracted string
+msgid "School Faculty"
+msgstr ""
+
+# Extracted string
+msgid "Audience"
+msgstr ""
+
+# Extracted string
+msgid "Expires"
+msgstr ""
+
+# Extracted string
+msgid "Priority"
+msgstr ""
+
+# Extracted string
+msgid "This message is verified by the school administration and is part of official school communications."
+msgstr ""
+
+# Extracted string
+msgid "Important"
+msgstr ""
+
+# Extracted string
+msgid "Announcement"
+msgstr ""
+
+# Extracted string
+msgid "Announcement Actions"
+msgstr ""
+
+# Extracted string
+msgid "Need more information or want to follow up on this announcement?"
+msgstr ""
+
+# Extracted string
+msgid "Contact Administrator"
+msgstr ""
+
+# Extracted string
+msgid "Suggest Changes"
+msgstr ""
+
+# Extracted string
+msgid "Back to all announcements"
+msgstr ""
+
+# Extracted string
+msgid "Announcement updated successfully"
+msgstr ""
+
+# Extracted string
+msgid "Edit Announcement"
+msgstr ""
+
+# Extracted string
+msgid "Modify the existing broadcast details."
+msgstr ""
+
+# Extracted string
+msgid "Announcement published successfully"
+msgstr ""
+
+# Extracted string
+msgid "Create Announcement"
+msgstr ""
+
+# Extracted string
+msgid "Draft and publish a new broadcast to the school community."
+msgstr ""
+
+# Extracted string
+msgid "Failed to load announcements"
+msgstr ""
+
+# Extracted string
+msgid "Failed to update announcement"
+msgstr ""
+
+# Extracted string
+msgid "Announcement deleted successfully"
+msgstr ""
+
+# Extracted string
+msgid "Failed to delete announcement"
+msgstr ""
+
+# Extracted string
+msgid "Are you sure you want to delete \"${current.title}\"? This action cannot be undone."
+msgstr ""
+
+# Extracted string
+msgid "Search announcements..."
+msgstr ""
+
+# Extracted string
+msgid "= now && expiresAt"
+msgstr ""
+
+# Extracted string
+msgid "Internal school communications and broadcasts."
+msgstr ""
+
+# Extracted string
+msgid "New Announcement"
+msgstr ""
+
+# Extracted string
+msgid "All Audiences"
+msgstr ""
+
+# Extracted string
+msgid "Read More"
+msgstr ""
+
+# Extracted string
+msgid "Loading announcements..."
+msgstr ""
+
+# Extracted string
+msgid "No announcements found"
+msgstr ""
+
+# Extracted string
+msgid "Create First Announcement"
+msgstr ""
+
+# Extracted string
+msgid "Total Active"
+msgstr ""
+
+# Extracted string
+msgid "Pinned"
+msgstr ""
+
+# Extracted string
+msgid "Total Records"
+msgstr ""
+
+# Extracted string
+msgid "Expiring Soon"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load attendance data. Please try again."
+msgstr ""
+
+# Extracted string
+msgid "Please mark attendance for all students before saving."
+msgstr ""
+
+# Extracted string
+msgid "Attendance saved successfully"
+msgstr ""
+
+# Extracted string
+msgid "Select class"
+msgstr ""
+
+# Extracted string
+msgid "Add note..."
+msgstr ""
+
+# Extracted string
+msgid "Record Attendance"
+msgstr ""
+
+# Extracted string
+msgid "Daily attendance tracking for your classes."
+msgstr ""
+
+# Extracted string
+msgid "View Reports"
+msgstr ""
+
+# Extracted string
+msgid "Edit Attendance"
+msgstr ""
+
+# Extracted string
+msgid "Mark Unmarked as Present"
+msgstr ""
+
+# Extracted string
+msgid "Attendance for this date has been saved. Editing is locked."
+msgstr ""
+
+# Extracted string
+msgid "Notes"
+msgstr ""
+
+# Extracted string
+msgid "Loading class records..."
+msgstr ""
+
+# Extracted string
+msgid "No students enrolled in this class."
+msgstr ""
+
+# Extracted string
+msgid "No students found"
+msgstr ""
+
+# Extracted string
+msgid "0 && !isSaved && ("
+msgstr ""
+
+# Extracted string
+msgid "Save Attendance"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load attendance report"
+msgstr ""
+
+# Extracted string
+msgid "Select month"
+msgstr ""
+
+# Extracted string
+msgid "Back to Record Attendance"
+msgstr ""
+
+# Extracted string
+msgid "Attendance Reports"
+msgstr ""
+
+# Extracted string
+msgid "Monthly overview of student attendance records."
+msgstr ""
+
+# Extracted string
+msgid "Class Average:"
+msgstr ""
+
+# Extracted string
+msgid "Perfect:"
+msgstr ""
+
+# Extracted string
+msgid "At Risk:"
+msgstr ""
+
+# Extracted string
+msgid "Attendance Report"
+msgstr ""
+
+# Extracted string
+msgid "Loading report..."
+msgstr ""
+
+# Extracted string
+msgid "No attendance records found for this period."
+msgstr ""
+
+# Extracted string
+msgid "/api/question-bank?${params}"
+msgstr ""
+
+# Extracted string
+msgid "/api/question-topics"
+msgstr ""
+
+# Extracted string
+msgid "Approved"
+msgstr ""
+
+# Extracted string
+msgid "Archive this question?"
+msgstr ""
+
+# Extracted string
+msgid "Search text…"
+msgstr ""
+
+# Extracted string
+msgid "Question Bank"
+msgstr ""
+
+# Extracted string
+msgid "Topics"
+msgstr ""
+
+# Extracted string
+msgid "New question"
+msgstr ""
+
+# Extracted string
+msgid "All topics"
+msgstr ""
+
+# Extracted string
+msgid "Difficulty"
+msgstr ""
+
+# Extracted string
+msgid "No questions match."
+msgstr ""
+
+# Extracted string
+msgid "Prev"
+msgstr ""
+
+# Extracted string
+msgid "/api/subjects"
+msgstr ""
+
+# Extracted string
+msgid "/api/question-bank/${id}"
+msgstr ""
+
+# Extracted string
+msgid "Could not load question"
+msgstr ""
+
+# Extracted string
+msgid "Question text required"
+msgstr ""
+
+# Extracted string
+msgid "Saved"
+msgstr ""
+
+# Extracted string
+msgid "wt"
+msgstr ""
+
+# Extracted string
+msgid "Comma-separated for short answer"
+msgstr ""
+
+# Extracted string
+msgid "Bank"
+msgstr ""
+
+# Extracted string
+msgid "Question text"
+msgstr ""
+
+# Extracted string
+msgid "Time (s)"
+msgstr ""
+
+# Extracted string
+msgid "Topic"
+msgstr ""
+
+# Extracted string
+msgid "Subtopic"
+msgstr ""
+
+# Extracted string
+msgid "Options (tick correct)"
+msgstr ""
+
+# Extracted string
+msgid "Add option"
+msgstr ""
+
+# Extracted string
+msgid "Accepted answer(s)"
+msgstr ""
+
+# Extracted string
+msgid "Explanation (shown after release)"
+msgstr ""
+
+# Extracted string
+msgid "Tags (comma)"
+msgstr ""
+
+# Extracted string
+msgid "Partial credit"
+msgstr ""
+
+# Extracted string
+msgid "Case-sensitive"
+msgstr ""
+
+# Extracted string
+msgid "Manual grading"
+msgstr ""
+
+# Extracted string
+msgid "Name required"
+msgstr ""
+
+# Extracted string
+msgid "Delete topic? Questions keep their content but lose this topic."
+msgstr ""
+
+# Extracted string
+msgid "Topics & Subtopics"
+msgstr ""
+
+# Extracted string
+msgid "Code"
+msgstr ""
+
+# Extracted string
+msgid "Parent (for subtopic)"
+msgstr ""
+
+# Extracted string
+msgid "None (top-level)"
+msgstr ""
+
+# Extracted string
+msgid "Add topic"
+msgstr ""
+
+# Extracted string
+msgid "No topics yet."
+msgstr ""
+
+# Extracted string
+msgid "Borrower name is required"
+msgstr ""
+
+# Extracted string
+msgid "Due date is required"
+msgstr ""
+
+# Extracted string
+msgid "Checked out to ${borrowerName}."
+msgstr ""
+
+# Extracted string
+msgid "Book marked as returned."
+msgstr ""
+
+# Extracted string
+msgid "Book removed from catalog."
+msgstr ""
+
+# Extracted string
+msgid "Remove this book from the catalog? This cannot be undone."
+msgstr ""
+
+# Extracted string
+msgid "Full name"
+msgstr ""
+
+# Extracted string
+msgid "Loading book…"
+msgstr ""
+
+# Extracted string
+msgid "Back to Book Catalog"
+msgstr ""
+
+# Extracted string
+msgid "Check Out"
+msgstr ""
+
+# Extracted string
+msgid "Description / Notes"
+msgstr ""
+
+# Extracted string
+msgid "Borrowing History"
+msgstr ""
+
+# Extracted string
+msgid "No borrowing records yet."
+msgstr ""
+
+# Extracted string
+msgid "Borrower"
+msgstr ""
+
+# Extracted string
+msgid "Borrowed"
+msgstr ""
+
+# Extracted string
+msgid "Due"
+msgstr ""
+
+# Extracted string
+msgid "Returned"
+msgstr ""
+
+# Extracted string
+msgid "Return"
+msgstr ""
+
+# Extracted string
+msgid "Check Out Book"
+msgstr ""
+
+# Extracted string
+msgid "Borrower Name *"
+msgstr ""
+
+# Extracted string
+msgid "Borrower Type"
+msgstr ""
+
+# Extracted string
+msgid "Other"
+msgstr ""
+
+# Extracted string
+msgid "Due Date *"
+msgstr ""
+
+# Extracted string
+msgid "Book updated."
+msgstr ""
+
+# Extracted string
+msgid "Back"
+msgstr ""
+
+# Extracted string
+msgid "Edit Book"
+msgstr ""
+
+# Extracted string
+msgid "Update this book's catalog details."
+msgstr ""
+
+# Extracted string
+msgid "title"
+msgstr ""
+
+# Extracted string
+msgid "author"
+msgstr ""
+
+# Extracted string
+msgid "isbn"
+msgstr ""
+
+# Extracted string
+msgid "publisher"
+msgstr ""
+
+# Extracted string
+msgid "publishedYear"
+msgstr ""
+
+# Extracted string
+msgid "category"
+msgstr ""
+
+# Extracted string
+msgid "language"
+msgstr ""
+
+# Extracted string
+msgid "edition"
+msgstr ""
+
+# Extracted string
+msgid "shelfLocation"
+msgstr ""
+
+# Extracted string
+msgid "totalCopies"
+msgstr ""
+
+# Extracted string
+msgid "coverUrl"
+msgstr ""
+
+# Extracted string
+msgid "description"
+msgstr ""
+
+# Extracted string
+msgid "e.g. A Brief History of Time"
+msgstr ""
+
+# Extracted string
+msgid "e.g. Stephen Hawking"
+msgstr ""
+
+# Extracted string
+msgid "e.g. 978-0-553-10953-5"
+msgstr ""
+
+# Extracted string
+msgid "e.g. Bantam Books"
+msgstr ""
+
+# Extracted string
+msgid "e.g. 1988"
+msgstr ""
+
+# Extracted string
+msgid "Select category / genre"
+msgstr ""
+
+# Extracted string
+msgid "Enter new category / genre"
+msgstr ""
+
+# Extracted string
+msgid "New category or genre"
+msgstr ""
+
+# Extracted string
+msgid "e.g. English, Burmese, Mon"
+msgstr ""
+
+# Extracted string
+msgid "e.g. 2nd Edition"
+msgstr ""
+
+# Extracted string
+msgid "e.g. A-12 / Reference Shelf 3"
+msgstr ""
+
+# Extracted string
+msgid "https://..."
+msgstr ""
+
+# Extracted string
+msgid "Short summary, condition notes, donor, etc."
+msgstr ""
+
+# Extracted string
+msgid "(e: React.ChangeEvent"
+msgstr ""
+
+# Extracted string
+msgid "Title *"
+msgstr ""
+
+# Extracted string
+msgid "ISBN"
+msgstr ""
+
+# Extracted string
+msgid "Publisher"
+msgstr ""
+
+# Extracted string
+msgid "Published Year"
+msgstr ""
+
+# Extracted string
+msgid "Category / Genre"
+msgstr ""
+
+# Extracted string
+msgid "Edition"
+msgstr ""
+
+# Extracted string
+msgid "Shelf Location"
+msgstr ""
+
+# Extracted string
+msgid "Total Copies *"
+msgstr ""
+
+# Extracted string
+msgid "Cover Image URL"
+msgstr ""
+
+# Extracted string
+msgid "Book added to the catalog."
+msgstr ""
+
+# Extracted string
+msgid "Add Book"
+msgstr ""
+
+# Extracted string
+msgid "Enter the details of a physical book to add it to the library catalog."
+msgstr ""
+
+# Extracted string
+msgid "Search title, author, ISBN, category…"
+msgstr ""
+
+# Extracted string
+msgid "Physical books held by the library. Add titles, track copies, and manage borrowing."
+msgstr ""
+
+# Extracted string
+msgid "Loading catalog…"
+msgstr ""
+
+# Extracted string
+msgid ") : filtered.length === 0 ? ("
+msgstr ""
+
+# Extracted string
+msgid "Click “Add Book” to enter your first title."
+msgstr ""
+
+# Extracted string
+msgid "Cover"
+msgstr ""
+
+# Extracted string
+msgid "Shelf"
+msgstr ""
+
+# Extracted string
+msgid "Availability"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load case"
+msgstr ""
+
+# Extracted string
+msgid "Note added successfully"
+msgstr ""
+
+# Extracted string
+msgid "Case deleted."
+msgstr ""
+
+# Extracted string
+msgid "Type your follow-up note or update here..."
+msgstr ""
+
+# Extracted string
+msgid "Urgent"
+msgstr ""
+
+# Extracted string
+msgid "High"
+msgstr ""
+
+# Extracted string
+msgid "Medium"
+msgstr ""
+
+# Extracted string
+msgid "Low"
+msgstr ""
+
+# Extracted string
+msgid "Open"
+msgstr ""
+
+# Extracted string
+msgid "In Progress"
+msgstr ""
+
+# Extracted string
+msgid "Follow Up"
+msgstr ""
+
+# Extracted string
+msgid "Resolved"
+msgstr ""
+
+# Extracted string
+msgid "Loading case..."
+msgstr ""
+
+# Extracted string
+msgid "Back to Cases"
+msgstr ""
+
+# Extracted string
+msgid "Edit Details"
+msgstr ""
+
+# Extracted string
+msgid "Delete Case"
+msgstr ""
+
+# Extracted string
+msgid "Are you sure you want to permanently delete"
+msgstr ""
+
+# Extracted string
+msgid "? This will also remove all case notes and cannot be undone."
+msgstr ""
+
+# Extracted string
+msgid "Description / Concern"
+msgstr ""
+
+# Extracted string
+msgid "Case Notes & Timeline"
+msgstr ""
+
+# Extracted string
+msgid "Internal Only"
+msgstr ""
+
+# Extracted string
+msgid "Case Opened"
+msgstr ""
+
+# Extracted string
+msgid "Add New Note"
+msgstr ""
+
+# Extracted string
+msgid "Make this an internal private note"
+msgstr ""
+
+# Extracted string
+msgid "Case Details"
+msgstr ""
+
+# Extracted string
+msgid "Assigned To"
+msgstr ""
+
+# Extracted string
+msgid "Opened By"
+msgstr ""
+
+# Extracted string
+msgid "Opened On"
+msgstr ""
+
+# Extracted string
+msgid "Privacy Notice"
+msgstr ""
+
+# Extracted string
+msgid "Case data contains sensitive information. Do not share externally unless mandated by local safeguarding laws. Ensure notes accurately reflect facts."
+msgstr ""
+
+# Extracted string
+msgid "Case updated successfully"
+msgstr ""
+
+# Extracted string
+msgid "Failed to update case"
+msgstr ""
+
+# Extracted string
+msgid "Select Type"
+msgstr ""
+
+# Extracted string
+msgid "Select Priority"
+msgstr ""
+
+# Extracted string
+msgid "Unassigned"
+msgstr ""
+
+# Extracted string
+msgid "Back to Case"
+msgstr ""
+
+# Extracted string
+msgid "Edit Case"
+msgstr ""
+
+# Extracted string
+msgid "Update case details and status."
+msgstr ""
+
+# Extracted string
+msgid "Protection Case Guidelines"
+msgstr ""
+
+# Extracted string
+msgid "Protection cases involve severe safety concerns. Ensure all notes are strictly factual. This case should remain Urgent unless reviewed by a Safeguarding Lead."
+msgstr ""
+
+# Extracted string
+msgid "Case Status *"
+msgstr ""
+
+# Extracted string
+msgid "Case Title / Brief Summary *"
+msgstr ""
+
+# Extracted string
+msgid "Detailed Description *"
+msgstr ""
+
+# Extracted string
+msgid "Case Type *"
+msgstr ""
+
+# Extracted string
+msgid "Health"
+msgstr ""
+
+# Extracted string
+msgid "Family"
+msgstr ""
+
+# Extracted string
+msgid "Protection/Safeguarding"
+msgstr ""
+
+# Extracted string
+msgid "Behavior"
+msgstr ""
+
+# Extracted string
+msgid "Documentation/Legal"
+msgstr ""
+
+# Extracted string
+msgid "Priority Level *"
+msgstr ""
+
+# Extracted string
+msgid "Low - Routine monitoring"
+msgstr ""
+
+# Extracted string
+msgid "Medium - Needs attention"
+msgstr ""
+
+# Extracted string
+msgid "High - Needs immediate action"
+msgstr ""
+
+# Extracted string
+msgid "Urgent - Crisis / Safety risk"
+msgstr ""
+
+# Extracted string
+msgid "Assign To"
+msgstr ""
+
+# Extracted string
+msgid "-- Leave Unassigned --"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load students"
+msgstr ""
+
+# Extracted string
+msgid "Case created successfully."
+msgstr ""
+
+# Extracted string
+msgid "Select Student"
+msgstr ""
+
+# Extracted string
+msgid "e.g. Needs welfare check, absent 5 days"
+msgstr ""
+
+# Extracted string
+msgid "Provide all known context, observations, and factual details..."
+msgstr ""
+
+# Extracted string
+msgid "Open New Case"
+msgstr ""
+
+# Extracted string
+msgid "Record a new student support or protection concern."
+msgstr ""
+
+# Extracted string
+msgid "Protection cases involve severe safety concerns. Ensure all notes are strictly factual. This case will be flagged as Urgent by default and will notify designated Safeguarding Leads immediately."
+msgstr ""
+
+# Extracted string
+msgid "Student *"
+msgstr ""
+
+# Extracted string
+msgid "Do not include subjective opinions or diagnoses unless formally provided by a professional."
+msgstr ""
+
+# Extracted string
+msgid "Assign To (Optional)"
+msgstr ""
+
+# Extracted string
+msgid "Create Case"
+msgstr ""
+
+# Extracted string
+msgid "You do not have permission to view cases"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load cases"
+msgstr ""
+
+# Extracted string
+msgid "Search by student, case number, or title..."
+msgstr ""
+
+# Extracted string
+msgid "Case Management"
+msgstr ""
+
+# Extracted string
+msgid "Track student support and protection cases."
+msgstr ""
+
+# Extracted string
+msgid "All Types"
+msgstr ""
+
+# Extracted string
+msgid "Protection"
+msgstr ""
+
+# Extracted string
+msgid "Documentation"
+msgstr ""
+
+# Extracted string
+msgid "All Priorities"
+msgstr ""
+
+# Extracted string
+msgid "Loading cases..."
+msgstr ""
+
+# Extracted string
+msgid ") : filteredCases.length === 0 ? ("
+msgstr ""
+
+# Extracted string
+msgid "No cases found"
+msgstr ""
+
+# Extracted string
+msgid "Case Info"
+msgstr ""
+
+# Extracted string
+msgid "Status & Priority"
+msgstr ""
+
+# Extracted string
+msgid "Opened"
+msgstr ""
+
+# Extracted string
+msgid "No cases found matching your filters."
+msgstr ""
+
+# Extracted string
+msgid "Student:"
+msgstr ""
+
+# Extracted string
+msgid "View Details"
+msgstr ""
+
+# Extracted string
+msgid "Class details updated"
+msgstr ""
+
+# Extracted string
+msgid "e.g. GED Prep Morning"
+msgstr ""
+
+# Extracted string
+msgid "Select level"
+msgstr ""
+
+# Extracted string
+msgid "e.g. 2025-2026"
+msgstr ""
+
+# Extracted string
+msgid "Optional details about the curriculum or schedule..."
+msgstr ""
+
+# Extracted string
+msgid "Select status"
+msgstr ""
+
+# Extracted string
+msgid "Back to Class"
+msgstr ""
+
+# Extracted string
+msgid "Edit Class Details"
+msgstr ""
+
+# Extracted string
+msgid "Update academic class information."
+msgstr ""
+
+# Extracted string
+msgid "GED"
+msgstr ""
+
+# Extracted string
+msgid "IGCSE"
+msgstr ""
+
+# Extracted string
+msgid "Assigned Teachers"
+msgstr ""
+
+# Extracted string
+msgid "Class created successfully"
+msgstr ""
+
+# Extracted string
+msgid "Back to Classes"
+msgstr ""
+
+# Extracted string
+msgid "Create New Class"
+msgstr ""
+
+# Extracted string
+msgid "Define a new academic class, its level, and year."
+msgstr ""
+
+# Extracted string
+msgid "Create Class"
+msgstr ""
+
+# Extracted string
+msgid "You do not have permission to view this class"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load class"
+msgstr ""
+
+# Extracted string
+msgid "Select a teacher"
+msgstr ""
+
+# Extracted string
+msgid "Teacher assigned"
+msgstr ""
+
+# Extracted string
+msgid "Teacher removed"
+msgstr ""
+
+# Extracted string
+msgid "Class has been archived."
+msgstr ""
+
+# Extracted string
+msgid "Remove this teacher from the class?"
+msgstr ""
+
+# Extracted string
+msgid "Loading class..."
+msgstr ""
+
+# Extracted string
+msgid "Class not found."
+msgstr ""
+
+# Extracted string
+msgid "Edit Class"
+msgstr ""
+
+# Extracted string
+msgid "Archive"
+msgstr ""
+
+# Extracted string
+msgid "Capacity"
+msgstr ""
+
+# Extracted string
+msgid "Main Teacher"
+msgstr ""
+
+# Extracted string
+msgid "Level"
+msgstr ""
+
+# Extracted string
+msgid "Assign Students"
+msgstr ""
+
+# Extracted string
+msgid "No students assigned."
+msgstr ""
+
+# Extracted string
+msgid "Assign Teacher"
+msgstr ""
+
+# Extracted string
+msgid "No teachers assigned."
+msgstr ""
+
+# Extracted string
+msgid "kt.id === t.id)).length === 0 && ("
+msgstr ""
+
+# Extracted string
+msgid "All teachers are already assigned to this class."
+msgstr ""
+
+# Extracted string
+msgid "Add Subject"
+msgstr ""
+
+# Extracted string
+msgid "No subjects associated with this class yet."
+msgstr ""
+
+# Extracted string
+msgid "Attendance Records"
+msgstr ""
+
+# Extracted string
+msgid "View and manage daily attendance for this class."
+msgstr ""
+
+# Extracted string
+msgid "Go to Attendance Module"
+msgstr ""
+
+# Extracted string
+msgid "No exams for this class."
+msgstr ""
+
+# Extracted string
+msgid "Class Timetable"
+msgstr ""
+
+# Extracted string
+msgid "Timetable management coming soon."
+msgstr ""
+
+# Extracted string
+msgid "You do not have permission to view classes"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load classes"
+msgstr ""
+
+# Extracted string
+msgid "Search by name, level, or academic year..."
+msgstr ""
+
+# Extracted string
+msgid "Class Management"
+msgstr ""
+
+# Extracted string
+msgid "Manage academic classes, assignments, and curriculum."
+msgstr ""
+
+# Extracted string
+msgid "Add Class"
+msgstr ""
+
+# Extracted string
+msgid "View Dashboard"
+msgstr ""
+
+# Extracted string
+msgid "Archive Class"
+msgstr ""
+
+# Extracted string
+msgid "Restore Class"
+msgstr ""
+
+# Extracted string
+msgid "Loading classes..."
+msgstr ""
+
+# Extracted string
+msgid ") : filteredClasses.length === 0 ? ("
+msgstr ""
+
+# Extracted string
+msgid "No classes found"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load document"
+msgstr ""
+
+# Extracted string
+msgid "Verification QR"
+msgstr ""
+
+# Extracted string
+msgid "Loading document…"
+msgstr ""
+
+# Extracted string
+msgid "Document not found."
+msgstr ""
+
+# Extracted string
+msgid "Back to Documents"
+msgstr ""
+
+# Extracted string
+msgid "Download / Print PDF"
+msgstr ""
+
+# Extracted string
+msgid "No:"
+msgstr ""
+
+# Extracted string
+msgid "Issued:"
+msgstr ""
+
+# Extracted string
+msgid "Term:"
+msgstr ""
+
+# Extracted string
+msgid "This document confirms that"
+msgstr ""
+
+# Extracted string
+msgid "(Student ID"
+msgstr ""
+
+# Extracted string
+msgid "in"
+msgstr ""
+
+# Extracted string
+msgid "for the academic year"
+msgstr ""
+
+# Extracted string
+msgid ". Current status:"
+msgstr ""
+
+# Extracted string
+msgid "This is to certify that"
+msgstr ""
+
+# Extracted string
+msgid "has successfully completed the GED preparation program at"
+msgstr ""
+
+# Extracted string
+msgid "with an overall average of"
+msgstr ""
+
+# Extracted string
+msgid "GED subjects passed:"
+msgstr ""
+
+# Extracted string
+msgid "Academic Status"
+msgstr ""
+
+# Extracted string
+msgid "Subject Grades"
+msgstr ""
+
+# Extracted string
+msgid "Average"
+msgstr ""
+
+# Extracted string
+msgid "Grade"
+msgstr ""
+
+# Extracted string
+msgid "No grades recorded."
+msgstr ""
+
+# Extracted string
+msgid "Attendance Summary"
+msgstr ""
+
+# Extracted string
+msgid "GED Readiness"
+msgstr ""
+
+# Extracted string
+msgid "Teacher Comments"
+msgstr ""
+
+# Extracted string
+msgid "Scan to verify"
+msgstr ""
+
+# Extracted string
+msgid "${window.location.origin}/verify/${d.verifyToken}"
+msgstr ""
+
+# Extracted string
+msgid "Reason for cancellation (optional):"
+msgstr ""
+
+# Extracted string
+msgid "Select a student"
+msgstr ""
+
+# Extracted string
+msgid "${TYPE_LABELS[docType]} generated (${doc.documentNumber})"
+msgstr ""
+
+# Extracted string
+msgid "Verification link copied"
+msgstr ""
+
+# Extracted string
+msgid "Document cancelled"
+msgstr ""
+
+# Extracted string
+msgid "Reissued as ${fresh.documentNumber}"
+msgstr ""
+
+# Extracted string
+msgid "Reissue this document with fresh data? The current one will be marked as reissued."
+msgstr ""
+
+# Extracted string
+msgid "Select student"
+msgstr ""
+
+# Extracted string
+msgid "e.g. Term 1 2026"
+msgstr ""
+
+# Extracted string
+msgid "Official Documents"
+msgstr ""
+
+# Extracted string
+msgid "Generate verifiable report cards, transcripts and certificates."
+msgstr ""
+
+# Extracted string
+msgid "Generate a Document"
+msgstr ""
+
+# Extracted string
+msgid "Document Type"
+msgstr ""
+
+# Extracted string
+msgid "Term / Period (optional)"
+msgstr ""
+
+# Extracted string
+msgid "Issued Documents"
+msgstr ""
+
+# Extracted string
+msgid "Document No."
+msgstr ""
+
+# Extracted string
+msgid "Issued"
+msgstr ""
+
+# Extracted string
+msgid "Loading…"
+msgstr ""
+
+# Extracted string
+msgid "No documents generated yet."
+msgstr ""
+
+# Extracted string
+msgid "Open / Print"
+msgstr ""
+
+# Extracted string
+msgid "Copy verify link"
+msgstr ""
+
+# Extracted string
+msgid "Public verify page"
+msgstr ""
+
+# Extracted string
+msgid "Reissue"
+msgstr ""
+
+# Extracted string
+msgid "Official Document Verification"
+msgstr ""
+
+# Extracted string
+msgid "Verifying…"
+msgstr ""
+
+# Extracted string
+msgid "Document Not Found"
+msgstr ""
+
+# Extracted string
+msgid "No document matches this verification link. It may be invalid or mistyped."
+msgstr ""
+
+# Extracted string
+msgid "Valid Document"
+msgstr ""
+
+# Extracted string
+msgid "Only non-sensitive verification details are shown. Grades and personal records are never disclosed on this page."
+msgstr ""
+
+# Extracted string
+msgid "Title is required."
+msgstr ""
+
+# Extracted string
+msgid "E-book updated."
+msgstr ""
+
+# Extracted string
+msgid "Update details and access permissions."
+msgstr ""
+
+# Extracted string
+msgid "Visible to"
+msgstr ""
+
+# Extracted string
+msgid "Students only"
+msgstr ""
+
+# Extracted string
+msgid "Teachers only"
+msgstr ""
+
+# Extracted string
+msgid "Allow download"
+msgstr ""
+
+# Extracted string
+msgid "Saving…"
+msgstr ""
+
+# Extracted string
+msgid "Save changes"
+msgstr ""
+
+# Extracted string
+msgid "E-book deleted."
+msgstr ""
+
+# Extracted string
+msgid "Delete \"${b.title}\" from the e-library?"
+msgstr ""
+
+# Extracted string
+msgid "Search title, author, category…"
+msgstr ""
+
+# Extracted string
+msgid "Read EPUB and PDF books online."
+msgstr ""
+
+# Extracted string
+msgid "Upload Book"
+msgstr ""
+
+# Extracted string
+msgid "All formats"
+msgstr ""
+
+# Extracted string
+msgid "PDF"
+msgstr ""
+
+# Extracted string
+msgid "EPUB"
+msgstr ""
+
+# Extracted string
+msgid "Loading e-library…"
+msgstr ""
+
+# Extracted string
+msgid "Click “Upload Book” to add an EPUB or PDF."
+msgstr ""
+
+# Extracted string
+msgid "Read only"
+msgstr ""
+
+# Extracted string
+msgid "Read"
+msgstr ""
+
+# Extracted string
+msgid "Back to library"
+msgstr ""
+
+# Extracted string
+msgid "Zoom out"
+msgstr ""
+
+# Extracted string
+msgid "Zoom in"
+msgstr ""
+
+# Extracted string
+msgid "Contents"
+msgstr ""
+
+# Extracted string
+msgid "Opening book…"
+msgstr ""
+
+# Extracted string
+msgid ") : error ? ("
+msgstr ""
+
+# Extracted string
+msgid "Back to E-Library"
+msgstr ""
+
+# Extracted string
+msgid ") : meta && meta.format.toUpperCase() === 'EPUB' && epubBlob ? ("
+msgstr ""
+
+# Extracted string
+msgid ") : meta && meta.format.toUpperCase() === 'PDF' ? ("
+msgstr ""
+
+# Extracted string
+msgid "Could not display this PDF."
+msgstr ""
+
+# Extracted string
+msgid "Could not display this EPUB."
+msgstr ""
+
+# Extracted string
+msgid "Only PDF and EPUB files are allowed."
+msgstr ""
+
+# Extracted string
+msgid "File is too large (max ${MAX_MB} MB)."
+msgstr ""
+
+# Extracted string
+msgid "Please choose an EPUB or PDF file."
+msgstr ""
+
+# Extracted string
+msgid "E-book uploaded."
+msgstr ""
+
+# Extracted string
+msgid "Book title"
+msgstr ""
+
+# Extracted string
+msgid "Author name"
+msgstr ""
+
+# Extracted string
+msgid "e.g. Math, Science"
+msgstr ""
+
+# Extracted string
+msgid "e.g. English"
+msgstr ""
+
+# Extracted string
+msgid "Short description (optional)"
+msgstr ""
+
+# Extracted string
+msgid "Upload E-book"
+msgstr ""
+
+# Extracted string
+msgid "Add an EPUB or PDF to the E-Library."
+msgstr ""
+
+# Extracted string
+msgid "Click or drag a file here"
+msgstr ""
+
+# Extracted string
+msgid "Uploading…"
+msgstr ""
+
+# Extracted string
+msgid "Upload"
+msgstr ""
+
+# Extracted string
+msgid "/api/accommodations"
+msgstr ""
+
+# Extracted string
+msgid "/api/students"
+msgstr ""
+
+# Extracted string
+msgid "Accommodation saved"
+msgstr ""
+
+# Extracted string
+msgid "Remove accommodation?"
+msgstr ""
+
+# Extracted string
+msgid "Accommodations"
+msgstr ""
+
+# Extracted string
+msgid "New accommodation"
+msgstr ""
+
+# Extracted string
+msgid "Select…"
+msgstr ""
+
+# Extracted string
+msgid "Extra time %"
+msgstr ""
+
+# Extracted string
+msgid "Extra minutes"
+msgstr ""
+
+# Extracted string
+msgid "Add accommodation"
+msgstr ""
+
+# Extracted string
+msgid "No accommodations configured."
+msgstr ""
+
+# Extracted string
+msgid "/api/exams/${examId}/analytics"
+msgstr ""
+
+# Extracted string
+msgid "Item analysis recomputed"
+msgstr ""
+
+# Extracted string
+msgid "Exam Results &amp; Analytics"
+msgstr ""
+
+# Extracted string
+msgid "Grading queue"
+msgstr ""
+
+# Extracted string
+msgid "Recompute"
+msgstr ""
+
+# Extracted string
+msgid "Question"
+msgstr ""
+
+# Extracted string
+msgid "Discrim."
+msgstr ""
+
+# Extracted string
+msgid "Avg time"
+msgstr ""
+
+# Extracted string
+msgid "Flags"
+msgstr ""
+
+# Extracted string
+msgid "Detail →"
+msgstr ""
+
+# Extracted string
+msgid "No statistics yet — click Recompute after attempts are submitted."
+msgstr ""
+
+# Extracted string
+msgid "/api/exams/${examId}/sections"
+msgstr ""
+
+# Extracted string
+msgid "/api/exams/${examId}/stimuli"
+msgstr ""
+
+# Extracted string
+msgid "/api/exams/${examId}/question-groups"
+msgstr ""
+
+# Extracted string
+msgid "/api/exams/${examId}/rubrics"
+msgstr ""
+
+# Extracted string
+msgid "/api/exams/${examId}/questions"
+msgstr ""
+
+# Extracted string
+msgid "/api/exams/${examId}/bank-questions"
+msgstr ""
+
+# Extracted string
+msgid "q', q); try { const r = await apiGet(`/api/question-bank?${p}`); setResults(r.items || []); } catch { setResults([]); } }; const add = async (questionId: string) => { try { await apiSend(`/api/exams/${examId}/questions`, 'POST', { questionId, sectionId: sectionId || undefined }); toast.success('Added"
+msgstr ""
+
+# Extracted string
+msgid "/api/exams/${examId}/blueprint"
+msgstr ""
+
+# Extracted string
+msgid "/api/exams/${examId}/blueprint/preview"
+msgstr ""
+
+# Extracted string
+msgid "Exam cloned"
+msgstr ""
+
+# Extracted string
+msgid "Title required"
+msgstr ""
+
+# Extracted string
+msgid "Added"
+msgstr ""
+
+# Extracted string
+msgid "Clone this exam? A new DRAFT copy is created (no attempts/results copied)."
+msgstr ""
+
+# Extracted string
+msgid "Delete section?"
+msgstr ""
+
+# Extracted string
+msgid "Delete passage?"
+msgstr ""
+
+# Extracted string
+msgid "Delete group?"
+msgstr ""
+
+# Extracted string
+msgid "Delete rubric?"
+msgstr ""
+
+# Extracted string
+msgid "Section title (e.g. Section 1: Reading)"
+msgstr ""
+
+# Extracted string
+msgid "Instructions"
+msgstr ""
+
+# Extracted string
+msgid "Media URL"
+msgstr ""
+
+# Extracted string
+msgid "Group title"
+msgstr ""
+
+# Extracted string
+msgid "Rubric title"
+msgstr ""
+
+# Extracted string
+msgid "Criterion label"
+msgstr ""
+
+# Extracted string
+msgid "Max"
+msgstr ""
+
+# Extracted string
+msgid "Search approved questions…"
+msgstr ""
+
+# Extracted string
+msgid "Exam Authoring"
+msgstr ""
+
+# Extracted string
+msgid "Build sections, passages, grouped questions and grading rubrics."
+msgstr ""
+
+# Extracted string
+msgid "Clone"
+msgstr ""
+
+# Extracted string
+msgid "Scheduling →"
+msgstr ""
+
+# Extracted string
+msgid "New section"
+msgstr ""
+
+# Extracted string
+msgid "Time limit (min)"
+msgstr ""
+
+# Extracted string
+msgid "Shuffle"
+msgstr ""
+
+# Extracted string
+msgid "Add section"
+msgstr ""
+
+# Extracted string
+msgid "New passage / media"
+msgstr ""
+
+# Extracted string
+msgid "Add passage"
+msgstr ""
+
+# Extracted string
+msgid "New question group"
+msgstr ""
+
+# Extracted string
+msgid "Section"
+msgstr ""
+
+# Extracted string
+msgid "Shared passage"
+msgstr ""
+
+# Extracted string
+msgid "Add group"
+msgstr ""
+
+# Extracted string
+msgid "New rubric"
+msgstr ""
+
+# Extracted string
+msgid "Attach to question (optional)"
+msgstr ""
+
+# Extracted string
+msgid "Exam-wide"
+msgstr ""
+
+# Extracted string
+msgid "Criteria"
+msgstr ""
+
+# Extracted string
+msgid "Add criterion"
+msgstr ""
+
+# Extracted string
+msgid "Save rubric"
+msgstr ""
+
+# Extracted string
+msgid "No section"
+msgstr ""
+
+# Extracted string
+msgid "No group"
+msgstr ""
+
+# Extracted string
+msgid "No passage"
+msgstr ""
+
+# Extracted string
+msgid "Neg."
+msgstr ""
+
+# Extracted string
+msgid "Tol."
+msgstr ""
+
+# Extracted string
+msgid "Add approved bank questions"
+msgstr ""
+
+# Extracted string
+msgid "Random selection quota"
+msgstr ""
+
+# Extracted string
+msgid "Any"
+msgstr ""
+
+# Extracted string
+msgid "Count"
+msgstr ""
+
+# Extracted string
+msgid "Add rule"
+msgstr ""
+
+# Extracted string
+msgid "Preview generated set"
+msgstr ""
+
+# Extracted string
+msgid "/api/attempts/${attemptId}/save`, { sessionToken, reason, answers: payload }); setSaving(false); if (ok) { dirty.current.clear(); setSavedAt(data.lastSavedAt || new Date().toISOString()); if (typeof data.remainingSeconds === 'number') setRemaining(data.remainingSeconds); return true; } if (status === 409 && data.error === 'SESSION_CONFLICT') { setBlocked('This attempt was opened in another window or device. This session is now read-only.'); return false; } if (status === 409 && (data.error === 'TIME_EXPIRED' || data.autoSubmitted)) { toast.info('Time expired — submitted.'); navigate(`/exam2/attempts/${attemptId}/result"
+msgstr ""
+
+# Extracted string
+msgid "/api/attempts/${attemptId}/pause"
+msgstr ""
+
+# Extracted string
+msgid "/api/attempts/${attemptId}/submit"
+msgstr ""
+
+# Extracted string
+msgid "Time expired — your attempt was submitted."
+msgstr ""
+
+# Extracted string
+msgid "Time expired — submitted."
+msgstr ""
+
+# Extracted string
+msgid "Attempt paused. You can resume later."
+msgstr ""
+
+# Extracted string
+msgid "Exam submitted."
+msgstr ""
+
+# Extracted string
+msgid "Submit your exam? You will not be able to change your answers."
+msgstr ""
+
+# Extracted string
+msgid "Type your answer…"
+msgstr ""
+
+# Extracted string
+msgid "Loading exam…"
+msgstr ""
+
+# Extracted string
+msgid "Session locked"
+msgstr ""
+
+# Extracted string
+msgid "Back to my exams"
+msgstr ""
+
+# Extracted string
+msgid "Passage"
+msgstr ""
+
+# Extracted string
+msgid "Pause"
+msgstr ""
+
+# Extracted string
+msgid "Submit"
+msgstr ""
+
+# Extracted string
+msgid "/api/attempts/${attemptId}/result"
+msgstr ""
+
+# Extracted string
+msgid "Results not available yet"
+msgstr ""
+
+# Extracted string
+msgid "Your answer:"
+msgstr ""
+
+# Extracted string
+msgid "/api/exams/${examId}/schedule"
+msgstr ""
+
+# Extracted string
+msgid "/api/exams/${examId}/result-policy"
+msgstr ""
+
+# Extracted string
+msgid "Schedule & result policy saved"
+msgstr ""
+
+# Extracted string
+msgid "Exam Scheduling"
+msgstr ""
+
+# Extracted string
+msgid "Availability window, attempt rules, security and result release."
+msgstr ""
+
+# Extracted string
+msgid "Available from"
+msgstr ""
+
+# Extracted string
+msgid "Available until"
+msgstr ""
+
+# Extracted string
+msgid "Duration (minutes)"
+msgstr ""
+
+# Extracted string
+msgid "Grace period (minutes)"
+msgstr ""
+
+# Extracted string
+msgid "Attempt limit"
+msgstr ""
+
+# Extracted string
+msgid "Pass mark"
+msgstr ""
+
+# Extracted string
+msgid "Access"
+msgstr ""
+
+# Extracted string
+msgid "Require access code"
+msgstr ""
+
+# Extracted string
+msgid "Set / change code"
+msgstr ""
+
+# Extracted string
+msgid "Result Release"
+msgstr ""
+
+# Extracted string
+msgid "Release mode"
+msgstr ""
+
+# Extracted string
+msgid "Immediately after submit"
+msgstr ""
+
+# Extracted string
+msgid "At a scheduled time"
+msgstr ""
+
+# Extracted string
+msgid "Only after manual grading"
+msgstr ""
+
+# Extracted string
+msgid "Hidden (never)"
+msgstr ""
+
+# Extracted string
+msgid "Release at"
+msgstr ""
+
+# Extracted string
+msgid "Author content →"
+msgstr ""
+
+# Extracted string
+msgid "Invigilator dashboard →"
+msgstr ""
+
+# Extracted string
+msgid "Analytics →"
+msgstr ""
+
+# Extracted string
+msgid "Print export →"
+msgstr ""
+
+# Extracted string
+msgid "/api/exams/${examId}/invigilator"
+msgstr ""
+
+# Extracted string
+msgid "Extra minutes?', '10"
+msgstr ""
+
+# Extracted string
+msgid "Incident note"
+msgstr ""
+
+# Extracted string
+msgid "${action} applied"
+msgstr ""
+
+# Extracted string
+msgid "${action.replace('_', ' ')} this attempt?"
+msgstr ""
+
+# Extracted string
+msgid "Loading live session…"
+msgstr ""
+
+# Extracted string
+msgid "Invigilator Dashboard"
+msgstr ""
+
+# Extracted string
+msgid "State"
+msgstr ""
+
+# Extracted string
+msgid "Time left"
+msgstr ""
+
+# Extracted string
+msgid "Last save"
+msgstr ""
+
+# Extracted string
+msgid "Conn"
+msgstr ""
+
+# Extracted string
+msgid "Warnings"
+msgstr ""
+
+# Extracted string
+msgid "IP"
+msgstr ""
+
+# Extracted string
+msgid "+Time"
+msgstr ""
+
+# Extracted string
+msgid "Reopen"
+msgstr ""
+
+# Extracted string
+msgid "Void"
+msgstr ""
+
+# Extracted string
+msgid "Note"
+msgstr ""
+
+# Extracted string
+msgid "examId"
+msgstr ""
+
+# Extracted string
+msgid "/api/grading/queue?${qs}"
+msgstr ""
+
+# Extracted string
+msgid "Manual Grading Queue"
+msgstr ""
+
+# Extracted string
+msgid "Essays, short answers, file and spoken responses awaiting marking."
+msgstr ""
+
+# Extracted string
+msgid "Pending"
+msgstr ""
+
+# Extracted string
+msgid "In review"
+msgstr ""
+
+# Extracted string
+msgid "Graded"
+msgstr ""
+
+# Extracted string
+msgid "Finalized"
+msgstr ""
+
+# Extracted string
+msgid "All"
+msgstr ""
+
+# Extracted string
+msgid "Nothing to grade."
+msgstr ""
+
+# Extracted string
+msgid "/api/exams/${examId}/print?version=${version}&answerKey=${answerKey ? '1' : '0'}"
+msgstr ""
+
+# Extracted string
+msgid "verify"
+msgstr ""
+
+# Extracted string
+msgid "Answer key"
+msgstr ""
+
+# Extracted string
+msgid "Print / PDF"
+msgstr ""
+
+# Extracted string
+msgid "— ANSWER KEY"
+msgstr ""
+
+# Extracted string
+msgid "Candidate Name: ___________________________"
+msgstr ""
+
+# Extracted string
+msgid "Candidate ID: ___________________________"
+msgstr ""
+
+# Extracted string
+msgid "Class: ___________________________"
+msgstr ""
+
+# Extracted string
+msgid "Date: ___________________________"
+msgstr ""
+
+# Extracted string
+msgid "/api/exams/${examId}/questions/${qid}/analytics"
+msgstr ""
+
+# Extracted string
+msgid "No statistics for this question yet."
+msgstr ""
+
+# Extracted string
+msgid "Question Analytics"
+msgstr ""
+
+# Extracted string
+msgid "Distractor selection"
+msgstr ""
+
+# Extracted string
+msgid "Enter the exam access code"
+msgstr ""
+
+# Extracted string
+msgid "My Exams"
+msgstr ""
+
+# Extracted string
+msgid "Start a new attempt or resume one in progress."
+msgstr ""
+
+# Extracted string
+msgid "No exams available right now."
+msgstr ""
+
+# Extracted string
+msgid "Resume"
+msgstr ""
+
+# Extracted string
+msgid ") : exhausted ? ("
+msgstr ""
+
+# Extracted string
+msgid "No attempts left"
+msgstr ""
+
+# Extracted string
+msgid ") : !e.openNow ? ("
+msgstr ""
+
+# Extracted string
+msgid "Not open"
+msgstr ""
+
+# Extracted string
+msgid "Start"
+msgstr ""
+
+# Extracted string
+msgid "/api/grading/queue?"
+msgstr ""
+
+# Extracted string
+msgid "Finalized & locked"
+msgstr ""
+
+# Extracted string
+msgid "Finalize locks this grade and updates the attempt total. Continue?"
+msgstr ""
+
+# Extracted string
+msgid "Grade Response"
+msgstr ""
+
+# Extracted string
+msgid "Student answer"
+msgstr ""
+
+# Extracted string
+msgid "This grade is finalized and locked."
+msgstr ""
+
+# Extracted string
+msgid "Overall comment"
+msgstr ""
+
+# Extracted string
+msgid "Score override"
+msgstr ""
+
+# Extracted string
+msgid "Override reason"
+msgstr ""
+
+# Extracted string
+msgid "Second marker score"
+msgstr ""
+
+# Extracted string
+msgid "Moderation note"
+msgstr ""
+
+# Extracted string
+msgid "Save draft"
+msgstr ""
+
+# Extracted string
+msgid "Save grade"
+msgstr ""
+
+# Extracted string
+msgid "Finalize"
+msgstr ""
+
+# Extracted string
+msgid "Please enter an exam title."
+msgstr ""
+
+# Extracted string
+msgid "Please select a class."
+msgstr ""
+
+# Extracted string
+msgid "Please select a subject."
+msgstr ""
+
+# Extracted string
+msgid "Please add at least one question."
+msgstr ""
+
+# Extracted string
+msgid "Every question needs question text."
+msgstr ""
+
+# Extracted string
+msgid "Multiple choice questions need all choices and one correct answer."
+msgstr ""
+
+# Extracted string
+msgid "Exam title"
+msgstr ""
+
+# Extracted string
+msgid "Select subject"
+msgstr ""
+
+# Extracted string
+msgid "Type the question text"
+msgstr ""
+
+# Extracted string
+msgid "Type or paste the passage/stimulus text here. This will be shown on the left pane in a split layout."
+msgstr ""
+
+# Extracted string
+msgid "Explain the correct answer. This will be shown to students after results are released."
+msgstr ""
+
+# Extracted string
+msgid "Back to Exam Dashboard"
+msgstr ""
+
+# Extracted string
+msgid "Edit Exam"
+msgstr ""
+
+# Extracted string
+msgid "Students have already attempted this exam. Exam details can be updated, but questions are locked to protect submitted results."
+msgstr ""
+
+# Extracted string
+msgid "Exam Details"
+msgstr ""
+
+# Extracted string
+msgid "Exam Title"
+msgstr ""
+
+# Extracted string
+msgid "Exam Type"
+msgstr ""
+
+# Extracted string
+msgid "Quiz"
+msgstr ""
+
+# Extracted string
+msgid "Midterm"
+msgstr ""
+
+# Extracted string
+msgid "Final"
+msgstr ""
+
+# Extracted string
+msgid "Mock Exam"
+msgstr ""
+
+# Extracted string
+msgid "Duration (Minutes)"
+msgstr ""
+
+# Extracted string
+msgid "No questions added yet."
+msgstr ""
+
+# Extracted string
+msgid "Add First Question"
+msgstr ""
+
+# Extracted string
+msgid "Multiple Choice (MCQ)"
+msgstr ""
+
+# Extracted string
+msgid "Short Answer"
+msgstr ""
+
+# Extracted string
+msgid "Written / Essay"
+msgstr ""
+
+# Extracted string
+msgid "GED RLA (with Passage)"
+msgstr ""
+
+# Extracted string
+msgid "GED Mathematical Reasoning"
+msgstr ""
+
+# Extracted string
+msgid "GED Science"
+msgstr ""
+
+# Extracted string
+msgid "GED Social Studies"
+msgstr ""
+
+# Extracted string
+msgid "Question Text"
+msgstr ""
+
+# Extracted string
+msgid "Image (optional)"
+msgstr ""
+
+# Extracted string
+msgid "Include passage / stimulus text (split layout)"
+msgstr ""
+
+# Extracted string
+msgid "Passage / Stimulus Text"
+msgstr ""
+
+# Extracted string
+msgid "Choices & Correct Answer"
+msgstr ""
+
+# Extracted string
+msgid "Explanation / Rationale"
+msgstr ""
+
+# Extracted string
+msgid "Add Question"
+msgstr ""
+
+# Extracted string
+msgid "Exam created. Configure sections, bank questions and scheduling next."
+msgstr ""
+
+# Extracted string
+msgid "e.g. Midterm Mathematics"
+msgstr ""
+
+# Extracted string
+msgid "Select type"
+msgstr ""
+
+# Extracted string
+msgid "Back to Exams"
+msgstr ""
+
+# Extracted string
+msgid "Create New Exam"
+msgstr ""
+
+# Extracted string
+msgid "1. Setup Exam Details"
+msgstr ""
+
+# Extracted string
+msgid "2. Questions"
+msgstr ""
+
+# Extracted string
+msgid "Tip: wrap formulas in"
+msgstr ""
+
+# Extracted string
+msgid "$…$"
+msgstr ""
+
+# Extracted string
+msgid "for inline math or"
+msgstr ""
+
+# Extracted string
+msgid "$$…$$"
+msgstr ""
+
+# Extracted string
+msgid "for a centered equation."
+msgstr ""
+
+# Extracted string
+msgid "3. Exam Settings"
+msgstr ""
+
+# Extracted string
+msgid "Enable Timer"
+msgstr ""
+
+# Extracted string
+msgid "Enforce the time limit strictly."
+msgstr ""
+
+# Extracted string
+msgid "Auto-Submit"
+msgstr ""
+
+# Extracted string
+msgid "Submit automatically when time runs out."
+msgstr ""
+
+# Extracted string
+msgid "Shuffle Questions"
+msgstr ""
+
+# Extracted string
+msgid "Randomize question order for each student."
+msgstr ""
+
+# Extracted string
+msgid "Show Score Immediately"
+msgstr ""
+
+# Extracted string
+msgid "Students see auto-graded score after submitting."
+msgstr ""
+
+# Extracted string
+msgid "Ready to Create Exam"
+msgstr ""
+
+# Extracted string
+msgid "Review a summary of your exam before saving."
+msgstr ""
+
+# Extracted string
+msgid "Publish now"
+msgstr ""
+
+# Extracted string
+msgid "/api/exams/${id}/preview"
+msgstr ""
+
+# Extracted string
+msgid "Loading preview…"
+msgstr ""
+
+# Extracted string
+msgid "Can't preview this exam"
+msgstr ""
+
+# Extracted string
+msgid "Back to exam"
+msgstr ""
+
+# Extracted string
+msgid "Preview mode — this is how students see the exam. Nothing is saved or scored."
+msgstr ""
+
+# Extracted string
+msgid "No questions yet. Add questions in the editor or author content."
+msgstr ""
+
+# Extracted string
+msgid "Student writes their answer here…"
+msgstr ""
+
+# Extracted string
+msgid "Exam archived"
+msgstr ""
+
+# Extracted string
+msgid "You do not have permission to view this exam"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load exam"
+msgstr ""
+
+# Extracted string
+msgid "Archive this exam? It will be hidden from lists and can no longer be started, but the exam and all student attempts are preserved. You can restore it later."
+msgstr ""
+
+# Extracted string
+msgid "Loading exam..."
+msgstr ""
+
+# Extracted string
+msgid "Exam not found."
+msgstr ""
+
+# Extracted string
+msgid "Author content"
+msgstr ""
+
+# Extracted string
+msgid "Schedule"
+msgstr ""
+
+# Extracted string
+msgid "Submitted"
+msgstr ""
+
+# Extracted string
+msgid "Avg Score"
+msgstr ""
+
+# Extracted string
+msgid "Recent Submissions"
+msgstr ""
+
+# Extracted string
+msgid "View All Results"
+msgstr ""
+
+# Extracted string
+msgid "Time Taken"
+msgstr ""
+
+# Extracted string
+msgid "No submissions yet."
+msgstr ""
+
+# Extracted string
+msgid "Properties"
+msgstr ""
+
+# Extracted string
+msgid "Class Target"
+msgstr ""
+
+# Extracted string
+msgid "Timer"
+msgstr ""
+
+# Extracted string
+msgid "Opening results…"
+msgstr ""
+
+# Extracted string
+msgid "Can't open this exam"
+msgstr ""
+
+# Extracted string
+msgid "Go to my exams"
+msgstr ""
+
+# Extracted string
+msgid "Preparing your exam…"
+msgstr ""
+
+# Extracted string
+msgid "Exam restored to draft"
+msgstr ""
+
+# Extracted string
+msgid "You do not have permission to view exams"
+msgstr ""
+
+# Extracted string
+msgid "Archive \"${exam.title}\"? It will be hidden and can no longer be started, but the exam and all attempts are preserved. You can restore it from \"Show archived\"."
+msgstr ""
+
+# Extracted string
+msgid "Search exams by title, subject..."
+msgstr ""
+
+# Extracted string
+msgid "Manage assessments, quizzes, and standard tests."
+msgstr ""
+
+# Extracted string
+msgid "Loading exams..."
+msgstr ""
+
+# Extracted string
+msgid ") : filteredExams.length === 0 ? ("
+msgstr ""
+
+# Extracted string
+msgid "Schedule &amp; release"
+msgstr ""
+
+# Extracted string
+msgid "Restore exam"
+msgstr ""
+
+# Extracted string
+msgid "Archive exam"
+msgstr ""
+
+# Extracted string
+msgid "Manage"
+msgstr ""
+
+# Extracted string
+msgid "Search by student name or ID..."
+msgstr ""
+
+# Extracted string
+msgid "Fees & Payments"
+msgstr ""
+
+# Extracted string
+msgid "Manage student fees and track payments."
+msgstr ""
+
+# Extracted string
+msgid "Export Report"
+msgstr ""
+
+# Extracted string
+msgid "Total Collected"
+msgstr ""
+
+# Extracted string
+msgid "Total Outstanding"
+msgstr ""
+
+# Extracted string
+msgid "Collection Rate"
+msgstr ""
+
+# Extracted string
+msgid "Paid"
+msgstr ""
+
+# Extracted string
+msgid "Partial"
+msgstr ""
+
+# Extracted string
+msgid "Balance"
+msgstr ""
+
+# Extracted string
+msgid "Last Payment"
+msgstr ""
+
+# Extracted string
+msgid "Loading fee records..."
+msgstr ""
+
+# Extracted string
+msgid "No fee records found matching your filters."
+msgstr ""
+
+# Extracted string
+msgid "studentId"
+msgstr ""
+
+# Extracted string
+msgid "Payment recorded successfully"
+msgstr ""
+
+# Extracted string
+msgid "Year"
+msgstr ""
+
+# Extracted string
+msgid "Method"
+msgstr ""
+
+# Extracted string
+msgid "Additional references, cheque numbers, etc."
+msgstr ""
+
+# Extracted string
+msgid "Back to Fees"
+msgstr ""
+
+# Extracted string
+msgid "Add a new fee payment to the system."
+msgstr ""
+
+# Extracted string
+msgid "Payment Month *"
+msgstr ""
+
+# Extracted string
+msgid "January"
+msgstr ""
+
+# Extracted string
+msgid "February"
+msgstr ""
+
+# Extracted string
+msgid "March"
+msgstr ""
+
+# Extracted string
+msgid "April"
+msgstr ""
+
+# Extracted string
+msgid "May"
+msgstr ""
+
+# Extracted string
+msgid "June"
+msgstr ""
+
+# Extracted string
+msgid "July"
+msgstr ""
+
+# Extracted string
+msgid "August"
+msgstr ""
+
+# Extracted string
+msgid "September"
+msgstr ""
+
+# Extracted string
+msgid "October"
+msgstr ""
+
+# Extracted string
+msgid "November"
+msgstr ""
+
+# Extracted string
+msgid "December"
+msgstr ""
+
+# Extracted string
+msgid "Payment Year *"
+msgstr ""
+
+# Extracted string
+msgid "Payment Method *"
+msgstr ""
+
+# Extracted string
+msgid "Cash"
+msgstr ""
+
+# Extracted string
+msgid "Bank Transfer"
+msgstr ""
+
+# Extracted string
+msgid "Payment Date *"
+msgstr ""
+
+# Extracted string
+msgid "Receipt Number (Auto)"
+msgstr ""
+
+# Extracted string
+msgid "Notes (Optional)"
+msgstr ""
+
+# Extracted string
+msgid "Record Payment & Generate"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load payment receipt"
+msgstr ""
+
+# Extracted string
+msgid "Loading receipt..."
+msgstr ""
+
+# Extracted string
+msgid "Void Payment"
+msgstr ""
+
+# Extracted string
+msgid "RECEIPT"
+msgstr ""
+
+# Extracted string
+msgid "Date:"
+msgstr ""
+
+# Extracted string
+msgid "VOIDED"
+msgstr ""
+
+# Extracted string
+msgid "Received From"
+msgstr ""
+
+# Extracted string
+msgid "Student Details"
+msgstr ""
+
+# Extracted string
+msgid "Payment Info"
+msgstr ""
+
+# Extracted string
+msgid "Method:"
+msgstr ""
+
+# Extracted string
+msgid "Remarks:"
+msgstr ""
+
+# Extracted string
+msgid "Void Reason:"
+msgstr ""
+
+# Extracted string
+msgid "Error in amount"
+msgstr ""
+
+# Extracted string
+msgid "Authorized Signature"
+msgstr ""
+
+# Extracted string
+msgid "This is a computer-generated receipt. No signature is required."
+msgstr ""
+
+# Extracted string
+msgid "Failed to load fee data"
+msgstr ""
+
+# Extracted string
+msgid "Back to Fees Dashboard"
+msgstr ""
+
+# Extracted string
+msgid "Fee Profile"
+msgstr ""
+
+# Extracted string
+msgid "Loading fee data..."
+msgstr ""
+
+# Extracted string
+msgid "Outstanding Balance"
+msgstr ""
+
+# Extracted string
+msgid "Payment History"
+msgstr ""
+
+# Extracted string
+msgid "Receipt No"
+msgstr ""
+
+# Extracted string
+msgid "Voided"
+msgstr ""
+
+# Extracted string
+msgid "Receipt"
+msgstr ""
+
+# Extracted string
+msgid "No payment history found."
+msgstr ""
+
+# Extracted string
+msgid "Failed to load GED readiness"
+msgstr ""
+
+# Extracted string
+msgid "Track each student's readiness across the four GED subjects."
+msgstr ""
+
+# Extracted string
+msgid "No students in this class."
+msgstr ""
+
+# Extracted string
+msgid "Failed to load gradebook"
+msgstr ""
+
+# Extracted string
+msgid "Enter a title"
+msgstr ""
+
+# Extracted string
+msgid "Grade item added"
+msgstr ""
+
+# Extracted string
+msgid "Grade item deleted"
+msgstr ""
+
+# Extracted string
+msgid "Saved (${res?.changed ?? 0} changed)"
+msgstr ""
+
+# Extracted string
+msgid "Weights saved"
+msgstr ""
+
+# Extracted string
+msgid "Delete this grade item and all its marks?"
+msgstr ""
+
+# Extracted string
+msgid "e.g. Algebra Quiz 1"
+msgstr ""
+
+# Extracted string
+msgid "Select a grade item"
+msgstr ""
+
+# Extracted string
+msgid "Optional teacher comment"
+msgstr ""
+
+# Extracted string
+msgid "Gradebook"
+msgstr ""
+
+# Extracted string
+msgid "Assignments, quizzes, exams and weighted grades."
+msgstr ""
+
+# Extracted string
+msgid "All Subjects"
+msgstr ""
+
+# Extracted string
+msgid "Summary"
+msgstr ""
+
+# Extracted string
+msgid "Grade Entry"
+msgstr ""
+
+# Extracted string
+msgid "Categories &amp; Weights"
+msgstr ""
+
+# Extracted string
+msgid "Overall"
+msgstr ""
+
+# Extracted string
+msgid "No students or grades yet."
+msgstr ""
+
+# Extracted string
+msgid "Warning"
+msgstr ""
+
+# Extracted string
+msgid ") : r.overall != null ?"
+msgstr ""
+
+# Extracted string
+msgid "On track"
+msgstr ""
+
+# Extracted string
+msgid "Add Grade Item"
+msgstr ""
+
+# Extracted string
+msgid "Max Marks"
+msgstr ""
+
+# Extracted string
+msgid "Enter marks for:"
+msgstr ""
+
+# Extracted string
+msgid "Delete item"
+msgstr ""
+
+# Extracted string
+msgid "Comment"
+msgstr ""
+
+# Extracted string
+msgid "Add a grade item above, then pick it here to enter marks for the whole class."
+msgstr ""
+
+# Extracted string
+msgid "Set how much each category contributes to the overall grade. Only categories that have grades are counted (weights are normalized)."
+msgstr ""
+
+# Extracted string
+msgid "Failed to load report"
+msgstr ""
+
+# Extracted string
+msgid "Class Performance"
+msgstr ""
+
+# Extracted string
+msgid "Grade distribution, category averages and GED readiness across the class."
+msgstr ""
+
+# Extracted string
+msgid "Grade Distribution"
+msgstr ""
+
+# Extracted string
+msgid "Category Averages"
+msgstr ""
+
+# Extracted string
+msgid "GED Readiness Distribution"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load progress"
+msgstr ""
+
+# Extracted string
+msgid "Loading progress…"
+msgstr ""
+
+# Extracted string
+msgid "Back to Gradebook"
+msgstr ""
+
+# Extracted string
+msgid "No grade data available yet."
+msgstr ""
+
+# Extracted string
+msgid "Term Average"
+msgstr ""
+
+# Extracted string
+msgid "Academic warning"
+msgstr ""
+
+# Extracted string
+msgid "No graded subjects yet."
+msgstr ""
+
+# Extracted string
+msgid "No marks yet"
+msgstr ""
+
+# Extracted string
+msgid "Progress Trend"
+msgstr ""
+
+# Extracted string
+msgid "/api/departments"
+msgstr ""
+
+# Extracted string
+msgid "/api/designations"
+msgstr ""
+
+# Extracted string
+msgid "Name is required"
+msgstr ""
+
+# Extracted string
+msgid "Department added"
+msgstr ""
+
+# Extracted string
+msgid "Deleted"
+msgstr ""
+
+# Extracted string
+msgid "Title is required"
+msgstr ""
+
+# Extracted string
+msgid "Designation added"
+msgstr ""
+
+# Extracted string
+msgid "None"
+msgstr ""
+
+# Extracted string
+msgid "Back to staff"
+msgstr ""
+
+# Extracted string
+msgid "Departments &amp; designations"
+msgstr ""
+
+# Extracted string
+msgid "Departments"
+msgstr ""
+
+# Extracted string
+msgid "No departments yet."
+msgstr ""
+
+# Extracted string
+msgid "Designations"
+msgstr ""
+
+# Extracted string
+msgid "Department"
+msgstr ""
+
+# Extracted string
+msgid "No designations yet."
+msgstr ""
+
+# Extracted string
+msgid "/api/leave-requests${qs({ status: statusFilter })}"
+msgstr ""
+
+# Extracted string
+msgid "/api/leave-types"
+msgstr ""
+
+# Extracted string
+msgid "/api/employees?status=ACTIVE"
+msgstr ""
+
+# Extracted string
+msgid "Employee, type and dates are required"
+msgstr ""
+
+# Extracted string
+msgid "Leave request submitted"
+msgstr ""
+
+# Extracted string
+msgid "Request ${status.toLowerCase()}"
+msgstr ""
+
+# Extracted string
+msgid "Leave type added"
+msgstr ""
+
+# Extracted string
+msgid "Select employee"
+msgstr ""
+
+# Extracted string
+msgid "Leave"
+msgstr ""
+
+# Extracted string
+msgid "Leave types"
+msgstr ""
+
+# Extracted string
+msgid "None defined yet."
+msgstr ""
+
+# Extracted string
+msgid "Days/yr"
+msgstr ""
+
+# Extracted string
+msgid "Add type"
+msgstr ""
+
+# Extracted string
+msgid "New request"
+msgstr ""
+
+# Extracted string
+msgid "New leave request"
+msgstr ""
+
+# Extracted string
+msgid "Employee *"
+msgstr ""
+
+# Extracted string
+msgid "Leave type *"
+msgstr ""
+
+# Extracted string
+msgid "Start *"
+msgstr ""
+
+# Extracted string
+msgid "End *"
+msgstr ""
+
+# Extracted string
+msgid "Reason"
+msgstr ""
+
+# Extracted string
+msgid "All statuses"
+msgstr ""
+
+# Extracted string
+msgid "Employee"
+msgstr ""
+
+# Extracted string
+msgid "Dates"
+msgstr ""
+
+# Extracted string
+msgid "Days"
+msgstr ""
+
+# Extracted string
+msgid "No leave requests"
+msgstr ""
+
+# Extracted string
+msgid "/api/payroll-runs"
+msgstr ""
+
+# Extracted string
+msgid "/api/payroll-runs/${id}"
+msgstr ""
+
+# Extracted string
+msgid "Payroll run created"
+msgstr ""
+
+# Extracted string
+msgid "Marked ${next}"
+msgstr ""
+
+# Extracted string
+msgid "Payroll run updated"
+msgstr ""
+
+# Extracted string
+msgid "Payroll run deleted"
+msgstr ""
+
+# Extracted string
+msgid "Delete the ${MONTHS[selected.periodMonth - 1]} ${selected.periodYear} payroll run and its payslips?"
+msgstr ""
+
+# Extracted string
+msgid "Print payslip"
+msgstr ""
+
+# Extracted string
+msgid "Payroll"
+msgstr ""
+
+# Extracted string
+msgid "Refresh"
+msgstr ""
+
+# Extracted string
+msgid "New run"
+msgstr ""
+
+# Extracted string
+msgid "New payroll run"
+msgstr ""
+
+# Extracted string
+msgid "A draft payslip is created for every active employee from their base salary."
+msgstr ""
+
+# Extracted string
+msgid "Create"
+msgstr ""
+
+# Extracted string
+msgid "Runs"
+msgstr ""
+
+# Extracted string
+msgid "No payroll runs yet."
+msgstr ""
+
+# Extracted string
+msgid "Select a run to view payslips"
+msgstr ""
+
+# Extracted string
+msgid "Print all"
+msgstr ""
+
+# Extracted string
+msgid "Approve"
+msgstr ""
+
+# Extracted string
+msgid "Mark paid"
+msgstr ""
+
+# Extracted string
+msgid "Payee"
+msgstr ""
+
+# Extracted string
+msgid "Base"
+msgstr ""
+
+# Extracted string
+msgid "Allowances"
+msgstr ""
+
+# Extracted string
+msgid "Deductions"
+msgstr ""
+
+# Extracted string
+msgid "Net"
+msgstr ""
+
+# Extracted string
+msgid "Edit payroll run"
+msgstr ""
+
+# Extracted string
+msgid "Payroll register"
+msgstr ""
+
+# Extracted string
+msgid "Net pay"
+msgstr ""
+
+# Extracted string
+msgid "Total"
+msgstr ""
+
+# Extracted string
+msgid "This is a computer-generated payroll register."
+msgstr ""
+
+# Extracted string
+msgid "/api/payslips/${id}"
+msgstr ""
+
+# Extracted string
+msgid "Payslip"
+msgstr ""
+
+# Extracted string
+msgid "Name:"
+msgstr ""
+
+# Extracted string
+msgid "ID:"
+msgstr ""
+
+# Extracted string
+msgid "Role:"
+msgstr ""
+
+# Extracted string
+msgid "Department:"
+msgstr ""
+
+# Extracted string
+msgid "Status:"
+msgstr ""
+
+# Extracted string
+msgid "Base salary"
+msgstr ""
+
+# Extracted string
+msgid "Employee signature"
+msgstr ""
+
+# Extracted string
+msgid "Authorised signature"
+msgstr ""
+
+# Extracted string
+msgid "This is a computer-generated payslip."
+msgstr ""
+
+# Extracted string
+msgid "Employee removed"
+msgstr ""
+
+# Extracted string
+msgid "First and last name are required"
+msgstr ""
+
+# Extracted string
+msgid "Employee added"
+msgstr ""
+
+# Extracted string
+msgid "Remove ${emp.firstName} ${emp.lastName}? They will be marked terminated; payroll and leave history is kept."
+msgstr ""
+
+# Extracted string
+msgid "Search name, code, email…"
+msgstr ""
+
+# Extracted string
+msgid "Add employee"
+msgstr ""
+
+# Extracted string
+msgid "First name *"
+msgstr ""
+
+# Extracted string
+msgid "Last name *"
+msgstr ""
+
+# Extracted string
+msgid "Email"
+msgstr ""
+
+# Extracted string
+msgid "Designation"
+msgstr ""
+
+# Extracted string
+msgid "Base salary (monthly)"
+msgstr ""
+
+# Extracted string
+msgid "All departments"
+msgstr ""
+
+# Extracted string
+msgid "No employees found"
+msgstr ""
+
+# Extracted string
+msgid "/api/employees/${id}"
+msgstr ""
+
+# Extracted string
+msgid "/api/employees/${id}/leave-balance"
+msgstr ""
+
+# Extracted string
+msgid "Details"
+msgstr ""
+
+# Extracted string
+msgid "First name"
+msgstr ""
+
+# Extracted string
+msgid "Last name"
+msgstr ""
+
+# Extracted string
+msgid "No leave types defined."
+msgstr ""
+
+# Extracted string
+msgid "Payslips"
+msgstr ""
+
+# Extracted string
+msgid "No payslips yet."
+msgstr ""
+
+# Extracted string
+msgid "Period"
+msgstr ""
+
+# Extracted string
+msgid "Leave history"
+msgstr ""
+
+# Extracted string
+msgid "No leave requests."
+msgstr ""
+
+# Extracted string
+msgid "You do not have permission to view this resource"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load resource"
+msgstr ""
+
+# Extracted string
+msgid "Resource deleted"
+msgstr ""
+
+# Extracted string
+msgid "Failed to delete resource"
+msgstr ""
+
+# Extracted string
+msgid "Are you sure you want to delete this resource?"
+msgstr ""
+
+# Extracted string
+msgid "Video player"
+msgstr ""
+
+# Extracted string
+msgid "Loading resource..."
+msgstr ""
+
+# Extracted string
+msgid "Back to Library"
+msgstr ""
+
+# Extracted string
+msgid "Resource not found."
+msgstr ""
+
+# Extracted string
+msgid "Internal Staff Only"
+msgstr ""
+
+# Extracted string
+msgid "Visible to Students"
+msgstr ""
+
+# Extracted string
+msgid "Preview not available"
+msgstr ""
+
+# Extracted string
+msgid "This file type cannot be previewed directly in the browser."
+msgstr ""
+
+# Extracted string
+msgid "Information"
+msgstr ""
+
+# Extracted string
+msgid "Date Added"
+msgstr ""
+
+# Extracted string
+msgid "Assigned Class"
+msgstr ""
+
+# Extracted string
+msgid "View Class"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load resource details"
+msgstr ""
+
+# Extracted string
+msgid "Resource updated successfully."
+msgstr ""
+
+# Extracted string
+msgid "e.g. Intro to Biology Worksheet"
+msgstr ""
+
+# Extracted string
+msgid "Briefly describe the contents of this resource..."
+msgstr ""
+
+# Extracted string
+msgid "Format"
+msgstr ""
+
+# Extracted string
+msgid "Who can see this?"
+msgstr ""
+
+# Extracted string
+msgid "Global Resource"
+msgstr ""
+
+# Extracted string
+msgid "General Resource"
+msgstr ""
+
+# Extracted string
+msgid "Back to Resource"
+msgstr ""
+
+# Extracted string
+msgid "Edit Resource"
+msgstr ""
+
+# Extracted string
+msgid "Resource Title *"
+msgstr ""
+
+# Extracted string
+msgid "Description *"
+msgstr ""
+
+# Extracted string
+msgid "Resource Type *"
+msgstr ""
+
+# Extracted string
+msgid "Document (Word, Excel)"
+msgstr ""
+
+# Extracted string
+msgid "PDF File"
+msgstr ""
+
+# Extracted string
+msgid "Image"
+msgstr ""
+
+# Extracted string
+msgid "Video"
+msgstr ""
+
+# Extracted string
+msgid "External Link"
+msgstr ""
+
+# Extracted string
+msgid "Visibility *"
+msgstr ""
+
+# Extracted string
+msgid "Assign to Class (Optional)"
+msgstr ""
+
+# Extracted string
+msgid "-- Global (All Classes) --"
+msgstr ""
+
+# Extracted string
+msgid "Assign to Subject (Optional)"
+msgstr ""
+
+# Extracted string
+msgid "-- General System --"
+msgstr ""
+
+# Extracted string
+msgid "External URL"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load library resources"
+msgstr ""
+
+# Extracted string
+msgid "Search resources by title or description..."
+msgstr ""
+
+# Extracted string
+msgid "File Type"
+msgstr ""
+
+# Extracted string
+msgid "Visibility"
+msgstr ""
+
+# Extracted string
+msgid "Library Central"
+msgstr ""
+
+# Extracted string
+msgid "Discover and manage learning resources."
+msgstr ""
+
+# Extracted string
+msgid "PDFs"
+msgstr ""
+
+# Extracted string
+msgid "Images"
+msgstr ""
+
+# Extracted string
+msgid "Documents"
+msgstr ""
+
+# Extracted string
+msgid "Links"
+msgstr ""
+
+# Extracted string
+msgid "All Access"
+msgstr ""
+
+# Extracted string
+msgid "Loading resources..."
+msgstr ""
+
+# Extracted string
+msgid ") : filteredResources.length === 0 ? ("
+msgstr ""
+
+# Extracted string
+msgid "No resources found"
+msgstr ""
+
+# Extracted string
+msgid "Try adjusting your filters or search query."
+msgstr ""
+
+# Extracted string
+msgid "Please select a file to upload"
+msgstr ""
+
+# Extracted string
+msgid "Please provide a valid link/URL"
+msgstr ""
+
+# Extracted string
+msgid "Resource added to library successfully."
+msgstr ""
+
+# Extracted string
+msgid "https://youtube.com/..."
+msgstr ""
+
+# Extracted string
+msgid "Add New Resource"
+msgstr ""
+
+# Extracted string
+msgid "Upload files or link external content to the central library."
+msgstr ""
+
+# Extracted string
+msgid "File Upload"
+msgstr ""
+
+# Extracted string
+msgid "Select File *"
+msgstr ""
+
+# Extracted string
+msgid "Click to upload or drag and drop"
+msgstr ""
+
+# Extracted string
+msgid "PDF, PPTX, DOCX, JPG, PNG (Max 50MB)"
+msgstr ""
+
+# Extracted string
+msgid "Browse Files"
+msgstr ""
+
+# Extracted string
+msgid "External URL *"
+msgstr ""
+
+# Extracted string
+msgid "You can paste links to YouTube videos, external articles, or Google Drive files here. Make sure they are accessible to your intended audience."
+msgstr ""
+
+# Extracted string
+msgid "Save Resource"
+msgstr ""
+
+# Extracted string
+msgid "${activeModule.title} record saved"
+msgstr ""
+
+# Extracted string
+msgid "School Operations"
+msgstr ""
+
+# Extracted string
+msgid "Admissions, calendar planning, assignments, certificates, communications, and inventory."
+msgstr ""
+
+# Extracted string
+msgid ") : field.type === 'select' ? ("
+msgstr ""
+
+# Extracted string
+msgid "Use default"
+msgstr ""
+
+# Extracted string
+msgid "Latest saved records from the production database."
+msgstr ""
+
+# Extracted string
+msgid "No records yet"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load attendance report."
+msgstr ""
+
+# Extracted string
+msgid "Select Month"
+msgstr ""
+
+# Extracted string
+msgid "Monthly Attendance Report"
+msgstr ""
+
+# Extracted string
+msgid "Back to Reports"
+msgstr ""
+
+# Extracted string
+msgid "Apply Filters"
+msgstr ""
+
+# Extracted string
+msgid ") : rows.length === 0 ? ("
+msgstr ""
+
+# Extracted string
+msgid "No attendance records for this class and month."
+msgstr ""
+
+# Extracted string
+msgid "ID"
+msgstr ""
+
+# Extracted string
+msgid "Total Days"
+msgstr ""
+
+# Extracted string
+msgid "Class Average"
+msgstr ""
+
+# Extracted string
+msgid "Perfect Attendance"
+msgstr ""
+
+# Extracted string
+msgid "At Risk (&lt;80%)"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load class performance report."
+msgstr ""
+
+# Extracted string
+msgid "Class Performance Comparison"
+msgstr ""
+
+# Extracted string
+msgid "No classes with graded exams yet."
+msgstr ""
+
+# Extracted string
+msgid "Overall Avg (%)"
+msgstr ""
+
+# Extracted string
+msgid "School Average:"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load exam results report."
+msgstr ""
+
+# Extracted string
+msgid "Exam Results Summary"
+msgstr ""
+
+# Extracted string
+msgid "Exam Results Report"
+msgstr ""
+
+# Extracted string
+msgid "No graded exam attempts found for this class."
+msgstr ""
+
+# Extracted string
+msgid "Average (%)"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load fees report."
+msgstr ""
+
+# Extracted string
+msgid "Select Status"
+msgstr ""
+
+# Extracted string
+msgid "Fee Collection Summary"
+msgstr ""
+
+# Extracted string
+msgid "Fee Summary Report"
+msgstr ""
+
+# Extracted string
+msgid "Payment Status"
+msgstr ""
+
+# Extracted string
+msgid "All Statuses"
+msgstr ""
+
+# Extracted string
+msgid "Fully Paid"
+msgstr ""
+
+# Extracted string
+msgid "Partial Payment"
+msgstr ""
+
+# Extracted string
+msgid "Apply"
+msgstr ""
+
+# Extracted string
+msgid "Total Expected"
+msgstr ""
+
+# Extracted string
+msgid "Outstanding"
+msgstr ""
+
+# Extracted string
+msgid "No fee records match this filter."
+msgstr ""
+
+# Extracted string
+msgid "Failed to load monthly summary."
+msgstr ""
+
+# Extracted string
+msgid "Monthly Admin Summary"
+msgstr ""
+
+# Extracted string
+msgid "Monthly School Summary"
+msgstr ""
+
+# Extracted string
+msgid "Apply Filter"
+msgstr ""
+
+# Extracted string
+msgid "Active Students"
+msgstr ""
+
+# Extracted string
+msgid "Avg Attendance"
+msgstr ""
+
+# Extracted string
+msgid "Open Cases"
+msgstr ""
+
+# Extracted string
+msgid "Fee Collection"
+msgstr ""
+
+# Extracted string
+msgid "Case Management (Incidents)"
+msgstr ""
+
+# Extracted string
+msgid "No cases recorded."
+msgstr ""
+
+# Extracted string
+msgid "New Cases"
+msgstr ""
+
+# Extracted string
+msgid "Remaining Open"
+msgstr ""
+
+# Extracted string
+msgid "Staff Summary"
+msgstr ""
+
+# Extracted string
+msgid "Reports & Export"
+msgstr ""
+
+# Extracted string
+msgid "Generate, print, and export data insights for your school."
+msgstr ""
+
+# Extracted string
+msgid "Generate Report &rarr;"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load student profile report."
+msgstr ""
+
+# Extracted string
+msgid "Student Profile Export"
+msgstr ""
+
+# Extracted string
+msgid "Student Profile Report"
+msgstr ""
+
+# Extracted string
+msgid "No students found for this class."
+msgstr ""
+
+# Extracted string
+msgid "DOB"
+msgstr ""
+
+# Extracted string
+msgid "Guardian"
+msgstr ""
+
+# Extracted string
+msgid "Contact"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load audit logs"
+msgstr ""
+
+# Extracted string
+msgid "Audit log exported to CSV successfully."
+msgstr ""
+
+# Extracted string
+msgid "Search descriptions..."
+msgstr ""
+
+# Extracted string
+msgid "Entity Type"
+msgstr ""
+
+# Extracted string
+msgid "Success"
+msgstr ""
+
+# Extracted string
+msgid "Critical"
+msgstr ""
+
+# Extracted string
+msgid "Info"
+msgstr ""
+
+# Extracted string
+msgid "Log"
+msgstr ""
+
+# Extracted string
+msgid "Security & Audit Logs"
+msgstr ""
+
+# Extracted string
+msgid "Track every single action performed within the LMS for complete accountability."
+msgstr ""
+
+# Extracted string
+msgid "Export Log History"
+msgstr ""
+
+# Extracted string
+msgid "All Entities"
+msgstr ""
+
+# Extracted string
+msgid "All Actions"
+msgstr ""
+
+# Extracted string
+msgid "Date Range"
+msgstr ""
+
+# Extracted string
+msgid "Timestamp"
+msgstr ""
+
+# Extracted string
+msgid "User"
+msgstr ""
+
+# Extracted string
+msgid "Entity"
+msgstr ""
+
+# Extracted string
+msgid "IP Address"
+msgstr ""
+
+# Extracted string
+msgid "Loading audit logs..."
+msgstr ""
+
+# Extracted string
+msgid ") : filteredLogs.length === 0 ? ("
+msgstr ""
+
+# Extracted string
+msgid "No logs found."
+msgstr ""
+
+# Extracted string
+msgid "Read-Only Security Constraint"
+msgstr ""
+
+# Extracted string
+msgid "Audit logs are immutable for legal and compliance reasons. Individual logs cannot be deleted or modified once generated. Logs older than 2 years are automatically archived to cold storage."
+msgstr ""
+
+# Extracted string
+msgid "${type} export is not available yet."
+msgstr ""
+
+# Extracted string
+msgid "Creating database backup…"
+msgstr ""
+
+# Extracted string
+msgid "Database backup created."
+msgstr ""
+
+# Extracted string
+msgid "Invalid backup format. Please upload a .sql, .json, .csv, or .zip file."
+msgstr ""
+
+# Extracted string
+msgid "Please select a backup file to restore."
+msgstr ""
+
+# Extracted string
+msgid "Verifying credentials and creating safety snapshot..."
+msgstr ""
+
+# Extracted string
+msgid "Restore must be run by an administrator"
+msgstr ""
+
+# Extracted string
+msgid "Enter your password to confirm"
+msgstr ""
+
+# Extracted string
+msgid "Warning: Sensitive Operations"
+msgstr ""
+
+# Extracted string
+msgid "Database"
+msgstr ""
+
+# Extracted string
+msgid "Complete SQL dump of all tables and relationships."
+msgstr ""
+
+# Extracted string
+msgid "Create Backup"
+msgstr ""
+
+# Extracted string
+msgid "Uploaded Files"
+msgstr ""
+
+# Extracted string
+msgid "Archive of all user uploads, documents, and images."
+msgstr ""
+
+# Extracted string
+msgid "Create Archive"
+msgstr ""
+
+# Extracted string
+msgid "JSON Export"
+msgstr ""
+
+# Extracted string
+msgid "Structured data export for API or migration scripts."
+msgstr ""
+
+# Extracted string
+msgid "Export JSON"
+msgstr ""
+
+# Extracted string
+msgid "CSV Export"
+msgstr ""
+
+# Extracted string
+msgid "Tabular data format easy to open in spreadsheet apps."
+msgstr ""
+
+# Extracted string
+msgid "Export CSV"
+msgstr ""
+
+# Extracted string
+msgid "Restore Data"
+msgstr ""
+
+# Extracted string
+msgid "Choose Backup File to Restore"
+msgstr ""
+
+# Extracted string
+msgid "Accepts .sql, .json, .csv, .zip formats"
+msgstr ""
+
+# Extracted string
+msgid "Restoring a backup will"
+msgstr ""
+
+# Extracted string
+msgid "overwrite existing data"
+msgstr ""
+
+# Extracted string
+msgid ". An automatic safety snapshot will be created before the restore process begins."
+msgstr ""
+
+# Extracted string
+msgid "Initiate System Restore"
+msgstr ""
+
+# Extracted string
+msgid "Backup History"
+msgstr ""
+
+# Extracted string
+msgid "Date & Time"
+msgstr ""
+
+# Extracted string
+msgid "File Name"
+msgstr ""
+
+# Extracted string
+msgid "Size"
+msgstr ""
+
+# Extracted string
+msgid "No backups yet. Create one above, or enable automatic daily backups in System Settings."
+msgstr ""
+
+# Extracted string
+msgid "Confirm Database Restore"
+msgstr ""
+
+# Extracted string
+msgid "You are about to restore the system from"
+msgstr ""
+
+# Extracted string
+msgid "Your Admin Password"
+msgstr ""
+
+# Extracted string
+msgid "Branding settings updated successfully"
+msgstr ""
+
+# Extracted string
+msgid "File size must be 5MB or smaller"
+msgstr ""
+
+# Extracted string
+msgid "You must be logged in to upload files"
+msgstr ""
+
+# Extracted string
+msgid "Image uploaded successfully. Save branding to apply changes."
+msgstr ""
+
+# Extracted string
+msgid "Logo preview"
+msgstr ""
+
+# Extracted string
+msgid "Signature preview"
+msgstr ""
+
+# Extracted string
+msgid "Login background preview"
+msgstr ""
+
+# Extracted string
+msgid "Logo"
+msgstr ""
+
+# Extracted string
+msgid "Branding & Output"
+msgstr ""
+
+# Extracted string
+msgid "Configure how the LMS and generated documents look."
+msgstr ""
+
+# Extracted string
+msgid "Logos & Assets"
+msgstr ""
+
+# Extracted string
+msgid "School Logo (Display & PDF)"
+msgstr ""
+
+# Extracted string
+msgid "PNG, JPG, WEBP, GIF, or SVG max 5MB."
+msgstr ""
+
+# Extracted string
+msgid "Official Stamp / Signature (For Reports)"
+msgstr ""
+
+# Extracted string
+msgid "PNG format required for transparency support"
+msgstr ""
+
+# Extracted string
+msgid "Login Page Background"
+msgstr ""
+
+# Extracted string
+msgid "Shown behind the login screen."
+msgstr ""
+
+# Extracted string
+msgid "Use a wide photo (e.g. 1600×900). PNG, JPG or WEBP, max 5MB."
+msgstr ""
+
+# Extracted string
+msgid "Colors & Appearance"
+msgstr ""
+
+# Extracted string
+msgid "Primary Color"
+msgstr ""
+
+# Extracted string
+msgid "Accent Color"
+msgstr ""
+
+# Extracted string
+msgid "Report Header Style"
+msgstr ""
+
+# Extracted string
+msgid "Standard (Logo left, text right)"
+msgstr ""
+
+# Extracted string
+msgid "Minimal (Logo center, small text)"
+msgstr ""
+
+# Extracted string
+msgid "Elegant (Logo above text, centered)"
+msgstr ""
+
+# Extracted string
+msgid "Dark Mode Default"
+msgstr ""
+
+# Extracted string
+msgid "Enable dark mode by default for new users"
+msgstr ""
+
+# Extracted string
+msgid "Header Preview"
+msgstr ""
+
+# Extracted string
+msgid "Save Branding"
+msgstr ""
+
+# Extracted string
+msgid "You must be logged in to export data."
+msgstr ""
+
+# Extracted string
+msgid "Exported ${moduleId} as ${format.toUpperCase()}."
+msgstr ""
+
+# Extracted string
+msgid "Data Export Center"
+msgstr ""
+
+# Extracted string
+msgid "Instantly download system data in CSV or JSON format for reporting and backup."
+msgstr ""
+
+# Extracted string
+msgid "Export Options"
+msgstr ""
+
+# Extracted string
+msgid "Configure common settings for your export."
+msgstr ""
+
+# Extracted string
+msgid "Export Format"
+msgstr ""
+
+# Extracted string
+msgid "CSV (Spreadsheet)"
+msgstr ""
+
+# Extracted string
+msgid "JSON (Data Backup)"
+msgstr ""
+
+# Extracted string
+msgid "Date Range (Optional)"
+msgstr ""
+
+# Extracted string
+msgid "Restricted"
+msgstr ""
+
+# Extracted string
+msgid "Export Restricted Data"
+msgstr ""
+
+# Extracted string
+msgid "You are about to export"
+msgstr ""
+
+# Extracted string
+msgid "Case Summaries"
+msgstr ""
+
+# Extracted string
+msgid ", which contains sensitive student safeguarding and protection records."
+msgstr ""
+
+# Extracted string
+msgid "This action will be permanently recorded in the Audit Log."
+msgstr ""
+
+# Extracted string
+msgid "Handle this export with strict confidentiality. Do not share or store on unprotected systems."
+msgstr ""
+
+# Extracted string
+msgid "Confirm Export"
+msgstr ""
+
+# Extracted string
+msgid "Roles & Permissions"
+msgstr ""
+
+# Extracted string
+msgid "View system-wide role configurations. (Read-only)"
+msgstr ""
+
+# Extracted string
+msgid "Role Definitions"
+msgstr ""
+
+# Extracted string
+msgid "Modules accessible by each role."
+msgstr ""
+
+# Extracted string
+msgid "Description & Access Areas"
+msgstr ""
+
+# Extracted string
+msgid "ADMIN"
+msgstr ""
+
+# Extracted string
+msgid "Full system access."
+msgstr ""
+
+# Extracted string
+msgid "Can manage users, roles, settings, students, teachers, classes, subjects, exams, attendance, system configs."
+msgstr ""
+
+# Extracted string
+msgid "TEACHER"
+msgstr ""
+
+# Extracted string
+msgid "Academic & classroom management."
+msgstr ""
+
+# Extracted string
+msgid "Can access Teacher Dashboard, assigned classes, attendance for assigned classes, exams for their subjects, library, and specific reports. Cannot access user management."
+msgstr ""
+
+# Extracted string
+msgid "STUDENT"
+msgstr ""
+
+# Extracted string
+msgid "Personal academic portal."
+msgstr ""
+
+# Extracted string
+msgid "Can access Student Dashboard, own profile, own attendance history, own exam results, general library, and fee balance. Cannot edit academic records."
+msgstr ""
+
+# Extracted string
+msgid "STAFF"
+msgstr ""
+
+# Extracted string
+msgid "General administration (Future)."
+msgstr ""
+
+# Extracted string
+msgid "Assigned specific custom permissions for library, HR, or front-desk management."
+msgstr ""
+
+# Extracted string
+msgid "School profile updated successfully"
+msgstr ""
+
+# Extracted string
+msgid "e.g. Acme International School"
+msgstr ""
+
+# Extracted string
+msgid "e.g. AIS"
+msgstr ""
+
+# Extracted string
+msgid "e.g. Dr. Sarah Smith"
+msgstr ""
+
+# Extracted string
+msgid "e.g. contact@school.edu"
+msgstr ""
+
+# Extracted string
+msgid "e.g. +1 (555) 123-4567"
+msgstr ""
+
+# Extracted string
+msgid "e.g. https://school.edu"
+msgstr ""
+
+# Extracted string
+msgid "Full physical address"
+msgstr ""
+
+# Extracted string
+msgid "A brief description of the school's mission or profile"
+msgstr ""
+
+# Extracted string
+msgid "School Profile"
+msgstr ""
+
+# Extracted string
+msgid "Basic information about the school used across the system."
+msgstr ""
+
+# Extracted string
+msgid "School Full Name"
+msgstr ""
+
+# Extracted string
+msgid "Short Name / Abbreviation"
+msgstr ""
+
+# Extracted string
+msgid "Current Academic Year"
+msgstr ""
+
+# Extracted string
+msgid "Principal / Director Name"
+msgstr ""
+
+# Extracted string
+msgid "Public Email"
+msgstr ""
+
+# Extracted string
+msgid "Website URL"
+msgstr ""
+
+# Extracted string
+msgid "Physical Address"
+msgstr ""
+
+# Extracted string
+msgid "School Description (Optional)"
+msgstr ""
+
+# Extracted string
+msgid "Manage school profile, branding, and system configurations."
+msgstr ""
+
+# Extracted string
+msgid "System settings updated successfully"
+msgstr ""
+
+# Extracted string
+msgid "Select language"
+msgstr ""
+
+# Extracted string
+msgid "Example: Use one device only. Do not leave fullscreen, switch tabs, copy, paste, print, or search during the exam."
+msgstr ""
+
+# Extracted string
+msgid "System Configuration"
+msgstr ""
+
+# Extracted string
+msgid "Localization, storage, and automated system behaviors."
+msgstr ""
+
+# Extracted string
+msgid "Localization"
+msgstr ""
+
+# Extracted string
+msgid "Timezone"
+msgstr ""
+
+# Extracted string
+msgid "Date Format"
+msgstr ""
+
+# Extracted string
+msgid "MM/DD/YYYY (12/31/2025)"
+msgstr ""
+
+# Extracted string
+msgid "DD/MM/YYYY (31/12/2025)"
+msgstr ""
+
+# Extracted string
+msgid "YYYY-MM-DD (2025-12-31)"
+msgstr ""
+
+# Extracted string
+msgid "Currency"
+msgstr ""
+
+# Extracted string
+msgid "Storage & Maintenance"
+msgstr ""
+
+# Extracted string
+msgid "Max File Upload Size (MB)"
+msgstr ""
+
+# Extracted string
+msgid "Maximum allowed size for student assignments and resources."
+msgstr ""
+
+# Extracted string
+msgid "Automated Daily Backups"
+msgstr ""
+
+# Extracted string
+msgid "Create a database snapshot every night at 2:00 AM."
+msgstr ""
+
+# Extracted string
+msgid "System Security"
+msgstr ""
+
+# Extracted string
+msgid "Make sure to regularly review role permissions and limit file upload sizes to prevent abuse."
+msgstr ""
+
+# Extracted string
+msgid "Lockdown Browser Policy"
+msgstr ""
+
+# Extracted string
+msgid "Controls applied when students open an exam-taking session."
+msgstr ""
+
+# Extracted string
+msgid "Enable Lockdown Policy"
+msgstr ""
+
+# Extracted string
+msgid "Require students to start exams in monitored mode."
+msgstr ""
+
+# Extracted string
+msgid "Require Fullscreen"
+msgstr ""
+
+# Extracted string
+msgid "Record a warning if fullscreen is exited."
+msgstr ""
+
+# Extracted string
+msgid "Block Clipboard"
+msgstr ""
+
+# Extracted string
+msgid "Block copy, cut, paste, and drag actions."
+msgstr ""
+
+# Extracted string
+msgid "Block Right Click"
+msgstr ""
+
+# Extracted string
+msgid "Disable the browser context menu during exams."
+msgstr ""
+
+# Extracted string
+msgid "Block Shortcuts"
+msgstr ""
+
+# Extracted string
+msgid "Block print, save, find, view source, and developer shortcuts."
+msgstr ""
+
+# Extracted string
+msgid "Auto-submit Violations"
+msgstr ""
+
+# Extracted string
+msgid "Submit the attempt when the warning limit is reached."
+msgstr ""
+
+# Extracted string
+msgid "Warning Limit"
+msgstr ""
+
+# Extracted string
+msgid "Recommended: 3 warnings."
+msgstr ""
+
+# Extracted string
+msgid "Student Instructions"
+msgstr ""
+
+# Extracted string
+msgid "Save Settings"
+msgstr ""
+
+# Extracted string
+msgid "Percentage"
+msgstr ""
+
+# Extracted string
+msgid "My Attendance"
+msgstr ""
+
+# Extracted string
+msgid "Track your daily presence and punctuality."
+msgstr ""
+
+# Extracted string
+msgid "Attendance History"
+msgstr ""
+
+# Extracted string
+msgid "View detailed records for the selected period"
+msgstr ""
+
+# Extracted string
+msgid "Remarks"
+msgstr ""
+
+# Extracted string
+msgid "Attendance Policy"
+msgstr ""
+
+# Extracted string
+msgid "Maintenance of 75% attendance is mandatory to appear for end-of-year examinations. If you have been absent due to medical reasons, please submit your medical certificate to the school office within 3 days."
+msgstr ""
+
+# Extracted string
+msgid "Welcome back! 👋"
+msgstr ""
+
+# Extracted string
+msgid "My Profile"
+msgstr ""
+
+# Extracted string
+msgid "Stats"
+msgstr ""
+
+# Extracted string
+msgid "Scheduled assessments for your classes"
+msgstr ""
+
+# Extracted string
+msgid "View All"
+msgstr ""
+
+# Extracted string
+msgid "Recent Results"
+msgstr ""
+
+# Extracted string
+msgid "Your performance in recent assessments"
+msgstr ""
+
+# Extracted string
+msgid "All Grades"
+msgstr ""
+
+# Extracted string
+msgid "No announcements right now."
+msgstr ""
+
+# Extracted string
+msgid "Payment Due"
+msgstr ""
+
+# Extracted string
+msgid "Go to Fees"
+msgstr ""
+
+# Extracted string
+msgid "New in Library"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load your documents"
+msgstr ""
+
+# Extracted string
+msgid "My Documents"
+msgstr ""
+
+# Extracted string
+msgid "Your official report cards, transcripts and certificates."
+msgstr ""
+
+# Extracted string
+msgid ") : docs.length === 0 ? ("
+msgstr ""
+
+# Extracted string
+msgid "No documents have been issued to you yet."
+msgstr ""
+
+# Extracted string
+msgid "Open / Download"
+msgstr ""
+
+# Extracted string
+msgid "Opening ${exam.title}…"
+msgstr ""
+
+# Extracted string
+msgid "Examinations"
+msgstr ""
+
+# Extracted string
+msgid "View available exams and your submission history."
+msgstr ""
+
+# Extracted string
+msgid "All caught up!"
+msgstr ""
+
+# Extracted string
+msgid "No pending exams or assignments found."
+msgstr ""
+
+# Extracted string
+msgid "Assessment Name"
+msgstr ""
+
+# Extracted string
+msgid "Submitted At"
+msgstr ""
+
+# Extracted string
+msgid "Integrity Policy"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load your fee statement."
+msgstr ""
+
+# Extracted string
+msgid "Online payment is not enabled yet"
+msgstr ""
+
+# Extracted string
+msgid "No receipt available"
+msgstr ""
+
+# Extracted string
+msgid "Receipt ${tx.receiptNumber || ''}"
+msgstr ""
+
+# Extracted string
+msgid "No statement to print yet."
+msgstr ""
+
+# Extracted string
+msgid "Online portal payments are coming soon."
+msgstr ""
+
+# Extracted string
+msgid "Bank transfer details"
+msgstr ""
+
+# Extracted string
+msgid "For payment help, contact the accounts office."
+msgstr ""
+
+# Extracted string
+msgid "Manage your school fees, payment history, and receipts."
+msgstr ""
+
+# Extracted string
+msgid "Loading your fee statement…"
+msgstr ""
+
+# Extracted string
+msgid "Current Outstanding"
+msgstr ""
+
+# Extracted string
+msgid "Due Date"
+msgstr ""
+
+# Extracted string
+msgid "Pay Now"
+msgstr ""
+
+# Extracted string
+msgid "Total Billed"
+msgstr ""
+
+# Extracted string
+msgid "No fee records on file yet."
+msgstr ""
+
+# Extracted string
+msgid "Transaction Details"
+msgstr ""
+
+# Extracted string
+msgid "How to Pay"
+msgstr ""
+
+# Extracted string
+msgid "Online Portal"
+msgstr ""
+
+# Extracted string
+msgid "Pay via Card or Mobile Banking"
+msgstr ""
+
+# Extracted string
+msgid "Download Account Details"
+msgstr ""
+
+# Extracted string
+msgid "Payment Support"
+msgstr ""
+
+# Extracted string
+msgid "Fee Policy"
+msgstr ""
+
+# Extracted string
+msgid "Annual Statement"
+msgstr ""
+
+# Extracted string
+msgid "Print or save your complete payment summary as a PDF."
+msgstr ""
+
+# Extracted string
+msgid "Print Statement"
+msgstr ""
+
+# Extracted string
+msgid "No file or link is attached to this resource yet."
+msgstr ""
+
+# Extracted string
+msgid "Search resources by title..."
+msgstr ""
+
+# Extracted string
+msgid "Digital Library"
+msgstr ""
+
+# Extracted string
+msgid "Access study materials, recorded lectures, and reading resources."
+msgstr ""
+
+# Extracted string
+msgid "Loading library…"
+msgstr ""
+
+# Extracted string
+msgid "Copyright Notice"
+msgstr ""
+
+# Extracted string
+msgid "These materials are for private study only. Redistribution to third parties or online platforms is strictly prohibited."
+msgstr ""
+
+# Extracted string
+msgid "Print PDF"
+msgstr ""
+
+# Extracted string
+msgid "General Information"
+msgstr ""
+
+# Extracted string
+msgid "Contact Details"
+msgstr ""
+
+# Extracted string
+msgid "Guardian Details"
+msgstr ""
+
+# Extracted string
+msgid "Need to update info?"
+msgstr ""
+
+# Extracted string
+msgid "For security reasons, students cannot modify their own profile data. Please contact the administrative office if you need to update any information."
+msgstr ""
+
+# Extracted string
+msgid "Monthly Attendance"
+msgstr ""
+
+# Extracted string
+msgid "Current Class"
+msgstr ""
+
+# Extracted string
+msgid "My Results & Performance"
+msgstr ""
+
+# Extracted string
+msgid "Review your scores and academic feedback from teachers."
+msgstr ""
+
+# Extracted string
+msgid "Download Transcript"
+msgstr ""
+
+# Extracted string
+msgid "Performance Analytics"
+msgstr ""
+
+# Extracted string
+msgid "AVG"
+msgstr ""
+
+# Extracted string
+msgid "GPA Equivalent"
+msgstr ""
+
+# Extracted string
+msgid "Credits Earned"
+msgstr ""
+
+# Extracted string
+msgid "Performance summary is calculated from graded assessments available in the live system."
+msgstr ""
+
+# Extracted string
+msgid "Achievement Highlights"
+msgstr ""
+
+# Extracted string
+msgid "No achievement highlights are available yet."
+msgstr ""
+
+# Extracted string
+msgid "Recent Graded Assessments"
+msgstr ""
+
+# Extracted string
+msgid "Class Avg"
+msgstr ""
+
+# Extracted string
+msgid "Position"
+msgstr ""
+
+# Extracted string
+msgid "Top 10%"
+msgstr ""
+
+# Extracted string
+msgid "Teacher's Feedback"
+msgstr ""
+
+# Extracted string
+msgid "View Full Paper"
+msgstr ""
+
+# Extracted string
+msgid "Analysis Report"
+msgstr ""
+
+# Extracted string
+msgid "Search video lessons..."
+msgstr ""
+
+# Extracted string
+msgid "Watch recorded lessons and instructional videos from your teachers."
+msgstr ""
+
+# Extracted string
+msgid "Loading videos..."
+msgstr ""
+
+# Extracted string
+msgid "Clear filters"
+msgstr ""
+
+# Extracted string
+msgid "Loading student details..."
+msgstr ""
+
+# Extracted string
+msgid "Student profile not found."
+msgstr ""
+
+# Extracted string
+msgid "Back to Students"
+msgstr ""
+
+# Extracted string
+msgid "Back to Profile"
+msgstr ""
+
+# Extracted string
+msgid "Edit Student Details"
+msgstr ""
+
+# Extracted string
+msgid "Profile preview"
+msgstr ""
+
+# Extracted string
+msgid "e.g. ST-2024-001"
+msgstr ""
+
+# Extracted string
+msgid "Enter student's full name"
+msgstr ""
+
+# Extracted string
+msgid "Nickname / preferred name"
+msgstr ""
+
+# Extracted string
+msgid "Select gender"
+msgstr ""
+
+# Extracted string
+msgid "Select country"
+msgstr ""
+
+# Extracted string
+msgid "Full address"
+msgstr ""
+
+# Extracted string
+msgid "Select ID type"
+msgstr ""
+
+# Extracted string
+msgid "Enter selected ID number"
+msgstr ""
+
+# Extracted string
+msgid "Name of previous school (if any)"
+msgstr ""
+
+# Extracted string
+msgid "Name of parent/guardian"
+msgstr ""
+
+# Extracted string
+msgid "e.g. Mother, Uncle"
+msgstr ""
+
+# Extracted string
+msgid "guardian@example.com"
+msgstr ""
+
+# Extracted string
+msgid "e.g. Aunt, Friend"
+msgstr ""
+
+# Extracted string
+msgid "Conditions, medications, ongoing care…"
+msgstr ""
+
+# Extracted string
+msgid "Known allergies (food, medication, etc.)"
+msgstr ""
+
+# Extracted string
+msgid "Any background notes for staff…"
+msgstr ""
+
+# Extracted string
+msgid "Personal Information"
+msgstr ""
+
+# Extracted string
+msgid "Profile Photo"
+msgstr ""
+
+# Extracted string
+msgid "Choose Photo"
+msgstr ""
+
+# Extracted string
+msgid "PNG, JPG, WEBP, GIF, or SVG up to 5 MB."
+msgstr ""
+
+# Extracted string
+msgid "Full Name"
+msgstr ""
+
+# Extracted string
+msgid "Preferred Name"
+msgstr ""
+
+# Extracted string
+msgid "Date of Birth"
+msgstr ""
+
+# Extracted string
+msgid "Country / Nationality"
+msgstr ""
+
+# Extracted string
+msgid "Student Contact Number"
+msgstr ""
+
+# Extracted string
+msgid "Current Address"
+msgstr ""
+
+# Extracted string
+msgid "Identity &amp; Legal Documentation"
+msgstr ""
+
+# Extracted string
+msgid "ID Type"
+msgstr ""
+
+# Extracted string
+msgid "ID Number"
+msgstr ""
+
+# Extracted string
+msgid "Legal Documentation Status"
+msgstr ""
+
+# Extracted string
+msgid "Academic Background &amp; Enrollment"
+msgstr ""
+
+# Extracted string
+msgid "Current Education Level"
+msgstr ""
+
+# Extracted string
+msgid "Previous Education Level"
+msgstr ""
+
+# Extracted string
+msgid "Previous School"
+msgstr ""
+
+# Extracted string
+msgid "Enrollment Date"
+msgstr ""
+
+# Extracted string
+msgid "Student Status"
+msgstr ""
+
+# Extracted string
+msgid "Guardian Information"
+msgstr ""
+
+# Extracted string
+msgid "Guardian Name"
+msgstr ""
+
+# Extracted string
+msgid "Relationship"
+msgstr ""
+
+# Extracted string
+msgid "Guardian Phone"
+msgstr ""
+
+# Extracted string
+msgid "Guardian Email"
+msgstr ""
+
+# Extracted string
+msgid "Emergency Contact"
+msgstr ""
+
+# Extracted string
+msgid "Contact Name"
+msgstr ""
+
+# Extracted string
+msgid "Contact Phone"
+msgstr ""
+
+# Extracted string
+msgid "Health &amp; Medical"
+msgstr ""
+
+# Extracted string
+msgid "Medical Information"
+msgstr ""
+
+# Extracted string
+msgid "Allergies"
+msgstr ""
+
+# Extracted string
+msgid "Internal Notes"
+msgstr ""
+
+# Extracted string
+msgid "Add New Student"
+msgstr ""
+
+# Extracted string
+msgid "Enter details to enroll a new student into the system."
+msgstr ""
+
+# Extracted string
+msgid "Failed to load student profile."
+msgstr ""
+
+# Extracted string
+msgid "Loading student profile..."
+msgstr ""
+
+# Extracted string
+msgid "Edit Profile"
+msgstr ""
+
+# Extracted string
+msgid "Generate Report"
+msgstr ""
+
+# Extracted string
+msgid "Country"
+msgstr ""
+
+# Extracted string
+msgid "Contact Information"
+msgstr ""
+
+# Extracted string
+msgid "Parent/Guardian"
+msgstr ""
+
+# Extracted string
+msgid "Student Contact"
+msgstr ""
+
+# Extracted string
+msgid "Emergency"
+msgstr ""
+
+# Extracted string
+msgid "Remarks & Notes"
+msgstr ""
+
+# Extracted string
+msgid "Attendance Rate"
+msgstr ""
+
+# Extracted string
+msgid "Current Grade"
+msgstr ""
+
+# Extracted string
+msgid "Attendance summary is calculated from saved attendance records."
+msgstr ""
+
+# Extracted string
+msgid "No attendance records found for this student."
+msgstr ""
+
+# Extracted string
+msgid "Graded Exams"
+msgstr ""
+
+# Extracted string
+msgid "Pending Exams"
+msgstr ""
+
+# Extracted string
+msgid "Exam Results"
+msgstr ""
+
+# Extracted string
+msgid "No exam results or pending exams found for this student."
+msgstr ""
+
+# Extracted string
+msgid "Total Fees"
+msgstr ""
+
+# Extracted string
+msgid "No fee payment records found for this student."
+msgstr ""
+
+# Extracted string
+msgid "Case records will be displayed here."
+msgstr ""
+
+# Extracted string
+msgid "Search by name or ID..."
+msgstr ""
+
+# Extracted string
+msgid "Students list"
+msgstr ""
+
+# Extracted string
+msgid "Manage student records, enrollment, and academic profiles."
+msgstr ""
+
+# Extracted string
+msgid "Add Student"
+msgstr ""
+
+# Extracted string
+msgid "List of all students including name, student ID, class, gender, enrollment date, and status"
+msgstr ""
+
+# Extracted string
+msgid "ID / Gender"
+msgstr ""
+
+# Extracted string
+msgid "Open menu"
+msgstr ""
+
+# Extracted string
+msgid "View Profile"
+msgstr ""
+
+# Extracted string
+msgid "No students found matching your filters."
+msgstr ""
+
+# Extracted string
+msgid "Enrolled"
+msgstr ""
+
+# Extracted string
+msgid "Subject details updated"
+msgstr ""
+
+# Extracted string
+msgid "e.g. Mathematical Reasoning"
+msgstr ""
+
+# Extracted string
+msgid "e.g. GED-MATH"
+msgstr ""
+
+# Extracted string
+msgid "Optional description of what the subject covers..."
+msgstr ""
+
+# Extracted string
+msgid "Back to Subjects"
+msgstr ""
+
+# Extracted string
+msgid "Edit Subject Details"
+msgstr ""
+
+# Extracted string
+msgid "Update academic subject information."
+msgstr ""
+
+# Extracted string
+msgid "Subject Name"
+msgstr ""
+
+# Extracted string
+msgid "Subject Code"
+msgstr ""
+
+# Extracted string
+msgid "Subject created successfully"
+msgstr ""
+
+# Extracted string
+msgid "Create New Subject"
+msgstr ""
+
+# Extracted string
+msgid "Define a new subject for the school's curriculum."
+msgstr ""
+
+# Extracted string
+msgid "Create Subject"
+msgstr ""
+
+# Extracted string
+msgid "You do not have permission to view this subject"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load subject"
+msgstr ""
+
+# Extracted string
+msgid "Subject has been archived."
+msgstr ""
+
+# Extracted string
+msgid "Loading subject..."
+msgstr ""
+
+# Extracted string
+msgid "Subject not found."
+msgstr ""
+
+# Extracted string
+msgid "Edit Subject"
+msgstr ""
+
+# Extracted string
+msgid "Related Exams"
+msgstr ""
+
+# Extracted string
+msgid "Syllabus / Description"
+msgstr ""
+
+# Extracted string
+msgid "No classes associated with this subject."
+msgstr ""
+
+# Extracted string
+msgid "Employment"
+msgstr ""
+
+# Extracted string
+msgid "No teachers assigned to teach this subject."
+msgstr ""
+
+# Extracted string
+msgid "No exams created for this subject yet."
+msgstr ""
+
+# Extracted string
+msgid "You do not have permission to view subjects"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load subjects"
+msgstr ""
+
+# Extracted string
+msgid "Search by name, code, or level..."
+msgstr ""
+
+# Extracted string
+msgid "Subject Management"
+msgstr ""
+
+# Extracted string
+msgid "Manage academic subjects and curriculum."
+msgstr ""
+
+# Extracted string
+msgid "Archive Subject"
+msgstr ""
+
+# Extracted string
+msgid "Restore Subject"
+msgstr ""
+
+# Extracted string
+msgid "Loading subjects..."
+msgstr ""
+
+# Extracted string
+msgid ") : filteredSubjects.length === 0 ? ("
+msgstr ""
+
+# Extracted string
+msgid "No subjects found"
+msgstr ""
+
+# Extracted string
+msgid "Message sent successfully!"
+msgstr ""
+
+# Extracted string
+msgid "Failed to send message"
+msgstr ""
+
+# Extracted string
+msgid "Error sending message"
+msgstr ""
+
+# Extracted string
+msgid "Please provide both subject and message"
+msgstr ""
+
+# Extracted string
+msgid "Search students..."
+msgstr ""
+
+# Extracted string
+msgid "Send message"
+msgstr ""
+
+# Extracted string
+msgid "Message subject"
+msgstr ""
+
+# Extracted string
+msgid "Type your message here..."
+msgstr ""
+
+# Extracted string
+msgid "= 60 && parseInt(s.attendance)"
+msgstr ""
+
+# Extracted string
+msgid "Group Message"
+msgstr ""
+
+# Extracted string
+msgid "Download Roll Call"
+msgstr ""
+
+# Extracted string
+msgid "Exam History"
+msgstr ""
+
+# Extracted string
+msgid "Attendance:"
+msgstr ""
+
+# Extracted string
+msgid "All Students"
+msgstr ""
+
+# Extracted string
+msgid "High (≥80%)"
+msgstr ""
+
+# Extracted string
+msgid "Medium (60-79%)"
+msgstr ""
+
+# Extracted string
+msgid "Low (&lt;60%)"
+msgstr ""
+
+# Extracted string
+msgid "Average monthly attendance rates for this class."
+msgstr ""
+
+# Extracted string
+msgid ") : !attendanceData || attendanceData.rows.length === 0 ? ("
+msgstr ""
+
+# Extracted string
+msgid ") : examsData.length === 0 ? ("
+msgstr ""
+
+# Extracted string
+msgid "No exams available for this class."
+msgstr ""
+
+# Extracted string
+msgid "Average Score"
+msgstr ""
+
+# Extracted string
+msgid "Message"
+msgstr ""
+
+# Extracted string
+msgid "Send Message"
+msgstr ""
+
+# Extracted string
+msgid "Please fill in all required fields"
+msgstr ""
+
+# Extracted string
+msgid "Lesson plan created successfully!"
+msgstr ""
+
+# Extracted string
+msgid "Failed to create lesson plan"
+msgstr ""
+
+# Extracted string
+msgid "Lesson title"
+msgstr ""
+
+# Extracted string
+msgid "Room number or location"
+msgstr ""
+
+# Extracted string
+msgid "Subject (optional)"
+msgstr ""
+
+# Extracted string
+msgid "Brief description of the lesson..."
+msgstr ""
+
+# Extracted string
+msgid "• Students will be able to...&#10;• Understand the concept of...&#10;• Apply knowledge to..."
+msgstr ""
+
+# Extracted string
+msgid "• Textbook page 45-47&#10;• Whiteboard and markers&#10;• Student worksheets..."
+msgstr ""
+
+# Extracted string
+msgid "• Introduction (5 min): Review previous lesson&#10;• Main activity (30 min): Group work&#10;• Practice (15 min): Individual exercises..."
+msgstr ""
+
+# Extracted string
+msgid "How will you assess student understanding?"
+msgstr ""
+
+# Extracted string
+msgid "Back to Dashboard"
+msgstr ""
+
+# Extracted string
+msgid "Lesson Planner"
+msgstr ""
+
+# Extracted string
+msgid "Plan and manage your lesson schedules"
+msgstr ""
+
+# Extracted string
+msgid "New Lesson Plan"
+msgstr ""
+
+# Extracted string
+msgid "Create New Lesson Plan"
+msgstr ""
+
+# Extracted string
+msgid "Class *"
+msgstr ""
+
+# Extracted string
+msgid "Date *"
+msgstr ""
+
+# Extracted string
+msgid "Learning Objectives (one per line)"
+msgstr ""
+
+# Extracted string
+msgid "Materials Needed (one per line)"
+msgstr ""
+
+# Extracted string
+msgid "Activities (one per line)"
+msgstr ""
+
+# Extracted string
+msgid "Assessment Method"
+msgstr ""
+
+# Extracted string
+msgid "Create Lesson Plan"
+msgstr ""
+
+# Extracted string
+msgid "Upcoming Lessons"
+msgstr ""
+
+# Extracted string
+msgid "No upcoming lesson plans. Create your first lesson plan to get started!"
+msgstr ""
+
+# Extracted string
+msgid "Objectives:"
+msgstr ""
+
+# Extracted string
+msgid "${unmarked} student${unmarked > 1 ? 's' : ''} not yet marked."
+msgstr ""
+
+# Extracted string
+msgid "Attendance saved successfully!"
+msgstr ""
+
+# Extracted string
+msgid "Mark All Present"
+msgstr ""
+
+# Extracted string
+msgid "Selected Class"
+msgstr ""
+
+# Extracted string
+msgid "All records are logged with server timestamp."
+msgstr ""
+
+# Extracted string
+msgid "Assigned Classes"
+msgstr ""
+
+# Extracted string
+msgid "Course Progress"
+msgstr ""
+
+# Extracted string
+msgid "Class Details"
+msgstr ""
+
+# Extracted string
+msgid "Mark Attendance"
+msgstr ""
+
+# Extracted string
+msgid "New Assessment"
+msgstr ""
+
+# Extracted string
+msgid "Full Schedule"
+msgstr ""
+
+# Extracted string
+msgid "Module Name"
+msgstr ""
+
+# Extracted string
+msgid "Location"
+msgstr ""
+
+# Extracted string
+msgid "Attendance This Week"
+msgstr ""
+
+# Extracted string
+msgid "Above 90%"
+msgstr ""
+
+# Extracted string
+msgid "Below 90%"
+msgstr ""
+
+# Extracted string
+msgid "Manage Calendar"
+msgstr ""
+
+# Extracted string
+msgid "Full Gradebook"
+msgstr ""
+
+# Extracted string
+msgid "Assessments & Exams"
+msgstr ""
+
+# Extracted string
+msgid "Create, manage, and grade exams for your assigned classes."
+msgstr ""
+
+# Extracted string
+msgid "Create New Assessment"
+msgstr ""
+
+# Extracted string
+msgid "All Assessments"
+msgstr ""
+
+# Extracted string
+msgid "Active / Grading"
+msgstr ""
+
+# Extracted string
+msgid "Grade Now"
+msgstr ""
+
+# Extracted string
+msgid ") : exam.status === 'DRAFT' ? ("
+msgstr ""
+
+# Extracted string
+msgid "Edit Draft"
+msgstr ""
+
+# Extracted string
+msgid "View Results"
+msgstr ""
+
+# Extracted string
+msgid "Clear Search"
+msgstr ""
+
+# Extracted string
+msgid "Create Assessment"
+msgstr ""
+
+# Extracted string
+msgid "Failed to track download"
+msgstr ""
+
+# Extracted string
+msgid "Could not copy link. Please copy the URL manually."
+msgstr ""
+
+# Extracted string
+msgid "\"${resource.title}\" is not yet stored on the server."
+msgstr ""
+
+# Extracted string
+msgid "Link copied to clipboard!"
+msgstr ""
+
+# Extracted string
+msgid "No URL available for this resource"
+msgstr ""
+
+# Extracted string
+msgid "Edit functionality coming soon."
+msgstr ""
+
+# Extracted string
+msgid "Delete functionality coming soon."
+msgstr ""
+
+# Extracted string
+msgid "Copy share link"
+msgstr ""
+
+# Extracted string
+msgid "More options"
+msgstr ""
+
+# Extracted string
+msgid "Access shared materials and manage your own teaching uploads."
+msgstr ""
+
+# Extracted string
+msgid "All Formats"
+msgstr ""
+
+# Extracted string
+msgid "Archives"
+msgstr ""
+
+# Extracted string
+msgid ": resource.visibility === 'PRIVATE' ?"
+msgstr ""
+
+# Extracted string
+msgid "Uploaded By"
+msgstr ""
+
+# Extracted string
+msgid "Copy Link"
+msgstr ""
+
+# Extracted string
+msgid "Delete (Coming Soon)"
+msgstr ""
+
+# Extracted string
+msgid "Report file not available"
+msgstr ""
+
+# Extracted string
+msgid "View report details"
+msgstr ""
+
+# Extracted string
+msgid "Academic Reporting"
+msgstr ""
+
+# Extracted string
+msgid "Recently Generated"
+msgstr ""
+
+# Extracted string
+msgid "No reports generated yet. Use the options above to create your first report."
+msgstr ""
+
+# Extracted string
+msgid "Security Policy Reminder"
+msgstr ""
+
+# Extracted string
+msgid "Request Access Profile"
+msgstr ""
+
+# Extracted string
+msgid "Schedule exported as CSV!"
+msgstr ""
+
+# Extracted string
+msgid "Filter options coming soon."
+msgstr ""
+
+# Extracted string
+msgid "Previous week"
+msgstr ""
+
+# Extracted string
+msgid "Next week"
+msgstr ""
+
+# Extracted string
+msgid "Print Schedule"
+msgstr ""
+
+# Extracted string
+msgid "Export"
+msgstr ""
+
+# Extracted string
+msgid "Week"
+msgstr ""
+
+# Extracted string
+msgid "Day"
+msgstr ""
+
+# Extracted string
+msgid "Filters"
+msgstr ""
+
+# Extracted string
+msgid "Upcoming Session"
+msgstr ""
+
+# Extracted string
+msgid "Start Session Roll Call"
+msgstr ""
+
+# Extracted string
+msgid "No upcoming sessions scheduled."
+msgstr ""
+
+# Extracted string
+msgid "Active Modules"
+msgstr ""
+
+# Extracted string
+msgid "History"
+msgstr ""
+
+# Extracted string
+msgid "Video deleted"
+msgstr ""
+
+# Extracted string
+msgid "Failed to delete video"
+msgstr ""
+
+# Extracted string
+msgid "Are you sure you want to delete this video?"
+msgstr ""
+
+# Extracted string
+msgid "Manage and share instructional videos with your students."
+msgstr ""
+
+# Extracted string
+msgid "No videos found"
+msgstr ""
+
+# Extracted string
+msgid "Add a new video lesson to get started."
+msgstr ""
+
+# Extracted string
+msgid "Teacher profile updated"
+msgstr ""
+
+# Extracted string
+msgid "Failed to update teacher"
+msgstr ""
+
+# Extracted string
+msgid "Edit Teacher Profile"
+msgstr ""
+
+# Extracted string
+msgid "Update account information and professional details for faculty members."
+msgstr ""
+
+# Extracted string
+msgid "First Name"
+msgstr ""
+
+# Extracted string
+msgid "Last Name"
+msgstr ""
+
+# Extracted string
+msgid "Residential Address"
+msgstr ""
+
+# Extracted string
+msgid "Professional Details"
+msgstr ""
+
+# Extracted string
+msgid "Employment Type"
+msgstr ""
+
+# Extracted string
+msgid "Full Time"
+msgstr ""
+
+# Extracted string
+msgid "Part Time"
+msgstr ""
+
+# Extracted string
+msgid "Subjects (Comma separated)"
+msgstr ""
+
+# Extracted string
+msgid "Notes/Remarks"
+msgstr ""
+
+# Extracted string
+msgid "Profile Picture"
+msgstr ""
+
+# Extracted string
+msgid "Current Photo"
+msgstr ""
+
+# Extracted string
+msgid "Discard Changes"
+msgstr ""
+
+# Extracted string
+msgid "Teacher added — share their temporary password"
+msgstr ""
+
+# Extracted string
+msgid "Teacher added successfully"
+msgstr ""
+
+# Extracted string
+msgid "e.g. Htet Wai Yan"
+msgstr ""
+
+# Extracted string
+msgid "Select education level"
+msgstr ""
+
+# Extracted string
+msgid "teacher@lms.edu"
+msgstr ""
+
+# Extracted string
+msgid "Full address..."
+msgstr ""
+
+# Extracted string
+msgid "Mathematics, Science, English"
+msgstr ""
+
+# Extracted string
+msgid "Optional notes about the teacher..."
+msgstr ""
+
+# Extracted string
+msgid "Teacher profile preview"
+msgstr ""
+
+# Extracted string
+msgid "Back to Teachers"
+msgstr ""
+
+# Extracted string
+msgid "Add New Teacher"
+msgstr ""
+
+# Extracted string
+msgid "Fill in the details to register a new teacher in the system."
+msgstr ""
+
+# Extracted string
+msgid "Education Level"
+msgstr ""
+
+# Extracted string
+msgid "JPG, PNG, WEBP, or SVG up to 5 MB."
+msgstr ""
+
+# Extracted string
+msgid "You do not have permission to view teacher profiles"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load teacher profile"
+msgstr ""
+
+# Extracted string
+msgid "Login account created successfully"
+msgstr ""
+
+# Extracted string
+msgid "Loading teacher profile..."
+msgstr ""
+
+# Extracted string
+msgid "Teacher profile not found."
+msgstr ""
+
+# Extracted string
+msgid "Manage Account"
+msgstr ""
+
+# Extracted string
+msgid "Activity Logs"
+msgstr ""
+
+# Extracted string
+msgid "Basic Details"
+msgstr ""
+
+# Extracted string
+msgid "Contact Info"
+msgstr ""
+
+# Extracted string
+msgid "Official Work Email"
+msgstr ""
+
+# Extracted string
+msgid "Personal Contact Number"
+msgstr ""
+
+# Extracted string
+msgid "Permanent Residence"
+msgstr ""
+
+# Extracted string
+msgid "Professional Notes"
+msgstr ""
+
+# Extracted string
+msgid "No classes assigned yet."
+msgstr ""
+
+# Extracted string
+msgid "No subjects assigned."
+msgstr ""
+
+# Extracted string
+msgid "Activity tracking will be implemented soon."
+msgstr ""
+
+# Extracted string
+msgid "You do not have permission to view teachers"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load teachers"
+msgstr ""
+
+# Extracted string
+msgid "Search by name, ID, email, or subject..."
+msgstr ""
+
+# Extracted string
+msgid "Teacher Management"
+msgstr ""
+
+# Extracted string
+msgid "Manage faculty staff, assignments, and profiles."
+msgstr ""
+
+# Extracted string
+msgid "Loading teachers..."
+msgstr ""
+
+# Extracted string
+msgid ") : filteredTeachers.length === 0 ? ("
+msgstr ""
+
+# Extracted string
+msgid "No teachers found"
+msgstr ""
+
+# Extracted string
+msgid "Archive Teacher"
+msgstr ""
+
+# Extracted string
+msgid "Try adjusting your filters or search term."
+msgstr ""
+
+# Extracted string
+msgid "Schedule item not found"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load schedule item"
+msgstr ""
+
+# Extracted string
+msgid "Schedule item updated successfully"
+msgstr ""
+
+# Extracted string
+msgid "Edit Schedule Item"
+msgstr ""
+
+# Extracted string
+msgid "Modify the timing or assignment for this timetable slot."
+msgstr ""
+
+# Extracted string
+msgid "Schedule item created successfully"
+msgstr ""
+
+# Extracted string
+msgid "New Schedule Item"
+msgstr ""
+
+# Extracted string
+msgid "Add a new subject slot to the weekly timetable."
+msgstr ""
+
+# Extracted string
+msgid "Failed to load timetable"
+msgstr ""
+
+# Extracted string
+msgid "Timetable slot deleted"
+msgstr ""
+
+# Extracted string
+msgid "Failed to delete slot"
+msgstr ""
+
+# Extracted string
+msgid "Delete this timetable slot?"
+msgstr ""
+
+# Extracted string
+msgid "Academic year"
+msgstr ""
+
+# Extracted string
+msgid "School Timetable"
+msgstr ""
+
+# Extracted string
+msgid "Weekly class periods, teacher assignments, rooms, holidays, events, substitutions, and cancellations."
+msgstr ""
+
+# Extracted string
+msgid "Add Slot"
+msgstr ""
+
+# Extracted string
+msgid "MRLC Weekly Timetable"
+msgstr ""
+
+# Extracted string
+msgid "Substituted"
+msgstr ""
+
+# Extracted string
+msgid "Cancelled"
+msgstr ""
+
+# Extracted string
+msgid "All types"
+msgstr ""
+
+# Extracted string
+msgid "Class periods"
+msgstr ""
+
+# Extracted string
+msgid "Meetings"
+msgstr ""
+
+# Extracted string
+msgid "Holidays"
+msgstr ""
+
+# Extracted string
+msgid "Special events"
+msgstr ""
+
+# Extracted string
+msgid "Loading timetable..."
+msgstr ""
+
+# Extracted string
+msgid ") : timeSlots.length === 0 ? ("
+msgstr ""
+
+# Extracted string
+msgid "No timetable entries found."
+msgstr ""
+
+# Extracted string
+msgid "Role permissions updated successfully"
+msgstr ""
+
+# Extracted string
+msgid "Failed to update role permissions"
+msgstr ""
+
+# Extracted string
+msgid "Role permissions reset to defaults"
+msgstr ""
+
+# Extracted string
+msgid "Select a role"
+msgstr ""
+
+# Extracted string
+msgid "Role & Permissions Management"
+msgstr ""
+
+# Extracted string
+msgid "Configure which permissions each role has access to. Changes will affect all users with the selected role."
+msgstr ""
+
+# Extracted string
+msgid "Select Role to Configure"
+msgstr ""
+
+# Extracted string
+msgid "Permissions will be applied system-wide. Make changes carefully."
+msgstr ""
+
+# Extracted string
+msgid "You have unsaved changes. Don't forget to save before closing."
+msgstr ""
+
+# Extracted string
+msgid "Current Role Permissions Overview"
+msgstr ""
+
+# Extracted string
+msgid "Reset to Defaults"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load user"
+msgstr ""
+
+# Extracted string
+msgid "User account updated"
+msgstr ""
+
+# Extracted string
+msgid "e.g. Full Name"
+msgstr ""
+
+# Extracted string
+msgid "e.g. jdoe"
+msgstr ""
+
+# Extracted string
+msgid "e.g. jdoe@school.edu"
+msgstr ""
+
+# Extracted string
+msgid "Select role"
+msgstr ""
+
+# Extracted string
+msgid "Back to Users"
+msgstr ""
+
+# Extracted string
+msgid "Edit User Account"
+msgstr ""
+
+# Extracted string
+msgid "Modify system account details and permissions."
+msgstr ""
+
+# Extracted string
+msgid "Account Details"
+msgstr ""
+
+# Extracted string
+msgid "Full Name *"
+msgstr ""
+
+# Extracted string
+msgid "Username *"
+msgstr ""
+
+# Extracted string
+msgid "Role & Permissions"
+msgstr ""
+
+# Extracted string
+msgid "System Role *"
+msgstr ""
+
+# Extracted string
+msgid "Administrator"
+msgstr ""
+
+# Extracted string
+msgid "Account Status *"
+msgstr ""
+
+# Extracted string
+msgid "Disabled"
+msgstr ""
+
+# Extracted string
+msgid "Profile Linking (Optional)"
+msgstr ""
+
+# Extracted string
+msgid "Link to Teacher Profile"
+msgstr ""
+
+# Extracted string
+msgid "— Not linked —"
+msgstr ""
+
+# Extracted string
+msgid ") : watch('role') === 'STUDENT' ? ("
+msgstr ""
+
+# Extracted string
+msgid "Link to Student Profile"
+msgstr ""
+
+# Extracted string
+msgid "Profile linking is only available for Teacher and Student roles."
+msgstr ""
+
+# Extracted string
+msgid "User account created successfully"
+msgstr ""
+
+# Extracted string
+msgid "Create New User"
+msgstr ""
+
+# Extracted string
+msgid "Set up a new system account and assign permissions."
+msgstr ""
+
+# Extracted string
+msgid "Temporary Password *"
+msgstr ""
+
+# Extracted string
+msgid "Create Account"
+msgstr ""
+
+# Extracted string
+msgid "Cannot disable the last active administrator."
+msgstr ""
+
+# Extracted string
+msgid "User status updated."
+msgstr ""
+
+# Extracted string
+msgid "Password must be at least 6 characters."
+msgstr ""
+
+# Extracted string
+msgid "Password reset for ${resetUser.name}. They must change it on next login."
+msgstr ""
+
+# Extracted string
+msgid "Search by name, username, email, or role..."
+msgstr ""
+
+# Extracted string
+msgid "All Roles"
+msgstr ""
+
+# Extracted string
+msgid "At least 6 characters"
+msgstr ""
+
+# Extracted string
+msgid "User Management"
+msgstr ""
+
+# Extracted string
+msgid "Manage user accounts and roles for the school system."
+msgstr ""
+
+# Extracted string
+msgid "Create User"
+msgstr ""
+
+# Extracted string
+msgid "Linked Profile"
+msgstr ""
+
+# Extracted string
+msgid "Last Login"
+msgstr ""
+
+# Extracted string
+msgid "Teacher Profile"
+msgstr ""
+
+# Extracted string
+msgid ") : user.studentId ? ("
+msgstr ""
+
+# Extracted string
+msgid "Student Profile"
+msgstr ""
+
+# Extracted string
+msgid "Edit User"
+msgstr ""
+
+# Extracted string
+msgid "Reset Password"
+msgstr ""
+
+# Extracted string
+msgid "Disable User"
+msgstr ""
+
+# Extracted string
+msgid "Activate User"
+msgstr ""
+
+# Extracted string
+msgid "Set a new password for"
+msgstr ""
+
+# Extracted string
+msgid ". They will be required to change it on their next login."
+msgstr ""
+
+# Extracted string
+msgid "Failed to load video"
+msgstr ""
+
+# Extracted string
+msgid "Video completed! 🎉"
+msgstr ""
+
+# Extracted string
+msgid "Loading video..."
+msgstr ""
+
+# Extracted string
+msgid "Video not found"
+msgstr ""
+
+# Extracted string
+msgid "Back to Video Lessons"
+msgstr ""
+
+# Extracted string
+msgid "This video is only available to teachers."
+msgstr ""
+
+# Extracted string
+msgid ") : isDirectVideo ? ("
+msgstr ""
+
+# Extracted string
+msgid "VIDEO_RESUME_MIN_SECONDS && !isCompleted && ("
+msgstr ""
+
+# Extracted string
+msgid "✓ Completed"
+msgstr ""
+
+# Extracted string
+msgid "Preview not available for this URL."
+msgstr ""
+
+# Extracted string
+msgid "Open in new tab"
+msgstr ""
+
+# Extracted string
+msgid "Open original link"
+msgstr ""
+
+# Extracted string
+msgid "Auto-fetched video thumbnail"
+msgstr ""
+
+# Extracted string
+msgid "Video lesson updated successfully."
+msgstr ""
+
+# Extracted string
+msgid "https://www.youtube.com/watch?v=..."
+msgstr ""
+
+# Extracted string
+msgid "General"
+msgstr ""
+
+# Extracted string
+msgid "Edit Video Lesson"
+msgstr ""
+
+# Extracted string
+msgid "Update the details of this video lesson."
+msgstr ""
+
+# Extracted string
+msgid "How do you want to add the video?"
+msgstr ""
+
+# Extracted string
+msgid "Video URL"
+msgstr ""
+
+# Extracted string
+msgid "Upload File"
+msgstr ""
+
+# Extracted string
+msgid "Video URL *"
+msgstr ""
+
+# Extracted string
+msgid "Supported: YouTube, Vimeo, or direct .mp4/.webm URLs."
+msgstr ""
+
+# Extracted string
+msgid "Upload Video File *"
+msgstr ""
+
+# Extracted string
+msgid "Status *"
+msgstr ""
+
+# Extracted string
+msgid "-- All Classes --"
+msgstr ""
+
+# Extracted string
+msgid "-- General --"
+msgstr ""
+
+# Extracted string
+msgid "Duration (seconds, optional)"
+msgstr ""
+
+# Extracted string
+msgid "Thumbnail URL (Optional)"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load videos"
+msgstr ""
+
+# Extracted string
+msgid "${selectedIds.size} video${selectedIds.size > 1 ? 's' : ''} deleted"
+msgstr ""
+
+# Extracted string
+msgid "Failed to delete some videos"
+msgstr ""
+
+# Extracted string
+msgid "${selectedIds.size} video${selectedIds.size > 1 ? 's' : ''} archived"
+msgstr ""
+
+# Extracted string
+msgid "Failed to archive some videos"
+msgstr ""
+
+# Extracted string
+msgid "${selectedIds.size} video${selectedIds.size > 1 ? 's' : ''} published"
+msgstr ""
+
+# Extracted string
+msgid "Failed to publish some videos"
+msgstr ""
+
+# Extracted string
+msgid "Are you sure you want to delete ${selectedIds.size} video${selectedIds.size > 1 ? 's' : ''}?"
+msgstr ""
+
+# Extracted string
+msgid "Search by title or description..."
+msgstr ""
+
+# Extracted string
+msgid "Browse and manage instructional video content."
+msgstr ""
+
+# Extracted string
+msgid "0 && (isAdmin || isTeacher) && ("
+msgstr ""
+
+# Extracted string
+msgid "Publish"
+msgstr ""
+
+# Extracted string
+msgid "Select All"
+msgstr ""
+
+# Extracted string
+msgid ") : filteredVideos.length === 0 ? ("
+msgstr ""
+
+# Extracted string
+msgid "Clear all filters"
+msgstr ""
+
+# Extracted string
+msgid "Video lesson added successfully."
+msgstr ""
+
+# Extracted string
+msgid "e.g. Introduction to Algebra"
+msgstr ""
+
+# Extracted string
+msgid "Briefly describe what this video covers..."
+msgstr ""
+
+# Extracted string
+msgid "e.g. 1845"
+msgstr ""
+
+# Extracted string
+msgid "Add Video Lesson"
+msgstr ""
+
+# Extracted string
+msgid "Link a YouTube, Vimeo, or direct video URL to the lesson library."
+msgstr ""
+
+# Extracted string
+msgid "Paste a YouTube, Vimeo, or direct .mp4/.webm URL. The player will auto-embed supported links."
+msgstr ""
+
+# Extracted string
+msgid "Save as Draft"
+msgstr ""
+
+# Extracted string
+msgid "Save Video Lesson"
+msgstr ""
+
+# Extracted string
+msgid "auth-state-changed"
+msgstr ""
+
