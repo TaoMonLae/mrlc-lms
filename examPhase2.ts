@@ -718,9 +718,22 @@ export function registerExamPhase2Routes(deps: Deps): void {
         const qs = await prisma.question.findMany({ where: { examId: attempt.examId } });
         const ansByQ: Record<string, any> = {};
         for (const a of attempt.answers) ansByQ[a.questionId] = a;
+        // For legacy MCQs the correct answer is stored as an option *index*; show
+        // the option *text* so it matches the student's (text) answer.
+        const correctText = (q: any) => {
+          if (q.correctAnswer == null) return q.correctAnswer;
+          if (Array.isArray(q.options) && q.options.length) {
+            const idx = Number(q.correctAnswer);
+            if (Number.isInteger(idx) && q.options[idx] != null) {
+              const o = q.options[idx];
+              return String(typeof o === "object" ? (o.text ?? o.value ?? idx) : o);
+            }
+          }
+          return q.correctAnswer;
+        };
         questions = qs.map((q: any) => ({
           id: q.id, text: q.text, passageText: q.passageText ?? null,
-          ...(showCorrect ? { correctAnswer: q.correctAnswer, correctAnswers: q.correctAnswers } : {}),
+          ...(showCorrect ? { correctAnswer: correctText(q), correctAnswers: q.correctAnswers } : {}),
           ...(showExpl ? { explanation: q.explanation } : {}),
           yourAnswer: ansByQ[q.id]?.answerText ?? null,
           pointsAwarded: showScore ? ansByQ[q.id]?.pointsAwarded ?? null : undefined,
@@ -1261,6 +1274,18 @@ function registerGradingAndOps(deps: any) {
         const rand = () => { h = (Math.imul(1103515245, h) + 12345) & 0x7fffffff; return h / 0x7fffffff; };
         for (let i = questions.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [questions[i], questions[j]] = [questions[j], questions[i]]; }
       }
+      // Legacy MCQ stores the correct answer as an option index; show the text.
+      const correctText = (q: any) => {
+        if (q.correctAnswer == null) return q.correctAnswer;
+        if (Array.isArray(q.options) && q.options.length) {
+          const idx = Number(q.correctAnswer);
+          if (Number.isInteger(idx) && q.options[idx] != null) {
+            const o = q.options[idx];
+            return String(typeof o === "object" ? (o.text ?? o.value ?? idx) : o);
+          }
+        }
+        return q.correctAnswer;
+      };
       res.json({
         version,
         school: school ? { name: school.name, logoUrl: (school as any).logoUrl ?? null } : null,
@@ -1270,7 +1295,7 @@ function registerGradingAndOps(deps: any) {
         questions: questions.map((q: any, i: number) => ({
           number: i + 1, id: q.id, text: q.text, type: q.type, points: q.points, options: q.options,
           stimulusId: q.stimulusId, sectionId: q.sectionId,
-          ...(withKey ? { correctAnswer: q.correctAnswer, correctAnswers: q.correctAnswers } : {}),
+          ...(withKey ? { correctAnswer: correctText(q), correctAnswers: q.correctAnswers } : {}),
         })),
         answerKey: withKey,
       });
