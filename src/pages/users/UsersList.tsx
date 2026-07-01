@@ -224,7 +224,7 @@ export default function UsersList() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm overflow-hidden">
+      <div className="hidden md:block bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="bg-slate-50 dark:bg-surface-raised/50 text-slate-500 font-semibold">
@@ -314,6 +314,79 @@ export default function UsersList() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="grid grid-cols-1 gap-3 md:hidden">
+        {filteredUsers.length === 0 ? (
+          <div className="rounded-xl border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo py-10 text-center text-slate-500">
+            {loading ? 'Loading users…' : 'No users found matching your filters.'}
+          </div>
+        ) : (
+          filteredUsers.map((user) => (
+            <div key={user.id} className="rounded-xl border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo p-4 shadow-sm space-y-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="font-semibold text-slate-900 dark:text-white truncate">{user.name}</div>
+                  <div className="text-xs text-slate-500 mt-0.5 truncate">@{user.username}{user.email && ` • ${user.email}`}</div>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger render={<Button variant="ghost" size="sm" className="h-8 w-8 p-0 -mr-1 shrink-0" aria-label={`Options for ${user.name}`} />} nativeButton={true}>
+                    <MoreVertical className="h-4 w-4 text-slate-400" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuGroup>
+                      <DropdownMenuItem render={<Link to={`/users/${user.id}/edit`} className="flex w-full" />} nativeButton={false}>
+                        <Edit2 className="mr-2 h-4 w-4" /> Edit User
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => { setResetUser(user); setNewPassword(''); }}>
+                        <ShieldAlert className="mr-2 h-4 w-4" /> Reset Password
+                      </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                    <DropdownMenuSeparator />
+                    {user.status === 'ACTIVE' ? (
+                      <DropdownMenuItem
+                        className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/20"
+                        onClick={() => handleToggleStatus(user.id, user.status, user.role)}
+                      >
+                        <UserX className="mr-2 h-4 w-4" /> Disable User
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem
+                        className="text-emerald-600 focus:text-emerald-600 focus:bg-emerald-50 dark:focus:bg-emerald-900/20"
+                        onClick={() => handleToggleStatus(user.id, user.status, user.role)}
+                      >
+                        <UserCheck className="mr-2 h-4 w-4" /> Activate User
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <RoleBadge role={user.role} />
+                <Badge variant={user.status === 'ACTIVE' ? 'default' : 'secondary'} className={user.status === 'ACTIVE' ? 'bg-emerald-500 text-white hover:bg-emerald-600' : 'bg-slate-500 text-white hover:bg-slate-600'}>
+                  {user.status}
+                </Badge>
+              </div>
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-surface-raised text-sm">
+                <div>
+                  <span className="text-xs text-slate-500 block">Linked Profile</span>
+                  {user.teacherId ? (
+                    <Link to={`/teachers/${user.teacherId}`} className="text-blue-600 hover:underline">Teacher Profile</Link>
+                  ) : user.studentId ? (
+                    <Link to={`/students/${user.studentId}`} className="text-aubergine-600 hover:underline">Student Profile</Link>
+                  ) : (
+                    <span className="text-slate-400 italic">None</span>
+                  )}
+                </div>
+                <div>
+                  <span className="text-xs text-slate-500 block">Last Login</span>
+                  <span className="text-slate-700 dark:text-slate-300">{user.lastLoginAt ? formatDistanceToNow(new Date(user.lastLoginAt), { addSuffix: true }) : 'Never'}</span>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       <Dialog open={resetUser !== null} onOpenChange={(open) => { if (!open) { setResetUser(null); setNewPassword(''); } }}>

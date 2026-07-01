@@ -208,7 +208,7 @@ export default function GradebookPage() {
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-50 dark:bg-surface-raised/50 text-slate-500 uppercase tracking-wider font-semibold text-[11px]">
                 <tr>
-                  <th className="px-6 py-4 min-w-[200px]">Student</th>
+                  <th className="px-6 py-4 min-w-[160px] sticky left-0 z-20 bg-slate-50 dark:bg-surface-raised">Student</th>
                   {data?.categories.map((c) => <th key={c} className="px-4 py-4 text-center">{CATEGORY_LABELS[c]}</th>)}
                   <th className="px-4 py-4 text-center">Overall</th>
                   <th className="px-4 py-4 text-center">Grade</th>
@@ -220,7 +220,7 @@ export default function GradebookPage() {
                 {!loading && (data?.rows.length ?? 0) === 0 && <tr><td colSpan={9} className="px-6 py-8 text-center text-slate-500">No students or grades yet.</td></tr>}
                 {!loading && data?.rows.map((r) => (
                   <tr key={r.studentId} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50">
-                    <td className="px-6 py-3 font-medium text-slate-900 dark:text-white">
+                    <td className="px-6 py-3 font-medium text-slate-900 dark:text-white sticky left-0 z-10 bg-white dark:bg-surface-indigo">
                       <Link to={`/gradebook/students/${r.studentId}`} className="hover:text-aubergine-600 hover:underline">{r.name}</Link>
                       <span className="text-xs text-slate-400 font-mono ml-1">{r.code}</span>
                     </td>
