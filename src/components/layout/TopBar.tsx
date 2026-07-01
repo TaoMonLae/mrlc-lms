@@ -81,7 +81,7 @@ export function TopBar() {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 dark:border-white/10 bg-white dark:bg-surface-indigo px-8 md:px-8">
+    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 dark:border-white/10 bg-white dark:bg-surface-indigo px-4 sm:px-6 md:px-8 gap-2">
       <div className="flex flex-1 items-center gap-4">
         <div className="relative w-full max-w-md hidden md:block">
           <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
@@ -106,7 +106,7 @@ export function TopBar() {
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-1 sm:gap-3">
         {/* Time and Date Display */}
         <div className="hidden md:flex items-center gap-3 px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-surface-raised/50 border border-slate-200 dark:border-white/10">
           <Calendar className="h-4 w-4 text-slate-500 dark:text-slate-400" />

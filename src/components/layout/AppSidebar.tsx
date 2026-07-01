@@ -9,7 +9,8 @@ import {
   SidebarMenuButton, 
   SidebarMenuItem, 
   SidebarFooter,
-  SidebarRail
+  SidebarRail,
+  useSidebar
 } from "@/components/ui/sidebar";
 import { NAVIGATION_ITEMS } from "@/src/lib/navigation";
 import { GraduationCap, LogOut, User } from "lucide-react";
@@ -30,6 +31,8 @@ export function AppSidebar() {
   const { isAdmin, isTeacher, isStudent, hasPermission } = usePermissions();
   const { schoolProfile, brandingSettings } = useSettings();
   const { unreadCount } = useChat();
+  const { isMobile, setOpenMobile } = useSidebar();
+  const closeOnMobile = () => { if (isMobile) setOpenMobile(false); };
 
   const handleLogout = () => {
     logout();
@@ -67,7 +70,7 @@ export function AppSidebar() {
               {filteredNavItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
-                    render={<Link to={item.url} />}
+                    render={<Link to={item.url} onClick={closeOnMobile} />}
                     isActive={location.pathname === item.url}
                     tooltip={item.title}
                     className="h-9 hover:bg-white/10 hover:text-white data-[active=true]:bg-aubergine-600 data-[active=true]:text-white transition-colors duration-200"

@@ -206,7 +206,7 @@ export default function ExamNew() {
               <Label>Exam Title</Label>
               <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Midterm Mathematics" />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Class</Label>
                  <Select value={classId} onValueChange={setClassId}>
@@ -230,7 +230,7 @@ export default function ExamNew() {
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Exam Type</Label>
                 <Select value={examType} onValueChange={setExamType}>
@@ -290,7 +290,7 @@ export default function ExamNew() {
                       </div>
                     </div>
 
-                     <div className="grid grid-cols-2 gap-4">
+                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                          <Label>Type</Label>
                          <Select

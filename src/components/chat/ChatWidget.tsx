@@ -169,7 +169,7 @@ export default function ChatWidget() {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex h-[70vh] max-h-[560px] w-80 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-surface-raised dark:bg-surface-indigo sm:w-96">
+    <div className="fixed inset-x-3 bottom-3 z-50 flex h-[75vh] max-h-[560px] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-surface-raised dark:bg-surface-indigo sm:inset-x-auto sm:bottom-6 sm:right-6 sm:w-96">
       <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2 dark:border-surface-raised">
         <div className="flex items-center gap-2">
           {activeId && <button onClick={() => { setActiveId(null); setDetail(null); }} className="text-slate-500 hover:text-slate-700"><ArrowLeft className="h-4 w-4" /></button>}
