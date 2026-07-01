@@ -8298,28 +8298,51 @@ async function startServer() {
 
   // ── Vite / Static serving ───────────────────────────────────────────────────
   // ── Scheduled daily backup (runs only when enabled in Settings) ───────────────
+  // Self-rescheduling so it always targets the next HOUR:00 local time (no interval
+  // drift), plus a boot-time catch-up so a server that was powered off at backup
+  // time still gets a daily backup — without spamming a new dump on every restart.
   const scheduleDailyBackup = () => {
     const HOUR = Number(process.env.BACKUP_HOUR || 2); // local hour, default 02:00
-    const tick = async () => {
+    const STALE_MS = 20 * 60 * 60 * 1000; // treat a backup as "due" if newest is older than this
+
+    const newestBackupAgeMs = (): number => {
+      const [newest] = listBackups(); // sorted newest-first
+      return newest ? Date.now() - new Date(newest.createdAt).getTime() : Infinity;
+    };
+
+    const runIfEnabled = async (reason: string, onlyWhenStale: boolean) => {
       try {
         const settings = await prisma.schoolProfile.findFirst({ select: { backupEnabled: true } });
-        if (settings?.backupEnabled) {
-          const backup = await runBackup();
-          logger.info(`Scheduled backup created: ${backup.name}`);
-          await createAuditLog(null, "system", "BACKUP", "SYSTEM", null,
-            `Scheduled database backup created (${backup.name}).`, null, null, "SUCCESS").catch(() => {});
-        }
+        if (!settings?.backupEnabled) return;
+        if (onlyWhenStale && newestBackupAgeMs() < STALE_MS) return; // a fresh backup already exists
+        const backup = await runBackup();
+        logger.info(`${reason} backup created: ${backup.name}`);
+        await createAuditLog(null, "system", "BACKUP", "SYSTEM", null,
+          `${reason} database backup created (${backup.name}).`, null, null, "SUCCESS").catch(() => {});
       } catch (err: any) {
-        logger.error("Scheduled backup failed:", err.message);
+        logger.error(`${reason} backup failed:`, err.message);
+        await createAuditLog(null, "system", "BACKUP", "SYSTEM", null,
+          `${reason} database backup failed: ${err.message}`, null, null, "DANGER").catch(() => {});
       }
     };
-    const now = new Date();
-    const next = new Date(now);
-    next.setHours(HOUR, 0, 0, 0);
-    if (next <= now) next.setDate(next.getDate() + 1);
-    const delay = next.getTime() - now.getTime();
-    setTimeout(() => { tick(); setInterval(tick, 24 * 60 * 60 * 1000); }, delay);
-    logger.info(`Daily backup scheduled for ${String(HOUR).padStart(2, "0")}:00 (when enabled in Settings).`);
+
+    // Re-arm for the next HOUR:00 after each run so we never drift off the clock.
+    const scheduleNext = () => {
+      const now = new Date();
+      const next = new Date(now);
+      next.setHours(HOUR, 0, 0, 0);
+      if (next <= now) next.setDate(next.getDate() + 1);
+      const delay = next.getTime() - now.getTime();
+      setTimeout(async () => {
+        await runIfEnabled("Scheduled", false);
+        scheduleNext();
+      }, delay);
+      logger.info(`Next daily backup scheduled for ${next.toLocaleString()} (when enabled in Settings).`);
+    };
+    scheduleNext();
+
+    // Catch-up shortly after boot, in case the machine was off at HOUR:00.
+    setTimeout(() => { void runIfEnabled("Catch-up", true); }, 60 * 1000);
   };
   scheduleDailyBackup();
 
