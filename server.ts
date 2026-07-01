@@ -2098,6 +2098,50 @@ async function startServer() {
     }
   });
 
+  // Assign a teacher to a subject (populates the SubjectTeacher join table).
+  app.post("/api/subjects/:id/teachers", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { id } = req.params;
+    const { teacherId } = req.body || {};
+    if (!teacherId) { res.status(400).json({ error: "teacherId is required" }); return; }
+    try {
+      const [subject, teacher] = await Promise.all([
+        prisma.subject.findUnique({ where: { id } }),
+        prisma.teacher.findUnique({ where: { id: teacherId }, include: { user: true } }),
+      ]);
+      if (!subject) { res.status(404).json({ error: "Subject not found" }); return; }
+      if (!teacher) { res.status(404).json({ error: "Teacher not found" }); return; }
+      await prisma.subjectTeacher.upsert({
+        where: { subjectId_teacherId: { subjectId: id, teacherId } },
+        update: {},
+        create: { subjectId: id, teacherId },
+      });
+      const teacherName = `${teacher.user?.firstName ?? ""} ${teacher.user?.lastName ?? ""}`.trim() || teacher.teacherCode;
+      await createAuditLog(jwtUser.userId, jwtUser.email, "ASSIGN", "SUBJECT_TEACHER", id,
+        `Teacher '${teacherName}' assigned to subject '${subject.name}'.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.status(201).json({ success: true });
+    } catch (err) {
+      logger.error("Error assigning teacher to subject:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Remove a teacher from a subject.
+  app.delete("/api/subjects/:id/teachers/:teacherId", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { id, teacherId } = req.params;
+    try {
+      await prisma.subjectTeacher.delete({ where: { subjectId_teacherId: { subjectId: id, teacherId } } });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "UNASSIGN", "SUBJECT_TEACHER", id,
+        `Teacher ${teacherId} removed from subject ${id}.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.json({ success: true });
+    } catch (err: any) {
+      if (err?.code === "P2025") { res.status(404).json({ error: "Assignment not found" }); return; }
+      logger.error("Error removing teacher from subject:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
   // ── Attendance API ──────────────────────────────────────────────────────────
   app.get("/api/attendance", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
