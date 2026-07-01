@@ -1223,6 +1223,7 @@ model GeneratedDocument {
   @@index([studentId])
   @@index([type])
   @@index([status])
+	@@unique([studentId, type, term, status])
 }
 
 

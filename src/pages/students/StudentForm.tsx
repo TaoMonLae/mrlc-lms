@@ -132,17 +132,29 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
     try {
       const form = e.currentTarget;
       const studentId = val(form, 'studentId');
+      const emailInput = val(form, 'email');
       const fullName = val(form, 'fullName');
       const { firstName, lastName } = splitFullName(fullName);
 
       const emergencyContactName = val(form, 'emergencyContactName');
       const emergencyContactPhone = val(form, 'emergencyContactPhone');
 
-      const sanitizedId = studentId.toLowerCase().replace(/[^a-z0-9]/g, '');
-      const email = `${sanitizedId || 'student'}@mrlc-student.edu`;
+      // If studentId is provided, use it to generate email; otherwise use the provided email
+      let email: string;
+      if (studentId) {
+        const sanitizedId = studentId.toLowerCase().replace(/[^a-z0-9]/g, '');
+        email = emailInput || `${sanitizedId}@mrlc-student.edu`;
+      } else {
+        if (!emailInput) {
+          toast.error('Email is required when Student ID is not provided');
+          setIsSubmitting(false);
+          return;
+        }
+        email = emailInput;
+      }
 
       const payload = {
-        studentCode: studentId,
+        studentCode: studentId || undefined, // Send undefined to trigger auto-generation
         firstName,
         lastName,
         email,
@@ -255,8 +267,14 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div className="space-y-2">
-            <Label htmlFor="studentId">Student ID <span className="text-red-500">*</span></Label>
-            <Input id="studentId" defaultValue={initialData?.studentCode || initialData?.studentId} placeholder="e.g. ST-2024-001" required />
+            <Label htmlFor="studentId">Student ID</Label>
+            <Input id="studentId" defaultValue={initialData?.studentCode || initialData?.studentId} placeholder="e.g. ST-2024-001" />
+            <p className="text-xs text-slate-500">Leave blank to auto-generate (e.g. ST-2026-001)</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
+            <Input id="email" type="email" defaultValue={initialData?.user?.email} placeholder="student@mrlc-student.edu" />
+            <p className="text-xs text-slate-500">Required if Student ID is blank</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="fullName">Full Name <span className="text-red-500">*</span></Label>

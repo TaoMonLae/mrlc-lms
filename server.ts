@@ -1389,12 +1389,15 @@ async function startServer() {
       previousSchool, previousEducationLevel, educationLevel, medicalInformation, allergies,
       notes, classId, gender, status,
     } = req.body;
-    if (!firstName || !lastName || !email || !studentCode) {
-      res.status(400).json({ error: "First name, last name, email, and student code are required" });
+    if (!firstName || !lastName || !email) {
+      res.status(400).json({ error: "First name, last name, and email are required" });
       return;
     }
     try {
       const result = await prisma.$transaction(async (tx) => {
+        // Auto-generate studentCode if not provided
+        const finalStudentCode = studentCode || await nextStudentCode(tx);
+
         const user = await tx.user.create({
           data: {
             firstName,
@@ -1407,7 +1410,7 @@ async function startServer() {
         const student = await tx.student.create({
           data: {
             userId: user.id,
-            studentCode,
+            studentCode: finalStudentCode,
             preferredName: preferredName || null,
             dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
             ...(enrollmentDate ? { enrollmentDate: new Date(enrollmentDate) } : {}),
@@ -8462,6 +8465,8 @@ async function startServer() {
     const { type, classId, term } = req.body || {};
     if (!type || !classId) { res.status(400).json({ error: "type and classId are required" }); return; }
     if (!DOC_TYPES.includes(type)) { res.status(400).json({ error: "Invalid document type" }); return; }
+
+    // Use a transaction for atomicity - either all documents are created or none
     try {
       // Ownership guard for teachers.
       if (jwtUser.role === "TEACHER") {
@@ -8474,33 +8479,76 @@ async function startServer() {
       const klass = await prisma.class.findUnique({ where: { id: classId }, select: { name: true } });
       if (!klass) { res.status(404).json({ error: "Class not found" }); return; }
 
-      const students = await prisma.student.findMany({ where: { classId, status: "ACTIVE" }, select: { id: true } });
-      let generated = 0;
-      const errors: { studentId: string; message: string }[] = [];
+      // Fetch students with class info for accurate term matching
+      const students = await prisma.student.findMany({
+        where: { classId, status: "ACTIVE" },
+        select: { id: true, class: { select: { academicYear: true } } },
+      });
+
+      // Build a map of studentId -> effectiveTerm for consistent lookups
+      const studentTerms = new Map<string, string | null>();
       for (const s of students) {
-        try {
-          const snapshot = await buildDocumentSnapshot(type, s.id, term);
-          if (!snapshot) { errors.push({ studentId: s.id, message: "Student data unavailable" }); continue; }
-          const documentNumber = await makeDocumentNumber(type);
-          const verifyToken = crypto.randomBytes(16).toString("hex");
-          await prisma.generatedDocument.create({
-            data: {
-              documentNumber, verifyToken, type, status: "ACTIVE",
-              studentId: s.id, studentName: snapshot.student.name, studentCode: snapshot.student.code,
-              className: snapshot.student.className, term: snapshot.term,
-              payload: snapshot, issuedById: jwtUser.userId, issuedByName: jwtUser.email,
-            },
-          });
-          generated++;
-        } catch (e) {
-          errors.push({ studentId: s.id, message: "Generation failed" });
-        }
+        studentTerms.set(s.id, term || s.class?.academicYear || null);
       }
+
+      // Batch fetch all existing ACTIVE documents for these students (optimizes N+1 queries)
+      const existingDocs = await prisma.generatedDocument.findMany({
+        where: {
+          studentId: { in: students.map((s) => s.id) },
+          type,
+          status: "ACTIVE",
+          term: { in: Array.from(new Set(Array.from(studentTerms.values()))) },
+        },
+        select: { studentId: true, term: true },
+      });
+      const existingKey = new Set(existingDocs.map((d) => `${d.studentId}|${d.term}`));
+
+      let generated = 0;
+      let skipped = 0;
+      const errors: { studentId: string; message: string }[] = [];
+
+      // Use transaction to ensure atomicity
+      await prisma.$transaction(async (tx) => {
+        for (const s of students) {
+          try {
+            const effectiveTerm = studentTerms.get(s.id)!;
+            // Check if student already has an ACTIVE document of this type and term
+            if (existingKey.has(`${s.id}|${effectiveTerm}`)) {
+              skipped++;
+              continue;
+            }
+
+            const snapshot = await buildDocumentSnapshot(type, s.id, term);
+            if (!snapshot) { errors.push({ studentId: s.id, message: "Student data unavailable" }); continue; }
+
+            const documentNumber = await makeDocumentNumber(type);
+            const verifyToken = crypto.randomBytes(16).toString("hex");
+            await tx.generatedDocument.create({
+              data: {
+                documentNumber, verifyToken, type, status: "ACTIVE",
+                studentId: s.id, studentName: snapshot.student.name, studentCode: snapshot.student.code,
+                className: snapshot.student.className, term: snapshot.term,
+                payload: snapshot, issuedById: jwtUser.userId, issuedByName: jwtUser.email,
+              },
+            });
+            generated++;
+          } catch (e) {
+            errors.push({ studentId: s.id, message: "Generation failed" });
+          }
+        }
+      });
+
       await createAuditLog(jwtUser.userId, jwtUser.email, "GENERATE", "DOCUMENT", classId,
-        `Bulk ${type}: ${generated} generated for class '${klass.name}'${errors.length ? `, ${errors.length} failed` : ""}.`,
-        req.ip, req.headers["user-agent"] || null, errors.length ? "WARNING" : "SUCCESS");
-      res.status(201).json({ generated, failed: errors.length, total: students.length, className: klass.name, errors });
-    } catch (err) {
+        `Bulk ${type}: ${generated} generated for class '${klass.name}'${skipped ? `, ${skipped} skipped (existing)` : ""}${errors.length ? `, ${errors.length} failed` : ""}.`,
+        req.ip, req.headers["user-agent"] || null, (errors.length || skipped) ? "WARNING" : "SUCCESS");
+      res.status(201).json({ generated, skipped, failed: errors.length, total: students.length, className: klass.name, errors });
+    } catch (err: any) {
+      // Prisma unique constraint violations (race conditions) will be caught here
+      if (err.code === "P2002") {
+        logger.warn("Race condition detected in bulk document generation:", err);
+        res.status(409).json({ error: "Concurrent generation detected. Please try again." });
+        return;
+      }
       logger.error("Error bulk-generating documents:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }

@@ -72,13 +72,22 @@ export default function DocumentsPage() {
 
   const generateBulk = async () => {
     if (!bulkClassId) { toast.error('Select a class'); return; }
+    // Confirmation for large classes to prevent accidental bulk runs
+    const LARGE_CLASS_THRESHOLD = 30;
+    if (selectedBulkClass && selectedBulkClass.studentCount >= LARGE_CLASS_THRESHOLD) {
+      const confirmed = window.confirm(
+        `You are about to generate documents for ${selectedBulkClass.studentCount} students in ${selectedBulkClass.name}. Continue?`
+      );
+      if (!confirmed) return;
+    }
     setBulkGenerating(true);
     try {
-      const r = await apiSend<{ generated: number; failed: number; total: number; className: string }>(
+      const r = await apiSend<{ generated: number; skipped: number; failed: number; total: number; className: string }>(
         '/api/documents/bulk', 'POST', { type: bulkType, classId: bulkClassId, term: bulkTerm || undefined });
       if (r.generated > 0) toast.success(`${r.generated} ${TYPE_LABELS[bulkType]}${r.generated === 1 ? '' : 's'} generated for ${r.className}`);
-      if (r.failed > 0) toast.warning(`${r.failed} student(s) skipped`);
-      if (r.generated === 0 && r.failed === 0) toast.info('No active students in that class');
+      if (r.skipped > 0) toast.info(`${r.skipped} student(s) skipped (existing document)`);
+      if (r.failed > 0) toast.warning(`${r.failed} student(s) failed`);
+      if (r.generated === 0 && r.skipped === 0 && r.failed === 0) toast.info('No active students in that class');
       setBulkTerm('');
       loadDocs();
     } catch (e: any) {
