@@ -22,7 +22,7 @@ export default function RolesPermissions() {
           </div>
         </div>
         
-        <div className="p-0">
+        <div className="p-0 overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 dark:bg-surface-raised/50 text-slate-500 font-semibold border-b border-slate-200 dark:border-surface-raised">
               <tr>
@@ -53,7 +53,7 @@ export default function RolesPermissions() {
                 </td>
               </tr>
               <tr className="hover:bg-slate-50 dark:hover:bg-surface-raised/50">
-                <td className="px-6 py-4 font-bold text-slate-900 dark:text-white text-slate-400 italic">STAFF</td>
+                <td className="px-6 py-4 font-bold text-slate-400 italic">STAFF</td>
                 <td className="px-6 py-4">
                   <p className="text-slate-700 dark:text-slate-300 font-medium mb-1">General administration (Future).</p>
                   <p className="text-slate-500 dark:text-slate-300">Assigned specific custom permissions for library, HR, or front-desk management.</p>

@@ -157,7 +157,7 @@ export default function AnnouncementDetail() {
 
                 {announcement.expiresAt && (
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-500 flex items-center gap-2 text-rose-500">
+                    <span className="text-xs flex items-center gap-2 text-rose-500">
                       <Calendar className="h-3 w-3" /> Expires
                     </span>
                     <span className="text-xs font-medium text-slate-900 dark:text-white">

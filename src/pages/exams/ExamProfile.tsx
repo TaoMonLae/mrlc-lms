@@ -216,7 +216,7 @@ export default function ExamProfile() {
               <h2 className="font-semibold text-slate-900 dark:text-white">Recent Submissions</h2>
               <Button variant="ghost" size="sm" render={<Link to={`/exam2/${id}/analytics`} />} nativeButton={false}>View All Results</Button>
             </div>
-            <div className="p-0">
+            <div className="p-0 overflow-x-auto">
                <table className="w-full text-left text-sm">
                 <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-surface-raised/50">
                   <tr>

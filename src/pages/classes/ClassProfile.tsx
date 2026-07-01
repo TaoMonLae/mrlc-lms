@@ -295,6 +295,7 @@ export default function ClassProfile() {
           <div className="p-4 border-b border-slate-200 dark:border-surface-raised flex justify-end">
             <Button size="sm"><Users className="w-4 h-4 mr-2" /> Assign Students</Button>
           </div>
+          <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-surface-raised/50">
               <tr>
@@ -322,6 +323,7 @@ export default function ClassProfile() {
               )}
             </tbody>
           </table>
+          </div>
         </TabsContent>
 
         <TabsContent value="teachers" className="p-0 animate-in fade-in slide-in-from-bottom-2">
@@ -330,6 +332,7 @@ export default function ClassProfile() {
               <Button size="sm" onClick={() => setAssignOpen(true)}><Plus className="w-4 h-4 mr-2" /> Assign Teacher</Button>
             </div>
           )}
+          <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-surface-raised/50">
               <tr>
@@ -357,6 +360,7 @@ export default function ClassProfile() {
               )}
             </tbody>
           </table>
+          </div>
 
           {/* Assign teacher dialog */}
           {assignOpen && (
@@ -419,6 +423,7 @@ export default function ClassProfile() {
         </TabsContent>
 
         <TabsContent value="exams" className="p-0 animate-in fade-in slide-in-from-bottom-2">
+          <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-surface-raised/50">
               <tr>
@@ -446,6 +451,7 @@ export default function ClassProfile() {
               )}
             </tbody>
           </table>
+          </div>
         </TabsContent>
 
         <TabsContent value="timetable" className="p-6 animate-in fade-in slide-in-from-bottom-2">

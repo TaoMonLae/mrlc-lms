@@ -173,6 +173,7 @@ export default function StaffProfile() {
       <div className="rounded-lg border border-slate-200 p-4">
         <h2 className="mb-3 text-sm font-semibold text-slate-700">Payslips</h2>
         {(!emp.payslips || emp.payslips.length === 0) ? <p className="text-xs text-slate-400">No payslips yet.</p> : (
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="text-left text-xs uppercase text-slate-500">
               <tr><th className="py-1">Period</th><th className="py-1 text-right">Base</th><th className="py-1 text-right">Allowances</th><th className="py-1 text-right">Deductions</th><th className="py-1 text-right">Net pay</th></tr>
@@ -189,12 +190,14 @@ export default function StaffProfile() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 
       <div className="rounded-lg border border-slate-200 p-4">
         <h2 className="mb-3 text-sm font-semibold text-slate-700">Leave history</h2>
         {(!emp.leaveRequests || emp.leaveRequests.length === 0) ? <p className="text-xs text-slate-400">No leave requests.</p> : (
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="text-left text-xs uppercase text-slate-500">
               <tr><th className="py-1">Type</th><th className="py-1">Dates</th><th className="py-1 text-right">Days</th><th className="py-1">Status</th></tr>
@@ -210,6 +213,7 @@ export default function StaffProfile() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

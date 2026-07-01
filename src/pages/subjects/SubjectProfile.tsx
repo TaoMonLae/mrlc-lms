@@ -200,6 +200,7 @@ export default function SubjectProfile() {
         </TabsContent>
 
         <TabsContent value="classes" className="p-0 animate-in fade-in slide-in-from-bottom-2">
+           <div className="overflow-x-auto">
            <table className="w-full text-left text-sm">
              <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-surface-raised/50">
                 <tr>
@@ -227,9 +228,11 @@ export default function SubjectProfile() {
                )}
              </tbody>
            </table>
+           </div>
         </TabsContent>
 
         <TabsContent value="teachers" className="p-0 animate-in fade-in slide-in-from-bottom-2">
+           <div className="overflow-x-auto">
            <table className="w-full text-left text-sm">
              <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-surface-raised/50">
                 <tr>
@@ -257,9 +260,11 @@ export default function SubjectProfile() {
                )}
              </tbody>
            </table>
+           </div>
         </TabsContent>
 
         <TabsContent value="exams" className="p-0 animate-in fade-in slide-in-from-bottom-2">
+           <div className="overflow-x-auto">
            <table className="w-full text-left text-sm">
              <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px] dark:bg-surface-raised/50">
                 <tr>
@@ -293,6 +298,7 @@ export default function SubjectProfile() {
                )}
              </tbody>
            </table>
+           </div>
         </TabsContent>
       </Tabs>
     </div>

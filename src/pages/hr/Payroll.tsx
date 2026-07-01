@@ -192,6 +192,7 @@ export default function Payroll() {
                   {selected.status === 'APPROVED' && <Button size="sm" variant="outline" onClick={() => setStatus('DRAFT')}>Reopen</Button>}
                 </div>
               </div>
+              <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="text-left text-xs uppercase text-slate-500">
                   <tr><th className="py-1">Payee</th><th className="py-1">Type</th><th className="py-1 text-right">Base</th><th className="py-1 text-right">Allowances</th><th className="py-1 text-right">Deductions</th><th className="py-1 text-right">Net</th><th className="py-1"></th></tr>
@@ -202,6 +203,7 @@ export default function Payroll() {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
         </div>
