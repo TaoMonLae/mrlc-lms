@@ -8664,6 +8664,14 @@ async function startServer() {
   // to polling. Keyed by userId → open responses (a user may have several tabs).
   const chatStreams = new Map<string, Set<express.Response>>();
 
+  // Presence is resilient to a flaky/reconnecting SSE stream: a user counts as
+  // "online" if they have a live stream OR any recent chat activity (heartbeat,
+  // typing, sending). Without this, a user actively typing but whose EventSource
+  // briefly dropped would wrongly show as offline to everyone.
+  const chatLastSeen = new Map<string, number>();
+  const PRESENCE_WINDOW_MS = 45_000;
+  const markSeen = (userId?: string | null) => { if (userId) chatLastSeen.set(userId, Date.now()); };
+
   // Set httpOnly cookie for SSE authentication (prevents token exposure in URL)
   app.post("/api/set-chat-cookie", authMiddleware, (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
@@ -8715,12 +8723,14 @@ async function startServer() {
     res.set({ "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive", "X-Accel-Buffering": "no" });
     (res as any).flushHeaders?.();
     res.write(": connected\n\n");
+    markSeen(user.userId);
     let set = chatStreams.get(user.userId);
     if (!set) { set = new Set(); chatStreams.set(user.userId, set); }
     set.add(res);
     const ping = setInterval(() => {
       try {
         res.write(": ping\n\n");
+        markSeen(user.userId);
       } catch (err) {
         // Connection is dead, clean up
         clearInterval(ping);
@@ -8743,11 +8753,21 @@ async function startServer() {
     res.on("error", cleanup);
   });
 
-  // Presence: who currently has at least one live stream open (i.e. the app open).
+  // Presence: anyone with a live stream OR recent activity within the window.
   app.get("/api/chat/presence", authMiddleware, async (_req, res) => {
-    const online: string[] = [];
-    for (const [uid, set] of chatStreams) if (set.size > 0) online.push(uid);
-    res.json({ online });
+    const online = new Set<string>();
+    for (const [uid, set] of chatStreams) if (set.size > 0) online.add(uid);
+    const now = Date.now();
+    for (const [uid, ts] of chatLastSeen) if (now - ts < PRESENCE_WINDOW_MS) online.add(uid);
+    res.json({ online: [...online] });
+  });
+
+  // Heartbeat so a user with the app open stays "online" even if their SSE stream
+  // is momentarily reconnecting. Called periodically by the client.
+  app.post("/api/chat/heartbeat", authMiddleware, (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    markSeen(jwtUser.userId);
+    res.status(204).end();
   });
 
   // Who the signed-in user may start a conversation with.
@@ -8992,6 +9012,7 @@ async function startServer() {
     const ephemeral = Boolean(req.body?.ephemeral) && !!attachmentUrl;
     const expiresAt = ephemeral ? new Date(Date.now() + EPHEMERAL_TTL_MS) : null;
     if (!body && !attachmentUrl) { res.status(400).json({ error: "Message cannot be empty" }); return; }
+    markSeen(jwtUser.userId);
     try {
       const part = await prisma.conversationParticipant.findUnique({
         where: { conversationId_userId: { conversationId: req.params.id, userId: jwtUser.userId } },
@@ -9020,6 +9041,7 @@ async function startServer() {
   // so their clients can show a "typing…" indicator. Throttled on the client.
   app.post("/api/chat/conversations/:id/typing", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
+    markSeen(jwtUser.userId);
     try {
       const parts = await prisma.conversationParticipant.findMany({
         where: { conversationId: req.params.id },

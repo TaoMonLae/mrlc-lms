@@ -23,6 +23,7 @@ const Ctx = createContext<ChatCtx | null>(null);
 
 const LIST_MS = 8000;
 const PRESENCE_MS = 15000;
+const HEARTBEAT_MS = 20000;      // keep our presence fresh even if the SSE stream is reconnecting
 const TYPING_TTL_MS = 5000;      // hide the indicator this long after the last keystroke event
 const TYPING_SEND_MS = 2500;     // don't re-ping the server more often than this
 
@@ -67,10 +68,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    loadList(); loadPresence();
+    const beat = () => { apiSend('/api/chat/heartbeat', 'POST', {}).catch(() => {}); };
+    loadList(); loadPresence(); beat();
     const t1 = setInterval(loadList, LIST_MS);
     const t2 = setInterval(loadPresence, PRESENCE_MS);
-    return () => { clearInterval(t1); clearInterval(t2); };
+    const t3 = setInterval(beat, HEARTBEAT_MS);
+    return () => { clearInterval(t1); clearInterval(t2); clearInterval(t3); };
   }, []);
 
   // One app-wide SSE connection: bumps eventTick + refreshes the list/presence.
@@ -78,28 +81,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     const token = sessionStorage.getItem('auth_token');
     if (!token || typeof EventSource === 'undefined') return;
 
-    // Set an httpOnly cookie by making a request to a special endpoint
-    const setupCookie = async () => {
-      try {
-        await fetch('/api/set-chat-cookie', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include'
-        });
-      } catch (error) {
-        console.error('Failed to set chat cookie:', error);
-      }
-    };
-
-    setupCookie();
-
     let es: EventSource | null = null;
-    try {
-      es = new EventSource('/api/chat/stream');
-      es.onmessage = (e) => {
+    let closed = false;
+
+    const onMessage = (e: MessageEvent) => {
         let payload: any = null;
         try { payload = JSON.parse(e.data); } catch { /* non-JSON keep-alive */ }
 
@@ -112,6 +97,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
               [payload.userId]: { name: payload.name || 'Someone', at: Date.now() },
             },
           }));
+          // Someone typing is unambiguously online — reflect it immediately.
+          setOnlineUserIds((prev) => (prev.has(payload.userId) ? prev : new Set(prev).add(payload.userId)));
           return;
         }
 
@@ -127,10 +114,32 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
         setEventTick((t) => t + 1);
         loadList();
-      };
-      es.onopen = () => loadPresence();
-    } catch { /* ignore */ }
-    return () => es?.close();
+    };
+
+    // The SSE endpoint authenticates from an httpOnly cookie, so set it FIRST and
+    // await it — otherwise the stream opens unauthenticated (401) and the user is
+    // missing from server presence until a retry, showing them wrongly as offline.
+    const connect = async () => {
+      try {
+        await fetch('/api/set-chat-cookie', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          credentials: 'include',
+        });
+      } catch (error) {
+        console.error('Failed to set chat cookie:', error);
+      }
+      if (closed) return;
+      try {
+        es = new EventSource('/api/chat/stream');
+        es.onmessage = onMessage;
+        es.onopen = () => loadPresence();
+        // EventSource auto-reconnects on transient errors; the cookie persists.
+      } catch { /* ignore */ }
+    };
+    connect();
+
+    return () => { closed = true; es?.close(); };
   }, []);
 
   // Prune stale typing entries so the indicator disappears when someone stops.
