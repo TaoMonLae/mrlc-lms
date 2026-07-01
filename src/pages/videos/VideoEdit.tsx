@@ -24,6 +24,7 @@ import {
 } from '../../lib/video/constants';
 import type { VideoVisibility, VideoStatus, VideoLesson } from '../../lib/video/types';
 import { useVideoFileUpload } from '../../hooks/useVideoFileUpload';
+import { CaptionUploadButton } from '../../components/video/CaptionUploadButton';
 
 const videoUrlSchema = z.string().min(1, 'Video URL is required').refine(
   isValidVideoSourceUrl,
@@ -399,9 +400,12 @@ export default function VideoEdit() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="captionsUrl">Captions / Subtitles URL (Optional)</Label>
-              <Input id="captionsUrl" {...register('captionsUrl')} placeholder="https://... .vtt (WebVTT)" />
-              <p className="text-xs text-slate-400">WebVTT (.vtt) file. Shown as a CC toggle for uploaded videos.</p>
+              <Label htmlFor="captionsUrl">Captions / Subtitles (Optional)</Label>
+              <div className="flex gap-2">
+                <Input id="captionsUrl" {...register('captionsUrl')} placeholder="https://... .vtt  — or upload a file →" />
+                <CaptionUploadButton onUploaded={(url) => setValue('captionsUrl', url)} />
+              </div>
+              <p className="text-xs text-slate-400">Paste a WebVTT URL or upload a .vtt/.srt file. Shown as a CC toggle for uploaded videos.</p>
             </div>
 
             <div className="space-y-2 sm:col-span-2 rounded-lg border border-slate-200 dark:border-surface-raised p-3">

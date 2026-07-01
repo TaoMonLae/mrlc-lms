@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Filter, Video, Play, Clock, MoreVertical, Edit2, Trash2, Eye, BookOpen, CheckSquare, Square, Archive } from 'lucide-react';
+import { Plus, Search, Filter, Video, Play, Clock, MoreVertical, Edit2, Trash2, Eye, BookOpen, CheckSquare, Square, Archive, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { usePermissions, useUser } from '../../lib/permissions';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, format } from 'date-fns';
 import { toast } from 'sonner';
 import { formatDuration } from '../../lib/video';
 import { apiGet, apiSend } from '../../lib/api';
@@ -367,6 +367,12 @@ export default function VideoList() {
                 </p>
 
                 <div className="flex flex-wrap gap-1.5 mt-auto">
+                  {video.isRequired && (
+                    <Badge className="text-xs bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 border-0 flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3" />
+                      Required{video.dueDate ? ` · ${format(new Date(video.dueDate), 'dd MMM')}` : ''}
+                    </Badge>
+                  )}
                   {video.subjectName && (
                     <Badge variant="secondary" className="text-xs font-normal">
                       {video.subjectName}

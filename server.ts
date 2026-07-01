@@ -246,6 +246,23 @@ const videoFileUpload = multer({
   },
 });
 
+// Subtitle/caption files live alongside videos and are served from the same dir.
+const captionFileUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, VIDEO_FILES_DIR),
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase() || ".vtt";
+      cb(null, `${crypto.randomUUID()}${ext}`);
+    },
+  }),
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB is plenty for subtitles
+  fileFilter: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (ext === ".vtt" || ext === ".srt") cb(null, true);
+    else cb(new Error("Only .vtt or .srt subtitle files are allowed"));
+  },
+});
+
 // ─── Database backups ──────────────────────────────────────────────────────────
 // Real pg_dump backups written to disk (a Docker volume in production). Override
 // the location with BACKUP_DIR and how many to keep with BACKUP_RETENTION.
@@ -954,6 +971,10 @@ async function startServer() {
   app.use("/uploads/videos", express.static(VIDEO_FILES_DIR, {
     maxAge: isProduction ? "30d" : 0,
     immutable: isProduction,
+    setHeaders: (res, filePath) => {
+      // Browsers require text/vtt for <track> subtitles to load.
+      if (filePath.endsWith(".vtt")) res.setHeader("Content-Type", "text/vtt; charset=utf-8");
+    },
   }));
   app.use("/uploads/admissions", express.static(ADMISSION_FILE_DIR, {
     maxAge: isProduction ? "30d" : 0,
@@ -2351,6 +2372,17 @@ async function startServer() {
     });
   };
 
+  const uploadCaptionFile = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    captionFileUpload.single("captions")(req, res, (err: any) => {
+      if (!err) return next();
+      const message =
+        err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE"
+          ? "Subtitle files must be 2 MB or smaller"
+          : err.message || "Upload failed";
+      res.status(400).json({ error: message });
+    });
+  };
+
   const uploadAdmissionFile = (req: express.Request, res: express.Response, next: express.NextFunction) => {
     admissionFileUpload.single("file")(req, res, (err: any) => {
       if (!err) return next();
@@ -3121,6 +3153,18 @@ async function startServer() {
       size: file.size,
       mimeType: file.mimetype,
     });
+  });
+
+  // Caption/subtitle (.vtt/.srt) upload — stored alongside videos.
+  app.post("/api/videos/captions", authMiddleware, uploadCaptionFile, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const file = (req as any).file as Express.Multer.File | undefined;
+    if (!file) { res.status(400).json({ error: "Subtitle file is required" }); return; }
+    res.json({ url: `/uploads/videos/${file.filename}`, originalName: file.originalname });
   });
 
   app.get("/api/videos", authMiddleware, async (req, res) => {

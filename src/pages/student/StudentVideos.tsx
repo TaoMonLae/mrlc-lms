@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Video, Search, Filter, Play, Clock, BookOpen, Check } from 'lucide-react';
+import { Video, Search, Filter, Play, Clock, BookOpen, Check, AlertTriangle } from 'lucide-react';
 import { apiGet } from '../../lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, format } from 'date-fns';
 import { formatDuration } from '../../lib/video';
 import { useAllVideoProgress } from '../../hooks/useVideoProgress';
 import type { VideoLesson } from '../../lib/video/types';
@@ -181,6 +181,12 @@ export default function StudentVideos() {
                   {video.description}
                 </p>
                 <div className="flex flex-wrap gap-1.5">
+                  {video.isRequired && (
+                    <Badge className="text-[9px] uppercase tracking-widest font-bold border-0 bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 px-1.5 flex items-center gap-0.5">
+                      <AlertTriangle className="h-2.5 w-2.5" />
+                      Required{video.dueDate ? ` · ${format(new Date(video.dueDate), 'dd MMM')}` : ''}
+                    </Badge>
+                  )}
                   {video.subjectName && (
                     <Badge variant="outline" className="text-[9px] uppercase tracking-widest font-bold border-none bg-aubergine-50 text-aubergine-700 dark:bg-aubergine-900/30 dark:text-aubergine-400 px-1.5">
                       {video.subjectName}

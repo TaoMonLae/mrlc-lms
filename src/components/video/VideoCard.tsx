@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Video, Play, Clock, BookOpen, Check, CheckSquare, Square } from 'lucide-react';
+import { Video, Play, Clock, BookOpen, Check, CheckSquare, Square, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, format } from 'date-fns';
 import { formatDuration } from '../../lib/video';
 import type { VideoLesson, VideoProgress } from '../../lib/video/types';
 
@@ -139,6 +139,12 @@ export function VideoCard({
         </p>
 
         <div className="flex flex-wrap gap-1.5">
+          {video.isRequired && (
+            <Badge className="text-xs bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 border-0 flex items-center gap-1">
+              <AlertTriangle className="h-3 w-3" />
+              Required{video.dueDate ? ` · ${format(new Date(video.dueDate), 'dd MMM')}` : ''}
+            </Badge>
+          )}
           {video.subjectName && (
             <Badge variant="secondary" className="text-xs font-normal">
               {video.subjectName}
