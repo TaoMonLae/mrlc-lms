@@ -35,6 +35,13 @@ export default function StudentsList() {
   const [classes, setClasses] = useState<{ id: string; name: string }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const reloadStudents = async () => {
+    try {
+      const res = await fetch('/api/students', { headers: { Authorization: `Bearer ${sessionStorage.getItem('auth_token')}` } });
+      if (res.ok) setStudents(await res.json());
+    } catch { /* keep prior list */ }
+  };
+
   useEffect(() => {
     const token = sessionStorage.getItem('auth_token');
     const fetchStudents = async () => {
@@ -112,7 +119,7 @@ export default function StudentsList() {
           <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Manage student records, enrollment, and academic profiles.</p>
         </div>
         <div className="flex items-center gap-2">
-          <StudentCsvImport />
+          <StudentCsvImport onImported={reloadStudents} />
           <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto" render={<Link to="/students/new" />} nativeButton={false}>
             <UserPlus className="mr-2 h-4 w-4" />
             Add Student

@@ -1419,6 +1419,87 @@ async function startServer() {
     }
   });
 
+  // Bulk import from a parsed CSV. Each row is validated and created independently
+  // so one bad row never aborts the whole batch — the response reports per-row
+  // outcomes. `className` is matched (case-insensitively) to an existing class.
+  app.post("/api/students/import", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const rows: any[] = Array.isArray(req.body?.rows) ? req.body.rows : [];
+    if (rows.length === 0) { res.status(400).json({ error: "No rows to import" }); return; }
+    if (rows.length > 1000) { res.status(400).json({ error: "Too many rows (max 1000 per import)" }); return; }
+
+    const classes = await prisma.class.findMany({ select: { id: true, name: true } });
+    const classByName = new Map(classes.map((c) => [c.name.trim().toLowerCase(), c.id]));
+
+    const s = (v: any) => (v == null ? "" : String(v).trim());
+    const created: string[] = [];
+    const errors: { row: number; message: string }[] = [];
+    const seenCodes = new Set<string>();
+    const seenEmails = new Set<string>();
+
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i] || {};
+      const rowNo = i + 2; // account for the header line
+      const firstName = s(r.firstName);
+      const lastName = s(r.lastName);
+      const email = s(r.email).toLowerCase();
+      const studentCode = s(r.studentCode || r.studentId);
+
+      if (!firstName || !lastName || !email || !studentCode) {
+        errors.push({ row: rowNo, message: "firstName, lastName, email and studentCode are all required" });
+        continue;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        errors.push({ row: rowNo, message: `Invalid email "${email}"` });
+        continue;
+      }
+      if (seenCodes.has(studentCode) || seenEmails.has(email)) {
+        errors.push({ row: rowNo, message: "Duplicate email or studentCode within the file" });
+        continue;
+      }
+
+      const classNameRaw = s(r.className);
+      let classId: string | null = null;
+      if (classNameRaw) {
+        classId = classByName.get(classNameRaw.toLowerCase()) || null;
+        if (!classId) { errors.push({ row: rowNo, message: `Unknown class "${classNameRaw}"` }); continue; }
+      }
+
+      const gender = s(r.gender).toUpperCase() || null;
+      const status = s(r.status).toUpperCase() === "INACTIVE" ? "INACTIVE" : "ACTIVE";
+      const dob = s(r.dateOfBirth);
+      const dateOfBirth = dob && !isNaN(Date.parse(dob)) ? new Date(dob) : null;
+
+      try {
+        await prisma.$transaction(async (tx) => {
+          const user = await tx.user.create({
+            data: { firstName, lastName, email, role: "STUDENT", mustChangePassword: true, passwordHash: await bcrypt.hash("Student123!", 10) },
+          });
+          await tx.student.create({
+            data: {
+              userId: user.id, studentCode, gender, status, dateOfBirth, classId,
+              guardianName: s(r.guardianName) || null,
+              guardianPhone: s(r.guardianPhone) || null,
+              address: s(r.address) || null,
+              notes: s(r.notes) || null,
+            },
+          });
+        });
+        seenCodes.add(studentCode); seenEmails.add(email);
+        created.push(studentCode);
+      } catch (err: any) {
+        errors.push({ row: rowNo, message: err?.code === "P2002" ? "Email or studentCode already exists" : "Could not create student" });
+      }
+    }
+
+    await createAuditLog(
+      jwtUser.userId, jwtUser.email, "IMPORT", "STUDENT", null,
+      `Bulk student import: ${created.length} created, ${errors.length} skipped.`,
+      req.ip, req.headers["user-agent"] || null, errors.length ? "WARNING" : "SUCCESS",
+    );
+    res.json({ createdCount: created.length, failedCount: errors.length, errors });
+  });
+
   app.get("/api/students/:id", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
