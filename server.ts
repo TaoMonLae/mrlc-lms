@@ -1470,10 +1470,21 @@ async function startServer() {
       const dob = s(r.dateOfBirth);
       const dateOfBirth = dob && !isNaN(Date.parse(dob)) ? new Date(dob) : null;
 
+      // Optional per-row password. When supplied it's used as-is (min 6 chars) and
+      // the student is NOT forced to change it; otherwise a default is set and they
+      // must change it at first login.
+      const password = s(r.password);
+      if (password && password.length < 6) {
+        errors.push({ row: rowNo, message: "password must be at least 6 characters" });
+        continue;
+      }
+      const passwordHash = await bcrypt.hash(password || "Student123!", 10);
+      const mustChangePassword = !password;
+
       try {
         await prisma.$transaction(async (tx) => {
           const user = await tx.user.create({
-            data: { firstName, lastName, email, role: "STUDENT", mustChangePassword: true, passwordHash: await bcrypt.hash("Student123!", 10) },
+            data: { firstName, lastName, email, role: "STUDENT", mustChangePassword, passwordHash },
           });
           await tx.student.create({
             data: {

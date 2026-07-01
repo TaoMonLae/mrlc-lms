@@ -16,13 +16,13 @@ import { apiSend } from '../../lib/api';
 
 // These must match the columns the /api/students/import endpoint reads.
 const TEMPLATE_COLUMNS = [
-  'studentCode', 'firstName', 'lastName', 'email', 'gender', 'dateOfBirth',
+  'studentCode', 'firstName', 'lastName', 'email', 'password', 'gender', 'dateOfBirth',
   'className', 'guardianName', 'guardianPhone', 'address', 'status', 'notes',
 ];
 
 const SAMPLE_ROWS = [
-  ['STU-001', 'Aung', 'Ko', 'aung.ko@example.com', 'MALE', '2007-04-15', 'Grade 10', 'Daw Hla', '09-123456789', 'Mae Sot', 'ACTIVE', ''],
-  ['STU-002', 'Mya', 'Win', 'mya.win@example.com', 'FEMALE', '2008-09-02', 'Grade 9', 'U Tun', '09-987654321', '', 'ACTIVE', 'Transferred in'],
+  ['STU-001', 'Aung', 'Ko', 'aung.ko@example.com', '', 'MALE', '2007-04-15', 'Grade 10', 'Daw Hla', '09-123456789', 'Mae Sot', 'ACTIVE', ''],
+  ['STU-002', 'Mya', 'Win', 'mya.win@example.com', 'Welcome2026', 'FEMALE', '2008-09-02', 'Grade 9', 'U Tun', '09-987654321', '', 'ACTIVE', 'Transferred in'],
 ];
 
 interface CsvRow { [key: string]: string }
@@ -105,7 +105,7 @@ export function StudentCsvImport({ onImported }: { onImported?: () => void }) {
         <DialogHeader>
           <DialogTitle>Import Students from CSV</DialogTitle>
           <DialogDescription>
-            Download the template, fill in one student per row, then upload it here. New students get the default password <strong>Student123!</strong> and are asked to change it at first login.
+            Download the template, fill in one student per row, then upload it here. Leave <code className="text-xs">password</code> blank to use the default <strong>Student123!</strong> (student must change it at first login), or set one to assign it directly.
           </DialogDescription>
         </DialogHeader>
 
@@ -116,7 +116,7 @@ export function StudentCsvImport({ onImported }: { onImported?: () => void }) {
             <div className="text-sm">
               <p className="font-medium text-slate-900 dark:text-white">Step 1 — Get the template</p>
               <p className="text-slate-500 dark:text-slate-400">
-                Required columns: <code className="text-xs">studentCode</code>, <code className="text-xs">firstName</code>, <code className="text-xs">lastName</code>, <code className="text-xs">email</code>. Optional: gender, dateOfBirth (YYYY-MM-DD), className, guardianName, guardianPhone, address, status, notes. <code className="text-xs">className</code> must match an existing class name.
+                Required columns: <code className="text-xs">studentCode</code>, <code className="text-xs">firstName</code>, <code className="text-xs">lastName</code>, <code className="text-xs">email</code>. Optional: password (min 6 chars), gender, dateOfBirth (YYYY-MM-DD), className, guardianName, guardianPhone, address, status, notes. <code className="text-xs">className</code> must match an existing class name.
               </p>
               <Button onClick={downloadTemplate} variant="ghost" size="sm" className="mt-1 -ml-2 text-aubergine-600">
                 <Download className="mr-2 h-4 w-4" /> Download template (with example rows)
