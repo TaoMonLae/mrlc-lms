@@ -98,7 +98,7 @@ export const NAVIGATION_ITEMS: NavItem[] = [
   },
   {
     title: "Attendance",
-    url: "/attendance",
+    url: "/attendance/reports",
     icon: CalendarCheck,
     roles: ["ADMIN"],
   },

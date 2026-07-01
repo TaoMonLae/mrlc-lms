@@ -10,7 +10,6 @@ import StudentsList from "./pages/students/StudentsList";
 import StudentNew from "./pages/students/StudentNew";
 import StudentProfile from "./pages/students/StudentProfile";
 import StudentEdit from "./pages/students/StudentEdit";
-import AttendancePage from "./pages/attendance/AttendancePage";
 import AttendanceReportsPage from "./pages/attendance/AttendanceReports";
 
 import ExamNew from "./pages/exams/ExamNew";
@@ -250,7 +249,8 @@ export default function App() {
                   <Route path="/subjects/:id" element={<SubjectProfile />} />
                   <Route path="/subjects/:id/edit" element={<SubjectEdit />} />
 
-                  <Route path="/attendance" element={<AttendancePage />} />
+                  {/* Attendance - Admin can only view reports, teachers record via /teacher/attendance */}
+	                  <Route path="/attendance" element={<Navigate to="/attendance/reports" replace />} />
                   <Route path="/attendance/reports" element={<AttendanceReportsPage />} />
                   
                   <Route path="/exams" element={<ExamsList />} />

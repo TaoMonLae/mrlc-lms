@@ -2171,8 +2171,9 @@ async function startServer() {
   // ── Attendance API ──────────────────────────────────────────────────────────
   app.get("/api/attendance", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
-    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
-      res.status(403).json({ error: "Forbidden" });
+    // Only teachers can fetch attendance for recording
+    if (jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Forbidden: Only teachers can access attendance data" });
       return;
     }
     const { classId, date } = req.query as { classId?: string; date?: string };
@@ -2180,6 +2181,14 @@ async function startServer() {
       res.status(400).json({ error: "classId and date are required" });
       return;
     }
+
+    // Validate teacher is assigned to this class
+    const teacherClassIds = await getTeacherClassIds(jwtUser.userId);
+    if (!teacherClassIds.includes(classId)) {
+      res.status(403).json({ error: "Forbidden: You can only view attendance for your assigned classes" });
+      return;
+    }
+
     try {
       const parsedDate = new Date(date);
       const startOfDay = new Date(parsedDate.setUTCHours(0, 0, 0, 0));
@@ -2203,8 +2212,9 @@ async function startServer() {
 
   app.post("/api/attendance", authMiddleware, validate(schemas.attendance), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
-    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
-      res.status(403).json({ error: "Forbidden" });
+    // Only teachers can record attendance - admins should not take attendance
+    if (jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Forbidden: Only teachers can record attendance" });
       return;
     }
     const { classId, date, records } = req.body as {
@@ -2216,6 +2226,29 @@ async function startServer() {
       res.status(400).json({ error: "classId, date, and records array are required" });
       return;
     }
+
+    // Validate teacher is assigned to this class
+    const teacherClassIds = await getTeacherClassIds(jwtUser.userId);
+    if (!teacherClassIds.includes(classId)) {
+      res.status(403).json({ error: "Forbidden: You can only record attendance for your assigned classes" });
+      return;
+    }
+
+    // Validate all students are enrolled in this class
+    const classStudents = await prisma.student.findMany({
+      where: { classId },
+      select: { id: true }
+    });
+    const classStudentIds = new Set(classStudents.map((s) => s.id));
+    const invalidStudents = records.filter((rec) => !classStudentIds.has(rec.studentId));
+    if (invalidStudents.length > 0) {
+      res.status(400).json({
+        error: "Invalid students",
+        details: `${invalidStudents.map((r) => r.studentId).join(", ")} are not enrolled in this class`
+      });
+      return;
+    }
+
     try {
       const parsedDate = new Date(date);
 
