@@ -963,27 +963,47 @@ async function startServer() {
   }));
 
   // ── Rate limiting ───────────────────────────────────────────────────────────
-  // Generous global cap (schools often share one NAT'd IP). Health checks and
-  // e-book streaming are skipped so monitoring and reading are never throttled.
+  // Whole schools usually share ONE public (NAT'd) IP, so an IP-keyed limit is
+  // really a per-school limit that throttles everyone together. Key by the
+  // authenticated user instead (decoded from the bearer token) so each person
+  // gets their own budget; fall back to IP only for unauthenticated requests.
+  const perUserOrIpKey = (req: express.Request): string => {
+    const auth = req.headers.authorization;
+    if (auth?.startsWith("Bearer ")) {
+      try { return "u:" + verifyToken(auth.slice(7)).userId; } catch { /* not a valid token */ }
+    }
+    return "ip:" + ipKeyGenerator(req.ip || "");
+  };
+
+  // Generous per-user cap. Health checks and e-book streaming are skipped so
+  // monitoring and reading are never throttled.
   const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 min
-    max: 1000,
+    max: 2000, // per user (or per IP when unauthenticated)
     standardHeaders: true,
     legacyHeaders: false,
     message: { error: "Too many requests, please try again later." },
+    keyGenerator: perUserOrIpKey,
     skip: (req) =>
       req.originalUrl === "/api/health" ||
       /^\/api\/ebooks\/[^/]+\/(content|download)/.test(req.originalUrl),
   });
   app.use("/api/", apiLimiter);
 
-  // Stricter limit for auth endpoints to prevent brute-force.
+  // Brute-force protection for login. Keyed by the target account (email) plus
+  // IP — NOT IP alone — so that many different people logging in from the same
+  // shared school network each get their own attempt budget, while repeated
+  // attempts against a single account are still limited.
   const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 20,
     standardHeaders: true,
     legacyHeaders: false,
     message: { error: "Too many login attempts. Please try again after 15 minutes." },
+    keyGenerator: (req) => {
+      const email = String(req.body?.email || "").trim().toLowerCase();
+      return (email ? "acct:" + email + "|" : "") + "ip:" + ipKeyGenerator(req.ip || "");
+    },
   });
 
   // Rate limiters for chat endpoints to prevent spam and DoS
@@ -995,7 +1015,7 @@ async function startServer() {
     message: { error: "Too many messages. Please wait before sending more." },
     keyGenerator: (req) => {
       const jwtUser = (req as any).user as JwtPayload;
-      return jwtUser?.userId || ipKeyGenerator(req);
+      return jwtUser?.userId || ipKeyGenerator(req.ip || "");
     },
   });
 
@@ -1007,7 +1027,7 @@ async function startServer() {
     message: { error: "Too many uploads. Please wait before uploading more files." },
     keyGenerator: (req) => {
       const jwtUser = (req as any).user as JwtPayload;
-      return jwtUser?.userId || ipKeyGenerator(req);
+      return jwtUser?.userId || ipKeyGenerator(req.ip || "");
     },
   });
 
