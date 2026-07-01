@@ -9016,6 +9016,27 @@ async function startServer() {
     }
   });
 
+  // Lightweight typing signal — broadcast (not persisted) to the other participants
+  // so their clients can show a "typing…" indicator. Throttled on the client.
+  app.post("/api/chat/conversations/:id/typing", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const parts = await prisma.conversationParticipant.findMany({
+        where: { conversationId: req.params.id },
+        select: { userId: true, leftAt: true, user: { select: { firstName: true, lastName: true } } },
+      });
+      const me = parts.find((p) => p.userId === jwtUser.userId);
+      if (!me || me.leftAt) { res.status(403).json({ error: "You are not part of this conversation" }); return; }
+      const others = parts.filter((p) => p.userId !== jwtUser.userId && !p.leftAt).map((p) => p.userId);
+      const name = `${me.user?.firstName ?? ""} ${me.user?.lastName ?? ""}`.trim() || "Someone";
+      chatNotify(others, { type: "typing", conversationId: req.params.id, userId: jwtUser.userId, name });
+      res.status(204).end();
+    } catch (err) {
+      logger.error("Error broadcasting typing signal:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
   app.post("/api/chat/conversations/:id/read", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {

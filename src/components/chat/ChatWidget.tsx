@@ -30,7 +30,7 @@ const timeLabel = (iso: string) => { const d = new Date(iso); return isToday(d) 
 /** Messenger-style floating chat, available on every page (hidden on /chat). */
 export default function ChatWidget() {
   const location = useLocation();
-  const { onlineUserIds, eventTick, setActiveConversation } = useChat();
+  const { onlineUserIds, eventTick, setActiveConversation, typingNames, sendTyping } = useChat();
   const { user } = useAuth();
   const myId = user?.id;
   const canSave = user?.role === 'ADMIN' || user?.role === 'TEACHER';
@@ -250,6 +250,23 @@ export default function ChatWidget() {
               const seen = others.some((o) => o.lastReadAt && new Date(o.lastReadAt) >= new Date(last.createdAt));
               return <p className="pr-1 text-right text-[10px] text-slate-400">{seen ? 'Seen' : 'Sent'}</p>;
             })()}
+            {(() => {
+              const names = activeId ? typingNames(activeId) : [];
+              if (names.length === 0) return null;
+              const label = names.length === 1 ? `${names[0]} is typing` : `${names.length} people typing`;
+              return (
+                <div className="flex justify-start" aria-live="polite">
+                  <div className="flex items-center gap-1.5 rounded-2xl bg-slate-100 dark:bg-surface-raised px-2.5 py-1.5">
+                    <span className="flex gap-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:-0.3s]" />
+                      <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:-0.15s]" />
+                      <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce" />
+                    </span>
+                    <span className="text-[10px] text-slate-500">{label}…</span>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
           {detail.oversight ? (
             <div className="border-t border-slate-100 p-2 text-center text-[11px] text-slate-400 dark:border-surface-raised">Admin oversight — read only</div>
@@ -257,7 +274,7 @@ export default function ChatWidget() {
             <div className="flex items-center gap-1 border-t border-slate-100 p-2 dark:border-surface-raised">
               <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" title="Camera (disappears in 24h)" onClick={() => setCamera(true)}><Camera className="h-4 w-4 text-slate-500" /></Button>
               <StickerPicker onSelect={sendSticker} />
-              <Input value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} placeholder="Type a message…" className="h-9" />
+              <Input value={draft} onChange={(e) => { setDraft(e.target.value); if (e.target.value.trim() && activeId) sendTyping(activeId); }} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} placeholder="Type a message…" className="h-9" />
               <Button size="icon" className="h-9 w-9 shrink-0" onClick={send} disabled={!draft.trim()}><Send className="h-4 w-4" /></Button>
             </div>
           )}

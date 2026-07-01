@@ -47,7 +47,7 @@ function timeLeftShort(iso: string) {
 export default function ChatPage() {
   const { hasPermission } = usePermissions();
   const isAdmin = hasPermission('manage_all');
-  const { onlineUserIds, eventTick, setActiveConversation } = useChat();
+  const { onlineUserIds, eventTick, setActiveConversation, typingNames, sendTyping } = useChat();
   const { user } = useAuth();
   const myId = user?.id;
   const canSave = user?.role === 'ADMIN' || user?.role === 'TEACHER';
@@ -395,6 +395,26 @@ export default function ChatPage() {
                 const seen = others.some((o) => o.lastReadAt && new Date(o.lastReadAt) >= new Date(last.createdAt));
                 return <p className="pr-1 text-right text-[11px] text-slate-400">{seen ? 'Seen' : 'Sent'}</p>;
               })()}
+              {(() => {
+                const names = activeId ? typingNames(activeId) : [];
+                if (names.length === 0) return null;
+                const label =
+                  names.length === 1 ? `${names[0]} is typing`
+                  : names.length === 2 ? `${names[0]} and ${names[1]} are typing`
+                  : `${names.length} people are typing`;
+                return (
+                  <div className="flex justify-start" aria-live="polite">
+                    <div className="flex items-center gap-2 rounded-2xl bg-slate-100 dark:bg-surface-raised px-3 py-2">
+                      <span className="flex gap-1">
+                        <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:-0.3s]" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:-0.15s]" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce" />
+                      </span>
+                      <span className="text-[11px] text-slate-500">{label}…</span>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             {detail.oversight ? (
@@ -418,7 +438,7 @@ export default function ChatPage() {
                     <Camera className="h-4 w-4 text-slate-500" />
                   </Button>
                   <StickerPicker onSelect={sendSticker} />
-                  <Input value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} placeholder="Type a message…" />
+                  <Input value={draft} onChange={(e) => { setDraft(e.target.value); if (e.target.value.trim() && activeId) sendTyping(activeId); }} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} placeholder="Type a message…" />
                   <Button onClick={send} disabled={!draft.trim() && !attachment}><Send className="h-4 w-4" /></Button>
                 </div>
               </div>
