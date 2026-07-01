@@ -21,7 +21,7 @@ import {
   DropdownMenuGroup,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { StudentCsvImport } from '../../components/students/StudentCsvImport';
+import { StudentCsvImport, StudentTemplateButton } from '../../components/students/StudentCsvImport';
 import { toast } from 'sonner';
 import { TableSkeleton } from '../../components/ui/loading-skeleton';
 import { EmptySearchState } from '../../components/ui/empty-state';
@@ -119,6 +119,7 @@ export default function StudentsList() {
           <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Manage student records, enrollment, and academic profiles.</p>
         </div>
         <div className="flex items-center gap-2">
+          <StudentTemplateButton />
           <StudentCsvImport onImported={reloadStudents} />
           <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto" render={<Link to="/students/new" />} nativeButton={false}>
             <UserPlus className="mr-2 h-4 w-4" />

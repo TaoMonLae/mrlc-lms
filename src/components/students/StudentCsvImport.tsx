@@ -25,6 +25,27 @@ const SAMPLE_ROWS = [
   ['STU-002', 'Mya', 'Win', 'mya.win@example.com', 'Welcome2026', 'FEMALE', '2008-09-02', 'Grade 9', 'U Tun', '09-987654321', '', 'ACTIVE', 'Transferred in'],
 ];
 
+/** Downloads the student import template CSV (headers + example rows). */
+export function downloadStudentTemplate() {
+  const csv = Papa.unparse({ fields: TEMPLATE_COLUMNS, data: SAMPLE_ROWS });
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'student_import_template.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/** Standalone button so admins can grab the template without opening the dialog. */
+export function StudentTemplateButton() {
+  return (
+    <Button variant="outline" onClick={downloadStudentTemplate}>
+      <Download className="mr-2 h-4 w-4" /> Template
+    </Button>
+  );
+}
+
 interface CsvRow { [key: string]: string }
 interface RowError { row: number; message: string }
 interface ImportResult { createdCount: number; failedCount: number; errors: RowError[] }
@@ -67,16 +88,7 @@ export function StudentCsvImport({ onImported }: { onImported?: () => void }) {
     });
   };
 
-  const downloadTemplate = () => {
-    const csv = Papa.unparse({ fields: TEMPLATE_COLUMNS, data: SAMPLE_ROWS });
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'student_import_template.csv';
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+  const downloadTemplate = downloadStudentTemplate;
 
   const runImport = async () => {
     if (rows.length === 0) return;
