@@ -907,7 +907,7 @@ async function startServer() {
               "script-src": ["'self'"],
               "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
               "font-src": ["'self'", "https://fonts.gstatic.com", "data:"],
-              "img-src": ["'self'", "data:", "https:"],
+              "img-src": ["'self'", "data:", "https:", "blob:"],
               "media-src": ["'self'", "https:", "blob:"],
               "connect-src": ["'self'"],
               "worker-src": ["'self'", "blob:"],
