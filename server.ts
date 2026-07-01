@@ -6620,7 +6620,13 @@ async function startServer() {
 
   // ── Database backups (admin) ─────────────────────────────────────────────────
   app.get("/api/backups", authMiddleware, requireRole("ADMIN"), async (_req, res) => {
-    res.json({ backups: listBackups(), retention: BACKUP_RETENTION });
+    const settings = await prisma.schoolProfile.findFirst({ select: { backupEnabled: true } }).catch(() => null);
+    res.json({
+      backups: listBackups(),
+      retention: BACKUP_RETENTION,
+      enabled: settings?.backupEnabled ?? false,
+      backupHour: Number(process.env.BACKUP_HOUR || 2),
+    });
   });
 
   app.post("/api/backups/run", authMiddleware, requireRole("ADMIN"), async (req, res) => {

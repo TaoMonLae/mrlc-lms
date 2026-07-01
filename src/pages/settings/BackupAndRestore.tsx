@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   Database, 
   FileJson, 
@@ -44,8 +45,32 @@ function humanSize(bytes: number): string {
   return `${Math.max(1, Math.round(bytes / 1024))} KB`;
 }
 
+function relativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  if (diff < 0) return 'just now';
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins} min ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs} hour${hrs === 1 ? '' : 's'} ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days} day${days === 1 ? '' : 's'} ago`;
+}
+
+function nextRunLabel(hour: number): string {
+  const now = new Date();
+  const next = new Date(now);
+  next.setHours(hour, 0, 0, 0);
+  if (next <= now) next.setDate(next.getDate() + 1);
+  const hh = String(hour).padStart(2, '0');
+  const isTomorrow = next.getDate() !== now.getDate();
+  return `${isTomorrow ? 'tomorrow ' : ''}${hh}:00`;
+}
+
 export default function BackupAndRestore() {
   const [logs, setLogs] = useState<BackupLog[]>([]);
+  const [autoEnabled, setAutoEnabled] = useState<boolean | null>(null);
+  const [backupHour, setBackupHour] = useState(2);
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoreDialogOpen, setIsRestoreDialogOpen] = useState(false);
   const [adminPassword, setAdminPassword] = useState('');
@@ -60,6 +85,8 @@ export default function BackupAndRestore() {
       const res = await fetch('/api/backups', { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) return;
       const data = await res.json();
+      if (typeof data.enabled === 'boolean') setAutoEnabled(data.enabled);
+      if (typeof data.backupHour === 'number') setBackupHour(data.backupHour);
       setLogs((data.backups || []).map((b: { name: string; size: number; createdAt: string }) => ({
         id: b.name,
         type: 'Database',
@@ -206,8 +233,51 @@ export default function BackupAndRestore() {
         </div>
       </div>
 
+      {/* Automated backup status */}
+      <div className={`rounded-xl border p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 ${
+        autoEnabled
+          ? 'border-emerald-200 dark:border-emerald-900/40 bg-emerald-50 dark:bg-emerald-900/10'
+          : 'border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo'
+      }`}>
+        <div className="flex items-start gap-3">
+          <div className={`h-9 w-9 rounded-full flex items-center justify-center shrink-0 ${
+            autoEnabled ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-slate-100 dark:bg-surface-raised text-slate-400'
+          }`}>
+            <History className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-slate-900 dark:text-white">Automated Daily Backups</h3>
+              <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${
+                autoEnabled === null ? 'bg-slate-100 text-slate-500 dark:bg-surface-raised dark:text-slate-400'
+                  : autoEnabled ? 'bg-emerald-500 text-white' : 'bg-slate-400 text-white'
+              }`}>
+                {autoEnabled === null ? '…' : autoEnabled ? 'On' : 'Off'}
+              </span>
+            </div>
+            <p className="text-sm text-slate-600 dark:text-slate-300 mt-0.5">
+              {autoEnabled === null ? (
+                'Checking status…'
+              ) : autoEnabled ? (
+                <>
+                  Last backup: <span className="font-medium text-slate-900 dark:text-white">{logs.length ? relativeTime(logs[0].createdAt) : 'none yet'}</span>
+                  {' · '}Next run: <span className="font-medium text-slate-900 dark:text-white">{nextRunLabel(backupHour)}</span>
+                </>
+              ) : (
+                'Turn on automatic backups in System Settings to run a daily database backup.'
+              )}
+            </p>
+          </div>
+        </div>
+        {autoEnabled === false && (
+          <Button variant="outline" size="sm" render={<Link to="/settings/system" />} nativeButton={false}>
+            System Settings
+          </Button>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        
+
         {/* Backup Selection */}
         <div className="space-y-4">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
