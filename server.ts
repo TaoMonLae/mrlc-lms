@@ -533,6 +533,8 @@ const schemas = {
   attendance: z.object({
     classId: reqStr,
     date: reqStr,
+    timetableEntryId: optStr.optional(),  // For session-based attendance
+    subjectId: optStr.optional(),         // Auto-populated from timetableEntry if provided
     records: z.array(z.object({
       studentId: reqStr,
       status: z.enum(["PRESENT", "ABSENT", "LATE", "EXCUSED"]),
@@ -2176,34 +2178,94 @@ async function startServer() {
       res.status(403).json({ error: "Forbidden: Only teachers can access attendance data" });
       return;
     }
-    const { classId, date } = req.query as { classId?: string; date?: string };
-    if (!classId || !date) {
-      res.status(400).json({ error: "classId and date are required" });
-      return;
-    }
+    const { classId, date, timetableEntryId } = req.query as { classId?: string; date?: string; timetableEntryId?: string };
 
-    // Validate teacher is assigned to this class
-    const teacherClassIds = await getTeacherClassIds(jwtUser.userId);
-    if (!teacherClassIds.includes(classId)) {
-      res.status(403).json({ error: "Forbidden: You can only view attendance for your assigned classes" });
+    // Support both class-based and session-based attendance
+    if ((!classId && !timetableEntryId) || !date) {
+      res.status(400).json({ error: "date and either classId or timetableEntryId are required" });
       return;
     }
 
     try {
       const parsedDate = new Date(date);
       const startOfDay = new Date(parsedDate.setUTCHours(0, 0, 0, 0));
-      const attendances = await prisma.attendance.findMany({
-        where: {
-          classId,
-          date: startOfDay,
-        },
-        include: {
-          student: {
-            include: { user: true }
-          }
+
+      // Session-based attendance
+      if (timetableEntryId) {
+        // Validate teacher is assigned to this session
+        const timetableEntry = await prisma.timetableEntry.findUnique({
+          where: { id: timetableEntryId },
+          select: { id: true, teacherId: true, substituteTeacherId: true, classId: true, subjectId: true, status: true }
+        });
+
+        if (!timetableEntry) {
+          res.status(404).json({ error: "Timetable entry not found" });
+          return;
         }
-      });
-      res.json(attendances);
+
+        // Check if session is cancelled
+        if (timetableEntry.status === "CANCELLED") {
+          res.status(400).json({ error: "Cannot record attendance for cancelled sessions" });
+          return;
+        }
+
+        // Validate teacher is assigned to this session (either as main teacher or substitute)
+        const teacherUserId = await prisma.teacher.findUnique({
+          where: { userId: jwtUser.userId },
+          select: { id: true }
+        });
+
+        if (!teacherUserId) {
+          res.status(403).json({ error: "Forbidden: Teacher record not found" });
+          return;
+        }
+
+        const isTeacherAssigned = timetableEntry.teacherId === teacherUserId.id ||
+                                   timetableEntry.substituteTeacherId === teacherUserId.id;
+
+        if (!isTeacherAssigned) {
+          res.status(403).json({ error: "Forbidden: You can only view attendance for sessions you teach" });
+          return;
+        }
+
+        const attendances = await prisma.attendance.findMany({
+          where: {
+            timetableEntryId,
+            date: startOfDay,
+          },
+          include: {
+            student: {
+              include: { user: true }
+            }
+          }
+        });
+        res.json({ type: "session", timetableEntry, attendances });
+        return;
+      }
+
+      // Class-based attendance (existing behavior)
+      if (classId) {
+        // Validate teacher is assigned to this class
+        const teacherClassIds = await getTeacherClassIds(jwtUser.userId);
+        if (!teacherClassIds.includes(classId)) {
+          res.status(403).json({ error: "Forbidden: You can only view attendance for your assigned classes" });
+          return;
+        }
+
+        const attendances = await prisma.attendance.findMany({
+          where: {
+            classId,
+            date: startOfDay,
+            timetableEntryId: null,  // Only class-based records
+          },
+          include: {
+            student: {
+              include: { user: true }
+            }
+          }
+        });
+        res.json({ type: "class", attendances });
+      }
     } catch (err) {
       logger.error("Error fetching attendance:", err);
       res.status(500).json({ error: "Internal Server Error" });
@@ -2217,16 +2279,167 @@ async function startServer() {
       res.status(403).json({ error: "Forbidden: Only teachers can record attendance" });
       return;
     }
-    const { classId, date, records } = req.body as {
+    const { classId, date, records, timetableEntryId, subjectId } = req.body as {
       classId: string;
       date: string;
+      timetableEntryId?: string;
+      subjectId?: string;
       records: Array<{ studentId: string; status: "PRESENT" | "ABSENT" | "LATE" | "EXCUSED"; remarks?: string }>;
     };
+
     if (!classId || !date || !records || !Array.isArray(records)) {
       res.status(400).json({ error: "classId, date, and records array are required" });
       return;
     }
 
+    // Validate date is not in the future
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const parsedDate = new Date(date);
+    const attendanceDate = new Date(parsedDate);
+    attendanceDate.setHours(0, 0, 0, 0);
+
+    if (attendanceDate > today) {
+      res.status(400).json({ error: "Cannot mark attendance for future dates" });
+      return;
+    }
+
+    const startOfDay = new Date(attendanceDate.setUTCHours(0, 0, 0, 0));
+
+    // ── Session-based attendance ───────────────────────────────────────────────
+    if (timetableEntryId) {
+      // Validate teacher is assigned to this session
+      const timetableEntry = await prisma.timetableEntry.findUnique({
+        where: { id: timetableEntryId },
+        select: {
+          id: true,
+          teacherId: true,
+          substituteTeacherId: true,
+          classId: true,
+          subjectId: true,
+          status: true,
+          dayOfWeek: true,
+          startTime: true,
+          endTime: true
+        }
+      });
+
+      if (!timetableEntry) {
+        res.status(404).json({ error: "Timetable entry not found" });
+        return;
+      }
+
+      // Check if session is cancelled
+      if (timetableEntry.status === "CANCELLED") {
+        res.status(400).json({ error: "Cannot record attendance for cancelled sessions" });
+        return;
+      }
+
+      // Verify classId matches
+      if (timetableEntry.classId !== classId) {
+        res.status(400).json({ error: "classId does not match the timetable entry" });
+        return;
+      }
+
+      // Validate teacher is assigned to this session
+      const teacherRecord = await prisma.teacher.findUnique({
+        where: { userId: jwtUser.userId },
+        select: { id: true }
+      });
+
+      if (!teacherRecord) {
+        res.status(403).json({ error: "Forbidden: Teacher record not found" });
+        return;
+      }
+
+      const isTeacherAssigned = timetableEntry.teacherId === teacherRecord.id ||
+                                 timetableEntry.substituteTeacherId === teacherRecord.id;
+
+      if (!isTeacherAssigned) {
+        res.status(403).json({ error: "Forbidden: You can only record attendance for sessions you teach" });
+        return;
+      }
+
+      // Validate all students are enrolled in this class
+      const classStudents = await prisma.student.findMany({
+        where: { classId },
+        select: { id: true }
+      });
+      const classStudentIds = new Set(classStudents.map((s) => s.id));
+      const invalidStudents = records.filter((rec) => !classStudentIds.has(rec.studentId));
+      if (invalidStudents.length > 0) {
+        res.status(400).json({
+          error: "Invalid students",
+          details: `${invalidStudents.map((r) => r.studentId).join(", ")} are not enrolled in this class`
+        });
+        return;
+      }
+
+      try {
+        // For session-based attendance, we need to handle upsert differently
+        // since we can't use the class-based unique constraint
+        // Use Promise.all since operations are independent
+        const results = await Promise.all(
+          records.map(async (rec) => {
+            // First, try to find existing attendance for this student+session+date
+            const existing = await prisma.attendance.findFirst({
+              where: {
+                studentId: rec.studentId,
+                timetableEntryId,
+                date: startOfDay
+              }
+            });
+
+            if (existing) {
+              // Update existing
+              return await prisma.attendance.update({
+                where: { id: existing.id },
+                data: {
+                  status: rec.status,
+                  remarks: rec.remarks ? rec.remarks.substring(0, 500) : null,
+                  recordedById: jwtUser.userId,
+                }
+              });
+            } else {
+              // Create new
+              return await prisma.attendance.create({
+                data: {
+                  studentId: rec.studentId,
+                  classId,
+                  date: startOfDay,
+                  status: rec.status,
+                  remarks: rec.remarks ? rec.remarks.substring(0, 500) : null,
+                  recordedById: jwtUser.userId,
+                  timetableEntryId,
+                  subjectId: timetableEntry.subjectId, // Use subjectId from timetable entry
+                }
+              });
+            }
+          })
+        );
+
+        await createAuditLog(
+          jwtUser.userId,
+          jwtUser.email,
+          "STATUS_CHANGE",
+          "SESSION_ATTENDANCE",
+          timetableEntryId,
+          `Session attendance recorded for timetable entry ${timetableEntryId} on ${date}.`,
+          req.ip,
+          req.headers["user-agent"] || null,
+          "SUCCESS"
+        );
+
+        res.json({ success: true, count: results.length, type: "session", timetableEntryId });
+        return;
+      } catch (err) {
+        logger.error("Error saving session attendance:", err);
+        res.status(500).json({ error: "Internal Server Error" });
+        return;
+      }
+    }
+
+    // ── Class-based attendance (existing behavior) ───────────────────────────────
     // Validate teacher is assigned to this class
     const teacherClassIds = await getTeacherClassIds(jwtUser.userId);
     if (!teacherClassIds.includes(classId)) {
@@ -2250,20 +2463,6 @@ async function startServer() {
     }
 
     try {
-      const parsedDate = new Date(date);
-
-      // Validate date is not in the future
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const attendanceDate = new Date(parsedDate);
-      attendanceDate.setHours(0, 0, 0, 0);
-
-      if (attendanceDate > today) {
-        res.status(400).json({ error: "Cannot mark attendance for future dates" });
-        return;
-      }
-
-      const startOfDay = new Date(attendanceDate.setUTCHours(0, 0, 0, 0));
       const results = await prisma.$transaction(
         records.map((rec) =>
           prisma.attendance.upsert({
@@ -2303,9 +2502,215 @@ async function startServer() {
         "SUCCESS"
       );
 
-      res.json({ success: true, count: results.length });
+      res.json({ success: true, count: results.length, type: "class" });
     } catch (err) {
       logger.error("Error saving attendance:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Bulk session attendance: Mark attendance for multiple sessions at once
+  app.post("/api/attendance/bulk", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Forbidden: Only teachers can record attendance" });
+      return;
+    }
+
+    const { date, sessionRecords } = req.body as {
+      date: string;
+      sessionRecords: Array<{
+        timetableEntryId: string;
+        records: Array<{ studentId: string; status: "PRESENT" | "ABSENT" | "LATE" | "EXCUSED"; remarks?: string }>;
+      }>;
+    };
+
+    if (!date || !sessionRecords || !Array.isArray(sessionRecords)) {
+      res.status(400).json({ error: "date and sessionRecords array are required" });
+      return;
+    }
+
+    if (sessionRecords.length === 0) {
+      res.status(400).json({ error: "At least one session record is required" });
+      return;
+    }
+
+    // Validate date is not in the future
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const attendanceDate = new Date(date);
+    attendanceDate.setHours(0, 0, 0, 0);
+
+    if (attendanceDate > today) {
+      res.status(400).json({ error: "Cannot mark attendance for future dates" });
+      return;
+    }
+
+    const startOfDay = new Date(attendanceDate.setUTCHours(0, 0, 0, 0));
+
+    // Get teacher record
+    const teacherRecord = await prisma.teacher.findUnique({
+      where: { userId: jwtUser.userId },
+      select: { id: true }
+    });
+
+    if (!teacherRecord) {
+      res.status(403).json({ error: "Forbidden: Teacher record not found" });
+      return;
+    }
+
+    try {
+      // Validate all sessions and get their details
+      const sessionIds = sessionRecords.map(s => s.timetableEntryId);
+      const timetableEntries = await prisma.timetableEntry.findMany({
+        where: { id: { in: sessionIds } },
+        select: {
+          id: true,
+          teacherId: true,
+          substituteTeacherId: true,
+          classId: true,
+          subjectId: true,
+          subjectName: true,
+          status: true
+        }
+      });
+
+      // Check for missing or cancelled sessions
+      const missingIds = sessionIds.filter(id => !timetableEntries.find(e => e.id === id));
+      if (missingIds.length > 0) {
+        res.status(404).json({ error: "Sessions not found", details: missingIds });
+        return;
+      }
+
+      const cancelledSessions = timetableEntries.filter(e => e.status === "CANCELLED");
+      if (cancelledSessions.length > 0) {
+        res.status(400).json({ error: "Cannot record attendance for cancelled sessions", details: cancelledSessions.map(e => e.id) });
+        return;
+      }
+
+      // Validate teacher is assigned to all sessions
+      const unauthorizedSessions = timetableEntries.filter(e =>
+        e.teacherId !== teacherRecord.id && e.substituteTeacherId !== teacherRecord.id
+      );
+
+      if (unauthorizedSessions.length > 0) {
+        res.status(403).json({
+          error: "Forbidden: You can only record attendance for sessions you teach",
+          details: unauthorizedSessions.map(e => e.id)
+        });
+        return;
+      }
+
+      // Process each session
+      const results: Array<{ sessionId: string; subjectName: string; count: number; success: boolean; error?: string }> = [];
+
+      for (const sessionRecord of sessionRecords) {
+        const session = timetableEntries.find(e => e.id === sessionRecord.timetableEntryId);
+        if (!session) {
+          results.push({ sessionId: sessionRecord.timetableEntryId, subjectName: "Unknown", count: 0, success: false, error: "Session not found" });
+          continue;
+        }
+
+        try {
+          // Validate all students are enrolled in this class
+          const classStudents = await prisma.student.findMany({
+            where: { classId: session.classId },
+            select: { id: true }
+          });
+          const classStudentIds = new Set(classStudents.map((s) => s.id));
+          const invalidStudents = sessionRecord.records.filter((rec) => !classStudentIds.has(rec.studentId));
+
+          if (invalidStudents.length > 0) {
+            results.push({
+              sessionId: session.id,
+              subjectName: session.subjectName || "Unknown",
+              count: 0,
+              success: false,
+              error: `Invalid students: ${invalidStudents.map(r => r.studentId).join(", ")}`
+            });
+            continue;
+          }
+
+          // Create/update attendance records
+          const sessionResults = await Promise.all(
+            sessionRecord.records.map(async (rec) => {
+              const existing = await prisma.attendance.findFirst({
+                where: {
+                  studentId: rec.studentId,
+                  timetableEntryId: session.id,
+                  date: startOfDay
+                }
+              });
+
+              if (existing) {
+                return await prisma.attendance.update({
+                  where: { id: existing.id },
+                  data: {
+                    status: rec.status,
+                    remarks: rec.remarks ? rec.remarks.substring(0, 500) : null,
+                    recordedById: jwtUser.userId,
+                  }
+                });
+              } else {
+                return await prisma.attendance.create({
+                  data: {
+                    studentId: rec.studentId,
+                    classId: session.classId,
+                    date: startOfDay,
+                    status: rec.status,
+                    remarks: rec.remarks ? rec.remarks.substring(0, 500) : null,
+                    recordedById: jwtUser.userId,
+                    timetableEntryId: session.id,
+                    subjectId: session.subjectId,
+                  }
+                });
+              }
+            })
+          );
+
+          results.push({
+            sessionId: session.id,
+            subjectName: session.subjectName || "Unknown",
+            count: sessionResults.length,
+            success: true
+          });
+
+          await createAuditLog(
+            jwtUser.userId,
+            jwtUser.email,
+            "BULK_ATTENDANCE",
+            "SESSION_ATTENDANCE",
+            session.id,
+            `Bulk attendance recorded for session ${session.id} (${session.subjectName}) on ${date}.`,
+            req.ip,
+            req.headers["user-agent"] || null,
+            "SUCCESS"
+          );
+
+        } catch (err: any) {
+          results.push({
+            sessionId: session.id,
+            subjectName: session.subjectName || "Unknown",
+            count: 0,
+            success: false,
+            error: err.message || "Unknown error"
+          });
+        }
+      }
+
+      const successCount = results.filter(r => r.success).length;
+      const totalCount = results.reduce((sum, r) => sum + r.count, 0);
+
+      res.json({
+        success: true,
+        sessionsProcessed: results.length,
+        sessionsSuccessful: successCount,
+        totalRecords: totalCount,
+        results
+      });
+
+    } catch (err: any) {
+      logger.error("Error saving bulk attendance:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
@@ -7179,6 +7584,367 @@ async function startServer() {
       });
     } catch (err) {
       logger.error("Error building attendance report:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Session-based attendance report: per-student, per-subject attendance
+  app.get("/api/reports/session-attendance", authMiddleware, reportRole(["ADMIN", "TEACHER"]), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { classId, subjectId, month, startDate, endDate } = req.query as {
+      classId?: string;
+      subjectId?: string;
+      month?: string;
+      startDate?: string;
+      endDate?: string;
+    };
+
+    try {
+      const where: any = { timetableEntryId: { not: null } }; // Only session-based attendance
+
+      // For teachers, scope to their sessions
+      if (jwtUser.role === "TEACHER") {
+        const teacherRecord = await prisma.teacher.findUnique({
+          where: { userId: jwtUser.userId },
+          select: { id: true }
+        });
+
+        if (!teacherRecord) {
+          res.status(403).json({ error: "Forbidden: Teacher record not found" });
+          return;
+        }
+
+        // Get timetable entries where this teacher is assigned
+        const teacherSessions = await prisma.timetableEntry.findMany({
+          where: {
+            OR: [
+              { teacherId: teacherRecord.id },
+              { substituteTeacherId: teacherRecord.id }
+            ],
+            status: "ACTIVE"
+          },
+          select: { id: true, classId: true, subjectId: true }
+        });
+
+        const sessionIds = teacherSessions.map(s => s.id);
+
+        if (classId && classId !== "all") {
+          // Verify teacher has access to requested class via sessions
+          const classSessionIds = teacherSessions
+            .filter(s => s.classId === classId)
+            .map(s => s.id);
+          if (classSessionIds.length === 0) {
+            res.status(403).json({ error: "Forbidden: No sessions for this class" });
+            return;
+          }
+          where.timetableEntryId = { in: classSessionIds };
+        } else {
+          where.timetableEntryId = { in: sessionIds };
+        }
+
+        if (subjectId && subjectId !== "all") {
+          const subjectSessionIds = teacherSessions
+            .filter(s => s.subjectId === subjectId)
+            .map(s => s.id);
+          where.timetableEntryId = { in: subjectSessionIds };
+        }
+      } else {
+        // Admin can filter by class and/or subject
+        if (classId && classId !== "all") {
+          const classSessions = await prisma.timetableEntry.findMany({
+            where: { classId, status: "ACTIVE" },
+            select: { id: true }
+          });
+          where.timetableEntryId = { in: classSessions.map(s => s.id) };
+        }
+        if (subjectId && subjectId !== "all") {
+          const subjectSessions = await prisma.timetableEntry.findMany({
+            where: { subjectId, status: "ACTIVE" },
+            select: { id: true }
+          });
+          const existingIds = where.timetableEntryId?.in || [];
+          const subjectSessionIds = subjectSessions.map(s => s.id);
+          where.timetableEntryId = Array.isArray(existingIds) && existingIds.length > 0
+            ? { in: subjectSessionIds.filter((id: string) => existingIds.includes(id)) }
+            : { in: subjectSessionIds };
+        }
+      }
+
+      // Date range filtering
+      if (month) {
+        const range = monthRange(month);
+        if (range) where.date = { gte: range.start, lt: range.end };
+      } else if (startDate && endDate) {
+        where.date = { gte: new Date(startDate), lte: new Date(endDate) };
+      }
+
+      const records = await prisma.attendance.findMany({
+        where,
+        include: {
+          student: { include: { user: true, class: true } },
+          timetableEntry: {
+            select: {
+              subjectId: true,
+              subjectName: true,
+              subjectColor: true,
+              dayOfWeek: true,
+              startTime: true,
+              endTime: true
+            }
+          }
+        },
+      });
+
+      // Group by student and subject
+      const studentSubjectMap = new Map<string, Map<string, any>>();
+
+      for (const r of records) {
+        if (!r.timetableEntry) continue;
+
+        const studentKey = r.studentId;
+        const subjectKey = r.timetableEntry.subjectId || "UNKNOWN";
+
+        if (!studentSubjectMap.has(studentKey)) {
+          studentSubjectMap.set(studentKey, new Map());
+        }
+
+        const subjectMap = studentSubjectMap.get(studentKey)!;
+
+        if (!subjectMap.has(subjectKey)) {
+          subjectMap.set(subjectKey, {
+            studentId: r.studentId,
+            studentName: fullName(r.student.user),
+            studentCode: r.student.studentCode,
+            className: r.student.class?.name || "N/A",
+            subjectId: r.timetableEntry.subjectId,
+            subjectName: r.timetableEntry.subjectName || "Unknown",
+            subjectColor: r.timetableEntry.subjectColor || "bg-gray-500",
+            total: 0,
+            present: 0,
+            absent: 0,
+            late: 0,
+            excused: 0
+          });
+        }
+
+        const row = subjectMap.get(subjectKey)!;
+        row.total += 1;
+        if (r.status === "PRESENT") row.present += 1;
+        else if (r.status === "ABSENT") row.absent += 1;
+        else if (r.status === "LATE") row.late += 1;
+        else if (r.status === "EXCUSED") row.excused += 1;
+      }
+
+      // Flatten to array and calculate rates
+      const rows: any[] = [];
+      for (const [_, subjectMap] of studentSubjectMap) {
+        for (const [_, row] of subjectMap) {
+          rows.push({
+            ...row,
+            rate: row.total ? round1((row.present / row.total) * 100) : 0
+          });
+        }
+      }
+
+      rows.sort((a, b) => a.studentName.localeCompare(b.studentName));
+
+      // Calculate subject-level aggregates
+      const subjectStats = new Map<string, any>();
+      for (const row of rows) {
+        const key = row.subjectId || "UNKNOWN";
+        if (!subjectStats.has(key)) {
+          subjectStats.set(key, {
+            subjectId: row.subjectId,
+            subjectName: row.subjectName,
+            subjectColor: row.subjectColor,
+            totalStudents: 0,
+            avgRate: 0,
+            totalSessions: 0
+          });
+        }
+        const stat = subjectStats.get(key)!;
+        stat.totalStudents += 1;
+        stat.avgRate += row.rate;
+        stat.totalSessions += row.total;
+      }
+
+      const subjectStatsArray = Array.from(subjectStats.values()).map(s => ({
+        ...s,
+        avgRate: s.totalStudents ? round1(s.avgRate / s.totalStudents) : 0
+      }));
+
+      // Overall stats
+      const overallRate = rows.length ? round1(rows.reduce((a, r) => a + r.rate, 0) / rows.length) : 0;
+      const totalRecords = rows.reduce((a, r) => a + r.total, 0);
+
+      res.json({
+        rows,
+        subjectStats: subjectStatsArray,
+        overall: {
+          totalRecords,
+          overallRate,
+          studentSubjectPairs: rows.length,
+          perfectCount: rows.filter(r => r.rate === 100).length,
+          atRiskCount: rows.filter(r => r.rate < 80).length
+        }
+      });
+    } catch (err) {
+      logger.error("Error building session attendance report:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Attendance analytics: overall statistics by subject/teacher
+  app.get("/api/analytics/attendance", authMiddleware, reportRole(["ADMIN", "TEACHER"]), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { startDate, endDate, groupBy } = req.query as {
+      startDate?: string;
+      endDate?: string;
+      groupBy?: "subject" | "teacher" | "both";
+    };
+
+    try {
+      // Default to current month if no dates provided
+      const defaultRange = monthRange(new Date().toISOString().slice(0, 7));
+      const start = startDate ? new Date(startDate) : defaultRange?.start || new Date();
+      const end = endDate ? new Date(endDate) : defaultRange?.end || new Date();
+
+      const where: any = {
+        date: { gte: start, lte: end }
+      };
+
+      // For teachers, scope to their data
+      let teacherId: string | null = null;
+      if (jwtUser.role === "TEACHER") {
+        const teacherRecord = await prisma.teacher.findUnique({
+          where: { userId: jwtUser.userId },
+          select: { id: true }
+        });
+
+        if (!teacherRecord) {
+          res.status(403).json({ error: "Forbidden: Teacher record not found" });
+          return;
+        }
+        teacherId = teacherRecord.id;
+
+        // Get teacher's sessions
+        const teacherSessions = await prisma.timetableEntry.findMany({
+          where: {
+            OR: [
+              { teacherId: teacherId },
+              { substituteTeacherId: teacherId }
+            ],
+            status: "ACTIVE"
+          },
+          select: { id: true, subjectId: true }
+        });
+
+        where.timetableEntryId = { in: teacherSessions.map(s => s.id) };
+      }
+
+      const records = await prisma.attendance.findMany({
+        where,
+        include: {
+          timetableEntry: {
+            select: {
+              subjectId: true,
+              subjectName: true,
+              subjectColor: true,
+              teacherId: true,
+              teacherName: true
+            }
+          }
+        }
+      });
+
+      // Build analytics
+      const bySubject = new Map<string, any>();
+      const byTeacher = new Map<string, any>();
+
+      for (const r of records) {
+        if (!r.timetableEntry) continue;
+
+        // By subject
+        const subjKey = r.timetableEntry.subjectId || "UNKNOWN";
+        if (!bySubject.has(subjKey)) {
+          bySubject.set(subjKey, {
+            subjectId: r.timetableEntry.subjectId,
+            subjectName: r.timetableEntry.subjectName || "Unknown",
+            subjectColor: r.timetableEntry.subjectColor || "bg-gray-500",
+            total: 0,
+            present: 0,
+            absent: 0,
+            late: 0,
+            excused: 0,
+            uniqueStudents: new Set()
+          });
+        }
+        const subj = bySubject.get(subjKey)!;
+        subj.total += 1;
+        subj.uniqueStudents.add(r.studentId);
+        if (r.status === "PRESENT") subj.present += 1;
+        else if (r.status === "ABSENT") subj.absent += 1;
+        else if (r.status === "LATE") subj.late += 1;
+        else if (r.status === "EXCUSED") subj.excused += 1;
+
+        // By teacher (if available and admin is viewing)
+        if (jwtUser.role === "ADMIN" && r.timetableEntry.teacherId) {
+          const teacherKey = r.timetableEntry.teacherId;
+          if (!byTeacher.has(teacherKey)) {
+            byTeacher.set(teacherKey, {
+              teacherId: r.timetableEntry.teacherId,
+              teacherName: r.timetableEntry.teacherName || "Unknown",
+              total: 0,
+              present: 0,
+              absent: 0,
+              late: 0,
+              excused: 0
+            });
+          }
+          const teach = byTeacher.get(teacherKey)!;
+          teach.total += 1;
+          if (r.status === "PRESENT") teach.present += 1;
+          else if (r.status === "ABSENT") teach.absent += 1;
+          else if (r.status === "LATE") teach.late += 1;
+          else if (r.status === "EXCUSED") teach.excused += 1;
+        }
+      }
+
+      // Convert Sets to counts and calculate rates
+      const subjectStats = Array.from(bySubject.values()).map(s => ({
+        ...s,
+        uniqueStudents: s.uniqueStudents.size,
+        rate: s.total ? round1((s.present / s.total) * 100) : 0
+      }));
+
+      const teacherStats = Array.from(byTeacher.values()).map(t => ({
+        ...t,
+        rate: t.total ? round1((t.present / t.total) * 100) : 0
+      }));
+
+      // Overall stats
+      const totalRecords = records.length;
+      const overallPresent = records.filter(r => r.status === "PRESENT").length;
+      const overallAbsent = records.filter(r => r.status === "ABSENT").length;
+      const overallLate = records.filter(r => r.status === "LATE").length;
+      const overallExcused = records.filter(r => r.status === "EXCUSED").length;
+      const overallRate = totalRecords ? round1((overallPresent / totalRecords) * 100) : 0;
+
+      res.json({
+        period: { start, end },
+        overall: {
+          totalRecords,
+          present: overallPresent,
+          absent: overallAbsent,
+          late: overallLate,
+          excused: overallExcused,
+          rate: overallRate
+        },
+        bySubject: jwtUser.role === "ADMIN" || groupBy === "subject" || groupBy === "both" ? subjectStats : undefined,
+        byTeacher: jwtUser.role === "ADMIN" && (groupBy === "teacher" || groupBy === "both") ? teacherStats : undefined
+      });
+    } catch (err) {
+      logger.error("Error building attendance analytics:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });

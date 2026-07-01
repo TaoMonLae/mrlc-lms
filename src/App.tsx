@@ -10,6 +10,9 @@ import StudentsList from "./pages/students/StudentsList";
 import StudentNew from "./pages/students/StudentNew";
 import StudentProfile from "./pages/students/StudentProfile";
 import StudentEdit from "./pages/students/StudentEdit";
+import SessionAttendanceReport from "./pages/reports/SessionAttendanceReport";
+import AttendanceAnalytics from "./pages/analytics/AttendanceAnalytics";
+import BulkAttendance from "./pages/teacher/BulkAttendance";
 import AttendanceReportsPage from "./pages/attendance/AttendanceReports";
 
 import ExamNew from "./pages/exams/ExamNew";
@@ -194,6 +197,8 @@ export default function App() {
                   <Route path="/teacher/classes" element={<TeacherClasses />} />
                   <Route path="/teacher/classes/:id" element={<ClassDetails />} />
                   <Route path="/teacher/attendance" element={<TeacherAttendance />} />
+
+		                  <Route path="/teacher/bulk-attendance" element={<BulkAttendance />} />
                   <Route path="/teacher/exams" element={<TeacherExams />} />
                   <Route path="/teacher/library" element={<TeacherLibrary />} />
                   <Route path="/teacher/reports" element={<TeacherReports />} />
@@ -252,6 +257,8 @@ export default function App() {
                   {/* Attendance - Admin can only view reports, teachers record via /teacher/attendance */}
 	                  <Route path="/attendance" element={<Navigate to="/attendance/reports" replace />} />
                   <Route path="/attendance/reports" element={<AttendanceReportsPage />} />
+
+		                  <Route path="/attendance/session-reports" element={<SessionAttendanceReport />} />
                   
                   <Route path="/exams" element={<ExamsList />} />
                   <Route path="/exams/new" element={<ExamNew />} />
@@ -378,6 +385,8 @@ export default function App() {
                 <Route element={<ProtectedRoute requiredPermission="view_reports" />}>
                   <Route path="/reports" element={<ReportsDashboard />} />
                   <Route path="/reports/attendance" element={<AttendanceReport />} />
+
+		                  <Route path="/analytics/attendance" element={<AttendanceAnalytics />} />
                   <Route path="/reports/fees" element={<FeesReport />} />
                   <Route path="/reports/students" element={<StudentProfileReport />} />
                   <Route path="/reports/exams" element={<ExamResultsReport />} />

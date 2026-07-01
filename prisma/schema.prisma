@@ -321,24 +321,36 @@ model SubjectTeacher {
 
 model Attendance {
   id             String   @id @default(uuid())
-  date           DateTime
+  date           DateTime @default(now()) // Also serves as eventDate for sessions
   status         AttendanceStatus
   remarks        String?
-  
+
   studentId      String
   student        Student  @relation(fields: [studentId], references: [id])
   classId        String
   class          Class    @relation(fields: [classId], references: [id])
+
+  // Session-based attendance fields (optional, for session-based tracking)
+  timetableEntryId   String?  // Links to TimetableEntry for session-based attendance
+  timetableEntry     TimetableEntry? @relation("SessionAttendance", fields: [timetableEntryId], references: [id])
+  subjectId          String?  // Denormalized from timetableEntry for easier queries
+
   recordedById   String
   recordedBy     User     @relation("RecordedBy", fields: [recordedById], references: [id])
-  
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
+  // Unique constraint: For class-based attendance (timetableEntryId is null),
+  // ensures one record per student per class per date.
+  // For session-based attendance (timetableEntryId is set),
+  // application-level validation ensures one record per student per session per date.
   @@unique([studentId, classId, date])
   @@index([studentId])
   @@index([classId])
   @@index([date])
+  @@index([timetableEntryId])
+  @@index([subjectId])
 }
 
 model Exam {
@@ -1049,6 +1061,8 @@ model TimetableEntry {
   cancellationReason String?
   eventDate      DateTime?
   notes          String?
+
+  attendances    Attendance[]  @relation("SessionAttendance")
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt

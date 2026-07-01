@@ -103,6 +103,18 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     roles: ["ADMIN"],
   },
   {
+    title: "Session Attendance",
+    url: "/attendance/session-reports",
+    icon: CalendarDays,
+    roles: ["ADMIN", "TEACHER"],
+  },
+  {
+    title: "Attendance Analytics",
+    url: "/analytics/attendance",
+    icon: BarChart3,
+    roles: ["ADMIN", "TEACHER"],
+  },
+  {
     title: "Exams",
     url: "/exams",
     icon: FileCheck,
@@ -252,6 +264,12 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     title: "Take Attendance",
     url: "/teacher/attendance",
     icon: UserCheck,
+    roles: ["TEACHER"],
+  },
+  {
+    title: "Bulk Attendance",
+    url: "/teacher/bulk-attendance",
+    icon: CalendarDays,
     roles: ["TEACHER"],
   },
   {
