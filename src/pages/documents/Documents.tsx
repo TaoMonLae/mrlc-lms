@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FileBadge, Plus, Loader2, ExternalLink, Link2, Ban, RefreshCw, Eye } from 'lucide-react';
+import { FileBadge, Plus, Loader2, ExternalLink, Link2, Ban, RefreshCw, Eye, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -40,6 +40,13 @@ export default function DocumentsPage() {
   const [generating, setGenerating] = useState(false);
   const [typeFilter, setTypeFilter] = useState('all');
 
+  // Bulk generation for a whole class
+  const [eligibleClasses, setEligibleClasses] = useState<{ id: string; name: string; studentCount: number }[]>([]);
+  const [bulkClassId, setBulkClassId] = useState('');
+  const [bulkType, setBulkType] = useState('REPORT_CARD');
+  const [bulkTerm, setBulkTerm] = useState('');
+  const [bulkGenerating, setBulkGenerating] = useState(false);
+
   const loadDocs = () => {
     setLoading(true);
     const params = typeFilter !== 'all' ? `?type=${typeFilter}` : '';
@@ -54,6 +61,32 @@ export default function DocumentsPage() {
       .catch(() => {});
   }, []);
   useEffect(loadDocs, [typeFilter]);
+
+  useEffect(() => {
+    apiGet<{ id: string; name: string; studentCount: number }[]>('/api/documents/eligible-classes')
+      .then(setEligibleClasses)
+      .catch(() => {});
+  }, []);
+
+  const selectedBulkClass = eligibleClasses.find((c) => c.id === bulkClassId);
+
+  const generateBulk = async () => {
+    if (!bulkClassId) { toast.error('Select a class'); return; }
+    setBulkGenerating(true);
+    try {
+      const r = await apiSend<{ generated: number; failed: number; total: number; className: string }>(
+        '/api/documents/bulk', 'POST', { type: bulkType, classId: bulkClassId, term: bulkTerm || undefined });
+      if (r.generated > 0) toast.success(`${r.generated} ${TYPE_LABELS[bulkType]}${r.generated === 1 ? '' : 's'} generated for ${r.className}`);
+      if (r.failed > 0) toast.warning(`${r.failed} student(s) skipped`);
+      if (r.generated === 0 && r.failed === 0) toast.info('No active students in that class');
+      setBulkTerm('');
+      loadDocs();
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to bulk generate');
+    } finally {
+      setBulkGenerating(false);
+    }
+  };
 
   const generate = async () => {
     if (!studentId) { toast.error('Select a student'); return; }
@@ -134,6 +167,52 @@ export default function DocumentsPage() {
           </div>
           <Button onClick={generate} disabled={generating} className="bg-primary text-primary-foreground">
             {generating ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Plus className="h-4 w-4 mr-1" />} Generate
+          </Button>
+        </div>
+      </div>
+
+      {/* Bulk generate for a class */}
+      <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-5">
+        <div className="flex items-center gap-2 mb-1">
+          <Layers className="h-4 w-4 text-aubergine-600" />
+          <h3 className="font-semibold text-slate-900 dark:text-white text-sm">Bulk generate for a class</h3>
+        </div>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+          Issue one document type for every active student in a class at once{isAdmin ? '' : ' — you can only pick classes you teach'}.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+          <div className="space-y-1.5">
+            <Label>Class</Label>
+            <Select value={bulkClassId} onValueChange={setBulkClassId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select class">
+                  {selectedBulkClass ? `${selectedBulkClass.name} (${selectedBulkClass.studentCount})` : 'Select class'}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {eligibleClasses.length === 0 && <div className="px-3 py-2 text-xs text-slate-400">No classes available</div>}
+                {eligibleClasses.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name} · {c.studentCount} student{c.studentCount === 1 ? '' : 's'}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Document Type</Label>
+            <Select value={bulkType} onValueChange={setBulkType}>
+              <SelectTrigger><SelectValue>{TYPE_LABELS[bulkType]}</SelectValue></SelectTrigger>
+              <SelectContent>
+                {Object.entries(TYPE_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Term / Period (optional)</Label>
+            <input value={bulkTerm} onChange={(e) => setBulkTerm(e.target.value)} placeholder="e.g. Term 1 2026" className="h-9 w-full rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo px-3 text-sm" />
+          </div>
+          <Button onClick={generateBulk} disabled={bulkGenerating || !bulkClassId} className="bg-primary text-primary-foreground">
+            {bulkGenerating ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Layers className="h-4 w-4 mr-1" />}
+            Generate {selectedBulkClass ? `× ${selectedBulkClass.studentCount}` : 'for class'}
           </Button>
         </div>
       </div>

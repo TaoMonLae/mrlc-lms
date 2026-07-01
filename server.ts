@@ -8426,6 +8426,86 @@ async function startServer() {
     }
   });
 
+  // Classes the current user may bulk-generate documents for: admins see all,
+  // teachers see only the classes they're assigned to. (Registered before the
+  // "/:id" route so "eligible-classes" isn't captured as an id.)
+  app.get("/api/documents/eligible-classes", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canIssueDocs(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    try {
+      if (jwtUser.role === "ADMIN") {
+        const classes = await prisma.class.findMany({
+          select: { id: true, name: true, _count: { select: { students: true } } },
+          orderBy: { name: "asc" },
+        });
+        res.json(classes.map((c) => ({ id: c.id, name: c.name, studentCount: c._count.students })));
+        return;
+      }
+      const teacher = await prisma.teacher.findFirst({ where: { userId: jwtUser.userId }, select: { id: true } });
+      if (!teacher) { res.json([]); return; }
+      const links = await prisma.classTeacher.findMany({
+        where: { teacherId: teacher.id },
+        select: { class: { select: { id: true, name: true, _count: { select: { students: true } } } } },
+      });
+      res.json(links.map((l) => ({ id: l.class.id, name: l.class.name, studentCount: l.class._count.students })));
+    } catch (err) {
+      logger.error("Error fetching eligible classes:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Bulk-generate one document type for every active student in a class. Teachers
+  // may only target classes they are assigned to; admins may target any class.
+  app.post("/api/documents/bulk", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canIssueDocs(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    const { type, classId, term } = req.body || {};
+    if (!type || !classId) { res.status(400).json({ error: "type and classId are required" }); return; }
+    if (!DOC_TYPES.includes(type)) { res.status(400).json({ error: "Invalid document type" }); return; }
+    try {
+      // Ownership guard for teachers.
+      if (jwtUser.role === "TEACHER") {
+        const teacher = await prisma.teacher.findFirst({ where: { userId: jwtUser.userId }, select: { id: true } });
+        const owns = teacher && await prisma.classTeacher.findUnique({
+          where: { classId_teacherId: { classId, teacherId: teacher.id } },
+        });
+        if (!owns) { res.status(403).json({ error: "You are not assigned to this class" }); return; }
+      }
+      const klass = await prisma.class.findUnique({ where: { id: classId }, select: { name: true } });
+      if (!klass) { res.status(404).json({ error: "Class not found" }); return; }
+
+      const students = await prisma.student.findMany({ where: { classId, status: "ACTIVE" }, select: { id: true } });
+      let generated = 0;
+      const errors: { studentId: string; message: string }[] = [];
+      for (const s of students) {
+        try {
+          const snapshot = await buildDocumentSnapshot(type, s.id, term);
+          if (!snapshot) { errors.push({ studentId: s.id, message: "Student data unavailable" }); continue; }
+          const documentNumber = await makeDocumentNumber(type);
+          const verifyToken = crypto.randomBytes(16).toString("hex");
+          await prisma.generatedDocument.create({
+            data: {
+              documentNumber, verifyToken, type, status: "ACTIVE",
+              studentId: s.id, studentName: snapshot.student.name, studentCode: snapshot.student.code,
+              className: snapshot.student.className, term: snapshot.term,
+              payload: snapshot, issuedById: jwtUser.userId, issuedByName: jwtUser.email,
+            },
+          });
+          generated++;
+        } catch (e) {
+          errors.push({ studentId: s.id, message: "Generation failed" });
+        }
+      }
+      await createAuditLog(jwtUser.userId, jwtUser.email, "GENERATE", "DOCUMENT", classId,
+        `Bulk ${type}: ${generated} generated for class '${klass.name}'${errors.length ? `, ${errors.length} failed` : ""}.`,
+        req.ip, req.headers["user-agent"] || null, errors.length ? "WARNING" : "SUCCESS");
+      res.status(201).json({ generated, failed: errors.length, total: students.length, className: klass.name, errors });
+    } catch (err) {
+      logger.error("Error bulk-generating documents:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
   app.get("/api/documents", authMiddleware, reportRole(["ADMIN", "TEACHER"]), async (req, res) => {
     const { studentId, type, status } = req.query as { studentId?: string; type?: string; status?: string };
     try {
