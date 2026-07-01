@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Plus, Trash2, CheckCircle2, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, CheckCircle2, Loader2, Copy, ArrowUp, ArrowDown, X, Check } from 'lucide-react';
 import { apiGet, apiSend } from '../../lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,6 +48,7 @@ export default function ExamNew() {
 
   // Questions data
   const [questions, setQuestions] = useState<ExamQuestion[]>([]);
+  const [passageOpen, setPassageOpen] = useState<Record<string, boolean>>({});
 
   // Settings data
   const [settings, setSettings] = useState<ExamSettings>(INITIAL_SETTINGS);
@@ -63,34 +64,69 @@ export default function ExamNew() {
   const selectedSubjectName = subjects.find((s) => s.id === subjectId)?.name ?? '';
   const isMathSubject = /math/i.test(selectedSubjectName);
 
-  const addQuestion = () => {
-    setQuestions([
-      ...questions,
-      {
-        id: `q_${Date.now()}`,
-        type: 'MCQ',
-        questionText: '',
-        passageText: '',
-        explanation: '',
-        choices: ['', '', '', ''],
-        correctAnswer: '0',
-        points: 5,
-        order: questions.length,
-      }
-    ]);
+  // kind: 'MCQ' | 'TRUE_FALSE' | 'SHORT_ANSWER' | 'WRITTEN' (TRUE_FALSE is an MCQ with two options)
+  const addQuestion = (kind: string = 'MCQ') => {
+    const id = `q_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const base: ExamQuestion = {
+      id, type: 'MCQ', questionText: '', passageText: '', explanation: '',
+      choices: undefined, correctAnswer: undefined, points: 5, order: questions.length,
+    };
+    if (kind === 'TRUE_FALSE') { base.type = 'MCQ'; base.choices = ['True', 'False']; base.correctAnswer = '0'; }
+    else if (kind === 'MCQ') { base.type = 'MCQ'; base.choices = ['', '', '', '']; base.correctAnswer = '0'; }
+    else { base.type = kind as ExamQuestion['type']; }
+    setQuestions((qs) => [...qs, base]);
   };
 
   const updateQuestion = (id: string, updates: Partial<ExamQuestion>) => {
-    setQuestions(questions.map(q => q.id === id ? { ...q, ...updates } : q));
+    setQuestions((qs) => qs.map(q => q.id === id ? { ...q, ...updates } : q));
   };
 
   const removeQuestion = (id: string) => {
-    setQuestions(questions.filter(q => q.id !== id));
+    setQuestions((qs) => qs.filter(q => q.id !== id));
   };
 
-  const calculateTotalPoints = () => {
-    return questions.reduce((sum, q) => sum + (Number(q.points) || 0), 0);
+  const duplicateQuestion = (id: string) => {
+    setQuestions((qs) => {
+      const i = qs.findIndex(q => q.id === id);
+      if (i < 0) return qs;
+      const copy = { ...qs[i], id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`, choices: qs[i].choices ? [...qs[i].choices!] : undefined };
+      const next = [...qs];
+      next.splice(i + 1, 0, copy);
+      return next;
+    });
   };
+
+  const moveQuestion = (id: string, dir: -1 | 1) => {
+    setQuestions((qs) => {
+      const i = qs.findIndex(q => q.id === id);
+      const j = i + dir;
+      if (i < 0 || j < 0 || j >= qs.length) return qs;
+      const next = [...qs];
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
+  };
+
+  const setCorrect = (q: ExamQuestion, cIndex: number) => updateQuestion(q.id, { correctAnswer: String(cIndex) });
+
+  const addChoice = (q: ExamQuestion) => updateQuestion(q.id, { choices: [...(q.choices || []), ''] });
+
+  const removeChoice = (q: ExamQuestion, cIndex: number) => {
+    const choices = (q.choices || []).filter((_, i) => i !== cIndex);
+    let correct = Number(q.correctAnswer ?? 0);
+    if (cIndex === correct) correct = 0;
+    else if (cIndex < correct) correct -= 1;
+    updateQuestion(q.id, { choices, correctAnswer: String(Math.max(0, correct)) });
+  };
+
+  const calculateTotalPoints = () => questions.reduce((sum, q) => sum + (Number(q.points) || 0), 0);
+
+  const typeLabel = (t: string) =>
+    t === 'MCQ' ? 'Multiple Choice'
+    : t === 'SHORT_ANSWER' ? 'Short Answer'
+    : t === 'WRITTEN' ? 'Written / Essay'
+    : t.startsWith('GED_') ? t.replace('GED_', 'GED ').replace('_', ' ')
+    : t;
 
   const handleSave = async () => {
     if (!title.trim()) { toast.error('Please enter an exam title.'); setStep(1); return; }
@@ -99,10 +135,12 @@ export default function ExamNew() {
     if (questions.length === 0) { toast.error('Please add at least one question.'); setStep(2); return; }
     const invalidQuestion = questions.find((q) => !q.questionText.trim());
     if (invalidQuestion) { toast.error('Every question needs question text.'); setStep(2); return; }
-    const invalidMcq = questions.find((q) =>
-      isChoiceType(q.type) && (!q.choices?.length || q.choices.some((choice) => !choice.trim()) || q.correctAnswer == null)
-    );
-    if (invalidMcq) { toast.error('Multiple choice questions need all choices and one correct answer.'); setStep(2); return; }
+    const invalidMcq = questions.find((q) => {
+      if (!isChoiceType(q.type)) return false;
+      const filled = (q.choices || []).filter((c) => c.trim());
+      return filled.length < 2 || (q.choices || []).some((c) => !c.trim()) || q.correctAnswer == null;
+    });
+    if (invalidMcq) { toast.error('Multiple-choice questions need at least two filled options and one correct answer.'); setStep(2); return; }
     setSaving(true);
     try {
       const created = await apiSend('/api/exams', 'POST', {
@@ -120,7 +158,7 @@ export default function ExamNew() {
           points: Number(q.points) || 5,
           choices: isChoiceType(q.type) ? q.choices || [] : null,
           correctAnswer: q.correctAnswer,
-          passageText: q.passageText || null,
+          passageText: q.passageText?.trim() ? q.passageText : null,
           explanation: q.explanation || null,
           imageUrl: q.imageUrl || null,
         })),
@@ -219,27 +257,37 @@ export default function ExamNew() {
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white">2. Questions</h2>
-              <div className="text-sm font-medium bg-slate-100 dark:bg-surface-raised px-3 py-1 rounded-full">
-                Total Points: {calculateTotalPoints()}
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <span className="rounded-full bg-slate-100 dark:bg-surface-raised px-3 py-1">{questions.length} question{questions.length === 1 ? '' : 's'}</span>
+                <span className="rounded-full bg-aubergine-50 px-3 py-1 text-aubergine-700 dark:bg-aubergine-900/20 dark:text-aubergine-300">{calculateTotalPoints()} pts</span>
               </div>
             </div>
 
             {questions.length === 0 ? (
               <div className="text-center py-10 border-2 border-dashed border-slate-200 dark:border-surface-raised rounded-xl">
                 <p className="text-slate-500 mb-4">No questions added yet.</p>
-                <Button onClick={addQuestion} variant="outline">
-                  <Plus className="mr-2 h-4 w-4" /> Add First Question
-                </Button>
+                <div className="flex flex-wrap justify-center gap-2">
+                  <Button onClick={() => addQuestion('MCQ')} variant="outline"><Plus className="mr-1 h-4 w-4" /> Multiple choice</Button>
+                  <Button onClick={() => addQuestion('TRUE_FALSE')} variant="outline">True / False</Button>
+                  <Button onClick={() => addQuestion('SHORT_ANSWER')} variant="outline">Short answer</Button>
+                  <Button onClick={() => addQuestion('WRITTEN')} variant="outline">Written</Button>
+                </div>
               </div>
             ) : (
               <div className="space-y-8">
                 {questions.map((q, index) => (
                   <div key={q.id} className="p-4 border border-slate-200 dark:border-surface-raised rounded-lg space-y-4 bg-slate-50/50 dark:bg-surface-raised/30">
-                    <div className="flex justify-between items-center">
-                      <h3 className="font-medium text-slate-900 dark:text-white">Question {index + 1}</h3>
-                      <Button variant="ghost" size="sm" onClick={() => removeQuestion(q.id)} className="text-red-500 hover:text-red-600 hover:bg-red-50">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="grid h-6 w-6 place-items-center rounded-full bg-aubergine-600 text-xs font-bold text-white">{index + 1}</span>
+                        <span className="text-xs font-medium uppercase tracking-wide text-slate-400">{typeLabel(q.type)}</span>
+                      </div>
+                      <div className="flex items-center gap-0.5">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" title="Move up" disabled={index === 0} onClick={() => moveQuestion(q.id, -1)}><ArrowUp className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" title="Move down" disabled={index === questions.length - 1} onClick={() => moveQuestion(q.id, 1)}><ArrowDown className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" title="Duplicate" onClick={() => duplicateQuestion(q.id)}><Copy className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50" title="Delete" onClick={() => removeQuestion(q.id)}><Trash2 className="h-4 w-4" /></Button>
+                      </div>
                     </div>
 
                      <div className="grid grid-cols-2 gap-4">
@@ -249,9 +297,7 @@ export default function ExamNew() {
                           value={q.type}
                           onValueChange={(val: any) => {
                             const updates: Partial<ExamQuestion> = { type: val };
-                            if (val === 'GED_RLA_PASSAGE' && !q.passageText) {
-                              updates.passageText = 'Type passage here...';
-                            }
+                            if (val === 'GED_RLA_PASSAGE') setPassageOpen((p) => ({ ...p, [q.id]: true }));
                             if (isChoiceType(val) && (!q.choices || q.choices.length === 0)) {
                               updates.choices = ['', '', '', ''];
                               updates.correctAnswer = '0';
@@ -313,10 +359,8 @@ export default function ExamNew() {
                       <input
                         type="checkbox"
                         id={`has_passage_${q.id}`}
-                        checked={q.passageText !== undefined && q.passageText !== null && q.passageText !== ''}
-                        onChange={(e) => {
-                          updateQuestion(q.id, { passageText: e.target.checked ? 'Type passage here...' : '' });
-                        }}
+                        checked={!!passageOpen[q.id] || !!q.passageText?.trim()}
+                        onChange={(e) => { setPassageOpen((p) => ({ ...p, [q.id]: e.target.checked })); if (!e.target.checked) updateQuestion(q.id, { passageText: '' }); }}
                         className="rounded border-slate-300 text-aubergine-600 focus:ring-aubergine-500 h-4 w-4"
                       />
                       <label htmlFor={`has_passage_${q.id}`} className="text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer">
@@ -324,50 +368,49 @@ export default function ExamNew() {
                       </label>
                     </div>
 
-                    {(q.passageText !== undefined && q.passageText !== null && q.passageText !== '') && (
+                    {(passageOpen[q.id] || !!q.passageText?.trim()) && (
                       <div className="space-y-2">
                         <Label>Passage / Stimulus Text</Label>
                         <Textarea
-                          value={q.passageText}
+                          value={q.passageText || ''}
                           onChange={(e) => updateQuestion(q.id, { passageText: e.target.value })}
                           rows={4}
-                          placeholder="Type or paste the passage/stimulus text here. This will be shown on the left pane in a split layout."
+                          placeholder="Type or paste the passage here. It will be shown on the left pane in a split layout."
                           className="bg-white dark:bg-canvas text-sm border-slate-200 dark:border-surface-raised"
                         />
                       </div>
                     )}
 
                     {isChoiceType(q.type) && q.choices && (
-                      <div className="space-y-3">
-                        <Label>Choices & Correct Answer</Label>
-                        {q.choices.map((choice, cIndex) => (
-                          <div key={cIndex} className="flex items-start gap-3">
-                            <input
-                              type="radio"
-                              name={`correct_${q.id}`}
-                              checked={q.correctAnswer === cIndex.toString()}
-                              onChange={() => updateQuestion(q.id, { correctAnswer: cIndex.toString() })}
-                              className="h-4 w-4 mt-2.5 text-aubergine-600"
-                            />
-                            <div className="flex-1">
-                              <MathField
-                                value={choice}
-                                enabled={isMathSubject}
-                                showToolbar={isMathSubject}
-                                onChange={(val) => {
-                                  const newChoices = [...q.choices!];
-                                  newChoices[cIndex] = val;
-                                  updateQuestion(q.id, { choices: newChoices });
-                                }}
-                                placeholder={
-                                  isMathSubject
-                                    ? `Choice ${cIndex + 1} — math allowed, e.g. $x = 5$`
-                                    : `Choice ${cIndex + 1}`
-                                }
-                              />
+                      <div className="space-y-2">
+                        <Label>Options <span className="font-normal text-slate-400">— tap the circle to mark the correct answer</span></Label>
+                        {q.choices.map((choice, cIndex) => {
+                          const correct = q.correctAnswer === String(cIndex);
+                          return (
+                            <div key={cIndex} className={`flex items-center gap-2 rounded-lg border px-2 py-1.5 transition-colors ${correct ? 'border-emerald-300 bg-emerald-50/60 dark:border-emerald-800 dark:bg-emerald-900/15' : 'border-slate-200 dark:border-surface-raised'}`}>
+                              <button type="button" title="Mark correct" onClick={() => setCorrect(q, cIndex)}
+                                className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border transition-colors ${correct ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 text-transparent hover:border-emerald-400'}`}>
+                                <Check className="h-3.5 w-3.5" />
+                              </button>
+                              <div className="flex-1">
+                                <MathField
+                                  value={choice}
+                                  enabled={isMathSubject}
+                                  showToolbar={isMathSubject}
+                                  onChange={(val) => { const c = [...q.choices!]; c[cIndex] = val; updateQuestion(q.id, { choices: c }); }}
+                                  placeholder={isMathSubject ? `Option ${cIndex + 1} — math allowed, e.g. $x = 5$` : `Option ${cIndex + 1}`}
+                                />
+                              </div>
+                              <button type="button" title="Remove option" disabled={(q.choices?.length || 0) <= 2} onClick={() => removeChoice(q, cIndex)}
+                                className="shrink-0 text-slate-300 hover:text-rose-500 disabled:cursor-not-allowed disabled:opacity-30">
+                                <X className="h-4 w-4" />
+                              </button>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
+                        {(q.choices?.length || 0) < 6 && (
+                          <Button type="button" variant="ghost" size="sm" onClick={() => addChoice(q)} className="text-aubergine-600"><Plus className="mr-1 h-4 w-4" /> Add option</Button>
+                        )}
                       </div>
                     )}
 
@@ -384,9 +427,13 @@ export default function ExamNew() {
                   </div>
                 ))}
                 
-                <Button onClick={addQuestion} variant="outline" className="w-full border-dashed">
-                  <Plus className="mr-2 h-4 w-4" /> Add Question
-                </Button>
+                <div className="flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-slate-200 dark:border-surface-raised p-3">
+                  <span className="self-center text-xs font-medium text-slate-400">Add question:</span>
+                  <Button type="button" variant="outline" size="sm" onClick={() => addQuestion('MCQ')}><Plus className="mr-1 h-4 w-4" /> Multiple choice</Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => addQuestion('TRUE_FALSE')}>True / False</Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => addQuestion('SHORT_ANSWER')}>Short answer</Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => addQuestion('WRITTEN')}>Written</Button>
+                </div>
               </div>
             )}
           </div>

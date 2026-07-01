@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Loader2, Plus, Save, Trash2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Plus, Save, Trash2, Copy, ArrowUp, ArrowDown, X, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiGet, apiSend } from '../../lib/api';
 import { Button } from '@/components/ui/button';
@@ -54,6 +54,7 @@ export default function ExamEdit() {
   const [subjects, setSubjects] = useState<{ id: string; name: string }[]>([]);
   const [questions, setQuestions] = useState<ExamQuestion[]>([]);
   const [hasAttempts, setHasAttempts] = useState(false);
+  const [passageOpen, setPassageOpen] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     Promise.all([
@@ -100,21 +101,13 @@ export default function ExamEdit() {
   const isMathSubject = /math/i.test(selectedSubjectName);
   const totalPoints = questions.reduce((sum, q) => sum + (Number(q.points) || 0), 0);
 
-  const addQuestion = () => {
-    setQuestions((prev) => [
-      ...prev,
-      {
-        id: `q_${Date.now()}`,
-        type: 'MCQ',
-        questionText: '',
-        passageText: '',
-        explanation: '',
-        choices: ['', '', '', ''],
-        correctAnswer: '0',
-        points: 5,
-        order: prev.length,
-      },
-    ]);
+  const addQuestion = (kind: string = 'MCQ') => {
+    const id = `q_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const base: ExamQuestion = { id, type: 'MCQ', questionText: '', passageText: '', explanation: '', choices: undefined, correctAnswer: undefined, points: 5, order: questions.length };
+    if (kind === 'TRUE_FALSE') { base.type = 'MCQ'; base.choices = ['True', 'False']; base.correctAnswer = '0'; }
+    else if (kind === 'MCQ') { base.type = 'MCQ'; base.choices = ['', '', '', '']; base.correctAnswer = '0'; }
+    else { base.type = kind as ExamQuestion['type']; }
+    setQuestions((prev) => [...prev, base]);
   };
 
   const updateQuestion = (questionId: string, updates: Partial<ExamQuestion>) => {
@@ -125,6 +118,33 @@ export default function ExamEdit() {
     setQuestions((prev) => prev.filter((q) => q.id !== questionId));
   };
 
+  const duplicateQuestion = (questionId: string) => {
+    setQuestions((prev) => {
+      const i = prev.findIndex((q) => q.id === questionId);
+      if (i < 0) return prev;
+      const copy = { ...prev[i], id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`, choices: prev[i].choices ? [...prev[i].choices!] : undefined };
+      const next = [...prev]; next.splice(i + 1, 0, copy); return next;
+    });
+  };
+
+  const moveQuestion = (questionId: string, dir: -1 | 1) => {
+    setQuestions((prev) => {
+      const i = prev.findIndex((q) => q.id === questionId); const j = i + dir;
+      if (i < 0 || j < 0 || j >= prev.length) return prev;
+      const next = [...prev]; [next[i], next[j]] = [next[j], next[i]]; return next;
+    });
+  };
+
+  const setCorrect = (q: ExamQuestion, cIndex: number) => updateQuestion(q.id, { correctAnswer: String(cIndex) });
+  const addChoice = (q: ExamQuestion) => updateQuestion(q.id, { choices: [...(q.choices || []), ''] });
+  const removeChoice = (q: ExamQuestion, cIndex: number) => {
+    const choices = (q.choices || []).filter((_, i) => i !== cIndex);
+    let correct = Number(q.correctAnswer ?? 0);
+    if (cIndex === correct) correct = 0; else if (cIndex < correct) correct -= 1;
+    updateQuestion(q.id, { choices, correctAnswer: String(Math.max(0, correct)) });
+  };
+  const typeLabel = (t: string) => t === 'MCQ' ? 'Multiple Choice' : t === 'SHORT_ANSWER' ? 'Short Answer' : t === 'WRITTEN' ? 'Written / Essay' : t.startsWith('GED_') ? t.replace('GED_', 'GED ').replace('_', ' ') : t;
+
   const handleSave = async () => {
     if (!id) return;
     if (!title.trim()) { toast.error('Please enter an exam title.'); return; }
@@ -134,10 +154,12 @@ export default function ExamEdit() {
       if (questions.length === 0) { toast.error('Please add at least one question.'); return; }
       const invalidQuestion = questions.find((q) => !q.questionText.trim());
       if (invalidQuestion) { toast.error('Every question needs question text.'); return; }
-      const invalidMcq = questions.find((q) =>
-        isChoiceType(q.type) && (!q.choices?.length || q.choices.some((choice) => !choice.trim()) || q.correctAnswer == null)
-      );
-      if (invalidMcq) { toast.error('Multiple choice questions need all choices and one correct answer.'); return; }
+      const invalidMcq = questions.find((q) => {
+        if (!isChoiceType(q.type)) return false;
+        const filled = (q.choices || []).filter((c) => c.trim());
+        return filled.length < 2 || (q.choices || []).some((c) => !c.trim()) || q.correctAnswer == null;
+      });
+      if (invalidMcq) { toast.error('Multiple-choice questions need at least two filled options and one correct answer.'); return; }
     }
 
     setSaving(true);
@@ -157,7 +179,7 @@ export default function ExamEdit() {
           points: Number(q.points) || 5,
           choices: isChoiceType(q.type) ? q.choices || [] : null,
           correctAnswer: q.correctAnswer,
-          passageText: q.passageText || null,
+          passageText: q.passageText?.trim() ? q.passageText : null,
           explanation: q.explanation || null,
           imageUrl: q.imageUrl || null,
         })),
@@ -258,20 +280,28 @@ export default function ExamEdit() {
           {questions.length === 0 ? (
             <div className="text-center py-10 border-2 border-dashed border-slate-200 dark:border-surface-raised rounded-xl">
               <p className="text-slate-500 mb-4">No questions added yet.</p>
-              <Button onClick={addQuestion} variant="outline" disabled={hasAttempts}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add First Question
-              </Button>
+              <div className="flex flex-wrap justify-center gap-2">
+                <Button onClick={() => addQuestion('MCQ')} variant="outline" disabled={hasAttempts}><Plus className="mr-1 h-4 w-4" /> Multiple choice</Button>
+                <Button onClick={() => addQuestion('TRUE_FALSE')} variant="outline" disabled={hasAttempts}>True / False</Button>
+                <Button onClick={() => addQuestion('SHORT_ANSWER')} variant="outline" disabled={hasAttempts}>Short answer</Button>
+                <Button onClick={() => addQuestion('WRITTEN')} variant="outline" disabled={hasAttempts}>Written</Button>
+              </div>
             </div>
           ) : (
             <div className="space-y-6">
               {questions.map((q, index) => (
                 <div key={q.id} className="p-4 border border-slate-200 dark:border-surface-raised rounded-lg space-y-4 bg-slate-50/50 dark:bg-surface-raised/30">
-                  <div className="flex justify-between items-center">
-                    <h3 className="font-medium text-slate-900 dark:text-white">Question {index + 1}</h3>
-                    <Button variant="ghost" size="sm" onClick={() => removeQuestion(q.id)} disabled={hasAttempts} className="text-red-500 hover:text-red-600 hover:bg-red-50">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="grid h-6 w-6 place-items-center rounded-full bg-aubergine-600 text-xs font-bold text-white">{index + 1}</span>
+                      <span className="text-xs font-medium uppercase tracking-wide text-slate-400">{typeLabel(q.type)}</span>
+                    </div>
+                    <div className="flex items-center gap-0.5">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" title="Move up" disabled={hasAttempts || index === 0} onClick={() => moveQuestion(q.id, -1)}><ArrowUp className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" title="Move down" disabled={hasAttempts || index === questions.length - 1} onClick={() => moveQuestion(q.id, 1)}><ArrowDown className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" title="Duplicate" disabled={hasAttempts} onClick={() => duplicateQuestion(q.id)}><Copy className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50" title="Delete" disabled={hasAttempts} onClick={() => removeQuestion(q.id)}><Trash2 className="h-4 w-4" /></Button>
+                    </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -281,9 +311,7 @@ export default function ExamEdit() {
                         disabled={hasAttempts}
                         onValueChange={(val: any) => {
                           const updates: Partial<ExamQuestion> = { type: val };
-                          if (val === 'GED_RLA_PASSAGE' && !q.passageText) {
-                            updates.passageText = 'Type passage here...';
-                          }
+                          if (val === 'GED_RLA_PASSAGE') setPassageOpen((p) => ({ ...p, [q.id]: true }));
                           if (isChoiceType(val) && (!q.choices || q.choices.length === 0)) {
                             updates.choices = ['', '', '', ''];
                             updates.correctAnswer = '0';
@@ -324,10 +352,8 @@ export default function ExamEdit() {
                       type="checkbox"
                       id={`has_passage_${q.id}`}
                       disabled={hasAttempts}
-                      checked={q.passageText !== undefined && q.passageText !== null && q.passageText !== ''}
-                      onChange={(e) => {
-                        updateQuestion(q.id, { passageText: e.target.checked ? 'Type passage here...' : '' });
-                      }}
+                      checked={!!passageOpen[q.id] || !!q.passageText?.trim()}
+                      onChange={(e) => { setPassageOpen((p) => ({ ...p, [q.id]: e.target.checked })); if (!e.target.checked) updateQuestion(q.id, { passageText: '' }); }}
                       className="rounded border-slate-300 text-aubergine-600 focus:ring-aubergine-500 h-4 w-4"
                     />
                     <label htmlFor={`has_passage_${q.id}`} className="text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer">
@@ -335,41 +361,50 @@ export default function ExamEdit() {
                     </label>
                   </div>
 
-                  {(q.passageText !== undefined && q.passageText !== null && q.passageText !== '') && (
+                  {(passageOpen[q.id] || !!q.passageText?.trim()) && (
                     <div className="space-y-2">
                       <Label>Passage / Stimulus Text</Label>
                       <Textarea
-                        value={q.passageText}
+                        value={q.passageText || ''}
                         disabled={hasAttempts}
                         onChange={(e) => updateQuestion(q.id, { passageText: e.target.value })}
                         rows={4}
-                        placeholder="Type or paste the passage/stimulus text here. This will be shown on the left pane in a split layout."
+                        placeholder="Type or paste the passage here. It will be shown on the left pane in a split layout."
                         className="bg-white dark:bg-canvas text-sm border-slate-200 dark:border-surface-raised"
                       />
                     </div>
                   )}
 
                   {isChoiceType(q.type) && q.choices && (
-                    <div className="space-y-3">
-                      <Label>Choices & Correct Answer</Label>
-                      {q.choices.map((choice, choiceIndex) => (
-                        <div key={choiceIndex} className="flex items-start gap-3">
-                          <input type="radio" name={`correct_${q.id}`} checked={q.correctAnswer === choiceIndex.toString()} disabled={hasAttempts} onChange={() => updateQuestion(q.id, { correctAnswer: choiceIndex.toString() })} className="h-4 w-4 mt-2.5 text-aubergine-600" />
-                          <div className="flex-1">
-                            <MathField
-                              value={choice}
-                              enabled={isMathSubject && !hasAttempts}
-                              showToolbar={isMathSubject && !hasAttempts}
-                              onChange={(val) => {
-                                const nextChoices = [...q.choices!];
-                                nextChoices[choiceIndex] = val;
-                                updateQuestion(q.id, { choices: nextChoices });
-                              }}
-                              placeholder={`Choice ${choiceIndex + 1}`}
-                            />
+                    <div className="space-y-2">
+                      <Label>Options <span className="font-normal text-slate-400">— tap the circle to mark the correct answer</span></Label>
+                      {q.choices.map((choice, choiceIndex) => {
+                        const correct = q.correctAnswer === String(choiceIndex);
+                        return (
+                          <div key={choiceIndex} className={`flex items-center gap-2 rounded-lg border px-2 py-1.5 transition-colors ${correct ? 'border-emerald-300 bg-emerald-50/60 dark:border-emerald-800 dark:bg-emerald-900/15' : 'border-slate-200 dark:border-surface-raised'}`}>
+                            <button type="button" title="Mark correct" disabled={hasAttempts} onClick={() => setCorrect(q, choiceIndex)}
+                              className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border transition-colors disabled:opacity-50 ${correct ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 text-transparent hover:border-emerald-400'}`}>
+                              <Check className="h-3.5 w-3.5" />
+                            </button>
+                            <div className="flex-1">
+                              <MathField
+                                value={choice}
+                                enabled={isMathSubject && !hasAttempts}
+                                showToolbar={isMathSubject && !hasAttempts}
+                                onChange={(val) => { const c = [...q.choices!]; c[choiceIndex] = val; updateQuestion(q.id, { choices: c }); }}
+                                placeholder={`Option ${choiceIndex + 1}`}
+                              />
+                            </div>
+                            <button type="button" title="Remove option" disabled={hasAttempts || (q.choices?.length || 0) <= 2} onClick={() => removeChoice(q, choiceIndex)}
+                              className="shrink-0 text-slate-300 hover:text-rose-500 disabled:cursor-not-allowed disabled:opacity-30">
+                              <X className="h-4 w-4" />
+                            </button>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
+                      {!hasAttempts && (q.choices?.length || 0) < 6 && (
+                        <Button type="button" variant="ghost" size="sm" onClick={() => addChoice(q)} className="text-aubergine-600"><Plus className="mr-1 h-4 w-4" /> Add option</Button>
+                      )}
                     </div>
                   )}
 
@@ -386,10 +421,15 @@ export default function ExamEdit() {
                   </div>
                 </div>
               ))}
-              <Button onClick={addQuestion} variant="outline" disabled={hasAttempts} className="w-full border-dashed">
-                <Plus className="mr-2 h-4 w-4" />
-                Add Question
-              </Button>
+              {!hasAttempts && (
+                <div className="flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-slate-200 dark:border-surface-raised p-3">
+                  <span className="self-center text-xs font-medium text-slate-400">Add question:</span>
+                  <Button type="button" variant="outline" size="sm" onClick={() => addQuestion('MCQ')}><Plus className="mr-1 h-4 w-4" /> Multiple choice</Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => addQuestion('TRUE_FALSE')}>True / False</Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => addQuestion('SHORT_ANSWER')}>Short answer</Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => addQuestion('WRITTEN')}>Written</Button>
+                </div>
+              )}
             </div>
           )}
         </section>
