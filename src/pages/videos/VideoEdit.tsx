@@ -35,9 +35,12 @@ const videoSchema = z.object({
   description: z.string().optional(),
   videoUrl: videoUrlSchema,
   thumbnailUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
+  captionsUrl: z.string().optional(),
   duration: z.coerce.number().int().min(0).optional(),
   classId: z.string().optional(),
   subjectId: z.string().optional(),
+  isRequired: z.boolean().optional(),
+  dueDate: z.string().optional(),
   visibility: z.union([
     z.literal('ALL' as const),
     z.literal('STUDENTS' as const),
@@ -135,9 +138,12 @@ export default function VideoEdit() {
           description: v.description || '',
           videoUrl: v.videoUrl,
           thumbnailUrl: v.thumbnailUrl || '',
+          captionsUrl: v.captionsUrl || '',
           duration: v.duration,
           classId: v.classId,
           subjectId: v.subjectId,
+          isRequired: v.isRequired ?? false,
+          dueDate: v.dueDate ? String(v.dueDate).slice(0, 10) : '',
           visibility: v.visibility,
           status: v.status,
         });
@@ -390,6 +396,25 @@ export default function VideoEdit() {
               <Label htmlFor="thumbnailUrl">Thumbnail URL (Optional)</Label>
               <Input id="thumbnailUrl" {...register('thumbnailUrl')} placeholder="https://..." />
               {errors.thumbnailUrl && <p className="text-xs text-red-500 font-medium">{errors.thumbnailUrl.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="captionsUrl">Captions / Subtitles URL (Optional)</Label>
+              <Input id="captionsUrl" {...register('captionsUrl')} placeholder="https://... .vtt (WebVTT)" />
+              <p className="text-xs text-slate-400">WebVTT (.vtt) file. Shown as a CC toggle for uploaded videos.</p>
+            </div>
+
+            <div className="space-y-2 sm:col-span-2 rounded-lg border border-slate-200 dark:border-surface-raised p-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" className="h-4 w-4 rounded border-slate-300" {...register('isRequired')} />
+                <span className="text-sm font-medium text-slate-900 dark:text-white">Required viewing for the assigned class</span>
+              </label>
+              {watch('isRequired') && (
+                <div className="pt-2">
+                  <Label htmlFor="dueDate">Due date (optional)</Label>
+                  <Input id="dueDate" type="date" className="mt-1 max-w-[220px]" {...register('dueDate')} />
+                </div>
+              )}
             </div>
           </div>
         </div>

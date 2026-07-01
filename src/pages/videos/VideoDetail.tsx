@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit2, Clock, BookOpen, Calendar, ExternalLink, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Edit2, Clock, BookOpen, Calendar, ExternalLink, RotateCcw, Users, CheckCircle2, AlertTriangle, PlayCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { usePermissions, useUser } from '../../lib/permissions';
@@ -11,7 +11,7 @@ import { apiGet } from '../../lib/api';
 import { useVideoProgress } from '../../hooks/useVideoProgress';
 import { VideoPlayerControls } from '../../components/VideoPlayerControls';
 import { VIDEO_RESUME_MIN_SECONDS } from '../../lib/video/constants';
-import type { VideoLesson } from '../../lib/video/types';
+import type { VideoLesson, VideoAnalytics } from '../../lib/video/types';
 
 export default function VideoDetail() {
   const { id } = useParams<{ id: string }>();
@@ -21,6 +21,7 @@ export default function VideoDetail() {
 
   const [video, setVideo] = useState<VideoLesson | null>(null);
   const [loading, setLoading] = useState(true);
+  const [analytics, setAnalytics] = useState<VideoAnalytics | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // Enable progress tracking for students and teachers (not admins)
@@ -51,6 +52,12 @@ export default function VideoDetail() {
     };
     fetchVideo();
   }, [id]);
+
+  // Teachers/admins: load watch analytics for the intended audience.
+  useEffect(() => {
+    if (!id || !(isAdmin || isTeacher)) return;
+    apiGet<VideoAnalytics>(`/api/videos/${id}/analytics`).then(setAnalytics).catch(() => {});
+  }, [id, isAdmin, isTeacher]);
 
   // Set up video element event listeners for progress tracking
   useEffect(() => {
@@ -195,7 +202,11 @@ export default function VideoDetail() {
                   video.pause();
                 }
               }}
-            />
+            >
+              {video.captionsUrl && (
+                <track kind="subtitles" src={video.captionsUrl} srcLang="en" label="English" default />
+              )}
+            </video>
             {/* Custom Controls */}
             <VideoPlayerControls
               videoRef={videoRef}
@@ -255,6 +266,12 @@ export default function VideoDetail() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
+            {video.isRequired && (
+              <Badge className="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 border-0 flex items-center gap-1">
+                <AlertTriangle className="h-3 w-3" />
+                Required{video.dueDate ? ` · due ${format(new Date(video.dueDate), 'dd MMM')}` : ''}
+              </Badge>
+            )}
             {video.subjectName && (
               <Badge variant="secondary">{video.subjectName}</Badge>
             )}
@@ -295,6 +312,85 @@ export default function VideoDetail() {
           </a>
         </div>
       </div>
+
+      {/* Watch analytics (teachers/admins) */}
+      {canManage && analytics && (
+        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-4">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <h2 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+              <Users className="h-4 w-4" /> Watch analytics
+              <span className="text-xs font-normal text-slate-400">
+                ({analytics.scope === 'class' ? 'assigned class' : 'all students'})
+              </span>
+            </h2>
+            {analytics.total > 0 && (
+              <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                {analytics.completed}/{analytics.total} completed ({Math.round((analytics.completed / analytics.total) * 100)}%)
+              </span>
+            )}
+          </div>
+
+          {/* Summary chips */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/10 p-3 text-center">
+              <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{analytics.completed}</p>
+              <p className="text-xs font-medium text-slate-500 mt-0.5">Completed</p>
+            </div>
+            <div className="rounded-lg bg-amber-50 dark:bg-amber-900/10 p-3 text-center">
+              <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{analytics.inProgress}</p>
+              <p className="text-xs font-medium text-slate-500 mt-0.5">In progress</p>
+            </div>
+            <div className="rounded-lg bg-slate-50 dark:bg-surface-raised/40 p-3 text-center">
+              <p className="text-2xl font-bold text-slate-500 dark:text-slate-300">{analytics.notStarted}</p>
+              <p className="text-xs font-medium text-slate-500 mt-0.5">Not started</p>
+            </div>
+          </div>
+
+          {analytics.isRequired && analytics.dueDate && (
+            <p className={`text-xs font-medium ${analytics.overdue ? 'text-rose-600' : 'text-slate-500'}`}>
+              {analytics.overdue ? 'Past due' : 'Due'} {format(new Date(analytics.dueDate), 'dd MMM yyyy')}
+              {analytics.overdue && analytics.notStarted + analytics.inProgress > 0 &&
+                ` · ${analytics.notStarted + analytics.inProgress} student(s) have not finished`}
+            </p>
+          )}
+
+          {/* Roster */}
+          {analytics.total === 0 ? (
+            <p className="text-sm text-slate-400">No students in this audience yet.</p>
+          ) : (
+            <div className="overflow-x-auto border border-slate-100 dark:border-surface-raised rounded-lg">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-slate-50 dark:bg-surface-raised/50 text-slate-500 uppercase tracking-wider font-semibold text-[11px]">
+                  <tr>
+                    <th className="px-4 py-2.5">Student</th>
+                    <th className="px-4 py-2.5">Progress</th>
+                    <th className="px-4 py-2.5">Last watched</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {analytics.roster.map((r) => (
+                    <tr key={r.studentId} className="hover:bg-slate-50 dark:hover:bg-surface-raised/40">
+                      <td className="px-4 py-2.5 font-medium text-slate-900 dark:text-white">{r.name}</td>
+                      <td className="px-4 py-2.5">
+                        {r.status === 'completed' ? (
+                          <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-xs font-semibold"><CheckCircle2 className="h-3.5 w-3.5" /> Completed</span>
+                        ) : r.status === 'in_progress' ? (
+                          <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 text-xs font-semibold"><PlayCircle className="h-3.5 w-3.5" /> {r.percent}%</span>
+                        ) : (
+                          <span className="text-xs text-slate-400">Not started</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2.5 text-slate-500 text-xs">
+                        {r.lastWatchedAt ? format(new Date(r.lastWatchedAt), 'dd MMM, HH:mm') : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

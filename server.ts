@@ -624,9 +624,10 @@ const schemas = {
   }),
   video: z.object({
     title: reqStr, videoUrl: reqStr,
-    description: nullableStr, thumbnailUrl: nullableStr, duration: optNum,
+    description: nullableStr, thumbnailUrl: nullableStr, captionsUrl: nullableStr, duration: optNum,
     classId: nullableStr, subjectId: nullableStr, visibility: nullableStr,
     status: nullableStr, uploadedByName: nullableStr,
+    isRequired: z.union([z.boolean(), z.string()]).optional(), dueDate: nullableStr,
   }),
   bookLoan: z.object({
     borrowerName: reqStr, dueDate: reqStr,
@@ -661,8 +662,9 @@ const schemas = {
     classId: nullableStr, subjectId: nullableStr, externalUrl: nullableStr,
   }),
   videoUpdate: z.object({
-    title: optStr, description: nullableStr, videoUrl: optStr, thumbnailUrl: nullableStr,
+    title: optStr, description: nullableStr, videoUrl: optStr, thumbnailUrl: nullableStr, captionsUrl: nullableStr,
     duration: optNum, classId: nullableStr, subjectId: nullableStr, visibility: nullableStr, status: nullableStr,
+    isRequired: z.union([z.boolean(), z.string()]).optional(), dueDate: nullableStr,
   }),
   bookCreate: z.object({
     title: reqStr, author: optStr, isbn: optStr, publisher: optStr,
@@ -3147,7 +3149,7 @@ async function startServer() {
       res.status(403).json({ error: "Forbidden" });
       return;
     }
-    const { title, description, videoUrl, thumbnailUrl, duration, classId, subjectId, visibility, status, uploadedByName } = req.body;
+    const { title, description, videoUrl, thumbnailUrl, captionsUrl, duration, classId, subjectId, visibility, status, uploadedByName, isRequired, dueDate } = req.body;
     if (!title || !videoUrl) {
       res.status(400).json({ error: "title and videoUrl are required" });
       return;
@@ -3159,11 +3161,14 @@ async function startServer() {
           description: description || null,
           videoUrl,
           thumbnailUrl: thumbnailUrl || null,
+          captionsUrl: captionsUrl || null,
           duration: duration != null ? Number(duration) : null,
           classId: classId || null,
           subjectId: subjectId || null,
           visibility: visibility || "ALL",
           status: status || "PUBLISHED",
+          isRequired: parseBoolean(isRequired),
+          dueDate: dueDate ? new Date(dueDate) : null,
           uploadedById: jwtUser.userId,
           uploadedByName: uploadedByName || jwtUser.email,
         },
@@ -3220,7 +3225,7 @@ async function startServer() {
       return;
     }
     const { id } = req.params;
-    const { title, description, videoUrl, thumbnailUrl, duration, classId, subjectId, visibility, status } = req.body;
+    const { title, description, videoUrl, thumbnailUrl, captionsUrl, duration, classId, subjectId, visibility, status, isRequired, dueDate } = req.body;
     try {
       // First, get the current video to check if videoUrl is changing
       const currentVideo = await prisma.videoLesson.findUnique({ where: { id } });
@@ -3251,11 +3256,14 @@ async function startServer() {
           ...(description !== undefined && { description: description || null }),
           ...(videoUrl && { videoUrl }),
           ...(thumbnailUrl !== undefined && { thumbnailUrl: thumbnailUrl || null }),
+          ...(captionsUrl !== undefined && { captionsUrl: captionsUrl || null }),
           ...(duration !== undefined && { duration: duration != null ? Number(duration) : null }),
           ...(classId !== undefined && { classId: classId || null }),
           ...(subjectId !== undefined && { subjectId: subjectId || null }),
           ...(visibility && { visibility }),
           ...(status && { status }),
+          ...(isRequired !== undefined && { isRequired: parseBoolean(isRequired) }),
+          ...(dueDate !== undefined && { dueDate: dueDate ? new Date(dueDate) : null }),
         },
       });
 
@@ -3413,6 +3421,65 @@ async function startServer() {
       res.json(progress);
     } catch (err) {
       logger.error("Error saving video progress:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Watch analytics for a video (teachers/admins): completion across the intended
+  // audience. If the video is tied to a class, the roster is that class's students;
+  // otherwise it's all active students.
+  app.get("/api/videos/:id/analytics", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { id } = req.params;
+    try {
+      const video = await prisma.videoLesson.findUnique({ where: { id } });
+      if (!video) { res.status(404).json({ error: "Video lesson not found" }); return; }
+
+      const students = await prisma.student.findMany({
+        where: { status: "ACTIVE", userId: { not: null }, ...(video.classId ? { classId: video.classId } : {}) },
+        select: { id: true, userId: true, studentCode: true, user: { select: { firstName: true, lastName: true } } },
+      });
+
+      const progress = await prisma.videoProgress.findMany({ where: { videoId: id } });
+      const byUser = new Map(progress.map((p) => [p.userId, p]));
+
+      const now = Date.now();
+      const overdue = video.dueDate ? now > new Date(video.dueDate).getTime() : false;
+
+      const roster = students.map((s) => {
+        const p = s.userId ? byUser.get(s.userId) : undefined;
+        const pct = p && video.duration ? Math.min(100, Math.round((p.currentPosition / video.duration) * 100)) : 0;
+        const status = p?.isCompleted ? "completed" : p ? "in_progress" : "not_started";
+        return {
+          studentId: s.id,
+          name: `${s.user?.firstName ?? ""} ${s.user?.lastName ?? ""}`.trim() || s.studentCode,
+          status,
+          percent: p?.isCompleted ? 100 : pct,
+          lastWatchedAt: p?.lastWatchedAt ?? null,
+        };
+      });
+
+      const completed = roster.filter((r) => r.status === "completed").length;
+      const inProgress = roster.filter((r) => r.status === "in_progress").length;
+      const notStarted = roster.filter((r) => r.status === "not_started").length;
+
+      res.json({
+        total: roster.length,
+        completed,
+        inProgress,
+        notStarted,
+        dueDate: video.dueDate,
+        overdue,
+        isRequired: video.isRequired,
+        scope: video.classId ? "class" : "all",
+        roster: roster.sort((a, b) => a.name.localeCompare(b.name)),
+      });
+    } catch (err) {
+      logger.error("Error fetching video analytics:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });

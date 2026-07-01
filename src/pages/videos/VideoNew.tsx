@@ -36,9 +36,12 @@ const videoSchema = z.object({
   description: z.string().optional(),
   videoUrl: videoUrlSchema,
   thumbnailUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
+  captionsUrl: z.string().optional(),
   duration: z.coerce.number().int().min(0).optional(),
   classId: z.string().optional(),
   subjectId: z.string().optional(),
+  isRequired: z.boolean().optional(),
+  dueDate: z.string().optional(),
   visibility: z.union([
     z.literal('ALL' as const),
     z.literal('STUDENTS' as const),
@@ -71,6 +74,7 @@ export default function VideoNew() {
     defaultValues: {
       visibility: 'ALL',
       status: 'PUBLISHED',
+      isRequired: false,
     },
   });
 
@@ -382,6 +386,32 @@ export default function VideoNew() {
                 placeholder="https://..."
               />
               {errors.thumbnailUrl && <p className="text-xs text-red-500 font-medium">{errors.thumbnailUrl.message}</p>}
+            </div>
+
+            {/* Captions */}
+            <div className="space-y-2">
+              <Label htmlFor="captionsUrl">Captions / Subtitles URL (Optional)</Label>
+              <Input
+                id="captionsUrl"
+                {...register('captionsUrl')}
+                placeholder="https://... .vtt (WebVTT). Aids second-language learners."
+              />
+              <p className="text-xs text-slate-400">WebVTT (.vtt) file. Shown as a CC toggle for uploaded videos.</p>
+            </div>
+
+            {/* Required viewing */}
+            <div className="space-y-2 sm:col-span-2 rounded-lg border border-slate-200 dark:border-surface-raised p-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" className="h-4 w-4 rounded border-slate-300" {...register('isRequired')} />
+                <span className="text-sm font-medium text-slate-900 dark:text-white">Required viewing for the assigned class</span>
+              </label>
+              {watch('isRequired') && (
+                <div className="pt-2">
+                  <Label htmlFor="dueDate">Due date (optional)</Label>
+                  <Input id="dueDate" type="date" className="mt-1 max-w-[220px]" {...register('dueDate')} />
+                  <p className="text-xs text-slate-400 mt-1">Students see a “Required” badge; teachers can track completion in Watch analytics.</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

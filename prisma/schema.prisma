@@ -666,11 +666,14 @@ model VideoLesson {
   description   String?
   videoUrl      String
   thumbnailUrl  String?
+  captionsUrl   String?  // WebVTT subtitle track (uploaded videos)
   duration      Int?     // seconds
   classId       String?
   subjectId     String?
   visibility    String   @default("ALL") // ALL | STUDENTS | TEACHERS_ONLY
   status        String   @default("PUBLISHED") // PUBLISHED | DRAFT | ARCHIVED
+  isRequired    Boolean  @default(false) // required viewing for the linked class
+  dueDate       DateTime? // optional deadline for required viewing
   uploadedById  String
   uploadedByName String
 

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Pause, Volume2, VolumeX, Maximize, RotateCcw } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Maximize, RotateCcw, Subtitles } from 'lucide-react';
 import { PLAYBACK_SPEEDS, VIDEO_CONTROLS_AUTO_HIDE_DELAY } from '../lib/video/constants';
 
 interface VideoPlayerControlsProps {
@@ -15,9 +15,35 @@ export function VideoPlayerControls({ videoRef, duration, onProgress }: VideoPla
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
+  const [hasCaptions, setHasCaptions] = useState(false);
+  const [captionsOn, setCaptionsOn] = useState(false);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const video = videoRef.current;
+
+  // Detect a subtitle/caption track and reflect its current on/off state.
+  useEffect(() => {
+    if (!video) return;
+    const sync = () => {
+      const tracks = video.textTracks;
+      setHasCaptions(tracks.length > 0);
+      setCaptionsOn(tracks.length > 0 && tracks[0].mode === 'showing');
+    };
+    sync();
+    video.textTracks.addEventListener?.('addtrack', sync);
+    video.textTracks.addEventListener?.('change', sync);
+    return () => {
+      video.textTracks.removeEventListener?.('addtrack', sync);
+      video.textTracks.removeEventListener?.('change', sync);
+    };
+  }, [video]);
+
+  const toggleCaptions = () => {
+    if (!video || video.textTracks.length === 0) return;
+    const track = video.textTracks[0];
+    track.mode = track.mode === 'showing' ? 'hidden' : 'showing';
+    setCaptionsOn(track.mode === 'showing');
+  };
 
   // Update play state from video element
   useEffect(() => {
@@ -222,6 +248,19 @@ export function VideoPlayerControls({ videoRef, duration, onProgress }: VideoPla
             </div>
           )}
         </div>
+
+        {/* Captions toggle (only when a subtitle track is present) */}
+        {hasCaptions && (
+          <button
+            onClick={toggleCaptions}
+            className={`transition-colors p-1 rounded ${captionsOn ? 'text-blue-400 bg-white/10' : 'text-white hover:text-blue-400'}`}
+            aria-label={captionsOn ? 'Hide captions' : 'Show captions'}
+            aria-pressed={captionsOn}
+            title="Captions"
+          >
+            <Subtitles className="h-4 w-4" />
+          </button>
+        )}
 
         {/* Restart */}
         <button
