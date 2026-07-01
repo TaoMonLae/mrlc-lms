@@ -4,6 +4,7 @@ import { Plus, Search, MoreVertical, Edit2, ShieldAlert, CheckCircle2, UserX, Us
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -241,8 +242,13 @@ export default function UsersList() {
               {filteredUsers.map((user) => (
                 <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors">
                   <td className="px-6 py-4">
-                    <div className="font-semibold text-slate-900 dark:text-white">{user.name}</div>
-                    <div className="text-xs text-slate-500 mt-1">@{user.username} {user.email && `• ${user.email}`}</div>
+                    <div className="flex items-center gap-3">
+                      <UserAvatar name={user.name} className="h-9 w-9 text-xs" />
+                      <div>
+                        <div className="font-semibold text-slate-900 dark:text-white">{user.name}</div>
+                        <div className="text-xs text-slate-500 mt-1">@{user.username} {user.email && `• ${user.email}`}</div>
+                      </div>
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <RoleBadge role={user.role} />
@@ -326,9 +332,12 @@ export default function UsersList() {
           filteredUsers.map((user) => (
             <div key={user.id} className="rounded-xl border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo p-4 shadow-sm space-y-3">
               <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="font-semibold text-slate-900 dark:text-white truncate">{user.name}</div>
-                  <div className="text-xs text-slate-500 mt-0.5 truncate">@{user.username}{user.email && ` • ${user.email}`}</div>
+                <div className="flex min-w-0 items-center gap-3">
+                  <UserAvatar name={user.name} className="h-9 w-9 text-xs" />
+                  <div className="min-w-0">
+                    <div className="font-semibold text-slate-900 dark:text-white truncate">{user.name}</div>
+                    <div className="text-xs text-slate-500 mt-0.5 truncate">@{user.username}{user.email && ` • ${user.email}`}</div>
+                  </div>
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger render={<Button variant="ghost" size="sm" className="h-8 w-8 p-0 -mr-1 shrink-0" aria-label={`Options for ${user.name}`} />} nativeButton={true}>

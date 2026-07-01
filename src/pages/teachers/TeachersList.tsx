@@ -14,6 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -182,7 +183,7 @@ export default function TeachersList() {
               <tr key={teacher.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors">
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
-                    <img src={teacher.profilePhotoUrl} alt={teacher.firstName} className="h-10 w-10 rounded-full border border-slate-200 dark:border-surface-raised" />
+                    <UserAvatar name={`${teacher.firstName} ${teacher.lastName}`} src={teacher.profilePhotoUrl} className="h-10 w-10 border border-slate-200 dark:border-surface-raised" />
                     <div>
                       <div className="font-semibold text-slate-900 dark:text-white">{teacher.firstName} {teacher.lastName}</div>
                       <div className="text-xs text-slate-500 font-mono">{teacher.teacherId}</div>
@@ -246,7 +247,7 @@ export default function TeachersList() {
           <Link key={teacher.id} to={`/teachers/${teacher.id}`} className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-5 shadow-sm hover:border-aubergine-500 transition-colors">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
-                <img src={teacher.profilePhotoUrl} alt={teacher.firstName} className="h-12 w-12 rounded-full border" />
+                <UserAvatar name={`${teacher.firstName} ${teacher.lastName}`} src={teacher.profilePhotoUrl} className="h-12 w-12 border text-base" />
                 <div>
                   <h3 className="font-bold text-slate-900 dark:text-white leading-tight">{teacher.firstName} {teacher.lastName}</h3>
                   <span className="text-xs text-slate-500 font-mono">{teacher.teacherId}</span>

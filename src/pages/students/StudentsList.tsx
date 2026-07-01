@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Search, Plus, Filter, MoreHorizontal, User, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import {
   Select,
   SelectContent,
@@ -73,6 +74,7 @@ export default function StudentsList() {
     studentId: s.studentCode,
     firstName: s.user?.firstName || '',
     lastName: s.user?.lastName || '',
+    profilePhotoUrl: s.user?.profilePhotoUrl || s.profilePhotoUrl || null,
     class: s.class?.name || 'Unassigned',
     status: s.status || 'ACTIVE',
     gender: s.gender || 'MALE',
@@ -187,9 +189,7 @@ export default function StudentsList() {
                         <tr key={student.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors group">
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
-                              <div className="h-9 w-9 rounded-full bg-slate-100 dark:bg-surface-raised flex items-center justify-center text-slate-500 dark:text-slate-300 font-medium">
-                                {student.firstName.charAt(0)}{student.lastName.charAt(0)}
-                              </div>
+                              <UserAvatar name={`${student.firstName} ${student.lastName}`} src={student.profilePhotoUrl} className="h-9 w-9 text-xs" />
                               <div>
                                 <Link to={`/students/${student.id}`} className="font-semibold text-slate-900 dark:text-white hover:text-aubergine-600 dark:hover:text-aubergine-400">
                                   {student.firstName} {student.lastName}
@@ -281,9 +281,7 @@ export default function StudentsList() {
               <div key={student.id} className="border border-slate-200 dark:border-surface-raised rounded-lg p-4 space-y-3 bg-white dark:bg-surface-indigo shadow-sm relative">
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-slate-100 dark:bg-surface-raised flex items-center justify-center text-slate-500 font-medium shrink-0">
-                      {student.firstName.charAt(0)}{student.lastName.charAt(0)}
-                    </div>
+                    <UserAvatar name={`${student.firstName} ${student.lastName}`} src={student.profilePhotoUrl} className="h-10 w-10 text-sm" />
                     <div>
                       <Link to={`/students/${student.id}`} className="font-semibold text-slate-900 dark:text-white block hover:underline">
                         {student.firstName} {student.lastName}

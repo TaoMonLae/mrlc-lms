@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { usePermissions } from '../../lib/permissions';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger,
 } from '@/components/ui/dialog';
@@ -287,9 +288,12 @@ export default function ChatPage() {
                         return (
                           <button key={c.id} type="button"
                             onClick={() => setPicked((p) => { const n = { ...p }; if (n[c.id]) delete n[c.id]; else n[c.id] = c; return n; })}
-                            className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-sm ${on ? 'border-aubergine-300 bg-aubergine-50 dark:bg-aubergine-900/20' : 'border-slate-200 dark:border-surface-raised hover:bg-slate-50 dark:hover:bg-surface-raised/40'}`}>
-                            <span className="font-medium text-slate-800 dark:text-slate-200">{c.name}</span>
-                            <Badge variant="outline" className="text-[10px] uppercase">{roleLabel(c.role)}</Badge>
+                            className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-sm ${on ? 'border-aubergine-300 bg-aubergine-50 dark:bg-aubergine-900/20' : 'border-slate-200 dark:border-surface-raised hover:bg-slate-50 dark:hover:bg-surface-raised/40'}`}>
+                            <span className="flex min-w-0 items-center gap-2">
+                              <UserAvatar name={c.name} src={c.profilePhotoUrl} className="h-7 w-7 text-[11px]" />
+                              <span className="truncate font-medium text-slate-800 dark:text-slate-200">{c.name}</span>
+                            </span>
+                            <Badge variant="outline" className="shrink-0 text-[10px] uppercase">{roleLabel(c.role)}</Badge>
                           </button>
                         );
                       })}
@@ -311,9 +315,7 @@ export default function ChatPage() {
               <button key={c.id} onClick={() => openConversation(c.id)}
                 className={`flex w-full items-start gap-3 border-b border-slate-50 dark:border-surface-raised/50 p-3 text-left hover:bg-slate-50 dark:hover:bg-surface-raised/40 ${activeId === c.id ? 'bg-slate-50 dark:bg-surface-raised/40' : ''}`}>
                 <div className="relative shrink-0">
-                  <div className="grid h-10 w-10 place-items-center rounded-full bg-aubergine-100 text-sm font-bold text-aubergine-700">
-                    {c.title.charAt(0).toUpperCase()}
-                  </div>
+                  <UserAvatar name={c.title} className="h-10 w-10 font-bold" />
                   {c.participants?.some((p) => p.id !== myId && onlineUserIds.has(p.id)) && (
                     <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-surface-indigo" />
                   )}

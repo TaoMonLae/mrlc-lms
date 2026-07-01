@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
@@ -128,7 +129,7 @@ export default function TeacherProfile() {
             Back to Teachers
           </Button>
           <div className="flex items-center gap-4">
-            <img src={teacher.photoUrl} alt={teacher.firstName} className="h-20 w-20 rounded-2xl border-4 border-white dark:border-surface-raised shadow-md" />
+            <UserAvatar name={`${teacher.firstName} ${teacher.lastName}`} src={teacher.photoUrl} rounded="2xl" className="h-20 w-20 border-4 border-white dark:border-surface-raised shadow-md text-2xl" />
             <div>
               <div className="flex items-center gap-3">
                 <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">{teacher.firstName} {teacher.lastName}</h1>
