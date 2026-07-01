@@ -124,6 +124,7 @@ model User {
   role          Role      @default(STUDENT)
   isActive      Boolean   @default(true)
   mustChangePassword Boolean @default(false)
+  lastLoginAt   DateTime?
 
   studentProfile Student?
   teacherProfile Teacher?

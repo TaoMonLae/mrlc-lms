@@ -1077,6 +1077,10 @@ async function startServer() {
       };
       const token = signToken(payload);
 
+      // Record the login time (fire-and-forget so a slow write can't block sign-in).
+      prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } })
+        .catch((e) => logger.warn(`Could not update lastLoginAt for ${user.email}: ${e?.message}`));
+
       logger.info(`User ${user.email} (${user.role}) logged in successfully`);
 
       res.json({
@@ -1785,7 +1789,7 @@ async function startServer() {
     try {
       const users = await prisma.user.findMany({
         select: {
-          id: true, firstName: true, lastName: true, email: true, role: true, isActive: true, createdAt: true,
+          id: true, firstName: true, lastName: true, email: true, role: true, isActive: true, createdAt: true, lastLoginAt: true,
           studentProfile: { select: { id: true } },
           teacherProfile: { select: { id: true } },
         },

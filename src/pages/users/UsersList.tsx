@@ -43,6 +43,7 @@ interface ApiUser {
   role: User['role'];
   isActive: boolean;
   createdAt?: string;
+  lastLoginAt?: string | null;
   studentProfile?: { id: string } | null;
   teacherProfile?: { id: string } | null;
 }
@@ -59,6 +60,7 @@ function mapUser(u: ApiUser): User {
     teacherId: u.teacherProfile?.id,
     createdAt: u.createdAt ?? new Date().toISOString(),
     updatedAt: u.createdAt ?? new Date().toISOString(),
+    lastLoginAt: u.lastLoginAt ?? undefined,
   };
 }
 
