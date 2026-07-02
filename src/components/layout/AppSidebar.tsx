@@ -1,19 +1,23 @@
 import { 
-  Sidebar, 
-  SidebarContent, 
-  SidebarGroup, 
-  SidebarGroupContent, 
-  SidebarGroupLabel, 
-  SidebarHeader, 
-  SidebarMenu, 
-  SidebarMenuButton, 
-  SidebarMenuItem, 
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarFooter,
   SidebarRail,
   useSidebar
 } from "@/components/ui/sidebar";
-import { NAVIGATION_ITEMS } from "@/src/lib/navigation";
-import { GraduationCap, LogOut, User } from "lucide-react";
+import { NAVIGATION_ITEMS, ADMIN_NAV, isNavGroup } from "@/src/lib/navigation";
+import { GraduationCap, LogOut, User, ChevronDown } from "lucide-react";
+import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuGroup } from "@/components/ui/dropdown-menu";
@@ -31,8 +35,31 @@ export function AppSidebar() {
   const { isAdmin, isTeacher, isStudent, hasPermission } = usePermissions();
   const { schoolProfile, brandingSettings } = useSettings();
   const { unreadCount } = useChat();
-  const { isMobile, setOpenMobile } = useSidebar();
+  const { isMobile, setOpenMobile, state: sidebarState } = useSidebar();
   const closeOnMobile = () => { if (isMobile) setOpenMobile(false); };
+
+  const isPathActive = (url: string) => {
+    if (url === '/settings') {
+      // Settings has sub-pages that are separate nav items (audit-log, export).
+      return location.pathname.startsWith('/settings')
+        && !location.pathname.startsWith('/settings/audit-log')
+        && !location.pathname.startsWith('/settings/export');
+    }
+    return location.pathname === url || location.pathname.startsWith(url + '/');
+  };
+
+  // Admin nav groups: open the group containing the current page by default;
+  // remember manual open/close choices for the session.
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    try { return JSON.parse(sessionStorage.getItem('nav_open_groups') || '{}'); } catch { return {}; }
+  });
+  const toggleGroup = (label: string, fallbackOpen: boolean) => {
+    setOpenGroups((prev) => {
+      const next = { ...prev, [label]: !(prev[label] ?? fallbackOpen) };
+      try { sessionStorage.setItem('nav_open_groups', JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  };
 
   const handleLogout = () => {
     logout();
@@ -67,24 +94,85 @@ export function AppSidebar() {
           <SidebarGroupLabel className="group-data-[collapsible=icon]:opacity-0 text-white/50 text-[10px] uppercase font-bold tracking-widest px-3 mb-2">Main Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
-              {filteredNavItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    render={<Link to={item.url} onClick={closeOnMobile} />}
-                    isActive={location.pathname === item.url}
-                    tooltip={item.title}
-                    className="h-9 hover:bg-white/10 hover:text-white data-[active=true]:bg-aubergine-600 data-[active=true]:text-white transition-colors duration-200"
-                  >
-                    <item.icon className="h-4 w-4 opacity-70" />
-                    <span className="text-sm font-medium">{item.title}</span>
-                    {item.url === '/chat' && unreadCount > 0 && (
-                      <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white group-data-[collapsible=icon]:hidden">
-                        {unreadCount > 99 ? '99+' : unreadCount}
-                      </span>
-                    )}
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {isAdmin && (sidebarState === 'expanded' || isMobile) ? (
+                // ── Grouped admin navigation ─────────────────────────────
+                ADMIN_NAV.map((entry) => {
+                  if (!isNavGroup(entry)) {
+                    return (
+                      <SidebarMenuItem key={entry.title}>
+                        <SidebarMenuButton
+                          render={<Link to={entry.url} onClick={closeOnMobile} />}
+                          isActive={isPathActive(entry.url)}
+                          tooltip={entry.title}
+                          className="h-9 hover:bg-white/10 hover:text-white data-[active=true]:bg-aubergine-600 data-[active=true]:text-white transition-colors duration-200"
+                        >
+                          <entry.icon className="h-4 w-4 opacity-70" />
+                          <span className="text-sm font-medium">{entry.title}</span>
+                          {entry.url === '/chat' && unreadCount > 0 && (
+                            <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
+                              {unreadCount > 99 ? '99+' : unreadCount}
+                            </span>
+                          )}
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  }
+                  const containsActive = entry.items.some((i) => isPathActive(i.url));
+                  const open = openGroups[entry.label] ?? containsActive;
+                  return (
+                    <SidebarMenuItem key={entry.label}>
+                      <SidebarMenuButton
+                        onClick={() => toggleGroup(entry.label, containsActive)}
+                        className="h-9 hover:bg-white/10 hover:text-white transition-colors duration-200"
+                        aria-expanded={open}
+                      >
+                        <entry.icon className="h-4 w-4 opacity-70" />
+                        <span className="text-sm font-medium">{entry.label}</span>
+                        <ChevronDown className={`ml-auto h-4 w-4 opacity-60 transition-transform duration-200 ${open ? '' : '-rotate-90'}`} />
+                      </SidebarMenuButton>
+                      {open && (
+                        <SidebarMenuSub className="border-white/15 mx-0 ml-5 pl-2.5 pr-0">
+                          {entry.items.map((item) => (
+                            <SidebarMenuSubItem key={item.url + item.title}>
+                              <SidebarMenuSubButton
+                                render={<Link to={item.url} onClick={closeOnMobile} />}
+                                isActive={isPathActive(item.url)}
+                                className="h-8 text-white/70 hover:bg-white/10 hover:text-white data-active:bg-aubergine-600 data-active:text-white data-[active=true]:bg-aubergine-600 data-[active=true]:text-white [&_svg]:text-white/50"
+                              >
+                                <item.icon className="h-3.5 w-3.5" />
+                                <span className="text-sm font-medium">{item.title}</span>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
+                        </SidebarMenuSub>
+                      )}
+                    </SidebarMenuItem>
+                  );
+                })
+              ) : (
+                // ── Flat navigation (teacher/student/staff, or icon-collapsed admin) ──
+                (isAdmin
+                  ? ADMIN_NAV.flatMap((e) => (isNavGroup(e) ? e.items : [e]))
+                  : filteredNavItems
+                ).map((item) => (
+                  <SidebarMenuItem key={item.url + item.title}>
+                    <SidebarMenuButton
+                      render={<Link to={item.url} onClick={closeOnMobile} />}
+                      isActive={isPathActive(item.url)}
+                      tooltip={item.title}
+                      className="h-9 hover:bg-white/10 hover:text-white data-[active=true]:bg-aubergine-600 data-[active=true]:text-white transition-colors duration-200"
+                    >
+                      <item.icon className="h-4 w-4 opacity-70" />
+                      <span className="text-sm font-medium">{item.title}</span>
+                      {item.url === '/chat' && unreadCount > 0 && (
+                        <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white group-data-[collapsible=icon]:hidden">
+                          {unreadCount > 99 ? '99+' : unreadCount}
+                        </span>
+                      )}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

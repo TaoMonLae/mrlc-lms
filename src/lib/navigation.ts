@@ -34,6 +34,98 @@ export interface NavItem {
   roles?: UserRole[];
 }
 
+export interface NavGroup {
+  label: string;
+  icon: any;
+  items: { title: string; url: string; icon: any }[];
+}
+
+export type AdminNavEntry = { title: string; url: string; icon: any } | NavGroup;
+
+export const isNavGroup = (e: AdminNavEntry): e is NavGroup => 'items' in e;
+
+/**
+ * Grouped sidebar structure for the ADMIN role only — the flat admin list had
+ * grown to ~28 entries. Teachers/students keep the flat NAVIGATION_ITEMS list.
+ */
+export const ADMIN_NAV: AdminNavEntry[] = [
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Chat", url: "/chat", icon: MessageSquare },
+  { title: "Social Space", url: "/social", icon: Sparkles },
+  { title: "Announcements", url: "/announcements", icon: Megaphone },
+  { title: "Timetable", url: "/timetable", icon: CalendarDays },
+  {
+    label: "People",
+    icon: Users,
+    items: [
+      { title: "Students", url: "/students", icon: Users },
+      { title: "Admissions", url: "/admissions", icon: UserPlus },
+      { title: "Teachers", url: "/teachers", icon: UserSquare2 },
+      { title: "Staff", url: "/staff", icon: UserSquare2 },
+      { title: "Users & Roles", url: "/users", icon: Briefcase },
+    ],
+  },
+  {
+    label: "Academics",
+    icon: BookOpen,
+    items: [
+      { title: "Classes", url: "/classes", icon: BookOpen },
+      { title: "Subjects", url: "/subjects", icon: BookOpen },
+      { title: "Exams", url: "/exams", icon: FileCheck },
+      { title: "Gradebook", url: "/gradebook", icon: ClipboardList },
+      { title: "GED Readiness", url: "/gradebook/ged-readiness", icon: GraduationCap },
+      { title: "Class Performance", url: "/gradebook/reports", icon: BarChart3 },
+      { title: "Documents", url: "/documents", icon: FileText },
+    ],
+  },
+  {
+    label: "Attendance",
+    icon: CalendarCheck,
+    items: [
+      { title: "Daily Reports", url: "/attendance/reports", icon: CalendarCheck },
+      { title: "Session Reports", url: "/attendance/session-reports", icon: CalendarDays },
+      { title: "Analytics", url: "/analytics/attendance", icon: BarChart3 },
+    ],
+  },
+  {
+    label: "Resources",
+    icon: Library,
+    items: [
+      { title: "Library", url: "/library", icon: Library },
+      { title: "E-Library", url: "/elibrary", icon: Tablet },
+      { title: "Video Lessons", url: "/videos", icon: Video },
+      { title: "Book Catalog", url: "/books", icon: BookMarked },
+    ],
+  },
+  {
+    label: "Finance & HR",
+    icon: Wallet,
+    items: [
+      { title: "Fees", url: "/fees", icon: Wallet },
+      { title: "Payroll", url: "/payroll", icon: Wallet },
+      { title: "Leave", url: "/leave", icon: CalendarCheck },
+    ],
+  },
+  {
+    label: "Operations",
+    icon: ClipboardList,
+    items: [
+      { title: "School Operations", url: "/operations", icon: ClipboardList },
+      { title: "Cases", url: "/cases", icon: AlertCircle },
+      { title: "Reports", url: "/reports", icon: BarChart3 },
+    ],
+  },
+  {
+    label: "System",
+    icon: Settings,
+    items: [
+      { title: "Settings", url: "/settings", icon: Settings },
+      { title: "Audit Log", url: "/settings/audit-log", icon: FileText },
+      { title: "Export Data", url: "/settings/export", icon: Download },
+    ],
+  },
+];
+
 export const NAVIGATION_ITEMS: NavItem[] = [
   // Admin / General Navigation
   {
