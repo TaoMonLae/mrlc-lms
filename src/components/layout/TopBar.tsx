@@ -16,11 +16,28 @@ import type { Announcement } from "@/src/pages/announcements/AnnouncementsList";
 import { format } from "date-fns";
 import { SearchDialog } from "../SearchDialog";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { useUser } from "@/src/lib/permissions";
 
 export function TopBar() {
   const { setTheme } = useTheme();
+  const { user } = useUser();
   const [notifOpen, setNotifOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  // Search covers students/teachers/classes — records only these roles may see.
+  const canSearch = !!user && ["ADMIN", "TEACHER", "STAFF"].includes(user.role);
+
+  // Ctrl/Cmd+K opens search from anywhere.
+  useEffect(() => {
+    if (!canSearch) return;
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [canSearch]);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [viewedAnnouncements, setViewedAnnouncements] = useState<Set<string>>(new Set());
@@ -87,25 +104,36 @@ export function TopBar() {
   return (
     <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 dark:border-white/10 bg-white dark:bg-surface-indigo px-4 sm:px-6 md:px-8 gap-2">
       <div className="flex flex-1 items-center gap-4">
-        <div className="relative w-full max-w-md hidden md:block">
-          <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
-            <Search className="h-5 w-5" />
-          </span>
-          <Input
-            placeholder="Search students, classes, records..."
-            className="block w-full rounded-md border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-surface-raised dark:text-white py-2 pl-10 pr-3 text-sm placeholder-slate-400 focus:border-aubergine-500 focus:outline-none focus:ring-1 focus:ring-aubergine-500 transition-all"
-          />
-        </div>
-        <div className="flex items-center gap-2 md:hidden">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-10 w-10"
-            aria-label="Open search"
+        {canSearch && (
+          <button
+            type="button"
             onClick={() => setSearchOpen(true)}
+            className="relative hidden w-full max-w-md md:block text-left"
+            aria-label="Open search (Ctrl+K)"
           >
-            <Search className="h-5 w-5" />
-          </Button>
+            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+              <Search className="h-5 w-5" />
+            </span>
+            <span className="block w-full rounded-md border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-surface-raised py-2 pl-10 pr-3 text-sm text-slate-400 transition-all hover:border-aubergine-400">
+              Search students, teachers, classes...
+            </span>
+            <kbd className="absolute right-3 top-1/2 -translate-y-1/2 rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-slate-400 dark:border-white/10 dark:bg-surface-indigo">
+              ⌘K
+            </kbd>
+          </button>
+        )}
+        <div className="flex items-center gap-2 md:hidden">
+          {canSearch && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10"
+              aria-label="Open search"
+              onClick={() => setSearchOpen(true)}
+            >
+              <Search className="h-5 w-5" />
+            </Button>
+          )}
           <SidebarTrigger className="bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-surface-raised dark:text-slate-300" aria-label="Toggle sidebar navigation" />
         </div>
       </div>

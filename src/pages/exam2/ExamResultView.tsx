@@ -19,6 +19,9 @@ export default function ExamResultView() {
       <Clock className="h-10 w-10 text-slate-400 mx-auto" />
       <h2 className="text-lg font-bold text-slate-900 dark:text-white">Results not available yet</h2>
       <p className="text-sm text-slate-500">{data?.message || 'Your teacher has not released results for this exam.'}</p>
+      <p className="text-xs text-slate-400">
+        Your answers are safely submitted. Results appear here once your teacher finishes marking and releases them — check back later.
+      </p>
       <Button onClick={() => navigate('/exam2/resume')}>Back to my exams</Button>
     </div>
   );

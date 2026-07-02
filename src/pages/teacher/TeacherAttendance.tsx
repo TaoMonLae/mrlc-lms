@@ -52,7 +52,10 @@ const localToday = () => {
 };
 
 export default function TeacherAttendance() {
-  const [mode, setMode] = useState<AttendanceMode>('daily');
+  // Deep link from the dashboard: /teacher/attendance?sessionId=... opens that
+  // session directly in session mode.
+  const initialSessionId = new URLSearchParams(window.location.search).get('sessionId') || '';
+  const [mode, setMode] = useState<AttendanceMode>(initialSessionId ? 'session' : 'daily');
   const [classOptions, setClassOptions] = useState<{ value: string; label: string }[]>([]);
   const [selectedClass, setSelectedClass] = useState("");
   const [students, setStudents] = useState<RosterStudent[]>([]);
@@ -62,8 +65,22 @@ export default function TeacherAttendance() {
 
   // Session attendance state
   const [sessions, setSessions] = useState<TimetableSession[]>([]);
-  const [selectedSession, setSelectedSession] = useState("");
+  const [selectedSession, setSelectedSession] = useState(initialSessionId);
   const [sessionDate, setSessionDate] = useState(localToday());
+
+  // Without a deep link, default the mode from the timetable: teachers with
+  // scheduled sessions today start in session mode instead of choosing.
+  useEffect(() => {
+    if (initialSessionId) return;
+    const dayNames = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+    apiGet<TimetableSession[]>(`/api/timetable?dayOfWeek=${dayNames[new Date().getDay()]}`)
+      .then((r) => {
+        const todays = (r ?? []).filter((s) => s.scheduleType === 'CLASS' && s.status === 'ACTIVE');
+        if (todays.length > 0) setMode('session');
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     apiGet<{ id: string; name: string }[]>('/api/teacher/classes')

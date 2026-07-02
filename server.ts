@@ -7757,6 +7757,62 @@ async function startServer() {
     fs.createReadStream(path.join(BACKUP_DIR, name)).pipe(res);
   });
 
+  // ── Global search (top bar) ──────────────────────────────────────────────────
+  app.get("/api/search", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!["ADMIN", "TEACHER", "STAFF"].includes(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const q = String(req.query.q ?? "").trim();
+    if (q.length < 2) { res.json({ students: [], teachers: [], classes: [] }); return; }
+    const contains = { contains: q, mode: "insensitive" as const };
+    try {
+      const [students, teachers, classes] = await Promise.all([
+        prisma.student.findMany({
+          where: {
+            OR: [
+              { studentCode: contains },
+              { user: { firstName: contains } },
+              { user: { lastName: contains } },
+            ],
+          },
+          include: { user: { select: { firstName: true, lastName: true } }, class: { select: { name: true } } },
+          take: 6,
+        }),
+        prisma.teacher.findMany({
+          where: {
+            OR: [
+              { teacherCode: contains },
+              { user: { firstName: contains } },
+              { user: { lastName: contains } },
+            ],
+          },
+          include: { user: { select: { firstName: true, lastName: true } } },
+          take: 5,
+        }),
+        prisma.class.findMany({ where: { name: contains }, take: 5 }),
+      ]);
+      res.json({
+        students: students.map((s) => ({
+          id: s.id,
+          name: `${s.user?.firstName ?? ""} ${s.user?.lastName ?? ""}`.trim() || s.studentCode,
+          code: s.studentCode,
+          className: s.class?.name ?? null,
+        })),
+        teachers: teachers.map((t) => ({
+          id: t.id,
+          name: `${t.user?.firstName ?? ""} ${t.user?.lastName ?? ""}`.trim() || t.teacherCode,
+          code: t.teacherCode,
+        })),
+        classes: classes.map((c) => ({ id: c.id, name: c.name, level: c.level })),
+      });
+    } catch (err) {
+      logger.error("Search failed:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
   // ── Health check ────────────────────────────────────────────────────────────
   app.get("/api/health", async (req, res) => {
     try {

@@ -335,3 +335,32 @@
     @apply font-sans;
     }
 }
+/* ── Myanmar / Mon script support ─────────────────────────────────────────────
+   Myanmar script stacks vowel signs and medials above and below the baseline.
+   The Latin-tuned tight line-heights (leading-tight etc.) clip those stacks so
+   lines collide. When Burmese (my) or Mon (mnw) is active we switch to a font
+   with proper Myanmar metrics and give every text element more vertical room.
+   These rules are unlayered on purpose so they win over Tailwind utilities. */
+
+html[lang='my'] body,
+html[lang='mnw'] body {
+  font-family: 'Padauk', 'Inter', 'Geist Variable', 'Myanmar Text', 'Noto Sans Myanmar',
+    'Myanmar Sangam MN', system-ui, sans-serif;
+}
+
+html[lang='my'] :is(h1, h2, h3, h4, h5, h6),
+html[lang='mnw'] :is(h1, h2, h3, h4, h5, h6) {
+  line-height: 1.6;
+  letter-spacing: normal;
+}
+
+html[lang='my'] :is(p, a, span, label, button, li, td, th, dt, dd, input, textarea, option, legend, figcaption, blockquote),
+html[lang='mnw'] :is(p, a, span, label, button, li, td, th, dt, dd, input, textarea, option, legend, figcaption, blockquote) {
+  line-height: 1.9;
+}
+
+/* Inputs and buttons size by height, not line-height — keep glyphs unclipped. */
+html[lang='my'] :is(input, button, select),
+html[lang='mnw'] :is(input, button, select) {
+  line-height: 1.7;
+}

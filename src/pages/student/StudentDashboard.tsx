@@ -94,7 +94,20 @@ export default function StudentDashboard() {
   const upcomingExams = dash.upcomingExams;
   const recentResults = dash.recentResults;
 
-  const libraryResources: LibraryResourceRow[] = [];
+  // "New in Library" — the three most recent resources visible to students.
+  const [libraryResources, setLibraryResources] = useState<LibraryResourceRow[]>([]);
+  useEffect(() => {
+    apiGet<any[]>('/api/library')
+      .then((data) =>
+        setLibraryResources(
+          (Array.isArray(data) ? data : [])
+            .filter((r) => (r.status ?? 'ACTIVE') === 'ACTIVE')
+            .slice(0, 3)
+            .map((r) => ({ id: r.id, title: r.title, subject: r.description || r.uploadedByName || '', format: r.type || 'FILE' }))
+        )
+      )
+      .catch(() => setLibraryResources([]));
+  }, []);
 
   return (
     <div className="space-y-8 pb-10">
@@ -274,6 +287,9 @@ export default function StudentDashboard() {
               </div>
             </CardHeader>
             <CardContent className="p-0">
+              {libraryResources.length === 0 && (
+                <p className="p-4 text-xs text-slate-400">Nothing new yet — <Link to="/student/library" className="underline text-aubergine-600">browse the library</Link>.</p>
+              )}
               {libraryResources.map((res, idx) => (
                 <div key={idx} className="p-4 border-b last:border-0 border-slate-100 dark:border-surface-raised/50 flex items-center justify-between">
                   <div>

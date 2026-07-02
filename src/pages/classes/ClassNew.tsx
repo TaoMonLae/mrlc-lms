@@ -74,8 +74,9 @@ export default function ClassNew() {
           )
         );
       }
-      toast.success('Class created successfully');
-      navigate('/classes');
+      toast.success('Class created', { description: 'Next: add subjects and assign students from the class profile.' });
+      // Land on the new class so the next steps (subjects, students) are one tap away.
+      navigate(created?.id ? `/classes/${created.id}` : '/classes');
     } catch (error: any) {
       toast.error(error.message || 'Failed to create class');
     }

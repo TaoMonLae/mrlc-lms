@@ -27,6 +27,16 @@ interface DashboardData {
   recentPerformance: { id: string | number; student: string; class: string; score: string; trend: string }[];
 }
 interface AnnouncementItem { id: string; title: string; body: string; createdAt: string; }
+interface TodaySession {
+  id: string;
+  subjectName: string | null;
+  className: string | null;
+  startTime: string;
+  endTime: string;
+  room: string | null;
+  status?: string;
+  scheduleType?: string;
+}
 
 export default function TeacherDashboard() {
   const navigate = useNavigate();
@@ -36,6 +46,7 @@ export default function TeacherDashboard() {
   });
 
   const [announcements, setAnnouncements] = useState<AnnouncementItem[]>([]);
+  const [todaySessions, setTodaySessions] = useState<TodaySession[]>([]);
 
   useEffect(() => {
     apiGet<DashboardData>('/api/teacher/dashboard')
@@ -47,6 +58,11 @@ export default function TeacherDashboard() {
     apiGet<AnnouncementItem[]>('/api/announcements')
       .then((r) => setAnnouncements((r ?? []).slice(0, 4)))
       .catch(() => setAnnouncements([]));
+    // Today's sessions — each one deep-links into attendance for that session.
+    const dayNames = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+    apiGet<TodaySession[]>(`/api/timetable?dayOfWeek=${dayNames[new Date().getDay()]}&scheduleType=CLASS&status=ACTIVE`)
+      .then((r) => setTodaySessions((r ?? []).sort((a, b) => a.startTime.localeCompare(b.startTime))))
+      .catch(() => setTodaySessions([]));
   }, []);
 
   const { stats, classes: assignedClasses, attendanceData, upcomingExams, recentPerformance } = data;
@@ -114,6 +130,40 @@ export default function TeacherDashboard() {
           </Card>
         ))}
       </div>
+
+      {/* Today's sessions — one tap into attendance for that session */}
+      {todaySessions.length > 0 && (
+        <Card className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden dark:bg-surface-indigo/50 dark:border-surface-raised">
+          <div className="flex items-center justify-between border-b px-6 py-4 dark:border-surface-raised">
+            <h3 className="font-bold text-slate-800 text-sm dark:text-slate-100 flex items-center gap-2">
+              <Clock className="h-4 w-4 text-aubergine-600" /> Today's Sessions
+            </h3>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+            </span>
+          </div>
+          <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
+            {todaySessions.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => navigate(`/teacher/attendance?sessionId=${s.id}`)}
+                className="group flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 p-3 text-left transition-colors hover:border-aubergine-400 hover:bg-aubergine-50 dark:border-surface-raised dark:bg-surface-raised/30 dark:hover:bg-aubergine-900/20"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold text-slate-800 dark:text-slate-200">{sanitizeText(s.subjectName || 'Session')}</p>
+                  <p className="mt-0.5 truncate text-[11px] font-semibold text-slate-500">
+                    {s.startTime}–{s.endTime}{s.className ? ` · ${sanitizeText(s.className)}` : ''}{s.room ? ` · ${sanitizeText(s.room)}` : ''}
+                  </p>
+                </div>
+                <span className="ml-3 flex shrink-0 items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-aubergine-600 opacity-0 transition-opacity group-hover:opacity-100">
+                  Attendance <ArrowRight className="h-3 w-3" />
+                </span>
+              </button>
+            ))}
+          </div>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <Card className="lg:col-span-2 rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden dark:bg-surface-indigo/50 dark:border-surface-raised flex flex-col">
