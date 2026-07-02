@@ -1947,6 +1947,97 @@ async function startServer() {
     }
   });
 
+  // The signed-in teacher's own record (used by "My Profile").
+  app.get("/api/teacher/me", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "TEACHER" && jwtUser.role !== "ADMIN") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const teacher = await prisma.teacher.findUnique({
+        where: { userId: jwtUser.userId },
+        include: { user: true },
+      });
+      if (!teacher) { res.status(404).json({ error: "No teacher profile linked to this account" }); return; }
+      res.json(teacher);
+    } catch (err) {
+      logger.error("Error fetching own teacher profile:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Update a teacher. ADMIN may edit everything; a TEACHER may edit only their
+  // own record, limited to personal fields (never email, employment, salary,
+  // status or dates).
+  app.put("/api/teachers/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { id } = req.params;
+    const b = req.body || {};
+    try {
+      const teacher = await prisma.teacher.findUnique({ where: { id }, include: { user: true } });
+      if (!teacher) { res.status(404).json({ error: "Teacher not found" }); return; }
+
+      const isSelf = teacher.userId === jwtUser.userId;
+      if (jwtUser.role === "TEACHER" && !isSelf) {
+        res.status(403).json({ error: "You can only edit your own profile" });
+        return;
+      }
+      const isAdminEdit = jwtUser.role === "ADMIN";
+
+      const s = (v: any) => (v == null ? null : String(v).trim() || null);
+      const subjectsList = Array.isArray(b.subjects)
+        ? b.subjects.map((x: string) => String(x).trim()).filter(Boolean)
+        : String(b.subjects ?? "").split(",").map((x: string) => x.trim()).filter(Boolean);
+
+      // Fields any teacher may change on their own profile.
+      const teacherData: any = {
+        ...(b.phone !== undefined ? { phone: s(b.phone) } : {}),
+        ...(b.gender !== undefined ? { gender: s(b.gender) } : {}),
+        ...(b.address !== undefined ? { address: s(b.address) } : {}),
+        ...(b.subjects !== undefined ? { specialization: subjectsList.join(", ") || null } : {}),
+        ...(b.notes !== undefined ? { notes: s(b.notes) } : {}),
+      };
+      // Admin-only fields.
+      if (isAdminEdit) {
+        if (b.employmentType !== undefined) teacherData.employmentType = ["FULL_TIME", "PART_TIME", "VOLUNTEER"].includes(b.employmentType) ? b.employmentType : "FULL_TIME";
+        if (b.joinedDate) {
+          const d = new Date(b.joinedDate);
+          if (!isNaN(d.getTime())) teacherData.hireDate = d;
+        }
+        if (b.baseSalary !== undefined && !isNaN(Number(b.baseSalary))) teacherData.baseSalary = Number(b.baseSalary);
+      }
+
+      const userData: any = {
+        ...(b.firstName ? { firstName: String(b.firstName).trim() } : {}),
+        ...(b.lastName ? { lastName: String(b.lastName).trim() } : {}),
+      };
+      if (isAdminEdit && b.email) userData.email = String(b.email).trim().toLowerCase();
+      if (isAdminEdit && b.status !== undefined) userData.isActive = b.status !== "INACTIVE";
+
+      const updated = await prisma.$transaction(async (tx) => {
+        const t = await tx.teacher.update({ where: { id }, data: teacherData });
+        if (teacher.userId && Object.keys(userData).length) {
+          await tx.user.update({ where: { id: teacher.userId }, data: userData });
+        }
+        return tx.teacher.findUnique({ where: { id: t.id }, include: { user: true } });
+      });
+
+      await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "TEACHER", id,
+        `Teacher profile updated${isSelf && !isAdminEdit ? " (self-service)" : ""}.`,
+        req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.json(updated);
+    } catch (err: any) {
+      if (err?.code === "P2002") { res.status(400).json({ error: "Email already exists" }); return; }
+      logger.error("Error updating teacher:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
   // Activate / deactivate a teacher (toggles the linked user account).
   app.put("/api/teachers/:id/status", authMiddleware, requireRole("ADMIN"), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;

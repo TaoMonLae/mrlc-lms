@@ -86,6 +86,7 @@ import ExamResultsReport from "./pages/reports/ExamResultsReport";
 import ClassPerformanceReport from "./pages/reports/ClassPerformanceReport";
 import MonthlySummaryReport from "./pages/reports/MonthlySummaryReport";
 import SchoolOperations from "./pages/operations/SchoolOperations";
+import TeacherMyProfile from "./pages/teacher/MyProfile";
 import StaffDirectory from "./pages/hr/StaffDirectory";
 import StaffProfile from "./pages/hr/StaffProfile";
 import Departments from "./pages/hr/Departments";
@@ -205,6 +206,7 @@ export default function App() {
                   <Route path="/teacher/timetable" element={<TeacherTimetable />} />
                   <Route path="/teacher/videos" element={<TeacherVideos />} />
                   <Route path="/teacher/planner" element={<LessonPlanner />} />
+                  <Route path="/teacher/profile" element={<TeacherMyProfile />} />
                 </Route>
 
                 <Route element={<ProtectedRoute allowedRoles={['STUDENT', 'ADMIN']} />}>

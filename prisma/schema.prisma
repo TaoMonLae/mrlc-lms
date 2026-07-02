@@ -246,6 +246,11 @@ model Teacher {
   profilePhotoUrl String?
   baseSalary     Float    @default(0)
   currency       String   @default("MYR")
+  phone          String?
+  gender         String?
+  address        String?
+  employmentType String   @default("FULL_TIME")
+  notes          String?
 
   classes        ClassTeacher[]
   subjects       SubjectTeacher[]

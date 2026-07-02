@@ -166,6 +166,7 @@ export const TEACHER_NAV: AdminNavEntry[] = [
     ],
   },
   { title: "Reports", url: "/teacher/reports", icon: BarChart3 },
+  { title: "My Profile", url: "/teacher/profile", icon: UserSquare2 },
 ];
 
 /** Grouped sidebar for the STUDENT role. */

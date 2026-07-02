@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { ProfilePhotoUploader } from '@/src/components/profile/ProfilePhotoUploader';
+import { usePermissions } from '../../lib/permissions';
 
 const teacherSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
@@ -37,7 +38,10 @@ type TeacherFormValues = z.infer<typeof teacherSchema>;
 export default function TeacherEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { isAdmin } = usePermissions();
   const [profilePhotoUrl, setProfilePhotoUrl] = React.useState<string | null>(null);
+  // Teachers may edit their own personal details; account/employment fields are admin-only.
+  const adminOnly = !isAdmin;
   
   const {
     register,
@@ -65,23 +69,22 @@ export default function TeacherEdit() {
 
   useEffect(() => {
     const token = sessionStorage.getItem('auth_token');
-    fetch('/api/teachers', { headers: { Authorization: `Bearer ${token}` } })
-      .then((res) => (res.ok ? res.json() : []))
-      .then((teachers) => {
-        const teacher = Array.isArray(teachers) ? teachers.find((item: any) => item.id === id) : null;
+    fetch(`/api/teachers/${id}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((teacher) => {
         if (!teacher) return;
         setProfilePhotoUrl(teacher.profilePhotoUrl || teacher.user?.profilePhotoUrl || null);
         reset({
-          firstName: teacher.user?.firstName || teacher.firstName || '',
-          lastName: teacher.user?.lastName || teacher.lastName || '',
+          firstName: teacher.user?.firstName || '',
+          lastName: teacher.user?.lastName || '',
           gender: teacher.gender || 'MALE',
-          email: teacher.user?.email || teacher.email || '',
+          email: teacher.user?.email || '',
           phone: teacher.phone || '',
           address: teacher.address || '',
           employmentType: teacher.employmentType || 'FULL_TIME',
-          status: teacher.status || 'ACTIVE',
-          joinedDate: teacher.joinedDate ? String(teacher.joinedDate).split('T')[0] : '',
-          subjects: Array.isArray(teacher.subjects) ? teacher.subjects.join(', ') : teacher.subjects || '',
+          status: teacher.user?.isActive === false ? 'INACTIVE' : 'ACTIVE',
+          joinedDate: teacher.hireDate ? String(teacher.hireDate).split('T')[0] : '',
+          subjects: teacher.specialization || '',
           notes: teacher.notes || '',
         });
       })
@@ -90,10 +93,20 @@ export default function TeacherEdit() {
 
   const onSubmit = async (data: TeacherFormValues) => {
     try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`/api/teachers/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        throw new Error(e.error || 'Failed to update teacher');
+      }
       toast.success('Teacher profile updated');
       navigate(`/teachers/${id}`);
-    } catch (error) {
-      toast.error('Failed to update teacher');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update teacher');
     }
   };
 
@@ -141,16 +154,16 @@ export default function TeacherEdit() {
                 {errors.gender && <p className="text-xs text-red-500 font-medium">{errors.gender.message}</p>}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="joinedDate">Joined Date</Label>
-                <Input id="joinedDate" type="date" {...register('joinedDate')} />
+                <Label htmlFor="joinedDate">Joined Date {adminOnly && <span className="text-[10px] text-slate-400">(admin only)</span>}</Label>
+                <Input id="joinedDate" type="date" {...register('joinedDate')} disabled={adminOnly} />
                 {errors.joinedDate && <p className="text-xs text-red-500 font-medium">{errors.joinedDate.message}</p>}
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
-                <Input id="email" type="email" {...register('email')} />
+                <Label htmlFor="email">Email Address {adminOnly && <span className="text-[10px] text-slate-400">(admin only)</span>}</Label>
+                <Input id="email" type="email" {...register('email')} disabled={adminOnly} />
                 {errors.email && <p className="text-xs text-red-500 font-medium">{errors.email.message}</p>}
               </div>
               <div className="space-y-2">
@@ -171,8 +184,8 @@ export default function TeacherEdit() {
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Professional Details</h2>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Status</Label>
-                <Select value={watch('status')} onValueChange={(val: any) => setValue('status', val)}>
+                <Label>Status {adminOnly && <span className="text-[10px] text-slate-400">(admin only)</span>}</Label>
+                <Select value={watch('status')} onValueChange={(val: any) => setValue('status', val)} disabled={adminOnly}>
                   <SelectTrigger id="status">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
@@ -184,8 +197,8 @@ export default function TeacherEdit() {
                 {errors.status && <p className="text-xs text-red-500 font-medium">{errors.status.message}</p>}
               </div>
               <div className="space-y-2">
-                <Label>Employment Type</Label>
-                <Select value={watch('employmentType')} onValueChange={(val: any) => setValue('employmentType', val)}>
+                <Label>Employment Type {adminOnly && <span className="text-[10px] text-slate-400">(admin only)</span>}</Label>
+                <Select value={watch('employmentType')} onValueChange={(val: any) => setValue('employmentType', val)} disabled={adminOnly}>
                   <SelectTrigger id="employmentType">
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>

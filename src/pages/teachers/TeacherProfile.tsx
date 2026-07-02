@@ -22,6 +22,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { type Teacher, type TeacherActivity } from '../../types/teacher';
+import { usePermissions } from '../../lib/permissions';
 
 const handlePrint = () => {
   window.print();
@@ -29,10 +30,23 @@ const handlePrint = () => {
 
 export default function TeacherProfile() {
   const { id } = useParams();
+  const { isAdmin } = usePermissions();
   const [activeTab, setActiveTab] = useState('overview');
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
   const [teacher, setTeacher] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [myTeacherId, setMyTeacherId] = useState<string | null>(null);
+
+  // Teachers may edit only their own profile; admins may edit anyone's.
+  useEffect(() => {
+    if (isAdmin) return;
+    const token = sessionStorage.getItem('auth_token');
+    fetch('/api/teacher/me', { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((t) => setMyTeacherId(t?.id ?? null))
+      .catch(() => {});
+  }, [isAdmin]);
+  const canEdit = isAdmin || (myTeacherId !== null && myTeacherId === id);
 
   useEffect(() => {
     const fetchTeacher = async () => {
@@ -147,9 +161,11 @@ export default function TeacherProfile() {
           <Button variant="outline" onClick={handlePrint}>
             <Printer className="mr-2 h-4 w-4" /> Print PDF
           </Button>
-          <Button variant="outline" render={<Link to={`/teachers/${id}/edit`} />} nativeButton={false}>
-            <Edit className="mr-2 h-4 w-4" /> Edit Profile
-          </Button>
+          {canEdit && (
+            <Button variant="outline" render={<Link to={`/teachers/${id}/edit`} />} nativeButton={false}>
+              <Edit className="mr-2 h-4 w-4" /> Edit Profile
+            </Button>
+          )}
           {!teacher.userId ? (
             <Button onClick={handleCreateAccount} className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isCreatingAccount}>
               <ShieldCheck className="mr-2 h-4 w-4" />
