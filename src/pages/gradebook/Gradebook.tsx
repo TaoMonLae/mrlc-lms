@@ -195,11 +195,11 @@ export default function GradebookPage() {
       </div>
 
       <Tabs defaultValue="summary" className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm">
-        <div className="px-6 pt-4 overflow-x-auto">
+        <div className="px-6 pt-4">
           <TabsList className="bg-transparent border-b border-slate-100 dark:border-surface-raised w-full justify-start rounded-none h-12 gap-6">
-            <TabsTrigger value="summary" className="border-b-2 border-transparent data-[state=active]:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Summary</TabsTrigger>
-            {canManage && <TabsTrigger value="entry" className="border-b-2 border-transparent data-[state=active]:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Grade Entry</TabsTrigger>}
-            {canManage && <TabsTrigger value="weights" className="border-b-2 border-transparent data-[state=active]:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Categories &amp; Weights</TabsTrigger>}
+            <TabsTrigger value="summary" className="flex-none border-b-2 border-transparent data-[state=active]:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Summary</TabsTrigger>
+            {canManage && <TabsTrigger value="entry" className="flex-none border-b-2 border-transparent data-[state=active]:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Grade Entry</TabsTrigger>}
+            {canManage && <TabsTrigger value="weights" className="flex-none border-b-2 border-transparent data-[state=active]:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Categories &amp; Weights</TabsTrigger>}
           </TabsList>
         </div>
 

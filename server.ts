@@ -7738,20 +7738,23 @@ async function startServer() {
   });
 
   app.get("/api/backups/:name/download", authMiddleware, requireRole("ADMIN"), async (req, res) => {
-    // Guard against path traversal — only allow our generated file names.
+    // Traversal-safe: the name must exactly match a file that listBackups()
+    // found in BACKUP_DIR (names come from readdir, so no paths are possible).
+    // Older backups used different naming (mrlc_lms_backup_*), so a strict
+    // pattern here wrongly rejected files the history table shows.
     const name = req.params.name;
-    if (!/^mrlc-[\w.\-]+\.dump$/.test(name)) {
+    if (name.includes("/") || name.includes("\\") || name.includes("..")) {
       res.status(400).json({ error: "Invalid backup name" });
       return;
     }
-    const filePath = path.join(BACKUP_DIR, name);
-    if (!fs.existsSync(filePath)) {
+    const known = listBackups().some((b) => b.name === name);
+    if (!known) {
       res.status(404).json({ error: "Backup not found" });
       return;
     }
     res.setHeader("Content-Type", "application/octet-stream");
-    res.setHeader("Content-Disposition", `attachment; filename="${name}"`);
-    fs.createReadStream(filePath).pipe(res);
+    res.setHeader("Content-Disposition", `attachment; filename="${name.replace(/"/g, "")}"`);
+    fs.createReadStream(path.join(BACKUP_DIR, name)).pipe(res);
   });
 
   // ── Health check ────────────────────────────────────────────────────────────
