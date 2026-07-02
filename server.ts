@@ -4465,6 +4465,10 @@ async function startServer() {
       res.status(400).json({ error: "endTime must be after startTime" });
       return;
     }
+    if (req.body.substituteTeacherId && req.body.substituteTeacherId === req.body.teacherId) {
+      res.status(400).json({ error: "Substitute teacher must be different from the main teacher" });
+      return;
+    }
     try {
       const candidate = {
         ...req.body,
@@ -4530,6 +4534,10 @@ async function startServer() {
       const candidate = { ...current, ...req.body };
       if (["CLASS", "EXAM"].includes(candidate.scheduleType) && (!candidate.classId || !candidate.subjectId)) {
         res.status(400).json({ error: "classId and subjectId are required for class and exam schedules" });
+        return;
+      }
+      if (candidate.substituteTeacherId && candidate.substituteTeacherId === candidate.teacherId) {
+        res.status(400).json({ error: "Substitute teacher must be different from the main teacher" });
         return;
       }
       if (timeToMinutes(candidate.startTime) >= timeToMinutes(candidate.endTime)) {

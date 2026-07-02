@@ -100,7 +100,7 @@ export function TeacherCsvImport({ onImported }: { onImported?: () => void }) {
   return (
     <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
       <DialogTrigger render={<Button variant="outline"><Upload className="mr-2 h-4 w-4" /> Import CSV</Button>} />
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-3xl sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Import Teachers from CSV</DialogTitle>
           <DialogDescription>

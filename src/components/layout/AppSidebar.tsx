@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/sidebar";
 import { NAVIGATION_ITEMS, ROLE_NAV, isNavGroup } from "@/src/lib/navigation";
 import { GraduationCap, LogOut, User, ChevronDown } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuGroup } from "@/components/ui/dropdown-menu";
@@ -52,24 +52,6 @@ export function AppSidebar() {
 
   const isPathActive = (url: string) => url === activeUrl;
 
-  // Admin nav groups: open the group containing the current page by default;
-  // remember manual open/close choices for the session.
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
-    try { return JSON.parse(sessionStorage.getItem('nav_open_groups') || '{}'); } catch { return {}; }
-  });
-  const toggleGroup = (label: string, fallbackOpen: boolean) => {
-    setOpenGroups((prev) => {
-      const next = { ...prev, [label]: !(prev[label] ?? fallbackOpen) };
-      try { sessionStorage.setItem('nav_open_groups', JSON.stringify(next)); } catch { /* ignore */ }
-      return next;
-    });
-  };
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
   const filteredNavItems = NAVIGATION_ITEMS.filter(item => {
     if (!user) return false;
     if (!item.roles) return true; // Show to everyone if no roles defined
@@ -78,6 +60,49 @@ export function AppSidebar() {
 
   // Grouped sidebar for roles that have one (admin/teacher/student).
   const groupedNav = user ? ROLE_NAV[user.role] : undefined;
+
+  // Nav groups behave as an accordion: opening one collapses the others.
+  // The group containing the current page opens by default; the choice is
+  // remembered for the session.
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    try { return JSON.parse(sessionStorage.getItem('nav_open_groups') || '{}'); } catch { return {}; }
+  });
+  const toggleGroup = (label: string, fallbackOpen: boolean) => {
+    setOpenGroups((prev) => {
+      const opening = !(prev[label] ?? fallbackOpen);
+      // Explicitly close every group, then open the clicked one if requested —
+      // recording false for all labels also suppresses the active-route fallback.
+      const next: Record<string, boolean> = {};
+      for (const entry of groupedNav ?? []) {
+        if (isNavGroup(entry)) next[entry.label] = false;
+      }
+      next[label] = opening;
+      try { sessionStorage.setItem('nav_open_groups', JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  };
+
+  // When navigation lands on a page whose group is collapsed (e.g. via search
+  // or a dashboard link), open that group — accordion-style.
+  useEffect(() => {
+    if (!groupedNav || !activeUrl) return;
+    const owner = groupedNav.find((e) => isNavGroup(e) && e.items.some((i) => i.url === activeUrl));
+    if (!owner || !isNavGroup(owner)) return;
+    setOpenGroups((prev) => {
+      if (prev[owner.label]) return prev;
+      const next: Record<string, boolean> = {};
+      for (const entry of groupedNav) if (isNavGroup(entry)) next[entry.label] = false;
+      next[owner.label] = true;
+      try { sessionStorage.setItem('nav_open_groups', JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeUrl]);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <Sidebar collapsible="icon" className="bg-canvas text-white/80 border-r border-white/10 [&>[data-slot=sidebar-inner]]:bg-canvas [&>[data-slot=sidebar-inner]]:text-white/80" aria-label="Main application navigation">
