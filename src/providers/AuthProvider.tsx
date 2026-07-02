@@ -15,7 +15,8 @@ interface AuthContextType {
   isLoading: boolean;
   login: (
     email: string,
-    password: string
+    password: string,
+    rememberMe?: boolean
   ) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
 }
@@ -52,9 +53,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // On mount: validate any existing token via /api/auth/me
+  // On mount: validate any existing token via /api/auth/me.
+  // sessionStorage is the canonical in-app store; "Remember me" additionally
+  // mirrors the token to localStorage so it survives browser restarts —
+  // restore it into sessionStorage here if the session copy is gone.
   useEffect(() => {
-    const token = sessionStorage.getItem('auth_token');
+    let token = sessionStorage.getItem('auth_token');
+    if (!token) {
+      const remembered = localStorage.getItem('auth_token');
+      if (remembered) {
+        token = remembered;
+        sessionStorage.setItem('auth_token', remembered);
+        const rememberedUser = localStorage.getItem('auth_user');
+        if (rememberedUser) sessionStorage.setItem('auth_user', rememberedUser);
+      }
+    }
     if (!token) {
       setIsLoading(false);
       return;
@@ -74,6 +87,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Token is stale — clear it so the user is sent back to login
         sessionStorage.removeItem('auth_token');
         sessionStorage.removeItem('auth_user');
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_user');
       })
       .finally(() => setIsLoading(false));
   }, []);
@@ -81,13 +96,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(
     async (
       email: string,
-      password: string
+      password: string,
+      rememberMe = false
     ): Promise<{ success: boolean; error?: string }> => {
       try {
         const res = await fetch('/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify({ email, password, rememberMe }),
         });
 
         const data = await res.json();
@@ -98,6 +114,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         sessionStorage.setItem('auth_token', data.token);
         sessionStorage.setItem('auth_user', JSON.stringify(data.user));
+        if (rememberMe) {
+          localStorage.setItem('auth_token', data.token);
+          localStorage.setItem('auth_user', JSON.stringify(data.user));
+        } else {
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('auth_user');
+        }
         setUser(mapApiUser(data.user));
 
         // Dispatch custom event for other providers to listen to
@@ -114,6 +137,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     sessionStorage.removeItem('auth_token');
     sessionStorage.removeItem('auth_user');
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_user');
     setUser(null);
 
     // Dispatch custom event for other providers to listen to

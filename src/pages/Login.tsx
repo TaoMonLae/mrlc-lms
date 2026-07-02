@@ -84,7 +84,7 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginFormValues) => {
     setServerError(null);
-    const result = await login(data.email, data.password);
+    const result = await login(data.email, data.password, rememberMe);
     if (!result.success) {
       setServerError(result.error ?? "Login failed. Please try again.");
     } else {

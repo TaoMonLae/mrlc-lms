@@ -27,6 +27,8 @@ export function installAuthInterceptor() {
       if (res.status === 401 && isApi && !isLogin && hadToken) {
         sessionStorage.removeItem('auth_token');
         sessionStorage.removeItem('auth_user');
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_user');
         if (!window.location.pathname.startsWith('/login')) {
           window.location.assign('/login');
         }

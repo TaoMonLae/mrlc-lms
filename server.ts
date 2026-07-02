@@ -382,8 +382,10 @@ export interface JwtPayload {
   email: string;
 }
 
-function signToken(payload: JwtPayload): string {
-  return jwt.sign(payload, JWT_SECRET as string, { expiresIn: "8h" });
+function signToken(payload: JwtPayload, rememberMe = false): string {
+  // "Remember me" issues a longer-lived token so the session survives
+  // browser restarts; the default stays short for shared computers.
+  return jwt.sign(payload, JWT_SECRET as string, { expiresIn: rememberMe ? "30d" : "8h" });
 }
 
 function verifyToken(token: string): JwtPayload {
@@ -496,7 +498,7 @@ function lockdownBrowserPolicy(profile?: Record<string, any> | null) {
 }
 
 const schemas = {
-  login: z.object({ email, password: z.string().min(1, "is required") }),
+  login: z.object({ email, password: z.string().min(1, "is required"), rememberMe: z.boolean().optional() }),
   verifyPassword: z.object({ password: z.string().min(1, "is required") }),
   changePassword: z.object({
     currentPassword: z.string().min(1, "is required"),
@@ -1063,9 +1065,10 @@ async function startServer() {
    * Returns: { token: string, user: { id, email, role } }
    */
   app.post("/api/auth/login", authLimiter, validate(schemas.login), async (req, res) => {
-    const { email, password } = req.body as {
+    const { email, password, rememberMe } = req.body as {
       email?: string;
       password?: string;
+      rememberMe?: boolean;
     };
 
     if (!email || !password) {
@@ -1100,7 +1103,7 @@ async function startServer() {
         role: user.role,
         email: user.email,
       };
-      const token = signToken(payload);
+      const token = signToken(payload, Boolean(rememberMe));
 
       // Record the login time (fire-and-forget so a slow write can't block sign-in).
       prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } })
