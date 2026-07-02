@@ -1269,6 +1269,54 @@ async function startServer() {
     }
   });
 
+  // Remove a profile picture (own photo, or any if ADMIN).
+  app.delete("/api/profile-photo", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const targetType = String(req.query?.targetType || req.body?.targetType || "user");
+    const requestedTargetId = (req.query?.targetId || req.body?.targetId)
+      ? String(req.query?.targetId || req.body?.targetId) : null;
+    try {
+      if (targetType === "student" || targetType === "teacher") {
+        const model: any = targetType === "student" ? prisma.student : prisma.teacher;
+        const row = requestedTargetId
+          ? await model.findUnique({ where: { id: requestedTargetId } })
+          : await model.findUnique({ where: { userId: jwtUser.userId } });
+        if (!row) { res.status(404).json({ error: "Profile not found" }); return; }
+        if (jwtUser.role !== "ADMIN" && row.userId !== jwtUser.userId) {
+          res.status(403).json({ error: "You can only remove your own profile picture" });
+          return;
+        }
+        await prisma.$transaction(async (tx) => {
+          const txModel: any = targetType === "student" ? tx.student : tx.teacher;
+          await txModel.update({ where: { id: row.id }, data: { profilePhotoUrl: null } });
+          if (row.userId) await tx.user.update({ where: { id: row.userId }, data: { profilePhotoUrl: null } });
+        });
+        res.json({ success: true });
+        return;
+      }
+
+      const targetUserId = jwtUser.role === "ADMIN" && requestedTargetId ? requestedTargetId : jwtUser.userId;
+      if (jwtUser.role !== "ADMIN" && requestedTargetId && requestedTargetId !== jwtUser.userId) {
+        res.status(403).json({ error: "You can only remove your own profile picture" });
+        return;
+      }
+      const user = await prisma.user.findUnique({
+        where: { id: targetUserId },
+        include: { studentProfile: true, teacherProfile: true },
+      });
+      if (!user) { res.status(404).json({ error: "User not found" }); return; }
+      await prisma.$transaction(async (tx) => {
+        await tx.user.update({ where: { id: user.id }, data: { profilePhotoUrl: null } });
+        if (user.studentProfile) await tx.student.update({ where: { id: user.studentProfile.id }, data: { profilePhotoUrl: null } });
+        if (user.teacherProfile) await tx.teacher.update({ where: { id: user.teacherProfile.id }, data: { profilePhotoUrl: null } });
+      });
+      res.json({ success: true });
+    } catch (err) {
+      logger.error("Error removing profile photo:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
   /**
    * POST /api/auth/change-password
    * Lets the signed-in user set a new password (also clears the
@@ -7993,15 +8041,17 @@ async function startServer() {
       const byTeacher = new Map<string, any>();
 
       for (const r of records) {
-        if (!r.timetableEntry) continue;
+        // Daily (class-based) attendance has no timetable entry — count it under
+        // a pseudo-subject so schools using daily attendance still see analytics.
+        const te = r.timetableEntry;
 
         // By subject
-        const subjKey = r.timetableEntry.subjectId || "UNKNOWN";
+        const subjKey = te ? (te.subjectId || "UNKNOWN") : "DAILY";
         if (!bySubject.has(subjKey)) {
           bySubject.set(subjKey, {
-            subjectId: r.timetableEntry.subjectId,
-            subjectName: r.timetableEntry.subjectName || "Unknown",
-            subjectColor: r.timetableEntry.subjectColor || "bg-gray-500",
+            subjectId: te?.subjectId ?? null,
+            subjectName: te ? (te.subjectName || "Unknown") : "Daily Attendance",
+            subjectColor: te ? (te.subjectColor || "bg-gray-500") : "bg-slate-500",
             total: 0,
             present: 0,
             absent: 0,
@@ -8019,12 +8069,12 @@ async function startServer() {
         else if (r.status === "EXCUSED") subj.excused += 1;
 
         // By teacher (if available and admin is viewing)
-        if (jwtUser.role === "ADMIN" && r.timetableEntry.teacherId) {
-          const teacherKey = r.timetableEntry.teacherId;
+        if (jwtUser.role === "ADMIN" && te?.teacherId) {
+          const teacherKey = te.teacherId;
           if (!byTeacher.has(teacherKey)) {
             byTeacher.set(teacherKey, {
-              teacherId: r.timetableEntry.teacherId,
-              teacherName: r.timetableEntry.teacherName || "Unknown",
+              teacherId: te.teacherId,
+              teacherName: te.teacherName || "Unknown",
               total: 0,
               present: 0,
               absent: 0,

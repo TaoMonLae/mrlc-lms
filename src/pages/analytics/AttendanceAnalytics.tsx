@@ -62,7 +62,11 @@ interface AnalyticsData {
 export default function AttendanceAnalytics() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(false);
-  const [startDate, setStartDate] = useState(localToday());
+  // Default to the current month so the page isn't empty on first visit.
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
+  });
   const [endDate, setEndDate] = useState(localToday());
   const [groupBy, setGroupBy] = useState<"subject" | "teacher" | "both">("both");
   const [userRole, setUserRole] = useState<"ADMIN" | "TEACHER">("TEACHER");

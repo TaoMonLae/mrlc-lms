@@ -42,13 +42,17 @@ export function TopBar() {
     }
   }, []);
 
+  // Fetch on mount AND whenever the bell is opened, so announcements published
+  // after page load show up without a full refresh.
   useEffect(() => {
+    if (!notifOpen && announcements.length > 0) return;
     const token = sessionStorage.getItem("auth_token");
     fetch("/api/announcements", { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => setAnnouncements(Array.isArray(data) ? data : []))
       .catch(() => setAnnouncements([]));
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notifOpen]);
 
   const activeAnnouncements = announcements
     .filter((a) => a.status === "ACTIVE")

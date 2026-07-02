@@ -57,6 +57,9 @@ const timetableSchema = z.object({
     if (!data.subjectId) ctx.addIssue({ code: 'custom', path: ['subjectId'], message: 'Subject is required' });
     if (!data.teacherId) ctx.addIssue({ code: 'custom', path: ['teacherId'], message: 'Teacher is required' });
   }
+  if (data.substituteTeacherId && data.substituteTeacherId === data.teacherId) {
+    ctx.addIssue({ code: 'custom', path: ['substituteTeacherId'], message: 'Substitute must be a different teacher' });
+  }
 });
 
 type TimetableFormValues = z.infer<typeof timetableSchema>;

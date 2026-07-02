@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/sidebar";
 import { NAVIGATION_ITEMS, ROLE_NAV, isNavGroup } from "@/src/lib/navigation";
 import { GraduationCap, LogOut, User, ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuGroup } from "@/components/ui/dropdown-menu";
@@ -38,15 +38,19 @@ export function AppSidebar() {
   const { isMobile, setOpenMobile, state: sidebarState } = useSidebar();
   const closeOnMobile = () => { if (isMobile) setOpenMobile(false); };
 
-  const isPathActive = (url: string) => {
-    if (url === '/settings') {
-      // Settings has sub-pages that are separate nav items (audit-log, export).
-      return location.pathname.startsWith('/settings')
-        && !location.pathname.startsWith('/settings/audit-log')
-        && !location.pathname.startsWith('/settings/export');
-    }
-    return location.pathname === url || location.pathname.startsWith(url + '/');
-  };
+  // Exactly one nav item may be highlighted: the LONGEST url that prefix-matches
+  // the current path. Plain prefix matching lit up both "Gradebook" (/gradebook)
+  // and "Class Performance" (/gradebook/reports) at the same time.
+  const activeUrl = useMemo(() => {
+    const grouped = user ? ROLE_NAV[user.role] : undefined;
+    const urls = grouped
+      ? grouped.flatMap((e) => (isNavGroup(e) ? e.items.map((i) => i.url) : [e.url]))
+      : NAVIGATION_ITEMS.filter((i) => user && (!i.roles || i.roles.includes(user.role))).map((i) => i.url);
+    const matches = urls.filter((u) => location.pathname === u || location.pathname.startsWith(u + '/'));
+    return matches.sort((a, b) => b.length - a.length)[0] ?? null;
+  }, [user, location.pathname]);
+
+  const isPathActive = (url: string) => url === activeUrl;
 
   // Admin nav groups: open the group containing the current page by default;
   // remember manual open/close choices for the session.

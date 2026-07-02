@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -52,6 +53,7 @@ interface AnnouncementFormProps {
 }
 
 export function AnnouncementForm({ initialData, onSubmit, isLoading }: AnnouncementFormProps) {
+  const navigate = useNavigate();
   const [classes, setClasses] = useState<{ id: string; name: string }[]>([]);
   const form = useForm<AnnouncementFormValues>({
     resolver: zodResolver(announcementSchema),
@@ -274,7 +276,7 @@ export function AnnouncementForm({ initialData, onSubmit, isLoading }: Announcem
                   initialData ? 'Update Announcement' : 'Publish Announcement'
                 )}
               </Button>
-              <Button type="button" variant="outline" className="w-full h-11 border-slate-200 dark:border-surface-raised" disabled={isLoading}>
+              <Button type="button" variant="outline" className="w-full h-11 border-slate-200 dark:border-surface-raised" disabled={isLoading} onClick={() => navigate('/announcements')}>
                 Cancel
               </Button>
             </div>

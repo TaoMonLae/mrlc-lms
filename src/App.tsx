@@ -319,9 +319,10 @@ export default function App() {
                     <Route path="system" element={<SystemSettings />} />
                     <Route path="roles" element={<RolesPermissions />} />
                     <Route path="backup" element={<BackupAndRestore />} />
-                    <Route path="audit-log" element={<AuditLogPage />} />
-                    <Route path="export" element={<ExportDataPage />} />
                   </Route>
+                  {/* Standalone pages — not part of the settings sub-nav layout */}
+                  <Route path="/settings/audit-log" element={<AuditLogPage />} />
+                  <Route path="/settings/export" element={<ExportDataPage />} />
                 </Route>
 
                 <Route element={<ProtectedRoute requiredPermission="view_admissions" />}>

@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Camera, Image as ImageIcon } from 'lucide-react';
+import { Camera, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
@@ -26,7 +26,31 @@ export function ProfilePhotoUploader({
 }: ProfilePhotoUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [removing, setRemoving] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(currentUrl || '');
+
+  const handleRemove = async () => {
+    if (!confirm('Remove this profile picture?')) return;
+    const token = sessionStorage.getItem('auth_token');
+    const params = new URLSearchParams({ targetType });
+    if (targetId) params.set('targetId', targetId);
+    setRemoving(true);
+    try {
+      const res = await fetch(`/api/profile-photo?${params}`, {
+        method: 'DELETE',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload.error || 'Failed to remove profile picture');
+      setPreviewUrl('');
+      onUploaded?.('');
+      toast.success('Profile picture removed');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to remove profile picture');
+    } finally {
+      setRemoving(false);
+    }
+  };
 
   React.useEffect(() => {
     setPreviewUrl(currentUrl || '');
@@ -94,10 +118,17 @@ export function ProfilePhotoUploader({
         onChange={handleFileChange}
         disabled={uploading}
       />
-      <Button type="button" variant="outline" size="sm" onClick={() => inputRef.current?.click()} disabled={uploading}>
-        <Camera className="mr-2 h-4 w-4" />
-        {uploading ? 'Uploading...' : buttonLabel}
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button type="button" variant="outline" size="sm" onClick={() => inputRef.current?.click()} disabled={uploading || removing}>
+          <Camera className="mr-2 h-4 w-4" />
+          {uploading ? 'Uploading...' : buttonLabel}
+        </Button>
+        {previewUrl && (
+          <Button type="button" variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={handleRemove} disabled={uploading || removing} aria-label="Remove profile picture">
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
