@@ -6794,6 +6794,86 @@ async function startServer() {
     }
   });
 
+  // Bulk import teachers from parsed CSV rows. Mirrors /api/students/import.
+  app.post("/api/teachers/import", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const rows: any[] = Array.isArray(req.body?.rows) ? req.body.rows : [];
+    if (rows.length === 0) { res.status(400).json({ error: "No rows to import" }); return; }
+    if (rows.length > 500) { res.status(400).json({ error: "Too many rows (max 500 per import)" }); return; }
+
+    const s = (v: any) => (v == null ? "" : String(v).trim());
+    const created: string[] = [];
+    const errors: { row: number; message: string }[] = [];
+    const seenEmails = new Set<string>();
+    const codeBase = Date.now().toString().slice(-6);
+
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i] || {};
+      const rowNo = i + 2; // account for the header line
+      const firstName = s(r.firstName);
+      const lastName = s(r.lastName);
+      const email = s(r.email).toLowerCase();
+
+      if (!firstName || !lastName || !email) {
+        errors.push({ row: rowNo, message: "firstName, lastName and email are all required" });
+        continue;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        errors.push({ row: rowNo, message: `Invalid email "${email}"` });
+        continue;
+      }
+      if (seenEmails.has(email)) {
+        errors.push({ row: rowNo, message: "Duplicate email within the file" });
+        continue;
+      }
+
+      const subjectList = s(r.subjects).split(",").map((x) => x.trim()).filter(Boolean);
+      const joined = s(r.joinedDate);
+      const hireDate = joined && !isNaN(Date.parse(joined)) ? new Date(joined) : new Date();
+      const baseSalaryRaw = s(r.baseSalary);
+      const baseSalary = baseSalaryRaw && !isNaN(Number(baseSalaryRaw)) ? Number(baseSalaryRaw) : 0;
+
+      // Optional per-row password. When supplied it's used as-is (min 6 chars)
+      // and the teacher is NOT forced to change it; otherwise a default is set
+      // and they must change it at first login.
+      const password = s(r.password);
+      if (password && password.length < 6) {
+        errors.push({ row: rowNo, message: "password must be at least 6 characters" });
+        continue;
+      }
+      const passwordHash = await bcrypt.hash(password || "Teacher123!", 10);
+      const mustChangePassword = !password;
+
+      try {
+        await prisma.$transaction(async (tx) => {
+          const user = await tx.user.create({
+            data: { firstName, lastName, email, passwordHash, role: "TEACHER", isActive: true, mustChangePassword },
+          });
+          await tx.teacher.create({
+            data: {
+              userId: user.id,
+              teacherCode: s(r.teacherCode) || `TCH-${codeBase}${String(i).padStart(3, "0")}`,
+              specialization: subjectList.join(", ") || null,
+              hireDate,
+              baseSalary,
+            },
+          });
+        });
+        seenEmails.add(email);
+        created.push(email);
+      } catch (err: any) {
+        errors.push({ row: rowNo, message: err?.code === "P2002" ? "Email or teacherCode already exists" : "Could not create teacher" });
+      }
+    }
+
+    await createAuditLog(
+      jwtUser.userId, jwtUser.email, "IMPORT", "TEACHER", null,
+      `Bulk teacher import: ${created.length} created, ${errors.length} skipped.`,
+      req.ip, req.headers["user-agent"] || null, errors.length ? "WARNING" : "SUCCESS",
+    );
+    res.json({ createdCount: created.length, failedCount: errors.length, errors });
+  });
+
   // ── Classes (create) ────────────────────────────────────────────────────────
   app.post("/api/classes", authMiddleware, requireRole("ADMIN"), validate(schemas.classCreate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;

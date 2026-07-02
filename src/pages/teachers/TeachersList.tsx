@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { TeacherCsvImport } from '../../components/teachers/TeacherCsvImport';
 
 interface TeacherData {
   id: string;
@@ -53,8 +54,7 @@ export default function TeachersList() {
   const [teachers, setTeachers] = useState<TeacherData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchTeachers = async () => {
+  const fetchTeachers = async () => {
       try {
         const token = sessionStorage.getItem('auth_token');
         const res = await fetch('/api/teachers', {
@@ -98,7 +98,10 @@ export default function TeachersList() {
         setLoading(false);
       }
     };
+
+  useEffect(() => {
     fetchTeachers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const setTeacherStatus = async (teacher: TeacherData, status: 'ACTIVE' | 'INACTIVE') => {
@@ -138,10 +141,13 @@ export default function TeachersList() {
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Teacher Management</h1>
           <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Manage faculty staff, assignments, and profiles.</p>
         </div>
-        <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto" render={<Link to="/teachers/new" />} nativeButton={false}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Teacher
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <TeacherCsvImport onImported={fetchTeachers} />
+          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto" render={<Link to="/teachers/new" />} nativeButton={false}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Teacher
+          </Button>
+        </div>
       </div>
 
       <div className="bg-white dark:bg-surface-indigo p-4 rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm flex flex-col md:flex-row gap-4 items-center">
