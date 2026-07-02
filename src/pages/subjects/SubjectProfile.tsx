@@ -24,6 +24,7 @@ type SubjectData = {
   name: string;
   code: string;
   description?: string | null;
+  status?: string;
   classes: SubjectClassRow[];
   teachers: SubjectTeacherRow[];
   exams: SubjectExamRow[];
@@ -90,6 +91,7 @@ export default function SubjectProfile() {
         name: data.name,
         code: data.code,
         description: data.description,
+        status: data.status,
         classes: Array.from(classMap.values()),
         teachers,
         exams,
@@ -153,8 +155,27 @@ export default function SubjectProfile() {
     }
   };
 
-  const handleArchive = () => {
-    toast.success('Subject has been archived.');
+  const [archiving, setArchiving] = useState(false);
+  const handleArchive = async () => {
+    if (!subject) return;
+    const toArchived = subject.status !== 'ARCHIVED';
+    if (!confirm(toArchived ? 'Archive this subject?' : 'Restore this subject to active status?')) return;
+    setArchiving(true);
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`/api/subjects/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status: toArchived ? 'ARCHIVED' : 'ACTIVE' }),
+      });
+      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Failed to update subject'); }
+      toast.success(toArchived ? 'Subject has been archived.' : 'Subject restored.');
+      await fetchSubject();
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to update subject');
+    } finally {
+      setArchiving(false);
+    }
   };
 
   if (loading) {
@@ -200,8 +221,8 @@ export default function SubjectProfile() {
             <Button variant="outline" render={<Link to={`/subjects/${id}/edit`} />} nativeButton={false}>
               <Edit className="mr-2 h-4 w-4" /> Edit Subject
             </Button>
-            <Button variant="secondary" className="text-amber-600 bg-amber-50 hover:bg-amber-100" onClick={handleArchive}>
-               <Archive className="mr-2 h-4 w-4" /> Archive
+            <Button variant="secondary" className="text-amber-600 bg-amber-50 hover:bg-amber-100" onClick={handleArchive} disabled={archiving}>
+               <Archive className="mr-2 h-4 w-4" /> {subject.status === 'ARCHIVED' ? (archiving ? 'Restoring…' : 'Restore') : (archiving ? 'Archiving…' : 'Archive')}
             </Button>
           </div>
         )}

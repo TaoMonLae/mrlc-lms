@@ -1896,6 +1896,26 @@ async function startServer() {
     }
   });
 
+  // Activate / deactivate a teacher (toggles the linked user account).
+  app.put("/api/teachers/:id/status", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { id } = req.params;
+    const status = req.body?.status === "INACTIVE" ? "INACTIVE" : "ACTIVE";
+    try {
+      const teacher = await prisma.teacher.findUnique({ where: { id }, include: { user: true } });
+      if (!teacher) { res.status(404).json({ error: "Teacher not found" }); return; }
+      if (!teacher.userId) { res.status(400).json({ error: "This teacher has no linked user account" }); return; }
+      await prisma.user.update({ where: { id: teacher.userId }, data: { isActive: status === "ACTIVE" } });
+      const name = `${teacher.user?.firstName ?? ""} ${teacher.user?.lastName ?? ""}`.trim() || teacher.teacherCode;
+      await createAuditLog(jwtUser.userId, jwtUser.email, "STATUS_CHANGE", "TEACHER", id,
+        `Teacher '${name}' set to ${status}.`, req.ip, req.headers["user-agent"] || null, status === "ACTIVE" ? "SUCCESS" : "WARNING");
+      res.json({ success: true, status });
+    } catch (err) {
+      logger.error("Error updating teacher status:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
   app.get("/api/teachers/:id", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
@@ -1961,7 +1981,11 @@ async function startServer() {
         res.status(404).json({ error: "Class not found" });
         return;
       }
-      res.json(klass);
+      // Attach directly-assigned subjects (degrades to [] before migration).
+      const subjectLinks = await (prisma as any).classSubject
+        .findMany({ where: { classId: id }, include: { subject: true } })
+        .catch(() => []);
+      res.json({ ...klass, subjects: subjectLinks });
     } catch (err) {
       logger.error("Error fetching class:", err);
       res.status(500).json({ error: "Internal Server Error" });
@@ -2008,6 +2032,103 @@ async function startServer() {
     } catch (err: any) {
       if (err?.code === "P2025") { res.status(404).json({ error: "Assignment not found" }); return; }
       logger.error("Error removing teacher from class:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Assign a subject to a class.
+  app.post("/api/classes/:id/subjects", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { id } = req.params;
+    const { subjectId } = req.body || {};
+    if (!subjectId) { res.status(400).json({ error: "subjectId is required" }); return; }
+    try {
+      const [klass, subject] = await Promise.all([
+        prisma.class.findUnique({ where: { id } }),
+        prisma.subject.findUnique({ where: { id: subjectId } }),
+      ]);
+      if (!klass) { res.status(404).json({ error: "Class not found" }); return; }
+      if (!subject) { res.status(404).json({ error: "Subject not found" }); return; }
+      await (prisma as any).classSubject.upsert({
+        where: { classId_subjectId: { classId: id, subjectId } },
+        update: {},
+        create: { classId: id, subjectId },
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "ASSIGN", "CLASS_SUBJECT", id,
+        `Subject '${subject.name}' assigned to class '${klass.name}'.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.status(201).json({ success: true });
+    } catch (err: any) {
+      if (err?.code === "P2021" || err?.code === "P2022") {
+        res.status(503).json({ error: "Database is out of date — run `npx prisma migrate deploy` then restart the server." });
+        return;
+      }
+      logger.error("Error assigning subject to class:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Remove a subject from a class.
+  app.delete("/api/classes/:id/subjects/:subjectId", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { id, subjectId } = req.params;
+    try {
+      await (prisma as any).classSubject.delete({ where: { classId_subjectId: { classId: id, subjectId } } });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "UNASSIGN", "CLASS_SUBJECT", id,
+        `Subject ${subjectId} removed from class ${id}.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.json({ success: true });
+    } catch (err: any) {
+      if (err?.code === "P2025") { res.status(404).json({ error: "Assignment not found" }); return; }
+      logger.error("Error removing subject from class:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Assign students to a class (moves them from their current class, if any).
+  app.post("/api/classes/:id/students", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { id } = req.params;
+    const studentIds: string[] = Array.isArray(req.body?.studentIds)
+      ? req.body.studentIds
+      : (req.body?.studentId ? [req.body.studentId] : []);
+    if (!studentIds.length) { res.status(400).json({ error: "studentIds is required" }); return; }
+    try {
+      const klass = await prisma.class.findUnique({ where: { id }, include: { _count: { select: { students: true } } } });
+      if (!klass) { res.status(404).json({ error: "Class not found" }); return; }
+      const students = await prisma.student.findMany({ where: { id: { in: studentIds } }, select: { id: true } });
+      if (students.length !== studentIds.length) {
+        res.status(404).json({ error: "One or more students were not found" });
+        return;
+      }
+      if (klass.capacity != null) {
+        const newTotal = klass._count.students + studentIds.length;
+        if (newTotal > klass.capacity) {
+          res.status(400).json({ error: `Class capacity is ${klass.capacity}; this would make ${newTotal} students.` });
+          return;
+        }
+      }
+      await prisma.student.updateMany({ where: { id: { in: studentIds } }, data: { classId: id } });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "ASSIGN", "CLASS_STUDENT", id,
+        `${studentIds.length} student(s) assigned to class '${klass.name}'.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.status(201).json({ success: true, count: studentIds.length });
+    } catch (err) {
+      logger.error("Error assigning students to class:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Remove a student from a class (leaves the student unassigned).
+  app.delete("/api/classes/:id/students/:studentId", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { id, studentId } = req.params;
+    try {
+      const student = await prisma.student.findUnique({ where: { id: studentId } });
+      if (!student || student.classId !== id) { res.status(404).json({ error: "Student is not in this class" }); return; }
+      await prisma.student.update({ where: { id: studentId }, data: { classId: null } });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "UNASSIGN", "CLASS_STUDENT", id,
+        `Student ${student.studentCode || studentId} removed from class ${id}.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.json({ success: true });
+    } catch (err) {
+      logger.error("Error removing student from class:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });

@@ -75,6 +75,22 @@ export default function LibraryList() {
     fetchResources();
   }, []);
 
+  const deleteResource = async (resource: Resource) => {
+    if (!confirm(`Delete "${resource.title}"? This cannot be undone.`)) return;
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`/api/library/${resource.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Failed to delete'); }
+      setResources((prev) => prev.filter((r) => r.id !== resource.id));
+      toast.success('Resource deleted');
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to delete resource');
+    }
+  };
+
   const getIconForType = (type: string) => {
     switch (type) {
       case 'PDF': return <FileText className="text-red-500" />;
@@ -196,7 +212,7 @@ export default function LibraryList() {
                           <Edit2 className="h-4 w-4 mr-2" /> Edit Details
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-600">
+                        <DropdownMenuItem className="text-red-600" onClick={() => deleteResource(resource)}>
                           <Trash2 className="h-4 w-4 mr-2" /> Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>

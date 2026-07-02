@@ -62,6 +62,23 @@ export default function ClassesList() {
     fetchClasses();
   }, []);
 
+  const setStatus = async (cls: Class, status: 'ACTIVE' | 'ARCHIVED') => {
+    if (status === 'ARCHIVED' && !confirm(`Archive "${cls.name}"?`)) return;
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`/api/classes/${cls.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Failed to update class'); }
+      setClasses((prev) => prev.map((c) => (c.id === cls.id ? { ...c, status } : c)));
+      toast.success(status === 'ARCHIVED' ? 'Class archived' : 'Class restored');
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to update class');
+    }
+  };
+
   const filteredClasses = classes.filter(c =>
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.level.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -124,11 +141,11 @@ export default function ClassesList() {
                       <React.Fragment>
                         <DropdownMenuSeparator />
                         {(cls.status || 'ACTIVE') === 'ACTIVE' ? (
-                          <DropdownMenuItem className="text-amber-600 focus:text-amber-600 focus:bg-amber-50">
+                          <DropdownMenuItem className="text-amber-600 focus:text-amber-600 focus:bg-amber-50" onClick={() => setStatus(cls, 'ARCHIVED')}>
                             <Archive className="mr-2 h-4 w-4" /> Archive Class
                           </DropdownMenuItem>
                         ) : (
-                          <DropdownMenuItem className="text-emerald-600 focus:text-emerald-600 focus:bg-emerald-50">
+                          <DropdownMenuItem className="text-emerald-600 focus:text-emerald-600 focus:bg-emerald-50" onClick={() => setStatus(cls, 'ACTIVE')}>
                             <CheckCircle2 className="mr-2 h-4 w-4" /> Restore Class
                           </DropdownMenuItem>
                         )}

@@ -85,7 +85,7 @@ export default function TeachersList() {
               ? String(teacher.subjects || teacher.specialization).split(',').map((s: string) => s.trim()).filter(Boolean)
               : [],
           employmentType: teacher.employmentType || 'FULL_TIME',
-          status: teacher.status || 'ACTIVE',
+          status: teacher.user?.isActive === false ? 'INACTIVE' : 'ACTIVE',
           joinedDate: teacher.createdAt || new Date().toISOString(),
           profilePhotoUrl: teacher.profilePhotoUrl || teacher.user?.profilePhotoUrl || '',
           teacherId: teacher.teacherId || `TCH-${String(teacher.id).slice(0, 4).toUpperCase()}`,
@@ -100,6 +100,23 @@ export default function TeachersList() {
     };
     fetchTeachers();
   }, []);
+
+  const setTeacherStatus = async (teacher: TeacherData, status: 'ACTIVE' | 'INACTIVE') => {
+    if (status === 'INACTIVE' && !confirm(`Deactivate ${teacher.firstName} ${teacher.lastName}? They will no longer be able to sign in.`)) return;
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`/api/teachers/${teacher.id}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Failed to update teacher'); }
+      setTeachers((prev) => prev.map((t) => (t.id === teacher.id ? { ...t, status } : t)));
+      toast.success(status === 'INACTIVE' ? 'Teacher deactivated' : 'Teacher reactivated');
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to update teacher');
+    }
+  };
 
   const filteredTeachers = teachers.filter(teacher => {
     const fullName = `${teacher.firstName} ${teacher.lastName}`.toLowerCase();
@@ -224,7 +241,11 @@ export default function TeachersList() {
                         <DropdownMenuItem render={<Link to={`/teachers/${teacher.id}/edit`} className="flex w-full" />} nativeButton={false}>Edit Details</DropdownMenuItem>
                       </DropdownMenuGroup>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">Archive Teacher</DropdownMenuItem>
+                      {teacher.status === 'ACTIVE' ? (
+                        <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => setTeacherStatus(teacher, 'INACTIVE')}>Deactivate Teacher</DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem className="text-emerald-600 focus:text-emerald-600 focus:bg-emerald-50" onClick={() => setTeacherStatus(teacher, 'ACTIVE')}>Reactivate Teacher</DropdownMenuItem>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </td>

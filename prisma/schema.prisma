@@ -270,6 +270,7 @@ model Class {
 
   students       Student[]
   teachers       ClassTeacher[]
+  subjects       ClassSubject[]
   exams          Exam[]
   attendances    Attendance[]
   gradeItems     GradeItem[]
@@ -292,6 +293,19 @@ model ClassTeacher {
   @@index([classId])
 }
 
+// Intermediary table for Class <-> Subject (Many-to-Many)
+model ClassSubject {
+  classId        String
+  class          Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  subjectId      String
+  subject        Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+
+  @@id([classId, subjectId])
+  @@index([subjectId])
+  @@index([classId])
+}
+
 model Subject {
   id             String   @id @default(uuid())
   name           String
@@ -301,6 +315,7 @@ model Subject {
   status         String   @default("ACTIVE")
 
   teachers       SubjectTeacher[]
+  classes        ClassSubject[]
   exams          Exam[]
   gradeItems     GradeItem[]
   lessonPlans    LessonPlan[]

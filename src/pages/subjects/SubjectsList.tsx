@@ -60,6 +60,23 @@ export default function SubjectsList() {
     fetchSubjects();
   }, []);
 
+  const setStatus = async (sub: Subject, status: 'ACTIVE' | 'ARCHIVED') => {
+    if (status === 'ARCHIVED' && !confirm(`Archive "${sub.name}"?`)) return;
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`/api/subjects/${sub.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Failed to update subject'); }
+      setSubjects((prev) => prev.map((s) => (s.id === sub.id ? { ...s, status } : s)));
+      toast.success(status === 'ARCHIVED' ? 'Subject archived' : 'Subject restored');
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to update subject');
+    }
+  };
+
   const filteredSubjects = subjects.filter(s =>
     s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -129,11 +146,11 @@ export default function SubjectsList() {
                       <React.Fragment>
                         <DropdownMenuSeparator />
                         {sub.status === 'ACTIVE' ? (
-                          <DropdownMenuItem className="text-amber-600 focus:text-amber-600 focus:bg-amber-50">
+                          <DropdownMenuItem className="text-amber-600 focus:text-amber-600 focus:bg-amber-50" onClick={() => setStatus(sub, 'ARCHIVED')}>
                             <Archive className="mr-2 h-4 w-4" /> Archive Subject
                           </DropdownMenuItem>
                         ) : (
-                          <DropdownMenuItem className="text-emerald-600 focus:text-emerald-600 focus:bg-emerald-50">
+                          <DropdownMenuItem className="text-emerald-600 focus:text-emerald-600 focus:bg-emerald-50" onClick={() => setStatus(sub, 'ACTIVE')}>
                             <CheckCircle2 className="mr-2 h-4 w-4" /> Restore Subject
                           </DropdownMenuItem>
                         )}
