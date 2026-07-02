@@ -19,7 +19,7 @@ import { spawn } from "child_process";
 import { registerExamPhase2Routes } from "./examPhase2";
 import { registerExamBankRoutes } from "./examBank";
 import cookieParser from "cookie-parser";
-import { BADGE_CATALOG, getBadgeLevel } from "../src/lib/badges";
+import { BADGE_CATALOG, getBadgeLevel } from "./lib/badges";
 
 dotenv.config();
 
