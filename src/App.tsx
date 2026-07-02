@@ -87,6 +87,9 @@ import ClassPerformanceReport from "./pages/reports/ClassPerformanceReport";
 import MonthlySummaryReport from "./pages/reports/MonthlySummaryReport";
 import SchoolOperations from "./pages/operations/SchoolOperations";
 import TeacherMyProfile from "./pages/teacher/MyProfile";
+import HomeworkList from "./pages/teacher/HomeworkList";
+import HomeworkDetail from "./pages/teacher/HomeworkDetail";
+import StudentHomework from "./pages/student/StudentHomework";
 import StaffDirectory from "./pages/hr/StaffDirectory";
 import StaffProfile from "./pages/hr/StaffProfile";
 import Departments from "./pages/hr/Departments";
@@ -207,6 +210,8 @@ export default function App() {
                   <Route path="/teacher/videos" element={<TeacherVideos />} />
                   <Route path="/teacher/planner" element={<LessonPlanner />} />
                   <Route path="/teacher/profile" element={<TeacherMyProfile />} />
+                  <Route path="/teacher/homework" element={<HomeworkList />} />
+                  <Route path="/teacher/homework/:id" element={<HomeworkDetail />} />
                 </Route>
 
                 <Route element={<ProtectedRoute allowedRoles={['STUDENT', 'ADMIN']} />}>
@@ -220,6 +225,7 @@ export default function App() {
                   <Route path="/student/library" element={<StudentLibrary />} />
                   <Route path="/student/fees" element={<StudentFees />} />
                   <Route path="/student/videos" element={<StudentVideos />} />
+                  <Route path="/student/homework" element={<StudentHomework />} />
                   <Route path="/exam2/resume" element={<ResumeAttempt />} />
                   <Route path="/exam2/attempts/:attemptId/play" element={<ExamPlayer />} />
                   <Route path="/exam2/attempts/:attemptId/result" element={<ExamResultView />} />

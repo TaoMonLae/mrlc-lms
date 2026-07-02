@@ -43,6 +43,8 @@ const EXAM_MEDIA_DIR = process.env.EXAM_MEDIA_DIR || path.join(process.cwd(), "d
 fs.mkdirSync(EXAM_MEDIA_DIR, { recursive: true });
 const CHAT_MEDIA_DIR = process.env.CHAT_MEDIA_DIR || path.join(process.cwd(), "data", "chat-media");
 fs.mkdirSync(CHAT_MEDIA_DIR, { recursive: true });
+const HOMEWORK_MEDIA_DIR = process.env.HOMEWORK_MEDIA_DIR || path.join(process.cwd(), "data", "homework-media");
+fs.mkdirSync(HOMEWORK_MEDIA_DIR, { recursive: true });
 // Admin-uploaded sticker packs live here (served at /uploads/stickers); built-in
 // packs ship in public/stickers (served at /stickers).
 const STICKER_UPLOAD_DIR = process.env.STICKER_UPLOAD_DIR || path.join(process.cwd(), "data", "stickers");
@@ -134,6 +136,24 @@ const examMediaUpload = multer({
   }),
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: imageUploadFilter,
+});
+
+const homeworkMediaUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, HOMEWORK_MEDIA_DIR),
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase();
+      cb(null, `${crypto.randomUUID()}${ext}`);
+    },
+  }),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    // Photos of paper work plus PDFs/docs.
+    const ok = file.mimetype.startsWith("image/") ||
+      ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"].includes(file.mimetype);
+    if (ok) cb(null, true);
+    else cb(new Error("Only images, PDF or Word files are allowed"));
+  },
 });
 
 const chatMediaUpload = multer({
@@ -950,6 +970,10 @@ async function startServer() {
     immutable: isProduction,
   }));
   app.use("/uploads/profile-photos", express.static(PROFILE_PHOTO_DIR, {
+    maxAge: isProduction ? "30d" : 0,
+    immutable: isProduction,
+  }));
+  app.use("/uploads/homework-media", express.static(HOMEWORK_MEDIA_DIR, {
     maxAge: isProduction ? "30d" : 0,
     immutable: isProduction,
   }));
@@ -5417,6 +5441,79 @@ async function startServer() {
       res.status(201).json(record);
     } catch (err) {
       logger.error("Error creating inventory item:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Update / delete a communication log (so NEEDS_FOLLOW_UP can be resolved).
+  app.put("/api/operations/communications/:id", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const b = req.body || {};
+    try {
+      const data: any = {};
+      if (b.title !== undefined) data.title = b.title;
+      if (b.channel !== undefined) data.channel = b.channel;
+      if (b.audience !== undefined) data.audience = b.audience;
+      if (b.contactName !== undefined) data.contactName = b.contactName || null;
+      if (b.contactInfo !== undefined) data.contactInfo = b.contactInfo || null;
+      if (b.message !== undefined) data.message = b.message;
+      if (b.followUpDate !== undefined) data.followUpDate = toOptionalDate(b.followUpDate);
+      if (b.status !== undefined) data.status = b.status;
+      const record = await (prisma as any).communicationLog.update({ where: { id: req.params.id }, data });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "CommunicationLog", record.id, `Updated communication ${record.title}`, req.ip, req.get("user-agent") || null);
+      res.json(record);
+    } catch (err: any) {
+      if (err?.code === "P2025") { res.status(404).json({ error: "Record not found" }); return; }
+      logger.error("Error updating communication log:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.delete("/api/operations/communications/:id", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      await (prisma as any).communicationLog.delete({ where: { id: req.params.id } });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "DELETE", "CommunicationLog", req.params.id, `Deleted communication log`, req.ip, req.get("user-agent") || null, "WARNING");
+      res.json({ success: true });
+    } catch (err: any) {
+      if (err?.code === "P2025") { res.status(404).json({ error: "Record not found" }); return; }
+      logger.error("Error deleting communication log:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Update / delete an inventory item (condition, quantity, location changes).
+  app.put("/api/operations/inventory/:id", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const b = req.body || {};
+    try {
+      const data: any = {};
+      if (b.name !== undefined) data.name = b.name;
+      if (b.category !== undefined) data.category = b.category || "GENERAL";
+      if (b.quantity !== undefined) data.quantity = Math.max(0, Number(b.quantity) || 0);
+      if (b.condition !== undefined) data.condition = b.condition;
+      if (b.location !== undefined) data.location = b.location || null;
+      if (b.assignedTo !== undefined) data.assignedTo = b.assignedTo || null;
+      if (b.notes !== undefined) data.notes = b.notes || null;
+      const record = await (prisma as any).inventoryItem.update({ where: { id: req.params.id }, data });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "InventoryItem", record.id, `Updated inventory item ${record.name}`, req.ip, req.get("user-agent") || null);
+      res.json(record);
+    } catch (err: any) {
+      if (err?.code === "P2025") { res.status(404).json({ error: "Record not found" }); return; }
+      logger.error("Error updating inventory item:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.delete("/api/operations/inventory/:id", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      await (prisma as any).inventoryItem.delete({ where: { id: req.params.id } });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "DELETE", "InventoryItem", req.params.id, `Deleted inventory item`, req.ip, req.get("user-agent") || null, "WARNING");
+      res.json({ success: true });
+    } catch (err: any) {
+      if (err?.code === "P2025") { res.status(404).json({ error: "Record not found" }); return; }
+      logger.error("Error deleting inventory item:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
@@ -11184,6 +11281,326 @@ async function startServer() {
   });
 
   // ── Lesson Planning API ─────────────────────────────────────────────────────
+  // ── Homework ─────────────────────────────────────────────────────────────────
+  const hw = () => (prisma as any).homework;
+  const hwSub = () => (prisma as any).homeworkSubmission;
+
+  /** The requesting teacher's record, or null. */
+  const ownTeacher = (userId: string) => prisma.teacher.findUnique({ where: { userId } });
+
+  // Upload an attachment (teacher worksheet or student photo of paper work).
+  app.post("/api/homework-media", authMiddleware, (req, res, next) => {
+    homeworkMediaUpload.single("file")(req, res, (err: any) => {
+      if (!err) return next();
+      const message = err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE"
+        ? "File must be 10 MB or smaller" : err.message || "Upload failed";
+      res.status(400).json({ error: message });
+    });
+  }, (req, res) => {
+    const file = (req as any).file as Express.Multer.File | undefined;
+    if (!file) { res.status(400).json({ error: "File is required" }); return; }
+    res.status(201).json({ url: `/uploads/homework-media/${file.filename}` });
+  });
+
+  // Create homework (teacher for their own classes; admin for any).
+  app.post("/api/homework", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") { res.status(403).json({ error: "Forbidden" }); return; }
+    const { title, instructions, classId, subjectId, dueDate, maxMarks, attachmentUrl } = req.body || {};
+    if (!title || !classId || !dueDate) { res.status(400).json({ error: "title, classId and dueDate are required" }); return; }
+    const due = new Date(dueDate);
+    if (isNaN(due.getTime())) { res.status(400).json({ error: "Invalid dueDate" }); return; }
+    try {
+      if (!(await canManageExamClass(jwtUser, classId))) {
+        res.status(403).json({ error: "Forbidden: not your class" });
+        return;
+      }
+      // Homework belongs to a teacher; admins must have a linked teacher record
+      // or we attribute it to the class's first teacher.
+      let teacher = await ownTeacher(jwtUser.userId);
+      if (!teacher && jwtUser.role === "ADMIN") {
+        const ct = await prisma.classTeacher.findFirst({ where: { classId }, include: { teacher: true } });
+        teacher = ct?.teacher ?? null;
+      }
+      if (!teacher) { res.status(400).json({ error: "No teacher profile available to own this homework" }); return; }
+
+      const created = await hw().create({
+        data: {
+          title: String(title).trim(),
+          instructions: instructions ? String(instructions) : null,
+          attachmentUrl: attachmentUrl || null,
+          classId,
+          subjectId: subjectId || null,
+          teacherId: teacher.id,
+          dueDate: due,
+          maxMarks: maxMarks != null && maxMarks !== "" && !isNaN(Number(maxMarks)) ? Number(maxMarks) : null,
+        },
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "HOMEWORK", created.id,
+        `Homework '${created.title}' assigned to class ${classId}.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.status(201).json(created);
+    } catch (err: any) {
+      if (err?.code === "P2021" || err?.code === "P2022") { res.status(503).json({ error: "Database is out of date — run `npx prisma migrate deploy` then restart." }); return; }
+      logger.error("Error creating homework:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // List homework (teacher: own classes; admin: all; optional classId filter).
+  app.get("/api/homework", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") { res.status(403).json({ error: "Forbidden" }); return; }
+    const { classId } = req.query as Record<string, string | undefined>;
+    try {
+      const where: any = {};
+      if (classId) where.classId = classId;
+      if (jwtUser.role === "TEACHER") {
+        const classIds = await getTeacherClassIds(jwtUser.userId);
+        where.classId = classId && classIds.includes(classId) ? classId : { in: classIds };
+      }
+      const rows = await hw().findMany({
+        where,
+        include: {
+          class: { select: { id: true, name: true, _count: { select: { students: true } } } },
+          subject: { select: { id: true, name: true } },
+          teacher: { include: { user: { select: { firstName: true, lastName: true } } } },
+          submissions: { select: { id: true, status: true, submittedAt: true } },
+        },
+        orderBy: { dueDate: "desc" },
+      });
+      res.json(rows);
+    } catch (err: any) {
+      if (err?.code === "P2021" || err?.code === "P2022") { res.json([]); return; }
+      logger.error("Error listing homework:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Homework detail with the full class roster + each student's submission.
+  app.get("/api/homework/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") { res.status(403).json({ error: "Forbidden" }); return; }
+    try {
+      const row = await hw().findUnique({
+        where: { id: req.params.id },
+        include: {
+          class: { include: { students: { include: { user: { select: { firstName: true, lastName: true } } } } } },
+          subject: { select: { id: true, name: true } },
+          submissions: true,
+        },
+      });
+      if (!row) { res.status(404).json({ error: "Homework not found" }); return; }
+      if (!(await canManageExamClass(jwtUser, row.classId))) {
+        res.status(403).json({ error: "Forbidden: not your class" });
+        return;
+      }
+      res.json(row);
+    } catch (err) {
+      logger.error("Error fetching homework:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Edit / close / reopen homework.
+  app.put("/api/homework/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") { res.status(403).json({ error: "Forbidden" }); return; }
+    const b = req.body || {};
+    try {
+      const existing = await hw().findUnique({ where: { id: req.params.id } });
+      if (!existing) { res.status(404).json({ error: "Homework not found" }); return; }
+      if (!(await canManageExamClass(jwtUser, existing.classId))) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+      const data: any = {};
+      if (b.title !== undefined) data.title = String(b.title).trim();
+      if (b.instructions !== undefined) data.instructions = b.instructions || null;
+      if (b.attachmentUrl !== undefined) data.attachmentUrl = b.attachmentUrl || null;
+      if (b.subjectId !== undefined) data.subjectId = b.subjectId || null;
+      if (b.dueDate) { const d = new Date(b.dueDate); if (!isNaN(d.getTime())) data.dueDate = d; }
+      if (b.maxMarks !== undefined) data.maxMarks = b.maxMarks === null || b.maxMarks === "" ? null : Number(b.maxMarks) || null;
+      if (b.status !== undefined) data.status = b.status === "CLOSED" ? "CLOSED" : "OPEN";
+      const updated = await hw().update({ where: { id: req.params.id }, data });
+      res.json(updated);
+    } catch (err) {
+      logger.error("Error updating homework:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.delete("/api/homework/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") { res.status(403).json({ error: "Forbidden" }); return; }
+    try {
+      const existing = await hw().findUnique({ where: { id: req.params.id } });
+      if (!existing) { res.status(404).json({ error: "Homework not found" }); return; }
+      if (!(await canManageExamClass(jwtUser, existing.classId))) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+      await hw().delete({ where: { id: req.params.id } });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "DELETE", "HOMEWORK", req.params.id,
+        `Homework '${existing.title}' deleted.`, req.ip, req.headers["user-agent"] || null, "WARNING");
+      res.json({ success: true });
+    } catch (err) {
+      logger.error("Error deleting homework:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Student: list homework for their class with their own submission state.
+  app.get("/api/student/homework", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "STUDENT") { res.status(403).json({ error: "Forbidden" }); return; }
+    try {
+      const student = await prisma.student.findUnique({ where: { userId: jwtUser.userId } });
+      if (!student?.classId) { res.json([]); return; }
+      const rows = await hw().findMany({
+        where: { classId: student.classId },
+        include: {
+          subject: { select: { name: true } },
+          teacher: { include: { user: { select: { firstName: true, lastName: true } } } },
+          submissions: { where: { studentId: student.id } },
+        },
+        orderBy: { dueDate: "desc" },
+      });
+      res.json(rows.map((r: any) => ({
+        id: r.id, title: r.title, instructions: r.instructions, attachmentUrl: r.attachmentUrl,
+        subjectName: r.subject?.name ?? null,
+        teacherName: `${r.teacher?.user?.firstName ?? ""} ${r.teacher?.user?.lastName ?? ""}`.trim() || null,
+        dueDate: r.dueDate, maxMarks: r.maxMarks, status: r.status,
+        mySubmission: r.submissions[0] ?? null,
+      })));
+    } catch (err: any) {
+      if (err?.code === "P2021" || err?.code === "P2022") { res.json([]); return; }
+      logger.error("Error listing student homework:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Student: submit (or resubmit until marked).
+  app.post("/api/homework/:id/submit", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "STUDENT") { res.status(403).json({ error: "Only students can submit homework" }); return; }
+    const { text, attachmentUrl } = req.body || {};
+    if (!String(text ?? "").trim() && !attachmentUrl) {
+      res.status(400).json({ error: "Add some text or attach a photo/file" });
+      return;
+    }
+    try {
+      const student = await prisma.student.findUnique({ where: { userId: jwtUser.userId } });
+      if (!student) { res.status(403).json({ error: "No student profile" }); return; }
+      const homework = await hw().findUnique({ where: { id: req.params.id } });
+      if (!homework || homework.classId !== student.classId) { res.status(404).json({ error: "Homework not found" }); return; }
+      if (homework.status === "CLOSED") { res.status(403).json({ error: "This homework is closed for submissions" }); return; }
+
+      const existing = await hwSub().findUnique({ where: { homeworkId_studentId: { homeworkId: homework.id, studentId: student.id } } });
+      if (existing?.status === "MARKED") { res.status(409).json({ error: "Already marked — ask your teacher to reopen it if you need to resubmit" }); return; }
+
+      const data = {
+        text: String(text ?? "").trim() || null,
+        attachmentUrl: attachmentUrl || null,
+        submittedAt: new Date(),
+        status: "SUBMITTED",
+      };
+      const sub = existing
+        ? await hwSub().update({ where: { id: existing.id }, data })
+        : await hwSub().create({ data: { ...data, homeworkId: homework.id, studentId: student.id } });
+      res.status(existing ? 200 : 201).json(sub);
+    } catch (err) {
+      logger.error("Error submitting homework:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Teacher: mark a submission (score optional) or request a redo. Also lets
+  // the teacher mark students who submitted on paper (creates an empty record).
+  app.post("/api/homework/:id/mark", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") { res.status(403).json({ error: "Forbidden" }); return; }
+    const { studentId, score, feedback, status } = req.body || {};
+    if (!studentId) { res.status(400).json({ error: "studentId is required" }); return; }
+    const newStatus = status === "REDO" ? "REDO" : "MARKED";
+    try {
+      const homework = await hw().findUnique({ where: { id: req.params.id } });
+      if (!homework) { res.status(404).json({ error: "Homework not found" }); return; }
+      if (!(await canManageExamClass(jwtUser, homework.classId))) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+
+      const parsedScore = score === null || score === undefined || score === "" ? null : Number(score);
+      if (parsedScore != null && (isNaN(parsedScore) || parsedScore < 0)) { res.status(400).json({ error: "Invalid score" }); return; }
+      if (parsedScore != null && homework.maxMarks != null && parsedScore > homework.maxMarks) {
+        res.status(400).json({ error: `Score cannot exceed ${homework.maxMarks}` });
+        return;
+      }
+
+      const markData = {
+        status: newStatus,
+        score: newStatus === "MARKED" ? parsedScore : null,
+        feedback: feedback ? String(feedback) : null,
+        markedAt: new Date(),
+        markedById: jwtUser.userId,
+      };
+      const sub = await hwSub().upsert({
+        where: { homeworkId_studentId: { homeworkId: homework.id, studentId } },
+        update: markData,
+        create: { homeworkId: homework.id, studentId, ...markData },
+      });
+      res.json(sub);
+    } catch (err) {
+      logger.error("Error marking homework:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Teacher: push scored submissions into the gradebook (ASSIGNMENT category).
+  app.post("/api/homework/:id/sync-gradebook", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") { res.status(403).json({ error: "Forbidden" }); return; }
+    try {
+      const homework = await hw().findUnique({ where: { id: req.params.id }, include: { submissions: true } });
+      if (!homework) { res.status(404).json({ error: "Homework not found" }); return; }
+      if (!(await canManageExamClass(jwtUser, homework.classId))) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+      if (homework.maxMarks == null) { res.status(400).json({ error: "Set max marks on this homework before syncing to the gradebook" }); return; }
+      const scored = homework.submissions.filter((s: any) => s.status === "MARKED" && s.score != null);
+      if (scored.length === 0) { res.status(400).json({ error: "No scored submissions to sync yet" }); return; }
+
+      const result = await prisma.$transaction(async (tx) => {
+        let gradeItemId = homework.gradeItemId as string | null;
+        if (gradeItemId) {
+          const stillThere = await tx.gradeItem.findUnique({ where: { id: gradeItemId } });
+          if (!stillThere) gradeItemId = null;
+        }
+        if (!gradeItemId) {
+          const item = await tx.gradeItem.create({
+            data: {
+              title: `Homework: ${homework.title}`,
+              category: "ASSIGNMENT" as any,
+              maxMarks: homework.maxMarks,
+              date: homework.dueDate,
+              classId: homework.classId,
+              subjectId: homework.subjectId,
+              createdById: jwtUser.userId,
+            },
+          });
+          gradeItemId = item.id;
+          await (tx as any).homework.update({ where: { id: homework.id }, data: { gradeItemId } });
+        } else {
+          await tx.gradeItem.update({ where: { id: gradeItemId }, data: { maxMarks: homework.maxMarks } });
+        }
+        for (const s of scored) {
+          await tx.grade.upsert({
+            where: { gradeItemId_studentId: { gradeItemId, studentId: s.studentId } },
+            update: { marks: s.score, comment: s.feedback || null, gradedById: jwtUser.userId },
+            create: { gradeItemId, studentId: s.studentId, marks: s.score, comment: s.feedback || null, gradedById: jwtUser.userId },
+          });
+        }
+        return { gradeItemId, count: scored.length };
+      });
+
+      await createAuditLog(jwtUser.userId, jwtUser.email, "SYNC", "HOMEWORK", homework.id,
+        `Homework '${homework.title}' synced ${result.count} score(s) to gradebook.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.json(result);
+    } catch (err) {
+      logger.error("Error syncing homework to gradebook:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
   app.get("/api/lesson-plans", authMiddleware, teacherOnly, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { classId, upcoming } = req.query;

@@ -228,6 +228,7 @@ model Student {
   documents      GeneratedDocument[]
   examAssignments    ExamAssignment[]
   examAccommodations ExamAccommodation[]
+  homeworkSubmissions HomeworkSubmission[]
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -256,6 +257,7 @@ model Teacher {
   subjects       SubjectTeacher[]
   lessonPlans    LessonPlan[]
   payslips       Payslip[]
+  homework       Homework[]
   
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -281,6 +283,7 @@ model Class {
   gradeItems     GradeItem[]
   categoryWeights CategoryWeight[]
   lessonPlans    LessonPlan[]
+  homework       Homework[]
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -324,6 +327,7 @@ model Subject {
   exams          Exam[]
   gradeItems     GradeItem[]
   lessonPlans    LessonPlan[]
+  homework       Homework[]
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -1167,6 +1171,58 @@ model GradeItem {
   @@index([classId])
   @@index([subjectId])
   @@index([category])
+}
+
+// ── Homework ──────────────────────────────────────────────────────────────────
+model Homework {
+  id            String   @id @default(uuid())
+  title         String
+  instructions  String?
+  attachmentUrl String?
+
+  classId       String
+  class         Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  subjectId     String?
+  subject       Subject? @relation(fields: [subjectId], references: [id])
+  teacherId     String
+  teacher       Teacher  @relation(fields: [teacherId], references: [id])
+
+  dueDate       DateTime
+  maxMarks      Float?   // optional — homework can be check-off only
+  status        String   @default("OPEN") // OPEN | CLOSED
+  gradeItemId   String?  // set once synced to the gradebook
+
+  submissions   HomeworkSubmission[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([classId])
+  @@index([teacherId])
+  @@index([dueDate])
+}
+
+model HomeworkSubmission {
+  id            String   @id @default(uuid())
+  homeworkId    String
+  homework      Homework @relation(fields: [homeworkId], references: [id], onDelete: Cascade)
+  studentId     String
+  student       Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  text          String?
+  attachmentUrl String?
+  submittedAt   DateTime @default(now())
+
+  status        String   @default("SUBMITTED") // SUBMITTED | MARKED | REDO
+  score         Float?   // optional — only when the teacher chooses to score
+  feedback      String?
+  markedAt      DateTime?
+  markedById    String?
+
+  updatedAt     DateTime @updatedAt
+
+  @@unique([homeworkId, studentId])
+  @@index([studentId])
 }
 
 model Grade {
