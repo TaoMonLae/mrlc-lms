@@ -8838,3 +8838,1187 @@ msgstr ""
 msgid "auth-state-changed"
 msgstr ""
 
+# Extracted string
+msgid "Could not capture photo"
+msgstr ""
+
+# Extracted string
+msgid "captured"
+msgstr ""
+
+# Extracted string
+msgid "Capture"
+msgstr ""
+
+# Extracted string
+msgid "Camera isn’t available here."
+msgstr ""
+
+# Extracted string
+msgid "Choose / take a photo"
+msgstr ""
+
+# Extracted string
+msgid "Retake"
+msgstr ""
+
+# Extracted string
+msgid "Use photo"
+msgstr ""
+
+# Extracted string
+msgid "Captions"
+msgstr ""
+
+# Extracted string
+msgid "Please open a conversation first"
+msgstr ""
+
+# Extracted string
+msgid "Open chat"
+msgstr ""
+
+# Extracted string
+msgid "Open full chat"
+msgstr ""
+
+# Extracted string
+msgid "Close chat"
+msgstr ""
+
+# Extracted string
+msgid "Camera (disappears in 24h)"
+msgstr ""
+
+# Extracted string
+msgid "Type a message…"
+msgstr ""
+
+# Extracted string
+msgid "Messages"
+msgstr ""
+
+# Extracted string
+msgid "No conversations yet."
+msgstr ""
+
+# Extracted string
+msgid "Open chat to start one"
+msgstr ""
+
+# Extracted string
+msgid "No messages yet."
+msgstr ""
+
+# Extracted string
+msgid "Admin oversight — read only"
+msgstr ""
+
+# Extracted string
+msgid "Stickers"
+msgstr ""
+
+# Extracted string
+msgid "sticker"
+msgstr ""
+
+# Extracted string
+msgid "No stickers yet"
+msgstr ""
+
+# Extracted string
+msgid "Profile picture removed"
+msgstr ""
+
+# Extracted string
+msgid "Remove this profile picture?"
+msgstr ""
+
+# Extracted string
+msgid "Remove profile picture"
+msgstr ""
+
+# Extracted string
+msgid "No data rows found in the file."
+msgstr ""
+
+# Extracted string
+msgid "Could not read the CSV file."
+msgstr ""
+
+# Extracted string
+msgid "Imported ${res.createdCount} student${res.createdCount === 1 ? '' : 's'}."
+msgstr ""
+
+# Extracted string
+msgid "${res.failedCount} row${res.failedCount === 1 ? '' : 's'} skipped."
+msgstr ""
+
+# Extracted string
+msgid "Template"
+msgstr ""
+
+# Extracted string
+msgid "Import Students from CSV"
+msgstr ""
+
+# Extracted string
+msgid "Download the template, fill in one student per row, then upload it here. Leave"
+msgstr ""
+
+# Extracted string
+msgid "password"
+msgstr ""
+
+# Extracted string
+msgid "blank to use the default"
+msgstr ""
+
+# Extracted string
+msgid "Student123!"
+msgstr ""
+
+# Extracted string
+msgid "(student must change it at first login), or set one to assign it directly."
+msgstr ""
+
+# Extracted string
+msgid "Step 1 — Get the template"
+msgstr ""
+
+# Extracted string
+msgid "Required columns:"
+msgstr ""
+
+# Extracted string
+msgid "studentCode"
+msgstr ""
+
+# Extracted string
+msgid "firstName"
+msgstr ""
+
+# Extracted string
+msgid "lastName"
+msgstr ""
+
+# Extracted string
+msgid "email"
+msgstr ""
+
+# Extracted string
+msgid "must match an existing class name."
+msgstr ""
+
+# Extracted string
+msgid "Download template (with example rows)"
+msgstr ""
+
+# Extracted string
+msgid "Step 2 — Upload your filled-in file"
+msgstr ""
+
+# Extracted string
+msgid "Fix these rows before importing:"
+msgstr ""
+
+# Extracted string
+msgid "Imported ${res.createdCount} teacher${res.createdCount === 1 ? '' : 's'}."
+msgstr ""
+
+# Extracted string
+msgid "Import Teachers from CSV"
+msgstr ""
+
+# Extracted string
+msgid "Download the template, fill in one teacher per row, then upload it here. Leave"
+msgstr ""
+
+# Extracted string
+msgid "Teacher123!"
+msgstr ""
+
+# Extracted string
+msgid "(teacher must change it at first login), or set one to assign it directly."
+msgstr ""
+
+# Extracted string
+msgid ". Optional: password (min 6 chars), subjects (comma-separated), joinedDate (YYYY-MM-DD), baseSalary, teacherCode (auto-generated if blank)."
+msgstr ""
+
+# Extracted string
+msgid "Please choose a .vtt or .srt file"
+msgstr ""
+
+# Extracted string
+msgid "Captions uploaded"
+msgstr ""
+
+# Extracted string
+msgid "Attendance Analytics"
+msgstr ""
+
+# Extracted string
+msgid "Comprehensive attendance insights and statistics."
+msgstr ""
+
+# Extracted string
+msgid "Start Date"
+msgstr ""
+
+# Extracted string
+msgid "End Date"
+msgstr ""
+
+# Extracted string
+msgid "Group By"
+msgstr ""
+
+# Extracted string
+msgid "Both"
+msgstr ""
+
+# Extracted string
+msgid "Loading analytics..."
+msgstr ""
+
+# Extracted string
+msgid "Overall Attendance Rate"
+msgstr ""
+
+# Extracted string
+msgid "Attendance by Subject"
+msgstr ""
+
+# Extracted string
+msgid "Attendance by Teacher"
+msgstr ""
+
+# Extracted string
+msgid "Select a date range to view analytics."
+msgstr ""
+
+# Extracted string
+msgid "Back to chat"
+msgstr ""
+
+# Extracted string
+msgid "Chat moderation"
+msgstr ""
+
+# Extracted string
+msgid "Actioned"
+msgstr ""
+
+# Extracted string
+msgid "Dismissed"
+msgstr ""
+
+# Extracted string
+msgid "No reports."
+msgstr ""
+
+# Extracted string
+msgid "Open conversation"
+msgstr ""
+
+# Extracted string
+msgid "Dismiss"
+msgstr ""
+
+# Extracted string
+msgid "Conversation deleted"
+msgstr ""
+
+# Extracted string
+msgid "Reported to admin"
+msgstr ""
+
+# Extracted string
+msgid "Pick at least one person"
+msgstr ""
+
+# Extracted string
+msgid "Permanently delete this conversation? All messages and photos in it are cleared and cannot be recovered."
+msgstr ""
+
+# Extracted string
+msgid "Report this message to an administrator?"
+msgstr ""
+
+# Extracted string
+msgid "Sticker packs"
+msgstr ""
+
+# Extracted string
+msgid "Moderation"
+msgstr ""
+
+# Extracted string
+msgid "Search people…"
+msgstr ""
+
+# Extracted string
+msgid "e.g. Grade 10 project"
+msgstr ""
+
+# Extracted string
+msgid "Delete conversation"
+msgstr ""
+
+# Extracted string
+msgid "Report"
+msgstr ""
+
+# Extracted string
+msgid "attachment preview"
+msgstr ""
+
+# Extracted string
+msgid "Attach image"
+msgstr ""
+
+# Extracted string
+msgid "Chat"
+msgstr ""
+
+# Extracted string
+msgid "New"
+msgstr ""
+
+# Extracted string
+msgid "New conversation"
+msgstr ""
+
+# Extracted string
+msgid "Group name (optional)"
+msgstr ""
+
+# Extracted string
+msgid "No people available to message"
+msgstr ""
+
+# Extracted string
+msgid "No matches"
+msgstr ""
+
+# Extracted string
+msgid "No conversations yet. Tap “New” to start one."
+msgstr ""
+
+# Extracted string
+msgid "Select a conversation"
+msgstr ""
+
+# Extracted string
+msgid "Oversight"
+msgstr ""
+
+# Extracted string
+msgid "No messages yet. Say hello."
+msgstr ""
+
+# Extracted string
+msgid "Enter a pack name"
+msgstr ""
+
+# Extracted string
+msgid "Pack created"
+msgstr ""
+
+# Extracted string
+msgid "Added ${data.urls?.length ?? 0} sticker(s)"
+msgstr ""
+
+# Extracted string
+msgid "Pack deleted"
+msgstr ""
+
+# Extracted string
+msgid "Delete the “${pack}” pack and all its stickers?"
+msgstr ""
+
+# Extracted string
+msgid "e.g. School fun"
+msgstr ""
+
+# Extracted string
+msgid "New pack"
+msgstr ""
+
+# Extracted string
+msgid "No sticker packs yet. Create one above."
+msgstr ""
+
+# Extracted string
+msgid "Built-in"
+msgstr ""
+
+# Extracted string
+msgid "No stickers — upload some."
+msgstr ""
+
+# Extracted string
+msgid "Subject added"
+msgstr ""
+
+# Extracted string
+msgid "Subject removed"
+msgstr ""
+
+# Extracted string
+msgid "Select at least one student"
+msgstr ""
+
+# Extracted string
+msgid "${selectedStudentIds.length} student${selectedStudentIds.length > 1 ? 's' : ''} assigned"
+msgstr ""
+
+# Extracted string
+msgid "Student removed from class"
+msgstr ""
+
+# Extracted string
+msgid "Remove this subject from the class?"
+msgstr ""
+
+# Extracted string
+msgid "Remove this student from the class? They will be left unassigned."
+msgstr ""
+
+# Extracted string
+msgid "Search by name or student ID..."
+msgstr ""
+
+# Extracted string
+msgid "No unassigned students available."
+msgstr ""
+
+# Extracted string
+msgid "Add a student"
+msgstr ""
+
+# Extracted string
+msgid "first."
+msgstr ""
+
+# Extracted string
+msgid "No teachers found."
+msgstr ""
+
+# Extracted string
+msgid "Add a teacher"
+msgstr ""
+
+# Extracted string
+msgid "first, then assign them here."
+msgstr ""
+
+# Extracted string
+msgid "Add another teacher"
+msgstr ""
+
+# Extracted string
+msgid "to assign more."
+msgstr ""
+
+# Extracted string
+msgid "(exam)"
+msgstr ""
+
+# Extracted string
+msgid "No subjects found."
+msgstr ""
+
+# Extracted string
+msgid "Create a subject"
+msgstr ""
+
+# Extracted string
+msgid "first, then add it here."
+msgstr ""
+
+# Extracted string
+msgid "All subjects are already added to this class."
+msgstr ""
+
+# Extracted string
+msgid "Archive \"${cls.name}\"?"
+msgstr ""
+
+# Extracted string
+msgid "${r.skipped} student(s) skipped (existing document)"
+msgstr ""
+
+# Extracted string
+msgid "${r.failed} student(s) failed"
+msgstr ""
+
+# Extracted string
+msgid "No active students in that class"
+msgstr ""
+
+# Extracted string
+msgid "You are about to generate documents for ${selectedBulkClass.studentCount} students in ${selectedBulkClass.name}. Continue?"
+msgstr ""
+
+# Extracted string
+msgid "Bulk generate for a class"
+msgstr ""
+
+# Extracted string
+msgid "No classes available"
+msgstr ""
+
+# Extracted string
+msgid "Multiple-choice questions need at least two filled options and one correct answer."
+msgstr ""
+
+# Extracted string
+msgid "Move up"
+msgstr ""
+
+# Extracted string
+msgid "Move down"
+msgstr ""
+
+# Extracted string
+msgid "Duplicate"
+msgstr ""
+
+# Extracted string
+msgid "Type or paste the passage here. It will be shown on the left pane in a split layout."
+msgstr ""
+
+# Extracted string
+msgid "Mark correct"
+msgstr ""
+
+# Extracted string
+msgid "Remove option"
+msgstr ""
+
+# Extracted string
+msgid "Multiple choice"
+msgstr ""
+
+# Extracted string
+msgid "True / False"
+msgstr ""
+
+# Extracted string
+msgid "Short answer"
+msgstr ""
+
+# Extracted string
+msgid "Written"
+msgstr ""
+
+# Extracted string
+msgid "Options"
+msgstr ""
+
+# Extracted string
+msgid "— tap the circle to mark the correct answer"
+msgstr ""
+
+# Extracted string
+msgid "Add question:"
+msgstr ""
+
+# Extracted string
+msgid "Delete \"${resource.title}\"? This cannot be undone."
+msgstr ""
+
+# Extracted string
+msgid "Updated"
+msgstr ""
+
+# Extracted string
+msgid "Delete \"${name}\"?"
+msgstr ""
+
+# Extracted string
+msgid "Delete record"
+msgstr ""
+
+# Extracted string
+msgid "Communication logs and inventory — the day-to-day office records."
+msgstr ""
+
+# Extracted string
+msgid "Latest records — update the status inline as things get resolved."
+msgstr ""
+
+# Extracted string
+msgid "Looking for something else?"
+msgstr ""
+
+# Extracted string
+msgid "Report exported to CSV"
+msgstr ""
+
+# Extracted string
+msgid "= 90) return"
+msgstr ""
+
+# Extracted string
+msgid "= 80) return"
+msgstr ""
+
+# Extracted string
+msgid "Session Attendance Report"
+msgstr ""
+
+# Extracted string
+msgid "View attendance by subject and session."
+msgstr ""
+
+# Extracted string
+msgid "Student-Subject Pairs"
+msgstr ""
+
+# Extracted string
+msgid "Overall Rate"
+msgstr ""
+
+# Extracted string
+msgid "Subject Summary"
+msgstr ""
+
+# Extracted string
+msgid "No attendance records found for the selected filters."
+msgstr ""
+
+# Extracted string
+msgid "Last backup:"
+msgstr ""
+
+# Extracted string
+msgid "System Settings"
+msgstr ""
+
+# Extracted string
+msgid "Add a photo or some text"
+msgstr ""
+
+# Extracted string
+msgid "Posted — disappears in 24 hours"
+msgstr ""
+
+# Extracted string
+msgid "Delete this post?"
+msgstr ""
+
+# Extracted string
+msgid "What's happening?"
+msgstr ""
+
+# Extracted string
+msgid "preview"
+msgstr ""
+
+# Extracted string
+msgid "post"
+msgstr ""
+
+# Extracted string
+msgid "Add a comment…"
+msgstr ""
+
+# Extracted string
+msgid "Social Space"
+msgstr ""
+
+# Extracted string
+msgid "Share a photo or a thought with the school. Everything disappears after 24 hours."
+msgstr ""
+
+# Extracted string
+msgid "Photo"
+msgstr ""
+
+# Extracted string
+msgid "Camera"
+msgstr ""
+
+# Extracted string
+msgid "Nothing here yet. Be the first to post!"
+msgstr ""
+
+# Extracted string
+msgid "File attached"
+msgstr ""
+
+# Extracted string
+msgid "Write something or attach a photo of your work"
+msgstr ""
+
+# Extracted string
+msgid "Homework submitted!"
+msgstr ""
+
+# Extracted string
+msgid "Type your answer, or add a note about your attached work…"
+msgstr ""
+
+# Extracted string
+msgid "Redo requested"
+msgstr ""
+
+# Extracted string
+msgid "Overdue"
+msgstr ""
+
+# Extracted string
+msgid "To do"
+msgstr ""
+
+# Extracted string
+msgid "Worksheet"
+msgstr ""
+
+# Extracted string
+msgid "Teacher feedback:"
+msgstr ""
+
+# Extracted string
+msgid "attached"
+msgstr ""
+
+# Extracted string
+msgid "My Homework"
+msgstr ""
+
+# Extracted string
+msgid "Submit your work by typing an answer or photographing your paper work."
+msgstr ""
+
+# Extracted string
+msgid "No homework yet. Enjoy the free time!"
+msgstr ""
+
+# Extracted string
+msgid "Submitted &amp; marked"
+msgstr ""
+
+# Extracted string
+msgid "Email is required when Student ID is not provided"
+msgstr ""
+
+# Extracted string
+msgid "student@mrlc-student.edu"
+msgstr ""
+
+# Extracted string
+msgid "Leave blank to auto-generate (e.g. ST-2026-001)"
+msgstr ""
+
+# Extracted string
+msgid "Required if Student ID is blank"
+msgstr ""
+
+# Extracted string
+msgid "Remove this teacher from the subject?"
+msgstr ""
+
+# Extracted string
+msgid "Specialization"
+msgstr ""
+
+# Extracted string
+msgid "All teachers are already assigned to this subject."
+msgstr ""
+
+# Extracted string
+msgid "Archive \"${sub.name}\"?"
+msgstr ""
+
+# Extracted string
+msgid "${incomplete.length} session(s) not fully marked. Please mark all students before submitting."
+msgstr ""
+
+# Extracted string
+msgid "No sessions selected"
+msgstr ""
+
+# Extracted string
+msgid "Bulk attendance saved!"
+msgstr ""
+
+# Extracted string
+msgid "Find session..."
+msgstr ""
+
+# Extracted string
+msgid "Bulk Attendance"
+msgstr ""
+
+# Extracted string
+msgid "Mark attendance for multiple sessions at once."
+msgstr ""
+
+# Extracted string
+msgid "Loading sessions..."
+msgstr ""
+
+# Extracted string
+msgid "No sessions found for the selected date."
+msgstr ""
+
+# Extracted string
+msgid "Complete"
+msgstr ""
+
+# Extracted string
+msgid "This student has no account to message"
+msgstr ""
+
+# Extracted string
+msgid "Message sent"
+msgstr ""
+
+# Extracted string
+msgid "Please type a message"
+msgstr ""
+
+# Extracted string
+msgid "Score cannot exceed ${data.maxMarks}"
+msgstr ""
+
+# Extracted string
+msgid "${r.count} score(s) synced to the gradebook"
+msgstr ""
+
+# Extracted string
+msgid "Homework deleted"
+msgstr ""
+
+# Extracted string
+msgid "Delete this homework and all its submissions?"
+msgstr ""
+
+# Extracted string
+msgid "Optional feedback"
+msgstr ""
+
+# Extracted string
+msgid "Send back for redo"
+msgstr ""
+
+# Extracted string
+msgid "Homework not found."
+msgstr ""
+
+# Extracted string
+msgid "All Homework"
+msgstr ""
+
+# Extracted string
+msgid "Worksheet attachment"
+msgstr ""
+
+# Extracted string
+msgid "Close"
+msgstr ""
+
+# Extracted string
+msgid "Submission"
+msgstr ""
+
+# Extracted string
+msgid "Feedback"
+msgstr ""
+
+# Extracted string
+msgid "Marked"
+msgstr ""
+
+# Extracted string
+msgid "Redo"
+msgstr ""
+
+# Extracted string
+msgid "Missing"
+msgstr ""
+
+# Extracted string
+msgid "View attachment"
+msgstr ""
+
+# Extracted string
+msgid "No submission yet (mark anyway if handed in on paper)"
+msgstr ""
+
+# Extracted string
+msgid "Mark"
+msgstr ""
+
+# Extracted string
+msgid "Attachment uploaded"
+msgstr ""
+
+# Extracted string
+msgid "Title, class and due date are required"
+msgstr ""
+
+# Extracted string
+msgid "Homework assigned"
+msgstr ""
+
+# Extracted string
+msgid "e.g. Fractions worksheet p. 12-13"
+msgstr ""
+
+# Extracted string
+msgid "e.g. 20"
+msgstr ""
+
+# Extracted string
+msgid "What should students do?"
+msgstr ""
+
+# Extracted string
+msgid "Homework"
+msgstr ""
+
+# Extracted string
+msgid "Assign work, collect submissions, and mark them — with optional scores."
+msgstr ""
+
+# Extracted string
+msgid "Due date *"
+msgstr ""
+
+# Extracted string
+msgid "Max marks"
+msgstr ""
+
+# Extracted string
+msgid "(leave blank for check-off only)"
+msgstr ""
+
+# Extracted string
+msgid "Assign to class"
+msgstr ""
+
+# Extracted string
+msgid "Loading homework…"
+msgstr ""
+
+# Extracted string
+msgid "No homework assigned yet. Use “Assign Homework” to create the first one."
+msgstr ""
+
+# Extracted string
+msgid "Past due"
+msgstr ""
+
+# Extracted string
+msgid "Select subject (optional)"
+msgstr ""
+
+# Extracted string
+msgid "Loading your profile..."
+msgstr ""
+
+# Extracted string
+msgid "Please select a class or session first."
+msgstr ""
+
+# Extracted string
+msgid "Select Session"
+msgstr ""
+
+# Extracted string
+msgid "Record attendance for your assigned classes and sessions."
+msgstr ""
+
+# Extracted string
+msgid "Mode"
+msgstr ""
+
+# Extracted string
+msgid "Session Attendance"
+msgstr ""
+
+# Extracted string
+msgid "Session"
+msgstr ""
+
+# Extracted string
+msgid "(admin only)"
+msgstr ""
+
+# Extracted string
+msgid "Deactivate ${teacher.firstName} ${teacher.lastName}? They will no longer be able to sign in."
+msgstr ""
+
+# Extracted string
+msgid "Deactivate Teacher"
+msgstr ""
+
+# Extracted string
+msgid "Reactivate Teacher"
+msgstr ""
+
+# Extracted string
+msgid "Today"
+msgstr ""
+
+# Extracted string
+msgid "No timetable entries for this week."
+msgstr ""
+
+# Extracted string
+msgid "Watch analytics"
+msgstr ""
+
+# Extracted string
+msgid "In progress"
+msgstr ""
+
+# Extracted string
+msgid "Not started"
+msgstr ""
+
+# Extracted string
+msgid "No students in this audience yet."
+msgstr ""
+
+# Extracted string
+msgid "Progress"
+msgstr ""
+
+# Extracted string
+msgid "Last watched"
+msgstr ""
+
+# Extracted string
+msgid "https://... .vtt — or upload a file →"
+msgstr ""
+
+# Extracted string
+msgid "Captions / Subtitles (Optional)"
+msgstr ""
+
+# Extracted string
+msgid "Paste a WebVTT URL or upload a .vtt/.srt file. Shown as a CC toggle for uploaded videos."
+msgstr ""
+
+# Extracted string
+msgid "Required viewing for the assigned class"
+msgstr ""
+
+# Extracted string
+msgid "Due date (optional)"
+msgstr ""
+
+# Extracted string
+msgid "Paste a WebVTT URL or upload a .vtt/.srt file. Shown as a CC toggle for uploaded videos — a big help for second-language learners."
+msgstr ""
+
+# Extracted string
+msgid "Students see a “Required” badge; teachers can track completion in Watch analytics."
+msgstr ""
+
+# Extracted string
+msgid "now - u.at"
+msgstr ""
+
+# Extracted string
+msgid "People"
+msgstr ""
+
+# Extracted string
+msgid "Admissions"
+msgstr ""
+
+# Extracted string
+msgid "Users & Roles"
+msgstr ""
+
+# Extracted string
+msgid "Academics"
+msgstr ""
+
+# Extracted string
+msgid "Daily Reports"
+msgstr ""
+
+# Extracted string
+msgid "Session Reports"
+msgstr ""
+
+# Extracted string
+msgid "Analytics"
+msgstr ""
+
+# Extracted string
+msgid "Resources"
+msgstr ""
+
+# Extracted string
+msgid "Finance & HR"
+msgstr ""
+
+# Extracted string
+msgid "Operations"
+msgstr ""
+
+# Extracted string
+msgid "My Timetable"
+msgstr ""
+
+# Extracted string
+msgid "My Teaching"
+msgstr ""
+
+# Extracted string
+msgid "My Learning"
+msgstr ""
+
+# Extracted string
+msgid "My Progress"
+msgstr ""
+
+# Extracted string
+msgid "My Fees"
+msgstr ""
+
+# Extracted string
+msgid "Teacher Timetable"
+msgstr ""
+
+# Extracted string
+msgid "Teacher Exams"
+msgstr ""
+
+# Extracted string
+msgid "Teacher Library"
+msgstr ""
+
+# Extracted string
+msgid "Teacher Reports"
+msgstr ""
+
+# Extracted string
+msgid "Student Attendance"
+msgstr ""
+
+# Extracted string
+msgid "Student Timetable"
+msgstr ""
+
+# Extracted string
+msgid "Student Exams"
+msgstr ""
+
+# Extracted string
+msgid "Student Fees"
+msgstr ""
+
+# Extracted string
+msgid "Student Library"
+msgstr ""
+

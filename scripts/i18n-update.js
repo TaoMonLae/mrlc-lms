@@ -128,6 +128,16 @@ function isValidJsxText(str) {
   if (!str) return false;
   if (/^[0-9\s.,:\-()\[\]{}#$%/\\_*+=?!&;]+$/.test(str)) return false;
   if (str.length <= 1) return false;
+
+  // Filter out expressions that are actually JS code
+  if (str.includes('&&') || str.includes('||') || str.includes('=>') || str.includes('===') || str.includes('!==') || str.includes('==') || str.includes('!=')) return false;
+  if (str.startsWith(')') || str.endsWith('(') || str.startsWith('}') || str.endsWith('{')) return false;
+  if (str.includes(') :') || str.includes(') ?') || str.includes('? (') || str.includes(') &&')) return false;
+  if (str.includes('return ') || str.includes('import ')) return false;
+  if (/\bexport\s+(?:const|default|class|function|type|interface|{)\b/.test(str)) return false;
+  if (str.includes('React.') || str.includes('SVGProps') || str.includes('ChangeEvent')) return false;
+  if (/\b(?:true|false|null|undefined|void)\b/.test(str)) return false;
+
   return true;
 }
 
@@ -137,7 +147,7 @@ walk(srcDir, (f) => f.endsWith('.tsx') || f.endsWith('.ts'), (filePath) => {
   const content = fs.readFileSync(filePath, 'utf8');
   
   // 1. Match t('...')
-  const tMatches = content.matchAll(/t\(\s*(['"`])((?:\\.|[^\\])*?)\1\s*\)/g);
+  const tMatches = content.matchAll(/\bt\(\s*(['"`])((?:\\.|[^\\])*?)\1\s*\)/g);
   for (const m of tMatches) {
     addString(unescapeJs(m[2]));
   }
@@ -166,6 +176,14 @@ walk(srcDir, (f) => f.endsWith('.tsx') || f.endsWith('.ts'), (filePath) => {
     const str = m[1].trim();
     if (isValidJsxText(str)) {
       addString(str);
+    }
+  }
+
+  // 6. Navigation items in navigation.ts
+  if (filePath.endsWith('navigation.ts')) {
+    const navMatches = content.matchAll(/\b(title|label):\s*(['"`])((?:\\.|[^\\])*?)\2/g);
+    for (const m of navMatches) {
+      addString(unescapeJs(m[3]));
     }
   }
 });
