@@ -229,6 +229,7 @@ model Student {
   examAssignments    ExamAssignment[]
   examAccommodations ExamAccommodation[]
   homeworkSubmissions HomeworkSubmission[]
+  badges            StudentBadge[]
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -1270,6 +1271,22 @@ model GedReadiness {
 
   @@unique([studentId, subject])
   @@index([studentId])
+}
+
+model StudentBadge {
+  id           String   @id @default(uuid())
+  studentId    String
+  student      Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  badgeKey     String   // e.g. "STREAK_7", "FIRST_EXAM"
+  level        Int      @default(1)
+  earnedAt     DateTime @default(now())
+  currentCount Int      @default(0) // For multi-level badges (e.g. current streak length)
+  targetCount  Int?     // Target for next level
+  metadata     Json?    // Additional context
+
+  @@unique([studentId, badgeKey])
+  @@index([studentId])
+  @@index([badgeKey])
 }
 
 enum DocumentType {

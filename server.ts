@@ -19,6 +19,7 @@ import { spawn } from "child_process";
 import { registerExamPhase2Routes } from "./examPhase2";
 import { registerExamBankRoutes } from "./examBank";
 import cookieParser from "cookie-parser";
+import { BADGE_CATALOG, getBadgeLevel } from "../src/lib/badges";
 
 dotenv.config();
 
@@ -2772,6 +2773,13 @@ async function startServer() {
           "SUCCESS"
         );
 
+        // Check badges for all students with recorded attendance
+        for (const rec of records) {
+          checkAndAwardBadges(rec.studentId, 'ATTENDANCE').catch(err =>
+            logger.error(`Error checking badges for student ${rec.studentId}:`, err)
+          );
+        }
+
         res.json({ success: true, count: results.length, type: "session", timetableEntryId });
         return;
       } catch (err) {
@@ -2843,6 +2851,13 @@ async function startServer() {
         req.headers["user-agent"] || null,
         "SUCCESS"
       );
+
+      // Check badges for all students with recorded attendance
+      for (const rec of records) {
+        checkAndAwardBadges(rec.studentId, 'ATTENDANCE').catch(err =>
+          logger.error(`Error checking badges for student ${rec.studentId}:`, err)
+        );
+      }
 
       res.json({ success: true, count: results.length, type: "class" });
     } catch (err) {
@@ -6898,6 +6913,11 @@ async function startServer() {
         "SUCCESS"
       );
 
+      // Check badges for exam completion
+      checkAndAwardBadges(attempt.studentId, 'EXAM').catch(err =>
+        logger.error(`Error checking badges for student ${attempt.studentId}:`, err)
+      );
+
       res.json(result);
     } catch (err: any) {
       logger.error("Error grading exam attempt:", err);
@@ -8822,14 +8842,17 @@ async function startServer() {
       const s = await getStudentForReq(req);
       if (!s) { res.status(404).json({ error: "Student profile not found" }); return; }
       const profile = await prisma.schoolProfile.findFirst();
-      const [att, attempts, fees, classmates] = await Promise.all([
+      const [att, attempts, fees, classmates, readiness] = await Promise.all([
         prisma.attendance.findMany({ where: { studentId: s.id } }),
         prisma.examAttempt.findMany({ where: { studentId: s.id, isCompleted: true }, include: { exam: { include: { subject: true } } }, orderBy: { completedAt: "desc" } }),
         prisma.feePayment.findMany({ where: { studentId: s.id } }),
         s.classId ? prisma.student.count({ where: { classId: s.classId } }) : Promise.resolve(0),
+        prisma.gedReadiness.findMany({ where: { studentId: s.id } }),
       ]);
       const present = att.filter((a) => a.status === "PRESENT").length;
       const attendanceRate = att.length ? round1((present / att.length) * 100) : 0;
+      const readinessBySubject: Record<string, any> = {};
+      for (const r of readiness) readinessBySubject[r.subject] = { status: r.status };
       const graded = attempts.filter((a) => a.score != null);
       const examAverage = graded.length
         ? round1(graded.reduce((acc, a) => acc + ((a.score! / (a.exam.totalMarks || 100)) * 100), 0) / graded.length)
@@ -8859,6 +8882,10 @@ async function startServer() {
           score: a.exam.totalMarks ? `${a.score}/${a.exam.totalMarks}` : `${a.score}`,
           grade: letterGrade(round1(((a.score || 0) / (a.exam.totalMarks || 100)) * 100)),
           date: (a.completedAt || a.createdAt).toISOString().slice(0, 10),
+        })),
+        gedReadiness: GED_SUBJECTS.map((sub) => ({
+          subject: sub,
+          status: readinessBySubject[sub]?.status || "NOT_READY",
         })),
       });
     } catch (err) {
@@ -9427,6 +9454,34 @@ async function startServer() {
     const readinessBySubject: Record<string, any> = {};
     for (const r of readiness) readinessBySubject[r.subject] = { status: r.status, note: r.note, updatedAt: r.updatedAt };
 
+    // Aggregate exam performance per GED subject
+    const examAttempts = await prisma.examAttempt.findMany({
+      where: {
+        studentId,
+        isCompleted: true,
+        exam: { subject: { code: { in: [...GED_SUBJECTS] } } },
+      },
+      include: { exam: { include: { subject: true } } },
+    });
+
+    const examStatsBySubject: Record<string, { examAverage: number; attemptCount: number }> = {};
+    for (const sub of GED_SUBJECTS) {
+      examStatsBySubject[sub] = { examAverage: 0, attemptCount: 0 };
+    }
+
+    for (const attempt of examAttempts) {
+      const subjectCode = attempt.exam.subject?.code;
+      if (!subjectCode || !examStatsBySubject[subjectCode]) continue;
+      const stats = examStatsBySubject[subjectCode];
+      stats.attemptCount++;
+      if (attempt.score != null && attempt.exam.totalMarks) {
+        const pct = (attempt.score / attempt.exam.totalMarks) * 100;
+        stats.examAverage = stats.examAverage === 0
+          ? pct
+          : (stats.examAverage * (stats.attemptCount - 1) + pct) / stats.attemptCount;
+      }
+    }
+
     return {
       student: { id: student.id, name: fullName(student.user), code: student.studentCode, className: student.class?.name || "Unassigned" },
       subjects, termAverage,
@@ -9436,8 +9491,153 @@ async function startServer() {
       gedReadiness: GED_SUBJECTS.map((sub) => ({
         subject: sub, status: readinessBySubject[sub]?.status || "NOT_READY",
         note: readinessBySubject[sub]?.note || null, updatedAt: readinessBySubject[sub]?.updatedAt || null,
+        examAverage: Math.round(examStatsBySubject[sub].examAverage),
+        attemptCount: examStatsBySubject[sub].attemptCount,
       })),
     };
+  };
+
+  // ── Badges & Streaks System ─────────────────────────────────────────────────────
+
+  /**
+   * Calculate current attendance streak for a student
+   * Counts consecutive days with PRESENT, LATE, or EXCUSED status from today backward
+   */
+  const calculateAttendanceStreak = async (studentId: string): Promise<number> => {
+    const attendances = await prisma.attendance.findMany({
+      where: {
+        studentId,
+        status: { in: ['PRESENT', 'LATE', 'EXCUSED'] }
+      },
+      orderBy: { date: 'desc' }
+    });
+
+    if (attendances.length === 0) return 0;
+
+    let streak = 0;
+    let currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0);
+
+    for (const att of attendances) {
+      const attDate = new Date(att.date);
+      attDate.setHours(0, 0, 0, 0);
+
+      const diffDays = Math.floor((currentDate.getTime() - attDate.getTime()) / (1000 * 60 * 60 * 24));
+
+      if (diffDays === streak) {
+        streak++;
+        currentDate = attDate;
+      } else if (diffDays > streak) {
+        break;
+      }
+    }
+
+    return streak;
+  };
+
+  /**
+   * Check and award badges for a student based on their current achievements
+   * Called after relevant actions (attendance, homework, exam, GED readiness updates)
+   */
+  const checkAndAwardBadges = async (
+    studentId: string,
+    triggerType: 'ATTENDANCE' | 'EXAM' | 'HOMEWORK' | 'GED' | 'LOGIN'
+  ): Promise<void> => {
+    try {
+      // Fetch student data needed for badge checks
+      const [student, currentBadges] = await Promise.all([
+        prisma.student.findUnique({
+          where: { id: studentId },
+          include: {
+            attendances: { where: { status: { in: ['PRESENT', 'LATE', 'EXCUSED'] } } },
+            examAttempts: { where: { isCompleted: true }, include: { exam: true } },
+            homeworkSubmissions: { include: { homework: true } },
+            gedReadiness: {}
+          }
+        }),
+        prisma.studentBadge.findMany({ where: { studentId } })
+      ]);
+
+      if (!student) return;
+
+      const existingBadgeKeys = new Set(currentBadges.map(b => b.badgeKey));
+
+      // Calculate metrics
+      const currentStreak = await calculateAttendanceStreak(studentId);
+      const examCount = student.examAttempts.length;
+      const exam90PlusCount = student.examAttempts.filter(a => {
+        if (!a.score || !a.exam.totalMarks) return false;
+        const pct = (a.score / a.exam.totalMarks) * 100;
+        return pct >= 90;
+      }).length;
+      const homeworkCount = student.homeworkSubmissions.length;
+      const onTimeHomeworkCount = student.homeworkSubmissions.filter(hs => {
+        return hs.submittedAt <= new Date(hs.homework.dueDate);
+      }).length;
+      const gedPassedCount = student.gedReadiness.filter(r => r.status === 'PASSED').length;
+      const gedReadyCount = student.gedReadiness.filter(r => r.status === 'READY' || r.status === 'PASSED').length;
+
+      // Build badge context
+      const badgeContext = {
+        studentId,
+        attendanceCount: student.attendances.length,
+        currentStreak,
+        examCount,
+        exam90PlusCount,
+        homeworkCount,
+        onTimeHomeworkCount,
+        gedSubjectsPassed: gedPassedCount,
+        gedSubjectsReady: gedReadyCount,
+      };
+
+      // Check each badge definition
+      for (const [key, badge] of Object.entries(BADGE_CATALOG)) {
+        // Skip if already at max level
+        if (existingBadgeKeys.has(key)) {
+          const existing = currentBadges.find(b => b.badgeKey === key);
+          if (existing && badge.levels && existing.level >= badge.levels.length) {
+            continue;
+          }
+        }
+
+        // Run check function
+        const result = badge.checkFn(badgeContext);
+        const progress = typeof result === 'boolean' ? (result ? 1 : 0) : result;
+
+        // Determine level
+        let level = 1;
+        if (badge.levels) {
+          level = getBadgeLevel(badge, progress);
+          if (level === 0) continue; // Doesn't qualify for any level
+        }
+
+        // Award or update badge
+        if (existingBadgeKeys.has(key)) {
+          await prisma.studentBadge.update({
+            where: { id: currentBadges.find(b => b.badgeKey === key)!.id },
+            data: {
+              level,
+              currentCount: progress,
+              targetCount: badge.levels ? badge.levels[level - 1] : null,
+              metadata: { triggerType, lastChecked: new Date().toISOString() }
+            }
+          });
+        } else {
+          await prisma.studentBadge.create({
+            data: {
+              studentId,
+              badgeKey: key,
+              level,
+              currentCount: progress,
+              targetCount: badge.levels ? badge.levels[level - 1] : null,
+              metadata: { triggerType, firstEarnedAt: new Date().toISOString() }
+            }
+          });
+        }
+      }
+    } catch (err) {
+      logger.error("Error checking and awarding badges:", err);
+    }
   };
 
   app.get("/api/gradebook/student/:studentId", authMiddleware, reportRole(["ADMIN", "TEACHER"]), async (req, res) => {
@@ -9461,6 +9661,42 @@ async function startServer() {
     } catch (err: any) {
       if (err?.code === "P2021" || err?.code === "P2022") { res.json(null); return; }
       logger.error("Error building own progress:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Badges & streaks for current student
+  app.get("/api/student/badges", authMiddleware, studentOnly, async (req, res) => {
+    try {
+      const s = await getStudentForReq(req);
+      if (!s) { res.status(404).json({ error: "Student profile not found" }); return; }
+
+      const [badges, currentStreak] = await Promise.all([
+        prisma.studentBadge.findMany({
+          where: { studentId: s.id },
+          orderBy: { earnedAt: 'desc' }
+        }),
+        calculateAttendanceStreak(s.id)
+      ]);
+
+      const badgeDetails = badges.map(b => {
+        const def = BADGE_CATALOG[b.badgeKey];
+        return {
+          key: b.badgeKey,
+          name: def?.name || b.badgeKey,
+          description: def?.description || '',
+          icon: def?.icon || 'Award',
+          color: def?.color || '',
+          level: b.level,
+          currentCount: b.currentCount,
+          targetCount: b.targetCount,
+          earnedAt: b.earnedAt,
+        };
+      });
+
+      res.json({ badges: badgeDetails, currentStreak });
+    } catch (err) {
+      logger.error("Error fetching student badges:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
@@ -9508,6 +9744,12 @@ async function startServer() {
       await createAuditLog(jwtUser.userId, jwtUser.email, "STATUS_CHANGE", "GED_READINESS", `${studentId}:${subject}`,
         `GED ${subject} readiness: ${existing?.status || "NOT_READY"} → ${status}`,
         req.ip, req.headers["user-agent"] || null, "SUCCESS");
+
+      // Check badges for GED readiness change
+      checkAndAwardBadges(studentId, 'GED').catch(err =>
+        logger.error(`Error checking badges for student ${studentId}:`, err)
+      );
+
       res.json(record);
     } catch (err) {
       logger.error("Error updating GED readiness:", err);
@@ -11560,6 +11802,12 @@ async function startServer() {
       const sub = existing
         ? await hwSub().update({ where: { id: existing.id }, data })
         : await hwSub().create({ data: { ...data, homeworkId: homework.id, studentId: student.id } });
+
+      // Check badges for homework submission
+      checkAndAwardBadges(student.id, 'HOMEWORK').catch(err =>
+        logger.error(`Error checking badges for student ${student.id}:`, err)
+      );
+
       res.status(existing ? 200 : 201).json(sub);
     } catch (err) {
       logger.error("Error submitting homework:", err);

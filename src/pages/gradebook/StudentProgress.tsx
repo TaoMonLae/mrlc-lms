@@ -5,21 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { apiGet } from '../../lib/api';
+import GedStageTracker, { type GedReadinessItem } from '@/components/ged/GedStageTracker';
 
 const CATEGORY_LABELS: Record<string, string> = {
   ASSIGNMENT: 'Assignment', QUIZ: 'Quiz', MIDTERM: 'Midterm', FINAL: 'Final', MOCK_GED: 'Mock GED',
-};
-const SUBJECT_LABELS: Record<string, string> = { RLA: 'RLA', MATH: 'Math', SCIENCE: 'Science', SOCIAL_STUDIES: 'Social Studies' };
-const STATUS_LABELS: Record<string, string> = {
-  NOT_READY: 'Not Ready', DEVELOPING: 'Developing', NEAR_READY: 'Near Ready', READY: 'Ready', TEST_SCHEDULED: 'Test Scheduled', PASSED: 'Passed',
-};
-const STATUS_STYLES: Record<string, string> = {
-  NOT_READY: 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-200',
-  DEVELOPING: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
-  NEAR_READY: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-  READY: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
-  TEST_SCHEDULED: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
-  PASSED: 'bg-emerald-600 text-white',
 };
 const letterColor = (l: string | null) => {
   if (!l) return 'bg-slate-100 text-slate-500';
@@ -37,7 +26,7 @@ interface Progress {
   warnings: string[];
   trend: { date: string; title: string; category: string; percent: number }[];
   comments: { item: string; subject: string; comment: string }[];
-  gedReadiness: { subject: string; status: string; note: string | null }[];
+  gedReadiness: GedReadinessItem[];
 }
 
 export default function StudentProgress() {
@@ -118,14 +107,7 @@ export default function StudentProgress() {
       {/* GED readiness */}
       <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-6">
         <h3 className="font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2 text-sm"><Target className="h-4 w-4 text-aubergine-600" /> GED Readiness</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {data.gedReadiness.map((g) => (
-            <div key={g.subject} className="rounded-xl border border-slate-100 dark:border-surface-raised p-4 text-center">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">{SUBJECT_LABELS[g.subject] || g.subject}</p>
-              <span className={`inline-block px-2.5 py-1 rounded-md text-xs font-semibold ${STATUS_STYLES[g.status] || ''}`}>{STATUS_LABELS[g.status] || g.status}</span>
-            </div>
-          ))}
-        </div>
+        <GedStageTracker readiness={data.gedReadiness} showStats={true} />
       </div>
 
       {/* Subject averages */}

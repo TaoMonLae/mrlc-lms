@@ -23,6 +23,8 @@ import { useEffect, useState } from 'react';
 import { useSettings } from '../../providers/SettingsProvider';
 import { formatMoney } from '../../lib/locale';
 import { apiGet } from '../../lib/api';
+import GedStageTracker, { type GedReadinessItem } from '@/components/ged/GedStageTracker';
+import BadgeShelf from '@/components/badges/BadgeShelf';
 
 function sanitizeText(text: string): string {
   if (!text) return text;
@@ -39,6 +41,7 @@ interface StudentDashData {
   stats: { attendanceRate: number; examAverage: number; feeBalance: number; classSize: number };
   upcomingExams: { id: string | number; subject: string; date: string; time: string; type: string }[];
   recentResults: { id: string | number; subject: string; score: string; grade: string; date: string }[];
+  gedReadiness?: GedReadinessItem[];
 }
 
 const EMPTY_DASH: StudentDashData = {
@@ -151,6 +154,9 @@ export default function StudentDashboard() {
         ))}
       </div>
 
+      {/* Badge Shelf */}
+      <BadgeShelf />
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: Exams & Results */}
         <div className="lg:col-span-2 space-y-8">
@@ -233,6 +239,20 @@ export default function StudentDashboard() {
 
         {/* Right Column: Announcements & Library */}
         <div className="space-y-8">
+          {/* GED Readiness */}
+          {dash.gedReadiness && dash.gedReadiness.length > 0 && (
+            <Card className="border-slate-200 dark:border-surface-raised shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <GraduationCap className="h-4 w-4 text-aubergine-500" /> GED Readiness
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <GedStageTracker readiness={dash.gedReadiness} compact showStats={false} />
+              </CardContent>
+            </Card>
+          )}
+
           {/* Announcements */}
           <Card className="border-slate-200 dark:border-surface-raised shadow-sm">
             <CardHeader className="pb-4">
