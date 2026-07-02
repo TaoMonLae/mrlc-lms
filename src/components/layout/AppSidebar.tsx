@@ -15,7 +15,7 @@ import {
   SidebarRail,
   useSidebar
 } from "@/components/ui/sidebar";
-import { NAVIGATION_ITEMS, ADMIN_NAV, isNavGroup } from "@/src/lib/navigation";
+import { NAVIGATION_ITEMS, ROLE_NAV, isNavGroup } from "@/src/lib/navigation";
 import { GraduationCap, LogOut, User, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -72,6 +72,9 @@ export function AppSidebar() {
     return item.roles.includes(user.role);
   });
 
+  // Grouped sidebar for roles that have one (admin/teacher/student).
+  const groupedNav = user ? ROLE_NAV[user.role] : undefined;
+
   return (
     <Sidebar collapsible="icon" className="bg-canvas text-white/80 border-r border-white/10 [&>[data-slot=sidebar-inner]]:bg-canvas [&>[data-slot=sidebar-inner]]:text-white/80" aria-label="Main application navigation">
       <SidebarHeader className="h-16 flex items-center px-6 border-b border-white/10 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
@@ -94,9 +97,9 @@ export function AppSidebar() {
           <SidebarGroupLabel className="group-data-[collapsible=icon]:opacity-0 text-white/50 text-[10px] uppercase font-bold tracking-widest px-3 mb-2">Main Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
-              {isAdmin && (sidebarState === 'expanded' || isMobile) ? (
-                // ── Grouped admin navigation ─────────────────────────────
-                ADMIN_NAV.map((entry) => {
+              {groupedNav && (sidebarState === 'expanded' || isMobile) ? (
+                // ── Grouped navigation (admin / teacher / student) ────────
+                groupedNav.map((entry) => {
                   if (!isNavGroup(entry)) {
                     return (
                       <SidebarMenuItem key={entry.title}>
@@ -150,9 +153,9 @@ export function AppSidebar() {
                   );
                 })
               ) : (
-                // ── Flat navigation (teacher/student/staff, or icon-collapsed admin) ──
-                (isAdmin
-                  ? ADMIN_NAV.flatMap((e) => (isNavGroup(e) ? e.items : [e]))
+                // ── Flat navigation (other staff roles, or icon-collapsed sidebar) ──
+                (groupedNav
+                  ? groupedNav.flatMap((e) => (isNavGroup(e) ? e.items : [e]))
                   : filteredNavItems
                 ).map((item) => (
                   <SidebarMenuItem key={item.url + item.title}>

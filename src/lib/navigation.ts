@@ -126,6 +126,85 @@ export const ADMIN_NAV: AdminNavEntry[] = [
   },
 ];
 
+/** Grouped sidebar for the TEACHER role. */
+export const TEACHER_NAV: AdminNavEntry[] = [
+  { title: "Dashboard", url: "/teacher/dashboard", icon: LayoutDashboard },
+  { title: "Chat", url: "/chat", icon: MessageSquare },
+  { title: "Social Space", url: "/social", icon: Sparkles },
+  { title: "Announcements", url: "/announcements", icon: Megaphone },
+  { title: "My Timetable", url: "/teacher/timetable", icon: CalendarDays },
+  {
+    label: "My Teaching",
+    icon: BookOpen,
+    items: [
+      { title: "My Classes", url: "/teacher/classes", icon: BookOpen },
+      { title: "Lesson Planner", url: "/teacher/planner", icon: ClipboardList },
+      { title: "Exams", url: "/teacher/exams", icon: FileCheck },
+      { title: "Gradebook", url: "/gradebook", icon: ClipboardList },
+      { title: "GED Readiness", url: "/gradebook/ged-readiness", icon: GraduationCap },
+      { title: "Class Performance", url: "/gradebook/reports", icon: BarChart3 },
+      { title: "Documents", url: "/documents", icon: FileText },
+    ],
+  },
+  {
+    label: "Attendance",
+    icon: UserCheck,
+    items: [
+      { title: "Take Attendance", url: "/teacher/attendance", icon: UserCheck },
+      { title: "Bulk Attendance", url: "/teacher/bulk-attendance", icon: CalendarDays },
+      { title: "Session Reports", url: "/attendance/session-reports", icon: CalendarCheck },
+      { title: "Analytics", url: "/analytics/attendance", icon: BarChart3 },
+    ],
+  },
+  {
+    label: "Resources",
+    icon: Library,
+    items: [
+      { title: "Library", url: "/teacher/library", icon: Library },
+      { title: "E-Library", url: "/elibrary", icon: Tablet },
+      { title: "Video Lessons", url: "/teacher/videos", icon: Video },
+    ],
+  },
+  { title: "Reports", url: "/teacher/reports", icon: BarChart3 },
+];
+
+/** Grouped sidebar for the STUDENT role. */
+export const STUDENT_NAV: AdminNavEntry[] = [
+  { title: "Dashboard", url: "/student/dashboard", icon: LayoutDashboard },
+  { title: "Chat", url: "/chat", icon: MessageSquare },
+  { title: "Social Space", url: "/social", icon: Sparkles },
+  { title: "Announcements", url: "/announcements", icon: Megaphone },
+  { title: "My Timetable", url: "/timetable", icon: CalendarDays },
+  {
+    label: "My Learning",
+    icon: GraduationCap,
+    items: [
+      { title: "Exams", url: "/student/exams", icon: FileCheck },
+      { title: "My Results", url: "/student/results", icon: GraduationCap },
+      { title: "My Progress", url: "/student/grades", icon: ClipboardList },
+      { title: "My Attendance", url: "/student/attendance", icon: CalendarCheck },
+      { title: "My Documents", url: "/student/documents", icon: FileText },
+      { title: "My Fees", url: "/student/fees", icon: Wallet },
+    ],
+  },
+  {
+    label: "Resources",
+    icon: Library,
+    items: [
+      { title: "Library", url: "/student/library", icon: Library },
+      { title: "E-Library", url: "/elibrary", icon: Tablet },
+      { title: "Video Lessons", url: "/student/videos", icon: Video },
+    ],
+  },
+];
+
+/** Roles with a grouped sidebar; everyone else gets the flat list. */
+export const ROLE_NAV: Partial<Record<UserRole, AdminNavEntry[]>> = {
+  ADMIN: ADMIN_NAV,
+  TEACHER: TEACHER_NAV,
+  STUDENT: STUDENT_NAV,
+};
+
 export const NAVIGATION_ITEMS: NavItem[] = [
   // Admin / General Navigation
   {
