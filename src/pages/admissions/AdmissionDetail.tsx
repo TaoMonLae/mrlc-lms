@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { apiGet, apiSend, authHeaders } from '../../lib/api';
+import { localToday } from '../../lib/dates';
 
 interface AdmissionDocument {
   id: string;
@@ -86,7 +87,7 @@ export default function AdmissionDetail() {
   const [decision, setDecision] = useState({ status: 'APPROVED', decisionNotes: '' });
   const [documentForm, setDocumentForm] = useState({ title: '', documentType: 'OTHER', checklistStatus: 'RECEIVED', notes: '' });
   const [documentFile, setDocumentFile] = useState<File | null>(null);
-  const [conversion, setConversion] = useState({ studentCode: '', classId: '', enrollmentDate: new Date().toISOString().slice(0, 10), password: '' });
+  const [conversion, setConversion] = useState({ studentCode: '', classId: '', enrollmentDate: localToday(), password: '' });
 
   const loadApplication = async () => {
     if (!id) return;

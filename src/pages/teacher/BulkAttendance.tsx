@@ -50,7 +50,11 @@ export default function BulkAttendance() {
   const [sessions, setSessions] = useState<BulkSessionData[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(() => {
+    // Local calendar date, not the UTC day (toISOString shifts the date near midnight).
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  });
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
@@ -60,7 +64,8 @@ export default function BulkAttendance() {
   const loadSessions = async () => {
     setLoading(true);
     try {
-      const date = new Date(selectedDate);
+      // Parse as local time so getDay() returns the weekday of the picked date.
+      const date = new Date(`${selectedDate}T00:00:00`);
       const dayNames = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
       const dayOfWeek = dayNames[date.getDay()];
 

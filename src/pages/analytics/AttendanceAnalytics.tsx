@@ -19,6 +19,7 @@ import {
   AlertCircle,
   BarChart3
 } from "lucide-react";
+import { localToday } from '../../lib/dates';
 
 interface SubjectStats {
   subjectId: string;
@@ -61,8 +62,8 @@ interface AnalyticsData {
 export default function AttendanceAnalytics() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(false);
-  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
-  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [startDate, setStartDate] = useState(localToday());
+  const [endDate, setEndDate] = useState(localToday());
   const [groupBy, setGroupBy] = useState<"subject" | "teacher" | "both">("both");
   const [userRole, setUserRole] = useState<"ADMIN" | "TEACHER">("TEACHER");
 

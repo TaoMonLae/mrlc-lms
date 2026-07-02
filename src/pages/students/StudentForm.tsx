@@ -14,6 +14,7 @@ import {
 import { Image as ImageIcon, UploadCloud } from 'lucide-react';
 import { toast } from 'sonner';
 import { ProfilePhotoUploader } from '@/src/components/profile/ProfilePhotoUploader';
+import { localToday } from '../../lib/dates';
 
 interface StudentFormProps {
   initialData?: any;
@@ -385,7 +386,7 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
           </div>
           <div className="space-y-2">
             <Label htmlFor="enrollmentDate">Enrollment Date <span className="text-red-500">*</span></Label>
-            <Input id="enrollmentDate" type="date" defaultValue={getFormattedDate(initialData?.enrollmentDate) || new Date().toISOString().split('T')[0]} required />
+            <Input id="enrollmentDate" type="date" defaultValue={getFormattedDate(initialData?.enrollmentDate) || localToday()} required />
           </div>
           <div className="space-y-2">
             <Label>Student Status</Label>

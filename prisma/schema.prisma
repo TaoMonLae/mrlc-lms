@@ -265,7 +265,9 @@ model Class {
   academicYear   String
   room           String?
   capacity       Int?
-  
+  description    String?
+  status         String   @default("ACTIVE")
+
   students       Student[]
   teachers       ClassTeacher[]
   exams          Exam[]

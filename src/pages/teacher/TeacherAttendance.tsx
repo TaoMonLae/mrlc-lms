@@ -45,6 +45,12 @@ interface TimetableSession {
 
 type AttendanceMode = 'daily' | 'session';
 
+/** Today's date in the user's local timezone as YYYY-MM-DD (toISOString would give the UTC day). */
+const localToday = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 export default function TeacherAttendance() {
   const [mode, setMode] = useState<AttendanceMode>('daily');
   const [classOptions, setClassOptions] = useState<{ value: string; label: string }[]>([]);
@@ -57,7 +63,7 @@ export default function TeacherAttendance() {
   // Session attendance state
   const [sessions, setSessions] = useState<TimetableSession[]>([]);
   const [selectedSession, setSelectedSession] = useState("");
-  const [sessionDate, setSessionDate] = useState(new Date().toISOString().split('T')[0]);
+  const [sessionDate, setSessionDate] = useState(localToday());
 
   useEffect(() => {
     apiGet<{ id: string; name: string }[]>('/api/teacher/classes')
@@ -85,7 +91,9 @@ export default function TeacherAttendance() {
   useEffect(() => {
     if (mode !== 'session') return;
 
-    const date = new Date(sessionDate);
+    // Parse as local time — new Date('YYYY-MM-DD') is UTC midnight, which is the
+    // previous local day in timezones west of UTC, giving the wrong weekday.
+    const date = new Date(`${sessionDate}T00:00:00`);
     const dayNames = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
     const dayOfWeek = dayNames[date.getDay()];
 
@@ -147,7 +155,7 @@ export default function TeacherAttendance() {
 
       const payload: any = {
         classId: classIdForApi,
-        date: mode === 'session' ? sessionDate : new Date().toISOString(),
+        date: mode === 'session' ? sessionDate : localToday(),
         records,
       };
 

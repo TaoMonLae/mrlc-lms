@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { apiGet, apiSend } from '../../lib/api';
 import { usePermissions } from '../../lib/permissions';
+import { localToday } from '../../lib/dates';
 
 const CATEGORY_LABELS: Record<string, string> = {
   ASSIGNMENT: 'Assignment',
@@ -48,7 +49,7 @@ export default function GradebookPage() {
   const [loading, setLoading] = useState(false);
 
   // New grade item form
-  const [newItem, setNewItem] = useState({ title: '', category: 'ASSIGNMENT', maxMarks: '100', date: new Date().toISOString().slice(0, 10) });
+  const [newItem, setNewItem] = useState({ title: '', category: 'ASSIGNMENT', maxMarks: '100', date: localToday() });
   const [creating, setCreating] = useState(false);
 
   // Bulk entry
@@ -114,7 +115,7 @@ export default function GradebookPage() {
         classId, subjectId: subjectId !== 'all' ? subjectId : null,
       });
       toast.success('Grade item added');
-      setNewItem({ title: '', category: 'ASSIGNMENT', maxMarks: '100', date: new Date().toISOString().slice(0, 10) });
+      setNewItem({ title: '', category: 'ASSIGNMENT', maxMarks: '100', date: localToday() });
       loadGradebook();
     } catch (e: any) {
       toast.error(e.message || 'Failed to add grade item');

@@ -371,7 +371,7 @@ export default function ChatPage() {
                   return (
                   <div key={m.id} className={`group flex ${m.mine ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[78%] text-sm ${sticker ? '' : `rounded-2xl px-3 py-2 ${m.mine ? 'bg-aubergine-600 text-white' : 'bg-slate-100 dark:bg-surface-raised text-slate-800 dark:text-slate-200'}`}`}>
-                      {!m.mine && !sticker && <p className="mb-0.5 text-[10px] font-bold uppercase tracking-wide opacity-70">{m.sender.name}</p>}
+                      {!m.mine && <p className={`mb-0.5 text-[10px] font-bold uppercase tracking-wide ${sticker ? 'text-slate-500 dark:text-slate-400' : 'opacity-70'}`}>{m.sender.name}</p>}
                       {m.attachmentUrl && <img src={m.attachmentUrl} alt={sticker ? 'sticker' : 'attachment'} className={sticker ? 'h-28 w-28' : 'mb-1 max-h-60 rounded-lg'} />}
                       {m.expiresAt && (
                         <div className={`mb-1 flex items-center gap-2 text-[10px] ${m.mine ? 'text-white/80' : 'text-slate-500'}`}>

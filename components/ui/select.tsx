@@ -4,7 +4,43 @@ import { Select as SelectPrimitive } from "@base-ui/react/select"
 import { cn } from "@/lib/utils"
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react"
 
-const Select = SelectPrimitive.Root
+/**
+ * Recursively collect `SelectItem` value → label pairs from the React tree so
+ * the trigger's `SelectValue` can render the item's label (e.g. a class or
+ * subject name) instead of its raw value (e.g. a UUID).
+ */
+function collectItemLabels(
+  children: React.ReactNode,
+  map: Map<any, React.ReactNode>
+) {
+  React.Children.forEach(children, (child) => {
+    if (!React.isValidElement(child)) return
+    const props = child.props as any
+    if (child.type === SelectItem) {
+      if (props.value !== undefined && !map.has(props.value)) {
+        map.set(props.value, props.children ?? String(props.value))
+      }
+      return
+    }
+    if (props?.children) collectItemLabels(props.children, map)
+  })
+}
+
+function Select({ items, children, ...props }: SelectPrimitive.Root.Props<any, any>) {
+  const derivedItems = React.useMemo(() => {
+    if (items) return items
+    const map = new Map<any, React.ReactNode>()
+    collectItemLabels(children, map)
+    if (map.size === 0) return undefined
+    return Array.from(map, ([value, label]) => ({ value, label }))
+  }, [items, children])
+
+  return (
+    <SelectPrimitive.Root items={derivedItems} {...props}>
+      {children}
+    </SelectPrimitive.Root>
+  )
+}
 
 function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
   return (

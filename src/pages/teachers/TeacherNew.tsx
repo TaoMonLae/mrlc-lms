@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { localToday } from '../../lib/dates';
 
 const teacherSchema = z.object({
   fullName: z.string().min(2, 'Full name must be at least 2 characters'),
@@ -59,7 +60,7 @@ export default function TeacherNew() {
     defaultValues: {
       gender: 'MALE',
       employmentType: 'FULL_TIME',
-      joinedDate: new Date().toISOString().split('T')[0]
+      joinedDate: localToday()
     }
   });
 

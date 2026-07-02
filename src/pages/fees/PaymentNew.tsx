@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { useSettings } from '../../providers/SettingsProvider';
+import { localToday } from '../../lib/dates';
 
 type StudentOption = {
   id: string;
@@ -86,7 +87,7 @@ export default function PaymentNew() {
     defaultValues: {
       studentId: initialStudentId,
       paymentMethod: 'CASH',
-      paymentDate: new Date().toISOString().split('T')[0],
+      paymentDate: localToday(),
       receiptNumber: getNextReceiptNumber(),
       amount: 0,
       paymentMonth: currentMonth.toString(),
@@ -226,7 +227,7 @@ export default function PaymentNew() {
 
             <div className="space-y-2">
               <Label htmlFor="paymentDate">Payment Date *</Label>
-              <Input id="paymentDate" type="date" {...register('paymentDate')} max={new Date().toISOString().split('T')[0]} />
+              <Input id="paymentDate" type="date" {...register('paymentDate')} max={localToday()} />
               {errors.paymentDate && <p className="text-xs text-red-500 font-medium">{errors.paymentDate.message}</p>}
             </div>
 

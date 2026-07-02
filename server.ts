@@ -13,7 +13,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, type Role } from "@prisma/client";
 import dotenv from "dotenv";
 import { spawn } from "child_process";
 import { registerExamPhase2Routes } from "./examPhase2";
@@ -627,7 +627,7 @@ const schemas = {
   }),
   classCreate: z.object({
     name: reqStr, level: reqStr, academicYear: reqStr,
-    description: optStr, room: optStr, capacity: optNum,
+    description: optStr, room: optStr, capacity: optNum, status: optStr,
   }),
   teacherCreate: z.object({
     firstName: reqStr, lastName: reqStr, email,
@@ -2012,6 +2012,58 @@ async function startServer() {
     }
   });
 
+  // Fix teachers with NULL userId by matching email to user accounts
+  app.post("/api/admin/fix-teacher-userids", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    try {
+      const teachersWithoutUser = await prisma.teacher.findMany({
+        where: { userId: null },
+        include: { user: true },
+      });
+
+      if (teachersWithoutUser.length === 0) {
+        return res.json({ message: "All teachers have userIds set", fixed: 0 });
+      }
+
+      let fixed = 0;
+      const results = [];
+
+      for (const teacher of teachersWithoutUser) {
+        // Try to find a user by matching the teacherCode to a pattern, or by email if user exists
+        let user = await prisma.user.findFirst({
+          where: {
+            role: "TEACHER",
+            OR: [
+              { email: { contains: teacher.teacherCode.toLowerCase() } },
+              { firstName: { equals: teacher.teacherCode, mode: "insensitive" } },
+            ],
+          },
+        });
+
+        if (user) {
+          await prisma.teacher.update({
+            where: { id: teacher.id },
+            data: { userId: user.id },
+          });
+          fixed++;
+          results.push({ teacherId: teacher.id, teacherCode: teacher.teacherCode, linkedToUser: user.email });
+          logger.info(`Fixed teacher ${teacher.teacherCode}: linked to user ${user.email}`);
+        } else {
+          results.push({ teacherId: teacher.id, teacherCode: teacher.teacherCode, error: "No matching user found" });
+        }
+      }
+
+      res.json({
+        message: `Fixed ${fixed} out of ${teachersWithoutUser.length} teachers`,
+        fixed,
+        total: teachersWithoutUser.length,
+        results,
+      });
+    } catch (err) {
+      logger.error("Error fixing teacher userIds:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
   app.get("/api/subjects", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
@@ -2304,7 +2356,10 @@ async function startServer() {
       return;
     }
 
-    const startOfDay = new Date(attendanceDate.setUTCHours(0, 0, 0, 0));
+    // Normalize to UTC midnight of the submitted calendar date (must match the
+    // GET /api/attendance query key; mutating the locally-truncated date here
+    // shifted records to the previous UTC day for timezones east of UTC).
+    const startOfDay = new Date(new Date(date).setUTCHours(0, 0, 0, 0));
 
     // ── Session-based attendance ───────────────────────────────────────────────
     if (timetableEntryId) {
@@ -2546,7 +2601,9 @@ async function startServer() {
       return;
     }
 
-    const startOfDay = new Date(attendanceDate.setUTCHours(0, 0, 0, 0));
+    // Normalize to UTC midnight of the submitted calendar date (see note in
+    // POST /api/attendance — keeps the storage key consistent with reads).
+    const startOfDay = new Date(new Date(date).setUTCHours(0, 0, 0, 0));
 
     // Get teacher record
     const teacherRecord = await prisma.teacher.findUnique({
@@ -4910,6 +4967,12 @@ async function startServer() {
   };
 
   app.get("/api/operations/overview", authMiddleware, async (_req, res) => {
+    // Admissions applications, communication logs, etc. contain PII — staff only.
+    const jwtUser = (_req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "STAFF") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
     try {
       const db = prisma as any;
       const [admissions, calendarEvents, assignments, certificates, communications, inventory] = await Promise.all([
@@ -5123,11 +5186,13 @@ async function startServer() {
           include: { student: { include: { user: true, class: true } } }
         });
         res.json(fees.map((fee) => feeReceiptPayload(fee, fallbackCurrency)));
-      } else {
+      } else if (["ADMIN", "ACCOUNTANT", "STAFF"].includes(jwtUser.role)) {
         const fees = await prisma.feePayment.findMany({
           include: { student: { include: { user: true, class: true } } }
         });
         res.json(fees.map((fee) => feeReceiptPayload(fee, fallbackCurrency)));
+      } else {
+        res.status(403).json({ error: "Forbidden" });
       }
     } catch (err) {
       logger.error("Error fetching fees:", err);
@@ -5154,6 +5219,9 @@ async function startServer() {
           res.status(403).json({ error: "Forbidden" });
           return;
         }
+      } else if (!["ADMIN", "ACCOUNTANT", "STAFF"].includes(jwtUser.role)) {
+        res.status(403).json({ error: "Forbidden" });
+        return;
       }
       res.json(feeReceiptPayload(fee, profile?.currency || "MYR"));
     } catch (err) {
@@ -5946,6 +6014,8 @@ async function startServer() {
           subject: true,
           questions: isStudent
             ? {
+                // No correctAnswer and no explanation: explanations often reveal
+                // the answer and are released post-exam via the result policy.
                 select: {
                   id: true,
                   text: true,
@@ -5953,7 +6023,6 @@ async function startServer() {
                   points: true,
                   options: true,
                   passageText: true,
-                  explanation: true,
                   imageUrl: true,
                   examId: true,
                   createdAt: true,
@@ -6278,162 +6347,12 @@ async function startServer() {
     }
   });
 
-  // DEPRECATED: the unified delivery path is the Phase 2 lifecycle
+  // RETIRED: the unified delivery path is the Phase 2 lifecycle
   // (POST /api/exam2/:id/start → /api/attempts/:id/save → /submit). This legacy
-  // one-shot submit is retained only for backward compatibility with any old
-  // client/bookmark and is no longer used by the app UI.
-  app.post("/api/exams/:id/submit", authMiddleware, validate(schemas.examSubmit), async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    if (jwtUser.role !== "STUDENT") {
-      res.status(403).json({ error: "Only students can submit exam attempts" });
-      return;
-    }
-
-    const { id } = req.params;
-    const answers = (req.body.answers || {}) as Record<string, string>;
-    const integrityEvents = Array.isArray(req.body.integrityEvents) ? req.body.integrityEvents : [];
-    const securityWarnings = Number(req.body.securityWarnings || 0);
-    const autoSubmitted = Boolean(req.body.autoSubmitted);
-
-    try {
-      const student = await prisma.student.findUnique({
-        where: { userId: jwtUser.userId },
-        include: { user: true },
-      });
-      if (!student || !student.classId) {
-        res.status(403).json({ error: "Student profile is not assigned to a class" });
-        return;
-      }
-
-      const exam = await prisma.exam.findUnique({
-        where: { id },
-        include: { questions: true, class: true, subject: true },
-      });
-      if (!exam || exam.classId !== student.classId) {
-        res.status(404).json({ error: "Exam not found" });
-        return;
-      }
-      if (exam.status !== "PUBLISHED") {
-        res.status(403).json({ error: "This exam is not open for submissions" });
-        return;
-      }
-
-      const existingCompleted = await prisma.examAttempt.findFirst({
-        where: { studentId: student.id, examId: id },
-        orderBy: { attemptNumber: "desc" },
-      });
-      if (existingCompleted?.isCompleted) {
-        res.status(409).json({ error: "This exam has already been submitted" });
-        return;
-      }
-
-      const result = await prisma.$transaction(async (tx) => {
-        const attempt = existingCompleted
-          ? await tx.examAttempt.update({
-              where: { id: existingCompleted.id },
-              data: {
-                isCompleted: false,
-                securityWarnings,
-                autoSubmitted,
-                integrityEvents,
-              },
-            })
-          : await tx.examAttempt.create({
-              data: {
-                studentId: student.id,
-                examId: id,
-                isCompleted: false,
-                securityWarnings,
-                autoSubmitted,
-                integrityEvents,
-              },
-            });
-
-        await tx.examAnswer.deleteMany({ where: { attemptId: attempt.id } });
-
-        let score = 0;
-        let autoGradedCount = 0;
-        let manualGradingCount = 0;
-        let answeredCount = 0;
-
-        for (const question of exam.questions) {
-          const answerText = answers[question.id]?.trim();
-          if (answerText) answeredCount += 1;
-
-          let isCorrect: boolean | null = null;
-          let pointsAwarded: number | null = null;
-          const options = Array.isArray(question.options) ? question.options : [];
-          const hasAutoAnswer = question.correctAnswer != null && options.length > 0;
-
-          if (answerText && hasAutoAnswer) {
-            const correctAnswer = String(question.correctAnswer);
-            const optionIndex = Number(correctAnswer);
-            const expectedOption = Number.isInteger(optionIndex)
-              ? String(options[optionIndex] ?? "")
-              : correctAnswer;
-            isCorrect = answerText === correctAnswer || answerText === expectedOption;
-            pointsAwarded = isCorrect ? Number(question.points || 0) : 0;
-            score += pointsAwarded;
-            autoGradedCount += 1;
-          } else if (answerText) {
-            manualGradingCount += 1;
-          }
-
-          await tx.examAnswer.create({
-            data: {
-              attemptId: attempt.id,
-              questionId: question.id,
-              answerText: answerText || null,
-              isCorrect,
-              pointsAwarded,
-            },
-          });
-        }
-
-        const completedAttempt = await tx.examAttempt.update({
-          where: { id: attempt.id },
-          data: {
-            score,
-            isCompleted: true,
-            completedAt: new Date(),
-            securityWarnings,
-            autoSubmitted,
-            integrityEvents,
-          },
-        });
-
-        return {
-          attemptId: completedAttempt.id,
-          score,
-          totalMarks: exam.totalMarks,
-          answeredCount,
-          questionCount: exam.questions.length,
-          autoGradedCount,
-          manualGradingCount,
-        };
-      });
-
-      await createAuditLog(
-        jwtUser.userId,
-        jwtUser.email,
-        "SUBMIT",
-        "EXAM",
-        id,
-        `Student ${student.studentCode} submitted '${exam.title}' with ${securityWarnings} security warning(s) and ${integrityEvents.length} integrity event(s).`,
-        req.ip,
-        req.headers["user-agent"] || null,
-        autoSubmitted || securityWarnings > 0 ? "WARNING" : "SUCCESS"
-      );
-
-      res.json({
-        ...result,
-        securityWarnings,
-        autoSubmitted,
-      });
-    } catch (err) {
-      logger.error("Error submitting exam:", err);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
+  // one-shot submit bypassed the attempt/session/timing safeguards and is no
+  // longer used by the app UI, so it now returns 410 Gone.
+  app.post("/api/exams/:id/submit", authMiddleware, (_req, res) => {
+    res.status(410).json({ error: "This endpoint has been retired. Use POST /api/exam2/:examId/start and POST /api/attempts/:attemptId/submit." });
   });
 
   app.get("/api/exams/:id/results", authMiddleware, async (req, res) => {
@@ -6757,13 +6676,19 @@ async function startServer() {
   // ── Classes (create) ────────────────────────────────────────────────────────
   app.post("/api/classes", authMiddleware, requireRole("ADMIN"), validate(schemas.classCreate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
-    const { name, level, academicYear, description, room, capacity } = req.body;
+    const { name, level, academicYear, description, room, capacity, status } = req.body;
     if (!name || !level || !academicYear) {
       res.status(400).json({ error: "name, level, and academicYear are required" }); return;
     }
     try {
       const cls = await prisma.class.create({
-        data: { name, level, academicYear, room: room || null, capacity: capacity ? Number(capacity) : null },
+        data: {
+          name, level, academicYear,
+          room: room || null,
+          capacity: capacity ? Number(capacity) : null,
+          description: description || null,
+          status: status === "ARCHIVED" ? "ARCHIVED" : "ACTIVE",
+        },
       });
       await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "CLASS", cls.id,
         `Class '${name}' (${level}) created.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
@@ -6777,7 +6702,7 @@ async function startServer() {
   app.put("/api/classes/:id", authMiddleware, requireRole("ADMIN"), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { id } = req.params;
-    const { name, level, academicYear, room, capacity } = req.body || {};
+    const { name, level, academicYear, room, capacity, description, status } = req.body || {};
     try {
       const cls = await prisma.class.update({
         where: { id },
@@ -6787,6 +6712,8 @@ async function startServer() {
           ...(academicYear !== undefined ? { academicYear } : {}),
           ...(room !== undefined ? { room: room || null } : {}),
           ...(capacity !== undefined ? { capacity: capacity ? Number(capacity) : null } : {}),
+          ...(description !== undefined ? { description: description || null } : {}),
+          ...(status !== undefined ? { status: status === "ARCHIVED" ? "ARCHIVED" : "ACTIVE" } : {}),
         },
       });
       await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "CLASS", id,
@@ -8444,6 +8371,8 @@ async function startServer() {
       include: { classes: true },
     });
     if (teacher) return teacher.classes.map((ct) => ct.classId);
+    // Log if teacher not found - likely userId is NULL or mismatched
+    logger.warn(`teacherClassIds: No teacher found for userId ${jwtUser.userId}`);
     return [];
   };
   const canAccessTeacherClass = async (req: express.Request, classId: string) => {
@@ -8486,6 +8415,48 @@ async function startServer() {
       }));
     } catch (err) {
       logger.error("Error building teacher classes:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Debug endpoint to check teacher userId and class assignments
+  app.get("/api/teacher/debug", authMiddleware, async (req, res) => {
+    try {
+      const jwtUser = (req as any).user as JwtPayload;
+      // Diagnostic endpoint: teacher/admin only, and never lists other teachers.
+      if (jwtUser.role !== "TEACHER" && jwtUser.role !== "ADMIN") {
+        res.status(403).json({ error: "Forbidden" });
+        return;
+      }
+      const teacher = await prisma.teacher.findUnique({
+        where: { userId: jwtUser.userId },
+        include: { classes: true, user: true },
+      });
+      if (!teacher) {
+        return res.json({
+          jwtUserId: jwtUser.userId,
+          teacherFound: false,
+          message: "No Teacher record found with this userId",
+        });
+      }
+      const classIds = teacher.classes.map((ct) => ct.classId);
+      const classDetails = await prisma.class.findMany({
+        where: { id: { in: classIds } },
+        select: { id: true, name: true, level: true },
+      });
+      res.json({
+        teacherFound: true,
+        teacher: {
+          id: teacher.id,
+          teacherCode: teacher.teacherCode,
+          userId: teacher.userId,
+          userEmail: teacher.user?.email,
+        },
+        classCount: classIds.length,
+        classes: classDetails,
+      });
+    } catch (err) {
+      logger.error("Error in teacher debug:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
@@ -9573,9 +9544,9 @@ async function startServer() {
   setInterval(cleanupEphemeral, 60 * 60 * 1000);
 
   // ── Phase 2 advanced exam routes (registered before the SPA catch-all) ──────
-  registerExamPhase2Routes({ app, prisma, authMiddleware, createAuditLog, logger });
+  registerExamPhase2Routes({ app, prisma, authMiddleware, createAuditLog, logger, canManageExamClass });
   // ── Phase 3 reusable question bank routes ───────────────────────────────────
-  registerExamBankRoutes({ app, prisma, authMiddleware, createAuditLog, logger });
+  registerExamBankRoutes({ app, prisma, authMiddleware, createAuditLog, logger, canManageExamClass });
 
   // NOTE: the SPA catch-all (Vite middleware in dev / static dist in prod) is
   // registered at the very end of startServer, AFTER every /api route, so it can
@@ -9584,8 +9555,8 @@ async function startServer() {
   // ── Chat API (conversation-based) ────────────────────────────────────────────
   // Hierarchical rule: every conversation must include at least one staff member.
   // Students therefore can never have a student-only (peer-to-peer) conversation.
-  const CHAT_STAFF_ROLES = ["ADMIN", "TEACHER", "STAFF", "ACCOUNTANT", "CASE_WORKER", "LIBRARIAN"];
-  const isStaffRole = (role: string) => CHAT_STAFF_ROLES.includes(role);
+  const CHAT_STAFF_ROLES: Role[] = ["ADMIN", "TEACHER", "STAFF", "ACCOUNTANT", "CASE_WORKER", "LIBRARIAN"];
+  const isStaffRole = (role: string) => CHAT_STAFF_ROLES.includes(role as Role);
   const userBrief = (u: any) => ({ id: u.id, name: fullName(u), role: u.role, profilePhotoUrl: u.profilePhotoUrl ?? null });
 
   // Upload an image to attach to a chat message.
@@ -10963,10 +10934,10 @@ async function startServer() {
           title,
           description,
           classId,
-          subjectId,
+          subjectId: subjectId || null,
           plannedDate: new Date(plannedDate),
           duration: duration || 60,
-          room,
+          room: room || null,
           objectives: objectives || [],
           materials: materials || [],
           activities: activities || [],
@@ -11030,7 +11001,7 @@ async function startServer() {
   app.put("/api/lesson-plans/:id", authMiddleware, teacherOnly, async (req, res) => {
     const { id } = req.params;
     const jwtUser = (req as any).user as JwtPayload;
-    const updates = req.body;
+    const updates = req.body || {};
 
     try {
       const existing = await prisma.lessonPlan.findFirst({
@@ -11042,12 +11013,32 @@ async function startServer() {
         return;
       }
 
+      // Ownership: teachers may only edit their own plans (admins may edit any).
+      if (jwtUser.role !== "ADMIN") {
+        const teacher = await prisma.teacher.findUnique({ where: { userId: jwtUser.userId } });
+        if (!teacher || existing.teacherId !== teacher.id) {
+          res.status(403).json({ error: "Forbidden: not your lesson plan" });
+          return;
+        }
+      }
+
+      // Whitelist updatable fields (previously spread the raw body into the
+      // update, letting a client reassign teacherId or crash on unknown fields).
+      const data: any = {};
+      for (const k of ["title", "description", "room", "assessment", "status"] as const) {
+        if (updates[k] !== undefined) data[k] = updates[k];
+      }
+      for (const k of ["objectives", "materials", "activities"] as const) {
+        if (updates[k] !== undefined) data[k] = Array.isArray(updates[k]) ? updates[k] : [];
+      }
+      if (updates.classId !== undefined) data.classId = updates.classId;
+      if (updates.subjectId !== undefined) data.subjectId = updates.subjectId || null;
+      if (updates.duration !== undefined) data.duration = Number(updates.duration) || existing.duration;
+      if (updates.plannedDate) data.plannedDate = new Date(updates.plannedDate);
+
       const updated = await prisma.lessonPlan.update({
         where: { id },
-        data: {
-          ...updates,
-          plannedDate: updates.plannedDate ? new Date(updates.plannedDate) : existing.plannedDate
-        },
+        data,
         include: {
           class: true,
           subject: true,

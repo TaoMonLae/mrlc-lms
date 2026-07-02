@@ -51,6 +51,7 @@ export default function LessonPlanner() {
   const navigate = useNavigate();
   const [lessonPlans, setLessonPlans] = useState<LessonPlan[]>([]);
   const [classes, setClasses] = useState<ClassOption[]>([]);
+  const [subjects, setSubjects] = useState<{ id: string; name: string }[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
@@ -77,6 +78,13 @@ export default function LessonPlanner() {
             level: c.classInfo.level
           })));
         }
+      })
+      .catch(() => {});
+
+    // Fetch subjects for the subject picker (subjectId is a foreign key).
+    apiGet<any[]>('/api/subjects')
+      .then((data) => {
+        if (Array.isArray(data)) setSubjects(data.map((s: any) => ({ id: s.id, name: s.name })));
       })
       .catch(() => {});
 
@@ -240,11 +248,16 @@ export default function LessonPlanner() {
 
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Subject</label>
-                  <Input
-                    placeholder="Subject (optional)"
-                    value={formData.subjectId}
-                    onChange={(e) => setFormData({ ...formData, subjectId: e.target.value })}
-                  />
+                  <Select value={formData.subjectId} onValueChange={(value) => setFormData({ ...formData, subjectId: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select subject (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {subjects.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 

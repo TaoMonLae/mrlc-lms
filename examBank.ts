@@ -12,6 +12,7 @@ interface Deps {
     ip: string | null, ua: string | null, severity?: string,
   ) => Promise<void>;
   logger: { error: (...a: any[]) => void; warn: (...a: any[]) => void; info: (...a: any[]) => void };
+  canManageExamClass: (jwtUser: JwtPayload, classId: string) => Promise<boolean>;
 }
 
 const ACTIVE_EXAM_STATUSES = ["PUBLISHED", "ACTIVE", "SCHEDULED"];
@@ -104,7 +105,7 @@ export function freezeAttempt(questions: any[], exam: any, seed: string) {
 }
 
 export function registerExamBankRoutes(deps: Deps): void {
-  const { app, prisma, authMiddleware, createAuditLog, logger } = deps;
+  const { app, prisma, authMiddleware, createAuditLog, logger, canManageExamClass } = deps;
   const user = (req: express.Request) => (req as any).user as JwtPayload;
   const isAdmin = (req: express.Request) => user(req).role === "ADMIN";
   const isTeacher = (req: express.Request) => ["ADMIN", "TEACHER"].includes(user(req).role);
@@ -118,9 +119,34 @@ export function registerExamBankRoutes(deps: Deps): void {
   const teacherGuard: express.RequestHandler = (req, res, next) => { if (!isTeacher(req)) { res.status(403).json({ error: "Forbidden" }); return; } next(); };
   const adminGuard: express.RequestHandler = (req, res, next) => { if (!isAdmin(req)) { res.status(403).json({ error: "Admin only" }); return; } next(); };
 
+  // Per-class scoping: a TEACHER may only touch exams of classes they teach.
+  const canManageExam = async (req: express.Request, examId: string): Promise<{ ok: boolean; found: boolean }> => {
+    const exam = await prisma.exam.findUnique({ where: { id: examId }, select: { classId: true } });
+    if (!exam) return { ok: false, found: false };
+    return { ok: await canManageExamClass(user(req), exam.classId), found: true };
+  };
+  const examGuard = (param = "id"): express.RequestHandler => async (req, res, next) => {
+    try {
+      const { ok, found } = await canManageExam(req, req.params[param]);
+      if (!found) { res.status(404).json({ error: "Exam not found" }); return; }
+      if (!ok) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+      next();
+    } catch (err) {
+      logger.error("exam guard failed", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  };
+
+  // Idempotent escape: decode previously-escaped entities first so repeated
+  // edits don't double-escape, then escape once.
   function sanitizeHTML(text: string): string {
     if (!text) return text;
     return text
+      .replace(/&#x27;/g, "'")
+      .replace(/&quot;/g, '"')
+      .replace(/&gt;/g, ">")
+      .replace(/&lt;/g, "<")
+      .replace(/&amp;/g, "&")
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
@@ -315,12 +341,12 @@ export function registerExamBankRoutes(deps: Deps): void {
     } catch (err: any) { if (err?.code === "P2025") { res.status(404).json({ error: "Not found" }); return; } logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
 
-  app.get("/api/exams/:id/bank-questions", authMiddleware, teacherGuard, async (req: any, res: any) => {
+  app.get("/api/exams/:id/bank-questions", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
     try { res.json(await prisma.examQuestion.findMany({ where: { examId: req.params.id }, include: { question: { include: { optionRows: true } } }, orderBy: { displayOrder: "asc" } })); }
     catch (err: any) { if (degrade(err, res, [])) return; logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
 
-  app.post("/api/exams/:id/questions", authMiddleware, teacherGuard, async (req: any, res: any) => {
+  app.post("/api/exams/:id/questions", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
     const { id } = req.params; const b = req.body || {};
     const questionIds: string[] = Array.isArray(b.questionIds) ? b.questionIds : (b.questionId ? [b.questionId] : []);
     if (!questionIds.length) { res.status(400).json({ error: "questionIds required" }); return; }
@@ -345,11 +371,16 @@ export function registerExamBankRoutes(deps: Deps): void {
   });
 
   app.delete("/api/exam-questions/:id", authMiddleware, teacherGuard, async (req: any, res: any) => {
-    try { const row = await prisma.examQuestion.delete({ where: { id: req.params.id } }); await audit(req, "REMOVE_QUESTION", "EXAM", row.examId, `Removed question link ${req.params.id}.`); res.json({ ok: true }); }
+    try {
+      const link = await prisma.examQuestion.findUnique({ where: { id: req.params.id }, select: { examId: true } });
+      if (!link) { res.status(404).json({ error: "Not found" }); return; }
+      const scope = await canManageExam(req, link.examId);
+      if (!scope.ok) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+      const row = await prisma.examQuestion.delete({ where: { id: req.params.id } }); await audit(req, "REMOVE_QUESTION", "EXAM", row.examId, `Removed question link ${req.params.id}.`); res.json({ ok: true }); }
     catch (err: any) { if (err?.code === "P2025") { res.status(404).json({ error: "Not found" }); return; } logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
 
-  app.put("/api/exams/:id/questions/reorder", authMiddleware, teacherGuard, async (req: any, res: any) => {
+  app.put("/api/exams/:id/questions/reorder", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
     const order: { id: string; displayOrder: number }[] = Array.isArray(req.body?.order) ? req.body.order : [];
     try {
       await prisma.$transaction(order.map((o) => prisma.examQuestion.update({ where: { id: o.id }, data: { displayOrder: Number(o.displayOrder) || 0 } })));
@@ -358,11 +389,11 @@ export function registerExamBankRoutes(deps: Deps): void {
     } catch (err) { logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
 
-  app.get("/api/exams/:id/blueprint", authMiddleware, teacherGuard, async (req: any, res: any) => {
+  app.get("/api/exams/:id/blueprint", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
     try { res.json(await prisma.examBlueprintRule.findMany({ where: { examId: req.params.id }, orderBy: { createdAt: "asc" } })); }
     catch (err: any) { if (degrade(err, res, [])) return; logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
-  app.post("/api/exams/:id/blueprint", authMiddleware, teacherGuard, async (req: any, res: any) => {
+  app.post("/api/exams/:id/blueprint", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
     const b = req.body || {};
     try {
       const row = await prisma.examBlueprintRule.create({ data: { examId: req.params.id, sectionId: b.sectionId || null, subjectId: b.subjectId || null, topicId: b.topicId || null, difficulty: DIFFICULTY.includes(b.difficulty) ? b.difficulty : null, type: b.type || null, count: num(b.count) ?? 1, pointsEach: num(b.pointsEach) } });
@@ -371,18 +402,23 @@ export function registerExamBankRoutes(deps: Deps): void {
     } catch (err) { logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
   app.delete("/api/blueprint-rules/:id", authMiddleware, teacherGuard, async (req: any, res: any) => {
-    try { const row = await prisma.examBlueprintRule.delete({ where: { id: req.params.id } }); await audit(req, "BLUEPRINT_CHANGE", "EXAM", row.examId, `Blueprint rule removed.`); res.json({ ok: true }); }
+    try {
+      const rule = await prisma.examBlueprintRule.findUnique({ where: { id: req.params.id }, select: { examId: true } });
+      if (!rule) { res.status(404).json({ error: "Not found" }); return; }
+      const scope = await canManageExam(req, rule.examId);
+      if (!scope.ok) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+      const row = await prisma.examBlueprintRule.delete({ where: { id: req.params.id } }); await audit(req, "BLUEPRINT_CHANGE", "EXAM", row.examId, `Blueprint rule removed.`); res.json({ ok: true }); }
     catch (err: any) { if (err?.code === "P2025") { res.status(404).json({ error: "Not found" }); return; } logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
 
-  app.get("/api/exams/:id/blueprint/preview", authMiddleware, teacherGuard, async (req: any, res: any) => {
+  app.get("/api/exams/:id/blueprint/preview", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
     try {
       const set = await composeQuestionSet(prisma, req.params.id, `preview:${Date.now()}`);
       res.json({ count: set.length, questions: set.map((q: any) => ({ id: q.id, text: q.text, type: q.type, difficulty: q.difficulty, points: q.pointsOverride ?? q.defaultPoints ?? q.points, source: q.sourceType || "RANDOM" })) });
     } catch (err: any) { if (degrade(err, res, { count: 0, questions: [] })) return; logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
 
-  app.post("/api/exams/:id/clone", authMiddleware, teacherGuard, async (req: any, res: any) => {
+  app.post("/api/exams/:id/clone", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
     try {
       const src = await prisma.exam.findUnique({ where: { id: req.params.id }, include: { sections: true, examQuestions: true, blueprintRules: true } });
       if (!src) { res.status(404).json({ error: "Exam not found" }); return; }

@@ -16,13 +16,21 @@ interface Deps {
     ip: string | null, ua: string | null, severity?: string,
   ) => Promise<void>;
   logger: { error: (...a: any[]) => void; warn: (...a: any[]) => void; info: (...a: any[]) => void };
+  canManageExamClass: (jwtUser: JwtPayload, classId: string) => Promise<boolean>;
 }
 
 const TEACHER_ROLES = ["ADMIN", "TEACHER"];
 
+// Idempotent escape: decode any previously-escaped entities first so repeated
+// edits don't double-escape (&amp;amp; …), then escape once.
 function sanitizeHTML(text: string): string {
   if (!text) return text;
   return text
+    .replace(/&#x27;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&gt;/g, ">")
+    .replace(/&lt;/g, "<")
+    .replace(/&amp;/g, "&")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
@@ -31,7 +39,7 @@ function sanitizeHTML(text: string): string {
 }
 
 export function registerExamPhase2Routes(deps: Deps): void {
-  const { app, prisma, authMiddleware, createAuditLog, logger } = deps;
+  const { app, prisma, authMiddleware, createAuditLog, logger, canManageExamClass } = deps;
 
   const user = (req: express.Request) => (req as any).user as JwtPayload;
   const isTeacher = (req: express.Request) => TEACHER_ROLES.includes(user(req).role);
@@ -51,6 +59,38 @@ export function registerExamPhase2Routes(deps: Deps): void {
   const teacherGuard: express.RequestHandler = (req, res, next) => {
     if (!isTeacher(req)) { res.status(403).json({ error: "Forbidden" }); return; }
     next();
+  };
+
+  // Per-class scoping: a TEACHER may only touch exams of classes they teach
+  // (ADMIN passes). `examGuard(param)` reads the exam id from that route param.
+  const canManageExam = async (req: express.Request, examId: string): Promise<{ ok: boolean; found: boolean }> => {
+    const exam = await prisma.exam.findUnique({ where: { id: examId }, select: { classId: true } });
+    if (!exam) return { ok: false, found: false };
+    return { ok: await canManageExamClass(user(req), exam.classId), found: true };
+  };
+  const examGuard = (param = "id"): express.RequestHandler => async (req, res, next) => {
+    try {
+      const { ok, found } = await canManageExam(req, req.params[param]);
+      if (!found) { res.status(404).json({ error: "Exam not found" }); return; }
+      if (!ok) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+      next();
+    } catch (err) {
+      logger.error("exam guard failed", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  };
+  // Same check, keyed by an attempt id route param.
+  const attemptExamGuard = (param = "attemptId"): express.RequestHandler => async (req, res, next) => {
+    try {
+      const attempt = await prisma.examAttempt.findUnique({ where: { id: req.params[param] }, select: { examId: true } });
+      if (!attempt) { res.status(404).json({ error: "Attempt not found" }); return; }
+      const { ok } = await canManageExam(req, attempt.examId);
+      if (!ok) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+      next();
+    } catch (err) {
+      logger.error("attempt guard failed", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
   };
 
   async function studentForReq(req: express.Request) {
@@ -98,7 +138,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
     return a;
   }
 
-  app.put("/api/exams/:id/schedule", authMiddleware, teacherGuard, async (req, res) => {
+  app.put("/api/exams/:id/schedule", authMiddleware, teacherGuard, examGuard(), async (req, res) => {
     const { id } = req.params;
     const b = req.body || {};
     try {
@@ -132,7 +172,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
     }
   });
 
-  app.get("/api/exams/:id/schedule", authMiddleware, teacherGuard, async (req, res) => {
+  app.get("/api/exams/:id/schedule", authMiddleware, teacherGuard, examGuard(), async (req, res) => {
     try {
       const exam = await prisma.exam.findUnique({ where: { id: req.params.id } });
       if (!exam) { res.status(404).json({ error: "Exam not found" }); return; }
@@ -141,7 +181,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
     } catch (err) { logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
 
-  app.get("/api/exams/:id/result-policy", authMiddleware, teacherGuard, async (req, res) => {
+  app.get("/api/exams/:id/result-policy", authMiddleware, teacherGuard, examGuard(), async (req, res) => {
     try {
       const policy = await prisma.examResultPolicy.findUnique({ where: { examId: req.params.id } });
       res.json(policy || null);
@@ -151,7 +191,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
     }
   });
 
-  app.put("/api/exams/:id/result-policy", authMiddleware, teacherGuard, async (req, res) => {
+  app.put("/api/exams/:id/result-policy", authMiddleware, teacherGuard, examGuard(), async (req, res) => {
     const { id } = req.params; const b = req.body || {};
     const data = {
       showScore: b.showScore !== false,
@@ -233,7 +273,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
     }
   });
 
-  app.get("/api/exams/:id/assignments", authMiddleware, teacherGuard, async (req, res) => {
+  app.get("/api/exams/:id/assignments", authMiddleware, teacherGuard, examGuard(), async (req, res) => {
     try {
       const rows = await prisma.examAssignment.findMany({
         where: { examId: req.params.id },
@@ -247,7 +287,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
     }
   });
 
-  app.post("/api/exams/:id/assignments", authMiddleware, teacherGuard, async (req, res) => {
+  app.post("/api/exams/:id/assignments", authMiddleware, teacherGuard, examGuard(), async (req, res) => {
     const { id } = req.params;
     const b = req.body || {};
     const studentIds: string[] = Array.isArray(b.studentIds) ? b.studentIds : (b.studentId ? [b.studentId] : []);
@@ -265,7 +305,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
     } catch (err) { logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
 
-  app.delete("/api/exams/:examId/assignments/:assignmentId", authMiddleware, teacherGuard, async (req, res) => {
+  app.delete("/api/exams/:examId/assignments/:assignmentId", authMiddleware, teacherGuard, examGuard("examId"), async (req, res) => {
     try {
       await prisma.examAssignment.delete({ where: { id: req.params.assignmentId } });
       await createAuditLog(user(req).userId, user(req).email, "UNASSIGN", "EXAM", req.params.examId, `Removed assignment ${req.params.assignmentId}.`, ipOf(req), uaOf(req), "SUCCESS");
@@ -294,11 +334,17 @@ export function registerExamPhase2Routes(deps: Deps): void {
       const exam = await prisma.exam.findUnique({ where: { id: examId }, include: { questions: true } });
       if (!exam) { res.status(404).json({ error: "Exam not found" }); return; }
       if (exam.status === "ARCHIVED") { res.status(403).json({ error: "This exam has been archived" }); return; }
+      if (exam.status === "DRAFT") { res.status(403).json({ error: "This exam is not open yet" }); return; }
 
       // If assignments exist for this exam, the student must be assigned.
       const assignment = await prisma.examAssignment.findUnique({ where: { examId_studentId: { examId, studentId: student.id } } }).catch(() => null);
       const anyAssignments = await prisma.examAssignment.count({ where: { examId } }).catch(() => 0);
       if (anyAssignments > 0 && !assignment) { res.status(403).json({ error: "You are not assigned to this exam" }); return; }
+      // Without explicit assignments, the exam is scoped to its class roster.
+      if (!assignment && exam.classId && student.classId !== exam.classId) {
+        res.status(403).json({ error: "This exam is not available to you" });
+        return;
+      }
 
       const now = Date.now();
       const from = assignment?.availableFromOverride || exam.availableFrom;
@@ -320,9 +366,20 @@ export function registerExamPhase2Routes(deps: Deps): void {
       if (existing) {
         // New device/session takeover: issue a fresh token, log it.
         const sessionToken = crypto.randomUUID();
+        // Resuming from PAUSED: push the deadline forward by the paused duration
+        // so pausing genuinely freezes the clock (mirrors the invigilator RESUME action).
+        let pauseComp: any = {};
+        if (existing.state === "PAUSED" && existing.pausedAt && existing.serverDeadline) {
+          const extra = Math.max(0, now - new Date(existing.pausedAt).getTime());
+          pauseComp = {
+            pausedAt: null,
+            accumulatedPauseSeconds: (existing.accumulatedPauseSeconds || 0) + Math.floor(extra / 1000),
+            serverDeadline: new Date(new Date(existing.serverDeadline).getTime() + extra),
+          };
+        }
         const resumed = await prisma.examAttempt.update({
           where: { id: existing.id },
-          data: { sessionToken, state: "IN_PROGRESS", ipAddress: ipOf(req), userAgent: uaOf(req), deviceInfo: b.deviceInfo || undefined },
+          data: { sessionToken, state: "IN_PROGRESS", ipAddress: ipOf(req), userAgent: uaOf(req), deviceInfo: b.deviceInfo || undefined, ...pauseComp },
         });
         await prisma.attemptEvent.create({ data: { attemptId: existing.id, type: "RECONNECT", actorRole: "STUDENT", ipAddress: ipOf(req), userAgent: uaOf(req) } }).catch(() => {});
         return res.json(await attemptPayload(resumed, exam, student.id));
@@ -375,7 +432,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
   // TEACHER PREVIEW — render the exam exactly as a student would see it, but
   // read-only: no attempt is created, no scoring, no timer. Correct answers are
   // stripped so the preview matches the student view.
-  app.get("/api/exams/:examId/preview", authMiddleware, teacherGuard, async (req, res) => {
+  app.get("/api/exams/:examId/preview", authMiddleware, teacherGuard, examGuard("examId"), async (req, res) => {
     const { examId } = req.params;
     try {
       const exam = await prisma.exam.findUnique({ where: { id: examId } });
@@ -715,7 +772,13 @@ export function registerExamPhase2Routes(deps: Deps): void {
 
       let questions: any[] = [];
       if (showCorrect || showExpl) {
-        const qs = await prisma.question.findMany({ where: { examId: attempt.examId } });
+        // Use the frozen selected set when present (bank/blueprint attempts draw
+        // questions that don't belong to this examId), else the exam's own questions.
+        const selectedIds: string[] | null = Array.isArray(attempt.selectedQuestionIds) && attempt.selectedQuestionIds.length
+          ? attempt.selectedQuestionIds : null;
+        const qs = await prisma.question.findMany({
+          where: selectedIds ? { id: { in: selectedIds } } : { examId: attempt.examId },
+        });
         const ansByQ: Record<string, any> = {};
         for (const a of attempt.answers) ansByQ[a.questionId] = a;
         // For legacy MCQs the correct answer is stored as an option *index*; show
@@ -762,14 +825,22 @@ export function registerExamPhase2Routes(deps: Deps): void {
       const assignments = await prisma.examAssignment.findMany({ where: { studentId: student.id }, include: { exam: true } }).catch(() => []);
       const assignedExamIds = new Set(assignments.map((a: any) => a.examId));
       // Class exams with a scheduling window, plus explicit assignments.
-      const classExams = student.classId ? await prisma.exam.findMany({ where: { classId: student.classId } }) : [];
+      const classExams = student.classId
+        ? await prisma.exam.findMany({ where: { classId: student.classId, status: { notIn: ["DRAFT", "ARCHIVED"] } } })
+        : [];
       const seen = new Set<string>();
       const out: any[] = [];
       const consider = [...assignments.map((a: any) => a.exam), ...classExams].filter(Boolean);
+      // Batch all attempts in one query instead of one query per exam.
+      const allAttempts = await prisma.examAttempt.findMany({
+        where: { studentId: student.id, examId: { in: consider.map((e: any) => e.id) } },
+      }).catch(() => []);
+      const attemptsByExam: Record<string, any[]> = {};
+      for (const a of allAttempts) (attemptsByExam[a.examId] ||= []).push(a);
       for (const e of consider) {
         if (seen.has(e.id)) continue; seen.add(e.id);
         const openNow = (!e.availableFrom || now >= new Date(e.availableFrom)) && (!e.availableUntil || now <= new Date(e.availableUntil) || e.allowLateStart);
-        const attempts = await prisma.examAttempt.findMany({ where: { studentId: student.id, examId: e.id } }).catch(() => []);
+        const attempts = attemptsByExam[e.id] || [];
         out.push({
           id: e.id, title: e.title, durationMinutes: e.durationMinutes,
           availableFrom: e.availableFrom, availableUntil: e.availableUntil,
@@ -787,9 +858,9 @@ export function registerExamPhase2Routes(deps: Deps): void {
 
   // The grading/analysis/invigilator/export routes are registered by a second
   // function to keep each module focused.
-  registerGradingAndOps({ ...deps, helpers: { user, isTeacher, ipOf, uaOf, num, teacherGuard, gradingLimiter, studentForReq } });
+  registerGradingAndOps({ ...deps, helpers: { user, isTeacher, ipOf, uaOf, num, teacherGuard, gradingLimiter, studentForReq, examGuard, attemptExamGuard, canManageExam } });
   // Authoring CRUD (sections, stimuli, groups, rubrics, question structure).
-  registerAuthoringRoutes({ ...deps, helpers: { user, ipOf, uaOf, num, teacherGuard } });
+  registerAuthoringRoutes({ ...deps, helpers: { user, ipOf, uaOf, num, teacherGuard, examGuard, canManageExam } });
 }
 
 // =============================================================================
@@ -797,16 +868,30 @@ export function registerExamPhase2Routes(deps: Deps): void {
 // =============================================================================
 function registerAuthoringRoutes(deps: any) {
   const { app, prisma, authMiddleware, createAuditLog, logger, helpers } = deps;
-  const { user, ipOf, uaOf, num, teacherGuard } = helpers;
+  const { user, ipOf, uaOf, num, teacherGuard, examGuard, canManageExam } = helpers;
   const audit = (req: any, action: string, type: string, id: string | null, desc: string) =>
     createAuditLog(user(req).userId, user(req).email, action, type, id, desc, ipOf(req), uaOf(req), "SUCCESS");
   const degrade = (err: any, res: any, empty: any) => {
     if (err?.code === "P2021" || err?.code === "P2022") { res.json(empty); return true; }
     return false;
   };
+  // Guard child entities (section/stimulus/group/rubric) via their parent exam.
+  const childExamGuard = (model: string): express.RequestHandler => async (req: any, res: any, next: any) => {
+    try {
+      const row = await prisma[model].findUnique({ where: { id: req.params.id }, select: { examId: true } });
+      if (!row) { res.status(404).json({ error: "Not found" }); return; }
+      const { ok } = await canManageExam(req, row.examId);
+      if (!ok) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+      next();
+    } catch (err: any) {
+      if (err?.code === "P2021" || err?.code === "P2022") { res.status(404).json({ error: "Not found" }); return; }
+      logger.error("child exam guard failed", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  };
 
   // ── Teacher question list (full — includes correct answers + structure) ─────
-  app.get("/api/exams/:id/questions", authMiddleware, teacherGuard, async (req: any, res: any) => {
+  app.get("/api/exams/:id/questions", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
     try {
       const questions = await prisma.question.findMany({ where: { examId: req.params.id }, orderBy: { orderIndex: "asc" } });
       res.json(questions);
@@ -815,6 +900,20 @@ function registerAuthoringRoutes(deps: any) {
 
   // Update a question's structure (section/group/stimulus/order) + scoring config + content.
   app.patch("/api/questions/:id", authMiddleware, teacherGuard, async (req: any, res: any) => {
+    // Exam-owned questions are scoped to the teacher's classes; bank questions
+    // (examId null) are subject-scoped by the bank routes.
+    try {
+      const owner = await prisma.question.findUnique({ where: { id: req.params.id }, select: { examId: true } });
+      if (!owner) { res.status(404).json({ error: "Question not found" }); return; }
+      if (owner.examId) {
+        const { ok } = await canManageExam(req, owner.examId);
+        if (!ok) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+      }
+    } catch (err: any) {
+      logger.error("question guard failed", err);
+      res.status(500).json({ error: "Internal Server Error" });
+      return;
+    }
     const b = req.body || {};
     const data: any = {};
     const passthrough = ["text", "correctAnswer", "explanation"];
@@ -853,7 +952,7 @@ function registerAuthoringRoutes(deps: any) {
   });
 
   // ── Sections ────────────────────────────────────────────────────────────────
-  app.get("/api/exams/:id/sections", authMiddleware, teacherGuard, async (req: any, res: any) => {
+  app.get("/api/exams/:id/sections", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
     try { res.json(await prisma.examSection.findMany({ where: { examId: req.params.id }, orderBy: { orderIndex: "asc" } })); }
     catch (err: any) { if (degrade(err, res, [])) return; logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
@@ -862,21 +961,21 @@ function registerAuthoringRoutes(deps: any) {
     orderIndex: num(b.orderIndex) ?? 0, timeLimitMinutes: num(b.timeLimitMinutes),
     shuffleQuestions: !!b.shuffleQuestions, questionsToPick: num(b.questionsToPick),
   });
-  app.post("/api/exams/:id/sections", authMiddleware, teacherGuard, async (req: any, res: any) => {
+  app.post("/api/exams/:id/sections", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
     try { const row = await prisma.examSection.create({ data: { examId: req.params.id, ...sectionData(req.body || {}) } }); await audit(req, "CREATE", "EXAM_SECTION", row.id, `Section '${row.title}' created.`); res.status(201).json(row); }
     catch (err) { logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
-  app.put("/api/sections/:id", authMiddleware, teacherGuard, async (req: any, res: any) => {
+  app.put("/api/sections/:id", authMiddleware, teacherGuard, childExamGuard("examSection"), async (req: any, res: any) => {
     try { const row = await prisma.examSection.update({ where: { id: req.params.id }, data: sectionData(req.body || {}) }); await audit(req, "UPDATE", "EXAM_SECTION", row.id, `Section updated.`); res.json(row); }
     catch (err: any) { if (err?.code === "P2025") { res.status(404).json({ error: "Not found" }); return; } logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
-  app.delete("/api/sections/:id", authMiddleware, teacherGuard, async (req: any, res: any) => {
+  app.delete("/api/sections/:id", authMiddleware, teacherGuard, childExamGuard("examSection"), async (req: any, res: any) => {
     try { await prisma.question.updateMany({ where: { sectionId: req.params.id }, data: { sectionId: null } }); await prisma.examSection.delete({ where: { id: req.params.id } }); await audit(req, "DELETE", "EXAM_SECTION", req.params.id, `Section removed.`); res.json({ ok: true }); }
     catch (err: any) { if (err?.code === "P2025") { res.status(404).json({ error: "Not found" }); return; } logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
 
   // ── Stimuli (passages / media) ───────────────────────────────────────────────
-  app.get("/api/exams/:id/stimuli", authMiddleware, teacherGuard, async (req: any, res: any) => {
+  app.get("/api/exams/:id/stimuli", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
     try { res.json(await prisma.stimulus.findMany({ where: { examId: req.params.id }, orderBy: { createdAt: "asc" } })); }
     catch (err: any) { if (degrade(err, res, [])) return; logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
@@ -885,46 +984,46 @@ function registerAuthoringRoutes(deps: any) {
     type: STIMULUS_TYPES.includes(b.type) ? b.type : "TEXT", title: b.title || null,
     content: b.content || null, mediaUrl: b.mediaUrl || null, caption: b.caption || null, data: b.data ?? null,
   });
-  app.post("/api/exams/:id/stimuli", authMiddleware, teacherGuard, async (req: any, res: any) => {
+  app.post("/api/exams/:id/stimuli", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
     try { const row = await prisma.stimulus.create({ data: { examId: req.params.id, ...stimulusData(req.body || {}) } }); await audit(req, "CREATE", "STIMULUS", row.id, `Stimulus '${row.title || row.type}' created.`); res.status(201).json(row); }
     catch (err) { logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
-  app.put("/api/stimuli/:id", authMiddleware, teacherGuard, async (req: any, res: any) => {
+  app.put("/api/stimuli/:id", authMiddleware, teacherGuard, childExamGuard("stimulus"), async (req: any, res: any) => {
     try { const row = await prisma.stimulus.update({ where: { id: req.params.id }, data: stimulusData(req.body || {}) }); await audit(req, "UPDATE", "STIMULUS", row.id, `Stimulus updated.`); res.json(row); }
     catch (err: any) { if (err?.code === "P2025") { res.status(404).json({ error: "Not found" }); return; } logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
-  app.delete("/api/stimuli/:id", authMiddleware, teacherGuard, async (req: any, res: any) => {
+  app.delete("/api/stimuli/:id", authMiddleware, teacherGuard, childExamGuard("stimulus"), async (req: any, res: any) => {
     try { await prisma.question.updateMany({ where: { stimulusId: req.params.id }, data: { stimulusId: null } }); await prisma.questionGroup.updateMany({ where: { stimulusId: req.params.id }, data: { stimulusId: null } }); await prisma.stimulus.delete({ where: { id: req.params.id } }); await audit(req, "DELETE", "STIMULUS", req.params.id, `Stimulus removed.`); res.json({ ok: true }); }
     catch (err: any) { if (err?.code === "P2025") { res.status(404).json({ error: "Not found" }); return; } logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
 
   // ── Question groups (passage-based sets) ─────────────────────────────────────
-  app.get("/api/exams/:id/question-groups", authMiddleware, teacherGuard, async (req: any, res: any) => {
+  app.get("/api/exams/:id/question-groups", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
     try { res.json(await prisma.questionGroup.findMany({ where: { examId: req.params.id }, include: { stimulus: true }, orderBy: { orderIndex: "asc" } })); }
     catch (err: any) { if (degrade(err, res, [])) return; logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
   const groupData = (b: any) => ({ sectionId: b.sectionId || null, stimulusId: b.stimulusId || null, title: b.title || null, instructions: b.instructions || null, orderIndex: num(b.orderIndex) ?? 0 });
-  app.post("/api/exams/:id/question-groups", authMiddleware, teacherGuard, async (req: any, res: any) => {
+  app.post("/api/exams/:id/question-groups", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
     try { const row = await prisma.questionGroup.create({ data: { examId: req.params.id, ...groupData(req.body || {}) } }); await audit(req, "CREATE", "QUESTION_GROUP", row.id, `Question group created.`); res.status(201).json(row); }
     catch (err) { logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
-  app.put("/api/question-groups/:id", authMiddleware, teacherGuard, async (req: any, res: any) => {
+  app.put("/api/question-groups/:id", authMiddleware, teacherGuard, childExamGuard("questionGroup"), async (req: any, res: any) => {
     try { const row = await prisma.questionGroup.update({ where: { id: req.params.id }, data: groupData(req.body || {}) }); await audit(req, "UPDATE", "QUESTION_GROUP", row.id, `Question group updated.`); res.json(row); }
     catch (err: any) { if (err?.code === "P2025") { res.status(404).json({ error: "Not found" }); return; } logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
-  app.delete("/api/question-groups/:id", authMiddleware, teacherGuard, async (req: any, res: any) => {
+  app.delete("/api/question-groups/:id", authMiddleware, teacherGuard, childExamGuard("questionGroup"), async (req: any, res: any) => {
     try { await prisma.question.updateMany({ where: { groupId: req.params.id }, data: { groupId: null } }); await prisma.questionGroup.delete({ where: { id: req.params.id } }); await audit(req, "DELETE", "QUESTION_GROUP", req.params.id, `Question group removed.`); res.json({ ok: true }); }
     catch (err: any) { if (err?.code === "P2025") { res.status(404).json({ error: "Not found" }); return; } logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
 
   // ── Rubrics + criteria ───────────────────────────────────────────────────────
-  app.get("/api/exams/:id/rubrics", authMiddleware, teacherGuard, async (req: any, res: any) => {
+  app.get("/api/exams/:id/rubrics", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
     const { questionId } = req.query as Record<string, string>;
     try { res.json(await prisma.gradingRubric.findMany({ where: { examId: req.params.id, ...(questionId ? { questionId } : {}) }, include: { criteria: { orderBy: { orderIndex: "asc" } } }, orderBy: { createdAt: "asc" } })); }
     catch (err: any) { if (degrade(err, res, [])) return; logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
   // Create rubric with nested criteria; maxScore is summed from criteria.
-  app.post("/api/exams/:id/rubrics", authMiddleware, teacherGuard, async (req: any, res: any) => {
+  app.post("/api/exams/:id/rubrics", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
     const b = req.body || {};
     const criteria: any[] = Array.isArray(b.criteria) ? b.criteria : [];
     const maxScore = criteria.reduce((s, c) => s + (num(c.maxScore) || 0), 0);
@@ -941,7 +1040,7 @@ function registerAuthoringRoutes(deps: any) {
     } catch (err) { logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
   // Replace rubric + criteria wholesale (transactional).
-  app.put("/api/rubrics/:id", authMiddleware, teacherGuard, async (req: any, res: any) => {
+  app.put("/api/rubrics/:id", authMiddleware, teacherGuard, childExamGuard("gradingRubric"), async (req: any, res: any) => {
     const b = req.body || {};
     const criteria: any[] = Array.isArray(b.criteria) ? b.criteria : [];
     const maxScore = criteria.reduce((s, c) => s + (num(c.maxScore) || 0), 0);
@@ -961,7 +1060,7 @@ function registerAuthoringRoutes(deps: any) {
       res.json(row);
     } catch (err: any) { if (err?.code === "P2025") { res.status(404).json({ error: "Not found" }); return; } logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
-  app.delete("/api/rubrics/:id", authMiddleware, teacherGuard, async (req: any, res: any) => {
+  app.delete("/api/rubrics/:id", authMiddleware, teacherGuard, childExamGuard("gradingRubric"), async (req: any, res: any) => {
     try { await prisma.gradingRubric.delete({ where: { id: req.params.id } }); await audit(req, "DELETE", "GRADING_RUBRIC", req.params.id, `Rubric removed.`); res.json({ ok: true }); }
     catch (err: any) { if (err?.code === "P2025") { res.status(404).json({ error: "Not found" }); return; } logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
@@ -972,16 +1071,23 @@ function registerAuthoringRoutes(deps: any) {
 // =============================================================================
 function registerGradingAndOps(deps: any) {
   const { app, prisma, authMiddleware, createAuditLog, logger, helpers } = deps;
-  const { user, ipOf, uaOf, num, teacherGuard, gradingLimiter } = helpers;
+  const { user, ipOf, uaOf, num, teacherGuard, gradingLimiter, examGuard, attemptExamGuard, canManageExam } = helpers;
 
   // ── Manual grading queue ─────────────────────────────────────────────────
   app.get("/api/grading/queue", authMiddleware, teacherGuard, async (req: any, res: any) => {
     const { examId, status } = req.query as Record<string, string>;
     try {
+      // Teachers only see grading work for exams of classes they teach.
+      let attemptScope: any = examId ? { examId } : undefined;
+      if (user(req).role === "TEACHER") {
+        const teacher = await prisma.teacher.findUnique({ where: { userId: user(req).userId }, include: { classes: true } });
+        const classIds = (teacher?.classes || []).map((c: any) => c.classId);
+        attemptScope = { ...(examId ? { examId } : {}), exam: { classId: { in: classIds } } };
+      }
       const rows = await prisma.manualGrade.findMany({
         where: {
           ...(status ? { status } : { status: { in: ["PENDING", "IN_REVIEW", "GRADED", "MODERATED"] } }),
-          ...(examId ? { attempt: { examId } } : {}),
+          ...(attemptScope ? { attempt: attemptScope } : {}),
         },
         include: {
           question: true, rubric: { include: { criteria: true } },
@@ -1003,7 +1109,7 @@ function registerGradingAndOps(deps: any) {
   });
 
   // Submit / update a manual grade. SECURITY: blocked once finalized.
-  app.post("/api/grading/:attemptId/:questionId", authMiddleware, teacherGuard, gradingLimiter, async (req: any, res: any) => {
+  app.post("/api/grading/:attemptId/:questionId", authMiddleware, teacherGuard, attemptExamGuard(), gradingLimiter, async (req: any, res: any) => {
     const { attemptId, questionId } = req.params; const b = req.body || {};
     try {
       const existing = await prisma.manualGrade.findFirst({ where: { attemptId, questionId } });
@@ -1035,6 +1141,11 @@ function registerGradingAndOps(deps: any) {
   // Finalize a manual grade → lock + recompute attempt total (transactional).
   app.post("/api/grading/:gradeId/finalize", authMiddleware, teacherGuard, gradingLimiter, async (req: any, res: any) => {
     try {
+      // Class scoping: resolve the exam via grade → attempt.
+      const gradeRow = await prisma.manualGrade.findUnique({ where: { id: req.params.gradeId }, select: { attempt: { select: { examId: true } } } });
+      if (!gradeRow) { res.status(404).json({ error: "not found" }); return; }
+      const scope = await canManageExam(req, gradeRow.attempt.examId);
+      if (!scope.ok) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
       const result = await prisma.$transaction(async (tx: any) => {
         const grade = await tx.manualGrade.findUnique({ where: { id: req.params.gradeId } });
         if (!grade) throw Object.assign(new Error("not found"), { http: 404 });
@@ -1064,7 +1175,7 @@ function registerGradingAndOps(deps: any) {
   });
 
   // Release results for an exam (bulk) → flips eligible attempts to RELEASED.
-  app.post("/api/exams/:id/release", authMiddleware, teacherGuard, async (req: any, res: any) => {
+  app.post("/api/exams/:id/release", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
     try {
       const updated = await prisma.examAttempt.updateMany({
         where: { examId: req.params.id, state: { in: ["SUBMITTED", "AUTO_SUBMITTED", "FINALIZED"] } },
@@ -1079,7 +1190,7 @@ function registerGradingAndOps(deps: any) {
   const median = (xs: number[]) => { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
   const stddev = (xs: number[]) => { if (xs.length < 2) return 0; const m = xs.reduce((a, b) => a + b, 0) / xs.length; return Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / (xs.length - 1)); };
 
-  app.post("/api/exams/:id/analyze", authMiddleware, teacherGuard, async (req: any, res: any) => {
+  app.post("/api/exams/:id/analyze", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
     const examId = req.params.id;
     try {
       const questions = await prisma.question.findMany({ where: { examId } });
@@ -1147,7 +1258,7 @@ function registerGradingAndOps(deps: any) {
     }
   });
 
-  app.get("/api/exams/:id/analytics", authMiddleware, teacherGuard, async (req: any, res: any) => {
+  app.get("/api/exams/:id/analytics", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
     try {
       const stats = await prisma.questionStatistic.findMany({ where: { examId: req.params.id }, include: { question: true } }).catch(() => []);
       const attempts = await prisma.examAttempt.findMany({ where: { examId: req.params.id, state: { in: ["SUBMITTED", "AUTO_SUBMITTED", "FINALIZED", "RELEASED"] } } }).catch(() => []);
@@ -1165,7 +1276,7 @@ function registerGradingAndOps(deps: any) {
     } catch (err) { logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
 
-  app.get("/api/exams/:id/questions/:qid/analytics", authMiddleware, teacherGuard, async (req: any, res: any) => {
+  app.get("/api/exams/:id/questions/:qid/analytics", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
     try {
       const stat = await prisma.questionStatistic.findUnique({ where: { questionId: req.params.qid }, include: { question: true } });
       res.json(stat || null);
@@ -1173,7 +1284,7 @@ function registerGradingAndOps(deps: any) {
   });
 
   // ── Invigilator dashboard (live) ─────────────────────────────────────────
-  app.get("/api/exams/:id/invigilator", authMiddleware, teacherGuard, async (req: any, res: any) => {
+  app.get("/api/exams/:id/invigilator", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
     try {
       const examId = req.params.id;
       const assignments = await prisma.examAssignment.findMany({ where: { examId }, include: { student: { include: { user: true } } } }).catch(() => []);
@@ -1217,7 +1328,7 @@ function registerGradingAndOps(deps: any) {
   });
 
   // Invigilator actions — all audit-logged. SECURITY: teacher/admin only.
-  app.post("/api/attempts/:attemptId/invigilate", authMiddleware, teacherGuard, async (req: any, res: any) => {
+  app.post("/api/attempts/:attemptId/invigilate", authMiddleware, teacherGuard, attemptExamGuard(), async (req: any, res: any) => {
     const { attemptId } = req.params; const b = req.body || {};
     const action = String(b.action || "").toUpperCase();
     try {
@@ -1256,7 +1367,7 @@ function registerGradingAndOps(deps: any) {
   // ── Printable export payload ──────────────────────────────────────────────
   // SECURITY: teacher/admin only. `answerKey=1` adds correct answers; never call
   // this from a student context.
-  app.get("/api/exams/:id/print", authMiddleware, teacherGuard, async (req: any, res: any) => {
+  app.get("/api/exams/:id/print", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
     const withKey = req.query.answerKey === "1" || req.query.answerKey === "true";
     const version = String(req.query.version || "A").toUpperCase();
     try {
