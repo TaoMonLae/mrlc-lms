@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Newspaper, Search, ExternalLink, RefreshCw, Settings2, BookOpenText } from 'lucide-react';
+import { Newspaper, Search, ExternalLink, RefreshCw, Settings2, BookOpenText, ClipboardList } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { apiGet, apiSend } from '@/src/lib/api';
 import { usePermissions } from '@/src/lib/permissions';
+import { homeworkPrefillFor } from '@/src/lib/newsHomeworkPrefill';
 import { toast } from 'sonner';
 
 interface NewsArticle {
@@ -23,7 +24,8 @@ interface NewsArticle {
 }
 
 export default function NewsFeed() {
-  const { isAdmin } = usePermissions();
+  const { isAdmin, isTeacher } = usePermissions();
+  const navigate = useNavigate();
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [category, setCategory] = useState('ALL');
@@ -173,6 +175,24 @@ export default function NewsFeed() {
                   {a.hasFullContent ? 'Read in app' : 'Read summary'} <ExternalLink className="h-3 w-3" />
                 </span>
               </div>
+              {/* Teacher/admin-only — jumps into Homework creation with this
+                  article pre-filled as a reading-response assignment. Not
+                  restricted to any subject; RLA/Social Studies are just the
+                  natural fit. stopPropagation so it doesn't also trigger the
+                  card's own Link navigation to the article. */}
+              {(isTeacher || isAdmin) && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    navigate('/teacher/homework', { state: { prefill: homeworkPrefillFor(a) } });
+                  }}
+                  className="mt-2 flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-surface-raised py-1.5 text-[11px] font-bold uppercase tracking-wide text-slate-500 hover:border-aubergine-300 hover:text-aubergine-600 dark:hover:border-aubergine-800 transition-colors"
+                >
+                  <ClipboardList className="h-3.5 w-3.5" /> Assign as Homework
+                </button>
+              )}
             </div>
           </Link>
         ))}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, ClipboardList, Lock, LockOpen, Paperclip, RotateCcw, Trash2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ClipboardList, Lock, LockOpen, Newspaper, Paperclip, RotateCcw, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -120,7 +120,7 @@ export default function HomeworkDetail() {
             {data.instructions && <p className="mt-2 max-w-2xl whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">{data.instructions}</p>}
             {data.attachmentUrl && (
               <a href={data.attachmentUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-sm text-aubergine-600 underline">
-                <Paperclip className="h-3.5 w-3.5" /> Worksheet attachment
+                {data.attachmentUrl.startsWith('/news/') ? <><Newspaper className="h-3.5 w-3.5" /> Linked News article</> : <><Paperclip className="h-3.5 w-3.5" /> Worksheet attachment</>}
               </a>
             )}
           </div>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { BookOpenCheck, Camera, CheckCircle2, Clock, Paperclip, RotateCcw, Send } from 'lucide-react';
+import { BookOpenCheck, Camera, CheckCircle2, Clock, Newspaper, Paperclip, RotateCcw, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -118,7 +118,7 @@ export default function StudentHomework() {
             {item.instructions && <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">{item.instructions}</p>}
             {item.attachmentUrl && (
               <a href={item.attachmentUrl} target="_blank" rel="noreferrer" className="mt-1 inline-flex items-center gap-1 text-xs text-aubergine-600 underline">
-                <Paperclip className="h-3 w-3" /> Worksheet
+                {item.attachmentUrl.startsWith('/news/') ? <><Newspaper className="h-3 w-3" /> Read the article</> : <><Paperclip className="h-3 w-3" /> Worksheet</>}
               </a>
             )}
             {item.mySubmission?.feedback && (

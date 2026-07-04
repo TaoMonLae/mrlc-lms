@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { BookOpenCheck, CalendarDays, Paperclip, Plus, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -26,15 +26,20 @@ interface HomeworkRow {
 
 export default function HomeworkList() {
   const { isAdmin } = usePermissions();
+  const location = useLocation();
+  // Arrives here from "Assign as Homework" on a News article — see
+  // NewsFeed.tsx / ArticleReader.tsx, which navigate with this shape.
+  const prefill = (location.state as { prefill?: { title: string; instructions: string; attachmentUrl: string } } | null)?.prefill;
   const [rows, setRows] = useState<HomeworkRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [classes, setClasses] = useState<{ id: string; name: string }[]>([]);
   const [subjects, setSubjects] = useState<{ id: string; name: string }[]>([]);
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(!!prefill);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({
-    title: '', instructions: '', classId: '', subjectId: '', dueDate: localToday(), maxMarks: '', attachmentUrl: '',
+    title: prefill?.title || '', instructions: prefill?.instructions || '', classId: '', subjectId: '',
+    dueDate: localToday(), maxMarks: '', attachmentUrl: prefill?.attachmentUrl || '',
   });
 
   const load = () => {
@@ -160,13 +165,19 @@ export default function HomeworkList() {
               <Textarea rows={3} value={form.instructions} onChange={(e) => setForm({ ...form, instructions: e.target.value })} placeholder="What should students do?" />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label>Worksheet attachment</Label>
+              <Label>{form.attachmentUrl.startsWith('/news/') ? 'Linked News article' : 'Worksheet attachment'}</Label>
               <div className="flex items-center gap-3">
-                <input type="file" accept="image/*,.pdf,.doc,.docx" className="text-sm" disabled={uploading}
-                  onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAttachment(f); }} />
+                {form.attachmentUrl.startsWith('/news/') ? (
+                  <Button type="button" variant="outline" size="sm" onClick={() => setForm({ ...form, attachmentUrl: '' })}>
+                    Remove article link
+                  </Button>
+                ) : (
+                  <input type="file" accept="image/*,.pdf,.doc,.docx" className="text-sm" disabled={uploading}
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAttachment(f); }} />
+                )}
                 {form.attachmentUrl && (
                   <a href={form.attachmentUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-aubergine-600 underline">
-                    <Paperclip className="h-3 w-3" /> attached
+                    <Paperclip className="h-3 w-3" /> {form.attachmentUrl.startsWith('/news/') ? 'view article' : 'attached'}
                   </a>
                 )}
               </div>

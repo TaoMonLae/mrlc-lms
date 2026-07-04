@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ExternalLink, Newspaper, Clock } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Newspaper, Clock, ClipboardList } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import DOMPurify from 'dompurify';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { apiGet } from '@/src/lib/api';
+import { usePermissions } from '@/src/lib/permissions';
+import { homeworkPrefillFor } from '@/src/lib/newsHomeworkPrefill';
 import { toast } from 'sonner';
 
 interface ArticleDetail {
@@ -25,6 +27,7 @@ interface ArticleDetail {
 export default function ArticleReader() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { isTeacher, isAdmin } = usePermissions();
   const [article, setArticle] = useState<ArticleDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -55,14 +58,25 @@ export default function ArticleReader() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" render={<Link to="/news" />} className="rounded-full hover:bg-slate-100 dark:hover:bg-surface-raised">
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div className="flex items-center gap-2">
-          <Newspaper className="h-5 w-5 text-aubergine-600" />
-          <span className="text-xs font-bold uppercase tracking-widest text-slate-400">News</span>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" render={<Link to="/news" />} className="rounded-full hover:bg-slate-100 dark:hover:bg-surface-raised">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div className="flex items-center gap-2">
+            <Newspaper className="h-5 w-5 text-aubergine-600" />
+            <span className="text-xs font-bold uppercase tracking-widest text-slate-400">News</span>
+          </div>
         </div>
+        {(isTeacher || isAdmin) && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/teacher/homework', { state: { prefill: homeworkPrefillFor(article) } })}
+          >
+            <ClipboardList className="mr-2 h-4 w-4" /> Assign as Homework
+          </Button>
+        )}
       </div>
 
       <Card className="border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
