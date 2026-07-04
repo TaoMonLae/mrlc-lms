@@ -39,6 +39,9 @@ const DEFAULT_SOURCES = [
   { name: "BBC Burmese", feedUrl: "https://feeds.bbci.co.uk/burmese/rss.xml", category: "Myanmar" },
   { name: "Independent Mon News Agency (IMNA)", feedUrl: "https://monnews.org/feed/", category: "Myanmar" },
   { name: "Karen News", feedUrl: "https://karennews.org/feed/", category: "Myanmar" },
+  // Malaysia
+  { name: "Malaysiakini", feedUrl: "https://www.malaysiakini.com/rss/en/news.rss", category: "Malaysia" },
+  { name: "Malay Mail", feedUrl: "https://www.malaymail.com/feed/rss/malaysia", category: "Malaysia" },
 ];
 
 // Articles older than this are pruned on refresh so the table doesn't grow
