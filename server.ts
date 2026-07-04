@@ -18,6 +18,7 @@ import dotenv from "dotenv";
 import { spawn } from "child_process";
 import { registerExamPhase2Routes } from "./examPhase2";
 import { registerExamBankRoutes } from "./examBank";
+import { registerNewsRoutes } from "./news";
 import cookieParser from "cookie-parser";
 import { BADGE_CATALOG, getBadgeLevel } from "./lib/badges";
 
@@ -6525,7 +6526,7 @@ async function startServer() {
             classId,
             subjectId,
             type: examType || "FINAL",
-            status: status || "PUBLISHED",
+            status: status || "DRAFT",
             date: new Date(),
             durationMinutes: duration ? Number(duration) : null,
             totalMarks: totalMarks != null ? Number(totalMarks) : null,
@@ -6867,7 +6868,7 @@ async function startServer() {
         select: {
           id: true,
           exam: { select: { classId: true } },
-          student: { select: { studentCode: true } },
+          student: { select: { id: true, studentCode: true } },
           answers: { select: { id: true, pointsAwarded: true, question: { select: { id: true } } } },
         },
       });
@@ -6914,8 +6915,8 @@ async function startServer() {
       );
 
       // Check badges for exam completion
-      checkAndAwardBadges(attempt.studentId, 'EXAM').catch(err =>
-        logger.error(`Error checking badges for student ${attempt.studentId}:`, err)
+      checkAndAwardBadges(attempt.student.id, 'EXAM').catch(err =>
+        logger.error(`Error checking badges for student ${attempt.student.id}:`, err)
       );
 
       res.json(result);
@@ -10272,6 +10273,48 @@ async function startServer() {
   };
   scheduleDailyBackup();
 
+  // ── Scheduled daily news digest refresh ─────────────────────────────────────
+  // Same self-rescheduling pattern as the backup job above: always targets the
+  // next HOUR:00 local time, plus a boot-time catch-up so a fresh install (or a
+  // server that was off at refresh time) still gets today's articles promptly.
+  const scheduleNewsRefresh = () => {
+    const HOUR = Number(process.env.NEWS_REFRESH_HOUR || 6); // local hour, default 06:00
+    const STALE_MS = 20 * 60 * 60 * 1000;
+
+    const anySourceStale = async (): Promise<boolean> => {
+      const sources = await (prisma as any).newsSource.findMany({ where: { enabled: true }, select: { lastFetchedAt: true } }).catch(() => []);
+      if (!sources.length) return true; // nothing fetched yet
+      return sources.some((s) => !s.lastFetchedAt || Date.now() - new Date(s.lastFetchedAt).getTime() > STALE_MS);
+    };
+
+    const runIfDue = async (reason: string, onlyWhenStale: boolean) => {
+      try {
+        if (onlyWhenStale && !(await anySourceStale())) return;
+        await refreshAllNewsSources();
+      } catch (err: any) {
+        logger.error(`${reason} news refresh failed:`, err.message);
+      }
+    };
+
+    const scheduleNext = () => {
+      const now = new Date();
+      const next = new Date(now);
+      next.setHours(HOUR, 0, 0, 0);
+      if (next <= now) next.setDate(next.getDate() + 1);
+      const delay = next.getTime() - now.getTime();
+      setTimeout(async () => {
+        await runIfDue("Scheduled", false);
+        scheduleNext();
+      }, delay);
+      logger.info(`Next news digest refresh scheduled for ${next.toLocaleString()}.`);
+    };
+    scheduleNext();
+
+    // Catch-up shortly after boot so a first install / stale feed isn't empty.
+    setTimeout(() => { void runIfDue("Catch-up", true); }, 90 * 1000);
+  };
+  scheduleNewsRefresh();
+
   // Sweep expired social posts and ephemeral chat photos (rows + files) hourly.
   const cleanupEphemeral = async () => {
     try {
@@ -10298,6 +10341,8 @@ async function startServer() {
   registerExamPhase2Routes({ app, prisma, authMiddleware, createAuditLog, logger, canManageExamClass });
   // ── Phase 3 reusable question bank routes ───────────────────────────────────
   registerExamBankRoutes({ app, prisma, authMiddleware, createAuditLog, logger, canManageExamClass });
+  // ── News / Daily Digest (RSS aggregation) ───────────────────────────────────
+  const { refreshAllSources: refreshAllNewsSources } = registerNewsRoutes({ app, prisma, authMiddleware, requireRole, createAuditLog, logger });
 
   // NOTE: the SPA catch-all (Vite middleware in dev / static dist in prod) is
   // registered at the very end of startServer, AFTER every /api route, so it can

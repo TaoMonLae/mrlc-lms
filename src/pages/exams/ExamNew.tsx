@@ -55,7 +55,7 @@ export default function ExamNew() {
 
   // Whether the exam is visible to students immediately. When off it is saved as
   // a DRAFT so the teacher can finish authoring/scheduling before publishing.
-  const [publishNow, setPublishNow] = useState(true);
+  const [publishNow, setPublishNow] = useState(false);
 
   // Math equation tools only make sense for Math subjects, so show them only
   // when the selected subject looks like Mathematics (e.g. "Math",

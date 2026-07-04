@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
+    "postinstall": "prisma generate",
     "seed": "tsx prisma/seed.ts",
     "smoke": "node scripts/smoke-test.mjs",
     "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
@@ -54,6 +55,7 @@
     "react-pdf": "^9.2.1",
     "react-router-dom": "^7.15.0",
     "recharts": "^3.8.1",
+    "rss-parser": "^3.13.0",
     "shadcn": "^4.7.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.6.0",

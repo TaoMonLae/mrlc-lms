@@ -110,8 +110,12 @@ import SchoolSettings from "./pages/settings/SchoolSettings";
 import BrandingSettings from "./pages/settings/BrandingSettings";
 import SystemSettings from "./pages/settings/SystemSettings";
 import BackupAndRestore from "./pages/settings/BackupAndRestore";
+import NewsSources from "./pages/settings/NewsSources";
 import AuditLogPage from "./pages/settings/AuditLog";
 import ExportDataPage from "./pages/settings/ExportData";
+
+import NewsFeed from "./pages/news/NewsFeed";
+import ArticleReader from "./pages/news/ArticleReader";
 
 import AnnouncementsList from "./pages/announcements/AnnouncementsList";
 import AnnouncementNew from "./pages/announcements/AnnouncementNew";
@@ -240,6 +244,10 @@ export default function App() {
                 {/* Social Space — ephemeral 24h community feed */}
                 <Route path="/social" element={<SocialSpace />} />
 
+                {/* News — daily-refreshed RSS digest, available to every authenticated role */}
+                <Route path="/news" element={<NewsFeed />} />
+                <Route path="/news/:id" element={<ArticleReader />} />
+
                 <Route path="/timetable" element={<TimetablePage />} />
 
                 <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'TEACHER']} />}>
@@ -326,6 +334,7 @@ export default function App() {
                     <Route path="branding" element={<BrandingSettings />} />
                     <Route path="system" element={<SystemSettings />} />
                     <Route path="roles" element={<RolesPermissions />} />
+                    <Route path="news-sources" element={<NewsSources />} />
                     <Route path="backup" element={<BackupAndRestore />} />
                   </Route>
                   {/* Standalone pages — not part of the settings sub-nav layout */}

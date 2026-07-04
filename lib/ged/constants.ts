@@ -46,7 +46,7 @@ export const GED_STAGES = GED_STATUSES.map((status, index) => ({
   label: GED_STATUS_LABELS[status],
   step: index + 1,
   style: GED_STATUS_STYLES[status]
-})) as const;
+}));
 
 // Thresholds for automatic status suggestions based on exam performance
 export const GED_MASTERY_THRESHOLDS = {

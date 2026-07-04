@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, Outlet, useLocation, Navigate } from 'react-router-dom';
-import { Building2, Palette, Settings as SettingsIcon, Shield, ChevronRight, DatabaseBackup } from 'lucide-react';
+import { Building2, Palette, Settings as SettingsIcon, Shield, ChevronRight, DatabaseBackup, Rss } from 'lucide-react';
 import { usePermissions } from '../../lib/permissions';
 
 export default function SettingsLayout() {
@@ -16,6 +16,7 @@ export default function SettingsLayout() {
     { name: 'Branding', path: '/settings/branding', icon: Palette },
     { name: 'System Settings', path: '/settings/system', icon: SettingsIcon },
     { name: 'Roles & Permissions', path: '/settings/roles', icon: Shield },
+    { name: 'News Sources', path: '/settings/news-sources', icon: Rss },
     { name: 'Backup & Restore', path: '/settings/backup', icon: DatabaseBackup },
   ];
 

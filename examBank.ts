@@ -383,6 +383,12 @@ export function registerExamBankRoutes(deps: Deps): void {
   app.put("/api/exams/:id/questions/reorder", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
     const order: { id: string; displayOrder: number }[] = Array.isArray(req.body?.order) ? req.body.order : [];
     try {
+      // Ownership check: every link being reordered must actually belong to
+      // this exam, otherwise a teacher could reorder examQuestion rows from
+      // an exam/class they don't manage just by knowing the link id.
+      const ids = order.map((o) => o.id);
+      const owned = await prisma.examQuestion.findMany({ where: { id: { in: ids }, examId: req.params.id }, select: { id: true } });
+      if (owned.length !== ids.length) { res.status(403).json({ error: "One or more questions do not belong to this exam" }); return; }
       await prisma.$transaction(order.map((o) => prisma.examQuestion.update({ where: { id: o.id }, data: { displayOrder: Number(o.displayOrder) || 0 } })));
       await audit(req, "REORDER", "EXAM", req.params.id, `Reordered ${order.length} questions.`);
       res.json({ ok: true });

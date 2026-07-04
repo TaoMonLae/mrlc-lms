@@ -8,3 +8,5 @@ coverage/
 !.env.example
 # Runtime uploaded e-book files (persisted via Docker volume in production)
 data/
+# Local Claude Code tool settings — machine-specific, not part of the app
+.claude/

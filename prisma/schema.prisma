@@ -2127,3 +2127,47 @@ model ChatMessageReport {
   @@index([status])
   @@index([messageId])
 }
+
+// ── News / Daily Digest ──────────────────────────────────────────────────────
+// Admin-managed list of RSS feeds. Articles are aggregated from these on a
+// scheduled refresh (see server.ts scheduleNewsRefresh). `content` is only
+// populated when the publisher's own feed includes full-article HTML (e.g.
+// content:encoded) — we never scrape the source page to force full text, so
+// students read in-app when the feed offers it, and read at the source
+// (credited, linked) when it doesn't.
+model NewsSource {
+  id            String   @id @default(uuid())
+  name          String
+  feedUrl       String   @unique
+  category      String?  // free-text label, e.g. "World", "Education", "Science"
+  enabled       Boolean  @default(true)
+  lastFetchedAt DateTime?
+  lastError     String?
+  createdById   String?
+
+  articles      NewsArticle[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model NewsArticle {
+  id          String     @id @default(uuid())
+  sourceId    String
+  source      NewsSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  title       String
+  summary     String?
+  content     String?    // full-article HTML, only when the feed provides it (e.g. content:encoded)
+  link        String     // original article URL — the credited source, always shown
+  imageUrl    String?
+  author      String?
+  publishedAt DateTime?
+  fetchedAt   DateTime   @default(now())
+
+  createdAt   DateTime   @default(now())
+
+  @@unique([sourceId, link])
+  @@index([publishedAt])
+  @@index([sourceId])
+}
