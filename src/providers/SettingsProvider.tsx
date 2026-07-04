@@ -180,6 +180,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     }
     const saved = await res.json();
     applyServerData(saved, setSchoolProfile, setBrandingSettings, setSystemSettings);
+    // Let anything outside this provider's tree (e.g. DynamicFavicon, which
+    // has to work for logged-out visitors too and so can't consume this
+    // context) know branding just changed, without a full page refresh.
+    window.dispatchEvent(new Event('branding-updated'));
   };
 
   const updateSchoolProfile = (data: Partial<SchoolProfile>) =>

@@ -178,6 +178,7 @@ import { I18nProvider } from "./i18n/I18nProvider";
 
 import LandingPage from "./pages/Landing";
 import CursorEffect from "./components/CursorEffect";
+import DynamicFavicon from "./components/DynamicFavicon";
 
 export default function App() {
   return (
@@ -421,6 +422,7 @@ export default function App() {
           </Routes>
           <Toaster position="top-right" closeButton richColors />
           <CursorEffect />
+          <DynamicFavicon />
         </BrowserRouter>
         </TooltipProvider>
       </SettingsProvider>
