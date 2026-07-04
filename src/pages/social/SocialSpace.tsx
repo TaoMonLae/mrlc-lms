@@ -9,6 +9,8 @@ import { formatDistanceToNowStrict } from 'date-fns';
 import { apiGet, apiSend, authHeaders } from '../../lib/api';
 import { useAuth } from '../../providers/AuthProvider';
 import CameraCapture from '../../components/CameraCapture';
+import { useTheme } from '../../components/theme-provider';
+import DotGrid from '@/components/DotGrid';
 
 interface Comment { id: string; body: string; createdAt: string; user: { id: string; name: string; role: string }; mine: boolean }
 interface Post {
@@ -22,6 +24,7 @@ const timeLeft = (iso: string) => { const ms = new Date(iso).getTime() - Date.no
 
 export default function SocialSpace() {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [body, setBody] = useState('');
@@ -91,11 +94,31 @@ export default function SocialSpace() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="rounded-lg bg-aubergine-100 p-2 text-aubergine-700 dark:bg-aubergine-900/30 dark:text-aubergine-400"><Sparkles className="h-5 w-5" /></div>
-        <div>
-          <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Social Space</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Share a photo or a thought with the school. Everything disappears after 24 hours.</p>
+      {/* Header banner — a bounded-height decorative dot grid, distinct from
+          the scrolling feed below it. Kept small and fixed-height on purpose:
+          Social Space's feed grows unboundedly as posts are added, so a
+          full-page background here (unlike the Landing hero) would mean
+          endlessly resizing/redrawing a canvas behind mostly off-screen
+          content — wasteful for no visual payoff. This banner fits the
+          page's casual, photo/social tone without touching the feed itself. */}
+      <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-surface-raised dark:bg-surface-indigo">
+        <div className="absolute inset-0 opacity-70 dark:opacity-40">
+          <DotGrid
+            dotSize={3}
+            gap={20}
+            baseColor={theme === 'dark' ? '#33334d' : '#e2e8f0'}
+            activeColor="#7a3dff"
+            proximity={110}
+            shockRadius={160}
+            shockStrength={2.5}
+          />
+        </div>
+        <div className="relative flex items-center gap-3 p-4">
+          <div className="rounded-lg bg-aubergine-100 p-2 text-aubergine-700 dark:bg-aubergine-900/30 dark:text-aubergine-400"><Sparkles className="h-5 w-5" /></div>
+          <div>
+            <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Social Space</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Share a photo or a thought with the school. Everything disappears after 24 hours.</p>
+          </div>
         </div>
       </div>
 
