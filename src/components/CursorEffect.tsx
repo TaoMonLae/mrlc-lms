@@ -3,6 +3,9 @@ import { useSettings } from '../providers/SettingsProvider';
 import RainbowMouseTrail from './RainbowMouseTrail';
 import SplashCursor from '@/components/SplashCursor';
 import Ribbons from '@/components/Ribbons';
+import GhostCursor from '@/components/GhostCursor';
+import ClickSpark from '@/components/ClickSpark';
+import TargetCursor from '@/components/TargetCursor';
 
 // Dispatches whichever global cursor/mouse effect is picked in
 // Settings -> System -> Cursor Effects. Purely decorative — never blocks
@@ -32,6 +35,22 @@ export default function CursorEffect() {
           <Ribbons colors={['#7a3dff', '#3b89ff', '#ff6ec7']} />
         </div>
       );
+    case 'GHOST_CURSOR':
+      // Wrapped with an inline (not Tailwind-class) `position: fixed` so the
+      // component's own "was my parent static?" check sees a non-static
+      // inline style and doesn't override it — see GhostCursor.jsx.
+      return (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 40, pointerEvents: 'none', overflow: 'hidden' }}>
+          <GhostCursor />
+        </div>
+      );
+    case 'CLICK_SPARK':
+      return <ClickSpark sparkColor="#7a3dff" />;
+    case 'TARGET_CURSOR':
+      // Corners only "lock on" to elements with a .cursor-target class;
+      // without any on the page yet it's still a fully functional custom
+      // spinning-reticle cursor on its own.
+      return <TargetCursor cursorColor="#7a3dff" />;
     case 'NONE':
       return null;
     case 'RAINBOW_TRAIL':

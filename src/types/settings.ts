@@ -39,4 +39,4 @@ export interface SystemSettings {
   cursorEffect: CursorEffect;
 }
 
-export type CursorEffect = 'NONE' | 'RAINBOW_TRAIL' | 'SPLASH_CURSOR' | 'RIBBONS';
+export type CursorEffect = 'NONE' | 'RAINBOW_TRAIL' | 'SPLASH_CURSOR' | 'RIBBONS' | 'GHOST_CURSOR' | 'CLICK_SPARK' | 'TARGET_CURSOR';

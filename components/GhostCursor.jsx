@@ -6,8 +6,8 @@ import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 
 const GhostCursor = ({
-  className,
-  style,
+  className = undefined,
+  style = undefined,
   trailLength = 50,
   inertia = 0.5,
   grainIntensity = 0.05,
@@ -21,10 +21,10 @@ const GhostCursor = ({
   edgeIntensity = 0,
 
   maxDevicePixelRatio = 0.5,
-  targetPixels,
+  targetPixels = undefined,
 
-  fadeDelayMs,
-  fadeDurationMs,
+  fadeDelayMs = undefined,
+  fadeDurationMs = undefined,
   zIndex = 10
 }) => {
   const containerRef = useRef(null);
@@ -410,6 +410,13 @@ const GhostCursor = ({
       }
     };
 
+    // Listens on `window` rather than `parent` so this still works when
+    // mounted as a fixed, full-viewport global effect (a sibling of the
+    // routed page content in the DOM tree, not an ancestor of it) — pointer
+    // events over real page content never bubble up to a sibling element.
+    // Coordinates are still normalized against `parent`'s own rect, so this
+    // stays correct for bounded/embedded usage too (parent === viewport when
+    // used as a full-screen overlay, or the actual container otherwise).
     const onPointerMove = e => {
       const rect = parent.getBoundingClientRect();
       const x = THREE.MathUtils.clamp((e.clientX - rect.left) / Math.max(1, rect.width), 0, 1);
@@ -419,19 +426,15 @@ const GhostCursor = ({
       lastMoveTimeRef.current = performance.now();
       ensureLoop();
     };
-    const onPointerEnter = () => {
-      pointerActiveRef.current = true;
-      ensureLoop();
-    };
-    const onPointerLeave = () => {
+    const onWindowMouseLeave = () => {
       pointerActiveRef.current = false;
       lastMoveTimeRef.current = performance.now();
       ensureLoop();
     };
 
-    parent.addEventListener('pointermove', onPointerMove, { passive: true });
-    parent.addEventListener('pointerenter', onPointerEnter, { passive: true });
-    parent.addEventListener('pointerleave', onPointerLeave, { passive: true });
+    window.addEventListener('pointermove', onPointerMove, { passive: true });
+    window.addEventListener('pointerdown', onPointerMove, { passive: true });
+    document.addEventListener('mouseleave', onWindowMouseLeave, { passive: true });
 
     ensureLoop();
 
@@ -443,9 +446,9 @@ const GhostCursor = ({
       runningRef.current = false;
       rafRef.current = null;
 
-      parent.removeEventListener('pointermove', onPointerMove);
-      parent.removeEventListener('pointerenter', onPointerEnter);
-      parent.removeEventListener('pointerleave', onPointerLeave);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerdown', onPointerMove);
+      document.removeEventListener('mouseleave', onWindowMouseLeave);
       resizeObsRef.current?.disconnect();
 
       scene.clear();

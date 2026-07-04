@@ -30,7 +30,7 @@ const systemSchema = z.object({
   lockdownAutoSubmitOnViolation: z.boolean(),
   lockdownMaxWarnings: z.number().min(1).max(10),
   lockdownInstructions: z.string(),
-  cursorEffect: z.enum(['NONE', 'RAINBOW_TRAIL', 'SPLASH_CURSOR', 'RIBBONS']),
+  cursorEffect: z.enum(['NONE', 'RAINBOW_TRAIL', 'SPLASH_CURSOR', 'RIBBONS', 'GHOST_CURSOR', 'CLICK_SPARK', 'TARGET_CURSOR']),
 });
 
 type FormValues = z.infer<typeof systemSchema>;
@@ -222,6 +222,9 @@ export default function SystemSettings() {
               <SelectItem value="RAINBOW_TRAIL">Rainbow Trail</SelectItem>
               <SelectItem value="SPLASH_CURSOR">Splash Cursor (fluid)</SelectItem>
               <SelectItem value="RIBBONS">Ribbons</SelectItem>
+              <SelectItem value="GHOST_CURSOR">Ghost Cursor (smoke trail)</SelectItem>
+              <SelectItem value="CLICK_SPARK">Click Spark</SelectItem>
+              <SelectItem value="TARGET_CURSOR">Target Cursor (reticle)</SelectItem>
             </SelectContent>
           </Select>
           <p className="text-xs text-slate-500">
