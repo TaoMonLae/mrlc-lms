@@ -9480,8 +9480,13 @@ async function startServer() {
     // "GED-SCI", "GED-SOC" — not the bare GED_SUBJECTS enum values), so an exact-match
     // filter against GED_SUBJECTS silently matches nothing. Match loosely against both
     // code and name instead.
+    // Exam.subjectId is a required field, so filtering it against { not: null }
+    // is redundant (every exam already has one) — and Prisma 7 now throws a
+    // PrismaClientValidationError ("Argument `not` must not be null") for a
+    // null-filter against a non-nullable column, which was crashing this
+    // endpoint for every student. Just drop the no-op filter.
     const examAttempts = await prisma.examAttempt.findMany({
-      where: { studentId, isCompleted: true, exam: { subjectId: { not: null } } },
+      where: { studentId, isCompleted: true },
       include: { exam: { include: { subject: true } } },
     });
 
