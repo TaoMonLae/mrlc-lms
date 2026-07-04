@@ -204,6 +204,7 @@ export const STUDENT_NAV: AdminNavEntry[] = [
       { title: "Video Lessons", url: "/student/videos", icon: Video },
     ],
   },
+  { title: "My Profile", url: "/student/profile", icon: UserSquare2 },
 ];
 
 /** Roles with a grouped sidebar; everyone else gets the flat list. */
