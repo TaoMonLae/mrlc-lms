@@ -52,10 +52,29 @@ const MAX_ITEMS_PER_FEED = 30;
 const FETCH_TIMEOUT_MS = 15000;
 
 function firstImageFrom(item: any): string | null {
-  if (item.enclosure?.url) return item.enclosure.url;
-  const mediaContent = item["media:content"];
-  if (mediaContent?.$?.url) return mediaContent.$.url;
-  const html: string = item.content || item["content:encoded"] || "";
+  // Only trust <enclosure> when it's actually an image — some feeds use it
+  // for podcast audio/video, which would otherwise get rendered as a photo.
+  if (item.enclosure?.url && (!item.enclosure.type || item.enclosure.type.startsWith("image"))) {
+    return item.enclosure.url;
+  }
+  // <media:content> and <media:thumbnail> can each appear as a single object
+  // or an array of them depending on the feed — normalize both to arrays.
+  // (BBC and Malay Mail, e.g., only ever set media:thumbnail, not
+  // media:content, so both namespaces need to be checked.)
+  const mediaCandidates = ([] as any[])
+    .concat(item["media:content"] || [])
+    .concat(item["media:thumbnail"] || []);
+  for (const m of mediaCandidates) {
+    const url = m?.$?.url;
+    const medium = m?.$?.medium;
+    const type = m?.$?.type;
+    if (url && (!medium || medium === "image") && (!type || !type.startsWith("video"))) return url;
+  }
+  // Fall back to scanning the article HTML for a plain <img> tag. Check
+  // content:encoded (the full article body) before the plain `content`
+  // field — a feed's <description> is often just text, so checking it first
+  // would short-circuit and miss an image that's only present further in.
+  const html: string = item["content:encoded"] || item.content || "";
   const match = /<img[^>]+src=["']([^"']+)["']/i.exec(html);
   return match ? match[1] : null;
 }
