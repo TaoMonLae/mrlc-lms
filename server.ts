@@ -391,6 +391,41 @@ async function createAuditLog(
   }
 }
 
+// Recomputes a Budget's spentAmount/remainingAmount/status from its linked expenses'
+// actual APPROVED/PAID/PARTIAL totals. Budget.spentAmount previously only ever
+// changed via a manual admin PUT to /api/budgets/:id, so it silently drifted from
+// the real, live expense totals shown in the financial reports as soon as any
+// expense tied to the budget was approved or paid. Call this after any change to
+// an expense's status or budgetId that could affect a budget's spend.
+async function syncBudgetSpending(budgetId: string | null | undefined) {
+  if (!budgetId) return;
+  try {
+    const budget = await prisma.budget.findUnique({ where: { id: budgetId } });
+    if (!budget) return;
+
+    const counted = await prisma.expense.aggregate({
+      where: { budgetId, status: { in: ["APPROVED", "PAID", "PARTIAL"] } },
+      _sum: { amount: true },
+    });
+    const spentAmount = counted._sum.amount || 0;
+    const remainingAmount = budget.allocatedAmount - spentAmount;
+
+    let status = budget.status;
+    if (status !== "ARCHIVED") {
+      if (spentAmount > budget.allocatedAmount) status = "EXCEEDED";
+      else if (spentAmount >= budget.allocatedAmount) status = "EXHAUSTED";
+      else status = "ACTIVE";
+    }
+
+    await prisma.budget.update({
+      where: { id: budgetId },
+      data: { spentAmount, remainingAmount, status },
+    });
+  } catch (err) {
+    logger.error("Failed to sync budget spending:", err);
+  }
+}
+
 // ─── JWT helpers ─────────────────────────────────────────────────────────────
 const JWT_SECRET = process.env.SESSION_SECRET;
 if (!JWT_SECRET || JWT_SECRET.length < 16) {
@@ -485,6 +520,10 @@ const optStr = str.optional();
 const nullableStr = str.nullable().optional(); // accepts string | null | undefined
 const email = z.string().trim().email("must be a valid email");
 const num = z.union([z.string(), z.number()]); // handlers coerce with Number()
+// Required numeric fields (amounts, goals, installment counts, etc.) must be positive —
+// without this, negative/zero values (e.g. a negative expense amount or donation) pass
+// validation and corrupt financial totals downstream.
+const reqNum = num.refine((v) => Number(v) > 0, { message: "must be a positive number" });
 const optNum = num.optional().nullable();
 const userRole = z.enum(["ADMIN", "TEACHER", "STUDENT", "STAFF", "ACCOUNTANT", "CASE_WORKER", "LIBRARIAN"]);
 const admissionStatus = z.enum([
@@ -574,6 +613,147 @@ const schemas = {
     studentId: reqStr, amount: num,
     paymentType: optStr, paymentMethod: optStr, paymentDate: optStr,
     receiptNumber: optStr, notes: optStr,
+  }),
+  feeStructureCreate: z.object({
+    name: reqStr,
+    description: nullableStr,
+    academicYear: num,
+    term: nullableStr,
+    currency: z.string().length(3).optional().default("MYR"),
+    effectiveFromDate: reqStr,
+    effectiveToDate: nullableStr,
+    applyToClasses: z.boolean().optional().default(false),
+    applyToBoarders: z.boolean().optional().default(false),
+    applyToDayStudents: z.boolean().optional().default(false),
+    notes: nullableStr,
+    tags: z.array(z.string()).optional().default([]),
+    status: z.enum(["DRAFT", "ACTIVE", "ARCHIVED"]).optional().default("DRAFT"),
+  }),
+  feeStructureUpdate: z.object({
+    name: optStr,
+    description: nullableStr,
+    status: z.enum(["DRAFT", "ACTIVE", "ARCHIVED"]).optional(),
+    effectiveFromDate: optStr,
+    effectiveToDate: nullableStr,
+    notes: nullableStr,
+    tags: z.array(z.string()).optional(),
+  }),
+  feeItemCreate: z.object({
+    name: reqStr,
+    description: nullableStr,
+    amount: reqNum,
+    currency: z.string().length(3).optional().default("MYR"),
+    frequency: z.enum(["ONE_TIME", "MONTHLY", "TERMLY", "YEARLY"]).optional().default("ONE_TIME"),
+    applicableTo: z.enum(["ALL", "BOARDING_STUDENTS", "DAY_STUDENTS"]).optional().default("ALL"),
+    classIds: z.array(z.string()).optional().default([]),
+    dueDate: nullableStr,
+    dueDaysAfterStart: optNum,
+    budgetId: nullableStr,
+    order: optNum,
+    isActive: z.boolean().optional().default(true),
+  }),
+  feeItemUpdate: z.object({
+    name: optStr,
+    description: nullableStr,
+    amount: optNum,
+    frequency: z.enum(["ONE_TIME", "MONTHLY", "TERMLY", "YEARLY"]).optional(),
+    applicableTo: z.enum(["ALL", "BOARDING_STUDENTS", "DAY_STUDENTS"]).optional(),
+    classIds: z.array(z.string()).optional(),
+    dueDate: nullableStr,
+    order: optNum,
+    isActive: z.boolean().optional(),
+  }),
+  feeDiscountCreate: z.object({
+    name: reqStr,
+    description: nullableStr,
+    discountType: z.enum(["PERCENTAGE", "FIXED_AMOUNT", "SIBLING_DISCOUNT", "SCHOLARSHIP", "EARLY_PAYMENT"]),
+    value: reqNum,
+    applyToAllStructures: z.boolean().optional().default(false),
+    feeStructureIds: z.array(z.string()).optional().default([]),
+    classIds: z.array(z.string()).optional().default([]),
+    minSiblings: optNum,
+    requireBoarding: z.boolean().optional().default(false),
+    minGpa: optNum,
+    validFrom: reqStr,
+    validTo: nullableStr,
+    isActive: z.boolean().optional().default(true),
+  }),
+  feePaymentPlanCreate: z.object({
+    name: reqStr,
+    description: nullableStr,
+    feeStructureId: reqStr,
+    studentId: reqStr,
+    totalAmount: reqNum,
+    currency: z.string().length(3).optional().default("MYR"),
+    numberOfInstallments: reqNum,
+    installmentFrequency: z.string().optional().default("MONTHLY"),
+    firstInstallmentDue: reqStr,
+    notes: nullableStr,
+  }),
+  donorCreate: z.object({
+    name: reqStr,
+    email: nullableStr,
+    phone: nullableStr,
+    organization: nullableStr,
+    donorType: z.enum(["INDIVIDUAL", "ORGANIZATION", "ALUMNUS", "PARENT", "GRANT_AGENCY"]).optional().default("INDIVIDUAL"),
+    category: nullableStr,
+    address: nullableStr,
+    city: nullableStr,
+    state: nullableStr,
+    postalCode: nullableStr,
+    country: z.string().optional().default("Malaysia"),
+    preferredContact: z.string().optional().default("EMAIL"),
+    doNotContact: z.boolean().optional().default(false),
+    taxId: nullableStr,
+    receiptPreference: z.string().optional().default("EMAIL"),
+    notes: nullableStr,
+    tags: z.array(z.string()).optional().default([]),
+  }),
+  donationCreate: z.object({
+    donorId: reqStr,
+    amount: reqNum,
+    currency: z.string().length(3).optional().default("MYR"),
+    donationType: z.enum(["ONE_TIME", "RECURRING_MONTHLY", "RECURRING_QUARTERLY", "RECURRING_YEARLY", "IN_KIND"]).optional().default("ONE_TIME"),
+    purpose: nullableStr,
+    designation: nullableStr,
+    campaignId: nullableStr,
+    paymentMethod: nullableStr,
+    paymentReference: nullableStr,
+    donationDate: reqStr,
+    isTaxDeductible: z.boolean().optional().default(true),
+    taxReceiptAmount: optNum,
+    notes: nullableStr,
+  }),
+  donationUpdate: z.object({
+    amount: optNum,
+    status: z.enum(["PENDING", "RECEIVED", "PROCESSED", "CANCELLED", "REFUNDED"]).optional(),
+    receivedDate: optStr,
+    processedDate: optStr,
+    notes: nullableStr,
+  }),
+  campaignCreate: z.object({
+    name: reqStr,
+    description: nullableStr,
+    goalAmount: reqNum,
+    currency: z.string().length(3).optional().default("MYR"),
+    startDate: reqStr,
+    endDate: reqStr,
+    targetAudience: nullableStr,
+    coverImage: nullableStr,
+    notes: nullableStr,
+    tags: z.array(z.string()).optional().default([]),
+    status: z.enum(["DRAFT", "ACTIVE", "PAUSED", "COMPLETED", "CANCELLED"]).optional().default("DRAFT"),
+  }),
+  campaignUpdate: z.object({
+    name: optStr,
+    description: nullableStr,
+    goalAmount: optNum,
+    endDate: optStr,
+    targetAudience: nullableStr,
+    status: z.enum(["DRAFT", "ACTIVE", "PAUSED", "COMPLETED", "CANCELLED"]).optional(),
+    raisedAmount: optNum,
+    notes: nullableStr,
+    tags: z.array(z.string()).optional(),
   }),
   department: z.object({
     name: reqStr, code: nullableStr, description: nullableStr,
@@ -905,6 +1085,155 @@ const schemas = {
   }),
   timetableCancellation: z.object({
     reason: optStr,
+  }),
+
+  // ── Expense Management Schemas ───────────────────────────────────────────────
+  expenseCreate: z.object({
+    title: reqStr,
+    description: nullableStr,
+    category: z.enum(["OPERATIONAL", "ACADEMIC", "STAFF_COSTS", "FOOD_CATERING", "TRANSPORTATION", "FACILITY", "TECHNOLOGY", "EVENT", "ADMINISTRATIVE", "OTHER"]),
+    amount: reqNum,
+    currency: z.string().length(3).optional().default("MYR"),
+    taxAmount: optNum,
+    expenseDate: reqStr,
+    dueDate: optStr,
+    vendorId: nullableStr,
+    vendorInvoiceNo: nullableStr,
+    paymentMethod: z.enum(["CASH", "BANK_TRANSFER", "CHECK", "CREDIT_CARD", "DEBIT_CARD", "ONLINE_PAYMENT", "WIRE_TRANSFER", "OTHER"]).nullable().optional(),
+    budgetId: nullableStr,
+    academicYear: nullableStr,
+    term: nullableStr,
+    notes: nullableStr,
+    tags: z.array(z.string()).optional().default([]),
+    attachmentUrls: z.array(z.string()).optional().default([]),
+    departmentId: nullableStr,
+    relatedClassId: nullableStr,
+    relatedSubjectId: nullableStr,
+  }),
+  expenseUpdate: z.object({
+    title: optStr,
+    description: nullableStr,
+    category: z.enum(["OPERATIONAL", "ACADEMIC", "STAFF_COSTS", "FOOD_CATERING", "TRANSPORTATION", "FACILITY", "TECHNOLOGY", "EVENT", "ADMINISTRATIVE", "OTHER"]).optional(),
+    amount: optNum,
+    currency: z.string().length(3).optional(),
+    taxAmount: optNum,
+    expenseDate: optStr,
+    dueDate: optStr,
+    vendorId: nullableStr,
+    vendorInvoiceNo: nullableStr,
+    paymentMethod: z.enum(["CASH", "BANK_TRANSFER", "CHECK", "CREDIT_CARD", "DEBIT_CARD", "ONLINE_PAYMENT", "WIRE_TRANSFER", "OTHER"]).nullable().optional(),
+    budgetId: nullableStr,
+    notes: nullableStr,
+    tags: z.array(z.string()).optional(),
+    attachmentUrls: z.array(z.string()).optional(),
+  }),
+  expenseSubmit: z.object({}),
+  expenseApprove: z.object({
+    notes: nullableStr,
+  }),
+  expenseReject: z.object({
+    reason: reqStr,
+  }),
+  expensePay: z.object({
+    paymentMethod: z.enum(["CASH", "BANK_TRANSFER", "CHECK", "CREDIT_CARD", "DEBIT_CARD", "ONLINE_PAYMENT", "WIRE_TRANSFER", "OTHER"]),
+    paymentReference: nullableStr,
+    bankAccount: nullableStr,
+    paymentDate: optStr,
+    receiptUrl: nullableStr,
+    notes: nullableStr,
+  }),
+  vendorCreate: z.object({
+    name: reqStr,
+    description: nullableStr,
+    contactPerson: nullableStr,
+    email: nullableStr,
+    phone: nullableStr,
+    website: nullableStr,
+    address: nullableStr,
+    city: nullableStr,
+    state: nullableStr,
+    postalCode: nullableStr,
+    country: z.string().optional().default("Malaysia"),
+    taxId: nullableStr,
+    bankName: nullableStr,
+    bankAccount: nullableStr,
+    paymentTerms: nullableStr,
+    category: nullableStr,
+    tags: z.array(z.string()).optional().default([]),
+    notes: nullableStr,
+  }),
+  vendorUpdate: z.object({
+    name: optStr,
+    description: nullableStr,
+    contactPerson: nullableStr,
+    email: nullableStr,
+    phone: nullableStr,
+    website: nullableStr,
+    address: nullableStr,
+    city: nullableStr,
+    state: nullableStr,
+    postalCode: nullableStr,
+    country: z.string().optional(),
+    taxId: nullableStr,
+    bankName: nullableStr,
+    bankAccount: nullableStr,
+    paymentTerms: nullableStr,
+    category: nullableStr,
+    isActive: z.boolean().optional(),
+    tags: z.array(z.string()).optional(),
+    notes: nullableStr,
+  }),
+  recurringExpenseCreate: z.object({
+    title: reqStr,
+    description: nullableStr,
+    category: z.enum(["OPERATIONAL", "ACADEMIC", "STAFF_COSTS", "FOOD_CATERING", "TRANSPORTATION", "FACILITY", "TECHNOLOGY", "EVENT", "ADMINISTRATIVE", "OTHER"]),
+    amount: reqNum,
+    currency: z.string().length(3).optional().default("MYR"),
+    taxAmount: optNum,
+    vendorId: nullableStr,
+    frequency: z.enum(["DAILY", "WEEKLY", "BI_WEEKLY", "MONTHLY", "QUARTERLY", "SEMI_ANNUALLY", "ANNUALLY"]),
+    startDate: reqStr,
+    endDate: optStr,
+    dayOfMonth: z.number().int().min(-1).max(31).nullable().optional(),
+    occurrenceCount: z.number().int().positive().nullable().optional(),
+    paymentMethod: z.enum(["CASH", "BANK_TRANSFER", "CHECK"]).nullable().optional(),
+    budgetId: nullableStr,
+    notes: nullableStr,
+    tags: z.array(z.string()).optional().default([]),
+  }),
+  budgetCreate: z.object({
+    name: reqStr,
+    code: nullableStr,
+    description: nullableStr,
+    fiscalYear: z.number().int().positive(),
+    startDate: reqStr,
+    endDate: reqStr,
+    allocatedAmount: reqNum,
+    currency: z.string().length(3).optional().default("MYR"),
+    category: z.enum(["OPERATIONAL", "ACADEMIC", "STAFF_COSTS", "FOOD_CATERING", "TRANSPORTATION", "FACILITY", "TECHNOLOGY", "EVENT", "ADMINISTRATIVE", "OTHER"]).nullable().optional(),
+    departmentId: nullableStr,
+    alertThreshold: z.number().min(0).max(1).optional().default(0.8),
+    strictLimit: z.boolean().optional().default(false),
+    notes: nullableStr,
+    tags: z.array(z.string()).optional().default([]),
+  }),
+  budgetUpdate: z.object({
+    name: optStr,
+    code: nullableStr,
+    description: nullableStr,
+    fiscalYear: z.number().int().positive().optional(),
+    startDate: optStr,
+    endDate: optStr,
+    allocatedAmount: optNum,
+    currency: z.string().length(3).optional(),
+    category: z.enum(["OPERATIONAL", "ACADEMIC", "STAFF_COSTS", "FOOD_CATERING", "TRANSPORTATION", "FACILITY", "TECHNOLOGY", "EVENT", "ADMINISTRATIVE", "OTHER"]).nullable().optional(),
+    departmentId: nullableStr,
+    status: z.enum(["ACTIVE", "EXHAUSTED", "EXCEEDED", "ARCHIVED"]).optional(),
+    spentAmount: z.number().optional(),
+    alertThreshold: z.number().min(0).max(1).optional(),
+    strictLimit: z.boolean().optional(),
+    notes: nullableStr,
+    tags: z.array(z.string()).optional(),
   }),
 };
 
@@ -5681,6 +6010,2534 @@ async function startServer() {
     }
   });
 
+  // ── Fee Structure Management API ─────────────────────────────────────────────────────
+  // Permission helpers
+  const feeStructureCanManage = (role: string) => role === "ADMIN" || role === "ACCOUNTANT";
+  const feeStructureCanView = (role: string) => ["ADMIN", "ACCOUNTANT", "STAFF"].includes(role);
+
+  // ---- Fee Structures ----
+  app.get("/api/fee-structures", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!feeStructureCanView(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+
+    try {
+      const { status, academicYear, sortBy = "createdAt", sortOrder = "desc" } = req.query;
+      const where: any = {};
+      if (status) where.status = { in: (status as string).split(',') };
+      if (academicYear) where.academicYear = parseInt(academicYear as string);
+
+      const structures = await prisma.feeStructure.findMany({
+        where,
+        orderBy: { [sortBy as string]: sortOrder as 'asc' | 'desc' },
+        include: {
+          items: { where: { isActive: true }, orderBy: { order: 'asc' } },
+          _count: { select: { assignments: true } },
+        },
+      });
+
+      res.json(structures);
+    } catch (err) {
+      logger.error("Error fetching fee structures:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/fee-structures/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!feeStructureCanView(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+
+    try {
+      const structure = await prisma.feeStructure.findUnique({
+        where: { id: req.params.id },
+        include: {
+          items: { include: { budget: true }, orderBy: { order: 'asc' } },
+          assignments: { include: { student: true, feeItem: true } },
+          discounts: true,
+          paymentPlans: { include: { student: true } },
+        },
+      });
+
+      if (!structure) {
+        res.status(404).json({ error: "Fee structure not found" });
+        return;
+      }
+
+      res.json(structure);
+    } catch (err) {
+      logger.error("Error fetching fee structure:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/fee-structures", authMiddleware, validate(schemas.feeStructureCreate), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!feeStructureCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+
+    try {
+      const structure = await prisma.feeStructure.create({
+        data: {
+          ...req.body,
+          effectiveFromDate: new Date(req.body.effectiveFromDate),
+          effectiveToDate: req.body.effectiveToDate ? new Date(req.body.effectiveToDate) : null,
+          createdById: jwtUser.userId,
+          createdByName: jwtUser.email,
+        },
+        include: { items: true },
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "CREATE",
+        "FEE_STRUCTURE",
+        structure.id,
+        `Created fee structure: ${structure.name}`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.status(201).json(structure);
+    } catch (err) {
+      logger.error("Error creating fee structure:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.put("/api/fee-structures/:id", authMiddleware, validate(schemas.feeStructureUpdate), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!feeStructureCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+
+    try {
+      const structure = await prisma.feeStructure.update({
+        where: { id: req.params.id },
+        data: {
+          ...req.body,
+          effectiveFromDate: req.body.effectiveFromDate ? new Date(req.body.effectiveFromDate) : undefined,
+          effectiveToDate: req.body.effectiveToDate ? new Date(req.body.effectiveToDate) : undefined,
+        },
+        include: { items: true },
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "UPDATE",
+        "FEE_STRUCTURE",
+        structure.id,
+        `Updated fee structure: ${structure.name}`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.json(structure);
+    } catch (err) {
+      logger.error("Error updating fee structure:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.delete("/api/fee-structures/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!feeStructureCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+
+    try {
+      const structure = await prisma.feeStructure.findUnique({ where: { id: req.params.id } });
+      if (!structure) {
+        res.status(404).json({ error: "Fee structure not found" });
+        return;
+      }
+      if (structure.status === "ACTIVE") {
+        res.status(400).json({ error: "Cannot delete ACTIVE fee structure. Archive it first." });
+        return;
+      }
+
+      await prisma.feeStructure.delete({ where: { id: req.params.id } });
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "DELETE",
+        "FEE_STRUCTURE",
+        structure.id,
+        `Deleted fee structure: ${structure.name}`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.json({ message: "Fee structure deleted" });
+    } catch (err) {
+      logger.error("Error deleting fee structure:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ---- Fee Items ----
+  app.post("/api/fee-structures/:id/items", authMiddleware, validate(schemas.feeItemCreate), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!feeStructureCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+
+    try {
+      const item = await prisma.feeItem.create({
+        data: {
+          ...req.body,
+          feeStructureId: req.params.id,
+          dueDate: req.body.dueDate ? new Date(req.body.dueDate) : null,
+          createdById: jwtUser.userId,
+          createdByName: jwtUser.email,
+        },
+      });
+
+      res.status(201).json(item);
+    } catch (err) {
+      logger.error("Error creating fee item:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.put("/api/fee-items/:id", authMiddleware, validate(schemas.feeItemUpdate), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!feeStructureCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+
+    try {
+      const item = await prisma.feeItem.update({
+        where: { id: req.params.id },
+        data: {
+          ...req.body,
+          dueDate: req.body.dueDate ? new Date(req.body.dueDate) : undefined,
+        },
+      });
+
+      res.json(item);
+    } catch (err) {
+      logger.error("Error updating fee item:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.delete("/api/fee-items/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!feeStructureCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+
+    try {
+      await prisma.feeItem.delete({ where: { id: req.params.id } });
+      res.json({ message: "Fee item deleted" });
+    } catch (err) {
+      logger.error("Error deleting fee item:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ---- Fee Assignments ----
+  app.post("/api/fee-structures/:id/assign", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!feeStructureCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+
+    try {
+      const structure = await prisma.feeStructure.findUnique({
+        where: { id: req.params.id },
+        include: { items: { where: { isActive: true } } },
+      });
+
+      if (!structure) {
+        res.status(404).json({ error: "Fee structure not found" });
+        return;
+      }
+
+      // Get applicable students
+      const students = await prisma.student.findMany({
+        where: {
+          status: "ACTIVE",
+          ...(structure.applyToBoarders && { educationLevel: { contains: "BOARDING" } }),
+        },
+        include: { class: true },
+      });
+
+      // Create assignments
+      const assignments = [];
+      for (const student of students) {
+        for (const item of structure.items) {
+          // Check if student meets criteria
+          if (item.classIds.length > 0 && !item.classIds.includes(student.classId || "")) continue;
+          if (item.applicableTo === "BOARDING_STUDENTS" && !student.educationLevel?.includes("BOARDING")) continue;
+          if (item.applicableTo === "DAY_STUDENTS" && student.educationLevel?.includes("BOARDING")) continue;
+
+          const dueDate = item.dueDate || new Date(structure.effectiveFromDate);
+
+          const assignment = await prisma.feeAssignment.create({
+            data: {
+              studentId: student.id,
+              feeItemId: item.id,
+              feeStructureId: structure.id,
+              baseAmount: item.amount,
+              totalAmount: item.amount,
+              outstandingAmount: item.amount,
+              dueDate,
+              status: "PENDING",
+            },
+          });
+
+          assignments.push(assignment);
+        }
+      }
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "ASSIGN",
+        "FEE_STRUCTURE",
+        structure.id,
+        `Assigned fees to ${assignments.length} students`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.json({ message: `Created ${assignments.length} fee assignments`, count: assignments.length });
+    } catch (err) {
+      logger.error("Error assigning fees:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/fee-assignments", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!feeStructureCanView(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+
+    try {
+      const { studentId, status, feeStructureId } = req.query;
+      const where: any = {};
+      if (studentId) where.studentId = studentId;
+      if (status) where.status = { in: (status as string).split(',') };
+      if (feeStructureId) where.feeStructureId = feeStructureId;
+
+      const assignments = await prisma.feeAssignment.findMany({
+        where,
+        include: { student: true, feeItem: true, feeStructure: true },
+        orderBy: { dueDate: 'asc' },
+      });
+
+      res.json(assignments);
+    } catch (err) {
+      logger.error("Error fetching fee assignments:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/fee-assignments/:id/pay", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!feeStructureCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+
+    try {
+      const assignment = await prisma.feeAssignment.findUnique({
+        where: { id: req.params.id },
+        include: { student: true, feeItem: true },
+      });
+
+      if (!assignment) {
+        res.status(404).json({ error: "Assignment not found" });
+        return;
+      }
+      if (assignment.status === "PAID") {
+        res.status(400).json({ error: "Assignment already paid" });
+        return;
+      }
+
+      // Create FeePayment
+      const payment = await prisma.feePayment.create({
+        data: {
+          studentId: assignment.studentId,
+          amount: assignment.outstandingAmount,
+          currency: "MYR",
+          dueDate: assignment.dueDate,
+          paidDate: new Date(),
+          status: "PAID",
+          description: assignment.feeItem?.name || "Fee payment",
+          paymentMethod: req.body.paymentMethod || "OTHER",
+          notes: req.body.notes,
+        },
+      });
+
+      // Update assignment
+      await prisma.feeAssignment.update({
+        where: { id: req.params.id },
+        data: {
+          feePaymentId: payment.id,
+          paidAmount: assignment.outstandingAmount,
+          outstandingAmount: 0,
+          status: "PAID",
+          paidDate: new Date(),
+        },
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "PAY",
+        "FEE_ASSIGNMENT",
+        assignment.id,
+        `Recorded payment for ${assignment.student?.preferredName}`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.json({ message: "Payment recorded", payment });
+    } catch (err) {
+      logger.error("Error recording payment:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ---- Fee Discounts ----
+  app.get("/api/fee-discounts", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!feeStructureCanView(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+
+    try {
+      const discounts = await prisma.feeDiscount.findMany({
+        where: { isActive: true },
+        include: { feeStructure: true },
+        orderBy: { validFrom: 'desc' },
+      });
+
+      res.json(discounts);
+    } catch (err) {
+      logger.error("Error fetching fee discounts:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/fee-discounts", authMiddleware, validate(schemas.feeDiscountCreate), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!feeStructureCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+
+    try {
+      const discount = await prisma.feeDiscount.create({
+        data: {
+          ...req.body,
+          validFrom: new Date(req.body.validFrom),
+          validTo: req.body.validTo ? new Date(req.body.validTo) : null,
+          createdById: jwtUser.userId,
+          createdByName: jwtUser.email,
+        },
+      });
+
+      res.status(201).json(discount);
+    } catch (err) {
+      logger.error("Error creating fee discount:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ---- Payment Plans ----
+  app.post("/api/payment-plans", authMiddleware, validate(schemas.feePaymentPlanCreate), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!feeStructureCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+
+    try {
+      const plan = await prisma.feePaymentPlan.create({
+        data: {
+          ...req.body,
+          firstInstallmentDue: new Date(req.body.firstInstallmentDue),
+          agreedById: jwtUser.userId,
+          agreedByName: jwtUser.email,
+          agreedAt: new Date(),
+        },
+      });
+
+      // Create installments
+      const installments = [];
+      const installmentAmount = plan.totalAmount / plan.numberOfInstallments;
+      for (let i = 0; i < plan.numberOfInstallments; i++) {
+        const dueDate = new Date(plan.firstInstallmentDue);
+        dueDate.setMonth(dueDate.getMonth() + i);
+
+        const installment = await prisma.feeInstallment.create({
+          data: {
+            paymentPlanId: plan.id,
+            installmentNumber: i + 1,
+            amount: installmentAmount,
+            dueDate,
+            status: "DUE",
+          },
+        });
+
+        installments.push(installment);
+      }
+
+      res.status(201).json({ plan, installments });
+    } catch (err) {
+      logger.error("Error creating payment plan:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/payment-plans", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!feeStructureCanView(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+
+    try {
+      const { studentId, status } = req.query;
+      const where: any = {};
+      if (studentId) where.studentId = studentId;
+      if (status) where.status = status;
+
+      const plans = await prisma.feePaymentPlan.findMany({
+        where,
+        include: { student: true, installments: true, feeStructure: true },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      res.json(plans);
+    } catch (err) {
+      logger.error("Error fetching payment plans:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Donation Tracking API ─────────────────────────────────────────────────────
+  // Permission helpers
+  const donationCanManage = (role: string) => role === "ADMIN" || role === "ACCOUNTANT";
+  const donationCanView = (role: string) => ["ADMIN", "ACCOUNTANT", "STAFF"].includes(role);
+
+  // ---- Donors ----
+  // (Full CRUD — including statistics, PUT, and soft-delete — lives further
+  // down under "Donor Management". An earlier, incomplete GET/POST/GET:id-only
+  // trio used to be registered here too; since Express dispatches to whichever
+  // route matches first, that duplicate was silently shadowing the more
+  // complete implementation below. Removed rather than merged, since the
+  // later block is a strict superset.)
+
+  // ---- Donations ----
+  app.get("/api/donations", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!donationCanView(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+
+    try {
+      const { status, donorId, campaignId, sortBy = "donationDate", sortOrder = "desc" } = req.query;
+      const where: any = {};
+      if (status) where.status = { in: (status as string).split(',') };
+      if (donorId) where.donorId = donorId;
+      if (campaignId) where.campaignId = campaignId;
+
+      const donations = await prisma.donation.findMany({
+        where,
+        orderBy: { [sortBy as string]: sortOrder as 'asc' | 'desc' },
+        include: { donor: true, campaign: true },
+      });
+
+      res.json(donations);
+    } catch (err) {
+      logger.error("Error fetching donations:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/donations", authMiddleware, validate(schemas.donationCreate), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!donationCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+
+    try {
+      // Auto-generate donation number
+      const year = new Date().getFullYear();
+      const count = await prisma.donation.count({ where: { donationNumber: { startsWith: `DON-${year}-` } } });
+      const donationNumber = `DON-${year}-${String(count + 1).padStart(4, '0')}`;
+
+      const donation = await prisma.donation.create({
+        data: {
+          ...req.body,
+          donationNumber,
+          donationDate: new Date(req.body.donationDate),
+          taxReceiptAmount: req.body.isTaxDeductible ? req.body.amount : undefined,
+        },
+      });
+
+      // Update campaign raised amount if linked
+      if (donation.campaignId) {
+        await prisma.donationCampaign.update({
+          where: { id: donation.campaignId },
+          data: { raisedAmount: { increment: donation.amount }, donorCount: { increment: 1 } },
+        });
+      }
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "CREATE",
+        "DONATION",
+        donation.id,
+        `Created donation: ${donationNumber}`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.status(201).json(donation);
+    } catch (err) {
+      logger.error("Error creating donation:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.put("/api/donations/:id", authMiddleware, validate(schemas.donationUpdate), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!donationCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+
+    try {
+      const donation = await prisma.donation.update({
+        where: { id: req.params.id },
+        data: {
+          ...req.body,
+          receivedDate: req.body.receivedDate ? new Date(req.body.receivedDate) : undefined,
+          processedDate: req.body.processedDate ? new Date(req.body.processedDate) : undefined,
+        },
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "UPDATE",
+        "DONATION",
+        donation.id,
+        `Updated donation: ${donation.donationNumber}`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.json(donation);
+    } catch (err) {
+      logger.error("Error updating donation:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ---- Donation Acknowledgment & Tax Receipts ----
+  app.post("/api/donations/:id/acknowledge", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!donationCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const donation = await prisma.donation.findUnique({
+        where: { id: req.params.id },
+        include: { donor: true },
+      });
+
+      if (!donation) {
+        res.status(404).json({ error: "Donation not found" });
+        return;
+      }
+
+      if (donation.status !== 'RECEIVED' && donation.status !== 'PROCESSED') {
+        res.status(400).json({ error: "Donation must be received before acknowledgment" });
+        return;
+      }
+
+      // Update donation acknowledgment status
+      const updatedDonation = await prisma.donation.update({
+        where: { id: req.params.id },
+        data: {
+          acknowledgmentSent: true,
+        },
+      });
+
+      // In a real implementation, you would send an email/letter here
+      // For now, we'll just log it
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "ACKNOWLEDGE",
+        "DONATION",
+        donation.id,
+        `Acknowledgment sent for donation: ${donation.donationNumber} to ${donation.donor.name}`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.json({
+        success: true,
+        donation: updatedDonation,
+        message: "Acknowledgment sent successfully",
+        donor: {
+          name: donation.donor.name,
+          email: donation.donor.email,
+          preferredContact: donation.donor.preferredContact,
+        },
+      });
+    } catch (error) {
+      logger.error("Error sending acknowledgment:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/donations/:id/tax-receipt", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!donationCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const donation = await prisma.donation.findUnique({
+        where: { id: req.params.id },
+        include: { donor: true },
+      });
+
+      if (!donation) {
+        res.status(404).json({ error: "Donation not found" });
+        return;
+      }
+
+      if (!donation.isTaxDeductible) {
+        res.status(400).json({ error: "This donation is not tax-deductible" });
+        return;
+      }
+
+      if (donation.status !== 'PROCESSED') {
+        res.status(400).json({ error: "Donation must be processed before issuing tax receipt" });
+        return;
+      }
+
+      // Generate tax receipt number
+      const year = new Date().getFullYear();
+      const receiptCount = await prisma.donationReceipt.count({
+        where: {
+          receiptDate: {
+            gte: new Date(`${year}-01-01`),
+            lt: new Date(`${year + 1}-01-01`),
+          },
+        },
+      });
+      const receiptNumber = `TAX-${year}-${String(receiptCount + 1).padStart(4, '0')}`;
+
+      // Create tax receipt
+      const taxReceipt = await prisma.donationReceipt.create({
+        data: {
+          donationId: donation.id,
+          receiptNumber,
+          recipientName: donation.donor.name,
+          recipientAddress: donation.donor.address,
+          recipientEmail: donation.donor.email,
+          amount: donation.amount,
+          currency: donation.currency,
+          isTaxDeductible: true,
+          taxDeductibleAmount: donation.taxReceiptAmount || donation.amount,
+          taxId: donation.donor.taxId,
+        },
+      });
+
+      // Update donation to indicate tax receipt issued
+      await prisma.donation.update({
+        where: { id: req.params.id },
+        data: { receiptNumber: taxReceipt.receiptNumber },
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "ISSUE_TAX_RECEIPT",
+        "DONATION",
+        donation.id,
+        `Tax receipt issued: ${taxReceipt.receiptNumber} for donation ${donation.donationNumber}`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.status(201).json({
+        success: true,
+        taxReceipt,
+        donation: {
+          id: donation.id,
+          donationNumber: donation.donationNumber,
+          amount: donation.amount,
+          donor: donation.donor.name,
+        },
+        message: "Tax receipt issued successfully",
+      });
+    } catch (error) {
+      logger.error("Error issuing tax receipt:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/donations/:id/tax-receipt", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!donationCanView(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const donation = await prisma.donation.findUnique({
+        where: { id: req.params.id },
+        include: {
+          donor: true,
+          receipt: true,
+        },
+      });
+
+      if (!donation) {
+        res.status(404).json({ error: "Donation not found" });
+        return;
+      }
+
+      if (!donation.receipt) {
+        res.status(404).json({ error: "No tax receipt issued for this donation" });
+        return;
+      }
+
+      res.json(donation.receipt);
+    } catch (error) {
+      logger.error("Error fetching tax receipt:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // ---- Campaigns ----
+  app.get("/api/campaigns", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!donationCanView(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+
+    try {
+      const { status, sortBy = "startDate", sortOrder = "desc" } = req.query;
+      const where: any = {};
+      if (status) where.status = { in: (status as string).split(',') };
+
+      const campaigns = await prisma.donationCampaign.findMany({
+        where,
+        orderBy: { [sortBy as string]: sortOrder as 'asc' | 'desc' },
+        include: { _count: { select: { donations: true } }, donations: { take: 5, orderBy: { donationDate: 'desc' } } },
+      });
+
+      res.json(campaigns);
+    } catch (err) {
+      logger.error("Error fetching campaigns:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/campaigns", authMiddleware, validate(schemas.campaignCreate), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!donationCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+
+    try {
+      const campaign = await prisma.donationCampaign.create({
+        data: {
+          ...req.body,
+          startDate: new Date(req.body.startDate),
+          endDate: new Date(req.body.endDate),
+          createdById: jwtUser.userId,
+          createdByName: jwtUser.email,
+        },
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "CREATE",
+        "CAMPAIGN",
+        campaign.id,
+        `Created campaign: ${campaign.name}`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.status(201).json(campaign);
+    } catch (err) {
+      logger.error("Error creating campaign:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.put("/api/campaigns/:id", authMiddleware, validate(schemas.campaignUpdate), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!donationCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+
+    try {
+      const campaign = await prisma.donationCampaign.update({
+        where: { id: req.params.id },
+        data: {
+          ...req.body,
+          endDate: req.body.endDate ? new Date(req.body.endDate) : undefined,
+        },
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "UPDATE",
+        "CAMPAIGN",
+        campaign.id,
+        `Updated campaign: ${campaign.name}`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.json(campaign);
+    } catch (err) {
+      logger.error("Error updating campaign:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ---- Donor Management ----
+  app.get("/api/donors", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!donationCanView(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const { search, donorType, category, isActive } = req.query;
+      const where: any = {};
+
+      if (search) {
+        where.OR = [
+          { name: { contains: search, mode: 'insensitive' } },
+          { donorCode: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } },
+          { organization: { contains: search, mode: 'insensitive' } },
+        ];
+      }
+      if (donorType) where.donorType = donorType;
+      if (category) where.category = category;
+      if (isActive !== undefined) where.isActive = isActive === 'true';
+
+      const donors = await prisma.donor.findMany({
+        where,
+        orderBy: { name: 'asc' },
+        include: {
+          _count: { select: { donations: true } },
+        },
+      });
+      res.json(donors);
+    } catch (error) {
+      logger.error("Error fetching donors:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/donors/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!donationCanView(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const donor = await prisma.donor.findUnique({
+        where: { id: req.params.id },
+        include: {
+          donations: {
+            orderBy: { donationDate: 'desc' },
+            take: 20,
+            include: {
+              campaign: {
+                select: { name: true },
+              },
+            },
+          },
+        },
+      });
+
+      if (!donor) {
+        res.status(404).json({ error: "Donor not found" });
+        return;
+      }
+
+      // Calculate donor statistics
+      const totalDonated = donor.donations.reduce((sum, d) => sum + d.amount, 0);
+      const donationCount = donor.donations.length;
+      const lastDonation = donor.donations[0];
+
+      res.json({
+        ...donor,
+        statistics: {
+          totalDonated,
+          donationCount,
+          lastDonationDate: lastDonation?.donationDate || null,
+          averageDonation: donationCount > 0 ? totalDonated / donationCount : 0,
+        },
+      });
+    } catch (error) {
+      logger.error("Error fetching donor:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/donors", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!donationCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const { name, email, phone, donorType, organization, ...rest } = req.body;
+
+      // Generate donor code
+      const year = new Date().getFullYear();
+      const donorCount = await prisma.donor.count();
+      const donorCode = `DONOR-${year}-${String(donorCount + 1).padStart(4, '0')}`;
+
+      const donor = await prisma.donor.create({
+        data: {
+          name,
+          email,
+          phone,
+          donorCode,
+          donorType: donorType || 'INDIVIDUAL',
+          organization,
+          ...rest,
+          createdById: jwtUser.userId,
+          createdByName: jwtUser.email,
+        },
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "CREATE",
+        "DONOR",
+        donor.id,
+        `Created donor: ${donor.name}`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.status(201).json(donor);
+    } catch (error: any) {
+      if (error.code === 'P2002') {
+        res.status(409).json({ error: "Donor with this code already exists" });
+      } else {
+        logger.error("Error creating donor:", error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    }
+  });
+
+  app.put("/api/donors/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!donationCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const { name, email, phone, donorType, organization, address, city, state, postalCode, country, notes, tags, isActive } = req.body;
+
+      const donor = await prisma.donor.update({
+        where: { id: req.params.id },
+        data: {
+          ...(name !== undefined && { name }),
+          ...(email !== undefined && { email }),
+          ...(phone !== undefined && { phone }),
+          ...(donorType !== undefined && { donorType }),
+          ...(organization !== undefined && { organization }),
+          ...(address !== undefined && { address }),
+          ...(city !== undefined && { city }),
+          ...(state !== undefined && { state }),
+          ...(postalCode !== undefined && { postalCode }),
+          ...(country !== undefined && { country }),
+          ...(notes !== undefined && { notes }),
+          ...(tags !== undefined && { tags }),
+          ...(isActive !== undefined && { isActive }),
+        },
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "UPDATE",
+        "DONOR",
+        donor.id,
+        `Updated donor: ${donor.name}`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.json(donor);
+    } catch (error) {
+      logger.error("Error updating donor:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/donors/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!donationCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const donor = await prisma.donor.findUnique({
+        where: { id: req.params.id },
+      });
+
+      if (!donor) {
+        res.status(404).json({ error: "Donor not found" });
+        return;
+      }
+
+      // Soft delete by setting isActive to false
+      await prisma.donor.update({
+        where: { id: req.params.id },
+        data: { isActive: false },
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "DELETE",
+        "DONOR",
+        donor.id,
+        `Deleted donor: ${donor.name}`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.status(204).send();
+    } catch (error) {
+      logger.error("Error deleting donor:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // ── Expense Management API ─────────────────────────────────────────────────────
+  // Permission helpers
+  const expenseCanManage = (role: string) => role === "ADMIN" || role === "ACCOUNTANT";
+  const expenseCanView = (role: string) => ["ADMIN", "ACCOUNTANT", "STAFF"].includes(role);
+  const expenseCanApprove = (role: string) => role === "ADMIN" || role === "ACCOUNTANT";
+
+  // ---- Expenses ----
+  app.get("/api/expenses", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanView(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const {
+        page = "1",
+        limit = "25",
+        status,
+        category,
+        vendorId,
+        budgetId,
+        startDate,
+        endDate,
+        search,
+        sortBy = "createdAt",
+        sortOrder = "desc",
+      } = req.query;
+
+      const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
+      const take = parseInt(limit as string);
+
+      const where: any = {};
+      if (status) where.status = { in: (status as string).split(',') };
+      if (category) where.category = { in: (category as string).split(',') };
+      if (vendorId) where.vendorId = vendorId;
+      if (budgetId) where.budgetId = budgetId;
+      if (startDate) where.expenseDate = { ...where.expenseDate, gte: new Date(startDate as string) };
+      if (endDate) where.expenseDate = { ...where.expenseDate, lte: new Date(endDate as string) };
+      if (search) {
+        where.OR = [
+          { title: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } },
+          { vendorInvoiceNo: { contains: search, mode: 'insensitive' } },
+        ];
+      }
+
+      const [expenses, total] = await Promise.all([
+        prisma.expense.findMany({
+          where,
+          skip,
+          take,
+          orderBy: { [sortBy as string]: sortOrder as 'asc' | 'desc' },
+          include: {
+            vendor: true,
+            budget: true,
+            payments: true,
+          },
+        }),
+        prisma.expense.count({ where }),
+      ]);
+
+      // Calculate summary
+      const summary = await prisma.expense.groupBy({
+        by: ['status'],
+        where,
+        _sum: { amount: true },
+      });
+
+      const summaryData = {
+        totalAmount: summary.reduce((sum, s) => sum + (s._sum.amount || 0), 0),
+        paidAmount: summary.find(s => s.status === 'PAID')?._sum.amount || 0,
+        pendingAmount: (summary.find(s => s.status === 'PENDING_APPROVAL')?._sum.amount || 0) +
+                        (summary.find(s => s.status === 'DRAFT')?._sum.amount || 0),
+      };
+
+      res.json({
+        data: expenses,
+        pagination: {
+          total,
+          page: parseInt(page as string),
+          limit: take,
+          totalPages: Math.ceil(total / take),
+        },
+        summary: summaryData,
+      });
+    } catch (error) {
+      logger.error("Error fetching expenses:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/expenses/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanView(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const expense = await prisma.expense.findUnique({
+        where: { id: req.params.id },
+        include: {
+          vendor: true,
+          budget: true,
+          payments: true,
+        },
+      });
+      if (!expense) {
+        res.status(404).json({ error: "Expense not found" });
+        return;
+      }
+      res.json(expense);
+    } catch (error) {
+      logger.error("Error fetching expense:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/expenses", authMiddleware, validate(schemas.expenseCreate), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const {
+        amount,
+        taxAmount = 0,
+        ...rest
+      } = req.body;
+
+      const totalAmount = Number(amount) + Number(taxAmount);
+
+      const expense = await prisma.expense.create({
+        data: {
+          ...rest,
+          amount: Number(amount),
+          taxAmount: Number(taxAmount),
+          totalAmount,
+          expenseDate: new Date(rest.expenseDate),
+          dueDate: rest.dueDate ? new Date(rest.dueDate) : null,
+        },
+        include: {
+          vendor: true,
+          budget: true,
+        },
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "CREATE",
+        "EXPENSE",
+        expense.id,
+        `Created expense: ${expense.title}`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.status(201).json(expense);
+    } catch (error: any) {
+      if (error.code === 'P2002') {
+        res.status(409).json({ error: "Vendor invoice number already exists" });
+      } else {
+        logger.error("Error creating expense:", error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    }
+  });
+
+  app.put("/api/expenses/:id", authMiddleware, validate(schemas.expenseUpdate), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const expense = await prisma.expense.findUnique({ where: { id: req.params.id } });
+      if (!expense) {
+        res.status(404).json({ error: "Expense not found" });
+        return;
+      }
+
+      // Only allow editing DRAFT expenses
+      if (expense.status !== "DRAFT") {
+        res.status(400).json({ error: "Can only edit DRAFT expenses" });
+        return;
+      }
+
+      const { amount, taxAmount, ...rest } = req.body;
+      const totalAmount = amount !== undefined && taxAmount !== undefined
+        ? Number(amount) + Number(taxAmount)
+        : undefined;
+
+      const updated = await prisma.expense.update({
+        where: { id: req.params.id },
+        data: {
+          ...rest,
+          ...(amount !== undefined && { amount: Number(amount) }),
+          ...(taxAmount !== undefined && { taxAmount: Number(taxAmount) }),
+          ...(totalAmount !== undefined && { totalAmount }),
+          expenseDate: rest.expenseDate ? new Date(rest.expenseDate) : undefined,
+          dueDate: rest.dueDate ? new Date(rest.dueDate) : null,
+        },
+        include: { vendor: true, budget: true },
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "UPDATE",
+        "EXPENSE",
+        expense.id,
+        `Updated expense: ${expense.title}`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.json(updated);
+    } catch (error) {
+      logger.error("Error updating expense:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/expenses/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const expense = await prisma.expense.findUnique({ where: { id: req.params.id } });
+      if (!expense) {
+        res.status(404).json({ error: "Expense not found" });
+        return;
+      }
+
+      // Only allow deleting DRAFT expenses
+      if (expense.status !== "DRAFT") {
+        res.status(400).json({ error: "Can only delete DRAFT expenses" });
+        return;
+      }
+
+      await prisma.expense.delete({ where: { id: req.params.id } });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "DELETE",
+        "EXPENSE",
+        expense.id,
+        `Deleted expense: ${expense.title}`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.json({ success: true });
+    } catch (error) {
+      logger.error("Error deleting expense:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Submit expense for approval
+  app.post("/api/expenses/:id/submit", authMiddleware, validate(schemas.expenseSubmit), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const expense = await prisma.expense.update({
+        where: { id: req.params.id },
+        data: {
+          status: "PENDING_APPROVAL",
+          submittedAt: new Date(),
+          submittedById: jwtUser.userId,
+          submittedByName: jwtUser.email,
+        },
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "EXPENSE_SUBMITTED",
+        "EXPENSE",
+        expense.id,
+        `Submitted expense for approval: ${expense.title}`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.json(expense);
+    } catch (error) {
+      logger.error("Error submitting expense:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Approve expense
+  app.post("/api/expenses/:id/approve", authMiddleware, validate(schemas.expenseApprove), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanApprove(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const { notes } = req.body;
+      const expense = await prisma.expense.update({
+        where: { id: req.params.id },
+        data: {
+          status: "APPROVED",
+          approvedAt: new Date(),
+          approvedById: jwtUser.userId,
+          approvedByName: jwtUser.email,
+          notes: notes || undefined,
+        },
+      });
+
+      await syncBudgetSpending(expense.budgetId);
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "EXPENSE_APPROVED",
+        "EXPENSE",
+        expense.id,
+        `Approved expense: ${expense.title}`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.json(expense);
+    } catch (error) {
+      logger.error("Error approving expense:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Reject expense
+  app.post("/api/expenses/:id/reject", authMiddleware, validate(schemas.expenseReject), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanApprove(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const { reason } = req.body;
+      const expense = await prisma.expense.update({
+        where: { id: req.params.id },
+        data: {
+          status: "REJECTED",
+          approvedAt: new Date(),
+          approvedById: jwtUser.userId,
+          approvedByName: jwtUser.email,
+          rejectionReason: reason,
+        },
+      });
+
+      await syncBudgetSpending(expense.budgetId);
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "EXPENSE_REJECTED",
+        "EXPENSE",
+        expense.id,
+        `Rejected expense: ${expense.title}. Reason: ${reason}`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.json(expense);
+    } catch (error) {
+      logger.error("Error rejecting expense:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Mark expense as paid
+  app.post("/api/expenses/:id/pay", authMiddleware, validate(schemas.expensePay), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const expense = await prisma.expense.findUnique({
+        where: { id: req.params.id },
+      });
+
+      if (!expense) {
+        res.status(404).json({ error: "Expense not found" });
+        return;
+      }
+
+      if (expense.status !== "APPROVED") {
+        res.status(400).json({ error: "Expense must be approved before payment" });
+        return;
+      }
+
+      const {
+        paymentMethod,
+        paymentReference,
+        bankAccount,
+        paymentDate = new Date().toISOString(),
+        receiptUrl,
+        notes,
+      } = req.body;
+
+      // Generate payment number
+      const year = new Date().getFullYear();
+      const paymentCount = await prisma.billPayment.count({
+        where: {
+          paymentDate: {
+            gte: new Date(`${year}-01-01`),
+            lt: new Date(`${year + 1}-01-01`),
+          },
+        },
+      });
+      const paymentNumber = `PAY-${year}-${String(paymentCount + 1).padStart(4, '0')}`;
+
+      const [payment] = await prisma.$transaction([
+        prisma.billPayment.create({
+          data: {
+            expenseId: expense.id,
+            paymentNumber,
+            amount: expense.totalAmount || expense.amount,
+            currency: expense.currency,
+            paymentMethod,
+            paymentDate: new Date(paymentDate),
+            referenceNumber: paymentReference,
+            bankAccount,
+            receiptUrl,
+            notes,
+            approvedById: jwtUser.userId,
+            approvedByName: jwtUser.email,
+            approvedAt: new Date(),
+          },
+        }),
+        prisma.expense.update({
+          where: { id: req.params.id },
+          data: {
+            status: "PAID",
+            paidDate: new Date(paymentDate),
+            paymentReference,
+          },
+        }),
+      ]);
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "EXPENSE_PAID",
+        "EXPENSE",
+        expense.id,
+        `Recorded payment for expense: ${expense.title}. Amount: ${expense.amount}`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.json({
+        expense: await prisma.expense.findUnique({
+          where: { id: req.params.id },
+          include: { vendor: true, budget: true, payments: true },
+        }),
+        payment,
+      });
+    } catch (error) {
+      logger.error("Error processing payment:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // ---- Bill Payments ----
+  app.get("/api/bill-payments", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanView(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const { expenseId, paymentMethod, startDate, endDate } = req.query;
+      const where: any = {};
+
+      if (expenseId) where.expenseId = expenseId;
+      if (paymentMethod) where.paymentMethod = paymentMethod;
+      if (startDate || endDate) {
+        where.paymentDate = {};
+        if (startDate) where.paymentDate.gte = new Date(startDate as string);
+        if (endDate) where.paymentDate.lte = new Date(endDate as string);
+      }
+
+      const payments = await prisma.billPayment.findMany({
+        where,
+        orderBy: { paymentDate: 'desc' },
+        include: {
+          expense: {
+            select: {
+              id: true,
+              title: true,
+              category: true,
+              vendorId: true,
+            },
+          },
+        },
+      });
+      res.json(payments);
+    } catch (error) {
+      logger.error("Error fetching bill payments:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/bill-payments/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanView(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const payment = await prisma.billPayment.findUnique({
+        where: { id: req.params.id },
+        include: {
+          expense: {
+            include: {
+              vendor: true,
+            },
+          },
+        },
+      });
+
+      if (!payment) {
+        res.status(404).json({ error: "Bill payment not found" });
+        return;
+      }
+
+      res.json(payment);
+    } catch (error) {
+      logger.error("Error fetching bill payment:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/expenses/:id/payments", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanView(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const payments = await prisma.billPayment.findMany({
+        where: { expenseId: req.params.id },
+        orderBy: { paymentDate: 'desc' },
+      });
+
+      const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
+
+      res.json({
+        payments,
+        summary: {
+          totalPayments: payments.length,
+          totalPaid,
+          currency: payments[0]?.currency || 'MYR',
+        },
+      });
+    } catch (error) {
+      logger.error("Error fetching expense payments:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/bill-payments", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const { expenseId, amount, paymentMethod, paymentReference, bankAccount, paymentDate, receiptUrl, notes } = req.body;
+
+      // Validate expense exists
+      const expense = await prisma.expense.findUnique({
+        where: { id: expenseId },
+      });
+
+      if (!expense) {
+        res.status(404).json({ error: "Expense not found" });
+        return;
+      }
+
+      if (expense.status !== "APPROVED") {
+        res.status(400).json({ error: "Expense must be approved before payment" });
+        return;
+      }
+
+      // Generate payment number
+      const year = new Date().getFullYear();
+      const paymentCount = await prisma.billPayment.count({
+        where: {
+          paymentDate: {
+            gte: new Date(`${year}-01-01`),
+            lt: new Date(`${year + 1}-01-01`),
+          },
+        },
+      });
+      const paymentNumber = `PAY-${year}-${String(paymentCount + 1).padStart(4, '0')}`;
+
+      const payment = await prisma.billPayment.create({
+        data: {
+          expenseId,
+          paymentNumber,
+          amount: Number(amount),
+          currency: expense.currency,
+          paymentMethod,
+          referenceNumber: paymentReference,
+          bankAccount,
+          paymentDate: paymentDate ? new Date(paymentDate) : new Date(),
+          receiptUrl,
+          notes,
+        },
+      });
+
+      // Update expense status if fully paid
+      const allPayments = await prisma.billPayment.findMany({
+        where: { expenseId },
+      });
+      const totalPaid = allPayments.reduce((sum, p) => sum + p.amount, 0);
+      const totalAmount = expense.totalAmount || expense.amount;
+
+      if (totalPaid >= totalAmount) {
+        await prisma.expense.update({
+          where: { id: expenseId },
+          data: {
+            status: "PAID",
+            paidDate: new Date(),
+          },
+        });
+      } else if (totalPaid > 0 && totalPaid < totalAmount) {
+        await prisma.expense.update({
+          where: { id: expenseId },
+          data: { status: "PARTIAL" },
+        });
+      }
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "CREATE",
+        "BILL_PAYMENT",
+        payment.id,
+        `Created bill payment: ${payment.paymentNumber} for expense ${expense.title}`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.status(201).json(payment);
+    } catch (error: any) {
+      logger.error("Error creating bill payment:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.put("/api/bill-payments/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const { amount, paymentMethod, paymentReference, bankAccount, paymentDate, receiptUrl, notes, approved } = req.body;
+
+      const payment = await prisma.billPayment.update({
+        where: { id: req.params.id },
+        data: {
+          ...(amount !== undefined && { amount: Number(amount) }),
+          ...(paymentMethod !== undefined && { paymentMethod }),
+          ...(paymentReference !== undefined && { referenceNumber: paymentReference }),
+          ...(bankAccount !== undefined && { bankAccount }),
+          ...(paymentDate !== undefined && { paymentDate: new Date(paymentDate) }),
+          ...(receiptUrl !== undefined && { receiptUrl }),
+          ...(notes !== undefined && { notes }),
+          ...(approved !== undefined && {
+            approvedById: jwtUser.userId,
+            approvedByName: jwtUser.email,
+            approvedAt: approved ? new Date() : null,
+          }),
+        },
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "UPDATE",
+        "BILL_PAYMENT",
+        payment.id,
+        `Updated bill payment: ${payment.paymentNumber}`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.json(payment);
+    } catch (error) {
+      logger.error("Error updating bill payment:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/bill-payments/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const payment = await prisma.billPayment.findUnique({
+        where: { id: req.params.id },
+      });
+
+      if (!payment) {
+        res.status(404).json({ error: "Bill payment not found" });
+        return;
+      }
+
+      await prisma.billPayment.delete({
+        where: { id: req.params.id },
+      });
+
+      // Recalculate expense status
+      const remainingPayments = await prisma.billPayment.findMany({
+        where: { expenseId: payment.expenseId },
+      });
+      const totalPaid = remainingPayments.reduce((sum, p) => sum + p.amount, 0);
+
+      if (totalPaid === 0) {
+        await prisma.expense.update({
+          where: { id: payment.expenseId },
+          data: { status: "APPROVED", paidDate: null },
+        });
+      } else {
+        const expense = await prisma.expense.findUnique({
+          where: { id: payment.expenseId },
+        });
+        const totalAmount = expense?.totalAmount || expense?.amount || 0;
+        if (totalPaid < totalAmount) {
+          await prisma.expense.update({
+            where: { id: payment.expenseId },
+            data: { status: "PARTIAL" },
+          });
+        }
+      }
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "DELETE",
+        "BILL_PAYMENT",
+        payment.id,
+        `Deleted bill payment: ${payment.paymentNumber}`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.status(204).send();
+    } catch (error) {
+      logger.error("Error deleting bill payment:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // ---- Vendors ----
+  app.get("/api/vendors", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanView(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const { search, category, isActive } = req.query;
+      const where: any = {};
+      if (search) {
+        where.OR = [
+          { name: { contains: search, mode: 'insensitive' } },
+          { code: { contains: search, mode: 'insensitive' } },
+        ];
+      }
+      if (category) where.category = category;
+      if (isActive !== undefined) where.isActive = isActive === 'true';
+
+      const vendors = await prisma.vendor.findMany({
+        where,
+        orderBy: { name: 'asc' },
+        include: {
+          _count: { select: { expenses: true } },
+        },
+      });
+      res.json(vendors);
+    } catch (error) {
+      logger.error("Error fetching vendors:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/vendors", authMiddleware, validate(schemas.vendorCreate), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const { name, ...rest } = req.body;
+
+      // Generate vendor code
+      const year = new Date().getFullYear();
+      const vendorCount = await prisma.vendor.count();
+      const code = `VENDOR-${year}-${String(vendorCount + 1).padStart(4, '0')}`;
+
+      const vendor = await prisma.vendor.create({
+        data: {
+          name,
+          code,
+          ...rest,
+          createdById: jwtUser.userId,
+          createdByName: jwtUser.email,
+        },
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "CREATE",
+        "VENDOR",
+        vendor.id,
+        `Created vendor: ${vendor.name}`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.status(201).json(vendor);
+    } catch (error: any) {
+      if (error.code === 'P2002') {
+        res.status(409).json({ error: "Vendor with this code already exists" });
+      } else {
+        logger.error("Error creating vendor:", error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    }
+  });
+
+  app.get("/api/vendors/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanView(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const vendor = await prisma.vendor.findUnique({
+        where: { id: req.params.id },
+        include: {
+          expenses: {
+            orderBy: { expenseDate: 'desc' },
+            take: 10,
+          },
+        },
+      });
+      if (!vendor) {
+        res.status(404).json({ error: "Vendor not found" });
+        return;
+      }
+      res.json(vendor);
+    } catch (error) {
+      logger.error("Error fetching vendor:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.put("/api/vendors/:id", authMiddleware, validate(schemas.vendorUpdate), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const vendor = await prisma.vendor.update({
+        where: { id: req.params.id },
+        data: req.body,
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "UPDATE",
+        "VENDOR",
+        vendor.id,
+        `Updated vendor: ${vendor.name}`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.json(vendor);
+    } catch (error) {
+      logger.error("Error updating vendor:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/vendors/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const expenseCount = await prisma.expense.count({ where: { vendorId: req.params.id } });
+      if (expenseCount > 0) {
+        res.status(409).json({ error: "Cannot delete vendor with associated expenses" });
+        return;
+      }
+
+      await prisma.vendor.delete({ where: { id: req.params.id } });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "DELETE",
+        "VENDOR",
+        req.params.id,
+        `Deleted vendor`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.json({ success: true });
+    } catch (error) {
+      logger.error("Error deleting vendor:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // ---- Recurring Expenses ----
+  app.get("/api/recurring-expenses", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanView(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const recurringExpenses = await prisma.recurringExpense.findMany({
+        orderBy: { createdAt: 'desc' },
+        include: { vendor: true },
+      });
+      res.json(recurringExpenses);
+    } catch (error) {
+      logger.error("Error fetching recurring expenses:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/recurring-expenses", authMiddleware, validate(schemas.recurringExpenseCreate), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const { amount, taxAmount = 0, frequency, startDate, ...rest } = req.body;
+
+      const totalAmount = Number(amount) + Number(taxAmount);
+
+      // Calculate next occurrence date based on frequency
+      const startDateObj = new Date(startDate);
+      let nextOccurrenceDate = new Date(startDateObj);
+      switch (frequency) {
+        case "DAILY":
+          nextOccurrenceDate.setDate(nextOccurrenceDate.getDate() + 1);
+          break;
+        case "WEEKLY":
+          nextOccurrenceDate.setDate(nextOccurrenceDate.getDate() + 7);
+          break;
+        case "BI_WEEKLY":
+          nextOccurrenceDate.setDate(nextOccurrenceDate.getDate() + 14);
+          break;
+        case "MONTHLY":
+          nextOccurrenceDate.setMonth(nextOccurrenceDate.getMonth() + 1);
+          break;
+        case "QUARTERLY":
+          nextOccurrenceDate.setMonth(nextOccurrenceDate.getMonth() + 3);
+          break;
+        case "SEMI_ANNUALLY":
+          nextOccurrenceDate.setMonth(nextOccurrenceDate.getMonth() + 6);
+          break;
+        case "ANNUALLY":
+          nextOccurrenceDate.setFullYear(nextOccurrenceDate.getFullYear() + 1);
+          break;
+      }
+
+      const recurringExpense = await prisma.recurringExpense.create({
+        data: {
+          ...rest,
+          amount: Number(amount),
+          taxAmount: Number(taxAmount),
+          totalAmount,
+          frequency,
+          startDate: startDateObj,
+          nextOccurrenceDate,
+          status: "DRAFT",
+        },
+        include: { vendor: true },
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "CREATE",
+        "RECURRING_EXPENSE",
+        recurringExpense.id,
+        `Created recurring expense: ${recurringExpense.title}`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.status(201).json(recurringExpense);
+    } catch (error) {
+      logger.error("Error creating recurring expense:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Approve a recurring expense so it becomes eligible for /generate.
+  // Without this endpoint, every recurring expense was permanently stuck in its
+  // default DRAFT status (nothing else in the app could move it to APPROVED),
+  // making the whole recurring-expense-generation feature unreachable.
+  app.post("/api/recurring-expenses/:id/approve", authMiddleware, validate(schemas.expenseApprove), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanApprove(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const { notes } = req.body;
+      const recurring = await prisma.recurringExpense.update({
+        where: { id: req.params.id },
+        data: {
+          status: "APPROVED",
+          approvedAt: new Date(),
+          approvedById: jwtUser.userId,
+          approvedByName: jwtUser.email,
+          notes: notes || undefined,
+        },
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "RECURRING_EXPENSE_APPROVED",
+        "RECURRING_EXPENSE",
+        recurring.id,
+        `Approved recurring expense: ${recurring.title}`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.json(recurring);
+    } catch (error) {
+      logger.error("Error approving recurring expense:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Reject a recurring expense (e.g. sent back for revision instead of approved).
+  app.post("/api/recurring-expenses/:id/reject", authMiddleware, validate(schemas.expenseReject), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanApprove(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const { reason } = req.body;
+      const recurring = await prisma.recurringExpense.update({
+        where: { id: req.params.id },
+        data: {
+          status: "REJECTED",
+          approvedAt: new Date(),
+          approvedById: jwtUser.userId,
+          approvedByName: jwtUser.email,
+          notes: reason,
+        },
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "RECURRING_EXPENSE_REJECTED",
+        "RECURRING_EXPENSE",
+        recurring.id,
+        `Rejected recurring expense: ${recurring.title}. Reason: ${reason}`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.json(recurring);
+    } catch (error) {
+      logger.error("Error rejecting recurring expense:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/recurring-expenses/:id/generate", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const recurring = await prisma.recurringExpense.findUnique({
+        where: { id: req.params.id },
+      });
+
+      if (!recurring) {
+        res.status(404).json({ error: "Recurring expense not found" });
+        return;
+      }
+
+      if (recurring.status !== "APPROVED") {
+        res.status(400).json({ error: "Recurring expense must be approved first" });
+        return;
+      }
+
+      // Create expense instance
+      const expense = await prisma.expense.create({
+        data: {
+          title: recurring.title,
+          description: recurring.description,
+          category: recurring.category,
+          amount: recurring.amount,
+          currency: recurring.currency,
+          taxAmount: recurring.taxAmount,
+          totalAmount: recurring.totalAmount,
+          expenseDate: recurring.nextOccurrenceDate || new Date(),
+          vendorId: recurring.vendorId,
+          budgetId: recurring.budgetId,
+          paymentMethod: recurring.paymentMethod,
+          isRecurring: true,
+          recurringExpenseId: recurring.id,
+          status: "PENDING_APPROVAL",
+        },
+      });
+
+      // Update recurring expense
+      let nextOccurrenceDate = new Date(recurring.nextOccurrenceDate || recurring.startDate);
+      switch (recurring.frequency) {
+        case "DAILY":
+          nextOccurrenceDate.setDate(nextOccurrenceDate.getDate() + 1);
+          break;
+        case "WEEKLY":
+          nextOccurrenceDate.setDate(nextOccurrenceDate.getDate() + 7);
+          break;
+        case "BI_WEEKLY":
+          nextOccurrenceDate.setDate(nextOccurrenceDate.getDate() + 14);
+          break;
+        case "MONTHLY":
+          nextOccurrenceDate.setMonth(nextOccurrenceDate.getMonth() + 1);
+          break;
+        case "QUARTERLY":
+          nextOccurrenceDate.setMonth(nextOccurrenceDate.getMonth() + 3);
+          break;
+        case "SEMI_ANNUALLY":
+          nextOccurrenceDate.setMonth(nextOccurrenceDate.getMonth() + 6);
+          break;
+        case "ANNUALLY":
+          nextOccurrenceDate.setFullYear(nextOccurrenceDate.getFullYear() + 1);
+          break;
+      }
+
+      await prisma.recurringExpense.update({
+        where: { id: req.params.id },
+        data: {
+          lastGeneratedDate: new Date(),
+          totalGenerated: { increment: 1 },
+          nextOccurrenceDate,
+        },
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "GENERATE",
+        "RECURRING_EXPENSE",
+        recurring.id,
+        `Generated expense instance from: ${recurring.title}`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.status(201).json(expense);
+    } catch (error) {
+      logger.error("Error generating expense instance:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // ---- Budgets ----
+  app.get("/api/budgets", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanView(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const { fiscalYear, status, departmentId } = req.query;
+      const where: any = {};
+      if (fiscalYear) where.fiscalYear = parseInt(fiscalYear as string);
+      if (status) where.status = status;
+      if (departmentId) where.departmentId = departmentId;
+
+      const budgets = await prisma.budget.findMany({
+        where,
+        orderBy: [{ fiscalYear: 'desc' }, { name: 'asc' }],
+        include: {
+          _count: { select: { expenses: true } },
+        },
+      });
+      res.json(budgets);
+    } catch (error) {
+      logger.error("Error fetching budgets:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/budgets", authMiddleware, validate(schemas.budgetCreate), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const { allocatedAmount, ...rest } = req.body;
+
+      // Generate budget code
+      const year = new Date().getFullYear();
+      const budgetCount = await prisma.budget.count({ where: { fiscalYear: parseInt(rest.fiscalYear) || year } });
+      const code = `BUDGET-${rest.fiscalYear || year}-${String(budgetCount + 1).padStart(2, '0')}`;
+
+      const budget = await prisma.budget.create({
+        data: {
+          ...rest,
+          code,
+          allocatedAmount: Number(allocatedAmount),
+          remainingAmount: Number(allocatedAmount),
+          approvedById: jwtUser.userId,
+          approvedByName: jwtUser.email,
+          approvedAt: new Date(),
+        },
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "CREATE",
+        "BUDGET",
+        budget.id,
+        `Created budget: ${budget.name}`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.status(201).json(budget);
+    } catch (error: any) {
+      if (error.code === 'P2002') {
+        res.status(409).json({ error: "Budget with this code already exists" });
+      } else {
+        logger.error("Error creating budget:", error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    }
+  });
+
+  app.get("/api/budgets/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanView(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const budget = await prisma.budget.findUnique({
+        where: { id: req.params.id },
+        include: {
+          expenses: {
+            orderBy: { expenseDate: 'desc' },
+            take: 20,
+          },
+        },
+      });
+      if (!budget) {
+        res.status(404).json({ error: "Budget not found" });
+        return;
+      }
+      res.json(budget);
+    } catch (error) {
+      logger.error("Error fetching budget:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.put("/api/budgets/:id", authMiddleware, validate(schemas.budgetUpdate), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const { allocatedAmount, spentAmount, ...rest } = req.body;
+      const data: any = { ...rest };
+
+      if (allocatedAmount !== undefined) {
+        data.allocatedAmount = Number(allocatedAmount);
+        data.remainingAmount = Number(allocatedAmount) - (spentAmount || 0);
+      }
+      if (spentAmount !== undefined) {
+        data.spentAmount = Number(spentAmount);
+        data.remainingAmount = (allocatedAmount || 0) - Number(spentAmount);
+      }
+
+      const budget = await prisma.budget.update({
+        where: { id: req.params.id },
+        data,
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "UPDATE",
+        "BUDGET",
+        budget.id,
+        `Updated budget: ${budget.name}`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.json(budget);
+    } catch (error) {
+      logger.error("Error updating budget:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Delete budget
+  app.delete("/api/budgets/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const expenseCount = await prisma.expense.count({ where: { budgetId: req.params.id } });
+      if (expenseCount > 0) {
+        res.status(409).json({ error: "Cannot delete budget with associated expenses" });
+        return;
+      }
+
+      await prisma.budget.delete({ where: { id: req.params.id } });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "DELETE",
+        "BUDGET",
+        req.params.id,
+        `Deleted budget`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.json({ success: true });
+    } catch (error) {
+      logger.error("Error deleting budget:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // ── HR / Payroll / Leave API ─────────────────────────────────────────────────
   // Admin manages everything; ACCOUNTANT may view/manage payroll. Writes are
   // guarded inline so we can allow more than one role where appropriate.
@@ -5693,6 +8550,470 @@ async function startServer() {
     if (Number.isNaN(ms) || ms < 0) return 0;
     return Math.floor(ms / 86_400_000) + 1;
   }
+
+  // ---- Financial Reports ----
+  app.get("/api/financial-reports/summary", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanView(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const { startDate, endDate, fiscalYear } = req.query;
+
+      // Determine date range
+      let dateFilter: any = {};
+      if (startDate && endDate) {
+        dateFilter = {
+          gte: new Date(startDate as string),
+          lte: new Date(endDate as string),
+        };
+      } else if (fiscalYear) {
+        const year = parseInt(fiscalYear as string);
+        dateFilter = {
+          gte: new Date(`${year}-01-01`),
+          lte: new Date(`${year}-12-31`),
+        };
+      } else {
+        // Default to current year
+        const currentYear = new Date().getFullYear();
+        dateFilter = {
+          gte: new Date(`${currentYear}-01-01`),
+          lte: new Date(`${currentYear}-12-31`),
+        };
+      }
+
+      // Get fee payments (income)
+      const feePayments = await prisma.feePayment.aggregate({
+        where: {
+          paidDate: dateFilter,
+          status: 'PAID',
+        },
+        _sum: { amount: true },
+        _count: true,
+      });
+
+      // Get donations (income)
+      const donations = await prisma.donation.aggregate({
+        where: {
+          donationDate: dateFilter,
+          status: { in: ['RECEIVED', 'PROCESSED'] },
+        },
+        _sum: { amount: true },
+        _count: true,
+      });
+
+      // Get expenses (outcome)
+      const expenses = await prisma.expense.aggregate({
+        where: {
+          expenseDate: dateFilter,
+          // PARTIAL expenses have already had real money paid out against them
+          // (via bill payments) even though the balance isn't fully settled, so
+          // they must count toward actual spend just like APPROVED/PAID ones —
+          // excluding them understated every financial report.
+          status: { in: ['APPROVED', 'PAID', 'PARTIAL'] },
+        },
+        _sum: { amount: true },
+        _count: true,
+      });
+
+      // Get budget summary
+      const budgets = await prisma.budget.findMany({
+        where: {
+          OR: [
+            { startDate: dateFilter },
+            { endDate: dateFilter },
+          ],
+        },
+      });
+
+      const totalBudget = budgets.reduce((sum, b) => sum + b.allocatedAmount, 0);
+      const totalBudgetSpent = budgets.reduce((sum, b) => sum + b.spentAmount, 0);
+
+      // Get outstanding fees
+      const outstandingFees = await prisma.feePayment.aggregate({
+        where: {
+          status: { in: ['PENDING', 'OVERDUE'] },
+        },
+        _sum: { amount: true },
+        _count: true,
+      });
+
+      // Get pending expenses
+      const pendingExpenses = await prisma.expense.aggregate({
+        where: {
+          status: { in: ['DRAFT', 'PENDING_APPROVAL'] },
+        },
+        _sum: { amount: true },
+        _count: true,
+      });
+
+      const totalIncome = (feePayments._sum.amount || 0) + (donations._sum.amount || 0);
+      const totalExpenses = expenses._sum.amount || 0;
+      const netCashFlow = totalIncome - totalExpenses;
+
+      res.json({
+        period: {
+          startDate: dateFilter.gte,
+          endDate: dateFilter.lte,
+        },
+        income: {
+          total: totalIncome,
+          fees: feePayments._sum.amount || 0,
+          donations: donations._sum.amount || 0,
+          feePayments: feePayments._count,
+          donationCount: donations._count,
+        },
+        expenses: {
+          total: totalExpenses,
+          paidExpenses: expenses._count,
+          pendingAmount: pendingExpenses._sum.amount || 0,
+          pendingCount: pendingExpenses._count,
+        },
+        budget: {
+          total: totalBudget,
+          spent: totalBudgetSpent,
+          remaining: totalBudget - totalBudgetSpent,
+          utilization: totalBudget > 0 ? (totalBudgetSpent / totalBudget) * 100 : 0,
+        },
+        cashFlow: {
+          net: netCashFlow,
+          positive: netCashFlow >= 0,
+        },
+        accountsReceivable: {
+          outstanding: outstandingFees._sum.amount || 0,
+          count: outstandingFees._count,
+        },
+      });
+    } catch (error) {
+      logger.error("Error generating financial summary:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/financial-reports/income-expense", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanView(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const { startDate, endDate, groupBy = 'month' } = req.query;
+
+      let dateFilter: any = {};
+      if (startDate && endDate) {
+        dateFilter = {
+          gte: new Date(startDate as string),
+          lte: new Date(endDate as string),
+        };
+      } else {
+        // Default to current year
+        const currentYear = new Date().getFullYear();
+        dateFilter = {
+          gte: new Date(`${currentYear}-01-01`),
+          lte: new Date(`${currentYear}-12-31`),
+        };
+      }
+
+      // Get income by period
+      const feePaymentsByPeriod = await prisma.feePayment.groupBy({
+        by: groupBy === 'month' ? ['paidDate'] : ['paidDate'],
+        where: {
+          paidDate: dateFilter,
+          status: 'PAID',
+        },
+        _sum: { amount: true },
+        _count: true,
+      });
+
+      const donationsByPeriod = await prisma.donation.groupBy({
+        by: groupBy === 'month' ? ['donationDate'] : ['donationDate'],
+        where: {
+          donationDate: dateFilter,
+          status: { in: ['RECEIVED', 'PROCESSED'] },
+        },
+        _sum: { amount: true },
+        _count: true,
+      });
+
+      // Get expenses by category and period
+      const expensesByCategory = await prisma.expense.groupBy({
+        by: ['category'],
+        where: {
+          expenseDate: dateFilter,
+          // PARTIAL expenses have already had real money paid out against them
+          // (via bill payments) even though the balance isn't fully settled, so
+          // they must count toward actual spend just like APPROVED/PAID ones —
+          // excluding them understated every financial report.
+          status: { in: ['APPROVED', 'PAID', 'PARTIAL'] },
+        },
+        _sum: { amount: true },
+        _count: true,
+      });
+
+      // Calculate totals
+      const totalIncome = (feePaymentsByPeriod.reduce((sum, p) => sum + (p._sum.amount || 0), 0) +
+                           donationsByPeriod.reduce((sum, p) => sum + (p._sum.amount || 0), 0));
+      const totalExpenses = expensesByCategory.reduce((sum, cat) => sum + (cat._sum.amount || 0), 0);
+      const netSurplus = totalIncome - totalExpenses;
+
+      res.json({
+        period: {
+          startDate: dateFilter.gte,
+          endDate: dateFilter.lte,
+          groupBy,
+        },
+        income: {
+          total: totalIncome,
+          bySource: {
+            fees: feePaymentsByPeriod.reduce((sum, p) => sum + (p._sum.amount || 0), 0),
+            donations: donationsByPeriod.reduce((sum, p) => sum + (p._sum.amount || 0), 0),
+          },
+        },
+        expenses: {
+          total: totalExpenses,
+          byCategory: expensesByCategory.map(cat => ({
+            category: cat.category,
+            amount: cat._sum.amount || 0,
+            count: cat._count,
+            percentage: totalExpenses > 0 ? ((cat._sum.amount || 0) / totalExpenses) * 100 : 0,
+          })),
+        },
+        summary: {
+          netSurplus,
+          surplusRatio: totalIncome > 0 ? (netSurplus / totalIncome) * 100 : 0,
+        },
+      });
+    } catch (error) {
+      logger.error("Error generating income-expense report:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/financial-reports/budget-vs-actual", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanView(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const { budgetId, fiscalYear } = req.query;
+
+      let where: any = {};
+      if (budgetId) {
+        where.id = budgetId;
+      } else if (fiscalYear) {
+        where.fiscalYear = parseInt(fiscalYear as string);
+      } else {
+        // Default to current year budgets
+        where.fiscalYear = new Date().getFullYear();
+      }
+
+      const budgets = await prisma.budget.findMany({
+        where,
+        include: {
+          expenses: {
+            where: { status: { in: ['APPROVED', 'PAID', 'PARTIAL'] } },
+          },
+          feeItems: true,
+        },
+      });
+
+      const budgetComparison = budgets.map(budget => {
+        const actualExpenses = budget.expenses.reduce((sum, exp) => sum + exp.amount, 0);
+        const variance = budget.allocatedAmount - actualExpenses;
+        const variancePercent = budget.allocatedAmount > 0 ? (variance / budget.allocatedAmount) * 100 : 0;
+
+        return {
+          id: budget.id,
+          name: budget.name,
+          code: budget.code,
+          category: budget.category,
+          fiscalYear: budget.fiscalYear,
+          budget: {
+            allocated: budget.allocatedAmount,
+            spent: budget.spentAmount,
+            remaining: budget.remainingAmount,
+          },
+          actual: {
+            expenses: actualExpenses,
+          },
+          variance: {
+            amount: variance,
+            percentage: variancePercent,
+            favorable: variance >= 0,
+          },
+          status: budget.status,
+          utilization: budget.allocatedAmount > 0 ? (actualExpenses / budget.allocatedAmount) * 100 : 0,
+        };
+      });
+
+      const totals = budgetComparison.reduce((acc, budget) => ({
+        allocated: acc.allocated + budget.budget.allocated,
+        spent: acc.spent + budget.budget.spent,
+        actualExpenses: acc.actualExpenses + budget.actual.expenses,
+        variance: acc.variance + budget.variance.amount,
+      }), { allocated: 0, spent: 0, actualExpenses: 0, variance: 0 });
+
+      res.json({
+        budgets: budgetComparison,
+        summary: {
+          totalAllocated: totals.allocated,
+          totalSpent: totals.spent,
+          totalActualExpenses: totals.actualExpenses,
+          totalVariance: totals.variance,
+          overallUtilization: totals.allocated > 0 ? (totals.actualExpenses / totals.allocated) * 100 : 0,
+        },
+      });
+    } catch (error) {
+      logger.error("Error generating budget vs actual report:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/financial-reports/cash-flow", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!expenseCanView(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const { startDate, endDate } = req.query;
+
+      let dateFilter: any = {};
+      if (startDate && endDate) {
+        dateFilter = {
+          gte: new Date(startDate as string),
+          lte: new Date(endDate as string),
+        };
+      } else {
+        // Default to current year
+        const currentYear = new Date().getFullYear();
+        dateFilter = {
+          gte: new Date(`${currentYear}-01-01`),
+          lte: new Date(`${currentYear}-12-31`),
+        };
+      }
+
+      // Cash inflows
+      const feeInflows = await prisma.feePayment.findMany({
+        where: {
+          paidDate: dateFilter,
+          status: 'PAID',
+        },
+        select: {
+          paidDate: true,
+          amount: true,
+          paymentMethod: true,
+        },
+      });
+
+      const donationInflows = await prisma.donation.findMany({
+        where: {
+          donationDate: dateFilter,
+          status: { in: ['RECEIVED', 'PROCESSED'] },
+        },
+        select: {
+          donationDate: true,
+          amount: true,
+          paymentMethod: true,
+        },
+      });
+
+      // Cash outflows
+      const expenseOutflows = await prisma.expense.findMany({
+        where: {
+          expenseDate: dateFilter,
+          // PARTIAL expenses have already had real money paid out against them
+          // (via bill payments) even though the balance isn't fully settled, so
+          // they must count toward actual spend just like APPROVED/PAID ones —
+          // excluding them understated every financial report.
+          status: { in: ['APPROVED', 'PAID', 'PARTIAL'] },
+        },
+        select: {
+          expenseDate: true,
+          amount: true,
+          category: true,
+          paymentMethod: true,
+        },
+      });
+
+      // Combine and group by month
+      const monthlyCashFlow = [];
+
+      for (let i = 0; i < 12; i++) {
+        const month = new Date(dateFilter.gte);
+        month.setMonth(i);
+
+        const monthStart = new Date(month.getFullYear(), month.getMonth(), 1);
+        const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+
+        const monthFeeInflows = feeInflows.filter(f => {
+          const date = new Date(f.paidDate);
+          return date >= monthStart && date <= monthEnd;
+        });
+
+        const monthDonationInflows = donationInflows.filter(d => {
+          const date = new Date(d.donationDate);
+          return date >= monthStart && date <= monthEnd;
+        });
+
+        const monthExpenseOutflows = expenseOutflows.filter(e => {
+          const date = new Date(e.expenseDate);
+          return date >= monthStart && date <= monthEnd;
+        });
+
+        const totalInflow = monthFeeInflows.reduce((sum, f) => sum + f.amount, 0) +
+                            monthDonationInflows.reduce((sum, d) => sum + d.amount, 0);
+        const totalOutflow = monthExpenseOutflows.reduce((sum, e) => sum + e.amount, 0);
+        const netFlow = totalInflow - totalOutflow;
+
+        monthlyCashFlow.push({
+          month: month.getMonth() + 1,
+          year: month.getFullYear(),
+          inflow: {
+            total: totalInflow,
+            fees: monthFeeInflows.reduce((sum, f) => sum + f.amount, 0),
+            donations: monthDonationInflows.reduce((sum, d) => sum + d.amount, 0),
+          },
+          outflow: {
+            total: totalOutflow,
+            byCategory: monthExpenseOutflows.reduce((acc, e) => {
+              acc[e.category] = (acc[e.category] || 0) + e.amount;
+              return acc;
+            }, {} as Record<string, number>),
+          },
+          netFlow,
+          cumulative: monthlyCashFlow.length > 0 ?
+            monthlyCashFlow[monthlyCashFlow.length - 1].cumulative + netFlow : netFlow,
+        });
+      }
+
+      const totalInflow = feeInflows.reduce((sum, f) => sum + f.amount, 0) +
+                         donationInflows.reduce((sum, d) => sum + d.amount, 0);
+      const totalOutflow = expenseOutflows.reduce((sum, e) => sum + e.amount, 0);
+      const netCashFlow = totalInflow - totalOutflow;
+
+      res.json({
+        period: {
+          startDate: dateFilter.gte,
+          endDate: dateFilter.lte,
+        },
+        monthlyCashFlow,
+        summary: {
+          totalInflow,
+          totalOutflow,
+          netCashFlow,
+          averageMonthlyFlow: netCashFlow / 12,
+          endingBalance: monthlyCashFlow.length > 0 ?
+            monthlyCashFlow[monthlyCashFlow.length - 1].cumulative : 0,
+        },
+      });
+    } catch (error) {
+      logger.error("Error generating cash flow report:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
 
   // ---- Departments ----
   app.get("/api/departments", authMiddleware, async (_req, res) => {
