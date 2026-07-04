@@ -57,6 +57,35 @@ enum FeeStatus {
   WAIVED
 }
 
+enum FeeStructureStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum FeeFrequency {
+  ONE_TIME      // Single payment
+  MONTHLY       // Monthly recurring
+  TERMLY        // Per academic term
+  YEARLY        // Annual
+}
+
+enum FeeDiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  SIBLING_DISCOUNT
+  SCHOLARSHIP
+  EARLY_PAYMENT
+}
+
+enum InstallmentStatus {
+  PENDING
+  DUE
+  PAID
+  OVERDUE
+  WAIVED
+}
+
 enum StimulusType {
   TEXT
   IMAGE
@@ -111,6 +140,61 @@ enum CasePriority {
   HIGH
   CRITICAL
   URGENT
+}
+
+// ────────────────────────────────────────────────────────────────────────────────
+// EXPENSE MANAGEMENT ENUMS
+// ────────────────────────────────────────────────────────────────────────────────
+
+enum ExpenseStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  PARTIAL // some, but not all, of the expense's total has been paid via BillPayment records
+  PAID
+  REJECTED
+  CANCELLED
+}
+
+enum ExpenseCategory {
+  OPERATIONAL      // Daily operations, utilities, maintenance
+  ACADEMIC         // Educational materials, supplies, equipment
+  STAFF_COSTS      // Employee-related expenses (excluding payroll)
+  FOOD_CATERING    // Boarding school meals, events
+  TRANSPORTATION   // Vehicle costs, fuel, travel
+  FACILITY         // Building repairs, improvements
+  TECHNOLOGY       // IT equipment, software, licenses
+  EVENT            // School events, activities
+  ADMINISTRATIVE   // Office supplies, insurance, legal
+  OTHER            // Miscellaneous expenses
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  CHECK
+  CREDIT_CARD
+  DEBIT_CARD
+  ONLINE_PAYMENT
+  WIRE_TRANSFER
+  OTHER
+}
+
+enum RecurringExpenseFrequency {
+  DAILY
+  WEEKLY
+  BI_WEEKLY
+  MONTHLY
+  QUARTERLY
+  SEMI_ANNUALLY
+  ANNUALLY
+}
+
+enum BudgetStatus {
+  ACTIVE
+  EXHAUSTED
+  EXCEEDED
+  ARCHIVED
 }
 
 
@@ -226,6 +310,8 @@ model Student {
   attendances    Attendance[]
   examAttempts   ExamAttempt[]
   feePayments    FeePayment[]
+  feeAssignments FeeAssignment[]
+  paymentPlans   FeePaymentPlan[]
   caseRecords    CaseRecord[]
   grades         Grade[]
   gedReadiness   GedReadiness[]
@@ -658,12 +744,442 @@ model FeePayment {
   
   studentId      String
   student        Student  @relation(fields: [studentId], references: [id])
-  
+  assignmentId   String?  @unique
+  assignment     FeeAssignment? @relation("FeeAssignmentPayments", fields: [assignmentId], references: [id])
+  installmentId  String?  @unique
+  installment    FeeInstallment? @relation("FeeInstallmentPayments", fields: [installmentId], references: [id])
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   @@index([studentId])
   @@index([status])
+  @@index([assignmentId])
+  @@index([installmentId])
+}
+
+model FeeStructure {
+  id                String          @id @default(uuid())
+  name              String
+  description       String?
+  academicYear      Int
+  term              String?         // e.g., "Term 1", "Semester 1"
+  status            FeeStructureStatus @default(DRAFT)
+  currency          String          @default("MYR")
+  effectiveFromDate DateTime
+  effectiveToDate   DateTime?
+
+  // Configuration
+  applyToClasses    Boolean         @default(false)
+  applyToBoarders   Boolean         @default(false)
+  applyToDayStudents Boolean        @default(false)
+
+  notes             String?
+  tags              String[]        @default([])
+
+  // Audit
+  createdById       String?
+  createdByName     String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  // Relations
+  items             FeeItem[]
+  assignments       FeeAssignment[]
+  discounts         FeeDiscount[]
+  paymentPlans      FeePaymentPlan[]
+
+  @@index([status])
+  @@index([academicYear])
+  @@index([effectiveFromDate])
+}
+
+model FeeItem {
+  id                String          @id @default(uuid())
+  name              String
+  description       String?
+  amount            Float
+  currency          String          @default("MYR")
+  frequency         FeeFrequency    @default(ONE_TIME)
+
+  // Applicability
+  applicableTo      String          @default("ALL") // ALL, BOARDING_STUDENTS, DAY_STUDENTS
+  classIds          String[]        @default([])     // Empty = applies to all classes
+
+  // Timing
+  dueDate           DateTime?
+  dueDaysAfterStart Int?            // For recurring fees
+
+  // Optional linking to budget
+  budgetId          String?
+  budget            Budget?         @relation(fields: [budgetId], references: [id])
+
+  order             Int             @default(0)
+  isActive          Boolean         @default(true)
+
+  // Audit
+  createdById       String?
+  createdByName     String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  // Relations
+  feeStructureId    String
+  feeStructure      FeeStructure    @relation(fields: [feeStructureId], references: [id], onDelete: Cascade)
+  assignments       FeeAssignment[]
+
+  @@index([feeStructureId])
+  @@index([isActive])
+}
+
+model FeeAssignment {
+  id                String          @id @default(uuid())
+  studentId         String
+  student           Student         @relation(fields: [studentId], references: [id])
+
+  feeItemId         String
+  feeItem           FeeItem         @relation(fields: [feeItemId], references: [id])
+
+  feeStructureId    String
+  feeStructure      FeeStructure    @relation(fields: [feeStructureId], references: [id])
+
+  // Calculated amounts
+  baseAmount        Float
+  discountAmount    Float           @default(0)
+  totalAmount       Float
+
+  // Payment tracking
+  paidAmount        Float           @default(0)
+  outstandingAmount Float
+
+  // Status
+  status            FeeStatus       @default(PENDING)
+  dueDate           DateTime
+  paidDate          DateTime?
+
+  // Link to actual payment
+  feePaymentId      String?         @unique
+  feePayment        FeePayment?     @relation("FeeAssignmentPayments")
+
+  notes             String?
+
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([studentId])
+  @@index([feeItemId])
+  @@index([feeStructureId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model FeeDiscount {
+  id                String          @id @default(uuid())
+  name              String
+  description       String?
+  discountType      FeeDiscountType
+  value             Float           // Percentage or fixed amount
+
+  // Applicability
+  applyToAllStructures Boolean      @default(false)
+  feeStructureIds  String[]        @default([])
+  classIds          String[]        @default([])
+
+  // Conditions
+  minSiblings       Int?            // For sibling discount
+  requireBoarding   Boolean         @default(false)
+  minGpa            Float?          // For scholarships
+
+  // Validity
+  validFrom         DateTime
+  validTo           DateTime?
+  isActive          Boolean         @default(true)
+
+  // Audit
+  createdById       String?
+  createdByName     String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  // Relations
+  feeStructureId    String
+  feeStructure      FeeStructure    @relation(fields: [feeStructureId], references: [id], onDelete: Cascade)
+
+  @@index([feeStructureId])
+  @@index([isActive])
+  @@index([validFrom])
+}
+
+model FeePaymentPlan {
+  id                String          @id @default(uuid())
+  name              String
+  description       String?
+
+  feeStructureId    String
+  feeStructure      FeeStructure    @relation(fields: [feeStructureId], references: [id], onDelete: Cascade)
+
+  studentId         String
+  student           Student         @relation(fields: [studentId], references: [id])
+
+  // Financials
+  totalAmount       Float
+  currency          String          @default("MYR")
+
+  // Installment configuration
+  numberOfInstallments Int
+  installmentFrequency String       @default("MONTHLY")
+  firstInstallmentDue DateTime
+
+  // Status
+  status            InstallmentStatus @default(PENDING)
+
+  // Agreement
+  agreedById        String?
+  agreedByName      String?
+  agreedAt          DateTime?
+
+  notes             String?
+
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  // Relations
+  installments      FeeInstallment[]
+
+  @@index([studentId])
+  @@index([feeStructureId])
+  @@index([status])
+}
+
+model FeeInstallment {
+  id                String          @id @default(uuid())
+  paymentPlanId     String
+  paymentPlan       FeePaymentPlan  @relation(fields: [paymentPlanId], references: [id], onDelete: Cascade)
+
+  installmentNumber Int
+  amount            Float
+  dueDate           DateTime
+  paidDate          DateTime?
+  status            InstallmentStatus @default(DUE)
+
+  // Link to actual payment
+  feePaymentId      String?         @unique
+  feePayment        FeePayment?     @relation("FeeInstallmentPayments")
+
+  notes             String?
+
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([paymentPlanId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+// ───────────────────────────────────────────────────────────────────────────────
+// DONATION TRACKING (fundraising and alumni donations)
+// ───────────────────────────────────────────────────────────────────────────────
+
+enum DonationStatus {
+  PENDING
+  RECEIVED
+  PROCESSED
+  CANCELLED
+  REFUNDED
+}
+
+enum DonationType {
+  ONE_TIME
+  RECURRING_MONTHLY
+  RECURRING_QUARTERLY
+  RECURRING_YEARLY
+  IN_KIND
+}
+
+enum CampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+model Donor {
+  id                String          @id @default(uuid())
+
+  // Basic Information
+  donorCode         String          @unique  // Auto-generated: DON-YYYY-NNNN
+  name              String
+  email             String?
+  phone             String?
+  organization      String?         // Company or organization name (if donating as entity)
+
+  // Classification
+  donorType         String          @default("INDIVIDUAL") // INDIVIDUAL, ORGANIZATION, ALUMNUS, PARENT, GRANT_AGENCY
+  category          String?         // e.g., "Major Donor", "Regular Supporter"
+
+  // Contact Information
+  address           String?
+  city              String?
+  state             String?
+  postalCode        String?
+  country           String?         @default("Malaysia")
+
+  // Communication Preferences
+  preferredContact   String?         @default("EMAIL") // EMAIL, PHONE, MAIL
+  doNotContact      Boolean         @default(false)
+  isActive          Boolean         @default(true)
+
+  // Financial Information
+  taxId             String?         // For tax-deductible receipts
+  receiptPreference String?         @default("EMAIL") // EMAIL, MAIL, NONE
+
+  // Additional
+  notes             String?
+  tags              String[]        @default([])
+
+  // Audit
+  createdById       String?
+  createdByName     String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  // Relations
+  donations         Donation[]
+
+  @@index([donorCode])
+  @@index([email])
+  @@index([donorType])
+  @@index([organization])
+}
+
+model Donation {
+  id                String          @id @default(uuid())
+
+  // Basic Information
+  donationNumber    String          @unique  // Auto-generated: DON-YYYY-NNNN
+  amount            Float
+  currency          String          @default("MYR")
+
+  // Classification
+  donationType     DonationType    @default(ONE_TIME)
+  status            DonationStatus  @default(PENDING)
+
+  // Purpose
+  purpose           String?         // General, Scholarship, Building, Equipment, etc.
+  designation       String?         // Specific fund or program
+
+  // Relationships
+  donorId           String
+  donor             Donor           @relation(fields: [donorId], references: [id])
+
+  campaignId        String?
+  campaign          DonationCampaign? @relation(fields: [campaignId], references: [id])
+
+  // Payment Information
+  paymentMethod     String?         // CASH, BANK_TRANSFER, CHECK, CREDIT_CARD, ONLINE
+  paymentReference  String?         // Check number, transaction ID, etc.
+  receiptNumber     String?         @unique
+
+  // Dates
+  donationDate      DateTime        @default(now())
+  receivedDate      DateTime?
+  processedDate     DateTime?
+
+  // Tax Information
+  isTaxDeductible  Boolean         @default(true)
+  taxReceiptAmount  Float?
+
+  // Additional
+  notes             String?
+  acknowledgmentSent Boolean         @default(false)
+
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  // Relations
+  receipt           DonationReceipt?
+
+  @@index([donorId])
+  @@index([campaignId])
+  @@index([status])
+  @@index([donationDate])
+  @@index([donationNumber])
+}
+
+model DonationCampaign {
+  id                String          @id @default(uuid())
+
+  // Basic Information
+  name              String
+  description       String?
+  goalAmount        Float
+  currency          String          @default("MYR")
+  status            CampaignStatus  @default(DRAFT)
+
+  // Campaign Period
+  startDate         DateTime
+  endDate           DateTime
+
+  // Target
+  targetAudience    String?         // ALUMNI, PARENTS, CORPORATE, PUBLIC, STAFF
+
+  // Progress Tracking
+  raisedAmount      Float           @default(0)
+  donorCount        Int             @default(0)
+
+  // Additional
+  coverImage        String?
+  notes             String?
+  tags              String[]        @default([])
+
+  // Audit
+  createdById       String?
+  createdByName     String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  // Relations
+  donations         Donation[]
+
+  @@index([status])
+  @@index([startDate])
+  @@index([endDate])
+}
+
+model DonationReceipt {
+  id                String          @id @default(uuid())
+
+  // References
+  donationId        String          @unique
+  donation          Donation        @relation(fields: [donationId], references: [id])
+
+  // Receipt Information
+  receiptNumber     String          @unique
+  receiptDate       DateTime        @default(now())
+
+  // Recipient Information
+  recipientName     String          // Name on receipt
+  recipientAddress  String?
+  recipientEmail    String?
+
+  // Financial
+  amount            Float
+  currency          String          @default("MYR")
+
+  // Tax Information
+  isTaxDeductible  Boolean         @default(true)
+  taxDeductibleAmount Float?
+  taxId             String?
+
+  // Additional
+  notes             String?
+
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([receiptNumber])
+  @@index([receiptDate])
 }
 
 model CaseRecord {
@@ -2001,6 +2517,302 @@ model LeaveRequest {
 
   @@index([employeeId])
   @@index([status])
+}
+
+// ────────────────────────────────────────────────────────────────────────────────
+// EXPENSE MANAGEMENT MODELS
+// ────────────────────────────────────────────────────────────────────────────────
+
+model Expense {
+  id                String          @id @default(uuid())
+
+  // Basic Information
+  title             String
+  description       String?
+  category          ExpenseCategory
+  status            ExpenseStatus   @default(DRAFT)
+
+  // Financial Details
+  amount            Float
+  currency          String          @default("MYR")
+  taxAmount         Float?          @default(0)
+  totalAmount       Float?          // amount + taxAmount (computed)
+  budgetId          String?         // Link to budget for tracking
+
+  // Vendor Information
+  vendorId          String?
+  vendor            Vendor?         @relation(fields: [vendorId], references: [id])
+  vendorInvoiceNo   String?         @unique
+
+  // Dates
+  expenseDate       DateTime
+  dueDate           DateTime?
+  paidDate          DateTime?
+
+  // Payment Information
+  paymentMethod     PaymentMethod?
+  paymentReference  String?         @unique  // Check number, transfer reference, etc.
+  bankAccount       String?          // Which school bank account was used
+
+  // Approval Workflow
+  submittedById     String?
+  submittedByName   String?
+  submittedAt       DateTime?
+  approvedById      String?
+  approvedByName    String?
+  approvedAt        DateTime?
+  rejectionReason   String?
+
+  // Supporting Documents
+  receiptUrl        String?
+  receiptFileName   String?
+  attachmentUrls    String[]        @default([])
+  attachmentMetadata Json?         // Array of {fileName, fileSize, mimeType}
+
+  // Additional Details
+  notes             String?
+  tags              String[]        @default([])
+  isRecurring       Boolean         @default(false)
+  recurringExpenseId String?         // If generated from recurring expense
+
+  // Academic Context
+  academicYear      String?
+  term              String?
+
+  // Class/Department tracking
+  departmentId      String?
+  relatedClassId    String?
+  relatedSubjectId  String?
+
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  // Relations
+  payments          BillPayment[]
+  recurringExpense  RecurringExpense? @relation("ExpenseToRecurring", fields: [recurringExpenseId], references: [id])
+  budget            Budget?          @relation(fields: [budgetId], references: [id])
+
+  @@index([category])
+  @@index([status])
+  @@index([expenseDate])
+  @@index([dueDate])
+  @@index([vendorId])
+  @@index([budgetId])
+  @@index([submittedById])
+  @@index([academicYear])
+  @@index([term])
+  @@index([isRecurring])
+  @@index([createdAt])
+}
+
+model Vendor {
+  id                String          @id @default(uuid())
+
+  // Basic Information
+  name              String
+  code              String?         @unique  // Auto-generated vendor code
+  description       String?
+
+  // Contact Information
+  contactPerson     String?
+  email             String?
+  phone             String?
+  website           String?
+
+  // Address
+  address           String?
+  city              String?
+  state             String?
+  postalCode        String?
+  country           String?         @default("Malaysia")
+
+  // Tax & Banking
+  taxId             String?          // GST/VAT/Tax registration number
+  bankName          String?
+  bankAccount       String?
+  paymentTerms      String?          // e.g., "NET 30", "COD"
+
+  // Categorization
+  category          String?          // e.g., "Food Supplier", "IT Services"
+  tags              String[]        @default([])
+
+  // Status
+  isActive          Boolean         @default(true)
+
+  // Performance Tracking
+  totalPurchases    Float           @default(0)
+  purchaseCount     Int             @default(0)
+  lastPurchaseDate  DateTime?
+
+  // Audit
+  notes             String?
+  createdById       String?
+  createdByName     String?
+
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  // Relations
+  expenses          Expense[]
+  recurringExpenses RecurringExpense[]
+
+  @@index([name])
+  @@index([code])
+  @@index([category])
+  @@index([isActive])
+  @@index([createdAt])
+}
+
+model BillPayment {
+  id                String          @id @default(uuid())
+
+  // Reference
+  expenseId         String
+  expense           Expense         @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  paymentNumber     String          @unique  // Auto-generated: PAY-2024-0001
+
+  // Payment Details
+  amount            Float
+  currency          String          @default("MYR")
+  paymentMethod     PaymentMethod
+  paymentDate       DateTime        @default(now())
+
+  // Reference Information
+  referenceNumber   String?         // Check number, transfer ref
+  bankAccount       String?         // Which school account paid
+
+  // Supporting Documents
+  receiptUrl        String?
+  receiptFileName   String?
+
+  // Approval
+  approvedById      String?
+  approvedByName    String?
+  approvedAt        DateTime?
+
+  // Additional
+  notes             String?
+
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([expenseId])
+  @@index([paymentDate])
+  @@index([paymentMethod])
+  @@index([paymentNumber])
+}
+
+model RecurringExpense {
+  id                String                 @id @default(uuid())
+
+  // Basic Information
+  title             String
+  description       String?
+  category          ExpenseCategory
+  status            ExpenseStatus          @default(DRAFT)
+
+  // Financial Details
+  amount            Float
+  currency          String                @default("MYR")
+  taxAmount         Float?                 @default(0)
+  totalAmount       Float?                 // amount + taxAmount
+
+  // Vendor Information
+  vendorId          String?
+  vendor            Vendor?                @relation(fields: [vendorId], references: [id])
+
+  // Recurring Schedule
+  frequency         RecurringExpenseFrequency
+  startDate         DateTime
+  endDate           DateTime?
+  dayOfMonth        Int?                   // For monthly: 1-31, or -1 for last day
+  occurrenceCount   Int?                   // Total number of occurrences (null = indefinite)
+
+  // Payment Information
+  paymentMethod     PaymentMethod?
+  budgetId          String?
+
+  // Approval
+  approvedById      String?
+  approvedByName    String?
+  approvedAt        DateTime?
+
+  // Tracking
+  nextOccurrenceDate DateTime?
+  lastGeneratedDate  DateTime?
+  totalGenerated     Int                @default(0)
+
+  // Additional
+  notes             String?
+  tags              String[]             @default([])
+
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  // Relations
+  generatedExpenses Expense[]            @relation("ExpenseToRecurring")
+
+  @@index([category])
+  @@index([status])
+  @@index([frequency])
+  @@index([startDate])
+  @@index([endDate])
+  @@index([nextOccurrenceDate])
+  @@index([createdAt])
+}
+
+model Budget {
+  id                String          @id @default(uuid())
+
+  // Basic Information
+  name              String
+  code              String?         @unique  // Budget code like "OP-2024-Q1"
+  description       String?
+  status            BudgetStatus    @default(ACTIVE)
+
+  // Budget Period
+  fiscalYear        Int
+  startDate         DateTime
+  endDate           DateTime
+
+  // Allocation
+  allocatedAmount   Float
+  currency          String          @default("MYR")
+  spentAmount       Float           @default(0)
+  remainingAmount   Float           @default(0)  // computed: allocated - spent
+
+  // Categorization
+  category          ExpenseCategory?
+  departmentId      String?
+
+  // Constraints
+  alertThreshold    Float           @default(0.8)  // Alert when 80% spent
+  strictLimit       Boolean         @default(false)  // Block expenses if exceeded
+
+  // Approval
+  approvedById      String?
+  approvedByName    String?
+  approvedAt        DateTime?
+
+  // Additional
+  notes             String?
+  tags              String[]        @default([])
+
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  // Relations
+  expenses          Expense[]
+  feeItems          FeeItem[]
+
+  @@index([name])
+  @@index([code])
+  @@index([status])
+  @@index([fiscalYear])
+  @@index([category])
+  @@index([departmentId])
+  @@index([startDate])
+  @@index([endDate])
 }
 
 // -----------------------------------------------------------------------------
