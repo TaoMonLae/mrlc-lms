@@ -8,7 +8,7 @@
 
 ## Overview
 
-MRLC LMS is a full-featured, single-school Learning Management System designed specifically for the Mon Refugee Learning Centre. It provides a complete digital platform for managing students, teachers, classes, subjects, attendance, examinations, digital library resources, physical book catalog with borrowing management, fee tracking, case management, announcements, role-based access control, and configurable school branding.
+MRLC LMS is a full-featured, single-school Learning Management System designed specifically for the Mon Refugee Learning Centre. It provides a complete digital platform for managing students, teachers, classes, subjects, attendance, homework, examinations, digital library resources, physical book catalog with borrowing management, fee tracking, case management, announcements, GED readiness tracking with gamified student engagement (streaks & badges), a curated news digest, role-based access control, and configurable school branding.
 
 The application is built as a unified Node.js/Express server that serves both the API and the compiled Vite/React frontend, backed by a PostgreSQL database managed through Prisma ORM.
 
@@ -27,9 +27,11 @@ The application is built as a unified Node.js/Express server that serves both th
 | **Teacher Management** | Teacher profiles, class assignments, and workload tracking |
 | **Class Management** | Class creation, enrollment, teacher assignment, and scheduling |
 | **Subject Management** | Subject catalog with prerequisites and difficulty levels |
-| **Attendance** | Daily attendance tracking with reporting and analytics |
-| **Examinations** | Exam creation, scheduling, proctoring, and automated grading |
+| **Attendance** | Daily and session-based attendance tracking with reporting, analytics, and bulk marking |
+| **Homework** | Assignment creation, submission tracking, on-time scoring, and gradebook sync |
+| **Examinations** | Exam creation, scheduling, reusable question bank, advanced proctoring (lockdown browser, accommodations, invigilator dashboard), and automated + manual grading |
 | **Gradebook** | Student progress tracking, grade reports, and performance analytics |
+| **GED Readiness & Engagement** | Per-subject mastery tracker (6-stage readiness pipeline tied to real exam performance), attendance streaks, and achievement badges to keep students motivated |
 | **Digital Library** | E-book (EPUB/PDF) collection with reading progress tracking |
 | **Physical Library** | Book catalog, borrowing system, and due date management |
 | **Fee Management** | Fee structure, payment tracking, and receipt generation |
@@ -41,14 +43,16 @@ The application is built as a unified Node.js/Express server that serves both th
 
 ### Specialized Features
 
-- **Chat System**: Real-time messaging between users with sticker support
+- **Chat System**: Real-time messaging with typing indicators, presence, and sticker support
 - **Social Space**: Community feed for sharing updates and media
-- **Video Management**: Educational video library with categories
+- **News & Daily Digest**: Curated multi-source RSS feed (world, tech, education, and Myanmar-focused independent outlets) with a clean in-app reading view
+- **Video Management**: Educational video library with categories, captions, and required-viewing tracking
 - **Document Management**: Secure document generation and printing
 - **Lesson Planner**: Teacher lesson planning and resource management
 - **Admissions**: Student application and enrollment workflow
-- **HR & Payroll**: Staff management and payroll processing
+- **HR, Payroll & Leave**: Staff directory with departments/designations, monthly payroll, and leave request/approval workflow
 - **Bank Integration**: Fee payment tracking and reconciliation
+- **Global Search**: Cross-module search with deep links into students, classes, exams, and more
 
 ### Multi-Language Support
 
@@ -194,12 +198,14 @@ NODE_ENV=production npm run start
 mrlc-lms/
 ├── src/
 │   ├── pages/          # Route components (student, teacher, admin, etc.)
-│   ├── components/     # Reusable UI components
-│   ├── lib/            # API clients, utilities, helpers
+│   ├── lib/            # App-specific API clients, utilities, helpers
 │   ├── i18n/           # Internationalization files (.po)
 │   ├── hooks/          # Custom React hooks
 │   ├── providers/      # Context providers
 │   └── types/          # TypeScript type definitions
+├── lib/                # Shared utilities (imported as @/lib/*), e.g. badge catalog, GED constants
+├── components/         # Shared/reusable UI components (imported as @/components/*), incl. shadcn/ui primitives
+├── hooks/              # Shared hooks (imported as @/hooks/*)
 ├── prisma/
 │   ├── schema.prisma   # Database schema
 │   ├── migrations/     # Database migration files
@@ -208,8 +214,13 @@ mrlc-lms/
 │   └── stickers/       # Built-in sticker packs for chat
 ├── data/               # Runtime data directory (uploads, backups, etc.)
 ├── deploy/             # Deployment configurations
-└── server.ts           # Express server entry point
+├── server.ts           # Express server entry point (core API routes)
+├── examBank.ts         # Reusable question bank (question pooling, randomized composition)
+├── examPhase2.ts       # Advanced exam features (lockdown browser, accommodations, rubrics, invigilator dashboard)
+└── news.ts             # News/daily digest RSS aggregation
 ```
+
+> Note: `@/*` resolves to the project root (see `tsconfig.json` / `vite.config.ts`), so both `src/` and the root-level `lib/`, `components/`, `hooks/` directories are reachable via the `@/` alias.
 
 ---
 

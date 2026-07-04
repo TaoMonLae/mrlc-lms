@@ -49,6 +49,7 @@ const DEFAULT_SYSTEM: SystemSettings = {
   lockdownAutoSubmitOnViolation: true,
   lockdownMaxWarnings: 3,
   lockdownInstructions: '',
+  cursorEffect: 'RAINBOW_TRAIL',
 };
 
 const SettingsContext = createContext<SettingsContextType>({
@@ -103,6 +104,7 @@ function applyServerData(
     lockdownAutoSubmitOnViolation: data.lockdownAutoSubmitOnViolation !== undefined ? data.lockdownAutoSubmitOnViolation : prev.lockdownAutoSubmitOnViolation,
     lockdownMaxWarnings: data.lockdownMaxWarnings !== undefined ? data.lockdownMaxWarnings : prev.lockdownMaxWarnings,
     lockdownInstructions: data.lockdownInstructions !== undefined ? data.lockdownInstructions || '' : prev.lockdownInstructions,
+    cursorEffect: data.cursorEffect !== undefined ? data.cursorEffect : prev.cursorEffect,
   }));
 }
 
@@ -210,6 +212,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       lockdownAutoSubmitOnViolation: data.lockdownAutoSubmitOnViolation,
       lockdownMaxWarnings: data.lockdownMaxWarnings,
       lockdownInstructions: data.lockdownInstructions,
+      cursorEffect: data.cursorEffect,
     });
 
   return (

@@ -848,6 +848,7 @@ const schemas = {
     lockdownAutoSubmitOnViolation: z.union([z.boolean(), z.string()]).optional(),
     lockdownMaxWarnings: optNum,
     lockdownInstructions: nullableStr,
+    cursorEffect: optStr,
   }),
   timetable: z.object({
     classId: nullableStr,
@@ -7325,6 +7326,7 @@ async function startServer() {
     if (b.lockdownAutoSubmitOnViolation !== undefined) data.lockdownAutoSubmitOnViolation = parseBoolean(b.lockdownAutoSubmitOnViolation);
     if (b.lockdownMaxWarnings !== undefined) data.lockdownMaxWarnings = Math.max(1, Number(b.lockdownMaxWarnings));
     if (b.lockdownInstructions !== undefined) data.lockdownInstructions = b.lockdownInstructions;
+    if (b.cursorEffect !== undefined) data.cursorEffect = b.cursorEffect;
 
     try {
       const existing = await prisma.schoolProfile.findFirst();

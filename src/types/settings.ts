@@ -36,4 +36,7 @@ export interface SystemSettings {
   lockdownAutoSubmitOnViolation: boolean;
   lockdownMaxWarnings: number;
   lockdownInstructions: string;
+  cursorEffect: CursorEffect;
 }
+
+export type CursorEffect = 'NONE' | 'RAINBOW_TRAIL' | 'SPLASH_CURSOR' | 'RIBBONS';

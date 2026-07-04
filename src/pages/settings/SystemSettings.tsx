@@ -2,7 +2,7 @@ import React, { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Save, HardDrive, Shield, MonitorCheck } from 'lucide-react';
+import { Save, HardDrive, Shield, MonitorCheck, MousePointerClick } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -30,6 +30,7 @@ const systemSchema = z.object({
   lockdownAutoSubmitOnViolation: z.boolean(),
   lockdownMaxWarnings: z.number().min(1).max(10),
   lockdownInstructions: z.string(),
+  cursorEffect: z.enum(['NONE', 'RAINBOW_TRAIL', 'SPLASH_CURSOR', 'RIBBONS']),
 });
 
 type FormValues = z.infer<typeof systemSchema>;
@@ -198,6 +199,35 @@ export default function SystemSettings() {
           </div>
         </div>
 
+      </div>
+
+      <div className="space-y-4 border-t border-slate-200 dark:border-surface-raised pt-8">
+        <div>
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+            <MousePointerClick className="h-4 w-4" /> Cursor Effects
+          </h3>
+          <p className="text-sm text-slate-500 mt-1">
+            A fun, purely decorative effect that follows the mouse across the whole app.
+          </p>
+        </div>
+
+        <div className="max-w-sm space-y-2">
+          <Label>Effect</Label>
+          <Select value={watch('cursorEffect')} onValueChange={(v: any) => setValue('cursorEffect', v, { shouldDirty: true })}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="NONE">None</SelectItem>
+              <SelectItem value="RAINBOW_TRAIL">Rainbow Trail</SelectItem>
+              <SelectItem value="SPLASH_CURSOR">Splash Cursor (fluid)</SelectItem>
+              <SelectItem value="RIBBONS">Ribbons</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-slate-500">
+            Applies for every user across the whole app. Automatically disabled for anyone with "reduce motion" enabled in their OS.
+          </p>
+        </div>
       </div>
 
       <div className="space-y-6 border-t border-slate-200 dark:border-surface-raised pt-8">

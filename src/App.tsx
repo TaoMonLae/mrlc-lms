@@ -177,7 +177,7 @@ import { AuthProvider } from "./providers/AuthProvider";
 import { I18nProvider } from "./i18n/I18nProvider";
 
 import LandingPage from "./pages/Landing";
-import RainbowMouseTrail from "./components/RainbowMouseTrail";
+import CursorEffect from "./components/CursorEffect";
 
 export default function App() {
   return (
@@ -420,7 +420,7 @@ export default function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
           <Toaster position="top-right" closeButton richColors />
-          <RainbowMouseTrail />
+          <CursorEffect />
         </BrowserRouter>
         </TooltipProvider>
       </SettingsProvider>
