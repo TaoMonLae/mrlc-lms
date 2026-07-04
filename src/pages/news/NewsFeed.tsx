@@ -154,7 +154,12 @@ export default function NewsFeed() {
                   </Badge>
                 )}
               </div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white line-clamp-2 mb-2 group-hover:text-aubergine-600 transition-colors">
+              {/* font-myanmar only affects glyphs the custom Khit Haungg
+                  face actually covers (Burmese/Mon script) — Latin-script
+                  headlines fall through to the sans stack untouched, so
+                  this is safe to apply to every title regardless of the
+                  source's language. */}
+              <h3 className="font-myanmar text-base font-bold text-slate-900 dark:text-white line-clamp-2 mb-2 group-hover:text-aubergine-600 transition-colors">
                 {a.title}
               </h3>
               {a.summary && (

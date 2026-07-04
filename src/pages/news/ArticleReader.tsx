@@ -84,7 +84,7 @@ export default function ArticleReader() {
                 </Badge>
               )}
             </div>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight">
+            <h1 className="font-myanmar text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight">
               {article.title}
             </h1>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">

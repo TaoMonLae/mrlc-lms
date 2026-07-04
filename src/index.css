@@ -82,6 +82,25 @@
   --color-canvas: #080808;
   --color-surface-indigo: #161616;
   --color-surface-raised: #222222;
+
+  /* Myanmar/Mon script display font for News titles (see @font-face below).
+     Registering it under --font-* makes Tailwind generate a `font-myanmar`
+     utility. Only used for headline text — the font ships Bold only, so
+     it's paired with the regular sans stack as a fallback for any glyph
+     (e.g. Latin-script headlines) it doesn't cover. */
+  --font-myanmar: "Khit Haungg", "Noto Sans Myanmar", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Zawgyi-era Myanmar display font, donated for use in the app's News
+   headlines. Bold weight only — browsers will still request other
+   computed weights (e.g. font-extrabold) against this single face rather
+   than silently falling back to the next font in the stack. */
+@font-face {
+  font-family: "Khit Haungg";
+  src: url("/fonts/Z20-KhitHaungg-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
 }
 
 @layer base {
