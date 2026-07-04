@@ -255,4 +255,4 @@ For issues, questions, or contributions related to MRLC LMS, please refer to the
 
 **Developed by Tao Mon Lae**
 
-© 2024 Mon Refugee Learning Centre
+© 2026 Mon Refugee Learning Centre
