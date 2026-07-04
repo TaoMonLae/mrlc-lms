@@ -29,7 +29,7 @@ const DEFAULT_SOURCES = [
   { name: "TechCrunch", feedUrl: "https://techcrunch.com/feed/", category: "IT" },
   { name: "Ars Technica", feedUrl: "https://feeds.arstechnica.com/arstechnica/index", category: "IT" },
   // Education / educational
-  { name: "EdSurge", feedUrl: "https://www.edsurge.com/news.rss", category: "Education" },
+  { name: "EdSurge", feedUrl: "https://www.edsurge.com/articles_rss", category: "Education" },
   { name: "Inside Higher Ed", feedUrl: "https://www.insidehighered.com/rss.xml", category: "Education" },
   // Myanmar — independent outlets only (deliberately excludes state/military-
   // run media like Global New Light of Myanmar or MRTV, given the audience).
