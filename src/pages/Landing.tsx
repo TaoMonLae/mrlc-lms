@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { useTheme } from '../components/theme-provider';
 import { useUser } from '../lib/permissions';
+import DotGrid from '@/components/DotGrid';
 
 export default function LandingPage() {
   const { theme, setTheme } = useTheme();
@@ -176,7 +177,24 @@ export default function LandingPage() {
           </div>
           
           {/* Background Decorative Blobs */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-aubergine-400/20 dark:bg-aubergine-600/10 blur-[120px] rounded-full pointer-events-none -z-10" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-aubergine-400/20 dark:bg-aubergine-600/10 blur-[120px] rounded-full pointer-events-none -z-20" />
+
+          {/* Interactive dot grid — purely decorative, sits behind the hero
+              copy/visual (which is in a `relative z-10` wrapper above), so it
+              never intercepts clicks. Only used here on the public marketing
+              page; intentionally left out of the authenticated app where it
+              would just be visual noise during real work. */}
+          <div className="absolute inset-0 -z-10 opacity-60 dark:opacity-40 pointer-events-none">
+            <DotGrid
+              dotSize={3}
+              gap={24}
+              baseColor={theme === 'dark' ? '#33334d' : '#e2e8f0'}
+              activeColor="#7a3dff"
+              proximity={130}
+              shockRadius={220}
+              shockStrength={3}
+            />
+          </div>
         </section>
 
         {/* Feature Overview Section */}
