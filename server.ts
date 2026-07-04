@@ -1782,11 +1782,17 @@ async function startServer() {
       notes, classId, gender, status,
     } = req.body;
     try {
-      const existingStudent = await prisma.student.findUnique({ where: { id } });
+      const existingStudent = await prisma.student.findUnique({ where: { id }, include: { user: true } });
       if (!existingStudent) {
         res.status(404).json({ error: "Student not found" });
         return;
       }
+      // Quick actions (e.g. "Mark as Dropped" from the students list) only send
+      // { status }, so fall back to the student's current name for the audit
+      // log instead of logging "undefined undefined".
+      const auditName = (firstName || lastName)
+        ? `${firstName ?? ""} ${lastName ?? ""}`.trim()
+        : fullName(existingStudent.user) || existingStudent.studentCode;
       const updated = await prisma.$transaction(async (tx) => {
         if (existingStudent.userId) {
           await tx.user.update({
@@ -1836,13 +1842,16 @@ async function startServer() {
         });
       });
 
+      const statusChanged = status !== undefined && status !== existingStudent.status;
       await createAuditLog(
         jwtUser.userId,
         jwtUser.email,
-        "UPDATE",
+        statusChanged ? "STATUS_CHANGE" : "UPDATE",
         "STUDENT",
         id,
-        `Student '${firstName} ${lastName}' updated.`,
+        statusChanged
+          ? `Student '${auditName}' status changed to ${status}.`
+          : `Student '${auditName}' updated.`,
         req.ip,
         req.headers["user-agent"] || null,
         "SUCCESS"
@@ -1859,11 +1868,12 @@ async function startServer() {
     const jwtUser = (req as any).user as JwtPayload;
     const { id } = req.params;
     try {
-      const student = await prisma.student.findUnique({ where: { id } });
+      const student = await prisma.student.findUnique({ where: { id }, include: { user: true } });
       if (!student) {
         res.status(404).json({ error: "Student not found" });
         return;
       }
+      const label = `${fullName(student.user) || "Unnamed"} (${student.studentCode})`;
       await prisma.$transaction(async (tx) => {
         await tx.student.delete({ where: { id } });
         if (student.userId) {
@@ -1871,16 +1881,20 @@ async function startServer() {
         }
       });
 
+      // Permanent, irreversible — cascades (per schema.prisma) to delete this
+      // student's attendance, grades, exam attempts, fee payments, and case
+      // records too. Flagged WARNING severity (vs. the usual SUCCESS) so it
+      // stands out in the audit log given the blast radius.
       await createAuditLog(
         jwtUser.userId,
         jwtUser.email,
         "DELETE",
         "STUDENT",
         id,
-        `Student ID ${id} deleted.`,
+        `Student ${label} permanently deleted, including all attendance/grades/exam/fee/case records.`,
         req.ip,
         req.headers["user-agent"] || null,
-        "SUCCESS"
+        "WARNING"
       );
 
       res.json({ message: "Student deleted successfully" });
@@ -9062,8 +9076,10 @@ async function startServer() {
         res.status(403).json({ error: "Forbidden" });
         return;
       }
+      // Exclude students who've left the school so they don't show up for
+      // attendance marking; ON_LEAVE/GRADUATED/unset still count as roster.
       const students = await prisma.student.findMany({
-        where: { classId }, include: { user: true }, orderBy: { studentCode: "asc" },
+        where: { classId, status: { not: "DROPPED" } }, include: { user: true }, orderBy: { studentCode: "asc" },
       });
       res.json(students.map((s) => ({
         id: s.id,

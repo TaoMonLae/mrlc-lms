@@ -1,12 +1,18 @@
 import React from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
-  ArrowLeft, Edit, User, UserMinus, FileText,
+  ArrowLeft, Edit, User, UserMinus, FileText, Trash2,
   MapPin, Phone, CreditCard, CheckCircle2,
   CalendarDays, Download, AlertTriangle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { StudentDocuments } from '@/src/components/students/StudentDocuments';
 import { toast } from 'sonner';
 import { HoloProfileHeader } from '@/src/components/profile/HoloProfileHeader';
@@ -16,10 +22,15 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs';
+import { apiSend } from '../../lib/api';
+import { getErrorMessage } from '../../lib/errors';
+import { useAuth } from '../../providers/AuthProvider';
 
 export default function StudentProfile() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
   const [student, setStudent] = React.useState<any>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [attendanceData, setAttendanceData] = React.useState<any>(null);
@@ -132,6 +143,42 @@ export default function StudentProfile() {
     notes: student.notes || 'No notes available.',
     profilePhotoUrl: student.profilePhotoUrl || student.user?.profilePhotoUrl || null,
   };
+
+  // "Left the school" — soft-remove (reversible). See StudentsList.tsx for
+  // the same pair of actions on the list page.
+  const markDropped = async () => {
+    const name = `${s.firstName} ${s.lastName}`.trim();
+    if (!confirm(`Mark ${name} as Dropped (left the school)? They'll disappear from active class rosters and attendance marking, but all their grades, attendance, and exam history is kept. You can reverse this later from Edit Details.`)) return;
+    try {
+      await apiSend(`/api/students/${s.id}`, 'PUT', { status: 'DROPPED' });
+      toast.success(`${name} marked as Dropped.`);
+      setStudent((prev: any) => prev ? { ...prev, status: 'DROPPED' } : prev);
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
+  };
+
+  // Permanent hard delete — irreversible, cascades to erase attendance,
+  // grades, exam attempts, fee payments, and case records.
+  const permanentlyDelete = async () => {
+    const name = `${s.firstName} ${s.lastName}`.trim();
+    const typed = window.prompt(
+      `This PERMANENTLY deletes ${name} (${s.studentId}) and ALL their records — attendance, grades, exam history, fee payments, case notes. This cannot be undone.\n\nIf you just want to remove them from active rosters, cancel this and use "Mark as Left (Dropped)" instead — it keeps their history.\n\nType the student ID "${s.studentId}" to confirm permanent deletion:`
+    );
+    if (typed === null) return;
+    if (typed !== s.studentId) {
+      toast.error('Student ID did not match — nothing was deleted.');
+      return;
+    }
+    try {
+      await apiSend(`/api/students/${s.id}`, 'DELETE');
+      toast.success(`${name} permanently deleted.`);
+      navigate('/students');
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
+  };
+
   const formatCurrency = (amount: number, currency = 'MYR') =>
     new Intl.NumberFormat('en-MY', { style: 'currency', currency }).format(Number(amount || 0));
   const latestGrade = examData?.results?.[0]?.grade || null;
@@ -157,6 +204,31 @@ export default function StudentProfile() {
             <FileText className="mr-2 h-4 w-4" />
             Generate Report
           </Button>
+          {isAdmin && (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-900/20">
+                    <UserMinus className="mr-2 h-4 w-4" />
+                    Remove Student
+                  </Button>
+                }
+                nativeButton={true}
+              />
+              <DropdownMenuContent align="end">
+                {s.status !== 'DROPPED' && (
+                  <DropdownMenuItem className="text-amber-600" onClick={markDropped}>
+                    <UserMinus className="mr-2 h-4 w-4" />
+                    Mark as Left (Dropped)
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem className="text-red-600" onClick={permanentlyDelete}>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete Permanently
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
 

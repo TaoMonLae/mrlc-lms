@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Plus, Filter, MoreHorizontal, User, UserPlus } from 'lucide-react';
+import { Search, Plus, Filter, MoreHorizontal, User, UserPlus, UserMinus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { UserAvatar } from '@/components/ui/user-avatar';
@@ -26,8 +26,12 @@ import { toast } from 'sonner';
 import { TableSkeleton } from '../../components/ui/loading-skeleton';
 import { EmptySearchState } from '../../components/ui/empty-state';
 import { getErrorMessage } from '../../lib/errors';
+import { apiSend } from '../../lib/api';
+import { useAuth } from '../../providers/AuthProvider';
 
 export default function StudentsList() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
   const [searchTerm, setSearchTerm] = useState('');
   const [classFilter, setClassFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -40,6 +44,46 @@ export default function StudentsList() {
       const res = await fetch('/api/students', { headers: { Authorization: `Bearer ${sessionStorage.getItem('auth_token')}` } });
       if (res.ok) setStudents(await res.json());
     } catch { /* keep prior list */ }
+  };
+
+  // "Left the school" — soft-remove. Sets status to DROPPED so the student
+  // drops off active rosters/attendance but every grade, attendance record,
+  // exam attempt, etc. is kept, and it's reversible by editing the status
+  // back. This is intentionally a single confirm(), same as other
+  // status-only changes elsewhere in the app.
+  const markDropped = async (student: { id: string; firstName: string; lastName: string }) => {
+    const name = `${student.firstName} ${student.lastName}`.trim();
+    if (!confirm(`Mark ${name} as Dropped (left the school)? They'll disappear from active class rosters and attendance marking, but all their grades, attendance, and exam history is kept. You can reverse this later from Edit Details.`)) return;
+    try {
+      await apiSend(`/api/students/${student.id}`, 'PUT', { status: 'DROPPED' });
+      toast.success(`${name} marked as Dropped.`);
+      reloadStudents();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
+  };
+
+  // Permanent hard delete — cascades to erase attendance, grades, exam
+  // attempts, fee payments, and case records for this student. Irreversible,
+  // so it's guarded with a stronger, type-to-confirm prompt rather than the
+  // plain confirm() used for the reversible "Dropped" action above.
+  const permanentlyDelete = async (student: { id: string; firstName: string; lastName: string; studentId: string }) => {
+    const name = `${student.firstName} ${student.lastName}`.trim();
+    const typed = window.prompt(
+      `This PERMANENTLY deletes ${name} (${student.studentId}) and ALL their records — attendance, grades, exam history, fee payments, case notes. This cannot be undone.\n\nIf you just want to remove them from active rosters, cancel this and use "Mark as Left (Dropped)" instead — it keeps their history.\n\nType the student ID "${student.studentId}" to confirm permanent deletion:`
+    );
+    if (typed === null) return;
+    if (typed !== student.studentId) {
+      toast.error('Student ID did not match — nothing was deleted.');
+      return;
+    }
+    try {
+      await apiSend(`/api/students/${student.id}`, 'DELETE');
+      toast.success(`${name} permanently deleted.`);
+      reloadStudents();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
   };
 
   useEffect(() => {
@@ -238,6 +282,21 @@ export default function StudentsList() {
                                 <DropdownMenuItem className="text-aubergine-600" render={<Link to="/attendance" />}>
                                   Record Attendance
                                 </DropdownMenuItem>
+                                {isAdmin && student.status !== 'DROPPED' && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem className="text-amber-600" onClick={() => markDropped(student)}>
+                                      <UserMinus className="mr-2 h-4 w-4" />
+                                      Mark as Left (Dropped)
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                                {isAdmin && (
+                                  <DropdownMenuItem className="text-red-600" onClick={() => permanentlyDelete(student)}>
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete Permanently
+                                  </DropdownMenuItem>
+                                )}
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </td>
@@ -308,6 +367,18 @@ export default function StudentsList() {
                       <DropdownMenuItem render={<Link to={`/students/${student.id}/edit`} />}>
                         Edit
                       </DropdownMenuItem>
+                      {isAdmin && student.status !== 'DROPPED' && (
+                        <DropdownMenuItem className="text-amber-600" onClick={() => markDropped(student)}>
+                          <UserMinus className="mr-2 h-4 w-4" />
+                          Mark as Left (Dropped)
+                        </DropdownMenuItem>
+                      )}
+                      {isAdmin && (
+                        <DropdownMenuItem className="text-red-600" onClick={() => permanentlyDelete(student)}>
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete Permanently
+                        </DropdownMenuItem>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
