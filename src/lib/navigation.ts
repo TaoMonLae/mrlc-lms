@@ -122,6 +122,7 @@ export const ADMIN_NAV: AdminNavEntry[] = [
     icon: ClipboardList,
     items: [
       { title: "School Operations", url: "/operations", icon: ClipboardList },
+      { title: "Student Duties", url: "/duties", icon: CalendarCheck },
       { title: "Cases", url: "/cases", icon: AlertCircle },
       { title: "Reports", url: "/reports", icon: BarChart3 },
     ],
@@ -201,6 +202,7 @@ export const STUDENT_NAV: AdminNavEntry[] = [
       { title: "My Attendance", url: "/student/attendance", icon: CalendarCheck },
       { title: "My Documents", url: "/student/documents", icon: FileText },
       { title: "My Fees", url: "/student/fees", icon: Wallet },
+      { title: "My Duties", url: "/student/duties", icon: ClipboardList },
     ],
   },
   {
@@ -409,6 +411,12 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     url: "/donations",
     icon: Heart,
     roles: ["ADMIN", "ACCOUNTANT"],
+  },
+  {
+    title: "Student Duties",
+    url: "/duties",
+    icon: CalendarCheck,
+    roles: ["ADMIN", "STAFF"],
   },
   {
     title: "Cases",

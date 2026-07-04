@@ -105,6 +105,13 @@ import DonorProfile from "./pages/donations/DonorProfile";
 import DonorNew from "./pages/donations/DonorNew";
 import DonorEdit from "./pages/donations/DonorEdit";
 import DonationNew from "./pages/donations/DonationNew";
+
+import DutiesDashboard from "./pages/duties/DutiesDashboard";
+import DutyDefinitionsPage from "./pages/duties/DutyDefinitionsPage";
+import DutyRostersPage from "./pages/duties/DutyRostersPage";
+import DutyRosterDetail from "./pages/duties/DutyRosterDetail";
+import StudentDutyView from "./pages/duties/StudentDutyView";
+import DutyPerformancePage from "./pages/duties/DutyPerformancePage";
 import CasesDashboard from "./pages/cases/CasesDashboard";
 import CaseNew from "./pages/cases/CaseNew";
 import CaseDetail from "./pages/cases/CaseDetail";
@@ -490,6 +497,18 @@ export default function App() {
                   <Route path="/donors/new" element={<DonorNew />} />
                   <Route path="/donors/:id/edit" element={<DonorEdit />} />
                   <Route path="/donors/:id" element={<DonorProfile />} />
+                </Route>
+
+                <Route element={<ProtectedRoute requiredPermission="view_duties" />}>
+                  <Route path="/duties" element={<DutiesDashboard />} />
+                  <Route path="/duties/definitions" element={<DutyDefinitionsPage />} />
+                  <Route path="/duties/rosters" element={<DutyRostersPage />} />
+                  <Route path="/duties/rosters/:id" element={<DutyRosterDetail />} />
+                  <Route path="/duties/performance" element={<DutyPerformancePage />} />
+                </Route>
+
+                <Route element={<ProtectedRoute requiredPermission="view_own_duties" />}>
+                  <Route path="/student/duties" element={<StudentDutyView />} />
                 </Route>
 
                 <Route index element={<Navigate to="/dashboard" replace />} />

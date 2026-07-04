@@ -86,6 +86,10 @@ export type Permission =
   | 'manage_budgets'
   | 'view_budgets'
   | 'view_financial_reports'
+  // Student Duty System
+  | 'manage_duties'
+  | 'view_duties'
+  | 'view_own_duties'
   // Library & Resources
   | 'manage_library'
   | 'manage_own_library'
@@ -165,6 +169,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'view_own_results',
     'view_own_grades',
     'view_own_documents',
+    'view_own_duties',
   ],
   STAFF: [
     'view_students',
@@ -182,6 +187,8 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'view_budgets',
     'view_fee_structures',
     'view_financial_reports',
+    'manage_duties',
+    'view_duties',
   ],
   ACCOUNTANT: [
     'manage_fees',
@@ -297,6 +304,7 @@ export const PERMISSION_CATEGORIES = {
   CONTENT_MANAGEMENT: ['manage_videos', 'view_videos'],
   FEE_STRUCTURE_MANAGEMENT: ['manage_fee_structures', 'view_fee_structures'],
   EXPENSE_MANAGEMENT: ['view_expenses', 'manage_expenses', 'approve_expenses', 'manage_vendors', 'view_vendors', 'manage_budgets', 'view_budgets', 'view_financial_reports'],
+  DUTY_MANAGEMENT: ['manage_duties', 'view_duties', 'view_own_duties'],
   DONATION_MANAGEMENT: ['manage_donations', 'view_donations', 'manage_campaigns', 'view_campaigns'],
   SUPER_ADMIN: ['manage_all'],
 } as const;
@@ -357,6 +365,9 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   'manage_budgets': 'Manage Budgets',
   'view_budgets': 'View Budgets',
   'view_financial_reports': 'View Financial Reports',
+  'manage_duties': 'Manage Student Duties',
+  'view_duties': 'View Student Duties',
+  'view_own_duties': 'View Own Duties',
   'manage_library': 'Manage Library',
   'manage_own_library': 'Manage Own Library',
   'view_library': 'View Library',
