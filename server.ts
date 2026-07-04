@@ -9160,6 +9160,24 @@ async function startServer() {
   const WARNING_THRESHOLD = 60; // overall % below which an academic warning is raised
   const canManageGrades = (role: string) => role === "ADMIN" || role === "TEACHER";
 
+  // Subject.code/name are free text the school configures (e.g. seeded as "GED-MATH",
+  // "GED-SCI", "GED-SOC") — they don't equal the GED_SUBJECTS enum values, so callers
+  // that need to bucket an Exam's Subject into one of the 4 GED areas should match
+  // loosely against both fields rather than requiring an exact match.
+  const GED_SUBJECT_PATTERNS: Record<(typeof GED_SUBJECTS)[number], RegExp> = {
+    RLA: /\bRLA\b|READING|LANGUAGE/i,
+    MATH: /MATH/i,
+    SCIENCE: /\bSCI/i,
+    SOCIAL_STUDIES: /\bSOC/i,
+  };
+  const matchGedSubject = (code?: string | null, name?: string | null): (typeof GED_SUBJECTS)[number] | null => {
+    const hay = `${code || ""} ${name || ""}`;
+    for (const sub of GED_SUBJECTS) {
+      if (GED_SUBJECT_PATTERNS[sub].test(hay)) return sub;
+    }
+    return null;
+  };
+
   // Returns a {category: weight} map for a class (configured rows override defaults).
   const weightsForClass = async (classId: string): Promise<Record<string, number>> => {
     const rows = await prisma.categoryWeight.findMany({ where: { classId } });
@@ -9455,13 +9473,13 @@ async function startServer() {
     const readinessBySubject: Record<string, any> = {};
     for (const r of readiness) readinessBySubject[r.subject] = { status: r.status, note: r.note, updatedAt: r.updatedAt };
 
-    // Aggregate exam performance per GED subject
+    // Aggregate exam performance per GED subject.
+    // Subject.code is a free-text field the school sets (e.g. seeded as "GED-MATH",
+    // "GED-SCI", "GED-SOC" — not the bare GED_SUBJECTS enum values), so an exact-match
+    // filter against GED_SUBJECTS silently matches nothing. Match loosely against both
+    // code and name instead.
     const examAttempts = await prisma.examAttempt.findMany({
-      where: {
-        studentId,
-        isCompleted: true,
-        exam: { subject: { code: { in: [...GED_SUBJECTS] } } },
-      },
+      where: { studentId, isCompleted: true, exam: { subjectId: { not: null } } },
       include: { exam: { include: { subject: true } } },
     });
 
@@ -9471,7 +9489,7 @@ async function startServer() {
     }
 
     for (const attempt of examAttempts) {
-      const subjectCode = attempt.exam.subject?.code;
+      const subjectCode = matchGedSubject(attempt.exam.subject?.code, attempt.exam.subject?.name);
       if (!subjectCode || !examStatsBySubject[subjectCode]) continue;
       const stats = examStatsBySubject[subjectCode];
       stats.attemptCount++;
@@ -9604,6 +9622,7 @@ async function startServer() {
         // Run check function
         const result = badge.checkFn(badgeContext);
         const progress = typeof result === 'boolean' ? (result ? 1 : 0) : result;
+        if (progress <= 0) continue; // Not earned yet — badges without `levels` have no other gate
 
         // Determine level
         let level = 1;
@@ -9696,7 +9715,8 @@ async function startServer() {
       });
 
       res.json({ badges: badgeDetails, currentStreak });
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.code === "P2021" || err?.code === "P2022") { res.json({ badges: [], currentStreak: 0 }); return; }
       logger.error("Error fetching student badges:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }

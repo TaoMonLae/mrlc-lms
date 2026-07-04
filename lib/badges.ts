@@ -28,6 +28,13 @@ export interface BadgeContext {
   // Add more as needed
 }
 
+// NOTE ON `levels`: `levels` is for a SINGLE badge that escalates through its own
+// tiers (see `getBadgeLevel`) — it must never be shared across sibling catalog
+// entries. Each entry below is an independent, named milestone (e.g. "Hot Streak"
+// vs "Perfect Month"), so each gets its own boolean check at its own threshold
+// rather than a shared multi-tier `levels` array. Sharing thresholds across
+// entries would award e.g. "Perfect Month" the moment a 3-day streak is hit,
+// since every sibling badge would report the same computed level.
 export const BADGE_CATALOG: Record<string, BadgeDefinition> = {
   // Attendance Streak Badges
   STREAK_3: {
@@ -37,8 +44,7 @@ export const BADGE_CATALOG: Record<string, BadgeDefinition> = {
     icon: 'Flame',
     category: 'ATTENDANCE',
     color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
-    levels: [3, 7, 14, 30],
-    checkFn: (ctx) => ctx.currentStreak || 0
+    checkFn: (ctx) => (ctx.currentStreak || 0) >= 3
   },
 
   STREAK_7: {
@@ -48,8 +54,7 @@ export const BADGE_CATALOG: Record<string, BadgeDefinition> = {
     icon: 'Flame',
     category: 'ATTENDANCE',
     color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
-    levels: [3, 7, 14, 30],
-    checkFn: (ctx) => ctx.currentStreak || 0
+    checkFn: (ctx) => (ctx.currentStreak || 0) >= 7
   },
 
   STREAK_14: {
@@ -59,8 +64,7 @@ export const BADGE_CATALOG: Record<string, BadgeDefinition> = {
     icon: 'Flame',
     category: 'ATTENDANCE',
     color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
-    levels: [3, 7, 14, 30],
-    checkFn: (ctx) => ctx.currentStreak || 0
+    checkFn: (ctx) => (ctx.currentStreak || 0) >= 14
   },
 
   STREAK_30: {
@@ -70,8 +74,7 @@ export const BADGE_CATALOG: Record<string, BadgeDefinition> = {
     icon: 'CalendarCheck',
     category: 'ATTENDANCE',
     color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-    levels: [3, 7, 14, 30],
-    checkFn: (ctx) => ctx.currentStreak || 0
+    checkFn: (ctx) => (ctx.currentStreak || 0) >= 30
   },
 
   // Academic Badges - Exams
@@ -82,7 +85,7 @@ export const BADGE_CATALOG: Record<string, BadgeDefinition> = {
     icon: 'Footprints',
     category: 'MILESTONE',
     color: 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400',
-    checkFn: (ctx) => ctx.examCount || 0
+    checkFn: (ctx) => (ctx.examCount || 0) >= 1
   },
 
   EXAM_CHAMPION_5: {
@@ -92,8 +95,7 @@ export const BADGE_CATALOG: Record<string, BadgeDefinition> = {
     icon: 'Trophy',
     category: 'ACADEMIC',
     color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-    levels: [1, 5, 10],
-    checkFn: (ctx) => ctx.exam90PlusCount || 0
+    checkFn: (ctx) => (ctx.exam90PlusCount || 0) >= 5
   },
 
   EXAM_CHAMPION_10: {
@@ -103,8 +105,7 @@ export const BADGE_CATALOG: Record<string, BadgeDefinition> = {
     icon: 'Trophy',
     category: 'ACADEMIC',
     color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-    levels: [1, 5, 10],
-    checkFn: (ctx) => ctx.exam90PlusCount || 0
+    checkFn: (ctx) => (ctx.exam90PlusCount || 0) >= 10
   },
 
   // Academic Badges - Homework
@@ -115,8 +116,7 @@ export const BADGE_CATALOG: Record<string, BadgeDefinition> = {
     icon: 'BookOpen',
     category: 'ACADEMIC',
     color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-    levels: [5, 10, 25],
-    checkFn: (ctx) => ctx.onTimeHomeworkCount || 0
+    checkFn: (ctx) => (ctx.onTimeHomeworkCount || 0) >= 5
   },
 
   HOMEWORK_HERO_10: {
@@ -126,8 +126,7 @@ export const BADGE_CATALOG: Record<string, BadgeDefinition> = {
     icon: 'BookOpen',
     category: 'ACADEMIC',
     color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-    levels: [5, 10, 25],
-    checkFn: (ctx) => ctx.onTimeHomeworkCount || 0
+    checkFn: (ctx) => (ctx.onTimeHomeworkCount || 0) >= 10
   },
 
   // GED Badges
@@ -138,8 +137,7 @@ export const BADGE_CATALOG: Record<string, BadgeDefinition> = {
     icon: 'Target',
     category: 'ACADEMIC',
     color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-    levels: [1, 2, 3, 4],
-    checkFn: (ctx) => ctx.gedSubjectsReady || 0
+    checkFn: (ctx) => (ctx.gedSubjectsReady || 0) >= 1
   },
 
   GED_READY_ALL: {
@@ -149,8 +147,7 @@ export const BADGE_CATALOG: Record<string, BadgeDefinition> = {
     icon: 'Target',
     category: 'ACADEMIC',
     color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-    levels: [1, 2, 3, 4],
-    checkFn: (ctx) => ctx.gedSubjectsReady || 0
+    checkFn: (ctx) => (ctx.gedSubjectsReady || 0) >= 4
   },
 
   GED_PASSED_ONE: {
@@ -160,8 +157,7 @@ export const BADGE_CATALOG: Record<string, BadgeDefinition> = {
     icon: 'Award',
     category: 'ACADEMIC',
     color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',
-    levels: [1, 2, 3, 4],
-    checkFn: (ctx) => ctx.gedSubjectsPassed || 0
+    checkFn: (ctx) => (ctx.gedSubjectsPassed || 0) >= 1
   },
 
   GED_MASTER: {
@@ -171,8 +167,7 @@ export const BADGE_CATALOG: Record<string, BadgeDefinition> = {
     icon: 'GraduationCap',
     category: 'ACADEMIC',
     color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',
-    levels: [1, 2, 3, 4],
-    checkFn: (ctx) => ctx.gedSubjectsPassed || 0
+    checkFn: (ctx) => (ctx.gedSubjectsPassed || 0) >= 4
   },
 };
 
