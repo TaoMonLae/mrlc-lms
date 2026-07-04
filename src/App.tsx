@@ -73,6 +73,38 @@ import PaymentNew from "./pages/fees/PaymentNew";
 import StudentFeeProfile from "./pages/fees/StudentFeeProfile";
 import PaymentReceipt from "./pages/fees/PaymentReceipt";
 
+import ExpensesDashboard from "./pages/expenses/ExpensesDashboard";
+import ExpenseNew from "./pages/expenses/ExpenseNew";
+import ExpenseEdit from "./pages/expenses/ExpenseEdit";
+import ExpenseDetail from "./pages/expenses/ExpenseDetail";
+
+import VendorsPage from "./pages/vendors/VendorsPage";
+import VendorNew from "./pages/vendors/VendorNew";
+import VendorEdit from "./pages/vendors/VendorEdit";
+import VendorDetail from "./pages/vendors/VendorDetail";
+
+import BudgetsPage from "./pages/budgets/BudgetsPage";
+import BudgetNew from "./pages/budgets/BudgetNew";
+import BudgetDetail from "./pages/budgets/BudgetDetail";
+import BudgetEdit from "./pages/budgets/BudgetEdit";
+
+import FeeStructuresDashboard from "./pages/fee-structures/FeeStructuresDashboard";
+import FeeStructureDetail from "./pages/fee-structures/FeeStructureDetail";
+import FeeStructureNew from "./pages/fee-structures/FeeStructureNew";
+import FeeStructureEdit from "./pages/fee-structures/FeeStructureEdit";
+import FeeAssignmentsPage from "./pages/fee-structures/FeeAssignmentsPage";
+import FeeDiscountsPage from "./pages/fee-structures/FeeDiscountsPage";
+
+import FinancialDashboard from "./pages/financial/FinancialDashboard";
+import BudgetVsActualReport from "./pages/financial/BudgetVsActualReport";
+import IncomeExpenseReport from "./pages/financial/IncomeExpenseReport";
+import DonationsDashboard from "./pages/donations/DonationsDashboard";
+import CampaignsPage from "./pages/donations/CampaignsPage";
+import DonorList from "./pages/donations/DonorList";
+import DonorProfile from "./pages/donations/DonorProfile";
+import DonorNew from "./pages/donations/DonorNew";
+import DonorEdit from "./pages/donations/DonorEdit";
+import DonationNew from "./pages/donations/DonationNew";
 import CasesDashboard from "./pages/cases/CasesDashboard";
 import CaseNew from "./pages/cases/CaseNew";
 import CaseDetail from "./pages/cases/CaseDetail";
@@ -394,7 +426,43 @@ export default function App() {
                   <Route path="/fees/students/:id" element={<StudentFeeProfile />} />
                   <Route path="/fees/receipts/:id" element={<PaymentReceipt />} />
                 </Route>
-                
+
+                <Route element={<ProtectedRoute requiredPermission="view_expenses" />}>
+                  <Route path="/expenses" element={<ExpensesDashboard />} />
+                  <Route path="/expenses/new" element={<ExpenseNew />} />
+                  <Route path="/expenses/:id/edit" element={<ExpenseEdit />} />
+                  <Route path="/expenses/:id" element={<ExpenseDetail />} />
+                </Route>
+
+                <Route element={<ProtectedRoute requiredPermission="view_vendors" />}>
+                  <Route path="/vendors" element={<VendorsPage />} />
+                  <Route path="/vendors/new" element={<VendorNew />} />
+                  <Route path="/vendors/:id/edit" element={<VendorEdit />} />
+                  <Route path="/vendors/:id" element={<VendorDetail />} />
+                </Route>
+
+                <Route element={<ProtectedRoute requiredPermission="view_budgets" />}>
+                  <Route path="/budgets" element={<BudgetsPage />} />
+                  <Route path="/budgets/new" element={<BudgetNew />} />
+                  <Route path="/budgets/:id/edit" element={<BudgetEdit />} />
+                  <Route path="/budgets/:id" element={<BudgetDetail />} />
+                </Route>
+
+                <Route element={<ProtectedRoute requiredPermission="view_fee_structures" />}>
+                  <Route path="/fee-structures" element={<FeeStructuresDashboard />} />
+                  <Route path="/fee-structures/new" element={<FeeStructureNew />} />
+                  <Route path="/fee-structures/:id/edit" element={<FeeStructureEdit />} />
+                  <Route path="/fee-structures/:id" element={<FeeStructureDetail />} />
+                  <Route path="/fee-assignments" element={<FeeAssignmentsPage />} />
+                  <Route path="/fee-discounts" element={<FeeDiscountsPage />} />
+                </Route>
+
+                <Route element={<ProtectedRoute requiredPermission="view_financial_reports" />}>
+                  <Route path="/financial" element={<FinancialDashboard />} />
+                  <Route path="/financial/reports/budget-vs-actual" element={<BudgetVsActualReport />} />
+                  <Route path="/financial/reports/income-expense" element={<IncomeExpenseReport />} />
+                </Route>
+
                 <Route element={<ProtectedRoute requiredPermission="manage_cases" />}>
                   <Route path="/cases" element={<CasesDashboard />} />
                   <Route path="/cases/new" element={<CaseNew />} />
@@ -413,7 +481,17 @@ export default function App() {
                   <Route path="/reports/classes" element={<ClassPerformanceReport />} />
                   <Route path="/reports/monthly-summary" element={<MonthlySummaryReport />} />
                 </Route>
-                
+
+                <Route element={<ProtectedRoute requiredPermission="view_donations" />}>
+                  <Route path="/donations" element={<DonationsDashboard />} />
+                  <Route path="/donations/campaigns" element={<CampaignsPage />} />
+                  <Route path="/donations/new" element={<DonationNew />} />
+                  <Route path="/donors" element={<DonorList />} />
+                  <Route path="/donors/new" element={<DonorNew />} />
+                  <Route path="/donors/:id/edit" element={<DonorEdit />} />
+                  <Route path="/donors/:id" element={<DonorProfile />} />
+                </Route>
+
                 <Route index element={<Navigate to="/dashboard" replace />} />
               </Route>
             </Route>

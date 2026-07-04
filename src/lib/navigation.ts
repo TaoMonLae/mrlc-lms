@@ -24,7 +24,8 @@ import {
   Tablet,
   ClipboardList,
   UserPlus,
-  Newspaper
+  Newspaper,
+  Heart
 } from "lucide-react";
 import { UserRole } from "./permissions";
 
@@ -104,7 +105,14 @@ export const ADMIN_NAV: AdminNavEntry[] = [
     label: "Finance & HR",
     icon: Wallet,
     items: [
+      { title: "Financial Dashboard", url: "/financial", icon: BarChart3 },
       { title: "Fees", url: "/fees", icon: Wallet },
+      { title: "Fee Structures", url: "/fee-structures", icon: Wallet },
+      { title: "Donations", url: "/donations", icon: Heart },
+      { title: "Donors", url: "/donors", icon: Heart },
+      { title: "Expenses", url: "/expenses", icon: Wallet },
+      { title: "Vendors", url: "/vendors", icon: UserSquare2 },
+      { title: "Budgets", url: "/budgets", icon: BarChart3 },
       { title: "Payroll", url: "/payroll", icon: Wallet },
       { title: "Leave", url: "/leave", icon: CalendarCheck },
     ],
@@ -364,6 +372,42 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     title: "Fees",
     url: "/fees",
     icon: Wallet,
+    roles: ["ADMIN", "ACCOUNTANT"],
+  },
+  {
+    title: "Fee Structures",
+    url: "/fee-structures",
+    icon: Wallet,
+    roles: ["ADMIN", "ACCOUNTANT", "STAFF"],
+  },
+  {
+    title: "Financial Dashboard",
+    url: "/financial",
+    icon: BarChart3,
+    roles: ["ADMIN", "ACCOUNTANT", "STAFF"],
+  },
+  {
+    title: "Expenses",
+    url: "/expenses",
+    icon: Wallet,
+    roles: ["ADMIN", "ACCOUNTANT", "STAFF"],
+  },
+  {
+    title: "Vendors",
+    url: "/vendors",
+    icon: UserSquare2,
+    roles: ["ADMIN", "ACCOUNTANT", "STAFF"],
+  },
+  {
+    title: "Budgets",
+    url: "/budgets",
+    icon: BarChart3,
+    roles: ["ADMIN", "ACCOUNTANT", "STAFF"],
+  },
+  {
+    title: "Donations",
+    url: "/donations",
+    icon: Heart,
     roles: ["ADMIN", "ACCOUNTANT"],
   },
   {

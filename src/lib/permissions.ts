@@ -68,8 +68,24 @@ export type Permission =
   | 'manage_fees'
   | 'view_fees'
   | 'view_own_fees'
+  | 'manage_fee_structures'
+  | 'view_fee_structures'
   | 'manage_payments'
   | 'view_payments'
+  // Donation Management
+  | 'manage_donations'
+  | 'view_donations'
+  | 'manage_campaigns'
+  | 'view_campaigns'
+  // Expense Management
+  | 'view_expenses'
+  | 'manage_expenses'
+  | 'approve_expenses'
+  | 'manage_vendors'
+  | 'view_vendors'
+  | 'manage_budgets'
+  | 'view_budgets'
+  | 'view_financial_reports'
   // Library & Resources
   | 'manage_library'
   | 'manage_own_library'
@@ -161,6 +177,11 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'view_announcements',
     'view_timetable',
     'export_data',
+    'view_expenses',
+    'view_vendors',
+    'view_budgets',
+    'view_fee_structures',
+    'view_financial_reports',
   ],
   ACCOUNTANT: [
     'manage_fees',
@@ -169,6 +190,23 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'view_payments',
     'view_students',
     'export_data',
+    // Fee structures
+    'manage_fee_structures',
+    'view_fee_structures',
+    // Expense management
+    'view_expenses',
+    'manage_expenses',
+    'approve_expenses',
+    'manage_vendors',
+    'view_vendors',
+    'view_budgets',
+    'manage_budgets',
+    'view_financial_reports',
+    // Donation management
+    'manage_donations',
+    'view_donations',
+    'manage_campaigns',
+    'view_campaigns',
   ],
   CASE_WORKER: [
     'manage_cases',
@@ -252,11 +290,14 @@ export const PERMISSION_CATEGORIES = {
   EXAM_MANAGEMENT: ['manage_exams', 'manage_assigned_exams', 'view_exams', 'view_own_exams', 'view_own_results', 'manage_results', 'view_results', 'view_assigned_reports'],
   ATTENDANCE_MANAGEMENT: ['manage_attendance', 'manage_assigned_attendance', 'view_attendance', 'view_own_attendance'],
   FINANCIAL_MANAGEMENT: ['manage_fees', 'view_fees', 'view_own_fees', 'manage_payments', 'view_payments'],
- _LIBRARY_MANAGEMENT: ['manage_library', 'manage_own_library', 'view_library', 'manage_books', 'view_books', 'manage_ebooks', 'manage_documents', 'view_documents'],
+  LIBRARY_MANAGEMENT: ['manage_library', 'manage_own_library', 'view_library', 'manage_books', 'view_books', 'manage_ebooks', 'manage_documents', 'view_documents'],
   COMMUNICATIONS: ['manage_announcements', 'view_announcements', 'send_notifications'],
   CASE_MANAGEMENT: ['manage_cases', 'view_cases', 'manage_own_cases'],
   SYSTEM_MANAGEMENT: ['manage_timetable', 'view_timetable', 'view_audit_logs', 'export_data', 'view_reports', 'manage_settings'],
   CONTENT_MANAGEMENT: ['manage_videos', 'view_videos'],
+  FEE_STRUCTURE_MANAGEMENT: ['manage_fee_structures', 'view_fee_structures'],
+  EXPENSE_MANAGEMENT: ['view_expenses', 'manage_expenses', 'approve_expenses', 'manage_vendors', 'view_vendors', 'manage_budgets', 'view_budgets', 'view_financial_reports'],
+  DONATION_MANAGEMENT: ['manage_donations', 'view_donations', 'manage_campaigns', 'view_campaigns'],
   SUPER_ADMIN: ['manage_all'],
 } as const;
 
@@ -300,8 +341,22 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   'manage_fees': 'Manage Fees',
   'view_fees': 'View Fees',
   'view_own_fees': 'View Own Fees',
+  'manage_fee_structures': 'Manage Fee Structures',
+  'view_fee_structures': 'View Fee Structures',
   'manage_payments': 'Manage Payments',
   'view_payments': 'View Payments',
+  'manage_donations': 'Manage Donations',
+  'view_donations': 'View Donations',
+  'manage_campaigns': 'Manage Campaigns',
+  'view_campaigns': 'View Campaigns',
+  'view_expenses': 'View Expenses',
+  'manage_expenses': 'Manage Expenses',
+  'approve_expenses': 'Approve Expenses',
+  'manage_vendors': 'Manage Vendors',
+  'view_vendors': 'View Vendors',
+  'manage_budgets': 'Manage Budgets',
+  'view_budgets': 'View Budgets',
+  'view_financial_reports': 'View Financial Reports',
   'manage_library': 'Manage Library',
   'manage_own_library': 'Manage Own Library',
   'view_library': 'View Library',
