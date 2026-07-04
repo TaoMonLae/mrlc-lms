@@ -31,6 +31,14 @@ const DEFAULT_SOURCES = [
   // Education / educational
   { name: "EdSurge", feedUrl: "https://www.edsurge.com/news.rss", category: "Education" },
   { name: "Inside Higher Ed", feedUrl: "https://www.insidehighered.com/rss.xml", category: "Education" },
+  // Myanmar — independent outlets only (deliberately excludes state/military-
+  // run media like Global New Light of Myanmar or MRTV, given the audience).
+  { name: "The Irrawaddy", feedUrl: "https://www.irrawaddy.com/feed", category: "Myanmar" },
+  { name: "Myanmar Now", feedUrl: "https://myanmar-now.org/en/feed/", category: "Myanmar" },
+  { name: "Frontier Myanmar", feedUrl: "https://www.frontiermyanmar.net/en/feed/", category: "Myanmar" },
+  { name: "BBC Burmese", feedUrl: "https://feeds.bbci.co.uk/burmese/rss.xml", category: "Myanmar" },
+  { name: "Independent Mon News Agency (IMNA)", feedUrl: "https://monnews.org/feed/", category: "Myanmar" },
+  { name: "Karen News", feedUrl: "https://karennews.org/feed/", category: "Myanmar" },
 ];
 
 // Articles older than this are pruned on refresh so the table doesn't grow
