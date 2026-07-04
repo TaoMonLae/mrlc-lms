@@ -129,12 +129,13 @@ export default function NewsFeed() {
           <Link
             key={a.id}
             to={`/news/${a.id}`}
-            className="group bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex flex-col overflow-hidden"
+            className="group bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm hover:shadow-lg hover:border-aubergine-200 dark:hover:border-aubergine-800 hover:-translate-y-1 transition-all duration-200 flex flex-col overflow-hidden"
           >
             {a.imageUrl && (
-              <div className="h-40 w-full overflow-hidden bg-slate-100 dark:bg-surface-raised">
+              <div className="h-40 w-full overflow-hidden bg-slate-100 dark:bg-surface-raised relative">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={a.imageUrl} alt="" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200" />
               </div>
             )}
             <div className="p-5 flex-1 flex flex-col">
