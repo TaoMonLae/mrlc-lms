@@ -20,6 +20,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAuth } from "../providers/AuthProvider";
+import DotGrid from "@/components/DotGrid";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -156,8 +157,27 @@ export default function LoginPage() {
       <main
         id="main-content"
         role="main"
-        className="flex w-full flex-col lg:w-1/2 lg:h-screen lg:overflow-y-auto"
+        className="relative flex w-full flex-col lg:w-1/2 lg:h-screen lg:overflow-y-auto"
       >
+        {/* Decorative interactive background, bounded to this panel only
+            (fixed height on desktop, ordinary form-length content on
+            mobile — not an unbounded/growing feed) so it never has to
+            resize against a runaway height. Sits behind everything and
+            is pointer-events-none so it can't intercept clicks on the
+            form above it. The left-hand photo panel is left untouched
+            since that's the admin-configurable branding image. */}
+        <div className="pointer-events-none absolute inset-0 -z-10 opacity-70">
+          <DotGrid
+            dotSize={3}
+            gap={26}
+            baseColor="#dbe4f3"
+            activeColor="#1d4ed8"
+            proximity={130}
+            shockRadius={200}
+            shockStrength={3}
+          />
+        </div>
+
         {/* Logo */}
         <header className="flex items-center justify-center px-6 pt-6 sm:justify-end sm:px-10 sm:pt-8">
           {Logo}
