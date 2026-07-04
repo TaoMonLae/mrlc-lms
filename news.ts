@@ -42,6 +42,15 @@ const DEFAULT_SOURCES = [
   // Malaysia
   { name: "Malaysiakini", feedUrl: "https://www.malaysiakini.com/rss/en/news.rss", category: "Malaysia" },
   { name: "Malay Mail", feedUrl: "https://www.malaymail.com/feed/rss/malaysia", category: "Malaysia" },
+  // Social Studies (history, civics, culture)
+  { name: "Smithsonian Magazine — History", feedUrl: "https://www.smithsonianmag.com/rss/history/", category: "Social Studies" },
+  // Discovery (general-audience science & exploration)
+  { name: "Discover Magazine", feedUrl: "https://www.discovermagazine.com/rss/all", category: "Discovery" },
+  // STEM
+  { name: "NASA Breaking News", feedUrl: "http://www.nasa.gov/rss/breaking_news.rss", category: "STEM" },
+  { name: "ScienceDaily — All", feedUrl: "https://www.sciencedaily.com/rss/all.xml", category: "STEM" },
+  // GED / adult education
+  { name: "The Hechinger Report — Adult Learning", feedUrl: "https://hechingerreport.org/tags/adult-learning/feed/", category: "GED" },
 ];
 
 // Articles older than this are pruned on refresh so the table doesn't grow
