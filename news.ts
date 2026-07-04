@@ -83,7 +83,19 @@ function fullContentFrom(item: any): string | null {
 
 export function registerNewsRoutes(deps: Deps): { refreshAllSources: () => Promise<void> } {
   const { app, prisma, authMiddleware, requireRole, createAuditLog, logger } = deps;
-  const parser = new Parser({ timeout: FETCH_TIMEOUT_MS });
+  // Some publishers (notably WordPress sites behind Cloudflare, e.g. The
+  // Irrawaddy, Frontier Myanmar) reject requests that carry Node's default
+  // "no User-Agent" / generic client signature, even though the same feed
+  // loads fine in a browser. Sending a normal browser UA + Accept header
+  // fixes those silently-failing fetches without affecting feeds that never
+  // had a problem.
+  const parser = new Parser({
+    timeout: FETCH_TIMEOUT_MS,
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+      "Accept": "application/rss+xml, application/xml, text/xml, */*",
+    },
+  });
 
   const user = (req: express.Request) => (req as any).user as JwtPayload;
   const ipOf = (req: express.Request) => (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.ip || null;
