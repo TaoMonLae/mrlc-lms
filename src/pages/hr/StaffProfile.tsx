@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { HoloProfileHeader } from '@/src/components/profile/HoloProfileHeader';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
@@ -96,11 +97,22 @@ export default function StaffProfile() {
         <ArrowLeft className="h-4 w-4" /> Back to staff
       </Link>
 
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-slate-900">{emp.firstName} {emp.lastName}</h1>
-          <p className="font-mono text-xs text-slate-400">{emp.employeeCode}</p>
-        </div>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        {/* HR staff records don't have a photo-upload field elsewhere in
+            the app, so this is a read-only display card (no
+            ProfilePhotoUploader control) — name/role/status only. */}
+        <HoloProfileHeader
+          name={`${emp.firstName} ${emp.lastName}`}
+          title={emp.designation?.name || emp.department?.name || 'Staff'}
+          handle={emp.employeeCode}
+          status={emp.status.replace('_', ' ')}
+          photoUrl={null}
+          onPhotoUploaded={() => {}}
+          targetType="user"
+          canEditPhoto={false}
+          contactText="Print / Export"
+          onContactClick={() => window.print()}
+        />
         <div className="flex items-center gap-2">
           <Badge>{emp.status.replace('_', ' ')}</Badge>
           {emp.status !== 'TERMINATED' && (

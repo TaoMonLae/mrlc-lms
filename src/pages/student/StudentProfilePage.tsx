@@ -14,10 +14,9 @@ import {
   Printer
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ProfilePhotoUploader } from '@/src/components/profile/ProfilePhotoUploader';
+import { HoloProfileHeader } from '@/src/components/profile/HoloProfileHeader';
 
 function sanitizeText(text: string): string {
   if (!text) return text;
@@ -72,23 +71,20 @@ export default function StudentProfilePage() {
         </Button>
       </div>
 
-      <div className="flex flex-col md:flex-row items-center gap-6 bg-white dark:bg-surface-indigo p-8 rounded-2xl border border-slate-200 dark:border-surface-raised shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-aubergine-500/5 rounded-full -mr-16 -mt-16" />
-
-        <ProfilePhotoUploader
-          currentUrl={student.profilePhotoUrl}
-          fallbackText={student.name.charAt(0) || 'S'}
+      <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
+        <HoloProfileHeader
+          name={sanitizeText(student.name)}
+          title={student.class || 'Student'}
+          handle={student.studentId}
+          status={sanitizeText(student.status)}
+          photoUrl={student.profilePhotoUrl}
+          onPhotoUploaded={(url) => setStudent((prev) => ({ ...prev, profilePhotoUrl: url }))}
           targetType="student"
-          onUploaded={(url) => setStudent((prev) => ({ ...prev, profilePhotoUrl: url }))}
-          imageClassName="h-24 w-24 rounded-2xl"
-          buttonLabel="Change Picture"
+          contactText="Print Profile"
+          onContactClick={handlePrint}
         />
-        
-        <div className="flex-1 text-center md:text-left">
-          <div className="flex flex-col md:flex-row md:items-center gap-2 mb-2 justify-center md:justify-start">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{sanitizeText(student.name)}</h1>
-            <Badge className="w-fit mx-auto md:mx-0 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/50 uppercase font-bold text-[10px] tracking-widest">{sanitizeText(student.status)}</Badge>
-          </div>
+        <div className="flex-1 w-full bg-white dark:bg-surface-indigo p-8 rounded-2xl border border-slate-200 dark:border-surface-raised shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-aubergine-500/5 rounded-full -mr-16 -mt-16" />
           <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm font-medium text-slate-500 dark:text-slate-300">
             <span className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4" /> {student.studentId}</span>
             <span className="flex items-center gap-1.5"><BookOpen className="h-4 w-4" /> {student.class}</span>

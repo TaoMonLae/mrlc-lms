@@ -1,7 +1,7 @@
 import React from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { 
-  ArrowLeft, Edit, User, UserMinus, FileText, 
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import {
+  ArrowLeft, Edit, User, UserMinus, FileText,
   MapPin, Phone, CreditCard, CheckCircle2,
   CalendarDays, Download, AlertTriangle
 } from 'lucide-react';
@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { StudentDocuments } from '@/src/components/students/StudentDocuments';
 import { toast } from 'sonner';
-import { ProfilePhotoUploader } from '@/src/components/profile/ProfilePhotoUploader';
+import { HoloProfileHeader } from '@/src/components/profile/HoloProfileHeader';
 import {
   Tabs,
   TabsContent,
@@ -19,6 +19,7 @@ import {
 
 export default function StudentProfile() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [student, setStudent] = React.useState<any>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [attendanceData, setAttendanceData] = React.useState<any>(null);
@@ -139,20 +140,14 @@ export default function StudentProfile() {
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto">
-      {/* Header & Actions */}
+      {/* Header & Actions — name/status/id now live on the holographic
+          profile card below instead of duplicating them here as text. */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <div>
-          <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/students" />} nativeButton={false}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Students
-          </Button>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{s.firstName} {s.lastName}</h1>
-            <Badge className="bg-emerald-500">{s.status}</Badge>
-          </div>
-          <p className="text-sm font-mono text-slate-500 mt-1 dark:text-slate-300">{s.studentId} • Enrolled {new Date(s.enrollmentDate).toLocaleDateString()}</p>
-        </div>
-        
+        <Button variant="ghost" size="sm" className="-ml-3 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/students" />} nativeButton={false}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Students
+        </Button>
+
         <div className="flex gap-2">
           <Button variant="outline" render={<Link to={`/students/${id}/edit`} />} nativeButton={false}>
             <Edit className="mr-2 h-4 w-4" />
@@ -165,24 +160,36 @@ export default function StudentProfile() {
         </div>
       </div>
 
+      {/* Holographic profile header — replaces the old photo+name block that
+          used to sit at the top of the left sidebar. Kept full-width here
+          since the card's intrinsic size (up to ~390x540) doesn't fit
+          inside the sidebar's fixed 300px column. */}
+      <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
+        <HoloProfileHeader
+          name={`${s.firstName} ${s.lastName}`}
+          title={s.class}
+          handle={s.studentId}
+          status={s.status}
+          photoUrl={s.profilePhotoUrl}
+          onPhotoUploaded={(url) => setStudent((prev: any) => prev ? { ...prev, profilePhotoUrl: url } : prev)}
+          targetType="student"
+          targetId={s.id}
+          contactText="Edit Profile"
+          onContactClick={() => navigate(`/students/${id}/edit`)}
+        />
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-8">
-        
+
         {/* Left Sidebar Info Card */}
         <div className="space-y-6">
-          <div className="bg-white dark:bg-surface-indigo rounded-xl border border-slate-200 dark:border-surface-raised p-6 shadow-sm flex flex-col items-center">
-            <ProfilePhotoUploader
-              currentUrl={s.profilePhotoUrl}
-              fallbackText={`${s.firstName.charAt(0)}${s.lastName.charAt(0)}`}
-              targetType="student"
-              targetId={s.id}
-              imageClassName="h-24 w-24 rounded-full"
-              buttonLabel="Change Picture"
-              onUploaded={(url) => setStudent((prev: any) => prev ? { ...prev, profilePhotoUrl: url } : prev)}
-            />
-            <h2 className="font-bold text-lg text-slate-900 dark:text-white">{s.firstName} {s.lastName}</h2>
-            <p className="font-semibold text-slate-500 text-sm">{s.class}</p>
-            
-            <div className="w-full mt-6 space-y-4 pt-6 border-t border-slate-100 dark:border-surface-raised">
+          <div className="bg-white dark:bg-surface-indigo rounded-xl border border-slate-200 dark:border-surface-raised p-6 shadow-sm">
+            <h3 className="font-bold text-slate-900 dark:text-white mb-4">Quick Facts</h3>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-slate-500">Enrolled</span>
+                <span className="font-medium text-slate-900 dark:text-slate-300">{new Date(s.enrollmentDate).toLocaleDateString()}</span>
+              </div>
               <div className="flex justify-between items-center text-sm">
                 <span className="text-slate-500">Gender</span>
                 <span className="font-medium capitalize text-slate-900 dark:text-slate-300">{s.gender.toLowerCase()}</span>

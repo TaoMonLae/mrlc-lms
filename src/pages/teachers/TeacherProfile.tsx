@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
   Edit,
@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { UserAvatar } from '@/components/ui/user-avatar';
+import { HoloProfileHeader } from '@/src/components/profile/HoloProfileHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
@@ -30,6 +30,7 @@ const handlePrint = () => {
 
 export default function TeacherProfile() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { isAdmin } = usePermissions();
   const [activeTab, setActiveTab] = useState('overview');
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
@@ -142,20 +143,19 @@ export default function TeacherProfile() {
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Teachers
           </Button>
-          <div className="flex items-center gap-4">
-            <UserAvatar name={`${teacher.firstName} ${teacher.lastName}`} src={teacher.photoUrl} rounded="2xl" className="h-20 w-20 border-4 border-white dark:border-surface-raised shadow-md text-2xl" />
-            <div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">{teacher.firstName} {teacher.lastName}</h1>
-                <Badge className="bg-emerald-500">{teacher.status}</Badge>
-              </div>
-              <p className="text-sm text-slate-500 flex items-center gap-2 mt-1">
-                <span className="font-mono text-xs">{teacher.teacherId}</span>
-                <span className="text-slate-300">•</span>
-                <span>{(teacher.employmentType || 'FULL_TIME').replace('_', ' ')}</span>
-              </p>
-            </div>
-          </div>
+          <HoloProfileHeader
+            name={`${teacher.firstName} ${teacher.lastName}`}
+            title={(teacher.employmentType || 'FULL_TIME').replace('_', ' ')}
+            handle={teacher.teacherId}
+            status={teacher.status}
+            photoUrl={teacher.photoUrl}
+            onPhotoUploaded={(url) => setTeacher((prev: any) => prev ? { ...prev, photoUrl: url } : prev)}
+            targetType="teacher"
+            targetId={teacher.id}
+            canEditPhoto={canEdit}
+            contactText={canEdit ? 'Edit Profile' : 'Print PDF'}
+            onContactClick={canEdit ? () => navigate(`/teachers/${id}/edit`) : handlePrint}
+          />
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handlePrint}>
