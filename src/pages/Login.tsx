@@ -166,13 +166,13 @@ export default function LoginPage() {
             is pointer-events-none so it can't intercept clicks on the
             form above it. The left-hand photo panel is left untouched
             since that's the admin-configurable branding image. */}
-        <div className="pointer-events-none absolute inset-0 -z-10 opacity-70">
+        <div className="pointer-events-none absolute inset-0 -z-10 opacity-90">
           <DotGrid
-            dotSize={3}
+            dotSize={4}
             gap={26}
-            baseColor="#dbe4f3"
+            baseColor="#aec2e8"
             activeColor="#1d4ed8"
-            proximity={130}
+            proximity={140}
             shockRadius={200}
             shockStrength={3}
           />
