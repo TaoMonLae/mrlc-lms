@@ -197,6 +197,39 @@ enum BudgetStatus {
   ARCHIVED
 }
 
+// ────────────────────────────────────────────────────────────────────────────────
+// STUDENT DUTY SYSTEM ENUMS
+// ────────────────────────────────────────────────────────────────────────────────
+
+enum DutyType {
+  COOKING
+  RESOURCE_BUYING
+  CLEANING
+  DISH_WASHING
+  GARDENING
+  MAINTENANCE
+  SECURITY
+  EVENT_SETUP
+  OTHER
+}
+
+enum DutyStatus {
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  SKIPPED
+  EXCUSED
+  FAILED
+}
+
+enum DutyRosterStatus {
+  DRAFT
+  PUBLISHED
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
 
 model User {
   id            String    @id @default(uuid())
@@ -320,6 +353,7 @@ model Student {
   examAccommodations ExamAccommodation[]
   homeworkSubmissions HomeworkSubmission[]
   badges            StudentBadge[]
+  dutyAssignments    DutyAssignment[]
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -2813,6 +2847,99 @@ model Budget {
   @@index([departmentId])
   @@index([startDate])
   @@index([endDate])
+}
+
+// -----------------------------------------------------------------------------
+// STUDENT DUTY SYSTEM (boarding-school chore rosters: cooking, cleaning, etc.)
+// Note: performance stats (completion rate, average rating, points) are
+// deliberately NOT a stored model here -- they're computed live from
+// DutyAssignment via GET /api/duty-performance/:studentId. A cached/stored
+// summary table is exactly the kind of thing that silently drifts from the
+// real numbers (see Budget.spentAmount elsewhere in this schema, which had
+// that bug), and duty history is cheap enough to aggregate on read.
+// -----------------------------------------------------------------------------
+
+model DutyDefinition {
+  id               String    @id @default(uuid())
+  name             String
+  code             String    @unique // Auto-generated: DUTY-001
+  type             DutyType
+  description      String?
+  durationMinutes  Int?      // Expected time to complete
+  requiredStudents Int       @default(1) // How many students needed per occurrence
+  pointsAwarded    Int       @default(1)
+  isActive         Boolean   @default(true)
+  notes            String?
+
+  createdById      String?
+  createdByName    String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  assignments      DutyAssignment[]
+
+  @@index([type])
+  @@index([isActive])
+}
+
+model DutyRoster {
+  id              String            @id @default(uuid())
+  name            String            // e.g. "Week 45", "November 2026"
+  periodType      String            @default("WEEKLY") // WEEKLY, MONTHLY, TERMLY
+  startDate       DateTime
+  endDate         DateTime
+  status          DutyRosterStatus  @default(DRAFT)
+  maxWeeklyDuties Int               @default(5) // Fairness cap used by auto-assign
+  notes           String?
+
+  publishedAt     DateTime?
+  publishedById   String?
+  publishedByName String?
+
+  createdById     String?
+  createdByName   String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  assignments     DutyAssignment[]
+
+  @@index([status])
+  @@index([startDate])
+  @@index([endDate])
+}
+
+model DutyAssignment {
+  id               String          @id @default(uuid())
+
+  rosterId         String
+  roster           DutyRoster      @relation(fields: [rosterId], references: [id], onDelete: Cascade)
+
+  dutyDefinitionId String
+  dutyDefinition   DutyDefinition  @relation(fields: [dutyDefinitionId], references: [id])
+
+  studentId        String
+  student          Student         @relation(fields: [studentId], references: [id])
+
+  scheduledDate    DateTime
+  status           DutyStatus      @default(ASSIGNED)
+
+  // Completion & performance
+  rating           Int?            // 1-5, set when marking COMPLETED
+  pointsEarned     Int?
+  completedAt      DateTime?
+  ratedById        String?
+  ratedByName      String?
+
+  notes            String?
+
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  @@index([rosterId])
+  @@index([dutyDefinitionId])
+  @@index([studentId])
+  @@index([scheduledDate])
+  @@index([status])
 }
 
 // -----------------------------------------------------------------------------
