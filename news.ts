@@ -49,8 +49,11 @@ const DEFAULT_SOURCES = [
   // STEM
   { name: "NASA Breaking News", feedUrl: "http://www.nasa.gov/rss/breaking_news.rss", category: "STEM" },
   { name: "ScienceDaily — All", feedUrl: "https://www.sciencedaily.com/rss/all.xml", category: "STEM" },
-  // GED / adult education
+  // GED / adult education — no dedicated GED-branded outlet exists publicly,
+  // so this pairs Hechinger's two overlapping-but-distinct adult-ed tags for
+  // more volume (the "adult-learning" tag alone only had 1 recent article).
   { name: "The Hechinger Report — Adult Learning", feedUrl: "https://hechingerreport.org/tags/adult-learning/feed/", category: "GED" },
+  { name: "The Hechinger Report — Adult Education", feedUrl: "https://hechingerreport.org/tags/adult-education/feed/", category: "GED" },
 ];
 
 // Articles older than this are pruned on refresh so the table doesn't grow
