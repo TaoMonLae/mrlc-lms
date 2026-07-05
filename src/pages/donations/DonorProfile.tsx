@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Mail, Phone, MapPin, Building2, User, Edit, Calendar, TrendingUp } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MapPin, Building2, User, Edit, Calendar, TrendingUp, Trash2, RotateCcw } from "lucide-react";
+import { toast } from "sonner";
 
 interface Donation {
   id: string;
@@ -103,6 +104,52 @@ export default function DonorProfile() {
     navigate(`/donations/new?donorId=${id}`);
   };
 
+  const handleDelete = async () => {
+    if (!donor) return;
+    if (!confirm(`Deactivate donor "${donor.name}"? Their donation history is kept, but they'll be marked inactive.`)) return;
+
+    try {
+      const response = await fetch(`/api/donors/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${sessionStorage.getItem('auth_token')}` },
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || "Failed to deactivate donor");
+      }
+
+      toast.success("Donor deactivated");
+      navigate("/donors");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to deactivate donor");
+    }
+  };
+
+  const handleReactivate = async () => {
+    if (!donor) return;
+    try {
+      const response = await fetch(`/api/donors/${id}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem('auth_token')}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ isActive: true }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || "Failed to reactivate donor");
+      }
+
+      setDonor((prev) => (prev ? { ...prev, isActive: true } : prev));
+      toast.success("Donor reactivated");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to reactivate donor");
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "PROCESSED":
@@ -174,6 +221,17 @@ export default function DonorProfile() {
                 <Edit className="w-4 h-4 mr-2" />
                 Edit Donor
               </Button>
+              {donor.isActive ? (
+                <Button onClick={handleDelete} variant="outline" className="text-red-600 hover:text-red-700">
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Deactivate
+                </Button>
+              ) : (
+                <Button onClick={handleReactivate} variant="outline" className="text-green-600 hover:text-green-700">
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Reactivate
+                </Button>
+              )}
             </>
           )}
         </div>

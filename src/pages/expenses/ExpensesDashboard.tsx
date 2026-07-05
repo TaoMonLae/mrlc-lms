@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, DollarSign, TrendingUp, AlertCircle, CheckCircle2, Receipt, Building2, Wallet, Printer, FileSpreadsheet } from 'lucide-react';
+import { Plus, Search, DollarSign, TrendingUp, AlertCircle, CheckCircle2, Receipt, Building2, Wallet, Printer, FileSpreadsheet, Pencil, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -116,6 +117,28 @@ export default function ExpensesDashboard() {
         },
       ],
     });
+  };
+
+  const handleDelete = async (expense: any) => {
+    if (!confirm(`Delete expense "${expense.title}"? This cannot be undone.`)) return;
+
+    const token = sessionStorage.getItem('auth_token');
+    try {
+      const response = await fetch(`/api/expenses/${expense.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || 'Failed to delete expense');
+      }
+
+      setExpenses((prev) => prev.filter((e) => e.id !== expense.id));
+      toast.success('Expense deleted successfully');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete expense');
+    }
   };
 
   const activeFilters: Record<string, string> = {};
@@ -286,9 +309,26 @@ export default function ExpensesDashboard() {
                       </Badge>
                     </td>
                     <td className="py-3 px-4 text-center">
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" render={<Link to={`/expenses/${expense.id}`} />} nativeButton={false}>
-                          <Receipt className="h-4 w-4" />
-                        </Button>
+                      <div className="flex items-center justify-center gap-1">
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" render={<Link to={`/expenses/${expense.id}`} />} nativeButton={false}>
+                            <Receipt className="h-4 w-4" />
+                          </Button>
+                        {hasPermission('manage_expenses') && (
+                          <>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0" render={<Link to={`/expenses/${expense.id}/edit`} />} nativeButton={false}>
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                              onClick={() => handleDelete(expense)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))

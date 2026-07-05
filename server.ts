@@ -739,10 +739,20 @@ const schemas = {
     notes: nullableStr,
   }),
   donationUpdate: z.object({
+    donorId: optionalId,
     amount: optNum,
+    currency: z.string().length(3).optional(),
+    donationType: z.enum(["ONE_TIME", "RECURRING_MONTHLY", "RECURRING_QUARTERLY", "RECURRING_YEARLY", "IN_KIND"]).optional(),
     status: z.enum(["PENDING", "RECEIVED", "PROCESSED", "CANCELLED", "REFUNDED"]).optional(),
+    purpose: nullableStr,
+    designation: nullableStr,
+    campaignId: optionalId,
+    paymentMethod: nullableStr,
+    paymentReference: nullableStr,
+    donationDate: optStr,
     receivedDate: optStr,
     processedDate: optStr,
+    isTaxDeductible: z.boolean().optional(),
     notes: nullableStr,
   }),
   campaignCreate: z.object({
@@ -6664,6 +6674,31 @@ async function startServer() {
     }
   });
 
+  app.get("/api/donations/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!donationCanView(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+
+    try {
+      const donation = await prisma.donation.findUnique({
+        where: { id: req.params.id },
+        include: { donor: true, campaign: true, receipt: true },
+      });
+
+      if (!donation) {
+        res.status(404).json({ error: "Donation not found" });
+        return;
+      }
+
+      res.json(donation);
+    } catch (err) {
+      logger.error("Error fetching donation:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
   app.post("/api/donations", authMiddleware, validate(schemas.donationCreate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (!donationCanManage(jwtUser.role)) {
@@ -6720,13 +6755,51 @@ async function startServer() {
     }
 
     try {
-      const donation = await prisma.donation.update({
-        where: { id: req.params.id },
-        data: {
-          ...req.body,
-          receivedDate: req.body.receivedDate ? new Date(req.body.receivedDate) : undefined,
-          processedDate: req.body.processedDate ? new Date(req.body.processedDate) : undefined,
-        },
+      const existing = await prisma.donation.findUnique({ where: { id: req.params.id } });
+      if (!existing) {
+        res.status(404).json({ error: "Donation not found" });
+        return;
+      }
+
+      const nextAmount = req.body.amount !== undefined ? Number(req.body.amount) : existing.amount;
+      const nextCampaignId = req.body.campaignId !== undefined ? (req.body.campaignId || null) : existing.campaignId;
+
+      const donation = await prisma.$transaction(async (tx) => {
+        // Keep each campaign's cached raisedAmount/donorCount in sync if the
+        // amount was corrected or the donation was reassigned to a different
+        // campaign (or removed from one).
+        if (existing.campaignId !== nextCampaignId || existing.amount !== nextAmount) {
+          if (existing.campaignId) {
+            await tx.donationCampaign.update({
+              where: { id: existing.campaignId },
+              data: {
+                raisedAmount: { decrement: existing.amount },
+                donorCount: { decrement: 1 },
+              },
+            });
+          }
+          if (nextCampaignId) {
+            await tx.donationCampaign.update({
+              where: { id: nextCampaignId },
+              data: {
+                raisedAmount: { increment: nextAmount },
+                donorCount: { increment: 1 },
+              },
+            });
+          }
+        }
+
+        return tx.donation.update({
+          where: { id: req.params.id },
+          data: {
+            ...req.body,
+            amount: nextAmount,
+            campaignId: nextCampaignId,
+            donationDate: req.body.donationDate ? new Date(req.body.donationDate) : undefined,
+            receivedDate: req.body.receivedDate ? new Date(req.body.receivedDate) : undefined,
+            processedDate: req.body.processedDate ? new Date(req.body.processedDate) : undefined,
+          },
+        });
       });
 
       await createAuditLog(
@@ -6743,6 +6816,66 @@ async function startServer() {
       res.json(donation);
     } catch (err) {
       logger.error("Error updating donation:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.delete("/api/donations/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!donationCanManage(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+
+    try {
+      const donation = await prisma.donation.findUnique({
+        where: { id: req.params.id },
+        include: { receipt: true },
+      });
+
+      if (!donation) {
+        res.status(404).json({ error: "Donation not found" });
+        return;
+      }
+
+      // A donation with an issued tax receipt shouldn't be silently deleted --
+      // that receipt may already be in the donor's hands / filed with tax
+      // authorities. Delete the receipt first (or cancel/refund instead).
+      if (donation.receipt) {
+        res.status(400).json({ error: "Cannot delete a donation that already has a tax receipt issued. Delete the receipt first, or mark the donation as CANCELLED/REFUNDED instead." });
+        return;
+      }
+
+      await prisma.$transaction(async (tx) => {
+        // Keep the linked campaign's cached totals in sync (mirrors the
+        // increment done when the donation was created).
+        if (donation.campaignId) {
+          await tx.donationCampaign.update({
+            where: { id: donation.campaignId },
+            data: {
+              raisedAmount: { decrement: donation.amount },
+              donorCount: { decrement: 1 },
+            },
+          });
+        }
+
+        await tx.donation.delete({ where: { id: req.params.id } });
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "DELETE",
+        "DONATION",
+        donation.id,
+        `Deleted donation: ${donation.donationNumber}`,
+        req.ip,
+        req.headers["user-agent"] || null
+      );
+
+      res.json({ success: true });
+    } catch (err) {
+      logger.error("Error deleting donation:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });

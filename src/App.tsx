@@ -106,6 +106,7 @@ import DonorProfile from "./pages/donations/DonorProfile";
 import DonorNew from "./pages/donations/DonorNew";
 import DonorEdit from "./pages/donations/DonorEdit";
 import DonationNew from "./pages/donations/DonationNew";
+import DonationEdit from "./pages/donations/DonationEdit";
 import CampaignNew from "./pages/donations/CampaignNew";
 
 import DutiesDashboard from "./pages/duties/DutiesDashboard";
@@ -497,6 +498,7 @@ export default function App() {
                   <Route path="/donations/campaigns" element={<CampaignsPage />} />
                   <Route path="/donations/campaigns/new" element={<CampaignNew />} />
                   <Route path="/donations/new" element={<DonationNew />} />
+                  <Route path="/donations/:id/edit" element={<DonationEdit />} />
                   <Route path="/donors" element={<DonorList />} />
                   <Route path="/donors/new" element={<DonorNew />} />
                   <Route path="/donors/:id/edit" element={<DonorEdit />} />

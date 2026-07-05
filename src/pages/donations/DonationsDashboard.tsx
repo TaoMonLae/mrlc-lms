@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Plus, Heart, Users, DollarSign, TrendingUp, Calendar } from 'lucide-react';
+import { Plus, Heart, Users, DollarSign, TrendingUp, Calendar, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -51,6 +51,28 @@ export default function DonationsDashboard() {
       case 'CANCELLED': return 'bg-red-100 text-red-800';
       case 'REFUNDED': return 'bg-red-100 text-red-800';
       default: return 'bg-slate-100 text-slate-800';
+    }
+  };
+
+  const handleDelete = async (donation: any) => {
+    if (!confirm(`Delete donation from "${donation.donor?.name || 'this donor'}" (${formatMoney(donation.amount, currency)})? This cannot be undone.`)) return;
+
+    const token = sessionStorage.getItem('auth_token');
+    try {
+      const response = await fetch(`/api/donations/${donation.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || 'Failed to delete donation');
+      }
+
+      setDonations((prev) => prev.filter((d) => d.id !== donation.id));
+      toast.success('Donation deleted successfully');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete donation');
     }
   };
 
@@ -165,6 +187,26 @@ export default function DonationsDashboard() {
                       <div className="text-xs text-green-600">Tax Deductible</div>
                     )}
                   </div>
+                  {hasPermission('manage_donations') && (
+                    <div className="flex items-center gap-1 ml-3">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => navigate(`/donations/${donation.id}/edit`)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                        onClick={() => handleDelete(donation)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

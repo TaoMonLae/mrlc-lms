@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Plus, Mail, Phone, Building2, User, TrendingUp } from "lucide-react";
+import { Search, Plus, Mail, Phone, Building2, User, TrendingUp, Pencil, Trash2, RotateCcw } from "lucide-react";
+import { toast } from "sonner";
 
 interface Donor {
   id: string;
@@ -109,6 +110,50 @@ export default function DonorList() {
 
   const handleViewDonor = (id: string) => {
     navigate(`/donors/${id}`);
+  };
+
+  const handleDeleteDonor = async (donor: Donor) => {
+    if (!confirm(`Deactivate donor "${donor.name}"? Their donation history is kept, but they'll be marked inactive.`)) return;
+
+    try {
+      const response = await fetch(`/api/donors/${donor.id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${sessionStorage.getItem('auth_token')}` },
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || "Failed to deactivate donor");
+      }
+
+      setDonors((prev) => prev.map((d) => (d.id === donor.id ? { ...d, isActive: false } : d)));
+      toast.success("Donor deactivated");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to deactivate donor");
+    }
+  };
+
+  const handleReactivateDonor = async (donor: Donor) => {
+    try {
+      const response = await fetch(`/api/donors/${donor.id}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem('auth_token')}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ isActive: true }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || "Failed to reactivate donor");
+      }
+
+      setDonors((prev) => prev.map((d) => (d.id === donor.id ? { ...d, isActive: true } : d)));
+      toast.success("Donor reactivated");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to reactivate donor");
+    }
   };
 
   const getDonorTypeIcon = (type: string) => {
@@ -326,13 +371,47 @@ export default function DonorList() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleViewDonor(donor.id)}
-                    >
-                      View
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleViewDonor(donor.id)}
+                      >
+                        View
+                      </Button>
+                      {hasPermission("manage_donations") && (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => navigate(`/donors/${donor.id}/edit`)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          {donor.isActive ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                              onClick={() => handleDeleteDonor(donor)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-green-600 hover:text-green-700"
+                              onClick={() => handleReactivateDonor(donor)}
+                              title="Reactivate donor"
+                            >
+                              <RotateCcw className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
