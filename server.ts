@@ -8833,6 +8833,93 @@ async function startServer() {
         _count: true,
       });
 
+      // Line-item detail behind the aggregates above -- the report used to
+      // only show totals by source/category, which isn't enough to actually
+      // audit a period; these feed the "detailed" transaction tables in the
+      // Income & Expense Report.
+      const [feePaymentDetails, donationDetails, expenseDetails] = await Promise.all([
+        prisma.feePayment.findMany({
+          where: { paidDate: dateFilter, status: 'PAID' },
+          select: {
+            id: true,
+            amount: true,
+            paidDate: true,
+            receiptNumber: true,
+            paymentMethod: true,
+            student: {
+              select: {
+                studentCode: true,
+                preferredName: true,
+                user: { select: { firstName: true, lastName: true } },
+              },
+            },
+          },
+          orderBy: { paidDate: 'desc' },
+        }),
+        prisma.donation.findMany({
+          where: { donationDate: dateFilter, status: { in: ['RECEIVED', 'PROCESSED'] } },
+          select: {
+            id: true,
+            amount: true,
+            donationDate: true,
+            donationNumber: true,
+            paymentMethod: true,
+            donor: { select: { name: true, donorCode: true } },
+            campaign: { select: { name: true } },
+          },
+          orderBy: { donationDate: 'desc' },
+        }),
+        prisma.expense.findMany({
+          where: {
+            expenseDate: dateFilter,
+            status: { in: ['APPROVED', 'PAID', 'PARTIAL'] },
+          },
+          select: {
+            id: true,
+            title: true,
+            category: true,
+            status: true,
+            amount: true,
+            expenseDate: true,
+            vendorInvoiceNo: true,
+            vendor: { select: { name: true } },
+          },
+          orderBy: { expenseDate: 'desc' },
+        }),
+      ]);
+
+      const studentLabel = (s: (typeof feePaymentDetails)[number]['student']) =>
+        s.preferredName || (s.user ? `${s.user.firstName} ${s.user.lastName}` : s.studentCode);
+
+      const incomeDetail = [
+        ...feePaymentDetails.map((p) => ({
+          date: p.paidDate,
+          type: 'Fee Payment' as const,
+          description: `Fee payment — ${studentLabel(p.student)}`,
+          reference: p.receiptNumber || null,
+          paymentMethod: p.paymentMethod || null,
+          amount: p.amount,
+        })),
+        ...donationDetails.map((d) => ({
+          date: d.donationDate,
+          type: 'Donation' as const,
+          description: `Donation — ${d.donor.name}${d.campaign ? ` (${d.campaign.name})` : ''}`,
+          reference: d.donationNumber,
+          paymentMethod: d.paymentMethod || null,
+          amount: d.amount,
+        })),
+      ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      const expenseDetail = expenseDetails.map((e) => ({
+        date: e.expenseDate,
+        title: e.title,
+        category: e.category,
+        status: e.status,
+        vendor: e.vendor?.name || null,
+        reference: e.vendorInvoiceNo || null,
+        amount: e.amount,
+      }));
+
       // Calculate totals
       const totalIncome = (feePaymentsByPeriod.reduce((sum, p) => sum + (p._sum.amount || 0), 0) +
                            donationsByPeriod.reduce((sum, p) => sum + (p._sum.amount || 0), 0));
@@ -8851,6 +8938,7 @@ async function startServer() {
             fees: feePaymentsByPeriod.reduce((sum, p) => sum + (p._sum.amount || 0), 0),
             donations: donationsByPeriod.reduce((sum, p) => sum + (p._sum.amount || 0), 0),
           },
+          detail: incomeDetail,
         },
         expenses: {
           total: totalExpenses,
@@ -8860,6 +8948,7 @@ async function startServer() {
             count: cat._count,
             percentage: totalExpenses > 0 ? ((cat._sum.amount || 0) / totalExpenses) * 100 : 0,
           })),
+          detail: expenseDetail,
         },
         summary: {
           netSurplus,

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, DollarSign, TrendingUp, AlertCircle, CheckCircle2, Receipt, Building2, Wallet } from 'lucide-react';
+import { Plus, Search, DollarSign, TrendingUp, AlertCircle, CheckCircle2, Receipt, Building2, Wallet, Printer, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +15,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePermissions } from '../../lib/permissions';
 import { formatMoney } from '../../lib/locale';
 import { useSettings } from '../../providers/SettingsProvider';
+import { exportReportToExcel } from '../../lib/exportReport';
+import { PrintLayout } from '../../components/reports/PrintLayout';
 
 export default function ExpensesDashboard() {
   const { hasPermission } = usePermissions();
@@ -88,14 +90,47 @@ export default function ExpensesDashboard() {
     return labels[category] || category;
   };
 
+  const handleExportExcel = () => {
+    exportReportToExcel({
+      title: 'Expenses',
+      subtitle: `${filteredExpenses.length} expense${filteredExpenses.length === 1 ? '' : 's'}`,
+      filename: 'expenses',
+      summary: [
+        { label: 'Total Expenses', value: formatMoney(totalAmount, currency) },
+        { label: 'Paid', value: formatMoney(paidAmount, currency) },
+        { label: 'Pending', value: formatMoney(pendingAmount, currency) },
+        { label: 'Awaiting Approval', value: String(pendingApproval) },
+      ],
+      sections: [
+        {
+          heading: 'Expenses',
+          columns: ['Title', 'Category', 'Vendor', 'Date', 'Amount', 'Status'],
+          rows: filteredExpenses.map((e) => [
+            e.title,
+            getCategoryLabel(e.category),
+            e.vendor?.name || '-',
+            new Date(e.expenseDate).toLocaleDateString(),
+            formatMoney(e.amount, e.currency || currency),
+            e.status.replace('_', ' '),
+          ]),
+        },
+      ],
+    });
+  };
+
+  const activeFilters: Record<string, string> = {};
+  if (searchTerm) activeFilters['Search'] = searchTerm;
+  if (statusFilter !== 'ALL') activeFilters['Status'] = statusFilter.replace('_', ' ');
+  if (categoryFilter !== 'ALL') activeFilters['Category'] = getCategoryLabel(categoryFilter);
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+      <div className="print:hidden flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Expenses</h1>
           <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Track and manage school expenses.</p>
         </div>
-        <div className="flex gap-2 w-full sm:w-auto">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           {hasPermission('view_budgets') && (
             <Button variant="outline" className="w-full sm:w-auto" render={<Link to="/budgets" />} nativeButton={false}>
                 <Wallet className="mr-2 h-4 w-4" /> Budgets
@@ -106,6 +141,12 @@ export default function ExpensesDashboard() {
                 <Building2 className="mr-2 h-4 w-4" /> Vendors
               </Button>
           )}
+          <Button variant="outline" className="w-full sm:w-auto" onClick={handleExportExcel}>
+            <FileSpreadsheet className="mr-2 h-4 w-4" /> Excel
+          </Button>
+          <Button variant="outline" className="w-full sm:w-auto" onClick={() => window.print()}>
+            <Printer className="mr-2 h-4 w-4" /> Print / PDF
+          </Button>
           {hasPermission('manage_expenses') && (
             <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto" render={<Link to="/expenses/new" />} nativeButton={false}>
                 <Plus className="mr-2 h-4 w-4" /> New Expense
@@ -115,7 +156,7 @@ export default function ExpensesDashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="print:hidden grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-slate-500">Total Expenses</CardTitle>
@@ -151,7 +192,7 @@ export default function ExpensesDashboard() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="print:hidden flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
@@ -189,7 +230,7 @@ export default function ExpensesDashboard() {
       </div>
 
       {/* Expenses Table */}
-      <Card>
+      <Card className="print:hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -256,6 +297,73 @@ export default function ExpensesDashboard() {
           </table>
         </div>
       </Card>
+
+      {/* Print-only branded view */}
+      <div className="hidden print:block">
+        <PrintLayout title="Expenses" filters={activeFilters}>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="border border-slate-300 p-3 rounded text-center">
+              <p className="text-xs text-slate-500 uppercase font-bold">Total Expenses</p>
+              <p className="text-lg font-bold mt-1">{formatMoney(totalAmount, currency)}</p>
+            </div>
+            <div className="border border-slate-300 p-3 rounded text-center">
+              <p className="text-xs text-slate-500 uppercase font-bold">Paid</p>
+              <p className="text-lg font-bold mt-1">{formatMoney(paidAmount, currency)}</p>
+            </div>
+            <div className="border border-slate-300 p-3 rounded text-center">
+              <p className="text-xs text-slate-500 uppercase font-bold">Pending</p>
+              <p className="text-lg font-bold mt-1">{formatMoney(pendingAmount, currency)}</p>
+            </div>
+            <div className="border border-slate-300 p-3 rounded text-center">
+              <p className="text-xs text-slate-500 uppercase font-bold">Awaiting Approval</p>
+              <p className="text-lg font-bold mt-1">{pendingApproval}</p>
+            </div>
+          </div>
+
+          <table className="w-full text-sm">
+            <thead>
+              <tr>
+                <th className="text-left p-2">Title</th>
+                <th className="text-left p-2">Category</th>
+                <th className="text-left p-2">Vendor</th>
+                <th className="text-left p-2">Date</th>
+                <th className="text-right p-2">Amount</th>
+                <th className="text-left p-2">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredExpenses.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="text-center p-4 text-slate-500">No expenses to show.</td>
+                </tr>
+              ) : (
+                filteredExpenses.map((expense) => (
+                  <tr key={expense.id}>
+                    <td className="p-2">
+                      {expense.title}
+                      {expense.vendorInvoiceNo && (
+                        <span className="text-slate-500"> ({expense.vendorInvoiceNo})</span>
+                      )}
+                    </td>
+                    <td className="p-2">{getCategoryLabel(expense.category)}</td>
+                    <td className="p-2">{expense.vendor?.name || '-'}</td>
+                    <td className="p-2">{new Date(expense.expenseDate).toLocaleDateString()}</td>
+                    <td className="text-right p-2">{formatMoney(expense.amount, expense.currency || currency)}</td>
+                    <td className="p-2">{expense.status.replace('_', ' ')}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+            <tfoot>
+              <tr className="font-bold">
+                <td className="p-2" colSpan={4}>Total</td>
+                <td className="text-right p-2">{formatMoney(totalAmount, currency)}</td>
+                <td className="p-2"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </PrintLayout>
+      </div>
     </div>
   );
 }

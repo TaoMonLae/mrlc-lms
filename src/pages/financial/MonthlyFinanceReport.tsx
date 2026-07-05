@@ -14,8 +14,9 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Calendar, Download, TrendingUp, TrendingDown, FileText, FileSpreadsheet } from "lucide-react";
-import { exportReportToPdf, exportReportToExcel } from "@/src/lib/exportReport";
+import { Calendar, Download, TrendingUp, TrendingDown, Printer, FileSpreadsheet } from "lucide-react";
+import { exportReportToExcel } from "@/src/lib/exportReport";
+import { PrintLayout } from "../../components/reports/PrintLayout";
 
 const MONTH_LABELS = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -184,11 +185,6 @@ export default function MonthlyFinanceReport() {
     };
   };
 
-  const handleExportPdf = () => {
-    const opts = buildExportOptions();
-    if (opts) exportReportToPdf(opts);
-  };
-
   const handleExportExcel = () => {
     const opts = buildExportOptions();
     if (opts) exportReportToExcel(opts);
@@ -238,7 +234,7 @@ export default function MonthlyFinanceReport() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="print:hidden flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Monthly Finance Report</h1>
           <p className="text-gray-500">Pick a month for its summary, or scan the full year below</p>
@@ -282,17 +278,18 @@ export default function MonthlyFinanceReport() {
             <Download className="w-4 h-4 mr-2" />
             CSV
           </Button>
-          <Button onClick={handleExportPdf} variant="outline">
-            <FileText className="w-4 h-4 mr-2" />
-            PDF
-          </Button>
           <Button onClick={handleExportExcel} variant="outline">
             <FileSpreadsheet className="w-4 h-4 mr-2" />
             Excel
           </Button>
+          <Button onClick={() => window.print()} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+            <Printer className="w-4 h-4 mr-2" />
+            Print / PDF
+          </Button>
         </div>
       </div>
 
+      <PrintLayout title="Monthly Finance Report" filters={{ "Fiscal Year": year.toString(), Month: monthLabel }}>
       {/* Month Summary Cards */}
       <div>
         <p className="text-sm font-medium text-gray-500 mb-3">Summary for {monthLabel}</p>
@@ -379,7 +376,7 @@ export default function MonthlyFinanceReport() {
       )}
 
       {/* Chart */}
-      <Card>
+      <Card className="print:hidden">
         <CardHeader>
           <CardTitle>Income vs. Expenses — All of {year}</CardTitle>
           <CardDescription>Monthly totals with running cumulative balance, for context</CardDescription>
@@ -462,6 +459,7 @@ export default function MonthlyFinanceReport() {
           </div>
         </CardContent>
       </Card>
+      </PrintLayout>
     </div>
   );
 }

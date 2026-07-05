@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, Download, AlertTriangle, CheckCircle, TrendingUp, TrendingDown, FileText, FileSpreadsheet } from "lucide-react";
+import { Calendar, Download, Printer, TrendingUp, TrendingDown, FileSpreadsheet } from "lucide-react";
 import { BudgetComparisonCard, BudgetProgress, BudgetHealthIndicator } from "@/src/components/financial/BudgetProgress";
 import { cn } from "@/lib/utils";
-import { exportReportToPdf, exportReportToExcel } from "@/src/lib/exportReport";
+import { exportReportToExcel } from "@/src/lib/exportReport";
+import { PrintLayout } from "../../components/reports/PrintLayout";
 
 interface BudgetComparison {
   id: string;
@@ -60,6 +61,7 @@ export default function BudgetVsActualReport() {
     }
 
     fetchReport();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [year, hasPermission]);
 
   const fetchReport = async () => {
@@ -88,7 +90,7 @@ export default function BudgetVsActualReport() {
     }
   };
 
-  const handleExport = () => {
+  const handleExportCsv = () => {
     if (!data) return;
 
     const csvContent = [
@@ -122,9 +124,10 @@ export default function BudgetVsActualReport() {
     URL.revokeObjectURL(url);
   };
 
-  const buildExportOptions = () => {
-    if (!data) return null;
-    return {
+  const handleExportExcel = () => {
+    if (!data) return;
+
+    exportReportToExcel({
       title: "Budget vs Actual Report",
       subtitle: `Fiscal Year ${year}`,
       filename: `budget-vs-actual-${year}`,
@@ -154,17 +157,7 @@ export default function BudgetVsActualReport() {
           ]),
         },
       ],
-    };
-  };
-
-  const handleExportPdf = () => {
-    const opts = buildExportOptions();
-    if (opts) exportReportToPdf(opts);
-  };
-
-  const handleExportExcel = () => {
-    const opts = buildExportOptions();
-    if (opts) exportReportToExcel(opts);
+    });
   };
 
   const getVarianceColor = (favorable: boolean) => {
@@ -208,14 +201,14 @@ export default function BudgetVsActualReport() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="print:hidden flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Budget vs Actual Report</h1>
           <p className="text-gray-500">Compare budgeted amounts with actual spending</p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <Select value={year.toString()} onValueChange={(value) => setYear(parseInt(value))}>
-            <SelectTrigger className="w-32">
+            <SelectTrigger className="w-28">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -226,245 +219,316 @@ export default function BudgetVsActualReport() {
               ))}
             </SelectContent>
           </Select>
-          <Button onClick={handleExport} variant="outline">
+          <Button onClick={handleExportCsv} variant="outline">
             <Download className="w-4 h-4 mr-2" />
             CSV
-          </Button>
-          <Button onClick={handleExportPdf} variant="outline">
-            <FileText className="w-4 h-4 mr-2" />
-            PDF
           </Button>
           <Button onClick={handleExportExcel} variant="outline">
             <FileSpreadsheet className="w-4 h-4 mr-2" />
             Excel
           </Button>
+          <Button onClick={() => window.print()} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+            <Printer className="w-4 h-4 mr-2" />
+            Print / PDF
+          </Button>
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Allocated</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              RM{data.summary.totalAllocated.toLocaleString()}
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Budgeted amount
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Spent</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              RM{data.summary.totalSpent.toLocaleString()}
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              According to budget
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Actual Expenses</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              RM{data.summary.totalActualExpenses.toLocaleString()}
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Recorded expenses
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Variance</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${
-              data.summary.totalVariance >= 0 ? "text-green-600" : "text-red-600"
-            }`}>
-              {data.summary.totalVariance >= 0 ? "+" : ""}
-              RM{data.summary.totalVariance.toLocaleString()}
-            </div>
-            <div className="flex items-center mt-1">
-              {data.summary.totalVariance >= 0 ? (
-                <TrendingUp className="w-4 h-4 text-green-600 mr-1" />
-              ) : (
-                <TrendingDown className="w-4 h-4 text-red-600 mr-1" />
-              )}
-              <p className="text-xs text-gray-500">
-                {data.summary.totalVariance >= 0 ? "Under budget" : "Over budget"}
+      {/* Interactive screen-only view */}
+      <div className="print:hidden space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Total Allocated</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                RM{data.summary.totalAllocated.toLocaleString()}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Budgeted amount
               </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Total Spent</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600">
+                RM{data.summary.totalSpent.toLocaleString()}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                According to budget
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Actual Expenses</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                RM{data.summary.totalActualExpenses.toLocaleString()}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Recorded expenses
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Total Variance</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${
+                data.summary.totalVariance >= 0 ? "text-green-600" : "text-red-600"
+              }`}>
+                {data.summary.totalVariance >= 0 ? "+" : ""}
+                RM{data.summary.totalVariance.toLocaleString()}
+              </div>
+              <div className="flex items-center mt-1">
+                {data.summary.totalVariance >= 0 ? (
+                  <TrendingUp className="w-4 h-4 text-green-600 mr-1" />
+                ) : (
+                  <TrendingDown className="w-4 h-4 text-red-600 mr-1" />
+                )}
+                <p className="text-xs text-gray-500">
+                  {data.summary.totalVariance >= 0 ? "Under budget" : "Over budget"}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Overall Utilization</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {data.summary.overallUtilization.toFixed(1)}%
+              </div>
+              <BudgetHealthIndicator
+                utilization={data.summary.overallUtilization}
+                showLabel={false}
+                size="small"
+              />
+            </CardContent>
+          </Card>
+        </div>
+
+        <Tabs defaultValue="cards" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="cards">Card View</TabsTrigger>
+            <TabsTrigger value="table">Table View</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="cards" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {data.budgets.map((budget) => {
+                return (
+                  <BudgetComparisonCard
+                    key={budget.id}
+                    name={budget.name}
+                    budget={budget.budget.allocated}
+                    actual={budget.actual.expenses}
+                    variance={budget.variance.amount}
+                    fiscalYear={budget.fiscalYear}
+                  />
+                );
+              })}
             </div>
-          </CardContent>
-        </Card>
+          </TabsContent>
+
+          <TabsContent value="table" className="space-y-4">
+            <Card>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Budget</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead className="text-right">Allocated</TableHead>
+                      <TableHead className="text-right">Spent</TableHead>
+                      <TableHead className="text-right">Actual</TableHead>
+                      <TableHead className="text-right">Variance</TableHead>
+                      <TableHead className="text-right">Variance %</TableHead>
+                      <TableHead className="text-right">Utilization</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Health</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {data.budgets.map((budget) => {
+                      const health = getHealthStatus(budget.utilization);
+                      return (
+                        <TableRow key={budget.id}>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{budget.name}</div>
+                              <div className="text-xs text-gray-500">{budget.code}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {budget.category && (
+                              <Badge variant="outline">{budget.category}</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            RM{budget.budget.allocated.toLocaleString()}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            RM{budget.budget.spent.toLocaleString()}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            RM{budget.actual.expenses.toLocaleString()}
+                          </TableCell>
+                          <TableCell className={`text-right font-medium ${getVarianceColor(budget.variance.favorable)}`}>
+                            {budget.variance.amount >= 0 ? "+" : ""}
+                            RM{budget.variance.amount.toLocaleString()}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {budget.variance.percentage.toFixed(1)}%
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {budget.utilization.toFixed(1)}%
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{budget.status}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className={cn("flex items-center gap-2", `text-${health.color}-600`)}>
+                              <span className="text-lg">{health.icon}</span>
+                              <span className="text-xs">{health.text}</span>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
 
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Overall Utilization</CardTitle>
+          <CardHeader>
+            <CardTitle>Summary</CardTitle>
+            <CardDescription>Overall budget performance for {year}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {data.summary.overallUtilization.toFixed(1)}%
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+              <div>
+                <p className="text-sm text-gray-500">Total Budgets</p>
+                <p className="text-2xl font-bold">{data.budgets.length}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Over Budget</p>
+                <p className="text-2xl font-bold text-red-600">
+                  {data.budgets.filter(b => b.utilization >= 100).length}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">On Track</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {data.budgets.filter(b => b.utilization >= 70 && b.utilization < 100).length}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Under Budget</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {data.budgets.filter(b => b.utilization < 70).length}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Overall Health</p>
+                <BudgetHealthIndicator
+                  utilization={data.summary.overallUtilization}
+                  threshold={90}
+                />
+              </div>
             </div>
-            <BudgetHealthIndicator
-              utilization={data.summary.overallUtilization}
-              showLabel={false}
-              size="small"
-            />
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="cards" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="cards">Card View</TabsTrigger>
-          <TabsTrigger value="table">Table View</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="cards" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {data.budgets.map((budget) => {
-              const health = getHealthStatus(budget.utilization);
-              return (
-                <BudgetComparisonCard
-                  key={budget.id}
-                  name={budget.name}
-                  budget={budget.budget.allocated}
-                  actual={budget.actual.expenses}
-                  variance={budget.variance.amount}
-                  fiscalYear={budget.fiscalYear}
-                />
-              );
-            })}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="table" className="space-y-4">
-          <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Budget</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead className="text-right">Allocated</TableHead>
-                    <TableHead className="text-right">Spent</TableHead>
-                    <TableHead className="text-right">Actual</TableHead>
-                    <TableHead className="text-right">Variance</TableHead>
-                    <TableHead className="text-right">Variance %</TableHead>
-                    <TableHead className="text-right">Utilization</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Health</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.budgets.map((budget) => {
-                    const health = getHealthStatus(budget.utilization);
-                    return (
-                      <TableRow key={budget.id}>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">{budget.name}</div>
-                            <div className="text-xs text-gray-500">{budget.code}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {budget.category && (
-                            <Badge variant="outline">{budget.category}</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          RM{budget.budget.allocated.toLocaleString()}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          RM{budget.budget.spent.toLocaleString()}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          RM{budget.actual.expenses.toLocaleString()}
-                        </TableCell>
-                        <TableCell className={`text-right font-medium ${getVarianceColor(budget.variance.favorable)}`}>
-                          {budget.variance.amount >= 0 ? "+" : ""}
-                          RM{budget.variance.amount.toLocaleString()}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {budget.variance.percentage.toFixed(1)}%
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {budget.utilization.toFixed(1)}%
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{budget.status}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className={cn("flex items-center gap-2", `text-${health.color}-600`)}>
-                            <span className="text-lg">{health.icon}</span>
-                            <span className="text-xs">{health.text}</span>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      {/* Summary Footer */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Summary</CardTitle>
-          <CardDescription>Overall budget performance for {year}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-            <div>
-              <p className="text-sm text-gray-500">Total Budgets</p>
-              <p className="text-2xl font-bold">{data.budgets.length}</p>
+      {/* Print-only branded view */}
+      <div className="hidden print:block">
+        <PrintLayout title="Budget vs Actual Report" filters={{ "Fiscal Year": year.toString() }}>
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+            <div className="border border-slate-300 p-3 rounded text-center">
+              <p className="text-xs text-slate-500 uppercase font-bold">Allocated</p>
+              <p className="text-lg font-bold mt-1">RM{data.summary.totalAllocated.toLocaleString()}</p>
             </div>
-            {/* Buckets are mutually exclusive (matching getHealthStatus thresholds):
-                Over ≥100% utilization, On Track 70–100%, Under <70%. The old
-                filters counted the same budget in both On Track and Under Budget. */}
-            <div>
-              <p className="text-sm text-gray-500">Over Budget</p>
-              <p className="text-2xl font-bold text-red-600">
-                {data.budgets.filter(b => b.utilization >= 100).length}
+            <div className="border border-slate-300 p-3 rounded text-center">
+              <p className="text-xs text-slate-500 uppercase font-bold">Actual Expenses</p>
+              <p className="text-lg font-bold mt-1">RM{data.summary.totalActualExpenses.toLocaleString()}</p>
+            </div>
+            <div className="border border-slate-300 p-3 rounded text-center">
+              <p className="text-xs text-slate-500 uppercase font-bold">Variance</p>
+              <p className={`text-lg font-bold mt-1 ${data.summary.totalVariance >= 0 ? "text-green-700" : "text-red-700"}`}>
+                {data.summary.totalVariance >= 0 ? "+" : ""}RM{data.summary.totalVariance.toLocaleString()}
               </p>
             </div>
-            <div>
-              <p className="text-sm text-gray-500">On Track</p>
-              <p className="text-2xl font-bold text-green-600">
-                {data.budgets.filter(b => b.utilization >= 70 && b.utilization < 100).length}
-              </p>
+            <div className="border border-slate-300 p-3 rounded text-center">
+              <p className="text-xs text-slate-500 uppercase font-bold">Utilization</p>
+              <p className="text-lg font-bold mt-1">{data.summary.overallUtilization.toFixed(1)}%</p>
             </div>
-            <div>
-              <p className="text-sm text-gray-500">Under Budget</p>
-              <p className="text-2xl font-bold text-blue-600">
-                {data.budgets.filter(b => b.utilization < 70).length}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Overall Health</p>
-              <BudgetHealthIndicator
-                utilization={data.summary.overallUtilization}
-                threshold={90}
-              />
+            <div className="border border-slate-300 p-3 rounded text-center">
+              <p className="text-xs text-slate-500 uppercase font-bold">Total Budgets</p>
+              <p className="text-lg font-bold mt-1">{data.budgets.length}</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+
+          <table className="w-full text-sm">
+            <thead>
+              <tr>
+                <th className="text-left p-2">Budget</th>
+                <th className="text-left p-2">Category</th>
+                <th className="text-right p-2">Allocated</th>
+                <th className="text-right p-2">Spent</th>
+                <th className="text-right p-2">Actual</th>
+                <th className="text-right p-2">Variance</th>
+                <th className="text-right p-2">Utilization</th>
+                <th className="text-left p-2">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.budgets.map((budget) => (
+                <tr key={budget.id}>
+                  <td className="p-2">{budget.name} <span className="text-slate-500">({budget.code})</span></td>
+                  <td className="p-2">{budget.category || "-"}</td>
+                  <td className="text-right p-2">RM{budget.budget.allocated.toLocaleString()}</td>
+                  <td className="text-right p-2">RM{budget.budget.spent.toLocaleString()}</td>
+                  <td className="text-right p-2">RM{budget.actual.expenses.toLocaleString()}</td>
+                  <td className="text-right p-2">
+                    {budget.variance.amount >= 0 ? "+" : ""}RM{budget.variance.amount.toLocaleString()} ({budget.variance.percentage.toFixed(1)}%)
+                  </td>
+                  <td className="text-right p-2">{budget.utilization.toFixed(1)}%</td>
+                  <td className="p-2">{budget.status}</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className="font-bold">
+                <td className="p-2" colSpan={2}>Total</td>
+                <td className="text-right p-2">RM{data.summary.totalAllocated.toLocaleString()}</td>
+                <td className="text-right p-2">RM{data.summary.totalSpent.toLocaleString()}</td>
+                <td className="text-right p-2">RM{data.summary.totalActualExpenses.toLocaleString()}</td>
+                <td className="text-right p-2">
+                  {data.summary.totalVariance >= 0 ? "+" : ""}RM{data.summary.totalVariance.toLocaleString()}
+                </td>
+                <td className="text-right p-2">{data.summary.overallUtilization.toFixed(1)}%</td>
+                <td className="p-2"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </PrintLayout>
+      </div>
     </div>
   );
 }
