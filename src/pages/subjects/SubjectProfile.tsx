@@ -77,6 +77,15 @@ export default function SubjectProfile() {
         status: e.status || 'DRAFT',
       }));
       const classMap = new Map<string, SubjectClassRow>();
+      (data.classes || []).forEach((cs: any) => {
+        if (cs.class?.id && !classMap.has(cs.class.id)) {
+          classMap.set(cs.class.id, {
+            id: cs.class.id,
+            name: cs.class.name,
+            academicYear: cs.class.academicYear || '—',
+          });
+        }
+      });
       (data.exams || []).forEach((e: any) => {
         if (e.class?.id && !classMap.has(e.class.id)) {
           classMap.set(e.class.id, {

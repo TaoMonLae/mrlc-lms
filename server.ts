@@ -2551,6 +2551,29 @@ async function startServer() {
     }
   });
 
+  // ── Teacher class scoping (used by classes, exams, gradebook, reports) ───────
+  const getTeacherClassIds = async (userId: string): Promise<string[]> => {
+    const teacher = await prisma.teacher.findUnique({
+      where: { userId },
+      include: { classes: true },
+    });
+    return teacher?.classes.map((ct) => ct.classId) || [];
+  };
+  const teacherClassIds = async (req: express.Request): Promise<string[]> => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role === "ADMIN") {
+      const all = await prisma.class.findMany({ select: { id: true } });
+      return all.map((c) => c.id);
+    }
+    return getTeacherClassIds(jwtUser.userId);
+  };
+  const canAccessTeacherClass = async (req: express.Request, classId: string): Promise<boolean> => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role === "ADMIN") return true;
+    const ids = await teacherClassIds(req);
+    return ids.includes(classId);
+  };
+
   // ── Classes & Subjects API ──────────────────────────────────────────────────
   app.get("/api/classes", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
@@ -2559,7 +2582,15 @@ async function startServer() {
       return;
     }
     try {
+      const showArchived = req.query.archived === "1" || req.query.archived === "true";
+      const where: { status?: string | { not: string }; id?: { in: string[] } } =
+        showArchived ? { status: "ARCHIVED" } : { status: { not: "ARCHIVED" } };
+      if (jwtUser.role === "TEACHER") {
+        const ids = await getTeacherClassIds(jwtUser.userId);
+        where.id = { in: ids };
+      }
       const classes = await prisma.class.findMany({
+        where,
         include: { students: true }
       });
       res.json(classes);
@@ -2577,6 +2608,10 @@ async function startServer() {
     }
     const { id } = req.params;
     try {
+      if (jwtUser.role === "TEACHER" && !(await canAccessTeacherClass(req, id))) {
+        res.status(403).json({ error: "Forbidden" });
+        return;
+      }
       const klass = await prisma.class.findUnique({
         where: { id },
         include: {
@@ -2702,13 +2737,17 @@ async function startServer() {
     try {
       const klass = await prisma.class.findUnique({ where: { id }, include: { _count: { select: { students: true } } } });
       if (!klass) { res.status(404).json({ error: "Class not found" }); return; }
-      const students = await prisma.student.findMany({ where: { id: { in: studentIds } }, select: { id: true } });
+      const students = await prisma.student.findMany({
+        where: { id: { in: studentIds } },
+        select: { id: true, classId: true },
+      });
       if (students.length !== studentIds.length) {
         res.status(404).json({ error: "One or more students were not found" });
         return;
       }
+      const newAssignments = students.filter((s) => s.classId !== id);
       if (klass.capacity != null) {
-        const newTotal = klass._count.students + studentIds.length;
+        const newTotal = klass._count.students + newAssignments.length;
         if (newTotal > klass.capacity) {
           res.status(400).json({ error: `Class capacity is ${klass.capacity}; this would make ${newTotal} students.` });
           return;
@@ -2800,7 +2839,9 @@ async function startServer() {
       return;
     }
     try {
+      const showArchived = req.query.archived === "1" || req.query.archived === "true";
       const subjects = await prisma.subject.findMany({
+        where: showArchived ? { status: "ARCHIVED" } : { status: { not: "ARCHIVED" } },
         include: { _count: { select: { teachers: true, exams: true } } },
         orderBy: { name: "asc" },
       });
@@ -2855,6 +2896,7 @@ async function startServer() {
         where: { id },
         include: {
           teachers: { include: { teacher: { include: { user: true } } } },
+          classes: { include: { class: true } },
           exams: { include: { class: true } },
         },
       });
@@ -10771,8 +10813,13 @@ async function startServer() {
           },
         });
       } else {
+        const where: Record<string, unknown> = { ...statusFilter };
+        if (jwtUser.role === "TEACHER") {
+          const ids = await getTeacherClassIds(jwtUser.userId);
+          where.classId = { in: ids };
+        }
         exams = await prisma.exam.findMany({
-          where: statusFilter,
+          where,
           include: {
             class: true,
             subject: true,
@@ -10843,6 +10890,10 @@ async function startServer() {
       });
       if (!exam) {
         res.status(404).json({ error: "Exam not found" });
+        return;
+      }
+      if (jwtUser.role === "TEACHER" && !(await canManageExamClass(jwtUser, exam.classId))) {
+        res.status(403).json({ error: "Forbidden" });
         return;
       }
       if (exam.status === "ARCHIVED" && isStudent) {
@@ -11020,7 +11071,7 @@ async function startServer() {
             classId,
             subjectId,
             type: examType || "FINAL",
-            status: status || existing.status || "PUBLISHED",
+            status: status !== undefined ? (status || existing.status || "DRAFT") : (existing.status || "DRAFT"),
             durationMinutes: duration ? Number(duration) : null,
             totalMarks: totalMarks != null ? Number(totalMarks) : null,
             settings: settings !== undefined ? settings : existing.settings,
@@ -11104,6 +11155,87 @@ async function startServer() {
       res.json({ ok: true, status: "ARCHIVED" });
     } catch (err: any) {
       logger.error("Error archiving exam:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  const EXAM_TYPE_TO_GRADE_CATEGORY: Record<string, string> = {
+    QUIZ: "QUIZ",
+    MIDTERM: "MIDTERM",
+    FINAL: "FINAL",
+    MOCK: "MOCK_GED",
+  };
+
+  // Push best completed exam scores into the gradebook for the exam's class.
+  app.post("/api/exams/:id/sync-gradebook", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const { id } = req.params;
+    try {
+      const exam = await prisma.exam.findUnique({
+        where: { id },
+        include: {
+          questions: { select: { points: true } },
+          attempts: { where: { isCompleted: true, score: { not: null } } },
+        },
+      });
+      if (!exam) { res.status(404).json({ error: "Exam not found" }); return; }
+      if (!(await canManageExamClass(jwtUser, exam.classId))) {
+        res.status(403).json({ error: "Forbidden: not your class" });
+        return;
+      }
+      const maxMarks = exam.totalMarks ?? exam.questions.reduce((sum, q) => sum + Number(q.points || 0), 0);
+      if (!maxMarks || maxMarks <= 0) {
+        res.status(400).json({ error: "Set total marks on this exam before syncing to the gradebook" });
+        return;
+      }
+      const bestByStudent = new Map<string, number>();
+      for (const attempt of exam.attempts) {
+        if (attempt.score == null) continue;
+        const prev = bestByStudent.get(attempt.studentId);
+        if (prev == null || attempt.score > prev) bestByStudent.set(attempt.studentId, attempt.score);
+      }
+      if (bestByStudent.size === 0) {
+        res.status(400).json({ error: "No completed scored attempts to sync yet" });
+        return;
+      }
+      const category = EXAM_TYPE_TO_GRADE_CATEGORY[exam.type] || "QUIZ";
+      const result = await prisma.$transaction(async (tx) => {
+        let gradeItem = await tx.gradeItem.findFirst({
+          where: { classId: exam.classId, title: exam.title, category: category as any, subjectId: exam.subjectId },
+        });
+        if (!gradeItem) {
+          gradeItem = await tx.gradeItem.create({
+            data: {
+              title: exam.title,
+              category: category as any,
+              maxMarks,
+              date: exam.date,
+              classId: exam.classId,
+              subjectId: exam.subjectId,
+              createdById: jwtUser.userId,
+            },
+          });
+        } else {
+          await tx.gradeItem.update({ where: { id: gradeItem.id }, data: { maxMarks } });
+        }
+        for (const [studentId, score] of bestByStudent) {
+          await tx.grade.upsert({
+            where: { gradeItemId_studentId: { gradeItemId: gradeItem!.id, studentId } },
+            update: { marks: score, gradedById: jwtUser.userId },
+            create: { gradeItemId: gradeItem!.id, studentId, marks: score, gradedById: jwtUser.userId },
+          });
+        }
+        return { gradeItemId: gradeItem!.id, count: bestByStudent.size };
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "SYNC", "EXAM", id,
+        `Exam '${exam.title}' synced ${result.count} score(s) to gradebook.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.json(result);
+    } catch (err) {
+      logger.error("Error syncing exam to gradebook:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
@@ -13305,35 +13437,6 @@ async function startServer() {
 
   // ── Teacher portal API (scoped to the signed-in teacher; ADMIN sees all) ─────
   const teacherOnly = reportRole(["TEACHER", "ADMIN"]);
-  const teacherClassIds = async (req: express.Request): Promise<string[]> => {
-    const jwtUser = (req as any).user as JwtPayload;
-    if (jwtUser.role === "ADMIN") {
-      const all = await prisma.class.findMany({ select: { id: true } });
-      return all.map((c) => c.id);
-    }
-    const teacher = await prisma.teacher.findUnique({
-      where: { userId: jwtUser.userId },
-      include: { classes: true },
-    });
-    if (teacher) return teacher.classes.map((ct) => ct.classId);
-    // Log if teacher not found - likely userId is NULL or mismatched
-    logger.warn(`teacherClassIds: No teacher found for userId ${jwtUser.userId}`);
-    return [];
-  };
-  const canAccessTeacherClass = async (req: express.Request, classId: string) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    if (jwtUser.role === "ADMIN") return true;
-    const ids = await teacherClassIds(req);
-    return ids.includes(classId);
-  };
-
-  const getTeacherClassIds = async (userId: string): Promise<string[]> => {
-    const teacher = await prisma.teacher.findUnique({
-      where: { userId },
-      include: { classes: true },
-    });
-    return teacher?.classes.map((ct) => ct.classId) || [];
-  };
   const fmtDate = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
   const examStatus = (date: Date, attempts: { score: number | null }[]): string => {
     if (attempts.length === 0) return date > new Date() ? "UPCOMING" : "DRAFT";
@@ -13631,6 +13734,10 @@ async function startServer() {
   app.get("/api/gradebook", authMiddleware, reportRole(["ADMIN", "TEACHER"]), async (req, res) => {
     const { classId, subjectId } = req.query as { classId?: string; subjectId?: string };
     if (!classId) { res.status(400).json({ error: "classId is required" }); return; }
+    if (!(await canAccessTeacherClass(req, classId))) {
+      res.status(403).json({ error: "Forbidden: not your class" });
+      return;
+    }
     try {
       const [students, items, weights] = await Promise.all([
         prisma.student.findMany({ where: { classId }, include: { user: true }, orderBy: { studentCode: "asc" } }),
@@ -13688,6 +13795,7 @@ async function startServer() {
     const { title, category, maxMarks, date, classId, subjectId } = req.body || {};
     if (!title || !category || !classId) { res.status(400).json({ error: "title, category and classId are required" }); return; }
     if (!GRADE_CATEGORIES.includes(category)) { res.status(400).json({ error: "Invalid category" }); return; }
+    if (!(await canManageExamClass(jwtUser, classId))) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
     try {
       const item = await prisma.gradeItem.create({
         data: {
@@ -13712,6 +13820,9 @@ async function startServer() {
     const { id } = req.params;
     const { title, category, maxMarks, date, subjectId } = req.body || {};
     try {
+      const existingItem = await prisma.gradeItem.findUnique({ where: { id }, select: { classId: true } });
+      if (!existingItem) { res.status(404).json({ error: "Grade item not found" }); return; }
+      if (!(await canManageExamClass(jwtUser, existingItem.classId))) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
       const item = await prisma.gradeItem.update({
         where: { id },
         data: {
@@ -13737,6 +13848,9 @@ async function startServer() {
     if (!canManageGrades(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
     const { id } = req.params;
     try {
+      const existingItem = await prisma.gradeItem.findUnique({ where: { id }, select: { classId: true } });
+      if (!existingItem) { res.status(404).json({ error: "Grade item not found" }); return; }
+      if (!(await canManageExamClass(jwtUser, existingItem.classId))) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
       await prisma.gradeItem.delete({ where: { id } });
       await createAuditLog(jwtUser.userId, jwtUser.email, "DELETE", "GRADE_ITEM", id,
         `Grade item ${id} deleted.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
@@ -13760,14 +13874,32 @@ async function startServer() {
     try {
       const item = await prisma.gradeItem.findUnique({ where: { id: gradeItemId } });
       if (!item) { res.status(404).json({ error: "Grade item not found" }); return; }
+      if (!(await canManageExamClass(jwtUser, item.classId))) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+      const classStudentIds = new Set(
+        (await prisma.student.findMany({ where: { classId: item.classId }, select: { id: true } })).map((s) => s.id),
+      );
       const existing = await prisma.grade.findMany({ where: { gradeItemId } });
       const prevByStudent: Record<string, any> = {};
       for (const g of existing) prevByStudent[g.studentId] = g;
 
+      const normalized: Array<{ studentId: string; marks: number | null; comment: string }> = [];
+      for (const e of entries) {
+        if (!classStudentIds.has(e.studentId)) {
+          res.status(400).json({ error: `Student ${e.studentId} is not enrolled in this class` });
+          return;
+        }
+        let marks: number | null = e.marks == null || (e.marks as any) === "" ? null : Number(e.marks);
+        if (marks != null && (Number.isNaN(marks) || marks < 0 || marks > item.maxMarks)) {
+          res.status(400).json({ error: `Marks must be between 0 and ${item.maxMarks}` });
+          return;
+        }
+        normalized.push({ studentId: e.studentId, marks, comment: e.comment || "" });
+      }
+
       let changed = 0;
       await prisma.$transaction(
-        entries.map((e) => {
-          const marks = e.marks == null || (e.marks as any) === "" ? null : Number(e.marks);
+        normalized.map((e) => {
+          const marks = e.marks;
           const prev = prevByStudent[e.studentId];
           if (!prev || prev.marks !== marks || (prev.comment || "") !== (e.comment || "")) changed += 1;
           return prisma.grade.upsert({
@@ -13779,16 +13911,14 @@ async function startServer() {
       );
 
       // Per-mark audit for changed entries (capped to avoid log floods).
-      const changedEntries = entries.filter((e) => {
-        const marks = e.marks == null || (e.marks as any) === "" ? null : Number(e.marks);
+      const changedEntries = normalized.filter((e) => {
         const prev = prevByStudent[e.studentId];
-        return !prev || prev.marks !== marks;
+        return !prev || prev.marks !== e.marks;
       }).slice(0, 50);
       for (const e of changedEntries) {
         const prev = prevByStudent[e.studentId];
-        const marks = e.marks == null || (e.marks as any) === "" ? null : Number(e.marks);
         await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "GRADE", `${gradeItemId}:${e.studentId}`,
-          `Grade for student ${e.studentId} on '${item.title}': ${prev?.marks ?? "—"} → ${marks ?? "—"}`,
+          `Grade for student ${e.studentId} on '${item.title}': ${prev?.marks ?? "—"} → ${e.marks ?? "—"}`,
           req.ip, req.headers["user-agent"] || null, "SUCCESS").catch(() => {});
       }
       res.json({ success: true, saved: entries.length, changed });
@@ -13815,6 +13945,7 @@ async function startServer() {
     if (!canManageGrades(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
     const { classId, weights } = req.body as { classId: string; weights: Record<string, number> };
     if (!classId || !weights) { res.status(400).json({ error: "classId and weights are required" }); return; }
+    if (!(await canManageExamClass(jwtUser, classId))) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
     try {
       await prisma.$transaction(
         GRADE_CATEGORIES.filter((c) => weights[c] != null).map((c) =>
@@ -14077,6 +14208,15 @@ async function startServer() {
 
   app.get("/api/gradebook/student/:studentId", authMiddleware, reportRole(["ADMIN", "TEACHER"]), async (req, res) => {
     try {
+      const student = await prisma.student.findUnique({
+        where: { id: req.params.studentId },
+        select: { classId: true },
+      });
+      if (!student) { res.status(404).json({ error: "Student not found" }); return; }
+      if (student.classId && !(await canAccessTeacherClass(req, student.classId))) {
+        res.status(403).json({ error: "Forbidden: not your class" });
+        return;
+      }
       const data = await buildStudentProgress(req.params.studentId);
       if (!data) { res.status(404).json({ error: "Student not found" }); return; }
       res.json(data);
@@ -14213,6 +14353,10 @@ async function startServer() {
   app.get("/api/reports/class-performance", authMiddleware, reportRole(["ADMIN", "TEACHER"]), async (req, res) => {
     const { classId, subjectId } = req.query as { classId?: string; subjectId?: string };
     if (!classId) { res.status(400).json({ error: "classId is required" }); return; }
+    if (!(await canAccessTeacherClass(req, classId))) {
+      res.status(403).json({ error: "Forbidden: not your class" });
+      return;
+    }
     try {
       const [students, items, weights] = await Promise.all([
         prisma.student.findMany({ where: { classId }, include: { user: true } }),

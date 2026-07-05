@@ -38,8 +38,24 @@ export default function GradebookClassReport() {
       setClasses(list);
       if (list[0]) setClassId(list[0].id);
     }).catch(() => {});
-    apiGet<any[]>('/api/subjects').then((ss) => setSubjects(ss.map((s) => ({ id: s.id, name: s.name })))).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!classId) { setSubjects([]); return; }
+    apiGet<any>(`/api/classes/${classId}`)
+      .then((klass) => {
+        const map = new Map<string, string>();
+        for (const cs of klass.subjects || []) {
+          if (cs.subject?.id) map.set(cs.subject.id, cs.subject.name);
+        }
+        for (const e of klass.exams || []) {
+          if (e.subject?.id) map.set(e.subject.id, e.subject.name);
+        }
+        setSubjects(Array.from(map.entries()).map(([id, name]) => ({ id, name })));
+        setSubjectId((prev) => (prev !== 'all' && !map.has(prev) ? 'all' : prev));
+      })
+      .catch(() => setSubjects([]));
+  }, [classId]);
 
   useEffect(() => {
     if (!classId) return;

@@ -13,6 +13,7 @@ import {
   DropdownMenuGroup,
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
+import { usePermissions } from '../../lib/permissions';
 
 interface Class {
   id: string;
@@ -31,7 +32,8 @@ export default function ClassesList() {
   const [classes, setClasses] = useState<Class[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const userRole = 'ADMIN';
+  const { hasPermission } = usePermissions();
+  const canManage = hasPermission('manage_classes');
 
   useEffect(() => {
     const fetchClasses = async () => {
@@ -92,7 +94,7 @@ export default function ClassesList() {
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Class Management</h1>
           <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Manage academic classes, assignments, and curriculum.</p>
         </div>
-        {userRole === 'ADMIN' && (
+        {canManage && (
           <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto" render={<Link to="/classes/new" />} nativeButton={false}>
             <Plus className="mr-2 h-4 w-4" />
             Add Class
@@ -133,11 +135,11 @@ export default function ClassesList() {
                   <DropdownMenuContent align="end">
                     <DropdownMenuGroup>
                       <DropdownMenuItem render={<Link to={`/classes/${cls.id}`} className="flex w-full" />} nativeButton={false}>View Dashboard</DropdownMenuItem>
-                      {userRole === 'ADMIN' && (
+                      {canManage && (
                         <DropdownMenuItem render={<Link to={`/classes/${cls.id}/edit`} className="flex w-full" />} nativeButton={false}>Edit Class</DropdownMenuItem>
                       )}
                     </DropdownMenuGroup>
-                    {userRole === 'ADMIN' && (
+                    {canManage && (
                       <React.Fragment>
                         <DropdownMenuSeparator />
                         {(cls.status || 'ACTIVE') === 'ACTIVE' ? (

@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Subject } from '../../types/subject';
 import { toast } from 'sonner';
+import { usePermissions } from '../../lib/permissions';
 
 // Webflow five-stop category palette, cycled across subject cards.
 const CATEGORY_COLORS = [
@@ -29,7 +30,8 @@ export default function SubjectsList() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const userRole = 'ADMIN';
+  const { hasPermission } = usePermissions();
+  const canManage = hasPermission('manage_subjects');
 
   useEffect(() => {
     const fetchSubjects = async () => {
@@ -90,7 +92,7 @@ export default function SubjectsList() {
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Subject Management</h1>
           <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Manage academic subjects and curriculum.</p>
         </div>
-        {userRole === 'ADMIN' && (
+        {canManage && (
           <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto" render={<Link to="/subjects/new" />} nativeButton={false}>
             <Plus className="mr-2 h-4 w-4" />
             Add Subject
@@ -138,14 +140,14 @@ export default function SubjectsList() {
                   <DropdownMenuContent align="end">
                     <DropdownMenuGroup>
                       <DropdownMenuItem render={<Link to={`/subjects/${sub.id}`} className="flex w-full" />} nativeButton={false}>View Dashboard</DropdownMenuItem>
-                      {userRole === 'ADMIN' && (
+                      {canManage && (
                         <DropdownMenuItem render={<Link to={`/subjects/${sub.id}/edit`} className="flex w-full" />} nativeButton={false}>Edit Subject</DropdownMenuItem>
                       )}
                     </DropdownMenuGroup>
-                    {userRole === 'ADMIN' && (
+                    {canManage && (
                       <React.Fragment>
                         <DropdownMenuSeparator />
-                        {sub.status === 'ACTIVE' ? (
+                        {(sub.status || 'ACTIVE') === 'ACTIVE' ? (
                           <DropdownMenuItem className="text-amber-600 focus:text-amber-600 focus:bg-amber-50" onClick={() => setStatus(sub, 'ARCHIVED')}>
                             <Archive className="mr-2 h-4 w-4" /> Archive Subject
                           </DropdownMenuItem>
@@ -166,10 +168,10 @@ export default function SubjectsList() {
             </div>
 
             <div className="bg-slate-50 dark:bg-surface-raised/30 p-4 border-t border-slate-100 dark:border-surface-raised flex justify-between items-center text-sm">
-              <Badge variant={sub.status === 'ACTIVE' ? 'default' : 'secondary'} 
-                className={sub.status === 'ACTIVE' ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-slate-500 hover:bg-slate-600'}
+              <Badge variant={(sub.status || 'ACTIVE') === 'ACTIVE' ? 'default' : 'secondary'} 
+                className={(sub.status || 'ACTIVE') === 'ACTIVE' ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-slate-500 hover:bg-slate-600'}
               >
-                {sub.status}
+                {sub.status || 'ACTIVE'}
               </Badge>
               <div className="flex space-x-3 text-xs text-slate-500">
                  <span>{sub._count?.exams ?? 0} Exams</span>

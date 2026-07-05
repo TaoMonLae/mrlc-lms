@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, Play, Users, BarChart3, Clock, CheckCircle2, Settings, Trash2 } from 'lucide-react';
+import { ArrowLeft, Edit, Play, Users, BarChart3, Clock, CheckCircle2, Settings, Trash2, BookOpenCheck, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
@@ -37,6 +37,20 @@ export default function ExamProfile() {
   const navigate = useNavigate();
   const [exam, setExam] = useState<ExamData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+
+  const handleSyncGradebook = async () => {
+    if (!confirm('Sync best exam scores into the gradebook for this class?')) return;
+    setSyncing(true);
+    try {
+      const res = await apiSend<{ count: number }>(`/api/exams/${id}/sync-gradebook`, 'POST');
+      toast.success(`Synced ${res?.count ?? 0} score(s) to gradebook`);
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to sync to gradebook');
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const handleDelete = async () => {
     if (!confirm('Archive this exam? It will be hidden from lists and can no longer be started, but the exam and all student attempts are preserved. You can restore it later.')) return;
@@ -159,6 +173,10 @@ export default function ExamProfile() {
             </Button>
             <Button variant="outline" render={<Link to={`/exam2/${id}/schedule`} />} nativeButton={false}>
               Schedule
+            </Button>
+            <Button variant="outline" onClick={handleSyncGradebook} disabled={syncing}>
+              {syncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BookOpenCheck className="mr-2 h-4 w-4" />}
+              Sync to Gradebook
             </Button>
             <Button variant="secondary" className="text-aubergine-600 bg-aubergine-50 hover:bg-aubergine-100 dark:bg-aubergine-900/20 dark:hover:bg-aubergine-900/40" render={<Link to={`/exams/${id}/preview`} />} nativeButton={false}>
               <Play className="mr-2 h-4 w-4" /> Preview
