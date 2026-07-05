@@ -73,14 +73,15 @@ export default function BudgetVsActualReport() {
       );
 
       if (!response.ok) {
-        throw new Error("Failed to fetch report data");
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.error || "Failed to fetch report data");
       }
 
       const reportData = await response.json();
       setData(reportData);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error fetching report:", err);
-      setError("Failed to load budget report");
+      setError(err.message || "Failed to load budget report");
     } finally {
       setLoading(false);
     }

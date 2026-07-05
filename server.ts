@@ -8758,7 +8758,11 @@ async function startServer() {
           count: outstandingFees._count,
         },
       });
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.code === "P2007" || error?.code === "P2021" || error?.code === "P2022") {
+        res.status(503).json({ error: "Database is out of date — run `npx prisma migrate deploy` then restart the server." });
+        return;
+      }
       logger.error("Error generating financial summary:", error);
       res.status(500).json({ error: "Internal server error" });
     }
@@ -8857,7 +8861,11 @@ async function startServer() {
           surplusRatio: totalIncome > 0 ? (netSurplus / totalIncome) * 100 : 0,
         },
       });
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.code === "P2007" || error?.code === "P2021" || error?.code === "P2022") {
+        res.status(503).json({ error: "Database is out of date — run `npx prisma migrate deploy` then restart the server." });
+        return;
+      }
       logger.error("Error generating income-expense report:", error);
       res.status(500).json({ error: "Internal server error" });
     }
@@ -8938,7 +8946,11 @@ async function startServer() {
           overallUtilization: totals.allocated > 0 ? (totals.actualExpenses / totals.allocated) * 100 : 0,
         },
       });
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.code === "P2007" || error?.code === "P2021" || error?.code === "P2022") {
+        res.status(503).json({ error: "Database is out of date — run `npx prisma migrate deploy` then restart the server." });
+        return;
+      }
       logger.error("Error generating budget vs actual report:", error);
       res.status(500).json({ error: "Internal server error" });
     }
@@ -9082,7 +9094,11 @@ async function startServer() {
             monthlyCashFlow[monthlyCashFlow.length - 1].cumulative : 0,
         },
       });
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.code === "P2007" || error?.code === "P2021" || error?.code === "P2022") {
+        res.status(503).json({ error: "Database is out of date — run `npx prisma migrate deploy` then restart the server." });
+        return;
+      }
       logger.error("Error generating cash flow report:", error);
       res.status(500).json({ error: "Internal server error" });
     }

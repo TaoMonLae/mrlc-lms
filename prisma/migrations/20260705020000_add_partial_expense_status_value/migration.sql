@@ -1,0 +1,18 @@
+-- The "add_financial_modules" migration's CREATE TYPE "ExpenseStatus" statement
+-- already listed PARTIAL, but it's wrapped in a DO block that swallows
+-- "duplicate_object" errors:
+--
+--   DO $$ BEGIN CREATE TYPE "ExpenseStatus" AS ENUM (...) EXCEPTION WHEN
+--   duplicate_object THEN null; END $$;
+--
+-- On a database where "ExpenseStatus" already existed (created without PARTIAL
+-- by an earlier version of that migration before PARTIAL was added to it),
+-- that CREATE TYPE silently no-ops instead of adding the missing value --
+-- CREATE TYPE can't ALTER an existing type. Every query filtering
+-- Expense.status by PARTIAL (financial-reports summary, income-expense,
+-- budget-vs-actual, cash-flow) then fails at the database with
+-- "invalid input value for enum ExpenseStatus: PARTIAL".
+--
+-- ALTER TYPE ... ADD VALUE is the correct, idempotent way to backfill a
+-- missing enum value on a type that may or may not already have it.
+ALTER TYPE "ExpenseStatus" ADD VALUE IF NOT EXISTS 'PARTIAL';
