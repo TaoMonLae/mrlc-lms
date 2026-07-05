@@ -124,7 +124,7 @@ export default function StaffDirectory() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="rounded-lg bg-indigo-100 p-2 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400"><Briefcase className="h-5 w-5" /></div>
           <div>
@@ -132,7 +132,7 @@ export default function StaffDirectory() {
             <p className="text-sm text-slate-500">{employees.length} employees</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Link to="/staff/departments"><Button variant="outline">Departments</Button></Link>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger render={<Button><Plus className="mr-1 h-4 w-4" /> Add employee</Button>} />

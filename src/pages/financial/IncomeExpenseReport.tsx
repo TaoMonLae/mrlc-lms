@@ -244,12 +244,12 @@ export default function IncomeExpenseReport() {
 
   return (
     <div className="space-y-6">
-      <div className="print:hidden flex items-center justify-between">
+      <div className="print:hidden flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">Income & Expense Report</h1>
           <p className="text-gray-500">Analyze financial performance and trends</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Select value={year.toString()} onValueChange={(value) => setYear(parseInt(value))}>
             <SelectTrigger className="w-28">
               <SelectValue />
