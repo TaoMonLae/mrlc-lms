@@ -525,6 +525,20 @@ const num = z.union([z.string(), z.number()]); // handlers coerce with Number()
 // validation and corrupt financial totals downstream.
 const reqNum = num.refine((v) => Number(v) > 0, { message: "must be a positive number" });
 const optNum = num.optional().nullable();
+// Optional foreign-key ID fields (vendorId, budgetId, campaignId, etc.). Frontend
+// "None" <SelectItem value=""> options submit an empty string rather than
+// omitting the field, and while an empty string passes plain z.string()
+// validation, it then hits the database as a real (non-null) foreign key value
+// -- Postgres rejects it as a FK violation since no row has id: ''. Coercing ''
+// (and null) to undefined here means Prisma just leaves the column unset/null,
+// which is what "no vendor/budget/campaign selected" actually means.
+const optionalId = z.string().trim().optional().nullable().transform((v) => (v ? v : undefined));
+// Same problem for optional enum fields (paymentMethod, category, etc.) backed
+// by a "None" select option -- z.enum() rejects '' outright, which was making
+// every submission that left one of these unset fail validation with a 400
+// before it ever reached the database.
+const optEnumOrEmpty = <T extends [string, ...string[]]>(values: T) =>
+  z.union([z.enum(values), z.literal(""), z.null()]).optional().transform((v) => (v ? v : undefined));
 const userRole = z.enum(["ADMIN", "TEACHER", "STUDENT", "STAFF", "ACCOUNTANT", "CASE_WORKER", "LIBRARIAN"]);
 const admissionStatus = z.enum([
   "SUBMITTED",
@@ -716,7 +730,7 @@ const schemas = {
     donationType: z.enum(["ONE_TIME", "RECURRING_MONTHLY", "RECURRING_QUARTERLY", "RECURRING_YEARLY", "IN_KIND"]).optional().default("ONE_TIME"),
     purpose: nullableStr,
     designation: nullableStr,
-    campaignId: nullableStr,
+    campaignId: optionalId,
     paymentMethod: nullableStr,
     paymentReference: nullableStr,
     donationDate: reqStr,
@@ -1097,10 +1111,10 @@ const schemas = {
     taxAmount: optNum,
     expenseDate: reqStr,
     dueDate: optStr,
-    vendorId: nullableStr,
+    vendorId: optionalId,
     vendorInvoiceNo: nullableStr,
-    paymentMethod: z.enum(["CASH", "BANK_TRANSFER", "CHECK", "CREDIT_CARD", "DEBIT_CARD", "ONLINE_PAYMENT", "WIRE_TRANSFER", "OTHER"]).nullable().optional(),
-    budgetId: nullableStr,
+    paymentMethod: optEnumOrEmpty(["CASH", "BANK_TRANSFER", "CHECK", "CREDIT_CARD", "DEBIT_CARD", "ONLINE_PAYMENT", "WIRE_TRANSFER", "OTHER"]),
+    budgetId: optionalId,
     academicYear: nullableStr,
     term: nullableStr,
     notes: nullableStr,
@@ -1119,10 +1133,10 @@ const schemas = {
     taxAmount: optNum,
     expenseDate: optStr,
     dueDate: optStr,
-    vendorId: nullableStr,
+    vendorId: optionalId,
     vendorInvoiceNo: nullableStr,
-    paymentMethod: z.enum(["CASH", "BANK_TRANSFER", "CHECK", "CREDIT_CARD", "DEBIT_CARD", "ONLINE_PAYMENT", "WIRE_TRANSFER", "OTHER"]).nullable().optional(),
-    budgetId: nullableStr,
+    paymentMethod: optEnumOrEmpty(["CASH", "BANK_TRANSFER", "CHECK", "CREDIT_CARD", "DEBIT_CARD", "ONLINE_PAYMENT", "WIRE_TRANSFER", "OTHER"]),
+    budgetId: optionalId,
     notes: nullableStr,
     tags: z.array(z.string()).optional(),
     attachmentUrls: z.array(z.string()).optional(),
@@ -1190,14 +1204,14 @@ const schemas = {
     amount: reqNum,
     currency: z.string().length(3).optional().default("MYR"),
     taxAmount: optNum,
-    vendorId: nullableStr,
+    vendorId: optionalId,
     frequency: z.enum(["DAILY", "WEEKLY", "BI_WEEKLY", "MONTHLY", "QUARTERLY", "SEMI_ANNUALLY", "ANNUALLY"]),
     startDate: reqStr,
     endDate: optStr,
     dayOfMonth: z.number().int().min(-1).max(31).nullable().optional(),
     occurrenceCount: z.number().int().positive().nullable().optional(),
-    paymentMethod: z.enum(["CASH", "BANK_TRANSFER", "CHECK"]).nullable().optional(),
-    budgetId: nullableStr,
+    paymentMethod: optEnumOrEmpty(["CASH", "BANK_TRANSFER", "CHECK"]),
+    budgetId: optionalId,
     notes: nullableStr,
     tags: z.array(z.string()).optional().default([]),
   }),
@@ -1210,8 +1224,8 @@ const schemas = {
     endDate: reqStr,
     allocatedAmount: reqNum,
     currency: z.string().length(3).optional().default("MYR"),
-    category: z.enum(["OPERATIONAL", "ACADEMIC", "STAFF_COSTS", "FOOD_CATERING", "TRANSPORTATION", "FACILITY", "TECHNOLOGY", "EVENT", "ADMINISTRATIVE", "OTHER"]).nullable().optional(),
-    departmentId: nullableStr,
+    category: optEnumOrEmpty(["OPERATIONAL", "ACADEMIC", "STAFF_COSTS", "FOOD_CATERING", "TRANSPORTATION", "FACILITY", "TECHNOLOGY", "EVENT", "ADMINISTRATIVE", "OTHER"]),
+    departmentId: optionalId,
     alertThreshold: z.number().min(0).max(1).optional().default(0.8),
     strictLimit: z.boolean().optional().default(false),
     notes: nullableStr,
@@ -1226,8 +1240,8 @@ const schemas = {
     endDate: optStr,
     allocatedAmount: optNum,
     currency: z.string().length(3).optional(),
-    category: z.enum(["OPERATIONAL", "ACADEMIC", "STAFF_COSTS", "FOOD_CATERING", "TRANSPORTATION", "FACILITY", "TECHNOLOGY", "EVENT", "ADMINISTRATIVE", "OTHER"]).nullable().optional(),
-    departmentId: nullableStr,
+    category: optEnumOrEmpty(["OPERATIONAL", "ACADEMIC", "STAFF_COSTS", "FOOD_CATERING", "TRANSPORTATION", "FACILITY", "TECHNOLOGY", "EVENT", "ADMINISTRATIVE", "OTHER"]),
+    departmentId: optionalId,
     status: z.enum(["ACTIVE", "EXHAUSTED", "EXCEEDED", "ARCHIVED"]).optional(),
     spentAmount: z.number().optional(),
     alertThreshold: z.number().min(0).max(1).optional(),
