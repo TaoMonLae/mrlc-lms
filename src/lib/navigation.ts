@@ -410,7 +410,13 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     title: "Donations",
     url: "/donations",
     icon: Heart,
-    roles: ["ADMIN", "ACCOUNTANT"],
+    roles: ["ADMIN", "ACCOUNTANT", "STAFF"],
+  },
+  {
+    title: "Donors",
+    url: "/donors",
+    icon: Heart,
+    roles: ["ADMIN", "ACCOUNTANT", "STAFF"],
   },
   {
     title: "Student Duties",

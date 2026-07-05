@@ -98,6 +98,7 @@ import FeeDiscountsPage from "./pages/fee-structures/FeeDiscountsPage";
 import FinancialDashboard from "./pages/financial/FinancialDashboard";
 import BudgetVsActualReport from "./pages/financial/BudgetVsActualReport";
 import IncomeExpenseReport from "./pages/financial/IncomeExpenseReport";
+import MonthlyFinanceReport from "./pages/financial/MonthlyFinanceReport";
 import DonationsDashboard from "./pages/donations/DonationsDashboard";
 import CampaignsPage from "./pages/donations/CampaignsPage";
 import DonorList from "./pages/donations/DonorList";
@@ -105,6 +106,7 @@ import DonorProfile from "./pages/donations/DonorProfile";
 import DonorNew from "./pages/donations/DonorNew";
 import DonorEdit from "./pages/donations/DonorEdit";
 import DonationNew from "./pages/donations/DonationNew";
+import CampaignNew from "./pages/donations/CampaignNew";
 
 import DutiesDashboard from "./pages/duties/DutiesDashboard";
 import DutyDefinitionsPage from "./pages/duties/DutyDefinitionsPage";
@@ -468,6 +470,7 @@ export default function App() {
                   <Route path="/financial" element={<FinancialDashboard />} />
                   <Route path="/financial/reports/budget-vs-actual" element={<BudgetVsActualReport />} />
                   <Route path="/financial/reports/income-expense" element={<IncomeExpenseReport />} />
+                  <Route path="/financial/reports/monthly" element={<MonthlyFinanceReport />} />
                 </Route>
 
                 <Route element={<ProtectedRoute requiredPermission="manage_cases" />}>
@@ -492,6 +495,7 @@ export default function App() {
                 <Route element={<ProtectedRoute requiredPermission="view_donations" />}>
                   <Route path="/donations" element={<DonationsDashboard />} />
                   <Route path="/donations/campaigns" element={<CampaignsPage />} />
+                  <Route path="/donations/campaigns/new" element={<CampaignNew />} />
                   <Route path="/donations/new" element={<DonationNew />} />
                   <Route path="/donors" element={<DonorList />} />
                   <Route path="/donors/new" element={<DonorNew />} />

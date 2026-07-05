@@ -59,7 +59,7 @@ export default function CampaignsPage() {
           <p className="text-sm text-slate-500">Manage donation campaigns and track progress</p>
         </div>
         {hasPermission('manage_campaigns') && (
-          <Button>
+          <Button render={<Link to="/donations/campaigns/new" />} nativeButton={false}>
             <Plus className="h-4 w-4 mr-2" />
             New Campaign
           </Button>

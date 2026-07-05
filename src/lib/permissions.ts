@@ -189,6 +189,11 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'view_financial_reports',
     'manage_duties',
     'view_duties',
+    // Backend grants STAFF read access to donations/donors (donationCanView) --
+    // frontend permission was missing, making the whole donations area
+    // unreachable/blocked for this role even though the API allowed it.
+    'view_donations',
+    'view_campaigns',
   ],
   ACCOUNTANT: [
     'manage_fees',
