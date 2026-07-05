@@ -46,7 +46,12 @@ export default function MonthlyFinanceReport() {
   const { hasPermission } = usePermissions();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<CashFlowData | null>(null);
-  const [year, setYear] = useState(new Date().getFullYear());
+  const now = new Date();
+  const [year, setYear] = useState(now.getFullYear());
+  // Which single month's numbers are shown in the headline summary cards.
+  // Defaults to the current month when viewing the current year, otherwise
+  // January of whatever year is selected.
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -156,22 +161,51 @@ export default function MonthlyFinanceReport() {
     Balance: m.cumulative,
   }));
 
+  const selectedMonthData =
+    data.monthlyCashFlow.find((m) => m.month === selectedMonth) || data.monthlyCashFlow[0];
+  const monthLabel = `${MONTH_LABELS[selectedMonth - 1]} ${year}`;
+  const monthCategoryEntries = Object.entries(selectedMonthData.outflow.byCategory).sort(
+    (a, b) => b[1] - a[1]
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Monthly Finance Report</h1>
-          <p className="text-gray-500">Income vs. expenses broken down by month</p>
+          <p className="text-gray-500">Pick a month for its summary, or scan the full year below</p>
         </div>
         <div className="flex items-center gap-4">
-          <Select value={year.toString()} onValueChange={(value) => setYear(parseInt(value))}>
-            <SelectTrigger className="w-32">
+          <Select
+            value={year.toString()}
+            onValueChange={(value) => {
+              const newYear = parseInt(value);
+              setYear(newYear);
+              // If we just switched away from the current year, there's no
+              // "current month" in that year anymore -- fall back to January.
+              if (newYear !== now.getFullYear()) setSelectedMonth(1);
+              else setSelectedMonth(now.getMonth() + 1);
+            }}
+          >
+            <SelectTrigger className="w-28">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               {[2024, 2025, 2026].map((y) => (
                 <SelectItem key={y} value={y.toString()}>
                   {y}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={selectedMonth.toString()} onValueChange={(value) => setSelectedMonth(parseInt(value))}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {MONTH_LABELS.map((label, idx) => (
+                <SelectItem key={label} value={(idx + 1).toString()}>
+                  {label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -183,74 +217,96 @@ export default function MonthlyFinanceReport() {
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Income</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              RM{data.summary.totalInflow.toLocaleString()}
-            </div>
-            <p className="text-xs text-gray-500 mt-1">Fees + Donations</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              RM{data.summary.totalOutflow.toLocaleString()}
-            </div>
-            <p className="text-xs text-gray-500 mt-1">Approved &amp; paid expenses</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Net Cash Flow</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${data.summary.netCashFlow >= 0 ? "text-green-600" : "text-red-600"}`}>
-              {data.summary.netCashFlow >= 0 ? "+" : ""}RM{data.summary.netCashFlow.toLocaleString()}
-            </div>
-            <div className="flex items-center mt-1">
-              {data.summary.netCashFlow >= 0 ? (
-                <TrendingUp className="w-4 h-4 text-green-600 mr-1" />
-              ) : (
-                <TrendingDown className="w-4 h-4 text-red-600 mr-1" />
-              )}
-              <p className="text-xs text-gray-500">
-                Avg RM{data.summary.averageMonthlyFlow.toLocaleString(undefined, { maximumFractionDigits: 0 })}/mo
+      {/* Month Summary Cards */}
+      <div>
+        <p className="text-sm font-medium text-gray-500 mb-3">Summary for {monthLabel}</p>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Income</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">
+                RM{selectedMonthData.inflow.total.toLocaleString()}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Fees RM{selectedMonthData.inflow.fees.toLocaleString()} + Donations RM
+                {selectedMonthData.inflow.donations.toLocaleString()}
               </p>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Expenses</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600">
+                RM{selectedMonthData.outflow.total.toLocaleString()}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Approved &amp; paid expenses</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Net</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${selectedMonthData.netFlow >= 0 ? "text-green-600" : "text-red-600"}`}>
+                {selectedMonthData.netFlow >= 0 ? "+" : ""}RM{selectedMonthData.netFlow.toLocaleString()}
+              </div>
+              <div className="flex items-center mt-1">
+                {selectedMonthData.netFlow >= 0 ? (
+                  <TrendingUp className="w-4 h-4 text-green-600 mr-1" />
+                ) : (
+                  <TrendingDown className="w-4 h-4 text-red-600 mr-1" />
+                )}
+                <p className="text-xs text-gray-500">This month</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Running Balance</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                RM{selectedMonthData.cumulative.toLocaleString()}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                <Calendar className="w-3 h-3 inline mr-1" />
+                Cumulative through {monthLabel}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {monthCategoryEntries.length > 0 && (
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Ending Balance</CardTitle>
+          <CardHeader>
+            <CardTitle>Expenses by Category — {monthLabel}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              RM{data.summary.endingBalance.toLocaleString()}
+            <div className="space-y-2">
+              {monthCategoryEntries.map(([category, amount]) => (
+                <div key={category} className="flex justify-between text-sm py-1 border-b last:border-0">
+                  <span className="text-gray-600">{category}</span>
+                  <span className="font-medium">RM{amount.toLocaleString()}</span>
+                </div>
+              ))}
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              <Calendar className="w-3 h-3 inline mr-1" />
-              Cumulative for {year}
-            </p>
           </CardContent>
         </Card>
-      </div>
+      )}
 
       {/* Chart */}
       <Card>
         <CardHeader>
-          <CardTitle>Income vs. Expenses by Month</CardTitle>
-          <CardDescription>Monthly totals with running cumulative balance</CardDescription>
+          <CardTitle>Income vs. Expenses — All of {year}</CardTitle>
+          <CardDescription>Monthly totals with running cumulative balance, for context</CardDescription>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={360}>
@@ -271,8 +327,8 @@ export default function MonthlyFinanceReport() {
       {/* Detailed Monthly Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Monthly Breakdown</CardTitle>
-          <CardDescription>Income sources, expenses, and running balance</CardDescription>
+          <CardTitle>Monthly Breakdown — All of {year}</CardTitle>
+          <CardDescription>Income sources, expenses, and running balance (selected month highlighted)</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -290,7 +346,13 @@ export default function MonthlyFinanceReport() {
               </thead>
               <tbody>
                 {data.monthlyCashFlow.map((m) => (
-                  <tr key={`${m.year}-${m.month}`} className="border-b hover:bg-gray-50">
+                  <tr
+                    key={`${m.year}-${m.month}`}
+                    onClick={() => setSelectedMonth(m.month)}
+                    className={`border-b cursor-pointer hover:bg-gray-50 ${
+                      m.month === selectedMonth ? "bg-blue-50" : ""
+                    }`}
+                  >
                     <td className="p-3">{MONTH_LABELS[m.month - 1]} {m.year}</td>
                     <td className="text-right p-3">RM{m.inflow.fees.toLocaleString()}</td>
                     <td className="text-right p-3">RM{m.inflow.donations.toLocaleString()}</td>
