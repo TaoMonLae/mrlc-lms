@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, Download, AlertTriangle, CheckCircle, TrendingUp, TrendingDown } from "lucide-react";
+import { Calendar, Download, AlertTriangle, CheckCircle, TrendingUp, TrendingDown, FileText, FileSpreadsheet } from "lucide-react";
 import { BudgetComparisonCard, BudgetProgress, BudgetHealthIndicator } from "@/src/components/financial/BudgetProgress";
 import { cn } from "@/lib/utils";
+import { exportReportToPdf, exportReportToExcel } from "@/src/lib/exportReport";
 
 interface BudgetComparison {
   id: string;
@@ -121,6 +122,51 @@ export default function BudgetVsActualReport() {
     URL.revokeObjectURL(url);
   };
 
+  const buildExportOptions = () => {
+    if (!data) return null;
+    return {
+      title: "Budget vs Actual Report",
+      subtitle: `Fiscal Year ${year}`,
+      filename: `budget-vs-actual-${year}`,
+      summary: [
+        { label: "Total Allocated", value: `RM${data.summary.totalAllocated.toLocaleString()}` },
+        { label: "Total Actual Expenses", value: `RM${data.summary.totalActualExpenses.toLocaleString()}` },
+        {
+          label: "Total Variance",
+          value: `${data.summary.totalVariance >= 0 ? "+" : ""}RM${data.summary.totalVariance.toLocaleString()}`,
+        },
+        { label: "Overall Utilization", value: `${data.summary.overallUtilization.toFixed(1)}%` },
+      ],
+      sections: [
+        {
+          heading: "Budgets",
+          columns: ["Budget", "Category", "Allocated", "Spent", "Actual", "Variance", "Variance %", "Utilization", "Status"],
+          rows: data.budgets.map((budget) => [
+            budget.name,
+            budget.category || "-",
+            `RM${budget.budget.allocated.toLocaleString()}`,
+            `RM${budget.budget.spent.toLocaleString()}`,
+            `RM${budget.actual.expenses.toLocaleString()}`,
+            `${budget.variance.amount >= 0 ? "+" : ""}RM${budget.variance.amount.toLocaleString()}`,
+            `${budget.variance.percentage.toFixed(1)}%`,
+            `${budget.utilization.toFixed(1)}%`,
+            budget.status,
+          ]),
+        },
+      ],
+    };
+  };
+
+  const handleExportPdf = () => {
+    const opts = buildExportOptions();
+    if (opts) exportReportToPdf(opts);
+  };
+
+  const handleExportExcel = () => {
+    const opts = buildExportOptions();
+    if (opts) exportReportToExcel(opts);
+  };
+
   const getVarianceColor = (favorable: boolean) => {
     return favorable ? "text-green-600" : "text-red-600";
   };
@@ -182,7 +228,15 @@ export default function BudgetVsActualReport() {
           </Select>
           <Button onClick={handleExport} variant="outline">
             <Download className="w-4 h-4 mr-2" />
-            Export CSV
+            CSV
+          </Button>
+          <Button onClick={handleExportPdf} variant="outline">
+            <FileText className="w-4 h-4 mr-2" />
+            PDF
+          </Button>
+          <Button onClick={handleExportExcel} variant="outline">
+            <FileSpreadsheet className="w-4 h-4 mr-2" />
+            Excel
           </Button>
         </div>
       </div>

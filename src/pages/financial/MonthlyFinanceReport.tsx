@@ -14,7 +14,8 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Calendar, Download, TrendingUp, TrendingDown } from "lucide-react";
+import { Calendar, Download, TrendingUp, TrendingDown, FileText, FileSpreadsheet } from "lucide-react";
+import { exportReportToPdf, exportReportToExcel } from "@/src/lib/exportReport";
 
 const MONTH_LABELS = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -126,6 +127,73 @@ export default function MonthlyFinanceReport() {
     URL.revokeObjectURL(url);
   };
 
+  const buildExportOptions = () => {
+    if (!data) return null;
+    const monthData = data.monthlyCashFlow.find((m) => m.month === selectedMonth) || data.monthlyCashFlow[0];
+    const monthLabel = `${MONTH_LABELS[selectedMonth - 1]} ${year}`;
+    const monthCategoryEntries = Object.entries(monthData.outflow.byCategory).sort((a, b) => b[1] - a[1]);
+
+    return {
+      title: "Monthly Finance Report",
+      subtitle: `${monthLabel} — full year ${year} shown below`,
+      filename: `monthly-finance-report-${year}-${String(selectedMonth).padStart(2, '0')}`,
+      summary: [
+        { label: `Income (${monthLabel})`, value: `RM${monthData.inflow.total.toLocaleString()}` },
+        { label: `Expenses (${monthLabel})`, value: `RM${monthData.outflow.total.toLocaleString()}` },
+        {
+          label: `Net (${monthLabel})`,
+          value: `${monthData.netFlow >= 0 ? "+" : ""}RM${monthData.netFlow.toLocaleString()}`,
+        },
+        { label: "Running Balance", value: `RM${monthData.cumulative.toLocaleString()}` },
+      ],
+      sections: [
+        ...(monthCategoryEntries.length
+          ? [
+              {
+                heading: `Expenses by Category — ${monthLabel}`,
+                columns: ["Category", "Amount"],
+                rows: monthCategoryEntries.map(([category, amount]) => [category, `RM${amount.toLocaleString()}`]),
+              },
+            ]
+          : []),
+        {
+          heading: `Monthly Breakdown — All of ${year}`,
+          columns: ["Month", "Fees", "Donations", "Total Income", "Expenses", "Net", "Cumulative"],
+          rows: [
+            ...data.monthlyCashFlow.map((m) => [
+              `${MONTH_LABELS[m.month - 1]} ${m.year}`,
+              `RM${m.inflow.fees.toLocaleString()}`,
+              `RM${m.inflow.donations.toLocaleString()}`,
+              `RM${m.inflow.total.toLocaleString()}`,
+              `RM${m.outflow.total.toLocaleString()}`,
+              `${m.netFlow >= 0 ? "+" : ""}RM${m.netFlow.toLocaleString()}`,
+              `RM${m.cumulative.toLocaleString()}`,
+            ]),
+            [
+              "Total",
+              `RM${data.monthlyCashFlow.reduce((s, m) => s + m.inflow.fees, 0).toLocaleString()}`,
+              `RM${data.monthlyCashFlow.reduce((s, m) => s + m.inflow.donations, 0).toLocaleString()}`,
+              `RM${data.summary.totalInflow.toLocaleString()}`,
+              `RM${data.summary.totalOutflow.toLocaleString()}`,
+              `${data.summary.netCashFlow >= 0 ? "+" : ""}RM${data.summary.netCashFlow.toLocaleString()}`,
+              `RM${data.summary.endingBalance.toLocaleString()}`,
+            ],
+          ],
+        },
+      ],
+    };
+  };
+
+  const handleExportPdf = () => {
+    const opts = buildExportOptions();
+    if (opts) exportReportToPdf(opts);
+  };
+
+  const handleExportExcel = () => {
+    const opts = buildExportOptions();
+    if (opts) exportReportToExcel(opts);
+  };
+
   if (error) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -212,7 +280,15 @@ export default function MonthlyFinanceReport() {
           </Select>
           <Button onClick={handleExport} variant="outline">
             <Download className="w-4 h-4 mr-2" />
-            Export CSV
+            CSV
+          </Button>
+          <Button onClick={handleExportPdf} variant="outline">
+            <FileText className="w-4 h-4 mr-2" />
+            PDF
+          </Button>
+          <Button onClick={handleExportExcel} variant="outline">
+            <FileSpreadsheet className="w-4 h-4 mr-2" />
+            Excel
           </Button>
         </div>
       </div>

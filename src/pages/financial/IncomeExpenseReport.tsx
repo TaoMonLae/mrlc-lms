@@ -4,7 +4,8 @@ import { Bar, BarChart, CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieCh
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Calendar, Download, TrendingUp, TrendingDown } from "lucide-react";
+import { Calendar, Download, TrendingUp, TrendingDown, FileText, FileSpreadsheet } from "lucide-react";
+import { exportReportToPdf, exportReportToExcel } from "@/src/lib/exportReport";
 
 interface IncomeExpenseData {
   period: {
@@ -110,6 +111,57 @@ export default function IncomeExpenseReport() {
     URL.revokeObjectURL(url);
   };
 
+  const buildExportOptions = () => {
+    if (!data) return null;
+    return {
+      title: "Income & Expense Report",
+      subtitle: `Fiscal Year ${year}`,
+      filename: `income-expense-report-${year}`,
+      summary: [
+        { label: "Total Income", value: `RM${data.income.total.toLocaleString()}` },
+        { label: "Total Expenses", value: `RM${data.expenses.total.toLocaleString()}` },
+        {
+          label: "Net Surplus",
+          value: `${data.summary.netSurplus >= 0 ? "+" : ""}RM${data.summary.netSurplus.toLocaleString()} (${data.summary.surplusRatio.toFixed(1)}%)`,
+        },
+      ],
+      sections: [
+        {
+          heading: "Income by Source",
+          columns: ["Source", "Amount"],
+          rows: [
+            ["Fees", `RM${data.income.bySource.fees.toLocaleString()}`],
+            ["Donations", `RM${data.income.bySource.donations.toLocaleString()}`],
+            ["Total", `RM${data.income.total.toLocaleString()}`],
+          ],
+        },
+        {
+          heading: "Expenses by Category",
+          columns: ["Category", "Amount", "Count", "Percentage"],
+          rows: [
+            ...data.expenses.byCategory.map((item) => [
+              item.category,
+              `RM${item.amount.toLocaleString()}`,
+              item.count,
+              `${item.percentage.toFixed(1)}%`,
+            ]),
+            ["Total", `RM${data.expenses.total.toLocaleString()}`, data.expenses.byCategory.reduce((s, i) => s + i.count, 0), "100%"],
+          ],
+        },
+      ],
+    };
+  };
+
+  const handleExportPdf = () => {
+    const opts = buildExportOptions();
+    if (opts) exportReportToPdf(opts);
+  };
+
+  const handleExportExcel = () => {
+    const opts = buildExportOptions();
+    if (opts) exportReportToExcel(opts);
+  };
+
   if (error) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -173,7 +225,15 @@ export default function IncomeExpenseReport() {
           </Select>
           <Button onClick={handleExport} variant="outline">
             <Download className="w-4 h-4 mr-2" />
-            Export CSV
+            CSV
+          </Button>
+          <Button onClick={handleExportPdf} variant="outline">
+            <FileText className="w-4 h-4 mr-2" />
+            PDF
+          </Button>
+          <Button onClick={handleExportExcel} variant="outline">
+            <FileSpreadsheet className="w-4 h-4 mr-2" />
+            Excel
           </Button>
         </div>
       </div>
