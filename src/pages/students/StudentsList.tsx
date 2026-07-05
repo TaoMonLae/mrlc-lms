@@ -162,9 +162,11 @@ export default function StudentsList() {
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Students</h1>
           <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Manage student records, enrollment, and academic profiles.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <StudentTemplateButton />
-          <StudentCsvImport onImported={reloadStudents} />
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <div className="flex gap-2">
+            <StudentTemplateButton />
+            <StudentCsvImport onImported={reloadStudents} />
+          </div>
           <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto" render={<Link to="/students/new" />} nativeButton={false}>
             <UserPlus className="mr-2 h-4 w-4" />
             Add Student
