@@ -166,7 +166,7 @@ export default function TeacherTimetable() {
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight dark:text-white uppercase tracking-tighter">Teaching Schedule</h1>
           <p className="text-sm text-slate-500 mt-1 font-medium">Your assigned teaching sessions and availability across the week.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
             <Button
               id="print-schedule-btn"
               variant="outline"

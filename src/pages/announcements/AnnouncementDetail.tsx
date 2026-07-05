@@ -101,7 +101,7 @@ export default function AnnouncementDetail() {
           </div>
         </div>
         
-        <div className="flex items-center gap-2 self-end md:self-auto">
+        <div className="flex flex-wrap items-center gap-2 self-end md:self-auto">
           <Button variant="outline" size="sm" onClick={handleShare} className="h-9 px-3">
             <Share2 className="mr-2 h-4 w-4" /> Share
           </Button>
