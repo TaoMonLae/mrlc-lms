@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { DollarSign, TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight, Calendar, Users, AlertTriangle, CheckCircle2, PiggyBank } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight, Calendar, Users, AlertTriangle, CheckCircle2, PiggyBank, FileBarChart, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -166,7 +166,7 @@ export default function FinancialDashboard() {
               ))}
             </SelectContent>
           </Select>
-          <Button variant="outline" render={<Link to="/reports/monthly-summary" />} nativeButton={false}>
+          <Button variant="outline" render={<Link to="/financial/reports/monthly" />} nativeButton={false}>
               <Calendar className="h-4 w-4 mr-2" />
               Monthly Report
             </Button>
@@ -407,6 +407,30 @@ export default function FinancialDashboard() {
               </div>
             </CardContent>
           </Card>
+
+          {hasPermission('view_financial_reports') && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Financial Reports</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <Button variant="outline" className="h-20 flex-col" render={<Link to="/financial/reports/monthly" />} nativeButton={false}>
+                      <Calendar className="h-6 w-6 mb-2" />
+                      Monthly Report
+                    </Button>
+                  <Button variant="outline" className="h-20 flex-col" render={<Link to="/financial/reports/income-expense" />} nativeButton={false}>
+                      <FileBarChart className="h-6 w-6 mb-2" />
+                      Income &amp; Expense
+                    </Button>
+                  <Button variant="outline" className="h-20 flex-col" render={<Link to="/financial/reports/budget-vs-actual" />} nativeButton={false}>
+                      <BarChart3 className="h-6 w-6 mb-2" />
+                      Budget vs Actual
+                    </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </>
       )}
     </div>

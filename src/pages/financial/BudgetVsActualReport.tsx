@@ -66,8 +66,10 @@ export default function BudgetVsActualReport() {
       setLoading(true);
       setError(null);
 
+      const token = sessionStorage.getItem('auth_token');
       const response = await fetch(
-        `/api/financial-reports/budget-vs-actual?fiscalYear=${year}`
+        `/api/financial-reports/budget-vs-actual?fiscalYear=${year}`,
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (!response.ok) {

@@ -57,9 +57,11 @@ export default function IncomeExpenseReport() {
 
       const startDate = `${year}-01-01`;
       const endDate = `${year}-12-31`;
+      const token = sessionStorage.getItem('auth_token');
 
       const response = await fetch(
-        `/api/financial-reports/income-expense?startDate=${startDate}&endDate=${endDate}`
+        `/api/financial-reports/income-expense?startDate=${startDate}&endDate=${endDate}`,
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (!response.ok) {

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, Calendar, GraduationCap, DollarSign, Activity, FileSpreadsheet, Loader2 } from 'lucide-react';
+import { Users, Calendar, GraduationCap, DollarSign, Activity, FileSpreadsheet, Loader2, TrendingUp } from 'lucide-react';
 import { usePermissions } from '../../lib/permissions';
 import { apiGet } from '../../lib/api';
 
@@ -99,6 +99,17 @@ export default function ReportsDashboard() {
       allowed: isAdmin,
       metricLabel: 'Active Cases',
       metricValue: summary?.openCases,
+    },
+    {
+      id: 'monthly-finance',
+      title: 'Monthly Finance Report',
+      description: 'Income vs. expenses by month, with running cash balance and CSV export.',
+      icon: <TrendingUp className="h-6 w-6 text-green-500" />,
+      path: '/financial/reports/monthly',
+      color: 'bg-green-50 dark:bg-green-900/20',
+      allowed: hasPermission('view_financial_reports') || isAdmin,
+      metricLabel: 'This Year',
+      metricValue: null,
     }
   ];
 
