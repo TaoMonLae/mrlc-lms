@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useAuth } from '../providers/AuthProvider';
 
 export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT' | 'STAFF' | 'ACCOUNTANT' | 'CASE_WORKER' | 'LIBRARIAN';
@@ -276,7 +277,19 @@ export function useUser() {
 export function usePermissions() {
   const { user } = useUser();
 
-  return {
+  // IMPORTANT: this return value must stay referentially stable across
+  // renders when `user` hasn't changed. Every field here (including the
+  // functions) used to be recreated on every render, which is harmless on
+  // its own -- but dozens of pages pass `hasPermission` (or the whole
+  // `usePermissions()` result) into a useEffect dependency array to gate a
+  // data fetch. A fresh function reference every render meant that
+  // dependency "changed" every render, so the effect fired -> fetch ->
+  // setState -> re-render -> new hasPermission -> effect fires again,
+  // forever. That's what caused pages like the donor list/profile and the
+  // financial reports to spam the network with repeated requests instead of
+  // loading once. Memoizing on `user` keeps the reference stable so those
+  // effects only re-run when the actual user changes.
+  return useMemo(() => ({
     hasPermission: (permission: Permission) => hasPermission(user, permission),
     hasAnyPermission: (permissions: Permission[]) => hasAnyPermission(user, permissions),
     hasAllPermissions: (permissions: Permission[]) => hasAllPermissions(user, permissions),
@@ -290,7 +303,8 @@ export function usePermissions() {
     isCaseWorker: user?.role === 'CASE_WORKER',
     isStaff: user?.role === 'STAFF',
     user: user,
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [user]);
 }
 
 // Permission categories for UI organization
