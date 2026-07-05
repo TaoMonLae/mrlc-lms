@@ -75,8 +75,8 @@ export default function ChatStickers() {
 
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-aubergine-100 p-2 text-aubergine-700"><Sticker className="h-5 w-5" /></div>
-          <h1 className="text-xl font-semibold text-slate-900">Sticker packs</h1>
+          <div className="rounded-lg bg-aubergine-100 p-2 text-aubergine-700 dark:bg-aubergine-900/30 dark:text-aubergine-400"><Sticker className="h-5 w-5" /></div>
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Sticker packs</h1>
         </div>
         <div className="flex items-end gap-2">
           <div className="space-y-1"><Label className="text-xs">New pack</Label><Input value={newPack} onChange={(e) => setNewPack(e.target.value)} placeholder="e.g. School fun" className="h-9 w-48" /></div>

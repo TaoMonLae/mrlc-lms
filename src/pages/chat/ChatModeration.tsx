@@ -57,8 +57,8 @@ export default function ChatModeration() {
 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-amber-100 p-2 text-amber-700"><ShieldAlert className="h-5 w-5" /></div>
-          <h1 className="text-xl font-semibold text-slate-900">Chat moderation</h1>
+          <div className="rounded-lg bg-amber-100 p-2 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"><ShieldAlert className="h-5 w-5" /></div>
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Chat moderation</h1>
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>

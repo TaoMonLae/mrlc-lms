@@ -69,7 +69,7 @@ export default function Departments() {
       <Link to="/staff" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700">
         <ArrowLeft className="h-4 w-4" /> Back to staff
       </Link>
-      <h1 className="text-xl font-semibold text-slate-900">Departments &amp; designations</h1>
+      <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Departments &amp; designations</h1>
 
       <div className="grid gap-6 md:grid-cols-2">
         <div className="space-y-4 rounded-lg border border-slate-200 p-4">

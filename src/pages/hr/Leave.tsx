@@ -90,8 +90,8 @@ export default function Leave() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-amber-100 p-2 text-amber-700"><CalendarCheck className="h-5 w-5" /></div>
-          <h1 className="text-xl font-semibold text-slate-900">Leave</h1>
+          <div className="rounded-lg bg-amber-100 p-2 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"><CalendarCheck className="h-5 w-5" /></div>
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Leave</h1>
         </div>
         <div className="flex items-center gap-2">
           <Dialog open={typeOpen} onOpenChange={setTypeOpen}>

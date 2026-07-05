@@ -126,9 +126,9 @@ export default function StaffDirectory() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-indigo-100 p-2 text-indigo-700"><Briefcase className="h-5 w-5" /></div>
+          <div className="rounded-lg bg-indigo-100 p-2 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400"><Briefcase className="h-5 w-5" /></div>
           <div>
-            <h1 className="text-xl font-semibold text-slate-900">Staff</h1>
+            <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Staff</h1>
             <p className="text-sm text-slate-500">{employees.length} employees</p>
           </div>
         </div>
