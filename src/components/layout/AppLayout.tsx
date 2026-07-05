@@ -5,7 +5,9 @@ import { Outlet, useLocation, Navigate } from "react-router-dom";
 import { motion } from "motion/react";
 import { useAuth } from "../../providers/AuthProvider";
 import ChatWidget from "../chat/ChatWidget";
+import AIAssistantWidget from "../ai/AIAssistantWidget";
 import { ChatProvider } from "../../providers/ChatProvider";
+import { FloatingPanelProvider } from "../../providers/FloatingPanelProvider";
 
 export function AppLayout() {
   const location = useLocation();
@@ -42,7 +44,10 @@ export function AppLayout() {
             </motion.div>
           </main>
         </SidebarInset>
-        <ChatWidget />
+        <FloatingPanelProvider>
+          <ChatWidget />
+          <AIAssistantWidget />
+        </FloatingPanelProvider>
       </div>
     </SidebarProvider>
     </ChatProvider>

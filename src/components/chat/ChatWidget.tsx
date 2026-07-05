@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { apiGet, apiSend } from '../../lib/api';
 import { useChat } from '../../providers/ChatProvider';
 import { useAuth } from '../../providers/AuthProvider';
+import { useFloatingPanel } from '../../providers/FloatingPanelProvider';
 import { StickerPicker, isStickerUrl } from './StickerPicker';
 import CameraCapture from '../CameraCapture';
 import DOMPurify from 'dompurify';
@@ -35,7 +36,9 @@ export default function ChatWidget() {
   const myId = user?.id;
   const canSave = user?.role === 'ADMIN' || user?.role === 'TEACHER';
   const isChatRoute = location.pathname.startsWith('/chat');
-  const [open, setOpen] = useState(false);
+  // Coordinated with the AI Assistant widget so only one floating panel is
+  // ever expanded at a time -- both anchor to the bottom-right corner.
+  const { isOpen: open, isOtherOpen: aiOpen, setOpen } = useFloatingPanel('chat');
   const [camera, setCamera] = useState(false);
   const [conversations, setConversations] = useState<ConvSummary[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -150,6 +153,10 @@ export default function ChatWidget() {
 
   // The full chat page has its own UI; don't double up there.
   if (location.pathname.startsWith('/chat')) return null;
+
+  // The AI Assistant's panel covers the same bottom-right corner; hide our
+  // trigger while it's open instead of floating on top of it.
+  if (!open && aiOpen) return null;
 
   if (!open) {
     return (
