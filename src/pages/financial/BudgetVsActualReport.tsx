@@ -380,22 +380,25 @@ export default function BudgetVsActualReport() {
               <p className="text-sm text-gray-500">Total Budgets</p>
               <p className="text-2xl font-bold">{data.budgets.length}</p>
             </div>
+            {/* Buckets are mutually exclusive (matching getHealthStatus thresholds):
+                Over ≥100% utilization, On Track 70–100%, Under <70%. The old
+                filters counted the same budget in both On Track and Under Budget. */}
             <div>
               <p className="text-sm text-gray-500">Over Budget</p>
               <p className="text-2xl font-bold text-red-600">
-                {data.budgets.filter(b => b.variance.amount < 0).length}
+                {data.budgets.filter(b => b.utilization >= 100).length}
               </p>
             </div>
             <div>
               <p className="text-sm text-gray-500">On Track</p>
               <p className="text-2xl font-bold text-green-600">
-                {data.budgets.filter(b => b.variance.amount >= 0 && b.variance.amount < b.budget.allocated * 0.1).length}
+                {data.budgets.filter(b => b.utilization >= 70 && b.utilization < 100).length}
               </p>
             </div>
             <div>
               <p className="text-sm text-gray-500">Under Budget</p>
               <p className="text-2xl font-bold text-blue-600">
-                {data.budgets.filter(b => b.variance.amount > 0).length}
+                {data.budgets.filter(b => b.utilization < 70).length}
               </p>
             </div>
             <div>

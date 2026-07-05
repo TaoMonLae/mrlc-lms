@@ -29,7 +29,9 @@ export function BudgetProgress({
   showLabels = true,
   className,
 }: BudgetProgressProps) {
-  const calculatedUtilization = utilization || ((spent / allocated) * 100);
+  // `??` not `||`: a legitimate 0% utilization must not trigger recomputation,
+  // and dividing by a zero allocation would produce NaN/Infinity.
+  const calculatedUtilization = utilization ?? (allocated > 0 ? (spent / allocated) * 100 : 0);
 
   const getStatusColor = () => {
     if (calculatedUtilization >= 100) return "text-red-600 bg-red-100";
@@ -192,7 +194,7 @@ export function BudgetComparisonCard({
                 <span>{getVarianceIcon()}</span>
                 <span>{currency}{Math.abs(variance).toLocaleString()}</span>
                 <span className="text-xs text-gray-500">
-                  ({Math.abs(variance / budget * 100).toFixed(1)}%)
+                  ({budget > 0 ? Math.abs((variance / budget) * 100).toFixed(1) : "0.0"}%)
                 </span>
               </div>
             </div>

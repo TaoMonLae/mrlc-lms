@@ -1432,13 +1432,26 @@ async function startServer() {
   // monitoring and reading are never throttled.
   const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 min
-    max: 2000, // per user (or per IP when unauthenticated)
+    max: 4000, // per user (or per IP when unauthenticated)
     standardHeaders: true,
     legacyHeaders: false,
     message: { error: "Too many requests, please try again later." },
     keyGenerator: perUserOrIpKey,
+    // Skip endpoints that are hit on timers or on every page load. The chat
+    // provider polls conversations/presence/heartbeat every 8–20s in EVERY
+    // open tab (~220 req/15min/tab), which alone could exhaust the budget and
+    // then 429 unrelated pages — including /api/auth/me, which logged users
+    // out. These polling endpoints are cheap authenticated reads; chat writes
+    // still have their own dedicated limiters.
     skip: (req) =>
       req.originalUrl === "/api/health" ||
+      req.originalUrl === "/api/auth/me" ||
+      req.originalUrl === "/api/settings" ||
+      req.originalUrl.startsWith("/api/public/branding") ||
+      req.originalUrl === "/api/chat/heartbeat" ||
+      req.originalUrl === "/api/chat/presence" ||
+      req.originalUrl === "/api/chat/stream" ||
+      (req.method === "GET" && req.originalUrl.startsWith("/api/chat/conversations")) ||
       /^\/api\/ebooks\/[^/]+\/(content|download)/.test(req.originalUrl),
   });
   app.use("/api/", apiLimiter);
@@ -8625,6 +8638,23 @@ async function startServer() {
   }
 
   // ---- Financial Reports ----
+  // Resolves a report period from query params. The end of the range is pushed
+  // to 23:59:59.999 so records dated on the final day (which carry a time
+  // component) aren't silently excluded — `lte: new Date("2026-12-31")` is
+  // midnight and used to drop everything that happened during Dec 31.
+  function resolveReportRange(startDate?: string, endDate?: string, fiscalYear?: string): { gte: Date; lte: Date } {
+    if (startDate && endDate) {
+      const lte = new Date(endDate);
+      lte.setUTCHours(23, 59, 59, 999);
+      return { gte: new Date(startDate), lte };
+    }
+    const year = fiscalYear ? parseInt(fiscalYear) : new Date().getFullYear();
+    return {
+      gte: new Date(Date.UTC(year, 0, 1)),
+      lte: new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999)),
+    };
+  }
+
   app.get("/api/financial-reports/summary", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (!expenseCanView(jwtUser.role)) {
@@ -8632,29 +8662,14 @@ async function startServer() {
       return;
     }
     try {
-      const { startDate, endDate, fiscalYear } = req.query;
+      const { startDate, endDate, fiscalYear, year: yearParam } = req.query;
 
-      // Determine date range
-      let dateFilter: any = {};
-      if (startDate && endDate) {
-        dateFilter = {
-          gte: new Date(startDate as string),
-          lte: new Date(endDate as string),
-        };
-      } else if (fiscalYear) {
-        const year = parseInt(fiscalYear as string);
-        dateFilter = {
-          gte: new Date(`${year}-01-01`),
-          lte: new Date(`${year}-12-31`),
-        };
-      } else {
-        // Default to current year
-        const currentYear = new Date().getFullYear();
-        dateFilter = {
-          gte: new Date(`${currentYear}-01-01`),
-          lte: new Date(`${currentYear}-12-31`),
-        };
-      }
+      // Determine date range (accept both `fiscalYear` and `year` for the year shortcut)
+      const dateFilter = resolveReportRange(
+        startDate as string | undefined,
+        endDate as string | undefined,
+        (fiscalYear || yearParam) as string | undefined
+      );
 
       // Get fee payments (income)
       const feePayments = await prisma.feePayment.aggregate({
@@ -8690,13 +8705,13 @@ async function startServer() {
         _count: true,
       });
 
-      // Get budget summary
+      // Get budget summary — a budget belongs to the period if its window
+      // overlaps it (starts before the period ends AND ends after it starts).
+      // The old OR filter missed budgets that span the entire period.
       const budgets = await prisma.budget.findMany({
         where: {
-          OR: [
-            { startDate: dateFilter },
-            { endDate: dateFilter },
-          ],
+          startDate: { lte: dateFilter.lte },
+          endDate: { gte: dateFilter.gte },
         },
       });
 
@@ -8777,20 +8792,10 @@ async function startServer() {
     try {
       const { startDate, endDate, groupBy = 'month' } = req.query;
 
-      let dateFilter: any = {};
-      if (startDate && endDate) {
-        dateFilter = {
-          gte: new Date(startDate as string),
-          lte: new Date(endDate as string),
-        };
-      } else {
-        // Default to current year
-        const currentYear = new Date().getFullYear();
-        dateFilter = {
-          gte: new Date(`${currentYear}-01-01`),
-          lte: new Date(`${currentYear}-12-31`),
-        };
-      }
+      const dateFilter = resolveReportRange(
+        startDate as string | undefined,
+        endDate as string | undefined
+      );
 
       // Get income by period
       const feePaymentsByPeriod = await prisma.feePayment.groupBy({
@@ -8965,20 +8970,10 @@ async function startServer() {
     try {
       const { startDate, endDate } = req.query;
 
-      let dateFilter: any = {};
-      if (startDate && endDate) {
-        dateFilter = {
-          gte: new Date(startDate as string),
-          lte: new Date(endDate as string),
-        };
-      } else {
-        // Default to current year
-        const currentYear = new Date().getFullYear();
-        dateFilter = {
-          gte: new Date(`${currentYear}-01-01`),
-          lte: new Date(`${currentYear}-12-31`),
-        };
-      }
+      const dateFilter = resolveReportRange(
+        startDate as string | undefined,
+        endDate as string | undefined
+      );
 
       // Cash inflows
       const feeInflows = await prisma.feePayment.findMany({
@@ -9026,12 +9021,17 @@ async function startServer() {
       // Combine and group by month
       const monthlyCashFlow = [];
 
-      for (let i = 0; i < 12; i++) {
-        const month = new Date(dateFilter.gte);
-        month.setMonth(i);
+      // Use the UTC year of the range start. The old code did
+      // `new Date(dateFilter.gte).setMonth(i)` which (a) shifted to the
+      // previous year in negative-UTC-offset timezones ("2026-01-01" parses to
+      // Dec 31 local) and (b) skipped months via day-of-month overflow when the
+      // start day was the 29th–31st.
+      const reportYear = dateFilter.gte.getUTCFullYear();
 
-        const monthStart = new Date(month.getFullYear(), month.getMonth(), 1);
-        const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+      for (let i = 0; i < 12; i++) {
+        const monthStart = new Date(reportYear, i, 1);
+        // End of the month's last day, so records dated on it are included.
+        const monthEnd = new Date(reportYear, i + 1, 0, 23, 59, 59, 999);
 
         const monthFeeInflows = feeInflows.filter(f => {
           const date = new Date(f.paidDate);
@@ -9054,8 +9054,8 @@ async function startServer() {
         const netFlow = totalInflow - totalOutflow;
 
         monthlyCashFlow.push({
-          month: month.getMonth() + 1,
-          year: month.getFullYear(),
+          month: i + 1,
+          year: reportYear,
           inflow: {
             total: totalInflow,
             fees: monthFeeInflows.reduce((sum, f) => sum + f.amount, 0),

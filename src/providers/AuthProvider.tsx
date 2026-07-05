@@ -76,19 +76,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fetch('/api/auth/me', {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((res) => {
-        if (!res.ok) throw new Error('Token invalid or expired');
-        return res.json();
-      })
-      .then((data) => {
-        setUser(mapApiUser(data.user));
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await res.json();
+          setUser(mapApiUser(data.user));
+          return;
+        }
+        // Only 401/403 mean the token itself is bad. Transient failures
+        // (429 rate limit, 5xx, network) must NOT log the user out — that
+        // was bouncing people to the login page whenever the server was
+        // briefly rate-limited or restarting.
+        if (res.status === 401 || res.status === 403) {
+          sessionStorage.removeItem('auth_token');
+          sessionStorage.removeItem('auth_user');
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('auth_user');
+          return;
+        }
+        // Transient error: fall back to the cached user so the session survives.
+        const cached = sessionStorage.getItem('auth_user');
+        if (cached) {
+          try { setUser(mapApiUser(JSON.parse(cached))); } catch { /* ignore */ }
+        }
       })
       .catch(() => {
-        // Token is stale — clear it so the user is sent back to login
-        sessionStorage.removeItem('auth_token');
-        sessionStorage.removeItem('auth_user');
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('auth_user');
+        // Network error — keep the session; fall back to the cached user.
+        const cached = sessionStorage.getItem('auth_user');
+        if (cached) {
+          try { setUser(mapApiUser(JSON.parse(cached))); } catch { /* ignore */ }
+        }
       })
       .finally(() => setIsLoading(false));
   }, []);

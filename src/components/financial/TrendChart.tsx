@@ -37,6 +37,8 @@ export function TrendChart({
 
     const first = data[0].value;
     const last = data[data.length - 1].value;
+    // Guard: a zero first value would make the % change Infinity/NaN.
+    if (first === 0) return null;
     const change = ((last - first) / first) * 100;
 
     return {
@@ -249,6 +251,7 @@ export function Sparkline({
     if (data.length < 2) return null;
     const first = data[0];
     const last = data[data.length - 1];
+    if (first === 0) return null;
     return ((last - first) / first) * 100;
   };
 

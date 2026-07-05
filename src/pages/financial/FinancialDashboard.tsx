@@ -40,18 +40,26 @@ export default function FinancialDashboard() {
 
   useEffect(() => {
     const token = sessionStorage.getItem('auth_token');
+    const headers = { Authorization: `Bearer ${token}` };
+    const yearStart = `${year}-01-01`;
+    const yearEnd = `${year}-12-31`;
 
     // Fetch both legacy and new financial data
     Promise.all([
-      fetch('/api/fees', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-      fetch('/api/expenses', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-      fetch('/api/budgets', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-      // New enhanced data
-      fetch(`/api/financial-reports/summary?year=${year}`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.ok ? r.json() : null),
+      fetch('/api/fees', { headers }).then(r => r.json()),
+      // The expenses list is paginated; totals come from its `summary`, which
+      // is computed server-side over ALL matching rows (not just one page).
+      fetch('/api/expenses?limit=1', { headers }).then(r => r.json()),
+      // Pending approvals fetched separately so the count/list are complete.
+      fetch('/api/expenses?status=PENDING_APPROVAL&limit=5', { headers }).then(r => r.json()),
+      fetch('/api/budgets', { headers }).then(r => r.json()),
+      // New enhanced data (server expects `fiscalYear`, not `year`)
+      fetch(`/api/financial-reports/summary?fiscalYear=${year}`, { headers }).then(r => r.ok ? r.json() : null),
+      fetch(`/api/financial-reports/cash-flow?startDate=${yearStart}&endDate=${yearEnd}`, { headers }).then(r => r.ok ? r.json() : null),
     ])
-      .then(([feesData, expensesData, budgetsData, financialSummary]) => {
+      .then(([feesData, expensesData, pendingData, budgetsData, financialSummary, cashFlowData]) => {
         // Process fee statistics
-        const fees = feesData || [];
+        const fees = Array.isArray(feesData) ? feesData : [];
         const feeTotal = fees.reduce((sum, f) => sum + f.amount, 0);
         const feePaid = fees.filter(f => f.status === 'PAID').reduce((sum, f) => sum + f.amount, 0);
         const feeOverdue = fees.filter(f => f.status === 'OVERDUE').reduce((sum, f) => sum + f.amount, 0);
@@ -74,11 +82,11 @@ export default function FinancialDashboard() {
           status: f.status,
         })));
 
-        // Process expense statistics
-        const expenses = expensesData.data || expensesData || [];
-        const expenseTotal = expenses.reduce((sum, e) => sum + (e.totalAmount || e.amount || 0), 0);
-        const expensePaid = expenses.filter(e => e.status === 'PAID').reduce((sum, e) => sum + (e.totalAmount || e.amount || 0), 0);
-        const expensePending = expenses.filter(e => e.status === 'PENDING_APPROVAL').length;
+        // Process expense statistics from the server-side summary
+        const expenseSummary = expensesData?.summary || {};
+        const expenseTotal = expenseSummary.totalAmount || 0;
+        const expensePaid = expenseSummary.paidAmount || 0;
+        const expensePending = pendingData?.pagination?.total || 0;
 
         setExpenseStats({
           total: expenseTotal,
@@ -88,7 +96,28 @@ export default function FinancialDashboard() {
         });
 
         // Set pending approvals
-        setPendingApprovals(expenses.filter(e => e.status === 'PENDING_APPROVAL').slice(0, 5));
+        setPendingApprovals(pendingData?.data || []);
+
+        // Build real monthly trend series from the cash-flow report
+        if (cashFlowData?.monthlyCashFlow) {
+          const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          setMonthlyTrends({
+            income: cashFlowData.monthlyCashFlow.map((m: any) => ({
+              date: MONTHS[m.month - 1],
+              value: m.inflow.total,
+            })),
+            expenses: cashFlowData.monthlyCashFlow.map((m: any) => ({
+              date: MONTHS[m.month - 1],
+              value: m.outflow.total,
+            })),
+            cashFlow: cashFlowData.monthlyCashFlow.map((m: any) => ({
+              date: MONTHS[m.month - 1],
+              value: m.netFlow,
+            })),
+          });
+        } else {
+          setMonthlyTrends(null);
+        }
 
         // Process budget statistics
         const budgets = budgetsData || [];
@@ -121,26 +150,7 @@ export default function FinancialDashboard() {
       });
   }, [year]);
 
-  // Generate sample trend data for visualization
-  const generateMonthlyTrends = () => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-    return {
-      income: months.map(month => ({
-        date: month,
-        value: 45000 + Math.random() * 5000,
-      })),
-      expenses: months.map(month => ({
-        date: month,
-        value: 38000 + Math.random() * 4000,
-      })),
-      cashFlow: months.map(month => ({
-        date: month,
-        value: 7000 + Math.random() * 2000,
-      })),
-    };
-  };
-
-  const trends = generateMonthlyTrends();
+  const trends = monthlyTrends;
 
   const netCashFlow = cashFlow.inflow - cashFlow.outflow;
   const isPositiveCashFlow = netCashFlow >= 0;
@@ -181,23 +191,15 @@ export default function FinancialDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <FinancialMetricCard
               title="Total Revenue"
-              amount={feeStats.total}
-              description="Fees & Payments"
+              amount={feeStats.paid}
+              description="Fees collected"
               icon={<DollarSign className="w-4 h-4 text-green-600" />}
-              trend={{
-                value: 8.5,
-                direction: "up",
-              }}
             />
             <FinancialMetricCard
               title="Total Expenses"
               amount={expenseStats.total}
-              description={`${expenseStats.paid} paid, ${expenseStats.pending} pending`}
+              description={`${formatMoney(expenseStats.paid, currency)} paid, ${expenseStats.pending} pending`}
               icon={<Wallet className="w-4 h-4 text-red-600" />}
-              trend={{
-                value: 3.2,
-                direction: "down",
-              }}
             />
             <FinancialMetricCard
               title="Outstanding Fees"
@@ -215,10 +217,11 @@ export default function FinancialDashboard() {
           </div>
 
           {/* Enhanced Cash Flow with visual components */}
+          {trends && (
           <Card>
             <CardHeader>
               <CardTitle>Cash Flow Analysis</CardTitle>
-              <CardDescription>Monthly income and expense trends</CardDescription>
+              <CardDescription>Monthly income and expense trends for {year}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -249,6 +252,7 @@ export default function FinancialDashboard() {
               </div>
             </CardContent>
           </Card>
+          )}
 
           {/* Legacy Cash Flow Summary */}
           <Card>
