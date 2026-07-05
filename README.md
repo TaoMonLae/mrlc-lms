@@ -35,6 +35,7 @@ The application is built as a unified Node.js/Express server that serves both th
 | **Digital Library** | E-book (EPUB/PDF) collection with reading progress tracking |
 | **Physical Library** | Book catalog, borrowing system, and due date management |
 | **Fee Management** | Fee structure, payment tracking, and receipt generation |
+| **Financial Management** | Income/expense tracking, budget vs. actual reporting, monthly finance summaries, expense management, and donor/donation tracking with PDF/Excel export |
 | **Case Management** | Student case notes, interventions, and follow-up tracking |
 | **Announcements** | School-wide announcements with rich text and media support |
 | **Timetable** | Class scheduling with conflict detection and calendar view |
@@ -43,6 +44,7 @@ The application is built as a unified Node.js/Express server that serves both th
 
 ### Specialized Features
 
+- **AI Assistant**: Built-in AI assistant for Admins and Teachers with quick prompts for lesson planning, quiz generation, announcement drafting, and multi-language translation (English/Mon/Burmese)
 - **Chat System**: Real-time messaging with typing indicators, presence, and sticker support
 - **Social Space**: Community feed for sharing updates and media
 - **News & Daily Digest**: Curated multi-source RSS feed (world, tech, education, and Myanmar-focused independent outlets) with a clean in-app reading view
@@ -51,6 +53,7 @@ The application is built as a unified Node.js/Express server that serves both th
 - **Lesson Planner**: Teacher lesson planning and resource management
 - **Admissions**: Student application and enrollment workflow
 - **HR, Payroll & Leave**: Staff directory with departments/designations, monthly payroll, and leave request/approval workflow
+- **Financial Management**: Comprehensive financial dashboard with income/expense tracking, budget vs. actual reporting, monthly finance summaries, expense management, and donor/donation tracking with PDF and Excel export
 - **Bank Integration**: Fee payment tracking and reconciliation
 - **Global Search**: Cross-module search with deep links into students, classes, exams, and more
 
@@ -66,9 +69,44 @@ Adding new languages is straightforward—simply add a `.po` file to `src/i18n/l
 
 ---
 
+## Recent Updates
+
+### Latest Features & Improvements
+
+**AI Assistant (NEW)**
+- Built-in AI assistant for Admins and Teachers
+- Quick prompt templates for lesson planning, quiz generation, announcements, and translation
+- Multi-language support (English, Mon, Burmese)
+- Floating panel design coordinated with chat system
+
+**Enhanced Financial Management**
+- Comprehensive financial dashboard with real-time metrics
+- Income and expense tracking with detailed reporting
+- Budget vs. Actual analysis with visualizations
+- Monthly finance summaries with trend analysis
+- Expense management with edit/delete capabilities
+- Donor and donation tracking
+- PDF and Excel export for all financial reports
+
+**UI/UX Improvements**
+- Fixed widget overlapping issues (AI Assistant and Chat widgets)
+- Enhanced mobile responsiveness across all pages
+- Improved dark mode contrast and readability
+- Floating panel system for better space management
+- Consistent PDF layouts across reports and receipts
+
+**Production Readiness**
+- Enhanced security configurations
+- Improved error handling and logging
+- Database backup management
+- Environment variable validation
+- Production deployment optimizations
+
+---
+
 ## Tech Stack
 
-- **Frontend**: React 19 · Vite 6 · TypeScript · Tailwind CSS v4 · Radix UI · Lucide Icons
+- **Frontend**: React 19 · Vite 6 · TypeScript · Tailwind CSS v4 · Radix UI · Lucide Icons · Motion (animations) · Sonner (toast notifications)
 - **Backend**: Express 4 · Node.js · Winston logging · JWT authentication
 - **Database**: PostgreSQL · Prisma 7 ORM
 - **File Processing**: Multer (uploads) · epubjs (e-books) · react-pdf (PDFs)
