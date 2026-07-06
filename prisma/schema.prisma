@@ -269,9 +269,14 @@ model User {
 model SchoolProfile {
   id              String   @id @default(uuid())
   name            String
+  shortName       String?
   address         String?
   contactEmail    String?
   contactPhone    String?
+  website         String?
+  academicYear    String?
+  principalName   String?
+  description     String?
   establishedYear Int?
 
   // Branding

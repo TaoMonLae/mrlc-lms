@@ -1046,6 +1046,7 @@ const schemas = {
   }),
   settingsUpdate: z.object({
     name: optStr, address: optStr, email: optStr, phone: optStr,
+    shortName: optStr, website: optStr, academicYear: optStr, principalName: optStr, description: optStr,
     logoUrl: nullableStr, signatureUrl: nullableStr, loginHeroUrl: nullableStr, primaryColor: optStr, accentColor: optStr,
     darkModeDefault: z.union([z.boolean(), z.string()]).optional(),
     reportHeaderStyle: optStr,
@@ -11915,9 +11916,14 @@ async function startServer() {
     // School / Branding / System tabs can each save independently.
     const data: any = {};
     if (b.name) data.name = b.name;
+    if (b.shortName !== undefined) data.shortName = b.shortName;
     if (b.address !== undefined) data.address = b.address;
     if (b.email !== undefined) data.contactEmail = b.email;
     if (b.phone !== undefined) data.contactPhone = b.phone;
+    if (b.website !== undefined) data.website = b.website;
+    if (b.academicYear !== undefined) data.academicYear = b.academicYear;
+    if (b.principalName !== undefined) data.principalName = b.principalName;
+    if (b.description !== undefined) data.description = b.description;
 
     // Branding
     if (b.logoUrl !== undefined) data.logoUrl = b.logoUrl;

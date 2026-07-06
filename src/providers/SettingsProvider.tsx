@@ -74,9 +74,14 @@ function applyServerData(
   setSchool(prev => ({
     ...prev,
     name: data.name ?? prev.name,
+    shortName: data.shortName !== undefined ? (data.shortName ?? '') : prev.shortName,
     address: data.address !== undefined ? data.address : prev.address,
     phone: data.contactPhone !== undefined ? data.contactPhone : prev.phone,
     email: data.contactEmail !== undefined ? data.contactEmail : prev.email,
+    website: data.website !== undefined ? (data.website ?? '') : prev.website,
+    academicYear: data.academicYear !== undefined ? (data.academicYear ?? '') : prev.academicYear,
+    principalName: data.principalName !== undefined ? (data.principalName ?? '') : prev.principalName,
+    description: data.description !== undefined ? (data.description ?? '') : prev.description,
   }));
   setBranding(prev => ({
     ...prev,
@@ -187,7 +192,17 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   };
 
   const updateSchoolProfile = (data: Partial<SchoolProfile>) =>
-    save({ name: data.name, address: data.address, phone: data.phone, email: data.email });
+    save({
+      name: data.name,
+      shortName: data.shortName,
+      address: data.address,
+      phone: data.phone,
+      email: data.email,
+      website: data.website,
+      academicYear: data.academicYear,
+      principalName: data.principalName,
+      description: data.description,
+    });
 
   const updateBranding = (data: Partial<BrandingSettings>) =>
     save({
