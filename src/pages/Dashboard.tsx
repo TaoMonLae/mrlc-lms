@@ -25,6 +25,13 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Students are redirected to /student/dashboard below, which hits its
+    // own endpoint (/api/student/dashboard). /api/dashboard is
+    // staff/admin-only and rejects STUDENT with a 403 -- fetching it here
+    // anyway just threw a spurious "Failed to load dashboard" toast on
+    // every student login, even though the redirect made the failure
+    // invisible/irrelevant a moment later.
+    if (isStudent) { setLoading(false); return; }
     const load = async () => {
       try {
         const token = sessionStorage.getItem("auth_token");
@@ -38,7 +45,7 @@ export default function DashboardPage() {
       }
     };
     load();
-  }, []);
+  }, [isStudent]);
 
   if (isStudent) {
     return <Navigate to="/student/dashboard" replace />;
