@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { TimetableForm } from '@/src/components/timetable/TimetableForm';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, CalendarDays } from 'lucide-react';
@@ -8,6 +8,11 @@ import { toast } from 'sonner';
 
 export default function TimetableNew() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // Allows deep-linking here from a Class Profile page (e.g. "/timetable/new?classId=...")
+  // so the class is pre-selected and the user is returned to that class afterward.
+  const classId = searchParams.get('classId') || undefined;
+  const backUrl = classId ? `/classes/${classId}` : '/timetable';
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (values: any) => {
@@ -25,7 +30,7 @@ export default function TimetableNew() {
         throw new Error(`${err.error || 'Failed to create schedule item'}${details}`);
       }
       toast.success('Schedule item created successfully');
-      navigate('/timetable');
+      navigate(backUrl);
     } catch (error: any) {
       toast.error(error.message || 'Failed to create schedule item');
     } finally {
@@ -36,10 +41,10 @@ export default function TimetableNew() {
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-center gap-3">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          render={<Link to="/timetable" />}
+        <Button
+          variant="ghost"
+          size="icon"
+          render={<Link to={backUrl} />}
           nativeButton={false}
           className="rounded-full hover:bg-slate-100 dark:hover:bg-surface-raised"
         >
@@ -54,7 +59,7 @@ export default function TimetableNew() {
         </div>
       </div>
 
-      <TimetableForm onSubmit={handleSubmit} isLoading={isLoading} />
+      <TimetableForm onSubmit={handleSubmit} isLoading={isLoading} defaultClassId={classId} />
     </div>
   );
 }

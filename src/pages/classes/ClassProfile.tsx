@@ -46,6 +46,22 @@ type ClassSubjectRow = {
   assigned: boolean;
 };
 
+type TimetableRow = {
+  id: string;
+  dayOfWeek: string;
+  startTime: string;
+  endTime: string;
+  subjectName: string | null;
+  teacherName: string | null;
+  substituteTeacherName?: string | null;
+  room: string | null;
+  scheduleType?: string;
+  status?: string;
+  notes?: string | null;
+};
+
+const DAY_ORDER = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
 type ClassData = {
   id: string;
   name: string;
@@ -93,6 +109,10 @@ export default function ClassProfile() {
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
   const [assigningStudents, setAssigningStudents] = useState(false);
 
+  // Timetable
+  const [timetable, setTimetable] = useState<TimetableRow[]>([]);
+  const [timetableLoading, setTimetableLoading] = useState(true);
+
   const loadClass = async () => {
     if (!id) return;
     try {
@@ -139,6 +159,17 @@ export default function ClassProfile() {
   };
 
   useEffect(() => { loadClass(); /* eslint-disable-next-line */ }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    const token = sessionStorage.getItem('auth_token');
+    setTimetableLoading(true);
+    fetch(`/api/timetable?classId=${id}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setTimetable(Array.isArray(data) ? data : []))
+      .catch(() => setTimetable([]))
+      .finally(() => setTimetableLoading(false));
+  }, [id]);
 
   // Load all teachers and subjects for the assignment pickers (admins only).
   useEffect(() => {
@@ -717,11 +748,77 @@ export default function ClassProfile() {
         </TabsContent>
 
         <TabsContent value="timetable" className="p-6 animate-in fade-in slide-in-from-bottom-2">
-          <div className="text-center py-10">
-            <Clock className="w-12 h-12 text-slate-200 mx-auto mb-3" />
-            <p className="text-lg font-medium text-slate-900 dark:text-white">Class Timetable</p>
-            <p className="text-slate-500 text-sm">Timetable management coming soon.</p>
+          <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
+            <h3 className="font-semibold text-slate-900 dark:text-white">Weekly Schedule</h3>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" render={<Link to="/timetable" />} nativeButton={false}>
+                View Full Timetable
+              </Button>
+              {canManageClass && (
+                <Button size="sm" render={<Link to={`/timetable/new?classId=${id}`} />} nativeButton={false}>
+                  <Plus className="w-4 h-4 mr-2" /> Add Slot
+                </Button>
+              )}
+            </div>
           </div>
+
+          {timetableLoading ? (
+            <div className="flex items-center justify-center py-10">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+              <span className="ml-3 text-slate-500 text-sm">Loading timetable…</span>
+            </div>
+          ) : timetable.length === 0 ? (
+            <div className="text-center py-10">
+              <Clock className="w-12 h-12 text-slate-200 mx-auto mb-3" />
+              <p className="text-lg font-medium text-slate-900 dark:text-white">No schedule yet</p>
+              <p className="text-slate-500 text-sm">
+                {canManageClass ? 'Add the first slot to build this class\'s weekly timetable.' : 'This class has no timetable slots yet.'}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              {DAY_ORDER.filter((day) => timetable.some((t) => t.dayOfWeek === day)).map((day) => (
+                <div key={day}>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">{day}</p>
+                  <div className="space-y-2">
+                    {timetable
+                      .filter((t) => t.dayOfWeek === day)
+                      .sort((a, b) => a.startTime.localeCompare(b.startTime))
+                      .map((t) => (
+                        <div
+                          key={t.id}
+                          className={`flex items-center gap-4 p-3 rounded-lg border ${
+                            t.status === 'CANCELLED'
+                              ? 'border-slate-200 dark:border-surface-raised bg-slate-50 dark:bg-surface-raised/30 opacity-60'
+                              : 'border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo'
+                          }`}
+                        >
+                          <div className="w-24 shrink-0 text-sm font-mono text-slate-500">{t.startTime}–{t.endTime}</div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-slate-900 dark:text-white truncate">
+                              {t.scheduleType === 'HOLIDAY' ? (t.notes || 'School Holiday') : t.scheduleType === 'SPECIAL_EVENT' ? (t.notes || 'Special Event') : (t.subjectName || 'Scheduled Period')}
+                            </p>
+                            <p className="text-xs text-slate-500 truncate">
+                              {t.teacherName || '—'}
+                              {t.substituteTeacherName ? ` (sub: ${t.substituteTeacherName})` : ''}
+                              {t.room ? ` · Room ${t.room}` : ''}
+                            </p>
+                          </div>
+                          {t.status && t.status !== 'ACTIVE' && (
+                            <Badge variant="outline" className="text-[10px] shrink-0">{t.status}</Badge>
+                          )}
+                          {canManageClass && (
+                            <Button size="sm" variant="ghost" className="shrink-0" render={<Link to={`/timetable/${t.id}/edit`} />} nativeButton={false}>
+                              Edit
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>

@@ -68,9 +68,11 @@ interface TimetableFormProps {
   initialData?: TimetableEntry;
   onSubmit: (data: TimetableFormValues) => void;
   isLoading?: boolean;
+  /** Pre-select a class (e.g. when adding a slot from a Class Profile page). Ignored if initialData is set. */
+  defaultClassId?: string;
 }
 
-export function TimetableForm({ initialData, onSubmit, isLoading }: TimetableFormProps) {
+export function TimetableForm({ initialData, onSubmit, isLoading, defaultClassId }: TimetableFormProps) {
   const [classOptions, setClassOptions] = useState<Option[]>([]);
   const [subjectOptions, setSubjectOptions] = useState<Option[]>([]);
   const [teacherOptions, setTeacherOptions] = useState<Option[]>([]);
@@ -97,7 +99,7 @@ export function TimetableForm({ initialData, onSubmit, isLoading }: TimetableFor
   const form = useForm<TimetableFormValues>({
     resolver: zodResolver(timetableSchema),
     defaultValues: {
-      classId: initialData?.classId || '',
+      classId: initialData?.classId || defaultClassId || '',
       subjectId: initialData?.subjectId || '',
       teacherId: initialData?.teacherId || '',
       substituteTeacherId: (initialData as any)?.substituteTeacherId || '',
