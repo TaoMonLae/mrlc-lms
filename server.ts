@@ -2492,10 +2492,37 @@ async function startServer() {
   });
 
   // ── Teachers API ────────────────────────────────────────────────────────────
-  app.get("/api/teachers", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.get("/api/teachers", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    // permissions.ts grants 'view_teachers' to ADMIN, TEACHER, STAFF, and
+    // LIBRARIAN, but this route only ever let ADMIN through -- so TEACHER
+    // users hit a 403 (silently swallowed as an empty list by the fetch
+    // callers) any time they needed the teacher list, e.g. the Teacher /
+    // Substitute Teacher dropdowns on the New Schedule Item form, which
+    // TEACHER is explicitly allowed to open.
+    if (!["ADMIN", "TEACHER", "STAFF", "LIBRARIAN"].includes(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
     try {
       const teachers = await prisma.teacher.findMany({
-        include: {
+        // Only ADMIN gets salary/currency/notes -- everyone else granted
+        // 'view_teachers' just needs enough to identify/pick a teacher
+        // (name, code, subject specialization), not their pay details.
+        select: {
+          id: true,
+          teacherCode: true,
+          specialization: true,
+          employmentType: true,
+          profilePhotoUrl: true,
+          gender: jwtUser.role === "ADMIN",
+          phone: jwtUser.role === "ADMIN",
+          address: jwtUser.role === "ADMIN",
+          notes: jwtUser.role === "ADMIN",
+          baseSalary: jwtUser.role === "ADMIN",
+          currency: jwtUser.role === "ADMIN",
+          hireDate: true,
+          createdAt: true,
           user: {
             select: {
               firstName: true,

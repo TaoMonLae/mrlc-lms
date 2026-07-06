@@ -131,6 +131,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'view_assigned_classes',
     'view_assigned_students',
     'view_students',
+    'view_teachers',
     'view_classes',
     'view_subjects',
     'view_exams',
