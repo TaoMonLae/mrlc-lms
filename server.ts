@@ -2321,16 +2321,54 @@ async function startServer() {
       }
       const label = `${fullName(student.user) || "Unnamed"} (${student.studentCode})`;
       await prisma.$transaction(async (tx) => {
+        // Only a couple of the Student model's relations actually cascade at
+        // the DB level (HomeworkSubmission, StudentBadge) — everything else
+        // below defaults to Postgres's RESTRICT, so deleting the Student row
+        // directly failed with a foreign-key violation (surfaced to the user
+        // as a generic 500 "Server error") for any student who had even one
+        // attendance record, exam attempt, fee payment, or case file, which
+        // in practice is almost every real student. Explicitly clear out all
+        // of this student's own records first; each of these has its own
+        // children cascading further (exam attempt answers, case notes, fee
+        // installments, etc.) per schema.prisma.
+        await tx.attendance.deleteMany({ where: { studentId: id } });
+        await tx.examAssignment.deleteMany({ where: { studentId: id } });
+        await tx.examAccommodation.deleteMany({ where: { studentId: id } });
+        await tx.examAttempt.deleteMany({ where: { studentId: id } });
+        await tx.feePayment.deleteMany({ where: { studentId: id } });
+        await tx.feeAssignment.deleteMany({ where: { studentId: id } });
+        await tx.feePaymentPlan.deleteMany({ where: { studentId: id } });
+        await tx.caseRecord.deleteMany({ where: { studentId: id } });
+        await tx.grade.deleteMany({ where: { studentId: id } });
+        await tx.gedReadiness.deleteMany({ where: { studentId: id } });
+        await tx.generatedDocument.deleteMany({ where: { studentId: id } });
+        await tx.dutyAssignment.deleteMany({ where: { studentId: id } });
+        await tx.studentDocument.deleteMany({ where: { studentId: id } });
+
         await tx.student.delete({ where: { id } });
+
         if (student.userId) {
-          await tx.user.delete({ where: { id: student.userId } });
+          const userId = student.userId;
+          // Same problem on the linked login account: any chat/messaging/
+          // social activity references the user without cascading. Clear the
+          // account's own footprint before deleting it. Conversations this
+          // account *created* are removed entirely (cascading their messages
+          // for all participants) since there's no other owner to hand them
+          // to — an accepted consequence of a permanent account deletion.
+          await tx.chatMessageReport.deleteMany({ where: { reportedById: userId } });
+          await tx.chatMessage.deleteMany({ where: { senderId: userId } });
+          await tx.conversationParticipant.deleteMany({ where: { userId } });
+          await tx.conversation.deleteMany({ where: { createdById: userId } });
+          await tx.messageRecipient.deleteMany({ where: { recipientId: userId } });
+          await tx.message.deleteMany({ where: { senderId: userId } });
+          await tx.user.delete({ where: { id: userId } });
         }
       });
 
-      // Permanent, irreversible — cascades (per schema.prisma) to delete this
-      // student's attendance, grades, exam attempts, fee payments, and case
-      // records too. Flagged WARNING severity (vs. the usual SUCCESS) so it
-      // stands out in the audit log given the blast radius.
+      // Permanent, irreversible — wipes this student's attendance, grades,
+      // exam attempts, fee payments, case records, and login account.
+      // Flagged WARNING severity (vs. the usual SUCCESS) so it stands out in
+      // the audit log given the blast radius.
       await createAuditLog(
         jwtUser.userId,
         jwtUser.email,
@@ -2344,8 +2382,12 @@ async function startServer() {
       );
 
       res.json({ message: "Student deleted successfully" });
-    } catch (err) {
+    } catch (err: any) {
       logger.error("Error deleting student:", err);
+      if (err.code === "P2003" || err.code === "P2014") {
+        res.status(400).json({ error: "This student has related records that couldn't be removed automatically. Please contact support." });
+        return;
+      }
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
