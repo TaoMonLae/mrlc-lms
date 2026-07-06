@@ -239,6 +239,9 @@ model User {
   firstName     String
   lastName      String
   profilePhotoUrl String?
+  // Personal override for the decorative mouse-cursor effect. Null means
+  // "use the school-wide default" set in Settings > System > Cursor Effects.
+  cursorEffect  String?
   role          Role      @default(STUDENT)
   isActive      Boolean   @default(true)
   mustChangePassword Boolean @default(false)

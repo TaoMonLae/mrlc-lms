@@ -14,6 +14,9 @@ export interface User {
   role: UserRole;
   status: UserStatus;
   mustChangePassword?: boolean;
+  // Personal override for the decorative cursor effect; null/undefined means
+  // "use the school-wide default" from Settings > System.
+  cursorEffect?: string | null;
   studentId?: string;
   teacherId?: string;
   lastLoginAt?: string;

@@ -5,6 +5,7 @@ import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import LoginPage from "./pages/Login";
 import ChangePassword from "./pages/ChangePassword";
 import DashboardPage from "./pages/Dashboard";
+import MyProfile from "./pages/MyProfile";
 import { PlaceholderPage } from "./pages/Placeholder";
 import StudentsList from "./pages/students/StudentsList";
 import StudentNew from "./pages/students/StudentNew";
@@ -243,6 +244,7 @@ export default function App() {
               <Route path="/payroll/runs/:id/print" element={<PayrollRunPrint />} />
               <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/profile" element={<MyProfile />} />
 
                 <Route element={<ProtectedRoute allowedRoles={['TEACHER', 'ADMIN']} />}>
                   <Route path="/teacher/dashboard" element={<TeacherDashboard />} />

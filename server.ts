@@ -1591,6 +1591,7 @@ async function startServer() {
           role: user.role,
           isActive: user.isActive,
           mustChangePassword: user.mustChangePassword,
+          cursorEffect: (user as any).cursorEffect || null,
         },
       });
     } catch (err) {
@@ -1619,6 +1620,7 @@ async function startServer() {
           role: true,
           isActive: true,
           mustChangePassword: true,
+          cursorEffect: true,
         },
       } as any);
       if (!user || !user.isActive) {
@@ -1628,6 +1630,31 @@ async function startServer() {
       res.json({ user });
     } catch (err) {
       logger.error("Error fetching user profile:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Any authenticated user may set their own personal cursor-effect
+  // preference (distinct from the school-wide default in Settings > System,
+  // which stays admin-only). null/omitted clears the override and falls
+  // back to that default.
+  const CURSOR_EFFECTS = ["NONE", "RAINBOW_TRAIL", "SPLASH_CURSOR", "RIBBONS", "GHOST_CURSOR", "CLICK_SPARK", "TARGET_CURSOR"];
+  app.put("/api/me/cursor-effect", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { cursorEffect } = req.body || {};
+    if (cursorEffect !== null && cursorEffect !== undefined && !CURSOR_EFFECTS.includes(cursorEffect)) {
+      res.status(400).json({ error: "Invalid cursor effect" });
+      return;
+    }
+    try {
+      const updated = await prisma.user.update({
+        where: { id: jwtUser.userId },
+        data: { cursorEffect: cursorEffect || null },
+        select: { id: true, cursorEffect: true },
+      } as any);
+      res.json(updated);
+    } catch (err) {
+      logger.error("Error updating cursor effect preference:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });

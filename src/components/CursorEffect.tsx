@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSettings } from '../providers/SettingsProvider';
+import { useAuth } from '../providers/AuthProvider';
 import RainbowMouseTrail from './RainbowMouseTrail';
 import SplashCursor from '@/components/SplashCursor';
 import Ribbons from '@/components/Ribbons';
@@ -7,12 +8,15 @@ import GhostCursor from '@/components/GhostCursor';
 import ClickSpark from '@/components/ClickSpark';
 import TargetCursor from '@/components/TargetCursor';
 
-// Dispatches whichever global cursor/mouse effect is picked in
-// Settings -> System -> Cursor Effects. Purely decorative — never blocks
-// clicks (each branch is either self-contained pointer-events-none, or
-// wrapped in one here), and is skipped entirely for prefers-reduced-motion.
+// Dispatches whichever cursor/mouse effect applies for the current user:
+// their own personal pick from My Profile if they've set one, otherwise the
+// school-wide default from Settings -> System -> Cursor Effects. Purely
+// decorative — never blocks clicks (each branch is either self-contained
+// pointer-events-none, or wrapped in one here), and is skipped entirely for
+// prefers-reduced-motion.
 export default function CursorEffect() {
   const { systemSettings } = useSettings();
+  const { user } = useAuth();
   const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
@@ -26,7 +30,9 @@ export default function CursorEffect() {
 
   if (reducedMotion) return null;
 
-  switch (systemSettings.cursorEffect) {
+  const effect = user?.cursorEffect || systemSettings.cursorEffect;
+
+  switch (effect) {
     case 'SPLASH_CURSOR':
       return <SplashCursor />;
     case 'RIBBONS':

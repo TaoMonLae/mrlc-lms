@@ -21,6 +21,10 @@ interface AuthContextType {
     rememberMe?: boolean
   ) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
+  // Patches the in-memory user (and its cached copy in session/local
+  // storage) after a self-service change like a personal preference update,
+  // without needing a full /api/auth/me round trip or page reload.
+  updateUser: (patch: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -28,6 +32,7 @@ const AuthContext = createContext<AuthContextType>({
   isLoading: true,
   login: async () => ({ success: false }),
   logout: () => {},
+  updateUser: () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -44,6 +49,7 @@ function mapApiUser(apiUser: Record<string, any>): User {
     role: apiUser.role,
     status: apiUser.isActive ? 'ACTIVE' : 'DISABLED',
     mustChangePassword: Boolean(apiUser.mustChangePassword),
+    cursorEffect: apiUser.cursorEffect ?? null,
     createdAt: apiUser.createdAt ?? new Date().toISOString(),
     updatedAt: apiUser.updatedAt ?? new Date().toISOString(),
   };
@@ -163,8 +169,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.dispatchEvent(new Event('auth-state-changed'));
   }, []);
 
+  const updateUser = useCallback((patch: Partial<User>) => {
+    setUser((prev) => (prev ? { ...prev, ...patch } : prev));
+    // Keep the cached copy (used to restore on reload / transient errors) in
+    // sync too, whichever storage currently holds it.
+    for (const storage of [sessionStorage, localStorage]) {
+      const cached = storage.getItem('auth_user');
+      if (!cached) continue;
+      try {
+        const parsed = JSON.parse(cached);
+        storage.setItem('auth_user', JSON.stringify({ ...parsed, ...patch }));
+      } catch { /* ignore malformed cache */ }
+    }
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

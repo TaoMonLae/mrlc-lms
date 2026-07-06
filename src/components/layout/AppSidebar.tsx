@@ -237,9 +237,9 @@ export function AppSidebar() {
                 />
               </div>
               <DropdownMenuSeparator />
-              <DropdownMenuItem render={<Link to="/settings" className="w-full flex items-center" />}>
+              <DropdownMenuItem render={<Link to="/profile" className="w-full flex items-center" />}>
                 <User className="mr-2 h-4 w-4" />
-                Profile Settings
+                My Profile
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
