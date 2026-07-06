@@ -226,7 +226,11 @@ export function registerNewsRoutes(deps: Deps): { refreshAllSources: () => Promi
       const where: any = {
         ...(sourceId ? { sourceId } : {}),
         ...(q ? { OR: [{ title: { contains: q, mode: "insensitive" } }, { summary: { contains: q, mode: "insensitive" } }] } : {}),
-        source: { enabled: true, ...(category ? { category } : {}) },
+        // Case-insensitive: category is admin-entered free text (no enum),
+        // so "World" and "world" would otherwise be treated as different
+        // categories and silently split a source's articles out of the
+        // filter the user actually meant.
+        source: { enabled: true, ...(category ? { category: { equals: category, mode: "insensitive" } } : {}) },
       };
       const [items, total] = await Promise.all([
         prisma.newsArticle.findMany({
@@ -254,7 +258,18 @@ export function registerNewsRoutes(deps: Deps): { refreshAllSources: () => Promi
   app.get("/api/news/categories", authMiddleware, async (_req, res) => {
     try {
       const sources = await prisma.newsSource.findMany({ where: { enabled: true }, select: { category: true } });
-      const cats = Array.from(new Set(sources.map((s: any) => s.category).filter(Boolean)));
+      // Dedupe case-insensitively (keeping the first-seen casing) so "World"
+      // and "world" don't show up as two separate filter options even though
+      // the article filter itself now treats them as the same category.
+      const seen = new Set<string>();
+      const cats: string[] = [];
+      for (const s of sources as any[]) {
+        if (!s.category) continue;
+        const key = s.category.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        cats.push(s.category);
+      }
       res.json(cats);
     } catch (err: any) {
       if (degrade(err, res, [])) return;
@@ -265,8 +280,13 @@ export function registerNewsRoutes(deps: Deps): { refreshAllSources: () => Promi
 
   app.get("/api/news/:id", authMiddleware, async (req, res) => {
     try {
-      const article = await prisma.newsArticle.findUnique({
-        where: { id: req.params.id },
+      // Match the list endpoint's `source: { enabled: true }` filter -- without
+      // it, an article whose source an admin has since disabled/removed from
+      // rotation stayed reachable by direct ID (e.g. via a homework link that
+      // pointed at it before the source was disabled), even though it no
+      // longer shows up in the feed at all.
+      const article = await prisma.newsArticle.findFirst({
+        where: { id: req.params.id, source: { enabled: true } },
         include: { source: { select: { id: true, name: true, category: true } } },
       });
       if (!article) { res.status(404).json({ error: "Not found" }); return; }
@@ -298,7 +318,12 @@ export function registerNewsRoutes(deps: Deps): { refreshAllSources: () => Promi
     if (!name || !feedUrl) { res.status(400).json({ error: "name and feedUrl are required" }); return; }
     try {
       const source = await prisma.newsSource.create({
-        data: { name, feedUrl, category: category || null, createdById: jwtUser.userId },
+        data: {
+          name: String(name).trim(),
+          feedUrl: String(feedUrl).trim(),
+          category: category ? String(category).trim() || null : null,
+          createdById: jwtUser.userId,
+        },
       });
       await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "NEWS_SOURCE", source.id,
         `News source '${name}' added.`, ipOf(req), uaOf(req), "SUCCESS");
@@ -320,9 +345,9 @@ export function registerNewsRoutes(deps: Deps): { refreshAllSources: () => Promi
       const source = await prisma.newsSource.update({
         where: { id: req.params.id },
         data: {
-          ...(name !== undefined ? { name } : {}),
-          ...(feedUrl !== undefined ? { feedUrl } : {}),
-          ...(category !== undefined ? { category: category || null } : {}),
+          ...(name !== undefined ? { name: String(name).trim() } : {}),
+          ...(feedUrl !== undefined ? { feedUrl: String(feedUrl).trim() } : {}),
+          ...(category !== undefined ? { category: category ? String(category).trim() || null : null } : {}),
           ...(enabled !== undefined ? { enabled: !!enabled } : {}),
         },
       });

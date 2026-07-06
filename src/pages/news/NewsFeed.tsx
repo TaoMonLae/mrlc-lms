@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Newspaper, Search, ExternalLink, RefreshCw, Settings2, BookOpenText, ClipboardList } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Link, useNavigate } from 'react-router-dom';
@@ -35,22 +35,31 @@ export default function NewsFeed() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const pageSize = 24;
+  // Guards against out-of-order responses -- e.g. clicking "Load more" (page
+  // 2) and then immediately switching category (page 1) fires two requests,
+  // and without this the slower one could resolve last and clobber state
+  // with the wrong page/category mix. Each call captures the sequence number
+  // it was issued with; a response only gets applied if it's still the most
+  // recently issued request by the time it comes back.
+  const requestSeqRef = useRef(0);
 
   const load = async (nextPage = 1) => {
+    const seq = ++requestSeqRef.current;
     setLoading(true);
     try {
       const params = new URLSearchParams({ page: String(nextPage) });
       if (category !== 'ALL') params.set('category', category);
       if (search.trim()) params.set('q', search.trim());
       const res = await apiGet<{ items: NewsArticle[]; total: number }>(`/api/news?${params}`);
+      if (seq !== requestSeqRef.current) return; // superseded by a newer request
       if (nextPage === 1) setArticles(res.items);
       else setArticles((prev) => [...prev, ...res.items]);
       setTotal(res.total);
       setPage(nextPage);
     } catch {
-      toast.error('Failed to load news');
+      if (seq === requestSeqRef.current) toast.error('Failed to load news');
     } finally {
-      setLoading(false);
+      if (seq === requestSeqRef.current) setLoading(false);
     }
   };
 
