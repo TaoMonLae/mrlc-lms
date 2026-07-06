@@ -394,7 +394,8 @@ model Teacher {
   lessonPlans    LessonPlan[]
   payslips       Payslip[]
   homework       Homework[]
-  
+  flashcardDecks FlashcardDeck[]
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -420,6 +421,7 @@ model Class {
   categoryWeights CategoryWeight[]
   lessonPlans    LessonPlan[]
   homework       Homework[]
+  flashcardDeckLinks FlashcardDeckClass[]
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -464,6 +466,7 @@ model Subject {
   gradeItems     GradeItem[]
   lessonPlans    LessonPlan[]
   homework       Homework[]
+  flashcardDecks FlashcardDeck[]
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -1789,6 +1792,54 @@ model HomeworkSubmission {
 
   @@unique([homeworkId, studentId])
   @@index([studentId])
+}
+
+// -----------------------------------------------------------------------------
+// FLASHCARDS (teacher-authored study decks assigned to classes)
+// -----------------------------------------------------------------------------
+
+model FlashcardDeck {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+
+  teacherId   String
+  teacher     Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  subjectId   String?
+  subject     Subject? @relation(fields: [subjectId], references: [id])
+
+  cards       FlashcardCard[]
+  classLinks  FlashcardDeckClass[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([teacherId])
+}
+
+model FlashcardCard {
+  id         String        @id @default(uuid())
+  deckId     String
+  deck       FlashcardDeck @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  term       String
+  definition String
+  order      Int           @default(0)
+  createdAt  DateTime      @default(now())
+
+  @@index([deckId])
+}
+
+// Which classes a deck has been assigned to -- a teacher may reuse one deck
+// across several classes/sections they teach.
+model FlashcardDeckClass {
+  id      String        @id @default(uuid())
+  deckId  String
+  deck    FlashcardDeck @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  classId String
+  class   Class         @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@unique([deckId, classId])
+  @@index([classId])
 }
 
 model Grade {

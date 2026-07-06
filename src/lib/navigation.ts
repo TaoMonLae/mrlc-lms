@@ -25,7 +25,8 @@ import {
   ClipboardList,
   UserPlus,
   Newspaper,
-  Heart
+  Heart,
+  Layers
 } from "lucide-react";
 import { UserRole } from "./permissions";
 
@@ -80,6 +81,7 @@ export const ADMIN_NAV: AdminNavEntry[] = [
       { title: "GED Readiness", url: "/gradebook/ged-readiness", icon: GraduationCap },
       { title: "Class Performance", url: "/gradebook/reports", icon: BarChart3 },
       { title: "Documents", url: "/documents", icon: FileText },
+      { title: "Flashcards", url: "/flashcards", icon: Layers },
     ],
   },
   {
@@ -158,6 +160,7 @@ export const TEACHER_NAV: AdminNavEntry[] = [
       { title: "GED Readiness", url: "/gradebook/ged-readiness", icon: GraduationCap },
       { title: "Class Performance", url: "/gradebook/reports", icon: BarChart3 },
       { title: "Documents", url: "/documents", icon: FileText },
+      { title: "Flashcards", url: "/flashcards", icon: Layers },
     ],
   },
   {
@@ -204,6 +207,7 @@ export const STUDENT_NAV: AdminNavEntry[] = [
       { title: "My Documents", url: "/student/documents", icon: FileText },
       { title: "My Fees", url: "/student/fees", icon: Wallet },
       { title: "My Duties", url: "/student/duties", icon: ClipboardList },
+      { title: "Flashcards", url: "/student/flashcards", icon: Layers },
     ],
   },
   {

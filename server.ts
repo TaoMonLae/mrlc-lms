@@ -20,6 +20,7 @@ import { registerExamPhase2Routes } from "./examPhase2";
 import { registerExamBankRoutes } from "./examBank";
 import { registerNewsRoutes } from "./news";
 import { registerPayrollPdfRoutes } from "./payrollPdf";
+import { registerFlashcardRoutes } from "./flashcards";
 import cookieParser from "cookie-parser";
 import { BADGE_CATALOG, getBadgeLevel } from "./lib/badges";
 
@@ -15339,6 +15340,8 @@ async function startServer() {
   const { refreshAllSources: refreshAllNewsSources } = registerNewsRoutes({ app, prisma, authMiddleware, requireRole, createAuditLog, logger });
   // ── Payroll PDF export ──────────────────────────────────────────────────────
   registerPayrollPdfRoutes({ app, prisma, authMiddleware, payrollCanManage, createAuditLog, logger });
+  // ── Flashcards (teacher-authored study decks assigned to classes) ──────────
+  registerFlashcardRoutes({ app, prisma, authMiddleware, createAuditLog, logger });
 
   // NOTE: the SPA catch-all (Vite middleware in dev / static dist in prod) is
   // registered at the very end of startServer, AFTER every /api route, so it can

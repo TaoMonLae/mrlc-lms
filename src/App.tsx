@@ -134,6 +134,10 @@ import TeacherMyProfile from "./pages/teacher/MyProfile";
 import HomeworkList from "./pages/teacher/HomeworkList";
 import HomeworkDetail from "./pages/teacher/HomeworkDetail";
 import StudentHomework from "./pages/student/StudentHomework";
+import FlashcardDecks from "./pages/flashcards/FlashcardDecks";
+import FlashcardDeckForm from "./pages/flashcards/FlashcardDeckForm";
+import StudentFlashcardDecks from "./pages/flashcards/StudentFlashcardDecks";
+import StudentFlashcardStudy from "./pages/flashcards/StudentFlashcardStudy";
 import StaffDirectory from "./pages/hr/StaffDirectory";
 import StaffProfile from "./pages/hr/StaffProfile";
 import Departments from "./pages/hr/Departments";
@@ -278,6 +282,8 @@ export default function App() {
                   <Route path="/student/fees" element={<StudentFees />} />
                   <Route path="/student/videos" element={<StudentVideos />} />
                   <Route path="/student/homework" element={<StudentHomework />} />
+                  <Route path="/student/flashcards" element={<StudentFlashcardDecks />} />
+                  <Route path="/student/flashcards/:id" element={<StudentFlashcardStudy />} />
                   <Route path="/exam2/resume" element={<ResumeAttempt />} />
                   <Route path="/exam2/attempts/:attemptId/play" element={<ExamPlayer />} />
                   <Route path="/exam2/attempts/:attemptId/result" element={<ExamResultView />} />
@@ -317,6 +323,10 @@ export default function App() {
                   <Route path="/subjects/new" element={<SubjectNew />} />
                   <Route path="/subjects/:id" element={<SubjectProfile />} />
                   <Route path="/subjects/:id/edit" element={<SubjectEdit />} />
+
+                  <Route path="/flashcards" element={<FlashcardDecks />} />
+                  <Route path="/flashcards/new" element={<FlashcardDeckForm />} />
+                  <Route path="/flashcards/:id/edit" element={<FlashcardDeckForm />} />
 
                   {/* Attendance - Admin can only view reports, teachers record via /teacher/attendance */}
 	                  <Route path="/attendance" element={<Navigate to="/attendance/reports" replace />} />
