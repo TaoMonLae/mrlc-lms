@@ -2624,6 +2624,73 @@ async function startServer() {
     }
   });
 
+  app.delete("/api/teachers/:id", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { id } = req.params;
+    try {
+      const teacher = await prisma.teacher.findUnique({ where: { id }, include: { user: true } });
+      if (!teacher) {
+        res.status(404).json({ error: "Teacher not found" });
+        return;
+      }
+      const label = `${fullName(teacher.user) || "Unnamed"} (${teacher.teacherCode})`;
+
+      await prisma.$transaction(async (tx) => {
+        // As with student deletion: only a couple of Teacher's relations
+        // cascade at the DB level, so the Teacher row can't just be deleted
+        // directly once it has any class/subject assignments, homework, or
+        // lesson plans (i.e. almost any real teacher). Clear those out
+        // first; each cascades its own children (homework submissions,
+        // lesson plan progress) per schema.prisma.
+        await tx.classTeacher.deleteMany({ where: { teacherId: id } });
+        await tx.subjectTeacher.deleteMany({ where: { teacherId: id } });
+        await tx.homework.deleteMany({ where: { teacherId: id } });
+        await tx.lessonPlan.deleteMany({ where: { teacherId: id } });
+        // Payslips are financial history — unlink rather than delete them.
+        await tx.payslip.updateMany({ where: { teacherId: id }, data: { teacherId: null } });
+
+        await tx.teacher.delete({ where: { id } });
+
+        if (teacher.userId) {
+          const userId = teacher.userId;
+          // Same as student deletion: clear the linked login account's own
+          // chat/messaging/social footprint before deleting it.
+          await tx.chatMessageReport.deleteMany({ where: { reportedById: userId } });
+          await tx.chatMessage.deleteMany({ where: { senderId: userId } });
+          await tx.conversationParticipant.deleteMany({ where: { userId } });
+          await tx.conversation.deleteMany({ where: { createdById: userId } });
+          await tx.messageRecipient.deleteMany({ where: { recipientId: userId } });
+          await tx.message.deleteMany({ where: { senderId: userId } });
+          await tx.user.delete({ where: { id: userId } });
+        }
+      });
+
+      // Permanent, irreversible — wipes this teacher's class/subject
+      // assignments, homework, and lesson plans, and unlinks their payslip
+      // history. Flagged WARNING severity given the blast radius.
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "DELETE",
+        "TEACHER",
+        id,
+        `Teacher ${label} permanently deleted, including class/subject assignments, homework, and lesson plans.`,
+        req.ip,
+        req.headers["user-agent"] || null,
+        "WARNING"
+      );
+
+      res.json({ message: "Teacher deleted successfully" });
+    } catch (err: any) {
+      logger.error("Error deleting teacher:", err);
+      if (err.code === "P2003" || err.code === "P2014") {
+        res.status(400).json({ error: "This teacher has related records that couldn't be removed automatically. Please contact support." });
+        return;
+      }
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
   // ── Teacher class scoping (used by classes, exams, gradebook, reports) ───────
   const getTeacherClassIds = async (userId: string): Promise<string[]> => {
     const teacher = await prisma.teacher.findUnique({

@@ -121,6 +121,37 @@ export default function TeachersList() {
     }
   };
 
+  // Permanent hard delete — cascades to erase this teacher's class/subject
+  // assignments, homework, and lesson plans, and unlinks their payslip
+  // history. Irreversible, so it's guarded with a stronger, type-to-confirm
+  // prompt rather than the plain confirm() used for deactivate above.
+  const permanentlyDelete = async (teacher: TeacherData) => {
+    const name = `${teacher.firstName} ${teacher.lastName}`.trim();
+    const typed = window.prompt(
+      `This PERMANENTLY deletes ${name} (${teacher.teacherId}) and ALL their records — class/subject assignments, homework, and lesson plans. Their payslip history is kept but unlinked from this profile. This cannot be undone.\n\nIf you just want to remove them from active duty, cancel this and use "Deactivate Teacher" instead — it keeps their history and login disabled.\n\nType the teacher ID "${teacher.teacherId}" to confirm permanent deletion:`
+    );
+    if (typed === null) return;
+    if (typed !== teacher.teacherId) {
+      toast.error('Teacher ID did not match — nothing was deleted.');
+      return;
+    }
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`/api/teachers/${teacher.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        throw new Error(e.error || 'Failed to delete teacher');
+      }
+      toast.success(`${name} permanently deleted.`);
+      setTeachers((prev) => prev.filter((t) => t.id !== teacher.id));
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to delete teacher');
+    }
+  };
+
   const filteredTeachers = teachers.filter(teacher => {
     const fullName = `${teacher.firstName} ${teacher.lastName}`.toLowerCase();
     const matchesSearch =
@@ -252,6 +283,8 @@ export default function TeachersList() {
                       ) : (
                         <DropdownMenuItem className="text-emerald-600 focus:text-emerald-600 focus:bg-emerald-50" onClick={() => setTeacherStatus(teacher, 'ACTIVE')}>Reactivate Teacher</DropdownMenuItem>
                       )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50" onClick={() => permanentlyDelete(teacher)}>Delete Permanently</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </td>
