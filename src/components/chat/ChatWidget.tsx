@@ -163,11 +163,11 @@ export default function ChatWidget() {
       <button
         onClick={() => setOpen(true)}
         aria-label="Open chat"
-        className="fixed bottom-6 right-6 z-50 grid h-14 w-14 place-items-center rounded-full bg-aubergine-600 text-white shadow-lg transition hover:bg-aubergine-700"
+        className="fixed bottom-4 right-4 z-50 grid h-11 w-11 place-items-center rounded-full bg-aubergine-600 text-white shadow-lg transition hover:bg-aubergine-700"
       >
-        <MessageSquare className="h-6 w-6" />
+        <MessageSquare className="h-5 w-5" />
         {unread > 0 && (
-          <span className="absolute -top-1 -right-1 grid h-6 min-w-6 place-items-center rounded-full bg-rose-500 px-1 text-xs font-bold text-white ring-2 ring-white dark:ring-canvas">
+          <span className="absolute -top-1 -right-1 grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white ring-2 ring-white dark:ring-canvas">
             {unread > 99 ? '99+' : unread}
           </span>
         )}
@@ -176,7 +176,7 @@ export default function ChatWidget() {
   }
 
   return (
-    <div className="fixed inset-x-3 bottom-3 z-50 flex h-[75vh] max-h-[560px] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-surface-raised dark:bg-surface-indigo sm:inset-x-auto sm:bottom-6 sm:right-6 sm:w-96">
+    <div className="fixed inset-x-3 bottom-3 z-50 flex h-[75vh] max-h-[560px] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-surface-raised dark:bg-surface-indigo sm:inset-x-auto sm:bottom-4 sm:right-4 sm:w-96">
       <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2 dark:border-surface-raised">
         <div className="flex items-center gap-2">
           {activeId && <button onClick={() => { setActiveId(null); setDetail(null); }} className="text-slate-500 hover:text-slate-700"><ArrowLeft className="h-4 w-4" /></button>}

@@ -83,10 +83,10 @@ export default function AIAssistantWidget() {
       {!open && !chatOpen && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed bottom-6 right-24 z-50 grid h-14 w-14 place-items-center rounded-full bg-gradient-to-tr from-violet-600 to-indigo-600 text-white shadow-lg transition duration-300 hover:scale-105 hover:shadow-indigo-500/30"
+          className="fixed bottom-4 right-[68px] z-50 grid h-11 w-11 place-items-center rounded-full bg-gradient-to-tr from-violet-600 to-indigo-600 text-white shadow-lg transition duration-300 hover:scale-105 hover:shadow-indigo-500/30"
           title="AI School Assistant"
         >
-          <Sparkles className="h-6 w-6" />
+          <Sparkles className="h-5 w-5" />
         </button>
       )}
 
