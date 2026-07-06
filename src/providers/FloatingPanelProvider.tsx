@@ -1,4 +1,5 @@
-import { createContext, useContext, useMemo, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, ReactNode } from "react";
+import { useLocation } from "react-router-dom";
 
 /**
  * Coordinates the app's floating bottom-right widgets (Chat, AI Assistant)
@@ -18,6 +19,18 @@ const FloatingPanelContext = createContext<FloatingPanelContextValue | null>(nul
 
 export function FloatingPanelProvider({ children }: { children: ReactNode }) {
   const [active, setActive] = useState<FloatingPanelId | null>(null);
+  const location = useLocation();
+  const prevPathRef = useRef(location.pathname);
+
+  // Collapse whichever panel is open whenever the user navigates to a
+  // different page -- otherwise the expanded Chat/AI panel stays parked on
+  // top of the new page's content until manually closed.
+  useEffect(() => {
+    if (prevPathRef.current !== location.pathname) {
+      prevPathRef.current = location.pathname;
+      setActive(null);
+    }
+  }, [location.pathname]);
 
   const value = useMemo<FloatingPanelContextValue>(
     () => ({

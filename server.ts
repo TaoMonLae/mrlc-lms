@@ -15617,6 +15617,50 @@ async function startServer() {
     }
   });
 
+  // How much new Social Space activity (posts + comments from other people)
+  // has happened since this user last opened the feed -- mirrors the Chat
+  // unread-count pattern via a single per-user "last seen" timestamp instead
+  // of Chat's per-conversation lastReadAt.
+  app.get("/api/social/unread-count", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      // NOTE: SocialSeen is a new model the sandboxed Prisma client here
+      // can't be regenerated for (see other `as any` casts in this file for
+      // the same reason) -- `as any` on the model accessor is safe once the
+      // real machine runs `npx prisma migrate deploy` + `prisma generate`.
+      const seen = await (prisma as any).socialSeen.findUnique({ where: { userId: jwtUser.userId } });
+      const since = seen?.lastSeenAt ?? new Date(0);
+      const now = new Date();
+      const [newPosts, newComments] = await Promise.all([
+        prisma.socialPost.count({
+          where: { expiresAt: { gt: now }, authorId: { not: jwtUser.userId }, createdAt: { gt: since } },
+        }),
+        prisma.socialComment.count({
+          where: { userId: { not: jwtUser.userId }, createdAt: { gt: since }, post: { expiresAt: { gt: now } } },
+        }),
+      ]);
+      res.json({ unread: newPosts + newComments });
+    } catch (err) {
+      logger.error("Error getting social unread count:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/social/seen", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      await (prisma as any).socialSeen.upsert({
+        where: { userId: jwtUser.userId },
+        create: { userId: jwtUser.userId, lastSeenAt: new Date() },
+        update: { lastSeenAt: new Date() },
+      });
+      res.json({ success: true });
+    } catch (err) {
+      logger.error("Error marking social space as seen:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
   // ── Real-time push (Server-Sent Events) ──────────────────────────────────────
   // Additive over the client's polling: a broken/closed stream simply falls back
   // to polling. Keyed by userId → open responses (a user may have several tabs).

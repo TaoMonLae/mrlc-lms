@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { apiGet, apiSend, authHeaders } from '../../lib/api';
 import { useAuth } from '../../providers/AuthProvider';
+import { useSocial } from '../../providers/SocialProvider';
 import CameraCapture from '../../components/CameraCapture';
 import { useTheme } from '../../components/theme-provider';
 import DotGrid from '@/components/DotGrid';
@@ -25,6 +26,7 @@ const timeLeft = (iso: string) => { const ms = new Date(iso).getTime() - Date.no
 export default function SocialSpace() {
   const { user } = useAuth();
   const { theme } = useTheme();
+  const { markSeen } = useSocial();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [body, setBody] = useState('');
@@ -41,6 +43,9 @@ export default function SocialSpace() {
     finally { setLoading(false); }
   }
   useEffect(() => { load(); const t = setInterval(load, 20000); return () => clearInterval(t); }, []);
+  // Visiting the feed counts as "seen" -- clears the sidebar badge for new
+  // posts/comments the same way opening a chat thread clears its unread badge.
+  useEffect(() => { markSeen(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function pickPhoto(blob: Blob) { setPhoto({ blob, url: URL.createObjectURL(blob) }); setCamera(false); }
 

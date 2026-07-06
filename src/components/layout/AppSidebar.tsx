@@ -25,6 +25,7 @@ import { usePermissions, useUser } from "@/src/lib/permissions";
 import { useSettings } from "@/src/providers/SettingsProvider";
 import { useAuth } from "@/src/providers/AuthProvider";
 import { useChat } from "@/src/providers/ChatProvider";
+import { useSocial } from "@/src/providers/SocialProvider";
 import { ProfilePhotoUploader } from "@/src/components/profile/ProfilePhotoUploader";
 
 export function AppSidebar() {
@@ -35,6 +36,7 @@ export function AppSidebar() {
   const { isAdmin, isTeacher, isStudent, hasPermission } = usePermissions();
   const { schoolProfile, brandingSettings } = useSettings();
   const { unreadCount } = useChat();
+  const { unreadCount: socialUnreadCount } = useSocial();
   const { isMobile, setOpenMobile, state: sidebarState } = useSidebar();
   const closeOnMobile = () => { if (isMobile) setOpenMobile(false); };
 
@@ -51,6 +53,14 @@ export function AppSidebar() {
   }, [user, location.pathname]);
 
   const isPathActive = (url: string) => url === activeUrl;
+
+  // Nav items with a live unread/new-activity badge (mirrors Chat's pattern
+  // for any other feature that tracks unseen activity, e.g. Social Space).
+  const navBadgeCount = (url: string): number => {
+    if (url === '/chat') return unreadCount;
+    if (url === '/social') return socialUnreadCount;
+    return 0;
+  };
 
   const filteredNavItems = NAVIGATION_ITEMS.filter(item => {
     if (!user) return false;
@@ -140,9 +150,9 @@ export function AppSidebar() {
                         >
                           <entry.icon className="h-4 w-4 opacity-70" />
                           <span className="text-sm font-medium">{entry.title}</span>
-                          {entry.url === '/chat' && unreadCount > 0 && (
+                          {navBadgeCount(entry.url) > 0 && (
                             <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
-                              {unreadCount > 99 ? '99+' : unreadCount}
+                              {navBadgeCount(entry.url) > 99 ? '99+' : navBadgeCount(entry.url)}
                             </span>
                           )}
                         </SidebarMenuButton>
@@ -196,9 +206,9 @@ export function AppSidebar() {
                     >
                       <item.icon className="h-4 w-4 opacity-70" />
                       <span className="text-sm font-medium">{item.title}</span>
-                      {item.url === '/chat' && unreadCount > 0 && (
+                      {navBadgeCount(item.url) > 0 && (
                         <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white group-data-[collapsible=icon]:hidden">
-                          {unreadCount > 99 ? '99+' : unreadCount}
+                          {navBadgeCount(item.url) > 99 ? '99+' : navBadgeCount(item.url)}
                         </span>
                       )}
                     </SidebarMenuButton>

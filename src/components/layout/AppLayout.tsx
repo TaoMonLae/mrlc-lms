@@ -7,6 +7,7 @@ import { useAuth } from "../../providers/AuthProvider";
 import ChatWidget from "../chat/ChatWidget";
 import AIAssistantWidget from "../ai/AIAssistantWidget";
 import { ChatProvider } from "../../providers/ChatProvider";
+import { SocialProvider } from "../../providers/SocialProvider";
 import { FloatingPanelProvider } from "../../providers/FloatingPanelProvider";
 
 export function AppLayout() {
@@ -20,6 +21,7 @@ export function AppLayout() {
 
   return (
     <ChatProvider>
+    <SocialProvider>
     <SidebarProvider>
       <div className="flex h-screen w-full bg-slate-50 dark:bg-canvas font-sans text-slate-900 dark:text-white overflow-hidden">
         {/* Skip navigation link for keyboard users */}
@@ -50,6 +52,7 @@ export function AppLayout() {
         </FloatingPanelProvider>
       </div>
     </SidebarProvider>
+    </SocialProvider>
     </ChatProvider>
   );
 }

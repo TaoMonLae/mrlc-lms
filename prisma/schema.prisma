@@ -261,6 +261,7 @@ model User {
   socialPosts    SocialPost[]    @relation("SocialAuthor")
   socialLikes    SocialLike[]    @relation("SocialLiker")
   socialComments SocialComment[] @relation("SocialCommenter")
+  socialSeen     SocialSeen?     @relation("SocialSeenBy")
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -2994,6 +2995,15 @@ model SocialComment {
   createdAt DateTime @default(now())
 
   @@index([postId])
+}
+
+// Tracks the last time each user viewed the Social Space feed, so the app
+// can badge new posts/comments from other people the same way Chat badges
+// unread messages.
+model SocialSeen {
+  userId     String   @id
+  user       User     @relation("SocialSeenBy", fields: [userId], references: [id], onDelete: Cascade)
+  lastSeenAt DateTime @default(now())
 }
 
 // -----------------------------------------------------------------------------
