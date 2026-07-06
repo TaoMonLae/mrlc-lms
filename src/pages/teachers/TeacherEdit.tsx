@@ -212,9 +212,14 @@ export default function TeacherEdit() {
               </div>
             </div>
              <div className="space-y-2">
-              <Label htmlFor="subjects">Subjects (Comma separated)</Label>
+              <Label htmlFor="subjects">Specialization (comma separated)</Label>
               <Input id="subjects" {...register('subjects')} />
               {errors.subjects && <p className="text-xs text-red-500 font-medium">{errors.subjects.message}</p>}
+              <p className="text-[11px] text-slate-400">
+                This is free-text background info only. To actually assign this teacher to
+                teach a subject (so it shows on rosters and class assignment), use{' '}
+                <span className="font-medium text-slate-500">Subjects tab → Assign Subject</span> on their profile page.
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="notes">Notes/Remarks</Label>

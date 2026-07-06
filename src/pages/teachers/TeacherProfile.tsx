@@ -13,7 +13,9 @@ import {
   BookOpen,
   Activity,
   UserCircle,
-  Printer
+  Printer,
+  Plus,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -31,12 +33,17 @@ const handlePrint = () => {
 export default function TeacherProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAdmin } = usePermissions();
+  const { isAdmin, hasPermission } = usePermissions();
   const [activeTab, setActiveTab] = useState('overview');
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
   const [teacher, setTeacher] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [myTeacherId, setMyTeacherId] = useState<string | null>(null);
+  const [allSubjects, setAllSubjects] = useState<{ id: string; name: string }[]>([]);
+  const [assignSubjectOpen, setAssignSubjectOpen] = useState(false);
+  const [assignSubjectId, setAssignSubjectId] = useState('');
+  const [assigningSubject, setAssigningSubject] = useState(false);
+  const canManageSubjects = hasPermission('manage_subjects');
 
   // Teachers may edit only their own profile; admins may edit anyone's.
   useEffect(() => {
@@ -49,54 +56,108 @@ export default function TeacherProfile() {
   }, [isAdmin]);
   const canEdit = isAdmin || (myTeacherId !== null && myTeacherId === id);
 
-  useEffect(() => {
-    const fetchTeacher = async () => {
-      if (!id) return;
-      try {
-        const token = sessionStorage.getItem('auth_token');
-        const res = await fetch(`/api/teachers/${id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        if (!res.ok) {
-          if (res.status === 404) {
-            setTeacher(null);
-          } else if (res.status === 401 || res.status === 403) {
-            toast.error('You do not have permission to view teacher profiles');
-          } else {
-            throw new Error('Failed to fetch teacher');
-          }
-          return;
+  const fetchTeacher = async () => {
+    if (!id) return;
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`/api/teachers/${id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
         }
-        const t = await res.json();
-        setTeacher({
-          ...t,
-          firstName: t.user?.firstName || '',
-          lastName: t.user?.lastName || '',
-          email: t.user?.email || '',
-          photoUrl: t.profilePhotoUrl || t.user?.profilePhotoUrl || '',
-          teacherId: t.teacherCode || `TCH-${String(t.id).slice(0, 4).toUpperCase()}`,
-          status: t.user?.isActive === false ? 'INACTIVE' : 'ACTIVE',
-          joinedDate: t.hireDate || t.createdAt,
-          notes: t.specialization || '',
-          assignedClasses: (t.classes || []).map((ct: any) => ({
-            id: ct.class?.id || ct.classId,
-            name: ct.class?.name || '—',
-            schedule: ct.class?.academicYear || '',
-            subject: ct.class?.level || '',
-          })),
-          subjects: (t.subjects || []).map((st: any) => st.subject?.name).filter(Boolean),
-        });
-      } catch (error) {
-        console.error('Error fetching teacher:', error);
-        toast.error('Failed to load teacher profile');
-      } finally {
-        setLoading(false);
+      });
+      if (!res.ok) {
+        if (res.status === 404) {
+          setTeacher(null);
+        } else if (res.status === 401 || res.status === 403) {
+          toast.error('You do not have permission to view teacher profiles');
+        } else {
+          throw new Error('Failed to fetch teacher');
+        }
+        return;
       }
-    };
+      const t = await res.json();
+      setTeacher({
+        ...t,
+        firstName: t.user?.firstName || '',
+        lastName: t.user?.lastName || '',
+        email: t.user?.email || '',
+        photoUrl: t.profilePhotoUrl || t.user?.profilePhotoUrl || '',
+        teacherId: t.teacherCode || `TCH-${String(t.id).slice(0, 4).toUpperCase()}`,
+        status: t.user?.isActive === false ? 'INACTIVE' : 'ACTIVE',
+        joinedDate: t.hireDate || t.createdAt,
+        notes: t.specialization || '',
+        assignedClasses: (t.classes || []).map((ct: any) => ({
+          id: ct.class?.id || ct.classId,
+          name: ct.class?.name || '—',
+          schedule: ct.class?.academicYear || '',
+          subject: ct.class?.level || '',
+        })),
+        subjects: (t.subjects || [])
+          .map((st: any) => ({ id: st.subject?.id, name: st.subject?.name }))
+          .filter((s: any) => s.id && s.name),
+      });
+    } catch (error) {
+      console.error('Error fetching teacher:', error);
+      toast.error('Failed to load teacher profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchTeacher();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  // Teachers can already see/manage their own subjects, but the subject
+  // picker for assignment is only needed by users who can manage subjects.
+  useEffect(() => {
+    if (!canManageSubjects) return;
+    const token = sessionStorage.getItem('auth_token');
+    fetch('/api/subjects', { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setAllSubjects((Array.isArray(data) ? data : []).map((s: any) => ({ id: s.id, name: s.name }))))
+      .catch(() => {});
+  }, [canManageSubjects]);
+
+  const assignSubject = async () => {
+    if (!assignSubjectId || !id) { toast.error('Select a subject'); return; }
+    setAssigningSubject(true);
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`/api/subjects/${assignSubjectId}/teachers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ teacherId: id }),
+      });
+      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Failed to assign subject'); }
+      toast.success('Subject assigned');
+      setAssignSubjectOpen(false);
+      setAssignSubjectId('');
+      await fetchTeacher();
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to assign subject');
+    } finally {
+      setAssigningSubject(false);
+    }
+  };
+
+  const removeSubject = async (subjectId: string) => {
+    if (!id) return;
+    if (!confirm('Remove this subject from the teacher?')) return;
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`/api/subjects/${subjectId}/teachers/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to remove subject');
+      toast.success('Subject removed');
+      await fetchTeacher();
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to remove subject');
+    }
+  };
 
   if (loading) {
     return (
@@ -277,11 +338,28 @@ export default function TeacherProfile() {
         </TabsContent>
 
         <TabsContent value="subjects" className="p-6 space-y-6 animate-in fade-in slide-in-from-bottom-2">
+          {canManageSubjects && (
+            <div className="flex justify-end">
+              <Button size="sm" onClick={() => { setAssignSubjectId(''); setAssignSubjectOpen(true); }}>
+                <Plus className="w-4 h-4 mr-2" /> Assign Subject
+              </Button>
+            </div>
+          )}
           <div className="flex flex-wrap gap-2">
-            {(teacher.subjects || []).map((s: string, idx: number) => (
-              <div key={idx} className="px-4 py-3 bg-slate-50 dark:bg-surface-raised rounded-xl border border-slate-100 dark:border-surface-raised flex items-center gap-3">
+            {(teacher.subjects || []).map((s: { id: string; name: string }) => (
+              <div key={s.id} className="px-4 py-3 bg-slate-50 dark:bg-surface-raised rounded-xl border border-slate-100 dark:border-surface-raised flex items-center gap-3">
                 <div className="w-2 h-2 rounded-full bg-aubergine-500" />
-                <span className="font-bold text-slate-700 dark:text-slate-300">{s}</span>
+                <span className="font-bold text-slate-700 dark:text-slate-300">{s.name}</span>
+                {canManageSubjects && (
+                  <button
+                    type="button"
+                    onClick={() => removeSubject(s.id)}
+                    className="text-slate-400 hover:text-destructive"
+                    aria-label={`Remove ${s.name}`}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             ))}
             {(!teacher.subjects || teacher.subjects.length === 0) && (
@@ -297,6 +375,37 @@ export default function TeacherProfile() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Assign subject dialog */}
+      {assignSubjectOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => !assigningSubject && setAssignSubjectOpen(false)}>
+          <div className="w-full max-w-md bg-white dark:bg-surface-indigo rounded-xl shadow-2xl p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Assign Subject</h3>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Subject</label>
+              <select
+                value={assignSubjectId}
+                onChange={(e) => setAssignSubjectId(e.target.value)}
+                className="w-full rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-raised px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-aubergine-500"
+              >
+                <option value="">Select a subject</option>
+                {allSubjects
+                  .filter((s) => !(teacher.subjects || []).some((ts: { id: string }) => ts.id === s.id))
+                  .map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+              {allSubjects.filter((s) => !(teacher.subjects || []).some((ts: { id: string }) => ts.id === s.id)).length === 0 && (
+                <p className="text-xs text-slate-400">This teacher is already assigned to every subject.</p>
+              )}
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setAssignSubjectOpen(false)} disabled={assigningSubject}>Cancel</Button>
+              <Button className="bg-primary text-primary-foreground" onClick={assignSubject} disabled={assigningSubject || !assignSubjectId}>
+                {assigningSubject ? 'Assigning…' : 'Assign'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
