@@ -11680,6 +11680,89 @@ async function startServer() {
     }
   });
 
+  app.delete("/api/users/:id", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { id } = req.params;
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id },
+        include: { studentProfile: true, teacherProfile: true, employeeProfile: true },
+      });
+      if (!user) { res.status(404).json({ error: "User not found" }); return; }
+
+      if (id === jwtUser.userId) {
+        res.status(400).json({ error: "You cannot delete your own account" });
+        return;
+      }
+      // Student/Teacher accounts have their own delete flows (Students /
+      // Teachers pages) that also clean up the academic data trail --
+      // attendance, grades, class assignments, etc. Deleting the User row
+      // straight from here would either fail on that data or, worse, leave
+      // it orphaned. Redirect to the right place instead of duplicating (and
+      // risking diverging from) that logic here.
+      if (user.studentProfile) {
+        res.status(400).json({ error: "This account is linked to a student profile. Delete the student from the Students page instead." });
+        return;
+      }
+      if (user.teacherProfile) {
+        res.status(400).json({ error: "This account is linked to a teacher profile. Delete the teacher from the Teachers page instead." });
+        return;
+      }
+      if (user.role === "ADMIN" && user.isActive) {
+        const activeAdmins = await prisma.user.count({ where: { role: "ADMIN", isActive: true } });
+        if (activeAdmins <= 1) {
+          res.status(400).json({ error: "Cannot delete the last active administrator." });
+          return;
+        }
+      }
+
+      const label = `${fullName(user)} (${user.email})`;
+
+      await prisma.$transaction(async (tx) => {
+        // Employees are only ever soft-deleted (terminated) elsewhere so
+        // their payroll/leave history is preserved -- unlink rather than
+        // touch the Employee row itself.
+        if (user.employeeProfile) {
+          await tx.employee.update({ where: { id: user.employeeProfile.id }, data: { userId: null } });
+        }
+        // Attendance recorded by / case notes authored by this account
+        // (e.g. a STAFF/ADMIN user) have required, non-cascading FKs.
+        await tx.attendance.deleteMany({ where: { recordedById: id } });
+        await tx.caseNote.deleteMany({ where: { createdById: id } });
+        // Same chat/messaging/social cleanup as student and teacher deletion.
+        await tx.chatMessageReport.deleteMany({ where: { reportedById: id } });
+        await tx.chatMessage.deleteMany({ where: { senderId: id } });
+        await tx.conversationParticipant.deleteMany({ where: { userId: id } });
+        await tx.conversation.deleteMany({ where: { createdById: id } });
+        await tx.messageRecipient.deleteMany({ where: { recipientId: id } });
+        await tx.message.deleteMany({ where: { senderId: id } });
+
+        await tx.user.delete({ where: { id } });
+      });
+
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "DELETE",
+        "USER",
+        id,
+        `User account ${label} permanently deleted.`,
+        req.ip,
+        req.headers["user-agent"] || null,
+        "WARNING"
+      );
+
+      res.json({ message: "User deleted successfully" });
+    } catch (err: any) {
+      logger.error("Error deleting user:", err);
+      if (err.code === "P2003" || err.code === "P2014") {
+        res.status(400).json({ error: "This user has related records that couldn't be removed automatically. Please contact support." });
+        return;
+      }
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
   // Admin resets a user's password directly to a chosen value.
   app.post("/api/users/:id/reset-password", authMiddleware, requireRole("ADMIN"), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;

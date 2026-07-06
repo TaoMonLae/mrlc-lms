@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, MoreVertical, Edit2, ShieldAlert, CheckCircle2, UserX, UserCheck, Shield, Settings } from 'lucide-react';
+import { Plus, Search, MoreVertical, Edit2, ShieldAlert, CheckCircle2, UserX, UserCheck, Shield, Settings, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -130,6 +130,49 @@ export default function UsersList() {
       toast.success('User status updated.');
     } catch (e: any) {
       toast.error(e.message || 'Failed to update status');
+    }
+  };
+
+  // Permanent hard delete of a login account. Irreversible, so it's guarded
+  // with a stronger, type-to-confirm prompt rather than the plain confirm()
+  // used for disable/enable above. Student/Teacher accounts are redirected
+  // to their dedicated pages (mirrors the server-side check) since those
+  // flows also clean up the academic data trail.
+  const handleDeleteUser = async (user: User) => {
+    if (user.teacherId) {
+      toast.error('This account is linked to a teacher profile. Delete the teacher from the Teachers page instead.');
+      return;
+    }
+    if (user.studentId) {
+      toast.error('This account is linked to a student profile. Delete the student from the Students page instead.');
+      return;
+    }
+    if (user.role === 'ADMIN' && user.status === 'ACTIVE' && activeAdminCount <= 1) {
+      toast.error('Cannot delete the last active administrator.');
+      return;
+    }
+    const typed = window.prompt(
+      `This PERMANENTLY deletes the login account for ${user.name} (${user.email}). This cannot be undone.\n\nIf you just want to remove their access, cancel this and use "Disable User" instead — it keeps their history and can be reversed.\n\nType their email "${user.email}" to confirm permanent deletion:`
+    );
+    if (typed === null) return;
+    if (typed !== user.email) {
+      toast.error('Email did not match — nothing was deleted.');
+      return;
+    }
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`/api/users/${user.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to delete user');
+      }
+      setUsers((prev) => prev.filter((u) => u.id !== user.id));
+      toast.success(`${user.name} permanently deleted.`);
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to delete user');
     }
   };
 
@@ -300,13 +343,20 @@ export default function UsersList() {
                             <UserX className="mr-2 h-4 w-4" /> Disable User
                           </DropdownMenuItem>
                         ) : (
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
                             className="text-emerald-600 focus:text-emerald-600 focus:bg-emerald-50 dark:focus:bg-emerald-900/20"
                             onClick={() => handleToggleStatus(user.id, user.status, user.role)}
                           >
                             <UserCheck className="mr-2 h-4 w-4" /> Activate User
                           </DropdownMenuItem>
                         )}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/20"
+                          onClick={() => handleDeleteUser(user)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" /> Delete Permanently
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </td>
@@ -371,6 +421,13 @@ export default function UsersList() {
                         <UserCheck className="mr-2 h-4 w-4" /> Activate User
                       </DropdownMenuItem>
                     )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/20"
+                      onClick={() => handleDeleteUser(user)}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" /> Delete Permanently
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
