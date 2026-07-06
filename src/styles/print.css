@@ -1,8 +1,20 @@
 @media print {
+  /* Everything in this file targets the generic app chrome (dashboards,
+     profile pages, etc.). Report pages built with <PrintLayout> (the
+     ".report-print" wrapper) implement their OWN, more precise print
+     styling (see src/components/reports/PrintLayout.tsx) -- brand-colored
+     header/table/badges that must survive printing untouched. These broad
+     class-substring selectors (".bg-white", "[class*=\"border\"]", etc.)
+     used to also match inside .report-print and stomp on that styling with
+     !important, which is why printed/PDF reports looked different (flatter,
+     colors stripped, borders/margins off) from the on-screen preview.
+     Every selector below is scoped with :not(.report-print, .report-print *, .timetable-print-area, .timetable-print-area *, .print\:m-0, .print\:m-0 *)
+     so this file never touches report output. */
+
   /* Hide elements that shouldn't appear in print */
   .no-print,
-  button,
-  a:not([href^="http"]),
+  button:not(.report-print, .report-print *, .timetable-print-area, .timetable-print-area *, .print\:m-0, .print\:m-0 *),
+  a:not([href^="http"]):not(.report-print, .report-print *, .timetable-print-area, .timetable-print-area *, .print\:m-0, .print\:m-0 *),
   .sidebar-trigger,
   nav,
   [data-sidebar] {
@@ -17,44 +29,44 @@
   }
 
   /* Ensure cards and sections are visible */
-  .card,
-  [class*="rounded-xl"],
-  [class*="border"] {
+  .card:not(.report-print, .report-print *, .timetable-print-area, .timetable-print-area *, .print\:m-0, .print\:m-0 *),
+  [class*="rounded-xl"]:not(.report-print, .report-print *, .timetable-print-area, .timetable-print-area *, .print\:m-0, .print\:m-0 *),
+  [class*="border"]:not(.report-print, .report-print *, .timetable-print-area, .timetable-print-area *, .print\:m-0, .print\:m-0 *) {
     border: 1px solid #ccc !important;
     box-shadow: none !important;
     break-inside: avoid;
   }
 
   /* Profile-specific print styles */
-  .bg-white,
-  .bg-surface-indigo {
+  .bg-white:not(.report-print, .report-print *, .timetable-print-area, .timetable-print-area *, .print\:m-0, .print\:m-0 *),
+  .bg-surface-indigo:not(.report-print, .report-print *, .timetable-print-area, .timetable-print-area *, .print\:m-0, .print\:m-0 *) {
     background: white !important;
   }
 
-  .dark\:bg-surface-indigo {
+  .dark\:bg-surface-indigo:not(.report-print, .report-print *, .timetable-print-area, .timetable-print-area *, .print\:m-0, .print\:m-0 *) {
     background: white !important;
   }
 
-  .text-slate-900,
-  .dark\:text-white {
+  .text-slate-900:not(.report-print, .report-print *, .timetable-print-area, .timetable-print-area *, .print\:m-0, .print\:m-0 *),
+  .dark\:text-white:not(.report-print, .report-print *, .timetable-print-area, .timetable-print-area *, .print\:m-0, .print\:m-0 *) {
     color: black !important;
   }
 
-  .text-slate-500,
-  .dark\:text-slate-300 {
+  .text-slate-500:not(.report-print, .report-print *, .timetable-print-area, .timetable-print-area *, .print\:m-0, .print\:m-0 *),
+  .dark\:text-slate-300:not(.report-print, .report-print *, .timetable-print-area, .timetable-print-area *, .print\:m-0, .print\:m-0 *) {
     color: #333 !important;
   }
 
   /* Badge colors in print */
-  .bg-emerald-500,
-  .bg-emerald-50 {
+  .bg-emerald-500:not(.report-print, .report-print *, .timetable-print-area, .timetable-print-area *, .print\:m-0, .print\:m-0 *),
+  .bg-emerald-50:not(.report-print, .report-print *, .timetable-print-area, .timetable-print-area *, .print\:m-0, .print\:m-0 *) {
     background: #f0fdf4 !important;
     color: #166534 !important;
     border: 1px solid #166534 !important;
   }
 
-  /* Ensure images print correctly */
-  img {
+  /* Ensure images print correctly (report logos manage their own sizing) */
+  img:not(.report-print, .report-print *, .timetable-print-area, .timetable-print-area *, .print\:m-0, .print\:m-0 *) {
     max-width: 200px;
     max-height: 200px;
   }
@@ -69,14 +81,17 @@
   }
 
   /* Links should show URL */
-  a[href^="http"]::after {
+  a[href^="http"]:not(.report-print, .report-print *, .timetable-print-area, .timetable-print-area *, .print\:m-0, .print\:m-0 *)::after {
     content: " (" attr(href) ")";
     font-size: 0.8em;
     color: #666;
   }
 
   /* Print-friendly headers */
-  h1, h2, h3, h4 {
+  h1:not(.report-print, .report-print *, .timetable-print-area, .timetable-print-area *, .print\:m-0, .print\:m-0 *),
+  h2:not(.report-print, .report-print *, .timetable-print-area, .timetable-print-area *, .print\:m-0, .print\:m-0 *),
+  h3:not(.report-print, .report-print *, .timetable-print-area, .timetable-print-area *, .print\:m-0, .print\:m-0 *),
+  h4:not(.report-print, .report-print *, .timetable-print-area, .timetable-print-area *, .print\:m-0, .print\:m-0 *) {
     color: black !important;
     page-break-after: avoid;
   }
@@ -92,16 +107,18 @@
   }
 
   /* Ensure proper spacing */
-  .space-y-6 > * + *,
-  .space-y-8 > * + * {
+  .space-y-6:not(.report-print, .report-print *, .timetable-print-area, .timetable-print-area *, .print\:m-0, .print\:m-0 *) > * + *,
+  .space-y-8:not(.report-print, .report-print *, .timetable-print-area, .timetable-print-area *, .print\:m-0, .print\:m-0 *) > * + * {
     margin-top: 1rem !important;
   }
 
   /* Grid layouts for print */
-  .grid {
+  .grid:not(.report-print, .report-print *, .timetable-print-area, .timetable-print-area *, .print\:m-0, .print\:m-0 *) {
     display: grid !important;
   }
 
+  /* Fallback page box for pages NOT using <PrintLayout> (which declares its
+     own, more specific @page rule with a 14mm margin -- see PrintLayout.tsx). */
   @page {
     margin: 1cm;
     size: A4;
