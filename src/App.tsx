@@ -140,6 +140,7 @@ import StudentFlashcardDecks from "./pages/flashcards/StudentFlashcardDecks";
 import StudentFlashcardStudy from "./pages/flashcards/StudentFlashcardStudy";
 import FlashcardQuiz from "./pages/flashcards/FlashcardQuiz";
 import FlashcardMatch from "./pages/flashcards/FlashcardMatch";
+import FlashcardSpelling from "./pages/flashcards/FlashcardSpelling";
 import StaffDirectory from "./pages/hr/StaffDirectory";
 import StaffProfile from "./pages/hr/StaffProfile";
 import Departments from "./pages/hr/Departments";
@@ -288,6 +289,7 @@ export default function App() {
                   <Route path="/student/flashcards/:id" element={<StudentFlashcardStudy />} />
                   <Route path="/student/flashcards/:id/quiz" element={<FlashcardQuiz />} />
                   <Route path="/student/flashcards/:id/match" element={<FlashcardMatch />} />
+                  <Route path="/student/flashcards/:id/spell" element={<FlashcardSpelling />} />
                   <Route path="/exam2/resume" element={<ResumeAttempt />} />
                   <Route path="/exam2/attempts/:attemptId/play" element={<ExamPlayer />} />
                   <Route path="/exam2/attempts/:attemptId/result" element={<ExamResultView />} />
@@ -334,6 +336,7 @@ export default function App() {
                   <Route path="/flashcards/:id/study" element={<StudentFlashcardStudy />} />
                   <Route path="/flashcards/:id/quiz" element={<FlashcardQuiz />} />
                   <Route path="/flashcards/:id/match" element={<FlashcardMatch />} />
+                  <Route path="/flashcards/:id/spell" element={<FlashcardSpelling />} />
 
                   {/* Attendance - Admin can only view reports, teachers record via /teacher/attendance */}
 	                  <Route path="/attendance" element={<Navigate to="/attendance/reports" replace />} />

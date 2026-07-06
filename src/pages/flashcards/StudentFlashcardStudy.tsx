@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
-import { ArrowLeft, Shuffle, RotateCw, ChevronLeft, ChevronRight, Layers, Brain, Grid3x3 } from 'lucide-react';
+import { ArrowLeft, Shuffle, RotateCw, ChevronLeft, ChevronRight, Layers, Brain, Grid3x3, SpellCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { apiGet } from '../../lib/api';
@@ -32,6 +32,7 @@ export default function StudentFlashcardStudy() {
   const listUrl = isStudentRoute ? '/student/flashcards' : '/flashcards';
   const quizUrl = isStudentRoute ? `/student/flashcards/${id}/quiz` : `/flashcards/${id}/quiz`;
   const matchUrl = isStudentRoute ? `/student/flashcards/${id}/match` : `/flashcards/${id}/match`;
+  const spellUrl = isStudentRoute ? `/student/flashcards/${id}/spell` : `/flashcards/${id}/spell`;
   const [deck, setDeck] = useState<DeckDetail | null>(null);
   const [order, setOrder] = useState<Card[]>([]);
   const [index, setIndex] = useState(0);
@@ -87,6 +88,7 @@ export default function StudentFlashcardStudy() {
         <div className="flex items-center gap-2">
           <Button size="sm" variant="outline" render={<Link to={quizUrl} />}><Brain className="mr-1.5 h-3.5 w-3.5" /> Quiz</Button>
           <Button size="sm" variant="outline" render={<Link to={matchUrl} />}><Grid3x3 className="mr-1.5 h-3.5 w-3.5" /> Match</Button>
+          <Button size="sm" variant="outline" render={<Link to={spellUrl} />}><SpellCheck className="mr-1.5 h-3.5 w-3.5" /> Spell</Button>
         </div>
       </div>
 

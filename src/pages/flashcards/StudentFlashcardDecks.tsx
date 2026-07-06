@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Layers, BookOpen, Brain, Grid3x3 } from 'lucide-react';
+import { Layers, BookOpen, Brain, Grid3x3, SpellCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -68,6 +68,7 @@ export default function StudentFlashcardDecks() {
                 <Button size="sm" variant="outline" className="h-7 px-2 text-xs" render={<Link to={`/student/flashcards/${d.id}`} />}>Study</Button>
                 <Button size="sm" variant="outline" className="h-7 px-2 text-xs" render={<Link to={`/student/flashcards/${d.id}/quiz`} />}><Brain className="mr-1 h-3 w-3" /> Quiz</Button>
                 <Button size="sm" variant="outline" className="h-7 px-2 text-xs" render={<Link to={`/student/flashcards/${d.id}/match`} />}><Grid3x3 className="mr-1 h-3 w-3" /> Match</Button>
+                <Button size="sm" variant="outline" className="h-7 px-2 text-xs" render={<Link to={`/student/flashcards/${d.id}/spell`} />}><SpellCheck className="mr-1 h-3 w-3" /> Spell</Button>
               </div>
             </div>
           ))}
