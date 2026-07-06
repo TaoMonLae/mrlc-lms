@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Layers, Plus, Pencil, Trash2, BookOpen, Download, Brain, Grid3x3, SpellCheck } from 'lucide-react';
+import { Layers, Plus, Pencil, Trash2, BookOpen, Download, Brain, Grid3x3, SpellCheck, BarChart3 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -90,6 +90,9 @@ export default function FlashcardDecks() {
               <div className="flex items-start justify-between gap-2">
                 <h3 className="font-semibold text-slate-900 dark:text-white">{d.title}</h3>
                 <div className="flex items-center gap-1 shrink-0">
+                  <Button size="icon" variant="ghost" className="h-7 w-7" title="Student progress" render={<Link to={`/flashcards/${d.id}/progress`} />}>
+                    <BarChart3 className="h-3.5 w-3.5" />
+                  </Button>
                   <Button size="icon" variant="ghost" className="h-7 w-7" render={<Link to={`/flashcards/${d.id}/edit`} />}>
                     <Pencil className="h-3.5 w-3.5" />
                   </Button>

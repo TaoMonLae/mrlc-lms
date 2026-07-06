@@ -3,7 +3,7 @@ import { Link, useLocation, useParams } from 'react-router-dom';
 import { ArrowLeft, Brain, CheckCircle2, XCircle, RotateCw, Grid3x3, SpellCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { apiGet } from '../../lib/api';
+import { apiGet, apiSend } from '../../lib/api';
 
 interface CardT { id: string; term: string; definition: string }
 interface DeckDetail { id: string; title: string; cards: CardT[] }
@@ -43,6 +43,7 @@ export default function FlashcardQuiz() {
   const [selected, setSelected] = useState<string | null>(null);
   const [answers, setAnswers] = useState<{ term: string; correct: string; picked: string }[]>([]);
   const [finished, setFinished] = useState(false);
+  const [bestScore, setBestScore] = useState<{ score: number; total: number } | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -50,7 +51,16 @@ export default function FlashcardQuiz() {
       .then((d) => { setDeck(d); setQuestions(buildQuestions(d.cards || [])); })
       .catch((e: any) => toast.error(e?.message || 'Failed to load deck'))
       .finally(() => setLoading(false));
+    if (isStudentRoute) loadBest();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  const loadBest = () => {
+    if (!id) return;
+    apiGet<{ bestByMode: Record<string, { score: number; total: number }> }>(`/api/flashcards/decks/${id}/attempts`)
+      .then((r) => setBestScore(r?.bestByMode?.QUIZ ? { score: r.bestByMode.QUIZ.score, total: r.bestByMode.QUIZ.total } : null))
+      .catch(() => {});
+  };
 
   const current = questions[index];
   const score = useMemo(() => answers.filter((a) => a.picked === a.correct).length, [answers]);
@@ -62,7 +72,15 @@ export default function FlashcardQuiz() {
   };
 
   const next = () => {
-    if (index + 1 >= questions.length) { setFinished(true); return; }
+    if (index + 1 >= questions.length) {
+      setFinished(true);
+      if (isStudentRoute && id) {
+        apiSend(`/api/flashcards/decks/${id}/attempts`, 'POST', { mode: 'QUIZ', score, total: questions.length })
+          .then(loadBest)
+          .catch(() => {});
+      }
+      return;
+    }
     setIndex((i) => i + 1);
     setSelected(null);
   };
@@ -124,6 +142,9 @@ export default function FlashcardQuiz() {
           <p className="text-sm text-slate-500 uppercase tracking-widest font-semibold">Quiz Complete</p>
           <p className="text-4xl font-bold text-aubergine-600">{score} / {questions.length}</p>
           <p className="text-sm text-slate-500">{Math.round((score / questions.length) * 100)}% correct</p>
+          {isStudentRoute && bestScore && (
+            <p className="text-xs text-slate-400">Personal best: {bestScore.score} / {bestScore.total} ({Math.round((bestScore.score / bestScore.total) * 100)}%)</p>
+          )}
 
           {answers.some((a) => a.picked !== a.correct) && (
             <div className="text-left mt-6 space-y-2">

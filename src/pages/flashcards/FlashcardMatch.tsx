@@ -3,7 +3,7 @@ import { Link, useLocation, useParams } from 'react-router-dom';
 import { ArrowLeft, Grid3x3, RotateCw, Brain, Timer, Trophy, SpellCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { apiGet } from '../../lib/api';
+import { apiGet, apiSend } from '../../lib/api';
 
 interface CardT { id: string; term: string; definition: string }
 interface DeckDetail { id: string; title: string; cards: CardT[] }
@@ -56,6 +56,7 @@ export default function FlashcardMatch() {
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [finished, setFinished] = useState(false);
+  const [bestRun, setBestRun] = useState<{ score: number; total: number; durationMs: number | null } | null>(null);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -64,7 +65,16 @@ export default function FlashcardMatch() {
       .then((d) => { setDeck(d); setTiles(buildTiles(d.cards || [])); })
       .catch((e: any) => toast.error(e?.message || 'Failed to load deck'))
       .finally(() => setLoading(false));
+    if (isStudentRoute) loadBest();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  const loadBest = () => {
+    if (!id) return;
+    apiGet<{ bestByMode: Record<string, { score: number; total: number; durationMs: number | null }> }>(`/api/flashcards/decks/${id}/attempts`)
+      .then((r) => setBestRun(r?.bestByMode?.MATCH ?? null))
+      .catch(() => {});
+  };
 
   useEffect(() => {
     if (!startedAt || finished) return;
@@ -106,6 +116,13 @@ export default function FlashcardMatch() {
       if (nextMatched.size === totalPairs) {
         setFinished(true);
         if (tickRef.current) clearInterval(tickRef.current);
+        if (isStudentRoute && id && startedAt) {
+          const durationMs = Date.now() - startedAt;
+          const score = Math.max(0, totalPairs - mistakes);
+          apiSend(`/api/flashcards/decks/${id}/attempts`, 'POST', { mode: 'MATCH', score, total: totalPairs, durationMs })
+            .then(loadBest)
+            .catch(() => {});
+        }
       }
     } else {
       setMistakes((m) => m + 1);
@@ -173,6 +190,12 @@ export default function FlashcardMatch() {
           <p className="text-sm text-slate-500 uppercase tracking-widest font-semibold">Match Complete</p>
           <p className="text-3xl font-bold text-aubergine-600">{formatTime(elapsed)}</p>
           <p className="text-sm text-slate-500">{mistakes} mistake{mistakes === 1 ? '' : 's'}</p>
+          {isStudentRoute && bestRun && (
+            <p className="text-xs text-slate-400">
+              Personal best: {bestRun.total - bestRun.score} mistake{bestRun.total - bestRun.score === 1 ? '' : 's'}
+              {bestRun.durationMs != null ? ` in ${formatTime(bestRun.durationMs)}` : ''}
+            </p>
+          )}
           <div className="flex justify-center gap-3 pt-2">
             <Button variant="outline" onClick={reset}><RotateCw className="mr-2 h-4 w-4" /> Play Again</Button>
             <Button render={<Link to={listUrl} />}>Back to Flashcards</Button>

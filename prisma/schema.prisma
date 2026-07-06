@@ -365,6 +365,8 @@ model Student {
   homeworkSubmissions HomeworkSubmission[]
   badges            StudentBadge[]
   dutyAssignments    DutyAssignment[]
+  flashcardMastery   FlashcardCardMastery[]
+  flashcardAttempts  FlashcardAttempt[]
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -1810,6 +1812,7 @@ model FlashcardDeck {
 
   cards       FlashcardCard[]
   classLinks  FlashcardDeckClass[]
+  attempts    FlashcardAttempt[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -1826,7 +1829,45 @@ model FlashcardCard {
   order      Int           @default(0)
   createdAt  DateTime      @default(now())
 
+  masteries  FlashcardCardMastery[]
+
   @@index([deckId])
+}
+
+// A student's personal "know it" / "still learning" flag on one card,
+// independent of any quiz/match/spelling score -- lets Study mode filter
+// down to just the cards a student hasn't mastered yet.
+model FlashcardCardMastery {
+  id        String        @id @default(uuid())
+  studentId String
+  student   Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  cardId    String
+  card      FlashcardCard @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  status    String        @default("LEARNING") // LEARNING | KNOWN
+  updatedAt DateTime      @updatedAt
+
+  @@unique([studentId, cardId])
+  @@index([cardId])
+}
+
+// A single completed play of Quiz, Match, or Spelling mode, so students can
+// see their history and teachers can see who's actually engaging with a
+// deck. For MATCH, score/total represent (pairs solved without a mistake)
+// out of (total pairs); durationMs holds the completion time.
+model FlashcardAttempt {
+  id         String        @id @default(uuid())
+  studentId  String
+  student    Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  deckId     String
+  deck       FlashcardDeck @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  mode       String        // QUIZ | SPELL | MATCH
+  score      Int
+  total      Int
+  durationMs Int?
+  createdAt  DateTime      @default(now())
+
+  @@index([deckId])
+  @@index([studentId])
 }
 
 // Which classes a deck has been assigned to -- a teacher may reuse one deck

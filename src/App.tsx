@@ -141,6 +141,7 @@ import StudentFlashcardStudy from "./pages/flashcards/StudentFlashcardStudy";
 import FlashcardQuiz from "./pages/flashcards/FlashcardQuiz";
 import FlashcardMatch from "./pages/flashcards/FlashcardMatch";
 import FlashcardSpelling from "./pages/flashcards/FlashcardSpelling";
+import FlashcardDeckProgress from "./pages/flashcards/FlashcardDeckProgress";
 import StaffDirectory from "./pages/hr/StaffDirectory";
 import StaffProfile from "./pages/hr/StaffProfile";
 import Departments from "./pages/hr/Departments";
@@ -337,6 +338,7 @@ export default function App() {
                   <Route path="/flashcards/:id/quiz" element={<FlashcardQuiz />} />
                   <Route path="/flashcards/:id/match" element={<FlashcardMatch />} />
                   <Route path="/flashcards/:id/spell" element={<FlashcardSpelling />} />
+                  <Route path="/flashcards/:id/progress" element={<FlashcardDeckProgress />} />
 
                   {/* Attendance - Admin can only view reports, teachers record via /teacher/attendance */}
 	                  <Route path="/attendance" element={<Navigate to="/attendance/reports" replace />} />

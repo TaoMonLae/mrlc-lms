@@ -4,7 +4,7 @@ import { ArrowLeft, SpellCheck, Volume2, CheckCircle2, XCircle, RotateCw, Brain,
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { apiGet } from '../../lib/api';
+import { apiGet, apiSend } from '../../lib/api';
 
 interface CardT { id: string; term: string; definition: string }
 interface DeckDetail { id: string; title: string; cards: CardT[] }
@@ -53,6 +53,7 @@ export default function FlashcardSpelling() {
   const [checked, setChecked] = useState<{ correct: boolean } | null>(null);
   const [answers, setAnswers] = useState<{ term: string; typed: string; correct: boolean }[]>([]);
   const [finished, setFinished] = useState(false);
+  const [bestScore, setBestScore] = useState<{ score: number; total: number } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const speechSupported = typeof window !== 'undefined' && 'speechSynthesis' in window;
 
@@ -62,7 +63,16 @@ export default function FlashcardSpelling() {
       .then((d) => { setDeck(d); setOrder(shuffle(d.cards || [])); })
       .catch((e: any) => toast.error(e?.message || 'Failed to load deck'))
       .finally(() => setLoading(false));
+    if (isStudentRoute) loadBest();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  const loadBest = () => {
+    if (!id) return;
+    apiGet<{ bestByMode: Record<string, { score: number; total: number }> }>(`/api/flashcards/decks/${id}/attempts`)
+      .then((r) => setBestScore(r?.bestByMode?.SPELL ? { score: r.bestByMode.SPELL.score, total: r.bestByMode.SPELL.total } : null))
+      .catch(() => {});
+  };
 
   const current = order[index];
 
@@ -86,7 +96,15 @@ export default function FlashcardSpelling() {
   const next = () => {
     setInput('');
     setChecked(null);
-    if (index + 1 >= order.length) { setFinished(true); return; }
+    if (index + 1 >= order.length) {
+      setFinished(true);
+      if (isStudentRoute && id) {
+        apiSend(`/api/flashcards/decks/${id}/attempts`, 'POST', { mode: 'SPELL', score, total: order.length })
+          .then(loadBest)
+          .catch(() => {});
+      }
+      return;
+    }
     setIndex((i) => i + 1);
   };
 
@@ -147,6 +165,9 @@ export default function FlashcardSpelling() {
           <p className="text-sm text-slate-500 uppercase tracking-widest font-semibold">Spelling Quiz Complete</p>
           <p className="text-4xl font-bold text-aubergine-600">{score} / {answers.length}</p>
           <p className="text-sm text-slate-500">{Math.round((score / answers.length) * 100)}% spelled correctly</p>
+          {isStudentRoute && bestScore && (
+            <p className="text-xs text-slate-400">Personal best: {bestScore.score} / {bestScore.total} ({Math.round((bestScore.score / bestScore.total) * 100)}%)</p>
+          )}
 
           {answers.some((a) => !a.correct) && (
             <div className="text-left mt-6 space-y-2">

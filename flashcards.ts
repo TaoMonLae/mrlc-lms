@@ -250,4 +250,186 @@ export function registerFlashcardRoutes(deps: Deps): void {
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
+
+  const ATTEMPT_MODES = ["QUIZ", "SPELL", "MATCH"];
+
+  async function studentCanAccessDeck(studentId: string | null | undefined, deckId: string): Promise<boolean> {
+    if (!studentId) return false;
+    const student = await prisma.student.findUnique({ where: { id: studentId } });
+    if (!student?.classId) return false;
+    const link = await prisma.flashcardDeckClass.findFirst({ where: { deckId, classId: student.classId } });
+    return !!link;
+  }
+
+  // ── Student: record a completed Quiz/Match/Spelling attempt ─────────────────
+  app.post("/api/flashcards/decks/:id/attempts", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "STUDENT") { res.status(403).json({ error: "Forbidden" }); return; }
+    const mode = (req.body?.mode ?? "").toString().toUpperCase();
+    const score = Number(req.body?.score);
+    const total = Number(req.body?.total);
+    const durationMs = req.body?.durationMs != null ? Number(req.body.durationMs) : null;
+    if (!ATTEMPT_MODES.includes(mode)) { res.status(400).json({ error: "Invalid mode" }); return; }
+    if (!Number.isFinite(score) || !Number.isFinite(total) || total <= 0 || score < 0) {
+      res.status(400).json({ error: "Invalid score/total" }); return;
+    }
+    try {
+      const student = await getStudentForReq(req);
+      if (!student) { res.status(404).json({ error: "Student profile not found" }); return; }
+      const deck = await prisma.flashcardDeck.findUnique({ where: { id: req.params.id } });
+      if (!deck) { res.status(404).json({ error: "Deck not found" }); return; }
+      const canAccess = await studentCanAccessDeck(student.id, deck.id);
+      if (!canAccess) { res.status(403).json({ error: "Forbidden" }); return; }
+
+      const attempt = await prisma.flashcardAttempt.create({
+        data: { studentId: student.id, deckId: deck.id, mode, score, total, durationMs },
+      });
+      res.status(201).json({ id: attempt.id });
+    } catch (err) {
+      logger.error("Error recording flashcard attempt:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Student: my own attempt history + personal bests for a deck ─────────────
+  app.get("/api/flashcards/decks/:id/attempts", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "STUDENT") { res.status(403).json({ error: "Forbidden" }); return; }
+    try {
+      const student = await getStudentForReq(req);
+      if (!student) { res.status(404).json({ error: "Student profile not found" }); return; }
+      const attempts = await prisma.flashcardAttempt.findMany({
+        where: { deckId: req.params.id, studentId: student.id },
+        orderBy: { createdAt: "desc" },
+        take: 20,
+      });
+      const bestByMode: Record<string, any> = {};
+      for (const a of attempts) {
+        const prev = bestByMode[a.mode];
+        const better = !prev || a.score / a.total > prev.score / prev.total;
+        if (better) bestByMode[a.mode] = a;
+      }
+      res.json({
+        attempts: attempts.map((a: any) => ({ id: a.id, mode: a.mode, score: a.score, total: a.total, durationMs: a.durationMs, createdAt: a.createdAt })),
+        bestByMode,
+      });
+    } catch (err) {
+      logger.error("Error fetching flashcard attempts:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Student: my per-card mastery map for a deck ──────────────────────────────
+  app.get("/api/flashcards/decks/:id/mastery", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "STUDENT") { res.status(403).json({ error: "Forbidden" }); return; }
+    try {
+      const student = await getStudentForReq(req);
+      if (!student) { res.status(404).json({ error: "Student profile not found" }); return; }
+      const masteries = await prisma.flashcardCardMastery.findMany({
+        where: { studentId: student.id, card: { deckId: req.params.id } },
+        select: { cardId: true, status: true },
+      });
+      const map: Record<string, string> = {};
+      for (const m of masteries) map[m.cardId] = m.status;
+      res.json(map);
+    } catch (err) {
+      logger.error("Error fetching flashcard mastery:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Student: mark one card as known / still learning ─────────────────────────
+  app.put("/api/flashcards/cards/:cardId/mastery", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "STUDENT") { res.status(403).json({ error: "Forbidden" }); return; }
+    const status = (req.body?.status ?? "").toString().toUpperCase();
+    if (!["KNOWN", "LEARNING"].includes(status)) { res.status(400).json({ error: "Invalid status" }); return; }
+    try {
+      const student = await getStudentForReq(req);
+      if (!student) { res.status(404).json({ error: "Student profile not found" }); return; }
+      const card = await prisma.flashcardCard.findUnique({ where: { id: req.params.cardId } });
+      if (!card) { res.status(404).json({ error: "Card not found" }); return; }
+      const canAccess = await studentCanAccessDeck(student.id, card.deckId);
+      if (!canAccess) { res.status(403).json({ error: "Forbidden" }); return; }
+
+      await prisma.flashcardCardMastery.upsert({
+        where: { studentId_cardId: { studentId: student.id, cardId: card.id } },
+        create: { studentId: student.id, cardId: card.id, status },
+        update: { status },
+      });
+      res.json({ success: true });
+    } catch (err) {
+      logger.error("Error updating flashcard mastery:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Teacher/admin: per-student engagement for a deck (mastery % + best scores) ──
+  app.get("/api/flashcards/decks/:id/progress", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!["TEACHER", "ADMIN"].includes(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    try {
+      const deck = await prisma.flashcardDeck.findUnique({
+        where: { id: req.params.id },
+        include: {
+          teacher: { select: { userId: true } },
+          cards: { select: { id: true } },
+          classLinks: { select: { classId: true } },
+        },
+      });
+      if (!deck) { res.status(404).json({ error: "Deck not found" }); return; }
+      if (jwtUser.role !== "ADMIN" && deck.teacher?.userId !== jwtUser.userId) {
+        res.status(403).json({ error: "Forbidden" }); return;
+      }
+
+      const classIds = deck.classLinks.map((l: any) => l.classId);
+      const cardIds = deck.cards.map((c: any) => c.id);
+      const totalCards = cardIds.length;
+
+      const students = classIds.length
+        ? await prisma.student.findMany({
+            where: { classId: { in: classIds } },
+            select: { id: true, studentCode: true, user: { select: { firstName: true, lastName: true } } },
+          })
+        : [];
+      const studentIds = students.map((s: any) => s.id);
+
+      const [masteries, attempts] = await Promise.all([
+        studentIds.length ? prisma.flashcardCardMastery.findMany({
+          where: { studentId: { in: studentIds }, cardId: { in: cardIds }, status: "KNOWN" },
+          select: { studentId: true },
+        }) : [],
+        studentIds.length ? prisma.flashcardAttempt.findMany({
+          where: { studentId: { in: studentIds }, deckId: deck.id },
+          orderBy: { createdAt: "desc" },
+        }) : [],
+      ]);
+
+      const knownCountByStudent: Record<string, number> = {};
+      for (const m of masteries) knownCountByStudent[m.studentId] = (knownCountByStudent[m.studentId] || 0) + 1;
+
+      const bestByStudentMode: Record<string, Record<string, any>> = {};
+      const lastActivityByStudent: Record<string, string> = {};
+      for (const a of attempts) {
+        if (!lastActivityByStudent[a.studentId]) lastActivityByStudent[a.studentId] = a.createdAt;
+        bestByStudentMode[a.studentId] = bestByStudentMode[a.studentId] || {};
+        const prev = bestByStudentMode[a.studentId][a.mode];
+        if (!prev || a.score / a.total > prev.score / prev.total) bestByStudentMode[a.studentId][a.mode] = a;
+      }
+
+      res.json({
+        totalCards,
+        students: students.map((s: any) => ({
+          id: s.id, name: fullName(s.user), studentCode: s.studentCode,
+          known: knownCountByStudent[s.id] || 0,
+          bestByMode: bestByStudentMode[s.id] || {},
+          lastActivity: lastActivityByStudent[s.id] || null,
+        })),
+      });
+    } catch (err) {
+      logger.error("Error fetching flashcard deck progress:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
 }
