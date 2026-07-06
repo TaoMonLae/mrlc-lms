@@ -311,12 +311,18 @@ export default function ChatPage() {
         <div className="flex-1 overflow-y-auto">
           {loadingList ? <p className="p-4 text-sm text-slate-400">Loading…</p> :
             conversations.length === 0 ? <p className="p-6 text-center text-sm text-slate-400">No conversations yet. Tap “New” to start one.</p> :
-            conversations.map((c) => (
+            conversations.map((c) => {
+              const others = c.participants?.filter((p) => p.id !== myId) ?? [];
+              // For a 1:1 chat, show the other person's real photo; a
+              // GROUP's title is a group name, not one person, so keep the
+              // initials fallback there.
+              const avatarSrc = c.type === 'DIRECT' ? others[0]?.profilePhotoUrl : null;
+              return (
               <button key={c.id} onClick={() => openConversation(c.id)}
                 className={`flex w-full items-start gap-3 border-b border-slate-50 dark:border-surface-raised/50 p-3 text-left hover:bg-slate-50 dark:hover:bg-surface-raised/40 ${activeId === c.id ? 'bg-slate-50 dark:bg-surface-raised/40' : ''}`}>
                 <div className="relative shrink-0">
-                  <UserAvatar name={c.title} className="h-10 w-10 font-bold" />
-                  {c.participants?.some((p) => p.id !== myId && onlineUserIds.has(p.id)) && (
+                  <UserAvatar name={c.title} src={avatarSrc} className="h-10 w-10 font-bold" />
+                  {others.some((p) => onlineUserIds.has(p.id)) && (
                     <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-surface-indigo" />
                   )}
                 </div>
@@ -331,7 +337,8 @@ export default function ChatPage() {
                   </div>
                 </div>
               </button>
-            ))}
+              );
+            })}
         </div>
       </div>
 

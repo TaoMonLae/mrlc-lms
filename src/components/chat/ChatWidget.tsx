@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { MessageSquare, X, ArrowLeft, Send, Maximize2, Camera, Clock, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { format, isToday } from 'date-fns';
 import { toast } from 'sonner';
 import { apiGet, apiSend } from '../../lib/api';
@@ -15,7 +16,7 @@ import DOMPurify from 'dompurify';
 
 const timeLeftShort = (iso: string) => { const m = Math.max(0, Math.round((new Date(iso).getTime() - Date.now()) / 60000)); return m < 60 ? `${m}m` : `${Math.round(m / 60)}h`; };
 
-interface Contact { id: string; name: string; role: string }
+interface Contact { id: string; name: string; role: string; profilePhotoUrl?: string | null }
 interface Participant extends Contact { lastReadAt?: string | null }
 interface ConvSummary {
   id: string; type: string; title: string; unread: number; lastMessageAt: string;
@@ -206,11 +207,17 @@ export default function ChatWidget() {
               No conversations yet.
               <Link to="/chat" className="mt-2 text-aubergine-600 hover:underline">Open chat to start one</Link>
             </div>
-          ) : conversations.map((c) => (
+          ) : conversations.map((c) => {
+            const others = c.participants?.filter((p) => p.id !== myId) ?? [];
+            // For a 1:1 chat, show the other person's real photo; a GROUP's
+            // title is a group name, not one person, so keep the initials
+            // fallback there.
+            const avatarSrc = c.type === 'DIRECT' ? others[0]?.profilePhotoUrl : null;
+            return (
             <button key={c.id} onClick={() => openConversation(c.id)} className="flex w-full items-start gap-3 border-b border-slate-50 p-3 text-left hover:bg-slate-50 dark:border-surface-raised/50 dark:hover:bg-surface-raised/40">
               <div className="relative shrink-0">
-                <div className="grid h-9 w-9 place-items-center rounded-full bg-aubergine-100 text-xs font-bold text-aubergine-700">{c.title.charAt(0).toUpperCase()}</div>
-                {c.participants?.some((p) => p.id !== myId && onlineUserIds.has(p.id)) && (
+                <UserAvatar name={c.title} src={avatarSrc} className="h-9 w-9 text-xs" />
+                {others.some((p) => onlineUserIds.has(p.id)) && (
                   <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-surface-indigo" />
                 )}
               </div>
@@ -225,7 +232,8 @@ export default function ChatWidget() {
                 </div>
               </div>
             </button>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <>
