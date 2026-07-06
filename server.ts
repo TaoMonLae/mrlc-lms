@@ -1988,7 +1988,12 @@ async function startServer() {
     } catch (err: any) {
       logger.error("Error creating student:", err);
       if (err.code === "P2002") {
-        res.status(400).json({ error: "Email or Student Code already exists" });
+        const target = String(err.meta?.target || "");
+        res.status(400).json({
+          error: target.includes("studentCode")
+            ? "That student code is already in use"
+            : "A user account with that email already exists",
+        });
       } else {
         res.status(500).json({ error: "Internal Server Error" });
       }
