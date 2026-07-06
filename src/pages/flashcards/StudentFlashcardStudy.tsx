@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { apiGet, apiSend } from '../../lib/api';
 import { useAuth } from '../../providers/AuthProvider';
 import { MathText } from '@/src/components/MathText';
+import ElectricBorder from '@/components/ElectricBorder';
 
 interface Card { id: string; term: string; definition: string; imageUrl?: string | null }
 interface DeckDetail {
@@ -160,31 +161,33 @@ export default function StudentFlashcardStudy() {
           </div>
           <p className="text-center text-sm text-slate-500">Card {index + 1} of {order.length}</p>
 
-          {/* Flip card */}
-          <button
-            type="button"
-            onClick={() => setFlipped((f) => !f)}
-            className="w-full [perspective:1200px] group"
-            aria-label="Flip card"
-          >
-            <div
-              className="relative w-full min-h-[260px] transition-transform duration-500 [transform-style:preserve-3d]"
-              style={{ transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
+          {/* Flip card, wrapped in an animated electric border for a bit of flair */}
+          <ElectricBorder color="#7a3dff" speed={1} chaos={0.08} borderRadius={16} className="w-full" style={{}}>
+            <button
+              type="button"
+              onClick={() => setFlipped((f) => !f)}
+              className="w-full [perspective:1200px] group block"
+              aria-label="Flip card"
             >
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-8 rounded-2xl border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-sm [backface-visibility:hidden]">
-                {current?.imageUrl && (
-                  <img src={current.imageUrl} alt="" className="max-h-32 rounded-lg object-contain" />
-                )}
-                <p className="text-xl font-semibold text-slate-900 dark:text-white text-center"><MathText>{current?.term}</MathText></p>
-              </div>
               <div
-                className="absolute inset-0 flex items-center justify-center p-8 rounded-2xl border border-aubergine-200 dark:border-aubergine-900/40 bg-aubergine-50 dark:bg-aubergine-900/10 shadow-sm [backface-visibility:hidden]"
-                style={{ transform: 'rotateY(180deg)' }}
+                className="relative w-full min-h-[260px] transition-transform duration-500 [transform-style:preserve-3d]"
+                style={{ transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
               >
-                <p className="text-lg text-slate-700 dark:text-slate-200 text-center"><MathText>{current?.definition}</MathText></p>
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-8 rounded-2xl border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-sm [backface-visibility:hidden]">
+                  {current?.imageUrl && (
+                    <img src={current.imageUrl} alt="" className="max-h-32 rounded-lg object-contain" />
+                  )}
+                  <p className="text-xl font-semibold text-slate-900 dark:text-white text-center"><MathText>{current?.term}</MathText></p>
+                </div>
+                <div
+                  className="absolute inset-0 flex items-center justify-center p-8 rounded-2xl border border-aubergine-200 dark:border-aubergine-900/40 bg-aubergine-50 dark:bg-aubergine-900/10 shadow-sm [backface-visibility:hidden]"
+                  style={{ transform: 'rotateY(180deg)' }}
+                >
+                  <p className="text-lg text-slate-700 dark:text-slate-200 text-center"><MathText>{current?.definition}</MathText></p>
+                </div>
               </div>
-            </div>
-          </button>
+            </button>
+          </ElectricBorder>
           <p className="text-center text-xs text-slate-400">Tap the card to flip it</p>
 
           <div className="flex items-center justify-between gap-3">
