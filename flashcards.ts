@@ -1,4 +1,8 @@
 import express from "express";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import crypto from "crypto";
 
 interface JwtPayload { userId: string; role: string; email: string; }
 
@@ -13,6 +17,26 @@ interface Deps {
   ) => Promise<void>;
   logger: { error: (...a: any[]) => void };
 }
+
+const FLASHCARD_IMAGE_DIR = process.env.FLASHCARD_IMAGE_DIR || path.join(process.cwd(), "data", "flashcards");
+fs.mkdirSync(FLASHCARD_IMAGE_DIR, { recursive: true });
+
+const flashcardImageUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, FLASHCARD_IMAGE_DIR),
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase() || ".jpg";
+      cb(null, `${crypto.randomUUID()}${ext}`);
+    },
+  }),
+  limits: { fileSize: 8 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif"]);
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (file.mimetype.startsWith("image/") && allowed.has(ext)) cb(null, true);
+    else cb(new Error("Only PNG, JPG, WEBP, and GIF image files are allowed") as any);
+  },
+});
 
 /**
  * Flashcards: teachers build study decks (term/definition cards) and assign
@@ -35,23 +59,67 @@ export function registerFlashcardRoutes(deps: Deps): void {
     return prisma.student.findUnique({ where: { userId: jwtUser.userId } });
   }
 
-  function normalizeCards(raw: any): { term: string; definition: string }[] {
+  function normalizeCards(raw: any): { term: string; definition: string; imageUrl: string | null }[] {
     if (!Array.isArray(raw)) return [];
     return raw
       .map((c: any) => ({
         term: (c?.term ?? "").toString().trim().slice(0, 500),
         definition: (c?.definition ?? "").toString().trim().slice(0, 2000),
+        imageUrl: c?.imageUrl ? c.imageUrl.toString().trim().slice(0, 500) : null,
       }))
       .filter((c) => c.term && c.definition);
   }
 
+  // Best-effort cleanup of image files that are actually going away (deck
+  // update replaces all cards, deck delete removes them all) -- mirrors the
+  // social post image cleanup elsewhere in the app. `keepUrls` lets an update
+  // that re-submits the same imageUrl for an edited card avoid deleting a
+  // file the new row still points at. Never blocks the request.
+  async function deleteCardImages(deckId: string, keepUrls: Set<string> = new Set()) {
+    try {
+      const cards = await prisma.flashcardCard.findMany({ where: { deckId, imageUrl: { not: null } }, select: { imageUrl: true } });
+      for (const c of cards) {
+        if (!c.imageUrl || keepUrls.has(c.imageUrl)) continue;
+        try {
+          const fp = path.join(FLASHCARD_IMAGE_DIR, path.basename(c.imageUrl));
+          if (fs.existsSync(fp)) fs.unlinkSync(fp);
+        } catch { /* ignore */ }
+      }
+    } catch { /* ignore */ }
+  }
+
   const deckSummarySelect = {
-    id: true, title: true, description: true, createdAt: true, updatedAt: true,
+    id: true, title: true, description: true, shared: true, createdAt: true, updatedAt: true,
     subject: { select: { id: true, name: true } },
     teacher: { select: { id: true, user: { select: { firstName: true, lastName: true } } } },
     _count: { select: { cards: true } },
     classLinks: { select: { classId: true, class: { select: { id: true, name: true } } } },
   };
+
+  // ── Image upload for card faces ─────────────────────────────────────────────
+  app.use("/uploads/flashcards", express.static(FLASHCARD_IMAGE_DIR, { maxAge: process.env.NODE_ENV === "production" ? "30d" : 0 }));
+
+  app.post(
+    "/api/flashcards/image-upload",
+    authMiddleware,
+    (req, res, next) => {
+      const jwtUser = (req as any).user as JwtPayload;
+      if (!["TEACHER", "ADMIN"].includes(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+      next();
+    },
+    (req, res, next) => {
+      flashcardImageUpload.single("file")(req, res, (err: any) => {
+        if (!err) return next();
+        const msg = err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE" ? "Image must be 8 MB or smaller" : err.message || "Upload failed";
+        res.status(400).json({ error: msg });
+      });
+    },
+    (req, res) => {
+      const file = (req as any).file as Express.Multer.File | undefined;
+      if (!file) { res.status(400).json({ error: "No file uploaded" }); return; }
+      res.status(201).json({ url: `/uploads/flashcards/${file.filename}` });
+    },
+  );
 
   // ── Teacher/admin: list decks I own (or all, for ADMIN) ──────────────────────
   app.get("/api/flashcards/decks", authMiddleware, async (req, res) => {
@@ -68,7 +136,7 @@ export function registerFlashcardRoutes(deps: Deps): void {
         where, orderBy: { updatedAt: "desc" }, select: deckSummarySelect,
       });
       res.json(decks.map((d: any) => ({
-        id: d.id, title: d.title, description: d.description,
+        id: d.id, title: d.title, description: d.description, shared: d.shared,
         createdAt: d.createdAt, updatedAt: d.updatedAt,
         subject: d.subject, teacherName: fullName(d.teacher?.user),
         cardCount: d._count.cards,
@@ -76,6 +144,28 @@ export function registerFlashcardRoutes(deps: Deps): void {
       })));
     } catch (err) {
       logger.error("Error listing flashcard decks:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Teacher/admin: browse decks other teachers have shared ──────────────────
+  app.get("/api/flashcards/community", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!["TEACHER", "ADMIN"].includes(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    try {
+      const myTeacher = await getTeacherForReq(req);
+      const decks = await prisma.flashcardDeck.findMany({
+        where: { shared: true, ...(myTeacher ? { teacherId: { not: myTeacher.id } } : {}) },
+        orderBy: { updatedAt: "desc" },
+        select: deckSummarySelect,
+      });
+      res.json(decks.map((d: any) => ({
+        id: d.id, title: d.title, description: d.description,
+        updatedAt: d.updatedAt, subject: d.subject, teacherName: fullName(d.teacher?.user),
+        cardCount: d._count.cards,
+      })));
+    } catch (err) {
+      logger.error("Error listing community flashcard decks:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
@@ -119,6 +209,9 @@ export function registerFlashcardRoutes(deps: Deps): void {
       if (!deck) { res.status(404).json({ error: "Deck not found" }); return; }
 
       let allowed = jwtUser.role === "ADMIN" || deck.teacher?.userId === jwtUser.userId;
+      // A shared deck can be previewed by any other teacher browsing the
+      // Community tab, so they can see what's inside before cloning it.
+      if (!allowed && jwtUser.role === "TEACHER" && deck.shared) allowed = true;
       if (!allowed && jwtUser.role === "STUDENT") {
         const student = await getStudentForReq(req);
         allowed = !!student?.classId && deck.classLinks.some((l: any) => l.classId === student.classId);
@@ -126,10 +219,10 @@ export function registerFlashcardRoutes(deps: Deps): void {
       if (!allowed) { res.status(403).json({ error: "Forbidden" }); return; }
 
       res.json({
-        id: deck.id, title: deck.title, description: deck.description,
+        id: deck.id, title: deck.title, description: deck.description, shared: deck.shared,
         subject: deck.subject, teacherName: fullName(deck.teacher?.user),
         classes: deck.classLinks.map((l: any) => l.class),
-        cards: deck.cards.map((c: any) => ({ id: c.id, term: c.term, definition: c.definition })),
+        cards: deck.cards.map((c: any) => ({ id: c.id, term: c.term, definition: c.definition, imageUrl: c.imageUrl ?? null })),
       });
     } catch (err) {
       logger.error("Error fetching flashcard deck:", err);
@@ -144,6 +237,7 @@ export function registerFlashcardRoutes(deps: Deps): void {
     const title = (req.body?.title ?? "").toString().trim().slice(0, 200);
     const description = (req.body?.description ?? "").toString().trim().slice(0, 1000) || null;
     const subjectId = req.body?.subjectId || null;
+    const shared = Boolean(req.body?.shared);
     const classIds: string[] = Array.isArray(req.body?.classIds) ? req.body.classIds.filter((c: any) => typeof c === "string") : [];
     const cards = normalizeCards(req.body?.cards);
     if (!title) { res.status(400).json({ error: "Title is required" }); return; }
@@ -162,8 +256,8 @@ export function registerFlashcardRoutes(deps: Deps): void {
 
       const deck = await prisma.flashcardDeck.create({
         data: {
-          title, description, subjectId, teacherId,
-          cards: { create: cards.map((c, i) => ({ term: c.term, definition: c.definition, order: i })) },
+          title, description, subjectId, teacherId, shared,
+          cards: { create: cards.map((c, i) => ({ term: c.term, definition: c.definition, imageUrl: c.imageUrl, order: i })) },
           classLinks: { create: classIds.map((classId) => ({ classId })) },
         },
       });
@@ -196,10 +290,14 @@ export function registerFlashcardRoutes(deps: Deps): void {
       const title = (req.body?.title ?? "").toString().trim().slice(0, 200);
       const description = (req.body?.description ?? "").toString().trim().slice(0, 1000) || null;
       const subjectId = req.body?.subjectId || null;
+      const shared = Boolean(req.body?.shared);
       const classIds: string[] = Array.isArray(req.body?.classIds) ? req.body.classIds.filter((c: any) => typeof c === "string") : [];
       const cards = normalizeCards(req.body?.cards);
       if (!title) { res.status(400).json({ error: "Title is required" }); return; }
       if (cards.length === 0) { res.status(400).json({ error: "Add at least one card (term + definition)" }); return; }
+
+      const keepImageUrls = new Set(cards.map((c) => c.imageUrl).filter((u): u is string => !!u));
+      await deleteCardImages(existing.id, keepImageUrls);
 
       await prisma.$transaction([
         prisma.flashcardCard.deleteMany({ where: { deckId: existing.id } }),
@@ -207,8 +305,8 @@ export function registerFlashcardRoutes(deps: Deps): void {
         prisma.flashcardDeck.update({
           where: { id: existing.id },
           data: {
-            title, description, subjectId,
-            cards: { create: cards.map((c, i) => ({ term: c.term, definition: c.definition, order: i })) },
+            title, description, subjectId, shared,
+            cards: { create: cards.map((c, i) => ({ term: c.term, definition: c.definition, imageUrl: c.imageUrl, order: i })) },
             classLinks: { create: classIds.map((classId) => ({ classId })) },
           },
         }),
@@ -238,6 +336,7 @@ export function registerFlashcardRoutes(deps: Deps): void {
       if (jwtUser.role !== "ADMIN" && existing.teacher?.userId !== jwtUser.userId) {
         res.status(403).json({ error: "Forbidden" }); return;
       }
+      await deleteCardImages(existing.id);
       await prisma.flashcardDeck.delete({ where: { id: existing.id } }); // cards/classLinks cascade
       await createAuditLog(
         jwtUser.userId, jwtUser.email, "DELETE", "FLASHCARD_DECK", existing.id,
@@ -429,6 +528,67 @@ export function registerFlashcardRoutes(deps: Deps): void {
       });
     } catch (err) {
       logger.error("Error fetching flashcard deck progress:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Teacher/admin: clone a deck into my own library ──────────────────────────
+  // Works on any deck that's shared (Community tab), or one you already own
+  // (e.g. to reuse it for a different class without disturbing the original's
+  // assignments). The clone always starts private and unassigned.
+  app.post("/api/flashcards/decks/:id/clone", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!["TEACHER", "ADMIN"].includes(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    try {
+      const source = await prisma.flashcardDeck.findUnique({
+        where: { id: req.params.id },
+        include: { cards: { orderBy: { order: "asc" } }, teacher: { select: { userId: true } } },
+      });
+      if (!source) { res.status(404).json({ error: "Deck not found" }); return; }
+      const isOwner = source.teacher?.userId === jwtUser.userId;
+      if (!source.shared && !isOwner && jwtUser.role !== "ADMIN") { res.status(403).json({ error: "Forbidden" }); return; }
+
+      const teacher = await getTeacherForReq(req);
+      if (!teacher) { res.status(400).json({ error: "Only a teacher account can clone a deck into its own library" }); return; }
+
+      // Duplicate each card's image file on disk (rather than pointing the
+      // clone at the source's file) so deleting either deck later can't
+      // orphan or break the other's images.
+      const cloneImageUrl = (url: string | null): string | null => {
+        if (!url) return null;
+        try {
+          const srcPath = path.join(FLASHCARD_IMAGE_DIR, path.basename(url));
+          if (!fs.existsSync(srcPath)) return null;
+          const ext = path.extname(srcPath) || ".jpg";
+          const destName = `${crypto.randomUUID()}${ext}`;
+          fs.copyFileSync(srcPath, path.join(FLASHCARD_IMAGE_DIR, destName));
+          return `/uploads/flashcards/${destName}`;
+        } catch {
+          return null;
+        }
+      };
+
+      const clone = await prisma.flashcardDeck.create({
+        data: {
+          title: `${source.title} (Copy)`,
+          description: source.description,
+          subjectId: source.subjectId,
+          teacherId: teacher.id,
+          shared: false,
+          cards: {
+            create: source.cards.map((c: any, i: number) => ({ term: c.term, definition: c.definition, imageUrl: cloneImageUrl(c.imageUrl), order: i })),
+          },
+        },
+      });
+
+      await createAuditLog(
+        jwtUser.userId, jwtUser.email, "CREATE", "FLASHCARD_DECK", clone.id,
+        `Cloned flashcard deck "${source.title}" from another teacher`,
+        req.ip || null, req.headers["user-agent"] || null,
+      );
+      res.status(201).json({ id: clone.id });
+    } catch (err) {
+      logger.error("Error cloning flashcard deck:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });

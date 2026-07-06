@@ -5,8 +5,9 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { apiGet, apiSend } from '../../lib/api';
+import { MathText } from '@/src/components/MathText';
 
-interface CardT { id: string; term: string; definition: string }
+interface CardT { id: string; term: string; definition: string; imageUrl?: string | null }
 interface DeckDetail { id: string; title: string; cards: CardT[] }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -198,7 +199,10 @@ export default function FlashcardSpelling() {
               <Button variant="outline" size="lg" onClick={() => speak(current.term)} disabled={!speechSupported}>
                 <Volume2 className="mr-2 h-5 w-5" /> Hear the word again
               </Button>
-              <p className="text-slate-600 dark:text-slate-300">{current.definition}</p>
+              {current.imageUrl && (
+                <img src={current.imageUrl} alt="" className="max-h-28 mx-auto rounded-lg object-contain" />
+              )}
+              <p className="text-slate-600 dark:text-slate-300"><MathText>{current.definition}</MathText></p>
               {!speechSupported && (
                 <p className="text-xs text-amber-600">Your browser can't read words aloud, so the definition is your only clue.</p>
               )}

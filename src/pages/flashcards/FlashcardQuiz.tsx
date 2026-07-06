@@ -4,10 +4,11 @@ import { ArrowLeft, Brain, CheckCircle2, XCircle, RotateCw, Grid3x3, SpellCheck 
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { apiGet, apiSend } from '../../lib/api';
+import { MathText } from '@/src/components/MathText';
 
-interface CardT { id: string; term: string; definition: string }
+interface CardT { id: string; term: string; definition: string; imageUrl?: string | null }
 interface DeckDetail { id: string; title: string; cards: CardT[] }
-interface Question { cardId: string; term: string; correct: string; choices: string[] }
+interface Question { cardId: string; term: string; imageUrl?: string | null; correct: string; choices: string[] }
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -23,7 +24,7 @@ function buildQuestions(cards: CardT[]): Question[] {
   return pool.map((card) => {
     const others = cards.filter((c) => c.id !== card.id).map((c) => c.definition);
     const distractors = shuffle(others).slice(0, 3);
-    return { cardId: card.id, term: card.term, correct: card.definition, choices: shuffle([card.definition, ...distractors]) };
+    return { cardId: card.id, term: card.term, imageUrl: card.imageUrl, correct: card.definition, choices: shuffle([card.definition, ...distractors]) };
   });
 }
 
@@ -172,7 +173,10 @@ export default function FlashcardQuiz() {
           <p className="text-center text-sm text-slate-500">Question {index + 1} of {questions.length}</p>
 
           <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-8">
-            <p className="text-lg font-semibold text-slate-900 dark:text-white text-center mb-6">{current.term}</p>
+            {current.imageUrl && (
+              <img src={current.imageUrl} alt="" className="max-h-32 mx-auto mb-4 rounded-lg object-contain" />
+            )}
+            <p className="text-lg font-semibold text-slate-900 dark:text-white text-center mb-6"><MathText>{current.term}</MathText></p>
             <div className="grid grid-cols-1 gap-3">
               {current.choices.map((choice) => {
                 const isPicked = selected === choice;
@@ -191,7 +195,7 @@ export default function FlashcardQuiz() {
                     }`}
                   >
                     <span className="flex items-center justify-between gap-2">
-                      {choice}
+                      <MathText>{choice}</MathText>
                       {showState && isCorrect && <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />}
                       {showState && isPicked && !isCorrect && <XCircle className="h-4 w-4 shrink-0 text-rose-600" />}
                     </span>

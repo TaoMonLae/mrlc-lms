@@ -4,8 +4,9 @@ import { ArrowLeft, Grid3x3, RotateCw, Brain, Timer, Trophy, SpellCheck } from '
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { apiGet, apiSend } from '../../lib/api';
+import { MathText } from '@/src/components/MathText';
 
-interface CardT { id: string; term: string; definition: string }
+interface CardT { id: string; term: string; definition: string; imageUrl?: string | null }
 interface DeckDetail { id: string; title: string; cards: CardT[] }
 interface Tile { key: string; cardId: string; text: string; kind: 'term' | 'definition' }
 
@@ -220,7 +221,7 @@ export default function FlashcardMatch() {
                   'border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo hover:border-aubergine-300'
                 }`}
               >
-                {t.text}
+                <MathText>{t.text}</MathText>
               </button>
             );
           })}

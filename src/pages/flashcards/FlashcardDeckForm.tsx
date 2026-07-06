@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Layers, Plus, Trash2, Save, Upload, Download } from 'lucide-react';
+import { ArrowLeft, Layers, Plus, Trash2, Save, Upload, Download, ImagePlus, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,10 +9,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { usePermissions } from '../../lib/permissions';
-import { apiGet, apiSend } from '../../lib/api';
+import { apiGet, apiSend, authHeaders } from '../../lib/api';
 import { cardsToCsv, downloadCsv, parseFlashcardCsvFile } from '../../lib/flashcardCsv';
 
-interface CardDraft { term: string; definition: string }
+interface CardDraft { term: string; definition: string; imageUrl?: string | null }
 interface ClassOption { id: string; name: string }
 interface SubjectOption { id: string; name: string }
 
@@ -25,8 +25,10 @@ export default function FlashcardDeckForm() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [subjectId, setSubjectId] = useState('');
+  const [shared, setShared] = useState(false);
   const [classIds, setClassIds] = useState<string[]>([]);
   const [cards, setCards] = useState<CardDraft[]>([{ term: '', definition: '' }, { term: '', definition: '' }]);
+  const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
   const [classes, setClasses] = useState<ClassOption[]>([]);
   const [subjects, setSubjects] = useState<SubjectOption[]>([]);
   const [loading, setLoading] = useState(isEdit);
@@ -54,8 +56,9 @@ export default function FlashcardDeckForm() {
         setTitle(d.title || '');
         setDescription(d.description || '');
         setSubjectId(d.subject?.id || '');
+        setShared(!!d.shared);
         setClassIds((d.classes || []).map((c: any) => c.id));
-        setCards(d.cards?.length ? d.cards.map((c: any) => ({ term: c.term, definition: c.definition })) : [{ term: '', definition: '' }]);
+        setCards(d.cards?.length ? d.cards.map((c: any) => ({ term: c.term, definition: c.definition, imageUrl: c.imageUrl ?? null })) : [{ term: '', definition: '' }]);
       })
       .catch((e: any) => toast.error(e?.message || 'Failed to load deck'))
       .finally(() => setLoading(false));
@@ -70,6 +73,26 @@ export default function FlashcardDeckForm() {
   };
   const addCard = () => setCards((prev) => [...prev, { term: '', definition: '' }]);
   const removeCard = (index: number) => setCards((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== index) : prev));
+
+  const setCardImage = (index: number, imageUrl: string | null) => {
+    setCards((prev) => prev.map((c, i) => (i === index ? { ...c, imageUrl } : c)));
+  };
+
+  const uploadCardImage = async (index: number, file: File) => {
+    setUploadingIndex(index);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/flashcards/image-upload', { method: 'POST', headers: authHeaders(), body: fd });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Upload failed');
+      setCardImage(index, data.url);
+    } catch (e: any) {
+      toast.error(e.message || 'Image upload failed');
+    } finally {
+      setUploadingIndex(null);
+    }
+  };
 
   const csvInputRef = useRef<HTMLInputElement>(null);
   const exportCsv = () => {
@@ -102,7 +125,7 @@ export default function FlashcardDeckForm() {
     try {
       const payload = {
         title: title.trim(), description: description.trim() || null,
-        subjectId: subjectId || null, classIds, cards: validCards,
+        subjectId: subjectId || null, shared, classIds, cards: validCards,
       };
       if (isEdit) {
         await apiSend(`/api/flashcards/decks/${id}`, 'PUT', payload);
@@ -176,6 +199,12 @@ export default function FlashcardDeckForm() {
           )}
           <p className="text-xs text-slate-400">Students in the selected classes will be able to study this deck. You can leave this unassigned and set it later.</p>
         </div>
+        <div className="flex items-start gap-2 pt-2 border-t border-slate-100 dark:border-surface-raised">
+          <Checkbox checked={shared} onCheckedChange={(v) => setShared(!!v)} id="deck-shared" className="mt-0.5" />
+          <Label htmlFor="deck-shared" className="text-sm font-normal cursor-pointer text-slate-600 dark:text-slate-300">
+            Share this deck with other teachers -- they'll be able to find it in Community and clone a copy into their own library, but can't edit your original.
+          </Label>
+        </div>
       </div>
 
       <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-6 space-y-4">
@@ -195,10 +224,40 @@ export default function FlashcardDeckForm() {
           </Button>
           <span className="text-xs text-slate-400">Two columns: term, definition. A header row is optional.</span>
         </div>
+        <p className="text-xs text-slate-400 -mt-1">Tip: wrap math in <code className="px-1 rounded bg-slate-100 dark:bg-surface-raised">$...$</code> (e.g. <code className="px-1 rounded bg-slate-100 dark:bg-surface-raised">$x^2 + 1$</code>) to render it as a formula, and click the square next to a card to attach an image.</p>
         <div className="space-y-3">
           {cards.map((c, i) => (
             <div key={i} className="flex gap-2 items-start">
               <span className="mt-2.5 text-xs font-semibold text-slate-400 w-5 shrink-0">{i + 1}.</span>
+
+              <div className="flex flex-col items-center gap-1 shrink-0">
+                <label
+                  htmlFor={`card-img-${i}`}
+                  className="relative h-9 w-9 rounded-md border border-dashed border-slate-300 dark:border-surface-raised flex items-center justify-center cursor-pointer overflow-hidden bg-slate-50 dark:bg-surface-raised/40 hover:border-aubergine-300"
+                  title="Add an image to this card"
+                >
+                  {uploadingIndex === i ? (
+                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-aubergine-600 border-t-transparent" />
+                  ) : c.imageUrl ? (
+                    <img src={c.imageUrl} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <ImagePlus className="h-4 w-4 text-slate-400" />
+                  )}
+                </label>
+                <input
+                  id={`card-img-${i}`}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) uploadCardImage(i, f); }}
+                />
+                {c.imageUrl && (
+                  <button type="button" onClick={() => setCardImage(i, null)} className="flex items-center text-[10px] text-rose-500 hover:underline">
+                    <X className="h-2.5 w-2.5" /> remove
+                  </button>
+                )}
+              </div>
+
               <Input
                 value={c.term}
                 onChange={(e) => updateCard(i, 'term', e.target.value)}

@@ -1804,6 +1804,10 @@ model FlashcardDeck {
   id          String   @id @default(uuid())
   title       String
   description String?
+  // Opt-in: when true, other teachers can find this deck in the Community
+  // tab and clone it into their own library. Off by default so a teacher's
+  // decks stay private unless they choose to share.
+  shared      Boolean  @default(false)
 
   teacherId   String
   teacher     Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
@@ -1826,6 +1830,7 @@ model FlashcardCard {
   deck       FlashcardDeck @relation(fields: [deckId], references: [id], onDelete: Cascade)
   term       String
   definition String
+  imageUrl   String?
   order      Int           @default(0)
   createdAt  DateTime      @default(now())
 

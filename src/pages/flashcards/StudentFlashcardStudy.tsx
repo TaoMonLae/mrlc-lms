@@ -5,8 +5,9 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { apiGet, apiSend } from '../../lib/api';
 import { useAuth } from '../../providers/AuthProvider';
+import { MathText } from '@/src/components/MathText';
 
-interface Card { id: string; term: string; definition: string }
+interface Card { id: string; term: string; definition: string; imageUrl?: string | null }
 interface DeckDetail {
   id: string; title: string; description: string | null;
   teacherName: string; subject: { id: string; name: string } | null;
@@ -170,14 +171,17 @@ export default function StudentFlashcardStudy() {
               className="relative w-full min-h-[260px] transition-transform duration-500 [transform-style:preserve-3d]"
               style={{ transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
             >
-              <div className="absolute inset-0 flex items-center justify-center p-8 rounded-2xl border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-sm [backface-visibility:hidden]">
-                <p className="text-xl font-semibold text-slate-900 dark:text-white text-center">{current?.term}</p>
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-8 rounded-2xl border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-sm [backface-visibility:hidden]">
+                {current?.imageUrl && (
+                  <img src={current.imageUrl} alt="" className="max-h-32 rounded-lg object-contain" />
+                )}
+                <p className="text-xl font-semibold text-slate-900 dark:text-white text-center"><MathText>{current?.term}</MathText></p>
               </div>
               <div
                 className="absolute inset-0 flex items-center justify-center p-8 rounded-2xl border border-aubergine-200 dark:border-aubergine-900/40 bg-aubergine-50 dark:bg-aubergine-900/10 shadow-sm [backface-visibility:hidden]"
                 style={{ transform: 'rotateY(180deg)' }}
               >
-                <p className="text-lg text-slate-700 dark:text-slate-200 text-center">{current?.definition}</p>
+                <p className="text-lg text-slate-700 dark:text-slate-200 text-center"><MathText>{current?.definition}</MathText></p>
               </div>
             </div>
           </button>
