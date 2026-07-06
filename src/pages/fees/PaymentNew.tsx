@@ -55,7 +55,15 @@ export default function PaymentNew() {
   useEffect(() => {
     const token = sessionStorage.getItem('auth_token');
     fetch('/api/students', { headers: { Authorization: `Bearer ${token}` } })
-      .then((res) => (res.ok ? res.json() : []))
+      .then(async (res) => {
+        if (!res.ok) {
+          // Surface permission/network failures instead of silently
+          // rendering an empty dropdown that looks like "no students".
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || `Failed to load students (${res.status})`);
+        }
+        return res.json();
+      })
       .then((data) => {
         if (!Array.isArray(data)) return;
         setStudents(data.map((student: any) => {
@@ -69,7 +77,10 @@ export default function PaymentNew() {
           };
         }));
       })
-      .catch(() => setStudents([]));
+      .catch((e: any) => {
+        setStudents([]);
+        toast.error(e.message || 'Failed to load students');
+      });
   }, []);
 
   const currentYear = new Date().getFullYear();

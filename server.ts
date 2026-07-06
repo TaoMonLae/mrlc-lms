@@ -1906,10 +1906,12 @@ async function startServer() {
   // ── Students API ────────────────────────────────────────────────────────────
   app.get("/api/students", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
-    // STAFF already holds view_students in permissions.ts (and needs the
-    // roster to build duty assignments), but this route never actually
-    // granted it access -- only ADMIN/TEACHER were let through.
-    if (!["ADMIN", "TEACHER", "STAFF"].includes(jwtUser.role)) {
+    // STAFF and ACCOUNTANT both hold view_students in permissions.ts (STAFF
+    // needs the roster for duty assignments; ACCOUNTANT needs it to record
+    // fee payments against a student), but this route's hardcoded allow-list
+    // had drifted out of sync with that permission model -- STAFF was
+    // patched in previously, and ACCOUNTANT was still missing entirely.
+    if (!["ADMIN", "TEACHER", "STAFF", "ACCOUNTANT"].includes(jwtUser.role)) {
       res.status(403).json({ error: "Forbidden" });
       return;
     }
