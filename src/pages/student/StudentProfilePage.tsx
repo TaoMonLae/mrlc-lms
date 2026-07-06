@@ -33,15 +33,21 @@ interface StudentProfile {
   profilePhotoUrl?: string | null;
   email: string; phone: string; address: string; birthDate: string; gender: string;
   enrollmentDate: string; guardian: { name: string; relationship: string; phone: string; email: string };
+  attendanceRate: number; academicYear: string;
 }
 
+// Client-side fallback only, for the rare case the backend doesn't have a
+// class assigned yet (and so returns no academicYear of its own).
+const fallbackAcademicYear = `${new Date().getFullYear()}-${String(new Date().getFullYear() + 1).slice(-2)}`;
+
 export default function StudentProfilePage() {
-  const currentAcademicYear = `${new Date().getFullYear()}-${String(new Date().getFullYear() + 1).slice(-2)}`;
   const [student, setStudent] = useState<StudentProfile>({
     name: '', studentId: '', role: 'Student', status: 'Active', class: '',
     email: '', phone: '', address: '', birthDate: '', gender: '',
     enrollmentDate: '', guardian: { name: '', relationship: '', phone: '', email: '' },
+    attendanceRate: 0, academicYear: '',
   });
+  const [loadError, setLoadError] = useState(false);
 
   const handlePrint = () => {
     window.print();
@@ -50,16 +56,7 @@ export default function StudentProfilePage() {
   useEffect(() => {
     apiGet<StudentProfile>('/api/student/profile')
       .then((r) => r && setStudent(r))
-      .catch(() => {
-        if (import.meta.env.DEV) {
-          setStudent({
-            name: 'Min Khant', studentId: 'ST-2024-001', role: 'Student', status: 'Active', class: 'Class A',
-            email: 'minkhant@school.edu', phone: '+95 9 123 456 789', address: 'Yangon, Myanmar',
-            birthDate: '2008-05-15', gender: 'Male', enrollmentDate: '2024-01-10',
-            guardian: { name: 'U Maung Maung', relationship: 'Father', phone: '+95 9 987 654 321', email: 'umaungmaung@gmail.com' },
-          });
-        }
-      });
+      .catch(() => setLoadError(true));
   }, []);
 
   return (
@@ -70,6 +67,12 @@ export default function StudentProfilePage() {
           <Printer className="mr-2 h-4 w-4" /> Print PDF
         </Button>
       </div>
+
+      {loadError && (
+        <div className="no-print rounded-xl border border-rose-200 bg-rose-50 dark:bg-rose-900/10 dark:border-rose-900/30 p-4 text-sm text-rose-700 dark:text-rose-300">
+          Couldn't load your profile right now. Please refresh the page or contact the administrative office if this keeps happening.
+        </div>
+      )}
 
       <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
         <HoloProfileHeader
@@ -170,11 +173,11 @@ export default function StudentProfilePage() {
             <CardContent className="space-y-4">
               <div>
                 <div className="flex items-center justify-between text-xs mb-2">
-                  <span className="text-slate-500 font-medium">Monthly Attendance</span>
-                  <span className="text-emerald-600 font-bold">92%</span>
+                  <span className="text-slate-500 font-medium">Attendance Rate</span>
+                  <span className="text-emerald-600 font-bold">{student.attendanceRate}%</span>
                 </div>
                 <div className="h-1.5 w-full bg-slate-100 dark:bg-surface-raised rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: '92%' }} />
+                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${Math.min(100, Math.max(0, student.attendanceRate))}%` }} />
                 </div>
               </div>
               <div>
@@ -186,7 +189,7 @@ export default function StudentProfilePage() {
               <div>
                 <div className="flex items-center justify-between text-xs mb-2 border-t border-slate-100 dark:border-surface-raised pt-3">
                   <span className="text-slate-500 font-medium font-bold uppercase tracking-tighter">Academic Year</span>
-                  <span className="text-slate-700 dark:text-slate-300 font-bold">{currentAcademicYear}</span>
+                  <span className="text-slate-700 dark:text-slate-300 font-bold">{student.academicYear || fallbackAcademicYear}</span>
                 </div>
               </div>
             </CardContent>

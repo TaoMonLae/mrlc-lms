@@ -3759,8 +3759,11 @@ async function startServer() {
       res.status(403).json({ error: "Forbidden" });
       return;
     }
+    const { studentId } = req.query as { studentId?: string };
     try {
       const cases = await prisma.caseRecord.findMany({
+        where: studentId ? { studentId } : undefined,
+        orderBy: { createdAt: "desc" },
         include: {
           student: {
             include: { user: true }
@@ -13641,7 +13644,7 @@ async function startServer() {
         enrollmentDate: s.enrollmentDate ? s.enrollmentDate.toISOString().slice(0, 10) : "—",
         guardian: { name: s.guardianName || "—", relationship: "Guardian", phone: s.guardianPhone || "—", email: "" },
         attendanceRate: att.length ? round1((present / att.length) * 100) : 0,
-        academicYear: s.class?.academicYear || profile?.name ? s.class?.academicYear || "" : "",
+        academicYear: s.class?.academicYear || "",
       });
     } catch (err) {
       logger.error("Error building student profile:", err);

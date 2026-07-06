@@ -25,17 +25,23 @@ import {
 import { apiSend } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
 import { useAuth } from '../../providers/AuthProvider';
+import { usePermissions } from '@/src/lib/permissions';
 
 export default function StudentProfile() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
+  const { hasPermission } = usePermissions();
+  // Case records (discipline/welfare notes) are sensitive -- only show the
+  // tab at all to roles the permission model actually grants case access to.
+  const canViewCases = isAdmin || hasPermission('view_cases');
   const [student, setStudent] = React.useState<any>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [attendanceData, setAttendanceData] = React.useState<any>(null);
   const [feesData, setFeesData] = React.useState<any>(null);
   const [examData, setExamData] = React.useState<any>(null);
+  const [casesData, setCasesData] = React.useState<any[] | null>(null);
 
   React.useEffect(() => {
     const fetchStudentData = async () => {
@@ -91,6 +97,18 @@ export default function StudentProfile() {
           console.error('Error fetching profile tab data:', err);
         }
 
+        // Fetch this student's case records, if this viewer is allowed to see them.
+        if (canViewCases) {
+          try {
+            const casesRes = await fetch(`/api/cases?studentId=${id}`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (casesRes.ok) setCasesData(await casesRes.json());
+          } catch (err) {
+            console.error('Error fetching case records:', err);
+          }
+        }
+
       } catch (err) {
         console.error(err);
         toast.error('Failed to load student profile.');
@@ -99,7 +117,8 @@ export default function StudentProfile() {
       }
     };
     fetchStudentData();
-  }, [id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, canViewCases]);
 
   if (isLoading) {
     return (
@@ -333,7 +352,9 @@ export default function StudentProfile() {
                   <FileText className="h-4 w-4" />
                   Documents
                 </TabsTrigger>
-                <TabsTrigger value="cases" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-aubergine-600 rounded-none h-14 px-6 font-semibold">Cases</TabsTrigger>
+                {canViewCases && (
+                  <TabsTrigger value="cases" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-aubergine-600 rounded-none h-14 px-6 font-semibold">Cases</TabsTrigger>
+                )}
               </TabsList>
             </div>
             
@@ -560,12 +581,52 @@ export default function StudentProfile() {
               <StudentDocuments studentId={id || ''} />
             </TabsContent>
 
-            <TabsContent value="cases" className="p-6 m-0 border-none min-h-[300px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-0">
-               <div className="text-center text-slate-500">
-                  <AlertTriangle className="h-10 w-10 mx-auto text-slate-300 mb-2" />
-                  <p>Case records will be displayed here.</p>
-               </div>
-            </TabsContent>
+            {canViewCases && (
+              <TabsContent value="cases" className="p-6 m-0 border-none min-h-[300px] focus-visible:outline-none focus-visible:ring-0">
+                {casesData === null ? (
+                  <div className="flex items-center justify-center min-h-[240px] text-slate-400">
+                    <span className="animate-spin rounded-full h-5 w-5 border-2 border-aubergine-600 border-t-transparent mr-2"></span>
+                    Loading case records…
+                  </div>
+                ) : casesData.length === 0 ? (
+                  <div className="flex items-center justify-center min-h-[240px]">
+                    <div className="text-center text-slate-500">
+                      <AlertTriangle className="h-10 w-10 mx-auto text-slate-300 mb-2" />
+                      <p>No case records for this student.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {casesData.map((c: any) => (
+                      <Link
+                        key={c.id}
+                        to={`/cases/${c.id}`}
+                        className="block rounded-lg border border-slate-200 dark:border-surface-raised p-4 hover:border-aubergine-300 hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="font-semibold text-slate-800 dark:text-slate-200">{c.title}</span>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <Badge className={
+                              c.status === 'RESOLVED' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-0' :
+                              c.status === 'FOLLOW_UP' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-0' :
+                              c.status === 'CLOSED' ? 'bg-slate-100 text-slate-500 dark:bg-surface-raised dark:text-slate-400 border-0' :
+                              'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-0'
+                            }>{(c.status || 'OPEN').replace('_', ' ')}</Badge>
+                            <Badge variant={c.priority === 'URGENT' ? 'destructive' : 'outline'} className="uppercase text-[10px]">{c.priority}</Badge>
+                          </div>
+                        </div>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{c.description}</p>
+                        <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
+                          {c.category && <span>{c.category}</span>}
+                          <span>Opened {new Date(c.createdAt).toLocaleDateString()}</span>
+                          {c.notes?.length > 0 && <span>{c.notes.length} note{c.notes.length === 1 ? '' : 's'}</span>}
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            )}
           </Tabs>
         </div>
       </div>
