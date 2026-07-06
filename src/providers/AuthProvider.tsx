@@ -13,8 +13,10 @@ import type { User } from '../lib/permissions';
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
+  // "identifier" is whatever the person typed into the login field — their
+  // email address or their username. The server figures out which it is.
   login: (
-    email: string,
+    identifier: string,
     password: string,
     rememberMe?: boolean
   ) => Promise<{ success: boolean; error?: string }>;
@@ -36,7 +38,7 @@ function mapApiUser(apiUser: Record<string, any>): User {
   return {
     id: apiUser.id,
     name: `${apiUser.firstName ?? ''} ${apiUser.lastName ?? ''}`.trim() || apiUser.email,
-    username: apiUser.email,
+    username: apiUser.username || apiUser.email,
     email: apiUser.email,
     profilePhotoUrl: apiUser.profilePhotoUrl ?? null,
     role: apiUser.role,
@@ -111,7 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(
     async (
-      email: string,
+      identifier: string,
       password: string,
       rememberMe = false
     ): Promise<{ success: boolean; error?: string }> => {
@@ -119,7 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const res = await fetch('/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password, rememberMe }),
+          body: JSON.stringify({ identifier, password, rememberMe }),
         });
 
         const data = await res.json();

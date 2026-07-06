@@ -234,6 +234,7 @@ enum DutyRosterStatus {
 model User {
   id            String    @id @default(uuid())
   email         String    @unique
+  username      String?   @unique
   passwordHash  String?
   firstName     String
   lastName      String
@@ -262,6 +263,7 @@ model User {
   updatedAt     DateTime  @updatedAt
 
   @@index([email])
+  @@index([username])
 }
 
 model SchoolProfile {

@@ -572,8 +572,14 @@ function lockdownBrowserPolicy(profile?: Record<string, any> | null) {
   };
 }
 
+// Username: letters, numbers, dots, underscores, hyphens only (no @ so it can
+// never collide in shape with an email address at the lookup layer).
+const username = z.string().trim().min(3, "must be at least 3 characters").regex(/^[a-zA-Z0-9._-]+$/, "can only contain letters, numbers, dots, underscores, and hyphens");
+
 const schemas = {
-  login: z.object({ email, password: z.string().min(1, "is required"), rememberMe: z.boolean().optional() }),
+  // "identifier" accepts either an email address or a username so a single
+  // login field can look up either kind of account.
+  login: z.object({ identifier: reqStr, password: z.string().min(1, "is required"), rememberMe: z.boolean().optional() }),
   verifyPassword: z.object({ password: z.string().min(1, "is required") }),
   changePassword: z.object({
     currentPassword: z.string().min(1, "is required"),
@@ -597,6 +603,7 @@ const schemas = {
   }),
   userCreate: z.object({
     firstName: reqStr, lastName: reqStr, email,
+    username: z.union([username, z.literal("")]).optional(),
     password: z.string().min(6, "must be at least 6 characters"),
     role: userRole, status: optStr,
     teacherId: nullableStr, studentId: nullableStr,
@@ -604,6 +611,7 @@ const schemas = {
   userUpdate: z.object({
     firstName: optStr, lastName: optStr,
     email: z.union([email, z.literal("")]).optional(),
+    username: z.union([username, z.literal("")]).optional(),
     role: userRole.optional(), status: optStr,
     teacherId: nullableStr, studentId: nullableStr,
   }),
@@ -1477,8 +1485,8 @@ async function startServer() {
     legacyHeaders: false,
     message: { error: "Too many login attempts. Please try again after 15 minutes." },
     keyGenerator: (req) => {
-      const email = String(req.body?.email || "").trim().toLowerCase();
-      return (email ? "acct:" + email + "|" : "") + "ip:" + ipKeyGenerator(req.ip || "");
+      const acct = String(req.body?.identifier || req.body?.email || "").trim().toLowerCase();
+      return (acct ? "acct:" + acct + "|" : "") + "ip:" + ipKeyGenerator(req.ip || "");
     },
   });
 
@@ -1510,28 +1518,38 @@ async function startServer() {
   // ── Auth routes ─────────────────────────────────────────────────────────────
   /**
    * POST /api/auth/login
-   * Body: { email: string, password: string }
+   * Body: { identifier: string, password: string }
+   * "identifier" may be either the account's email address or its username.
    * Returns: { token: string, user: { id, email, role } }
    */
   app.post("/api/auth/login", authLimiter, validate(schemas.login), async (req, res) => {
-    const { email, password, rememberMe } = req.body as {
-      email?: string;
+    const { identifier, password, rememberMe } = req.body as {
+      identifier?: string;
       password?: string;
       rememberMe?: boolean;
     };
 
-    if (!email || !password) {
-      res.status(400).json({ error: "Email and password are required" });
+    if (!identifier || !password) {
+      res.status(400).json({ error: "Email/username and password are required" });
       return;
     }
 
     try {
-      const user = await prisma.user.findUnique({ where: { email } });
+      // Cast to `any` here: the Prisma client in this environment was
+      // generated before the `username` column was added to the schema (no
+      // network access to fetch the schema-engine binary in this sandbox to
+      // regenerate it) and its TS types don't know about the field yet,
+      // though the column itself exists per the migration. Running
+      // `prisma generate` in a normal dev environment removes the need for
+      // this cast.
+      const user = await prisma.user.findFirst({
+        where: { OR: [{ email: identifier }, { username: identifier } as any] },
+      });
 
       if (!user || !user.passwordHash) {
         // Use constant-time comparison even for missing users to avoid timing attacks
         await bcrypt.compare(password, "$2b$10$invalidhashpadding000000000000000000000000000000000000");
-        res.status(401).json({ error: "Invalid email or password" });
+        res.status(401).json({ error: "Invalid email/username or password" });
         return;
       }
 
@@ -1542,8 +1560,8 @@ async function startServer() {
 
       const passwordValid = await bcrypt.compare(password, user.passwordHash);
       if (!passwordValid) {
-        logger.warn(`Failed login attempt for email: ${email}`);
-        res.status(401).json({ error: "Invalid email or password" });
+        logger.warn(`Failed login attempt for identifier: ${identifier}`);
+        res.status(401).json({ error: "Invalid email/username or password" });
         return;
       }
 
@@ -1565,6 +1583,7 @@ async function startServer() {
         user: {
           id: user.id,
           email: user.email,
+          username: (user as any).username || null,
           firstName: user.firstName,
           lastName: user.lastName,
           profilePhotoUrl: (user as any).profilePhotoUrl || null,
@@ -1586,11 +1605,13 @@ async function startServer() {
   app.get("/api/auth/me", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
+      // See the cast note on the login route above re: stale Prisma types.
       const user = await prisma.user.findUnique({
         where: { id: jwtUser.userId },
         select: {
           id: true,
           email: true,
+          username: true,
           firstName: true,
           lastName: true,
           profilePhotoUrl: true,
@@ -1598,7 +1619,7 @@ async function startServer() {
           isActive: true,
           mustChangePassword: true,
         },
-      });
+      } as any);
       if (!user || !user.isActive) {
         res.status(401).json({ error: "User not found or disabled" });
         return;
@@ -2332,14 +2353,16 @@ async function startServer() {
   // ── Users API ───────────────────────────────────────────────────────────────
   app.get("/api/users", authMiddleware, requireRole("ADMIN"), async (req, res) => {
     try {
+      // See the cast note near the login route re: stale Prisma types
+      // (username was added to the schema after this client was generated).
       const users = await prisma.user.findMany({
         select: {
-          id: true, firstName: true, lastName: true, email: true, role: true, isActive: true, createdAt: true, lastLoginAt: true,
+          id: true, firstName: true, lastName: true, email: true, username: true, role: true, isActive: true, createdAt: true, lastLoginAt: true,
           studentProfile: { select: { id: true } },
           teacherProfile: { select: { id: true } },
         },
         orderBy: { createdAt: "desc" },
-      });
+      } as any);
       res.json(users);
     } catch (err) {
       logger.error("Error fetching users:", err);
@@ -2349,7 +2372,7 @@ async function startServer() {
 
   app.post("/api/users", authMiddleware, requireRole("ADMIN"), validate(schemas.userCreate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
-    const { firstName, lastName, email, password, role, status, teacherId, studentId } = req.body;
+    const { firstName, lastName, email, username, password, role, status, teacherId, studentId } = req.body;
     if (!firstName || !email || !password || !role) {
       res.status(400).json({ error: "firstName, email, password, and role are required" });
       return;
@@ -2357,10 +2380,11 @@ async function startServer() {
     try {
       const passwordHash = await bcrypt.hash(password, 10);
       const user = await prisma.$transaction(async (tx) => {
+        // See the cast note near the login route re: stale Prisma types.
         const created = await tx.user.create({
-          data: { firstName, lastName: lastName || "", email, passwordHash, role, isActive: status !== "DISABLED" },
-          select: { id: true, firstName: true, lastName: true, email: true, role: true, isActive: true },
-        });
+          data: { firstName, lastName: lastName || "", email, username: username || null, passwordHash, role, isActive: status !== "DISABLED" },
+          select: { id: true, firstName: true, lastName: true, email: true, username: true, role: true, isActive: true },
+        } as any);
         // Optionally link an existing teacher/student profile to the new account.
         if (teacherId) {
           await tx.teacher.updateMany({ where: { userId: created.id }, data: { userId: null } });
@@ -2383,7 +2407,8 @@ async function startServer() {
     } catch (err: any) {
       logger.error("Error creating user:", err);
       if (err.code === "P2002") {
-        res.status(400).json({ error: "Email already exists" });
+        const target = String(err.meta?.target || "");
+        res.status(400).json({ error: target.includes("username") ? "Username already exists" : "Email already exists" });
       } else {
         res.status(500).json({ error: "Internal Server Error" });
       }
@@ -11472,14 +11497,15 @@ async function startServer() {
   // ── Users (single + update) ─────────────────────────────────────────────────
   app.get("/api/users/:id", authMiddleware, requireRole("ADMIN"), async (req, res) => {
     try {
+      // See the cast note near the login route re: stale Prisma types.
       const user = await prisma.user.findUnique({
         where: { id: req.params.id },
         select: {
-          id: true, firstName: true, lastName: true, email: true, role: true, isActive: true,
+          id: true, firstName: true, lastName: true, email: true, username: true, role: true, isActive: true,
           studentProfile: { select: { id: true } },
           teacherProfile: { select: { id: true } },
         },
-      });
+      } as any);
       if (!user) { res.status(404).json({ error: "User not found" }); return; }
       res.json(user);
     } catch (err) {
@@ -11490,21 +11516,23 @@ async function startServer() {
 
   app.put("/api/users/:id", authMiddleware, requireRole("ADMIN"), validate(schemas.userUpdate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
-    const { firstName, lastName, email, role, status, teacherId, studentId } = req.body;
+    const { firstName, lastName, email, username, role, status, teacherId, studentId } = req.body;
     const userId = req.params.id;
     try {
       const user = await prisma.$transaction(async (tx) => {
+        // See the cast note near the login route re: stale Prisma types.
         const updated = await tx.user.update({
           where: { id: userId },
           data: {
             ...(firstName && { firstName }),
             ...(lastName !== undefined && { lastName }),
             ...(email && { email }),
+            ...(username !== undefined && { username: username || null }),
             ...(role && { role }),
             ...(status !== undefined && { isActive: status !== "DISABLED" }),
           },
-          select: { id: true, firstName: true, lastName: true, email: true, role: true, isActive: true },
-        });
+          select: { id: true, firstName: true, lastName: true, email: true, username: true, role: true, isActive: true },
+        } as any);
 
         // Link / unlink a teacher profile (Teacher.userId is unique).
         if (teacherId !== undefined) {
@@ -11527,7 +11555,11 @@ async function startServer() {
       res.json(user);
     } catch (err: any) {
       logger.error("Error updating user:", err);
-      if (err.code === "P2002") { res.status(400).json({ error: "Email already in use" }); return; }
+      if (err.code === "P2002") {
+        const target = String(err.meta?.target || "");
+        res.status(400).json({ error: target.includes("username") ? "Username already in use" : "Email already in use" });
+        return;
+      }
       if (err.code === "P2025") { res.status(404).json({ error: "User not found" }); return; }
       res.status(500).json({ error: "Internal Server Error" });
     }

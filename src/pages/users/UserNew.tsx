@@ -28,7 +28,8 @@ const ROLE_DESCRIPTIONS: Record<string, string> = {
 
 const userSchema = z.object({
   name: z.string().min(2, 'Name is required'),
-  username: z.string().min(3, 'Username must be at least 3 characters'),
+  username: z.string().min(3, 'Username must be at least 3 characters')
+    .regex(/^[a-zA-Z0-9._-]+$/, 'Only letters, numbers, dots, underscores, and hyphens allowed'),
   email: z.string().email('Invalid email address').optional().or(z.literal('')),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   role: z.enum(['ADMIN', 'TEACHER', 'STUDENT', 'STAFF', 'ACCOUNTANT', 'CASE_WORKER', 'LIBRARIAN']),
@@ -93,6 +94,7 @@ export default function UserNew() {
           firstName,
           lastName,
           email: data.email || `${data.username}@mrlc.edu`,
+          username: data.username,
           password: data.password,
           role: data.role,
           status: data.status,
@@ -135,6 +137,7 @@ export default function UserNew() {
               <div className="space-y-2">
                 <Label htmlFor="username">Username *</Label>
                 <Input id="username" {...register('username')} placeholder="e.g. jdoe" />
+                <p className="text-xs text-slate-500">Can be used to sign in instead of the email address.</p>
                 {errors.username && <p className="text-xs text-red-500 font-medium">{errors.username.message}</p>}
               </div>
 

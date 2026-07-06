@@ -40,6 +40,7 @@ interface ApiUser {
   firstName?: string;
   lastName?: string;
   email: string;
+  username?: string | null;
   role: User['role'];
   isActive: boolean;
   createdAt?: string;
@@ -52,7 +53,7 @@ function mapUser(u: ApiUser): User {
   return {
     id: u.id,
     name: `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() || u.email,
-    username: u.email ? u.email.split('@')[0] : '',
+    username: u.username || (u.email ? u.email.split('@')[0] : ''),
     email: u.email,
     role: u.role,
     status: u.isActive ? 'ACTIVE' : 'DISABLED',

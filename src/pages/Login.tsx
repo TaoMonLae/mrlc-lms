@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   GraduationCap,
-  Mail,
+  User as UserIcon,
   Lock,
   Eye,
   EyeOff,
@@ -22,8 +22,10 @@ import * as z from "zod";
 import { useAuth } from "../providers/AuthProvider";
 import DotGrid from "@/components/DotGrid";
 
+// Accepts either an email address or a username so the same field can log
+// people in either way.
 const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
+  identifier: z.string().trim().min(1, "Please enter your email or username"),
   password: z.string().min(1, "Password is required"),
 });
 
@@ -85,7 +87,7 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginFormValues) => {
     setServerError(null);
-    const result = await login(data.email, data.password, rememberMe);
+    const result = await login(data.identifier, data.password, rememberMe);
     if (!result.success) {
       setServerError(result.error ?? "Login failed. Please try again.");
     } else {
@@ -229,24 +231,24 @@ export default function LoginPage() {
                   </div>
                 )}
 
-                {/* Email */}
+                {/* Email or Username */}
                 <div className="space-y-1.5">
-                  <label htmlFor="email" className="sr-only">Email address</label>
+                  <label htmlFor="identifier" className="sr-only">Email or username</label>
                   <div className="relative">
-                    <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+                    <UserIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
                     <Input
-                      id="email"
-                      type="email"
-                      placeholder="Enter your email"
-                      autoComplete="email"
-                      aria-invalid={!!errors.email}
-                      aria-describedby={errors.email ? "email-error" : undefined}
+                      id="identifier"
+                      type="text"
+                      placeholder="Enter your email or username"
+                      autoComplete="username"
+                      aria-invalid={!!errors.identifier}
+                      aria-describedby={errors.identifier ? "identifier-error" : undefined}
                       className="h-12 border-slate-200 bg-slate-50/70 pl-10 text-slate-900 placeholder:text-slate-400 focus:bg-white dark:bg-slate-50/70 dark:border-slate-200 dark:text-slate-900"
-                      {...register("email")}
+                      {...register("identifier")}
                     />
                   </div>
-                  {errors.email && (
-                    <p id="email-error" className="text-xs font-medium text-red-500" role="alert">{errors.email.message}</p>
+                  {errors.identifier && (
+                    <p id="identifier-error" className="text-xs font-medium text-red-500" role="alert">{errors.identifier.message}</p>
                   )}
                 </div>
 

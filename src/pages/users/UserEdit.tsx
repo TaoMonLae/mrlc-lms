@@ -28,7 +28,8 @@ const ROLE_DESCRIPTIONS: Record<string, string> = {
 
 const userSchema = z.object({
   name: z.string().min(2, 'Name is required'),
-  username: z.string().min(3, 'Username must be at least 3 characters'),
+  username: z.string().min(3, 'Username must be at least 3 characters')
+    .regex(/^[a-zA-Z0-9._-]+$/, 'Only letters, numbers, dots, underscores, and hyphens allowed'),
   email: z.string().email('Invalid email address').optional().or(z.literal('')),
   role: z.enum(['ADMIN', 'TEACHER', 'STUDENT', 'STAFF', 'ACCOUNTANT', 'CASE_WORKER', 'LIBRARIAN']),
   status: z.enum(['ACTIVE', 'DISABLED']),
@@ -91,7 +92,7 @@ export default function UserEdit() {
       .then(u => {
         reset({
           name: `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim(),
-          username: u.email?.split('@')[0] ?? '',
+          username: u.username ?? u.email?.split('@')[0] ?? '',
           email: u.email ?? '',
           role: u.role ?? 'TEACHER',
           status: u.isActive ? 'ACTIVE' : 'DISABLED',
@@ -114,7 +115,7 @@ export default function UserEdit() {
       const res = await fetch(`/api/users/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ firstName, lastName, email: data.email, role: data.role, status: data.status, teacherId, studentId }),
+        body: JSON.stringify({ firstName, lastName, email: data.email, username: data.username, role: data.role, status: data.status, teacherId, studentId }),
       });
       if (!res.ok) {
         const err = await res.json();
