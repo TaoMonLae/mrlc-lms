@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Wallet, Plus, Printer, RefreshCw, Pencil, Trash2 } from 'lucide-react';
+import { Wallet, Plus, Download, RefreshCw, Pencil, Trash2, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -33,6 +33,7 @@ export default function Payroll() {
   const [editOpen, setEditOpen] = useState(false);
   const [editForm, setEditForm] = useState({ year: '', month: '1', notes: '' });
   const [refreshing, setRefreshing] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -90,6 +91,34 @@ export default function Payroll() {
       await load();
       openRun(selected.id);
     } catch (err: any) { toast.error(err.message); }
+  }
+
+  async function exportPdf() {
+    if (!selected) return;
+    setExporting(true);
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`/api/payroll-runs/${selected.id}/pdf`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to export PDF');
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Payroll-${MONTHS[selected.periodMonth - 1]}-${selected.periodYear}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to export PDF');
+    } finally {
+      setExporting(false);
+    }
   }
 
   async function removeRun() {
@@ -174,8 +203,8 @@ export default function Payroll() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge className={STATUS_STYLES[selected.status]}>{selected.status}</Badge>
-                  <Button size="sm" variant="outline" render={<Link to={`/payroll/runs/${selected.id}/print`} />}>
-                    <Printer className="mr-1 h-4 w-4" /> Print all
+                  <Button size="sm" variant="outline" onClick={exportPdf} disabled={exporting}>
+                    <Download className="mr-1 h-4 w-4" /> {exporting ? 'Exporting…' : 'Export PDF'}
                   </Button>
                   {selected.status === 'DRAFT' && (
                     <Button size="sm" variant="ghost" className="h-8 w-8 p-0" title="Edit" onClick={openEdit}>
