@@ -58,12 +58,22 @@ export default function ChatWidget() {
     setActiveId(id);
     try {
       const d = await apiGet<ConvDetail>(`/api/chat/conversations/${id}/messages`);
+      if (activeIdRef.current !== id) return; // user already switched to another conversation
       setDetail(d);
       if (!d.oversight) {
         apiSend(`/api/chat/conversations/${id}/read`, 'POST').catch(() => {});
         setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, unread: 0 } : c)));
       }
     } catch { /* ignore */ }
+  }
+
+  // A slower/older response for a thread the user has since navigated away
+  // from can resolve after a newer one -- only apply it if it's still for
+  // the currently-open conversation, otherwise it silently overwrites the
+  // active thread with stale/unrelated data (this is what made chat appear
+  // to "disappear" intermittently).
+  function applyDetailIfStillActive(id: string, d: ConvDetail) {
+    if (activeIdRef.current === id) setDetail(d);
   }
 
   // Poll the open thread when active (the full /chat page handles its own).
@@ -76,7 +86,7 @@ export default function ChatWidget() {
       loadList();
       const id = activeIdRef.current;
       if (id && open && !cancelled) {
-        apiGet<ConvDetail>(`/api/chat/conversations/${id}/messages`).then(setDetail).catch(() => {});
+        apiGet<ConvDetail>(`/api/chat/conversations/${id}/messages`).then((d) => applyDetailIfStillActive(id, d)).catch(() => {});
       }
     }, POLL_MS);
     return () => {
@@ -92,7 +102,7 @@ export default function ChatWidget() {
     loadList();
     const id = activeIdRef.current;
     if (id && !cancelled) {
-      apiGet<ConvDetail>(`/api/chat/conversations/${id}/messages`).then(setDetail).catch(() => {});
+      apiGet<ConvDetail>(`/api/chat/conversations/${id}/messages`).then((d) => applyDetailIfStillActive(id, d)).catch(() => {});
     }
     return () => { cancelled = true; };
   }, [eventTick, isChatRoute]);

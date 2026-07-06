@@ -83,7 +83,11 @@ export default function ChatPage() {
   async function loadMessages(id: string) {
     try {
       const data = await apiGet<ConvDetail>(`/api/chat/conversations/${id}/messages`);
-      setDetail(data);
+      // A slower/older request for a thread the user has since navigated
+      // away from can resolve after a newer one -- only apply it if it's
+      // still for the currently-open conversation, otherwise it silently
+      // overwrites the active thread with stale/unrelated data.
+      if (activeIdRef.current === id) setDetail(data);
     } catch { /* keep prior */ }
   }
 
@@ -91,6 +95,7 @@ export default function ChatPage() {
     setActiveId(id);
     try {
       const d = await apiGet<ConvDetail>(`/api/chat/conversations/${id}/messages`);
+      if (activeIdRef.current !== id) return; // user already switched to another conversation
       setDetail(d);
       if (!d.oversight) {
         apiSend(`/api/chat/conversations/${id}/read`, 'POST').catch(() => {});
