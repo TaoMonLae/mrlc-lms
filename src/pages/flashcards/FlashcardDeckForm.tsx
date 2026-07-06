@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Layers, Plus, Trash2, Save } from 'lucide-react';
+import { ArrowLeft, Layers, Plus, Trash2, Save, Upload, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { usePermissions } from '../../lib/permissions';
 import { apiGet, apiSend } from '../../lib/api';
+import { cardsToCsv, downloadCsv, parseFlashcardCsvFile } from '../../lib/flashcardCsv';
 
 interface CardDraft { term: string; definition: string }
 interface ClassOption { id: string; name: string }
@@ -69,6 +70,29 @@ export default function FlashcardDeckForm() {
   };
   const addCard = () => setCards((prev) => [...prev, { term: '', definition: '' }]);
   const removeCard = (index: number) => setCards((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== index) : prev));
+
+  const csvInputRef = useRef<HTMLInputElement>(null);
+  const exportCsv = () => {
+    const valid = cards.filter((c) => c.term.trim() && c.definition.trim());
+    if (valid.length === 0) { toast.error('Add some cards before exporting'); return; }
+    downloadCsv(`${(title || 'flashcards').trim().replace(/[^\w\- ]+/g, '') || 'flashcards'}.csv`, cardsToCsv(valid));
+  };
+  const importCsv = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // allow re-selecting the same file
+    if (!file) return;
+    try {
+      const imported = await parseFlashcardCsvFile(file);
+      if (imported.length === 0) { toast.error('No term/definition rows found in that file'); return; }
+      setCards((prev) => {
+        const existingBlank = prev.length === 1 && !prev[0].term.trim() && !prev[0].definition.trim();
+        return existingBlank ? imported : [...prev, ...imported];
+      });
+      toast.success(`Imported ${imported.length} card${imported.length === 1 ? '' : 's'}`);
+    } catch {
+      toast.error('Could not read that CSV file');
+    }
+  };
 
   const save = async () => {
     const validCards = cards.filter((c) => c.term.trim() && c.definition.trim());
@@ -160,6 +184,16 @@ export default function FlashcardDeckForm() {
           <Button size="sm" variant="outline" onClick={addCard}>
             <Plus className="mr-1.5 h-3.5 w-3.5" /> Add Card
           </Button>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 -mt-1">
+          <input ref={csvInputRef} type="file" accept=".csv,.tsv,text/csv" onChange={importCsv} className="hidden" />
+          <Button size="sm" variant="outline" onClick={() => csvInputRef.current?.click()}>
+            <Upload className="mr-1.5 h-3.5 w-3.5" /> Import CSV
+          </Button>
+          <Button size="sm" variant="outline" onClick={exportCsv}>
+            <Download className="mr-1.5 h-3.5 w-3.5" /> Export CSV
+          </Button>
+          <span className="text-xs text-slate-400">Two columns: term, definition. A header row is optional.</span>
         </div>
         <div className="space-y-3">
           {cards.map((c, i) => (

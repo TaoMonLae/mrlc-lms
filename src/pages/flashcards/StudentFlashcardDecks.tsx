@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Layers, BookOpen } from 'lucide-react';
+import { Layers, BookOpen, Brain, Grid3x3 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { apiGet } from '../../lib/api';
 
 interface DeckRow {
@@ -52,10 +53,9 @@ export default function StudentFlashcardDecks() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {decks.map((d) => (
-            <Link
+            <div
               key={d.id}
-              to={`/student/flashcards/${d.id}`}
-              className="block bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-5 hover:border-aubergine-300 hover:shadow-md transition-all"
+              className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm p-5"
             >
               <h3 className="font-semibold text-slate-900 dark:text-white">{d.title}</h3>
               {d.description && <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{d.description}</p>}
@@ -63,8 +63,13 @@ export default function StudentFlashcardDecks() {
                 <Badge variant="outline" className="flex items-center gap-1"><BookOpen className="h-3 w-3" /> {d.cardCount} card{d.cardCount === 1 ? '' : 's'}</Badge>
                 {d.subject && <Badge variant="outline">{d.subject.name}</Badge>}
               </div>
-              <p className="text-xs text-slate-400 mt-3">By {d.teacherName || 'Teacher'}</p>
-            </Link>
+              <p className="text-xs text-slate-400 mt-2">By {d.teacherName || 'Teacher'}</p>
+              <div className="flex items-center gap-1.5 flex-wrap mt-3 pt-3 border-t border-slate-100 dark:border-surface-raised">
+                <Button size="sm" variant="outline" className="h-7 px-2 text-xs" render={<Link to={`/student/flashcards/${d.id}`} />}>Study</Button>
+                <Button size="sm" variant="outline" className="h-7 px-2 text-xs" render={<Link to={`/student/flashcards/${d.id}/quiz`} />}><Brain className="mr-1 h-3 w-3" /> Quiz</Button>
+                <Button size="sm" variant="outline" className="h-7 px-2 text-xs" render={<Link to={`/student/flashcards/${d.id}/match`} />}><Grid3x3 className="mr-1 h-3 w-3" /> Match</Button>
+              </div>
+            </div>
           ))}
         </div>
       )}

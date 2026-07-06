@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Shuffle, RotateCw, ChevronLeft, ChevronRight, Layers } from 'lucide-react';
+import { Link, useLocation, useParams } from 'react-router-dom';
+import { ArrowLeft, Shuffle, RotateCw, ChevronLeft, ChevronRight, Layers, Brain, Grid3x3 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { apiGet } from '../../lib/api';
@@ -23,6 +23,15 @@ function shuffleArray<T>(arr: T[]): T[] {
 
 export default function StudentFlashcardStudy() {
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
+  // This page is mounted at both /flashcards/:id/study (teacher/admin
+  // preview) and /student/flashcards/:id (a student's own assigned deck) --
+  // work out where "back" and the other study-mode links should point from
+  // the current URL rather than hard-coding one role's paths.
+  const isStudentRoute = location.pathname.startsWith('/student/');
+  const listUrl = isStudentRoute ? '/student/flashcards' : '/flashcards';
+  const quizUrl = isStudentRoute ? `/student/flashcards/${id}/quiz` : `/flashcards/${id}/quiz`;
+  const matchUrl = isStudentRoute ? `/student/flashcards/${id}/match` : `/flashcards/${id}/match`;
   const [deck, setDeck] = useState<DeckDetail | null>(null);
   const [order, setOrder] = useState<Card[]>([]);
   const [index, setIndex] = useState(0);
@@ -58,22 +67,26 @@ export default function StudentFlashcardStudy() {
     return (
       <div className="text-center py-12 text-slate-500">
         <p>Deck not found, or it isn't assigned to your class.</p>
-        <Button variant="outline" className="mt-4" render={<Link to="/student/flashcards" />}>Back to Flashcards</Button>
+        <Button variant="outline" className="mt-4" render={<Link to={listUrl} />}>Back to Flashcards</Button>
       </div>
     );
   }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 pb-10">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" render={<Link to="/student/flashcards" />}>
+      <div className="flex items-center gap-3 flex-wrap">
+        <Button variant="ghost" size="icon" render={<Link to={listUrl} />}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div>
+        <div className="flex-1 min-w-[160px]">
           <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
             <Layers className="h-5 w-5 text-aubergine-600" /> {deck.title}
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">By {deck.teacherName || 'Teacher'}{deck.subject ? ` · ${deck.subject.name}` : ''}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" render={<Link to={quizUrl} />}><Brain className="mr-1.5 h-3.5 w-3.5" /> Quiz</Button>
+          <Button size="sm" variant="outline" render={<Link to={matchUrl} />}><Grid3x3 className="mr-1.5 h-3.5 w-3.5" /> Match</Button>
         </div>
       </div>
 
