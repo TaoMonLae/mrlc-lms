@@ -180,6 +180,7 @@ export const TEACHER_NAV: AdminNavEntry[] = [
     ],
   },
   { title: "Reports", url: "/teacher/reports", icon: BarChart3 },
+  { title: "My Payroll", url: "/my-payroll", icon: Wallet },
   { title: "My Profile", url: "/teacher/profile", icon: UserSquare2 },
 ];
 
@@ -447,6 +448,12 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     url: "/payroll",
     icon: Wallet,
     roles: ["ADMIN", "ACCOUNTANT"],
+  },
+  {
+    title: "My Payroll",
+    url: "/my-payroll",
+    icon: Wallet,
+    roles: ["STAFF", "ACCOUNTANT", "CASE_WORKER", "LIBRARIAN"],
   },
   {
     title: "Leave",

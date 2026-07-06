@@ -10776,9 +10776,11 @@ async function startServer() {
   });
 
   // Single payslip with full context — used by the printable payslip view.
+  // Reachable either by payroll-managing roles (any payslip) or by the
+  // payee themselves viewing their own -- and only once the run is past
+  // DRAFT, so nobody sees provisional/unapproved figures for themselves.
   app.get("/api/payslips/:id", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
-    if (!payrollCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
     try {
       const payslip = await prisma.payslip.findUnique({
         where: { id: req.params.id },
@@ -10789,9 +10791,43 @@ async function startServer() {
         },
       });
       if (!payslip) { res.status(404).json({ error: "Payslip not found" }); return; }
+      if (!payrollCanManage(jwtUser.role)) {
+        const isOwnEmployeeSlip = payslip.employee?.userId === jwtUser.userId;
+        const isOwnTeacherSlip = payslip.teacher?.userId === jwtUser.userId;
+        if (!isOwnEmployeeSlip && !isOwnTeacherSlip) { res.status(403).json({ error: "Forbidden" }); return; }
+        if (payslip.payrollRun.status === "DRAFT") { res.status(403).json({ error: "This payslip isn't finalized yet" }); return; }
+      }
       res.json(payslip);
     } catch (err) {
       logger.error("Error fetching payslip:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Self-service: the signed-in user's own payslip history (resolved via
+  // their linked Teacher or Employee profile), excluding DRAFT runs.
+  app.get("/api/me/payslips", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const [teacher, employee] = await Promise.all([
+        prisma.teacher.findUnique({ where: { userId: jwtUser.userId } }),
+        prisma.employee.findUnique({ where: { userId: jwtUser.userId } }),
+      ]);
+      if (!teacher && !employee) { res.json([]); return; }
+      const slips = await prisma.payslip.findMany({
+        where: {
+          payrollRun: { status: { not: "DRAFT" } },
+          OR: [
+            ...(teacher ? [{ teacherId: teacher.id }] : []),
+            ...(employee ? [{ employeeId: employee.id }] : []),
+          ],
+        },
+        include: { payrollRun: true },
+        orderBy: [{ payrollRun: { periodYear: "desc" } }, { payrollRun: { periodMonth: "desc" } }],
+      });
+      res.json(slips);
+    } catch (err) {
+      logger.error("Error fetching own payslips:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
