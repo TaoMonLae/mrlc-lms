@@ -32,6 +32,7 @@ The application is built as a unified Node.js/Express server that serves both th
 | **Examinations** | Exam creation, scheduling, reusable question bank, advanced proctoring (lockdown browser, accommodations, invigilator dashboard), and automated + manual grading |
 | **Gradebook** | Student progress tracking, grade reports, and performance analytics |
 | **GED Readiness & Engagement** | Per-subject mastery tracker (6-stage readiness pipeline tied to real exam performance), attendance streaks, and achievement badges to keep students motivated |
+| **Flashcards** | Teacher-authored study decks with class assignment, deck sharing/cloning between teachers, and four student study modes (classic flip cards with mastery tracking, quiz with multiple question types, matching game, and spelling practice) |
 | **Digital Library** | E-book (EPUB/PDF) collection with reading progress tracking |
 | **Physical Library** | Book catalog, borrowing system, and due date management |
 | **Fee Management** | Fee structure, payment tracking, and receipt generation |
@@ -44,6 +45,7 @@ The application is built as a unified Node.js/Express server that serves both th
 
 ### Specialized Features
 
+- **Flashcards**: Teachers build decks (with LaTeX math and image support) and assign them to classes; students study via classic flip cards, a quiz mode (multiple choice, true/false, fill-in-the-blank with configurable question types), a timed matching game (with difficulty/size presets), and a spelling mode using browser speech synthesis. Includes per-card mastery tracking, attempt history with personal bests, teacher-facing progress dashboards, CSV import/export, and deck sharing/cloning between teachers
 - **AI Assistant**: Built-in AI assistant for Admins and Teachers with quick prompts for lesson planning, quiz generation, announcement drafting, and multi-language translation (English/Mon/Burmese)
 - **Chat System**: Real-time messaging with typing indicators, presence, and sticker support
 - **Social Space**: Community feed for sharing updates and media
@@ -73,7 +75,13 @@ Adding new languages is straightforward—simply add a `.po` file to `src/i18n/l
 
 ### Latest Features & Improvements
 
-**AI Assistant (NEW)**
+**Flashcards (NEW)**
+- Teacher-managed study decks assigned to one or more classes, with a Community tab for sharing/cloning decks between teachers
+- Four student study modes: classic flip cards, quiz (multiple choice, true/false, fill-in-the-blank — mix and match question types), a matching game with Easy/Medium/Hard/Expert size presets, and a spelling mode with text-to-speech
+- Per-card mastery tracking ("still learning" vs. "know it"), attempt history with personal bests, and a teacher-facing progress dashboard per deck
+- Rich cards support LaTeX math and image attachments; CSV import/export for quick deck authoring
+
+**AI Assistant**
 - Built-in AI assistant for Admins and Teachers
 - Quick prompt templates for lesson planning, quiz generation, announcements, and translation
 - Multi-language support (English, Mon, Burmese)
@@ -255,6 +263,7 @@ mrlc-lms/
 ├── server.ts           # Express server entry point (core API routes)
 ├── examBank.ts         # Reusable question bank (question pooling, randomized composition)
 ├── examPhase2.ts       # Advanced exam features (lockdown browser, accommodations, rubrics, invigilator dashboard)
+├── flashcards.ts       # Flashcards feature (decks, study modes, mastery/attempts, sharing, image uploads)
 └── news.ts             # News/daily digest RSS aggregation
 ```
 
