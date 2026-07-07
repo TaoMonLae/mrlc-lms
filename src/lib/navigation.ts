@@ -26,7 +26,8 @@ import {
   UserPlus,
   Newspaper,
   Heart,
-  Layers
+  Layers,
+  ShieldAlert
 } from "lucide-react";
 import { UserRole } from "./permissions";
 
@@ -126,6 +127,7 @@ export const ADMIN_NAV: AdminNavEntry[] = [
       { title: "School Operations", url: "/operations", icon: ClipboardList },
       { title: "Student Duties", url: "/duties", icon: CalendarCheck },
       { title: "Cases", url: "/cases", icon: AlertCircle },
+      { title: "Conduct", url: "/conduct", icon: ShieldAlert },
       { title: "Reports", url: "/reports", icon: BarChart3 },
     ],
   },
@@ -161,6 +163,7 @@ export const TEACHER_NAV: AdminNavEntry[] = [
       { title: "Class Performance", url: "/gradebook/reports", icon: BarChart3 },
       { title: "Documents", url: "/documents", icon: FileText },
       { title: "Flashcards", url: "/flashcards", icon: Layers },
+      { title: "Conduct", url: "/conduct", icon: ShieldAlert },
     ],
   },
   {
@@ -434,6 +437,12 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     url: "/cases",
     icon: AlertCircle,
     roles: ["ADMIN", "CASE_WORKER"],
+  },
+  {
+    title: "Conduct",
+    url: "/conduct",
+    icon: ShieldAlert,
+    roles: ["ADMIN", "TEACHER", "CASE_WORKER", "STAFF"],
   },
   {
     title: "Operations",

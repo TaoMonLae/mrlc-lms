@@ -118,6 +118,7 @@ import DutyRosterDetail from "./pages/duties/DutyRosterDetail";
 import StudentDutyView from "./pages/duties/StudentDutyView";
 import DutyPerformancePage from "./pages/duties/DutyPerformancePage";
 import CasesDashboard from "./pages/cases/CasesDashboard";
+import ConductDashboard from "./pages/conduct/ConductDashboard";
 import CaseNew from "./pages/cases/CaseNew";
 import CaseDetail from "./pages/cases/CaseDetail";
 import CaseEdit from "./pages/cases/CaseEdit";
@@ -506,7 +507,11 @@ export default function App() {
                   <Route path="/cases/:id" element={<CaseDetail />} />
                   <Route path="/cases/:id/edit" element={<CaseEdit />} />
                 </Route>
-                
+
+                <Route element={<ProtectedRoute requiredPermission="view_conduct" />}>
+                  <Route path="/conduct" element={<ConductDashboard />} />
+                </Route>
+
                 <Route element={<ProtectedRoute requiredPermission="view_reports" />}>
                   <Route path="/reports" element={<ReportsDashboard />} />
                   <Route path="/reports/attendance" element={<AttendanceReport />} />

@@ -111,6 +111,9 @@ export type Permission =
   | 'manage_cases'
   | 'view_cases'
   | 'manage_own_cases'
+  // Conduct / Discipline (rule violation logging)
+  | 'manage_conduct'
+  | 'view_conduct'
   // System & Reports
   | 'manage_timetable'
   | 'view_timetable'
@@ -159,6 +162,9 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     // Additional capabilities
     'export_data',
     'send_notifications',
+    // Conduct (report/view rule violations for their students)
+    'manage_conduct',
+    'view_conduct',
   ],
   STUDENT: [
     'view_own_student',
@@ -199,6 +205,9 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     // unreachable/blocked for this role even though the API allowed it.
     'view_donations',
     'view_campaigns',
+    // Hostel/duty staff enforce curfew, dormitory, and safety rules day-to-day.
+    'manage_conduct',
+    'view_conduct',
   ],
   ACCOUNTANT: [
     'manage_fees',
@@ -232,6 +241,8 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'view_students',
     'view_documents',
     'export_data',
+    'manage_conduct',
+    'view_conduct',
   ],
   LIBRARIAN: [
     'manage_library',
@@ -323,6 +334,7 @@ export const PERMISSION_CATEGORIES = {
   LIBRARY_MANAGEMENT: ['manage_library', 'manage_own_library', 'view_library', 'manage_books', 'view_books', 'manage_ebooks', 'manage_documents', 'view_documents'],
   COMMUNICATIONS: ['manage_announcements', 'view_announcements', 'send_notifications'],
   CASE_MANAGEMENT: ['manage_cases', 'view_cases', 'manage_own_cases'],
+  CONDUCT_MANAGEMENT: ['manage_conduct', 'view_conduct'],
   SYSTEM_MANAGEMENT: ['manage_timetable', 'view_timetable', 'view_audit_logs', 'export_data', 'view_reports', 'manage_settings'],
   CONTENT_MANAGEMENT: ['manage_videos', 'view_videos'],
   FEE_STRUCTURE_MANAGEMENT: ['manage_fee_structures', 'view_fee_structures'],
@@ -405,6 +417,8 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   'manage_cases': 'Manage Cases',
   'view_cases': 'View Cases',
   'manage_own_cases': 'Manage Own Cases',
+  'manage_conduct': 'Manage Conduct/Discipline',
+  'view_conduct': 'View Conduct/Discipline',
   'manage_timetable': 'Manage Timetable',
   'view_timetable': 'View Timetable',
   'view_audit_logs': 'View Audit Logs',

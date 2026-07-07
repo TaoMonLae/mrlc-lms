@@ -262,6 +262,7 @@ model User {
   socialLikes    SocialLike[]    @relation("SocialLiker")
   socialComments SocialComment[] @relation("SocialCommenter")
   socialSeen     SocialSeen?     @relation("SocialSeenBy")
+  reportedRuleViolations RuleViolation[] @relation("ReportedRuleViolations")
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -367,6 +368,7 @@ model Student {
   dutyAssignments    DutyAssignment[]
   flashcardMastery   FlashcardCardMastery[]
   flashcardAttempts  FlashcardAttempt[]
+  ruleViolations     RuleViolation[]
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -1230,6 +1232,64 @@ model DonationReceipt {
 
   @@index([receiptNumber])
   @@index([receiptDate])
+}
+
+enum RuleSeverity {
+  MINOR
+  MODERATE
+  SERIOUS
+}
+
+// Catalog of the school's numbered rules (School Rules & Regulations /
+// Hostel Guidelines handbook), grouped by Article, so violations reference a
+// real rule instead of free text. Seeded from the handbook via migration.
+model ConductRule {
+  id           String   @id @default(uuid())
+  code         String   @unique // handbook numbering, e.g. "2", "20", "4.1a"
+  article      String   // e.g. "Article 1 — General Conduct"
+  articleOrder Int      // sort order for grouping by article in the UI
+  title        String   // short label, e.g. "Late to class"
+  description  String   // full rule text from the handbook
+  severity     RuleSeverity @default(MINOR)
+  active       Boolean  @default(true)
+
+  violations   RuleViolation[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([articleOrder])
+  @@index([severity])
+}
+
+// A single logged instance of a student breaking a specific rule. Deliberately
+// simple for phase 1 (catalog + logging + counts) -- escalation workflow,
+// guardian notices, and case-linking are later phases.
+model RuleViolation {
+  id             String   @id @default(uuid())
+
+  studentId      String
+  student        Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  ruleId         String
+  rule           ConductRule @relation(fields: [ruleId], references: [id])
+  // Snapshot of the rule's severity at the time of the violation, so a later
+  // change to the rule catalog's severity doesn't rewrite history.
+  severity       RuleSeverity
+
+  note           String?
+  occurredAt     DateTime @default(now())
+
+  reportedById   String
+  reportedBy     User     @relation("ReportedRuleViolations", fields: [reportedById], references: [id])
+  reportedByName String
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([studentId])
+  @@index([ruleId])
+  @@index([occurredAt])
 }
 
 model CaseRecord {
