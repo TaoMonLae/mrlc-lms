@@ -6290,6 +6290,38 @@ async function startServer() {
     });
   };
 
+  // Real, itemized transaction/receipt history for one student -- each row
+  // keeps its own FeePayment id so "View Receipt" links (which fetch
+  // GET /api/fees/:id) keep working. Used both for a student viewing their
+  // own fees and for staff viewing a specific student's fee profile.
+  const buildStudentTransactionRows = async (studentId: string, fallbackCurrency: string) => {
+    const [fees, openAssignments] = await Promise.all([
+      prisma.feePayment.findMany({
+        where: { studentId },
+        include: { student: { include: { user: true, class: true } } }
+      }),
+      prisma.feeAssignment.findMany({
+        where: { studentId, status: { not: "PAID" } },
+        include: { feeItem: true },
+      }),
+    ]);
+    const rows = fees.map((fee: any) => feeReceiptPayload(fee, fallbackCurrency));
+    const synthetic = openAssignments.map((a: any) => ({
+      id: `assignment-${a.id}`,
+      studentId,
+      amount: a.outstandingAmount,
+      currency: fallbackCurrency,
+      status: a.status,
+      description: a.feeItem?.name ? `${a.feeItem.name} (Assigned)` : "Assigned Fee",
+      paymentMethod: null,
+      paidDate: null,
+      dueDate: a.dueDate,
+      createdAt: a.dueDate,
+      receiptNumber: null,
+    }));
+    return [...rows, ...synthetic];
+  };
+
   app.get("/api/fees", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
@@ -6303,35 +6335,18 @@ async function startServer() {
           res.status(404).json({ error: "Student profile not found" });
           return;
         }
-        // Keep this branch as a real transaction/receipt history (unchanged
-        // shape -- used by the student's own "My Fees" statement), but also
-        // surface any still-outstanding structured assignment as a synthetic
-        // line item, since those previously never appeared here at all.
-        const [fees, openAssignments] = await Promise.all([
-          prisma.feePayment.findMany({
-            where: { studentId: student.id },
-            include: { student: { include: { user: true, class: true } } }
-          }),
-          prisma.feeAssignment.findMany({
-            where: { studentId: student.id, status: { not: "PAID" } },
-            include: { feeItem: true },
-          }),
-        ]);
-        const rows = fees.map((fee) => feeReceiptPayload(fee, fallbackCurrency));
-        const synthetic = openAssignments.map((a: any) => ({
-          id: `assignment-${a.id}`,
-          amount: a.outstandingAmount,
-          currency: fallbackCurrency,
-          status: a.status,
-          description: a.feeItem?.name ? `${a.feeItem.name} (Assigned)` : "Assigned Fee",
-          paymentMethod: null,
-          paidDate: null,
-          dueDate: a.dueDate,
-          createdAt: a.dueDate,
-          receiptNumber: null,
-        }));
-        res.json([...rows, ...synthetic]);
+        res.json(await buildStudentTransactionRows(student.id, fallbackCurrency));
       } else if (["ADMIN", "ACCOUNTANT", "STAFF"].includes(jwtUser.role)) {
+        // A studentId query means a caller (e.g. the Fee Profile page) wants
+        // that one student's real, itemized transaction/receipt history --
+        // NOT the dashboard overview below, whose rows are aggregated per
+        // student and therefore have no real FeePayment id to link a receipt
+        // to.
+        const { studentId } = req.query as { studentId?: string };
+        if (studentId) {
+          res.json(await buildStudentTransactionRows(studentId, fallbackCurrency));
+          return;
+        }
         const overview = await buildStudentFeeOverview();
         res.json(overview.map(({ student, expected, paid, balance, status, lastPaymentDate }) => ({
           id: student.id,

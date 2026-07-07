@@ -32,14 +32,16 @@ export default function StudentFeeProfile() {
           setStudent(studentData);
         }
 
-        // Fetch fee payments
-        const feesRes = await fetch(`/api/fees`, {
+        // Fetch this student's real, itemized transaction history (passing
+        // studentId keeps the response as individual FeePayment rows with
+        // real ids, instead of the aggregated one-row-per-student dashboard
+        // overview, which has no receipt to link to).
+        const feesRes = await fetch(`/api/fees?studentId=${id}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (feesRes.ok) {
           const fees = await feesRes.json();
-          const studentFees = fees.filter((f: any) => f.studentId === id);
-          setPayments(studentFees);
+          setPayments(Array.isArray(fees) ? fees : []);
         }
       } catch (error) {
         console.error('Error fetching fee data:', error);
@@ -138,9 +140,13 @@ export default function StudentFeeProfile() {
                     {formatMoney(payment.amount || 0, payment.currency || currency)}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <Button variant="ghost" size="sm" render={<Link to={`/fees/receipts/${payment.id}`} />} nativeButton={false}>
-                         <FileText className="mr-2 h-4 w-4" /> Receipt
-                    </Button>
+                    {payment.receiptNumber ? (
+                      <Button variant="ghost" size="sm" render={<Link to={`/fees/receipts/${payment.id}`} />} nativeButton={false}>
+                           <FileText className="mr-2 h-4 w-4" /> Receipt
+                      </Button>
+                    ) : (
+                      <span className="text-xs text-slate-400">Not yet paid</span>
+                    )}
                   </td>
                 </tr>
               ))}
