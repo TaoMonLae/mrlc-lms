@@ -38,8 +38,12 @@ export default function FeesDashboard() {
             studentIdNumber: f.student?.studentCode ?? '—',
             class: f.student?.class?.name ?? f.student?.classId ?? '—',
             totalDue: f.amount,
-            totalPaid: f.status === 'PAID' ? f.amount : 0,
-            balance: f.status === 'PAID' ? 0 : f.amount,
+            // The backend now computes these directly (a student can be
+            // PARTIAL, meaning some but not all of totalDue is paid) --
+            // re-deriving them from status alone used to silently zero out
+            // any partial payment amount.
+            totalPaid: f.totalPaid ?? (f.status === 'PAID' ? f.amount : 0),
+            balance: f.balance ?? (f.status === 'PAID' ? 0 : f.amount),
             currency: f.currency,
             status: f.status ?? 'UNPAID',
             lastPaymentDate: f.paidDate ?? null,

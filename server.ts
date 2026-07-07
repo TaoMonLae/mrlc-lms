@@ -6236,6 +6236,60 @@ async function startServer() {
     };
   };
 
+  // Builds one row per student combining BOTH ways a fee can be tracked in
+  // this app: (a) structured FeeAssignment obligations (created via Fee
+  // Structures > Assign Fees, which stay PENDING/OVERDUE with a real
+  // outstandingAmount until someone pays them), and (b) ad-hoc FeePayment
+  // records with no assignmentId (created via the simple "Record Payment"
+  // form, which always writes status "PAID" immediately since it has no
+  // separate invoice step).
+  //
+  // Previously this endpoint (and /api/reports/fees) only ever looked at
+  // FeePayment. Since NEITHER of the two code paths that create a
+  // FeePayment ever writes anything other than status "PAID", a student
+  // who had been assigned a fee but hadn't paid it yet had zero rows to
+  // show under any status -- "Unpaid"/"Partial" were structurally
+  // impossible to see, not just empty by coincidence.
+  const buildStudentFeeOverview = async () => {
+    const [assignments, orphanPayments] = await Promise.all([
+      prisma.feeAssignment.findMany({ include: { student: { include: { user: true, class: true } }, feeItem: true } }),
+      // assignmentId is unique+optional: null means this payment wasn't
+      // recorded against a structured assignment (the ad-hoc flow).
+      prisma.feePayment.findMany({ where: { assignmentId: null }, include: { student: { include: { user: true, class: true } } } }),
+    ]);
+
+    const byStudent = new Map<string, {
+      student: any; expected: number; paid: number; lastPaymentDate: Date | null;
+    }>();
+    const ensure = (student: any) => {
+      if (!byStudent.has(student.id)) byStudent.set(student.id, { student, expected: 0, paid: 0, lastPaymentDate: null });
+      return byStudent.get(student.id)!;
+    };
+    for (const a of assignments) {
+      if (!a.student) continue;
+      const row = ensure(a.student);
+      row.expected += a.totalAmount;
+      row.paid += a.paidAmount;
+      if (a.paidDate && (!row.lastPaymentDate || a.paidDate > row.lastPaymentDate)) row.lastPaymentDate = a.paidDate;
+    }
+    for (const p of orphanPayments) {
+      if (!p.student) continue;
+      const row = ensure(p.student);
+      // Ad-hoc payments have no separate "amount due" -- they're recorded
+      // as already paid in full for that amount.
+      row.expected += p.amount;
+      row.paid += p.amount;
+      const d = p.paidDate || p.createdAt;
+      if (d && (!row.lastPaymentDate || d > row.lastPaymentDate)) row.lastPaymentDate = d;
+    }
+
+    return Array.from(byStudent.values()).map(({ student, expected, paid, lastPaymentDate }) => {
+      const balance = Math.max(0, expected - paid);
+      const status = expected > 0 && balance <= 0 ? "PAID" : paid > 0 ? "PARTIAL" : "UNPAID";
+      return { student, expected, paid, balance, status, lastPaymentDate };
+    });
+  };
+
   app.get("/api/fees", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
@@ -6249,20 +6303,52 @@ async function startServer() {
           res.status(404).json({ error: "Student profile not found" });
           return;
         }
-        const fees = await prisma.feePayment.findMany({
-          where: { studentId: student.id },
-          include: { student: { include: { user: true, class: true } } }
-        });
-        res.json(fees.map((fee) => feeReceiptPayload(fee, fallbackCurrency)));
+        // Keep this branch as a real transaction/receipt history (unchanged
+        // shape -- used by the student's own "My Fees" statement), but also
+        // surface any still-outstanding structured assignment as a synthetic
+        // line item, since those previously never appeared here at all.
+        const [fees, openAssignments] = await Promise.all([
+          prisma.feePayment.findMany({
+            where: { studentId: student.id },
+            include: { student: { include: { user: true, class: true } } }
+          }),
+          prisma.feeAssignment.findMany({
+            where: { studentId: student.id, status: { not: "PAID" } },
+            include: { feeItem: true },
+          }),
+        ]);
+        const rows = fees.map((fee) => feeReceiptPayload(fee, fallbackCurrency));
+        const synthetic = openAssignments.map((a: any) => ({
+          id: `assignment-${a.id}`,
+          amount: a.outstandingAmount,
+          currency: fallbackCurrency,
+          status: a.status,
+          description: a.feeItem?.name ? `${a.feeItem.name} (Assigned)` : "Assigned Fee",
+          paymentMethod: null,
+          paidDate: null,
+          dueDate: a.dueDate,
+          createdAt: a.dueDate,
+          receiptNumber: null,
+        }));
+        res.json([...rows, ...synthetic]);
       } else if (["ADMIN", "ACCOUNTANT", "STAFF"].includes(jwtUser.role)) {
-        const fees = await prisma.feePayment.findMany({
-          include: { student: { include: { user: true, class: true } } }
-        });
-        res.json(fees.map((fee) => feeReceiptPayload(fee, fallbackCurrency)));
+        const overview = await buildStudentFeeOverview();
+        res.json(overview.map(({ student, expected, paid, balance, status, lastPaymentDate }) => ({
+          id: student.id,
+          studentId: student.id,
+          student,
+          amount: expected,
+          totalPaid: paid,
+          balance,
+          status,
+          currency: fallbackCurrency,
+          paidDate: lastPaymentDate,
+        })));
       } else {
         res.status(403).json({ error: "Forbidden" });
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.code === "P2021" || err?.code === "P2022") { res.json([]); return; }
       logger.error("Error fetching fees:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
@@ -13369,30 +13455,27 @@ async function startServer() {
   app.get("/api/reports/fees", authMiddleware, reportRole(["ADMIN", "ACCOUNTANT"]), async (req, res) => {
     const { classId, status } = req.query as { classId?: string; status?: string };
     try {
-      const fees = await prisma.feePayment.findMany({
-        include: { student: { include: { user: true, class: true } } },
-      });
+      // Same combined source as GET /api/fees: structured FeeAssignment
+      // obligations (which stay unpaid until actually paid) plus ad-hoc
+      // FeePayment records with no assignment. This used to only look at
+      // FeePayment, which meant an assigned-but-unpaid fee never showed up
+      // here at all -- "expected" was silently reconstructed from whatever
+      // had already been paid, so this report could never show a real
+      // outstanding balance.
+      const overview = await buildStudentFeeOverview();
       const profile = await prisma.schoolProfile.findFirst();
 
-      const map = new Map<string, any>();
-      for (const f of fees) {
-        const s = f.student;
-        if (classId && classId !== "all" && s.classId !== classId) continue;
-        if (!map.has(s.id)) {
-          map.set(s.id, { studentName: fullName(s.user), className: s.class?.name || "Unassigned", expected: 0, paid: 0 });
-        }
-        const row = map.get(s.id);
-        row.expected += f.amount;
-        if (f.status === "PAID") row.paid += f.amount;
-      }
-
-      let rows = Array.from(map.values()).map((r) => {
-        const balance = Math.max(0, r.expected - r.paid);
-        let st = "UNPAID";
-        if (r.expected > 0 && r.paid >= r.expected) st = "PAID";
-        else if (r.paid > 0) st = "PARTIAL";
-        return { ...r, balance, status: st };
-      }).sort((a, b) => a.studentName.localeCompare(b.studentName));
+      let rows = overview
+        .filter((r) => !classId || classId === "all" || r.student.classId === classId)
+        .map((r) => ({
+          studentName: fullName(r.student.user),
+          className: r.student.class?.name || "Unassigned",
+          expected: r.expected,
+          paid: r.paid,
+          balance: r.balance,
+          status: r.status,
+        }))
+        .sort((a, b) => a.studentName.localeCompare(b.studentName));
 
       if (status && status !== "all") rows = rows.filter((r) => r.status === status);
 
