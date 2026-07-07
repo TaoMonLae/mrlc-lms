@@ -55,6 +55,7 @@ enum FeeStatus {
   PENDING
   OVERDUE
   WAIVED
+  PARTIAL
 }
 
 enum FeeStructureStatus {
@@ -784,7 +785,17 @@ model LibraryResource {
 
 model FeePayment {
   id             String   @id @default(uuid())
+  // Net amount owed for this charge, i.e. after discountAmount is
+  // subtracted from the original gross amount quoted to the family.
   amount         Float
+  // Amount knocked off the gross charge (e.g. sibling/scholarship
+  // discount applied manually when recording the charge). Informational --
+  // the gross amount billed is amount + discountAmount.
+  discountAmount Float    @default(0)
+  // How much of `amount` has actually been paid so far. A charge can be
+  // recorded with paidAmount < amount (a partial payment), and topped up
+  // later via POST /api/fees/:id/pay until paidAmount reaches amount.
+  paidAmount     Float    @default(0)
   currency       String   @default("MYR")
   dueDate        DateTime
   paidDate       DateTime?

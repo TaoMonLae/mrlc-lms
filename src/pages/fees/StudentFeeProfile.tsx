@@ -1,13 +1,32 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { usePermissions } from '../../lib/permissions';
-import { ArrowLeft, CheckCircle2, FileText, Printer, AlertCircle, Plus } from 'lucide-react';
+import { ArrowLeft, FileText, Plus, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from '@/components/ui/dialog';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { formatMoney } from '../../lib/locale';
 import { useSettings } from '../../providers/SettingsProvider';
+import { apiSend } from '../../lib/api';
+import { localToday } from '../../lib/dates';
+
+const statusBadge: Record<string, string> = {
+  PAID: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400',
+  PARTIAL: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+  PENDING: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+  OVERDUE: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+  WAIVED: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
+};
 
 export default function StudentFeeProfile() {
   const { id } = useParams();
@@ -16,48 +35,51 @@ export default function StudentFeeProfile() {
   const [payments, setPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [student, setStudent] = useState<any>(null);
+  const [payTarget, setPayTarget] = useState<any>(null);
+
+  const currency = payments.find((p) => p.currency)?.currency || systemSettings.currency || 'MYR';
+  const canManage = hasPermission('manage_fees');
+
+  const fetchFeeData = async () => {
+    if (!id) return;
+    try {
+      const token = sessionStorage.getItem('auth_token');
+
+      const studentRes = await fetch(`/api/students/${id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (studentRes.ok) {
+        setStudent(await studentRes.json());
+      }
+
+      // Fetch this student's real, itemized transaction history (passing
+      // studentId keeps the response as individual FeePayment rows with
+      // real ids, instead of the aggregated one-row-per-student dashboard
+      // overview, which has no receipt to link to).
+      const feesRes = await fetch(`/api/fees?studentId=${id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (feesRes.ok) {
+        const fees = await feesRes.json();
+        setPayments(Array.isArray(fees) ? fees : []);
+      }
+    } catch (error) {
+      console.error('Error fetching fee data:', error);
+      toast.error('Failed to load fee data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchFeeData = async () => {
-      if (!id) return;
-      try {
-        const token = sessionStorage.getItem('auth_token');
-
-        // Fetch student data
-        const studentRes = await fetch(`/api/students/${id}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (studentRes.ok) {
-          const studentData = await studentRes.json();
-          setStudent(studentData);
-        }
-
-        // Fetch this student's real, itemized transaction history (passing
-        // studentId keeps the response as individual FeePayment rows with
-        // real ids, instead of the aggregated one-row-per-student dashboard
-        // overview, which has no receipt to link to).
-        const feesRes = await fetch(`/api/fees?studentId=${id}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (feesRes.ok) {
-          const fees = await feesRes.json();
-          setPayments(Array.isArray(fees) ? fees : []);
-        }
-      } catch (error) {
-        console.error('Error fetching fee data:', error);
-        toast.error('Failed to load fee data');
-      } finally {
-        setLoading(false);
-      }
-    };
+    setLoading(true);
     fetchFeeData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  const isPaid = (p: any) => p.status === 'PAID' || !!p.paidDate;
   const totalDue = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
-  const totalPaid = payments.filter(isPaid).reduce((sum, p) => sum + (p.amount || 0), 0);
+  const totalPaid = payments.reduce((sum, p) => sum + (p.paidAmount ?? (p.status === 'PAID' ? p.amount : 0)), 0);
   const balance = Math.max(0, totalDue - totalPaid);
-  const currency = payments.find((p) => p.currency)?.currency || systemSettings.currency || 'MYR';
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-10">
@@ -73,7 +95,7 @@ export default function StudentFeeProfile() {
           </p>
         </div>
 
-        {hasPermission('manage_fees') && (
+        {canManage && (
            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground" render={<Link to={`/fees/payments/new?studentId=${id}`} />} nativeButton={false}>
              <Plus className="mr-2 h-4 w-4" /> Record Payment
            </Button>
@@ -115,13 +137,19 @@ export default function StudentFeeProfile() {
                 <th className="px-6 py-4 font-medium">Date</th>
                 <th className="px-6 py-4 font-medium">Receipt No</th>
                 <th className="px-6 py-4 font-medium">Description</th>
-                <th className="px-6 py-4 font-medium">Method</th>
-                <th className="px-6 py-4 font-medium text-right">Amount</th>
+                <th className="px-6 py-4 font-medium">Status</th>
+                <th className="px-6 py-4 font-medium text-right">Amount Due</th>
+                <th className="px-6 py-4 font-medium text-right">Paid</th>
+                <th className="px-6 py-4 font-medium text-right">Balance</th>
                 <th className="px-6 py-4 font-medium text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-              {payments.map((payment) => (
+              {payments.map((payment) => {
+                const paid = payment.paidAmount ?? (payment.status === 'PAID' ? payment.amount : 0);
+                const bal = payment.balance ?? Math.max(0, (payment.amount || 0) - paid);
+                const isRealCharge = typeof payment.id === 'string' && !payment.id.startsWith('assignment-');
+                return (
                 <tr key={payment.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors">
                   <td className="px-6 py-4 text-slate-600 dark:text-slate-300">
                     {(() => { const d = payment.paidDate || payment.createdAt; return d ? format(new Date(d), 'MMM d, yyyy') : 'N/A'; })()}
@@ -131,28 +159,42 @@ export default function StudentFeeProfile() {
                   </td>
                   <td className="px-6 py-4 text-slate-600 dark:text-slate-300">
                      {payment.feeType || payment.description || 'Fee Payment'}
-                     {payment.status === 'VOIDED' && <Badge variant="destructive" className="ml-2 py-0">Voided</Badge>}
+                     {payment.discountAmount > 0 && (
+                       <span className="block text-xs text-slate-400">Discount applied: {formatMoney(payment.discountAmount, payment.currency || currency)}</span>
+                     )}
                   </td>
-                  <td className="px-6 py-4 text-slate-600 dark:text-slate-300">
-                    {payment.paymentMethod ? payment.paymentMethod.replace('_', ' ') : 'N/A'}
+                  <td className="px-6 py-4">
+                    <Badge className={`border-0 ${statusBadge[payment.status] || ''}`} variant="outline">{payment.status}</Badge>
                   </td>
                   <td className="px-6 py-4 font-medium text-slate-900 dark:text-white text-right">
                     {formatMoney(payment.amount || 0, payment.currency || currency)}
                   </td>
+                  <td className="px-6 py-4 text-slate-600 dark:text-slate-300 text-right">
+                    {formatMoney(paid, payment.currency || currency)}
+                  </td>
+                  <td className={`px-6 py-4 text-right font-medium ${bal > 0 ? 'text-red-600' : 'text-slate-400'}`}>
+                    {formatMoney(bal, payment.currency || currency)}
+                  </td>
                   <td className="px-6 py-4 text-right">
-                    {payment.receiptNumber ? (
-                      <Button variant="ghost" size="sm" render={<Link to={`/fees/receipts/${payment.id}`} />} nativeButton={false}>
-                           <FileText className="mr-2 h-4 w-4" /> Receipt
-                      </Button>
-                    ) : (
-                      <span className="text-xs text-slate-400">Not yet paid</span>
-                    )}
+                    <div className="flex items-center justify-end gap-1">
+                      {payment.receiptNumber && (
+                        <Button variant="ghost" size="sm" render={<Link to={`/fees/receipts/${payment.id}`} />} nativeButton={false}>
+                             <FileText className="mr-2 h-4 w-4" /> Receipt
+                        </Button>
+                      )}
+                      {canManage && isRealCharge && bal > 0 && (
+                        <Button variant="outline" size="sm" onClick={() => setPayTarget(payment)}>
+                          Pay Balance
+                        </Button>
+                      )}
+                    </div>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
               {payments.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
+                  <td colSpan={8} className="px-6 py-8 text-center text-slate-500">
                     No payment history found.
                   </td>
                 </tr>
@@ -163,6 +205,85 @@ export default function StudentFeeProfile() {
       </div>
         </>
       )}
+
+      {payTarget && (
+        <PayBalanceDialog
+          payment={payTarget}
+          currency={currency}
+          onClose={() => setPayTarget(null)}
+          onPaid={() => { setPayTarget(null); fetchFeeData(); }}
+        />
+      )}
     </div>
+  );
+}
+
+function PayBalanceDialog({ payment, currency, onClose, onPaid }: { payment: any; currency: string; onClose: () => void; onPaid: () => void }) {
+  const balance = payment.balance ?? Math.max(0, (payment.amount || 0) - (payment.paidAmount || 0));
+  const [amount, setAmount] = useState(String(balance));
+  const [paymentMethod, setPaymentMethod] = useState(payment.paymentMethod || 'CASH');
+  const [paymentDate, setPaymentDate] = useState(localToday());
+  const [notes, setNotes] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const submit = async () => {
+    const value = Number(amount);
+    if (!value || value <= 0) {
+      toast.error('Enter an amount greater than 0');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await apiSend(`/api/fees/${payment.id}/pay`, 'POST', { amount: value, paymentMethod, paymentDate, notes: notes || undefined });
+      toast.success('Payment recorded');
+      onPaid();
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to record payment');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Record Payment Toward Balance</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <p className="text-sm text-slate-500">Outstanding balance: <span className="font-semibold text-slate-900 dark:text-white">{formatMoney(balance, currency)}</span></p>
+          <div className="space-y-2">
+            <Label>Amount Received ({currency})</Label>
+            <Input type="number" min="0" step="0.01" max={balance} value={amount} onChange={(e) => setAmount(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label>Payment Method</Label>
+            <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="CASH">Cash</SelectItem>
+                <SelectItem value="BANK_TRANSFER">Bank Transfer</SelectItem>
+                <SelectItem value="OTHER">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Payment Date</Label>
+            <Input type="date" value={paymentDate} max={localToday()} onChange={(e) => setPaymentDate(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label>Notes (optional)</Label>
+            <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={submit} disabled={submitting}>
+            {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            Record Payment
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

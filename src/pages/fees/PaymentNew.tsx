@@ -18,6 +18,7 @@ import {
 import { toast } from 'sonner';
 import { useSettings } from '../../providers/SettingsProvider';
 import { localToday } from '../../lib/dates';
+import { formatMoney } from '../../lib/locale';
 
 type StudentOption = {
   id: string;
@@ -32,16 +33,32 @@ const getNextReceiptNumber = () => {
    return `RCP-${stamp}`;
 };
 
-const paymentSchema = z.object({
-  studentId: z.string().min(1, 'Student selection is required'),
-  amount: z.any().transform((v) => Number(v)).refine((v) => !isNaN(v) && v > 0, 'Amount must be greater than 0'),
-  paymentMonth: z.string().min(1, 'Payment month is required'),
-  paymentYear: z.string().min(4, 'Payment year is required'),
-  paymentMethod: z.enum(['CASH', 'BANK_TRANSFER', 'OTHER']),
-  paymentDate: z.string().min(1, 'Payment date is required'),
-  receiptNumber: z.string(),
-  notes: z.string().optional(),
-});
+const paymentSchema = z
+  .object({
+    studentId: z.string().min(1, 'Student selection is required'),
+    totalAmount: z.any().transform((v) => Number(v)).refine((v) => !isNaN(v) && v > 0, 'Total amount must be greater than 0'),
+    discountAmount: z.any().transform((v) => (v === '' || v == null ? 0 : Number(v))).refine((v) => !isNaN(v) && v >= 0, 'Discount cannot be negative'),
+    amountPaid: z.any().transform((v) => (v === '' || v == null ? null : Number(v))),
+    paymentMonth: z.string().min(1, 'Payment month is required'),
+    paymentYear: z.string().min(4, 'Payment year is required'),
+    paymentMethod: z.enum(['CASH', 'BANK_TRANSFER', 'OTHER']),
+    paymentDate: z.string().min(1, 'Payment date is required'),
+    dueDate: z.string().optional(),
+    receiptNumber: z.string(),
+    notes: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.discountAmount > data.totalAmount) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['discountAmount'], message: 'Discount cannot exceed the total amount' });
+    }
+    const net = Math.max(0, data.totalAmount - data.discountAmount);
+    if (data.amountPaid != null && (isNaN(data.amountPaid) || data.amountPaid < 0)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['amountPaid'], message: 'Amount paid cannot be negative' });
+    }
+    if (data.amountPaid != null && data.amountPaid > net) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['amountPaid'], message: 'Amount paid cannot exceed the amount due' });
+    }
+  });
 
 type FormValues = z.infer<typeof paymentSchema>;
 
@@ -99,12 +116,26 @@ export default function PaymentNew() {
       studentId: initialStudentId,
       paymentMethod: 'CASH',
       paymentDate: localToday(),
+      dueDate: '',
       receiptNumber: getNextReceiptNumber(),
-      amount: 0,
+      totalAmount: 0,
+      discountAmount: 0,
+      amountPaid: null,
       paymentMonth: currentMonth.toString(),
       paymentYear: currentYear.toString(),
     }
   });
+
+  const totalAmount = Number(watch('totalAmount')) || 0;
+  const discountAmount = Number(watch('discountAmount')) || 0;
+  const netAmount = Math.max(0, totalAmount - discountAmount);
+  const amountPaidRaw = watch('amountPaid');
+  // Leaving "Amount Received Now" blank records this as fully paid, same
+  // as the old one-step behavior -- entering a smaller number is what
+  // creates a partial payment with a real balance.
+  const amountPaid = amountPaidRaw === null || amountPaidRaw === undefined || (amountPaidRaw as any) === '' ? netAmount : Number(amountPaidRaw);
+  const balance = Math.max(0, netAmount - amountPaid);
+  const isPartial = amountPaid > 0 && balance > 0;
 
   const onSubmit = async (data: FormValues) => {
     const token = sessionStorage.getItem('auth_token');
@@ -115,7 +146,15 @@ export default function PaymentNew() {
       const paymentType = `Monthly Fees - ${monthName} ${data.paymentYear}`;
 
       const payload = {
-        ...data,
+        studentId: data.studentId,
+        totalAmount: data.totalAmount,
+        discountAmount: data.discountAmount,
+        amountPaid: data.amountPaid,
+        paymentMethod: data.paymentMethod,
+        paymentDate: data.paymentDate,
+        dueDate: data.dueDate || undefined,
+        receiptNumber: data.receiptNumber,
+        notes: data.notes,
         paymentType,
       };
 
@@ -129,7 +168,7 @@ export default function PaymentNew() {
         throw new Error(err.error || 'Failed to record payment');
       }
       const fee = await res.json();
-      toast.success('Payment recorded successfully');
+      toast.success(fee.status === 'PARTIAL' ? 'Partial payment recorded' : 'Payment recorded successfully');
       navigate(`/fees/receipts/${fee.id}`);
     } catch (error: any) {
       toast.error(error.message || 'Failed to record payment');
@@ -144,11 +183,11 @@ export default function PaymentNew() {
           Back to Fees
         </Button>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Record Payment</h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Add a new fee payment to the system.</p>
+        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Charge a student a fee directly, with an optional discount and partial payment.</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised p-6 rounded-xl shadow-sm">
-         
+
          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="studentId">Student *</Label>
@@ -169,12 +208,6 @@ export default function PaymentNew() {
 
             <div className="space-y-2 text-slate-500 font-medium md:col-span-2">
                <span className="text-sm">Currency: {currency}</span>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="amount">Amount ({currency}) *</Label>
-              <Input id="amount" type="number" step="0.01" {...register('amount')} />
-              {errors.amount && <p className="text-xs text-red-500 font-medium">{errors.amount.message}</p>}
             </div>
 
             <div className="space-y-2">
@@ -220,7 +253,54 @@ export default function PaymentNew() {
               </Select>
               {errors.paymentYear && <p className="text-xs text-red-500 font-medium">{errors.paymentYear.message}</p>}
             </div>
+         </div>
 
+         <div className="border-t border-slate-100 dark:border-surface-raised pt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="totalAmount">Total Amount ({currency}) *</Label>
+              <Input id="totalAmount" type="number" step="0.01" min="0" {...register('totalAmount')} />
+              {errors.totalAmount && <p className="text-xs text-red-500 font-medium">{errors.totalAmount.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="discountAmount">Discount ({currency})</Label>
+              <Input id="discountAmount" type="number" step="0.01" min="0" {...register('discountAmount')} />
+              {errors.discountAmount && <p className="text-xs text-red-500 font-medium">{errors.discountAmount.message}</p>}
+            </div>
+
+            <div className="space-y-2 md:col-span-2 bg-slate-50 dark:bg-surface-raised/50 rounded-lg p-4 flex items-center justify-between">
+              <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Amount Due (after discount)</span>
+              <span className="text-lg font-bold text-slate-900 dark:text-white">{formatMoney(netAmount, currency)}</span>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="amountPaid">Amount Received Now ({currency})</Label>
+              <Input
+                id="amountPaid"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder={netAmount.toFixed(2)}
+                {...register('amountPaid')}
+              />
+              <p className="text-xs text-slate-400">Leave blank to record the full amount due as paid. Enter a smaller number for a partial payment.</p>
+              {errors.amountPaid && <p className="text-xs text-red-500 font-medium">{errors.amountPaid.message}</p>}
+            </div>
+
+            <div className="space-y-2 rounded-lg p-4 flex items-center justify-between" style={{ background: isPartial ? 'rgba(245,158,11,0.08)' : undefined }}>
+              <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Balance Remaining</span>
+              <span className={`text-lg font-bold ${balance > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>{formatMoney(balance, currency)}</span>
+            </div>
+
+            {balance > 0 && (
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="dueDate">Balance Due Date (optional)</Label>
+                <Input id="dueDate" type="date" {...register('dueDate')} />
+              </div>
+            )}
+         </div>
+
+         <div className="border-t border-slate-100 dark:border-surface-raised pt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label>Payment Method *</Label>
               <Select value={watch('paymentMethod')} onValueChange={(val: any) => setValue('paymentMethod', val)}>
@@ -261,7 +341,7 @@ export default function PaymentNew() {
                {isSubmitting ? 'Recording...' : (
                  <>
                    <Receipt className="mr-2 h-4 w-4" />
-                   Record Payment & Generate
+                   {isPartial ? 'Record Partial Payment' : 'Record Payment & Generate'}
                  </>
                )}
              </Button>

@@ -21,7 +21,10 @@ import { formatMoney } from '../../lib/locale';
 interface FeeRecord {
   id: string;
   amount: number;
-  status: 'PAID' | 'PENDING' | 'OVERDUE' | 'WAIVED';
+  discountAmount?: number;
+  paidAmount?: number;
+  balance?: number;
+  status: 'PAID' | 'PENDING' | 'OVERDUE' | 'WAIVED' | 'PARTIAL';
   description?: string | null;
   paymentMethod?: string | null;
   paidDate?: string | null;
@@ -32,10 +35,13 @@ interface FeeRecord {
 
 const statusBadge: Record<string, string> = {
   PAID: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+  PARTIAL: 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
   PENDING: 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
   OVERDUE: 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400',
   WAIVED: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
 };
+
+const paidAmountOf = (r: FeeRecord) => r.paidAmount ?? (r.status === 'PAID' ? r.amount : 0);
 
 export default function StudentFees() {
   const { systemSettings } = useSettings();
@@ -57,7 +63,10 @@ export default function StudentFees() {
 
   const summary = useMemo(() => {
     const total = records.reduce((a, r) => a + (r.amount || 0), 0);
-    const paid = records.filter((r) => r.status === 'PAID').reduce((a, r) => a + (r.amount || 0), 0);
+    // paidAmount reflects partial payments too -- a PARTIAL record has
+    // some but not all of its amount paid, which the old status === 'PAID'
+    // filter used to miss entirely.
+    const paid = records.reduce((a, r) => a + paidAmountOf(r), 0);
     const balance = Math.max(0, total - paid);
     const nextDue = records
       .filter((r) => r.status !== 'PAID' && r.status !== 'WAIVED' && r.dueDate)
@@ -81,11 +90,11 @@ export default function StudentFees() {
   };
 
   const handleDownloadReceipt = (tx: FeeRecord) => {
-    if (tx.status !== 'PAID') {
-      toast.info('No receipt available', { description: 'A receipt is issued once a payment is completed.' });
+    if (!tx.receiptNumber) {
+      toast.info('No receipt available', { description: 'A receipt is issued once a payment has been recorded against this fee.' });
       return;
     }
-    toast.success(`Receipt ${tx.receiptNumber || ''}`.trim(), {
+    toast.success(`Receipt ${tx.receiptNumber}`.trim(), {
       description: 'Please collect the printed receipt from the accounts office.',
     });
   };
@@ -176,23 +185,37 @@ export default function StudentFees() {
                     <tr className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                       <th className="px-6 py-4">Transaction Details</th>
                       <th className="px-6 py-4">Method</th>
-                      <th className="px-6 py-4 text-right">Amount</th>
+                      <th className="px-6 py-4 text-right">Amount Due</th>
+                      <th className="px-6 py-4 text-right">Paid</th>
+                      <th className="px-6 py-4 text-right">Balance</th>
                       <th className="px-6 py-4">Status</th>
                       <th className="px-6 py-4">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-                    {transactions.map((tx) => (
+                    {transactions.map((tx) => {
+                      const paid = paidAmountOf(tx);
+                      const bal = tx.balance ?? Math.max(0, (tx.amount || 0) - paid);
+                      return (
                       <tr key={tx.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors">
                         <td className="px-6 py-4">
                           <p className="text-sm font-bold text-slate-900 dark:text-white">{tx.description || 'School Fee'}</p>
                           <p className="text-[10px] text-slate-500 font-medium mt-0.5">{(tx.paidDate || tx.createdAt || '').slice(0, 10)}</p>
+                          {!!tx.discountAmount && (
+                            <p className="text-[10px] text-emerald-600 font-medium mt-0.5">Discount: {formatMoney(tx.discountAmount, currency)}</p>
+                          )}
                         </td>
                         <td className="px-6 py-4 text-xs font-medium text-slate-600 dark:text-slate-300">
                           {tx.paymentMethod || '—'}
                         </td>
                         <td className="px-6 py-4 text-right font-black text-slate-900 dark:text-white text-sm">
                           {formatMoney(tx.amount, currency)}
+                        </td>
+                        <td className="px-6 py-4 text-right font-medium text-slate-600 dark:text-slate-300 text-sm">
+                          {formatMoney(paid, currency)}
+                        </td>
+                        <td className={`px-6 py-4 text-right font-bold text-sm ${bal > 0 ? 'text-red-600' : 'text-slate-400'}`}>
+                          {formatMoney(bal, currency)}
                         </td>
                         <td className="px-6 py-4">
                           <Badge className={`border-none font-bold text-[9px] uppercase tracking-widest ${statusBadge[tx.status] || ''}`}>
@@ -205,7 +228,8 @@ export default function StudentFees() {
                           </Button>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
                 )}

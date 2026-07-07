@@ -635,9 +635,23 @@ const schemas = {
   }),
   caseNote: z.object({ content: reqStr }),
   fee: z.object({
-    studentId: reqStr, amount: num,
+    studentId: reqStr,
+    // Gross amount being charged, before any discount.
+    totalAmount: num,
+    // Optional discount taken off totalAmount (e.g. sibling/scholarship).
+    discountAmount: optNum,
+    // How much of the (post-discount) amount is being paid right now.
+    // Omit to record it as fully paid (preserves the old one-step
+    // behavior); a smaller value records a partial payment and leaves the
+    // rest as an outstanding balance to be topped up later.
+    amountPaid: optNum,
     paymentType: optStr, paymentMethod: optStr, paymentDate: optStr,
+    dueDate: optStr,
     receiptNumber: optStr, notes: optStr,
+  }),
+  feePaymentTopUp: z.object({
+    amount: reqNum,
+    paymentDate: optStr, paymentMethod: optStr, notes: optStr,
   }),
   feeStructureCreate: z.object({
     name: reqStr,
@@ -6227,6 +6241,12 @@ async function startServer() {
     return {
       ...fee,
       currency: fee.currency || fallbackCurrency,
+      // Some rows predate discountAmount/paidAmount (or are the synthetic
+      // "still owed" rows built from a FeeAssignment) -- default sensibly
+      // so every consumer can rely on these fields always being numbers.
+      discountAmount: fee.discountAmount ?? 0,
+      paidAmount: fee.paidAmount ?? (fee.status === "PAID" ? fee.amount : 0),
+      balance: Math.max(0, (fee.amount ?? 0) - (fee.paidAmount ?? (fee.status === "PAID" ? fee.amount : 0))),
       paymentDate: paidDate,
       paymentType: fee.description || "Fee Payment",
       studentName,
@@ -6255,7 +6275,11 @@ async function startServer() {
       prisma.feeAssignment.findMany({ include: { student: { include: { user: true, class: true } }, feeItem: true } }),
       // assignmentId is unique+optional: null means this payment wasn't
       // recorded against a structured assignment (the ad-hoc flow).
-      prisma.feePayment.findMany({ where: { assignmentId: null }, include: { student: { include: { user: true, class: true } } } }),
+      // Cast: discountAmount/paidAmount are new columns (see the
+      // add_fee_payment_discount_and_partial migration) not yet reflected
+      // in this environment's generated Prisma client typings; the real
+      // runtime client is regenerated from schema.prisma before deploy.
+      prisma.feePayment.findMany({ where: { assignmentId: null }, include: { student: { include: { user: true, class: true } } } }) as Promise<any[]>,
     ]);
 
     const byStudent = new Map<string, {
@@ -6275,10 +6299,12 @@ async function startServer() {
     for (const p of orphanPayments) {
       if (!p.student) continue;
       const row = ensure(p.student);
-      // Ad-hoc payments have no separate "amount due" -- they're recorded
-      // as already paid in full for that amount.
+      // p.amount is the net amount owed for this manually-recorded charge
+      // (after any discount); p.paidAmount is how much of that has
+      // actually been paid so far -- these can now differ for a charge
+      // recorded as a partial payment, so don't assume amount === paid.
       row.expected += p.amount;
-      row.paid += p.amount;
+      row.paid += p.paidAmount ?? (p.status === "PAID" ? p.amount : 0);
       const d = p.paidDate || p.createdAt;
       if (d && (!row.lastPaymentDate || d > row.lastPaymentDate)) row.lastPaymentDate = d;
     }
@@ -6306,10 +6332,18 @@ async function startServer() {
       }),
     ]);
     const rows = fees.map((fee: any) => feeReceiptPayload(fee, fallbackCurrency));
+    // amount here is the total owed (not just what's left), so it lines up
+    // with the same amount/discountAmount/paidAmount/balance shape as real
+    // FeePayment rows above -- these came from Fee Structures > Assign
+    // Fees, a separate, optional bulk-billing path from the manual charges
+    // created below, but should still read consistently on a statement.
     const synthetic = openAssignments.map((a: any) => ({
       id: `assignment-${a.id}`,
       studentId,
-      amount: a.outstandingAmount,
+      amount: a.totalAmount,
+      discountAmount: a.discountAmount ?? 0,
+      paidAmount: a.paidAmount ?? 0,
+      balance: a.outstandingAmount,
       currency: fallbackCurrency,
       status: a.status,
       description: a.feeItem?.name ? `${a.feeItem.name} (Assigned)` : "Assigned Fee",
@@ -6399,36 +6433,60 @@ async function startServer() {
     }
   });
 
+  // Manual fee charge, recorded directly against a student -- the primary
+  // way staff bill and collect fees day-to-day (Fee Structures is a
+  // separate, optional bulk-billing tool for structured invoicing). Supports
+  // an optional discount and an optional partial payment: if amountPaid is
+  // less than the post-discount amount, the charge is saved as PARTIAL with
+  // a real balance, instead of the old behavior of always writing PAID.
   app.post("/api/fees", authMiddleware, validate(schemas.fee), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (jwtUser.role !== "ADMIN" && jwtUser.role !== "ACCOUNTANT") {
       res.status(403).json({ error: "Forbidden" });
       return;
     }
-    const { studentId, amount, paymentType, paymentMethod, paymentDate, receiptNumber, notes } = req.body;
-    if (!studentId || !amount) {
-      res.status(400).json({ error: "studentId and amount are required" });
+    const { studentId, totalAmount, discountAmount, amountPaid, paymentType, paymentMethod, paymentDate, dueDate, receiptNumber, notes } = req.body;
+    const gross = Number(totalAmount);
+    if (!studentId || !totalAmount) {
+      res.status(400).json({ error: "studentId and totalAmount are required" });
       return;
     }
-    if (Number(amount) <= 0) {
-      res.status(400).json({ error: "amount must be greater than 0" });
+    if (gross <= 0) {
+      res.status(400).json({ error: "totalAmount must be greater than 0" });
       return;
     }
+    const discount = discountAmount != null ? Math.max(0, Number(discountAmount)) : 0;
+    if (discount > gross) {
+      res.status(400).json({ error: "discountAmount cannot exceed totalAmount" });
+      return;
+    }
+    const netAmount = Math.max(0, gross - discount);
+    // Omitting amountPaid preserves the historical one-step "record a
+    // completed payment" behavior; providing a smaller number records a
+    // partial payment instead.
+    const paidNow = amountPaid == null ? netAmount : Math.min(Math.max(0, Number(amountPaid)), netAmount);
+    // PARTIAL, discountAmount and paidAmount are new (see the
+    // add_fee_payment_discount_and_partial migration) and not yet reflected
+    // in this environment's generated Prisma client typings -- cast so this
+    // still compiles here; the real client is regenerated before deploy.
+    const status: any = paidNow <= 0 ? "PENDING" : paidNow >= netAmount ? "PAID" : "PARTIAL";
     try {
       const profile = await prisma.schoolProfile.findFirst();
       const fee = await prisma.feePayment.create({
         data: {
           studentId,
-          amount: Number(amount),
+          amount: netAmount,
+          discountAmount: discount,
+          paidAmount: paidNow,
           currency: profile?.currency || "MYR",
           description: paymentType || "Tuition Fee",
           paymentMethod: paymentMethod || "CASH",
-          paidDate: paymentDate ? new Date(paymentDate) : new Date(),
-          dueDate: new Date(),
-          status: "PAID",
+          paidDate: paidNow > 0 ? (paymentDate ? new Date(paymentDate) : new Date()) : null,
+          dueDate: dueDate ? new Date(dueDate) : (paymentDate ? new Date(paymentDate) : new Date()),
+          status,
           receiptNumber: receiptNumber || `RCP-${Date.now()}`,
           notes,
-        },
+        } as any,
         include: { student: { include: { user: true, class: true } } }
       });
 
@@ -6438,7 +6496,7 @@ async function startServer() {
         "CREATE",
         "PAYMENT",
         fee.id,
-        `Recorded fee payment of ${amount} for student ID ${studentId}.`,
+        `Recorded fee charge of ${netAmount} (paid ${paidNow}) for student ID ${studentId}.`,
         req.ip,
         req.headers["user-agent"] || null,
         "SUCCESS"
@@ -6447,6 +6505,76 @@ async function startServer() {
       res.status(201).json(feeReceiptPayload(fee, profile?.currency || "MYR"));
     } catch (err) {
       logger.error("Error creating fee payment:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Top up a partially-paid (or unpaid) manual charge with another payment,
+  // until it reaches PAID. This is how staff collect the remaining balance
+  // on a charge that was recorded as PARTIAL.
+  app.post("/api/fees/:id/pay", authMiddleware, validate(schemas.feePaymentTopUp), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "ACCOUNTANT") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      // Cast: discountAmount/paidAmount/PARTIAL are new (see the
+      // add_fee_payment_discount_and_partial migration) and not yet
+      // reflected in this environment's generated Prisma client typings.
+      const fee: any = await prisma.feePayment.findUnique({ where: { id: req.params.id } });
+      if (!fee) {
+        res.status(404).json({ error: "Fee record not found" });
+        return;
+      }
+      if (fee.status === "PAID") {
+        res.status(400).json({ error: "This fee is already fully paid" });
+        return;
+      }
+      if (fee.status === "WAIVED") {
+        res.status(400).json({ error: "This fee has been waived" });
+        return;
+      }
+      const balance = Math.max(0, fee.amount - fee.paidAmount);
+      const amountNow = Number(req.body.amount);
+      if (!amountNow || amountNow <= 0) {
+        res.status(400).json({ error: "amount must be greater than 0" });
+        return;
+      }
+      const applied = Math.min(amountNow, balance);
+      const newPaid = fee.paidAmount + applied;
+      const newStatus: any = newPaid >= fee.amount ? "PAID" : "PARTIAL";
+      const paymentDate = req.body.paymentDate ? new Date(req.body.paymentDate) : new Date();
+      const noteLine = `${paymentDate.toISOString().slice(0, 10)}: +${applied} payment recorded${req.body.notes ? ` (${req.body.notes})` : ""}`;
+
+      const updated: any = await prisma.feePayment.update({
+        where: { id: fee.id },
+        data: {
+          paidAmount: newPaid,
+          status: newStatus,
+          paidDate: paymentDate,
+          paymentMethod: req.body.paymentMethod || fee.paymentMethod,
+          notes: fee.notes ? `${fee.notes}\n${noteLine}` : noteLine,
+        } as any,
+        include: { student: { include: { user: true, class: true } } },
+      });
+
+      const profile = await prisma.schoolProfile.findFirst();
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "PAY",
+        "PAYMENT",
+        fee.id,
+        `Recorded additional payment of ${applied} toward fee ${fee.id} (new balance ${Math.max(0, updated.amount - updated.paidAmount)}).`,
+        req.ip,
+        req.headers["user-agent"] || null,
+        "SUCCESS"
+      );
+
+      res.json(feeReceiptPayload(updated, profile?.currency || "MYR"));
+    } catch (err) {
+      logger.error("Error recording fee top-up payment:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
@@ -9149,15 +9277,19 @@ async function startServer() {
         (fiscalYear || yearParam) as string | undefined
       );
 
-      // Get fee payments (income)
+      // Get fee payments (income). Includes PARTIAL charges too -- some
+      // real cash has already come in against those even though the
+      // balance isn't fully settled (same reasoning as the PARTIAL expense
+      // handling below), and sums paidAmount rather than amount so a
+      // partially-paid charge only counts the portion actually collected.
       const feePayments = await prisma.feePayment.aggregate({
         where: {
           paidDate: dateFilter,
-          status: 'PAID',
+          status: { in: ['PAID', 'PARTIAL'] },
         },
-        _sum: { amount: true },
+        _sum: { paidAmount: true },
         _count: true,
-      });
+      } as any);
 
       // Get donations (income)
       const donations = await prisma.donation.aggregate({
@@ -9196,14 +9328,17 @@ async function startServer() {
       const totalBudget = budgets.reduce((sum, b) => sum + b.allocatedAmount, 0);
       const totalBudgetSpent = budgets.reduce((sum, b) => sum + b.spentAmount, 0);
 
-      // Get outstanding fees
+      // Get outstanding fees. Includes PARTIAL charges, and nets out
+      // paidAmount so the outstanding figure is the real remaining balance
+      // (for PENDING/OVERDUE, paidAmount is 0, so this is unchanged there).
       const outstandingFees = await prisma.feePayment.aggregate({
         where: {
-          status: { in: ['PENDING', 'OVERDUE'] },
+          status: { in: ['PENDING', 'OVERDUE', 'PARTIAL'] },
         },
-        _sum: { amount: true },
+        _sum: { amount: true, paidAmount: true },
         _count: true,
-      });
+      } as any);
+      const outstandingBalance = Math.max(0, ((outstandingFees._sum as any).amount || 0) - ((outstandingFees._sum as any).paidAmount || 0));
 
       // Get pending expenses
       const pendingExpenses = await prisma.expense.aggregate({
@@ -9214,7 +9349,7 @@ async function startServer() {
         _count: true,
       });
 
-      const totalIncome = (feePayments._sum.amount || 0) + (donations._sum.amount || 0);
+      const totalIncome = ((feePayments._sum as any).paidAmount || 0) + (donations._sum.amount || 0);
       const totalExpenses = expenses._sum.amount || 0;
       const netCashFlow = totalIncome - totalExpenses;
 
@@ -9225,7 +9360,7 @@ async function startServer() {
         },
         income: {
           total: totalIncome,
-          fees: feePayments._sum.amount || 0,
+          fees: (feePayments._sum as any).paidAmount || 0,
           donations: donations._sum.amount || 0,
           feePayments: feePayments._count,
           donationCount: donations._count,
@@ -9247,7 +9382,7 @@ async function startServer() {
           positive: netCashFlow >= 0,
         },
         accountsReceivable: {
-          outstanding: outstandingFees._sum.amount || 0,
+          outstanding: outstandingBalance,
           count: outstandingFees._count,
         },
       });
@@ -9275,14 +9410,16 @@ async function startServer() {
         endDate as string | undefined
       );
 
-      // Get income by period
+      // Get income by period. Includes PARTIAL charges and sums paidAmount
+      // (not amount) so only cash actually collected counts as income --
+      // see the matching comment on the summary endpoint above.
       const feePaymentsByPeriod = await prisma.feePayment.groupBy({
         by: groupBy === 'month' ? ['paidDate'] : ['paidDate'],
         where: {
           paidDate: dateFilter,
-          status: 'PAID',
+          status: { in: ['PAID', 'PARTIAL'] as any },
         },
-        _sum: { amount: true },
+        _sum: { paidAmount: true } as any,
         _count: true,
       });
 
@@ -9399,7 +9536,7 @@ async function startServer() {
       }));
 
       // Calculate totals
-      const totalIncome = (feePaymentsByPeriod.reduce((sum, p) => sum + (p._sum.amount || 0), 0) +
+      const totalIncome = (feePaymentsByPeriod.reduce((sum, p) => sum + ((p._sum as any).paidAmount || 0), 0) +
                            donationsByPeriod.reduce((sum, p) => sum + (p._sum.amount || 0), 0));
       const totalExpenses = expensesByCategory.reduce((sum, cat) => sum + (cat._sum.amount || 0), 0);
       const netSurplus = totalIncome - totalExpenses;
@@ -9413,7 +9550,7 @@ async function startServer() {
         income: {
           total: totalIncome,
           bySource: {
-            fees: feePaymentsByPeriod.reduce((sum, p) => sum + (p._sum.amount || 0), 0),
+            fees: feePaymentsByPeriod.reduce((sum, p) => sum + ((p._sum as any).paidAmount || 0), 0),
             donations: donationsByPeriod.reduce((sum, p) => sum + (p._sum.amount || 0), 0),
           },
           detail: incomeDetail,
