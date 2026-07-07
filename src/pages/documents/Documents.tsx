@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FileBadge, Plus, Loader2, ExternalLink, Link2, Ban, RefreshCw, Eye, Layers } from 'lucide-react';
+import { FileBadge, Plus, Loader2, ExternalLink, Link2, Ban, RefreshCw, Eye, Layers, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -23,13 +23,14 @@ const TYPE_LABELS: Record<string, string> = {
 type Doc = {
   id: string; documentNumber: string; verifyToken: string; type: string; status: string;
   studentName: string; studentCode: string; term: string | null; issueDate: string; downloadCount: number;
+  issuedById?: string;
 };
 
 const statusStyle = (s: string) =>
   s === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : s === 'CANCELLED' ? 'bg-red-100 text-red-700' : 'bg-slate-200 text-slate-600';
 
 export default function DocumentsPage() {
-  const { isAdmin } = usePermissions();
+  const { isAdmin, user } = usePermissions();
   const [students, setStudents] = useState<{ id: string; name: string }[]>([]);
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
@@ -134,6 +135,19 @@ export default function DocumentsPage() {
       loadDocs();
     } catch (e: any) { toast.error(e.message || 'Failed to reissue'); }
   };
+
+  const deleteDoc = async (d: Doc) => {
+    if (!confirm(`Permanently delete ${d.documentNumber}? This cannot be undone (use Cancel instead if you just want to invalidate it while keeping a record).`)) return;
+    try {
+      await apiSend(`/api/documents/${d.id}`, 'DELETE');
+      toast.success('Document deleted');
+      setDocs((prev) => prev.filter((doc) => doc.id !== d.id));
+    } catch (e: any) { toast.error(e.message || 'Failed to delete document'); }
+  };
+
+  // Cancel/Delete: allowed for admins, or the teacher who issued the
+  // document themselves (mirrors the backend's ownership check).
+  const canModify = (d: Doc) => isAdmin || (!!user && d.issuedById === user.id);
 
   return (
     <div className="space-y-6 max-w-[1500px] mx-auto">
@@ -269,11 +283,16 @@ export default function DocumentsPage() {
                         <DropdownMenuItem render={<Link to={`/documents/${d.id}/print`} className="flex w-full" />} nativeButton={false}><Eye className="h-4 w-4 mr-2" /> Open / Print</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => copyVerifyLink(d)}><Link2 className="h-4 w-4 mr-2" /> Copy verify link</DropdownMenuItem>
                         <DropdownMenuItem render={<a href={`/verify/${d.verifyToken}`} target="_blank" rel="noreferrer" className="flex w-full" />} nativeButton={false}><ExternalLink className="h-4 w-4 mr-2" /> Public verify page</DropdownMenuItem>
-                        {isAdmin && d.status === 'ACTIVE' && (
+                        {canModify(d) && (
                           <>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => reissue(d)}><RefreshCw className="h-4 w-4 mr-2" /> Reissue</DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600" onClick={() => cancelDoc(d)}><Ban className="h-4 w-4 mr-2" /> Cancel</DropdownMenuItem>
+                            {isAdmin && d.status === 'ACTIVE' && (
+                              <DropdownMenuItem onClick={() => reissue(d)}><RefreshCw className="h-4 w-4 mr-2" /> Reissue</DropdownMenuItem>
+                            )}
+                            {d.status === 'ACTIVE' && (
+                              <DropdownMenuItem className="text-red-600" onClick={() => cancelDoc(d)}><Ban className="h-4 w-4 mr-2" /> Cancel</DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem className="text-red-600" onClick={() => deleteDoc(d)}><Trash2 className="h-4 w-4 mr-2" /> Delete</DropdownMenuItem>
                           </>
                         )}
                       </DropdownMenuContent>

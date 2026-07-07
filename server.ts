@@ -15141,10 +15141,19 @@ async function startServer() {
     }
   });
 
-  app.post("/api/documents/:id/cancel", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  // Cancel/Delete may be done by ADMIN, or by the TEACHER who originally
+  // issued the document (mirrors the ownership pattern used elsewhere in
+  // the app, e.g. flashcard decks / subject-teacher assignment).
+  const canModifyDocument = (jwtUser: JwtPayload, doc: { issuedById: string }) =>
+    jwtUser.role === "ADMIN" || (jwtUser.role === "TEACHER" && doc.issuedById === jwtUser.userId);
+
+  app.post("/api/documents/:id/cancel", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { reason } = req.body || {};
     try {
+      const existing = await prisma.generatedDocument.findUnique({ where: { id: req.params.id } });
+      if (!existing) { res.status(404).json({ error: "Document not found" }); return; }
+      if (!canModifyDocument(jwtUser, existing)) { res.status(403).json({ error: "Forbidden" }); return; }
       const doc = await prisma.generatedDocument.update({
         where: { id: req.params.id },
         data: { status: "CANCELLED", cancelledReason: reason || null },
@@ -15156,6 +15165,27 @@ async function startServer() {
     } catch (err: any) {
       if (err?.code === "P2025") { res.status(404).json({ error: "Document not found" }); return; }
       logger.error("Error cancelling document:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Permanent delete -- removes the record entirely (unlike Cancel, which
+  // just flags it CANCELLED but keeps it around for the audit trail / public
+  // verify page). No physical files to clean up: documents are rendered
+  // on-the-fly from the stored `payload` JSON snapshot.
+  app.delete("/api/documents/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const existing = await prisma.generatedDocument.findUnique({ where: { id: req.params.id } });
+      if (!existing) { res.status(404).json({ error: "Document not found" }); return; }
+      if (!canModifyDocument(jwtUser, existing)) { res.status(403).json({ error: "Forbidden" }); return; }
+      await prisma.generatedDocument.delete({ where: { id: req.params.id } });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "DELETE", "DOCUMENT", existing.id,
+        `${existing.type} ${existing.documentNumber} deleted.`, req.ip, req.headers["user-agent"] || null, "WARNING");
+      res.json({ success: true });
+    } catch (err: any) {
+      if (err?.code === "P2025") { res.status(404).json({ error: "Document not found" }); return; }
+      logger.error("Error deleting document:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
