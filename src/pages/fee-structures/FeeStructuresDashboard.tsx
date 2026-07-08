@@ -247,7 +247,7 @@ export default function FeeStructuresDashboard() {
                                 <Edit className="h-4 w-4" />
                               </Button>
                           )}
-                          {hasPermission('manage_fee_structures') && structure.status === 'DRAFT' && (
+                          {hasPermission('manage_fee_structures') && structure.status !== 'ACTIVE' && (
                             <Button variant="ghost" size="sm" className="text-red-600" onClick={() => handleDelete(structure.id, structure.name)}>
                               <Trash2 className="h-4 w-4" />
                             </Button>

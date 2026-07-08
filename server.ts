@@ -6725,7 +6725,17 @@ async function startServer() {
     }
 
     try {
-      const structure = await prisma.feeStructure.findUnique({ where: { id: req.params.id } });
+      const structure = await prisma.feeStructure.findUnique({
+        where: { id: req.params.id },
+        include: {
+          _count: {
+            select: {
+              assignments: true,
+              paymentPlans: true,
+            },
+          },
+        },
+      });
       if (!structure) {
         res.status(404).json({ error: "Fee structure not found" });
         return;
@@ -6734,22 +6744,73 @@ async function startServer() {
         res.status(400).json({ error: "Cannot delete ACTIVE fee structure. Archive it first." });
         return;
       }
+      const deleted = await prisma.$transaction(async (tx) => {
+        const assignments = await tx.feeAssignment.findMany({
+          where: { feeStructureId: structure.id },
+          select: { id: true },
+        });
+        const assignmentIds = assignments.map((assignment) => assignment.id);
+        const plans = await tx.feePaymentPlan.findMany({
+          where: { feeStructureId: structure.id },
+          select: {
+            id: true,
+            installments: { select: { id: true } },
+          },
+        });
+        const installmentIds = plans.flatMap((plan) => plan.installments.map((installment) => installment.id));
 
-      await prisma.feeStructure.delete({ where: { id: req.params.id } });
+        // Preserve real receipts as standalone payment records before removing
+        // the generated fee assignment/payment-plan records.
+        if (assignmentIds.length > 0) {
+          await tx.feePayment.updateMany({
+            where: { assignmentId: { in: assignmentIds } },
+            data: { assignmentId: null },
+          });
+          await tx.feeAssignment.updateMany({
+            where: { id: { in: assignmentIds } },
+            data: { feePaymentId: null },
+          });
+          await tx.feeAssignment.deleteMany({ where: { id: { in: assignmentIds } } });
+        }
+
+        if (installmentIds.length > 0) {
+          await tx.feePayment.updateMany({
+            where: { installmentId: { in: installmentIds } },
+            data: { installmentId: null },
+          });
+          await tx.feeInstallment.updateMany({
+            where: { id: { in: installmentIds } },
+            data: { feePaymentId: null },
+          });
+        }
+        if (plans.length > 0) {
+          await tx.feePaymentPlan.deleteMany({ where: { id: { in: plans.map((plan) => plan.id) } } });
+        }
+
+        await tx.feeStructure.delete({ where: { id: req.params.id } });
+        return {
+          assignments: assignmentIds.length,
+          paymentPlans: plans.length,
+        };
+      });
       await createAuditLog(
         jwtUser.userId,
         jwtUser.email,
         "DELETE",
         "FEE_STRUCTURE",
         structure.id,
-        `Deleted fee structure: ${structure.name}`,
+        `Deleted fee structure: ${structure.name} (${deleted.assignments} assignments and ${deleted.paymentPlans} payment plans removed).`,
         req.ip,
         req.headers["user-agent"] || null
       );
 
-      res.json({ message: "Fee structure deleted" });
-    } catch (err) {
+      res.json({ message: "Fee structure deleted", deleted });
+    } catch (err: any) {
       logger.error("Error deleting fee structure:", err);
+      if (err?.code === "P2003") {
+        res.status(409).json({ error: "This fee structure is still linked to billing records and could not be deleted safely." });
+        return;
+      }
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
