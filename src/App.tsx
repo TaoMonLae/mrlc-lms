@@ -285,6 +285,7 @@ export default function App() {
                   <Route path="/student/documents" element={<StudentDocumentsPage />} />
                   <Route path="/student/library" element={<StudentLibrary />} />
                   <Route path="/student/fees" element={<StudentFees />} />
+                  <Route path="/student/fees/receipts/:id" element={<PaymentReceipt />} />
                   <Route path="/student/videos" element={<StudentVideos />} />
                   <Route path="/student/homework" element={<StudentHomework />} />
                   <Route path="/student/flashcards" element={<StudentFlashcardDecks />} />

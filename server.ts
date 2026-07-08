@@ -653,6 +653,9 @@ const schemas = {
     amount: reqNum,
     paymentDate: optStr, paymentMethod: optStr, notes: optStr,
   }),
+  feePaymentVoid: z.object({
+    reason: reqStr,
+  }),
   feeStructureCreate: z.object({
     name: reqStr,
     description: nullableStr,
@@ -6237,6 +6240,10 @@ async function startServer() {
     const studentUser = fee.student?.user;
     const studentName = `${studentUser?.firstName ?? ""} ${studentUser?.lastName ?? ""}`.trim() || "Unknown";
     const paidDate = fee.paidDate ?? fee.createdAt;
+    const paidAmount = fee.status === "WAIVED"
+      ? 0
+      : (fee.paidAmount ?? (fee.status === "PAID" ? fee.amount : 0));
+    const balance = fee.status === "WAIVED" ? 0 : Math.max(0, (fee.amount ?? 0) - paidAmount);
 
     return {
       ...fee,
@@ -6245,8 +6252,8 @@ async function startServer() {
       // "still owed" rows built from a FeeAssignment) -- default sensibly
       // so every consumer can rely on these fields always being numbers.
       discountAmount: fee.discountAmount ?? 0,
-      paidAmount: fee.paidAmount ?? (fee.status === "PAID" ? fee.amount : 0),
-      balance: Math.max(0, (fee.amount ?? 0) - (fee.paidAmount ?? (fee.status === "PAID" ? fee.amount : 0))),
+      paidAmount,
+      balance,
       paymentDate: paidDate,
       paymentType: fee.description || "Fee Payment",
       studentName,
@@ -6298,6 +6305,7 @@ async function startServer() {
     }
     for (const p of orphanPayments) {
       if (!p.student) continue;
+      if (p.status === "WAIVED") continue;
       const row = ensure(p.student);
       // p.amount is the net amount owed for this manually-recorded charge
       // (after any discount); p.paidAmount is how much of that has
@@ -6575,6 +6583,56 @@ async function startServer() {
       res.json(feeReceiptPayload(updated, profile?.currency || "MYR"));
     } catch (err) {
       logger.error("Error recording fee top-up payment:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/fees/:id/void", authMiddleware, validate(schemas.feePaymentVoid), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "ACCOUNTANT") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const fee: any = await prisma.feePayment.findUnique({ where: { id: req.params.id } });
+      if (!fee) {
+        res.status(404).json({ error: "Fee record not found" });
+        return;
+      }
+      if (fee.status === "WAIVED") {
+        res.status(400).json({ error: "This payment is already voided" });
+        return;
+      }
+
+      const voidedAt = new Date();
+      const voidNote = `${voidedAt.toISOString().slice(0, 10)}: Payment voided by ${jwtUser.email}. Reason: ${req.body.reason}`;
+      const updated: any = await prisma.feePayment.update({
+        where: { id: fee.id },
+        data: {
+          status: "WAIVED" as any,
+          paidAmount: 0,
+          paidDate: null,
+          notes: fee.notes ? `${fee.notes}\n${voidNote}` : voidNote,
+        } as any,
+        include: { student: { include: { user: true, class: true } } },
+      });
+
+      const profile = await prisma.schoolProfile.findFirst();
+      await createAuditLog(
+        jwtUser.userId,
+        jwtUser.email,
+        "VOID",
+        "PAYMENT",
+        fee.id,
+        `Voided fee payment ${fee.id}. Reason: ${req.body.reason}`,
+        req.ip,
+        req.headers["user-agent"] || null,
+        "SUCCESS"
+      );
+
+      res.json(feeReceiptPayload(updated, profile?.currency || "MYR"));
+    } catch (err) {
+      logger.error("Error voiding fee payment:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });

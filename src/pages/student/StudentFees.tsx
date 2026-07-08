@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Wallet,
   CreditCard,
@@ -41,7 +42,8 @@ const statusBadge: Record<string, string> = {
   WAIVED: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
 };
 
-const paidAmountOf = (r: FeeRecord) => r.paidAmount ?? (r.status === 'PAID' ? r.amount : 0);
+const paidAmountOf = (r: FeeRecord) => (r.status === 'WAIVED' ? 0 : (r.paidAmount ?? (r.status === 'PAID' ? r.amount : 0)));
+const balanceOf = (r: FeeRecord) => (r.status === 'WAIVED' ? 0 : (r.balance ?? Math.max(0, (r.amount || 0) - paidAmountOf(r))));
 
 export default function StudentFees() {
   const { systemSettings } = useSettings();
@@ -62,11 +64,12 @@ export default function StudentFees() {
   }, []);
 
   const summary = useMemo(() => {
-    const total = records.reduce((a, r) => a + (r.amount || 0), 0);
+    const activeRecords = records.filter((r) => r.status !== 'WAIVED');
+    const total = activeRecords.reduce((a, r) => a + (r.amount || 0), 0);
     // paidAmount reflects partial payments too -- a PARTIAL record has
     // some but not all of its amount paid, which the old status === 'PAID'
     // filter used to miss entirely.
-    const paid = records.reduce((a, r) => a + paidAmountOf(r), 0);
+    const paid = activeRecords.reduce((a, r) => a + paidAmountOf(r), 0);
     const balance = Math.max(0, total - paid);
     const nextDue = records
       .filter((r) => r.status !== 'PAID' && r.status !== 'WAIVED' && r.dueDate)
@@ -86,16 +89,6 @@ export default function StudentFees() {
   const handlePayNow = () => {
     toast.info('Online payment is not enabled yet', {
       description: 'Please pay at the school accounts office or via bank transfer, then ask staff to record your payment.',
-    });
-  };
-
-  const handleDownloadReceipt = (tx: FeeRecord) => {
-    if (!tx.receiptNumber) {
-      toast.info('No receipt available', { description: 'A receipt is issued once a payment has been recorded against this fee.' });
-      return;
-    }
-    toast.success(`Receipt ${tx.receiptNumber}`.trim(), {
-      description: 'Please collect the printed receipt from the accounts office.',
     });
   };
 
@@ -195,7 +188,7 @@ export default function StudentFees() {
                   <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                     {transactions.map((tx) => {
                       const paid = paidAmountOf(tx);
-                      const bal = tx.balance ?? Math.max(0, (tx.amount || 0) - paid);
+                      const bal = balanceOf(tx);
                       return (
                       <tr key={tx.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors">
                         <td className="px-6 py-4">
@@ -219,11 +212,19 @@ export default function StudentFees() {
                         </td>
                         <td className="px-6 py-4">
                           <Badge className={`border-none font-bold text-[9px] uppercase tracking-widest ${statusBadge[tx.status] || ''}`}>
-                            {tx.status}
+                            {tx.status === 'WAIVED' ? 'VOIDED' : tx.status}
                           </Badge>
                         </td>
                         <td className="px-6 py-4">
-                          <Button onClick={() => handleDownloadReceipt(tx)} variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-aubergine-600" title="Receipt">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-slate-400 hover:text-aubergine-600"
+                            title={tx.receiptNumber ? 'View and download receipt' : 'No receipt available'}
+                            disabled={!tx.receiptNumber}
+                            render={tx.receiptNumber ? <Link to={`/student/fees/receipts/${tx.id}`} /> : undefined}
+                            nativeButton={!tx.receiptNumber}
+                          >
                             <Download className="h-4 w-4" />
                           </Button>
                         </td>

@@ -77,8 +77,9 @@ export default function StudentFeeProfile() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  const totalDue = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
-  const totalPaid = payments.reduce((sum, p) => sum + (p.paidAmount ?? (p.status === 'PAID' ? p.amount : 0)), 0);
+  const activePayments = payments.filter((p) => p.status !== 'WAIVED');
+  const totalDue = activePayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+  const totalPaid = activePayments.reduce((sum, p) => sum + (p.paidAmount ?? (p.status === 'PAID' ? p.amount : 0)), 0);
   const balance = Math.max(0, totalDue - totalPaid);
 
   return (
@@ -146,8 +147,8 @@ export default function StudentFeeProfile() {
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
               {payments.map((payment) => {
-                const paid = payment.paidAmount ?? (payment.status === 'PAID' ? payment.amount : 0);
-                const bal = payment.balance ?? Math.max(0, (payment.amount || 0) - paid);
+                const paid = payment.status === 'WAIVED' ? 0 : (payment.paidAmount ?? (payment.status === 'PAID' ? payment.amount : 0));
+                const bal = payment.status === 'WAIVED' ? 0 : (payment.balance ?? Math.max(0, (payment.amount || 0) - paid));
                 const isRealCharge = typeof payment.id === 'string' && !payment.id.startsWith('assignment-');
                 return (
                 <tr key={payment.id} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50 transition-colors">
@@ -164,7 +165,7 @@ export default function StudentFeeProfile() {
                      )}
                   </td>
                   <td className="px-6 py-4">
-                    <Badge className={`border-0 ${statusBadge[payment.status] || ''}`} variant="outline">{payment.status}</Badge>
+                    <Badge className={`border-0 ${statusBadge[payment.status] || ''}`} variant="outline">{payment.status === 'WAIVED' ? 'VOIDED' : payment.status}</Badge>
                   </td>
                   <td className="px-6 py-4 font-medium text-slate-900 dark:text-white text-right">
                     {formatMoney(payment.amount || 0, payment.currency || currency)}

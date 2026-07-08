@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Printer, Loader2 } from 'lucide-react';
+import { ArrowLeft, Ban, Download, Loader2, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
@@ -32,6 +32,7 @@ export default function PaymentReceipt() {
   const [payment, setPayment] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [payOpen, setPayOpen] = useState(false);
+  const [voidOpen, setVoidOpen] = useState(false);
 
   const fetchPayment = async () => {
     if (!id) return;
@@ -64,6 +65,10 @@ export default function PaymentReceipt() {
     window.print();
   };
 
+  const canManageFees = hasPermission('manage_fees');
+  const backPath = canManageFees ? '/fees' : '/student/fees';
+  const backLabel = canManageFees ? 'Back to Fees' : 'Back to My Fees';
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -76,9 +81,9 @@ export default function PaymentReceipt() {
   if (!payment) {
     return (
       <div className="space-y-6 max-w-3xl mx-auto pb-10">
-        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/fees" />} nativeButton={false}>
+        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to={backPath} />} nativeButton={false}>
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Fees
+          {backLabel}
         </Button>
         <div className="rounded-xl border border-dashed border-slate-200 bg-white p-10 text-center text-slate-500 dark:bg-surface-indigo dark:border-surface-raised">
           Receipt {id} is not available from the live API yet.
@@ -90,28 +95,36 @@ export default function PaymentReceipt() {
   const currency = payment.currency || systemSettings.currency || 'MYR';
   const discount = payment.discountAmount || 0;
   const gross = (payment.amount || 0) + discount;
-  const paidAmount = payment.paidAmount ?? (payment.status === 'PAID' ? payment.amount : 0);
-  const balance = payment.balance ?? Math.max(0, (payment.amount || 0) - paidAmount);
+  const paidAmount = payment.status === 'WAIVED' ? 0 : (payment.paidAmount ?? (payment.status === 'PAID' ? payment.amount : 0));
+  const balance = payment.status === 'WAIVED' ? 0 : (payment.balance ?? Math.max(0, (payment.amount || 0) - paidAmount));
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto pb-10 print:max-w-none print:m-0 print:p-0">
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 print:hidden">
         <div>
-          <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/fees" />} nativeButton={false}>
+          <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to={backPath} />} nativeButton={false}>
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Fees
+            {backLabel}
           </Button>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Receipt {payment.receiptNumber}</h1>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {hasPermission('manage_fees') && balance > 0 && (
+          {canManageFees && balance > 0 && payment.status !== 'WAIVED' && (
              <Button onClick={() => setPayOpen(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground">
                Record Additional Payment
              </Button>
           )}
+          {canManageFees && payment.status !== 'WAIVED' && (
+            <Button variant="destructive" onClick={() => setVoidOpen(true)}>
+              <Ban className="mr-2 h-4 w-4" /> Void Payment
+            </Button>
+          )}
           <Button variant="outline" onClick={handlePrint}>
             <Printer className="mr-2 h-4 w-4" /> Print
+          </Button>
+          <Button variant="outline" onClick={handlePrint}>
+            <Download className="mr-2 h-4 w-4" /> Download PDF
           </Button>
         </div>
       </div>
@@ -145,10 +158,16 @@ export default function PaymentReceipt() {
                  <p><span className="font-medium">Date:</span> {format(new Date(payment.paymentDate || payment.paidDate || payment.createdAt), 'dd MMM yyyy')}</p>
                </div>
                <div className="mt-2">
-                 <Badge className={`border-0 font-bold uppercase tracking-wide ${statusColor[payment.status] || ''}`}>{payment.status}</Badge>
+                 <Badge className={`border-0 font-bold uppercase tracking-wide ${statusColor[payment.status] || ''}`}>{payment.status === 'WAIVED' ? 'VOIDED' : payment.status}</Badge>
                </div>
             </div>
          </div>
+
+         {payment.status === 'WAIVED' && (
+           <div className="mb-6 rounded border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-slate-600">
+             This payment has been voided.
+           </div>
+         )}
 
          {/* Student Info */}
          <div className="bg-slate-50 p-4 rounded border border-slate-100 mb-8">
@@ -256,7 +275,62 @@ export default function PaymentReceipt() {
           onPaid={() => { setPayOpen(false); fetchPayment(); }}
         />
       )}
+      {voidOpen && (
+        <VoidPaymentDialog
+          payment={payment}
+          onClose={() => setVoidOpen(false)}
+          onVoided={() => { setVoidOpen(false); fetchPayment(); }}
+        />
+      )}
     </div>
+  );
+}
+
+function VoidPaymentDialog({ payment, onClose, onVoided }: { payment: any; onClose: () => void; onVoided: () => void }) {
+  const [reason, setReason] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const submit = async () => {
+    if (!reason.trim()) {
+      toast.error('Enter a reason for voiding this payment');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await apiSend(`/api/fees/${payment.id}/void`, 'POST', { reason: reason.trim() });
+      toast.success('Payment voided');
+      onVoided();
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to void payment');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Void Payment</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <p className="text-sm text-slate-500">
+            Voiding receipt {payment.receiptNumber || payment.id} removes it from collected and outstanding fee totals while keeping the receipt history visible.
+          </p>
+          <div className="space-y-2">
+            <Label>Void Reason</Label>
+            <Textarea rows={3} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Example: Duplicate receipt recorded in error" />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="destructive" onClick={submit} disabled={submitting}>
+            {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            Void Payment
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
