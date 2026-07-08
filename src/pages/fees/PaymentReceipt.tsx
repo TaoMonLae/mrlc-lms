@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Ban, Download, Loader2, Printer } from 'lucide-react';
+import QRCode from 'qrcode';
+import { ArrowLeft, Ban, Download, Loader2, Printer, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
@@ -33,6 +34,7 @@ export default function PaymentReceipt() {
   const [loading, setLoading] = useState(true);
   const [payOpen, setPayOpen] = useState(false);
   const [voidOpen, setVoidOpen] = useState(false);
+  const [qr, setQr] = useState('');
 
   const fetchPayment = async () => {
     if (!id) return;
@@ -42,7 +44,10 @@ export default function PaymentReceipt() {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
-        setPayment(await res.json());
+        const data = await res.json();
+        setPayment(data);
+        const verifyUrl = `${window.location.origin}/verify/payment/${data.id}`;
+        try { setQr(await QRCode.toDataURL(verifyUrl, { margin: 1, width: 220 })); } catch { setQr(''); }
       } else {
         const body = await res.json().catch(() => ({}));
         toast.error(body.error || 'Payment not found');
@@ -97,6 +102,7 @@ export default function PaymentReceipt() {
   const gross = (payment.amount || 0) + discount;
   const paidAmount = payment.status === 'WAIVED' ? 0 : (payment.paidAmount ?? (payment.status === 'PAID' ? payment.amount : 0));
   const balance = payment.status === 'WAIVED' ? 0 : (payment.balance ?? Math.max(0, (payment.amount || 0) - paidAmount));
+  const verifyUrl = `${window.location.origin}/verify/payment/${payment.id}`;
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto pb-10 print:max-w-none print:m-0 print:p-0">
@@ -232,11 +238,16 @@ export default function PaymentReceipt() {
                {payment.notes && <p className="text-slate-600 mt-1 whitespace-pre-wrap"><span className="font-medium">Remarks:</span> {payment.notes}</p>}
             </div>
 
-            <div className="flex flex-col items-end justify-end pt-8">
-               <div className="w-48 border-t border-slate-400 pt-2 text-center">
-                  <p className="font-medium text-slate-900">Authorized Signature</p>
-                  <p className="text-slate-500 text-xs mt-1">Processed by: {payment.recordedBy || 'Finance Office'}</p>
-               </div>
+            <div className="flex items-end justify-end gap-6">
+              <div className="text-center">
+                {qr && <img src={qr} alt="Payment verification QR" className="h-24 w-24 mx-auto" />}
+                <p className="text-[10px] text-slate-500 mt-1 flex items-center justify-center gap-1"><ShieldCheck className="h-3 w-3" /> Scan to verify</p>
+                <p className="text-[9px] text-slate-400 font-mono break-all max-w-[150px]">{verifyUrl}</p>
+              </div>
+              <div className="w-48 border-t border-slate-400 pt-2 text-center">
+                <p className="font-medium text-slate-900">Authorized Signature</p>
+                <p className="text-slate-500 text-xs mt-1">Processed by: {payment.recordedBy || 'Finance Office'}</p>
+              </div>
             </div>
          </div>
 

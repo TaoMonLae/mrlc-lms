@@ -74,6 +74,7 @@ import FeesDashboard from "./pages/fees/FeesDashboard";
 import PaymentNew from "./pages/fees/PaymentNew";
 import StudentFeeProfile from "./pages/fees/StudentFeeProfile";
 import PaymentReceipt from "./pages/fees/PaymentReceipt";
+import VerifyPaymentReceipt from "./pages/fees/VerifyPaymentReceipt";
 
 import ExpensesDashboard from "./pages/expenses/ExpensesDashboard";
 import ExpenseNew from "./pages/expenses/ExpenseNew";
@@ -245,6 +246,7 @@ export default function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
+            <Route path="/verify/payment/:id" element={<VerifyPaymentReceipt />} />
             <Route path="/verify/:token" element={<VerifyDocument />} />
             
             <Route element={<ProtectedRoute />}>

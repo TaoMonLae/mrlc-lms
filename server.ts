@@ -6637,6 +6637,43 @@ async function startServer() {
     }
   });
 
+  // PUBLIC payment verification -- reveals only receipt-level information.
+  app.get("/api/verify/payment/:id", async (req, res) => {
+    try {
+      const fee: any = await prisma.feePayment.findUnique({
+        where: { id: req.params.id },
+        include: { student: { include: { user: true, class: true } } },
+      });
+      if (!fee) {
+        res.status(404).json({ valid: false, error: "Payment receipt not found" });
+        return;
+      }
+      const profile = await prisma.schoolProfile.findFirst();
+      const receipt = feeReceiptPayload(fee, profile?.currency || "MYR");
+      res.json({
+        valid: fee.status !== "WAIVED",
+        status: fee.status === "WAIVED" ? "VOIDED" : fee.status,
+        receiptNumber: fee.receiptNumber,
+        paymentType: fee.description || "Fee Payment",
+        studentName: receipt.studentName,
+        studentIdNumber: receipt.studentIdNumber,
+        className: receipt.class,
+        amountPaid: receipt.paidAmount,
+        currency: receipt.currency,
+        paymentMethod: fee.paymentMethod || null,
+        paymentDate: receipt.paymentDate,
+        school: { name: profile?.name || "School", logoUrl: profile?.logoUrl || null },
+      });
+    } catch (err: any) {
+      if (err?.code === "P2021" || err?.code === "P2022") {
+        res.status(404).json({ valid: false, error: "Payment verification unavailable" });
+        return;
+      }
+      logger.error("Error verifying payment receipt:", err);
+      res.status(500).json({ valid: false, error: "Internal Server Error" });
+    }
+  });
+
   // ── Fee Structure Management API ─────────────────────────────────────────────────────
   // Permission helpers
   const feeStructureCanManage = (role: string) => role === "ADMIN" || role === "ACCOUNTANT";
