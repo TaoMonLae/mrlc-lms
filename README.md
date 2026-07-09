@@ -8,7 +8,7 @@
 
 ## Overview
 
-MRLC LMS is a full-featured, single-school Learning Management System designed specifically for the Mon Refugee Learning Centre. It provides a complete digital platform for managing students, teachers, classes, subjects, attendance, homework, examinations, digital library resources, physical book catalog with borrowing management, fee tracking, case management, announcements, GED readiness tracking with gamified student engagement (streaks & badges), a curated news digest, role-based access control, and configurable school branding.
+MRLC LMS is a full-featured, single-school Learning Management System designed specifically for the Mon Refugee Learning Centre. It provides a complete digital platform for managing students, teachers, classes, subjects, attendance, homework, examinations, digital library resources, physical book catalog with borrowing management, fee tracking (with discounts and partial payments), student conduct/discipline tracking, case management, announcements, GED readiness tracking with gamified student engagement (streaks & badges), a curated news digest, a community Social Space with moderation, a built-in Sudoku game, role-based access control, and configurable school branding.
 
 The application is built as a unified Node.js/Express server that serves both the API and the compiled Vite/React frontend, backed by a PostgreSQL database managed through Prisma ORM.
 
@@ -35,11 +35,12 @@ The application is built as a unified Node.js/Express server that serves both th
 | **Flashcards** | Teacher-authored study decks with class assignment, deck sharing/cloning between teachers, and four student study modes (classic flip cards with mastery tracking, quiz with multiple question types, matching game, and spelling practice) |
 | **Digital Library** | E-book (EPUB/PDF) collection with reading progress tracking |
 | **Physical Library** | Book catalog, borrowing system, and due date management |
-| **Fee Management** | Fee structure, payment tracking, and receipt generation |
+| **Fee Management** | Manual fee charges with optional discounts and partial payments (plus an optional bulk Fee Structures / Assign Fees workflow), balance top-ups, QR-verifiable receipts, and a Fees dashboard that correctly shows Paid/Partial/Unpaid |
 | **Financial Management** | Income/expense tracking, budget vs. actual reporting, monthly finance summaries, expense management, and donor/donation tracking with PDF/Excel export |
+| **Conduct & Discipline** | Handbook-derived rule catalog with severity tiers, per-student violation logging by teachers/admin/case workers, and per-student/per-rule violation counts |
 | **Case Management** | Student case notes, interventions, and follow-up tracking |
 | **Announcements** | School-wide announcements with rich text and media support |
-| **Timetable** | Class scheduling with conflict detection and calendar view |
+| **Timetable** | Class scheduling with conflict detection and calendar view, including a per-class view on the Class Profile page |
 | **Reports** | Comprehensive reporting across all modules with export options |
 | **Settings** | School branding, system configuration, and backup management |
 
@@ -47,8 +48,10 @@ The application is built as a unified Node.js/Express server that serves both th
 
 - **Flashcards**: Teachers build decks (with LaTeX math and image support) and assign them to classes; students study via classic flip cards, a quiz mode (multiple choice, true/false, fill-in-the-blank with configurable question types), a timed matching game (with difficulty/size presets), and a spelling mode using browser speech synthesis. Includes per-card mastery tracking, attempt history with personal bests, teacher-facing progress dashboards, CSV import/export, and deck sharing/cloning between teachers
 - **AI Assistant**: Built-in AI assistant for Admins and Teachers with quick prompts for lesson planning, quiz generation, announcement drafting, and multi-language translation (English/Mon/Burmese)
-- **Chat System**: Real-time messaging with typing indicators, presence, and sticker support
-- **Social Space**: Community feed for sharing updates and media
+- **Chat System**: Real-time messaging with typing indicators, presence, sticker support, and a message-reporting/moderation queue for admins
+- **Social Space**: 24-hour ephemeral community feed (photos and text) with likes, comments (editable by their author), cursor-paginated "Load more", and a post/comment reporting + admin moderation queue
+- **Conduct & Discipline**: A rule catalog transcribed from the school handbook (with severity tiers), so teachers/admin/case workers can log which rule a student broke and see running per-student violation counts instead of relying on free-text case notes
+- **Sudoku**: A built-in, fully offline Sudoku game — five difficulties, hints, notes, undo/redo, keyboard shortcuts, and a custom puzzle creator with uniqueness checking. A native port of the open-source [super-sudoku](https://github.com/TN1ck/super-sudoku) project by Tom Nick (MIT licensed) — see **Acknowledgments** below
 - **News & Daily Digest**: Curated multi-source RSS feed (world, tech, education, and Myanmar-focused independent outlets) with a clean in-app reading view
 - **Video Management**: Educational video library with categories, captions, and required-viewing tracking
 - **Document Management**: Secure document generation and printing
@@ -75,7 +78,36 @@ Adding new languages is straightforward—simply add a `.po` file to `src/i18n/l
 
 ### Latest Features & Improvements
 
-**Flashcards (NEW)**
+**Fee Management overhaul**
+- Manual fee charges can now be recorded directly against a student with an optional discount and an optional partial payment — no separate Fee Structure required
+- A "Pay Balance" / "Record Additional Payment" action lets staff top up a partially-paid charge until it's fully settled
+- Receipts and student fee statements now show Amount Due, Amount Paid, Discount, and Balance separately, plus a real Paid/Partial/Unpaid status
+- Fee Structures (the optional bulk-billing workflow) got working "Add Item", "Add Discount", and "Create Plan" forms, per-item delete, and an Archive action, plus an "Assign Fees" safeguard against structures with no items
+- Fixed a structural bug where Unpaid/Partial fees could never appear in the Fees dashboard or Fee Collection report
+
+**Conduct & Discipline (NEW)**
+- Rule catalog transcribed from the school's own Rules, Regulations & Hostel Guidelines handbook, with severity tiers (Minor/Moderate/Serious)
+- Teachers, admin, and case workers can log which rule a student broke, with a running per-student/per-rule violation count
+
+**Social Space improvements**
+- Reporting: any user can flag a post or comment; admins get a Reports queue with Remove/Dismiss actions
+- Cursor-based pagination ("Load more") instead of fetching the entire feed on every load and poll
+- Comments can now be edited by their author (with an "(edited)" indicator), not just deleted
+
+**Sudoku (NEW)**
+- A native, fully offline Sudoku game — five difficulties, hints, notes, undo/redo, keyboard shortcuts, and a custom puzzle creator
+- Ported from the open-source [super-sudoku](https://github.com/TN1ck/super-sudoku) project (MIT licensed) — see **Acknowledgments**
+
+**Other fixes**
+- Teacher ↔ Subject assignment (previously a misleading text field that didn't actually link them)
+- Per-class Timetable view on the Class Profile page
+- Chat messages intermittently disappearing (a stale-response race condition)
+- Fee record / student dropdowns not loading for the Accountant role
+- A spurious "failed to load" error flashing on student sign-in
+- Print/PDF output not matching the on-screen preview for reports and receipts
+- Documents page gained working Delete and Cancel actions
+
+**Flashcards**
 - Teacher-managed study decks assigned to one or more classes, with a Community tab for sharing/cloning decks between teachers
 - Four student study modes: classic flip cards, quiz (multiple choice, true/false, fill-in-the-blank — mix and match question types), a matching game with Easy/Medium/Hard/Expert size presets, and a spelling mode with text-to-speech
 - Per-card mastery tracking ("still learning" vs. "know it"), attempt history with personal bests, and a teacher-facing progress dashboard per deck
@@ -244,7 +276,9 @@ NODE_ENV=production npm run start
 mrlc-lms/
 ├── src/
 │   ├── pages/          # Route components (student, teacher, admin, etc.)
+│   │   └── games/sudoku/  # Sudoku UI (board, menus, contexts) — see Acknowledgments
 │   ├── lib/            # App-specific API clients, utilities, helpers
+│   │   └── sudoku/     # Sudoku engine (solvers, generator, puzzle data access)
 │   ├── i18n/           # Internationalization files (.po)
 │   ├── hooks/          # Custom React hooks
 │   ├── providers/      # Context providers
@@ -257,13 +291,15 @@ mrlc-lms/
 │   ├── migrations/     # Database migration files
 │   └── seed.ts         # Seed script for starter accounts
 ├── public/
-│   └── stickers/       # Built-in sticker packs for chat
+│   ├── stickers/       # Built-in sticker packs for chat
+│   └── sudokus/        # Sudoku puzzle data files, by difficulty
 ├── data/               # Runtime data directory (uploads, backups, etc.)
 ├── deploy/             # Deployment configurations
 ├── server.ts           # Express server entry point (core API routes)
 ├── examBank.ts         # Reusable question bank (question pooling, randomized composition)
 ├── examPhase2.ts       # Advanced exam features (lockdown browser, accommodations, rubrics, invigilator dashboard)
 ├── flashcards.ts       # Flashcards feature (decks, study modes, mastery/attempts, sharing, image uploads)
+├── conduct.ts          # Conduct/Discipline feature (rule catalog, violation logging)
 └── news.ts             # News/daily digest RSS aggregation
 ```
 
@@ -292,13 +328,24 @@ Automatic database backups can be enabled in **Settings → System Settings**. B
 
 ---
 
+## Acknowledgments
+
+The built-in **Sudoku** game (`src/pages/games/sudoku/`, `src/lib/sudoku/`) is a native port of [**super-sudoku**](https://github.com/TN1ck/super-sudoku) by **Tom Nick** (TN1ck), used and adapted under the MIT License:
+
+> Copyright (c) Tom Nick.
+> Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files, to deal in the Software without restriction, subject to the MIT License terms in the upstream repository.
+
+The puzzle generator, solvers, and core game logic were ported closely to the original; the surrounding UI chrome (theming, layout, and internationalization) was adapted to fit natively into MRLC LMS. This is the only third-party-licensed code bundled in the app — everything else in this repository is covered by the license below.
+
+---
+
 ## Support & Contributing
 
 For issues, questions, or contributions related to MRLC LMS, please refer to the project repository or contact the development team.
 
 ---
 
-**License:** All rights reserved
+**License:** All rights reserved (except the Sudoku module noted under Acknowledgments, which remains MIT licensed)
 
 **Developed by Tao Mon Lae**
 
