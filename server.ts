@@ -22,6 +22,7 @@ import { registerNewsRoutes } from "./news";
 import { registerPayrollPdfRoutes } from "./payrollPdf";
 import { registerFlashcardRoutes } from "./flashcards";
 import { registerConductRoutes } from "./conduct";
+import { registerDictionaryRoutes } from "./dictionary";
 import cookieParser from "cookie-parser";
 import { BADGE_CATALOG, getBadgeLevel } from "./lib/badges";
 
@@ -15952,6 +15953,7 @@ async function startServer() {
   registerFlashcardRoutes({ app, prisma, authMiddleware, createAuditLog, logger });
   // ── Conduct (rule catalog + violation logging + counts) ─────────────────────
   registerConductRoutes({ app, prisma, authMiddleware, createAuditLog, logger });
+  registerDictionaryRoutes({ app, authMiddleware, logger });
 
   // NOTE: the SPA catch-all (Vite middleware in dev / static dist in prod) is
   // registered at the very end of startServer, AFTER every /api route, so it can

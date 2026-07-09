@@ -174,6 +174,8 @@ import ArticleReader from "./pages/news/ArticleReader";
 import SudokuSelectPage from "./pages/games/sudoku/index";
 import SudokuPlayPage from "./pages/games/sudoku/PlayPage";
 
+import Dictionary from "./pages/dictionary/Dictionary";
+
 import AnnouncementsList from "./pages/announcements/AnnouncementsList";
 import AnnouncementNew from "./pages/announcements/AnnouncementNew";
 import AnnouncementDetail from "./pages/announcements/AnnouncementDetail";
@@ -318,6 +320,9 @@ export default function App() {
 
                 <Route path="/games/sudoku" element={<SudokuSelectPage />} />
                 <Route path="/games/sudoku/play" element={<SudokuPlayPage />} />
+
+                {/* Dictionary — offline WordNet lookup, available to every authenticated role */}
+                <Route path="/dictionary" element={<Dictionary />} />
 
                 <Route path="/timetable" element={<TimetablePage />} />
 

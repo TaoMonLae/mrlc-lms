@@ -28,7 +28,8 @@ import {
   Heart,
   Layers,
   ShieldAlert,
-  Grid3x3
+  Grid3x3,
+  BookA
 } from "lucide-react";
 import { UserRole } from "./permissions";
 
@@ -59,6 +60,7 @@ export const ADMIN_NAV: AdminNavEntry[] = [
   { title: "Social Space", url: "/social", icon: Sparkles },
   { title: "News", url: "/news", icon: Newspaper },
   { title: "Sudoku", url: "/games/sudoku", icon: Grid3x3 },
+  { title: "Dictionary", url: "/dictionary", icon: BookA },
   { title: "Announcements", url: "/announcements", icon: Megaphone },
   { title: "Timetable", url: "/timetable", icon: CalendarDays },
   {
@@ -151,6 +153,7 @@ export const TEACHER_NAV: AdminNavEntry[] = [
   { title: "Social Space", url: "/social", icon: Sparkles },
   { title: "News", url: "/news", icon: Newspaper },
   { title: "Sudoku", url: "/games/sudoku", icon: Grid3x3 },
+  { title: "Dictionary", url: "/dictionary", icon: BookA },
   { title: "Announcements", url: "/announcements", icon: Megaphone },
   { title: "My Timetable", url: "/teacher/timetable", icon: CalendarDays },
   {
@@ -200,6 +203,7 @@ export const STUDENT_NAV: AdminNavEntry[] = [
   { title: "Social Space", url: "/social", icon: Sparkles },
   { title: "News", url: "/news", icon: Newspaper },
   { title: "Sudoku", url: "/games/sudoku", icon: Grid3x3 },
+  { title: "Dictionary", url: "/dictionary", icon: BookA },
   { title: "Announcements", url: "/announcements", icon: Megaphone },
   { title: "My Timetable", url: "/timetable", icon: CalendarDays },
   {
@@ -278,6 +282,11 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     title: "Sudoku",
     url: "/games/sudoku",
     icon: Grid3x3,
+  },
+  {
+    title: "Dictionary",
+    url: "/dictionary",
+    icon: BookA,
   },
   {
     title: "Students",

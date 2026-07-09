@@ -33,7 +33,8 @@ The application is built as a unified Node.js/Express server that serves both th
 | **Gradebook** | Student progress tracking, grade reports, and performance analytics |
 | **GED Readiness & Engagement** | Per-subject mastery tracker (6-stage readiness pipeline tied to real exam performance), attendance streaks, and achievement badges to keep students motivated |
 | **Flashcards** | Teacher-authored study decks with class assignment, deck sharing/cloning between teachers, and four student study modes (classic flip cards with mastery tracking, quiz with multiple question types, matching game, and spelling practice) |
-| **Digital Library** | E-book (EPUB/PDF) collection with reading progress tracking |
+| **Digital Library** | E-book (EPUB/PDF) collection with resume-reading position, in-book search, highlights, batch upload with auto metadata/cover extraction, and a full-page reading mode |
+| **Dictionary** | Offline English dictionary (definitions, parts of speech, examples, synonyms) with no internet required |
 | **Physical Library** | Book catalog, borrowing system, and due date management |
 | **Fee Management** | Manual fee charges with optional discounts and partial payments (plus an optional bulk Fee Structures / Assign Fees workflow), balance top-ups, QR-verifiable receipts, and a Fees dashboard that correctly shows Paid/Partial/Unpaid |
 | **Financial Management** | Income/expense tracking, budget vs. actual reporting, monthly finance summaries, expense management, and donor/donation tracking with PDF/Excel export |
@@ -52,6 +53,7 @@ The application is built as a unified Node.js/Express server that serves both th
 - **Social Space**: 24-hour ephemeral community feed (photos and text) with likes, comments (editable by their author), cursor-paginated "Load more", and a post/comment reporting + admin moderation queue
 - **Conduct & Discipline**: A rule catalog transcribed from the school handbook (with severity tiers), so teachers/admin/case workers can log which rule a student broke and see running per-student violation counts instead of relying on free-text case notes
 - **Sudoku**: A built-in, fully offline Sudoku game — five difficulties, hints, notes, undo/redo, keyboard shortcuts, and a custom puzzle creator with uniqueness checking. A native port of the open-source [super-sudoku](https://github.com/TN1ck/super-sudoku) project by Tom Nick (MIT licensed) — see **Acknowledgments** below
+- **Dictionary**: Search any English word for its definitions (grouped by part of speech), example sentences, and synonyms, with a daily "Word of the Day" and recent-search history — backed entirely by an offline WordNet database, so it works with no internet connection. See **Acknowledgments** below
 - **News & Daily Digest**: Curated multi-source RSS feed (world, tech, education, and Myanmar-focused independent outlets) with a clean in-app reading view
 - **Video Management**: Educational video library with categories, captions, and required-viewing tracking
 - **Document Management**: Secure document generation and printing
@@ -77,6 +79,17 @@ Adding new languages is straightforward—simply add a `.po` file to `src/i18n/l
 ## Recent Updates
 
 ### Latest Features & Improvements
+
+**Dictionary (NEW)**
+- Offline English dictionary, backed by the bundled WordNet database — no internet connection needed for a lookup
+- Definitions grouped by part of speech, with example sentences, clickable synonyms, a "Word of the Day," and recent-search history
+
+**E-Library improvements**
+- Resume reading: both the PDF and EPUB readers now pick up where you left off automatically
+- In-book search across the whole book, jump straight to a match
+- Highlight passages while reading; Teachers/Admins can turn a highlight straight into a flashcard in one of their decks
+- Multi-file batch upload with auto-detected title/author/cover per file, sorting and category filters, and a "Continue Reading" strip on the library home
+- A full-page reading mode, and a fix for the table-of-contents dropdown overflowing into the page controls
 
 **Fee Management overhaul**
 - Manual fee charges can now be recorded directly against a student with an optional discount and an optional partial payment — no separate Fee Structure required
@@ -276,7 +289,9 @@ NODE_ENV=production npm run start
 mrlc-lms/
 ├── src/
 │   ├── pages/          # Route components (student, teacher, admin, etc.)
-│   │   └── games/sudoku/  # Sudoku UI (board, menus, contexts) — see Acknowledgments
+│   │   ├── games/sudoku/  # Sudoku UI (board, menus, contexts) — see Acknowledgments
+│   │   ├── dictionary/    # Dictionary search page — see Acknowledgments
+│   │   └── elibrary/      # E-Library reader (PDF/EPUB, progress, search, highlights)
 │   ├── lib/            # App-specific API clients, utilities, helpers
 │   │   └── sudoku/     # Sudoku engine (solvers, generator, puzzle data access)
 │   ├── i18n/           # Internationalization files (.po)
@@ -300,6 +315,7 @@ mrlc-lms/
 ├── examPhase2.ts       # Advanced exam features (lockdown browser, accommodations, rubrics, invigilator dashboard)
 ├── flashcards.ts       # Flashcards feature (decks, study modes, mastery/attempts, sharing, image uploads)
 ├── conduct.ts          # Conduct/Discipline feature (rule catalog, violation logging)
+├── dictionary.ts       # Offline English dictionary (WordNet lookup) — see Acknowledgments
 └── news.ts             # News/daily digest RSS aggregation
 ```
 
@@ -335,7 +351,13 @@ The built-in **Sudoku** game (`src/pages/games/sudoku/`, `src/lib/sudoku/`) is a
 > Copyright (c) Tom Nick.
 > Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files, to deal in the Software without restriction, subject to the MIT License terms in the upstream repository.
 
-The puzzle generator, solvers, and core game logic were ported closely to the original; the surrounding UI chrome (theming, layout, and internationalization) was adapted to fit natively into MRLC LMS. This is the only third-party-licensed code bundled in the app — everything else in this repository is covered by the license below.
+The puzzle generator, solvers, and core game logic were ported closely to the original; the surrounding UI chrome (theming, layout, and internationalization) was adapted to fit natively into MRLC LMS.
+
+The built-in **Dictionary** (`/dictionary`) is powered by [**WordPOS**](https://github.com/moos/wordpos) and the [**Princeton WordNet 3.1**](https://wordnet.princeton.edu/) database (via the `wordnet-db` package), bundled as an offline dependency so lookups work with no internet connection. WordNet is distributed under its own permissive license:
+
+> This software and database is being provided to you, the LICENSEE, by Princeton University under the following license. By obtaining, using and/or copying this software and database, you agree that you have read, understood, and will comply with these terms and conditions: Permission to use, copy, modify and distribute this software and database and its documentation for any purpose and without fee or royalty is hereby granted, provided that you agree to comply with the following copyright notice and statements, including the disclaimer, and that the same appear on ALL copies of the software, database and documentation, including modifications that you make for internal use or for distribution.
+
+These are the only third-party-licensed components bundled in the app — everything else in this repository is covered by the license below.
 
 ---
 
