@@ -195,28 +195,10 @@ export default function SocialSpace() {
   }
 
   return (
-    <div className="relative -m-4 sm:-m-6 lg:-m-8 min-h-[calc(100vh-4rem)]">
-      {/* Full-page decorative WebGL background, covering the whole page (not
-          just the header). Uses the same `relative` parent + `absolute
-          inset-0` child pattern the header banner used before (proven to
-          actually render), rather than `position: fixed` or a `sticky` +
-          negative-margin trick — both of those turned out to render
-          invisibly here, most likely because AppLayout wraps every routed
-          page in a Framer Motion div that sets a `transform`, which messes
-          with how descendants establish their positioning/stacking context.
-          `absolute` positioned against our OWN nearest `relative` ancestor
-          isn't affected by that. The `-m-*` above cancels out the page
-          shell's own padding so this covers edge-to-edge instead of leaving
-          a plain gap around it, and `min-h-[calc(100vh-4rem)]` gives it a
-          full-viewport-ish height even when the feed is short. Note this
-          means the canvas DOES grow taller as the feed grows (more posts
-          loaded) rather than staying capped to one screenful -- accepted
-          trade-off for now since correctness matters more than that
-          micro-optimization; the OGL renderer is still driven by a
-          ResizeObserver, so it's not literally uncapped, just scoped to
-          this page's actual content height. */}
-      <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+    <div className="relative isolate -m-4 min-h-[calc(100vh-4rem)] overflow-hidden bg-slate-50 sm:-m-6 lg:-m-8 dark:bg-canvas">
+      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
         <Lightfall
+          className="h-full w-full"
           colors={['#7a3dff', '#3b89ff', '#c084fc']}
           backgroundColor={theme === 'dark' ? '#0d0d24' : '#f1eeff'}
           speed={0.4}
@@ -228,7 +210,7 @@ export default function SocialSpace() {
         />
       </div>
 
-      <div className="relative z-0 mx-auto max-w-2xl space-y-6 p-4 sm:p-6 lg:p-8">
+      <div className="relative z-10 mx-auto max-w-2xl space-y-6 p-4 sm:p-6 lg:p-8">
       {/* Header banner — content now floats over the full-page background
           above (translucent + blurred instead of its own opaque card). */}
       <div className="rounded-xl border border-slate-200/80 bg-white/80 backdrop-blur-sm dark:border-surface-raised/80 dark:bg-surface-indigo/70">

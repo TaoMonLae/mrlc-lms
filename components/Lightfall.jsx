@@ -350,7 +350,7 @@ const Lightfall = ({
   return (
     <div
       ref={containerRef}
-      className={`w-full h-full overflow-hidden relative ${className ?? ''}`}
+      className={`relative h-full w-full overflow-hidden ${className ?? ''}`}
       style={{
         ...(mixBlendMode && { mixBlendMode })
       }}
