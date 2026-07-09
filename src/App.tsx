@@ -171,6 +171,9 @@ import ExportDataPage from "./pages/settings/ExportData";
 import NewsFeed from "./pages/news/NewsFeed";
 import ArticleReader from "./pages/news/ArticleReader";
 
+import SudokuSelectPage from "./pages/games/sudoku/index";
+import SudokuPlayPage from "./pages/games/sudoku/PlayPage";
+
 import AnnouncementsList from "./pages/announcements/AnnouncementsList";
 import AnnouncementNew from "./pages/announcements/AnnouncementNew";
 import AnnouncementDetail from "./pages/announcements/AnnouncementDetail";
@@ -312,6 +315,9 @@ export default function App() {
                 {/* News — daily-refreshed RSS digest, available to every authenticated role */}
                 <Route path="/news" element={<NewsFeed />} />
                 <Route path="/news/:id" element={<ArticleReader />} />
+
+                <Route path="/games/sudoku" element={<SudokuSelectPage />} />
+                <Route path="/games/sudoku/play" element={<SudokuPlayPage />} />
 
                 <Route path="/timetable" element={<TimetablePage />} />
 
