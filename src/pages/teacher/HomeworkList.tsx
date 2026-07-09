@@ -165,11 +165,17 @@ export default function HomeworkList() {
               <Textarea rows={3} value={form.instructions} onChange={(e) => setForm({ ...form, instructions: e.target.value })} placeholder="What should students do?" />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label>{form.attachmentUrl.startsWith('/news/') ? 'Linked News article' : 'Worksheet attachment'}</Label>
+              <Label>
+                {form.attachmentUrl.startsWith('/news/')
+                  ? 'Linked News article'
+                  : form.attachmentUrl.startsWith('/elibrary/')
+                  ? 'Linked E-Book'
+                  : 'Worksheet attachment'}
+              </Label>
               <div className="flex items-center gap-3">
-                {form.attachmentUrl.startsWith('/news/') ? (
+                {form.attachmentUrl.startsWith('/news/') || form.attachmentUrl.startsWith('/elibrary/') ? (
                   <Button type="button" variant="outline" size="sm" onClick={() => setForm({ ...form, attachmentUrl: '' })}>
-                    Remove article link
+                    {form.attachmentUrl.startsWith('/elibrary/') ? 'Remove book link' : 'Remove article link'}
                   </Button>
                 ) : (
                   <input type="file" accept="image/*,.pdf,.doc,.docx" className="text-sm" disabled={uploading}
@@ -177,7 +183,12 @@ export default function HomeworkList() {
                 )}
                 {form.attachmentUrl && (
                   <a href={form.attachmentUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-aubergine-600 underline">
-                    <Paperclip className="h-3 w-3" /> {form.attachmentUrl.startsWith('/news/') ? 'view article' : 'attached'}
+                    <Paperclip className="h-3 w-3" />
+                    {form.attachmentUrl.startsWith('/news/')
+                      ? 'view article'
+                      : form.attachmentUrl.startsWith('/elibrary/')
+                      ? 'open book'
+                      : 'attached'}
                   </a>
                 )}
               </div>

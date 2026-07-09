@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { BookMarked, Search, Filter, Plus, BookOpen, Download, Pencil, Trash2, Lock, ArrowUpDown } from 'lucide-react';
+import { BookMarked, Search, Filter, Plus, BookOpen, Download, Pencil, Trash2, Lock, ArrowUpDown, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { useUser } from '../../lib/permissions';
+import { ebookHomeworkPrefill } from '../../lib/ebookHomeworkPrefill';
 
 export interface Ebook {
   id: string;
@@ -50,6 +51,7 @@ export default function EbookList() {
   const navigate = useNavigate();
   const { user } = useUser();
   const canManage = user?.role === 'ADMIN' || user?.role === 'TEACHER' || user?.role === 'LIBRARIAN';
+  const canAssignHomework = user?.role === 'ADMIN' || user?.role === 'TEACHER';
 
   const [ebooks, setEbooks] = useState<Ebook[]>([]);
   const [loading, setLoading] = useState(true);
@@ -281,6 +283,16 @@ export default function EbookList() {
                 {b.downloadAllowed && (
                   <Button variant="outline" size="icon" title="Download" onClick={() => handleDownload(b)}>
                     <Download className="h-4 w-4" />
+                  </Button>
+                )}
+                {canAssignHomework && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    title="Assign as homework"
+                    onClick={() => navigate('/teacher/homework', { state: { prefill: ebookHomeworkPrefill(b) } })}
+                  >
+                    <ClipboardList className="h-4 w-4" />
                   </Button>
                 )}
                 {canManage && (

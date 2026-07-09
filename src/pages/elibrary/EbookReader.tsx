@@ -11,7 +11,7 @@ import 'react-pdf/dist/esm/Page/TextLayer.css';
 import {
   ArrowLeft, ChevronLeft, ChevronRight, Download, ZoomIn, ZoomOut,
   Loader2, BookOpen, List, Lock, Maximize2, Minimize2, Search, X,
-  Highlighter, Sparkles, Trash2, BookA, Volume2,
+  Highlighter, Sparkles, Trash2, BookA, Volume2, ClipboardList,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +24,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { useUser } from '../../lib/permissions';
+import { ebookHomeworkPrefill } from '../../lib/ebookHomeworkPrefill';
 
 // A single shared module worker for the whole app (pdf.js reuses it safely).
 pdfjs.GlobalWorkerOptions.workerPort = new PdfjsWorker();
@@ -231,6 +232,15 @@ export default function EbookReader() {
         {meta?.downloadAllowed && (
           <Button variant="outline" size="sm" onClick={handleDownload}>
             <Download className="h-4 w-4 mr-2" /> Download
+          </Button>
+        )}
+        {canMakeFlashcards && meta && !isFullscreen && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/teacher/homework', { state: { prefill: ebookHomeworkPrefill(meta) } })}
+          >
+            <ClipboardList className="h-4 w-4 mr-2" /> Assign as Homework
           </Button>
         )}
         <Button
