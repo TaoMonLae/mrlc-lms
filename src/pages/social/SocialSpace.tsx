@@ -14,7 +14,7 @@ import { useAuth } from '../../providers/AuthProvider';
 import { useSocial } from '../../providers/SocialProvider';
 import CameraCapture from '../../components/CameraCapture';
 import { useTheme } from '../../components/theme-provider';
-import DotGrid from '@/components/DotGrid';
+import Lightfall from '@/components/Lightfall';
 
 interface Comment {
   id: string; body: string; createdAt: string; editedAt: string | null;
@@ -196,23 +196,25 @@ export default function SocialSpace() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      {/* Header banner — a bounded-height decorative dot grid, distinct from
-          the scrolling feed below it. Kept small and fixed-height on purpose:
-          Social Space's feed grows unboundedly as posts are added, so a
-          full-page background here (unlike the Landing hero) would mean
+      {/* Header banner — a bounded-height decorative WebGL background, distinct
+          from the scrolling feed below it. Kept small and fixed-height on
+          purpose: Social Space's feed grows unboundedly as posts are added,
+          so a full-page background here (unlike the Landing hero) would mean
           endlessly resizing/redrawing a canvas behind mostly off-screen
           content — wasteful for no visual payoff. This banner fits the
           page's casual, photo/social tone without touching the feed itself. */}
       <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-surface-raised dark:bg-surface-indigo">
-        <div className="absolute inset-0 opacity-70 dark:opacity-40">
-          <DotGrid
-            dotSize={3}
-            gap={20}
-            baseColor={theme === 'dark' ? '#33334d' : '#e2e8f0'}
-            activeColor="#7a3dff"
-            proximity={110}
-            shockRadius={160}
-            shockStrength={2.5}
+        <div className="absolute inset-0 opacity-70 dark:opacity-50">
+          <Lightfall
+            colors={['#7a3dff', '#3b89ff', '#c084fc']}
+            backgroundColor={theme === 'dark' ? '#0d0d24' : '#f1eeff'}
+            speed={0.4}
+            streakCount={3}
+            glow={1}
+            density={0.5}
+            twinkle={1}
+            mouseInteraction
+            mouseStrength={0.4}
           />
         </div>
         <div className="relative flex items-center justify-between gap-3 p-4">
