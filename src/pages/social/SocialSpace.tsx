@@ -195,29 +195,44 @@ export default function SocialSpace() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      {/* Header banner — a bounded-height decorative WebGL background, distinct
-          from the scrolling feed below it. Kept small and fixed-height on
-          purpose: Social Space's feed grows unboundedly as posts are added,
-          so a full-page background here (unlike the Landing hero) would mean
-          endlessly resizing/redrawing a canvas behind mostly off-screen
-          content — wasteful for no visual payoff. This banner fits the
-          page's casual, photo/social tone without touching the feed itself. */}
-      <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-surface-raised dark:bg-surface-indigo">
-        <div className="absolute inset-0 opacity-70 dark:opacity-50">
-          <Lightfall
-            colors={['#7a3dff', '#3b89ff', '#c084fc']}
-            backgroundColor={theme === 'dark' ? '#0d0d24' : '#f1eeff'}
-            speed={0.4}
-            streakCount={3}
-            glow={1}
-            density={0.5}
-            twinkle={1}
-            mouseInteraction
-            mouseStrength={0.4}
-          />
-        </div>
-        <div className="relative flex items-center justify-between gap-3 p-4">
+    <div className="relative mx-auto max-w-2xl">
+      {/* Full-page decorative WebGL background. Pinned behind the whole
+          page — not just the header — via the "sticky + negative margin"
+          trick rather than `position: fixed`: this app's page shell
+          animates each routed page in with Framer Motion, which puts a
+          `transform` on an ancestor and would silently break `fixed`
+          positioning (a transformed ancestor becomes the containing block
+          for its `fixed` descendants instead of the viewport). `sticky`
+          isn't affected by that, and pairing it with a matching negative
+          bottom margin keeps its own box from adding to the page's
+          scrollable height.
+          Just as importantly, this keeps the *canvas itself* capped to one
+          viewport's worth of pixels no matter how long the feed grows —
+          Social Space's feed grows unboundedly as posts are added, and a
+          WebGL canvas re-shades its entire backing buffer every frame
+          regardless of what's actually scrolled into view, so a canvas
+          literally the height of the whole feed would mean paying that
+          cost for thousands of off-screen pixels too. Pinning it to one
+          screenful and letting the (semi-transparent) content scroll over
+          it keeps the GPU cost constant. */}
+      <div className="sticky top-0 -z-10 -mb-[100vh] h-screen overflow-hidden pointer-events-none">
+        <Lightfall
+          colors={['#7a3dff', '#3b89ff', '#c084fc']}
+          backgroundColor={theme === 'dark' ? '#0d0d24' : '#f1eeff'}
+          speed={0.4}
+          streakCount={3}
+          glow={1}
+          density={0.5}
+          twinkle={1}
+          mouseInteraction={false}
+        />
+      </div>
+
+      <div className="relative z-0 space-y-6">
+      {/* Header banner — content now floats over the full-page background
+          above (translucent + blurred instead of its own opaque card). */}
+      <div className="rounded-xl border border-slate-200/80 bg-white/80 backdrop-blur-sm dark:border-surface-raised/80 dark:bg-surface-indigo/70">
+        <div className="flex items-center justify-between gap-3 p-4">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-aubergine-100 p-2 text-aubergine-700 dark:bg-aubergine-900/30 dark:text-aubergine-400"><Sparkles className="h-5 w-5" /></div>
             <div>
@@ -235,7 +250,7 @@ export default function SocialSpace() {
       </div>
 
       {/* Composer */}
-      <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-surface-raised dark:bg-surface-indigo">
+      <div className="space-y-3 rounded-xl border border-slate-200/80 bg-white/80 backdrop-blur-sm p-4 dark:border-surface-raised/80 dark:bg-surface-indigo/70">
         <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={2} maxLength={1000} placeholder="What's happening?" className="resize-none" />
         {photo && (
           <div className="relative inline-block">
@@ -258,7 +273,7 @@ export default function SocialSpace() {
         posts.length === 0 ? <div className="rounded-xl border border-dashed border-slate-200 py-16 text-center text-sm text-slate-400 dark:border-slate-700 dark:text-slate-500">Nothing here yet. Be the first to post!</div> :
         <div className="space-y-4">
           {posts.map((p) => (
-            <div key={p.id} className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-surface-raised dark:bg-surface-indigo">
+            <div key={p.id} className="overflow-hidden rounded-xl border border-slate-200/80 bg-white/80 backdrop-blur-sm dark:border-surface-raised/80 dark:bg-surface-indigo/70">
               <div className="flex items-center justify-between p-3">
                 <div className="flex items-center gap-2">
                   <div className="grid h-9 w-9 place-items-center overflow-hidden rounded-full bg-aubergine-100 text-xs font-bold text-aubergine-700 dark:bg-aubergine-900/30 dark:text-aubergine-400">
@@ -340,6 +355,7 @@ export default function SocialSpace() {
             </div>
           )}
         </div>}
+      </div>
 
       {camera && <CameraCapture onCapture={pickPhoto} onClose={() => setCamera(false)} />}
 
