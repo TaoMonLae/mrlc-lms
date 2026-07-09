@@ -1678,10 +1678,53 @@ model Ebook {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  progress        EbookProgress[]
+  highlights      EbookHighlight[]
+
   @@index([title])
   @@index([author])
   @@index([category])
   @@index([format])
+}
+
+// Per-reader "resume where you left off" position. userId is a plain field
+// rather than a User relation (Ebook itself follows the same loose-coupling
+// convention already), so it's cleaned up manually on account deletion --
+// see the three user-deletion transaction blocks in server.ts.
+model EbookProgress {
+  id        String   @id @default(uuid())
+  userId    String
+  ebookId   String
+  location  String   // EPUB: rendition CFI. PDF: page number as a string.
+  percent   Float?   // 0-100 best-effort completion; null when not computable (e.g. EPUB without a locations index)
+  updatedAt DateTime @updatedAt
+
+  ebook     Ebook    @relation(fields: [ebookId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, ebookId])
+  @@index([userId])
+  @@index([ebookId])
+}
+
+// A saved passage. EPUB highlights carry a range CFI so they can be
+// re-rendered on the page; PDF "highlights" are lighter-weight (page + text
+// only, no on-page overlay) since anchoring a selection back to exact PDF
+// text-layer coordinates is out of scope for now.
+model EbookHighlight {
+  id        String   @id @default(uuid())
+  userId    String
+  userName  String?
+  ebookId   String
+  cfi       String?  // EPUB range CFI (null for PDF)
+  page      Int?     // PDF page number (null for EPUB)
+  text      String
+  color     String   @default("yellow")
+  createdAt DateTime @default(now())
+
+  ebook     Ebook    @relation(fields: [ebookId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([ebookId])
 }
 
 model Announcement {

@@ -32,6 +32,11 @@ dotenv.config();
 // the database. Override the location with the EBOOK_DIR env var.
 const EBOOK_DIR = process.env.EBOOK_DIR || path.join(process.cwd(), "data", "ebooks");
 fs.mkdirSync(EBOOK_DIR, { recursive: true });
+// Ebook cover thumbnails (auto-extracted client-side from the EPUB's embedded
+// cover or a rendered PDF first page, or picked manually) — served statically,
+// unlike the book files themselves which stream through an auth-checked route.
+const EBOOK_COVER_DIR = process.env.EBOOK_COVER_DIR || path.join(process.cwd(), "data", "ebook-covers");
+fs.mkdirSync(EBOOK_COVER_DIR, { recursive: true });
 const BRANDING_ASSET_DIR = process.env.BRANDING_ASSET_DIR || path.join(process.cwd(), "data", "branding");
 fs.mkdirSync(BRANDING_ASSET_DIR, { recursive: true });
 const PROFILE_PHOTO_DIR = process.env.PROFILE_PHOTO_DIR || path.join(process.cwd(), "data", "profile-photos");
@@ -92,6 +97,23 @@ const ebookUpload = multer({
     const ext = path.extname(file.originalname).toLowerCase();
     if (ext === ".pdf" || ext === ".epub") cb(null, true);
     else cb(new Error("Only .pdf and .epub files are allowed"));
+  },
+});
+
+const ebookCoverUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, EBOOK_COVER_DIR),
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase();
+      cb(null, `${crypto.randomUUID()}${ext}`);
+    },
+  }),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+  fileFilter: (_req, file, cb) => {
+    const allowed = new Set([".png", ".jpg", ".jpeg", ".webp"]);
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (file.mimetype.startsWith("image/") && allowed.has(ext)) cb(null, true);
+    else cb(new Error("Only PNG, JPG, and WEBP image files are allowed"));
   },
 });
 
@@ -1453,6 +1475,10 @@ async function startServer() {
     maxAge: isProduction ? "30d" : 0,
     immutable: isProduction,
   }));
+  app.use("/uploads/ebook-covers", express.static(EBOOK_COVER_DIR, {
+    maxAge: isProduction ? "30d" : 0,
+    immutable: isProduction,
+  }));
 
   // ── Rate limiting ───────────────────────────────────────────────────────────
   // Whole schools usually share ONE public (NAT'd) IP, so an IP-keyed limit is
@@ -2416,6 +2442,8 @@ async function startServer() {
           await tx.conversation.deleteMany({ where: { createdById: userId } });
           await tx.messageRecipient.deleteMany({ where: { recipientId: userId } });
           await tx.message.deleteMany({ where: { senderId: userId } });
+          await (tx as any).ebookProgress.deleteMany({ where: { userId } });
+          await (tx as any).ebookHighlight.deleteMany({ where: { userId } });
           await tx.user.delete({ where: { id: userId } });
         }
       });
@@ -2737,6 +2765,8 @@ async function startServer() {
           await tx.conversation.deleteMany({ where: { createdById: userId } });
           await tx.messageRecipient.deleteMany({ where: { recipientId: userId } });
           await tx.message.deleteMany({ where: { senderId: userId } });
+          await (tx as any).ebookProgress.deleteMany({ where: { userId } });
+          await (tx as any).ebookHighlight.deleteMany({ where: { userId } });
           await tx.user.delete({ where: { id: userId } });
         }
       });
@@ -12228,6 +12258,8 @@ async function startServer() {
         await tx.conversation.deleteMany({ where: { createdById: id } });
         await tx.messageRecipient.deleteMany({ where: { recipientId: id } });
         await tx.message.deleteMany({ where: { senderId: id } });
+        await (tx as any).ebookProgress.deleteMany({ where: { userId: id } });
+        await (tx as any).ebookHighlight.deleteMany({ where: { userId: id } });
 
         await tx.user.delete({ where: { id } });
       });
@@ -12904,6 +12936,40 @@ async function startServer() {
     }
   });
 
+  // Upload (or auto-extracted-then-uploaded) cover art for a book, ahead of or
+  // independent from creating the Ebook record itself — used by the upload
+  // form's client-side EPUB-cover / PDF-first-page extraction.
+  app.post(
+    "/api/ebooks/cover-upload",
+    authMiddleware,
+    (req, res, next) => {
+      const jwtUser = (req as any).user as JwtPayload;
+      if (!canManageEbooks(jwtUser.role)) {
+        res.status(403).json({ error: "Forbidden" });
+        return;
+      }
+      next();
+    },
+    (req, res, next) => {
+      ebookCoverUpload.single("cover")(req, res, (err: any) => {
+        if (err) {
+          const message =
+            err instanceof multer.MulterError
+              ? (err.code === "LIMIT_FILE_SIZE" ? "Cover image exceeds the 5 MB limit" : err.message)
+              : err.message || "Upload failed";
+          res.status(400).json({ error: message });
+          return;
+        }
+        next();
+      });
+    },
+    (req, res) => {
+      const file = (req as any).file as Express.Multer.File | undefined;
+      if (!file) { res.status(400).json({ error: "A cover image is required" }); return; }
+      res.status(201).json({ url: `/uploads/ebook-covers/${file.filename}` });
+    }
+  );
+
   app.post(
     "/api/ebooks",
     authMiddleware,
@@ -13075,6 +13141,124 @@ async function startServer() {
       streamEbookFile(req, res, filePath, ebook.format, `attachment; filename="${safeName}"`);
     } catch (err) {
       logger.error("Error downloading ebook:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── E-Library: reading progress ("resume where you left off") ──────────────
+  // List first so the two-segment path can't be shadowed by /api/ebooks/:id.
+  app.get("/api/ebooks/my/progress", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const rows = await (prisma as any).ebookProgress.findMany({
+        where: { userId: jwtUser.userId },
+        orderBy: { updatedAt: "desc" },
+        take: 12,
+      });
+      const ebooks = await prisma.ebook.findMany({
+        where: { id: { in: rows.map((r: any) => r.ebookId) } },
+        select: { id: true, title: true, author: true, format: true, coverUrl: true, visibility: true },
+      });
+      const byId = new Map(ebooks.map((e) => [e.id, e]));
+      const merged = rows
+        .map((r: any) => {
+          const ebook = byId.get(r.ebookId);
+          if (!ebook || !ebookVisibleTo(jwtUser.role, ebook.visibility)) return null;
+          return { ebook, location: r.location, percent: r.percent, updatedAt: r.updatedAt };
+        })
+        .filter(Boolean);
+      res.json(merged);
+    } catch (err) {
+      logger.error("Error fetching reading progress list:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/ebooks/:id/progress", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const row = await (prisma as any).ebookProgress.findUnique({
+        where: { userId_ebookId: { userId: jwtUser.userId, ebookId: req.params.id } },
+      });
+      res.json(row ? { location: row.location, percent: row.percent, updatedAt: row.updatedAt } : null);
+    } catch (err) {
+      logger.error("Error fetching reading progress:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.put("/api/ebooks/:id/progress", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const location = (req.body?.location ?? "").toString().slice(0, 2000);
+    const percentRaw = req.body?.percent;
+    const percent = percentRaw === null || percentRaw === undefined ? null : Math.max(0, Math.min(100, Number(percentRaw)));
+    if (!location) { res.status(400).json({ error: "location is required" }); return; }
+    try {
+      const ebook = await prisma.ebook.findUnique({ where: { id: req.params.id }, select: { id: true, visibility: true } });
+      if (!ebook || !ebookVisibleTo(jwtUser.role, ebook.visibility)) { res.status(404).json({ error: "E-book not found" }); return; }
+      const row = await (prisma as any).ebookProgress.upsert({
+        where: { userId_ebookId: { userId: jwtUser.userId, ebookId: req.params.id } },
+        update: { location, percent: Number.isFinite(percent) ? percent : null },
+        create: { userId: jwtUser.userId, ebookId: req.params.id, location, percent: Number.isFinite(percent) ? percent : null },
+      });
+      res.json({ location: row.location, percent: row.percent, updatedAt: row.updatedAt });
+    } catch (err) {
+      logger.error("Error saving reading progress:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── E-Library: highlights / saved passages ──────────────────────────────────
+  app.get("/api/ebooks/:id/highlights", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const ebook = await prisma.ebook.findUnique({ where: { id: req.params.id }, select: { id: true, visibility: true } });
+      if (!ebook || !ebookVisibleTo(jwtUser.role, ebook.visibility)) { res.status(404).json({ error: "E-book not found" }); return; }
+      const highlights = await (prisma as any).ebookHighlight.findMany({
+        where: { ebookId: req.params.id, userId: jwtUser.userId },
+        orderBy: { createdAt: "asc" },
+      });
+      res.json(highlights);
+    } catch (err) {
+      logger.error("Error fetching highlights:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/ebooks/:id/highlights", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const text = (req.body?.text ?? "").toString().trim().slice(0, 2000);
+    const cfi = req.body?.cfi ? String(req.body.cfi).slice(0, 500) : null;
+    const page = req.body?.page != null ? Math.max(1, Math.trunc(Number(req.body.page))) : null;
+    const color = ["yellow", "green", "blue", "pink"].includes(req.body?.color) ? req.body.color : "yellow";
+    if (!text) { res.status(400).json({ error: "text is required" }); return; }
+    if (!cfi && !page) { res.status(400).json({ error: "cfi or page is required" }); return; }
+    try {
+      const ebook = await prisma.ebook.findUnique({ where: { id: req.params.id }, select: { id: true, visibility: true } });
+      if (!ebook || !ebookVisibleTo(jwtUser.role, ebook.visibility)) { res.status(404).json({ error: "E-book not found" }); return; }
+      const highlight = await (prisma as any).ebookHighlight.create({
+        data: {
+          ebookId: req.params.id, userId: jwtUser.userId, userName: jwtUser.email,
+          cfi, page, text, color,
+        },
+      });
+      res.status(201).json(highlight);
+    } catch (err) {
+      logger.error("Error creating highlight:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.delete("/api/ebooks/highlights/:highlightId", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const highlight = await (prisma as any).ebookHighlight.findUnique({ where: { id: req.params.highlightId } });
+      if (!highlight) { res.status(404).json({ error: "Highlight not found" }); return; }
+      if (highlight.userId !== jwtUser.userId && jwtUser.role !== "ADMIN") { res.status(403).json({ error: "Forbidden" }); return; }
+      await (prisma as any).ebookHighlight.delete({ where: { id: req.params.highlightId } });
+      res.json({ message: "Highlight deleted" });
+    } catch (err) {
+      logger.error("Error deleting highlight:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });

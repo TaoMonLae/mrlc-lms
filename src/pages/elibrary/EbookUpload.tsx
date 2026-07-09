@@ -1,6 +1,11 @@
 import React, { useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, UploadCloud, FileText, Loader2, Lock, Download } from 'lucide-react';
+import {
+  ArrowLeft, UploadCloud, FileText, Loader2, Lock, Download, X,
+  CheckCircle2, AlertCircle, BookMarked,
+} from 'lucide-react';
+import { pdfjs } from 'react-pdf';
+import ePub from 'epubjs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,14 +19,82 @@ import { useUser } from '../../lib/permissions';
 
 const MAX_MB = 50;
 
+interface QueuedFile {
+  key: string;
+  file: File;
+  title: string;
+  author: string;
+  coverBlob: Blob | null;
+  coverPreview: string | null;
+  extracting: boolean;
+  status: 'pending' | 'uploading' | 'done' | 'error';
+  error?: string;
+}
+
+function isEpub(file: File) {
+  return file.name.toLowerCase().endsWith('.epub');
+}
+
+// Reads the EPUB's own metadata (title/author) and embedded cover image so
+// the uploader doesn't have to retype what's already in the file.
+async function extractEpubMeta(file: File): Promise<{ title?: string; author?: string; coverBlob?: Blob }> {
+  let book: any;
+  try {
+    const buf = await file.arrayBuffer();
+    book = ePub(buf as any);
+    const meta = await book.loaded.metadata;
+    let coverBlob: Blob | undefined;
+    try {
+      const coverUrl = await book.coverUrl();
+      if (coverUrl) {
+        const resp = await fetch(coverUrl);
+        coverBlob = await resp.blob();
+      }
+    } catch { /* no embedded cover — not an error */ }
+    return { title: meta?.title?.trim() || undefined, author: meta?.creator?.trim() || undefined, coverBlob };
+  } catch {
+    return {};
+  } finally {
+    try { book?.destroy(); } catch { /* noop */ }
+  }
+}
+
+// Renders a PDF's first page to a small canvas to use as a cover thumbnail,
+// and reads the document Title from its metadata if present.
+async function extractPdfMeta(file: File): Promise<{ title?: string; coverBlob?: Blob }> {
+  try {
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjs.getDocument({ data: buf }).promise;
+    let title: string | undefined;
+    try {
+      const meta: any = await pdf.getMetadata();
+      if (meta?.info?.Title) title = String(meta.info.Title).trim();
+    } catch { /* no metadata — not an error */ }
+    let coverBlob: Blob | undefined;
+    try {
+      const page = await pdf.getPage(1);
+      const viewport = page.getViewport({ scale: 0.6 });
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        await page.render({ canvasContext: ctx, viewport, canvas } as any).promise;
+        coverBlob = (await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.82))) || undefined;
+      }
+    } catch { /* rendering failed — not fatal, just no auto cover */ }
+    return { title, coverBlob };
+  } catch {
+    return {};
+  }
+}
+
 export default function EbookUpload() {
   const navigate = useNavigate();
   const { user } = useUser();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [file, setFile] = useState<File | null>(null);
-  const [title, setTitle] = useState('');
-  const [author, setAuthor] = useState('');
+  const [queue, setQueue] = useState<QueuedFile[]>([]);
   const [category, setCategory] = useState('');
   const [language, setLanguage] = useState('');
   const [description, setDescription] = useState('');
@@ -29,57 +102,135 @@ export default function EbookUpload() {
   const [downloadAllowed, setDownloadAllowed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const pickFile = (f: File | null) => {
-    if (!f) return;
-    const ext = f.name.toLowerCase().slice(f.name.lastIndexOf('.'));
-    if (ext !== '.pdf' && ext !== '.epub') {
-      toast.error('Only PDF and EPUB files are allowed.');
-      return;
-    }
-    if (f.size > MAX_MB * 1024 * 1024) {
-      toast.error(`File is too large (max ${MAX_MB} MB).`);
-      return;
-    }
-    setFile(f);
-    if (!title) setTitle(f.name.replace(/\.(pdf|epub)$/i, ''));
+  const updateEntry = (key: string, patch: Partial<QueuedFile>) => {
+    setQueue((prev) => prev.map((q) => (q.key === key ? { ...q, ...patch } : q)));
   };
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!file) { toast.error('Please choose an EPUB or PDF file.'); return; }
-    if (!title.trim()) { toast.error('Title is required.'); return; }
+  const pickFiles = (files: FileList | File[] | null) => {
+    if (!files) return;
+    const list = Array.from(files);
+    const accepted: QueuedFile[] = [];
+    for (const f of list) {
+      const ext = f.name.toLowerCase().slice(f.name.lastIndexOf('.'));
+      if (ext !== '.pdf' && ext !== '.epub') {
+        toast.error(`${f.name}: only PDF and EPUB files are allowed.`);
+        continue;
+      }
+      if (f.size > MAX_MB * 1024 * 1024) {
+        toast.error(`${f.name}: file is too large (max ${MAX_MB} MB).`);
+        continue;
+      }
+      accepted.push({
+        key: `${f.name}-${f.size}-${f.lastModified}`,
+        file: f,
+        title: f.name.replace(/\.(pdf|epub)$/i, ''),
+        author: '',
+        coverBlob: null,
+        coverPreview: null,
+        extracting: true,
+        status: 'pending',
+      });
+    }
+    if (accepted.length === 0) return;
+    setQueue((prev) => [...prev, ...accepted]);
 
-    setSubmitting(true);
+    // Auto-fill title/author and cover art in the background for each file.
+    accepted.forEach(async (entry) => {
+      const result = isEpub(entry.file) ? await extractEpubMeta(entry.file) : await extractPdfMeta(entry.file);
+      const coverPreview = result.coverBlob ? URL.createObjectURL(result.coverBlob) : null;
+      setQueue((prev) => prev.map((q) => (q.key === entry.key
+        ? {
+          ...q,
+          title: result.title || q.title,
+          author: (result as any).author || q.author,
+          coverBlob: result.coverBlob || null,
+          coverPreview,
+          extracting: false,
+        }
+        : q)));
+    });
+  };
+
+  const removeEntry = (key: string) => {
+    setQueue((prev) => {
+      const entry = prev.find((q) => q.key === key);
+      if (entry?.coverPreview) URL.revokeObjectURL(entry.coverPreview);
+      return prev.filter((q) => q.key !== key);
+    });
+  };
+
+  const uploadOne = async (entry: QueuedFile, token: string | null): Promise<boolean> => {
+    updateEntry(entry.key, { status: 'uploading' });
     try {
+      let coverUrl = '';
+      if (entry.coverBlob) {
+        const coverForm = new FormData();
+        const ext = entry.coverBlob.type === 'image/png' ? 'png' : 'jpg';
+        coverForm.append('cover', entry.coverBlob, `cover.${ext}`);
+        const coverRes = await fetch('/api/ebooks/cover-upload', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: coverForm,
+        });
+        if (coverRes.ok) {
+          const { url } = await coverRes.json();
+          coverUrl = url;
+        }
+        // A failed cover upload isn't fatal — the book still uploads without one.
+      }
+
       const fd = new FormData();
-      fd.append('file', file);
-      fd.append('title', title.trim());
-      fd.append('author', author);
+      fd.append('file', entry.file);
+      fd.append('title', entry.title.trim() || entry.file.name);
+      fd.append('author', entry.author);
       fd.append('category', category);
       fd.append('language', language);
       fd.append('description', description);
       fd.append('visibility', visibility);
       fd.append('downloadAllowed', String(downloadAllowed));
       fd.append('uploadedByName', user?.name || user?.email || '');
+      if (coverUrl) fd.append('coverUrl', coverUrl);
 
-      const token = sessionStorage.getItem('auth_token');
-      const res = await fetch('/api/ebooks', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: fd,
-      });
+      const res = await fetch('/api/ebooks', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || 'Upload failed');
       }
-      toast.success('E-book uploaded.');
-      navigate('/elibrary');
+      updateEntry(entry.key, { status: 'done' });
+      return true;
     } catch (err: any) {
-      toast.error(err.message || 'Upload failed');
-    } finally {
-      setSubmitting(false);
+      updateEntry(entry.key, { status: 'error', error: err.message || 'Upload failed' });
+      return false;
     }
   };
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (queue.length === 0) { toast.error('Add at least one PDF or EPUB file.'); return; }
+    if (queue.some((q) => !q.title.trim())) { toast.error('Every file needs a title.'); return; }
+
+    setSubmitting(true);
+    const token = sessionStorage.getItem('auth_token');
+    let okCount = 0;
+    for (const entry of queue) {
+      if (entry.status === 'done') { okCount++; continue; }
+      // eslint-disable-next-line no-await-in-loop
+      const ok = await uploadOne(entry, token);
+      if (ok) okCount++;
+    }
+    setSubmitting(false);
+
+    if (okCount === queue.length) {
+      toast.success(queue.length === 1 ? 'E-book uploaded.' : `${okCount} e-books uploaded.`);
+      navigate('/elibrary');
+    } else if (okCount > 0) {
+      toast.warning(`${okCount} of ${queue.length} uploaded — fix the failed ones and try again.`);
+    } else {
+      toast.error('Upload failed.');
+    }
+  };
+
+  const isBatch = queue.length > 1;
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 pb-10">
@@ -88,8 +239,8 @@ export default function EbookUpload() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">Upload E-book</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-300">Add an EPUB or PDF to the E-Library.</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">Upload E-book{isBatch ? 's' : ''}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-300">Add one or more EPUB or PDF files to the E-Library.</p>
         </div>
       </div>
 
@@ -98,42 +249,76 @@ export default function EbookUpload() {
         <div
           onClick={() => fileInputRef.current?.click()}
           onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => { e.preventDefault(); pickFile(e.dataTransfer.files?.[0] || null); }}
+          onDrop={(e) => { e.preventDefault(); pickFiles(e.dataTransfer.files); }}
           className="cursor-pointer rounded-lg border-2 border-dashed border-slate-300 dark:border-surface-raised hover:border-primary/60 transition-colors p-8 text-center bg-white dark:bg-surface-indigo"
         >
           <input
             ref={fileInputRef}
             type="file"
+            multiple
             accept=".pdf,.epub,application/pdf,application/epub+zip"
             className="hidden"
-            onChange={(e) => pickFile(e.target.files?.[0] || null)}
+            onChange={(e) => { pickFiles(e.target.files); e.target.value = ''; }}
           />
-          {file ? (
-            <div className="flex items-center justify-center gap-3 text-slate-700 dark:text-slate-200">
-              <FileText className="h-6 w-6 text-primary" />
-              <div className="text-left">
-                <p className="font-medium truncate max-w-xs">{file.name}</p>
-                <p className="text-xs text-slate-500">{(file.size / (1024 * 1024)).toFixed(1)} MB · click to change</p>
-              </div>
-            </div>
-          ) : (
-            <>
-              <UploadCloud className="h-8 w-8 text-slate-400 mx-auto mb-2" />
-              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Click or drag a file here</p>
-              <p className="text-xs text-slate-500 mt-1">PDF or EPUB · up to {MAX_MB} MB</p>
-            </>
-          )}
+          <UploadCloud className="h-8 w-8 text-slate-400 mx-auto mb-2" />
+          <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Click or drag files here</p>
+          <p className="text-xs text-slate-500 mt-1">PDF or EPUB · up to {MAX_MB} MB each · multiple files supported</p>
         </div>
 
+        {/* Queued files */}
+        {queue.length > 0 && (
+          <div className="space-y-3">
+            {queue.map((q) => (
+              <div key={q.key} className="flex gap-3 rounded-lg border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo p-3">
+                <div className="h-16 w-11 shrink-0 rounded-sm bg-accent-purple/10 border border-slate-100 dark:border-surface-raised flex items-center justify-center overflow-hidden">
+                  {q.extracting ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                  ) : q.coverPreview ? (
+                    <img src={q.coverPreview} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <BookMarked className="h-5 w-5 text-accent-purple" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                    <p className="text-xs text-slate-500 truncate">{q.file.name} · {(q.file.size / (1024 * 1024)).toFixed(1)} MB</p>
+                  </div>
+                  <Input
+                    value={q.title}
+                    onChange={(e) => updateEntry(q.key, { title: e.target.value })}
+                    placeholder="Title"
+                    className="h-8 text-sm"
+                    disabled={q.status === 'uploading' || q.status === 'done'}
+                  />
+                  <Input
+                    value={q.author}
+                    onChange={(e) => updateEntry(q.key, { author: e.target.value })}
+                    placeholder="Author (optional)"
+                    className="h-8 text-sm"
+                    disabled={q.status === 'uploading' || q.status === 'done'}
+                  />
+                  {q.status === 'error' && <p className="text-xs text-red-600">{q.error}</p>}
+                </div>
+                <div className="flex flex-col items-center justify-between shrink-0">
+                  {q.status === 'uploading' && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+                  {q.status === 'done' && <CheckCircle2 className="h-4 w-4 text-green-600" />}
+                  {q.status === 'error' && <AlertCircle className="h-4 w-4 text-red-600" />}
+                  {q.status === 'pending' && (
+                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeEntry(q.key)}>
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-2 sm:col-span-2">
-            <Label>Title *</Label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Book title" required />
-          </div>
-          <div className="space-y-2">
-            <Label>Author</Label>
-            <Input value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="Author name" />
-          </div>
+          <p className="text-xs text-slate-500 sm:col-span-2 -mb-2">
+            {isBatch ? 'These settings apply to all files above.' : 'Book settings.'}
+          </p>
           <div className="space-y-2">
             <Label>Category</Label>
             <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="e.g. Math, Science" />
@@ -179,8 +364,10 @@ export default function EbookUpload() {
 
         <div className="flex justify-end gap-3">
           <Button type="button" variant="outline" render={<Link to="/elibrary" />} nativeButton={false}>Cancel</Button>
-          <Button type="submit" disabled={submitting} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-            {submitting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading…</> : <><UploadCloud className="h-4 w-4 mr-2" /> Upload</>}
+          <Button type="submit" disabled={submitting || queue.length === 0} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+            {submitting
+              ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading…</>
+              : <><UploadCloud className="h-4 w-4 mr-2" /> Upload {queue.length > 1 ? `${queue.length} Books` : 'Book'}</>}
           </Button>
         </div>
       </form>
