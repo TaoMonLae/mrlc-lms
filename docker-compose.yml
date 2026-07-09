@@ -35,6 +35,9 @@ services:
       BACKUP_DIR: "/app/data/backups"
       # How many daily backups to keep (older ones are pruned).
       BACKUP_RETENTION: "${BACKUP_RETENTION:-14}"
+      # kiwix-serve reachable at its compose service name, not localhost --
+      # the app and kiwix-serve run in separate containers.
+      KIWIX_URL: "http://kiwix:8080"
     volumes:
       # Persist uploaded e-book files across container rebuilds/recreations.
       - ebook_data:/app/data/ebooks
@@ -42,6 +45,23 @@ services:
       - backup_data:/app/data/backups
     ports:
       - "8000:8000"
+
+  # Offline Wiki (Kiwix). Not exposed on its own port -- only the "app"
+  # service talks to it, over the compose network; the LMS itself proxies
+  # and authenticates every request (see kiwix.ts). Drop .zim files into
+  # ./data/kiwix on the host, then `docker compose restart kiwix` to pick
+  # up newly-added files.
+  kiwix:
+    image: ghcr.io/kiwix/kiwix-serve:latest
+    restart: unless-stopped
+    # --urlRootLocation must match the PROXY_PREFIX in kiwix.ts (kiwix-proxy).
+    # Shell form so /data/*.zim actually gets glob-expanded (until at least
+    # one .zim file exists in ./data/kiwix, this container will keep
+    # restarting/erroring -- that's expected, and it'll come up clean once
+    # you've added one, see the instructions below).
+    command: sh -c "kiwix-serve --port=8080 --urlRootLocation=kiwix-proxy /data/*.zim"
+    volumes:
+      - ./data/kiwix:/data
 
 volumes:
   db_data:
