@@ -19,8 +19,8 @@ const TabItem = ({
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & { active: boolean }) => (
   <button
-    className={`px-1 xs:px-2 sm:px-4 text-xs sm:text-sm md:text-base py-2 pointer capitalize rounded-sm border-none hover:bg-gray-500 ${
-      active ? "bg-white text-black dark:bg-gray-600 dark:text-white" : "bg-transparent text-white dark:text-gray-300"
+    className={`px-1 xs:px-2 sm:px-4 text-xs sm:text-sm md:text-base py-2 pointer capitalize rounded-sm border-none hover:bg-slate-200 dark:hover:bg-gray-500 ${
+      active ? "bg-white text-black dark:bg-gray-600 dark:text-white" : "bg-transparent text-slate-600 dark:text-gray-300"
     }`}
     {...props}
   >
@@ -186,7 +186,7 @@ const GameIndex = ({
 }) => {
   if (pageSudokus.length === 0) {
     return (
-      <div className="text-center text-white">
+      <div className="text-center text-slate-700 dark:text-white">
         There are no sudokus in this collection. Add one by clicking the "Add sudoku" button.
       </div>
     );

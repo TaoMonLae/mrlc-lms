@@ -89,12 +89,13 @@ export default class SudokuPreview extends React.PureComponent<{
             lineHeight: 1,
           }}
         >
-          <div className="absolute z-10 top-0 left-0 w-full h-full flex items-center justify-center">
-            <div style={{ fontSize: size / 3 }} className="font-bold text-black dark:text-white opacity-80">
-              {id}
-            </div>
-          </div>
           <SudokuPreviewGrid width={width} height={height} hideLeftRight />
+          <div
+            className="pointer-events-none absolute z-10 top-0.5 left-1 font-bold text-black dark:text-white opacity-30 select-none"
+            style={{ fontSize: size / 8 }}
+          >
+            {id}
+          </div>
           {sudoku.map((row, y) => {
             return (
               <div key={y}>

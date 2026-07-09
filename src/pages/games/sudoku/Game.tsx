@@ -200,7 +200,7 @@ const ShareButton: React.FC<{
   return (
     <button
       aria-label="Share"
-      className="text-white hover:cursor-pointer p-1 hover:bg-gray-500 rounded-md border-none bg-transparent"
+      className="text-slate-700 dark:text-white hover:cursor-pointer p-1 hover:bg-gray-200 dark:hover:bg-gray-500 rounded-md border-none bg-transparent"
       data-testid="share-sudoku"
       onClick={handleShare}
       type="button"
@@ -223,7 +223,7 @@ const CenteredContinueButton: React.FC<{ visible: boolean; onClick: () => void }
 );
 
 const DifficultyShow = ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className="text-white capitalize" {...props}>
+  <div className="text-slate-700 dark:text-white capitalize" {...props}>
     {children}
   </div>
 );
@@ -246,12 +246,12 @@ const SettingsAndInformation = () => {
   } = useUserPreferences();
 
   return (
-    <div className="text-white">
+    <div className="text-slate-700 dark:text-white bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-4">
       <div className="grid gap-4">
         <div className="md:block hidden">
-          <h2 className="mb-2 text-3xl font-bold">Shortcuts</h2>
+          <h2 className="mb-2 text-xl font-bold">Shortcuts</h2>
           <div className="grid gap-2">
-            <ul className="list-disc pl-6">
+            <ul className="list-disc pl-6 text-sm">
               <li>Arrow keys: Move around the board</li>
               <li>Number keys: Write a note or set the sudoku number</li>
               <li>Backspace: Delete a number</li>
@@ -265,8 +265,8 @@ const SettingsAndInformation = () => {
           </div>
         </div>
         <div>
-          <h2 className="mb-2 text-3xl font-bold">Settings</h2>
-          <div className="grid gap-2">
+          <h2 className="mb-2 text-xl font-bold">Settings</h2>
+          <div className="grid gap-2 text-sm">
             <label className="flex items-center gap-2">
               <Checkbox checked={state.showHints} onCheckedChange={() => toggleShowHints()} />
               <span>Show auto generated notes</span>
@@ -290,8 +290,8 @@ const SettingsAndInformation = () => {
           </div>
         </div>
         <div>
-          <h2 className="text-3xl font-bold text-white">About</h2>
-          <p className="text-white">
+          <h2 className="text-xl font-bold text-slate-700 dark:text-white">About</h2>
+          <p className="text-sm text-slate-600 dark:text-white">
             This Sudoku game is a port of{" "}
             <a
               target="_blank"
@@ -423,7 +423,7 @@ const GameInner: React.FC<{
   return (
     <div>
       <header className="flex justify-between sm:items-center mt-4">
-        <div className="flex text-white flex-col sm:flex-row sm:justify-end sm:items-center gap-2">
+        <div className="flex text-slate-700 dark:text-white flex-col sm:flex-row sm:justify-end sm:items-center gap-2">
           <div className="flex gap-2 items-center">
             <DifficultyShow data-testid="current-game-label">{`${collectionName} #${game.sudokuIndex + 1}`}</DifficultyShow>
             <ShareButton gameState={game} sudokuState={sudokuState} />
@@ -431,7 +431,7 @@ const GameInner: React.FC<{
           <div className="hidden sm:block">{"|"}</div>
           <GameTimer />
         </div>
-        <div className="text-white text-lg sm:text-2xl font-bold flex items-center gap-2">Sudoku</div>
+        <div className="text-slate-900 dark:text-white text-lg sm:text-2xl font-bold flex items-center gap-2">Sudoku</div>
         <div className="flex">
           <div className="flex gap-2 flex-col justify-end items-end sm:flex-row">
             <div className="flex gap-2">
