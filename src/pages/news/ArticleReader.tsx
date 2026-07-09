@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, ExternalLink, Newspaper, Clock, ClipboardList } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import DOMPurify from 'dompurify';
@@ -27,9 +27,13 @@ interface ArticleDetail {
 export default function ArticleReader() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isTeacher, isAdmin } = usePermissions();
   const [article, setArticle] = useState<ArticleDetail | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Get the category from navigation state, default to 'ALL' if not provided
+  const fromCategory = (location.state as { fromCategory?: string })?.fromCategory || 'ALL';
 
   useEffect(() => {
     if (!id) return;
@@ -60,7 +64,7 @@ export default function ArticleReader() {
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" render={<Link to="/news" />} className="rounded-full hover:bg-slate-100 dark:hover:bg-surface-raised">
+          <Button variant="ghost" size="icon" render={<Link to="/news" state={{ fromCategory }} />} className="rounded-full hover:bg-slate-100 dark:hover:bg-surface-raised">
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex items-center gap-2">
@@ -148,7 +152,7 @@ export default function ArticleReader() {
         </CardContent>
       </Card>
 
-      <Link to="/news" className="text-sm font-bold flex items-center gap-2 text-slate-400 hover:text-aubergine-600 transition-colors">
+      <Link to="/news" state={{ fromCategory }} className="text-sm font-bold flex items-center gap-2 text-slate-400 hover:text-aubergine-600 transition-colors">
         <ArrowLeft className="h-4 w-4" /> Back to all news
       </Link>
     </div>

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Newspaper, Search, ExternalLink, RefreshCw, Settings2, BookOpenText, ClipboardList } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -26,9 +26,13 @@ interface NewsArticle {
 export default function NewsFeed() {
   const { isAdmin, isTeacher } = usePermissions();
   const navigate = useNavigate();
+  const location = useLocation();
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
-  const [category, setCategory] = useState('ALL');
+
+  // Get the category from navigation state, default to 'ALL' if not provided
+  const fromCategory = (location.state as { fromCategory?: string })?.fromCategory || 'ALL';
+  const [category, setCategory] = useState(fromCategory);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -140,6 +144,7 @@ export default function NewsFeed() {
           <Link
             key={a.id}
             to={`/news/${a.id}`}
+            state={{ fromCategory: category }}
             className="group bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm hover:shadow-lg hover:border-aubergine-200 dark:hover:border-aubergine-800 hover:-translate-y-1 transition-all duration-200 flex flex-col overflow-hidden"
           >
             {a.imageUrl && (
