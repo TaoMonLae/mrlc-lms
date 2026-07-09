@@ -70,7 +70,6 @@ const EbookReader = lazy(() => import("./pages/elibrary/EbookReader"));
 import EbookUpload from "./pages/elibrary/EbookUpload";
 import EbookEdit from "./pages/elibrary/EbookEdit";
 import GutenbergImport from "./pages/elibrary/GutenbergImport";
-import WikiPage from "./pages/wiki/WikiPage";
 
 import FeesDashboard from "./pages/fees/FeesDashboard";
 import PaymentNew from "./pages/fees/PaymentNew";
@@ -325,9 +324,6 @@ export default function App() {
 
                 <Route path="/games/sudoku" element={<SudokuSelectPage />} />
                 <Route path="/games/sudoku/play" element={<SudokuPlayPage />} />
-
-                {/* Offline Wiki (Kiwix) — available to every authenticated role */}
-                <Route path="/wiki" element={<WikiPage />} />
 
                 <Route path="/timetable" element={<TimetablePage />} />
 

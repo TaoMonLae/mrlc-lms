@@ -61,7 +61,6 @@ export const ADMIN_NAV: AdminNavEntry[] = [
   { title: "News", url: "/news", icon: Newspaper },
   { title: "Sudoku", url: "/games/sudoku", icon: Grid3x3 },
   { title: "Dictionary", url: "/dictionary", icon: BookA },
-  { title: "Wiki", url: "/wiki", icon: Library },
   { title: "Announcements", url: "/announcements", icon: Megaphone },
   { title: "Timetable", url: "/timetable", icon: CalendarDays },
   {
@@ -155,7 +154,6 @@ export const TEACHER_NAV: AdminNavEntry[] = [
   { title: "News", url: "/news", icon: Newspaper },
   { title: "Sudoku", url: "/games/sudoku", icon: Grid3x3 },
   { title: "Dictionary", url: "/dictionary", icon: BookA },
-  { title: "Wiki", url: "/wiki", icon: Library },
   { title: "Announcements", url: "/announcements", icon: Megaphone },
   { title: "My Timetable", url: "/teacher/timetable", icon: CalendarDays },
   {
@@ -206,7 +204,6 @@ export const STUDENT_NAV: AdminNavEntry[] = [
   { title: "News", url: "/news", icon: Newspaper },
   { title: "Sudoku", url: "/games/sudoku", icon: Grid3x3 },
   { title: "Dictionary", url: "/dictionary", icon: BookA },
-  { title: "Wiki", url: "/wiki", icon: Library },
   { title: "Announcements", url: "/announcements", icon: Megaphone },
   { title: "My Timetable", url: "/timetable", icon: CalendarDays },
   {
@@ -290,11 +287,6 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     title: "Dictionary",
     url: "/dictionary",
     icon: BookA,
-  },
-  {
-    title: "Wiki",
-    url: "/wiki",
-    icon: Library,
   },
   {
     title: "Students",

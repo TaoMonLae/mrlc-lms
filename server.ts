@@ -24,7 +24,6 @@ import { registerFlashcardRoutes } from "./flashcards";
 import { registerConductRoutes } from "./conduct";
 import { registerDictionaryRoutes } from "./dictionary";
 import { registerGutenbergRoutes } from "./gutenberg";
-import { registerKiwixRoutes } from "./kiwix";
 import cookieParser from "cookie-parser";
 import { BADGE_CATALOG, getBadgeLevel } from "./lib/badges";
 
@@ -15958,8 +15957,6 @@ async function startServer() {
   registerDictionaryRoutes({ app, prisma, authMiddleware, logger });
   // ── Project Gutenberg import (E-Library) ────────────────────────────────────
   registerGutenbergRoutes({ app, prisma, authMiddleware, logger });
-  // ── Kiwix (offline Wikipedia/etc. via a self-hosted kiwix-serve) ───────────
-  registerKiwixRoutes({ app, authMiddleware, verifyToken, logger });
 
   // NOTE: the SPA catch-all (Vite middleware in dev / static dist in prod) is
   // registered at the very end of startServer, AFTER every /api route, so it can
