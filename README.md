@@ -33,7 +33,7 @@ The application is built as a unified Node.js/Express server that serves both th
 | **Gradebook** | Student progress tracking, grade reports, and performance analytics |
 | **GED Readiness & Engagement** | Per-subject mastery tracker (6-stage readiness pipeline tied to real exam performance), attendance streaks, and achievement badges to keep students motivated |
 | **Flashcards** | Teacher-authored study decks with class assignment, deck sharing/cloning between teachers, and four student study modes (classic flip cards with mastery tracking, quiz with multiple question types, matching game, and spelling practice) |
-| **Digital Library** | E-book (EPUB/PDF) collection with resume-reading position, in-book search, highlights, batch upload with auto metadata/cover extraction, and a full-page reading mode |
+| **Digital Library** | E-book (EPUB/PDF) collection with resume-reading position, in-book search, highlights, in-book dictionary lookup, batch upload with auto metadata/cover extraction, one-click Project Gutenberg import, and a full-page reading mode |
 | **Dictionary** | Offline English dictionary (definitions, parts of speech, examples, synonyms) plus English-to-Myanmar and English/Myanmar/Thai-to-Mon translations, with no internet required |
 | **Physical Library** | Book catalog, borrowing system, and due date management |
 | **Fee Management** | Manual fee charges with optional discounts and partial payments (plus an optional bulk Fee Structures / Assign Fees workflow), balance top-ups, QR-verifiable receipts, and a Fees dashboard that correctly shows Paid/Partial/Unpaid |
@@ -90,8 +90,11 @@ Adding new languages is straightforward—simply add a `.po` file to `src/i18n/l
 - Resume reading: both the PDF and EPUB readers now pick up where you left off automatically
 - In-book search across the whole book, jump straight to a match
 - Highlight passages while reading; Teachers/Admins can turn a highlight straight into a flashcard in one of their decks
+- Select any word while reading to see its definition (English/Myanmar/Mon) in a popup, without leaving the book — works in full page (fullscreen) reading mode too
 - Multi-file batch upload with auto-detected title/author/cover per file, sorting and category filters, and a "Continue Reading" strip on the library home
+- Import free public-domain books directly from Project Gutenberg by title/author search — one click downloads the EPUB and cover and adds it to the library. Admins/Teachers/Librarians only, via "Import from Gutenberg" on the E-Library page — see **Acknowledgments**
 - A full-page reading mode, and a fix for the table-of-contents dropdown overflowing into the page controls
+- The Dictionary and the E-Library's in-book Define lookup are both usable without signing in
 
 **Fee Management overhaul**
 - Manual fee charges can now be recorded directly against a student with an optional discount and an optional partial payment — no separate Fee Structure required
@@ -369,7 +372,9 @@ The Dictionary's **English-to-Myanmar translations** were imported from the [**o
 
 The Dictionary's **Mon dictionary data** (21,086 Mon headwords with IPA pronunciation and English/Myanmar/Thai definitions) was imported from [**MonDictDB**](https://github.com/Barnista/MonDictDB) by Barnista, MIT License, Copyright (c) 2025 Barnista — a purpose-built, contributor-authored Mon dictionary, not sourced from a third-party commercial product. Unlike the English-to-Myanmar data above, this dataset carries a clean, verifiable open license. See `prisma/seedMonDictionary.ts` for the import notes.
 
-These are the only third-party-derived components bundled in the app — everything else in this repository is covered by the license below.
+The E-Library's **"Import from Gutenberg"** feature (`gutenberg.ts`) searches and downloads books via [**Gutendex**](https://github.com/garethbjohnson/gutendex) (`gutendex.com`), a free, public, read-only API over [**Project Gutenberg**](https://www.gutenberg.org)'s own catalog of 70,000+ books. Unlike the datasets above, nothing from Gutenberg is bundled with the app — books are fetched live, on demand, only when an admin/teacher/librarian explicitly chooses to import one, directly from Project Gutenberg's own servers. Every book in Project Gutenberg's US catalog is in the public domain, so imported books carry no licensing caveat.
+
+These are the only third-party-derived components in the app — everything else in this repository is covered by the license below.
 
 ---
 

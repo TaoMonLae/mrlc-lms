@@ -149,9 +149,14 @@ export default function EbookList() {
           <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Read EPUB and PDF books online.</p>
         </div>
         {canManage && (
-          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground" render={<Link to="/elibrary/upload" />} nativeButton={false}>
-            <Plus className="mr-2 h-4 w-4" /> Upload Book
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" render={<Link to="/elibrary/gutenberg" />} nativeButton={false}>
+              <BookMarked className="mr-2 h-4 w-4" /> Import from Gutenberg
+            </Button>
+            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground" render={<Link to="/elibrary/upload" />} nativeButton={false}>
+              <Plus className="mr-2 h-4 w-4" /> Upload Book
+            </Button>
+          </div>
         )}
       </div>
 

@@ -69,6 +69,7 @@ import EbookList from "./pages/elibrary/EbookList";
 const EbookReader = lazy(() => import("./pages/elibrary/EbookReader"));
 import EbookUpload from "./pages/elibrary/EbookUpload";
 import EbookEdit from "./pages/elibrary/EbookEdit";
+import GutenbergImport from "./pages/elibrary/GutenbergImport";
 
 import FeesDashboard from "./pages/fees/FeesDashboard";
 import PaymentNew from "./pages/fees/PaymentNew";
@@ -453,6 +454,7 @@ export default function App() {
                 <Route element={<ProtectedRoute requiredPermission="manage_ebooks" />}>
                   <Route path="/elibrary/upload" element={<EbookUpload />} />
                   <Route path="/elibrary/:id/edit" element={<EbookEdit />} />
+                  <Route path="/elibrary/gutenberg" element={<GutenbergImport />} />
                 </Route>
 
                 <Route path="/videos" element={<VideoList />} />
