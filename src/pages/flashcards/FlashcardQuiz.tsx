@@ -146,9 +146,10 @@ export default function FlashcardQuiz() {
   const next = () => {
     setAnswered(null); setTextDraft('');
     if (index + 1 >= questions.length) {
+      const finalScore = answers.filter((a) => a.isCorrect).length;
       setFinished(true);
       if (isStudentRoute && id) {
-        apiSend(`/api/flashcards/decks/${id}/attempts`, 'POST', { mode: 'QUIZ', score, total: questions.length })
+        apiSend(`/api/flashcards/decks/${id}/attempts`, 'POST', { mode: 'QUIZ', score: finalScore, total: questions.length })
           .then(loadBest)
           .catch(() => {});
       }

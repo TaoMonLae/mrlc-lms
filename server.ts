@@ -14303,18 +14303,41 @@ async function startServer() {
     try {
       const s = await getStudentForReq(req);
       if (!s) { res.status(404).json({ error: "Student profile not found" }); return; }
-      const exams = s.classId
+      const assignedRows = await prisma.examAssignment.findMany({
+        where: { studentId: s.id },
+        include: {
+          exam: {
+            include: {
+              subject: true,
+              questions: { select: { id: true } },
+              attempts: { where: { studentId: s.id }, orderBy: { attemptNumber: "desc" } },
+              resultPolicy: true,
+              _count: { select: { assignments: true } },
+            },
+          },
+        },
+      }).catch(() => []);
+      const assignedExamIds = new Set(assignedRows.map((row: any) => row.examId));
+      const classExams = s.classId
         ? await prisma.exam.findMany({
             where: { classId: s.classId, status: { not: "ARCHIVED" } },
             include: {
               subject: true,
               questions: { select: { id: true } },
-              attempts: { where: { studentId: s.id } },
+              attempts: { where: { studentId: s.id }, orderBy: { attemptNumber: "desc" } },
               resultPolicy: true,
+              _count: { select: { assignments: true } },
             },
             orderBy: { date: "asc" },
           })
         : [];
+      const seen = new Set<string>();
+      const exams = [...assignedRows.map((row: any) => row.exam).filter(Boolean), ...classExams]
+        .filter((exam: any) => {
+          if (seen.has(exam.id)) return false;
+          seen.add(exam.id);
+          return (exam._count?.assignments || 0) === 0 || assignedExamIds.has(exam.id);
+        });
       const now = Date.now();
       const available: any[] = [];
       const submitted: any[] = [];

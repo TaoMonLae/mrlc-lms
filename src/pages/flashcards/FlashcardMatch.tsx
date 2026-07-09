@@ -138,6 +138,7 @@ export default function FlashcardMatch() {
         if (tickRef.current) clearInterval(tickRef.current);
         if (isStudentRoute && id && startedAt) {
           const durationMs = Date.now() - startedAt;
+          setElapsed(durationMs);
           const score = Math.max(0, totalPairs - mistakes);
           apiSend(`/api/flashcards/decks/${id}/attempts`, 'POST', { mode: 'MATCH', score, total: totalPairs, durationMs })
             .then(loadBest)

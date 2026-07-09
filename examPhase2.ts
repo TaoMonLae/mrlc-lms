@@ -297,7 +297,10 @@ export function registerExamPhase2Routes(deps: Deps): void {
         studentIds.map((studentId) => prisma.examAssignment.upsert({
           where: { examId_studentId: { examId: id, studentId } },
           create: { examId: id, studentId, invigilatorId: b.invigilatorId || null, accommodationId: b.accommodationId || null },
-          update: { invigilatorId: b.invigilatorId || undefined, accommodationId: b.accommodationId || undefined },
+          update: {
+            ...(Object.prototype.hasOwnProperty.call(b, "invigilatorId") ? { invigilatorId: b.invigilatorId || null } : {}),
+            ...(Object.prototype.hasOwnProperty.call(b, "accommodationId") ? { accommodationId: b.accommodationId || null } : {}),
+          },
         }))
       );
       await createAuditLog(user(req).userId, user(req).email, "ASSIGN", "EXAM", id, `Assigned ${created.length} student(s) to exam.`, ipOf(req), uaOf(req), "SUCCESS");
@@ -307,6 +310,14 @@ export function registerExamPhase2Routes(deps: Deps): void {
 
   app.delete("/api/exams/:examId/assignments/:assignmentId", authMiddleware, teacherGuard, examGuard("examId"), async (req, res) => {
     try {
+      const assignment = await prisma.examAssignment.findUnique({
+        where: { id: req.params.assignmentId },
+        select: { examId: true },
+      });
+      if (!assignment || assignment.examId !== req.params.examId) {
+        res.status(404).json({ error: "Assignment not found" });
+        return;
+      }
       await prisma.examAssignment.delete({ where: { id: req.params.assignmentId } });
       await createAuditLog(user(req).userId, user(req).email, "UNASSIGN", "EXAM", req.params.examId, `Removed assignment ${req.params.assignmentId}.`, ipOf(req), uaOf(req), "SUCCESS");
       res.json({ ok: true });
@@ -334,6 +345,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
       const exam = await prisma.exam.findUnique({ where: { id: examId }, include: { questions: true } });
       if (!exam) { res.status(404).json({ error: "Exam not found" }); return; }
       if (exam.status === "ARCHIVED") { res.status(403).json({ error: "This exam has been archived" }); return; }
+      if (exam.status === "CLOSED") { res.status(403).json({ error: "This exam is closed" }); return; }
       if (exam.status === "DRAFT") { res.status(403).json({ error: "This exam is not open yet" }); return; }
 
       // If assignments exist for this exam, the student must be assigned.
@@ -364,6 +376,10 @@ export function registerExamPhase2Routes(deps: Deps): void {
         orderBy: { attemptNumber: "desc" },
       });
       if (existing) {
+        if (isExpired(existing)) {
+          const finalized = await finalizeSubmission(existing.id, true, ipOf(req), uaOf(req));
+          return res.status(409).json({ error: "TIME_EXPIRED", autoSubmitted: true, attempt: { id: finalized.id, state: finalized.state } });
+        }
         // New device/session takeover: issue a fresh token, log it.
         const sessionToken = crypto.randomUUID();
         // Resuming from PAUSED: push the deadline forward by the paused duration
@@ -778,12 +794,19 @@ export function registerExamPhase2Routes(deps: Deps): void {
           ? attempt.selectedQuestionIds : null;
         const qs = await prisma.question.findMany({
           where: selectedIds ? { id: { in: selectedIds } } : { examId: attempt.examId },
+          include: { optionRows: { orderBy: { orderIndex: "asc" } } },
         });
+        const orderedQs = selectedIds
+          ? selectedIds.map((id) => qs.find((q: any) => q.id === id)).filter(Boolean)
+          : qs;
         const ansByQ: Record<string, any> = {};
         for (const a of attempt.answers) ansByQ[a.questionId] = a;
         // For legacy MCQs the correct answer is stored as an option *index*; show
         // the option *text* so it matches the student's (text) answer.
         const correctText = (q: any) => {
+          if (Array.isArray(q.optionRows) && q.optionRows.length) {
+            return q.optionRows.filter((o: any) => o.isCorrect).map((o: any) => o.text).join(", ");
+          }
           if (q.correctAnswer == null) return q.correctAnswer;
           if (Array.isArray(q.options) && q.options.length) {
             const idx = Number(q.correctAnswer);
@@ -794,9 +817,12 @@ export function registerExamPhase2Routes(deps: Deps): void {
           }
           return q.correctAnswer;
         };
-        questions = qs.map((q: any) => ({
+        const correctAnswers = (q: any) => Array.isArray(q.optionRows) && q.optionRows.length
+          ? q.optionRows.filter((o: any) => o.isCorrect).map((o: any) => o.text)
+          : q.correctAnswers;
+        questions = orderedQs.map((q: any) => ({
           id: q.id, text: q.text, passageText: q.passageText ?? null,
-          ...(showCorrect ? { correctAnswer: correctText(q), correctAnswers: q.correctAnswers } : {}),
+          ...(showCorrect ? { correctAnswer: correctText(q), correctAnswers: correctAnswers(q) } : {}),
           ...(showExpl ? { explanation: q.explanation } : {}),
           yourAnswer: ansByQ[q.id]?.answerText ?? null,
           pointsAwarded: showScore ? ansByQ[q.id]?.pointsAwarded ?? null : undefined,
@@ -826,7 +852,10 @@ export function registerExamPhase2Routes(deps: Deps): void {
       const assignedExamIds = new Set(assignments.map((a: any) => a.examId));
       // Class exams with a scheduling window, plus explicit assignments.
       const classExams = student.classId
-        ? await prisma.exam.findMany({ where: { classId: student.classId, status: { notIn: ["DRAFT", "ARCHIVED"] } } })
+        ? await prisma.exam.findMany({
+            where: { classId: student.classId, status: { notIn: ["DRAFT", "ARCHIVED", "CLOSED"] } },
+            include: { _count: { select: { assignments: true } } },
+          })
         : [];
       const seen = new Set<string>();
       const out: any[] = [];
@@ -839,6 +868,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
       for (const a of allAttempts) (attemptsByExam[a.examId] ||= []).push(a);
       for (const e of consider) {
         if (seen.has(e.id)) continue; seen.add(e.id);
+        if ((e._count?.assignments || 0) > 0 && !assignedExamIds.has(e.id)) continue;
         const openNow = (!e.availableFrom || now >= new Date(e.availableFrom)) && (!e.availableUntil || now <= new Date(e.availableUntil) || e.allowLateStart);
         const attempts = attemptsByExam[e.id] || [];
         out.push({
@@ -858,7 +888,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
 
   // The grading/analysis/invigilator/export routes are registered by a second
   // function to keep each module focused.
-  registerGradingAndOps({ ...deps, helpers: { user, isTeacher, ipOf, uaOf, num, teacherGuard, gradingLimiter, studentForReq, examGuard, attemptExamGuard, canManageExam } });
+  registerGradingAndOps({ ...deps, helpers: { user, isTeacher, ipOf, uaOf, num, teacherGuard, gradingLimiter, studentForReq, examGuard, attemptExamGuard, canManageExam, finalizeSubmission } });
   // Authoring CRUD (sections, stimuli, groups, rubrics, question structure).
   registerAuthoringRoutes({ ...deps, helpers: { user, ipOf, uaOf, num, teacherGuard, examGuard, canManageExam } });
 }
@@ -1071,7 +1101,7 @@ function registerAuthoringRoutes(deps: any) {
 // =============================================================================
 function registerGradingAndOps(deps: any) {
   const { app, prisma, authMiddleware, createAuditLog, logger, helpers } = deps;
-  const { user, ipOf, uaOf, num, teacherGuard, gradingLimiter, examGuard, attemptExamGuard, canManageExam } = helpers;
+  const { user, ipOf, uaOf, num, teacherGuard, gradingLimiter, examGuard, attemptExamGuard, canManageExam, finalizeSubmission } = helpers;
 
   // ── Manual grading queue ─────────────────────────────────────────────────
   app.get("/api/grading/queue", authMiddleware, teacherGuard, async (req: any, res: any) => {
@@ -1279,6 +1309,10 @@ function registerGradingAndOps(deps: any) {
   app.get("/api/exams/:id/questions/:qid/analytics", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
     try {
       const stat = await prisma.questionStatistic.findUnique({ where: { questionId: req.params.qid }, include: { question: true } });
+      if (stat && stat.examId !== req.params.id) {
+        res.status(404).json({ error: "Question analytics not found" });
+        return;
+      }
       res.json(stat || null);
     } catch (err) { logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }
   });
@@ -1336,6 +1370,20 @@ function registerGradingAndOps(deps: any) {
       if (!attempt) { res.status(404).json({ error: "Attempt not found" }); return; }
       let data: any = {};
       let evType = action;
+      if (action === "FORCE_SUBMIT") {
+        if (["IN_PROGRESS", "PAUSED"].includes(attempt.state)) {
+          await finalizeSubmission(attemptId, true, ipOf(req), uaOf(req));
+        } else if (!["SUBMITTED", "AUTO_SUBMITTED", "PENDING_GRADING", "FINALIZED", "RELEASED"].includes(attempt.state)) {
+          await prisma.examAttempt.update({
+            where: { id: attemptId },
+            data: { state: "AUTO_SUBMITTED", isCompleted: true, autoSubmitted: true, submittedAt: new Date(), completedAt: new Date(), sessionToken: null },
+          });
+        }
+        await prisma.attemptEvent.create({ data: { attemptId, type: evType, actorId: user(req).userId, actorRole: user(req).role, payload: b, ipAddress: ipOf(req), userAgent: uaOf(req) } }).catch(() => {});
+        await createAuditLog(user(req).userId, user(req).email, "INVIGILATE", "EXAM_ATTEMPT", attemptId, `Invigilator action ${action}${b.note ? `: ${b.note}` : ""}.`, ipOf(req), uaOf(req), "SUCCESS");
+        res.json({ ok: true, action });
+        return;
+      }
       switch (action) {
         case "EXTRA_TIME": {
           const mins = num(b.minutes) || 0;
@@ -1351,7 +1399,6 @@ function registerGradingAndOps(deps: any) {
           data = { state: "IN_PROGRESS", pausedAt: null, accumulatedPauseSeconds: (attempt.accumulatedPauseSeconds || 0) + Math.floor(extra / 1000), serverDeadline: attempt.serverDeadline ? new Date(new Date(attempt.serverDeadline).getTime() + extra) : null };
           break;
         }
-        case "FORCE_SUBMIT": data = { state: attempt.state === "PENDING_GRADING" ? "PENDING_GRADING" : "AUTO_SUBMITTED", isCompleted: true, autoSubmitted: true, submittedAt: new Date(), completedAt: new Date(), sessionToken: null }; break;
         case "REOPEN": data = { state: "IN_PROGRESS", isCompleted: false, submittedAt: null, completedAt: null, serverDeadline: new Date(Date.now() + (num(b.minutes) || 15) * 60000), sessionToken: null }; break;
         case "INVALIDATE": data = { state: "INVALIDATED", invalidatedAt: new Date(), sessionToken: null }; break;
         case "INCIDENT_NOTE": data = {}; break;

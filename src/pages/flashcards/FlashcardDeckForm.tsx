@@ -12,7 +12,7 @@ import { usePermissions } from '../../lib/permissions';
 import { apiGet, apiSend, authHeaders } from '../../lib/api';
 import { cardsToCsv, downloadCsv, parseFlashcardCsvFile } from '../../lib/flashcardCsv';
 
-interface CardDraft { term: string; definition: string; imageUrl?: string | null }
+interface CardDraft { id?: string; term: string; definition: string; imageUrl?: string | null }
 interface ClassOption { id: string; name: string }
 interface SubjectOption { id: string; name: string }
 
@@ -58,7 +58,7 @@ export default function FlashcardDeckForm() {
         setSubjectId(d.subject?.id || '');
         setShared(!!d.shared);
         setClassIds((d.classes || []).map((c: any) => c.id));
-        setCards(d.cards?.length ? d.cards.map((c: any) => ({ term: c.term, definition: c.definition, imageUrl: c.imageUrl ?? null })) : [{ term: '', definition: '' }]);
+        setCards(d.cards?.length ? d.cards.map((c: any) => ({ id: c.id, term: c.term, definition: c.definition, imageUrl: c.imageUrl ?? null })) : [{ term: '', definition: '' }]);
       })
       .catch((e: any) => toast.error(e?.message || 'Failed to load deck'))
       .finally(() => setLoading(false));
@@ -175,9 +175,10 @@ export default function FlashcardDeckForm() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>Subject (optional)</Label>
-            <Select value={subjectId || undefined} onValueChange={(v) => setSubjectId(v)}>
+            <Select value={subjectId || 'none'} onValueChange={(v) => setSubjectId(v === 'none' ? '' : v)}>
               <SelectTrigger><SelectValue placeholder="No subject" /></SelectTrigger>
               <SelectContent>
+                <SelectItem value="none">No subject</SelectItem>
                 {subjects.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
               </SelectContent>
             </Select>

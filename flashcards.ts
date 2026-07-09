@@ -59,10 +59,11 @@ export function registerFlashcardRoutes(deps: Deps): void {
     return prisma.student.findUnique({ where: { userId: jwtUser.userId } });
   }
 
-  function normalizeCards(raw: any): { term: string; definition: string; imageUrl: string | null }[] {
+  function normalizeCards(raw: any): { id?: string; term: string; definition: string; imageUrl: string | null }[] {
     if (!Array.isArray(raw)) return [];
     return raw
       .map((c: any) => ({
+        id: typeof c?.id === "string" && c.id.trim() ? c.id.trim() : undefined,
         term: (c?.term ?? "").toString().trim().slice(0, 500),
         definition: (c?.definition ?? "").toString().trim().slice(0, 2000),
         imageUrl: c?.imageUrl ? c.imageUrl.toString().trim().slice(0, 500) : null,
@@ -95,6 +96,27 @@ export function registerFlashcardRoutes(deps: Deps): void {
     _count: { select: { cards: true } },
     classLinks: { select: { classId: true, class: { select: { id: true, name: true } } } },
   };
+
+  async function validateTeacherClassAccess(jwtUser: JwtPayload, teacherId: string, classIds: string[]): Promise<boolean> {
+    if (jwtUser.role === "ADMIN" || classIds.length === 0) return true;
+    const allowed = await prisma.classTeacher.findMany({
+      where: { teacherId, classId: { in: classIds } },
+      select: { classId: true },
+    });
+    return new Set(allowed.map((c: any) => c.classId)).size === new Set(classIds).size;
+  }
+
+  function isBetterAttempt(candidate: any, previous: any): boolean {
+    if (!previous) return true;
+    const candidatePct = candidate.score / candidate.total;
+    const previousPct = previous.score / previous.total;
+    if (candidatePct !== previousPct) return candidatePct > previousPct;
+    if (candidate.durationMs == null && previous.durationMs == null) return candidate.createdAt > previous.createdAt;
+    if (candidate.durationMs == null) return false;
+    if (previous.durationMs == null) return true;
+    if (candidate.durationMs !== previous.durationMs) return candidate.durationMs < previous.durationMs;
+    return candidate.createdAt > previous.createdAt;
+  }
 
   // ── Image upload for card faces ─────────────────────────────────────────────
   app.use("/uploads/flashcards", express.static(FLASHCARD_IMAGE_DIR, { maxAge: process.env.NODE_ENV === "production" ? "30d" : 0 }));
@@ -238,7 +260,7 @@ export function registerFlashcardRoutes(deps: Deps): void {
     const description = (req.body?.description ?? "").toString().trim().slice(0, 1000) || null;
     const subjectId = req.body?.subjectId || null;
     const shared = Boolean(req.body?.shared);
-    const classIds: string[] = Array.isArray(req.body?.classIds) ? req.body.classIds.filter((c: any) => typeof c === "string") : [];
+    const classIds: string[] = Array.from(new Set(Array.isArray(req.body?.classIds) ? req.body.classIds.filter((c: any) => typeof c === "string") : []));
     const cards = normalizeCards(req.body?.cards);
     if (!title) { res.status(400).json({ error: "Title is required" }); return; }
     if (cards.length === 0) { res.status(400).json({ error: "Add at least one card (term + definition)" }); return; }
@@ -253,6 +275,8 @@ export function registerFlashcardRoutes(deps: Deps): void {
       }
       if (!teacher) { res.status(400).json({ error: "No teacher profile available to own this deck -- assign a class with a teacher, or create it as a teacher account" }); return; }
       const teacherId = teacher.id;
+      const canUseClasses = await validateTeacherClassAccess(jwtUser, teacherId, classIds);
+      if (!canUseClasses) { res.status(403).json({ error: "You can only assign decks to your own classes" }); return; }
 
       const deck = await prisma.flashcardDeck.create({
         data: {
@@ -280,7 +304,7 @@ export function registerFlashcardRoutes(deps: Deps): void {
     try {
       const existing = await prisma.flashcardDeck.findUnique({
         where: { id: req.params.id },
-        include: { teacher: { select: { userId: true } } },
+        include: { teacher: { select: { userId: true } }, cards: { select: { id: true, imageUrl: true } } },
       });
       if (!existing) { res.status(404).json({ error: "Deck not found" }); return; }
       if (jwtUser.role !== "ADMIN" && existing.teacher?.userId !== jwtUser.userId) {
@@ -291,26 +315,46 @@ export function registerFlashcardRoutes(deps: Deps): void {
       const description = (req.body?.description ?? "").toString().trim().slice(0, 1000) || null;
       const subjectId = req.body?.subjectId || null;
       const shared = Boolean(req.body?.shared);
-      const classIds: string[] = Array.isArray(req.body?.classIds) ? req.body.classIds.filter((c: any) => typeof c === "string") : [];
+      const classIds: string[] = Array.from(new Set(Array.isArray(req.body?.classIds) ? req.body.classIds.filter((c: any) => typeof c === "string") : []));
       const cards = normalizeCards(req.body?.cards);
       if (!title) { res.status(400).json({ error: "Title is required" }); return; }
       if (cards.length === 0) { res.status(400).json({ error: "Add at least one card (term + definition)" }); return; }
+      const canUseClasses = await validateTeacherClassAccess(jwtUser, existing.teacherId, classIds);
+      if (!canUseClasses) { res.status(403).json({ error: "You can only assign decks to your own classes" }); return; }
+
+      const existingCardIds = new Set(existing.cards.map((c: any) => c.id));
+      const incomingIds = cards.map((c) => c.id).filter((cardId): cardId is string => !!cardId);
+      const invalidIds = incomingIds.filter((cardId) => !existingCardIds.has(cardId));
+      if (invalidIds.length > 0) { res.status(400).json({ error: "One or more cards do not belong to this deck" }); return; }
 
       const keepImageUrls = new Set(cards.map((c) => c.imageUrl).filter((u): u is string => !!u));
       await deleteCardImages(existing.id, keepImageUrls);
 
-      await prisma.$transaction([
-        prisma.flashcardCard.deleteMany({ where: { deckId: existing.id } }),
-        prisma.flashcardDeckClass.deleteMany({ where: { deckId: existing.id } }),
-        prisma.flashcardDeck.update({
+      await prisma.$transaction(async (tx: any) => {
+        await tx.flashcardCard.deleteMany({
+          where: { deckId: existing.id, ...(incomingIds.length ? { id: { notIn: incomingIds } } : {}) },
+        });
+        await tx.flashcardDeckClass.deleteMany({ where: { deckId: existing.id } });
+        await tx.flashcardDeck.update({
           where: { id: existing.id },
           data: {
             title, description, subjectId, shared,
-            cards: { create: cards.map((c, i) => ({ term: c.term, definition: c.definition, imageUrl: c.imageUrl, order: i })) },
             classLinks: { create: classIds.map((classId) => ({ classId })) },
           },
-        }),
-      ]);
+        });
+        for (const [i, c] of cards.entries()) {
+          if (c.id) {
+            await tx.flashcardCard.update({
+              where: { id: c.id },
+              data: { term: c.term, definition: c.definition, imageUrl: c.imageUrl, order: i },
+            });
+          } else {
+            await tx.flashcardCard.create({
+              data: { deckId: existing.id, term: c.term, definition: c.definition, imageUrl: c.imageUrl, order: i },
+            });
+          }
+        }
+      });
 
       await createAuditLog(
         jwtUser.userId, jwtUser.email, "UPDATE", "FLASHCARD_DECK", existing.id,
@@ -369,8 +413,11 @@ export function registerFlashcardRoutes(deps: Deps): void {
     const total = Number(req.body?.total);
     const durationMs = req.body?.durationMs != null ? Number(req.body.durationMs) : null;
     if (!ATTEMPT_MODES.includes(mode)) { res.status(400).json({ error: "Invalid mode" }); return; }
-    if (!Number.isFinite(score) || !Number.isFinite(total) || total <= 0 || score < 0) {
+    if (!Number.isFinite(score) || !Number.isFinite(total) || total <= 0 || score < 0 || score > total) {
       res.status(400).json({ error: "Invalid score/total" }); return;
+    }
+    if (durationMs != null && (!Number.isFinite(durationMs) || durationMs < 0)) {
+      res.status(400).json({ error: "Invalid duration" }); return;
     }
     try {
       const student = await getStudentForReq(req);
@@ -397,16 +444,19 @@ export function registerFlashcardRoutes(deps: Deps): void {
     try {
       const student = await getStudentForReq(req);
       if (!student) { res.status(404).json({ error: "Student profile not found" }); return; }
+      const deck = await prisma.flashcardDeck.findUnique({ where: { id: req.params.id } });
+      if (!deck) { res.status(404).json({ error: "Deck not found" }); return; }
+      const canAccess = await studentCanAccessDeck(student.id, deck.id);
+      if (!canAccess) { res.status(403).json({ error: "Forbidden" }); return; }
       const attempts = await prisma.flashcardAttempt.findMany({
-        where: { deckId: req.params.id, studentId: student.id },
+        where: { deckId: deck.id, studentId: student.id },
         orderBy: { createdAt: "desc" },
         take: 20,
       });
       const bestByMode: Record<string, any> = {};
       for (const a of attempts) {
         const prev = bestByMode[a.mode];
-        const better = !prev || a.score / a.total > prev.score / prev.total;
-        if (better) bestByMode[a.mode] = a;
+        if (isBetterAttempt(a, prev)) bestByMode[a.mode] = a;
       }
       res.json({
         attempts: attempts.map((a: any) => ({ id: a.id, mode: a.mode, score: a.score, total: a.total, durationMs: a.durationMs, createdAt: a.createdAt })),
@@ -425,8 +475,12 @@ export function registerFlashcardRoutes(deps: Deps): void {
     try {
       const student = await getStudentForReq(req);
       if (!student) { res.status(404).json({ error: "Student profile not found" }); return; }
+      const deck = await prisma.flashcardDeck.findUnique({ where: { id: req.params.id } });
+      if (!deck) { res.status(404).json({ error: "Deck not found" }); return; }
+      const canAccess = await studentCanAccessDeck(student.id, deck.id);
+      if (!canAccess) { res.status(403).json({ error: "Forbidden" }); return; }
       const masteries = await prisma.flashcardCardMastery.findMany({
-        where: { studentId: student.id, card: { deckId: req.params.id } },
+        where: { studentId: student.id, card: { deckId: deck.id } },
         select: { cardId: true, status: true },
       });
       const map: Record<string, string> = {};
@@ -509,12 +563,12 @@ export function registerFlashcardRoutes(deps: Deps): void {
       for (const m of masteries) knownCountByStudent[m.studentId] = (knownCountByStudent[m.studentId] || 0) + 1;
 
       const bestByStudentMode: Record<string, Record<string, any>> = {};
-      const lastActivityByStudent: Record<string, string> = {};
+      const lastActivityByStudent: Record<string, any> = {};
       for (const a of attempts) {
         if (!lastActivityByStudent[a.studentId]) lastActivityByStudent[a.studentId] = a.createdAt;
         bestByStudentMode[a.studentId] = bestByStudentMode[a.studentId] || {};
         const prev = bestByStudentMode[a.studentId][a.mode];
-        if (!prev || a.score / a.total > prev.score / prev.total) bestByStudentMode[a.studentId][a.mode] = a;
+        if (isBetterAttempt(a, prev)) bestByStudentMode[a.studentId][a.mode] = a;
       }
 
       res.json({

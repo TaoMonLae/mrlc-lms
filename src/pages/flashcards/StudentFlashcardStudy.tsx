@@ -87,11 +87,20 @@ export default function StudentFlashcardStudy() {
 
   const markMastery = async (status: 'KNOWN' | 'LEARNING') => {
     if (!current) return;
+    const cardId = current.id;
+    const previousStatus = mastery[cardId];
     setMastery((prev) => ({ ...prev, [current.id]: status }));
     try {
-      await apiSend(`/api/flashcards/cards/${current.id}/mastery`, 'PUT', { status });
+      await apiSend(`/api/flashcards/cards/${cardId}/mastery`, 'PUT', { status });
     } catch {
-      /* keep optimistic local state even if the sync fails silently */
+      setMastery((prev) => {
+        const next = { ...prev };
+        if (previousStatus) next[cardId] = previousStatus;
+        else delete next[cardId];
+        return next;
+      });
+      toast.error('Could not save your progress');
+      return;
     }
     goNext();
   };
@@ -137,7 +146,7 @@ export default function StudentFlashcardStudy() {
         <div className="flex items-center justify-between gap-3 text-sm">
           <span className="text-slate-500">{knownCount} of {deck.cards.length} cards known</span>
           <Button size="sm" variant="outline" onClick={toggleOnlyLearning}>
-            {onlyLearning ? 'Studying: still learning only' : 'Study all cards'}
+            {onlyLearning ? 'Study all cards' : 'Study still learning'}
           </Button>
         </div>
       )}

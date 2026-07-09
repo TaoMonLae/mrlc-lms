@@ -98,9 +98,10 @@ export default function FlashcardSpelling() {
     setInput('');
     setChecked(null);
     if (index + 1 >= order.length) {
+      const finalScore = answers.filter((a) => a.correct).length;
       setFinished(true);
       if (isStudentRoute && id) {
-        apiSend(`/api/flashcards/decks/${id}/attempts`, 'POST', { mode: 'SPELL', score, total: order.length })
+        apiSend(`/api/flashcards/decks/${id}/attempts`, 'POST', { mode: 'SPELL', score: finalScore, total: order.length })
           .then(loadBest)
           .catch(() => {});
       }
