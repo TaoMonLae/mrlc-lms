@@ -11,7 +11,7 @@ import 'react-pdf/dist/esm/Page/TextLayer.css';
 import {
   ArrowLeft, ChevronLeft, ChevronRight, Download, ZoomIn, ZoomOut,
   Loader2, BookOpen, List, Lock, Maximize2, Minimize2, Search, X,
-  Highlighter, Sparkles, Trash2,
+  Highlighter, Sparkles, Trash2, BookA, Volume2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -268,18 +268,149 @@ export default function EbookReader() {
 }
 
 /* ─────────────────────── Shared: selection action bar ─────────────────────── */
-function SelectionBar({ text, onHighlight, onFlashcard, onDismiss }: {
-  text: string; onHighlight: () => void; onFlashcard?: () => void; onDismiss: () => void;
+function SelectionBar({ text, onHighlight, onFlashcard, onDefine, onDismiss }: {
+  text: string; onHighlight: () => void; onFlashcard?: () => void; onDefine?: () => void; onDismiss: () => void;
 }) {
   return (
     <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-lg px-3 py-1.5 max-w-[92%]">
       <span className="hidden sm:inline text-xs text-slate-500 truncate max-w-[180px]">"{text}"</span>
+      {onDefine && (
+        <Button size="sm" variant="outline" onClick={onDefine}><BookA className="h-3.5 w-3.5 mr-1.5" /> Define</Button>
+      )}
       <Button size="sm" variant="outline" onClick={onHighlight}><Highlighter className="h-3.5 w-3.5 mr-1.5" /> Highlight</Button>
       {onFlashcard && (
         <Button size="sm" variant="outline" onClick={onFlashcard}><Sparkles className="h-3.5 w-3.5 mr-1.5" /> Flashcard</Button>
       )}
       <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={onDismiss}><X className="h-3.5 w-3.5" /></Button>
     </div>
+  );
+}
+
+// A single word (letters/apostrophes/hyphens only) or Myanmar-script text,
+// pulled out of a (possibly multi-word) text selection, for dictionary
+// lookup. Falls back to null if the selection has no such token at all
+// (e.g. pure punctuation/numbers).
+const MYANMAR_SCRIPT_RE_READER = /[က-႟]/;
+function extractLookupWord(selected: string): string | null {
+  const trimmed = selected.trim();
+  if (!trimmed) return null;
+  if (MYANMAR_SCRIPT_RE_READER.test(trimmed)) return trimmed.slice(0, 60);
+  const m = trimmed.match(/[A-Za-z][A-Za-z'-]*/);
+  return m ? m[0] : null;
+}
+
+interface ReaderDictEntry { pos: string; posLabel: string; definition: string; examples: string[]; synonyms: string[]; }
+interface ReaderTranslation { pos: string | null; definition: string; }
+interface ReaderMonDefinition { lang: string; pos: string | null; definition: string; example: string | null; }
+interface ReaderMonWord { word: string; ipa: string | null; thaiGloss: string | null; definitions: ReaderMonDefinition[]; }
+interface ReaderLookupResult { word: string; entries: ReaderDictEntry[]; translations: ReaderTranslation[]; monMatches: ReaderMonWord[]; }
+const READER_MON_LANG_LABEL: Record<string, string> = { eng: 'English', mya: 'Myanmar', tha: 'Thai' };
+
+/* ─────────────────────── Shared: quick define popover ─────────────────────── */
+function DefinePopover({ word, onClose }: { word: string; onClose: () => void }) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<ReaderLookupResult | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    setData(null);
+    // The dictionary API is public (no sign-in required), so no auth header.
+    fetch(`/api/dictionary/lookup?word=${encodeURIComponent(word)}`)
+      .then(async (res) => {
+        if (cancelled) return;
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || 'Word not found.');
+        }
+        setData(await res.json());
+      })
+      .catch((e: any) => { if (!cancelled) setError(e.message || 'Word not found.'); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [word]);
+
+  const speak = () => {
+    try {
+      const utter = new SpeechSynthesisUtterance(word);
+      utter.lang = 'en-US';
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utter);
+    } catch { /* speech synthesis unavailable — no-op */ }
+  };
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto custom-scrollbar">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <BookA className="h-4 w-4 text-accent-purple shrink-0" /> {word}
+            {data && data.entries.length > 0 && (
+              <Button variant="ghost" size="icon" className="h-6 w-6" title="Pronounce" onClick={speak}>
+                <Volume2 className="h-3.5 w-3.5" />
+              </Button>
+            )}
+          </DialogTitle>
+        </DialogHeader>
+        {loading ? (
+          <div className="flex items-center justify-center py-8 text-slate-500">
+            <Loader2 className="h-5 w-5 animate-spin" />
+          </div>
+        ) : error ? (
+          <p className="text-sm text-slate-500 py-6 text-center">{error}</p>
+        ) : data ? (
+          <div className="space-y-4">
+            {data.translations.length > 0 && (
+              <div className="space-y-1.5 rounded-lg bg-accent-purple/5 border border-accent-purple/10 p-3">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-accent-purple">Myanmar</p>
+                {data.translations.map((t, i) => (
+                  <p key={i} className="text-sm text-slate-700 dark:text-slate-200">{t.definition}</p>
+                ))}
+              </div>
+            )}
+            {data.monMatches.length > 0 && (
+              <div className="space-y-2 rounded-lg bg-amber-500/5 border border-amber-500/10 p-3">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-amber-600 dark:text-amber-400">Mon</p>
+                {data.monMatches.slice(0, 3).map((m, i) => (
+                  <div key={i}>
+                    <span className="text-sm font-medium text-slate-900 dark:text-white">{m.word}</span>
+                    {m.definitions.slice(0, 2).map((d, j) => (
+                      <p key={j} className="text-xs text-slate-600 dark:text-slate-300">
+                        <span className="text-slate-400">{READER_MON_LANG_LABEL[d.lang] || d.lang}: </span>{d.definition}
+                      </p>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
+            {data.entries.length > 0 ? (
+              <ol className="space-y-2.5 list-decimal list-inside marker:text-slate-400 marker:text-sm">
+                {data.entries.slice(0, 6).map((e, i) => (
+                  <li key={i} className="text-sm text-slate-700 dark:text-slate-200">
+                    <span className="text-[10px] font-medium text-slate-400 mr-1">{e.posLabel}</span>
+                    {e.definition}
+                    {e.examples[0] && <span className="block text-xs text-slate-500 italic mt-0.5 pl-4">"{e.examples[0]}"</span>}
+                  </li>
+                ))}
+              </ol>
+            ) : data.translations.length === 0 && data.monMatches.length === 0 ? (
+              <p className="text-sm text-slate-500 py-4 text-center">No definition found for "{word}".</p>
+            ) : null}
+            <Link
+              to={`/dictionary`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block text-xs text-primary hover:underline pt-1"
+            >
+              Open full Dictionary →
+            </Link>
+          </div>
+        ) : null}
+        <DialogFooter><Button variant="outline" onClick={onClose}>Close</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -498,6 +629,7 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards }: {
   const [showSearch, setShowSearch] = useState(false);
   const [selection, setSelection] = useState<string | null>(null);
   const [addingFlashcard, setAddingFlashcard] = useState(false);
+  const [defineWord, setDefineWord] = useState<string | null>(null);
 
   const file = useMemo(
     () => ({
@@ -675,6 +807,7 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards }: {
             text={selection}
             onHighlight={saveHighlight}
             onFlashcard={canMakeFlashcards ? () => setAddingFlashcard(true) : undefined}
+            onDefine={extractLookupWord(selection) ? () => setDefineWord(extractLookupWord(selection)) : undefined}
             onDismiss={() => { window.getSelection()?.removeAllRanges(); setSelection(null); }}
           />
         )}
@@ -719,6 +852,7 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards }: {
           onClose={() => { setAddingFlashcard(false); window.getSelection()?.removeAllRanges(); setSelection(null); }}
         />
       )}
+      {defineWord && <DefinePopover word={defineWord} onClose={() => setDefineWord(null)} />}
     </div>
   );
 }
@@ -757,6 +891,7 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards }: {
   const [showSearch, setShowSearch] = useState(false);
   const [selection, setSelection] = useState<{ cfiRange: string; text: string; contents: any } | null>(null);
   const [addingFlashcard, setAddingFlashcard] = useState(false);
+  const [defineWord, setDefineWord] = useState<string | null>(null);
   const appliedHighlightIds = useRef<Set<string>>(new Set());
 
   // Resolve the currently-visible location to the matching TOC entry (by
@@ -944,6 +1079,7 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards }: {
             text={selection.text}
             onHighlight={saveHighlight}
             onFlashcard={canMakeFlashcards ? () => setAddingFlashcard(true) : undefined}
+            onDefine={extractLookupWord(selection.text) ? () => setDefineWord(extractLookupWord(selection.text)) : undefined}
             onDismiss={clearSelection}
           />
         )}
@@ -995,6 +1131,7 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards }: {
           onClose={() => { setAddingFlashcard(false); clearSelection(); }}
         />
       )}
+      {defineWord && <DefinePopover word={defineWord} onClose={() => setDefineWord(null)} />}
     </div>
   );
 }
