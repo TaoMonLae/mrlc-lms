@@ -57,25 +57,39 @@ function mapApiUser(apiUser: Record<string, any>): User {
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
+// sessionStorage is the canonical in-app store; "Remember me" additionally
+// mirrors the token to localStorage so it survives browser restarts. Restore
+// it into sessionStorage synchronously, during render (NOT inside a
+// useEffect below): a fresh tab has no sessionStorage copy yet, and a
+// descendant provider (SettingsProvider, which reads sessionStorage in its
+// own mount effect to fetch the school's logo/branding) would otherwise
+// race this restoration. React fires a child's effects before its parent's,
+// so if this copy happened inside AuthProvider's useEffect, SettingsProvider
+// could run its effect first, see an empty sessionStorage on that brand-new
+// tab, and give up permanently — nothing ever tells it to retry once
+// AuthProvider finishes restoring the session a moment later (this is what
+// caused the school logo to silently fall back to the default icon on a
+// fresh tab/session). Doing this plain, idempotent read/write during render
+// instead guarantees it's done before any child even starts rendering,
+// since React renders parents top-down.
+function restoreRememberedSession() {
+  if (sessionStorage.getItem('auth_token')) return;
+  const remembered = localStorage.getItem('auth_token');
+  if (!remembered) return;
+  sessionStorage.setItem('auth_token', remembered);
+  const rememberedUser = localStorage.getItem('auth_user');
+  if (rememberedUser) sessionStorage.setItem('auth_user', rememberedUser);
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
+  restoreRememberedSession();
+
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // On mount: validate any existing token via /api/auth/me.
-  // sessionStorage is the canonical in-app store; "Remember me" additionally
-  // mirrors the token to localStorage so it survives browser restarts —
-  // restore it into sessionStorage here if the session copy is gone.
   useEffect(() => {
-    let token = sessionStorage.getItem('auth_token');
-    if (!token) {
-      const remembered = localStorage.getItem('auth_token');
-      if (remembered) {
-        token = remembered;
-        sessionStorage.setItem('auth_token', remembered);
-        const rememberedUser = localStorage.getItem('auth_user');
-        if (rememberedUser) sessionStorage.setItem('auth_user', rememberedUser);
-      }
-    }
+    const token = sessionStorage.getItem('auth_token');
     if (!token) {
       setIsLoading(false);
       return;
