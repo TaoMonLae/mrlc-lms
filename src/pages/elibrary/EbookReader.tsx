@@ -10,7 +10,7 @@ import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 import {
   ArrowLeft, ChevronLeft, ChevronRight, Download, ZoomIn, ZoomOut,
-  Loader2, BookOpen, List, Lock,
+  Loader2, BookOpen, List, Lock, Maximize2, Minimize2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -48,8 +48,29 @@ export default function EbookReader() {
   const [epubBlob, setEpubBlob] = useState<Blob | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const readerRef = useRef<HTMLDivElement>(null);
 
   const token = useMemo(() => sessionStorage.getItem('auth_token'), []);
+
+  // Full page (browser Fullscreen API) support for distraction-free reading.
+  useEffect(() => {
+    const onChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', onChange);
+    return () => document.removeEventListener('fullscreenchange', onChange);
+  }, []);
+
+  const toggleFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await readerRef.current?.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch {
+      toast.error('Full page view is not supported in this browser.');
+    }
+  };
 
   // Load metadata first. PDFs are streamed directly by pdf.js so larger books
   // can start rendering without waiting for a full blob download.
@@ -113,13 +134,18 @@ export default function EbookReader() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-7rem)] -m-2">
+    <div
+      ref={readerRef}
+      className={`flex flex-col -m-2 ${isFullscreen ? 'h-screen bg-white dark:bg-canvas p-3' : 'h-[calc(100vh-7rem)]'}`}
+    >
       {/* Toolbar */}
       <div className="flex items-center gap-3 px-1 pb-3 shrink-0">
-        <Button variant="ghost" size="icon" title="Back to library"
-          render={<Link to="/elibrary" />} nativeButton={false}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
+        {!isFullscreen && (
+          <Button variant="ghost" size="icon" title="Back to library"
+            render={<Link to="/elibrary" />} nativeButton={false}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        )}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <h1 className="font-semibold text-slate-900 dark:text-white truncate">
@@ -139,6 +165,14 @@ export default function EbookReader() {
             <Download className="h-4 w-4 mr-2" /> Download
           </Button>
         )}
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={toggleFullscreen}
+          title={isFullscreen ? 'Exit full page view' : 'Full page view'}
+        >
+          {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+        </Button>
       </div>
 
       {/* Viewer */}
@@ -261,6 +295,19 @@ function PdfView({ id, token }: { id: string; token: string | null }) {
   );
 }
 
+// TOC hrefs and the rendition's "relocated" href are often resolved relative
+// to different base paths (or carry a cache-busting prefix), so a naive
+// equality check almost never matches. Compare by filename only, ignoring
+// any query string or hash fragment, so the dropdown shows the chapter
+// label instead of falling back to the raw (and often very long) href.
+function hrefKey(href: string): string {
+  try {
+    return decodeURIComponent(href.split('#')[0].split('?')[0]).split('/').pop() || href;
+  } catch {
+    return href;
+  }
+}
+
 /* ─────────────────────────── EPUB reader ─────────────────────────── */
 function EpubView({ blob }: { blob: Blob }) {
   const viewerRef = useRef<HTMLDivElement>(null);
@@ -270,6 +317,16 @@ function EpubView({ blob }: { blob: Blob }) {
   const [currentHref, setCurrentHref] = useState<string>('');
   const [ready, setReady] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  // Resolve the currently-visible location to the matching TOC entry (by
+  // filename) so the dropdown shows a readable chapter label instead of the
+  // raw spine href, which is often long and would otherwise overflow into
+  // the "next" button.
+  const activeTocHref = useMemo(() => {
+    if (!currentHref) return '';
+    const key = hrefKey(currentHref);
+    return toc.find((t) => hrefKey(t.href) === key)?.href || '';
+  }, [currentHref, toc]);
 
   useEffect(() => {
     let destroyed = false;
@@ -330,11 +387,14 @@ function EpubView({ blob }: { blob: Blob }) {
         )}
       </div>
       <div className="shrink-0 flex items-center justify-center gap-2 border-t border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo px-4 py-2">
-        <Button variant="outline" size="icon" onClick={() => rendRef.current?.prev()} disabled={!ready}><ChevronLeft className="h-4 w-4" /></Button>
+        <Button variant="outline" size="icon" onClick={() => rendRef.current?.prev()} disabled={!ready} className="shrink-0"><ChevronLeft className="h-4 w-4" /></Button>
         {toc.length > 0 && (
-          <Select value={currentHref} onValueChange={(href) => rendRef.current?.display(href)}>
-            <SelectTrigger className="w-[260px] h-9">
-              <div className="flex items-center gap-2 min-w-0"><List className="h-3.5 w-3.5 shrink-0" /><SelectValue placeholder="Contents" /></div>
+          <Select value={activeTocHref} onValueChange={(href) => rendRef.current?.display(href)}>
+            <SelectTrigger className="w-[140px] sm:w-[220px] md:w-[260px] h-9 shrink-0 overflow-hidden">
+              <div className="flex items-center gap-2 min-w-0 w-full">
+                <List className="h-3.5 w-3.5 shrink-0" />
+                <SelectValue placeholder="Contents" className="truncate min-w-0" />
+              </div>
             </SelectTrigger>
             <SelectContent className="max-h-72 min-w-[260px]">
               {toc.map((t, i) => (
@@ -343,7 +403,7 @@ function EpubView({ blob }: { blob: Blob }) {
             </SelectContent>
           </Select>
         )}
-        <Button variant="outline" size="icon" onClick={() => rendRef.current?.next()} disabled={!ready}><ChevronRight className="h-4 w-4" /></Button>
+        <Button variant="outline" size="icon" onClick={() => rendRef.current?.next()} disabled={!ready} className="shrink-0"><ChevronRight className="h-4 w-4" /></Button>
       </div>
     </div>
   );
