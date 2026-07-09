@@ -253,6 +253,9 @@ export default function App() {
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
             <Route path="/verify/payment/:id" element={<VerifyPaymentReceipt />} />
             <Route path="/verify/:token" element={<VerifyDocument />} />
+
+            {/* Dictionary — public, no sign-in required (also linked from inside the app) */}
+            <Route path="/dictionary" element={<Dictionary />} />
             
             <Route element={<ProtectedRoute />}>
               <Route path="/change-password" element={<ChangePassword />} />
@@ -320,9 +323,6 @@ export default function App() {
 
                 <Route path="/games/sudoku" element={<SudokuSelectPage />} />
                 <Route path="/games/sudoku/play" element={<SudokuPlayPage />} />
-
-                {/* Dictionary — offline WordNet lookup, available to every authenticated role */}
-                <Route path="/dictionary" element={<Dictionary />} />
 
                 <Route path="/timetable" element={<TimetablePage />} />
 

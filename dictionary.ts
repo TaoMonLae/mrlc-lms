@@ -79,7 +79,10 @@ const MYANMAR_SCRIPT_RE = /[က-႟]/;
 const monWordSelect = { word: true, ipa: true, thaiGloss: true, definitions: { select: { lang: true, pos: true, definition: true, example: true } } };
 
 export function registerDictionaryRoutes(deps: Deps): void {
-  const { app, prisma, authMiddleware, logger } = deps;
+  // authMiddleware is accepted for interface consistency with the other
+  // register*Routes functions but intentionally unused: the Dictionary
+  // feature is public (no sign-in required).
+  const { app, prisma, logger } = deps;
 
   // Burmese translations for a word, if the (separately, non-WordNet)
   // English->Myanmar dataset has any -- see prisma/seedEnMyDictionary.ts for
@@ -136,7 +139,10 @@ export function registerDictionaryRoutes(deps: Deps): void {
     }
   }
 
-  app.get("/api/dictionary/lookup", authMiddleware, async (req, res) => {
+  // Public endpoints -- the Dictionary page is usable without signing in, so
+  // these intentionally do NOT use authMiddleware. They're still covered by
+  // the app-wide per-IP rate limiter registered in server.ts.
+  app.get("/api/dictionary/lookup", async (req, res) => {
     const rawWord = (req.query.word ?? "").toString().trim().slice(0, 60);
     if (!rawWord) { res.status(400).json({ error: "A word is required" }); return; }
 
@@ -176,7 +182,7 @@ export function registerDictionaryRoutes(deps: Deps): void {
   });
 
   // "Word of the Day" style random pick for the Dictionary page's landing state.
-  app.get("/api/dictionary/random", authMiddleware, async (_req, res) => {
+  app.get("/api/dictionary/random", async (_req, res) => {
     try {
       const word: string = await new Promise((resolve, reject) => {
         wordpos.rand({ count: 1 }, (words: string[]) => {

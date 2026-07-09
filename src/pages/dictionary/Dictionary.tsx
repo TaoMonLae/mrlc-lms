@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { BookA, Search, Loader2, Shuffle, X, Volume2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { BookA, Search, Loader2, Shuffle, X, Volume2, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -92,8 +93,8 @@ export default function Dictionary() {
   const fetchRandom = async () => {
     setLoadingWotd(true);
     try {
-      const token = sessionStorage.getItem('auth_token');
-      const res = await fetch('/api/dictionary/random', { headers: { Authorization: `Bearer ${token}` } });
+      // Dictionary is public — no sign-in required — so no auth header here.
+      const res = await fetch('/api/dictionary/random');
       if (res.ok) setWordOfDay(await res.json());
     } catch {
       // Non-critical — the word-of-the-day card just won't show.
@@ -109,10 +110,7 @@ export default function Dictionary() {
     setError(null);
     setResult(null);
     try {
-      const token = sessionStorage.getItem('auth_token');
-      const res = await fetch(`/api/dictionary/lookup?word=${encodeURIComponent(word)}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(`/api/dictionary/lookup?word=${encodeURIComponent(word)}`);
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || 'Word not found.');
@@ -232,13 +230,30 @@ export default function Dictionary() {
     );
   };
 
+  // This page is public (no sign-in required), so it isn't nested inside the
+  // app's authenticated layout/sidebar — it renders standalone with its own
+  // minimal header instead.
+  const isSignedIn = typeof window !== 'undefined' && !!sessionStorage.getItem('auth_token');
+
   return (
-    <div className="max-w-2xl mx-auto space-y-6 pb-10">
+    <div className="min-h-screen bg-slate-50 dark:bg-canvas">
+      <header className="border-b border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo">
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2 font-semibold text-slate-900 dark:text-white">
+            <BookA className="h-5 w-5 text-accent-purple" /> Dictionary
+          </Link>
+          <Link
+            to={isSignedIn ? '/dashboard' : '/login'}
+            className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-primary transition-colors"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> {isSignedIn ? 'Back to Dashboard' : 'Log in'}
+          </Link>
+        </div>
+      </header>
+
+      <div className="max-w-2xl mx-auto px-4 space-y-6 py-6 pb-10">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-          <BookA className="h-6 w-6 text-accent-purple" /> Dictionary
-        </h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Look up any English word — definitions, examples, synonyms, and Myanmar/Mon translations — or paste a Mon word directly. No internet required.</p>
+        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Look up any English word — definitions, examples, synonyms, and Myanmar/Mon translations — or paste a Mon word directly. Free to use, no sign-in required.</p>
       </div>
 
       <form onSubmit={onSubmit} className="flex gap-2">
@@ -312,6 +327,7 @@ export default function Dictionary() {
             )}
           </div>
         )}
+      </div>
       </div>
     </div>
   );
