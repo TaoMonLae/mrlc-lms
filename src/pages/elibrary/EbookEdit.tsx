@@ -11,6 +11,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { EBOOK_CATEGORY_DATALIST_ID, EbookCategoryOptions } from '../../lib/ebookCategories';
 
 export default function EbookEdit() {
   const { id } = useParams<{ id: string }>();
@@ -154,7 +155,13 @@ export default function EbookEdit() {
           </div>
           <div className="space-y-2">
             <Label>Category</Label>
-            <Input value={category} onChange={(e) => setCategory(e.target.value)} />
+            <Input
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              placeholder="Choose or type a genre/category"
+              list={EBOOK_CATEGORY_DATALIST_ID}
+            />
+            <EbookCategoryOptions />
           </div>
           <div className="space-y-2">
             <Label>Language</Label>

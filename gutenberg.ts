@@ -46,6 +46,37 @@ interface GutendexBook {
   download_count: number;
 }
 
+const GUTENBERG_CATEGORY_RULES: Array<[string, string]> = [
+  ["science fiction", "Science Fiction"],
+  ["fantasy", "Fantasy"],
+  ["children", "Children"],
+  ["juvenile", "Children"],
+  ["history", "History"],
+  ["science", "Science"],
+  ["biography", "Biography"],
+  ["autobiography", "Biography"],
+  ["reference", "Reference"],
+  ["education", "Education"],
+  ["language", "Language"],
+  ["religion", "Religion"],
+  ["philosophy", "Philosophy"],
+  ["poetry", "Poetry"],
+  ["drama", "Drama"],
+  ["adventure", "Adventure"],
+  ["mystery", "Mystery"],
+  ["detective", "Mystery"],
+  ["fiction", "Fiction"],
+  ["literature", "Literature"],
+];
+
+function inferGutenbergCategory(book: GutendexBook): string {
+  const haystack = [...(book.subjects || []), ...(book.bookshelves || [])].join(" ").toLowerCase();
+  for (const [needle, category] of GUTENBERG_CATEGORY_RULES) {
+    if (haystack.includes(needle)) return category;
+  }
+  return "Public Domain";
+}
+
 // Gutendex lists an EPUB URL under the "application/epub+zip" MIME key (most
 // books also have a ".images"-suffixed href variant under the same key in
 // some catalog snapshots, but there's only ever one entry per exact key, so
@@ -65,6 +96,7 @@ function simplify(b: GutendexBook) {
     author: b.authors.map((a) => a.name).join(", ") || null,
     languages: b.languages || [],
     subjects: (b.subjects || []).slice(0, 6),
+    category: inferGutenbergCategory(b),
     downloadCount: b.download_count,
     coverUrl: pickCoverUrl(b.formats || {}),
     hasEpub: !!pickEpubUrl(b.formats || {}),
@@ -150,7 +182,7 @@ export function registerGutenbergRoutes(deps: Deps): void {
           title: book.title,
           author,
           description: null,
-          category: category || "Public Domain",
+          category: category || inferGutenbergCategory(book),
           language: (book.languages && book.languages[0]) || "en",
           coverUrl,
           format: "EPUB",

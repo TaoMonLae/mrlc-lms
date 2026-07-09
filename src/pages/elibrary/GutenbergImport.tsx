@@ -14,6 +14,7 @@ interface GutenbergResult {
   author: string | null;
   languages: string[];
   subjects: string[];
+  category: string;
   downloadCount: number;
   coverUrl: string | null;
   hasEpub: boolean;
@@ -167,6 +168,7 @@ export default function GutenbergImport() {
                   {b.subjects.slice(0, 1).map((s) => (
                     <Badge key={s} variant="outline" className="text-[9px] truncate max-w-[100px]">{s}</Badge>
                   ))}
+                  <Badge variant="outline" className="text-[9px] truncate max-w-[100px]">{b.category}</Badge>
                 </div>
                 <div className="mt-auto pt-2">
                   {isImported ? (

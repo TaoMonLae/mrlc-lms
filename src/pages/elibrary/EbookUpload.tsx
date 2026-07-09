@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { useUser } from '../../lib/permissions';
+import { EBOOK_CATEGORY_DATALIST_ID, EbookCategoryOptions } from '../../lib/ebookCategories';
 
 const MAX_MB = 50;
 
@@ -321,7 +322,13 @@ export default function EbookUpload() {
           </p>
           <div className="space-y-2">
             <Label>Category</Label>
-            <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="e.g. Math, Science" />
+            <Input
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              placeholder="Choose or type a genre/category"
+              list={EBOOK_CATEGORY_DATALIST_ID}
+            />
+            <EbookCategoryOptions />
           </div>
           <div className="space-y-2">
             <Label>Language</Label>
