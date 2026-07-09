@@ -306,6 +306,14 @@ interface ReaderMonWord { word: string; ipa: string | null; thaiGloss: string | 
 interface ReaderLookupResult { word: string; entries: ReaderDictEntry[]; translations: ReaderTranslation[]; monMatches: ReaderMonWord[]; }
 const READER_MON_LANG_LABEL: Record<string, string> = { eng: 'English', mya: 'Myanmar', tha: 'Thai' };
 
+// Per the Fullscreen API spec, only descendants of the fullscreened element
+// are rendered -- a dialog portaled to document.body as usual would be
+// invisible while reading in the reader's "Full page view". Portal into the
+// fullscreened element itself when there is one.
+function fullscreenPortalContainer(): HTMLElement | undefined {
+  return (document.fullscreenElement as HTMLElement | null) || undefined;
+}
+
 /* ─────────────────────── Shared: quick define popover ─────────────────────── */
 function DefinePopover({ word, onClose }: { word: string; onClose: () => void }) {
   const [loading, setLoading] = useState(true);
@@ -341,9 +349,13 @@ function DefinePopover({ word, onClose }: { word: string; onClose: () => void })
     } catch { /* speech synthesis unavailable — no-op */ }
   };
 
+  // Browser fullscreen (used by the reader's "Full page view") only renders
+  // descendants of the fullscreened element -- a dialog portaled to
+  // document.body as usual would be invisible while reading in fullscreen.
+  // Portal into the fullscreened element itself when there is one.
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto custom-scrollbar">
+      <DialogContent container={fullscreenPortalContainer()} className="max-w-md max-h-[80vh] overflow-y-auto custom-scrollbar">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <BookA className="h-4 w-4 text-accent-purple shrink-0" /> {word}
@@ -420,7 +432,7 @@ function HighlightsDialog({ highlights, onJump, onDelete, onClose }: {
 }) {
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent container={fullscreenPortalContainer()} className="max-w-lg">
         <DialogHeader><DialogTitle>My Highlights</DialogTitle></DialogHeader>
         {highlights.length === 0 ? (
           <p className="text-sm text-slate-500 py-6 text-center">No highlights yet — select some text while reading to save one.</p>
@@ -471,7 +483,7 @@ function SearchDialog({ onSearch, onSelect, onClose }: {
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent container={fullscreenPortalContainer()} className="max-w-lg">
         <DialogHeader><DialogTitle>Search in Book</DialogTitle></DialogHeader>
         <div className="flex gap-2">
           <Input
@@ -568,7 +580,7 @@ function AddToFlashcardsDialog({ token, defaultDefinition, onClose }: {
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent>
+      <DialogContent container={fullscreenPortalContainer()}>
         <DialogHeader><DialogTitle>Add to Flashcard Deck</DialogTitle></DialogHeader>
         {loading ? (
           <div className="py-8 text-center text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin inline mr-2" /> Loading decks…</div>

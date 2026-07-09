@@ -41,12 +41,22 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  container,
   ...props
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean
+  /**
+   * Where to portal the dialog into. Defaults to `document.body`. Pass the
+   * fullscreened element here (e.g. `document.fullscreenElement`) when the
+   * dialog needs to stay visible while the page is in the browser's
+   * Fullscreen API mode -- per spec, only descendants of the fullscreened
+   * element are rendered, so a body-portaled dialog would otherwise be
+   * invisible.
+   */
+  container?: DialogPrimitive.Portal.Props["container"]
 }) {
   return (
-    <DialogPortal>
+    <DialogPortal container={container}>
       <DialogOverlay />
       <DialogPrimitive.Popup
         data-slot="dialog-content"
