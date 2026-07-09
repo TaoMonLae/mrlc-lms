@@ -12,9 +12,15 @@ interface DictionaryEntry {
   synonyms: string[];
 }
 
+interface Translation {
+  pos: string | null;
+  definition: string;
+}
+
 interface LookupResult {
   word: string;
   entries: DictionaryEntry[];
+  translations: Translation[];
 }
 
 const RECENTS_KEY = 'dictionary_recent_searches';
@@ -130,6 +136,19 @@ export default function Dictionary() {
             <Volume2 className="h-4 w-4" />
           </Button>
         </div>
+        {data.translations.length > 0 && (
+          <div className="space-y-2 rounded-lg bg-accent-purple/5 border border-accent-purple/10 p-3">
+            <p className="text-xs font-semibold uppercase tracking-widest text-accent-purple">Myanmar Translation (မြန်မာဘာသာပြန်)</p>
+            <ul className="space-y-1.5">
+              {data.translations.map((t, i) => (
+                <li key={i} className="text-sm text-slate-700 dark:text-slate-200 flex items-baseline gap-2">
+                  {t.pos && <span className="text-[10px] font-medium text-slate-400 shrink-0">{t.pos}</span>}
+                  <span>{t.definition}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         {Array.from(groups.entries()).map(([posLabel, entries]) => (
           <div key={posLabel} className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">{posLabel}</p>
@@ -172,7 +191,7 @@ export default function Dictionary() {
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
           <BookA className="h-6 w-6 text-accent-purple" /> Dictionary
         </h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Look up any English word — definitions, examples, and synonyms, no internet required.</p>
+        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Look up any English word — definitions, examples, synonyms, and Myanmar translations, no internet required.</p>
       </div>
 
       <form onSubmit={onSubmit} className="flex gap-2">

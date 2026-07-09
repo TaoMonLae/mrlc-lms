@@ -5,6 +5,7 @@ import WordPOS from "wordpos";
 
 interface Deps {
   app: express.Express;
+  prisma: any;
   authMiddleware: express.RequestHandler;
   logger: { error: (...a: any[]) => void };
 }
@@ -51,18 +52,45 @@ function normalizeResults(raw: any[], queryWord: string): DictionaryEntry[] {
   return entries;
 }
 
+interface Translation {
+  pos: string | null;
+  definition: string;
+}
+
 export function registerDictionaryRoutes(deps: Deps): void {
-  const { app, authMiddleware, logger } = deps;
+  const { app, prisma, authMiddleware, logger } = deps;
+
+  // Burmese translations for a word, if the (separately, non-WordNet)
+  // English->Myanmar dataset has any -- see prisma/seedEnMyDictionary.ts for
+  // where this data came from and its licensing caveat.
+  async function lookupTranslations(word: string): Promise<Translation[]> {
+    try {
+      const rows = await prisma.enMyDictionaryEntry.findMany({
+        where: { wordLower: word.toLowerCase() },
+        select: { pos: true, definition: true },
+      });
+      return rows;
+    } catch (err) {
+      logger.error("Error looking up EN-MY translation:", err);
+      return [];
+    }
+  }
 
   app.get("/api/dictionary/lookup", authMiddleware, async (req, res) => {
     const word = (req.query.word ?? "").toString().trim().toLowerCase().slice(0, 60);
     if (!word) { res.status(400).json({ error: "A word is required" }); return; }
     if (!/^[a-z][a-z '-]*$/.test(word)) { res.status(400).json({ error: "Enter a single English word" }); return; }
     try {
-      const raw: any[] = await new Promise((resolve) => wordpos.lookup(word, resolve));
+      const [raw, translations]: [any[], Translation[]] = await Promise.all([
+        new Promise<any[]>((resolve) => wordpos.lookup(word, resolve)),
+        lookupTranslations(word),
+      ]);
       const entries = normalizeResults(raw, word);
-      if (entries.length === 0) { res.status(404).json({ error: `No definition found for "${word}".` }); return; }
-      res.json({ word, entries });
+      if (entries.length === 0 && translations.length === 0) {
+        res.status(404).json({ error: `No definition found for "${word}".` });
+        return;
+      }
+      res.json({ word, entries, translations });
     } catch (err) {
       logger.error("Error looking up dictionary word:", err);
       res.status(500).json({ error: "Internal Server Error" });
@@ -78,10 +106,13 @@ export function registerDictionaryRoutes(deps: Deps): void {
           else reject(new Error("No word returned"));
         });
       });
-      const raw: any[] = await new Promise((resolve) => wordpos.lookup(word, resolve));
+      const [raw, translations]: [any[], Translation[]] = await Promise.all([
+        new Promise<any[]>((resolve) => wordpos.lookup(word, resolve)),
+        lookupTranslations(word),
+      ]);
       const entries = normalizeResults(raw, word);
       if (entries.length === 0) { res.status(404).json({ error: "Try again" }); return; }
-      res.json({ word, entries });
+      res.json({ word, entries, translations });
     } catch (err) {
       logger.error("Error fetching random dictionary word:", err);
       res.status(500).json({ error: "Internal Server Error" });

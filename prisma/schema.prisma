@@ -1687,6 +1687,20 @@ model Ebook {
   @@index([format])
 }
 
+// English -> Burmese dictionary. One row per (word, sense) pair, seeded once
+// from prisma/seed-data/en-my-dictionary.json (see prisma/seedEnMyDictionary.ts
+// for provenance/licensing notes on the source data). Static reference data,
+// not user-generated, so there's no FK/ownership to worry about.
+model EnMyDictionaryEntry {
+  id         String @id @default(uuid())
+  word       String // original-case headword, e.g. "Dog"
+  wordLower  String // normalized lookup key, e.g. "dog"
+  pos        String? // part of speech / inflection tag, e.g. "n", "v[pt]"
+  definition String // Burmese translation/gloss
+
+  @@index([wordLower])
+}
+
 // Per-reader "resume where you left off" position. userId is a plain field
 // rather than a User relation (Ebook itself follows the same loose-coupling
 // convention already), so it's cleaned up manually on account deletion --

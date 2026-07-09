@@ -15953,7 +15953,7 @@ async function startServer() {
   registerFlashcardRoutes({ app, prisma, authMiddleware, createAuditLog, logger });
   // ── Conduct (rule catalog + violation logging + counts) ─────────────────────
   registerConductRoutes({ app, prisma, authMiddleware, createAuditLog, logger });
-  registerDictionaryRoutes({ app, authMiddleware, logger });
+  registerDictionaryRoutes({ app, prisma, authMiddleware, logger });
 
   // NOTE: the SPA catch-all (Vite middleware in dev / static dist in prod) is
   // registered at the very end of startServer, AFTER every /api route, so it can
