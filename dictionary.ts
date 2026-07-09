@@ -57,6 +57,27 @@ interface Translation {
   definition: string;
 }
 
+interface MonDefinitionOut {
+  lang: string;
+  pos: string | null;
+  definition: string;
+  example: string | null;
+}
+
+interface MonWordResult {
+  word: string;
+  ipa: string | null;
+  thaiGloss: string | null;
+  definitions: MonDefinitionOut[];
+}
+
+// Mon (like Burmese) is written in the Myanmar Unicode block, so a query
+// containing any character in that range is treated as Mon-script input
+// rather than an English word to look up in WordNet.
+const MYANMAR_SCRIPT_RE = /[က-႟]/;
+
+const monWordSelect = { word: true, ipa: true, thaiGloss: true, definitions: { select: { lang: true, pos: true, definition: true, example: true } } };
+
 export function registerDictionaryRoutes(deps: Deps): void {
   const { app, prisma, authMiddleware, logger } = deps;
 
@@ -76,21 +97,78 @@ export function registerDictionaryRoutes(deps: Deps): void {
     }
   }
 
-  app.get("/api/dictionary/lookup", authMiddleware, async (req, res) => {
-    const word = (req.query.word ?? "").toString().trim().toLowerCase().slice(0, 60);
-    if (!word) { res.status(400).json({ error: "A word is required" }); return; }
-    if (!/^[a-z][a-z '-]*$/.test(word)) { res.status(400).json({ error: "Enter a single English word" }); return; }
+  // Mon-script query: look up the Mon headword directly (exact match first,
+  // falling back to a prefix/substring match so a partial word still
+  // surfaces something).
+  async function lookupMonByWord(monWord: string): Promise<MonWordResult[]> {
     try {
-      const [raw, translations]: [any[], Translation[]] = await Promise.all([
+      const exact = await (prisma as any).monWord.findMany({ where: { word: monWord }, select: monWordSelect, take: 20 });
+      if (exact.length > 0) return exact;
+      return await (prisma as any).monWord.findMany({
+        where: { word: { contains: monWord } },
+        select: monWordSelect,
+        take: 20,
+      });
+    } catch (err) {
+      logger.error("Error looking up Mon word:", err);
+      return [];
+    }
+  }
+
+  // English query: find Mon words whose English definition matches. English
+  // definitions in this dataset are often full glosses/phrases rather than
+  // single words, so this is a best-effort "contains" match, ranked with
+  // exact-gloss matches first.
+  async function lookupMonByEnglish(word: string): Promise<MonWordResult[]> {
+    try {
+      const candidates: any[] = await (prisma as any).monWord.findMany({
+        where: { definitions: { some: { lang: "eng", definition: { contains: word, mode: "insensitive" } } } },
+        select: monWordSelect,
+        take: 30,
+      });
+      const isExact = (w: any) =>
+        w.definitions.some((d: any) => d.lang === "eng" && d.definition.replace(/\.$/, "").trim().toLowerCase() === word.toLowerCase());
+      candidates.sort((a, b) => Number(isExact(b)) - Number(isExact(a)));
+      return candidates.slice(0, 12);
+    } catch (err) {
+      logger.error("Error looking up Mon-by-English:", err);
+      return [];
+    }
+  }
+
+  app.get("/api/dictionary/lookup", authMiddleware, async (req, res) => {
+    const rawWord = (req.query.word ?? "").toString().trim().slice(0, 60);
+    if (!rawWord) { res.status(400).json({ error: "A word is required" }); return; }
+
+    if (MYANMAR_SCRIPT_RE.test(rawWord)) {
+      try {
+        const monMatches = await lookupMonByWord(rawWord);
+        if (monMatches.length === 0) {
+          res.status(404).json({ error: `No Mon dictionary entry found for "${rawWord}".` });
+          return;
+        }
+        res.json({ word: rawWord, entries: [], translations: [], monMatches });
+      } catch (err) {
+        logger.error("Error looking up dictionary word:", err);
+        res.status(500).json({ error: "Internal Server Error" });
+      }
+      return;
+    }
+
+    const word = rawWord.toLowerCase();
+    if (!/^[a-z][a-z '-]*$/.test(word)) { res.status(400).json({ error: "Enter a single English word, or paste a Mon word" }); return; }
+    try {
+      const [raw, translations, monMatches]: [any[], Translation[], MonWordResult[]] = await Promise.all([
         new Promise<any[]>((resolve) => wordpos.lookup(word, resolve)),
         lookupTranslations(word),
+        lookupMonByEnglish(word),
       ]);
       const entries = normalizeResults(raw, word);
-      if (entries.length === 0 && translations.length === 0) {
+      if (entries.length === 0 && translations.length === 0 && monMatches.length === 0) {
         res.status(404).json({ error: `No definition found for "${word}".` });
         return;
       }
-      res.json({ word, entries, translations });
+      res.json({ word, entries, translations, monMatches });
     } catch (err) {
       logger.error("Error looking up dictionary word:", err);
       res.status(500).json({ error: "Internal Server Error" });
@@ -106,13 +184,14 @@ export function registerDictionaryRoutes(deps: Deps): void {
           else reject(new Error("No word returned"));
         });
       });
-      const [raw, translations]: [any[], Translation[]] = await Promise.all([
+      const [raw, translations, monMatches]: [any[], Translation[], MonWordResult[]] = await Promise.all([
         new Promise<any[]>((resolve) => wordpos.lookup(word, resolve)),
         lookupTranslations(word),
+        lookupMonByEnglish(word),
       ]);
       const entries = normalizeResults(raw, word);
       if (entries.length === 0) { res.status(404).json({ error: "Try again" }); return; }
-      res.json({ word, entries, translations });
+      res.json({ word, entries, translations, monMatches });
     } catch (err) {
       logger.error("Error fetching random dictionary word:", err);
       res.status(500).json({ error: "Internal Server Error" });

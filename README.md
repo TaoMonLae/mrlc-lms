@@ -34,7 +34,7 @@ The application is built as a unified Node.js/Express server that serves both th
 | **GED Readiness & Engagement** | Per-subject mastery tracker (6-stage readiness pipeline tied to real exam performance), attendance streaks, and achievement badges to keep students motivated |
 | **Flashcards** | Teacher-authored study decks with class assignment, deck sharing/cloning between teachers, and four student study modes (classic flip cards with mastery tracking, quiz with multiple question types, matching game, and spelling practice) |
 | **Digital Library** | E-book (EPUB/PDF) collection with resume-reading position, in-book search, highlights, batch upload with auto metadata/cover extraction, and a full-page reading mode |
-| **Dictionary** | Offline English dictionary (definitions, parts of speech, examples, synonyms) plus English-to-Myanmar translations, with no internet required |
+| **Dictionary** | Offline English dictionary (definitions, parts of speech, examples, synonyms) plus English-to-Myanmar and English/Myanmar/Thai-to-Mon translations, with no internet required |
 | **Physical Library** | Book catalog, borrowing system, and due date management |
 | **Fee Management** | Manual fee charges with optional discounts and partial payments (plus an optional bulk Fee Structures / Assign Fees workflow), balance top-ups, QR-verifiable receipts, and a Fees dashboard that correctly shows Paid/Partial/Unpaid |
 | **Financial Management** | Income/expense tracking, budget vs. actual reporting, monthly finance summaries, expense management, and donor/donation tracking with PDF/Excel export |
@@ -53,7 +53,7 @@ The application is built as a unified Node.js/Express server that serves both th
 - **Social Space**: 24-hour ephemeral community feed (photos and text) with likes, comments (editable by their author), cursor-paginated "Load more", and a post/comment reporting + admin moderation queue
 - **Conduct & Discipline**: A rule catalog transcribed from the school handbook (with severity tiers), so teachers/admin/case workers can log which rule a student broke and see running per-student violation counts instead of relying on free-text case notes
 - **Sudoku**: A built-in, fully offline Sudoku game — five difficulties, hints, notes, undo/redo, keyboard shortcuts, and a custom puzzle creator with uniqueness checking. A native port of the open-source [super-sudoku](https://github.com/TN1ck/super-sudoku) project by Tom Nick (MIT licensed) — see **Acknowledgments** below
-- **Dictionary**: Search any English word for its definitions (grouped by part of speech), example sentences, synonyms, and a Myanmar (Burmese) translation where available, with a daily "Word of the Day" and recent-search history — backed entirely by offline data, so it works with no internet connection. See **Acknowledgments** below
+- **Dictionary**: Search any English word for its definitions (grouped by part of speech), example sentences, synonyms, a Myanmar (Burmese) translation, and matching Mon dictionary entries where available — or paste a Mon word directly to see its English/Myanmar/Thai definitions and IPA pronunciation. Daily "Word of the Day" and recent-search history, backed entirely by offline data, so it works with no internet connection. See **Acknowledgments** below
 - **News & Daily Digest**: Curated multi-source RSS feed (world, tech, education, and Myanmar-focused independent outlets) with a clean in-app reading view
 - **Video Management**: Educational video library with categories, captions, and required-viewing tracking
 - **Document Management**: Secure document generation and printing
@@ -84,6 +84,7 @@ Adding new languages is straightforward—simply add a `.po` file to `src/i18n/l
 - Offline English dictionary, backed by the bundled WordNet database — no internet connection needed for a lookup
 - Definitions grouped by part of speech, with example sentences, clickable synonyms, a "Word of the Day," and recent-search history
 - English-to-Myanmar translations alongside the English definition, from an offline dataset (Zawgyi-encoded source text converted to standard Unicode) — see **Acknowledgments** for the licensing caveat on this data
+- Mon dictionary: search an English word to see matching Mon entries, or paste a Mon word directly to see its IPA pronunciation and definitions in English, Myanmar, and Thai — 21,000+ Mon headwords, cleanly MIT-licensed
 
 **E-Library improvements**
 - Resume reading: both the PDF and EPUB readers now pick up where you left off automatically
@@ -210,6 +211,9 @@ Adding new languages is straightforward—simply add a `.po` file to `src/i18n/l
 
    # Optional: load the English-to-Myanmar dictionary data (first run only, ~27k words)
    npm run seed:en-my-dictionary
+
+   # Optional: load the Mon dictionary data (first run only, ~21k words)
+   npm run seed:mon-dictionary
    ```
 
 5. **Start development server**
@@ -362,6 +366,8 @@ The built-in **Dictionary** (`/dictionary`) is powered by [**WordPOS**](https://
 > This software and database is being provided to you, the LICENSEE, by Princeton University under the following license. By obtaining, using and/or copying this software and database, you agree that you have read, understood, and will comply with these terms and conditions: Permission to use, copy, modify and distribute this software and database and its documentation for any purpose and without fee or royalty is hereby granted, provided that you agree to comply with the following copyright notice and statements, including the disclaimer, and that the same appear on ALL copies of the software, database and documentation, including modifications that you make for internal use or for distribution.
 
 The Dictionary's **English-to-Myanmar translations** were imported from the [**ornagai-V2**](https://github.com/saturngod/ornagai-V2) project by Htain Lin Shwe (MIT-licensed code), whose own README states its word list was originally sourced from a separate "MZ dictionary" product. That means, unlike WordNet above, **this translation data does not carry a clean, verifiable open license of its own** — it's included here as an internal, non-commercial school tool with that provenance on record, not as freely-licensed content. See `prisma/seedEnMyDictionary.ts` for the full note. The source data was also Zawgyi-encoded (the pre-2019 de facto Myanmar font encoding); it was converted to standard Unicode using the Z2U rule table from Google's [**myanmar-tools**](https://github.com/googlei18n/myanmar-tools) project, Apache License 2.0.
+
+The Dictionary's **Mon dictionary data** (21,086 Mon headwords with IPA pronunciation and English/Myanmar/Thai definitions) was imported from [**MonDictDB**](https://github.com/Barnista/MonDictDB) by Barnista, MIT License, Copyright (c) 2025 Barnista — a purpose-built, contributor-authored Mon dictionary, not sourced from a third-party commercial product. Unlike the English-to-Myanmar data above, this dataset carries a clean, verifiable open license. See `prisma/seedMonDictionary.ts` for the import notes.
 
 These are the only third-party-derived components bundled in the app — everything else in this repository is covered by the license below.
 

@@ -17,11 +17,29 @@ interface Translation {
   definition: string;
 }
 
+interface MonDefinitionOut {
+  lang: string;
+  pos: string | null;
+  definition: string;
+  example: string | null;
+}
+
+interface MonWordResult {
+  word: string;
+  ipa: string | null;
+  thaiGloss: string | null;
+  definitions: MonDefinitionOut[];
+}
+
 interface LookupResult {
   word: string;
   entries: DictionaryEntry[];
   translations: Translation[];
+  monMatches: MonWordResult[];
 }
+
+const MON_LANG_LABEL: Record<string, string> = { eng: 'English', mya: 'Myanmar', tha: 'Thai' };
+const MYANMAR_SCRIPT_RE = /[က-႟]/;
 
 const RECENTS_KEY = 'dictionary_recent_searches';
 const MAX_RECENTS = 10;
@@ -132,9 +150,11 @@ export default function Dictionary() {
       <div className="space-y-6">
         <div className="flex items-center gap-2">
           <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">{data.word}</h2>
-          <Button variant="ghost" size="icon" className="h-7 w-7" title="Pronounce" onClick={() => speak(data.word)}>
-            <Volume2 className="h-4 w-4" />
-          </Button>
+          {data.entries.length > 0 && (
+            <Button variant="ghost" size="icon" className="h-7 w-7" title="Pronounce" onClick={() => speak(data.word)}>
+              <Volume2 className="h-4 w-4" />
+            </Button>
+          )}
         </div>
         {data.translations.length > 0 && (
           <div className="space-y-2 rounded-lg bg-accent-purple/5 border border-accent-purple/10 p-3">
@@ -147,6 +167,33 @@ export default function Dictionary() {
                 </li>
               ))}
             </ul>
+          </div>
+        )}
+        {data.monMatches.length > 0 && (
+          <div className="space-y-3 rounded-lg bg-amber-500/5 border border-amber-500/10 p-3">
+            <p className="text-xs font-semibold uppercase tracking-widest text-amber-600 dark:text-amber-400">Mon Dictionary (ဘာသာမန်)</p>
+            <div className="space-y-4">
+              {data.monMatches.map((m, i) => (
+                <div key={i} className={i > 0 ? 'pt-3 border-t border-amber-500/10' : ''}>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-base font-semibold text-slate-900 dark:text-white">{m.word}</span>
+                    {m.ipa && <span className="text-xs text-slate-400">/{m.ipa}/</span>}
+                    {m.thaiGloss && <span className="text-xs text-slate-400">· {m.thaiGloss}</span>}
+                  </div>
+                  <ul className="mt-1 space-y-1">
+                    {m.definitions.map((d, j) => (
+                      <li key={j} className="text-sm text-slate-700 dark:text-slate-200 flex items-baseline gap-2">
+                        <span className="text-[10px] font-medium text-slate-400 shrink-0 w-14">{MON_LANG_LABEL[d.lang] || d.lang}</span>
+                        <span>
+                          {d.definition}
+                          {d.example && <span className="block text-xs text-slate-500 italic mt-0.5">{d.example}</span>}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
           </div>
         )}
         {Array.from(groups.entries()).map(([posLabel, entries]) => (
@@ -191,7 +238,7 @@ export default function Dictionary() {
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
           <BookA className="h-6 w-6 text-accent-purple" /> Dictionary
         </h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Look up any English word — definitions, examples, synonyms, and Myanmar translations, no internet required.</p>
+        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Look up any English word — definitions, examples, synonyms, and Myanmar/Mon translations — or paste a Mon word directly. No internet required.</p>
       </div>
 
       <form onSubmit={onSubmit} className="flex gap-2">
@@ -200,7 +247,7 @@ export default function Dictionary() {
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Type a word…"
+            placeholder="Type an English word, or paste a Mon word…"
             className="pl-9"
             autoFocus
           />
@@ -236,7 +283,11 @@ export default function Dictionary() {
         ) : error ? (
           <div className="text-center py-10">
             <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{error}</p>
-            <p className="text-xs text-slate-500 mt-1">Check the spelling, or try a simpler form of the word (e.g. "run" instead of "running").</p>
+            <p className="text-xs text-slate-500 mt-1">
+              {MYANMAR_SCRIPT_RE.test(query)
+                ? 'Check the spelling of the Mon word, or try a shorter part of it.'
+                : 'Check the spelling, or try a simpler form of the word (e.g. "run" instead of "running").'}
+            </p>
           </div>
         ) : result ? (
           renderEntries(result)

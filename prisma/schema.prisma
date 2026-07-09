@@ -1701,6 +1701,37 @@ model EnMyDictionaryEntry {
   @@index([wordLower])
 }
 
+// Mon dictionary. Mon is headword-keyed (unlike EnMyDictionaryEntry above),
+// with definitions in English, Burmese, and Thai attached per word -- mirrors
+// the source project's own Word/Definition relational structure. Seeded once
+// from prisma/seed-data/mon-dictionary.json via prisma/seedMonDictionary.ts.
+// MIT-licensed source data (see README Acknowledgments), so no licensing
+// caveat here unlike EnMyDictionaryEntry.
+model MonWord {
+  id          String          @id @default(uuid())
+  word        String // Mon-script headword
+  ipa         String? // IPA-ish romanized pronunciation
+  thaiGloss   String? // short Thai gloss carried on the word itself in the source data
+  definitions MonDefinition[]
+
+  @@index([word])
+}
+
+// One row per (word, language, sense). lang is "eng" | "mya" | "tha".
+model MonDefinition {
+  id         String  @id @default(uuid())
+  wordId     String
+  lang       String
+  pos        String?
+  definition String
+  example    String?
+
+  word MonWord @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  @@index([wordId])
+  @@index([lang])
+}
+
 // Per-reader "resume where you left off" position. userId is a plain field
 // rather than a User relation (Ebook itself follows the same loose-coupling
 // convention already), so it's cleaned up manually on account deletion --
