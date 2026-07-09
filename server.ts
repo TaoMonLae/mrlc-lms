@@ -15958,27 +15958,57 @@ async function startServer() {
     }
   });
 
+  // Cursor-paginated: ?cursor=<postId>&limit=<n> (default/most 20, capped at
+  // 50). Without this the feed always fetched every non-expired post in one
+  // shot, which was fine at small scale but would only get slower as a
+  // school's daily post volume grows. Ordered by createdAt desc, so the
+  // cursor is "give me posts older than this one".
   app.get("/api/social", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
+    const limit = Math.min(50, Math.max(1, parseInt(String(req.query.limit ?? "20"), 10) || 20));
+    const cursor = req.query.cursor ? String(req.query.cursor) : undefined;
     try {
       const posts = await prisma.socialPost.findMany({
         where: { expiresAt: { gt: new Date() } },
         orderBy: { createdAt: "desc" },
-        take: 100,
+        take: limit + 1,
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
         include: {
           author: { select: { id: true, firstName: true, lastName: true, role: true, profilePhotoUrl: true } },
           _count: { select: { likes: true, comments: true } },
           likes: { where: { userId: jwtUser.userId }, select: { id: true } },
-          comments: { orderBy: { createdAt: "asc" }, include: { user: { select: { id: true, firstName: true, lastName: true, role: true } } } },
-        },
+          comments: {
+            orderBy: { createdAt: "asc" },
+            include: {
+              user: { select: { id: true, firstName: true, lastName: true, role: true } },
+              // Cast: SocialReport is a new model (see the
+              // add_social_reports_and_comment_edit migration) not yet
+              // reflected in this environment's generated Prisma client
+              // typings -- the real client is regenerated before deploy.
+              ...( { reports: { where: { reportedById: jwtUser.userId }, select: { id: true } } } as any),
+            },
+          },
+          ...( { reports: { where: { reportedById: jwtUser.userId }, select: { id: true } } } as any),
+        } as any,
       });
-      res.json(posts.map((p) => ({
-        id: p.id, body: p.body, imageUrl: p.imageUrl, createdAt: p.createdAt, expiresAt: p.expiresAt,
-        author: { id: p.author.id, name: fullName(p.author), role: p.author.role, photo: p.author.profilePhotoUrl ?? null },
-        mine: p.authorId === jwtUser.userId,
-        likeCount: p._count.likes, commentCount: p._count.comments, likedByMe: p.likes.length > 0,
-        comments: p.comments.map((c) => ({ id: c.id, body: c.body, createdAt: c.createdAt, user: { id: c.user.id, name: fullName(c.user), role: c.user.role }, mine: c.userId === jwtUser.userId })),
-      })));
+      const hasMore = posts.length > limit;
+      const page = hasMore ? posts.slice(0, limit) : posts;
+      res.json({
+        posts: page.map((p: any) => ({
+          id: p.id, body: p.body, imageUrl: p.imageUrl, createdAt: p.createdAt, expiresAt: p.expiresAt,
+          author: { id: p.author.id, name: fullName(p.author), role: p.author.role, photo: p.author.profilePhotoUrl ?? null },
+          mine: p.authorId === jwtUser.userId,
+          likeCount: p._count.likes, commentCount: p._count.comments, likedByMe: p.likes.length > 0,
+          reportedByMe: (p.reports ?? []).length > 0,
+          comments: p.comments.map((c: any) => ({
+            id: c.id, body: c.body, createdAt: c.createdAt, editedAt: c.editedAt ?? null,
+            user: { id: c.user.id, name: fullName(c.user), role: c.user.role },
+            mine: c.userId === jwtUser.userId,
+            reportedByMe: (c.reports ?? []).length > 0,
+          })),
+        })),
+        nextCursor: hasMore ? page[page.length - 1].id : null,
+      });
     } catch (err) {
       logger.error("Error listing social posts:", err);
       res.status(500).json({ error: "Internal Server Error" });
@@ -16045,6 +16075,122 @@ async function startServer() {
       res.json({ success: true });
     } catch (err) {
       logger.error("Error deleting comment:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Only the author may edit their own comment (unlike delete, which admins
+  // can also do) -- editing someone else's words isn't a moderation action,
+  // it would just be silently rewriting what they said.
+  app.put("/api/social/comments/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const body = (req.body?.body ?? "").toString().trim().slice(0, 500);
+    if (!body) { res.status(400).json({ error: "Comment cannot be empty" }); return; }
+    try {
+      const c = await prisma.socialComment.findUnique({ where: { id: req.params.id } });
+      if (!c) { res.status(404).json({ error: "Comment not found" }); return; }
+      if (c.userId !== jwtUser.userId) { res.status(403).json({ error: "Forbidden" }); return; }
+      const updated = await prisma.socialComment.update({
+        where: { id: c.id },
+        data: { body, editedAt: new Date() } as any,
+        include: { user: { select: { id: true, firstName: true, lastName: true, role: true } } },
+      });
+      res.json({
+        id: updated.id, body: updated.body, createdAt: updated.createdAt, editedAt: (updated as any).editedAt,
+        user: { id: updated.user.id, name: fullName(updated.user), role: updated.user.role }, mine: true,
+      });
+    } catch (err) {
+      logger.error("Error editing comment:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Social Space reporting ────────────────────────────────────────────────
+  // Mirrors the /api/chat/messages/:id/report + /api/chat/reports pattern.
+  // Exactly one of postId/commentId is set per report; the unique
+  // (postId, reportedById) / (commentId, reportedById) constraints stop the
+  // same user from reporting the same item twice.
+  app.post("/api/social/:id/report", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const post = await prisma.socialPost.findUnique({ where: { id: req.params.id } });
+      if (!post) { res.status(404).json({ error: "Post not found" }); return; }
+      await (prisma as any).socialReport.create({
+        data: { postId: req.params.id, reportedById: jwtUser.userId, reason: (req.body?.reason ?? "").toString().slice(0, 500) || null },
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "SOCIAL_REPORT", req.params.id,
+        `Reported social post ${req.params.id}.`, req.ip, req.headers["user-agent"] || null, "WARNING");
+      res.status(201).json({ success: true });
+    } catch (err: any) {
+      if (err?.code === "P2002") { res.status(409).json({ error: "You already reported this post" }); return; }
+      logger.error("Error reporting social post:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/social/comments/:id/report", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const comment = await prisma.socialComment.findUnique({ where: { id: req.params.id } });
+      if (!comment) { res.status(404).json({ error: "Comment not found" }); return; }
+      await (prisma as any).socialReport.create({
+        data: { commentId: req.params.id, reportedById: jwtUser.userId, reason: (req.body?.reason ?? "").toString().slice(0, 500) || null },
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "SOCIAL_REPORT", req.params.id,
+        `Reported social comment ${req.params.id}.`, req.ip, req.headers["user-agent"] || null, "WARNING");
+      res.status(201).json({ success: true });
+    } catch (err: any) {
+      if (err?.code === "P2002") { res.status(409).json({ error: "You already reported this comment" }); return; }
+      logger.error("Error reporting social comment:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Social Space moderation (ADMIN) ──────────────────────────────────────────
+  app.get("/api/social/reports", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    try {
+      const status = req.query.status ? String(req.query.status) : "OPEN";
+      const reports = await (prisma as any).socialReport.findMany({
+        where: status === "ALL" ? {} : { status },
+        orderBy: { createdAt: "desc" },
+        include: {
+          reportedBy: { select: { id: true, firstName: true, lastName: true, role: true } },
+          post: { include: { author: { select: { id: true, firstName: true, lastName: true, role: true } } } },
+          comment: { include: { user: { select: { id: true, firstName: true, lastName: true, role: true } }, post: { select: { id: true } } } },
+        },
+      });
+      res.json(reports.map((r: any) => ({
+        id: r.id, status: r.status, reason: r.reason, createdAt: r.createdAt,
+        reportedBy: fullName(r.reportedBy),
+        type: r.postId ? "POST" : "COMMENT",
+        postId: r.postId ?? r.comment?.post?.id ?? null,
+        content: r.postId
+          ? { body: r.post?.body ?? null, imageUrl: r.post?.imageUrl ?? null, author: r.post?.author ? fullName(r.post.author) : "—" }
+          : { body: r.comment?.body ?? "(deleted)", author: r.comment?.user ? fullName(r.comment.user) : "—" },
+      })));
+    } catch (err) {
+      logger.error("Error listing social reports:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.post("/api/social/reports/:id/resolve", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const action = String(req.body?.action || "DISMISSED"); // ACTIONED | DISMISSED
+    try {
+      const report = await (prisma as any).socialReport.findUnique({ where: { id: req.params.id } });
+      if (!report) { res.status(404).json({ error: "Report not found" }); return; }
+      if (action === "ACTIONED") {
+        if (report.postId) await prisma.socialPost.delete({ where: { id: report.postId } }).catch(() => {});
+        else if (report.commentId) await prisma.socialComment.delete({ where: { id: report.commentId } }).catch(() => {});
+      }
+      const updated = await (prisma as any).socialReport.update({
+        where: { id: req.params.id },
+        data: { status: action === "ACTIONED" ? "ACTIONED" : "DISMISSED", reviewedById: jwtUser.userId, reviewedAt: new Date() },
+      });
+      res.json(updated);
+    } catch (err) {
+      logger.error("Error resolving social report:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });

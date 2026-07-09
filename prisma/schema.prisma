@@ -263,6 +263,7 @@ model User {
   socialLikes    SocialLike[]    @relation("SocialLiker")
   socialComments SocialComment[] @relation("SocialCommenter")
   socialSeen     SocialSeen?     @relation("SocialSeenBy")
+  socialReportsFiled SocialReport[] @relation("SocialReporter")
   reportedRuleViolations RuleViolation[] @relation("ReportedRuleViolations")
 
   createdAt     DateTime  @default(now())
@@ -3136,9 +3137,11 @@ model SocialPost {
 
   likes     SocialLike[]
   comments  SocialComment[]
+  reports   SocialReport[]
 
   @@index([authorId])
   @@index([expiresAt])
+  @@index([createdAt])
 }
 
 model SocialLike {
@@ -3161,8 +3164,46 @@ model SocialComment {
   user      User     @relation("SocialCommenter", fields: [userId], references: [id], onDelete: Cascade)
   body      String
   createdAt DateTime @default(now())
+  // Set the first time the author edits this comment; null means never
+  // edited. Surfaced in the UI as a small "(edited)" tag.
+  editedAt  DateTime?
+
+  reports   SocialReport[]
 
   @@index([postId])
+}
+
+enum SocialReportStatus {
+  OPEN
+  REVIEWED
+  ACTIONED
+  DISMISSED
+}
+
+// A user flagging a post or comment for admin review -- mirrors the
+// ChatMessageReport pattern used for Chat moderation. Exactly one of
+// postId/commentId is set per report.
+model SocialReport {
+  id           String   @id @default(uuid())
+  postId       String?
+  post         SocialPost?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  commentId    String?
+  comment      SocialComment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  reportedById String
+  reportedBy   User     @relation("SocialReporter", fields: [reportedById], references: [id], onDelete: Cascade)
+  reason       String?
+  status       SocialReportStatus @default(OPEN)
+  reviewedById String?
+  reviewedAt   DateTime?
+  createdAt    DateTime @default(now())
+
+  // A user can only report a given post/comment once -- report again by
+  // filing on a different item.
+  @@unique([postId, reportedById])
+  @@unique([commentId, reportedById])
+  @@index([status])
+  @@index([postId])
+  @@index([commentId])
 }
 
 // Tracks the last time each user viewed the Social Space feed, so the app
