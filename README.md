@@ -34,6 +34,7 @@ The application is built as a unified Node.js/Express server that serves both th
 | **GED Readiness & Engagement** | Per-subject mastery tracker (6-stage readiness pipeline tied to real exam performance), attendance streaks, and achievement badges to keep students motivated |
 | **Flashcards** | Teacher-authored study decks with class assignment, deck sharing/cloning between teachers, and four student study modes (classic flip cards with mastery tracking, quiz with multiple question types, matching game, and spelling practice) |
 | **Digital Library** | E-book (EPUB/PDF) collection with resume-reading position, in-book search, highlights, in-book dictionary lookup, batch upload with auto metadata/cover extraction, one-click Project Gutenberg import, and a full-page reading mode |
+| **Offline Wiki** | Browse an offline Wikipedia (or other wiki) from within the app via a self-hosted Kiwix server — works with no internet connection once set up |
 | **Dictionary** | Offline English dictionary (definitions, parts of speech, examples, synonyms) plus English-to-Myanmar and English/Myanmar/Thai-to-Mon translations, with no internet required |
 | **Physical Library** | Book catalog, borrowing system, and due date management |
 | **Fee Management** | Manual fee charges with optional discounts and partial payments (plus an optional bulk Fee Structures / Assign Fees workflow), balance top-ups, QR-verifiable receipts, and a Fees dashboard that correctly shows Paid/Partial/Unpaid |
@@ -54,6 +55,7 @@ The application is built as a unified Node.js/Express server that serves both th
 - **Conduct & Discipline**: A rule catalog transcribed from the school handbook (with severity tiers), so teachers/admin/case workers can log which rule a student broke and see running per-student violation counts instead of relying on free-text case notes
 - **Sudoku**: A built-in, fully offline Sudoku game — five difficulties, hints, notes, undo/redo, keyboard shortcuts, and a custom puzzle creator with uniqueness checking. A native port of the open-source [super-sudoku](https://github.com/TN1ck/super-sudoku) project by Tom Nick (MIT licensed) — see **Acknowledgments** below
 - **Dictionary**: Search any English word for its definitions (grouped by part of speech), example sentences, synonyms, a Myanmar (Burmese) translation, and matching Mon dictionary entries where available — or paste a Mon word directly to see its English/Myanmar/Thai definitions and IPA pronunciation. Daily "Word of the Day" and recent-search history, backed entirely by offline data, so it works with no internet connection. See **Acknowledgments** below
+- **Offline Wiki**: A "Wiki" page that reverse-proxies a self-hosted [Kiwix](https://kiwix.org) server, so students/staff can browse an offline Wikipedia (or any other ZIM-format wiki) without leaving the app or needing internet access — see the **Kiwix / Offline Wiki** setup section below
 - **News & Daily Digest**: Curated multi-source RSS feed (world, tech, education, and Myanmar-focused independent outlets) with a clean in-app reading view
 - **Video Management**: Educational video library with categories, captions, and required-viewing tracking
 - **Document Management**: Secure document generation and printing
@@ -93,6 +95,10 @@ Adding new languages is straightforward—simply add a `.po` file to `src/i18n/l
 - Select any word while reading to see its definition (English/Myanmar/Mon) in a popup, without leaving the book — works in full page (fullscreen) reading mode too
 - Multi-file batch upload with auto-detected title/author/cover per file, sorting and category filters, and a "Continue Reading" strip on the library home
 - Import free public-domain books directly from Project Gutenberg by title/author search — one click downloads the EPUB and cover and adds it to the library. Admins/Teachers/Librarians only, via "Import from Gutenberg" on the E-Library page — see **Acknowledgments**
+
+**Offline Wiki (NEW)**
+- A new "Wiki" page reverse-proxies a self-hosted Kiwix server (`kiwix-serve`), so anyone signed in can browse an offline Wikipedia (or Wiktionary, or any other ZIM archive) without leaving the app
+- Requires a one-time server setup (installing `kiwix-tools` and downloading a ZIM file) — see **Kiwix / Offline Wiki** below. Shows setup instructions to Admins, and a friendly "not available yet" message to everyone else, until it's configured
 - A full-page reading mode, and a fix for the table-of-contents dropdown overflowing into the page controls
 - The Dictionary and the E-Library's in-book Define lookup are both usable without signing in
 
@@ -236,6 +242,20 @@ Adding new languages is straightforward—simply add a `.po` file to `src/i18n/l
 
 > **Note**: A **Librarian** user can be created from Users → Create User to access the Book Catalog features.
 
+### Kiwix / Offline Wiki (Optional)
+
+The Wiki page (`/wiki`) needs a separately-running [Kiwix](https://kiwix.org) server — it isn't bundled, since its content files (ZIM archives) run from ~100MB to 100+GB depending on the wiki and whether it includes images. Without this setup, the Wiki page just shows a "not available" message.
+
+1. Install `kiwix-tools` (`kiwix-serve` is the piece you need) — see [kiwix-tools releases](https://github.com/kiwix/kiwix-tools).
+2. Download a ZIM file from [library.kiwix.org](https://library.kiwix.org) — Simple English Wikipedia without images (~1GB) is a practical starting point for a school.
+3. Run `kiwix-serve`, with `--urlRootLocation=kiwix-proxy` so its internal links match this app's reverse proxy path:
+   ```bash
+   kiwix-serve --port=8080 --urlRootLocation=kiwix-proxy /path/to/wikipedia_en_simple.zim
+   ```
+4. Set `KIWIX_URL` in `.env` to that server's address (default `http://127.0.0.1:8080`) and restart the app.
+
+The app authenticates and proxies requests to `kiwix-serve` itself (`kiwix.ts`) — signed-in users never talk to it directly, and it doesn't need to be exposed on the public internet at all, only reachable from the app server.
+
 ---
 
 ## Deployment
@@ -371,6 +391,8 @@ The built-in **Dictionary** (`/dictionary`) is powered by [**WordPOS**](https://
 The Dictionary's **English-to-Myanmar translations** were imported from the [**ornagai-V2**](https://github.com/saturngod/ornagai-V2) project by Htain Lin Shwe (MIT-licensed code), whose own README states its word list was originally sourced from a separate "MZ dictionary" product. That means, unlike WordNet above, **this translation data does not carry a clean, verifiable open license of its own** — it's included here as an internal, non-commercial school tool with that provenance on record, not as freely-licensed content. See `prisma/seedEnMyDictionary.ts` for the full note. The source data was also Zawgyi-encoded (the pre-2019 de facto Myanmar font encoding); it was converted to standard Unicode using the Z2U rule table from Google's [**myanmar-tools**](https://github.com/googlei18n/myanmar-tools) project, Apache License 2.0.
 
 The Dictionary's **Mon dictionary data** (21,086 Mon headwords with IPA pronunciation and English/Myanmar/Thai definitions) was imported from [**MonDictDB**](https://github.com/Barnista/MonDictDB) by Barnista, MIT License, Copyright (c) 2025 Barnista — a purpose-built, contributor-authored Mon dictionary, not sourced from a third-party commercial product. Unlike the English-to-Myanmar data above, this dataset carries a clean, verifiable open license. See `prisma/seedMonDictionary.ts` for the import notes.
+
+The **Offline Wiki** page (`/wiki`, `kiwix.ts`) is a thin, authenticated reverse proxy in front of a separately self-hosted [**Kiwix**](https://kiwix.org) server (`kiwix-serve`, part of [kiwix-tools](https://github.com/kiwix/kiwix-tools)), an open-source project of the [Kiwix](https://kiwix.org) non-profit. No Kiwix code or content ships with this repository — the school installs `kiwix-tools` and downloads its own ZIM content file(s) (e.g. from [library.kiwix.org](https://library.kiwix.org)) separately, per the setup instructions above.
 
 The E-Library's **"Import from Gutenberg"** feature (`gutenberg.ts`) searches and downloads books via [**Gutendex**](https://github.com/garethbjohnson/gutendex) (`gutendex.com`), a free, public, read-only API over [**Project Gutenberg**](https://www.gutenberg.org)'s own catalog of 70,000+ books. Unlike the datasets above, nothing from Gutenberg is bundled with the app — books are fetched live, on demand, only when an admin/teacher/librarian explicitly chooses to import one, directly from Project Gutenberg's own servers. Every book in Project Gutenberg's US catalog is in the public domain, so imported books carry no licensing caveat.
 
