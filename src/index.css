@@ -90,6 +90,15 @@
   --font-myanmar: "Khit Haungg", "Noto Sans Myanmar", ui-sans-serif, system-ui, sans-serif;
 }
 
+/* Pyidaungsu font for Myanmar/Mon body text - Unicode compliant */
+@font-face {
+  font-family: "Pyidaungsu";
+  src: url("/fonts/Pyidaungsu-2.5.3_Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Zawgyi-era Myanmar display font, donated for use in the app's News
    headlines. Regular + Bold weights are both registered against the same
    family name so the browser picks the right face for the requested
@@ -370,7 +379,7 @@
 
 html[lang='my'] body,
 html[lang='mnw'] body {
-  font-family: 'Padauk', 'Inter', 'Geist Variable', 'Myanmar Text', 'Noto Sans Myanmar',
+  font-family: 'Pyidaungsu', 'Padauk', 'Inter', 'Geist Variable', 'Myanmar Text', 'Noto Sans Myanmar',
     'Myanmar Sangam MN', system-ui, sans-serif;
 }
 
