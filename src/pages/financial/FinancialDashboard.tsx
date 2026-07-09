@@ -60,14 +60,16 @@ export default function FinancialDashboard() {
       .then(([feesData, expensesData, pendingData, budgetsData, financialSummary, cashFlowData]) => {
         // Process fee statistics
         const fees = Array.isArray(feesData) ? feesData : [];
-        const feeTotal = fees.reduce((sum, f) => sum + f.amount, 0);
-        const feePaid = fees.filter(f => f.status === 'PAID').reduce((sum, f) => sum + f.amount, 0);
-        const feeOverdue = fees.filter(f => f.status === 'OVERDUE').reduce((sum, f) => sum + f.amount, 0);
+        const paidForFee = (f: any) => f.totalPaid ?? f.paidAmount ?? (f.status === 'PAID' ? f.amount : 0);
+        const balanceForFee = (f: any) => f.balance ?? Math.max(0, (f.amount || 0) - paidForFee(f));
+        const feeTotal = fees.reduce((sum, f) => sum + (f.amount || 0), 0);
+        const feePaid = fees.reduce((sum, f) => sum + paidForFee(f), 0);
+        const feeOverdue = fees.filter(f => f.status === 'OVERDUE').reduce((sum, f) => sum + balanceForFee(f), 0);
 
         setFeeStats({
           total: feeTotal,
           paid: feePaid,
-          outstanding: feeTotal - feePaid,
+          outstanding: Math.max(0, feeTotal - feePaid),
           overdue: feeOverdue,
         });
 
@@ -77,7 +79,7 @@ export default function FinancialDashboard() {
           type: 'FEE_PAYMENT',
           studentId: f.studentId,
           studentName: 'Student',
-          amount: f.amount,
+          amount: paidForFee(f),
           date: f.paidDate || f.createdAt,
           status: f.status,
         })));
@@ -133,10 +135,12 @@ export default function FinancialDashboard() {
         });
 
         // Calculate cash flow
+        const reportIncome = financialSummary?.income?.total;
+        const reportOutflow = financialSummary?.expenses?.total;
         setCashFlow({
-          inflow: feePaid,
-          outflow: expensePaid,
-          net: feePaid - expensePaid,
+          inflow: reportIncome ?? feePaid,
+          outflow: reportOutflow ?? expensePaid,
+          net: (reportIncome ?? feePaid) - (reportOutflow ?? expensePaid),
         });
 
         // Set enhanced summary data

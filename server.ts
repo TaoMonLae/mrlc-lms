@@ -453,6 +453,35 @@ async function syncBudgetSpending(budgetId: string | null | undefined) {
   }
 }
 
+async function syncExpensePaymentStatus(expenseId: string) {
+  const expense = await prisma.expense.findUnique({
+    where: { id: expenseId },
+    include: { payments: true },
+  });
+  if (!expense) return null;
+
+  const totalAmount = expense.totalAmount || expense.amount;
+  const totalPaid = expense.payments.reduce((sum, payment) => sum + payment.amount, 0);
+  const latestPaymentDate = expense.payments.reduce<Date | null>((latest, payment) => {
+    if (!latest || payment.paymentDate > latest) return payment.paymentDate;
+    return latest;
+  }, null);
+
+  const status = totalPaid <= 0
+    ? "APPROVED"
+    : totalPaid >= totalAmount
+      ? "PAID"
+      : "PARTIAL";
+
+  return prisma.expense.update({
+    where: { id: expenseId },
+    data: {
+      status,
+      paidDate: status === "PAID" ? latestPaymentDate : null,
+    },
+  });
+}
+
 // ─── JWT helpers ─────────────────────────────────────────────────────────────
 const JWT_SECRET = process.env.SESSION_SECRET;
 if (!JWT_SECRET || JWT_SECRET.length < 16) {
@@ -8629,7 +8658,7 @@ async function startServer() {
         return;
       }
 
-      if (expense.status !== "APPROVED") {
+      if (!["APPROVED", "PARTIAL"].includes(expense.status)) {
         res.status(400).json({ error: "Expense must be approved before payment" });
         return;
       }
@@ -8646,11 +8675,30 @@ async function startServer() {
       });
       const paymentNumber = `PAY-${year}-${String(paymentCount + 1).padStart(4, '0')}`;
 
+      const existingPayments = await prisma.billPayment.findMany({ where: { expenseId } });
+      const totalPaidBefore = existingPayments.reduce((sum, p) => sum + p.amount, 0);
+      const totalAmount = expense.totalAmount || expense.amount;
+      const outstandingAmount = Math.max(0, totalAmount - totalPaidBefore);
+      const paymentAmount = Number(amount);
+
+      if (!paymentAmount || paymentAmount <= 0) {
+        res.status(400).json({ error: "amount must be greater than 0" });
+        return;
+      }
+      if (outstandingAmount <= 0) {
+        res.status(400).json({ error: "Expense is already fully paid" });
+        return;
+      }
+      if (paymentAmount > outstandingAmount) {
+        res.status(400).json({ error: `Payment exceeds outstanding amount of ${outstandingAmount}` });
+        return;
+      }
+
       const payment = await prisma.billPayment.create({
         data: {
           expenseId,
           paymentNumber,
-          amount: Number(amount),
+          amount: paymentAmount,
           currency: expense.currency,
           paymentMethod,
           referenceNumber: paymentReference,
@@ -8661,27 +8709,7 @@ async function startServer() {
         },
       });
 
-      // Update expense status if fully paid
-      const allPayments = await prisma.billPayment.findMany({
-        where: { expenseId },
-      });
-      const totalPaid = allPayments.reduce((sum, p) => sum + p.amount, 0);
-      const totalAmount = expense.totalAmount || expense.amount;
-
-      if (totalPaid >= totalAmount) {
-        await prisma.expense.update({
-          where: { id: expenseId },
-          data: {
-            status: "PAID",
-            paidDate: new Date(),
-          },
-        });
-      } else if (totalPaid > 0 && totalPaid < totalAmount) {
-        await prisma.expense.update({
-          where: { id: expenseId },
-          data: { status: "PARTIAL" },
-        });
-      }
+      await syncExpensePaymentStatus(expenseId);
 
       await createAuditLog(
         jwtUser.userId,
@@ -8727,6 +8755,7 @@ async function startServer() {
           }),
         },
       });
+      await syncExpensePaymentStatus(payment.expenseId);
 
       await createAuditLog(
         jwtUser.userId,
@@ -8766,29 +8795,7 @@ async function startServer() {
         where: { id: req.params.id },
       });
 
-      // Recalculate expense status
-      const remainingPayments = await prisma.billPayment.findMany({
-        where: { expenseId: payment.expenseId },
-      });
-      const totalPaid = remainingPayments.reduce((sum, p) => sum + p.amount, 0);
-
-      if (totalPaid === 0) {
-        await prisma.expense.update({
-          where: { id: payment.expenseId },
-          data: { status: "APPROVED", paidDate: null },
-        });
-      } else {
-        const expense = await prisma.expense.findUnique({
-          where: { id: payment.expenseId },
-        });
-        const totalAmount = expense?.totalAmount || expense?.amount || 0;
-        if (totalPaid < totalAmount) {
-          await prisma.expense.update({
-            where: { id: payment.expenseId },
-            data: { status: "PARTIAL" },
-          });
-        }
-      }
+      await syncExpensePaymentStatus(payment.expenseId);
 
       await createAuditLog(
         jwtUser.userId,
@@ -9349,16 +9356,25 @@ async function startServer() {
       return;
     }
     try {
+      const existing = await prisma.budget.findUnique({ where: { id: req.params.id } });
+      if (!existing) {
+        res.status(404).json({ error: "Budget not found" });
+        return;
+      }
+
       const { allocatedAmount, spentAmount, ...rest } = req.body;
       const data: any = { ...rest };
+      const nextAllocated = allocatedAmount !== undefined ? Number(allocatedAmount) : existing.allocatedAmount;
+      const nextSpent = spentAmount !== undefined ? Number(spentAmount) : existing.spentAmount;
 
       if (allocatedAmount !== undefined) {
-        data.allocatedAmount = Number(allocatedAmount);
-        data.remainingAmount = Number(allocatedAmount) - (spentAmount || 0);
+        data.allocatedAmount = nextAllocated;
       }
       if (spentAmount !== undefined) {
-        data.spentAmount = Number(spentAmount);
-        data.remainingAmount = (allocatedAmount || 0) - Number(spentAmount);
+        data.spentAmount = nextSpent;
+      }
+      if (allocatedAmount !== undefined || spentAmount !== undefined) {
+        data.remainingAmount = nextAllocated - nextSpent;
       }
 
       const budget = await prisma.budget.update({
@@ -9489,15 +9505,12 @@ async function startServer() {
         _count: true,
       });
 
-      // Get expenses (outcome)
-      const expenses = await prisma.expense.aggregate({
+      // Get actual cash outflows from bill payments, not invoice dates. A
+      // PARTIAL expense may only have some money paid out, and an APPROVED
+      // expense may have none.
+      const billPayments = await prisma.billPayment.aggregate({
         where: {
-          expenseDate: dateFilter,
-          // PARTIAL expenses have already had real money paid out against them
-          // (via bill payments) even though the balance isn't fully settled, so
-          // they must count toward actual spend just like APPROVED/PAID ones —
-          // excluding them understated every financial report.
-          status: { in: ['APPROVED', 'PAID', 'PARTIAL'] },
+          paymentDate: dateFilter,
         },
         _sum: { amount: true },
         _count: true,
@@ -9538,7 +9551,7 @@ async function startServer() {
       });
 
       const totalIncome = ((feePayments._sum as any).paidAmount || 0) + (donations._sum.amount || 0);
-      const totalExpenses = expenses._sum.amount || 0;
+      const totalExpenses = billPayments._sum.amount || 0;
       const netCashFlow = totalIncome - totalExpenses;
 
       res.json({
@@ -9555,7 +9568,7 @@ async function startServer() {
         },
         expenses: {
           total: totalExpenses,
-          paidExpenses: expenses._count,
+          paidExpenses: billPayments._count,
           pendingAmount: pendingExpenses._sum.amount || 0,
           pendingCount: pendingExpenses._count,
         },
@@ -9621,20 +9634,44 @@ async function startServer() {
         _count: true,
       });
 
-      // Get expenses by category and period
-      const expensesByCategory = await prisma.expense.groupBy({
-        by: ['category'],
+      // Get actual expense cash movements by bill payment. This keeps
+      // partial payments from being reported as if the full invoice was paid.
+      const billPaymentDetails = await prisma.billPayment.findMany({
         where: {
-          expenseDate: dateFilter,
-          // PARTIAL expenses have already had real money paid out against them
-          // (via bill payments) even though the balance isn't fully settled, so
-          // they must count toward actual spend just like APPROVED/PAID ones —
-          // excluding them understated every financial report.
-          status: { in: ['APPROVED', 'PAID', 'PARTIAL'] },
+          paymentDate: dateFilter,
         },
-        _sum: { amount: true },
-        _count: true,
+        select: {
+          amount: true,
+          paymentDate: true,
+          referenceNumber: true,
+          paymentMethod: true,
+          expense: {
+            select: {
+              id: true,
+              title: true,
+              category: true,
+              status: true,
+              vendorInvoiceNo: true,
+              vendor: { select: { name: true } },
+            },
+          },
+        },
+        orderBy: { paymentDate: 'desc' },
       });
+      const expensesByCategory = Array.from(
+        billPaymentDetails.reduce((map, payment) => {
+          const category = payment.expense.category;
+          const current = map.get(category) || { category, amount: 0, count: 0 };
+          current.amount += payment.amount;
+          current.count += 1;
+          map.set(category, current);
+          return map;
+        }, new Map<string, { category: string; amount: number; count: number }>()).values()
+      ).map((entry) => ({
+        category: entry.category,
+        _sum: { amount: entry.amount },
+        _count: entry.count,
+      }));
 
       // Line-item detail behind the aggregates above -- the report used to
       // only show totals by source/category, which isn't enough to actually
@@ -9642,10 +9679,11 @@ async function startServer() {
       // Income & Expense Report.
       const [feePaymentDetails, donationDetails, expenseDetails] = await Promise.all([
         prisma.feePayment.findMany({
-          where: { paidDate: dateFilter, status: 'PAID' },
+          where: { paidDate: dateFilter, status: { in: ['PAID', 'PARTIAL'] as any } },
           select: {
             id: true,
             amount: true,
+            paidAmount: true,
             paidDate: true,
             receiptNumber: true,
             paymentMethod: true,
@@ -9672,23 +9710,7 @@ async function startServer() {
           },
           orderBy: { donationDate: 'desc' },
         }),
-        prisma.expense.findMany({
-          where: {
-            expenseDate: dateFilter,
-            status: { in: ['APPROVED', 'PAID', 'PARTIAL'] },
-          },
-          select: {
-            id: true,
-            title: true,
-            category: true,
-            status: true,
-            amount: true,
-            expenseDate: true,
-            vendorInvoiceNo: true,
-            vendor: { select: { name: true } },
-          },
-          orderBy: { expenseDate: 'desc' },
-        }),
+        Promise.resolve(billPaymentDetails),
       ]);
 
       const studentLabel = (s: (typeof feePaymentDetails)[number]['student']) =>
@@ -9701,7 +9723,7 @@ async function startServer() {
           description: `Fee payment — ${studentLabel(p.student)}`,
           reference: p.receiptNumber || null,
           paymentMethod: p.paymentMethod || null,
-          amount: p.amount,
+          amount: (p as any).paidAmount ?? p.amount,
         })),
         ...donationDetails.map((d) => ({
           date: d.donationDate,
@@ -9713,14 +9735,14 @@ async function startServer() {
         })),
       ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-      const expenseDetail = expenseDetails.map((e) => ({
-        date: e.expenseDate,
-        title: e.title,
-        category: e.category,
-        status: e.status,
-        vendor: e.vendor?.name || null,
-        reference: e.vendorInvoiceNo || null,
-        amount: e.amount,
+      const expenseDetail = expenseDetails.map((payment) => ({
+        date: payment.paymentDate,
+        title: payment.expense.title,
+        category: payment.expense.category,
+        status: payment.expense.status,
+        vendor: payment.expense.vendor?.name || null,
+        reference: payment.referenceNumber || payment.expense.vendorInvoiceNo || null,
+        amount: payment.amount,
       }));
 
       // Calculate totals
@@ -9871,11 +9893,12 @@ async function startServer() {
       const feeInflows = await prisma.feePayment.findMany({
         where: {
           paidDate: dateFilter,
-          status: 'PAID',
+          status: { in: ['PAID', 'PARTIAL'] as any },
         },
         select: {
           paidDate: true,
           amount: true,
+          paidAmount: true,
           paymentMethod: true,
         },
       });
@@ -9892,20 +9915,16 @@ async function startServer() {
         },
       });
 
-      // Cash outflows
-      const expenseOutflows = await prisma.expense.findMany({
+      // Cash outflows are actual bill payments. Using expenseDate/amount here
+      // overstated partial payments and placed cash movement in the wrong month.
+      const expenseOutflows = await prisma.billPayment.findMany({
         where: {
-          expenseDate: dateFilter,
-          // PARTIAL expenses have already had real money paid out against them
-          // (via bill payments) even though the balance isn't fully settled, so
-          // they must count toward actual spend just like APPROVED/PAID ones —
-          // excluding them understated every financial report.
-          status: { in: ['APPROVED', 'PAID', 'PARTIAL'] },
+          paymentDate: dateFilter,
         },
         select: {
-          expenseDate: true,
+          paymentDate: true,
           amount: true,
-          category: true,
+          expense: { select: { category: true } },
           paymentMethod: true,
         },
       });
@@ -9936,11 +9955,11 @@ async function startServer() {
         });
 
         const monthExpenseOutflows = expenseOutflows.filter(e => {
-          const date = new Date(e.expenseDate);
+          const date = new Date(e.paymentDate);
           return date >= monthStart && date <= monthEnd;
         });
 
-        const totalInflow = monthFeeInflows.reduce((sum, f) => sum + f.amount, 0) +
+        const totalInflow = monthFeeInflows.reduce((sum, f) => sum + ((f as any).paidAmount ?? f.amount), 0) +
                             monthDonationInflows.reduce((sum, d) => sum + d.amount, 0);
         const totalOutflow = monthExpenseOutflows.reduce((sum, e) => sum + e.amount, 0);
         const netFlow = totalInflow - totalOutflow;
@@ -9950,13 +9969,14 @@ async function startServer() {
           year: reportYear,
           inflow: {
             total: totalInflow,
-            fees: monthFeeInflows.reduce((sum, f) => sum + f.amount, 0),
+            fees: monthFeeInflows.reduce((sum, f) => sum + ((f as any).paidAmount ?? f.amount), 0),
             donations: monthDonationInflows.reduce((sum, d) => sum + d.amount, 0),
           },
           outflow: {
             total: totalOutflow,
             byCategory: monthExpenseOutflows.reduce((acc, e) => {
-              acc[e.category] = (acc[e.category] || 0) + e.amount;
+              const category = e.expense.category;
+              acc[category] = (acc[category] || 0) + e.amount;
               return acc;
             }, {} as Record<string, number>),
           },
@@ -9966,7 +9986,7 @@ async function startServer() {
         });
       }
 
-      const totalInflow = feeInflows.reduce((sum, f) => sum + f.amount, 0) +
+      const totalInflow = feeInflows.reduce((sum, f) => sum + ((f as any).paidAmount ?? f.amount), 0) +
                          donationInflows.reduce((sum, d) => sum + d.amount, 0);
       const totalOutflow = expenseOutflows.reduce((sum, e) => sum + e.amount, 0);
       const netCashFlow = totalInflow - totalOutflow;
