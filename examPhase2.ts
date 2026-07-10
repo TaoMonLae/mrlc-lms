@@ -98,12 +98,17 @@ export function registerExamPhase2Routes(deps: Deps): void {
   }
 
   function sanitizeQuestion(q: any) {
+    const rawPairs = q.type === "DRAG_DROP" && q.options && !Array.isArray(q.options) && Array.isArray(q.options.pairs)
+      ? q.options.pairs
+      : [];
     return {
       id: q.id,
       text: q.text,
       type: q.type,
       points: q.points,
-      options: q.options ?? null,
+      options: q.type === "DRAG_DROP" ? null : q.options ?? null,
+      dragItems: q.type === "DRAG_DROP" ? rawPairs.map((pair: any) => String(pair?.item || "")).filter(Boolean) : undefined,
+      dragTargets: q.type === "DRAG_DROP" ? rawPairs.map((pair: any) => String(pair?.target || "")).filter(Boolean) : undefined,
       orderIndex: q.orderIndex,
       sectionId: q.sectionId ?? null,
       groupId: q.groupId ?? null,
@@ -471,7 +476,14 @@ export function registerExamPhase2Routes(deps: Deps): void {
         return {
           id: q.id, text: q.text, type: q.type,
           points: q.pointsOverride ?? q.defaultPoints ?? q.points ?? 0,
-          options, passageText: q.passageText ?? null, imageUrl: q.imageUrl ?? null,
+          options,
+          dragItems: q.type === "DRAG_DROP" && q.options && !Array.isArray(q.options) && Array.isArray(q.options.pairs)
+            ? q.options.pairs.map((pair: any) => String(pair?.item || "")).filter(Boolean)
+            : undefined,
+          dragTargets: q.type === "DRAG_DROP" && q.options && !Array.isArray(q.options) && Array.isArray(q.options.pairs)
+            ? q.options.pairs.map((pair: any) => String(pair?.target || "")).filter(Boolean)
+            : undefined,
+          passageText: q.passageText ?? null, imageUrl: q.imageUrl ?? null,
         };
       });
       res.json({
@@ -494,6 +506,8 @@ export function registerExamPhase2Routes(deps: Deps): void {
       ordered = attempt.frozenContent.map((q: any) => ({
         id: q.id, text: q.text, type: q.type, points: q.points,
         options: Array.isArray(q.options) ? q.options.map((o: any) => ({ value: o.key, text: o.text })) : null,
+        dragItems: Array.isArray(q.dragItems) ? q.dragItems : undefined,
+        dragTargets: Array.isArray(q.dragTargets) ? q.dragTargets : undefined,
         passageText: q.passageText ?? null,
         imageUrl: q.imageUrl ?? null,
         partialCredit: false,
@@ -660,6 +674,16 @@ export function registerExamPhase2Routes(deps: Deps): void {
     };
     // Manual types.
     if (["ESSAY", "WRITTEN"].includes(q.type) || q.requiresManualGrading) return { score: 0, correct: null, manual: true };
+
+    if (q.type === "DRAG_DROP") {
+      const pairs = q.options && !Array.isArray(q.options) && Array.isArray(q.options.pairs) ? q.options.pairs : [];
+      const matches = ans?.selectedOptions && !Array.isArray(ans.selectedOptions) && typeof ans.selectedOptions === "object" ? ans.selectedOptions : {};
+      const normalize = (value: unknown) => String(value || "").trim().toLocaleLowerCase();
+      const correctCount = pairs.filter((pair: any) => normalize(matches[pair.item]) === normalize(pair.target)).length;
+      const correct = pairs.length > 0 && correctCount === pairs.length;
+      const score = q.partialCredit && pairs.length ? (max * correctCount) / pairs.length : (correct ? max : 0);
+      return { score, correct, manual: false };
+    }
 
     // Multi-select with per-option weighting.
     if (Array.isArray(ans?.selectedOptions) && q.optionWeights) {

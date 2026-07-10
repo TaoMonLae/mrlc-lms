@@ -85,6 +85,12 @@ export function freezeAttempt(questions: any[], exam: any, seed: string) {
   for (const qid of order) {
     const q = byId[qid];
     if (!q) continue;
+    const rawPairs = q.type === "DRAG_DROP" && q.options && !Array.isArray(q.options) && Array.isArray((q.options as any).pairs)
+      ? (q.options as any).pairs
+      : [];
+    let dragItems = rawPairs.map((pair: any) => String(pair?.item || "")).filter(Boolean);
+    const dragTargets = rawPairs.map((pair: any) => String(pair?.target || "")).filter(Boolean);
+    if (q.type === "DRAG_DROP" && exam.shuffleOptions) dragItems = seededShuffle(dragItems, `${seed}:drag:${qid}`);
     let opts: { key: string; text: string; correct?: boolean; weight?: number | null }[] = [];
     if (Array.isArray(q.optionRows) && q.optionRows.length) {
       opts = q.optionRows.map((o: any) => ({ key: o.id, text: o.text, correct: o.isCorrect, weight: o.weight }));
@@ -99,6 +105,8 @@ export function freezeAttempt(questions: any[], exam: any, seed: string) {
       passageText: q.passageText ?? null,
       imageUrl: q.imageUrl ?? null,
       options: opts.map((o) => ({ key: o.key, text: o.text })),
+      dragItems: q.type === "DRAG_DROP" ? dragItems : undefined,
+      dragTargets: q.type === "DRAG_DROP" ? dragTargets : undefined,
     });
   }
   return { questionOrder: order, optionOrder, frozenContent };
@@ -243,6 +251,12 @@ export function registerExamBankRoutes(deps: Deps): void {
     if (!b.text || !b.type) { res.status(400).json({ error: "text and type are required" }); return; }
     if (!(await canEditSubject(req, b.subjectId))) { res.status(403).json({ error: "Not your subject" }); return; }
     const options: any[] = Array.isArray(b.options) ? b.options : [];
+    const dragDropPairs = Array.isArray(b.dragDropPairs) ? b.dragDropPairs.map((pair: any) => ({ item: String(pair?.item || "").trim(), target: String(pair?.target || "").trim() })) : [];
+    const hasUniquePairs = (pairs: any[]) => new Set(pairs.map((pair: any) => pair.item.toLocaleLowerCase())).size === pairs.length
+      && new Set(pairs.map((pair: any) => pair.target.toLocaleLowerCase())).size === pairs.length;
+    if (b.type === "DRAG_DROP" && (dragDropPairs.length < 2 || dragDropPairs.some((pair: any) => !pair.item || !pair.target) || !hasUniquePairs(dragDropPairs))) {
+      res.status(400).json({ error: "Drag-and-drop questions need at least two complete pairs with unique items and drop zones" }); return;
+    }
     try {
       const row = await prisma.question.create({
         data: {
@@ -253,6 +267,7 @@ export function registerExamBankRoutes(deps: Deps): void {
           explanation: sanitizeHTML(b.explanation) || null, status: "DRAFT", version: 1,
           tags: Array.isArray(b.tags) ? b.tags : [], language: b.language || null,
           correctAnswer: b.correctAnswer || null, correctAnswers: b.correctAnswers ?? null,
+          options: b.type === "DRAG_DROP" ? { pairs: dragDropPairs } : null,
           partialCredit: !!b.partialCredit, caseSensitive: !!b.caseSensitive,
           requiresManualGrading: !!b.requiresManualGrading,
           numericTolerance: (num(b.numericTolerance) !== null && num(b.numericTolerance) >= 0) ? num(b.numericTolerance) : null,
@@ -279,6 +294,16 @@ export function registerExamBankRoutes(deps: Deps): void {
         data[k] = (k === "text" || k === "explanation") ? sanitizeHTML(b[k] || "") : (b[k] || null);
       }
       if (b.type !== undefined) data.type = b.type;
+      if (b.type !== undefined && b.type !== "DRAG_DROP") data.options = null;
+      if (b.type === "DRAG_DROP" || b.dragDropPairs !== undefined) {
+        const pairs = Array.isArray(b.dragDropPairs) ? b.dragDropPairs.map((pair: any) => ({ item: String(pair?.item || "").trim(), target: String(pair?.target || "").trim() })) : [];
+        const uniquePairs = new Set(pairs.map((pair: any) => pair.item.toLocaleLowerCase())).size === pairs.length
+          && new Set(pairs.map((pair: any) => pair.target.toLocaleLowerCase())).size === pairs.length;
+        if ((b.type === "DRAG_DROP" || existing.type === "DRAG_DROP") && (pairs.length < 2 || pairs.some((pair: any) => !pair.item || !pair.target) || !uniquePairs)) {
+          res.status(400).json({ error: "Drag-and-drop questions need at least two complete pairs with unique items and drop zones" }); return;
+        }
+        data.options = (b.type === "DRAG_DROP" || (b.type === undefined && existing.type === "DRAG_DROP")) ? { pairs } : null;
+      }
       if (b.subjectId !== undefined) data.subjectId = b.subjectId || null;
       if (b.topicId !== undefined) data.topicId = b.topicId || null;
       if (b.bankId !== undefined) data.bankId = b.bankId || null;

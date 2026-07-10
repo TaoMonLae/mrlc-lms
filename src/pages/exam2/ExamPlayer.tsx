@@ -14,8 +14,8 @@ import MathText from '../../components/MathText';
  *    is re-synced on every save; the browser timer is display-only.
  *  - Handles SESSION_CONFLICT (another session) and TIME_EXPIRED (auto-submit).
  */
-type Q = { id: string; text: string; type: string; points: number; options: any; partialCredit?: boolean; passageText?: string | null; imageUrl?: string | null };
-type Answer = { answerText?: string; selectedOptions?: string[]; flaggedForReview?: boolean };
+type Q = { id: string; text: string; type: string; points: number; options: any; partialCredit?: boolean; passageText?: string | null; imageUrl?: string | null; dragItems?: string[]; dragTargets?: string[] };
+type Answer = { answerText?: string; selectedOptions?: string[] | Record<string, string>; flaggedForReview?: boolean };
 
 // Written-answer types always render a free-text box (never multiple choice),
 // even if stray options exist on the record.
@@ -35,6 +35,7 @@ export default function ExamPlayer() {
   const [saving, setSaving] = useState(false);
   const [examTitle, setExamTitle] = useState('');
   const [blocked, setBlocked] = useState<string>('');
+  const [selectedDragItem, setSelectedDragItem] = useState<string | null>(null);
   const dirty = useRef<Set<string>>(new Set());
   const answersRef = useRef(answers);
   answersRef.current = answers;
@@ -144,18 +145,84 @@ export default function ExamPlayer() {
   const ss = String(remaining % 60).padStart(2, '0');
   const low = remaining <= 60;
 
+  const selectedChoices = (questionId: string) => {
+    const selected = answers[questionId]?.selectedOptions;
+    return Array.isArray(selected) ? selected : [];
+  };
+  const dragMatches = (questionId: string) => {
+    const selected = answers[questionId]?.selectedOptions;
+    return selected && !Array.isArray(selected) ? selected : {};
+  };
+  const assignDragItem = (item: string, target: string) => {
+    if (!q) return;
+    const next = { ...dragMatches(q.id) };
+    for (const [assignedItem, assignedTarget] of Object.entries(next)) {
+      if (assignedTarget === target) delete next[assignedItem];
+    }
+    next[item] = target;
+    setAnswer(q.id, { selectedOptions: next });
+    setSelectedDragItem(null);
+  };
+  const pickUpAssignedItem = (item: string) => {
+    if (!q) return;
+    const next = { ...dragMatches(q.id) };
+    delete next[item];
+    setAnswer(q.id, { selectedOptions: next });
+    setSelectedDragItem(item);
+  };
+
+  const renderDragDrop = () => {
+    const items = q?.dragItems || [];
+    const targets = q?.dragTargets || [];
+    const matches = dragMatches(q.id);
+    const availableItems = items.filter((item) => !matches[item]);
+    return (
+      <div className="space-y-4">
+        <p className="text-sm text-slate-500 dark:text-slate-300">Drag an item onto its matching zone, or select an item and then select a zone.</p>
+        <div className="flex flex-wrap gap-2" aria-label="Draggable items">
+          {availableItems.map((item) => (
+            <button key={item} type="button" draggable
+              onDragStart={(event) => { event.dataTransfer.setData('text/plain', item); event.dataTransfer.effectAllowed = 'move'; setSelectedDragItem(item); }}
+              onClick={() => setSelectedDragItem((current) => current === item ? null : item)}
+              aria-pressed={selectedDragItem === item}
+              className={`cursor-grab rounded-lg border px-3 py-2 text-sm font-medium active:cursor-grabbing ${selectedDragItem === item ? 'border-aubergine-500 bg-aubergine-50 text-aubergine-800 dark:bg-aubergine-900/30 dark:text-aubergine-200' : 'border-slate-300 bg-white text-slate-800 dark:border-surface-raised dark:bg-canvas dark:text-slate-100'}`}>
+              {item}
+            </button>
+          ))}
+          {!availableItems.length && <span className="text-sm text-slate-400">All items have been placed.</span>}
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {targets.map((target) => {
+            const assignedItem = items.find((item) => matches[item] === target);
+            return (
+              <button key={target} type="button"
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={(event) => { event.preventDefault(); const item = event.dataTransfer.getData('text/plain'); if (items.includes(item)) assignDragItem(item, target); }}
+                onClick={() => selectedDragItem ? assignDragItem(selectedDragItem, target) : assignedItem ? pickUpAssignedItem(assignedItem) : undefined}
+                className={`min-h-20 rounded-lg border-2 border-dashed p-3 text-left transition-colors ${selectedDragItem ? 'border-aubergine-300 hover:bg-aubergine-50 dark:hover:bg-aubergine-900/20' : 'border-slate-200 dark:border-surface-raised'} ${assignedItem ? 'bg-slate-50 dark:bg-canvas/50' : ''}`}>
+                <span className="block text-xs font-bold uppercase tracking-wide text-slate-400">{target}</span>
+                {assignedItem && <span className="mt-2 inline-block rounded border border-aubergine-300 bg-aubergine-50 px-2 py-1 text-sm font-medium text-aubergine-800 dark:bg-aubergine-900/30 dark:text-aubergine-200">{assignedItem}</span>}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   const renderAnswerInput = () => {
+    if (q?.type === 'DRAG_DROP') return renderDragDrop();
     if (!TEXT_ANSWER_TYPES.includes(q?.type) && Array.isArray(q?.options) && q.options.length) {
       return (
         <div className="space-y-2">
           {(q.options as any[]).map((opt, i) => {
             const val = String(typeof opt === 'object' ? opt.value ?? opt.text ?? i : opt);
             const multi = q.partialCredit;
-            const selected = multi ? (answers[q.id]?.selectedOptions || []).includes(val) : answers[q.id]?.answerText === val;
+            const selected = multi ? selectedChoices(q.id).includes(val) : answers[q.id]?.answerText === val;
             return (
               <button key={i} type="button"
                 onClick={() => multi
-                  ? setAnswer(q.id, { selectedOptions: selected ? (answers[q.id]?.selectedOptions || []).filter((v) => v !== val) : [...(answers[q.id]?.selectedOptions || []), val] })
+                  ? setAnswer(q.id, { selectedOptions: selected ? selectedChoices(q.id).filter((v) => v !== val) : [...selectedChoices(q.id), val] })
                   : setAnswer(q.id, { answerText: val })}
                 className={`w-full text-left px-4 py-3 rounded-lg border transition-colors ${selected ? 'border-aubergine-500 bg-aubergine-50 dark:bg-aubergine-900/20' : 'border-slate-200 dark:border-surface-raised hover:border-slate-300'}`}>
                 <MathText className="text-sm font-medium text-slate-800 dark:text-slate-200">{String(typeof opt === 'object' ? opt.text ?? opt.value : opt)}</MathText>
@@ -230,7 +297,7 @@ export default function ExamPlayer() {
       <div className="flex flex-wrap gap-1.5 mt-4">
         {questions.map((qq, i) => (
           <button key={qq.id} onClick={() => goTo(i)}
-            className={`h-8 w-8 rounded text-xs font-bold ${i === idx ? 'bg-aubergine-600 text-white' : answers[qq.id]?.flaggedForReview ? 'bg-amber-100 text-amber-700 border border-amber-300' : (answers[qq.id]?.answerText || answers[qq.id]?.selectedOptions?.length) ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 dark:bg-surface-raised text-slate-500'}`}>
+            className={`h-8 w-8 rounded text-xs font-bold ${i === idx ? 'bg-aubergine-600 text-white' : answers[qq.id]?.flaggedForReview ? 'bg-amber-100 text-amber-700 border border-amber-300' : (answers[qq.id]?.answerText || selectedChoices(qq.id).length || Object.keys(dragMatches(qq.id)).length) ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 dark:bg-surface-raised text-slate-500'}`}>
             {i + 1}
           </button>
         ))}

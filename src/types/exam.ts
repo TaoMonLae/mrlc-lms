@@ -7,7 +7,13 @@ export type QuestionType =
   | 'GED_RLA_PASSAGE'
   | 'GED_MATH'
   | 'GED_SCIENCE'
-  | 'GED_SOCIAL_STUDIES';
+  | 'GED_SOCIAL_STUDIES'
+  | 'DRAG_DROP';
+
+export interface DragDropPair {
+  item: string;
+  target: string;
+}
 
 export interface ExamQuestion {
   id: string;
@@ -16,6 +22,7 @@ export interface ExamQuestion {
   passageText?: string;
   imageUrl?: string | null;
   choices?: string[];
+  dragDropPairs?: DragDropPair[];
   correctAnswer?: string;
   explanation?: string;
   points: number;

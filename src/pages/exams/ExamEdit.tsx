@@ -29,7 +29,7 @@ interface LoadedExam {
     text: string;
     type: ExamQuestion['type'];
     points: number;
-    options?: string[] | null;
+    options?: unknown;
     correctAnswer?: string | null;
     passageText?: string | null;
     explanation?: string | null;
@@ -83,8 +83,11 @@ export default function ExamEdit() {
           passageText: q.passageText || '',
           imageUrl: q.imageUrl ?? null,
           explanation: q.explanation || '',
-          choices: Array.isArray(q.options) ? q.options : ['', '', '', ''],
-          correctAnswer: q.correctAnswer ?? '0',
+          choices: Array.isArray(q.options) ? q.options : undefined,
+          dragDropPairs: q.type === 'DRAG_DROP' && q.options && !Array.isArray(q.options) && Array.isArray((q.options as any).pairs)
+            ? (q.options as any).pairs.map((pair: any) => ({ item: String(pair?.item || ''), target: String(pair?.target || '') }))
+            : undefined,
+          correctAnswer: q.correctAnswer ?? undefined,
           points: Number(q.points) || 5,
           order: index,
         })));
@@ -106,6 +109,7 @@ export default function ExamEdit() {
     const base: ExamQuestion = { id, type: 'MCQ', questionText: '', passageText: '', explanation: '', choices: undefined, correctAnswer: undefined, points: 5, order: questions.length };
     if (kind === 'TRUE_FALSE') { base.type = 'MCQ'; base.choices = ['True', 'False']; base.correctAnswer = '0'; }
     else if (kind === 'MCQ') { base.type = 'MCQ'; base.choices = ['', '', '', '']; base.correctAnswer = '0'; }
+    else if (kind === 'DRAG_DROP') { base.type = 'DRAG_DROP'; base.dragDropPairs = [{ item: '', target: '' }, { item: '', target: '' }]; }
     else { base.type = kind as ExamQuestion['type']; }
     setQuestions((prev) => [...prev, base]);
   };
@@ -122,7 +126,11 @@ export default function ExamEdit() {
     setQuestions((prev) => {
       const i = prev.findIndex((q) => q.id === questionId);
       if (i < 0) return prev;
-      const copy = { ...prev[i], id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`, choices: prev[i].choices ? [...prev[i].choices!] : undefined };
+      const copy = {
+        ...prev[i], id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        choices: prev[i].choices ? [...prev[i].choices!] : undefined,
+        dragDropPairs: prev[i].dragDropPairs?.map((pair) => ({ ...pair })),
+      };
       const next = [...prev]; next.splice(i + 1, 0, copy); return next;
     });
   };
@@ -143,7 +151,13 @@ export default function ExamEdit() {
     if (cIndex === correct) correct = 0; else if (cIndex < correct) correct -= 1;
     updateQuestion(q.id, { choices, correctAnswer: String(Math.max(0, correct)) });
   };
-  const typeLabel = (t: string) => t === 'MCQ' ? 'Multiple Choice' : t === 'SHORT_ANSWER' ? 'Short Answer' : t === 'WRITTEN' ? 'Written / Essay' : t.startsWith('GED_') ? t.replace('GED_', 'GED ').replace('_', ' ') : t;
+  const addDragDropPair = (q: ExamQuestion) => updateQuestion(q.id, { dragDropPairs: [...(q.dragDropPairs || []), { item: '', target: '' }] });
+  const updateDragDropPair = (q: ExamQuestion, pairIndex: number, field: 'item' | 'target', value: string) => {
+    const pairs = (q.dragDropPairs || []).map((pair, index) => index === pairIndex ? { ...pair, [field]: value } : pair);
+    updateQuestion(q.id, { dragDropPairs: pairs });
+  };
+  const removeDragDropPair = (q: ExamQuestion, pairIndex: number) => updateQuestion(q.id, { dragDropPairs: (q.dragDropPairs || []).filter((_, index) => index !== pairIndex) });
+  const typeLabel = (t: string) => t === 'MCQ' ? 'Multiple Choice' : t === 'SHORT_ANSWER' ? 'Short Answer' : t === 'WRITTEN' ? 'Written / Essay' : t === 'DRAG_DROP' ? 'Drag and Drop Matching' : t.startsWith('GED_') ? t.replace('GED_', 'GED ').replace('_', ' ') : t;
 
   const handleSave = async () => {
     if (!id) return;
@@ -160,6 +174,13 @@ export default function ExamEdit() {
         return filled.length < 2 || (q.choices || []).some((c) => !c.trim()) || q.correctAnswer == null;
       });
       if (invalidMcq) { toast.error('Multiple-choice questions need at least two filled options and one correct answer.'); return; }
+      const invalidDragDrop = questions.find((q) => {
+        if (q.type !== 'DRAG_DROP') return false;
+        const pairs = q.dragDropPairs || [];
+        const unique = (values: string[]) => new Set(values.map((value) => value.trim().toLocaleLowerCase())).size === values.length;
+        return pairs.length < 2 || pairs.some((pair) => !pair.item.trim() || !pair.target.trim()) || !unique(pairs.map((pair) => pair.item)) || !unique(pairs.map((pair) => pair.target));
+      });
+      if (invalidDragDrop) { toast.error('Drag-and-drop questions need at least two complete pairs with unique items and drop zones.'); return; }
     }
 
     setSaving(true);
@@ -177,8 +198,8 @@ export default function ExamEdit() {
           questionText: q.questionText,
           type: q.type,
           points: Number(q.points) || 5,
-          choices: isChoiceType(q.type) ? q.choices || [] : null,
-          correctAnswer: q.correctAnswer,
+          choices: q.type === 'DRAG_DROP' ? { pairs: q.dragDropPairs || [] } : isChoiceType(q.type) ? q.choices || [] : null,
+          correctAnswer: q.type === 'DRAG_DROP' ? null : q.correctAnswer,
           passageText: q.passageText?.trim() ? q.passageText : null,
           explanation: q.explanation || null,
           imageUrl: q.imageUrl || null,
@@ -285,6 +306,7 @@ export default function ExamEdit() {
                 <Button onClick={() => addQuestion('TRUE_FALSE')} variant="outline" disabled={hasAttempts}>True / False</Button>
                 <Button onClick={() => addQuestion('SHORT_ANSWER')} variant="outline" disabled={hasAttempts}>Short answer</Button>
                 <Button onClick={() => addQuestion('WRITTEN')} variant="outline" disabled={hasAttempts}>Written</Button>
+                <Button onClick={() => addQuestion('DRAG_DROP')} variant="outline" disabled={hasAttempts}>Drag and drop</Button>
               </div>
             </div>
           ) : (
@@ -316,6 +338,9 @@ export default function ExamEdit() {
                             updates.choices = ['', '', '', ''];
                             updates.correctAnswer = '0';
                           }
+                          if (val === 'DRAG_DROP' && (!q.dragDropPairs || q.dragDropPairs.length < 2)) {
+                            updates.dragDropPairs = [{ item: '', target: '' }, { item: '', target: '' }];
+                          }
                           updateQuestion(q.id, updates);
                         }}
                       >
@@ -324,6 +349,7 @@ export default function ExamEdit() {
                           <SelectItem value="MCQ">Multiple Choice (MCQ)</SelectItem>
                           <SelectItem value="SHORT_ANSWER">Short Answer</SelectItem>
                           <SelectItem value="WRITTEN">Written / Essay</SelectItem>
+                          <SelectItem value="DRAG_DROP">Drag and Drop Matching</SelectItem>
                           <SelectItem value="GED_RLA_PASSAGE">GED RLA (with Passage)</SelectItem>
                           <SelectItem value="GED_MATH">GED Mathematical Reasoning</SelectItem>
                           <SelectItem value="GED_SCIENCE">GED Science</SelectItem>
@@ -408,6 +434,20 @@ export default function ExamEdit() {
                     </div>
                   )}
 
+                  {q.type === 'DRAG_DROP' && (
+                    <div className="space-y-2">
+                      <Label>Matching pairs <span className="font-normal text-slate-400">— students drag each item to its matching drop zone</span></Label>
+                      {(q.dragDropPairs || []).map((pair, pairIndex) => (
+                        <div key={pairIndex} className="grid grid-cols-1 gap-2 rounded-lg border border-slate-200 p-2 sm:grid-cols-[1fr_1fr_auto] dark:border-surface-raised">
+                          <Input value={pair.item} disabled={hasAttempts} onChange={(e) => updateDragDropPair(q, pairIndex, 'item', e.target.value)} placeholder="Draggable item" />
+                          <Input value={pair.target} disabled={hasAttempts} onChange={(e) => updateDragDropPair(q, pairIndex, 'target', e.target.value)} placeholder="Correct drop zone" />
+                          <Button type="button" variant="ghost" size="icon" title="Remove pair" disabled={hasAttempts || (q.dragDropPairs?.length || 0) <= 2} onClick={() => removeDragDropPair(q, pairIndex)} className="text-slate-400 hover:text-rose-500"><X className="h-4 w-4" /></Button>
+                        </div>
+                      ))}
+                      {!hasAttempts && <Button type="button" variant="ghost" size="sm" onClick={() => addDragDropPair(q)} className="text-aubergine-600"><Plus className="mr-1 h-4 w-4" /> Add pair</Button>}
+                    </div>
+                  )}
+
                   <div className="space-y-2">
                     <Label>Explanation / Rationale</Label>
                     <Textarea
@@ -428,6 +468,7 @@ export default function ExamEdit() {
                   <Button type="button" variant="outline" size="sm" onClick={() => addQuestion('TRUE_FALSE')}>True / False</Button>
                   <Button type="button" variant="outline" size="sm" onClick={() => addQuestion('SHORT_ANSWER')}>Short answer</Button>
                   <Button type="button" variant="outline" size="sm" onClick={() => addQuestion('WRITTEN')}>Written</Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => addQuestion('DRAG_DROP')}>Drag and drop</Button>
                 </div>
               )}
             </div>

@@ -48,6 +48,7 @@ enum QuestionType {
   GED_MATH
   GED_SCIENCE
   GED_SOCIAL_STUDIES
+  DRAG_DROP
 }
 
 enum FeeStatus {
