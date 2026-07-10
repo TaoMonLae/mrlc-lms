@@ -888,11 +888,31 @@ export function registerExamPhase2Routes(deps: Deps): void {
           }
           return ans?.answerText ?? null;
         };
+        // A per-blank breakdown for the review screen (which blank the student
+        // got right/wrong, their word vs. the correct one) — richer than the
+        // one-line yourAnswer/correctAnswer summary, and only meaningful when
+        // showCorrect is on (it would otherwise leak the answer key).
+        const dragDropRows = (q: any, ans: any) => {
+          if (q.type !== "DRAG_DROP" || !showCorrect) return undefined;
+          const blanks = q.options && !Array.isArray(q.options) && Array.isArray((q.options as any).blanks) ? (q.options as any).blanks : [];
+          if (!blanks.length) return undefined;
+          const bank = dragDropBank(q.options);
+          const bankLabel: Record<string, string> = {};
+          for (const item of bank) bankLabel[item.key] = item.label;
+          const matches = ans?.selectedOptions && !Array.isArray(ans.selectedOptions) && typeof ans.selectedOptions === "object" ? ans.selectedOptions : {};
+          const norm = (s: string) => String(s || "").trim().toLocaleLowerCase();
+          return blanks.map((b: any, i: number) => {
+            const yourWord = matches[b.id] != null ? bankLabel[matches[b.id]] : null;
+            const isCorrect = !!yourWord && norm(yourWord) === norm(b.answer);
+            return { label: `Blank ${i + 1}`, your: yourWord || null, correct: b.answer, isCorrect };
+          });
+        };
         questions = orderedQs.map((q: any) => ({
           id: q.id, text: q.text, passageText: q.passageText ?? null,
           ...(showCorrect ? { correctAnswer: correctText(q), correctAnswers: correctAnswers(q) } : {}),
           ...(showExpl ? { explanation: q.explanation } : {}),
           yourAnswer: yourAnswerText(q, ansByQ[q.id]),
+          dragDropRows: dragDropRows(q, ansByQ[q.id]),
           pointsAwarded: showScore ? ansByQ[q.id]?.pointsAwarded ?? null : undefined,
           feedback: showFeedback ? fbByQ[q.id]?.overallComment ?? null : undefined,
         }));

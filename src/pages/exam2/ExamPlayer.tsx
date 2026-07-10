@@ -195,9 +195,10 @@ export default function ExamPlayer() {
     const matches = dragMatches(q.id);
     const usedKeys = new Set(Object.values(matches));
     const availableChips = bank.filter((chip) => !usedKeys.has(chip.key));
+    const allPlaced = bank.length > 0 && availableChips.length === 0;
     const chipColor = (key: string) => CHIP_COLORS[Math.max(0, bank.findIndex((c) => c.key === key)) % CHIP_COLORS.length];
     return (
-      <div className="space-y-5">
+      <div key={q.id} className="animate-in fade-in slide-in-from-bottom-2 space-y-5 duration-300">
         <p className="text-sm text-slate-500 dark:text-slate-300">Drag a word into each blank, or tap a word then tap a blank.</p>
         <div className="rounded-2xl border border-slate-200 bg-white p-5 text-lg leading-loose dark:border-surface-raised dark:bg-canvas">
           {segments.map((seg, i) => {
@@ -211,30 +212,33 @@ export default function ExamPlayer() {
                 onClick={() => (selectedDragItem ? placeChip(seg.blankId, selectedDragItem) : chip ? clearBlank(seg.blankId) : undefined)}
                 className={`mx-1 inline-flex min-w-[6rem] cursor-pointer items-center justify-center rounded-lg border-2 px-3 py-1 align-middle text-base font-bold transition-all ${
                   chip
-                    ? `border-solid shadow-sm ${chipColor(key)}`
+                    ? 'border-solid shadow-sm'
                     : selectedDragItem
                     ? 'border-dashed border-aubergine-400 bg-aubergine-50/70 dark:bg-aubergine-900/10'
                     : 'border-dashed border-slate-300 bg-slate-50 dark:border-surface-raised dark:bg-surface-raised/40'
                 }`}>
-                {chip ? chip.label : ' '}
+                {chip ? <span key={key} className={`animate-in zoom-in-75 -mx-1 rounded px-1 duration-200 ${chipColor(key)}`}>{chip.label}</span> : ' '}
               </span>
             );
           })}
         </div>
-        <div>
-          <p className="mb-2 text-xs font-bold uppercase tracking-widest text-slate-400">Word bank</p>
-          <div className="flex flex-wrap gap-2" aria-label="Draggable words">
-            {availableChips.map((chip) => (
-              <button key={chip.key} type="button" draggable
-                onDragStart={(event) => { event.dataTransfer.setData('text/plain', chip.key); event.dataTransfer.effectAllowed = 'move'; setSelectedDragItem(chip.key); }}
-                onClick={() => setSelectedDragItem((current) => (current === chip.key ? null : chip.key))}
-                aria-pressed={selectedDragItem === chip.key}
-                className={`cursor-grab rounded-full border-2 px-4 py-2 text-sm font-bold shadow-sm transition-transform hover:-translate-y-0.5 active:cursor-grabbing ${chipColor(chip.key)} ${selectedDragItem === chip.key ? 'ring-2 ring-aubergine-400 ring-offset-2 dark:ring-offset-canvas' : ''}`}>
-                {chip.label}
-              </button>
-            ))}
-            {!availableChips.length && <span className="text-sm text-slate-400">All words have been placed.</span>}
-          </div>
+        <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 dark:border-surface-raised dark:bg-surface-raised/30">
+          <p className="mb-2.5 text-xs font-bold uppercase tracking-widest text-slate-400">Word bank — drag from here</p>
+          {allPlaced ? (
+            <p className="animate-in zoom-in-95 flex items-center gap-1.5 text-sm font-bold text-emerald-600 duration-300">✓ All words placed — nice work!</p>
+          ) : (
+            <div className="flex flex-wrap gap-2" aria-label="Draggable words">
+              {availableChips.map((chip) => (
+                <button key={chip.key} type="button" draggable
+                  onDragStart={(event) => { event.dataTransfer.setData('text/plain', chip.key); event.dataTransfer.effectAllowed = 'move'; setSelectedDragItem(chip.key); }}
+                  onClick={() => setSelectedDragItem((current) => (current === chip.key ? null : chip.key))}
+                  aria-pressed={selectedDragItem === chip.key}
+                  className={`cursor-grab rounded-full border-2 px-4 py-2 text-sm font-bold shadow-sm transition-transform hover:-translate-y-0.5 active:cursor-grabbing ${chipColor(chip.key)} ${selectedDragItem === chip.key ? 'ring-2 ring-aubergine-400 ring-offset-2 dark:ring-offset-canvas' : ''}`}>
+                  {chip.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     );
