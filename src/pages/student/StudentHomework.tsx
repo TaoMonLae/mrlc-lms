@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { apiGet, apiSend, authHeaders } from '../../lib/api';
+import { localToday } from '../../lib/dates';
 
 interface MySubmission {
   id: string;
@@ -86,7 +87,10 @@ export default function StudentHomework() {
 
   const stateBadge = (item: HomeworkItem) => {
     const s = item.mySubmission;
-    const overdue = new Date(item.dueDate) < new Date();
+    // Compare calendar dates, not instants — otherwise a homework due
+    // "today" shows as overdue starting at UTC midnight, which is still
+    // mid-afternoon the day before in Myanmar (UTC+6:30).
+    const overdue = item.dueDate.slice(0, 10) < localToday();
     if (s?.status === 'MARKED') return <Badge className="bg-emerald-500 text-white"><CheckCircle2 className="mr-1 h-3 w-3" /> Marked{s.score != null && item.maxMarks != null ? ` ${s.score}/${item.maxMarks}` : ''}</Badge>;
     if (s?.status === 'REDO') return <Badge className="bg-amber-500 text-white"><RotateCcw className="mr-1 h-3 w-3" /> Redo requested</Badge>;
     if (s) return <Badge variant="secondary">Submitted</Badge>;

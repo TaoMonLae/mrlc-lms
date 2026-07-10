@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, BookOpen, CheckCircle2, ClipboardList, Lock, LockOpen, Newspaper, Paperclip, RotateCcw, Trash2 } from 'lucide-react';
+import { ArrowLeft, BookOpen, CheckCircle2, ClipboardList, Lock, LockOpen, Newspaper, Paperclip, Pencil, RotateCcw, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { apiGet, apiSend } from '../../lib/api';
+import { toLocalDateString } from '../../lib/dates';
 
 interface Submission {
   id: string;
@@ -27,7 +31,7 @@ interface Detail {
   maxMarks: number | null;
   status: string;
   gradeItemId?: string | null;
-  subject?: { name: string } | null;
+  subject?: { id: string; name: string } | null;
   class: { id: string; name: string; students: { id: string; studentCode: string; user?: { firstName?: string; lastName?: string } | null }[] };
   submissions: Submission[];
 }
@@ -39,6 +43,10 @@ export default function HomeworkDetail() {
   const [loading, setLoading] = useState(true);
   const [drafts, setDrafts] = useState<Record<string, { score: string; feedback: string }>>({});
   const [busy, setBusy] = useState<string | null>(null);
+  const [subjects, setSubjects] = useState<{ id: string; name: string }[]>([]);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editForm, setEditForm] = useState({ title: '', subjectId: '', dueDate: '', maxMarks: '', instructions: '' });
 
   const load = () => {
     apiGet<Detail>(`/api/homework/${id}`)
@@ -47,6 +55,40 @@ export default function HomeworkDetail() {
       .finally(() => setLoading(false));
   };
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [id]);
+  useEffect(() => { apiGet<any[]>('/api/subjects').then((d) => setSubjects((d || []).map((s: any) => ({ id: s.id, name: s.name })))).catch(() => {}); }, []);
+
+  const startEdit = () => {
+    if (!data) return;
+    setEditForm({
+      title: data.title,
+      subjectId: data.subject?.id ?? '',
+      dueDate: toLocalDateString(new Date(data.dueDate)),
+      maxMarks: data.maxMarks != null ? String(data.maxMarks) : '',
+      instructions: data.instructions ?? '',
+    });
+    setEditing(true);
+  };
+
+  const saveEdit = async () => {
+    if (!editForm.title.trim() || !editForm.dueDate) { toast.error('Title and due date are required'); return; }
+    setSaving(true);
+    try {
+      await apiSend(`/api/homework/${id}`, 'PUT', {
+        title: editForm.title,
+        subjectId: editForm.subjectId || null,
+        dueDate: editForm.dueDate,
+        maxMarks: editForm.maxMarks === '' ? null : editForm.maxMarks,
+        instructions: editForm.instructions || null,
+      });
+      toast.success('Homework updated');
+      setEditing(false);
+      load();
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to update homework');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const subFor = (studentId: string) => data?.submissions.find((s) => s.studentId === studentId) ?? null;
 
@@ -107,43 +149,84 @@ export default function HomeworkDetail() {
         <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500" render={<Link to="/teacher/homework" />} nativeButton={false}>
           <ArrowLeft className="mr-2 h-4 w-4" /> All Homework
         </Button>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-900 dark:text-white">
-              {data.title}
-              {data.status === 'CLOSED' && <Badge variant="secondary">Closed</Badge>}
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              {data.class.name}{data.subject ? ` · ${data.subject.name}` : ''} · due {new Date(data.dueDate).toLocaleDateString()}
-              {data.maxMarks != null ? ` · out of ${data.maxMarks}` : ' · check-off (no marks)'}
-            </p>
-            {data.instructions && <p className="mt-2 max-w-2xl whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">{data.instructions}</p>}
-            {data.attachmentUrl && (
-              <a href={data.attachmentUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-sm text-aubergine-600 underline">
-                {data.attachmentUrl.startsWith('/news/') ? (
-                  <><Newspaper className="h-3.5 w-3.5" /> Linked News article</>
-                ) : data.attachmentUrl.startsWith('/elibrary/') ? (
-                  <><BookOpen className="h-3.5 w-3.5" /> Linked E-Book</>
-                ) : (
-                  <><Paperclip className="h-3.5 w-3.5" /> Worksheet attachment</>
-                )}
-              </a>
-            )}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={toggleClosed}>
-              {data.status === 'CLOSED' ? <><LockOpen className="mr-2 h-4 w-4" /> Reopen</> : <><Lock className="mr-2 h-4 w-4" /> Close</>}
-            </Button>
-            {data.maxMarks != null && (
-              <Button variant="outline" size="sm" onClick={syncGradebook} disabled={scoredCount === 0} title={scoredCount === 0 ? 'Mark some submissions with scores first' : undefined}>
-                <ClipboardList className="mr-2 h-4 w-4" /> Sync to Gradebook{data.gradeItemId ? ' ✓' : ''}
+        {editing ? (
+          <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-surface-raised dark:bg-surface-indigo">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-2 md:col-span-2">
+                <Label>Title *</Label>
+                <Input value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Subject</Label>
+                <Select value={editForm.subjectId} onValueChange={(v) => setEditForm({ ...editForm, subjectId: v })}>
+                  <SelectTrigger className="w-full"><SelectValue placeholder="Optional" /></SelectTrigger>
+                  <SelectContent>
+                    {subjects.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Due date *</Label>
+                <Input type="date" value={editForm.dueDate} onChange={(e) => setEditForm({ ...editForm, dueDate: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Max marks <span className="text-xs text-slate-400">(leave blank for check-off only)</span></Label>
+                <Input type="number" min="1" value={editForm.maxMarks} onChange={(e) => setEditForm({ ...editForm, maxMarks: e.target.value })} placeholder="e.g. 20" />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label>Instructions</Label>
+                <Textarea rows={3} value={editForm.instructions} onChange={(e) => setEditForm({ ...editForm, instructions: e.target.value })} />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={() => setEditing(false)} disabled={saving}>
+                <X className="mr-2 h-4 w-4" /> Cancel
               </Button>
-            )}
-            <Button variant="outline" size="sm" className="text-rose-600" onClick={remove}>
-              <Trash2 className="mr-2 h-4 w-4" /> Delete
-            </Button>
+              <Button size="sm" onClick={saveEdit} disabled={saving}>{saving ? 'Saving…' : 'Save changes'}</Button>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-900 dark:text-white">
+                {data.title}
+                {data.status === 'CLOSED' && <Badge variant="secondary">Closed</Badge>}
+              </h1>
+              <p className="mt-1 text-sm text-slate-500">
+                {data.class.name}{data.subject ? ` · ${data.subject.name}` : ''} · due {new Date(data.dueDate).toLocaleDateString()}
+                {data.maxMarks != null ? ` · out of ${data.maxMarks}` : ' · check-off (no marks)'}
+              </p>
+              {data.instructions && <p className="mt-2 max-w-2xl whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">{data.instructions}</p>}
+              {data.attachmentUrl && (
+                <a href={data.attachmentUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-sm text-aubergine-600 underline">
+                  {data.attachmentUrl.startsWith('/news/') ? (
+                    <><Newspaper className="h-3.5 w-3.5" /> Linked News article</>
+                  ) : data.attachmentUrl.startsWith('/elibrary/') ? (
+                    <><BookOpen className="h-3.5 w-3.5" /> Linked E-Book</>
+                  ) : (
+                    <><Paperclip className="h-3.5 w-3.5" /> Worksheet attachment</>
+                  )}
+                </a>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" onClick={startEdit}>
+                <Pencil className="mr-2 h-4 w-4" /> Edit
+              </Button>
+              <Button variant="outline" size="sm" onClick={toggleClosed}>
+                {data.status === 'CLOSED' ? <><LockOpen className="mr-2 h-4 w-4" /> Reopen</> : <><Lock className="mr-2 h-4 w-4" /> Close</>}
+              </Button>
+              {data.maxMarks != null && (
+                <Button variant="outline" size="sm" onClick={syncGradebook} disabled={scoredCount === 0} title={scoredCount === 0 ? 'Mark some submissions with scores first' : undefined}>
+                  <ClipboardList className="mr-2 h-4 w-4" /> Sync to Gradebook{data.gradeItemId ? ' ✓' : ''}
+                </Button>
+              )}
+              <Button variant="outline" size="sm" className="text-rose-600" onClick={remove}>
+                <Trash2 className="mr-2 h-4 w-4" /> Delete
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-surface-raised dark:bg-surface-indigo">
@@ -162,7 +245,10 @@ export default function HomeworkDetail() {
               const sub = subFor(st.id);
               const name = `${st.user?.firstName ?? ''} ${st.user?.lastName ?? ''}`.trim() || st.studentCode;
               const d = drafts[st.id] ?? { score: sub?.score != null ? String(sub.score) : '', feedback: sub?.feedback ?? '' };
-              const late = sub && new Date(sub.submittedAt) > new Date(data.dueDate);
+              // Compare calendar dates, not instants — a submission made
+              // later in the day on the due date shouldn't be flagged
+              // "late" just because it's past UTC midnight (see dates.ts).
+              const late = sub && toLocalDateString(new Date(sub.submittedAt)) > data.dueDate.slice(0, 10);
               return (
                 <tr key={st.id} className="align-top hover:bg-slate-50 dark:hover:bg-surface-raised/40">
                   <td className="px-4 py-3">
