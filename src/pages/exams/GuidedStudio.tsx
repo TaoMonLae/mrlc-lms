@@ -656,13 +656,16 @@ export default function GuidedStudio() {
                   <Plus size={14} /> Add question
                 </button>
                 {showTypePicker && (
-                  <div style={{ position: 'absolute', bottom: '100%', left: 0, right: 0, marginBottom: 6, zIndex: 30, background: '#fff', border: `1px solid ${C.border3}`, borderRadius: 12, boxShadow: '0 24px 50px -18px rgba(0,0,0,.4)', padding: 8, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                  <div style={{ position: 'absolute', bottom: '100%', left: 0, right: 0, marginBottom: 6, zIndex: 30, background: '#fff', border: `1px solid ${C.border3}`, borderRadius: 12, boxShadow: '0 24px 50px -18px rgba(0,0,0,.4)', padding: 6, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    <div style={{ padding: '4px 8px 6px' }}><RailLabel>Choose a type</RailLabel></div>
                     {TYPES.map((t) => (
                       <button key={t.key} onClick={() => addQuestion(t.key)}
-                        style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 8px', borderRadius: 8, border: `1px solid ${C.border2}`, background: '#fff', cursor: 'pointer', fontSize: 11.5, fontWeight: 600, color: C.ink, textAlign: 'left' }}>
-                        <span style={{ width: 8, height: 8, borderRadius: 999, background: t.color }} />
+                        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 9px', borderRadius: 8, border: '1px solid transparent', background: '#fff', cursor: 'pointer', fontSize: 12.5, fontWeight: 600, color: C.ink, textAlign: 'left', whiteSpace: 'nowrap' }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = C.tint7; (e.currentTarget as HTMLButtonElement).style.borderColor = C.tint100; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = '#fff'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'transparent'; }}>
+                        <span style={{ width: 9, height: 9, borderRadius: 999, background: t.color, flexShrink: 0 }} />
                         <span style={{ flex: 1 }}>{t.label}</span>
-                        {t.ged && <span style={{ fontSize: 8.5, fontWeight: 800, color: C.blue, background: C.blueBg, padding: '1px 4px', borderRadius: 4 }}>GED</span>}
+                        {t.ged && <span style={{ fontSize: 8.5, fontWeight: 800, color: C.blue, background: C.blueBg, padding: '2px 5px', borderRadius: 4, letterSpacing: '.04em' }}>GED</span>}
                       </button>
                     ))}
                   </div>
