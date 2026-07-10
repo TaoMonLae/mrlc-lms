@@ -180,9 +180,9 @@ export default function ExamNew() {
           };
         }),
       });
-      toast.success('Exam created. Configure sections, bank questions and scheduling next.');
-      // Hand off to the unified authoring flow.
-      if (created?.id) navigate(`/exam2/${created.id}/author`);
+      toast.success('Exam created. Build questions, scheduling and grading in the Studio.');
+      // Hand off to the Guided Studio builder.
+      if (created?.id) navigate(`/exams/${created.id}/studio`);
       else navigate('/exams');
     } catch (err: any) {
       toast.error(err.message || 'Failed to create exam.');
