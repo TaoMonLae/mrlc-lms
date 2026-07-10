@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { apiGet } from '../../lib/api';
 import QRCode from 'qrcode';
 import { Printer, KeyRound } from 'lucide-react';
+import { splitDragText } from '../../lib/dragBlanks';
 
 /** Printable exam export. Builds a branded, print-ready sheet with a candidate
  *  ID block, QR code and answer sheet; supports A/B/C versions and answer keys. */
@@ -69,19 +70,15 @@ export default function PrintableExport() {
                   {q.options.map((o: any, i: number) => <li key={i}>{String(typeof o === 'object' ? o.text ?? o.value : o)}</li>)}
                 </ol>
               )}
-              {q.type === 'DRAG_DROP' && (Array.isArray(q.dragItems) || Array.isArray(q.dragTargets)) && (
+              {q.type === 'DRAG_DROP' && typeof q.dragText === 'string' && (
                 <div className="ml-8 mt-1 text-sm">
-                  <p className="text-xs text-slate-500">Match each item to its zone. Write the letter of the zone next to each item.</p>
-                  <div className="mt-1.5 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
-                    {(q.dragItems || []).map((item: string, i: number) => (
-                      <p key={i} className="col-span-2">{i + 1}. {item} — ______</p>
-                    ))}
-                  </div>
-                  {(q.dragTargets || []).length > 0 && (
-                    <p className="mt-1.5 text-xs">
-                      <span className="font-semibold">Zones: </span>
-                      {q.dragTargets.map((t: string, i: number) => `${String.fromCharCode(65 + i)}. ${t}`).join('   ')}
-                    </p>
+                  <p className="leading-relaxed">
+                    {splitDragText(q.dragText).map((seg: any, i: number) => seg.kind === 'text'
+                      ? <span key={i}>{seg.text}</span>
+                      : <span key={i} className="mx-1 inline-block border-b border-slate-500 px-3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>)}
+                  </p>
+                  {Array.isArray(q.dragBank) && q.dragBank.length > 0 && (
+                    <p className="mt-1.5 text-xs"><span className="font-semibold">Word bank: </span>{q.dragBank.join('   ')}</p>
                   )}
                 </div>
               )}

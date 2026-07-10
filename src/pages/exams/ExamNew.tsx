@@ -12,6 +12,9 @@ import { toast } from 'sonner';
 import { type Exam, type ExamQuestion, type ExamSettings } from '../../types/exam';
 import MathField from '../../components/MathField';
 import QuestionImageField from '../../components/QuestionImageField';
+import { parseDragBlankText, splitDragText } from '../../lib/dragBlanks';
+
+const DRAG_DROP_PLACEHOLDER = 'The [[cat]] sat on the [[mat]].';
 
 const INITIAL_SETTINGS: ExamSettings = {
   enableTimer: true,
@@ -73,7 +76,7 @@ export default function ExamNew() {
     };
     if (kind === 'TRUE_FALSE') { base.type = 'MCQ'; base.choices = ['True', 'False']; base.correctAnswer = '0'; }
     else if (kind === 'MCQ') { base.type = 'MCQ'; base.choices = ['', '', '', '']; base.correctAnswer = '0'; }
-    else if (kind === 'DRAG_DROP') { base.type = 'DRAG_DROP'; base.dragDropPairs = [{ item: '', target: '' }, { item: '', target: '' }]; }
+    else if (kind === 'DRAG_DROP') { base.type = 'DRAG_DROP'; base.dragRawText = ''; base.distractors = []; }
     else { base.type = kind as ExamQuestion['type']; }
     setQuestions((qs) => [...qs, base]);
   };
@@ -93,7 +96,7 @@ export default function ExamNew() {
       const copy = {
         ...qs[i], id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
         choices: qs[i].choices ? [...qs[i].choices!] : undefined,
-        dragDropPairs: qs[i].dragDropPairs?.map((pair) => ({ ...pair })),
+        distractors: qs[i].distractors ? [...qs[i].distractors!] : undefined,
       };
       const next = [...qs];
       next.splice(i + 1, 0, copy);
@@ -124,12 +127,8 @@ export default function ExamNew() {
     updateQuestion(q.id, { choices, correctAnswer: String(Math.max(0, correct)) });
   };
 
-  const addDragDropPair = (q: ExamQuestion) => updateQuestion(q.id, { dragDropPairs: [...(q.dragDropPairs || []), { item: '', target: '' }] });
-  const updateDragDropPair = (q: ExamQuestion, pairIndex: number, field: 'item' | 'target', value: string) => {
-    const pairs = (q.dragDropPairs || []).map((pair, index) => index === pairIndex ? { ...pair, [field]: value } : pair);
-    updateQuestion(q.id, { dragDropPairs: pairs });
-  };
-  const removeDragDropPair = (q: ExamQuestion, pairIndex: number) => updateQuestion(q.id, { dragDropPairs: (q.dragDropPairs || []).filter((_, index) => index !== pairIndex) });
+  const updateDistractors = (q: ExamQuestion, raw: string) =>
+    updateQuestion(q.id, { distractors: raw.split(',').map((s) => s.trim()).filter(Boolean) });
 
   const calculateTotalPoints = () => questions.reduce((sum, q) => sum + (Number(q.points) || 0), 0);
 
@@ -154,13 +153,8 @@ export default function ExamNew() {
       return filled.length < 2 || (q.choices || []).some((c) => !c.trim()) || q.correctAnswer == null;
     });
     if (invalidMcq) { toast.error('Multiple-choice questions need at least two filled options and one correct answer.'); setStep(2); return; }
-    const invalidDragDrop = questions.find((q) => {
-      if (q.type !== 'DRAG_DROP') return false;
-      const pairs = q.dragDropPairs || [];
-      const unique = (values: string[]) => new Set(values.map((value) => value.trim().toLocaleLowerCase())).size === values.length;
-      return pairs.length < 2 || pairs.some((pair) => !pair.item.trim() || !pair.target.trim()) || !unique(pairs.map((pair) => pair.item)) || !unique(pairs.map((pair) => pair.target));
-    });
-    if (invalidDragDrop) { toast.error('Drag-and-drop questions need at least two complete pairs with unique items and drop zones.'); setStep(2); return; }
+    const invalidDragDrop = questions.find((q) => q.type === 'DRAG_DROP' && parseDragBlankText(q.dragRawText || '').blanks.length < 1);
+    if (invalidDragDrop) { toast.error('Drag-and-drop questions need at least one blank — mark a word using [[word]].'); setStep(2); return; }
     setSaving(true);
     try {
       const created = await apiSend('/api/exams', 'POST', {
@@ -172,16 +166,19 @@ export default function ExamNew() {
         duration: Number(duration) || null,
         totalMarks: calculateTotalPoints(),
         settings,
-        questions: questions.map((q) => ({
-          questionText: q.questionText,
-          type: q.type,
-          points: Number(q.points) || 5,
-          choices: q.type === 'DRAG_DROP' ? { pairs: q.dragDropPairs || [] } : isChoiceType(q.type) ? q.choices || [] : null,
-          correctAnswer: q.type === 'DRAG_DROP' ? null : q.correctAnswer,
-          passageText: q.passageText?.trim() ? q.passageText : null,
-          explanation: q.explanation || null,
-          imageUrl: q.imageUrl || null,
-        })),
+        questions: questions.map((q) => {
+          const drag = q.type === 'DRAG_DROP' ? parseDragBlankText(q.dragRawText || '') : null;
+          return {
+            questionText: q.questionText,
+            type: q.type,
+            points: Number(q.points) || 5,
+            choices: drag ? { text: drag.text, blanks: drag.blanks, distractors: q.distractors || [] } : isChoiceType(q.type) ? q.choices || [] : null,
+            correctAnswer: q.type === 'DRAG_DROP' ? null : q.correctAnswer,
+            passageText: q.passageText?.trim() ? q.passageText : null,
+            explanation: q.explanation || null,
+            imageUrl: q.imageUrl || null,
+          };
+        }),
       });
       toast.success('Exam created. Configure sections, bank questions and scheduling next.');
       // Hand off to the unified authoring flow.
@@ -323,8 +320,9 @@ export default function ExamNew() {
                               updates.choices = ['', '', '', ''];
                               updates.correctAnswer = '0';
                             }
-                            if (val === 'DRAG_DROP' && (!q.dragDropPairs || q.dragDropPairs.length < 2)) {
-                              updates.dragDropPairs = [{ item: '', target: '' }, { item: '', target: '' }];
+                            if (val === 'DRAG_DROP' && !q.dragRawText) {
+                              updates.dragRawText = '';
+                              updates.distractors = [];
                             }
                             updateQuestion(q.id, updates);
                           }}
@@ -439,19 +437,38 @@ export default function ExamNew() {
                       </div>
                     )}
 
-                    {q.type === 'DRAG_DROP' && (
-                      <div className="space-y-2">
-                        <Label>Matching pairs <span className="font-normal text-slate-400">— students drag each item to its matching drop zone</span></Label>
-                        {(q.dragDropPairs || []).map((pair, pairIndex) => (
-                          <div key={pairIndex} className="grid grid-cols-1 gap-2 rounded-lg border border-slate-200 p-2 sm:grid-cols-[1fr_1fr_auto] dark:border-surface-raised">
-                            <Input value={pair.item} onChange={(e) => updateDragDropPair(q, pairIndex, 'item', e.target.value)} placeholder="Draggable item" />
-                            <Input value={pair.target} onChange={(e) => updateDragDropPair(q, pairIndex, 'target', e.target.value)} placeholder="Correct drop zone" />
-                            <Button type="button" variant="ghost" size="icon" title="Remove pair" disabled={(q.dragDropPairs?.length || 0) <= 2} onClick={() => removeDragDropPair(q, pairIndex)} className="text-slate-400 hover:text-rose-500"><X className="h-4 w-4" /></Button>
+                    {q.type === 'DRAG_DROP' && (() => {
+                      const parsed = parseDragBlankText(q.dragRawText || '');
+                      const segments = splitDragText(parsed.text);
+                      return (
+                        <div className="space-y-3">
+                          <div className="space-y-2">
+                            <Label>Passage <span className="font-normal text-slate-400">— wrap each word students must drag into place with double brackets, e.g. [[word]]</span></Label>
+                            <Textarea
+                              value={q.dragRawText || ''}
+                              onChange={(e) => updateQuestion(q.id, { dragRawText: e.target.value })}
+                              rows={3}
+                              placeholder={DRAG_DROP_PLACEHOLDER}
+                              className="bg-white dark:bg-canvas text-sm border-slate-200 dark:border-surface-raised"
+                            />
                           </div>
-                        ))}
-                        <Button type="button" variant="ghost" size="sm" onClick={() => addDragDropPair(q)} className="text-aubergine-600"><Plus className="mr-1 h-4 w-4" /> Add pair</Button>
-                      </div>
-                    )}
+                          {parsed.blanks.length > 0 && (
+                            <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-3 text-sm leading-relaxed dark:border-surface-raised dark:bg-canvas/50">
+                              <p className="mb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Preview</p>
+                              {segments.map((seg, i) => seg.kind === 'text'
+                                ? <span key={i}>{seg.text}</span>
+                                : <span key={i} className="mx-1 inline-block rounded border border-emerald-300 bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400">
+                                    {parsed.blanks.find((b) => b.id === seg.blankId)?.answer}
+                                  </span>)}
+                            </div>
+                          )}
+                          <div className="space-y-2">
+                            <Label>Extra wrong words <span className="font-normal text-slate-400">(optional — comma-separated, mixed into the word bank as decoys)</span></Label>
+                            <Input value={(q.distractors || []).join(', ')} onChange={(e) => updateDistractors(q, e.target.value)} placeholder="e.g. red, tall" />
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     <div className="space-y-2">
                       <Label>Explanation / Rationale</Label>

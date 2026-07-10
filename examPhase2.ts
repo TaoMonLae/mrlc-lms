@@ -2,7 +2,7 @@ import express from "express";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import rateLimit from "express-rate-limit";
-import { composeQuestionSet, freezeAttempt } from "./examBank";
+import { composeQuestionSet, freezeAttempt, dragDropBank, seededShuffle } from "./examBank";
 
 interface JwtPayload { userId: string; role: string; email: string; }
 
@@ -98,17 +98,14 @@ export function registerExamPhase2Routes(deps: Deps): void {
   }
 
   function sanitizeQuestion(q: any) {
-    const rawPairs = q.type === "DRAG_DROP" && q.options && !Array.isArray(q.options) && Array.isArray(q.options.pairs)
-      ? q.options.pairs
-      : [];
     return {
       id: q.id,
       text: q.text,
       type: q.type,
       points: q.points,
       options: q.type === "DRAG_DROP" ? null : q.options ?? null,
-      dragItems: q.type === "DRAG_DROP" ? rawPairs.map((pair: any) => String(pair?.item || "")).filter(Boolean) : undefined,
-      dragTargets: q.type === "DRAG_DROP" ? rawPairs.map((pair: any) => String(pair?.target || "")).filter(Boolean) : undefined,
+      dragText: q.type === "DRAG_DROP" ? String(q.options?.text ?? "") : undefined,
+      dragBank: q.type === "DRAG_DROP" ? seededShuffle(dragDropBank(q.options), `dq:${q.id}`) : undefined,
       orderIndex: q.orderIndex,
       sectionId: q.sectionId ?? null,
       groupId: q.groupId ?? null,
@@ -477,12 +474,8 @@ export function registerExamPhase2Routes(deps: Deps): void {
           id: q.id, text: q.text, type: q.type,
           points: q.pointsOverride ?? q.defaultPoints ?? q.points ?? 0,
           options,
-          dragItems: q.type === "DRAG_DROP" && q.options && !Array.isArray(q.options) && Array.isArray(q.options.pairs)
-            ? q.options.pairs.map((pair: any) => String(pair?.item || "")).filter(Boolean)
-            : undefined,
-          dragTargets: q.type === "DRAG_DROP" && q.options && !Array.isArray(q.options) && Array.isArray(q.options.pairs)
-            ? q.options.pairs.map((pair: any) => String(pair?.target || "")).filter(Boolean)
-            : undefined,
+          dragText: q.type === "DRAG_DROP" ? String(q.options?.text ?? "") : undefined,
+          dragBank: q.type === "DRAG_DROP" ? dragDropBank(q.options) : undefined,
           passageText: q.passageText ?? null, imageUrl: q.imageUrl ?? null,
         };
       });
@@ -506,8 +499,8 @@ export function registerExamPhase2Routes(deps: Deps): void {
       ordered = attempt.frozenContent.map((q: any) => ({
         id: q.id, text: q.text, type: q.type, points: q.points,
         options: Array.isArray(q.options) ? q.options.map((o: any) => ({ value: o.key, text: o.text })) : null,
-        dragItems: Array.isArray(q.dragItems) ? q.dragItems : undefined,
-        dragTargets: Array.isArray(q.dragTargets) ? q.dragTargets : undefined,
+        dragText: typeof q.dragText === "string" ? q.dragText : undefined,
+        dragBank: Array.isArray(q.dragBank) ? q.dragBank : undefined,
         passageText: q.passageText ?? null,
         imageUrl: q.imageUrl ?? null,
         partialCredit: false,
@@ -676,12 +669,18 @@ export function registerExamPhase2Routes(deps: Deps): void {
     if (["ESSAY", "WRITTEN"].includes(q.type) || q.requiresManualGrading) return { score: 0, correct: null, manual: true };
 
     if (q.type === "DRAG_DROP") {
-      const pairs = q.options && !Array.isArray(q.options) && Array.isArray(q.options.pairs) ? q.options.pairs : [];
+      // The student's answer is { [blankId]: bankKey } — bankKey is an index
+      // into the canonical (pre-shuffle) word bank built by dragDropBank(),
+      // which resolves back to the word text placed in that blank.
+      const blanks: { id: string; answer: string }[] = q.options && !Array.isArray(q.options) && Array.isArray(q.options.blanks) ? q.options.blanks : [];
+      const bank = dragDropBank(q.options);
+      const bankLabel: Record<string, string> = {};
+      for (const item of bank) bankLabel[item.key] = item.label;
       const matches = ans?.selectedOptions && !Array.isArray(ans.selectedOptions) && typeof ans.selectedOptions === "object" ? ans.selectedOptions : {};
       const normalize = (value: unknown) => String(value || "").trim().toLocaleLowerCase();
-      const correctCount = pairs.filter((pair: any) => normalize(matches[pair.item]) === normalize(pair.target)).length;
-      const correct = pairs.length > 0 && correctCount === pairs.length;
-      const score = q.partialCredit && pairs.length ? (max * correctCount) / pairs.length : (correct ? max : 0);
+      const correctCount = blanks.filter((b) => normalize(bankLabel[matches[b.id]]) === normalize(b.answer)).length;
+      const correct = blanks.length > 0 && correctCount === blanks.length;
+      const score = q.partialCredit && blanks.length ? (max * correctCount) / blanks.length : (correct ? max : 0);
       return { score, correct, manual: false };
     }
 
@@ -854,8 +853,8 @@ export function registerExamPhase2Routes(deps: Deps): void {
         // the option *text* so it matches the student's (text) answer.
         const correctText = (q: any) => {
           if (q.type === "DRAG_DROP") {
-            const pairs = q.options && !Array.isArray(q.options) && Array.isArray((q.options as any).pairs) ? (q.options as any).pairs : [];
-            return pairs.length ? pairs.map((p: any) => `${p.item} → ${p.target}`).join(", ") : null;
+            const blanks = q.options && !Array.isArray(q.options) && Array.isArray((q.options as any).blanks) ? (q.options as any).blanks : [];
+            return blanks.length ? blanks.map((b: any, i: number) => `${i + 1}. ${b.answer}`).join("   ") : null;
           }
           if (Array.isArray(q.optionRows) && q.optionRows.length) {
             return q.optionRows.filter((o: any) => o.isCorrect).map((o: any) => o.text).join(", ");
@@ -873,15 +872,19 @@ export function registerExamPhase2Routes(deps: Deps): void {
         const correctAnswers = (q: any) => Array.isArray(q.optionRows) && q.optionRows.length
           ? q.optionRows.filter((o: any) => o.isCorrect).map((o: any) => o.text)
           : q.correctAnswers;
-        // Drag-drop answers live in selectedOptions (an item→target map), not
-        // answerText, so the plain answerText lookup below always showed "—"
-        // for these questions even when the student answered (and was
-        // correctly graded). Render them as "item → target" pairs instead.
+        // Drag-drop answers live in selectedOptions ({ [blankId]: bankKey }),
+        // not answerText, so the plain answerText lookup below always showed
+        // "—" for these questions even when answered and correctly graded.
+        // Render them as numbered "1. word" lines matching the blank order.
         const yourAnswerText = (q: any, ans: any) => {
           if (q.type === "DRAG_DROP") {
-            const matches = ans?.selectedOptions && !Array.isArray(ans.selectedOptions) && typeof ans.selectedOptions === "object" ? ans.selectedOptions : null;
-            const entries = matches ? Object.entries(matches).filter(([, target]) => target) : [];
-            return entries.length ? entries.map(([item, target]) => `${item} → ${target}`).join(", ") : null;
+            const blanks = q.options && !Array.isArray(q.options) && Array.isArray((q.options as any).blanks) ? (q.options as any).blanks : [];
+            const bank = dragDropBank(q.options);
+            const bankLabel: Record<string, string> = {};
+            for (const item of bank) bankLabel[item.key] = item.label;
+            const matches = ans?.selectedOptions && !Array.isArray(ans.selectedOptions) && typeof ans.selectedOptions === "object" ? ans.selectedOptions : {};
+            const lines = blanks.map((b: any, i: number) => matches[b.id] != null && bankLabel[matches[b.id]] ? `${i + 1}. ${bankLabel[matches[b.id]]}` : null).filter(Boolean);
+            return lines.length ? lines.join("   ") : null;
           }
           return ans?.answerText ?? null;
         };
@@ -1500,8 +1503,8 @@ function registerGradingAndOps(deps: any) {
       // Legacy MCQ stores the correct answer as an option index; show the text.
       const correctText = (q: any) => {
         if (q.type === "DRAG_DROP") {
-          const pairs = q.options && !Array.isArray(q.options) && Array.isArray((q.options as any).pairs) ? (q.options as any).pairs : [];
-          return pairs.length ? pairs.map((p: any) => `${p.item} → ${p.target}`).join(", ") : null;
+          const blanks = q.options && !Array.isArray(q.options) && Array.isArray((q.options as any).blanks) ? (q.options as any).blanks : [];
+          return blanks.length ? blanks.map((b: any, i: number) => `${i + 1}. ${b.answer}`).join("   ") : null;
         }
         if (q.correctAnswer == null) return q.correctAnswer;
         if (Array.isArray(q.options) && q.options.length) {
@@ -1519,21 +1522,14 @@ function registerGradingAndOps(deps: any) {
         exam: { id: exam.id, title: exam.title, durationMinutes: exam.durationMinutes, totalMarks: exam.totalMarks, class: exam.class?.name, subject: exam.subject?.name },
         sections: exam.sections.map((s: any) => ({ id: s.id, title: s.title, instructions: s.instructions })),
         stimuli: exam.stimuli.map((s: any) => ({ id: s.id, type: s.type, title: s.title, content: s.content, mediaUrl: s.mediaUrl })),
-        questions: questions.map((q: any, i: number) => {
-          // Drag-and-drop has no equivalent on paper; print it as a matching
-          // list (items + a word bank of drop zones) instead of passing the
-          // raw {pairs} object through, which the print template can't render.
-          const dragPairs = q.type === "DRAG_DROP" && q.options && !Array.isArray(q.options) && Array.isArray((q.options as any).pairs)
-            ? (q.options as any).pairs : [];
-          return {
-            number: i + 1, id: q.id, text: q.text, type: q.type, points: q.points,
-            options: q.type === "DRAG_DROP" ? null : q.options,
-            dragItems: q.type === "DRAG_DROP" ? dragPairs.map((p: any) => String(p?.item || "")).filter(Boolean) : undefined,
-            dragTargets: q.type === "DRAG_DROP" ? dragPairs.map((p: any) => String(p?.target || "")).filter(Boolean) : undefined,
-            stimulusId: q.stimulusId, sectionId: q.sectionId,
-            ...(withKey ? { correctAnswer: correctText(q), correctAnswers: q.correctAnswers } : {}),
-          };
-        }),
+        questions: questions.map((q: any, i: number) => ({
+          number: i + 1, id: q.id, text: q.text, type: q.type, points: q.points,
+          options: q.type === "DRAG_DROP" ? null : q.options,
+          dragText: q.type === "DRAG_DROP" ? String(q.options?.text ?? "") : undefined,
+          dragBank: q.type === "DRAG_DROP" ? seededShuffle(dragDropBank(q.options), `print:${version}:${q.id}`).map((item) => item.label) : undefined,
+          stimulusId: q.stimulusId, sectionId: q.sectionId,
+          ...(withKey ? { correctAnswer: correctText(q), correctAnswers: q.correctAnswers } : {}),
+        })),
         answerKey: withKey,
       });
     } catch (err) { logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }

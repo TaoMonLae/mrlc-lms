@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { authHeaders } from '../../lib/api';
 import { Clock, Save, Flag, Pause, Send, AlertTriangle, Loader2 } from 'lucide-react';
 import MathText from '../../components/MathText';
+import { splitDragText } from '../../lib/dragBlanks';
 
 /**
  * Server-authoritative exam player.
@@ -14,8 +15,19 @@ import MathText from '../../components/MathText';
  *    is re-synced on every save; the browser timer is display-only.
  *  - Handles SESSION_CONFLICT (another session) and TIME_EXPIRED (auto-submit).
  */
-type Q = { id: string; text: string; type: string; points: number; options: any; partialCredit?: boolean; passageText?: string | null; imageUrl?: string | null; dragItems?: string[]; dragTargets?: string[] };
+type DragBankItem = { key: string; label: string };
+type Q = { id: string; text: string; type: string; points: number; options: any; partialCredit?: boolean; passageText?: string | null; imageUrl?: string | null; dragText?: string; dragBank?: DragBankItem[] };
 type Answer = { answerText?: string; selectedOptions?: string[] | Record<string, string>; flaggedForReview?: boolean };
+
+// A small rotating palette so drag chips read as playful/colorful (Wayground
+// style) rather than one flat color — purely cosmetic, keyed by chip index.
+const CHIP_COLORS = [
+  'border-aubergine-300 bg-aubergine-50 text-aubergine-800 dark:border-aubergine-700 dark:bg-aubergine-900/30 dark:text-aubergine-200',
+  'border-sky-300 bg-sky-50 text-sky-800 dark:border-sky-700 dark:bg-sky-900/30 dark:text-sky-200',
+  'border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200',
+  'border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200',
+  'border-rose-300 bg-rose-50 text-rose-800 dark:border-rose-700 dark:bg-rose-900/30 dark:text-rose-200',
+];
 
 // Written-answer types always render a free-text box (never multiple choice),
 // even if stray options exist on the record.
@@ -149,62 +161,80 @@ export default function ExamPlayer() {
     const selected = answers[questionId]?.selectedOptions;
     return Array.isArray(selected) ? selected : [];
   };
-  const dragMatches = (questionId: string) => {
+  // { [blankId]: bankKey } — which word-bank chip (by its stable key) is
+  // sitting in each blank.
+  const dragMatches = (questionId: string): Record<string, string> => {
     const selected = answers[questionId]?.selectedOptions;
-    return selected && !Array.isArray(selected) ? selected : {};
+    return selected && !Array.isArray(selected) ? (selected as Record<string, string>) : {};
   };
-  const assignDragItem = (item: string, target: string) => {
+  const placeChip = (blankId: string, key: string) => {
     if (!q) return;
     const next = { ...dragMatches(q.id) };
-    for (const [assignedItem, assignedTarget] of Object.entries(next)) {
-      if (assignedTarget === target) delete next[assignedItem];
-    }
-    next[item] = target;
+    // A chip can only occupy one blank — lift it out of wherever it was.
+    for (const [bId, k] of Object.entries(next)) if (k === key) delete next[bId];
+    next[blankId] = key;
     setAnswer(q.id, { selectedOptions: next });
     setSelectedDragItem(null);
   };
-  const pickUpAssignedItem = (item: string) => {
+  const clearBlank = (blankId: string) => {
     if (!q) return;
     const next = { ...dragMatches(q.id) };
-    delete next[item];
+    const key = next[blankId];
+    delete next[blankId];
     setAnswer(q.id, { selectedOptions: next });
-    setSelectedDragItem(item);
+    setSelectedDragItem(key ?? null);
   };
 
+  // Wayground-style fill-in-the-blank: the passage renders inline with each
+  // blank as a drop target; matching (and any extra distractor) words sit in
+  // a word bank below as draggable chips. Tap-to-select is supported
+  // alongside native HTML5 drag for touch devices / accessibility.
   const renderDragDrop = () => {
-    const items = q?.dragItems || [];
-    const targets = q?.dragTargets || [];
+    const bank = q?.dragBank || [];
+    const segments = splitDragText(q?.dragText || '');
     const matches = dragMatches(q.id);
-    const availableItems = items.filter((item) => !matches[item]);
+    const usedKeys = new Set(Object.values(matches));
+    const availableChips = bank.filter((chip) => !usedKeys.has(chip.key));
+    const chipColor = (key: string) => CHIP_COLORS[Math.max(0, bank.findIndex((c) => c.key === key)) % CHIP_COLORS.length];
     return (
-      <div className="space-y-4">
-        <p className="text-sm text-slate-500 dark:text-slate-300">Drag an item onto its matching zone, or select an item and then select a zone.</p>
-        <div className="flex flex-wrap gap-2" aria-label="Draggable items">
-          {availableItems.map((item) => (
-            <button key={item} type="button" draggable
-              onDragStart={(event) => { event.dataTransfer.setData('text/plain', item); event.dataTransfer.effectAllowed = 'move'; setSelectedDragItem(item); }}
-              onClick={() => setSelectedDragItem((current) => current === item ? null : item)}
-              aria-pressed={selectedDragItem === item}
-              className={`cursor-grab rounded-lg border px-3 py-2 text-sm font-medium active:cursor-grabbing ${selectedDragItem === item ? 'border-aubergine-500 bg-aubergine-50 text-aubergine-800 dark:bg-aubergine-900/30 dark:text-aubergine-200' : 'border-slate-300 bg-white text-slate-800 dark:border-surface-raised dark:bg-canvas dark:text-slate-100'}`}>
-              {item}
-            </button>
-          ))}
-          {!availableItems.length && <span className="text-sm text-slate-400">All items have been placed.</span>}
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {targets.map((target) => {
-            const assignedItem = items.find((item) => matches[item] === target);
+      <div className="space-y-5">
+        <p className="text-sm text-slate-500 dark:text-slate-300">Drag a word into each blank, or tap a word then tap a blank.</p>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 text-lg leading-loose dark:border-surface-raised dark:bg-canvas">
+          {segments.map((seg, i) => {
+            if (seg.kind === 'text') return <span key={i}>{seg.text}</span>;
+            const key = matches[seg.blankId];
+            const chip = key ? bank.find((c) => c.key === key) : undefined;
             return (
-              <button key={target} type="button"
+              <span key={i}
                 onDragOver={(event) => event.preventDefault()}
-                onDrop={(event) => { event.preventDefault(); const item = event.dataTransfer.getData('text/plain'); if (items.includes(item)) assignDragItem(item, target); }}
-                onClick={() => selectedDragItem ? assignDragItem(selectedDragItem, target) : assignedItem ? pickUpAssignedItem(assignedItem) : undefined}
-                className={`min-h-20 rounded-lg border-2 border-dashed p-3 text-left transition-colors ${selectedDragItem ? 'border-aubergine-300 hover:bg-aubergine-50 dark:hover:bg-aubergine-900/20' : 'border-slate-200 dark:border-surface-raised'} ${assignedItem ? 'bg-slate-50 dark:bg-canvas/50' : ''}`}>
-                <span className="block text-xs font-bold uppercase tracking-wide text-slate-400">{target}</span>
-                {assignedItem && <span className="mt-2 inline-block rounded border border-aubergine-300 bg-aubergine-50 px-2 py-1 text-sm font-medium text-aubergine-800 dark:bg-aubergine-900/30 dark:text-aubergine-200">{assignedItem}</span>}
-              </button>
+                onDrop={(event) => { event.preventDefault(); const k = event.dataTransfer.getData('text/plain'); if (bank.some((c) => c.key === k)) placeChip(seg.blankId, k); }}
+                onClick={() => (selectedDragItem ? placeChip(seg.blankId, selectedDragItem) : chip ? clearBlank(seg.blankId) : undefined)}
+                className={`mx-1 inline-flex min-w-[6rem] cursor-pointer items-center justify-center rounded-lg border-2 px-3 py-1 align-middle text-base font-bold transition-all ${
+                  chip
+                    ? `border-solid shadow-sm ${chipColor(key)}`
+                    : selectedDragItem
+                    ? 'border-dashed border-aubergine-400 bg-aubergine-50/70 dark:bg-aubergine-900/10'
+                    : 'border-dashed border-slate-300 bg-slate-50 dark:border-surface-raised dark:bg-surface-raised/40'
+                }`}>
+                {chip ? chip.label : ' '}
+              </span>
             );
           })}
+        </div>
+        <div>
+          <p className="mb-2 text-xs font-bold uppercase tracking-widest text-slate-400">Word bank</p>
+          <div className="flex flex-wrap gap-2" aria-label="Draggable words">
+            {availableChips.map((chip) => (
+              <button key={chip.key} type="button" draggable
+                onDragStart={(event) => { event.dataTransfer.setData('text/plain', chip.key); event.dataTransfer.effectAllowed = 'move'; setSelectedDragItem(chip.key); }}
+                onClick={() => setSelectedDragItem((current) => (current === chip.key ? null : chip.key))}
+                aria-pressed={selectedDragItem === chip.key}
+                className={`cursor-grab rounded-full border-2 px-4 py-2 text-sm font-bold shadow-sm transition-transform hover:-translate-y-0.5 active:cursor-grabbing ${chipColor(chip.key)} ${selectedDragItem === chip.key ? 'ring-2 ring-aubergine-400 ring-offset-2 dark:ring-offset-canvas' : ''}`}>
+                {chip.label}
+              </button>
+            ))}
+            {!availableChips.length && <span className="text-sm text-slate-400">All words have been placed.</span>}
+          </div>
         </div>
       </div>
     );
