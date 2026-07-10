@@ -2,13 +2,18 @@ export type ExamStatus = 'DRAFT' | 'PUBLISHED' | 'CLOSED';
 
 export type QuestionType =
   | 'MCQ'
+  | 'TRUE_FALSE'
   | 'SHORT_ANSWER'
+  | 'ESSAY'
   | 'WRITTEN'
   | 'GED_RLA_PASSAGE'
   | 'GED_MATH'
   | 'GED_SCIENCE'
   | 'GED_SOCIAL_STUDIES'
-  | 'DRAG_DROP';
+  | 'DRAG_DROP'
+  | 'DROPDOWN'
+  | 'HOTSPOT'
+  | 'EXTENDED';
 
 // Wayground-style drag-and-drop: a passage with blanked-out words the
 // student drags word chips into. Authored as raw text using "[[word]]" to

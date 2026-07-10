@@ -49,6 +49,9 @@ enum QuestionType {
   GED_SCIENCE
   GED_SOCIAL_STUDIES
   DRAG_DROP
+  DROPDOWN
+  HOTSPOT
+  EXTENDED
 }
 
 enum FeeStatus {

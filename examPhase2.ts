@@ -666,7 +666,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
       return Math.max(v, q.negativePoints ? -Math.abs(q.negativePoints) : (q.partialCredit ? v : Math.min(v, max)) );
     };
     // Manual types.
-    if (["ESSAY", "WRITTEN"].includes(q.type) || q.requiresManualGrading) return { score: 0, correct: null, manual: true };
+    if (["ESSAY", "WRITTEN", "EXTENDED"].includes(q.type) || q.requiresManualGrading) return { score: 0, correct: null, manual: true };
 
     if (q.type === "DRAG_DROP") {
       // The student's answer is { [blankId]: bankKey } — bankKey is an index

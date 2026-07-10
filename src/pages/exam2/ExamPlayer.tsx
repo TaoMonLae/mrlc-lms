@@ -31,7 +31,7 @@ const CHIP_COLORS = [
 
 // Written-answer types always render a free-text box (never multiple choice),
 // even if stray options exist on the record.
-const TEXT_ANSWER_TYPES = ['SHORT_ANSWER', 'ESSAY', 'WRITTEN'];
+const TEXT_ANSWER_TYPES = ['SHORT_ANSWER', 'ESSAY', 'WRITTEN', 'EXTENDED'];
 
 export default function ExamPlayer() {
   const { attemptId } = useParams();
@@ -246,6 +246,21 @@ export default function ExamPlayer() {
 
   const renderAnswerInput = () => {
     if (q?.type === 'DRAG_DROP') return renderDragDrop();
+    // Drop-down: single-select rendered as a native <select> (graded as a choice).
+    if (q?.type === 'DROPDOWN' && Array.isArray(q?.options) && q.options.length) {
+      return (
+        <select
+          value={answers[q.id]?.answerText ?? ''}
+          onChange={(e) => setAnswer(q.id, { answerText: e.target.value })}
+          className="w-full max-w-md rounded-lg border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-4 py-3 text-sm">
+          <option value="">Select an answer…</option>
+          {(q.options as any[]).map((opt, i) => {
+            const val = String(typeof opt === 'object' ? opt.value ?? opt.text ?? i : opt);
+            return <option key={i} value={val}>{String(typeof opt === 'object' ? opt.text ?? opt.value : opt)}</option>;
+          })}
+        </select>
+      );
+    }
     if (!TEXT_ANSWER_TYPES.includes(q?.type) && Array.isArray(q?.options) && q.options.length) {
       return (
         <div className="space-y-2">

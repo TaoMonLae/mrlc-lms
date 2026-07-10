@@ -117,6 +117,12 @@ function fromBackend(q: any, index: number): Question {
     base.uiType = 'ESSAY'; base.sample = q.correctAnswer || '';
   } else if (bt === 'WRITTEN') {
     base.uiType = 'EXTENDED'; base.sample = q.correctAnswer || '';
+  } else if (bt === 'DROPDOWN' || bt === 'HOTSPOT') {
+    // First-class GED types (graded as single-select choice questions).
+    base.uiType = bt;
+    base.options = optsToArr(Array.isArray(opts) ? opts : [], q.correctAnswer);
+  } else if (bt === 'EXTENDED') {
+    base.uiType = 'EXTENDED'; base.sample = q.correctAnswer || '';
   } else if (bt === 'DRAG_DROP') {
     base.uiType = 'DRAG';
     // options = { text, blanks:[{id,answer}], distractors }
@@ -148,7 +154,6 @@ function fromBackend(q: any, index: number): Question {
 /** Produce the backend save payload for one editor question. */
 function toBackend(q: Question) {
   const firstCorrect = q.options.findIndex((o) => o.c);
-  const correctIdxs = q.options.map((o, i) => (o.c ? i : -1)).filter((i) => i >= 0);
   switch (q.uiType) {
     case 'TF':
       return { questionText: q.text, type: 'TRUE_FALSE', points: q.points, choices: ['True', 'False'], correctAnswer: String(Math.max(0, firstCorrect)), explanation: q.explanation || null };
@@ -157,7 +162,7 @@ function toBackend(q: Question) {
     case 'ESSAY':
       return { questionText: q.text, type: 'ESSAY', points: q.points, choices: null, correctAnswer: q.sample || null, explanation: q.explanation || null };
     case 'EXTENDED':
-      return { questionText: q.text, type: 'WRITTEN', points: q.points, choices: null, correctAnswer: q.sample || null, explanation: q.explanation || null };
+      return { questionText: q.text, type: 'EXTENDED', points: q.points, choices: null, correctAnswer: q.sample || null, explanation: q.explanation || null };
     case 'DRAG': {
       // Build "[[word]]" raw text by filling each "___" with the correct words in order.
       const answers = q.options.filter((o) => o.c).map((o) => o.t);
@@ -170,9 +175,9 @@ function toBackend(q: Question) {
       return { questionText: text, type: 'DRAG_DROP', points: q.points, choices: { text, blanks, distractors }, correctAnswer: null, explanation: q.explanation || null };
     }
     case 'DROPDOWN':
-      return { questionText: q.text, type: 'MCQ', points: q.points, choices: { ui: 'DROPDOWN', choices: q.options.map((o) => o.t), correct: correctIdxs }, correctAnswer: String(Math.max(0, firstCorrect)), explanation: q.explanation || null };
+      return { questionText: q.text, type: 'DROPDOWN', points: q.points, choices: q.options.map((o) => o.t), correctAnswer: String(Math.max(0, firstCorrect)), explanation: q.explanation || null };
     case 'HOTSPOT':
-      return { questionText: q.text, type: 'MCQ', points: q.points, choices: { ui: 'HOTSPOT', choices: q.options.map((o) => o.t), correct: correctIdxs }, correctAnswer: null, explanation: q.explanation || null };
+      return { questionText: q.text, type: 'HOTSPOT', points: q.points, choices: q.options.map((o) => o.t), correctAnswer: String(Math.max(0, firstCorrect)), explanation: q.explanation || null };
     default: // MCQ (and reloaded GED_*)
       return { questionText: q.text, type: q.origType || 'MCQ', points: q.points, choices: q.options.map((o) => o.t), correctAnswer: String(Math.max(0, firstCorrect)), explanation: q.explanation || null };
   }
