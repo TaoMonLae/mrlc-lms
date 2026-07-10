@@ -853,6 +853,10 @@ export function registerExamPhase2Routes(deps: Deps): void {
         // For legacy MCQs the correct answer is stored as an option *index*; show
         // the option *text* so it matches the student's (text) answer.
         const correctText = (q: any) => {
+          if (q.type === "DRAG_DROP") {
+            const pairs = q.options && !Array.isArray(q.options) && Array.isArray((q.options as any).pairs) ? (q.options as any).pairs : [];
+            return pairs.length ? pairs.map((p: any) => `${p.item} → ${p.target}`).join(", ") : null;
+          }
           if (Array.isArray(q.optionRows) && q.optionRows.length) {
             return q.optionRows.filter((o: any) => o.isCorrect).map((o: any) => o.text).join(", ");
           }
@@ -869,11 +873,23 @@ export function registerExamPhase2Routes(deps: Deps): void {
         const correctAnswers = (q: any) => Array.isArray(q.optionRows) && q.optionRows.length
           ? q.optionRows.filter((o: any) => o.isCorrect).map((o: any) => o.text)
           : q.correctAnswers;
+        // Drag-drop answers live in selectedOptions (an item→target map), not
+        // answerText, so the plain answerText lookup below always showed "—"
+        // for these questions even when the student answered (and was
+        // correctly graded). Render them as "item → target" pairs instead.
+        const yourAnswerText = (q: any, ans: any) => {
+          if (q.type === "DRAG_DROP") {
+            const matches = ans?.selectedOptions && !Array.isArray(ans.selectedOptions) && typeof ans.selectedOptions === "object" ? ans.selectedOptions : null;
+            const entries = matches ? Object.entries(matches).filter(([, target]) => target) : [];
+            return entries.length ? entries.map(([item, target]) => `${item} → ${target}`).join(", ") : null;
+          }
+          return ans?.answerText ?? null;
+        };
         questions = orderedQs.map((q: any) => ({
           id: q.id, text: q.text, passageText: q.passageText ?? null,
           ...(showCorrect ? { correctAnswer: correctText(q), correctAnswers: correctAnswers(q) } : {}),
           ...(showExpl ? { explanation: q.explanation } : {}),
-          yourAnswer: ansByQ[q.id]?.answerText ?? null,
+          yourAnswer: yourAnswerText(q, ansByQ[q.id]),
           pointsAwarded: showScore ? ansByQ[q.id]?.pointsAwarded ?? null : undefined,
           feedback: showFeedback ? fbByQ[q.id]?.overallComment ?? null : undefined,
         }));
@@ -1483,6 +1499,10 @@ function registerGradingAndOps(deps: any) {
       }
       // Legacy MCQ stores the correct answer as an option index; show the text.
       const correctText = (q: any) => {
+        if (q.type === "DRAG_DROP") {
+          const pairs = q.options && !Array.isArray(q.options) && Array.isArray((q.options as any).pairs) ? (q.options as any).pairs : [];
+          return pairs.length ? pairs.map((p: any) => `${p.item} → ${p.target}`).join(", ") : null;
+        }
         if (q.correctAnswer == null) return q.correctAnswer;
         if (Array.isArray(q.options) && q.options.length) {
           const idx = Number(q.correctAnswer);
@@ -1499,11 +1519,21 @@ function registerGradingAndOps(deps: any) {
         exam: { id: exam.id, title: exam.title, durationMinutes: exam.durationMinutes, totalMarks: exam.totalMarks, class: exam.class?.name, subject: exam.subject?.name },
         sections: exam.sections.map((s: any) => ({ id: s.id, title: s.title, instructions: s.instructions })),
         stimuli: exam.stimuli.map((s: any) => ({ id: s.id, type: s.type, title: s.title, content: s.content, mediaUrl: s.mediaUrl })),
-        questions: questions.map((q: any, i: number) => ({
-          number: i + 1, id: q.id, text: q.text, type: q.type, points: q.points, options: q.options,
-          stimulusId: q.stimulusId, sectionId: q.sectionId,
-          ...(withKey ? { correctAnswer: correctText(q), correctAnswers: q.correctAnswers } : {}),
-        })),
+        questions: questions.map((q: any, i: number) => {
+          // Drag-and-drop has no equivalent on paper; print it as a matching
+          // list (items + a word bank of drop zones) instead of passing the
+          // raw {pairs} object through, which the print template can't render.
+          const dragPairs = q.type === "DRAG_DROP" && q.options && !Array.isArray(q.options) && Array.isArray((q.options as any).pairs)
+            ? (q.options as any).pairs : [];
+          return {
+            number: i + 1, id: q.id, text: q.text, type: q.type, points: q.points,
+            options: q.type === "DRAG_DROP" ? null : q.options,
+            dragItems: q.type === "DRAG_DROP" ? dragPairs.map((p: any) => String(p?.item || "")).filter(Boolean) : undefined,
+            dragTargets: q.type === "DRAG_DROP" ? dragPairs.map((p: any) => String(p?.target || "")).filter(Boolean) : undefined,
+            stimulusId: q.stimulusId, sectionId: q.sectionId,
+            ...(withKey ? { correctAnswer: correctText(q), correctAnswers: q.correctAnswers } : {}),
+          };
+        }),
         answerKey: withKey,
       });
     } catch (err) { logger.error(err); res.status(500).json({ error: "Internal Server Error" }); }

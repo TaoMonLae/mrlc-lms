@@ -69,10 +69,26 @@ export default function PrintableExport() {
                   {q.options.map((o: any, i: number) => <li key={i}>{String(typeof o === 'object' ? o.text ?? o.value : o)}</li>)}
                 </ol>
               )}
+              {q.type === 'DRAG_DROP' && (Array.isArray(q.dragItems) || Array.isArray(q.dragTargets)) && (
+                <div className="ml-8 mt-1 text-sm">
+                  <p className="text-xs text-slate-500">Match each item to its zone. Write the letter of the zone next to each item.</p>
+                  <div className="mt-1.5 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+                    {(q.dragItems || []).map((item: string, i: number) => (
+                      <p key={i} className="col-span-2">{i + 1}. {item} — ______</p>
+                    ))}
+                  </div>
+                  {(q.dragTargets || []).length > 0 && (
+                    <p className="mt-1.5 text-xs">
+                      <span className="font-semibold">Zones: </span>
+                      {q.dragTargets.map((t: string, i: number) => `${String.fromCharCode(65 + i)}. ${t}`).join('   ')}
+                    </p>
+                  )}
+                </div>
+              )}
               {answerKey && (q.correctAnswer != null || q.correctAnswers) && (
                 <p className="ml-8 text-sm text-red-600 font-semibold mt-1">Answer: {q.correctAnswer ?? (Array.isArray(q.correctAnswers) ? q.correctAnswers.join(' / ') : '')}</p>
               )}
-              {!answerKey && (!Array.isArray(q.options) || !q.options.length) && <div className="ml-8 mt-2 border-b border-slate-300 h-12" />}
+              {!answerKey && q.type !== 'DRAG_DROP' && (!Array.isArray(q.options) || !q.options.length) && <div className="ml-8 mt-2 border-b border-slate-300 h-12" />}
             </li>
           ))}
         </ol>
