@@ -36,7 +36,7 @@ export default function ExamAuthoring() {
 
   const clone = async () => {
     if (!confirm('Clone this exam? A new DRAFT copy is created (no attempts/results copied).')) return;
-    try { const ex = await apiSend(`/api/exams/${examId}/clone`, 'POST'); toast.success('Exam cloned'); navigate(`/exam2/${ex.id}/author`); }
+    try { const ex = await apiSend(`/api/exams/${examId}/clone`, 'POST'); toast.success('Exam cloned'); navigate(`/exams/${ex.id}/studio`); }
     catch (e: any) { toast.error(e.message || 'Clone failed'); }
   };
 
@@ -55,6 +55,7 @@ export default function ExamAuthoring() {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Button variant="outline" size="sm" onClick={clone}><Copy className="h-4 w-4 mr-1" /> Clone</Button>
+          <Link to={`/exams/${examId}/studio`} className="text-aubergine-600 text-sm font-semibold">Open in Studio →</Link>
           <Link to={`/exam2/${examId}/schedule`} className="text-aubergine-600 text-sm font-semibold">Scheduling →</Link>
         </div>
       </div>
