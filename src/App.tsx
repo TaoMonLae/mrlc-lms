@@ -19,7 +19,6 @@ import AttendanceReportsPage from "./pages/attendance/AttendanceReports";
 
 import ExamNew from "./pages/exams/ExamNew";
 import ExamProfile from "./pages/exams/ExamProfile";
-import ExamEdit from "./pages/exams/ExamEdit";
 import ExamTake from "./pages/exams/ExamTake";
 import ExamResults from "./pages/exams/ExamResults";
 import ExamsList from "./pages/exams/ExamsList";
@@ -366,7 +365,9 @@ export default function App() {
                   <Route path="/exams" element={<ExamsList />} />
                   <Route path="/exams/new" element={<ExamNew />} />
                   <Route path="/exams/:id" element={<ExamProfile />} />
-                  <Route path="/exams/:id/edit" element={<ExamEdit />} />
+                  {/* Classic edit removed — the Guided Studio is the only builder.
+                      Keep the /edit path as a redirect so old links/bookmarks resolve. */}
+                  <Route path="/exams/:id/edit" element={<GuidedStudio />} />
                   <Route path="/exams/:id/studio" element={<GuidedStudio />} />
                   <Route path="/exams/:id/preview" element={<ExamPreview />} />
                   

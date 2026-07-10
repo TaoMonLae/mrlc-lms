@@ -156,7 +156,6 @@ export default function ExamsList() {
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem render={<Link to={`/exams/${exam.id}`} />} nativeButton={false}>View Dashboard</DropdownMenuItem>
                       <DropdownMenuItem render={<Link to={`/exams/${exam.id}/studio`} />} nativeButton={false}>Open in Studio</DropdownMenuItem>
-                      <DropdownMenuItem render={<Link to={`/exams/${exam.id}/edit`} />} nativeButton={false}>Classic edit</DropdownMenuItem>
                       <DropdownMenuItem render={<Link to={`/exam2/${exam.id}/author`} />} nativeButton={false}>Author content</DropdownMenuItem>
                       <DropdownMenuItem render={<Link to={`/exam2/${exam.id}/schedule`} />} nativeButton={false}>Schedule &amp; release</DropdownMenuItem>
                       <DropdownMenuSeparator />
