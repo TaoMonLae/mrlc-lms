@@ -11,7 +11,7 @@ import 'react-pdf/dist/esm/Page/TextLayer.css';
 import {
   ArrowLeft, ChevronLeft, ChevronRight, Download, ZoomIn, ZoomOut,
   Loader2, BookOpen, List, Lock, Maximize2, Minimize2, Search, X,
-  Highlighter, Sparkles, Trash2, BookA, Volume2, ClipboardList,
+  Highlighter, Sparkles, Trash2, BookA, Volume2, ClipboardList, Sun, Moon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -896,6 +896,43 @@ const HIGHLIGHT_FILL: Record<string, string> = {
   yellow: '#facc15', green: '#4ade80', blue: '#60a5fa', pink: '#f472b6',
 };
 
+type EpubAppearance = 'light' | 'warm' | 'dark';
+
+const EPUB_APPEARANCE_KEY = 'ebook_epub_appearance';
+const EPUB_APPEARANCE_SURFACE: Record<EpubAppearance, string> = {
+  light: 'bg-white',
+  warm: 'bg-[#f5efe4]',
+  dark: 'bg-[#171717]',
+};
+
+function loadEpubAppearance(): EpubAppearance {
+  try {
+    const saved = localStorage.getItem(EPUB_APPEARANCE_KEY);
+    return saved === 'warm' || saved === 'dark' || saved === 'light' ? saved : 'light';
+  } catch {
+    return 'light';
+  }
+}
+
+function applyEpubAppearance(rendition: Rendition, appearance: EpubAppearance) {
+  const themes = (rendition as any).themes;
+  if (!themes) return;
+  themes.register('reader-light', {
+    'html, body': { background: '#ffffff', color: '#1e293b' },
+    a: { color: '#2563eb' },
+  });
+  themes.register('reader-warm', {
+    'html, body': { background: '#f5efe4', color: '#3d3427' },
+    a: { color: '#8a4b22' },
+  });
+  themes.register('reader-dark', {
+    'html, body': { background: '#171717', color: '#e5e7eb' },
+    'body *': { color: '#e5e7eb !important' },
+    a: { color: '#93c5fd !important' },
+  });
+  themes.select(`reader-${appearance}`);
+}
+
 /* ─────────────────────────── EPUB reader ─────────────────────────── */
 function EpubView({ id, token, blob, bookTitle, canMakeFlashcards }: {
   id: string; token: string | null; blob: Blob; bookTitle: string; canMakeFlashcards: boolean;
@@ -907,6 +944,7 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards }: {
   const [currentHref, setCurrentHref] = useState<string>('');
   const [ready, setReady] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [appearance, setAppearance] = useState<EpubAppearance>(loadEpubAppearance);
 
   const [highlights, setHighlights] = useState<HighlightRow[]>([]);
   const [showHighlights, setShowHighlights] = useState(false);
@@ -968,6 +1006,7 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards }: {
           spread: 'auto',
         });
         rendRef.current = rendition;
+        applyEpubAppearance(rendition, appearance);
         rendition.on('relocated', (loc: any) => {
           const href = loc?.start?.href || '';
           setCurrentHref(href);
@@ -1007,6 +1046,11 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards }: {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [blob]);
+
+  useEffect(() => {
+    try { localStorage.setItem(EPUB_APPEARANCE_KEY, appearance); } catch { /* preference remains for this session */ }
+    if (rendRef.current) applyEpubAppearance(rendRef.current, appearance);
+  }, [appearance, ready]);
 
   // Force single-page spread on narrow viewports (a two-page spread is
   // unreadable on a phone-width reader panel).
@@ -1086,7 +1130,7 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards }: {
 
   return (
     <div className="h-full flex flex-col relative">
-      <div className="flex-1 min-h-0 bg-white dark:bg-[#f7f7f2] relative">
+      <div className={`flex-1 min-h-0 relative ${EPUB_APPEARANCE_SURFACE[appearance]}`}>
         {err ? (
           <div className="h-full flex flex-col items-center justify-center text-center px-6">
             <BookOpen className="h-10 w-10 text-slate-300 mb-3" />
@@ -1129,6 +1173,38 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards }: {
         <Button variant="outline" size="icon" onClick={() => setShowHighlights(true)} title="My highlights" className="shrink-0">
           <Highlighter className="h-4 w-4" />
         </Button>
+        <div className="inline-flex items-center rounded-md border border-slate-200 dark:border-surface-raised p-0.5 shrink-0" role="group" aria-label="Reading appearance">
+          <Button
+            variant={appearance === 'light' ? 'secondary' : 'ghost'}
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => setAppearance('light')}
+            title="Light appearance"
+            aria-label="Light appearance"
+          >
+            <Sun className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant={appearance === 'warm' ? 'secondary' : 'ghost'}
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => setAppearance('warm')}
+            title="Warm appearance"
+            aria-label="Warm appearance"
+          >
+            <BookOpen className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant={appearance === 'dark' ? 'secondary' : 'ghost'}
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => setAppearance('dark')}
+            title="Dark appearance"
+            aria-label="Dark appearance"
+          >
+            <Moon className="h-3.5 w-3.5" />
+          </Button>
+        </div>
       </div>
 
       {showSearch && (

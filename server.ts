@@ -16772,7 +16772,7 @@ async function startServer() {
     const part = await prisma.conversationParticipant.findUnique({
       where: { conversationId_userId: { conversationId, userId: jwtUser.userId } },
     });
-    return { part, isAdmin: jwtUser.role === "ADMIN" };
+    return { part: part?.leftAt ? null : part, isAdmin: jwtUser.role === "ADMIN" };
   }
 
   app.get("/api/chat/conversations/:id/messages", authMiddleware, async (req, res) => {
@@ -16819,7 +16819,11 @@ async function startServer() {
   app.post("/api/chat/conversations/:id/messages", authMiddleware, chatMessageLimiter, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const body: string = (req.body?.body ?? "").toString().trim();
-    const attachmentUrl: string | null = req.body?.attachmentUrl || null;
+    const attachmentUrl: string | null = typeof req.body?.attachmentUrl === "string" ? req.body.attachmentUrl : null;
+    if (body.length > 5000) { res.status(400).json({ error: "Messages must be 5,000 characters or fewer" }); return; }
+    if (attachmentUrl && !attachmentUrl.startsWith("/uploads/chat-media/") && !attachmentUrl.startsWith("/stickers/") && !attachmentUrl.startsWith("/uploads/stickers/")) {
+      res.status(400).json({ error: "Invalid chat attachment" }); return;
+    }
     // Camera photos are ephemeral — they vanish after 24h.
     const ephemeral = Boolean(req.body?.ephemeral) && !!attachmentUrl;
     const expiresAt = ephemeral ? new Date(Date.now() + EPHEMERAL_TTL_MS) : null;
@@ -16840,7 +16844,7 @@ async function startServer() {
         data: { lastReadAt: msg.createdAt },
       });
       // Push to every participant's open streams (snappy delivery; polling backstops).
-      const others = await prisma.conversationParticipant.findMany({ where: { conversationId: req.params.id }, select: { userId: true } });
+      const others = await prisma.conversationParticipant.findMany({ where: { conversationId: req.params.id, leftAt: null }, select: { userId: true } });
       chatNotify(others.map((p) => p.userId), { type: "message", conversationId: req.params.id });
       res.status(201).json({ id: msg.id, body: msg.body, attachmentUrl: msg.attachmentUrl, expiresAt: msg.expiresAt, sender: userBrief(msg.sender), createdAt: msg.createdAt, mine: true });
     } catch (err) {
@@ -16874,8 +16878,10 @@ async function startServer() {
   app.post("/api/chat/conversations/:id/read", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
-      await prisma.conversationParticipant.updateMany({
-        where: { conversationId: req.params.id, userId: jwtUser.userId },
+      const { part } = await chatAccess(jwtUser, req.params.id);
+      if (!part) { res.status(403).json({ error: "Forbidden" }); return; }
+      await prisma.conversationParticipant.update({
+        where: { conversationId_userId: { conversationId: req.params.id, userId: jwtUser.userId } },
         data: { lastReadAt: new Date() },
       });
       res.json({ success: true });
@@ -16946,10 +16952,14 @@ async function startServer() {
   app.delete("/api/chat/messages/:id", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
-      const msg = await prisma.chatMessage.findUnique({ where: { id: req.params.id } });
-      if (!msg) { res.status(404).json({ error: "Message not found" }); return; }
+      const msg = await prisma.chatMessage.findUnique({
+        where: { id: req.params.id },
+        include: { conversation: { select: { participants: { where: { leftAt: null }, select: { userId: true } } } } },
+      });
+      if (!msg || msg.deletedAt) { res.status(404).json({ error: "Message not found" }); return; }
       if (msg.senderId !== jwtUser.userId && jwtUser.role !== "ADMIN") { res.status(403).json({ error: "Forbidden" }); return; }
       await prisma.chatMessage.update({ where: { id: req.params.id }, data: { deletedAt: new Date() } });
+      chatNotify(msg.conversation.participants.map((p) => p.userId), { type: "message-deleted", conversationId: msg.conversationId, messageId: msg.id });
       res.json({ success: true });
     } catch (err) {
       logger.error("Error deleting chat message:", err);

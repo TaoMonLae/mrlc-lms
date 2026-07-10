@@ -12,7 +12,6 @@ import { useAuth } from '../../providers/AuthProvider';
 import { useFloatingPanel } from '../../providers/FloatingPanelProvider';
 import { StickerPicker, isStickerUrl } from './StickerPicker';
 import CameraCapture from '../CameraCapture';
-import DOMPurify from 'dompurify';
 
 const timeLeftShort = (iso: string) => { const m = Math.max(0, Math.round((new Date(iso).getTime() - Date.now()) / 60000)); return m < 60 ? `${m}m` : `${Math.round(m / 60)}h`; };
 
@@ -45,6 +44,7 @@ export default function ChatWidget() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [detail, setDetail] = useState<ConvDetail | null>(null);
   const [draft, setDraft] = useState('');
+  const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const activeIdRef = useRef<string | null>(null);
   useEffect(() => { activeIdRef.current = activeId; }, [activeId]);
@@ -119,8 +119,9 @@ export default function ChatWidget() {
 
   async function send() {
     const body = draft.trim();
-    if (!body || !activeId) return;
+    if (sending || !body || !activeId) return;
     const originalDraft = draft;
+    setSending(true);
     setDraft('');
     try {
       const msg = await apiSend<ChatMsg>(`/api/chat/conversations/${activeId}/messages`, 'POST', { body });
@@ -129,24 +130,28 @@ export default function ChatWidget() {
     } catch (err: any) {
       toast.error(err.message || 'Could not send message');
       setDraft(originalDraft);
-    }
+    } finally { setSending(false); }
   }
 
   async function sendSticker(url: string) {
-    if (!activeId) return;
+    if (!activeId || sending) return;
+    setSending(true);
     try {
       const msg = await apiSend<ChatMsg>(`/api/chat/conversations/${activeId}/messages`, 'POST', { body: '', attachmentUrl: url });
       setDetail((d) => (d && d.id === activeId ? { ...d, messages: [...d.messages, msg] } : d));
       loadList();
     } catch { /* ignore */ }
+    finally { setSending(false); }
   }
 
   async function sendCameraPhoto(blob: Blob) {
-    if (!activeId) {
+    if (!activeId || sending) {
+      if (sending) return;
       toast.error('Please open a conversation first');
       return;
     }
     setCamera(false);
+    setSending(true);
     try {
       const fd = new FormData();
       fd.append('file', blob, 'photo.jpg');
@@ -159,7 +164,7 @@ export default function ChatWidget() {
       loadList();
     } catch (err: any) {
       toast.error(err.message || 'Could not send photo');
-    }
+    } finally { setSending(false); }
   }
 
   // The full chat page has its own UI; don't double up there.
@@ -262,7 +267,7 @@ export default function ChatWidget() {
                         {canSave && m.attachmentUrl && <a href={m.attachmentUrl} download className="inline-flex items-center gap-0.5 underline"><Download className="h-3 w-3" /> Save</a>}
                       </div>
                     )}
-                    {m.body && <p className="whitespace-pre-wrap break-words" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(m.body) }} />}
+                    {m.body && <p className="whitespace-pre-wrap break-words">{m.body}</p>}
                     <p className={`mt-0.5 text-[9px] ${m.mine ? 'text-right text-slate-400' : 'text-slate-400'} ${sticker ? '' : m.mine ? 'text-white/70' : ''}`}>{timeLabel(m.createdAt)}</p>
                   </div>
                 </div>
@@ -297,10 +302,10 @@ export default function ChatWidget() {
             <div className="border-t border-slate-100 p-2 text-center text-[11px] text-slate-400 dark:border-surface-raised">Admin oversight — read only</div>
           ) : (
             <div className="flex items-center gap-1 border-t border-slate-100 p-2 dark:border-surface-raised">
-              <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" title="Camera (disappears in 24h)" onClick={() => setCamera(true)}><Camera className="h-4 w-4 text-slate-500" /></Button>
+              <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" title="Camera (disappears in 24h)" onClick={() => setCamera(true)} disabled={sending}><Camera className="h-4 w-4 text-slate-500" /></Button>
               <StickerPicker onSelect={sendSticker} />
-              <Input value={draft} onChange={(e) => { setDraft(e.target.value); if (e.target.value.trim() && activeId) sendTyping(activeId); }} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} placeholder="Type a message…" className="h-9" />
-              <Button size="icon" className="h-9 w-9 shrink-0" onClick={send} disabled={!draft.trim()}><Send className="h-4 w-4" /></Button>
+              <Input value={draft} maxLength={5000} onChange={(e) => { setDraft(e.target.value); if (e.target.value.trim() && activeId) sendTyping(activeId); }} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} placeholder="Type a message…" className="h-9" disabled={sending} />
+              <Button size="icon" className="h-9 w-9 shrink-0" onClick={send} disabled={sending || !draft.trim()}>{sending ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" /> : <Send className="h-4 w-4" />}</Button>
             </div>
           )}
         </>

@@ -17,7 +17,6 @@ import { useChat } from '../../providers/ChatProvider';
 import { useAuth } from '../../providers/AuthProvider';
 import { StickerPicker, isStickerUrl } from '../../components/chat/StickerPicker';
 import CameraCapture from '../../components/CameraCapture';
-import DOMPurify from 'dompurify';
 
 interface Contact { id: string; name: string; role: string; profilePhotoUrl?: string | null }
 interface Participant extends Contact { lastReadAt?: string | null }
@@ -56,6 +55,8 @@ export default function ChatPage() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [detail, setDetail] = useState<ConvDetail | null>(null);
   const [draft, setDraft] = useState('');
+  const [sending, setSending] = useState(false);
+  const [conversationSearch, setConversationSearch] = useState('');
   const [attachment, setAttachment] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [camera, setCamera] = useState(false);
@@ -63,6 +64,8 @@ export default function ChatPage() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const activeIdRef = useRef<string | null>(null);
+  const shouldStickToBottomRef = useRef(true);
+  const lastScrolledConversationRef = useRef<string | null>(null);
   useEffect(() => { activeIdRef.current = activeId; }, [activeId]);
 
   // New conversation dialog
@@ -134,7 +137,11 @@ export default function ChatPage() {
   useEffect(() => { setActiveConversation(activeId); return () => setActiveConversation(null); }, [activeId, setActiveConversation]);
 
   useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    const el = scrollRef.current;
+    if (!el) return;
+    const conversationChanged = lastScrolledConversationRef.current !== activeId;
+    if (conversationChanged || shouldStickToBottomRef.current) el.scrollTop = el.scrollHeight;
+    lastScrolledConversationRef.current = activeId;
   }, [detail?.messages.length, activeId]);
 
   async function uploadAttachment(file: File) {
@@ -157,11 +164,13 @@ export default function ChatPage() {
 
   async function send() {
     const body = draft.trim();
-    if ((!body && !attachment) || !activeId) return;
+    if (sending || (!body && !attachment) || !activeId) return;
     const att = attachment;
     const originalDraft = draft;
     const originalAttachment = attachment;
 
+    setSending(true);
+    shouldStickToBottomRef.current = true;
     setDraft(''); setAttachment(null);
     try {
       const msg = await apiSend<ChatMsg>(`/api/chat/conversations/${activeId}/messages`, 'POST', { body, attachmentUrl: att });
@@ -170,24 +179,30 @@ export default function ChatPage() {
     } catch (err: any) {
       toast.error(err.message || 'Could not send');
       setDraft(originalDraft); setAttachment(originalAttachment);
-    }
+    } finally { setSending(false); }
   }
 
   async function sendSticker(url: string) {
-    if (!activeId) return;
+    if (!activeId || sending) return;
+    setSending(true);
+    shouldStickToBottomRef.current = true;
     try {
       const msg = await apiSend<ChatMsg>(`/api/chat/conversations/${activeId}/messages`, 'POST', { body: '', attachmentUrl: url });
       setDetail((d) => (d && d.id === activeId ? { ...d, messages: [...d.messages, msg] } : d));
       loadList();
     } catch (err: any) { toast.error(err.message || 'Could not send sticker'); }
+    finally { setSending(false); }
   }
 
   async function sendCameraPhoto(blob: Blob) {
-    if (!activeId) {
+    if (!activeId || sending) {
+      if (sending) return;
       toast.error('Please open a conversation first');
       return;
     }
     setCamera(false);
+    setSending(true);
+    shouldStickToBottomRef.current = true;
     try {
       const fd = new FormData();
       fd.append('file', blob, 'photo.jpg');
@@ -199,6 +214,7 @@ export default function ChatPage() {
       setDetail((d) => (d && d.id === activeId ? { ...d, messages: [...d.messages, msg] } : d));
       loadList();
     } catch (err: any) { toast.error(err.message || 'Could not send photo'); }
+    finally { setSending(false); }
   }
 
   async function deleteConversation() {
@@ -213,6 +229,15 @@ export default function ChatPage() {
       setConversations((prev) => prev.filter((c) => c.id !== id));
       loadList();
     } catch (err: any) { toast.error(err.message || 'Could not delete conversation'); }
+  }
+
+  async function deleteMessage(messageId: string) {
+    if (!window.confirm('Delete this message for everyone?')) return;
+    try {
+      await apiSend(`/api/chat/messages/${messageId}`, 'DELETE');
+      setDetail((d) => d ? { ...d, messages: d.messages.filter((m) => m.id !== messageId) } : d);
+      loadList();
+    } catch (err: any) { toast.error(err.message || 'Could not delete message'); }
   }
 
   async function report(messageId: string) {
@@ -257,6 +282,14 @@ export default function ChatPage() {
   }, [contactGroups, contactSearch]);
 
   const totalContacts = useMemo(() => contactGroups.reduce((n, g) => n + g.contacts.length, 0), [contactGroups]);
+  const visibleConversations = useMemo(() => {
+    const query = conversationSearch.trim().toLowerCase();
+    if (!query) return conversations;
+    return conversations.filter((conversation) =>
+      conversation.title.toLowerCase().includes(query) ||
+      conversation.lastMessage?.body.toLowerCase().includes(query),
+    );
+  }, [conversations, conversationSearch]);
 
   return (
     <div className="flex h-[calc(100vh-9rem)] gap-4">
@@ -313,10 +346,17 @@ export default function ChatPage() {
           </Dialog>
           </div>
         </div>
+        <div className="border-b border-slate-100 px-3 py-2 dark:border-surface-raised">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+            <Input value={conversationSearch} onChange={(e) => setConversationSearch(e.target.value)} placeholder="Search conversations" className="h-8 pl-8 text-xs" />
+          </div>
+        </div>
         <div className="flex-1 overflow-y-auto">
           {loadingList ? <p className="p-4 text-sm text-slate-400">Loading…</p> :
             conversations.length === 0 ? <p className="p-6 text-center text-sm text-slate-400">No conversations yet. Tap “New” to start one.</p> :
-            conversations.map((c) => {
+            visibleConversations.length === 0 ? <p className="p-6 text-center text-sm text-slate-400">No matching conversations.</p> :
+            visibleConversations.map((c) => {
               const others = c.participants?.filter((p) => p.id !== myId) ?? [];
               // For a 1:1 chat, show the other person's real photo; a
               // GROUP's title is a group name, not one person, so keep the
@@ -376,7 +416,14 @@ export default function ChatPage() {
               )}
             </div>
 
-            <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto p-4">
+            <div
+              ref={scrollRef}
+              onScroll={(event) => {
+                const el = event.currentTarget;
+                shouldStickToBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+              }}
+              className="flex-1 space-y-3 overflow-y-auto p-4"
+            >
               {detail.messages.length === 0 ? <p className="py-10 text-center text-sm text-slate-400">No messages yet. Say hello.</p> :
                 detail.messages.map((m) => {
                   const sticker = isStickerUrl(m.attachmentUrl) && !m.body;
@@ -391,9 +438,10 @@ export default function ChatPage() {
                           {canSave && m.attachmentUrl && <a href={m.attachmentUrl} download className="inline-flex items-center gap-0.5 underline"><Download className="h-3 w-3" /> Save</a>}
                         </div>
                       )}
-                      {m.body && <p className="whitespace-pre-wrap break-words" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(m.body) }} />}
+                      {m.body && <p className="whitespace-pre-wrap break-words">{m.body}</p>}
                       <div className={`mt-0.5 flex items-center gap-2 text-[10px] ${sticker ? 'text-slate-400' : m.mine ? 'text-white/70' : 'text-slate-400'} ${m.mine ? 'justify-end' : ''}`}>
                         <span>{timeLabel(m.createdAt)}</span>
+                        {m.mine && <button type="button" onClick={() => deleteMessage(m.id)} className="opacity-70 hover:opacity-100" title="Delete message" aria-label="Delete message"><Trash2 className="h-3 w-3" /></button>}
                         {!m.mine && <button onClick={() => report(m.id)} className="opacity-0 group-hover:opacity-100" title="Report"><Flag className="h-3 w-3" /></button>}
                       </div>
                     </div>
@@ -443,15 +491,15 @@ export default function ChatPage() {
                 )}
                 <div className="flex items-center gap-2">
                   <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAttachment(f); }} />
-                  <Button variant="ghost" size="icon" className="shrink-0" title="Attach image" onClick={() => fileRef.current?.click()} disabled={uploading}>
+                  <Button variant="ghost" size="icon" className="shrink-0" title="Attach image" onClick={() => fileRef.current?.click()} disabled={uploading || sending}>
                     {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4 text-slate-500" />}
                   </Button>
-                  <Button variant="ghost" size="icon" className="shrink-0" title="Camera (disappears in 24h)" onClick={() => setCamera(true)}>
+                  <Button variant="ghost" size="icon" className="shrink-0" title="Camera (disappears in 24h)" onClick={() => setCamera(true)} disabled={sending}>
                     <Camera className="h-4 w-4 text-slate-500" />
                   </Button>
                   <StickerPicker onSelect={sendSticker} />
-                  <Input value={draft} onChange={(e) => { setDraft(e.target.value); if (e.target.value.trim() && activeId) sendTyping(activeId); }} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} placeholder="Type a message…" />
-                  <Button onClick={send} disabled={!draft.trim() && !attachment}><Send className="h-4 w-4" /></Button>
+                  <Input value={draft} maxLength={5000} onChange={(e) => { setDraft(e.target.value); if (e.target.value.trim() && activeId) sendTyping(activeId); }} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} placeholder="Type a message…" disabled={sending} />
+                  <Button onClick={send} disabled={sending || (!draft.trim() && !attachment)}>{sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}</Button>
                 </div>
               </div>
             )}
