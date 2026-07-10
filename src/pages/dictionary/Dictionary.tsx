@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { BookA, Search, Loader2, Shuffle, X, Volume2, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -81,6 +81,7 @@ function speak(word: string) {
 }
 
 export default function Dictionary() {
+  const [searchParams] = useSearchParams();
   const [query, setQuery] = useState('');
   const [result, setResult] = useState<LookupResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -150,6 +151,13 @@ export default function Dictionary() {
     e.preventDefault();
     lookup(query);
   };
+
+  useEffect(() => {
+    const word = searchParams.get('word')?.trim();
+    if (word) lookup(word);
+    // A selected word arrives once via the News/E-Library reader link.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const clearRecents = () => {
     try {

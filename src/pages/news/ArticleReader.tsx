@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, ExternalLink, Newspaper, Clock, ClipboardList } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Newspaper, Clock, ClipboardList, BookA, Loader2, Volume2, X } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import DOMPurify from 'dompurify';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { apiGet } from '@/src/lib/api';
 import { usePermissions } from '@/src/lib/permissions';
 import { homeworkPrefillFor } from '@/src/lib/newsHomeworkPrefill';
@@ -24,6 +25,113 @@ interface ArticleDetail {
   source: { id: string; name: string; category: string | null };
 }
 
+interface DictionaryEntry { posLabel: string; definition: string; examples: string[]; }
+interface Translation { definition: string; }
+interface MonDefinition { lang: string; definition: string; }
+interface MonWord { word: string; definitions: MonDefinition[]; }
+interface LookupResult {
+  word: string;
+  entries: DictionaryEntry[];
+  translations: Translation[];
+  monMatches: MonWord[];
+}
+
+const MON_LANG_LABEL: Record<string, string> = { eng: 'English', mya: 'Myanmar', tha: 'Thai' };
+const MYANMAR_SCRIPT_RE = /[က-႟]/;
+
+function selectedLookupWord(selected: string): string | null {
+  const text = selected.trim();
+  if (!text) return null;
+  if (MYANMAR_SCRIPT_RE.test(text)) return text.slice(0, 60);
+  return text.match(/[A-Za-z][A-Za-z'-]*/)?.[0] || null;
+}
+
+function NewsDefinitionDialog({ word, onClose }: { word: string; onClose: () => void }) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<LookupResult | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    fetch(`/api/dictionary/lookup?word=${encodeURIComponent(word)}`)
+      .then(async (res) => {
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error || 'Word not found.');
+        }
+        return res.json() as Promise<LookupResult>;
+      })
+      .then((data) => { if (!cancelled) setResult(data); })
+      .catch((err: Error) => { if (!cancelled) setError(err.message || 'Word not found.'); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [word]);
+
+  const pronounce = () => {
+    try {
+      const utterance = new SpeechSynthesisUtterance(word);
+      utterance.lang = 'en-US';
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utterance);
+    } catch { /* Speech synthesis is optional. */ }
+  };
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto custom-scrollbar">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <BookA className="h-4 w-4 text-accent-purple" /> {word}
+            {result?.entries.length ? (
+              <Button variant="ghost" size="icon" className="h-7 w-7" title="Pronounce" onClick={pronounce}>
+                <Volume2 className="h-4 w-4" />
+              </Button>
+            ) : null}
+          </DialogTitle>
+        </DialogHeader>
+        {loading ? (
+          <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-slate-400" /></div>
+        ) : error ? (
+          <p className="py-6 text-center text-sm text-slate-500">{error}</p>
+        ) : result ? (
+          <div className="space-y-4">
+            {result.translations.length > 0 && (
+              <section className="rounded-lg border border-accent-purple/10 bg-accent-purple/5 p-3">
+                <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-accent-purple">Myanmar</p>
+                {result.translations.map((item, index) => <p key={index} className="text-sm text-slate-700 dark:text-slate-200">{item.definition}</p>)}
+              </section>
+            )}
+            {result.monMatches.length > 0 && (
+              <section className="rounded-lg border border-amber-500/10 bg-amber-500/5 p-3">
+                <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-amber-600 dark:text-amber-400">Mon</p>
+                {result.monMatches.slice(0, 3).map((match, index) => (
+                  <div key={index} className="mb-2 last:mb-0">
+                    <p className="text-sm font-medium text-slate-900 dark:text-white">{match.word}</p>
+                    {match.definitions.slice(0, 2).map((definition, definitionIndex) => (
+                      <p key={definitionIndex} className="text-xs text-slate-600 dark:text-slate-300"><span className="text-slate-400">{MON_LANG_LABEL[definition.lang] || definition.lang}: </span>{definition.definition}</p>
+                    ))}
+                  </div>
+                ))}
+              </section>
+            )}
+            {result.entries.length > 0 && (
+              <ol className="list-inside list-decimal space-y-2.5 marker:text-slate-400">
+                {result.entries.slice(0, 6).map((entry, index) => (
+                  <li key={index} className="text-sm text-slate-700 dark:text-slate-200"><span className="mr-1 text-[10px] text-slate-400">{entry.posLabel}</span>{entry.definition}</li>
+                ))}
+              </ol>
+            )}
+            <Link to={`/dictionary?word=${encodeURIComponent(word)}`} target="_blank" rel="noopener noreferrer" className="block pt-1 text-xs text-primary hover:underline">Open full Dictionary →</Link>
+          </div>
+        ) : null}
+        <DialogFooter><Button variant="outline" onClick={onClose}>Close</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function ArticleReader() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -31,6 +139,8 @@ export default function ArticleReader() {
   const { isTeacher, isAdmin } = usePermissions();
   const [article, setArticle] = useState<ArticleDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedText, setSelectedText] = useState<string | null>(null);
+  const [defineWord, setDefineWord] = useState<string | null>(null);
 
   // Get the category from navigation state, default to 'ALL' if not provided
   const fromCategory = (location.state as { fromCategory?: string })?.fromCategory || 'ALL';
@@ -59,6 +169,15 @@ export default function ArticleReader() {
   // see news.ts fullContentFrom(). We sanitize before rendering, same as the
   // chat message pattern elsewhere in the app.
   const safeContent = article.content ? DOMPurify.sanitize(article.content) : null;
+  const lookupWord = selectedText ? selectedLookupWord(selectedText) : null;
+  const captureSelection = () => {
+    const selected = window.getSelection()?.toString().trim() || '';
+    setSelectedText(selected || null);
+  };
+  const clearSelection = () => {
+    window.getSelection()?.removeAllRanges();
+    setSelectedText(null);
+  };
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -113,9 +232,10 @@ export default function ArticleReader() {
             </div>
           </div>
 
-          {safeContent ? (
-            <div
-              className={[
+          <div onMouseUp={captureSelection} onTouchEnd={captureSelection}>
+            {safeContent ? (
+              <div
+                className={[
                 'max-w-none text-slate-700 dark:text-slate-300 leading-relaxed',
                 '[&_p]:mb-4 [&_p]:text-base [&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-slate-900 dark:[&_h2]:text-white [&_h2]:mt-6 [&_h2]:mb-3',
                 '[&_h3]:text-lg [&_h3]:font-bold [&_h3]:mt-5 [&_h3]:mb-2',
@@ -124,20 +244,31 @@ export default function ArticleReader() {
                 '[&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:mb-4',
                 '[&_blockquote]:border-l-4 [&_blockquote]:border-aubergine-200 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-slate-500',
               ].join(' ')}
-              dangerouslySetInnerHTML={{ __html: safeContent }}
-            />
-          ) : (
-            <div className="space-y-4">
-              {article.summary && (
-                <p className="text-base text-slate-700 dark:text-slate-300 leading-relaxed">{article.summary}</p>
-              )}
-              <div className="flex flex-col gap-3 p-5 bg-slate-50 dark:bg-surface-raised/30 rounded-xl border border-slate-100 dark:border-surface-raised">
-                <p className="text-sm text-slate-500">
-                  {article.source.name} only shares a summary in its feed — read the full piece at the source.
-                </p>
-                <Button render={<a href={article.link} target="_blank" rel="noopener noreferrer" />} className="w-fit bg-primary hover:bg-primary/90 text-primary-foreground">
-                  Read full article at {article.source.name} <ExternalLink className="ml-2 h-4 w-4" />
-                </Button>
+                dangerouslySetInnerHTML={{ __html: safeContent }}
+              />
+            ) : (
+              <div className="space-y-4">
+                {article.summary && (
+                  <p className="text-base text-slate-700 dark:text-slate-300 leading-relaxed">{article.summary}</p>
+                )}
+                <div className="flex flex-col gap-3 p-5 bg-slate-50 dark:bg-surface-raised/30 rounded-xl border border-slate-100 dark:border-surface-raised">
+                  <p className="text-sm text-slate-500">
+                    {article.source.name} only shares a summary in its feed — read the full piece at the source.
+                  </p>
+                  <Button render={<a href={article.link} target="_blank" rel="noopener noreferrer" />} className="w-fit bg-primary hover:bg-primary/90 text-primary-foreground">
+                    Read full article at {article.source.name} <ExternalLink className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {selectedText && (
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-aubergine-200 bg-aubergine-50 px-3 py-2 dark:border-aubergine-900/60 dark:bg-aubergine-950/30">
+              <p className="min-w-0 truncate text-sm text-aubergine-800 dark:text-aubergine-200">Selected: “{selectedText}”</p>
+              <div className="flex shrink-0 gap-1">
+                {lookupWord && <Button size="sm" onClick={() => setDefineWord(lookupWord)}><BookA className="mr-1.5 h-3.5 w-3.5" /> Define</Button>}
+                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={clearSelection} title="Clear selection"><X className="h-4 w-4" /></Button>
               </div>
             </div>
           )}
@@ -155,6 +286,7 @@ export default function ArticleReader() {
       <Link to="/news" state={{ fromCategory }} className="text-sm font-bold flex items-center gap-2 text-slate-400 hover:text-aubergine-600 transition-colors">
         <ArrowLeft className="h-4 w-4" /> Back to all news
       </Link>
+      {defineWord && <NewsDefinitionDialog word={defineWord} onClose={() => { setDefineWord(null); clearSelection(); }} />}
     </div>
   );
 }
