@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BookA, Search, Loader2, Shuffle, X, Volume2, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -48,7 +48,12 @@ const MAX_RECENTS = 10;
 function loadRecents(): string[] {
   try {
     const raw = localStorage.getItem(RECENTS_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((word): word is string => typeof word === 'string' && word.trim().length > 0)
+      .slice(0, MAX_RECENTS);
   } catch {
     return [];
   }
@@ -83,34 +88,48 @@ export default function Dictionary() {
   const [recents, setRecents] = useState<string[]>([]);
   const [wordOfDay, setWordOfDay] = useState<LookupResult | null>(null);
   const [loadingWotd, setLoadingWotd] = useState(true);
+  const [lookupWord, setLookupWord] = useState('');
+  const lookupController = useRef<AbortController | null>(null);
+  const randomController = useRef<AbortController | null>(null);
 
   useEffect(() => {
     setRecents(loadRecents());
     fetchRandom();
+    return () => {
+      lookupController.current?.abort();
+      randomController.current?.abort();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchRandom = async () => {
+    randomController.current?.abort();
+    const controller = new AbortController();
+    randomController.current = controller;
     setLoadingWotd(true);
     try {
       // Dictionary is public — no sign-in required — so no auth header here.
-      const res = await fetch('/api/dictionary/random');
+      const res = await fetch('/api/dictionary/random', { signal: controller.signal });
       if (res.ok) setWordOfDay(await res.json());
     } catch {
       // Non-critical — the word-of-the-day card just won't show.
     } finally {
-      setLoadingWotd(false);
+      if (!controller.signal.aborted) setLoadingWotd(false);
     }
   };
 
   const lookup = async (raw: string) => {
     const word = raw.trim();
     if (!word) return;
+    lookupController.current?.abort();
+    const controller = new AbortController();
+    lookupController.current = controller;
     setLoading(true);
+    setLookupWord(word);
     setError(null);
     setResult(null);
     try {
-      const res = await fetch(`/api/dictionary/lookup?word=${encodeURIComponent(word)}`);
+      const res = await fetch(`/api/dictionary/lookup?word=${encodeURIComponent(word)}`, { signal: controller.signal });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || 'Word not found.');
@@ -121,9 +140,9 @@ export default function Dictionary() {
       saveRecent(data.word);
       setRecents(loadRecents());
     } catch (e: any) {
-      setError(e.message || 'Word not found.');
+      if (e.name !== 'AbortError') setError(e.message || 'Word not found.');
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
     }
   };
 
@@ -133,7 +152,11 @@ export default function Dictionary() {
   };
 
   const clearRecents = () => {
-    localStorage.removeItem(RECENTS_KEY);
+    try {
+      localStorage.removeItem(RECENTS_KEY);
+    } catch {
+      // localStorage unavailable — clear the in-memory list only.
+    }
     setRecents([]);
   };
 
@@ -184,7 +207,12 @@ export default function Dictionary() {
                         <span className="text-[10px] font-medium text-slate-400 shrink-0 w-14">{MON_LANG_LABEL[d.lang] || d.lang}</span>
                         <span>
                           {d.definition}
-                          {d.example && <span className="block text-xs text-slate-500 italic mt-0.5">{d.example}</span>}
+                          {d.example && (
+                            <details className="mt-1 text-xs text-slate-500">
+                              <summary className="cursor-pointer select-none italic hover:text-slate-700 dark:hover:text-slate-300">Example</summary>
+                              <p className="mt-1 italic">{d.example}</p>
+                            </details>
+                          )}
                         </span>
                       </li>
                     ))}
@@ -213,6 +241,7 @@ export default function Dictionary() {
                       {e.synonyms.map((s) => (
                         <button
                           key={s}
+                          type="button"
                           onClick={() => lookup(s.replace(/_/g, ' '))}
                           className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-surface-raised text-slate-500 hover:text-primary hover:underline transition-colors"
                         >
@@ -264,6 +293,8 @@ export default function Dictionary() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Type an English word, or paste a Mon word…"
             className="pl-9"
+            aria-label="Dictionary search"
+            spellCheck={false}
             autoFocus
           />
         </div>
@@ -278,13 +309,14 @@ export default function Dictionary() {
           {recents.map((w) => (
             <button
               key={w}
+              type="button"
               onClick={() => lookup(w)}
               className="text-xs px-2 py-1 rounded-full border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo text-slate-600 dark:text-slate-300 hover:border-primary/50 transition-colors"
             >
               {w}
             </button>
           ))}
-          <button onClick={clearRecents} className="text-slate-400 hover:text-slate-600 ml-1" title="Clear recent searches">
+          <button type="button" onClick={clearRecents} className="text-slate-400 hover:text-slate-600 ml-1" title="Clear recent searches" aria-label="Clear recent searches">
             <X className="h-3 w-3" />
           </button>
         </div>
@@ -293,13 +325,13 @@ export default function Dictionary() {
       <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-lg p-6 min-h-[240px]">
         {loading ? (
           <div className="h-full flex items-center justify-center text-slate-500 py-10">
-            <Loader2 className="h-5 w-5 animate-spin mr-2" /> Looking up “{query}”…
+            <Loader2 className="h-5 w-5 animate-spin mr-2" /> Looking up “{lookupWord}”…
           </div>
         ) : error ? (
           <div className="text-center py-10">
             <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{error}</p>
             <p className="text-xs text-slate-500 mt-1">
-              {MYANMAR_SCRIPT_RE.test(query)
+              {MYANMAR_SCRIPT_RE.test(lookupWord)
                 ? 'Check the spelling of the Mon word, or try a shorter part of it.'
                 : 'Check the spelling, or try a simpler form of the word (e.g. "run" instead of "running").'}
             </p>
@@ -309,7 +341,7 @@ export default function Dictionary() {
         ) : (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Word of the Day</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Featured Word</p>
               <Button variant="ghost" size="icon" className="h-7 w-7" title="Another word" onClick={fetchRandom} disabled={loadingWotd}>
                 <Shuffle className="h-3.5 w-3.5" />
               </Button>

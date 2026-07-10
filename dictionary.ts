@@ -76,7 +76,15 @@ interface MonWordResult {
 // rather than an English word to look up in WordNet.
 const MYANMAR_SCRIPT_RE = /[က-႟]/;
 
-const monWordSelect = { word: true, ipa: true, thaiGloss: true, definitions: { select: { lang: true, pos: true, definition: true, example: true } } };
+const monWordSelect = {
+  word: true,
+  ipa: true,
+  thaiGloss: true,
+  definitions: {
+    orderBy: [{ lang: "asc" }, { id: "asc" }],
+    select: { lang: true, pos: true, definition: true, example: true },
+  },
+};
 
 export function registerDictionaryRoutes(deps: Deps): void {
   // authMiddleware is accepted for interface consistency with the other
@@ -100,18 +108,25 @@ export function registerDictionaryRoutes(deps: Deps): void {
     }
   }
 
-  // Mon-script query: look up the Mon headword directly (exact match first,
-  // falling back to a prefix/substring match so a partial word still
-  // surfaces something).
+  // Mon-script query: look up the Mon headword directly. Partial searches
+  // prioritize headwords that begin with the supplied text before broader
+  // substring matches.
   async function lookupMonByWord(monWord: string): Promise<MonWordResult[]> {
     try {
       const exact = await (prisma as any).monWord.findMany({ where: { word: monWord }, select: monWordSelect, take: 20 });
       if (exact.length > 0) return exact;
-      return await (prisma as any).monWord.findMany({
-        where: { word: { contains: monWord } },
+      const prefix = await (prisma as any).monWord.findMany({
+        where: { word: { startsWith: monWord } },
         select: monWordSelect,
         take: 20,
       });
+      if (prefix.length >= 20) return prefix;
+      const contains = await (prisma as any).monWord.findMany({
+        where: { word: { contains: monWord, not: { startsWith: monWord } } },
+        select: monWordSelect,
+        take: 20 - prefix.length,
+      });
+      return [...prefix, ...contains];
     } catch (err) {
       logger.error("Error looking up Mon word:", err);
       return [];
@@ -143,7 +158,7 @@ export function registerDictionaryRoutes(deps: Deps): void {
   // these intentionally do NOT use authMiddleware. They're still covered by
   // the app-wide per-IP rate limiter registered in server.ts.
   app.get("/api/dictionary/lookup", async (req, res) => {
-    const rawWord = (req.query.word ?? "").toString().trim().slice(0, 60);
+    const rawWord = (req.query.word ?? "").toString().normalize("NFC").trim().slice(0, 60);
     if (!rawWord) { res.status(400).json({ error: "A word is required" }); return; }
 
     if (MYANMAR_SCRIPT_RE.test(rawWord)) {
