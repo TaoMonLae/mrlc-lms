@@ -616,7 +616,7 @@ export default function GuidedStudio() {
                 <RailLabel>Outline</RailLabel>
                 <span style={{ fontSize: 11, color: C.muted2 }}>{questions.length} q</span>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginTop: 8, overflow: 'auto' }}>
+              <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 5, marginTop: 8, overflow: 'auto' }}>
                 {questions.map((q, i) => {
                   const td = typeDef(q.uiType);
                   const isOver = drag?.over === i && drag.from !== i;
@@ -646,26 +646,27 @@ export default function GuidedStudio() {
                     </div>
                   );
                 })}
+              </div>
 
-                {/* Add question + type picker */}
-                <div style={{ position: 'relative' }}>
-                  <button onClick={() => setShowTypePicker((v) => !v)}
-                    style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px', marginTop: 4, borderRadius: 10, border: `1.5px dashed ${C.tint100}`, background: C.tint7, color: C.purpleText, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-                    <Plus size={14} /> Add question
-                  </button>
-                  {showTypePicker && (
-                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 6, zIndex: 30, background: '#fff', border: `1px solid ${C.border3}`, borderRadius: 12, boxShadow: '0 24px 50px -18px rgba(0,0,0,.4)', padding: 8, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-                      {TYPES.map((t) => (
-                        <button key={t.key} onClick={() => addQuestion(t.key)}
-                          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 8px', borderRadius: 8, border: `1px solid ${C.border2}`, background: '#fff', cursor: 'pointer', fontSize: 11.5, fontWeight: 600, color: C.ink, textAlign: 'left' }}>
-                          <span style={{ width: 8, height: 8, borderRadius: 999, background: t.color }} />
-                          <span style={{ flex: 1 }}>{t.label}</span>
-                          {t.ged && <span style={{ fontSize: 8.5, fontWeight: 800, color: C.blue, background: C.blueBg, padding: '1px 4px', borderRadius: 4 }}>GED</span>}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+              {/* Add question + type picker — kept OUTSIDE the scroll list above so
+                  the popover is never clipped; it opens upward for the same reason. */}
+              <div style={{ position: 'relative', marginTop: 8, flexShrink: 0 }}>
+                <button onClick={() => setShowTypePicker((v) => !v)}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px', borderRadius: 10, border: `1.5px dashed ${C.tint100}`, background: C.tint7, color: C.purpleText, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                  <Plus size={14} /> Add question
+                </button>
+                {showTypePicker && (
+                  <div style={{ position: 'absolute', bottom: '100%', left: 0, right: 0, marginBottom: 6, zIndex: 30, background: '#fff', border: `1px solid ${C.border3}`, borderRadius: 12, boxShadow: '0 24px 50px -18px rgba(0,0,0,.4)', padding: 8, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                    {TYPES.map((t) => (
+                      <button key={t.key} onClick={() => addQuestion(t.key)}
+                        style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 8px', borderRadius: 8, border: `1px solid ${C.border2}`, background: '#fff', cursor: 'pointer', fontSize: 11.5, fontWeight: 600, color: C.ink, textAlign: 'left' }}>
+                        <span style={{ width: 8, height: 8, borderRadius: 999, background: t.color }} />
+                        <span style={{ flex: 1 }}>{t.label}</span>
+                        {t.ged && <span style={{ fontSize: 8.5, fontWeight: 800, color: C.blue, background: C.blueBg, padding: '1px 4px', borderRadius: 4 }}>GED</span>}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
