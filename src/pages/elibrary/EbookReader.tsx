@@ -904,6 +904,23 @@ const EPUB_APPEARANCE_SURFACE: Record<EpubAppearance, string> = {
   warm: 'bg-[#f5efe4]',
   dark: 'bg-[#171717]',
 };
+const EPUB_APPEARANCE_CSS: Record<EpubAppearance, string> = {
+  light: `
+    html, body { background: #ffffff !important; color: #1e293b !important; }
+    body * { color: inherit; }
+    a { color: #2563eb !important; }
+  `,
+  warm: `
+    html, body { background: #f5efe4 !important; color: #3d3427 !important; }
+    body * { color: inherit; }
+    a { color: #8a4b22 !important; }
+  `,
+  dark: `
+    html, body { background: #171717 !important; color: #e5e7eb !important; }
+    body * { color: #e5e7eb !important; }
+    a { color: #93c5fd !important; }
+  `,
+};
 
 function loadEpubAppearance(): EpubAppearance {
   try {
@@ -917,20 +934,11 @@ function loadEpubAppearance(): EpubAppearance {
 function applyEpubAppearance(rendition: Rendition, appearance: EpubAppearance) {
   const themes = (rendition as any).themes;
   if (!themes) return;
-  themes.register('reader-light', {
-    'html, body': { background: '#ffffff', color: '#1e293b' },
-    a: { color: '#2563eb' },
-  });
-  themes.register('reader-warm', {
-    'html, body': { background: '#f5efe4', color: '#3d3427' },
-    a: { color: '#8a4b22' },
-  });
-  themes.register('reader-dark', {
-    'html, body': { background: '#171717', color: '#e5e7eb' },
-    'body *': { color: '#e5e7eb !important' },
-    a: { color: '#93c5fd !important' },
-  });
-  themes.select(`reader-${appearance}`);
+  // EPUB.js keeps every rule-based theme stylesheet in the book document.
+  // Reusing one CSS theme lets addStylesheetCss replace it, so switching back
+  // from dark reliably removes the previous colours.
+  themes.registerCss('reader-appearance', EPUB_APPEARANCE_CSS[appearance]);
+  themes.select('reader-appearance');
 }
 
 /* ─────────────────────────── EPUB reader ─────────────────────────── */
