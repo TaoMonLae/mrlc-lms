@@ -97,6 +97,40 @@ export function registerFlashcardRoutes(deps: Deps): void {
     classLinks: { select: { classId: true, class: { select: { id: true, name: true } } } },
   };
 
+  // A deck must be owned by a Teacher record for class assignment, but an
+  // administrator can create it without being that teacher. Use the immutable
+  // creation audit entry as the displayed author so ownership never mislabels
+  // an admin-authored Community deck as another teacher's work.
+  async function getDeckAuthorNames(deckIds: string[]): Promise<Map<string, string>> {
+    const names = new Map<string, string>();
+    if (!deckIds.length) return names;
+    try {
+      const logs = await prisma.auditLog.findMany({
+        where: { entityType: "FLASHCARD_DECK", action: "CREATE", entityId: { in: deckIds } },
+        orderBy: { createdAt: "asc" },
+        select: { entityId: true, userId: true },
+      });
+      const authorIdByDeck = new Map<string, string>();
+      for (const log of logs) {
+        if (log.entityId && log.userId && !authorIdByDeck.has(log.entityId)) authorIdByDeck.set(log.entityId, log.userId);
+      }
+      const authorIds = Array.from(new Set(authorIdByDeck.values()));
+      if (!authorIds.length) return names;
+      const users = await prisma.user.findMany({
+        where: { id: { in: authorIds } },
+        select: { id: true, firstName: true, lastName: true },
+      });
+      const userNames = new Map<string, string>(users.map((u: any) => [u.id, fullName(u)]));
+      for (const [deckId, userId] of authorIdByDeck) {
+        const name = userNames.get(userId);
+        if (name) names.set(deckId, name);
+      }
+    } catch {
+      // Older installations may not retain audit data; callers fall back to owner.
+    }
+    return names;
+  }
+
   async function validateTeacherClassAccess(jwtUser: JwtPayload, teacherId: string, classIds: string[]): Promise<boolean> {
     if (jwtUser.role === "ADMIN" || classIds.length === 0) return true;
     const allowed = await prisma.classTeacher.findMany({
@@ -157,10 +191,11 @@ export function registerFlashcardRoutes(deps: Deps): void {
       const decks = await prisma.flashcardDeck.findMany({
         where, orderBy: { updatedAt: "desc" }, select: deckSummarySelect,
       });
+      const authorNames = await getDeckAuthorNames(decks.map((d: any) => d.id));
       res.json(decks.map((d: any) => ({
         id: d.id, title: d.title, description: d.description, shared: d.shared,
         createdAt: d.createdAt, updatedAt: d.updatedAt,
-        subject: d.subject, teacherName: fullName(d.teacher?.user),
+        subject: d.subject, teacherName: fullName(d.teacher?.user), authorName: authorNames.get(d.id) || fullName(d.teacher?.user),
         cardCount: d._count.cards,
         classes: d.classLinks.map((l: any) => l.class),
       })));
@@ -181,9 +216,10 @@ export function registerFlashcardRoutes(deps: Deps): void {
         orderBy: { updatedAt: "desc" },
         select: deckSummarySelect,
       });
+      const authorNames = await getDeckAuthorNames(decks.map((d: any) => d.id));
       res.json(decks.map((d: any) => ({
         id: d.id, title: d.title, description: d.description,
-        updatedAt: d.updatedAt, subject: d.subject, teacherName: fullName(d.teacher?.user),
+        updatedAt: d.updatedAt, subject: d.subject, teacherName: fullName(d.teacher?.user), authorName: authorNames.get(d.id) || fullName(d.teacher?.user),
         cardCount: d._count.cards,
       })));
     } catch (err) {
@@ -204,9 +240,10 @@ export function registerFlashcardRoutes(deps: Deps): void {
         orderBy: { updatedAt: "desc" },
         select: deckSummarySelect,
       });
+      const authorNames = await getDeckAuthorNames(decks.map((d: any) => d.id));
       res.json(decks.map((d: any) => ({
         id: d.id, title: d.title, description: d.description,
-        updatedAt: d.updatedAt, subject: d.subject, teacherName: fullName(d.teacher?.user),
+        updatedAt: d.updatedAt, subject: d.subject, teacherName: fullName(d.teacher?.user), authorName: authorNames.get(d.id) || fullName(d.teacher?.user),
         cardCount: d._count.cards,
       })));
     } catch (err) {
@@ -240,9 +277,10 @@ export function registerFlashcardRoutes(deps: Deps): void {
       }
       if (!allowed) { res.status(403).json({ error: "Forbidden" }); return; }
 
+      const authorNames = await getDeckAuthorNames([deck.id]);
       res.json({
         id: deck.id, title: deck.title, description: deck.description, shared: deck.shared,
-        subject: deck.subject, teacherName: fullName(deck.teacher?.user),
+        subject: deck.subject, teacherName: fullName(deck.teacher?.user), authorName: authorNames.get(deck.id) || fullName(deck.teacher?.user),
         classes: deck.classLinks.map((l: any) => l.class),
         cards: deck.cards.map((c: any) => ({ id: c.id, term: c.term, definition: c.definition, imageUrl: c.imageUrl ?? null })),
       });

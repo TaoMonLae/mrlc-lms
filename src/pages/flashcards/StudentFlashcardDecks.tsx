@@ -13,6 +13,7 @@ interface DeckRow {
   updatedAt: string;
   subject: { id: string; name: string } | null;
   teacherName: string;
+  authorName?: string;
   cardCount: number;
 }
 
@@ -63,7 +64,7 @@ export default function StudentFlashcardDecks() {
                 <Badge variant="outline" className="flex items-center gap-1"><BookOpen className="h-3 w-3" /> {d.cardCount} card{d.cardCount === 1 ? '' : 's'}</Badge>
                 {d.subject && <Badge variant="outline">{d.subject.name}</Badge>}
               </div>
-              <p className="text-xs text-slate-400 mt-2">By {d.teacherName || 'Teacher'}</p>
+              <p className="text-xs text-slate-400 mt-2">By {d.authorName || d.teacherName || 'Teacher'}</p>
               <div className="flex items-center gap-1.5 flex-wrap mt-3 pt-3 border-t border-slate-100 dark:border-surface-raised">
                 <Button size="sm" variant="outline" className="h-7 px-2 text-xs" render={<Link to={`/student/flashcards/${d.id}`} />}>Study</Button>
                 <Button size="sm" variant="outline" className="h-7 px-2 text-xs" render={<Link to={`/student/flashcards/${d.id}/quiz`} />}><Brain className="mr-1 h-3 w-3" /> Quiz</Button>

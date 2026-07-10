@@ -124,6 +124,10 @@ export function registerExamPhase2Routes(deps: Deps): void {
   }
   const isExpired = (attempt: any) => attempt.serverDeadline && attempt.state !== "PAUSED" && Date.now() > new Date(attempt.serverDeadline).getTime();
 
+  function hasCurrentSession(attempt: any, sessionToken: unknown): boolean {
+    return typeof sessionToken === "string" && !!attempt.sessionToken && sessionToken === attempt.sessionToken;
+  }
+
   async function accommodationFor(studentId: string, examId: string) {
     const rows = await prisma.examAccommodation.findMany({ where: { studentId, OR: [{ examId }, { examId: null }] } });
     return rows.find((r: any) => r.examId === examId) || rows.find((r: any) => r.examId === null) || null;
@@ -502,11 +506,15 @@ export function registerExamPhase2Routes(deps: Deps): void {
       ordered = order.map((id) => byId[id]).filter(Boolean).map(sanitizeQuestion);
     }
     const answers = await prisma.examAnswer.findMany({ where: { attemptId: attempt.id } });
+    const accommodation = attempt.accommodationId
+      ? await prisma.examAccommodation.findUnique({ where: { id: attempt.accommodationId }, select: { additionalBreaks: true } })
+      : null;
     return {
       attempt: {
         id: attempt.id, examId: attempt.examId, state: attempt.state,
         attemptNumber: attempt.attemptNumber, lastSavedAt: attempt.lastSavedAt,
         sessionToken: attempt.sessionToken, remainingSeconds: remainingSeconds(attempt),
+        canPause: !!accommodation?.additionalBreaks,
         serverTime: new Date().toISOString(),
       },
       exam: { id: exam.id, title: exam.title, durationMinutes: exam.durationMinutes, totalMarks: exam.totalMarks },
@@ -523,6 +531,10 @@ export function registerExamPhase2Routes(deps: Deps): void {
       const attempt = await prisma.examAttempt.findUnique({ where: { id: req.params.attemptId }, include: { exam: { include: { questions: true } } } });
       if (!attempt) { res.status(404).json({ error: "Attempt not found" }); return; }
       if (!student || attempt.studentId !== student.id) { res.status(403).json({ error: "Forbidden" }); return; }
+      if (["IN_PROGRESS", "PAUSED"].includes(attempt.state) && !hasCurrentSession(attempt, req.headers["x-exam-session"])) {
+        res.status(409).json({ error: "SESSION_CONFLICT", message: "This attempt is open in another window or device." });
+        return;
+      }
 
       // Server-authoritative expiry → auto-submit.
       if (["IN_PROGRESS", "PAUSED"].includes(attempt.state) && isExpired(attempt)) {
@@ -545,9 +557,8 @@ export function registerExamPhase2Routes(deps: Deps): void {
       if (!student || attempt.studentId !== student.id) { res.status(403).json({ error: "Forbidden" }); return; }
       if (!["IN_PROGRESS", "PAUSED"].includes(attempt.state)) { res.status(409).json({ error: "Attempt is not active", state: attempt.state }); return; }
 
-      // Concurrent-session guard: only the holder of the current token may save,
-      // unless the exam explicitly permits multiple sessions (not by default).
-      if (attempt.sessionToken && b.sessionToken && b.sessionToken !== attempt.sessionToken) {
+      // Only the holder of the current token may modify an active attempt.
+      if (!hasCurrentSession(attempt, b.sessionToken)) {
         res.status(409).json({ error: "SESSION_CONFLICT", message: "This attempt is open in another session." });
         return;
       }
@@ -559,6 +570,17 @@ export function registerExamPhase2Routes(deps: Deps): void {
       }
 
       const answers: any[] = Array.isArray(b.answers) ? b.answers : [];
+      const allowedQuestionIds = new Set<string>(
+        Array.isArray(attempt.selectedQuestionIds) && attempt.selectedQuestionIds.length
+          ? attempt.selectedQuestionIds
+          : Array.isArray(attempt.questionOrder) && attempt.questionOrder.length
+            ? attempt.questionOrder
+            : (await prisma.question.findMany({ where: { examId: attempt.examId }, select: { id: true } })).map((q: any) => q.id),
+      );
+      if (answers.some((answer) => !answer?.questionId || !allowedQuestionIds.has(answer.questionId))) {
+        res.status(400).json({ error: "One or more answers do not belong to this attempt" });
+        return;
+      }
       const now = new Date();
       await prisma.$transaction(async (tx: any) => {
         try {
@@ -600,9 +622,11 @@ export function registerExamPhase2Routes(deps: Deps): void {
   app.post("/api/attempts/:attemptId/pause", authMiddleware, examLimiter, async (req, res) => {
     try {
       const student = await studentForReq(req);
-      const attempt = await prisma.examAttempt.findUnique({ where: { id: req.params.attemptId } });
+      const attempt = await prisma.examAttempt.findUnique({ where: { id: req.params.attemptId }, include: { accommodation: { select: { additionalBreaks: true } } } });
       if (!attempt || !student || attempt.studentId !== student.id) { res.status(403).json({ error: "Forbidden" }); return; }
       if (attempt.state !== "IN_PROGRESS") { res.status(409).json({ error: "Not in progress" }); return; }
+      if (!hasCurrentSession(attempt, req.body?.sessionToken)) { res.status(409).json({ error: "SESSION_CONFLICT", message: "This attempt is open in another session." }); return; }
+      if (!attempt.accommodation?.additionalBreaks) { res.status(403).json({ error: "Only an invigilator can pause this attempt" }); return; }
       const updated = await prisma.examAttempt.update({ where: { id: attempt.id }, data: { state: "PAUSED", pausedAt: new Date(), lastSavedAt: new Date() } });
       await prisma.attemptEvent.create({ data: { attemptId: attempt.id, type: "PAUSE", actorRole: "STUDENT", ipAddress: ipOf(req), userAgent: uaOf(req) } }).catch(() => {});
       res.json({ ok: true, state: updated.state, remainingSeconds: remainingSeconds(updated) });
@@ -616,6 +640,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
       const attempt = await prisma.examAttempt.findUnique({ where: { id: req.params.attemptId } });
       if (!attempt || !student || attempt.studentId !== student.id) { res.status(403).json({ error: "Forbidden" }); return; }
       if (!["IN_PROGRESS", "PAUSED"].includes(attempt.state)) { res.status(409).json({ error: "Already submitted", state: attempt.state }); return; }
+      if (!hasCurrentSession(attempt, req.body?.sessionToken)) { res.status(409).json({ error: "SESSION_CONFLICT", message: "This attempt is open in another session." }); return; }
       const finalized = await finalizeSubmission(attempt.id, false, ipOf(req), uaOf(req));
       res.json({ ok: true, state: finalized.state });
     } catch (err: any) {

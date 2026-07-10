@@ -32,6 +32,7 @@ export default function ExamTake() {
           setError(data.error || 'This exam could not be started.');
           return;
         }
+        if (data.attempt?.sessionToken) sessionStorage.setItem(`exam_attempt_session_${data.attempt.id}`, data.attempt.sessionToken);
         navigate(`/exam2/attempts/${data.attempt.id}/play`, { replace: true });
       } catch {
         if (!cancelled) setError('Network error while starting the exam.');

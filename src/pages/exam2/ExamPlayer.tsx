@@ -30,6 +30,7 @@ export default function ExamPlayer() {
   const [idx, setIdx] = useState(0);
   const [remaining, setRemaining] = useState<number>(0);
   const [sessionToken, setSessionToken] = useState<string>('');
+  const [canPause, setCanPause] = useState(false);
   const [savedAt, setSavedAt] = useState<string>('');
   const [saving, setSaving] = useState(false);
   const [examTitle, setExamTitle] = useState('');
@@ -46,13 +47,16 @@ export default function ExamPlayer() {
 
   // ── load / recover state ───────────────────────────────────────────────────
   const loadState = useCallback(async () => {
-    const res = await fetch(`/api/attempts/${attemptId}/state`, { headers: authHeaders() });
+    const storedToken = attemptId ? sessionStorage.getItem(`exam_attempt_session_${attemptId}`) || '' : '';
+    if (!storedToken) { setBlocked('This exam session has expired. Resume the attempt from My Exams.'); setLoading(false); return; }
+    const res = await fetch(`/api/attempts/${attemptId}/state`, { headers: { ...authHeaders(), 'X-Exam-Session': storedToken } });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) { setBlocked(data.error || 'Could not load attempt'); setLoading(false); return; }
+    if (!res.ok) { setBlocked(data.message || data.error || 'Could not load attempt'); setLoading(false); return; }
     if (data.autoSubmitted) { toast.info('Time expired — your attempt was submitted.'); navigate(`/exam2/attempts/${attemptId}/result`); return; }
     setQuestions(data.questions || []);
     setExamTitle(data.exam?.title || 'Exam');
     setSessionToken(data.attempt?.sessionToken || '');
+    setCanPause(!!data.attempt?.canPause);
     setRemaining(data.attempt?.remainingSeconds ?? 0);
     setSavedAt(data.attempt?.lastSavedAt || '');
     const map: Record<string, Answer> = {};
@@ -108,13 +112,20 @@ export default function ExamPlayer() {
 
   const goTo = async (next: number) => { await save('NAVIGATE'); setIdx(Math.max(0, Math.min(questions.length - 1, next))); };
 
-  const handlePause = async () => { await save('PAUSE'); await post(`/api/attempts/${attemptId}/pause`); toast.success('Attempt paused. You can resume later.'); navigate('/exam2/resume'); };
+  const handlePause = async () => {
+    if (!canPause) return;
+    if (!(await save('PAUSE'))) return;
+    const { ok, data } = await post(`/api/attempts/${attemptId}/pause`, { sessionToken });
+    if (!ok) { toast.error(data.error || 'Could not pause attempt'); return; }
+    toast.success('Attempt paused. You can resume later.');
+    navigate('/exam2/resume');
+  };
 
   const handleSubmit = async (auto = false) => {
     if (!auto && !confirm('Submit your exam? You will not be able to change your answers.')) return;
-    await save('SUBMIT');
-    const { ok, data } = await post(`/api/attempts/${attemptId}/submit`);
-    if (ok) { toast.success('Exam submitted.'); navigate(`/exam2/attempts/${attemptId}/result`); }
+    if (!(await save('SUBMIT'))) return;
+    const { ok, data } = await post(`/api/attempts/${attemptId}/submit`, { sessionToken });
+    if (ok) { sessionStorage.removeItem(`exam_attempt_session_${attemptId}`); toast.success('Exam submitted.'); navigate(`/exam2/attempts/${attemptId}/result`); }
     else toast.error(data.error || 'Could not submit');
   };
 
@@ -232,7 +243,7 @@ export default function ExamPlayer() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => save('AUTOSAVE')}><Save className="h-4 w-4 mr-1" /> Save</Button>
-          <Button variant="outline" onClick={handlePause}><Pause className="h-4 w-4 mr-1" /> Pause</Button>
+          {canPause && <Button variant="outline" onClick={handlePause}><Pause className="h-4 w-4 mr-1" /> Pause</Button>}
           <Button className="bg-primary text-primary-foreground" onClick={() => handleSubmit(false)}><Send className="h-4 w-4 mr-1" /> Submit</Button>
         </div>
       </div>

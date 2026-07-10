@@ -11,7 +11,7 @@ import ElectricBorder from '@/components/ElectricBorder';
 interface Card { id: string; term: string; definition: string; imageUrl?: string | null }
 interface DeckDetail {
   id: string; title: string; description: string | null;
-  teacherName: string; subject: { id: string; name: string } | null;
+  teacherName: string; authorName?: string; subject: { id: string; name: string } | null;
   cards: Card[];
 }
 
@@ -133,7 +133,7 @@ export default function StudentFlashcardStudy() {
           <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
             <Layers className="h-5 w-5 text-aubergine-600" /> {deck.title}
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">By {deck.teacherName || 'Teacher'}{deck.subject ? ` · ${deck.subject.name}` : ''}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">By {deck.authorName || deck.teacherName || 'Teacher'}{deck.subject ? ` · ${deck.subject.name}` : ''}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button size="sm" variant="outline" render={<Link to={quizUrl} />}><Brain className="mr-1.5 h-3.5 w-3.5" /> Quiz</Button>

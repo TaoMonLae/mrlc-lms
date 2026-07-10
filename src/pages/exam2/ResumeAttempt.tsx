@@ -30,6 +30,7 @@ export default function ResumeAttempt() {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) { toast.error(data.error || 'Could not start exam'); return; }
+    if (data.attempt?.sessionToken) sessionStorage.setItem(`exam_attempt_session_${data.attempt.id}`, data.attempt.sessionToken);
     navigate(`/exam2/attempts/${data.attempt.id}/play`);
   };
 
