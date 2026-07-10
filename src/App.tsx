@@ -37,6 +37,7 @@ const InvigilatorDashboard = lazy(() => import("./pages/exam2/InvigilatorDashboa
 const AccommodationManagement = lazy(() => import("./pages/exam2/AccommodationManagement"));
 const PrintableExport = lazy(() => import("./pages/exam2/PrintableExport"));
 const ExamAuthoring = lazy(() => import("./pages/exam2/ExamAuthoring"));
+const GuidedStudio = lazy(() => import("./pages/exams/GuidedStudio"));
 const QuestionBank = lazy(() => import("./pages/bank/QuestionBank"));
 const QuestionEditor = lazy(() => import("./pages/bank/QuestionEditor"));
 const TopicManager = lazy(() => import("./pages/bank/TopicManager"));
@@ -366,6 +367,7 @@ export default function App() {
                   <Route path="/exams/new" element={<ExamNew />} />
                   <Route path="/exams/:id" element={<ExamProfile />} />
                   <Route path="/exams/:id/edit" element={<ExamEdit />} />
+                  <Route path="/exams/:id/studio" element={<GuidedStudio />} />
                   <Route path="/exams/:id/preview" element={<ExamPreview />} />
                   
                   <Route path="/teachers" element={<TeachersList />} />
