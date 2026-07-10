@@ -383,6 +383,19 @@ const logger = winston.createLogger({
   ],
 });
 
+/**
+ * Winston's simple formatter does not render Error properties passed as a
+ * second argument. Keep Prisma's code and metadata in the message so PM2 logs
+ * show the table or column that needs attention during a deployment.
+ */
+function logExamDatabaseError(operation: string, err: any) {
+  logger.error(`${operation}: ${err?.message || "Unknown database error"}`, {
+    prismaCode: err?.code,
+    prismaMeta: err?.meta,
+    stack: err?.stack,
+  });
+}
+
 // ─── Prisma ───────────────────────────────────────────────────────────────────
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
@@ -11518,8 +11531,8 @@ async function startServer() {
       }
       res.json(exams);
     } catch (err: any) {
-      if (err?.code === "P2021" || err?.code === "P2022") { res.status(503).json({ error: "Exam database is out of date — run `npx prisma migrate deploy` then restart the server." }); return; }
-      logger.error("Error fetching exams:", err);
+      if (err?.code === "P2021" || err?.code === "P2022") { logExamDatabaseError("Error fetching exams", err); res.status(503).json({ error: "Exam database is out of date — run `npx prisma migrate deploy` then restart the server." }); return; }
+      logExamDatabaseError("Error fetching exams", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
@@ -11616,8 +11629,8 @@ async function startServer() {
       const profile = await prisma.schoolProfile.findFirst();
       res.json({ ...exam, lockdownPolicy: lockdownBrowserPolicy(profile) });
     } catch (err: any) {
-      if (err?.code === "P2021" || err?.code === "P2022") { res.status(503).json({ error: "Exam database is out of date — run `npx prisma migrate deploy` then restart the server." }); return; }
-      logger.error("Error fetching exam:", err);
+      if (err?.code === "P2021" || err?.code === "P2022") { logExamDatabaseError("Error fetching exam", err); res.status(503).json({ error: "Exam database is out of date — run `npx prisma migrate deploy` then restart the server." }); return; }
+      logExamDatabaseError("Error fetching exam", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
@@ -11709,8 +11722,8 @@ async function startServer() {
 
       res.status(201).json(result);
     } catch (err: any) {
-      if (err?.code === "P2021" || err?.code === "P2022") { res.status(503).json({ error: "Exam database is out of date — run `npx prisma migrate deploy` then restart the server." }); return; }
-      logger.error("Error creating exam:", err);
+      if (err?.code === "P2021" || err?.code === "P2022") { logExamDatabaseError("Error creating exam", err); res.status(503).json({ error: "Exam database is out of date — run `npx prisma migrate deploy` then restart the server." }); return; }
+      logExamDatabaseError("Error creating exam", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
@@ -11800,8 +11813,8 @@ async function startServer() {
 
       res.json(result);
     } catch (err: any) {
-      if (err?.code === "P2021" || err?.code === "P2022") { res.status(503).json({ error: "Exam database is out of date — run `npx prisma migrate deploy` then restart the server." }); return; }
-      logger.error("Error updating exam:", err);
+      if (err?.code === "P2021" || err?.code === "P2022") { logExamDatabaseError("Error updating exam", err); res.status(503).json({ error: "Exam database is out of date — run `npx prisma migrate deploy` then restart the server." }); return; }
+      logExamDatabaseError("Error updating exam", err);
       if (err.http === 404) {
         res.status(404).json({ error: err.message });
         return;
