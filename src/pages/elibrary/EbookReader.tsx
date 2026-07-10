@@ -907,19 +907,24 @@ const EPUB_APPEARANCE_SURFACE: Record<EpubAppearance, string> = {
 const EPUB_APPEARANCE_CSS: Record<EpubAppearance, string> = {
   light: `
     html, body { background: #ffffff !important; color: #1e293b !important; }
-    body * { color: inherit; }
+    html body * { color: #1e293b !important; }
     a { color: #2563eb !important; }
   `,
   warm: `
     html, body { background: #f5efe4 !important; color: #3d3427 !important; }
-    body * { color: inherit; }
+    html body * { color: #3d3427 !important; }
     a { color: #8a4b22 !important; }
   `,
   dark: `
     html, body { background: #171717 !important; color: #e5e7eb !important; }
-    body * { color: #e5e7eb !important; }
+    html body * { color: #e5e7eb !important; }
     a { color: #93c5fd !important; }
   `,
+};
+const EPUB_APPEARANCE_COLORS: Record<EpubAppearance, { background: string; text: string; link: string }> = {
+  light: { background: '#ffffff', text: '#1e293b', link: '#2563eb' },
+  warm: { background: '#f5efe4', text: '#3d3427', link: '#8a4b22' },
+  dark: { background: '#171717', text: '#e5e7eb', link: '#93c5fd' },
 };
 
 function loadEpubAppearance(): EpubAppearance {
@@ -931,6 +936,22 @@ function loadEpubAppearance(): EpubAppearance {
   }
 }
 
+function applyEpubContentAppearance(contents: any, appearance: EpubAppearance) {
+  const colors = EPUB_APPEARANCE_COLORS[appearance];
+  contents.css('background-color', colors.background, true);
+  contents.css('color', colors.text, true);
+  const doc = contents.document as Document | undefined;
+  if (!doc) return;
+
+  doc.documentElement.style.setProperty('background-color', colors.background, 'important');
+  doc.querySelectorAll<HTMLElement>('body *').forEach((element) => {
+    element.style.setProperty('color', colors.text, 'important');
+  });
+  doc.querySelectorAll<HTMLElement>('a').forEach((element) => {
+    element.style.setProperty('color', colors.link, 'important');
+  });
+}
+
 function applyEpubAppearance(rendition: Rendition, appearance: EpubAppearance) {
   const themes = (rendition as any).themes;
   if (!themes) return;
@@ -939,6 +960,9 @@ function applyEpubAppearance(rendition: Rendition, appearance: EpubAppearance) {
   // from dark reliably removes the previous colours.
   themes.registerCss('reader-appearance', EPUB_APPEARANCE_CSS[appearance]);
   themes.select('reader-appearance');
+  for (const contents of (rendition as any).getContents?.() ?? []) {
+    applyEpubContentAppearance(contents, appearance);
+  }
 }
 
 /* ─────────────────────────── EPUB reader ─────────────────────────── */
@@ -953,6 +977,7 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards }: {
   const [ready, setReady] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [appearance, setAppearance] = useState<EpubAppearance>(loadEpubAppearance);
+  const appearanceRef = useRef(appearance);
 
   const [highlights, setHighlights] = useState<HighlightRow[]>([]);
   const [showHighlights, setShowHighlights] = useState(false);
@@ -1015,6 +1040,7 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards }: {
         });
         rendRef.current = rendition;
         applyEpubAppearance(rendition, appearance);
+        rendition.hooks.content.register((contents: any) => applyEpubContentAppearance(contents, appearanceRef.current));
         rendition.on('relocated', (loc: any) => {
           const href = loc?.start?.href || '';
           setCurrentHref(href);
@@ -1056,6 +1082,7 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards }: {
   }, [blob]);
 
   useEffect(() => {
+    appearanceRef.current = appearance;
     try { localStorage.setItem(EPUB_APPEARANCE_KEY, appearance); } catch { /* preference remains for this session */ }
     if (rendRef.current) applyEpubAppearance(rendRef.current, appearance);
   }, [appearance, ready]);
