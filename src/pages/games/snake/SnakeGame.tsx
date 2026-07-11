@@ -3,6 +3,8 @@
 import * as React from "react";
 import { useEffect, useRef, useCallback } from "react";
 import { useSnake } from "./context/SnakeContext";
+import { useSwipeControls } from "./useSwipeControls";
+import MobileDirPad from "./MobileDirPad";
 import { Play, Pause, RotateCcw, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -57,6 +59,9 @@ function SnakeGame() {
   const gameLoopRef = useRef<number | undefined>(undefined);
   const gameStartRef = useRef<number>(0);
   const [isMobile, setIsMobile] = React.useState(false);
+
+  // Swipe-to-steer on the board — the primary mobile control.
+  const swipe = useSwipeControls(changeDirection, state.gameStatus === "PLAYING");
 
   // Check for mobile device
   useEffect(() => {
@@ -331,61 +336,16 @@ function SnakeGame() {
         <Card className="p-2 bg-gradient-to-br from-purple-500/5 to-blue-500/5 w-full max-w-[500px] mx-auto dark:from-purple-900/30 dark:to-blue-900/30 dark:border-2 dark:border-cyan-500/50 dark:shadow-[0_0_20px_rgba(6,182,212,0.3),0_0_40px_rgba(139,92,246,0.2)] dark:shadow-cyan-500/30">
           <canvas
             ref={canvasRef}
-            className="rounded-lg shadow-lg w-full aspect-square dark:shadow-[0_0_15px_rgba(6,182,212,0.5),inset_0_0_30px_rgba(139,92,246,0.3)]"
+            onTouchStart={swipe.onTouchStart}
+            onTouchMove={swipe.onTouchMove}
+            onTouchEnd={swipe.onTouchEnd}
+            className="rounded-lg shadow-lg w-full aspect-square touch-none select-none dark:shadow-[0_0_15px_rgba(6,182,212,0.5),inset_0_0_30px_rgba(139,92,246,0.3)]"
           />
         </Card>
 
-        {/* Mobile controls */}
-        {isMobile && (
-          <div className="grid grid-cols-3 gap-2">
-            <div />
-            <Button
-              variant="outline"
-              size="lg"
-              onPointerDown={(e) => {
-                e.preventDefault();
-                changeDirection("UP");
-              }}
-              className="bg-gray-800/50 text-white border-gray-600 hover:bg-gray-700/50"
-            >
-              ↑
-            </Button>
-            <div />
-            <Button
-              variant="outline"
-              size="lg"
-              onPointerDown={(e) => {
-                e.preventDefault();
-                changeDirection("LEFT");
-              }}
-              className="bg-gray-800/50 text-white border-gray-600 hover:bg-gray-700/50"
-            >
-              ←
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              onPointerDown={(e) => {
-                e.preventDefault();
-                changeDirection("DOWN");
-              }}
-              className="bg-gray-800/50 text-white border-gray-600 hover:bg-gray-700/50"
-            >
-              ↓
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              onPointerDown={(e) => {
-                e.preventDefault();
-                changeDirection("RIGHT");
-              }}
-              className="bg-gray-800/50 text-white border-gray-600 hover:bg-gray-700/50"
-            >
-              →
-            </Button>
-          </div>
-        )}
+        {/* Mobile controls: swipe on the board is primary; this D-pad is a
+            larger, proper-diamond fallback. */}
+        {isMobile && <MobileDirPad onDirection={changeDirection} />}
       </div>
 
       {/* Control panel - always visible */}
