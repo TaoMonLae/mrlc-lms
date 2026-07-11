@@ -1,4 +1,5 @@
 import * as React from "react";
+import { haptic } from "./haptics";
 
 type Direction = "UP" | "DOWN" | "LEFT" | "RIGHT";
 
@@ -12,6 +13,7 @@ function DirButton({ label, onPress }: { label: string; onPress: () => void }) {
       onPointerDown={(e) => {
         e.preventDefault();
         onPress();
+        haptic("turn");
       }}
       className="flex h-16 w-16 items-center justify-center rounded-2xl border border-gray-600 bg-gray-800/70 text-3xl font-bold text-white shadow-lg touch-none select-none transition-transform active:scale-90 active:bg-cyan-600/70"
     >

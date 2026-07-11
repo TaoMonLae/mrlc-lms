@@ -1,5 +1,6 @@
 import * as React from "react";
 import { useCallback, useRef } from "react";
+import { haptic } from "./haptics";
 
 type Direction = "UP" | "DOWN" | "LEFT" | "RIGHT";
 
@@ -42,6 +43,7 @@ export function useSwipeControls(onSwipe: (dir: Direction) => void, enabled = tr
       } else {
         onSwipe(dy > 0 ? "DOWN" : "UP");
       }
+      haptic("turn");
 
       // Reset so a continuous drag can chain multiple turns.
       start.current = { x: t.clientX, y: t.clientY };

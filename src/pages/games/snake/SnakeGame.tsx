@@ -5,6 +5,8 @@ import { useEffect, useRef, useCallback } from "react";
 import { useSnake } from "./context/SnakeContext";
 import { useSwipeControls } from "./useSwipeControls";
 import MobileDirPad from "./MobileDirPad";
+import HapticsToggle from "./HapticsToggle";
+import { haptic } from "./haptics";
 import { Play, Pause, RotateCcw, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -62,6 +64,20 @@ function SnakeGame() {
 
   // Swipe-to-steer on the board — the primary mobile control.
   const swipe = useSwipeControls(changeDirection, state.gameStatus === "PLAYING");
+
+  // Haptics: a firm bump when eating (score goes up) and a triple buzz on game
+  // over. No-ops on devices without vibration or when the toggle is off.
+  const prevScoreRef = useRef(state.score);
+  useEffect(() => {
+    if (state.gameStatus === "PLAYING" && state.score > prevScoreRef.current) {
+      haptic("eat");
+    }
+    prevScoreRef.current = state.score;
+  }, [state.score, state.gameStatus]);
+
+  useEffect(() => {
+    if (state.gameStatus === "GAME_OVER") haptic("over");
+  }, [state.gameStatus]);
 
   // Check for mobile device
   useEffect(() => {
@@ -314,9 +330,9 @@ function SnakeGame() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-4 p-4 items-start justify-center text-white">
+    <div className="flex flex-col lg:flex-row gap-4 p-2 sm:p-4 items-start justify-center text-white">
       {/* Game board area */}
-      <div className="flex flex-col items-center gap-3">
+      <div className="flex flex-col items-center gap-3 w-full lg:w-auto">
         {/* Compact score bar - always visible */}
         <div className="flex items-center gap-4 bg-gradient-to-r from-purple-500/10 to-blue-500/10 dark:from-purple-900/40 dark:to-blue-900/40 px-4 py-2 rounded-lg border border-purple-500/20 dark:border-cyan-500/50 w-full max-w-[600px] shadow-xl">
           <div className="flex items-center gap-2">
@@ -332,8 +348,8 @@ function SnakeGame() {
           </div>
         </div>
 
-        {/* Game canvas - slightly smaller for better fit */}
-        <Card className="p-2 bg-gradient-to-br from-purple-500/5 to-blue-500/5 w-full max-w-[500px] mx-auto dark:from-purple-900/30 dark:to-blue-900/30 dark:border-2 dark:border-cyan-500/50 dark:shadow-[0_0_20px_rgba(6,182,212,0.3),0_0_40px_rgba(139,92,246,0.2)] dark:shadow-cyan-500/30">
+        {/* Game canvas — fills the phone width, capped on larger screens */}
+        <Card className="p-1 sm:p-2 bg-gradient-to-br from-purple-500/5 to-blue-500/5 w-full max-w-[600px] mx-auto dark:from-purple-900/30 dark:to-blue-900/30 dark:border-2 dark:border-cyan-500/50 dark:shadow-[0_0_20px_rgba(6,182,212,0.3),0_0_40px_rgba(139,92,246,0.2)] dark:shadow-cyan-500/30">
           <canvas
             ref={canvasRef}
             onTouchStart={swipe.onTouchStart}
@@ -377,6 +393,9 @@ function SnakeGame() {
             </>
           )}
         </Button>
+
+        {/* Vibration toggle (only shown on devices that support it) */}
+        <HapticsToggle />
 
         {/* Settings card */}
         <Card className="p-3 bg-gradient-to-br from-purple-500/5 to-blue-500/5 dark:from-purple-900/30 dark:to-blue-900/30 dark:border-2 dark:border-purple-500/30">
