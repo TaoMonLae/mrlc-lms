@@ -7,51 +7,62 @@ import { Button } from "@/components/ui/button";
 import { Trophy, BookOpen, Zap, Users, Settings } from "lucide-react";
 import Leaderboard from "./Leaderboard";
 import VocabularyManager from "./VocabularyManager";
+import { fetchOrMock } from "../../../../lib/api";
 
 type TabType = "games" | "vocabulary" | "leaderboard";
+
+interface LeaderboardEntry {
+  id: string;
+  studentName: string;
+  studentCode: string;
+  className: string;
+  score: number;
+  gameDuration: number;
+  playedAt: string;
+  rank: number;
+  isCurrentUser: boolean;
+}
+
+// Dev-only fallback so the leaderboard demo stays populated without a backend;
+// production shows real rows (or an empty state), never these names.
+const MOCK_LEADERBOARD: LeaderboardEntry[] = [
+  { id: "1", studentName: "John Doe", studentCode: "STU001", className: "GED-A", score: 250, gameDuration: 180, playedAt: new Date().toISOString(), rank: 1, isCurrentUser: false },
+  { id: "2", studentName: "Jane Smith", studentCode: "STU002", className: "GED-A", score: 200, gameDuration: 150, playedAt: new Date().toISOString(), rank: 2, isCurrentUser: false },
+  { id: "3", studentName: "Bob Johnson", studentCode: "STU003", className: "GED-B", score: 150, gameDuration: 120, playedAt: new Date().toISOString(), rank: 3, isCurrentUser: false },
+];
 
 export default function GameSelect() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = React.useState<TabType>("games");
   const [timeRange, setTimeRange] = React.useState<"TODAY" | "WEEK" | "MONTH" | "ALL_TIME">("WEEK");
   const [loading, setLoading] = React.useState(false);
+  const [leaderboard, setLeaderboard] = React.useState<LeaderboardEntry[]>([]);
+  const [boardMode, setBoardMode] = React.useState<"CLASSIC" | "VOCABULARY">("CLASSIC");
 
-  // Mock data - replace with actual API call
-  const mockLeaderboardData = [
-    {
-      id: "1",
-      studentName: "John Doe",
-      studentCode: "STU001",
-      className: "GED-A",
-      score: 250,
-      gameDuration: 180,
-      playedAt: new Date().toISOString(),
-      rank: 1,
-      isCurrentUser: false,
-    },
-    {
-      id: "2",
-      studentName: "Jane Smith",
-      studentCode: "STU002",
-      className: "GED-A",
-      score: 200,
-      gameDuration: 150,
-      playedAt: new Date().toISOString(),
-      rank: 2,
-      isCurrentUser: true,
-    },
-    {
-      id: "3",
-      studentName: "Bob Johnson",
-      studentCode: "STU003",
-      className: "GED-B",
-      score: 150,
-      gameDuration: 120,
-      playedAt: new Date().toISOString(),
-      rank: 3,
-      isCurrentUser: false,
-    },
-  ];
+  // Load the real leaderboard from the API whenever the tab is opened or the
+  // time range / mode changes.
+  React.useEffect(() => {
+    if (activeTab !== "leaderboard") return;
+    let active = true;
+    setLoading(true);
+    (async () => {
+      try {
+        const { data } = await fetchOrMock<{ leaderboard: LeaderboardEntry[] }>(
+          `/api/snake-game/leaderboard?gameMode=${boardMode}&timeRange=${timeRange}&limit=20`,
+          () => ({ leaderboard: MOCK_LEADERBOARD }),
+          { emptyWhen: (d) => !d?.leaderboard }
+        );
+        if (active) setLeaderboard(data.leaderboard ?? []);
+      } catch {
+        if (active) setLeaderboard([]);
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [activeTab, timeRange, boardMode]);
 
   const gameModes = [
     {
@@ -178,10 +189,28 @@ export default function GameSelect() {
 
       {activeTab === "leaderboard" && (
         <div>
-          <h2 className="text-xl font-semibold mb-4 text-white">Class Leaderboard</h2>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-xl font-semibold text-white">Class Leaderboard</h2>
+            <div className="flex gap-2">
+              <Button
+                variant={boardMode === "CLASSIC" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setBoardMode("CLASSIC")}
+              >
+                <Zap className="size-4 mr-1" /> Classic
+              </Button>
+              <Button
+                variant={boardMode === "VOCABULARY" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setBoardMode("VOCABULARY")}
+              >
+                <BookOpen className="size-4 mr-1" /> Vocabulary
+              </Button>
+            </div>
+          </div>
           <Leaderboard
-            title="Top Snake Players"
-            entries={mockLeaderboardData}
+            title={boardMode === "VOCABULARY" ? "Top Vocabulary Players" : "Top Snake Players"}
+            entries={leaderboard}
             timeRange={timeRange}
             setTimeRange={setTimeRange}
             loading={loading}

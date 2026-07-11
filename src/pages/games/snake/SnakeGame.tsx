@@ -6,6 +6,14 @@ import { useSnake } from "./context/SnakeContext";
 import { Play, Pause, RotateCcw, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { apiSend } from "../../../lib/api";
+
+// Map the reducer's numeric tick speed to the API's enum.
+function speedLabel(speed: number): "SLOW" | "NORMAL" | "FAST" {
+  if (speed >= 200) return "SLOW";
+  if (speed <= 100) return "FAST";
+  return "NORMAL";
+}
 
 // Fill a rounded rectangle, falling back to a manual path on browsers that lack
 // CanvasRenderingContext2D.roundRect (e.g. Safari < 16) — without this the whole
@@ -47,6 +55,7 @@ function SnakeGame() {
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameLoopRef = useRef<number | undefined>(undefined);
+  const gameStartRef = useRef<number>(0);
   const [isMobile, setIsMobile] = React.useState(false);
 
   // Check for mobile device
@@ -257,9 +266,40 @@ function SnakeGame() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.gameStatus, state.snake, state.food, state.score, state.gridSize, isMobile]);
 
+  // Save the classic score when the game ends so the Classic leaderboard
+  // reflects real play. Uses the shared authed api helper; failures (not
+  // signed in / offline) are swallowed so the game stays playable.
+  useEffect(() => {
+    if (state.gameStatus !== "GAME_OVER" || state.score <= 0) return;
+
+    const durationSeconds = gameStartRef.current
+      ? Math.max(0, Math.round((Date.now() - gameStartRef.current) / 1000))
+      : 0;
+
+    (async () => {
+      try {
+        await apiSend("/api/snake-game/scores", "POST", {
+          score: state.score,
+          gameMode: "CLASSIC",
+          speed: speedLabel(state.speed),
+          gridSize: state.gridSize,
+          gameDuration: durationSeconds,
+          deviceInfo: {
+            userAgent: navigator.userAgent,
+            screen: { width: window.screen.width, height: window.screen.height },
+          },
+        });
+      } catch {
+        // Not signed in / offline — don't interrupt the game.
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.gameStatus]);
+
   const handleStartGame = () => {
     if (state.gameStatus === "IDLE" || state.gameStatus === "GAME_OVER") {
       resetGame();
+      gameStartRef.current = Date.now();
       startGame();
     } else if (state.gameStatus === "PAUSED") {
       resumeGame();
