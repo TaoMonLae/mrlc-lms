@@ -22,9 +22,13 @@ export function installAuthInterceptor() {
 
       const isApi = url.includes('/api/');
       const isLogin = url.includes('/api/auth/login');
+      const isOptionalAuth = url.includes('/api/snake-game/vocabulary-progress') ||
+                             url.includes('/api/snake-game/vocabulary-analytics') ||
+                             url.includes('/api/snake-game/scores');
       const hadToken = !!sessionStorage.getItem('auth_token');
 
-      if (res.status === 401 && isApi && !isLogin && hadToken) {
+      // Don't redirect to login for optional auth endpoints - let components handle 401s gracefully
+      if (res.status === 401 && isApi && !isLogin && !isOptionalAuth && hadToken) {
         sessionStorage.removeItem('auth_token');
         sessionStorage.removeItem('auth_user');
         localStorage.removeItem('auth_token');

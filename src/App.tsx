@@ -174,6 +174,8 @@ import ArticleReader from "./pages/news/ArticleReader";
 
 import SudokuSelectPage from "./pages/games/sudoku/index";
 import SudokuPlayPage from "./pages/games/sudoku/PlayPage";
+import SnakeSelectPage from "./pages/games/snake/index";
+import SnakePlayPage from "./pages/games/snake/PlayPage";
 
 import Dictionary from "./pages/dictionary/Dictionary";
 
@@ -324,6 +326,9 @@ export default function App() {
 
                 <Route path="/games/sudoku" element={<SudokuSelectPage />} />
                 <Route path="/games/sudoku/play" element={<SudokuPlayPage />} />
+
+                <Route path="/games/snake" element={<SnakeSelectPage />} />
+                <Route path="/games/snake/play" element={<SnakePlayPage />} />
 
                 <Route path="/timetable" element={<TimetablePage />} />
 
