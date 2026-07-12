@@ -374,6 +374,7 @@ model Student {
   flashcardAttempts   FlashcardAttempt[]
   ruleViolations      RuleViolation[]
   snakeGameScores     SnakeGameScore[]
+  checkerGameScores   CheckerGameScore[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -3504,4 +3505,53 @@ model SnakeCompetition {
   @@index([status])
   @@index([startDate])
   @@index([endDate])
+}
+
+// CHECKERS GAME (educational mini-game for students)
+// -----------------------------------------------------------------------------
+
+model CheckerGameScore {
+  id String @id @default(uuid())
+
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  classId   String?
+  className String?
+
+  // For tracking wins/losses/draws
+  result     String @default("PLAYING") // WIN | LOSE | DRAW | PLAYING | ABANDONED
+  score      Int    @default(0) // Points earned (pieces captured + bonuses)
+  highScore  Boolean @default(false) // Whether this was a personal best at the time
+
+  gameMode  String @default("CLASSIC") // CLASSIC | VOCABULARY | PVP
+
+  // Game details
+  opponentType String @default("HUMAN") // HUMAN | AI | CPU
+  difficulty    String? // EASY | MEDIUM | HARD (for AI games)
+  gameDuration  Int // seconds
+  movesCount    Int @default(0) // Total moves made in the game
+
+  // Pieces captured
+  playerPiecesCaptured Int  @default(0)
+  opponentPiecesCaptured Int @default(0)
+  playerKingsEarned     Int  @default(0)
+  opponentKingsEarned   Int  @default(0)
+
+  // Vocabulary mode details
+  vocabularyWords Int      @default(0) // Words learned in vocabulary mode
+  wordsList       String[] @default([]) // List of words encountered
+
+  deviceInfo Json? // User agent, screen size, etc.
+  ipAddress  String?
+
+  playedAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+
+  @@index([studentId])
+  @@index([classId])
+  @@index([score])
+  @@index([gameMode])
+  @@index([playedAt])
+  @@index([result])
 }

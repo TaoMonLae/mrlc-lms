@@ -31,7 +31,8 @@ import {
   Grid3x3,
   BookA,
   Turtle,
-  Gamepad2
+  Gamepad2,
+  Dice5
 } from "lucide-react";
 import { UserRole } from "./permissions";
 
@@ -67,6 +68,7 @@ export const ADMIN_NAV: AdminNavEntry[] = [
     items: [
       { title: "Snake Game", url: "/games/snake", icon: Turtle },
       { title: "Sudoku", url: "/games/sudoku", icon: Grid3x3 },
+      { title: "Checkers", url: "/games/checkers", icon: Dice5 },
     ],
   },
   { title: "Dictionary", url: "/dictionary", icon: BookA },
@@ -167,6 +169,7 @@ export const TEACHER_NAV: AdminNavEntry[] = [
     items: [
       { title: "Snake Game", url: "/games/snake", icon: Turtle },
       { title: "Sudoku", url: "/games/sudoku", icon: Grid3x3 },
+      { title: "Checkers", url: "/games/checkers", icon: Dice5 },
     ],
   },
   { title: "Dictionary", url: "/dictionary", icon: BookA },
@@ -224,6 +227,7 @@ export const STUDENT_NAV: AdminNavEntry[] = [
     items: [
       { title: "Snake Game", url: "/games/snake", icon: Turtle },
       { title: "Sudoku", url: "/games/sudoku", icon: Grid3x3 },
+      { title: "Checkers", url: "/games/checkers", icon: Dice5 },
     ],
   },
   { title: "Dictionary", url: "/dictionary", icon: BookA },
@@ -310,6 +314,11 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     title: "Snake Game",
     url: "/games/snake",
     icon: Turtle,
+  },
+  {
+    title: "Checkers",
+    url: "/games/checkers",
+    icon: Dice5,
   },
   {
     title: "Dictionary",

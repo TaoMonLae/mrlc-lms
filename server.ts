@@ -25,6 +25,7 @@ import { registerConductRoutes } from "./conduct";
 import { registerDictionaryRoutes } from "./dictionary";
 import { registerGutenbergRoutes } from "./gutenberg";
 import { registerSnakeGameRoutes } from "./snakeGame";
+import { registerCheckersGameRoutes } from "./checkersGame";
 import cookieParser from "cookie-parser";
 import { BADGE_CATALOG, getBadgeLevel } from "./lib/badges";
 
@@ -16017,6 +16018,9 @@ async function startServer() {
 
   // ── Snake Game (educational mini-game) ───────────────────────────────────────
   registerSnakeGameRoutes({ app, prisma, authMiddleware });
+
+  // ── Checkers Game (educational mini-game) ────────────────────────────────────
+  registerCheckersGameRoutes({ app, prisma, authMiddleware });
 
   // NOTE: the SPA catch-all (Vite middleware in dev / static dist in prod) is
   // registered at the very end of startServer, AFTER every /api route, so it can
