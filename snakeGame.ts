@@ -112,7 +112,7 @@ export function registerSnakeGameRoutes({
   // Save game score
   router.post("/scores", authMiddleware, async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).user?.id; // Get authenticated user ID
+      const userId = (req as any).user?.userId; // Get authenticated user ID
 
       if (!userId) {
         return res.status(401).json({
@@ -313,7 +313,7 @@ export function registerSnakeGameRoutes({
   // Get student's vocabulary progress
   router.get("/vocabulary-progress", authMiddleware, async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.userId;
 
       if (!userId) {
         return res.status(401).json({
@@ -383,7 +383,7 @@ export function registerSnakeGameRoutes({
   router.get("/vocabulary-analytics", authMiddleware, async (req: Request, res: Response) => {
     try {
       const { studentId, timeRange = "WEEK" } = req.query;
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.userId;
 
       // If no specific studentId, use the current user
       let targetStudentId: string;

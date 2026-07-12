@@ -5,11 +5,16 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import PixelBlast from "@/components/PixelBlast";
+import { useAuth } from "../../../providers/AuthProvider";
+import CheckerVocabularyManager from "./CheckerVocabularyManager";
 
 function GameSelect() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const mode = searchParams.get("mode") || "classic";
+  const { user } = useAuth();
+  const canManageVocab = user?.role === "ADMIN" || user?.role === "TEACHER";
+  const [showVocabManager, setShowVocabManager] = React.useState(false);
 
   const gameModes = [
     {
@@ -147,6 +152,24 @@ function GameSelect() {
           <li>✓ Vocabulary mode - learn words while playing!</li>
         </ul>
       </div>
+
+      {/* Vocabulary management (teachers/admins only) */}
+      {canManageVocab && (
+        <div>
+          <Button
+            variant="outline"
+            onClick={() => setShowVocabManager((s) => !s)}
+            className="bg-white/10 text-white border-white/30 hover:bg-white/20"
+          >
+            📚 {showVocabManager ? "Hide" : "Manage"} Vocabulary
+          </Button>
+          {showVocabManager && (
+            <div className="mt-3">
+              <CheckerVocabularyManager />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

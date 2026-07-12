@@ -3555,3 +3555,25 @@ model CheckerGameScore {
   @@index([playedAt])
   @@index([result])
 }
+
+// Teacher/admin-authored vocabulary for the Checkers vocabulary game. These are
+// mixed with the built-in English–Myanmar dictionary when building quizzes, so
+// staff can curate class-specific words that reach every student.
+model CheckerVocabularyWord {
+  id           String   @id @default(uuid())
+  word         String
+  definition   String
+  partOfSpeech String? // noun | verb | adjective | ...
+  difficulty   String   @default("medium") // easy | medium | hard
+  language     String   @default("en")
+  active       Boolean  @default(true) // soft-hide instead of delete when false
+
+  createdById   String? // User.id of the teacher/admin who added it
+  createdByName String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active])
+  @@index([word])
+}

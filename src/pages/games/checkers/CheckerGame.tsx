@@ -6,6 +6,45 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { apiSend } from "../../../lib/api";
 
+// ── Vocabulary quiz helpers ──────────────────────────────────────────────────
+type VocabWord = { word: string; definition: string; partOfSpeech: string };
+type VocabQuiz = {
+  word: string;
+  partOfSpeech: string;
+  correctIndex: number;
+  options: string[];
+};
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// Build a multiple-choice question: the target word's real definition plus up
+// to three distractor definitions drawn from other pool words, all shuffled.
+// Prefers words the student hasn't answered yet.
+function buildQuiz(pool: VocabWord[], learned: string[]): VocabQuiz | null {
+  const usable = pool.filter((w) => w.word && w.definition);
+  if (usable.length === 0) return null;
+  const unlearned = usable.filter((w) => !learned.includes(w.word));
+  const source = unlearned.length > 0 ? unlearned : usable;
+  const target = source[Math.floor(Math.random() * source.length)];
+  const distractors = shuffle(usable.filter((w) => w.definition !== target.definition))
+    .slice(0, 3)
+    .map((w) => w.definition);
+  const options = shuffle([target.definition, ...distractors]);
+  return {
+    word: target.word,
+    partOfSpeech: target.partOfSpeech,
+    correctIndex: options.indexOf(target.definition),
+    options,
+  };
+}
+
 // Game Constants
 const BOARD_SIZE = 8;
 const PLAYER_RED = "red"; // Player 1 (moves up, captures toward top)
@@ -183,14 +222,13 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
   // History for undo
   const [history, setHistory] = React.useState<GameHistory[]>([]);
 
-  // Vocabulary State
-  const [currentWord, setCurrentWord] = React.useState<{
-    word: string;
-    definition: string;
-    partOfSpeech: string;
-  } | null>(null);
+  // Vocabulary State — a gated quiz: the player must pick the correct definition
+  // to complete each move. Only correctly-answered, unique words are counted.
+  const [vocabPool, setVocabPool] = React.useState<VocabWord[]>([]);
+  const [quiz, setQuiz] = React.useState<VocabQuiz | null>(null);
+  const [quizChoice, setQuizChoice] = React.useState<number | null>(null);
   const [wordsLearned, setWordsLearned] = React.useState<string[]>([]);
-  const [showVocabulary, setShowVocabulary] = React.useState(false);
+  const pendingMoveRef = React.useRef<Move | null>(null);
 
   // Sound manager
   const soundManagerRef = React.useRef<SoundManager | null>(null);
@@ -290,21 +328,25 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
     }
   }, []);
 
-  // Fetch vocabulary word
-  const fetchVocabularyWord = async () => {
+  // Fetch a pool of vocabulary words up front, so each quiz can build a
+  // multiple-choice question with real distractor definitions.
+  const fetchVocabularyPool = async () => {
     try {
-      const response = await fetch("/api/checkers-game/vocabulary-words?limit=1");
+      const response = await fetch("/api/checkers-game/vocabulary-words?limit=20");
       const data = await response.json();
-      if (data.success && data.words.length > 0) {
-        const word = data.words[0];
-        setCurrentWord({
-          word: word.word,
-          definition: word.definition,
-          partOfSpeech: word.partOfSpeech,
-        });
+      if (data.success && Array.isArray(data.words)) {
+        setVocabPool(
+          data.words
+            .map((w: any) => ({
+              word: w.word,
+              definition: w.definition,
+              partOfSpeech: w.partOfSpeech,
+            }))
+            .filter((w: VocabWord) => w.word && w.definition)
+        );
       }
     } catch (error) {
-      console.error("Failed to fetch vocabulary word:", error);
+      console.error("Failed to fetch vocabulary words:", error);
     }
   };
 
@@ -741,12 +783,6 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
     setRedKings(newCounts.redKingsCount);
     setBlackKings(newCounts.blackKingsCount);
 
-    // Show vocabulary after move
-    if (gameMode === "VOCABULARY" && currentWord && !isAI) {
-      setWordsLearned((prev) => [...prev, currentWord.word]);
-      setShowVocabulary(true);
-    }
-
     // Check if must continue jumping (multi-jump)
     // Note: King promotion ends the multi-jump sequence
     if (captured && !promoted) {
@@ -835,11 +871,6 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
         }
       }
     }
-
-    // Fetch next vocabulary word
-    if (gameMode === "VOCABULARY") {
-      fetchVocabularyWord();
-    }
   };
 
   // Handle square click (for moving to empty squares)
@@ -857,7 +888,49 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
 
     const move = validMoves.find((m) => m.to.row === row && m.to.col === col);
     if (move) {
+      // In vocabulary mode the move is gated behind a definition quiz: hold the
+      // move and ask a question. It only executes on a correct answer.
+      if (gameMode === "VOCABULARY") {
+        const q = buildQuiz(vocabPool, wordsLearned);
+        if (q) {
+          pendingMoveRef.current = move;
+          setQuizChoice(null);
+          setQuiz(q);
+          return;
+        }
+        // No words available (pool empty) — don't block play.
+      }
       executeMove(move);
+    }
+  };
+
+  // Answer the vocabulary quiz. Correct → count the word (once) and complete the
+  // held move. Wrong → reveal the answer, then cancel the move so the player
+  // keeps their turn and can try again.
+  const handleQuizAnswer = (index: number) => {
+    if (!quiz || quizChoice !== null) return;
+    setQuizChoice(index);
+    const correct = index === quiz.correctIndex;
+
+    if (correct) {
+      soundManagerRef.current?.playKing();
+      setWordsLearned((prev) => (prev.includes(quiz.word) ? prev : [...prev, quiz.word]));
+      window.setTimeout(() => {
+        const move = pendingMoveRef.current;
+        pendingMoveRef.current = null;
+        setQuiz(null);
+        setQuizChoice(null);
+        if (move) executeMove(move);
+      }, 650);
+    } else {
+      window.setTimeout(() => {
+        pendingMoveRef.current = null;
+        setQuiz(null);
+        setQuizChoice(null);
+        // Cancel the move: deselect so the player chooses again.
+        setSelectedPiece(null);
+        setValidMoves([]);
+      }, 1500);
     }
   };
 
@@ -898,10 +971,8 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
       // Adjust moves count
       setMovesCount((prev) => Math.max(0, prev - movesToUndo));
 
-      // Remove last vocabulary word if in vocabulary mode
-      if (gameMode === "VOCABULARY" && wordsLearned.length > 0) {
-        setWordsLearned((prev) => prev.slice(0, -1));
-      }
+      // Note: words already answered correctly stay "learned" — undoing a board
+      // move shouldn't un-teach a word the student got right.
     }
   };
 
@@ -959,7 +1030,9 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
     setBlackKings(0);
     setMovesCount(0);
     setHistory([]);
-    setShowVocabulary(false);
+    setQuiz(null);
+    setQuizChoice(null);
+    pendingMoveRef.current = null;
     setWordsLearned([]);
     setIsAIThinking(false);
 
@@ -971,7 +1044,7 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
     clicksEnabledRef.current = true; // Re-enable clicks on restart
 
     if (gameMode === "VOCABULARY") {
-      fetchVocabularyWord();
+      fetchVocabularyPool();
     }
   }, [initializeBoard, gameMode]);
 
@@ -1122,6 +1195,31 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
         </div>
       </Card>
 
+      {/* End-of-game vocabulary recap */}
+      {winner && gameMode === "VOCABULARY" && (
+        <Card className="w-full max-w-md p-4 bg-white/10 border-white/20">
+          <h3 className="text-white font-semibold mb-2">
+            Words learned this game ({wordsLearned.length})
+          </h3>
+          {wordsLearned.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {wordsLearned.map((w) => (
+                <span
+                  key={w}
+                  className="text-xs bg-purple-500/30 text-white rounded-full px-3 py-1"
+                >
+                  {w}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-white/60 text-sm">
+              No words answered correctly this game — try again!
+            </p>
+          )}
+        </Card>
+      )}
+
       {/* Controls */}
       <div className="flex gap-3 flex-wrap justify-center">
         {!winner ? (
@@ -1158,21 +1256,58 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
         )}
       </div>
 
-      {/* Vocabulary Modal */}
-      {showVocabulary && currentWord && (
+      {/* Vocabulary Quiz Modal — answer correctly to complete your move */}
+      {quiz && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <Card className="max-w-md w-full p-6 bg-white">
-            <h3 className="text-lg font-bold mb-2">Word Learned!</h3>
-            <div className="space-y-2">
-              <div>
-                <span className="text-2xl font-bold text-purple-600">{currentWord.word}</span>
-                <span className="text-sm text-gray-500 ml-2">({currentWord.partOfSpeech})</span>
-              </div>
-              <p className="text-gray-700">{currentWord.definition}</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-purple-600">
+              Answer to make your move
+            </p>
+            <div className="mt-1 mb-3">
+              <span className="text-2xl font-bold text-purple-700">{quiz.word}</span>
+              {quiz.partOfSpeech && (
+                <span className="text-sm text-gray-500 ml-2">({quiz.partOfSpeech})</span>
+              )}
+              <p className="text-sm text-gray-600 mt-1">Which definition is correct?</p>
             </div>
-            <Button onClick={() => setShowVocabulary(false)} className="mt-4 w-full">
-              Continue
-            </Button>
+
+            <div className="flex flex-col gap-2">
+              {quiz.options.map((opt, i) => {
+                const answered = quizChoice !== null;
+                const isCorrect = i === quiz.correctIndex;
+                const isChosen = i === quizChoice;
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    disabled={answered}
+                    onClick={() => handleQuizAnswer(i)}
+                    className={cn(
+                      "text-left rounded-lg border p-3 text-sm transition-colors",
+                      !answered && "border-gray-300 text-gray-800 hover:border-purple-400 hover:bg-purple-50",
+                      answered && isCorrect && "border-green-500 bg-green-50 text-green-800",
+                      answered && isChosen && !isCorrect && "border-red-500 bg-red-50 text-red-800",
+                      answered && !isCorrect && !isChosen && "border-gray-200 text-gray-400"
+                    )}
+                  >
+                    {opt}
+                  </button>
+                );
+              })}
+            </div>
+
+            {quizChoice !== null && (
+              <p
+                className={cn(
+                  "mt-3 text-sm font-semibold",
+                  quizChoice === quiz.correctIndex ? "text-green-600" : "text-red-600"
+                )}
+              >
+                {quizChoice === quiz.correctIndex
+                  ? "Correct! Making your move…"
+                  : "Not quite — move cancelled. Pick another move to try again."}
+              </p>
+            )}
           </Card>
         </div>
       )}

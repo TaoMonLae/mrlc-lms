@@ -13,50 +13,161 @@ export function registerCheckersGameRoutes({
 }) {
   const router = Router();
 
-  // Get vocabulary words for the checkers game
+  // Only teachers and admins may curate vocabulary.
+  const requireEditor = (req: Request, res: Response, next: (err?: unknown) => void) => {
+    const role = (req as any).user?.role;
+    if (role === "ADMIN" || role === "TEACHER") return next();
+    return res.status(403).json({
+      success: false,
+      error: "Only teachers and admins can manage vocabulary",
+    });
+  };
+
+  const shuffle = <T,>(arr: T[]): T[] => {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  };
+
+  // Get vocabulary words for the checkers game — teacher/admin-added words mixed
+  // together with the built-in English–Myanmar dictionary. Public (the game is
+  // behind login anyway, and this needs no per-user data).
   router.get("/vocabulary-words", async (req: Request, res: Response) => {
     try {
-      const { limit = "20", difficulty, language } = req.query;
+      const { limit = "20" } = req.query;
+      const take = parseInt(limit as string) || 20;
 
-      // Fetch words from the English-Myanmar dictionary
-      const words = await prisma.enMyDictionaryEntry.findMany({
-        take: parseInt(limit as string) || 20,
-        orderBy: {
-          wordLower: "asc",
-        },
-        where: {
-          ...(difficulty && { definition: { contains: difficulty as string } }),
-        },
-        select: {
-          id: true,
-          word: true,
-          wordLower: true,
-          pos: true,
-          definition: true,
-        },
+      // Active teacher/admin-curated words.
+      const custom = await prisma.checkerVocabularyWord.findMany({
+        where: { active: true },
+        orderBy: { createdAt: "desc" },
       });
-
-      // Format for the game
-      const vocabularyWords = words.map((wordObj) => ({
-        id: wordObj.id,
-        word: wordObj.word,
-        definition: wordObj.definition,
-        partOfSpeech: wordObj.pos || "unknown",
-        language: "en-my",
-        difficulty: "medium",
+      const customWords = custom.map((w) => ({
+        id: w.id,
+        word: w.word,
+        definition: w.definition,
+        partOfSpeech: w.partOfSpeech || "unknown",
+        language: w.language,
+        difficulty: w.difficulty,
+        source: "custom" as const,
       }));
 
-      res.json({
-        success: true,
-        words: vocabularyWords,
-        total: vocabularyWords.length,
-      });
+      // Fill the remainder from the dictionary, skipping any words already
+      // supplied by staff (case-insensitive) so definitions don't collide.
+      const remaining = Math.max(0, take - customWords.length);
+      let dictWords: Array<Record<string, unknown>> = [];
+      if (remaining > 0) {
+        const dict = await prisma.enMyDictionaryEntry.findMany({
+          take: remaining + customWords.length + 20,
+          orderBy: { wordLower: "asc" },
+          select: { id: true, word: true, pos: true, definition: true },
+        });
+        const customLower = new Set(customWords.map((w) => w.word.toLowerCase()));
+        dictWords = dict
+          .filter((d) => !customLower.has(d.word.toLowerCase()))
+          .slice(0, remaining)
+          .map((d) => ({
+            id: d.id,
+            word: d.word,
+            definition: d.definition,
+            partOfSpeech: d.pos || "unknown",
+            language: "en-my",
+            difficulty: "medium",
+            source: "dictionary" as const,
+          }));
+      }
+
+      const words = shuffle([...customWords, ...dictWords]);
+      res.json({ success: true, words, total: words.length });
     } catch (error) {
       console.error("Error fetching vocabulary words:", error);
       res.status(500).json({
         success: false,
         error: "Failed to fetch vocabulary words",
       });
+    }
+  });
+
+  // ── Vocabulary management (teacher/admin) ──────────────────────────────────
+  // List every curated word (active + hidden) for the management UI.
+  router.get("/vocabulary", authMiddleware, requireEditor, async (_req: Request, res: Response) => {
+    try {
+      const words = await prisma.checkerVocabularyWord.findMany({
+        orderBy: { createdAt: "desc" },
+      });
+      res.json({ success: true, words });
+    } catch (error) {
+      console.error("Error listing vocabulary:", error);
+      res.status(500).json({ success: false, error: "Failed to list vocabulary" });
+    }
+  });
+
+  const wordSchema = z.object({
+    word: z.string().trim().min(1).max(100),
+    definition: z.string().trim().min(1).max(500),
+    partOfSpeech: z.string().trim().max(50).optional(),
+    difficulty: z.enum(["easy", "medium", "hard"]).default("medium"),
+    language: z.string().trim().max(20).default("en"),
+  });
+
+  // Create a word.
+  router.post("/vocabulary", authMiddleware, requireEditor, async (req: Request, res: Response) => {
+    try {
+      const data = wordSchema.parse(req.body);
+      const user = (req as any).user;
+      const created = await prisma.checkerVocabularyWord.create({
+        data: {
+          ...data,
+          createdById: user?.userId ?? null,
+          createdByName: user?.email ?? null,
+        },
+      });
+      res.json({ success: true, word: created });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ success: false, error: "Invalid word data", details: error.issues });
+      }
+      console.error("Error creating vocabulary word:", error);
+      res.status(500).json({ success: false, error: "Failed to create word" });
+    }
+  });
+
+  // Update a word (edit fields or toggle active).
+  router.put("/vocabulary/:id", authMiddleware, requireEditor, async (req: Request, res: Response) => {
+    try {
+      const updateSchema = wordSchema.partial().extend({ active: z.boolean().optional() });
+      const data = updateSchema.parse(req.body);
+      const updated = await prisma.checkerVocabularyWord.update({
+        where: { id: req.params.id },
+        data,
+      });
+      res.json({ success: true, word: updated });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ success: false, error: "Invalid word data", details: error.issues });
+      }
+      if ((error as { code?: string }).code === "P2025") {
+        return res.status(404).json({ success: false, error: "Word not found" });
+      }
+      console.error("Error updating vocabulary word:", error);
+      res.status(500).json({ success: false, error: "Failed to update word" });
+    }
+  });
+
+  // Delete a word.
+  router.delete("/vocabulary/:id", authMiddleware, requireEditor, async (req: Request, res: Response) => {
+    try {
+      await prisma.checkerVocabularyWord.delete({ where: { id: req.params.id } });
+      res.json({ success: true });
+    } catch (error) {
+      if ((error as { code?: string }).code === "P2025") {
+        return res.status(404).json({ success: false, error: "Word not found" });
+      }
+      console.error("Error deleting vocabulary word:", error);
+      res.status(500).json({ success: false, error: "Failed to delete word" });
     }
   });
 
@@ -109,7 +220,7 @@ export function registerCheckersGameRoutes({
   // Save game score
   router.post("/scores", authMiddleware, async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.userId;
 
       if (!userId) {
         return res.status(401).json({
@@ -325,7 +436,7 @@ export function registerCheckersGameRoutes({
   // Get student's vocabulary progress
   router.get("/vocabulary-progress", authMiddleware, async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.userId;
 
       if (!userId) {
         return res.status(401).json({
@@ -400,7 +511,7 @@ export function registerCheckersGameRoutes({
   // Get student stats
   router.get("/stats", authMiddleware, async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.userId;
 
       if (!userId) {
         return res.status(401).json({
