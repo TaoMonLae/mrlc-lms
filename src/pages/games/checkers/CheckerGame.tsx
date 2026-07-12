@@ -4,6 +4,7 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { apiSend } from "../../../lib/api";
 
 // Game Constants
 const BOARD_SIZE = 8;
@@ -910,27 +911,29 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
     const score = result === "WIN" ? 100 : result === "DRAW" ? 50 : 0;
 
     try {
-      await fetch("/api/checkers-game/scores", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          result,
-          score: score + movesCount * 2,
-          gameMode,
-          opponentType,
-          difficulty: opponentType === "AI" ? difficulty : undefined,
-          gameDuration,
-          movesCount,
-          playerPiecesCaptured: 12 - blackPieces,
-          opponentPiecesCaptured: 12 - redPieces,
-          playerKingsEarned: redKings,
-          opponentKingsEarned: blackKings,
-          vocabularyWords: wordsLearned.length,
-          wordsList: wordsLearned,
-        }),
+      // Use the shared api helper so the Bearer token is attached. A raw fetch
+      // sent no auth header, so this authed route returned 401 — which the
+      // global auth interceptor treats as an expired session and bounces the
+      // user to /login. That's why losing/forfeiting kicked players out.
+      await apiSend("/api/checkers-game/scores", "POST", {
+        result,
+        score: score + movesCount * 2,
+        gameMode,
+        opponentType,
+        difficulty: opponentType === "AI" ? difficulty : undefined,
+        gameDuration,
+        movesCount,
+        playerPiecesCaptured: 12 - blackPieces,
+        opponentPiecesCaptured: 12 - redPieces,
+        playerKingsEarned: redKings,
+        opponentKingsEarned: blackKings,
+        vocabularyWords: wordsLearned.length,
+        wordsList: wordsLearned,
       });
     } catch (error) {
-      console.error("Failed to save score:", error);
+      // Not signed in as a student (e.g. admin has no Student record → 404) or
+      // offline — don't interrupt play or trigger a logout.
+      console.info("Checkers score not saved:", error);
     }
   };
 
