@@ -22,9 +22,13 @@ export function installAuthInterceptor() {
 
       const isApi = url.includes('/api/');
       const isLogin = url.includes('/api/auth/login');
-      const isOptionalAuth = url.includes('/api/snake-game/vocabulary-progress') ||
-                             url.includes('/api/snake-game/vocabulary-analytics') ||
-                             url.includes('/api/snake-game/scores');
+      // Best-effort game endpoints (score saving, progress, leaderboards). A
+      // 401 here — e.g. saving a score on loss/forfeit — must NOT tear down the
+      // session and bounce the player to /login; components handle these
+      // failures quietly. Covers all snake- and checkers-game sub-routes so new
+      // endpoints don't reintroduce the logout bug.
+      const isOptionalAuth = url.includes('/api/snake-game/') ||
+                             url.includes('/api/checkers-game/');
       const hadToken = !!sessionStorage.getItem('auth_token');
 
       // Don't redirect to login for optional auth endpoints - let components handle 401s gracefully
