@@ -125,6 +125,36 @@ export default function EbookReader() {
 
   const token = useMemo(() => sessionStorage.getItem('auth_token'), []);
 
+  // Count active student reading time, not merely time with a tab left open.
+  // A heartbeat is sent only while the document is visible/focused and the
+  // student interacted with the reader during the previous minute.
+  useEffect(() => {
+    const reader = readerRef.current;
+    if (!id || !token || !meta || user?.role !== 'STUDENT' || !reader) return;
+    let lastActivity = Date.now();
+    const markActive = () => { lastActivity = Date.now(); };
+    const send = (seconds: number, opened = false) => fetch(`/api/ebooks/${id}/reading-time`, {
+      method: 'POST',
+      headers: authHeaders(token, true),
+      body: JSON.stringify({ seconds, opened }),
+      keepalive: true,
+    }).catch(() => {});
+    send(0, true);
+    const events: Array<keyof HTMLElementEventMap> = ['pointerdown', 'keydown', 'wheel', 'touchstart'];
+    events.forEach((event) => reader.addEventListener(event, markActive, { passive: true }));
+    window.addEventListener('ebook-reader-activity', markActive);
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === 'visible' && document.hasFocus() && Date.now() - lastActivity <= 60_000) {
+        send(15);
+      }
+    }, 15_000);
+    return () => {
+      window.clearInterval(timer);
+      events.forEach((event) => reader.removeEventListener(event, markActive));
+      window.removeEventListener('ebook-reader-activity', markActive);
+    };
+  }, [id, token, meta, user?.role]);
+
   // Full page (browser Fullscreen API) support for distraction-free reading.
   useEffect(() => {
     const onChange = () => setIsFullscreen(!!document.fullscreenElement);
@@ -1045,8 +1075,8 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards }: {
     return toc.find((t) => hrefKey(t.href) === key)?.href || '';
   }, [currentHref, toc]);
 
-  const debouncedSaveProgress = useDebouncedCallback((cfi: string) => {
-    saveProgress(id, token, cfi, null);
+  const debouncedSaveProgress = useDebouncedCallback((cfi: string, percent: number | null) => {
+    saveProgress(id, token, cfi, percent);
   }, 800);
 
   const applyHighlight = useCallback((h: HighlightRow) => {
@@ -1088,17 +1118,47 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards }: {
         });
         rendRef.current = rendition;
         applyEpubAppearance(rendition, appearance);
-        rendition.hooks.content.register((contents: any) => applyEpubContentAppearance(contents, appearanceRef.current));
+        rendition.hooks.content.register((contents: any) => {
+          applyEpubContentAppearance(contents, appearanceRef.current);
+          // EPUB chapters render inside iframes, so their input events do not
+          // bubble to the outer reader. Forward activity without exposing book
+          // content so legitimate iframe reading continues the time heartbeat.
+          const activity = () => window.dispatchEvent(new Event('ebook-reader-activity'));
+          ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach((event) =>
+            contents.document?.addEventListener(event, activity, { passive: true }),
+          );
+        });
         rendition.on('relocated', (loc: any) => {
           const href = loc?.start?.href || '';
           setCurrentHref(href);
-          if (loc?.start?.cfi) debouncedSaveProgress(loc.start.cfi);
+          if (loc?.start?.cfi) {
+            let percent: number | null = null;
+            try {
+              const rawPercentage = (book.locations as any).percentageFromCfi(loc.start.cfi);
+              const generated = Number(rawPercentage);
+              if (rawPercentage != null && Number.isFinite(generated)) percent = Math.round(generated * 1000) / 10;
+            } catch { /* locations may still be generating */ }
+            if (percent === null && Number.isFinite(Number(loc?.start?.percentage))) {
+              percent = Math.round(Number(loc.start.percentage) * 1000) / 10;
+            }
+            debouncedSaveProgress(loc.start.cfi, percent);
+          }
         });
         rendition.on('selected', (cfiRange: string, contents: any) => {
           const text = contents?.window?.getSelection?.()?.toString()?.trim() || '';
           if (text) setSelection({ cfiRange, text, contents });
         });
         await rendition.display(savedProgress?.location || undefined);
+        // Build a lightweight location map so reflowable EPUBs report a real
+        // 0-100 reading percentage. Do this after first display so opening the
+        // book is not blocked by pagination of every chapter.
+        book.locations.generate(1600).then(() => {
+          const location: any = rendition.currentLocation();
+          const cfi = location?.start?.cfi;
+          if (!cfi) return;
+          const percentage = Number((book.locations as any).percentageFromCfi(cfi));
+          if (Number.isFinite(percentage)) debouncedSaveProgress(cfi, Math.round(percentage * 1000) / 10);
+        }).catch(() => {});
         if (!destroyed) {
           setReady(true);
           highlights.forEach(applyHighlight);

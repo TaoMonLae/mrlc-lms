@@ -13617,6 +13617,89 @@ async function startServer() {
     }
   });
 
+  // Teacher/admin reading analytics. Teachers only see students in classes
+  // assigned to them; librarians and admins can see all student readers.
+  // Registered before /api/ebooks/:id so "analytics" is not treated as an id.
+  app.get("/api/ebooks/analytics", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!["ADMIN", "TEACHER", "LIBRARIAN"].includes(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const studentWhere: any = { role: "STUDENT" };
+      if (jwtUser.role === "TEACHER") {
+        const classIds = await getTeacherClassIds(jwtUser.userId);
+        studentWhere.studentProfile = { is: { classId: { in: classIds } } };
+      }
+      const students = await prisma.user.findMany({
+        where: studentWhere,
+        select: {
+          id: true, firstName: true, lastName: true, email: true,
+          studentProfile: { select: { studentCode: true, preferredName: true, class: { select: { id: true, name: true } } } },
+        },
+      });
+      const studentIds = students.map((student) => student.id);
+      const progressRows = await (prisma as any).ebookProgress.findMany({
+        where: { userId: { in: studentIds } },
+        include: { ebook: { select: { id: true, title: true, author: true, format: true, coverUrl: true } } },
+        orderBy: { lastOpenedAt: "desc" },
+      });
+      const byStudent = new Map<string, any[]>();
+      for (const row of progressRows) {
+        const list = byStudent.get(row.userId) || [];
+        list.push(row);
+        byStudent.set(row.userId, list);
+      }
+      const studentRows = students
+        .map((student) => {
+          const books = byStudent.get(student.id) || [];
+          if (books.length === 0) return null;
+          const totalReadingSeconds = books.reduce((sum, row) => sum + Number(row.totalReadingSeconds || 0), 0);
+          const completedBooks = books.filter((row) => row.completedAt || Number(row.percent || 0) >= 90).length;
+          const averagePercent = books.length
+            ? Math.round((books.reduce((sum, row) => sum + Number(row.percent || 0), 0) / books.length) * 10) / 10
+            : 0;
+          return {
+            userId: student.id,
+            name: student.studentProfile?.preferredName || `${student.firstName} ${student.lastName}`.trim() || student.email,
+            email: student.email,
+            studentCode: student.studentProfile?.studentCode || null,
+            classId: student.studentProfile?.class?.id || null,
+            className: student.studentProfile?.class?.name || "Unassigned",
+            booksStarted: books.length,
+            completedBooks,
+            averagePercent,
+            totalReadingSeconds,
+            lastReadAt: books[0]?.lastOpenedAt || books[0]?.updatedAt || null,
+            books: books.map((row) => ({
+              ebook: row.ebook,
+              percent: Number(row.percent || 0),
+              totalReadingSeconds: Number(row.totalReadingSeconds || 0),
+              openCount: Number(row.openCount || 0),
+              completedAt: row.completedAt,
+              firstOpenedAt: row.firstOpenedAt,
+              lastOpenedAt: row.lastOpenedAt,
+            })),
+          };
+        })
+        .filter(Boolean)
+        .sort((a: any, b: any) => b.totalReadingSeconds - a.totalReadingSeconds);
+      res.json({
+        summary: {
+          activeStudents: studentRows.length,
+          booksStarted: progressRows.length,
+          booksCompleted: progressRows.filter((row: any) => row.completedAt || Number(row.percent || 0) >= 90).length,
+          totalReadingSeconds: progressRows.reduce((sum: number, row: any) => sum + Number(row.totalReadingSeconds || 0), 0),
+        },
+        students: studentRows,
+      });
+    } catch (err) {
+      logger.error("Error building e-book reading analytics:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
   // Upload (or auto-extracted-then-uploaded) cover art for a book, ahead of or
   // independent from creating the Ebook record itself — used by the upload
   // form's client-side EPUB-cover / PDF-first-page extraction.
@@ -13883,6 +13966,36 @@ async function startServer() {
     }
   });
 
+  // Active reading heartbeat. The client only sends these while the reader is
+  // focused, visible, and recently interacted with; cap each request so a
+  // modified client cannot add arbitrary hours in one call.
+  app.post("/api/ebooks/:id/reading-time", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "STUDENT") { res.json({ success: true }); return; }
+    const seconds = Math.max(0, Math.min(30, Math.trunc(Number(req.body?.seconds || 0))));
+    const opened = req.body?.opened === true;
+    try {
+      const ebook = await prisma.ebook.findUnique({ where: { id: req.params.id }, select: { id: true, visibility: true } });
+      if (!ebook || !ebookVisibleTo(jwtUser.role, ebook.visibility)) { res.status(404).json({ error: "E-book not found" }); return; }
+      await (prisma as any).ebookProgress.upsert({
+        where: { userId_ebookId: { userId: jwtUser.userId, ebookId: req.params.id } },
+        create: {
+          userId: jwtUser.userId, ebookId: req.params.id, location: "", percent: 0,
+          totalReadingSeconds: seconds, openCount: 1, lastOpenedAt: new Date(),
+        },
+        update: {
+          ...(seconds > 0 && { totalReadingSeconds: { increment: seconds } }),
+          ...(opened && { openCount: { increment: 1 } }),
+          ...((opened || seconds > 0) && { lastOpenedAt: new Date() }),
+        },
+      });
+      res.json({ success: true });
+    } catch (err) {
+      logger.error("Error recording e-book reading time:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
   app.put("/api/ebooks/:id/progress", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const location = (req.body?.location ?? "").toString().slice(0, 2000);
@@ -13892,10 +14005,21 @@ async function startServer() {
     try {
       const ebook = await prisma.ebook.findUnique({ where: { id: req.params.id }, select: { id: true, visibility: true } });
       if (!ebook || !ebookVisibleTo(jwtUser.role, ebook.visibility)) { res.status(404).json({ error: "E-book not found" }); return; }
+      const existing = await (prisma as any).ebookProgress.findUnique({
+        where: { userId_ebookId: { userId: jwtUser.userId, ebookId: req.params.id } },
+      });
+      const furthestPercent = Number.isFinite(percent)
+        ? Math.max(Number(existing?.percent || 0), Number(percent))
+        : existing?.percent ?? null;
+      const completedAt = Number(furthestPercent || 0) >= 90 ? (existing?.completedAt || new Date()) : null;
       const row = await (prisma as any).ebookProgress.upsert({
         where: { userId_ebookId: { userId: jwtUser.userId, ebookId: req.params.id } },
-        update: { location, percent: Number.isFinite(percent) ? percent : null },
-        create: { userId: jwtUser.userId, ebookId: req.params.id, location, percent: Number.isFinite(percent) ? percent : null },
+        update: { location, percent: furthestPercent, completedAt },
+        create: {
+          userId: jwtUser.userId, ebookId: req.params.id, location,
+          percent: Number.isFinite(percent) ? percent : 0,
+          completedAt: Number(percent || 0) >= 90 ? new Date() : null,
+        },
       });
       res.json({ location: row.location, percent: row.percent, updatedAt: row.updatedAt });
     } catch (err) {

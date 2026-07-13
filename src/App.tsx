@@ -70,6 +70,7 @@ const EbookReader = lazy(() => import("./pages/elibrary/EbookReader"));
 import EbookUpload from "./pages/elibrary/EbookUpload";
 import EbookEdit from "./pages/elibrary/EbookEdit";
 import GutenbergImport from "./pages/elibrary/GutenbergImport";
+import EbookAnalytics from "./pages/elibrary/EbookAnalytics";
 
 import FeesDashboard from "./pages/fees/FeesDashboard";
 import PaymentNew from "./pages/fees/PaymentNew";
@@ -468,6 +469,7 @@ export default function App() {
                   <Route path="/elibrary/upload" element={<EbookUpload />} />
                   <Route path="/elibrary/:id/edit" element={<EbookEdit />} />
                   <Route path="/elibrary/gutenberg" element={<GutenbergImport />} />
+                  <Route path="/elibrary/analytics" element={<EbookAnalytics />} />
                 </Route>
 
                 <Route path="/videos" element={<VideoList />} />

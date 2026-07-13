@@ -1738,18 +1738,24 @@ model MonDefinition {
 // convention already), so it's cleaned up manually on account deletion --
 // see the three user-deletion transaction blocks in server.ts.
 model EbookProgress {
-  id        String   @id @default(uuid())
-  userId    String
-  ebookId   String
-  location  String // EPUB: rendition CFI. PDF: page number as a string.
-  percent   Float? // 0-100 best-effort completion; null when not computable (e.g. EPUB without a locations index)
-  updatedAt DateTime @updatedAt
+  id                  String    @id @default(uuid())
+  userId              String
+  ebookId             String
+  location            String // EPUB: rendition CFI. PDF: page number as a string.
+  percent             Float? // 0-100 furthest point reached, not merely the current page.
+  totalReadingSeconds Int       @default(0)
+  openCount           Int       @default(1)
+  firstOpenedAt       DateTime  @default(now())
+  lastOpenedAt        DateTime  @default(now())
+  completedAt         DateTime?
+  updatedAt           DateTime  @updatedAt
 
   ebook Ebook @relation(fields: [ebookId], references: [id], onDelete: Cascade)
 
   @@unique([userId, ebookId])
   @@index([userId])
   @@index([ebookId])
+  @@index([lastOpenedAt])
 }
 
 // A saved passage. EPUB highlights carry a range CFI so they can be

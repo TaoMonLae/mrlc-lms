@@ -115,6 +115,7 @@ export const ADMIN_NAV: AdminNavEntry[] = [
     items: [
       { title: "Library", url: "/library", icon: Library },
       { title: "E-Library", url: "/elibrary", icon: Tablet },
+      { title: "Reading Analytics", url: "/elibrary/analytics", icon: BarChart3 },
       { title: "Video Lessons", url: "/videos", icon: Video },
       { title: "Book Catalog", url: "/books", icon: BookMarked },
     ],
@@ -207,6 +208,7 @@ export const TEACHER_NAV: AdminNavEntry[] = [
     items: [
       { title: "Library", url: "/teacher/library", icon: Library },
       { title: "E-Library", url: "/elibrary", icon: Tablet },
+      { title: "Reading Analytics", url: "/elibrary/analytics", icon: BarChart3 },
       { title: "Video Lessons", url: "/teacher/videos", icon: Video },
     ],
   },

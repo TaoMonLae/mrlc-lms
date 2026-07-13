@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { BookMarked, Search, Filter, Plus, BookOpen, Download, Pencil, Trash2, Lock, ArrowUpDown, ClipboardList } from 'lucide-react';
+import { BarChart3, BookMarked, Search, Filter, Plus, BookOpen, Download, Pencil, Trash2, Lock, ArrowUpDown, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -152,6 +152,9 @@ export default function EbookList() {
         </div>
         {canManage && (
           <div className="flex items-center gap-2">
+            <Button variant="outline" render={<Link to="/elibrary/analytics" />} nativeButton={false}>
+              <BarChart3 className="mr-2 h-4 w-4" /> Reading Analytics
+            </Button>
             <Button variant="outline" render={<Link to="/elibrary/gutenberg" />} nativeButton={false}>
               <BookMarked className="mr-2 h-4 w-4" /> Import from Gutenberg
             </Button>
