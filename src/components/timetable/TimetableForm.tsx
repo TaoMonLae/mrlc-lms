@@ -27,6 +27,9 @@ import { TimetableEntry, DayOfWeek } from '@/src/pages/timetable/TimetablePage';
 
 type Option = { id: string; name: string };
 
+const DAY_VALUES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as const;
+const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] as const;
+
 const SUBJECT_COLORS = ['bg-blue-500', 'bg-purple-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500', 'bg-cyan-500', 'bg-indigo-500'];
 const colorForSubject = (subjectId: string) => {
   let hash = 0;
@@ -41,7 +44,9 @@ const timetableSchema = z.object({
   substituteTeacherId: z.string().optional(),
   academicYear: z.string().min(1, 'Academic year is required'),
   term: z.string().min(1, 'Term is required'),
-  dayOfWeek: z.enum(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']),
+  // One entry is created per selected day, so a teacher can add e.g. a daily
+  // period in the same time slot across every weekday in a single submit.
+  daysOfWeek: z.array(z.enum(DAY_VALUES)).min(1, 'Select at least one day'),
   startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format (HH:mm)'),
   endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format (HH:mm)'),
   room: z.string().min(1, 'Room is required'),
@@ -124,7 +129,7 @@ export function TimetableForm({ initialData, onSubmit, isLoading, defaultClassId
       substituteTeacherId: (initialData as any)?.substituteTeacherId || '',
       academicYear: (initialData as any)?.academicYear || `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`,
       term: (initialData as any)?.term || 'Term 1',
-      dayOfWeek: initialData?.dayOfWeek || 'Monday',
+      daysOfWeek: initialData?.dayOfWeek ? [initialData.dayOfWeek] : ['Monday'],
       startTime: initialData?.startTime || '',
       endTime: initialData?.endTime || '',
       room: initialData?.room || '',
@@ -155,6 +160,10 @@ export function TimetableForm({ initialData, onSubmit, isLoading, defaultClassId
 
     onSubmit({
       ...values,
+      // dayOfWeek kept for single-entry consumers (edit); the parent uses
+      // daysOfWeek to create one entry per selected day on create.
+      daysOfWeek: values.daysOfWeek,
+      dayOfWeek: values.daysOfWeek[0],
       classId: isC ? (values.classId || null) : null,
       subjectId: isC ? (values.subjectId || null) : null,
       teacherId: hasT ? (values.teacherId || null) : null,
@@ -185,7 +194,7 @@ export function TimetableForm({ initialData, onSubmit, isLoading, defaultClassId
                     Primary Assignment
                   </h3>
                 </div>
-                <CardContent className="pt-6 space-y-4">
+                <CardContent className="pt-6 space-y-5">
                   {isClassOrExam && (
                     <FormField
                       control={form.control}
@@ -302,7 +311,7 @@ export function TimetableForm({ initialData, onSubmit, isLoading, defaultClassId
                   Location & Notes
                 </h3>
               </div>
-              <CardContent className="pt-6 space-y-4">
+              <CardContent className="pt-6 space-y-5">
                 <FormField
                   control={form.control}
                   name="room"
@@ -375,29 +384,62 @@ export function TimetableForm({ initialData, onSubmit, isLoading, defaultClassId
               <CardContent className="pt-6 space-y-6">
                 <FormField
                   control={form.control}
-                  name="dayOfWeek"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Day of the Week</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || ""}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Choose day" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Monday">Monday</SelectItem>
-                          <SelectItem value="Tuesday">Tuesday</SelectItem>
-                          <SelectItem value="Wednesday">Wednesday</SelectItem>
-                          <SelectItem value="Thursday">Thursday</SelectItem>
-                          <SelectItem value="Friday">Friday</SelectItem>
-                          <SelectItem value="Saturday">Saturday</SelectItem>
-                          <SelectItem value="Sunday">Sunday</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  name="daysOfWeek"
+                  render={({ field }) => {
+                    const selected: string[] = field.value || [];
+                    const toggle = (day: string) => {
+                      if (initialData) { field.onChange([day]); return; } // editing one entry = single day
+                      field.onChange(
+                        selected.includes(day) ? selected.filter((d) => d !== day) : [...selected, day]
+                      );
+                    };
+                    const quick =
+                      "rounded-md border border-aubergine-200 bg-aubergine-50 px-2 py-1 text-[11px] font-semibold text-aubergine-700 hover:bg-aubergine-100 dark:border-aubergine-900/40 dark:bg-aubergine-900/20 dark:text-aubergine-300";
+                    return (
+                      <FormItem>
+                        <div className="flex items-center justify-between gap-2">
+                          <FormLabel>{initialData ? 'Day of the Week' : 'Days of the Week'}</FormLabel>
+                          {!initialData && (
+                            <div className="flex flex-wrap gap-1.5">
+                              <button type="button" className={quick} onClick={() => field.onChange([...WEEKDAYS])}>Weekdays</button>
+                              <button type="button" className={quick} onClick={() => field.onChange([...DAY_VALUES])}>Every day</button>
+                              {selected.length > 0 && (
+                                <button type="button" className={quick} onClick={() => field.onChange([])}>Clear</button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
+                          {DAY_VALUES.map((day) => {
+                            const on = selected.includes(day);
+                            return (
+                              <button
+                                key={day}
+                                type="button"
+                                aria-pressed={on}
+                                onClick={() => toggle(day)}
+                                className={`rounded-lg border px-2 py-2.5 text-xs font-semibold transition ${
+                                  on
+                                    ? 'border-aubergine-600 bg-aubergine-600 text-white shadow-sm'
+                                    : 'border-slate-200 bg-white text-slate-600 hover:border-aubergine-300 hover:bg-aubergine-50 dark:border-surface-raised dark:bg-canvas dark:text-slate-300'
+                                }`}
+                              >
+                                {day.slice(0, 3)}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {!initialData && (
+                          <FormDescription>
+                            {selected.length > 1
+                              ? `Creates ${selected.length} weekly slots — one per selected day, at the same time.`
+                              : 'Tip: pick several days (or “Weekdays”) to repeat this slot at the same time.'}
+                          </FormDescription>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
 
                 <div className="grid grid-cols-2 gap-4">
@@ -528,7 +570,7 @@ export function TimetableForm({ initialData, onSubmit, isLoading, defaultClassId
                     Status & Cancellation
                   </h3>
                 </div>
-                <CardContent className="pt-6 space-y-4">
+                <CardContent className="pt-6 space-y-5">
                   <FormField
                     control={form.control}
                     name="status"
