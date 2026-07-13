@@ -4780,31 +4780,53 @@ async function startServer() {
       return;
     }
 
-    // Non-web format → transcode to MP4. The uploader waits (spawn is async, so
-    // other requests keep serving). The original is removed once converted.
+    // Non-web format → transcode to MP4 in the BACKGROUND so the uploader isn't
+    // blocked for the whole conversion. Respond immediately with the eventual
+    // MP4 url and processing:true; the player polls /api/videos/transcode-status
+    // (which checks the filesystem) and shows "Converting…" until it's ready.
+    // ffmpeg writes to a .tmp.mp4 and we atomically rename on success, so the
+    // final file only appears when it's fully playable.
     const outName = `${crypto.randomUUID()}.mp4`;
     const outPath = path.join(VIDEO_FILES_DIR, outName);
-    try {
-      await transcodeToMp4(file.path, outPath);
-    } catch (err: any) {
-      await fs.promises.unlink(file.path).catch(() => {});
-      await fs.promises.unlink(outPath).catch(() => {});
-      logger.error("Video transcode failed:", err);
-      res.status(500).json({
-        error: "Could not convert this video for web playback. Try re-exporting as MP4, or check the file isn't corrupt.",
-      });
-      return;
-    }
-    await fs.promises.unlink(file.path).catch(() => {});
-    const outSize = await fs.promises.stat(outPath).then((s) => s.size).catch(() => file.size);
+    const tmpPath = `${outPath}.tmp.mp4`;
+
     res.json({
       url: `/uploads/videos/${outName}`,
       originalName: file.originalname,
-      size: outSize,
+      size: file.size,
       mimeType: "video/mp4",
       converted: true,
+      processing: true,
       originalFormat: ext.replace(".", "").toUpperCase(),
     });
+
+    transcodeToMp4(file.path, tmpPath)
+      .then(async () => {
+        await fs.promises.rename(tmpPath, outPath).catch(() => {});
+        await fs.promises.unlink(file.path).catch(() => {});
+      })
+      .catch(async (err: any) => {
+        logger.error("Video transcode failed:", err);
+        await fs.promises.unlink(tmpPath).catch(() => {});
+        await fs.promises.unlink(file.path).catch(() => {});
+        await fs.promises.writeFile(`${outPath}.failed`, String(err?.message ?? "failed")).catch(() => {});
+      });
+  });
+
+  // Transcode status for an uploaded video file (filesystem is the source of
+  // truth: the final .mp4 only exists once conversion finished; a .failed
+  // marker means it errored). Used by the player to show "Converting…".
+  app.get("/api/videos/transcode-status", authMiddleware, async (req, res) => {
+    const file = String(req.query.file || "");
+    // Only a bare filename within the video dir — no path traversal.
+    if (!file || file.includes("/") || file.includes("\\") || file.includes("..")) {
+      res.status(400).json({ error: "Invalid file" });
+      return;
+    }
+    const target = path.join(VIDEO_FILES_DIR, file);
+    const ready = fs.existsSync(target);
+    const failed = !ready && fs.existsSync(`${target}.failed`);
+    res.json({ ready, failed, processing: !ready && !failed });
   });
 
   // Caption/subtitle (.vtt/.srt) upload — stored alongside videos.

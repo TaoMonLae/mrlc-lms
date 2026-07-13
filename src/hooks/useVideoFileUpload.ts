@@ -129,8 +129,8 @@ export function useVideoFileUpload({ onUploadComplete }: UseVideoFileUploadOptio
       onUploadComplete?.(data.url, data.originalName);
 
       toast.success(
-        (data as any).converted
-          ? `Converted ${(data as any).originalFormat || 'video'} to MP4 for web playback`
+        (data as any).processing
+          ? `Uploaded — converting ${(data as any).originalFormat || 'video'} to MP4 in the background. It'll be playable shortly.`
           : 'Video file uploaded successfully'
       );
       return data;

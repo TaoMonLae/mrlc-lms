@@ -59,6 +59,35 @@ export default function VideoDetail() {
     apiGet<VideoAnalytics>(`/api/videos/${id}/analytics`).then(setAnalytics).catch(() => {});
   }, [id, isAdmin, isTeacher]);
 
+  // Uploaded videos in a non-web format are transcoded to MP4 in the background;
+  // poll until the file is ready so we can show "Converting…" instead of a
+  // broken player right after upload.
+  const [transcode, setTranscode] = useState<'ready' | 'processing' | 'failed'>('ready');
+  useEffect(() => {
+    const url = video?.videoUrl || '';
+    if (!url.startsWith('/uploads/videos/')) { setTranscode('ready'); return; }
+    const file = url.split('/').pop();
+    if (!file) return;
+    let active = true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const check = async () => {
+      try {
+        const s = await apiGet<{ ready: boolean; failed: boolean }>(
+          `/api/videos/transcode-status?file=${encodeURIComponent(file)}`
+        );
+        if (!active) return;
+        if (s.ready) { setTranscode('ready'); return; }
+        if (s.failed) { setTranscode('failed'); return; }
+        setTranscode('processing');
+        timer = setTimeout(check, 4000);
+      } catch {
+        if (active) setTranscode('ready'); // don't block playback on a status hiccup
+      }
+    };
+    check();
+    return () => { active = false; if (timer) clearTimeout(timer); };
+  }, [video?.videoUrl]);
+
   // Set up video element event listeners for progress tracking
   useEffect(() => {
     const videoEl = videoRef.current;
@@ -188,6 +217,20 @@ export default function VideoDetail() {
             referrerPolicy="strict-origin-when-cross-origin"
             allowFullScreen
           />
+        ) : isDirectVideo && transcode === 'processing' ? (
+          <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-center text-white/80">
+            <RotateCcw className="h-8 w-8 animate-spin text-white/60" />
+            <div>
+              <p className="font-semibold text-white">Converting video for web playback…</p>
+              <p className="mt-1 text-xs text-white/60">This runs once after upload. Large files may take a few minutes — this page updates automatically.</p>
+            </div>
+          </div>
+        ) : isDirectVideo && transcode === 'failed' ? (
+          <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-center text-white/80">
+            <AlertTriangle className="h-8 w-8 text-amber-400" />
+            <p className="font-semibold text-white">This video couldn’t be converted for playback.</p>
+            <p className="text-xs text-white/60">Try re-uploading it as an MP4 file.</p>
+          </div>
         ) : isDirectVideo ? (
           <>
             <video
