@@ -165,8 +165,8 @@ export default function ExamProfile() {
             <Badge className={exam.status === 'PUBLISHED' ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-amber-100 text-amber-800 hover:bg-amber-100'}>{exam.status}</Badge>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" render={<Link to={`/exams/${id}/edit`} />} nativeButton={false}>
-              <Edit className="mr-2 h-4 w-4" /> Edit
+            <Button className="bg-aubergine-600 hover:bg-aubergine-700 text-white" render={<Link to={`/exams/${id}/studio`} />} nativeButton={false}>
+              <Edit className="mr-2 h-4 w-4" /> Open in Studio
             </Button>
             <Button variant="outline" render={<Link to={`/exam2/${id}/author`} />} nativeButton={false}>
               Author content

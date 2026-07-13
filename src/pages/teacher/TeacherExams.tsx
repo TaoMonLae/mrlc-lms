@@ -142,11 +142,10 @@ export default function TeacherExams() {
                         </Button>
                     ) : exam.status === 'DRAFT' ? (
                         <Button
-                          variant="outline"
-                          onClick={() => navigate(`/exams/${exam.id}/edit`)}
-                          className="w-full border-slate-200 dark:border-surface-raised font-bold text-[10px] uppercase tracking-widest h-10"
+                          onClick={() => navigate(`/exams/${exam.id}/studio`)}
+                          className="w-full bg-aubergine-600 hover:bg-aubergine-700 text-white font-bold text-[10px] uppercase tracking-widest h-10"
                         >
-                            Edit Draft
+                            Open in Studio
                         </Button>
                     ) : (
                         <Button

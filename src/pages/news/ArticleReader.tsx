@@ -264,7 +264,7 @@ export default function ArticleReader() {
           </div>
 
           {selectedText && (
-            <div className="flex items-center justify-between gap-3 rounded-lg border border-aubergine-200 bg-aubergine-50 px-3 py-2 dark:border-aubergine-900/60 dark:bg-aubergine-950/30">
+            <div className="fixed inset-x-0 bottom-4 z-50 mx-auto flex w-[calc(100%-2rem)] max-w-md items-center justify-between gap-3 rounded-lg border border-aubergine-200 bg-white px-3 py-2 shadow-lg dark:border-aubergine-900/60 dark:bg-surface-raised">
               <p className="min-w-0 truncate text-sm text-aubergine-800 dark:text-aubergine-200">Selected: “{selectedText}”</p>
               <div className="flex shrink-0 gap-1">
                 {lookupWord && <Button size="sm" onClick={() => setDefineWord(lookupWord)}><BookA className="mr-1.5 h-3.5 w-3.5" /> Define</Button>}

@@ -8,7 +8,7 @@
 
 ## Overview
 
-MRLC LMS is a full-featured, single-school Learning Management System designed specifically for the Mon Refugee Learning Centre. It provides a complete digital platform for managing students, teachers, classes, subjects, attendance, homework, examinations, digital library resources, physical book catalog with borrowing management, fee tracking (with discounts and partial payments), student conduct/discipline tracking, case management, announcements, GED readiness tracking with gamified student engagement (streaks & badges), a curated news digest, a community Social Space with moderation, a built-in Sudoku game, role-based access control, and configurable school branding.
+MRLC LMS is a full-featured, single-school Learning Management System designed specifically for the Mon Refugee Learning Centre. It provides a complete digital platform for managing students, teachers, classes, subjects, attendance, homework, examinations, digital library resources, physical book catalog with borrowing management, fee tracking (with discounts and partial payments), student conduct/discipline tracking, case management, announcements, GED readiness tracking with gamified student engagement (streaks & badges), a curated news digest, a community Social Space with moderation, built-in Sudoku and Snake games (the latter with a vocabulary-learning mode and class leaderboards), role-based access control, and configurable school branding.
 
 The application is built as a unified Node.js/Express server that serves both the API and the compiled Vite/React frontend, backed by a PostgreSQL database managed through Prisma ORM.
 
@@ -53,6 +53,7 @@ The application is built as a unified Node.js/Express server that serves both th
 - **Social Space**: 24-hour ephemeral community feed (photos and text) with likes, comments (editable by their author), cursor-paginated "Load more", and a post/comment reporting + admin moderation queue
 - **Conduct & Discipline**: A rule catalog transcribed from the school handbook (with severity tiers), so teachers/admin/case workers can log which rule a student broke and see running per-student violation counts instead of relying on free-text case notes
 - **Sudoku**: A built-in, fully offline Sudoku game — five difficulties, hints, notes, undo/redo, keyboard shortcuts, and a custom puzzle creator with uniqueness checking. A native port of the open-source [super-sudoku](https://github.com/TN1ck/super-sudoku) project by Tom Nick (MIT licensed) — see **Acknowledgments** below
+- **Snake**: A built-in Snake game with two modes — a Classic mode (adjustable board size and speed, high-score tracking) and a Vocabulary mode where each food item is a dictionary word that's spoken aloud and shown with its definition as you collect it. Keyboard (arrows/WASD), on-screen D-pad for touch devices, pause/resume, per-mode high scores, and class leaderboards backed by the student's account so scores and words-learned persist across sessions
 - **Dictionary**: Search any English word for its definitions (grouped by part of speech), example sentences, synonyms, a Myanmar (Burmese) translation, and matching Mon dictionary entries where available — or paste a Mon word directly to see its English/Myanmar/Thai definitions and IPA pronunciation. Daily "Word of the Day" and recent-search history, backed entirely by offline data, so it works with no internet connection. See **Acknowledgments** below
 - **News & Daily Digest**: Curated multi-source RSS feed (world, tech, education, and Myanmar-focused independent outlets) with a clean in-app reading view
 - **Video Management**: Educational video library with categories, captions, and required-viewing tracking
@@ -115,6 +116,15 @@ Adding new languages is straightforward—simply add a `.po` file to `src/i18n/l
 **Sudoku (NEW)**
 - A native, fully offline Sudoku game — five difficulties, hints, notes, undo/redo, keyboard shortcuts, and a custom puzzle creator
 - Ported from the open-source [super-sudoku](https://github.com/TN1ck/super-sudoku) project (MIT licensed) — see **Acknowledgments**
+
+**Snake Game (NEW)**
+- Two modes: **Classic** (grow the snake, avoid walls and yourself) and **Vocabulary** (each food is a dictionary word, spoken aloud with its definition shown as you collect it — words are pulled from the English–Myanmar dictionary)
+- Classic mode adds selectable board size (Small/Medium/Large) and speed (Slow/Normal/Fast), with per-mode high scores saved locally
+- Vocabulary scores, words-learned, and game stats persist to the student's account (`SnakeGameScore` table) and feed class leaderboards and a progress panel
+- Controls: Arrow keys / WASD, Space to pause and resume, and an on-screen D-pad on touch devices
+- Reworked the movement engine to use a buffered turn queue — fixes instant-death on 180° reversals and false self-collisions when following your own tail, and stops fast perpendicular turns from being dropped
+- Canvas rendering hardened: device-pixel-ratio scaling for crisp visuals, a `roundRect` fallback for older browsers, immediate redraw on resize/board-size change, and a width cap so the board fits the viewport
+- Fixed a bug where opening the Vocabulary game logged the user out — its API routes now run through auth middleware, so a logged-in user gets real data instead of a 401 that tripped the global session interceptor
 
 **Other fixes**
 - Teacher ↔ Subject assignment (previously a misleading text field that didn't actually link them)
@@ -301,6 +311,7 @@ mrlc-lms/
 ├── src/
 │   ├── pages/          # Route components (student, teacher, admin, etc.)
 │   │   ├── games/sudoku/  # Sudoku UI (board, menus, contexts) — see Acknowledgments
+│   │   ├── games/snake/   # Snake game UI (classic + vocabulary modes, context, leaderboard)
 │   │   ├── dictionary/    # Dictionary search page — see Acknowledgments
 │   │   └── elibrary/      # E-Library reader (PDF/EPUB, progress, search, highlights)
 │   ├── lib/            # App-specific API clients, utilities, helpers
@@ -326,6 +337,7 @@ mrlc-lms/
 ├── examPhase2.ts       # Advanced exam features (lockdown browser, accommodations, rubrics, invigilator dashboard)
 ├── flashcards.ts       # Flashcards feature (decks, study modes, mastery/attempts, sharing, image uploads)
 ├── conduct.ts          # Conduct/Discipline feature (rule catalog, violation logging)
+├── snakeGame.ts        # Snake game API (vocabulary words, score saving, leaderboards, progress)
 ├── dictionary.ts       # Offline English dictionary (WordNet lookup) — see Acknowledgments
 └── news.ts             # News/daily digest RSS aggregation
 ```

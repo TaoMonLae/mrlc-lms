@@ -10013,3 +10013,4327 @@ msgstr ""
 msgid "Student Library"
 msgstr ""
 
+# Extracted string
+msgid "PixelBlast interactive background"
+msgstr ""
+
+# Extracted string
+msgid "Search students, teachers, classes..."
+msgstr ""
+
+# Extracted string
+msgid "Try a name, student ID, teacher code, or class name"
+msgstr ""
+
+# Extracted string
+msgid "Students, teachers, and classes"
+msgstr ""
+
+# Extracted string
+msgid "↑↓"
+msgstr ""
+
+# Extracted string
+msgid "Enter"
+msgstr ""
+
+# Extracted string
+msgid "Esc"
+msgstr ""
+
+# Extracted string
+msgid "close"
+msgstr ""
+
+# Extracted string
+msgid "Copied to clipboard!"
+msgstr ""
+
+# Extracted string
+msgid "AI School Assistant"
+msgstr ""
+
+# Extracted string
+msgid "Clear conversation"
+msgstr ""
+
+# Extracted string
+msgid "Ask AI assistant..."
+msgstr ""
+
+# Extracted string
+msgid "MRLC AI Assistant"
+msgstr ""
+
+# Extracted string
+msgid "Free Gemma/Gemini integration for Teachers & Admins"
+msgstr ""
+
+# Extracted string
+msgid "How can I help you today?"
+msgstr ""
+
+# Extracted string
+msgid "Choose a quick prompt below or type your request in the chat."
+msgstr ""
+
+# Extracted string
+msgid "Generating assistance..."
+msgstr ""
+
+# Extracted string
+msgid "prev"
+msgstr ""
+
+# Extracted string
+msgid "No vendors found"
+msgstr ""
+
+# Extracted string
+msgid "= 100) return"
+msgstr ""
+
+# Extracted string
+msgid "Allocated"
+msgstr ""
+
+# Extracted string
+msgid "Spent"
+msgstr ""
+
+# Extracted string
+msgid "Remaining"
+msgstr ""
+
+# Extracted string
+msgid "Budget"
+msgstr ""
+
+# Extracted string
+msgid "Actual"
+msgstr ""
+
+# Extracted string
+msgid "Variance"
+msgstr ""
+
+# Extracted string
+msgid "0 ? \"up\" : change"
+msgstr ""
+
+# Extracted string
+msgid "0 ? \"text-green-600\" : trend"
+msgstr ""
+
+# Extracted string
+msgid "Open search (Ctrl+K)"
+msgstr ""
+
+# Extracted string
+msgid "⌘K"
+msgstr ""
+
+# Extracted string
+msgid "News"
+msgstr ""
+
+# Extracted string
+msgid "Games"
+msgstr ""
+
+# Extracted string
+msgid "Snake Game"
+msgstr ""
+
+# Extracted string
+msgid "Sudoku"
+msgstr ""
+
+# Extracted string
+msgid "Checkers"
+msgstr ""
+
+# Extracted string
+msgid "Dictionary"
+msgstr ""
+
+# Extracted string
+msgid "Flashcards"
+msgstr ""
+
+# Extracted string
+msgid "Financial Dashboard"
+msgstr ""
+
+# Extracted string
+msgid "Fee Structures"
+msgstr ""
+
+# Extracted string
+msgid "Donations"
+msgstr ""
+
+# Extracted string
+msgid "Donors"
+msgstr ""
+
+# Extracted string
+msgid "Expenses"
+msgstr ""
+
+# Extracted string
+msgid "Vendors"
+msgstr ""
+
+# Extracted string
+msgid "Budgets"
+msgstr ""
+
+# Extracted string
+msgid "Student Duties"
+msgstr ""
+
+# Extracted string
+msgid "Conduct"
+msgstr ""
+
+# Extracted string
+msgid "My Payroll"
+msgstr ""
+
+# Extracted string
+msgid "My Duties"
+msgstr ""
+
+# Extracted string
+msgid "string | number): Record"
+msgstr ""
+
+# Extracted string
+msgid "= ([] as Array"
+msgstr ""
+
+# Extracted string
+msgid "String(n))).indexOf(char)"
+msgstr ""
+
+# Extracted string
+msgid "Enter your email or username"
+msgstr ""
+
+# Extracted string
+msgid "Email or username"
+msgstr ""
+
+# Extracted string
+msgid "Cursor effect updated"
+msgstr ""
+
+# Extracted string
+msgid "Manage your personal account and preferences."
+msgstr ""
+
+# Extracted string
+msgid "Change Password"
+msgstr ""
+
+# Extracted string
+msgid "Cursor Effect"
+msgstr ""
+
+# Extracted string
+msgid "Pick your own decorative mouse-cursor effect, overriding the school-wide default just for your account."
+msgstr ""
+
+# Extracted string
+msgid "Effect"
+msgstr ""
+
+# Extracted string
+msgid "Automatically disabled for anyone with \"reduce motion\" enabled in their OS."
+msgstr ""
+
+# Extracted string
+msgid "Mark at least one blank in the passage using [[word]]"
+msgstr ""
+
+# Extracted string
+msgid "e.g. red, tall"
+msgstr ""
+
+# Extracted string
+msgid "— wrap each word students must drag into place with double brackets, e.g. [[word]]"
+msgstr ""
+
+# Extracted string
+msgid "Extra wrong words"
+msgstr ""
+
+# Extracted string
+msgid "(optional, comma-separated)"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load budget"
+msgstr ""
+
+# Extracted string
+msgid "Budget deleted successfully"
+msgstr ""
+
+# Extracted string
+msgid "Are you sure you want to delete this budget?"
+msgstr ""
+
+# Extracted string
+msgid "Budget not found"
+msgstr ""
+
+# Extracted string
+msgid "Utilization"
+msgstr ""
+
+# Extracted string
+msgid "Used"
+msgstr ""
+
+# Extracted string
+msgid "Budget Period"
+msgstr ""
+
+# Extracted string
+msgid "Fiscal Year"
+msgstr ""
+
+# Extracted string
+msgid "Budget Settings"
+msgstr ""
+
+# Extracted string
+msgid "Alert Threshold"
+msgstr ""
+
+# Extracted string
+msgid "Strict Limit"
+msgstr ""
+
+# Extracted string
+msgid "Associated Expenses"
+msgstr ""
+
+# Extracted string
+msgid "View All Expenses"
+msgstr ""
+
+# Extracted string
+msgid "Budget updated successfully"
+msgstr ""
+
+# Extracted string
+msgid "e.g., Operating Expenses 2024"
+msgstr ""
+
+# Extracted string
+msgid "Budget code (optional)"
+msgstr ""
+
+# Extracted string
+msgid "Budget description and purpose"
+msgstr ""
+
+# Extracted string
+msgid "Select category"
+msgstr ""
+
+# Extracted string
+msgid "Comma-separated tags"
+msgstr ""
+
+# Extracted string
+msgid "Additional notes or comments"
+msgstr ""
+
+# Extracted string
+msgid "Edit Budget"
+msgstr ""
+
+# Extracted string
+msgid "Update budget allocation"
+msgstr ""
+
+# Extracted string
+msgid "Basic Information"
+msgstr ""
+
+# Extracted string
+msgid "Budget Name *"
+msgstr ""
+
+# Extracted string
+msgid "Fiscal Year *"
+msgstr ""
+
+# Extracted string
+msgid "Budget Code"
+msgstr ""
+
+# Extracted string
+msgid "Start Date *"
+msgstr ""
+
+# Extracted string
+msgid "End Date *"
+msgstr ""
+
+# Extracted string
+msgid "Budget Allocation"
+msgstr ""
+
+# Extracted string
+msgid "Allocated Amount *"
+msgstr ""
+
+# Extracted string
+msgid "MYR - Malaysian Ringgit"
+msgstr ""
+
+# Extracted string
+msgid "USD - US Dollar"
+msgstr ""
+
+# Extracted string
+msgid "EUR - Euro"
+msgstr ""
+
+# Extracted string
+msgid "GBP - British Pound"
+msgstr ""
+
+# Extracted string
+msgid "SGD - Singapore Dollar"
+msgstr ""
+
+# Extracted string
+msgid "THB - Thai Baht"
+msgstr ""
+
+# Extracted string
+msgid "Alert Threshold (%)"
+msgstr ""
+
+# Extracted string
+msgid "Strict Limit - Block expenses when exceeded"
+msgstr ""
+
+# Extracted string
+msgid "Additional Information"
+msgstr ""
+
+# Extracted string
+msgid "Tags"
+msgstr ""
+
+# Extracted string
+msgid "Budget created successfully"
+msgstr ""
+
+# Extracted string
+msgid "New Budget"
+msgstr ""
+
+# Extracted string
+msgid "Create a new budget allocation"
+msgstr ""
+
+# Extracted string
+msgid "Alert when budget usage exceeds this percentage"
+msgstr ""
+
+# Extracted string
+msgid "Search budgets..."
+msgstr ""
+
+# Extracted string
+msgid "All Years"
+msgstr ""
+
+# Extracted string
+msgid "Track and manage budget allocations."
+msgstr ""
+
+# Extracted string
+msgid "Create Budget"
+msgstr ""
+
+# Extracted string
+msgid "Total Allocated"
+msgstr ""
+
+# Extracted string
+msgid "Total Spent"
+msgstr ""
+
+# Extracted string
+msgid "Total Remaining"
+msgstr ""
+
+# Extracted string
+msgid "Exhausted"
+msgstr ""
+
+# Extracted string
+msgid "Exceeded"
+msgstr ""
+
+# Extracted string
+msgid "Budget Name"
+msgstr ""
+
+# Extracted string
+msgid "Delete this message for everyone?"
+msgstr ""
+
+# Extracted string
+msgid "Search conversations"
+msgstr ""
+
+# Extracted string
+msgid "Delete message"
+msgstr ""
+
+# Extracted string
+msgid "No matching conversations."
+msgstr ""
+
+# Extracted string
+msgid "Class created"
+msgstr ""
+
+# Extracted string
+msgid "Weekly Schedule"
+msgstr ""
+
+# Extracted string
+msgid "View Full Timetable"
+msgstr ""
+
+# Extracted string
+msgid "Loading timetable…"
+msgstr ""
+
+# Extracted string
+msgid "No schedule yet"
+msgstr ""
+
+# Extracted string
+msgid "Select the rule that was broken"
+msgstr ""
+
+# Extracted string
+msgid "Logged. This is ${ordinal} ${studentName} has broken rule ${selectedRule?.code}."
+msgstr ""
+
+# Extracted string
+msgid "Record removed"
+msgstr ""
+
+# Extracted string
+msgid "Remove this record (${v.studentName} — rule ${v.ruleCode})? This cannot be undone."
+msgstr ""
+
+# Extracted string
+msgid "Select the rule"
+msgstr ""
+
+# Extracted string
+msgid "What happened, where, and any context…"
+msgstr ""
+
+# Extracted string
+msgid "Log rule violations against the school handbook and track how many times each student has broken a rule."
+msgstr ""
+
+# Extracted string
+msgid "Report Violation"
+msgstr ""
+
+# Extracted string
+msgid "Report a Rule Violation"
+msgstr ""
+
+# Extracted string
+msgid "Loading history…"
+msgstr ""
+
+# Extracted string
+msgid "No prior violations on record."
+msgstr ""
+
+# Extracted string
+msgid "Rule broken"
+msgstr ""
+
+# Extracted string
+msgid "Note (optional)"
+msgstr ""
+
+# Extracted string
+msgid "All Severities"
+msgstr ""
+
+# Extracted string
+msgid "Minor"
+msgstr ""
+
+# Extracted string
+msgid "Moderate"
+msgstr ""
+
+# Extracted string
+msgid "Serious"
+msgstr ""
+
+# Extracted string
+msgid "Rule"
+msgstr ""
+
+# Extracted string
+msgid "Severity"
+msgstr ""
+
+# Extracted string
+msgid "Reported By"
+msgstr ""
+
+# Extracted string
+msgid "No conduct records yet."
+msgstr ""
+
+# Extracted string
+msgid "Pronounce"
+msgstr ""
+
+# Extracted string
+msgid "Type an English word, or paste a Mon word…"
+msgstr ""
+
+# Extracted string
+msgid "Dictionary search"
+msgstr ""
+
+# Extracted string
+msgid "Clear recent searches"
+msgstr ""
+
+# Extracted string
+msgid "Another word"
+msgstr ""
+
+# Extracted string
+msgid "Myanmar Translation (မြန်မာဘာသာပြန်)"
+msgstr ""
+
+# Extracted string
+msgid "Mon Dictionary (ဘာသာမန်)"
+msgstr ""
+
+# Extracted string
+msgid "Example"
+msgstr ""
+
+# Extracted string
+msgid "Look up any English word — definitions, examples, synonyms, and Myanmar/Mon translations — or paste a Mon word directly. Free to use, no sign-in required."
+msgstr ""
+
+# Extracted string
+msgid "Recent:"
+msgstr ""
+
+# Extracted string
+msgid "Featured Word"
+msgstr ""
+
+# Extracted string
+msgid "Search for a word above to get started."
+msgstr ""
+
+# Extracted string
+msgid "Document deleted"
+msgstr ""
+
+# Extracted string
+msgid "Permanently delete ${d.documentNumber}? This cannot be undone (use Cancel instead if you just want to invalidate it while keeping a record)."
+msgstr ""
+
+# Extracted string
+msgid "Please enter a campaign name"
+msgstr ""
+
+# Extracted string
+msgid "Please enter a valid goal amount"
+msgstr ""
+
+# Extracted string
+msgid "Please select a start and end date"
+msgstr ""
+
+# Extracted string
+msgid "Campaign created successfully"
+msgstr ""
+
+# Extracted string
+msgid "e.g. Back to School Fund 2026"
+msgstr ""
+
+# Extracted string
+msgid "What is this campaign raising money for?"
+msgstr ""
+
+# Extracted string
+msgid "e.g. Alumni, Parents, Corporate"
+msgstr ""
+
+# Extracted string
+msgid "Additional notes or internal comments"
+msgstr ""
+
+# Extracted string
+msgid "New Campaign"
+msgstr ""
+
+# Extracted string
+msgid "Launch a new fundraising campaign"
+msgstr ""
+
+# Extracted string
+msgid "Campaign Details"
+msgstr ""
+
+# Extracted string
+msgid "Campaign Name *"
+msgstr ""
+
+# Extracted string
+msgid "Goal Amount *"
+msgstr ""
+
+# Extracted string
+msgid "Paused"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load campaigns"
+msgstr ""
+
+# Extracted string
+msgid "Fundraising Campaigns"
+msgstr ""
+
+# Extracted string
+msgid "Manage donation campaigns and track progress"
+msgstr ""
+
+# Extracted string
+msgid "Total Campaigns"
+msgstr ""
+
+# Extracted string
+msgid "Total Goal"
+msgstr ""
+
+# Extracted string
+msgid "Total Raised"
+msgstr ""
+
+# Extracted string
+msgid "All Campaigns"
+msgstr ""
+
+# Extracted string
+msgid "No campaigns found"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load donation"
+msgstr ""
+
+# Extracted string
+msgid "Please select a donor"
+msgstr ""
+
+# Extracted string
+msgid "Please enter a valid donation amount"
+msgstr ""
+
+# Extracted string
+msgid "Donation updated successfully"
+msgstr ""
+
+# Extracted string
+msgid "Donation deleted successfully"
+msgstr ""
+
+# Extracted string
+msgid "Delete this donation? This cannot be undone."
+msgstr ""
+
+# Extracted string
+msgid "Select donor"
+msgstr ""
+
+# Extracted string
+msgid "No campaign"
+msgstr ""
+
+# Extracted string
+msgid "Select method"
+msgstr ""
+
+# Extracted string
+msgid "Transaction / check number"
+msgstr ""
+
+# Extracted string
+msgid "e.g. Scholarship fund"
+msgstr ""
+
+# Extracted string
+msgid "e.g. Unrestricted"
+msgstr ""
+
+# Extracted string
+msgid "Edit Donation"
+msgstr ""
+
+# Extracted string
+msgid "Donation Details"
+msgstr ""
+
+# Extracted string
+msgid "Donor *"
+msgstr ""
+
+# Extracted string
+msgid "Amount *"
+msgstr ""
+
+# Extracted string
+msgid "Donation Type"
+msgstr ""
+
+# Extracted string
+msgid "One-time"
+msgstr ""
+
+# Extracted string
+msgid "Recurring - Monthly"
+msgstr ""
+
+# Extracted string
+msgid "Recurring - Quarterly"
+msgstr ""
+
+# Extracted string
+msgid "Recurring - Yearly"
+msgstr ""
+
+# Extracted string
+msgid "In-kind"
+msgstr ""
+
+# Extracted string
+msgid "Received"
+msgstr ""
+
+# Extracted string
+msgid "Processed"
+msgstr ""
+
+# Extracted string
+msgid "Refunded"
+msgstr ""
+
+# Extracted string
+msgid "Donation Date *"
+msgstr ""
+
+# Extracted string
+msgid "Campaign"
+msgstr ""
+
+# Extracted string
+msgid "Payment Information"
+msgstr ""
+
+# Extracted string
+msgid "Payment Method"
+msgstr ""
+
+# Extracted string
+msgid "Check"
+msgstr ""
+
+# Extracted string
+msgid "Credit Card"
+msgstr ""
+
+# Extracted string
+msgid "Debit Card"
+msgstr ""
+
+# Extracted string
+msgid "Online Payment"
+msgstr ""
+
+# Extracted string
+msgid "Wire Transfer"
+msgstr ""
+
+# Extracted string
+msgid "Payment Reference"
+msgstr ""
+
+# Extracted string
+msgid "Tax Deductible"
+msgstr ""
+
+# Extracted string
+msgid "A tax receipt can be issued for this donation"
+msgstr ""
+
+# Extracted string
+msgid "Purpose"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load donors or campaigns"
+msgstr ""
+
+# Extracted string
+msgid "Donation recorded successfully"
+msgstr ""
+
+# Extracted string
+msgid "Record Donation"
+msgstr ""
+
+# Extracted string
+msgid "Log a new donation from a donor"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load donation data"
+msgstr ""
+
+# Extracted string
+msgid "Delete donation from \"${donation.donor?.name || 'this donor'}\" (${formatMoney(donation.amount, currency)})? This cannot be undone."
+msgstr ""
+
+# Extracted string
+msgid "Track donations and fundraising campaigns"
+msgstr ""
+
+# Extracted string
+msgid "Campaigns"
+msgstr ""
+
+# Extracted string
+msgid "New Donation"
+msgstr ""
+
+# Extracted string
+msgid "Total Donations"
+msgstr ""
+
+# Extracted string
+msgid "Total Amount"
+msgstr ""
+
+# Extracted string
+msgid "Active Campaigns"
+msgstr ""
+
+# Extracted string
+msgid "Recent Donations"
+msgstr ""
+
+# Extracted string
+msgid "No donations recorded"
+msgstr ""
+
+# Extracted string
+msgid "Goal"
+msgstr ""
+
+# Extracted string
+msgid "Raised"
+msgstr ""
+
+# Extracted string
+msgid "Please enter donor name"
+msgstr ""
+
+# Extracted string
+msgid "Donor updated successfully"
+msgstr ""
+
+# Extracted string
+msgid "Enter donor name"
+msgstr ""
+
+# Extracted string
+msgid "Organization name (if applicable)"
+msgstr ""
+
+# Extracted string
+msgid "e.g. Major Donor, Recurring Supporter"
+msgstr ""
+
+# Extracted string
+msgid "email@example.com"
+msgstr ""
+
+# Extracted string
+msgid "Select preference"
+msgstr ""
+
+# Extracted string
+msgid "Enter street address"
+msgstr ""
+
+# Extracted string
+msgid "City"
+msgstr ""
+
+# Extracted string
+msgid "Postal code"
+msgstr ""
+
+# Extracted string
+msgid "Tax identification number"
+msgstr ""
+
+# Extracted string
+msgid "Edit Donor"
+msgstr ""
+
+# Extracted string
+msgid "Update donor information"
+msgstr ""
+
+# Extracted string
+msgid "Donor Name *"
+msgstr ""
+
+# Extracted string
+msgid "Donor Type"
+msgstr ""
+
+# Extracted string
+msgid "Individual"
+msgstr ""
+
+# Extracted string
+msgid "Organization"
+msgstr ""
+
+# Extracted string
+msgid "Alumnus"
+msgstr ""
+
+# Extracted string
+msgid "Parent"
+msgstr ""
+
+# Extracted string
+msgid "Grant Agency"
+msgstr ""
+
+# Extracted string
+msgid "Preferred Contact Method"
+msgstr ""
+
+# Extracted string
+msgid "Mail"
+msgstr ""
+
+# Extracted string
+msgid "Receipt Preference"
+msgstr ""
+
+# Extracted string
+msgid "Do Not Contact"
+msgstr ""
+
+# Extracted string
+msgid "Suppress outreach communications to this donor"
+msgstr ""
+
+# Extracted string
+msgid "Address"
+msgstr ""
+
+# Extracted string
+msgid "Street Address"
+msgstr ""
+
+# Extracted string
+msgid "Postal Code"
+msgstr ""
+
+# Extracted string
+msgid "Tax ID"
+msgstr ""
+
+# Extracted string
+msgid "Inactive donors are hidden from default lists"
+msgstr ""
+
+# Extracted string
+msgid "Donor deactivated"
+msgstr ""
+
+# Extracted string
+msgid "Donor reactivated"
+msgstr ""
+
+# Extracted string
+msgid "Deactivate donor \"${donor.name}\"? Their donation history is kept, but they'll be marked inactive."
+msgstr ""
+
+# Extracted string
+msgid "Search donors..."
+msgstr ""
+
+# Extracted string
+msgid "Reactivate donor"
+msgstr ""
+
+# Extracted string
+msgid "Manage donor database and relationships"
+msgstr ""
+
+# Extracted string
+msgid "Add Donor"
+msgstr ""
+
+# Extracted string
+msgid "Total Donors"
+msgstr ""
+
+# Extracted string
+msgid "Across all donors"
+msgstr ""
+
+# Extracted string
+msgid "Organizations"
+msgstr ""
+
+# Extracted string
+msgid "Corporate donors"
+msgstr ""
+
+# Extracted string
+msgid "Individuals"
+msgstr ""
+
+# Extracted string
+msgid "Personal donors"
+msgstr ""
+
+# Extracted string
+msgid "Donor"
+msgstr ""
+
+# Extracted string
+msgid "No donors found matching your criteria"
+msgstr ""
+
+# Extracted string
+msgid "Donor created successfully"
+msgstr ""
+
+# Extracted string
+msgid "New Donor"
+msgstr ""
+
+# Extracted string
+msgid "Add a new donor to the database"
+msgstr ""
+
+# Extracted string
+msgid "Donor not found"
+msgstr ""
+
+# Extracted string
+msgid "Back to Donors"
+msgstr ""
+
+# Extracted string
+msgid "Deactivate"
+msgstr ""
+
+# Extracted string
+msgid "Reactivate"
+msgstr ""
+
+# Extracted string
+msgid "Total Donated"
+msgstr ""
+
+# Extracted string
+msgid "All time"
+msgstr ""
+
+# Extracted string
+msgid "Donation Count"
+msgstr ""
+
+# Extracted string
+msgid "Total donations"
+msgstr ""
+
+# Extracted string
+msgid "Average Donation"
+msgstr ""
+
+# Extracted string
+msgid "Per donation"
+msgstr ""
+
+# Extracted string
+msgid "Last Donation"
+msgstr ""
+
+# Extracted string
+msgid "Most recent activity"
+msgstr ""
+
+# Extracted string
+msgid "Preferred Contact"
+msgstr ""
+
+# Extracted string
+msgid "Donation"
+msgstr ""
+
+# Extracted string
+msgid "No donations recorded yet"
+msgstr ""
+
+# Extracted string
+msgid "Record First Donation"
+msgstr ""
+
+# Extracted string
+msgid "Manage chore rosters, assignments, and performance."
+msgstr ""
+
+# Extracted string
+msgid "Duty Types"
+msgstr ""
+
+# Extracted string
+msgid "Manage Rosters"
+msgstr ""
+
+# Extracted string
+msgid "Active Rosters"
+msgstr ""
+
+# Extracted string
+msgid "Today's Duties"
+msgstr ""
+
+# Extracted string
+msgid "scheduled for today"
+msgstr ""
+
+# Extracted string
+msgid "Completed Today"
+msgstr ""
+
+# Extracted string
+msgid "Leaderboard"
+msgstr ""
+
+# Extracted string
+msgid "View top performers"
+msgstr ""
+
+# Extracted string
+msgid "No duties scheduled for today."
+msgstr ""
+
+# Extracted string
+msgid "Rosters"
+msgstr ""
+
+# Extracted string
+msgid "Create one"
+msgstr ""
+
+# Extracted string
+msgid "See your own duty assignments and history."
+msgstr ""
+
+# Extracted string
+msgid "Please enter a duty name"
+msgstr ""
+
+# Extracted string
+msgid "Duty type removed"
+msgstr ""
+
+# Extracted string
+msgid "Remove this duty type? If it has assignment history it will be deactivated instead of deleted."
+msgstr ""
+
+# Extracted string
+msgid "e.g. Kitchen Cleanup"
+msgstr ""
+
+# Extracted string
+msgid "Configure the chores students can be assigned"
+msgstr ""
+
+# Extracted string
+msgid "Add Duty Type"
+msgstr ""
+
+# Extracted string
+msgid "Name *"
+msgstr ""
+
+# Extracted string
+msgid "Students Required"
+msgstr ""
+
+# Extracted string
+msgid "Points Awarded"
+msgstr ""
+
+# Extracted string
+msgid "No duty types yet."
+msgstr ""
+
+# Extracted string
+msgid "Duty Performance"
+msgstr ""
+
+# Extracted string
+msgid "Top performers by points and completion rate (last 90 days by default)"
+msgstr ""
+
+# Extracted string
+msgid "Assigned"
+msgstr ""
+
+# Extracted string
+msgid "Completion Rate"
+msgstr ""
+
+# Extracted string
+msgid "Avg Rating"
+msgstr ""
+
+# Extracted string
+msgid "No duty activity in this period."
+msgstr ""
+
+# Extracted string
+msgid "Failed to load roster"
+msgstr ""
+
+# Extracted string
+msgid "Select at least one student and one duty type"
+msgstr ""
+
+# Extracted string
+msgid "Created ${result.created} assignments${result.unfilled.length > 0 ?"
+msgstr ""
+
+# Extracted string
+msgid "Fill in duty, student, and date"
+msgstr ""
+
+# Extracted string
+msgid "Assignment added"
+msgstr ""
+
+# Extracted string
+msgid "Roster published"
+msgstr ""
+
+# Extracted string
+msgid "Remove this assignment?"
+msgstr ""
+
+# Extracted string
+msgid "Roster not found"
+msgstr ""
+
+# Extracted string
+msgid "Auto-Assign"
+msgstr ""
+
+# Extracted string
+msgid "Add Assignment Manually"
+msgstr ""
+
+# Extracted string
+msgid "Duty Type"
+msgstr ""
+
+# Extracted string
+msgid "Duty"
+msgstr ""
+
+# Extracted string
+msgid "Rating"
+msgstr ""
+
+# Extracted string
+msgid "No assignments yet."
+msgstr ""
+
+# Extracted string
+msgid "Please fill in name and date range"
+msgstr ""
+
+# Extracted string
+msgid "Roster created"
+msgstr ""
+
+# Extracted string
+msgid "e.g. Week 45, November 2026"
+msgstr ""
+
+# Extracted string
+msgid "Duty Rosters"
+msgstr ""
+
+# Extracted string
+msgid "Weekly or monthly duty periods"
+msgstr ""
+
+# Extracted string
+msgid "New Roster"
+msgstr ""
+
+# Extracted string
+msgid "Roster Name *"
+msgstr ""
+
+# Extracted string
+msgid "Period Type"
+msgstr ""
+
+# Extracted string
+msgid "Monthly"
+msgstr ""
+
+# Extracted string
+msgid "Termly"
+msgstr ""
+
+# Extracted string
+msgid "Max Duties / Week / Student"
+msgstr ""
+
+# Extracted string
+msgid "No rosters yet."
+msgstr ""
+
+# Extracted string
+msgid "Failed to load your duties"
+msgstr ""
+
+# Extracted string
+msgid "Your assigned chores and duty history"
+msgstr ""
+
+# Extracted string
+msgid "Upcoming"
+msgstr ""
+
+# Extracted string
+msgid "No upcoming duties."
+msgstr ""
+
+# Extracted string
+msgid "Mark Done"
+msgstr ""
+
+# Extracted string
+msgid "No duty history yet."
+msgstr ""
+
+# Extracted string
+msgid "Choose an image file."
+msgstr ""
+
+# Extracted string
+msgid "Cover updated — click Save changes to keep it."
+msgstr ""
+
+# Extracted string
+msgid "Choose or type a genre/category"
+msgstr ""
+
+# Extracted string
+msgid "Optional — shown on the E-Library list."
+msgstr ""
+
+# Extracted string
+msgid "Assign as homework"
+msgstr ""
+
+# Extracted string
+msgid "Import from Gutenberg"
+msgstr ""
+
+# Extracted string
+msgid "Continue Reading"
+msgstr ""
+
+# Extracted string
+msgid "All categories"
+msgstr ""
+
+# Extracted string
+msgid "Full page view is not supported in this browser."
+msgstr ""
+
+# Extracted string
+msgid "Type at least 2 characters."
+msgstr ""
+
+# Extracted string
+msgid "Choose a deck."
+msgstr ""
+
+# Extracted string
+msgid "Term and definition are required."
+msgstr ""
+
+# Extracted string
+msgid "Added to flashcard deck."
+msgstr ""
+
+# Extracted string
+msgid "Highlight saved."
+msgstr ""
+
+# Extracted string
+msgid "Could not delete highlight."
+msgstr ""
+
+# Extracted string
+msgid "The word or concept"
+msgstr ""
+
+# Extracted string
+msgid "Search in book"
+msgstr ""
+
+# Extracted string
+msgid "My highlights"
+msgstr ""
+
+# Extracted string
+msgid "Reading appearance"
+msgstr ""
+
+# Extracted string
+msgid "Light appearance"
+msgstr ""
+
+# Extracted string
+msgid "Warm appearance"
+msgstr ""
+
+# Extracted string
+msgid "Dark appearance"
+msgstr ""
+
+# Extracted string
+msgid "Assign as Homework"
+msgstr ""
+
+# Extracted string
+msgid "Define"
+msgstr ""
+
+# Extracted string
+msgid "Highlight"
+msgstr ""
+
+# Extracted string
+msgid "Flashcard"
+msgstr ""
+
+# Extracted string
+msgid "Myanmar"
+msgstr ""
+
+# Extracted string
+msgid "Mon"
+msgstr ""
+
+# Extracted string
+msgid "Open full Dictionary →"
+msgstr ""
+
+# Extracted string
+msgid "My Highlights"
+msgstr ""
+
+# Extracted string
+msgid "No highlights yet — select some text while reading to save one."
+msgstr ""
+
+# Extracted string
+msgid "Search in Book"
+msgstr ""
+
+# Extracted string
+msgid "Searching the whole book — this can take a moment for longer titles…"
+msgstr ""
+
+# Extracted string
+msgid "No matches found."
+msgstr ""
+
+# Extracted string
+msgid "Add to Flashcard Deck"
+msgstr ""
+
+# Extracted string
+msgid "Loading decks…"
+msgstr ""
+
+# Extracted string
+msgid "You don't have any flashcard decks yet. Create one from the Flashcards page first."
+msgstr ""
+
+# Extracted string
+msgid "Deck"
+msgstr ""
+
+# Extracted string
+msgid "Definition"
+msgstr ""
+
+# Extracted string
+msgid "${f.name}: only PDF and EPUB files are allowed."
+msgstr ""
+
+# Extracted string
+msgid "${f.name}: file is too large (max ${MAX_MB} MB)."
+msgstr ""
+
+# Extracted string
+msgid "Add at least one PDF or EPUB file."
+msgstr ""
+
+# Extracted string
+msgid "Every file needs a title."
+msgstr ""
+
+# Extracted string
+msgid "${okCount} of ${queue.length} uploaded — fix the failed ones and try again."
+msgstr ""
+
+# Extracted string
+msgid "Upload failed."
+msgstr ""
+
+# Extracted string
+msgid "Author (optional)"
+msgstr ""
+
+# Extracted string
+msgid "Add one or more EPUB or PDF files to the E-Library."
+msgstr ""
+
+# Extracted string
+msgid "Click or drag files here"
+msgstr ""
+
+# Extracted string
+msgid "\"${book.title}\" added to the E-Library."
+msgstr ""
+
+# Extracted string
+msgid "Search by title or author…"
+msgstr ""
+
+# Extracted string
+msgid "Import from Project Gutenberg"
+msgstr ""
+
+# Extracted string
+msgid "Search 70,000+ free, public-domain books and add them to your E-Library with one click."
+msgstr ""
+
+# Extracted string
+msgid "In library"
+msgstr ""
+
+# Extracted string
+msgid "Open in Studio →"
+msgstr ""
+
+# Extracted string
+msgid "Draggable words"
+msgstr ""
+
+# Extracted string
+msgid "Drag a word into each blank, or tap a word then tap a blank."
+msgstr ""
+
+# Extracted string
+msgid "Word bank — drag from here"
+msgstr ""
+
+# Extracted string
+msgid "✓ All words placed — nice work!"
+msgstr ""
+
+# Extracted string
+msgid "Select an answer…"
+msgstr ""
+
+# Extracted string
+msgid "Your answers are safely submitted. Results appear here once your teacher finishes marking and releases them — check back later."
+msgstr ""
+
+# Extracted string
+msgid "→ correct:"
+msgstr ""
+
+# Extracted string
+msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
+msgstr ""
+
+# Extracted string
+msgid "Word bank:"
+msgstr ""
+
+# Extracted string
+msgid "Draft created — build it in the Studio."
+msgstr ""
+
+# Extracted string
+msgid "e.g. Algebra II — Unit 4 Mock"
+msgstr ""
+
+# Extracted string
+msgid "New assessment"
+msgstr ""
+
+# Extracted string
+msgid "Just the basics — you'll build questions, scheduling and grading in the Studio."
+msgstr ""
+
+# Extracted string
+msgid "Exam type"
+msgstr ""
+
+# Extracted string
+msgid "&nbsp;"
+msgstr ""
+
+# Extracted string
+msgid "Synced ${res?.count ?? 0} score(s) to gradebook"
+msgstr ""
+
+# Extracted string
+msgid "Sync best exam scores into the gradebook for this class?"
+msgstr ""
+
+# Extracted string
+msgid "Open in Studio"
+msgstr ""
+
+# Extracted string
+msgid "Added 3 AI-generated variants."
+msgstr ""
+
+# Extracted string
+msgid "Add at least one question before publishing."
+msgstr ""
+
+# Extracted string
+msgid "Question ${badIdx + 1} has no correct answer marked."
+msgstr ""
+
+# Extracted string
+msgid "Saved."
+msgstr ""
+
+# Extracted string
+msgid "Exam submitted (preview)."
+msgstr ""
+
+# Extracted string
+msgid "Untitled exam"
+msgstr ""
+
+# Extracted string
+msgid "Type the question. Use $…$ for inline math and $$…$$ for a display equation."
+msgstr ""
+
+# Extracted string
+msgid "Guidance for graders (not shown to students)."
+msgstr ""
+
+# Extracted string
+msgid "Shown to students before they begin."
+msgstr ""
+
+# Extracted string
+msgid "IEP/504 note"
+msgstr ""
+
+# Extracted string
+msgid "(i"
+msgstr ""
+
+# Extracted string
+msgid "Preview as student"
+msgstr ""
+
+# Extracted string
+msgid "Exam readiness"
+msgstr ""
+
+# Extracted string
+msgid "Setup"
+msgstr ""
+
+# Extracted string
+msgid "Outline"
+msgstr ""
+
+# Extracted string
+msgid "Add question"
+msgstr ""
+
+# Extracted string
+msgid "Choose a type"
+msgstr ""
+
+# Extracted string
+msgid "Live student preview"
+msgstr ""
+
+# Extracted string
+msgid "This is exactly what students see."
+msgstr ""
+
+# Extracted string
+msgid ": active ?"
+msgstr ""
+
+# Extracted string
+msgid "Inline $…$ · display $$…$$"
+msgstr ""
+
+# Extracted string
+msgid "Word bank — tap the circle to mark words that fill a blank"
+msgstr ""
+
+# Extracted string
+msgid "Use"
+msgstr ""
+
+# Extracted string
+msgid "in the question for each blank. Correct words fill blanks in order; the rest become decoys."
+msgstr ""
+
+# Extracted string
+msgid "Add word"
+msgstr ""
+
+# Extracted string
+msgid "Model answer / rubric note"
+msgstr ""
+
+# Extracted string
+msgid "Graded manually in the grading queue."
+msgstr ""
+
+# Extracted string
+msgid "No questions yet"
+msgstr ""
+
+# Extracted string
+msgid "Add your first question to get started."
+msgstr ""
+
+# Extracted string
+msgid "Exam details"
+msgstr ""
+
+# Extracted string
+msgid "The basics students and the gradebook rely on."
+msgstr ""
+
+# Extracted string
+msgid "Continue to questions →"
+msgstr ""
+
+# Extracted string
+msgid "Schedule & access"
+msgstr ""
+
+# Extracted string
+msgid "When and how students can take the exam."
+msgstr ""
+
+# Extracted string
+msgid "Availability window"
+msgstr ""
+
+# Extracted string
+msgid "Opens"
+msgstr ""
+
+# Extracted string
+msgid "Closes"
+msgstr ""
+
+# Extracted string
+msgid "Attempts allowed"
+msgstr ""
+
+# Extracted string
+msgid "Continue to grading →"
+msgstr ""
+
+# Extracted string
+msgid "Add student override"
+msgstr ""
+
+# Extracted string
+msgid "Grading & results"
+msgstr ""
+
+# Extracted string
+msgid "How the exam is scored and shared back."
+msgstr ""
+
+# Extracted string
+msgid "Score breakdown"
+msgstr ""
+
+# Extracted string
+msgid "Release scores"
+msgstr ""
+
+# Extracted string
+msgid "Review & publish →"
+msgstr ""
+
+# Extracted string
+msgid "Select or add a question to preview."
+msgstr ""
+
+# Extracted string
+msgid "No questions to preview yet."
+msgstr ""
+
+# Extracted string
+msgid "Autosaved · preview mode"
+msgstr ""
+
+# Extracted string
+msgid "← Previous"
+msgstr ""
+
+# Extracted string
+msgid "Next →"
+msgstr ""
+
+# Extracted string
+msgid "Submit exam"
+msgstr ""
+
+# Extracted string
+msgid "MIN"
+msgstr ""
+
+# Extracted string
+msgid "Exam published"
+msgstr ""
+
+# Extracted string
+msgid "Back to editing"
+msgstr ""
+
+# Extracted string
+msgid "View dashboard"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load expense"
+msgstr ""
+
+# Extracted string
+msgid "Expense submitted for approval"
+msgstr ""
+
+# Extracted string
+msgid "Failed to submit expense"
+msgstr ""
+
+# Extracted string
+msgid "Expense approved"
+msgstr ""
+
+# Extracted string
+msgid "Failed to approve expense"
+msgstr ""
+
+# Extracted string
+msgid "Expense rejected"
+msgstr ""
+
+# Extracted string
+msgid "Failed to reject expense"
+msgstr ""
+
+# Extracted string
+msgid "Failed to record payment"
+msgstr ""
+
+# Extracted string
+msgid "Expense not found"
+msgstr ""
+
+# Extracted string
+msgid "Expense Details"
+msgstr ""
+
+# Extracted string
+msgid "Submit for Approval"
+msgstr ""
+
+# Extracted string
+msgid "Reject"
+msgstr ""
+
+# Extracted string
+msgid "Expense Information"
+msgstr ""
+
+# Extracted string
+msgid "Financial Details"
+msgstr ""
+
+# Extracted string
+msgid "Tax"
+msgstr ""
+
+# Extracted string
+msgid "Expense Date"
+msgstr ""
+
+# Extracted string
+msgid "Vendor Information"
+msgstr ""
+
+# Extracted string
+msgid "Vendor Name"
+msgstr ""
+
+# Extracted string
+msgid "Invoice Number"
+msgstr ""
+
+# Extracted string
+msgid "Contact Person"
+msgstr ""
+
+# Extracted string
+msgid "Approval Trail"
+msgstr ""
+
+# Extracted string
+msgid "Submitted:"
+msgstr ""
+
+# Extracted string
+msgid "Approved:"
+msgstr ""
+
+# Extracted string
+msgid "Paid:"
+msgstr ""
+
+# Extracted string
+msgid "Expense updated successfully"
+msgstr ""
+
+# Extracted string
+msgid "Expense deleted successfully"
+msgstr ""
+
+# Extracted string
+msgid "Are you sure you want to delete this expense?"
+msgstr ""
+
+# Extracted string
+msgid "Enter expense title"
+msgstr ""
+
+# Extracted string
+msgid "Enter expense description"
+msgstr ""
+
+# Extracted string
+msgid "Select vendor"
+msgstr ""
+
+# Extracted string
+msgid "Enter invoice number"
+msgstr ""
+
+# Extracted string
+msgid "Select payment method"
+msgstr ""
+
+# Extracted string
+msgid "Select budget"
+msgstr ""
+
+# Extracted string
+msgid "e.g., 2024-2025"
+msgstr ""
+
+# Extracted string
+msgid "Edit Expense"
+msgstr ""
+
+# Extracted string
+msgid "Update expense details"
+msgstr ""
+
+# Extracted string
+msgid "Category *"
+msgstr ""
+
+# Extracted string
+msgid "Tax Amount"
+msgstr ""
+
+# Extracted string
+msgid "Expense Date *"
+msgstr ""
+
+# Extracted string
+msgid "Vendor & Payment"
+msgstr ""
+
+# Extracted string
+msgid "Vendor"
+msgstr ""
+
+# Extracted string
+msgid "Vendor Invoice Number"
+msgstr ""
+
+# Extracted string
+msgid "Expense created successfully"
+msgstr ""
+
+# Extracted string
+msgid "New Expense"
+msgstr ""
+
+# Extracted string
+msgid "Create a new expense record"
+msgstr ""
+
+# Extracted string
+msgid "Delete expense \"${expense.title}\"? This cannot be undone."
+msgstr ""
+
+# Extracted string
+msgid "Search expenses..."
+msgstr ""
+
+# Extracted string
+msgid "All Categories"
+msgstr ""
+
+# Extracted string
+msgid "Track and manage school expenses."
+msgstr ""
+
+# Extracted string
+msgid "Excel"
+msgstr ""
+
+# Extracted string
+msgid "Total Expenses"
+msgstr ""
+
+# Extracted string
+msgid "Awaiting Approval"
+msgstr ""
+
+# Extracted string
+msgid "Pending Approval"
+msgstr ""
+
+# Extracted string
+msgid "Rejected"
+msgstr ""
+
+# Extracted string
+msgid "No expenses to show."
+msgstr ""
+
+# Extracted string
+msgid "Failed to load assignments"
+msgstr ""
+
+# Extracted string
+msgid "Fee Assignments"
+msgstr ""
+
+# Extracted string
+msgid "View and manage student fee assignments"
+msgstr ""
+
+# Extracted string
+msgid "Total Assignments"
+msgstr ""
+
+# Extracted string
+msgid "No assignments found"
+msgstr ""
+
+# Extracted string
+msgid "Fee Item"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load discounts"
+msgstr ""
+
+# Extracted string
+msgid "Fee Discounts"
+msgstr ""
+
+# Extracted string
+msgid "Manage fee discounts and scholarships"
+msgstr ""
+
+# Extracted string
+msgid "New Discount"
+msgstr ""
+
+# Extracted string
+msgid "No discounts configured"
+msgstr ""
+
+# Extracted string
+msgid "Value"
+msgstr ""
+
+# Extracted string
+msgid "Validity"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load fee structure"
+msgstr ""
+
+# Extracted string
+msgid "Fee structure deleted successfully"
+msgstr ""
+
+# Extracted string
+msgid "Fee structure archived"
+msgstr ""
+
+# Extracted string
+msgid "Fee item removed"
+msgstr ""
+
+# Extracted string
+msgid "Name and a positive amount are required"
+msgstr ""
+
+# Extracted string
+msgid "Fee item added"
+msgstr ""
+
+# Extracted string
+msgid "Name and a positive value are required"
+msgstr ""
+
+# Extracted string
+msgid "Discount added"
+msgstr ""
+
+# Extracted string
+msgid "Payment plan created"
+msgstr ""
+
+# Extracted string
+msgid "This will assign fee items to all applicable students. Continue?"
+msgstr ""
+
+# Extracted string
+msgid "Are you sure you want to delete this fee structure?"
+msgstr ""
+
+# Extracted string
+msgid "Archive this fee structure? It will stop applying to new students, and you can edit or delete it again."
+msgstr ""
+
+# Extracted string
+msgid "Remove \"${item.name}\"?"
+msgstr ""
+
+# Extracted string
+msgid "e.g., Tuition Fee"
+msgstr ""
+
+# Extracted string
+msgid "e.g., Sibling Discount"
+msgstr ""
+
+# Extracted string
+msgid "e.g., 2026 Installment Plan"
+msgstr ""
+
+# Extracted string
+msgid "Fee structure not found"
+msgstr ""
+
+# Extracted string
+msgid "This structure has no fee items yet, so \"Assign Fees\" won't create anything. Archive it, add at least one item, then reactivate it from the Edit page."
+msgstr ""
+
+# Extracted string
+msgid "Fee Items"
+msgstr ""
+
+# Extracted string
+msgid "Assignments"
+msgstr ""
+
+# Extracted string
+msgid "Discounts"
+msgstr ""
+
+# Extracted string
+msgid "Payment Plans"
+msgstr ""
+
+# Extracted string
+msgid "Student Assignments"
+msgstr ""
+
+# Extracted string
+msgid "No assignments yet. Add at least one fee item, activate this structure, then click \"Assign Fees\" above."
+msgstr ""
+
+# Extracted string
+msgid "Available Discounts"
+msgstr ""
+
+# Extracted string
+msgid "No payment plans configured"
+msgstr ""
+
+# Extracted string
+msgid "Add Item"
+msgstr ""
+
+# Extracted string
+msgid "Add Fee Item"
+msgstr ""
+
+# Extracted string
+msgid "Frequency"
+msgstr ""
+
+# Extracted string
+msgid "One Time"
+msgstr ""
+
+# Extracted string
+msgid "Per Term"
+msgstr ""
+
+# Extracted string
+msgid "Yearly"
+msgstr ""
+
+# Extracted string
+msgid "Applies To"
+msgstr ""
+
+# Extracted string
+msgid "Boarding Students"
+msgstr ""
+
+# Extracted string
+msgid "Day Students"
+msgstr ""
+
+# Extracted string
+msgid "Add Discount"
+msgstr ""
+
+# Extracted string
+msgid "Fixed Amount"
+msgstr ""
+
+# Extracted string
+msgid "Sibling Discount"
+msgstr ""
+
+# Extracted string
+msgid "Scholarship"
+msgstr ""
+
+# Extracted string
+msgid "Early Payment"
+msgstr ""
+
+# Extracted string
+msgid "Valid From"
+msgstr ""
+
+# Extracted string
+msgid "Valid To"
+msgstr ""
+
+# Extracted string
+msgid "Create Plan"
+msgstr ""
+
+# Extracted string
+msgid "Create Payment Plan"
+msgstr ""
+
+# Extracted string
+msgid "Plan Name *"
+msgstr ""
+
+# Extracted string
+msgid "# Installments *"
+msgstr ""
+
+# Extracted string
+msgid "First Installment Due *"
+msgstr ""
+
+# Extracted string
+msgid "Fee structure updated successfully"
+msgstr ""
+
+# Extracted string
+msgid "e.g., 2024-2025 Annual Fees"
+msgstr ""
+
+# Extracted string
+msgid "e.g., Term 1, Semester 1"
+msgstr ""
+
+# Extracted string
+msgid "Describe this fee structure..."
+msgstr ""
+
+# Extracted string
+msgid "Edit Fee Structure"
+msgstr ""
+
+# Extracted string
+msgid "Update fee structure details"
+msgstr ""
+
+# Extracted string
+msgid "Structure Name *"
+msgstr ""
+
+# Extracted string
+msgid "Academic Year *"
+msgstr ""
+
+# Extracted string
+msgid "Term (Optional)"
+msgstr ""
+
+# Extracted string
+msgid "Configuration"
+msgstr ""
+
+# Extracted string
+msgid "Apply to specific classes only"
+msgstr ""
+
+# Extracted string
+msgid "Apply to boarding students only"
+msgstr ""
+
+# Extracted string
+msgid "Apply to day students only"
+msgstr ""
+
+# Extracted string
+msgid "Effective Period"
+msgstr ""
+
+# Extracted string
+msgid "Effective From *"
+msgstr ""
+
+# Extracted string
+msgid "Effective To (Optional)"
+msgstr ""
+
+# Extracted string
+msgid "Fee structure created successfully"
+msgstr ""
+
+# Extracted string
+msgid "New Fee Structure"
+msgstr ""
+
+# Extracted string
+msgid "Create a new fee structure for your school"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load fee structures"
+msgstr ""
+
+# Extracted string
+msgid "Are you sure you want to delete \"${name}\"?"
+msgstr ""
+
+# Extracted string
+msgid "Search structures..."
+msgstr ""
+
+# Extracted string
+msgid "Manage fee types and academic year structures"
+msgstr ""
+
+# Extracted string
+msgid "New Structure"
+msgstr ""
+
+# Extracted string
+msgid "Total Structures"
+msgstr ""
+
+# Extracted string
+msgid "This Year"
+msgstr ""
+
+# Extracted string
+msgid "No fee structures found. Create one to get started."
+msgstr ""
+
+# Extracted string
+msgid "Charge a student a fee directly, with an optional discount and partial payment."
+msgstr ""
+
+# Extracted string
+msgid "Amount Due (after discount)"
+msgstr ""
+
+# Extracted string
+msgid "Leave blank to record the full amount due as paid. Enter a smaller number for a partial payment."
+msgstr ""
+
+# Extracted string
+msgid "Balance Remaining"
+msgstr ""
+
+# Extracted string
+msgid "Balance Due Date (optional)"
+msgstr ""
+
+# Extracted string
+msgid "Enter a reason for voiding this payment"
+msgstr ""
+
+# Extracted string
+msgid "Payment voided"
+msgstr ""
+
+# Extracted string
+msgid "Enter an amount greater than 0"
+msgstr ""
+
+# Extracted string
+msgid "Payment recorded"
+msgstr ""
+
+# Extracted string
+msgid "Payment verification QR"
+msgstr ""
+
+# Extracted string
+msgid "Example: Duplicate receipt recorded in error"
+msgstr ""
+
+# Extracted string
+msgid "Record Additional Payment"
+msgstr ""
+
+# Extracted string
+msgid "Download PDF"
+msgstr ""
+
+# Extracted string
+msgid "This payment has been voided."
+msgstr ""
+
+# Extracted string
+msgid "Discount"
+msgstr ""
+
+# Extracted string
+msgid "Amount Due"
+msgstr ""
+
+# Extracted string
+msgid "Amount Paid"
+msgstr ""
+
+# Extracted string
+msgid "Void Reason"
+msgstr ""
+
+# Extracted string
+msgid "Outstanding balance:"
+msgstr ""
+
+# Extracted string
+msgid "Payment Date"
+msgstr ""
+
+# Extracted string
+msgid "Notes (optional)"
+msgstr ""
+
+# Extracted string
+msgid "Pay Balance"
+msgstr ""
+
+# Extracted string
+msgid "Record Payment Toward Balance"
+msgstr ""
+
+# Extracted string
+msgid "Official Receipt Verification"
+msgstr ""
+
+# Extracted string
+msgid "Verifying..."
+msgstr ""
+
+# Extracted string
+msgid "Receipt Not Found"
+msgstr ""
+
+# Extracted string
+msgid "No payment receipt matches this verification link. It may be invalid or mistyped."
+msgstr ""
+
+# Extracted string
+msgid "Valid Payment Receipt"
+msgstr ""
+
+# Extracted string
+msgid "Voided Receipt"
+msgstr ""
+
+# Extracted string
+msgid "This payment receipt has been voided and should not be accepted as proof of payment."
+msgstr ""
+
+# Extracted string
+msgid "Only receipt verification details are shown. Private student financial notes are never disclosed on this page."
+msgstr ""
+
+# Extracted string
+msgid "Budget vs Actual Report"
+msgstr ""
+
+# Extracted string
+msgid "No data available"
+msgstr ""
+
+# Extracted string
+msgid "Compare budgeted amounts with actual spending"
+msgstr ""
+
+# Extracted string
+msgid "CSV"
+msgstr ""
+
+# Extracted string
+msgid "Budgeted amount"
+msgstr ""
+
+# Extracted string
+msgid "According to budget"
+msgstr ""
+
+# Extracted string
+msgid "Actual Expenses"
+msgstr ""
+
+# Extracted string
+msgid "Recorded expenses"
+msgstr ""
+
+# Extracted string
+msgid "Total Variance"
+msgstr ""
+
+# Extracted string
+msgid "Overall Utilization"
+msgstr ""
+
+# Extracted string
+msgid "Card View"
+msgstr ""
+
+# Extracted string
+msgid "Table View"
+msgstr ""
+
+# Extracted string
+msgid "Variance %"
+msgstr ""
+
+# Extracted string
+msgid "Total Budgets"
+msgstr ""
+
+# Extracted string
+msgid "Over Budget"
+msgstr ""
+
+# Extracted string
+msgid "On Track"
+msgstr ""
+
+# Extracted string
+msgid "Under Budget"
+msgstr ""
+
+# Extracted string
+msgid "b.utilization"
+msgstr ""
+
+# Extracted string
+msgid "Overall Health"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load financial data"
+msgstr ""
+
+# Extracted string
+msgid "Total Revenue"
+msgstr ""
+
+# Extracted string
+msgid "Outstanding Fees"
+msgstr ""
+
+# Extracted string
+msgid "Budget Utilization"
+msgstr ""
+
+# Extracted string
+msgid "Income Trend"
+msgstr ""
+
+# Extracted string
+msgid "Expense Trend"
+msgstr ""
+
+# Extracted string
+msgid "Net Cash Flow"
+msgstr ""
+
+# Extracted string
+msgid "Monthly Report"
+msgstr ""
+
+# Extracted string
+msgid "Loading financial data..."
+msgstr ""
+
+# Extracted string
+msgid "Cash Flow Analysis"
+msgstr ""
+
+# Extracted string
+msgid "Cash Flow Summary"
+msgstr ""
+
+# Extracted string
+msgid "Cash Inflow"
+msgstr ""
+
+# Extracted string
+msgid "Cash Outflow"
+msgstr ""
+
+# Extracted string
+msgid "Budget Utilization Overview"
+msgstr ""
+
+# Extracted string
+msgid "View All Budgets"
+msgstr ""
+
+# Extracted string
+msgid "Action Required"
+msgstr ""
+
+# Extracted string
+msgid "Review"
+msgstr ""
+
+# Extracted string
+msgid "Overdue Fees"
+msgstr ""
+
+# Extracted string
+msgid "View Fees"
+msgstr ""
+
+# Extracted string
+msgid "Quick Actions"
+msgstr ""
+
+# Extracted string
+msgid "View Budgets"
+msgstr ""
+
+# Extracted string
+msgid "Financial Reports"
+msgstr ""
+
+# Extracted string
+msgid "Income &amp; Expense"
+msgstr ""
+
+# Extracted string
+msgid "Budget vs Actual"
+msgstr ""
+
+# Extracted string
+msgid "Income & Expense Report"
+msgstr ""
+
+# Extracted string
+msgid "Analyze financial performance and trends"
+msgstr ""
+
+# Extracted string
+msgid "Total Income"
+msgstr ""
+
+# Extracted string
+msgid "Net Surplus"
+msgstr ""
+
+# Extracted string
+msgid "Income by Source"
+msgstr ""
+
+# Extracted string
+msgid "Breakdown of income sources"
+msgstr ""
+
+# Extracted string
+msgid "Expenses by Category"
+msgstr ""
+
+# Extracted string
+msgid "Breakdown of expense categories"
+msgstr ""
+
+# Extracted string
+msgid "No income transactions recorded for this period."
+msgstr ""
+
+# Extracted string
+msgid "Reference"
+msgstr ""
+
+# Extracted string
+msgid "No expense transactions recorded for this period."
+msgstr ""
+
+# Extracted string
+msgid "Monthly Finance Report"
+msgstr ""
+
+# Extracted string
+msgid "Pick a month for its summary, or scan the full year below"
+msgstr ""
+
+# Extracted string
+msgid "Income"
+msgstr ""
+
+# Extracted string
+msgid "Approved &amp; paid expenses"
+msgstr ""
+
+# Extracted string
+msgid "This month"
+msgstr ""
+
+# Extracted string
+msgid "Running Balance"
+msgstr ""
+
+# Extracted string
+msgid "Monthly totals with running cumulative balance, for context"
+msgstr ""
+
+# Extracted string
+msgid "Income sources, expenses, and running balance (selected month highlighted)"
+msgstr ""
+
+# Extracted string
+msgid "Cumulative"
+msgstr ""
+
+# Extracted string
+msgid "Add some cards before exporting"
+msgstr ""
+
+# Extracted string
+msgid "No term/definition rows found in that file"
+msgstr ""
+
+# Extracted string
+msgid "Imported ${imported.length} card${imported.length === 1 ? '' : 's'}"
+msgstr ""
+
+# Extracted string
+msgid "Could not read that CSV file"
+msgstr ""
+
+# Extracted string
+msgid "Give the deck a title"
+msgstr ""
+
+# Extracted string
+msgid "Add at least one card with both a term and a definition"
+msgstr ""
+
+# Extracted string
+msgid "Deck updated"
+msgstr ""
+
+# Extracted string
+msgid "Deck created"
+msgstr ""
+
+# Extracted string
+msgid "e.g. Chapter 5 Vocabulary"
+msgstr ""
+
+# Extracted string
+msgid "What this deck covers"
+msgstr ""
+
+# Extracted string
+msgid "No subject"
+msgstr ""
+
+# Extracted string
+msgid "Add an image to this card"
+msgstr ""
+
+# Extracted string
+msgid "Loading deck…"
+msgstr ""
+
+# Extracted string
+msgid "Description (optional)"
+msgstr ""
+
+# Extracted string
+msgid "Assign to classes"
+msgstr ""
+
+# Extracted string
+msgid "No classes available."
+msgstr ""
+
+# Extracted string
+msgid "Students in the selected classes will be able to study this deck. You can leave this unassigned and set it later."
+msgstr ""
+
+# Extracted string
+msgid "Share this deck with other teachers -- they'll be able to find it in Community and clone a copy into their own library, but can't edit your original."
+msgstr ""
+
+# Extracted string
+msgid "Cards"
+msgstr ""
+
+# Extracted string
+msgid "Add Card"
+msgstr ""
+
+# Extracted string
+msgid "Two columns: term, definition. A header row is optional."
+msgstr ""
+
+# Extracted string
+msgid "Tip: wrap math in"
+msgstr ""
+
+# Extracted string
+msgid "(e.g."
+msgstr ""
+
+# Extracted string
+msgid "$x^2 + 1$"
+msgstr ""
+
+# Extracted string
+msgid "remove"
+msgstr ""
+
+# Extracted string
+msgid "Couldn't load progress for this deck."
+msgstr ""
+
+# Extracted string
+msgid "Back to Flashcards"
+msgstr ""
+
+# Extracted string
+msgid "Student Progress"
+msgstr ""
+
+# Extracted string
+msgid "No students yet -- assign this deck to a class to see progress here."
+msgstr ""
+
+# Extracted string
+msgid "Mastery"
+msgstr ""
+
+# Extracted string
+msgid "Spelling"
+msgstr ""
+
+# Extracted string
+msgid "Match"
+msgstr ""
+
+# Extracted string
+msgid "Last Activity"
+msgstr ""
+
+# Extracted string
+msgid "Deck deleted"
+msgstr ""
+
+# Extracted string
+msgid "This deck has no cards to export"
+msgstr ""
+
+# Extracted string
+msgid "Cloned \"${deck.title}\" into your decks"
+msgstr ""
+
+# Extracted string
+msgid "Delete the deck \"${deck.title}\"? This cannot be undone."
+msgstr ""
+
+# Extracted string
+msgid "Shared with other teachers"
+msgstr ""
+
+# Extracted string
+msgid "Student progress"
+msgstr ""
+
+# Extracted string
+msgid "Build study decks and assign them to your classes."
+msgstr ""
+
+# Extracted string
+msgid "New Deck"
+msgstr ""
+
+# Extracted string
+msgid "My Decks"
+msgstr ""
+
+# Extracted string
+msgid "Community"
+msgstr ""
+
+# Extracted string
+msgid "No flashcard decks yet"
+msgstr ""
+
+# Extracted string
+msgid "Create your first deck to help students study key terms, or clone one from Community."
+msgstr ""
+
+# Extracted string
+msgid "Not assigned to any class yet"
+msgstr ""
+
+# Extracted string
+msgid "Spell"
+msgstr ""
+
+# Extracted string
+msgid "No shared decks yet"
+msgstr ""
+
+# Extracted string
+msgid "When other teachers share a deck, it'll show up here for you to clone."
+msgstr ""
+
+# Extracted string
+msgid "Loading match game…"
+msgstr ""
+
+# Extracted string
+msgid "Deck not found, or it isn't assigned to your class."
+msgstr ""
+
+# Extracted string
+msgid "Match mode needs at least 2 cards in this deck."
+msgstr ""
+
+# Extracted string
+msgid "Study"
+msgstr ""
+
+# Extracted string
+msgid "Difficulty / grid size"
+msgstr ""
+
+# Extracted string
+msgid "p.pairs"
+msgstr ""
+
+# Extracted string
+msgid "All Cards"
+msgstr ""
+
+# Extracted string
+msgid "Start Game"
+msgstr ""
+
+# Extracted string
+msgid "Match Complete"
+msgstr ""
+
+# Extracted string
+msgid "Change Size"
+msgstr ""
+
+# Extracted string
+msgid "Play Again"
+msgstr ""
+
+# Extracted string
+msgid "Loading quiz…"
+msgstr ""
+
+# Extracted string
+msgid "Quiz mode needs at least 2 cards in this deck."
+msgstr ""
+
+# Extracted string
+msgid "Question types"
+msgstr ""
+
+# Extracted string
+msgid "Start Quiz"
+msgstr ""
+
+# Extracted string
+msgid "Quiz Complete"
+msgstr ""
+
+# Extracted string
+msgid "Review missed questions"
+msgstr ""
+
+# Extracted string
+msgid "Change Types"
+msgstr ""
+
+# Extracted string
+msgid "Retake Quiz"
+msgstr ""
+
+# Extracted string
+msgid "Does this definition match the term?"
+msgstr ""
+
+# Extracted string
+msgid "Type the term for this definition"
+msgstr ""
+
+# Extracted string
+msgid "Check Answer"
+msgstr ""
+
+# Extracted string
+msgid "This browser can't read words aloud"
+msgstr ""
+
+# Extracted string
+msgid "Type the spelling…"
+msgstr ""
+
+# Extracted string
+msgid "Loading spelling quiz…"
+msgstr ""
+
+# Extracted string
+msgid "This deck has no cards to spell yet."
+msgstr ""
+
+# Extracted string
+msgid "Spelling Quiz Complete"
+msgstr ""
+
+# Extracted string
+msgid "Words to practice"
+msgstr ""
+
+# Extracted string
+msgid "Hear the word again"
+msgstr ""
+
+# Extracted string
+msgid "Your browser can't read words aloud, so the definition is your only clue."
+msgstr ""
+
+# Extracted string
+msgid "Check Spelling"
+msgstr ""
+
+# Extracted string
+msgid "Study decks your teachers have assigned to your class."
+msgstr ""
+
+# Extracted string
+msgid "No decks assigned yet"
+msgstr ""
+
+# Extracted string
+msgid "Check back once your teacher assigns a flashcard deck to your class."
+msgstr ""
+
+# Extracted string
+msgid "Could not save your progress"
+msgstr ""
+
+# Extracted string
+msgid "Flip card"
+msgstr ""
+
+# Extracted string
+msgid "Restart in order"
+msgstr ""
+
+# Extracted string
+msgid "You know every card in this deck. Nice work!"
+msgstr ""
+
+# Extracted string
+msgid "Study all cards anyway"
+msgstr ""
+
+# Extracted string
+msgid "Tap the card to flip it"
+msgstr ""
+
+# Extracted string
+msgid "Still learning"
+msgstr ""
+
+# Extracted string
+msgid "Know it"
+msgstr ""
+
+# Extracted string
+msgid "Opponent:"
+msgstr ""
+
+# Extracted string
+msgid "AI"
+msgstr ""
+
+# Extracted string
+msgid "Human (Local)"
+msgstr ""
+
+# Extracted string
+msgid "Difficulty:"
+msgstr ""
+
+# Extracted string
+msgid "Easy"
+msgstr ""
+
+# Extracted string
+msgid "Hard"
+msgstr ""
+
+# Extracted string
+msgid "VS"
+msgstr ""
+
+# Extracted string
+msgid "AI is thinking..."
+msgstr ""
+
+# Extracted string
+msgid "No words answered correctly this game — try again!"
+msgstr ""
+
+# Extracted string
+msgid "↶ Undo"
+msgstr ""
+
+# Extracted string
+msgid "Restart"
+msgstr ""
+
+# Extracted string
+msgid "Forfeit"
+msgstr ""
+
+# Extracted string
+msgid "Answer to make your move"
+msgstr ""
+
+# Extracted string
+msgid "Which definition is correct?"
+msgstr ""
+
+# Extracted string
+msgid "Word"
+msgstr ""
+
+# Extracted string
+msgid "Part of speech (optional, e.g. noun)"
+msgstr ""
+
+# Extracted string
+msgid "Manage Vocabulary"
+msgstr ""
+
+# Extracted string
+msgid "Words you add here are mixed with the dictionary in the Vocabulary game for all students."
+msgstr ""
+
+# Extracted string
+msgid "No custom words yet — add one above."
+msgstr ""
+
+# Extracted string
+msgid "hidden"
+msgstr ""
+
+# Extracted string
+msgid "Select Game Mode"
+msgstr ""
+
+# Extracted string
+msgid "Game Settings"
+msgstr ""
+
+# Extracted string
+msgid "Opponent"
+msgstr ""
+
+# Extracted string
+msgid "🤖 AI Opponent"
+msgstr ""
+
+# Extracted string
+msgid "👥 Human (Local)"
+msgstr ""
+
+# Extracted string
+msgid "AI Difficulty"
+msgstr ""
+
+# Extracted string
+msgid "🎮 Start Game"
+msgstr ""
+
+# Extracted string
+msgid "Game Features"
+msgstr ""
+
+# Extracted string
+msgid "✓ Undo moves to fix mistakes"
+msgstr ""
+
+# Extracted string
+msgid "✓ Sound effects (can be muted)"
+msgstr ""
+
+# Extracted string
+msgid "✓ AI opponent with 3 difficulty levels"
+msgstr ""
+
+# Extracted string
+msgid "✓ Full checkers rules (forced jumps, multi-jumps, kings)"
+msgstr ""
+
+# Extracted string
+msgid "✓ Vocabulary mode - learn words while playing!"
+msgstr ""
+
+# Extracted string
+msgid "🎲"
+msgstr ""
+
+# Extracted string
+msgid "Checkers Game"
+msgstr ""
+
+# Extracted string
+msgid "Classic board game with AI opponent and vocabulary learning!"
+msgstr ""
+
+# Extracted string
+msgid "Swipe the board to steer — or tap:"
+msgstr ""
+
+# Extracted string
+msgid "Score:"
+msgstr ""
+
+# Extracted string
+msgid "Best:"
+msgstr ""
+
+# Extracted string
+msgid "SPEED"
+msgstr ""
+
+# Extracted string
+msgid "BOARD SIZE"
+msgstr ""
+
+# Extracted string
+msgid "How to Play ▼"
+msgstr ""
+
+# Extracted string
+msgid "🎮 Arrow keys or WASD to move"
+msgstr ""
+
+# Extracted string
+msgid "🍎 Eat food to grow and score"
+msgstr ""
+
+# Extracted string
+msgid "⚠️ Avoid walls and yourself"
+msgstr ""
+
+# Extracted string
+msgid "⏸️ Pause anytime to take a break"
+msgstr ""
+
+# Extracted string
+msgid "📱 Use touch controls on mobile"
+msgstr ""
+
+# Extracted string
+msgid "Game Modes"
+msgstr ""
+
+# Extracted string
+msgid "Vocabulary"
+msgstr ""
+
+# Extracted string
+msgid "Choose Game Mode"
+msgstr ""
+
+# Extracted string
+msgid "Class Leaderboard"
+msgstr ""
+
+# Extracted string
+msgid "Classic"
+msgstr ""
+
+# Extracted string
+msgid "This Week"
+msgstr ""
+
+# Extracted string
+msgid "This Month"
+msgstr ""
+
+# Extracted string
+msgid "All Time"
+msgstr ""
+
+# Extracted string
+msgid "Loading leaderboard..."
+msgstr ""
+
+# Extracted string
+msgid "No scores yet. Be the first to play!"
+msgstr ""
+
+# Extracted string
+msgid "You"
+msgstr ""
+
+# Extracted string
+msgid "No vocabulary learning data available yet. Start playing Vocabulary Snake to track your progress!"
+msgstr ""
+
+# Extracted string
+msgid "Recent Performance"
+msgstr ""
+
+# Extracted string
+msgid "Top Learned Words"
+msgstr ""
+
+# Extracted string
+msgid "Learning Progress"
+msgstr ""
+
+# Extracted string
+msgid "Are you sure you want to delete this word?"
+msgstr ""
+
+# Extracted string
+msgid "Successfully imported ${validWords.length} vocabulary words from CSV!"
+msgstr ""
+
+# Extracted string
+msgid "Successfully imported ${normalizedWords.length} vocabulary words from JSON!"
+msgstr ""
+
+# Extracted string
+msgid "Error importing vocabulary: ${error instanceof Error ? error.message : \"Please check the file format\"}"
+msgstr ""
+
+# Extracted string
+msgid "Please fill in the word and definition"
+msgstr ""
+
+# Extracted string
+msgid "Search words or definitions..."
+msgstr ""
+
+# Extracted string
+msgid "EPHEMERAL"
+msgstr ""
+
+# Extracted string
+msgid "Lasting for a very short time"
+msgstr ""
+
+# Extracted string
+msgid "Loading vocabulary..."
+msgstr ""
+
+# Extracted string
+msgid "Vocabulary Management"
+msgstr ""
+
+# Extracted string
+msgid "Add Word"
+msgstr ""
+
+# Extracted string
+msgid "CSV Template"
+msgstr ""
+
+# Extracted string
+msgid "Import CSV/JSON"
+msgstr ""
+
+# Extracted string
+msgid "CSV Format Recommended"
+msgstr ""
+
+# Extracted string
+msgid "word,definition,partOfSpeech,difficulty,language"
+msgstr ""
+
+# Extracted string
+msgid "Download the CSV Template to see the exact format. Both CSV and JSON imports are supported."
+msgstr ""
+
+# Extracted string
+msgid "Add New Vocabulary Word"
+msgstr ""
+
+# Extracted string
+msgid "Part of Speech"
+msgstr ""
+
+# Extracted string
+msgid "Select..."
+msgstr ""
+
+# Extracted string
+msgid "Noun"
+msgstr ""
+
+# Extracted string
+msgid "Verb"
+msgstr ""
+
+# Extracted string
+msgid "Adjective"
+msgstr ""
+
+# Extracted string
+msgid "Adverb"
+msgstr ""
+
+# Extracted string
+msgid "Preposition"
+msgstr ""
+
+# Extracted string
+msgid "Conjunction"
+msgstr ""
+
+# Extracted string
+msgid "Interjection"
+msgstr ""
+
+# Extracted string
+msgid "Words:"
+msgstr ""
+
+# Extracted string
+msgid "Start Learning"
+msgstr ""
+
+# Extracted string
+msgid "Learn More"
+msgstr ""
+
+# Extracted string
+msgid "YOUR PROGRESS"
+msgstr ""
+
+# Extracted string
+msgid "Total Words:"
+msgstr ""
+
+# Extracted string
+msgid "Games:"
+msgstr ""
+
+# Extracted string
+msgid "Average Score:"
+msgstr ""
+
+# Extracted string
+msgid "📚 Collect books to learn vocabulary"
+msgstr ""
+
+# Extracted string
+msgid "🔊 Click speaker for pronunciation"
+msgstr ""
+
+# Extracted string
+msgid "⏸️ Press Space to pause anytime"
+msgstr ""
+
+# Extracted string
+msgid "Snake"
+msgstr ""
+
+# Extracted string
+msgid "🐍"
+msgstr ""
+
+# Extracted string
+msgid "Classic snake game with class leaderboards and vocabulary challenges!"
+msgstr ""
+
+# Extracted string
+msgid "Are you sure you want to restart this game? Your progress will be lost."
+msgstr ""
+
+# Extracted string
+msgid "You are currently playing sudoku ${translateCollectionName(gameState.sudokuCollectionName)} #${gameState.sudokuIndex + 1}, do you want to pause it and start ${translateCollectionName(sudokuCollectionName)} #${sudokuIndex}?"
+msgstr ""
+
+# Extracted string
+msgid "This sudoku doesn't seem to be valid."
+msgstr ""
+
+# Extracted string
+msgid "Clear"
+msgstr ""
+
+# Extracted string
+msgid "New game"
+msgstr ""
+
+# Extracted string
+msgid "Select new sudoku"
+msgstr ""
+
+# Extracted string
+msgid "Shortcuts"
+msgstr ""
+
+# Extracted string
+msgid "Arrow keys: Move around the board"
+msgstr ""
+
+# Extracted string
+msgid "Number keys: Write a note or set the sudoku number"
+msgstr ""
+
+# Extracted string
+msgid "Backspace: Delete a number"
+msgstr ""
+
+# Extracted string
+msgid "Escape: Pause/unpause the game"
+msgstr ""
+
+# Extracted string
+msgid "H: Hint"
+msgstr ""
+
+# Extracted string
+msgid "N: Enter/exit note mode"
+msgstr ""
+
+# Extracted string
+msgid "CTRL + Z: Undo"
+msgstr ""
+
+# Extracted string
+msgid "CTRL + Y: Redo"
+msgstr ""
+
+# Extracted string
+msgid "CTRL + C/V: Copy/paste notes"
+msgstr ""
+
+# Extracted string
+msgid "Show auto generated notes"
+msgstr ""
+
+# Extracted string
+msgid "Highlight wrong entries"
+msgstr ""
+
+# Extracted string
+msgid "Highlight conflicts"
+msgstr ""
+
+# Extracted string
+msgid "Show circle menu when a cell is clicked (desktop only)"
+msgstr ""
+
+# Extracted string
+msgid "Show occurrences of numbers in number buttons"
+msgstr ""
+
+# Extracted string
+msgid "About"
+msgstr ""
+
+# Extracted string
+msgid "super-sudoku"
+msgstr ""
+
+# Extracted string
+msgid "🎉 Congrats, you won! 🎉"
+msgstr ""
+
+# Extracted string
+msgid "Are you sure? This will restart the sudoku and reset the timer. It will continue to say that you solved it."
+msgstr ""
+
+# Extracted string
+msgid "You cannot delete the base collection."
+msgstr ""
+
+# Extracted string
+msgid "Are you sure you want to delete collection \"${translateCollectionName(activeCollection.name)}\"? This will delete all sudokus in it."
+msgstr ""
+
+# Extracted string
+msgid "Continue"
+msgstr ""
+
+# Extracted string
+msgid "There are no sudokus in this collection. Add one by clicking the \"Add sudoku\" button."
+msgstr ""
+
+# Extracted string
+msgid "+ New Collection"
+msgstr ""
+
+# Extracted string
+msgid "Add sudoku +"
+msgstr ""
+
+# Extracted string
+msgid "Close new sudoku creator"
+msgstr ""
+
+# Extracted string
+msgid "Delete collection"
+msgstr ""
+
+# Extracted string
+msgid "Create new sudoku"
+msgstr ""
+
+# Extracted string
+msgid "Loading puzzles…"
+msgstr ""
+
+# Extracted string
+msgid "Undo"
+msgstr ""
+
+# Extracted string
+msgid "Erase"
+msgstr ""
+
+# Extracted string
+msgid "Hint"
+msgstr ""
+
+# Extracted string
+msgid "Select a new sudoku to play or continue with an already started game."
+msgstr ""
+
+# Extracted string
+msgid "Your own pay history — base salary, allowances, and deductions for each finalized pay period."
+msgstr ""
+
+# Extracted string
+msgid "No payroll records yet"
+msgstr ""
+
+# Extracted string
+msgid "Your payslips will appear here once a payroll run including you has been finalized."
+msgstr ""
+
+# Extracted string
+msgid "Pay Period"
+msgstr ""
+
+# Extracted string
+msgid "Net Pay"
+msgstr ""
+
+# Extracted string
+msgid "Article not found"
+msgstr ""
+
+# Extracted string
+msgid "Clear selection"
+msgstr ""
+
+# Extracted string
+msgid "Loading article..."
+msgstr ""
+
+# Extracted string
+msgid "Back to all news"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load news"
+msgstr ""
+
+# Extracted string
+msgid "News refreshed"
+msgstr ""
+
+# Extracted string
+msgid "Search articles..."
+msgstr ""
+
+# Extracted string
+msgid "Refresh now"
+msgstr ""
+
+# Extracted string
+msgid "Sources"
+msgstr ""
+
+# Extracted string
+msgid "Full Article"
+msgstr ""
+
+# Extracted string
+msgid "Loading news..."
+msgstr ""
+
+# Extracted string
+msgid "No articles yet"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load news sources"
+msgstr ""
+
+# Extracted string
+msgid "Name and feed URL are required"
+msgstr ""
+
+# Extracted string
+msgid "Source added — fetching its articles now"
+msgstr ""
+
+# Extracted string
+msgid "Source removed"
+msgstr ""
+
+# Extracted string
+msgid "Fetched ${result.count} article(s) from ${source.name}"
+msgstr ""
+
+# Extracted string
+msgid "Remove \"${source.name}\"? Its ${source._count.articles} cached article(s) will also be deleted."
+msgstr ""
+
+# Extracted string
+msgid "e.g. BBC World News"
+msgstr ""
+
+# Extracted string
+msgid "https://example.com/rss.xml"
+msgstr ""
+
+# Extracted string
+msgid "World"
+msgstr ""
+
+# Extracted string
+msgid "News Sources"
+msgstr ""
+
+# Extracted string
+msgid "RSS Feed URL"
+msgstr ""
+
+# Extracted string
+msgid "Category (optional)"
+msgstr ""
+
+# Extracted string
+msgid "Source"
+msgstr ""
+
+# Extracted string
+msgid "Articles"
+msgstr ""
+
+# Extracted string
+msgid "Last Fetched"
+msgstr ""
+
+# Extracted string
+msgid "No sources yet — add one above."
+msgstr ""
+
+# Extracted string
+msgid "Error"
+msgstr ""
+
+# Extracted string
+msgid "Cursor Effects"
+msgstr ""
+
+# Extracted string
+msgid "A fun, purely decorative effect that follows the mouse across the whole app."
+msgstr ""
+
+# Extracted string
+msgid "Rainbow Trail"
+msgstr ""
+
+# Extracted string
+msgid "Splash Cursor (fluid)"
+msgstr ""
+
+# Extracted string
+msgid "Ribbons"
+msgstr ""
+
+# Extracted string
+msgid "Ghost Cursor (smoke trail)"
+msgstr ""
+
+# Extracted string
+msgid "Click Spark"
+msgstr ""
+
+# Extracted string
+msgid "Target Cursor (reticle)"
+msgstr ""
+
+# Extracted string
+msgid "Applies for every user across the whole app. Automatically disabled for anyone with \"reduce motion\" enabled in their OS."
+msgstr ""
+
+# Extracted string
+msgid "Comment cannot be empty"
+msgstr ""
+
+# Extracted string
+msgid "Reported. An admin will review it."
+msgstr ""
+
+# Extracted string
+msgid "Report this post to the admin team?"
+msgstr ""
+
+# Extracted string
+msgid "Report this comment to the admin team?"
+msgstr ""
+
+# Extracted string
+msgid "reported"
+msgstr ""
+
+# Extracted string
+msgid "(edited)"
+msgstr ""
+
+# Extracted string
+msgid "Reported content"
+msgstr ""
+
+# Extracted string
+msgid "Nothing reported right now."
+msgstr ""
+
+# Extracted string
+msgid "Remove content"
+msgstr ""
+
+# Extracted string
+msgid "Nothing new yet —"
+msgstr ""
+
+# Extracted string
+msgid "browse the library"
+msgstr ""
+
+# Extracted string
+msgid "Read the article"
+msgstr ""
+
+# Extracted string
+msgid "Read the book"
+msgstr ""
+
+# Extracted string
+msgid "Couldn't load your profile right now. Please refresh the page or contact the administrative office if this keeps happening."
+msgstr ""
+
+# Extracted string
+msgid "${name} marked as Dropped."
+msgstr ""
+
+# Extracted string
+msgid "Student ID did not match — nothing was deleted."
+msgstr ""
+
+# Extracted string
+msgid "${name} permanently deleted."
+msgstr ""
+
+# Extracted string
+msgid "Mark ${name} as Dropped (left the school)? They'll disappear from active class rosters and attendance marking, but all their grades, attendance, and exam history is kept. You can reverse this later from Edit Details."
+msgstr ""
+
+# Extracted string
+msgid "Remove Student"
+msgstr ""
+
+# Extracted string
+msgid "Mark as Left (Dropped)"
+msgstr ""
+
+# Extracted string
+msgid "Delete Permanently"
+msgstr ""
+
+# Extracted string
+msgid "Quick Facts"
+msgstr ""
+
+# Extracted string
+msgid "Loading case records…"
+msgstr ""
+
+# Extracted string
+msgid "No case records for this student."
+msgstr ""
+
+# Extracted string
+msgid "Title and due date are required"
+msgstr ""
+
+# Extracted string
+msgid "Homework updated"
+msgstr ""
+
+# Extracted string
+msgid "Linked News article"
+msgstr ""
+
+# Extracted string
+msgid "Linked E-Book"
+msgstr ""
+
+# Extracted string
+msgid "Today's Sessions"
+msgstr ""
+
+# Extracted string
+msgid "Specialization (comma separated)"
+msgstr ""
+
+# Extracted string
+msgid "Subjects tab → Assign Subject"
+msgstr ""
+
+# Extracted string
+msgid "on their profile page."
+msgstr ""
+
+# Extracted string
+msgid "Subject assigned"
+msgstr ""
+
+# Extracted string
+msgid "Remove this subject from the teacher?"
+msgstr ""
+
+# Extracted string
+msgid "Assign Subject"
+msgstr ""
+
+# Extracted string
+msgid "This teacher is already assigned to every subject."
+msgstr ""
+
+# Extracted string
+msgid "Teacher ID did not match — nothing was deleted."
+msgstr ""
+
+# Extracted string
+msgid "Can be used to sign in instead of the email address."
+msgstr ""
+
+# Extracted string
+msgid "This account is linked to a teacher profile. Delete the teacher from the Teachers page instead."
+msgstr ""
+
+# Extracted string
+msgid "This account is linked to a student profile. Delete the student from the Students page instead."
+msgstr ""
+
+# Extracted string
+msgid "Cannot delete the last active administrator."
+msgstr ""
+
+# Extracted string
+msgid "Email did not match — nothing was deleted."
+msgstr ""
+
+# Extracted string
+msgid "${user.name} permanently deleted."
+msgstr ""
+
+# Extracted string
+msgid "Failed to load vendor"
+msgstr ""
+
+# Extracted string
+msgid "Vendor deleted successfully"
+msgstr ""
+
+# Extracted string
+msgid "Are you sure you want to delete this vendor?"
+msgstr ""
+
+# Extracted string
+msgid "Vendor not found"
+msgstr ""
+
+# Extracted string
+msgid "Website"
+msgstr ""
+
+# Extracted string
+msgid "Financial Information"
+msgstr ""
+
+# Extracted string
+msgid "Tax ID / GST Registration"
+msgstr ""
+
+# Extracted string
+msgid "Payment Terms"
+msgstr ""
+
+# Extracted string
+msgid "Bank Name"
+msgstr ""
+
+# Extracted string
+msgid "Bank Account"
+msgstr ""
+
+# Extracted string
+msgid "Purchase History"
+msgstr ""
+
+# Extracted string
+msgid "Total Purchases"
+msgstr ""
+
+# Extracted string
+msgid "Total Transactions"
+msgstr ""
+
+# Extracted string
+msgid "Last Purchase"
+msgstr ""
+
+# Extracted string
+msgid "Recent Expenses"
+msgstr ""
+
+# Extracted string
+msgid "Please enter vendor name"
+msgstr ""
+
+# Extracted string
+msgid "Vendor updated successfully"
+msgstr ""
+
+# Extracted string
+msgid "Enter vendor name"
+msgstr ""
+
+# Extracted string
+msgid "Enter vendor description"
+msgstr ""
+
+# Extracted string
+msgid "Primary contact name"
+msgstr ""
+
+# Extracted string
+msgid "https://example.com"
+msgstr ""
+
+# Extracted string
+msgid "e.g., NET 30, COD"
+msgstr ""
+
+# Extracted string
+msgid "Bank name"
+msgstr ""
+
+# Extracted string
+msgid "Account number"
+msgstr ""
+
+# Extracted string
+msgid "Edit Vendor"
+msgstr ""
+
+# Extracted string
+msgid "Update vendor information"
+msgstr ""
+
+# Extracted string
+msgid "Vendor Name *"
+msgstr ""
+
+# Extracted string
+msgid "Active Vendor"
+msgstr ""
+
+# Extracted string
+msgid "Vendor created successfully"
+msgstr ""
+
+# Extracted string
+msgid "New Vendor"
+msgstr ""
+
+# Extracted string
+msgid "Add a new supplier or service provider"
+msgstr ""
+
+# Extracted string
+msgid "Search vendors..."
+msgstr ""
+
+# Extracted string
+msgid "Manage suppliers and service providers."
+msgstr ""
+
+# Extracted string
+msgid "Add Vendor"
+msgstr ""
+
+# Extracted string
+msgid "Total Vendors"
+msgstr ""
+
+# Extracted string
+msgid "Active Vendors"
+msgstr ""
+
+# Extracted string
+msgid "Expense Count"
+msgstr ""
+

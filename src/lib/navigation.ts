@@ -29,7 +29,10 @@ import {
   Layers,
   ShieldAlert,
   Grid3x3,
-  BookA
+  BookA,
+  Turtle,
+  Gamepad2,
+  Dice5
 } from "lucide-react";
 import { UserRole } from "./permissions";
 
@@ -59,7 +62,15 @@ export const ADMIN_NAV: AdminNavEntry[] = [
   { title: "Chat", url: "/chat", icon: MessageSquare },
   { title: "Social Space", url: "/social", icon: Sparkles },
   { title: "News", url: "/news", icon: Newspaper },
-  { title: "Sudoku", url: "/games/sudoku", icon: Grid3x3 },
+  {
+    label: "Games",
+    icon: Gamepad2,
+    items: [
+      { title: "Snake Game", url: "/games/snake", icon: Turtle },
+      { title: "Sudoku", url: "/games/sudoku", icon: Grid3x3 },
+      { title: "Checkers", url: "/games/checkers", icon: Dice5 },
+    ],
+  },
   { title: "Dictionary", url: "/dictionary", icon: BookA },
   { title: "Announcements", url: "/announcements", icon: Megaphone },
   { title: "Timetable", url: "/timetable", icon: CalendarDays },
@@ -152,7 +163,15 @@ export const TEACHER_NAV: AdminNavEntry[] = [
   { title: "Chat", url: "/chat", icon: MessageSquare },
   { title: "Social Space", url: "/social", icon: Sparkles },
   { title: "News", url: "/news", icon: Newspaper },
-  { title: "Sudoku", url: "/games/sudoku", icon: Grid3x3 },
+  {
+    label: "Games",
+    icon: Gamepad2,
+    items: [
+      { title: "Snake Game", url: "/games/snake", icon: Turtle },
+      { title: "Sudoku", url: "/games/sudoku", icon: Grid3x3 },
+      { title: "Checkers", url: "/games/checkers", icon: Dice5 },
+    ],
+  },
   { title: "Dictionary", url: "/dictionary", icon: BookA },
   { title: "Announcements", url: "/announcements", icon: Megaphone },
   { title: "My Timetable", url: "/teacher/timetable", icon: CalendarDays },
@@ -202,7 +221,15 @@ export const STUDENT_NAV: AdminNavEntry[] = [
   { title: "Chat", url: "/chat", icon: MessageSquare },
   { title: "Social Space", url: "/social", icon: Sparkles },
   { title: "News", url: "/news", icon: Newspaper },
-  { title: "Sudoku", url: "/games/sudoku", icon: Grid3x3 },
+  {
+    label: "Games",
+    icon: Gamepad2,
+    items: [
+      { title: "Snake Game", url: "/games/snake", icon: Turtle },
+      { title: "Sudoku", url: "/games/sudoku", icon: Grid3x3 },
+      { title: "Checkers", url: "/games/checkers", icon: Dice5 },
+    ],
+  },
   { title: "Dictionary", url: "/dictionary", icon: BookA },
   { title: "Announcements", url: "/announcements", icon: Megaphone },
   { title: "My Timetable", url: "/timetable", icon: CalendarDays },
@@ -282,6 +309,16 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     title: "Sudoku",
     url: "/games/sudoku",
     icon: Grid3x3,
+  },
+  {
+    title: "Snake Game",
+    url: "/games/snake",
+    icon: Turtle,
+  },
+  {
+    title: "Checkers",
+    url: "/games/checkers",
+    icon: Dice5,
   },
   {
     title: "Dictionary",

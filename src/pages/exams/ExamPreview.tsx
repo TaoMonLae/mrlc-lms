@@ -4,8 +4,10 @@ import { ArrowLeft, Eye, Loader2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { apiGet } from '../../lib/api';
 import MathText from '../../components/MathText';
+import { splitDragText } from '../../lib/dragBlanks';
 
-type Q = { id: string; text: string; type: string; points: number; options: { value: string; text: string }[] | null; dragItems?: string[]; dragTargets?: string[]; passageText?: string | null; imageUrl?: string | null };
+type DragBankItem = { key: string; label: string };
+type Q = { id: string; text: string; type: string; points: number; options: { value: string; text: string }[] | null; dragText?: string; dragBank?: DragBankItem[]; passageText?: string | null; imageUrl?: string | null };
 
 const TEXT_ANSWER_TYPES = ['SHORT_ANSWER', 'ESSAY', 'WRITTEN'];
 
@@ -86,9 +88,17 @@ export default function ExamPreview() {
                     ))}
                   </div>
                 ) : q.type === 'DRAG_DROP' ? (
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {(q.dragItems || []).map((item) => <div key={item} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-800 dark:border-surface-raised dark:bg-canvas dark:text-slate-100">{item}</div>)}
-                    {(q.dragTargets || []).map((target) => <div key={target} className="min-h-16 rounded-lg border-2 border-dashed border-slate-200 p-3 text-sm font-medium text-slate-500 dark:border-surface-raised">{target}</div>)}
+                  <div className="space-y-4">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 text-lg leading-loose dark:border-surface-raised dark:bg-canvas">
+                      {splitDragText(q.dragText || '').map((seg, i) => seg.kind === 'text'
+                        ? <span key={i}>{seg.text}</span>
+                        : <span key={i} className="mx-1 inline-block min-w-[6rem] rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 px-3 py-1 text-center align-middle dark:border-surface-raised dark:bg-surface-raised/40">&nbsp;</span>)}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {(q.dragBank || []).map((chip) => (
+                        <span key={chip.key} className="rounded-full border-2 border-aubergine-300 bg-aubergine-50 px-4 py-2 text-sm font-bold text-aubergine-800 shadow-sm dark:border-aubergine-700 dark:bg-aubergine-900/30 dark:text-aubergine-200">{chip.label}</span>
+                      ))}
+                    </div>
                   </div>
                 ) : (
                   <div className="w-full min-h-[100px] rounded-lg border border-dashed border-slate-200 dark:border-surface-raised bg-slate-50/50 dark:bg-canvas/40 p-3 text-sm text-slate-400">
