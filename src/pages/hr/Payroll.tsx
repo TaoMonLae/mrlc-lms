@@ -17,9 +17,9 @@ import { formatMoney } from '../../lib/locale';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const STATUS_STYLES: Record<string, string> = {
-  DRAFT: 'bg-slate-200 text-slate-600',
-  APPROVED: 'bg-blue-100 text-blue-700',
-  PAID: 'bg-emerald-100 text-emerald-700',
+  DRAFT: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200',
+  APPROVED: 'bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300',
+  PAID: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300',
 };
 
 export default function Payroll() {
@@ -34,6 +34,7 @@ export default function Payroll() {
   const [editForm, setEditForm] = useState({ year: '', month: '1', notes: '' });
   const [refreshing, setRefreshing] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [creating, setCreating] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -51,15 +52,22 @@ export default function Payroll() {
   }
 
   async function createRun() {
+    const parsedYear = Number(year);
+    if (!Number.isInteger(parsedYear) || parsedYear < 2000 || parsedYear > 2100) {
+      toast.error('Year must be between 2000 and 2100'); return;
+    }
+    setCreating(true);
     try {
-      await apiSend('/api/payroll-runs', 'POST', { periodYear: Number(year), periodMonth: Number(month) });
+      await apiSend('/api/payroll-runs', 'POST', { periodYear: parsedYear, periodMonth: Number(month) });
       toast.success('Payroll run created');
-      setOpen(false); load();
+      setOpen(false); await load();
     } catch (err: any) { toast.error(err.message); }
+    finally { setCreating(false); }
   }
 
   async function setStatus(next: string) {
     if (!selected) return;
+    if (next === 'PAID' && !window.confirm('Mark this payroll as paid? This permanently locks every payslip in the run.')) return;
     try {
       await apiSend(`/api/payroll-runs/${selected.id}/status`, 'PUT', { status: next });
       toast.success(`Marked ${next}`);
@@ -167,7 +175,7 @@ export default function Payroll() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button onClick={createRun}>Create</Button>
+              <Button onClick={createRun} disabled={creating}>{creating ? 'Creating…' : 'Create'}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -176,13 +184,13 @@ export default function Payroll() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-2 lg:col-span-1">
-          <h2 className="text-sm font-semibold text-slate-700">Runs</h2>
+          <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Runs</h2>
           {loading ? <p className="text-sm text-slate-400">Loading…</p> :
             runs.length === 0 ? <p className="text-sm text-slate-400">No payroll runs yet.</p> :
             <ul className="space-y-1">
               {runs.map((r) => (
                 <li key={r.id}>
-                  <button onClick={() => openRun(r.id)} className={`flex w-full items-center justify-between rounded-md border px-3 py-2 text-sm ${selected?.id === r.id ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                  <button onClick={() => openRun(r.id)} className={`flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-sm transition-colors ${selected?.id === r.id ? 'border-indigo-300 bg-indigo-50 dark:border-indigo-700 dark:bg-indigo-950/40' : 'border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800'}`}>
                     <span>{MONTHS[r.periodMonth - 1]} {r.periodYear} <span className="text-xs text-slate-400">· {r._count?.payslips ?? 0} payslips</span></span>
                     <Badge className={STATUS_STYLES[r.status]}>{r.status}</Badge>
                   </button>
@@ -193,15 +201,15 @@ export default function Payroll() {
 
         <div className="lg:col-span-2">
           {!selected ? (
-            <div className="rounded-lg border border-dashed border-slate-200 py-16 text-center text-sm text-slate-400">Select a run to view payslips</div>
+            <div className="rounded-lg border border-dashed border-slate-200 py-16 text-center text-sm text-slate-400 dark:border-slate-700">Select a run to view payslips</div>
           ) : (
-            <div className="space-y-4 rounded-lg border border-slate-200 p-4">
-              <div className="flex items-center justify-between">
+            <div className="space-y-4 rounded-lg border border-slate-200 p-4 dark:border-slate-700">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <h2 className="font-semibold text-slate-800">{MONTHS[selected.periodMonth - 1]} {selected.periodYear}</h2>
+                  <h2 className="font-semibold text-slate-800 dark:text-slate-100">{MONTHS[selected.periodMonth - 1]} {selected.periodYear}</h2>
                   <p className="text-sm text-slate-500">Total net: {formatMoney(selected.totalNet ?? 0, selected.payslips?.[0]?.currency)}</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <Badge className={STATUS_STYLES[selected.status]}>{selected.status}</Badge>
                   <Button size="sm" variant="outline" onClick={exportPdf} disabled={exporting}>
                     <Download className="mr-1 h-4 w-4" /> {exporting ? 'Exporting…' : 'Export PDF'}
@@ -211,7 +219,7 @@ export default function Payroll() {
                       <Pencil className="h-4 w-4 text-slate-500" />
                     </Button>
                   )}
-                  {selected.status !== 'PAID' && (
+                  {selected.status === 'DRAFT' && (
                     <Button size="sm" variant="ghost" className="h-8 w-8 p-0" title="Delete" onClick={removeRun}>
                       <Trash2 className="h-4 w-4 text-rose-500" />
                     </Button>
@@ -226,7 +234,7 @@ export default function Payroll() {
                 <thead className="text-left text-xs uppercase text-slate-500">
                   <tr><th className="py-1">Payee</th><th className="py-1">Type</th><th className="py-1 text-right">Base</th><th className="py-1 text-right">Allowances</th><th className="py-1 text-right">Deductions</th><th className="py-1 text-right">Net</th><th className="py-1"></th></tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {selected.payslips?.map((p: any) => (
                     <PayslipRow key={p.id} payslip={p} editable={selected.status === 'DRAFT'} onSave={savePayslip} />
                   ))}
@@ -274,23 +282,25 @@ function PayslipRow({ payslip, editable, onSave }: { payslip: any; editable: boo
   const [deductions, setDeductions] = useState(String(payslip.deductions));
   const net = (Number(base) || 0) + (Number(allowances) || 0) - (Number(deductions) || 0);
   const dirty = Number(base) !== payslip.baseSalary || Number(allowances) !== payslip.allowances || Number(deductions) !== payslip.deductions;
+  const values = [Number(base), Number(allowances), Number(deductions)];
+  const valid = values.every((value) => Number.isFinite(value) && value >= 0) && net >= 0;
   return (
     <tr>
       <td className="py-1">{payeeName(payslip)}</td>
       <td className="py-1"><span className="text-xs text-slate-400">{payslip.teacher ? 'Teacher' : 'Staff'}</span></td>
       <td className="py-1 text-right">
-        {editable ? <Input className="h-7 w-24 text-right" type="number" value={base} onChange={(e) => setBase(e.target.value)} /> : formatMoney(payslip.baseSalary, payslip.currency)}
+        {editable ? <Input className="h-7 w-24 text-right" type="number" min="0" step="0.01" value={base} onChange={(e) => setBase(e.target.value)} /> : formatMoney(payslip.baseSalary, payslip.currency)}
       </td>
       <td className="py-1 text-right">
-        {editable ? <Input className="h-7 w-24 text-right" type="number" value={allowances} onChange={(e) => setAllowances(e.target.value)} /> : formatMoney(payslip.allowances, payslip.currency)}
+        {editable ? <Input className="h-7 w-24 text-right" type="number" min="0" step="0.01" value={allowances} onChange={(e) => setAllowances(e.target.value)} /> : formatMoney(payslip.allowances, payslip.currency)}
       </td>
       <td className="py-1 text-right">
-        {editable ? <Input className="h-7 w-24 text-right" type="number" value={deductions} onChange={(e) => setDeductions(e.target.value)} /> : formatMoney(payslip.deductions, payslip.currency)}
+        {editable ? <Input className="h-7 w-24 text-right" type="number" min="0" step="0.01" value={deductions} onChange={(e) => setDeductions(e.target.value)} /> : formatMoney(payslip.deductions, payslip.currency)}
       </td>
       <td className="py-1 text-right font-medium">{formatMoney(editable ? net : payslip.netPay, payslip.currency)}</td>
       <td className="py-1 text-right">
         {editable && dirty
-          ? <Button size="sm" variant="ghost" className="h-6" onClick={() => onSave(payslip, Number(base) || 0, Number(allowances) || 0, Number(deductions) || 0)}>Save</Button>
+          ? <Button size="sm" variant="ghost" className="h-6" disabled={!valid} title={valid ? 'Save payslip' : 'Amounts must be non-negative and deductions cannot exceed gross pay'} onClick={() => onSave(payslip, Number(base), Number(allowances), Number(deductions))}>Save</Button>
           : <Link to={`/payroll/payslips/${payslip.id}/print`} className="text-slate-400 hover:text-slate-600" title="Print payslip"><Printer className="inline h-4 w-4" /></Link>}
       </td>
     </tr>

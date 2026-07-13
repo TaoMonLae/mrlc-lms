@@ -443,6 +443,10 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
+function getExpenseGrossAmount(expense: { amount: number; taxAmount?: number | null }): number {
+  return expense.amount + (expense.taxAmount ?? 0);
+}
+
 async function createAuditLog(
   userId: string | null,
   userName: string | null,
@@ -485,11 +489,11 @@ async function syncBudgetSpending(budgetId: string | null | undefined) {
     const budget = await prisma.budget.findUnique({ where: { id: budgetId } });
     if (!budget) return;
 
-    const counted = await prisma.expense.aggregate({
+    const counted = await prisma.expense.findMany({
       where: { budgetId, status: { in: ["APPROVED", "PAID", "PARTIAL"] } },
-      _sum: { amount: true },
+      select: { amount: true, taxAmount: true },
     });
-    const spentAmount = counted._sum.amount || 0;
+    const spentAmount = counted.reduce((sum, expense) => sum + getExpenseGrossAmount(expense), 0);
     const remainingAmount = budget.allocatedAmount - spentAmount;
 
     let status = budget.status;
@@ -515,7 +519,7 @@ async function syncExpensePaymentStatus(expenseId: string) {
   });
   if (!expense) return null;
 
-  const totalAmount = expense.totalAmount || expense.amount;
+  const totalAmount = getExpenseGrossAmount(expense);
   const totalPaid = expense.payments.reduce((sum, payment) => sum + payment.amount, 0);
   const latestPaymentDate = expense.payments.reduce<Date | null>((latest, payment) => {
     if (!latest || payment.paymentDate > latest) return payment.paymentDate;
@@ -535,6 +539,12 @@ async function syncExpensePaymentStatus(expenseId: string) {
       paidDate: status === "PAID" ? latestPaymentDate : null,
     },
   });
+}
+
+function generatePaymentNumber(paymentDate = new Date()): string {
+  const year = paymentDate.getUTCFullYear();
+  const uniquePart = `${Date.now().toString(36)}${crypto.randomBytes(2).toString("hex")}`.toUpperCase();
+  return `PAY-${year}-${uniquePart}`;
 }
 
 // ─── JWT helpers ─────────────────────────────────────────────────────────────
@@ -649,8 +659,18 @@ const num = z.union([z.string(), z.number()]); // handlers coerce with Number()
 // Required numeric fields (amounts, goals, installment counts, etc.) must be positive —
 // without this, negative/zero values (e.g. a negative expense amount or donation) pass
 // validation and corrupt financial totals downstream.
-const reqNum = num.refine((v) => Number(v) > 0, { message: "must be a positive number" });
+const reqNum = num.refine((v) => Number.isFinite(Number(v)) && Number(v) > 0, { message: "must be a positive number" });
 const optNum = num.optional().nullable();
+const nonNegativeNum = num.refine(
+  (v) => Number.isFinite(Number(v)) && Number(v) >= 0,
+  { message: "must be a non-negative number" }
+);
+const optNonNegativeNum = nonNegativeNum.optional().nullable();
+const positiveIntNum = num.refine(
+  (v) => Number.isInteger(Number(v)) && Number(v) > 0,
+  { message: "must be a positive whole number" }
+);
+const validDateStr = reqStr.refine((v) => !Number.isNaN(Date.parse(v)), { message: "must be a valid date" });
 // Optional foreign-key ID fields (vendorId, budgetId, campaignId, etc.). Frontend
 // "None" <SelectItem value=""> options submit an empty string rather than
 // omitting the field, and while an empty string passes plain z.string()
@@ -939,36 +959,36 @@ const schemas = {
   employee: z.object({
     firstName: reqStr, lastName: reqStr,
     email: z.union([email, z.literal("")]).optional(),
-    phone: optStr, status: optStr,
+    phone: optStr, status: z.enum(["ACTIVE", "ON_LEAVE", "SUSPENDED", "TERMINATED"]).optional(),
     departmentId: nullableStr, designationId: nullableStr,
-    baseSalary: optNum, currency: optStr, hireDate: optStr,
+    baseSalary: optNonNegativeNum, currency: z.string().trim().length(3).optional(), hireDate: validDateStr.optional(),
   }),
   employeeUpdate: z.object({
     firstName: optStr, lastName: optStr,
     email: z.union([email, z.literal("")]).optional(),
-    phone: nullableStr, status: optStr,
+    phone: nullableStr, status: z.enum(["ACTIVE", "ON_LEAVE", "SUSPENDED", "TERMINATED"]).optional(),
     departmentId: nullableStr, designationId: nullableStr,
-    baseSalary: optNum, currency: optStr, hireDate: optStr,
-    terminationDate: nullableStr,
+    baseSalary: optNonNegativeNum, currency: z.string().trim().length(3).optional(), hireDate: validDateStr.optional(),
+    terminationDate: z.union([validDateStr, z.literal(""), z.null()]).optional(),
   }),
   payrollRun: z.object({
-    periodYear: num, periodMonth: num, notes: optStr,
+    periodYear: positiveIntNum, periodMonth: positiveIntNum, notes: optStr,
   }),
   payrollStatus: z.object({
     status: z.enum(["DRAFT", "APPROVED", "PAID"]),
   }),
   payrollRunUpdate: z.object({
-    periodYear: optNum, periodMonth: optNum, notes: nullableStr,
+    periodYear: positiveIntNum.optional(), periodMonth: positiveIntNum.optional(), notes: nullableStr,
   }),
   payslipUpdate: z.object({
-    baseSalary: optNum, allowances: optNum, deductions: optNum, notes: nullableStr,
+    baseSalary: optNonNegativeNum, allowances: optNonNegativeNum, deductions: optNonNegativeNum, notes: nullableStr,
   }),
   leaveType: z.object({
-    name: reqStr, daysPerYear: optNum, paid: z.boolean().optional(),
+    name: reqStr, daysPerYear: optNonNegativeNum, paid: z.boolean().optional(),
   }),
   leaveRequest: z.object({
     employeeId: reqStr, leaveTypeId: reqStr,
-    startDate: reqStr, endDate: reqStr, reason: optStr,
+    startDate: validDateStr, endDate: validDateStr, reason: optStr,
   }),
   leaveDecision: z.object({
     status: z.enum(["APPROVED", "REJECTED", "CANCELLED"]),
@@ -1276,9 +1296,9 @@ const schemas = {
     category: z.enum(["OPERATIONAL", "ACADEMIC", "STAFF_COSTS", "FOOD_CATERING", "TRANSPORTATION", "FACILITY", "TECHNOLOGY", "EVENT", "ADMINISTRATIVE", "OTHER"]),
     amount: reqNum,
     currency: z.string().length(3).optional().default("MYR"),
-    taxAmount: optNum,
-    expenseDate: reqStr,
-    dueDate: optStr,
+    taxAmount: optNonNegativeNum,
+    expenseDate: validDateStr,
+    dueDate: validDateStr.optional(),
     vendorId: optionalId,
     vendorInvoiceNo: nullableStr,
     paymentMethod: optEnumOrEmpty(["CASH", "BANK_TRANSFER", "CHECK", "CREDIT_CARD", "DEBIT_CARD", "ONLINE_PAYMENT", "WIRE_TRANSFER", "OTHER"]),
@@ -1291,16 +1311,18 @@ const schemas = {
     departmentId: nullableStr,
     relatedClassId: nullableStr,
     relatedSubjectId: nullableStr,
+  }).refine((v) => !v.dueDate || new Date(v.dueDate) >= new Date(v.expenseDate), {
+    message: "must be on or after expenseDate", path: ["dueDate"],
   }),
   expenseUpdate: z.object({
     title: optStr,
     description: nullableStr,
     category: z.enum(["OPERATIONAL", "ACADEMIC", "STAFF_COSTS", "FOOD_CATERING", "TRANSPORTATION", "FACILITY", "TECHNOLOGY", "EVENT", "ADMINISTRATIVE", "OTHER"]).optional(),
-    amount: optNum,
+    amount: reqNum.optional().nullable(),
     currency: z.string().length(3).optional(),
-    taxAmount: optNum,
-    expenseDate: optStr,
-    dueDate: optStr,
+    taxAmount: optNonNegativeNum,
+    expenseDate: validDateStr.optional(),
+    dueDate: z.union([validDateStr, z.literal(""), z.null()]).optional(),
     vendorId: optionalId,
     vendorInvoiceNo: nullableStr,
     paymentMethod: optEnumOrEmpty(["CASH", "BANK_TRANSFER", "CHECK", "CREDIT_CARD", "DEBIT_CARD", "ONLINE_PAYMENT", "WIRE_TRANSFER", "OTHER"]),
@@ -1320,9 +1342,29 @@ const schemas = {
     paymentMethod: z.enum(["CASH", "BANK_TRANSFER", "CHECK", "CREDIT_CARD", "DEBIT_CARD", "ONLINE_PAYMENT", "WIRE_TRANSFER", "OTHER"]),
     paymentReference: nullableStr,
     bankAccount: nullableStr,
-    paymentDate: optStr,
+    paymentDate: validDateStr.optional(),
     receiptUrl: nullableStr,
     notes: nullableStr,
+  }),
+  billPaymentCreate: z.object({
+    expenseId: reqStr,
+    amount: reqNum,
+    paymentMethod: z.enum(["CASH", "BANK_TRANSFER", "CHECK", "CREDIT_CARD", "DEBIT_CARD", "ONLINE_PAYMENT", "WIRE_TRANSFER", "OTHER"]),
+    paymentReference: nullableStr,
+    bankAccount: nullableStr,
+    paymentDate: validDateStr.optional(),
+    receiptUrl: nullableStr,
+    notes: nullableStr,
+  }),
+  billPaymentUpdate: z.object({
+    amount: reqNum.optional(),
+    paymentMethod: z.enum(["CASH", "BANK_TRANSFER", "CHECK", "CREDIT_CARD", "DEBIT_CARD", "ONLINE_PAYMENT", "WIRE_TRANSFER", "OTHER"]).optional(),
+    paymentReference: nullableStr,
+    bankAccount: nullableStr,
+    paymentDate: validDateStr.optional(),
+    receiptUrl: nullableStr,
+    notes: nullableStr,
+    approved: z.boolean().optional(),
   }),
   vendorCreate: z.object({
     name: reqStr,
@@ -1371,7 +1413,7 @@ const schemas = {
     category: z.enum(["OPERATIONAL", "ACADEMIC", "STAFF_COSTS", "FOOD_CATERING", "TRANSPORTATION", "FACILITY", "TECHNOLOGY", "EVENT", "ADMINISTRATIVE", "OTHER"]),
     amount: reqNum,
     currency: z.string().length(3).optional().default("MYR"),
-    taxAmount: optNum,
+    taxAmount: optNonNegativeNum,
     vendorId: optionalId,
     frequency: z.enum(["DAILY", "WEEKLY", "BI_WEEKLY", "MONTHLY", "QUARTERLY", "SEMI_ANNUALLY", "ANNUALLY"]),
     startDate: reqStr,
@@ -1388,8 +1430,8 @@ const schemas = {
     code: nullableStr,
     description: nullableStr,
     fiscalYear: z.number().int().positive(),
-    startDate: reqStr,
-    endDate: reqStr,
+    startDate: validDateStr,
+    endDate: validDateStr,
     allocatedAmount: reqNum,
     currency: z.string().length(3).optional().default("MYR"),
     category: optEnumOrEmpty(["OPERATIONAL", "ACADEMIC", "STAFF_COSTS", "FOOD_CATERING", "TRANSPORTATION", "FACILITY", "TECHNOLOGY", "EVENT", "ADMINISTRATIVE", "OTHER"]),
@@ -1398,20 +1440,21 @@ const schemas = {
     strictLimit: z.boolean().optional().default(false),
     notes: nullableStr,
     tags: z.array(z.string()).optional().default([]),
+  }).refine((v) => new Date(v.endDate) >= new Date(v.startDate), {
+    message: "must be on or after startDate", path: ["endDate"],
   }),
   budgetUpdate: z.object({
     name: optStr,
     code: nullableStr,
     description: nullableStr,
     fiscalYear: z.number().int().positive().optional(),
-    startDate: optStr,
-    endDate: optStr,
-    allocatedAmount: optNum,
+    startDate: validDateStr.optional(),
+    endDate: validDateStr.optional(),
+    allocatedAmount: reqNum.optional(),
     currency: z.string().length(3).optional(),
     category: optEnumOrEmpty(["OPERATIONAL", "ACADEMIC", "STAFF_COSTS", "FOOD_CATERING", "TRANSPORTATION", "FACILITY", "TECHNOLOGY", "EVENT", "ADMINISTRATIVE", "OTHER"]),
     departmentId: optionalId,
     status: z.enum(["ACTIVE", "EXHAUSTED", "EXCEEDED", "ARCHIVED"]).optional(),
-    spentAmount: z.number().optional(),
     alertThreshold: z.number().min(0).max(1).optional(),
     strictLimit: z.boolean().optional(),
     notes: nullableStr,
@@ -8698,16 +8741,29 @@ async function startServer() {
         sortOrder = "desc",
       } = req.query;
 
-      const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
-      const take = parseInt(limit as string);
+      const pageNumber = Math.max(1, Number.parseInt(String(page), 10) || 1);
+      const take = Math.min(100, Math.max(1, Number.parseInt(String(limit), 10) || 25));
+      const skip = (pageNumber - 1) * take;
+      const allowedSortFields = new Set(["createdAt", "updatedAt", "expenseDate", "dueDate", "title", "amount", "totalAmount", "status"]);
+      const safeSortBy = allowedSortFields.has(String(sortBy)) ? String(sortBy) : "createdAt";
+      const safeSortOrder = sortOrder === "asc" ? "asc" : "desc";
 
       const where: any = {};
       if (status) where.status = { in: (status as string).split(',') };
       if (category) where.category = { in: (category as string).split(',') };
       if (vendorId) where.vendorId = vendorId;
       if (budgetId) where.budgetId = budgetId;
-      if (startDate) where.expenseDate = { ...where.expenseDate, gte: new Date(startDate as string) };
-      if (endDate) where.expenseDate = { ...where.expenseDate, lte: new Date(endDate as string) };
+      if (startDate) {
+        const parsed = new Date(String(startDate));
+        if (Number.isNaN(parsed.getTime())) { res.status(400).json({ error: "Invalid startDate" }); return; }
+        where.expenseDate = { ...where.expenseDate, gte: parsed };
+      }
+      if (endDate) {
+        const parsed = new Date(String(endDate));
+        if (Number.isNaN(parsed.getTime())) { res.status(400).json({ error: "Invalid endDate" }); return; }
+        parsed.setUTCHours(23, 59, 59, 999);
+        where.expenseDate = { ...where.expenseDate, lte: parsed };
+      }
       if (search) {
         where.OR = [
           { title: { contains: search, mode: 'insensitive' } },
@@ -8721,7 +8777,7 @@ async function startServer() {
           where,
           skip,
           take,
-          orderBy: { [sortBy as string]: sortOrder as 'asc' | 'desc' },
+          orderBy: { [safeSortBy]: safeSortOrder },
           include: {
             vendor: true,
             budget: true,
@@ -8735,21 +8791,24 @@ async function startServer() {
       const summary = await prisma.expense.groupBy({
         by: ['status'],
         where,
-        _sum: { amount: true },
+        _sum: { amount: true, taxAmount: true },
       });
 
+      const sumFor = (entry: (typeof summary)[number] | undefined) => entry
+        ? (entry._sum.amount ?? 0) + (entry._sum.taxAmount ?? 0)
+        : 0;
       const summaryData = {
-        totalAmount: summary.reduce((sum, s) => sum + (s._sum.amount || 0), 0),
-        paidAmount: summary.find(s => s.status === 'PAID')?._sum.amount || 0,
-        pendingAmount: (summary.find(s => s.status === 'PENDING_APPROVAL')?._sum.amount || 0) +
-                        (summary.find(s => s.status === 'DRAFT')?._sum.amount || 0),
+        totalAmount: summary.reduce((sum, entry) => sum + sumFor(entry), 0),
+        paidAmount: sumFor(summary.find((entry) => entry.status === "PAID")),
+        pendingAmount: ["DRAFT", "PENDING_APPROVAL", "APPROVED", "PARTIAL"]
+          .reduce((sum, statusName) => sum + sumFor(summary.find((entry) => entry.status === statusName)), 0),
       };
 
       res.json({
         data: expenses,
         pagination: {
           total,
-          page: parseInt(page as string),
+          page: pageNumber,
           limit: take,
           totalPages: Math.ceil(total / take),
         },
@@ -8859,19 +8918,26 @@ async function startServer() {
       }
 
       const { amount, taxAmount, ...rest } = req.body;
-      const totalAmount = amount !== undefined && taxAmount !== undefined
-        ? Number(amount) + Number(taxAmount)
-        : undefined;
+      const nextAmount = amount !== undefined && amount !== null ? Number(amount) : expense.amount;
+      const nextTaxAmount = taxAmount !== undefined ? Number(taxAmount ?? 0) : (expense.taxAmount ?? 0);
+      const nextExpenseDate = rest.expenseDate ? new Date(rest.expenseDate) : expense.expenseDate;
+      const nextDueDate = rest.dueDate !== undefined
+        ? (rest.dueDate ? new Date(rest.dueDate) : null)
+        : expense.dueDate;
+      if (nextDueDate && nextDueDate < nextExpenseDate) {
+        res.status(400).json({ error: "dueDate must be on or after expenseDate" });
+        return;
+      }
 
       const updated = await prisma.expense.update({
         where: { id: req.params.id },
         data: {
           ...rest,
           ...(amount !== undefined && { amount: Number(amount) }),
-          ...(taxAmount !== undefined && { taxAmount: Number(taxAmount) }),
-          ...(totalAmount !== undefined && { totalAmount }),
+          ...(taxAmount !== undefined && { taxAmount: Number(taxAmount ?? 0) }),
+          totalAmount: nextAmount + nextTaxAmount,
           expenseDate: rest.expenseDate ? new Date(rest.expenseDate) : undefined,
-          dueDate: rest.dueDate ? new Date(rest.dueDate) : null,
+          dueDate: rest.dueDate !== undefined ? nextDueDate : undefined,
         },
         include: { vendor: true, budget: true },
       });
@@ -8941,6 +9007,12 @@ async function startServer() {
       return;
     }
     try {
+      const existing = await prisma.expense.findUnique({ where: { id: req.params.id } });
+      if (!existing) { res.status(404).json({ error: "Expense not found" }); return; }
+      if (existing.status !== "DRAFT") {
+        res.status(400).json({ error: "Only DRAFT expenses can be submitted" });
+        return;
+      }
       const expense = await prisma.expense.update({
         where: { id: req.params.id },
         data: {
@@ -8978,6 +9050,36 @@ async function startServer() {
     }
     try {
       const { notes } = req.body;
+      const existing = await prisma.expense.findUnique({
+        where: { id: req.params.id },
+        include: { budget: true },
+      });
+      if (!existing) { res.status(404).json({ error: "Expense not found" }); return; }
+      if (existing.status !== "PENDING_APPROVAL") {
+        res.status(400).json({ error: "Only PENDING_APPROVAL expenses can be approved" });
+        return;
+      }
+      if (existing.budget?.status === "ARCHIVED") {
+        res.status(409).json({ error: "Cannot approve an expense against an archived budget" });
+        return;
+      }
+      if (existing.budget?.strictLimit) {
+        const committed = await prisma.expense.findMany({
+          where: {
+            budgetId: existing.budgetId!,
+            id: { not: existing.id },
+            status: { in: ["APPROVED", "PARTIAL", "PAID"] },
+          },
+          select: { amount: true, taxAmount: true },
+        });
+        const committedTotal = committed.reduce((sum, row) => sum + getExpenseGrossAmount(row), 0);
+        const requestedTotal = getExpenseGrossAmount(existing);
+        if (committedTotal + requestedTotal > existing.budget.allocatedAmount) {
+          const remaining = Math.max(0, existing.budget.allocatedAmount - committedTotal);
+          res.status(409).json({ error: `This strict budget has only ${remaining.toFixed(2)} remaining` });
+          return;
+        }
+      }
       const expense = await prisma.expense.update({
         where: { id: req.params.id },
         data: {
@@ -9018,6 +9120,12 @@ async function startServer() {
     }
     try {
       const { reason } = req.body;
+      const existing = await prisma.expense.findUnique({ where: { id: req.params.id } });
+      if (!existing) { res.status(404).json({ error: "Expense not found" }); return; }
+      if (existing.status !== "PENDING_APPROVAL") {
+        res.status(400).json({ error: "Only PENDING_APPROVAL expenses can be rejected" });
+        return;
+      }
       const expense = await prisma.expense.update({
         where: { id: req.params.id },
         data: {
@@ -9080,27 +9188,18 @@ async function startServer() {
         notes,
       } = req.body;
 
-      // Generate payment number
-      const year = new Date().getFullYear();
-      const paymentCount = await prisma.billPayment.count({
-        where: {
-          paymentDate: {
-            gte: new Date(`${year}-01-01`),
-            lt: new Date(`${year + 1}-01-01`),
-          },
-        },
-      });
-      const paymentNumber = `PAY-${year}-${String(paymentCount + 1).padStart(4, '0')}`;
+      const parsedPaymentDate = new Date(paymentDate);
+      const paymentNumber = generatePaymentNumber(parsedPaymentDate);
 
       const [payment] = await prisma.$transaction([
         prisma.billPayment.create({
           data: {
             expenseId: expense.id,
             paymentNumber,
-            amount: expense.totalAmount || expense.amount,
+            amount: getExpenseGrossAmount(expense),
             currency: expense.currency,
             paymentMethod,
-            paymentDate: new Date(paymentDate),
+            paymentDate: parsedPaymentDate,
             referenceNumber: paymentReference,
             bankAccount,
             receiptUrl,
@@ -9114,7 +9213,7 @@ async function startServer() {
           where: { id: req.params.id },
           data: {
             status: "PAID",
-            paidDate: new Date(paymentDate),
+            paidDate: parsedPaymentDate,
             paymentReference,
           },
         }),
@@ -9126,7 +9225,7 @@ async function startServer() {
         "EXPENSE_PAID",
         "EXPENSE",
         expense.id,
-        `Recorded payment for expense: ${expense.title}. Amount: ${expense.amount}`,
+        `Recorded payment for expense: ${expense.title}. Amount: ${getExpenseGrossAmount(expense)}`,
         req.ip,
         req.headers["user-agent"] || null
       );
@@ -9242,7 +9341,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/bill-payments", authMiddleware, async (req, res) => {
+  app.post("/api/bill-payments", authMiddleware, validate(schemas.billPaymentCreate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (!expenseCanManage(jwtUser.role)) {
       res.status(403).json({ error: "Forbidden" });
@@ -9266,21 +9365,12 @@ async function startServer() {
         return;
       }
 
-      // Generate payment number
-      const year = new Date().getFullYear();
-      const paymentCount = await prisma.billPayment.count({
-        where: {
-          paymentDate: {
-            gte: new Date(`${year}-01-01`),
-            lt: new Date(`${year + 1}-01-01`),
-          },
-        },
-      });
-      const paymentNumber = `PAY-${year}-${String(paymentCount + 1).padStart(4, '0')}`;
+      const parsedPaymentDate = paymentDate ? new Date(paymentDate) : new Date();
+      const paymentNumber = generatePaymentNumber(parsedPaymentDate);
 
       const existingPayments = await prisma.billPayment.findMany({ where: { expenseId } });
       const totalPaidBefore = existingPayments.reduce((sum, p) => sum + p.amount, 0);
-      const totalAmount = expense.totalAmount || expense.amount;
+      const totalAmount = getExpenseGrossAmount(expense);
       const outstandingAmount = Math.max(0, totalAmount - totalPaidBefore);
       const paymentAmount = Number(amount);
 
@@ -9306,7 +9396,7 @@ async function startServer() {
           paymentMethod,
           referenceNumber: paymentReference,
           bankAccount,
-          paymentDate: paymentDate ? new Date(paymentDate) : new Date(),
+          paymentDate: parsedPaymentDate,
           receiptUrl,
           notes,
         },
@@ -9332,7 +9422,7 @@ async function startServer() {
     }
   });
 
-  app.put("/api/bill-payments/:id", authMiddleware, async (req, res) => {
+  app.put("/api/bill-payments/:id", authMiddleware, validate(schemas.billPaymentUpdate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (!expenseCanManage(jwtUser.role)) {
       res.status(403).json({ error: "Forbidden" });
@@ -9341,8 +9431,24 @@ async function startServer() {
     try {
       const { amount, paymentMethod, paymentReference, bankAccount, paymentDate, receiptUrl, notes, approved } = req.body;
 
-      const payment = await prisma.billPayment.update({
+      const existing = await prisma.billPayment.findUnique({
         where: { id: req.params.id },
+        include: { expense: { include: { payments: true } } },
+      });
+      if (!existing) { res.status(404).json({ error: "Bill payment not found" }); return; }
+
+      const nextAmount = amount !== undefined ? Number(amount) : existing.amount;
+      const paidByOthers = existing.expense.payments
+        .filter((row) => row.id !== existing.id)
+        .reduce((sum, row) => sum + row.amount, 0);
+      const expenseTotal = getExpenseGrossAmount(existing.expense);
+      if (paidByOthers + nextAmount > expenseTotal) {
+        res.status(400).json({ error: `Payment exceeds the remaining amount of ${Math.max(0, expenseTotal - paidByOthers)}` });
+        return;
+      }
+
+      const payment = await prisma.billPayment.update({
+        where: { id: existing.id },
         data: {
           ...(amount !== undefined && { amount: Number(amount) }),
           ...(paymentMethod !== undefined && { paymentMethod }),
@@ -9894,7 +10000,7 @@ async function startServer() {
       const budget = await prisma.budget.create({
         data: {
           ...rest,
-          code,
+          code: rest.code?.trim() || code,
           allocatedAmount: Number(allocatedAmount),
           remainingAmount: Number(allocatedAmount),
           approvedById: jwtUser.userId,
@@ -9965,25 +10071,31 @@ async function startServer() {
         return;
       }
 
-      const { allocatedAmount, spentAmount, ...rest } = req.body;
+      const { allocatedAmount, status, ...rest } = req.body;
       const data: any = { ...rest };
       const nextAllocated = allocatedAmount !== undefined ? Number(allocatedAmount) : existing.allocatedAmount;
-      const nextSpent = spentAmount !== undefined ? Number(spentAmount) : existing.spentAmount;
+      const nextStart = rest.startDate ? new Date(rest.startDate) : existing.startDate;
+      const nextEnd = rest.endDate ? new Date(rest.endDate) : existing.endDate;
+      if (nextEnd < nextStart) {
+        res.status(400).json({ error: "endDate must be on or after startDate" });
+        return;
+      }
 
       if (allocatedAmount !== undefined) {
         data.allocatedAmount = nextAllocated;
       }
-      if (spentAmount !== undefined) {
-        data.spentAmount = nextSpent;
-      }
-      if (allocatedAmount !== undefined || spentAmount !== undefined) {
-        data.remainingAmount = nextAllocated - nextSpent;
-      }
+      data.remainingAmount = nextAllocated - existing.spentAmount;
+      // EXHAUSTED and EXCEEDED are calculated from linked expenses. Only
+      // archiving/unarchiving is a manual status decision.
+      if (status === "ARCHIVED") data.status = "ARCHIVED";
+      else if (status === "ACTIVE" && existing.status === "ARCHIVED") data.status = "ACTIVE";
 
-      const budget = await prisma.budget.update({
+      await prisma.budget.update({
         where: { id: req.params.id },
         data,
       });
+      await syncBudgetSpending(existing.id);
+      const budget = await prisma.budget.findUniqueOrThrow({ where: { id: existing.id } });
 
       await createAuditLog(
         jwtUser.userId,
@@ -10043,11 +10155,35 @@ async function startServer() {
   const hrCanManage = (role: string) => role === "ADMIN";
   const payrollCanManage = (role: string) => role === "ADMIN" || role === "ACCOUNTANT";
 
-  // Inclusive whole-day count between two dates (calendar days, min 1).
+  const toUtcDay = (date: Date) => Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+
+  // Inclusive whole-day count between two calendar dates. UTC normalization
+  // avoids 23/25-hour DST days changing an employee's charged leave.
   function countLeaveDays(start: Date, end: Date): number {
-    const ms = end.getTime() - start.getTime();
+    const ms = toUtcDay(end) - toUtcDay(start);
     if (Number.isNaN(ms) || ms < 0) return 0;
     return Math.floor(ms / 86_400_000) + 1;
+  }
+
+  function countLeaveDaysInRange(start: Date, end: Date, rangeStart: Date, rangeEndExclusive: Date): number {
+    const overlapStart = Math.max(toUtcDay(start), toUtcDay(rangeStart));
+    const overlapEnd = Math.min(toUtcDay(end), toUtcDay(rangeEndExclusive) - 86_400_000);
+    return overlapEnd < overlapStart ? 0 : Math.floor((overlapEnd - overlapStart) / 86_400_000) + 1;
+  }
+
+  async function validateEmployeeAssignment(departmentId?: string | null, designationId?: string | null): Promise<string | null> {
+    if (departmentId) {
+      const department = await prisma.department.findUnique({ where: { id: departmentId }, select: { id: true } });
+      if (!department) return "Department not found";
+    }
+    if (designationId) {
+      const designation = await prisma.designation.findUnique({ where: { id: designationId } });
+      if (!designation) return "Designation not found";
+      if (designation.departmentId && designation.departmentId !== departmentId) {
+        return "Designation does not belong to the selected department";
+      }
+    }
+    return null;
   }
 
   // ---- Financial Reports ----
@@ -11433,8 +11569,14 @@ async function startServer() {
     const jwtUser = (req as any).user as JwtPayload;
     if (!hrCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
     try {
-      const employees = await prisma.employee.count({ where: { departmentId: req.params.id } });
-      if (employees > 0) { res.status(409).json({ error: "Cannot delete a department that still has employees" }); return; }
+      const [employees, designations] = await Promise.all([
+        prisma.employee.count({ where: { departmentId: req.params.id } }),
+        prisma.designation.count({ where: { departmentId: req.params.id } }),
+      ]);
+      if (employees > 0 || designations > 0) {
+        res.status(409).json({ error: "Remove all employees and designations from this department before deleting it" });
+        return;
+      }
       await prisma.department.delete({ where: { id: req.params.id } });
       res.json({ success: true });
     } catch (err: any) {
@@ -11537,7 +11679,9 @@ async function startServer() {
 
   app.get("/api/employees/:id", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
-    if (!hrCanManage(jwtUser.role) && !payrollCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    // The detailed HR profile includes phone/email and leave history; payroll
+    // accountants use the scoped payslip endpoints and must not receive it.
+    if (!hrCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
     try {
       const employee = await prisma.employee.findUnique({
         where: { id: req.params.id },
@@ -11560,8 +11704,10 @@ async function startServer() {
     if (!hrCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
     const { firstName, lastName, email, phone, status, departmentId, designationId, baseSalary, currency, hireDate } = req.body;
     try {
+      const assignmentError = await validateEmployeeAssignment(departmentId, designationId);
+      if (assignmentError) { res.status(400).json({ error: assignmentError }); return; }
       const profile = await prisma.schoolProfile.findFirst();
-      const employeeCode = `EMP-${Date.now().toString().slice(-6)}`;
+      const employeeCode = `EMP-${new Date().getUTCFullYear()}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
       const employee = await prisma.employee.create({
         data: {
           employeeCode,
@@ -11572,7 +11718,7 @@ async function startServer() {
           departmentId: departmentId || null,
           designationId: designationId || null,
           baseSalary: baseSalary != null ? Number(baseSalary) : 0,
-          currency: currency || profile?.currency || "MYR",
+          currency: (currency || profile?.currency || "MYR").toUpperCase(),
           hireDate: hireDate ? new Date(hireDate) : new Date(),
         },
         include: { department: true, designation: true },
@@ -11580,7 +11726,8 @@ async function startServer() {
       await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "EMPLOYEE", employee.id,
         `Created employee ${firstName} ${lastName} (${employeeCode}).`, req.ip, req.headers["user-agent"] || null, "INFO");
       res.status(201).json(employee);
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.code === "P2002") { res.status(409).json({ error: "An employee with this code or linked account already exists" }); return; }
       logger.error("Error creating employee:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
@@ -11591,6 +11738,20 @@ async function startServer() {
     if (!hrCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
     const b = req.body;
     try {
+      const existing = await prisma.employee.findUnique({ where: { id: req.params.id } });
+      if (!existing) { res.status(404).json({ error: "Employee not found" }); return; }
+      const nextDepartmentId = b.departmentId !== undefined ? (b.departmentId || null) : existing.departmentId;
+      const nextDesignationId = b.designationId !== undefined ? (b.designationId || null) : existing.designationId;
+      const assignmentError = await validateEmployeeAssignment(nextDepartmentId, nextDesignationId);
+      if (assignmentError) { res.status(400).json({ error: assignmentError }); return; }
+      const nextHireDate = b.hireDate ? new Date(b.hireDate) : existing.hireDate;
+      const nextTerminationDate = b.terminationDate !== undefined
+        ? (b.terminationDate ? new Date(b.terminationDate) : null)
+        : existing.terminationDate;
+      if (nextTerminationDate && nextTerminationDate < nextHireDate) {
+        res.status(400).json({ error: "terminationDate must be on or after hireDate" });
+        return;
+      }
       const data: any = {};
       if (b.firstName !== undefined) data.firstName = b.firstName;
       if (b.lastName !== undefined) data.lastName = b.lastName;
@@ -11600,9 +11761,9 @@ async function startServer() {
       if (b.departmentId !== undefined) data.departmentId = b.departmentId || null;
       if (b.designationId !== undefined) data.designationId = b.designationId || null;
       if (b.baseSalary !== undefined && b.baseSalary !== null) data.baseSalary = Number(b.baseSalary);
-      if (b.currency !== undefined) data.currency = b.currency || "MYR";
+      if (b.currency !== undefined) data.currency = (b.currency || "MYR").toUpperCase();
       if (b.hireDate) data.hireDate = new Date(b.hireDate);
-      if (b.terminationDate !== undefined) data.terminationDate = b.terminationDate ? new Date(b.terminationDate) : null;
+      if (b.terminationDate !== undefined) data.terminationDate = nextTerminationDate;
       const employee = await prisma.employee.update({
         where: { id: req.params.id }, data,
         include: { department: true, designation: true },
@@ -11639,7 +11800,11 @@ async function startServer() {
     const jwtUser = (req as any).user as JwtPayload;
     if (!payrollCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
     try {
-      const where = req.query.year ? { periodYear: Number(req.query.year) } : {};
+      const requestedYear = req.query.year ? Number(req.query.year) : null;
+      if (requestedYear !== null && (!Number.isInteger(requestedYear) || requestedYear < 2000 || requestedYear > 2100)) {
+        res.status(400).json({ error: "year must be a whole number between 2000 and 2100" }); return;
+      }
+      const where = requestedYear !== null ? { periodYear: requestedYear } : {};
       const runs = await prisma.payrollRun.findMany({
         where, orderBy: [{ periodYear: "desc" }, { periodMonth: "desc" }],
         include: { _count: { select: { payslips: true } } },
@@ -11682,8 +11847,8 @@ async function startServer() {
     if (!payrollCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
     const periodYear = Number(req.body.periodYear);
     const periodMonth = Number(req.body.periodMonth);
-    if (!periodYear || periodMonth < 1 || periodMonth > 12) {
-      res.status(400).json({ error: "Valid periodYear and periodMonth (1-12) are required" });
+    if (!Number.isInteger(periodYear) || periodYear < 2000 || periodYear > 2100 || !Number.isInteger(periodMonth) || periodMonth < 1 || periodMonth > 12) {
+      res.status(400).json({ error: "periodYear must be 2000-2100 and periodMonth must be 1-12" });
       return;
     }
     try {
@@ -11691,7 +11856,12 @@ async function startServer() {
       if (existing) { res.status(409).json({ error: "A payroll run already exists for that month" }); return; }
       // Seed a payslip for every active non-teaching employee AND every teacher.
       const employees = await prisma.employee.findMany({ where: { status: "ACTIVE" } });
-      const teachers = await prisma.teacher.findMany();
+      const employeeUserIds = employees.flatMap((employee) => employee.userId ? [employee.userId] : []);
+      const teachers = await prisma.teacher.findMany({
+        where: employeeUserIds.length > 0
+          ? { OR: [{ userId: null }, { userId: { notIn: employeeUserIds } }] }
+          : undefined,
+      });
       const seeded = [
         ...employees.map((e) => ({
           employeeId: e.id,
@@ -11736,6 +11906,18 @@ async function startServer() {
         res.status(400).json({ error: `Cannot move payroll run from ${run.status} to ${next}` });
         return;
       }
+      if (next === "APPROVED") {
+        const payslips = await prisma.payslip.findMany({ where: { payrollRunId: run.id } });
+        if (payslips.length === 0) {
+          res.status(400).json({ error: "Cannot approve an empty payroll run" });
+          return;
+        }
+        const invalid = payslips.find((p) => p.baseSalary < 0 || p.allowances < 0 || p.deductions < 0 || p.netPay < 0);
+        if (invalid) {
+          res.status(400).json({ error: "All payslips must have non-negative amounts and net pay before approval" });
+          return;
+        }
+      }
       const updated = await prisma.payrollRun.update({ where: { id: run.id }, data: { status: next } });
       await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "PAYROLL_RUN", run.id,
         `Payroll run ${run.periodMonth}/${run.periodYear} status ${run.status} → ${next}.`, req.ip, req.headers["user-agent"] || null, "INFO");
@@ -11759,7 +11941,8 @@ async function startServer() {
       }
       const periodYear = req.body.periodYear != null ? Number(req.body.periodYear) : run.periodYear;
       const periodMonth = req.body.periodMonth != null ? Number(req.body.periodMonth) : run.periodMonth;
-      if (periodMonth < 1 || periodMonth > 12) { res.status(400).json({ error: "periodMonth must be 1-12" }); return; }
+      if (!Number.isInteger(periodYear) || periodYear < 2000 || periodYear > 2100) { res.status(400).json({ error: "periodYear must be 2000-2100" }); return; }
+      if (!Number.isInteger(periodMonth) || periodMonth < 1 || periodMonth > 12) { res.status(400).json({ error: "periodMonth must be 1-12" }); return; }
       if (periodYear !== run.periodYear || periodMonth !== run.periodMonth) {
         const clash = await prisma.payrollRun.findUnique({ where: { periodYear_periodMonth: { periodYear, periodMonth } } });
         if (clash && clash.id !== run.id) { res.status(409).json({ error: "A payroll run already exists for that month" }); return; }
@@ -11775,15 +11958,15 @@ async function startServer() {
     }
   });
 
-  // Delete a run (and its payslips) — blocked once PAID to protect records.
+  // Only unapproved drafts are disposable; approved payroll is an audit record.
   app.delete("/api/payroll-runs/:id", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (!payrollCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
     try {
       const run = await prisma.payrollRun.findUnique({ where: { id: req.params.id } });
       if (!run) { res.status(404).json({ error: "Payroll run not found" }); return; }
-      if (run.status === "PAID") {
-        res.status(400).json({ error: "A PAID payroll run cannot be deleted" });
+      if (run.status !== "DRAFT") {
+        res.status(400).json({ error: "Only DRAFT payroll runs can be deleted" });
         return;
       }
       await prisma.payrollRun.delete({ where: { id: run.id } }); // payslips cascade
@@ -11811,6 +11994,10 @@ async function startServer() {
       const allowances = req.body.allowances != null ? Number(req.body.allowances) : payslip.allowances;
       const deductions = req.body.deductions != null ? Number(req.body.deductions) : payslip.deductions;
       const netPay = baseSalary + allowances - deductions;
+      if (netPay < 0) {
+        res.status(400).json({ error: "Deductions cannot exceed base salary plus allowances" });
+        return;
+      }
       const updated = await prisma.payslip.update({
         where: { id: payslip.id },
         data: { baseSalary, allowances, deductions, netPay, notes: req.body.notes !== undefined ? (req.body.notes || null) : payslip.notes },
@@ -11980,6 +12167,28 @@ async function startServer() {
     const days = countLeaveDays(start, end);
     if (days <= 0) { res.status(400).json({ error: "endDate must be on or after startDate" }); return; }
     try {
+      const [employee, leaveType, overlap] = await Promise.all([
+        prisma.employee.findUnique({ where: { id: req.body.employeeId } }),
+        prisma.leaveType.findUnique({ where: { id: req.body.leaveTypeId } }),
+        prisma.leaveRequest.findFirst({
+          where: {
+            employeeId: req.body.employeeId,
+            status: { in: ["PENDING", "APPROVED"] },
+            startDate: { lte: end },
+            endDate: { gte: start },
+          },
+        }),
+      ]);
+      if (!employee) { res.status(404).json({ error: "Employee not found" }); return; }
+      if (!leaveType) { res.status(404).json({ error: "Leave type not found" }); return; }
+      if (["SUSPENDED", "TERMINATED"].includes(employee.status)) {
+        res.status(400).json({ error: `${employee.status.toLowerCase()} employees cannot receive new leave requests` });
+        return;
+      }
+      if (overlap) {
+        res.status(409).json({ error: "This employee already has a pending or approved request for overlapping dates" });
+        return;
+      }
       const request = await prisma.leaveRequest.create({
         data: {
           employeeId: req.body.employeeId,
@@ -12001,11 +12210,56 @@ async function startServer() {
     if (!hrCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
     const next = req.body.status as "APPROVED" | "REJECTED" | "CANCELLED";
     try {
-      const request = await prisma.leaveRequest.findUnique({ where: { id: req.params.id } });
+      const request = await prisma.leaveRequest.findUnique({ where: { id: req.params.id }, include: { leaveType: true } });
       if (!request) { res.status(404).json({ error: "Leave request not found" }); return; }
-      if (request.status !== "PENDING") {
-        res.status(400).json({ error: `Leave request is already ${request.status}` });
+      const allowed = request.status === "PENDING"
+        ? ["APPROVED", "REJECTED", "CANCELLED"]
+        : request.status === "APPROVED"
+          ? ["CANCELLED"]
+          : [];
+      if (!allowed.includes(next)) {
+        res.status(400).json({ error: `Cannot move leave request from ${request.status} to ${next}` });
         return;
+      }
+      if (next === "APPROVED") {
+        const overlappingApproval = await prisma.leaveRequest.findFirst({
+          where: {
+            id: { not: request.id },
+            employeeId: request.employeeId,
+            status: "APPROVED",
+            startDate: { lte: request.endDate },
+            endDate: { gte: request.startDate },
+          },
+        });
+        if (overlappingApproval) {
+          res.status(409).json({ error: "This leave overlaps another approved request" });
+          return;
+        }
+
+        if (request.leaveType.daysPerYear > 0) {
+          for (let year = request.startDate.getUTCFullYear(); year <= request.endDate.getUTCFullYear(); year += 1) {
+            const yearStart = new Date(Date.UTC(year, 0, 1));
+            const yearEnd = new Date(Date.UTC(year + 1, 0, 1));
+            const approved = await prisma.leaveRequest.findMany({
+              where: {
+                id: { not: request.id },
+                employeeId: request.employeeId,
+                leaveTypeId: request.leaveTypeId,
+                status: "APPROVED",
+                startDate: { lt: yearEnd },
+                endDate: { gte: yearStart },
+              },
+            });
+            const used = approved.reduce((sum, row) => sum + countLeaveDaysInRange(row.startDate, row.endDate, yearStart, yearEnd), 0);
+            const requested = countLeaveDaysInRange(request.startDate, request.endDate, yearStart, yearEnd);
+            if (used + requested > request.leaveType.daysPerYear) {
+              res.status(409).json({
+                error: `${request.leaveType.name} balance exceeded for ${year}: ${Math.max(0, request.leaveType.daysPerYear - used)} day(s) remaining`,
+              });
+              return;
+            }
+          }
+        }
       }
       const updated = await prisma.leaveRequest.update({
         where: { id: request.id },
@@ -12033,18 +12287,27 @@ async function startServer() {
     if (!hrCanManage(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
     try {
       const year = req.query.year ? Number(req.query.year) : new Date().getFullYear();
-      const yearStart = new Date(year, 0, 1);
-      const yearEnd = new Date(year + 1, 0, 1);
+      if (!Number.isInteger(year) || year < 2000 || year > 2100) {
+        res.status(400).json({ error: "year must be a whole number between 2000 and 2100" });
+        return;
+      }
+      const employee = await prisma.employee.findUnique({ where: { id: req.params.id }, select: { id: true } });
+      if (!employee) { res.status(404).json({ error: "Employee not found" }); return; }
+      const yearStart = new Date(Date.UTC(year, 0, 1));
+      const yearEnd = new Date(Date.UTC(year + 1, 0, 1));
       const types = await prisma.leaveType.findMany({ orderBy: { name: "asc" } });
       const approved = await prisma.leaveRequest.findMany({
         where: {
           employeeId: req.params.id,
           status: "APPROVED",
-          startDate: { gte: yearStart, lt: yearEnd },
+          startDate: { lt: yearEnd },
+          endDate: { gte: yearStart },
         },
       });
       const balance = types.map((t) => {
-        const used = approved.filter((r) => r.leaveTypeId === t.id).reduce((sum, r) => sum + r.days, 0);
+        const used = approved
+          .filter((r) => r.leaveTypeId === t.id)
+          .reduce((sum, r) => sum + countLeaveDaysInRange(r.startDate, r.endDate, yearStart, yearEnd), 0);
         return {
           leaveTypeId: t.id,
           name: t.name,

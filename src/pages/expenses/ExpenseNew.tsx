@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSettings } from '../../providers/SettingsProvider';
 import { toast } from 'sonner';
+import { apiGet } from '../../lib/api';
 
 export default function ExpenseNew() {
   const navigate = useNavigate();
@@ -43,14 +44,13 @@ export default function ExpenseNew() {
   });
 
   useEffect(() => {
-    const token = sessionStorage.getItem('auth_token');
     Promise.all([
-      fetch('/api/vendors', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-      fetch('/api/budgets', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+      apiGet('/api/vendors'),
+      apiGet('/api/budgets'),
     ]).then(([vendorsData, budgetsData]) => {
-      setVendors(vendorsData.filter((v: any) => v.isActive) || []);
-      setBudgets(budgetsData.filter((b: any) => b.status === 'ACTIVE') || []);
-    });
+      setVendors(Array.isArray(vendorsData) ? vendorsData.filter((v: any) => v.isActive) : []);
+      setBudgets(Array.isArray(budgetsData) ? budgetsData.filter((b: any) => b.status === 'ACTIVE') : []);
+    }).catch((error) => toast.error(error.message || 'Failed to load vendors and budgets'));
   }, []);
 
   const totalAmount = (Number(formData.amount) || 0) + (Number(formData.taxAmount) || 0);
@@ -60,6 +60,12 @@ export default function ExpenseNew() {
     if (!formData.title || !formData.amount || !formData.category) {
       toast.error('Please fill in all required fields');
       return;
+    }
+    if (Number(formData.amount) <= 0 || Number(formData.taxAmount) < 0) {
+      toast.error('Amount must be greater than zero and tax cannot be negative'); return;
+    }
+    if (formData.dueDate && formData.dueDate < formData.expenseDate) {
+      toast.error('Due date must be on or after the expense date'); return;
     }
 
     setLoading(true);
@@ -136,7 +142,7 @@ export default function ExpenseNew() {
             <CardTitle>Basic Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="title">Title *</Label>
                 <Input
@@ -180,12 +186,13 @@ export default function ExpenseNew() {
             <CardTitle>Financial Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid gap-4 sm:grid-cols-3">
               <div className="space-y-2">
                 <Label htmlFor="amount">Amount *</Label>
                 <Input
                   id="amount"
                   type="number"
+                  min="0.01"
                   step="0.01"
                   value={formData.amount}
                   onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
@@ -198,6 +205,7 @@ export default function ExpenseNew() {
                 <Input
                   id="taxAmount"
                   type="number"
+                  min="0"
                   step="0.01"
                   value={formData.taxAmount}
                   onChange={(e) => setFormData({ ...formData, taxAmount: e.target.value })}
@@ -211,7 +219,7 @@ export default function ExpenseNew() {
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="expenseDate">Expense Date *</Label>
                 <Input
@@ -227,6 +235,7 @@ export default function ExpenseNew() {
                 <Input
                   id="dueDate"
                   type="date"
+                  min={formData.expenseDate || undefined}
                   value={formData.dueDate}
                   onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
                 />
@@ -241,7 +250,7 @@ export default function ExpenseNew() {
             <CardTitle>Vendor & Payment</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="vendor">Vendor</Label>
                 <Select value={formData.vendorId} onValueChange={(value) => setFormData({ ...formData, vendorId: value })}>
@@ -289,7 +298,7 @@ export default function ExpenseNew() {
             <CardTitle>Additional Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="budget">Budget</Label>
                 <Select value={formData.budgetId} onValueChange={(value) => setFormData({ ...formData, budgetId: value })}>

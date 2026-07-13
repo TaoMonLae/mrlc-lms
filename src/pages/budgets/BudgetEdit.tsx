@@ -57,7 +57,7 @@ export default function BudgetEdit() {
             allocatedAmount: data.allocatedAmount?.toString() || '',
             currency: data.currency || 'MYR',
             category: data.category || '',
-            status: data.status || 'ACTIVE',
+            status: data.status === 'ARCHIVED' ? 'ARCHIVED' : 'ACTIVE',
             alertThreshold: data.alertThreshold?.toString() || '0.8',
             strictLimit: data.strictLimit || false,
             notes: data.notes || '',
@@ -74,6 +74,8 @@ export default function BudgetEdit() {
       toast.error('Please fill in all required fields');
       return;
     }
+    if (Number(formData.allocatedAmount) <= 0) { toast.error('Allocated amount must be greater than zero'); return; }
+    if (formData.endDate < formData.startDate) { toast.error('End date must be on or after start date'); return; }
 
     setSubmitting(true);
     try {
@@ -143,7 +145,7 @@ export default function BudgetEdit() {
   ];
 
   const yearOptions = [new Date().getFullYear() - 1, new Date().getFullYear(), new Date().getFullYear() + 1, new Date().getFullYear() + 2];
-  const statusOptions = ['ACTIVE', 'EXHAUSTED', 'EXCEEDED', 'ARCHIVED'];
+  const statusOptions = ['ACTIVE', 'ARCHIVED'];
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -167,7 +169,7 @@ export default function BudgetEdit() {
               <CardTitle>Basic Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="name">Budget Name *</Label>
                   <Input
@@ -203,6 +205,7 @@ export default function BudgetEdit() {
                       ))}
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-slate-500">Exhausted and exceeded states are calculated from approved expense totals.</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="code">Budget Code</Label>
@@ -233,7 +236,7 @@ export default function BudgetEdit() {
               <CardTitle>Budget Period</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="startDate">Start Date *</Label>
                   <Input
@@ -249,6 +252,7 @@ export default function BudgetEdit() {
                   <Input
                     id="endDate"
                     type="date"
+                    min={formData.startDate || undefined}
                     value={formData.endDate}
                     onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                     required
@@ -264,12 +268,13 @@ export default function BudgetEdit() {
               <CardTitle>Budget Allocation</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="allocatedAmount">Allocated Amount *</Label>
                   <Input
                     id="allocatedAmount"
                     type="number"
+                    min="0.01"
                     step="0.01"
                     value={formData.allocatedAmount}
                     onChange={(e) => setFormData({ ...formData, allocatedAmount: e.target.value })}
