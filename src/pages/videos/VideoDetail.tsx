@@ -38,6 +38,11 @@ export default function VideoDetail() {
     if (!id) return;
     const fetchVideo = async () => {
       try {
+        const token = sessionStorage.getItem('auth_token');
+        await fetch('/api/videos/media-session', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+        });
         const v = await apiGet<VideoLesson>(`/api/videos/${id}`);
         setVideo(v);
       } catch (error) {

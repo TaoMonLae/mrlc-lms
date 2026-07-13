@@ -74,7 +74,8 @@ export default function VideoEdit() {
     removeUploaded,
     triggerFileSelect,
   } = useVideoFileUpload({
-    onUploadComplete: (url) => setValue('videoUrl', url),
+    onUploadComplete: (url) => setValue('videoUrl', url, { shouldValidate: true }),
+    onUploadRemoved: () => setValue('videoUrl', video?.videoUrl || '', { shouldValidate: true }),
   });
 
   const {
@@ -234,7 +235,10 @@ export default function VideoEdit() {
             <div className="flex gap-4">
               <button
                 type="button"
-                onClick={() => setUploadMethod('url')}
+                onClick={async () => {
+                  if (uploadedVideoUrl) await removeUploaded();
+                  setUploadMethod('url');
+                }}
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 text-sm font-medium transition-colors ${
                   uploadMethod === 'url'
                     ? 'border-aubergine-600 bg-aubergine-50 text-aubergine-700 dark:bg-aubergine-900/20 dark:text-aubergine-300'
@@ -424,7 +428,10 @@ export default function VideoEdit() {
         </div>
 
         <div className="flex justify-end gap-3">
-          <Button type="button" variant="outline" onClick={() => navigate(`/videos/${id}`)}>Cancel</Button>
+          <Button type="button" variant="outline" onClick={async () => {
+            await removeUploaded();
+            navigate(`/videos/${id}`);
+          }}>Cancel</Button>
           <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
             {isSubmitting ? 'Saving...' : <><Save className="mr-2 h-4 w-4" />Save Changes</>}
           </Button>

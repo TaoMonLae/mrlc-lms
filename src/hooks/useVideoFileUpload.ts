@@ -1,6 +1,5 @@
 import { useState, useRef } from 'react';
 import { toast } from 'sonner';
-import { apiSend } from '../lib/api';
 import {
   MAX_VIDEO_FILE_SIZE,
   MAX_VIDEO_FILE_SIZE_DISPLAY,
@@ -12,6 +11,8 @@ import type { VideoUploadResponse } from '../lib/video/types';
 interface UseVideoFileUploadOptions {
   /** Callback invoked when a file is successfully uploaded */
   onUploadComplete?: (url: string, fileName: string) => void;
+  /** Callback invoked when the current unsaved upload is discarded */
+  onUploadRemoved?: () => void;
 }
 
 /**
@@ -55,7 +56,7 @@ interface UseVideoFileUploadOptions {
  * }
  * ```
  */
-export function useVideoFileUpload({ onUploadComplete }: UseVideoFileUploadOptions = {}) {
+export function useVideoFileUpload({ onUploadComplete, onUploadRemoved }: UseVideoFileUploadOptions = {}) {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
@@ -102,7 +103,11 @@ export function useVideoFileUpload({ onUploadComplete }: UseVideoFileUploadOptio
     }
 
     setFile(selectedFile);
-    await uploadFile(selectedFile);
+    try {
+      await uploadFile(selectedFile);
+    } catch {
+      // uploadFile already reports the actionable error to the user.
+    }
   };
 
   const uploadFile = async (fileToUpload: File) => {
@@ -119,20 +124,16 @@ export function useVideoFileUpload({ onUploadComplete }: UseVideoFileUploadOptio
       });
 
       if (!res.ok) {
-        // Try to parse as JSON first, fallback to HTML/text
         let errorMessage = 'Failed to upload video file';
-        try {
-          const err = await res.json();
-          errorMessage = err.error || errorMessage;
-        } catch {
-          // Response is not JSON (likely HTML error page from infrastructure)
-          const contentType = res.headers.get('content-type');
-          if (contentType?.includes('text/html')) {
-            errorMessage = `Server error (${res.status}): ${res.statusText}`;
-          } else {
-            const text = await res.text();
-            errorMessage = text || errorMessage;
-          }
+        const text = await res.text();
+        if (res.headers.get('content-type')?.includes('application/json')) {
+          try {
+            errorMessage = JSON.parse(text).error || errorMessage;
+          } catch { /* keep the fallback */ }
+        } else if (res.headers.get('content-type')?.includes('text/html')) {
+          errorMessage = `Server error (${res.status}): ${res.statusText}`;
+        } else if (text) {
+          errorMessage = text;
         }
         throw new Error(errorMessage);
       }
@@ -161,11 +162,27 @@ export function useVideoFileUpload({ onUploadComplete }: UseVideoFileUploadOptio
     }
   };
 
-  const removeUploaded = () => {
+  const removeUploaded = async () => {
+    const urlToRemove = uploadedUrl;
     setFile(null);
     setUploadedUrl(null);
+    onUploadRemoved?.();
     if (inputRef.current) {
       inputRef.current.value = '';
+    }
+    if (!urlToRemove) return;
+
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`/api/videos/files?url=${encodeURIComponent(urlToRemove)}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok && res.status !== 404 && res.status !== 409) {
+        toast.warning('The lesson was cleared, but the temporary upload could not be removed from the server');
+      }
+    } catch {
+      toast.warning('The lesson was cleared, but the temporary upload could not be removed from the server');
     }
   };
 

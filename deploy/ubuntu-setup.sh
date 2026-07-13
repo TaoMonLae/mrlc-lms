@@ -45,8 +45,8 @@ else
     echo "PostgreSQL already installed"
 fi
 
-echo -e "${GREEN}[4/10] Installing nginx and Certbot...${NC}"
-sudo apt install -y nginx certbot python3-certbot-nginx
+echo -e "${GREEN}[4/10] Installing nginx, Certbot, and video conversion tools...${NC}"
+sudo apt install -y nginx certbot python3-certbot-nginx ffmpeg
 
 echo -e "${GREEN}[5/10] Installing PM2 for process management...${NC}"
 sudo npm install -g pm2
@@ -106,6 +106,7 @@ NODE_ENV="production"
 
 # File Storage
 EBOOK_DIR="$APP_DIR/data/ebooks"
+VIDEO_FILES_DIR="$APP_DIR/data/videos"
 BACKUP_DIR="$APP_DIR/data/backups"
 BACKUP_RETENTION="14"
 BACKUP_HOUR="2"

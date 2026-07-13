@@ -357,6 +357,7 @@ mrlc-lms/
 | `APP_URL` | No | `http://localhost:8000` | Public origin for CORS |
 | `PORT` | No | `8000` | Server listening port |
 | `EBOOK_DIR` | No | `./data/ebooks` | E-book storage location |
+| `VIDEO_FILES_DIR` | No | `./data/videos` | Uploaded and transcoded lesson-video storage |
 | `BACKUP_DIR` | No | `./data/backups` | Database backup location |
 | `BACKUP_RETENTION` | No | `14` | Number of backups to retain |
 | `BACKUP_HOUR` | No | `2` | Hour for daily backup (0-23) |

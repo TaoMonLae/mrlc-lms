@@ -565,6 +565,21 @@ function requireRole(role: string) {
   };
 }
 
+function requireAnyRole(...roles: string[]) {
+  return (
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ): void => {
+    const user = (req as any).user as JwtPayload | undefined;
+    if (!user || !roles.includes(user.role)) {
+      res.status(403).json({ error: "Forbidden: Insufficient permissions" });
+      return;
+    }
+    next();
+  };
+}
+
 // ─── Request body validation (zod) ────────────────────────────────────────────
 // Validates and sanitizes req.body against a schema before the handler runs.
 // On failure returns 400 with the first offending field, so bad input never
@@ -1510,10 +1525,55 @@ async function startServer() {
     maxAge: isProduction ? "30d" : 0,
     immutable: isProduction,
   }));
-  app.use("/uploads/videos", express.static(VIDEO_FILES_DIR, {
-    maxAge: isProduction ? "30d" : 0,
-    immutable: isProduction,
+  // Uploaded lesson media is not public static content. Native <video> and
+  // <track> requests cannot attach an Authorization header, so they authenticate
+  // with a narrowly-scoped httpOnly cookie set at login (and refreshed by the
+  // video detail page for sessions that pre-date this behavior).
+  app.use("/uploads/videos", async (req, res, next) => {
+    let jwtUser: JwtPayload;
+    try {
+      jwtUser = verifyToken(String(req.cookies?.video_media_token || ""));
+    } catch {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    const filename = req.path.replace(/^\/+/, "");
+    if (!filename || filename !== path.basename(filename)) {
+      res.status(400).json({ error: "Invalid video file" });
+      return;
+    }
+
+    try {
+      const mediaUrl = `/uploads/videos/${filename}`;
+      const lesson = await prisma.videoLesson.findFirst({
+        where: { OR: [{ videoUrl: mediaUrl }, { captionsUrl: mediaUrl }] },
+        select: { visibility: true, status: true },
+      });
+      if (!lesson) {
+        res.status(404).json({ error: "Video file not found" });
+        return;
+      }
+
+      const allowed = jwtUser.role === "ADMIN" ||
+        jwtUser.role === "TEACHER" ||
+        (jwtUser.role === "STUDENT" &&
+          lesson.status === "PUBLISHED" &&
+          ["ALL", "STUDENTS"].includes(lesson.visibility));
+      if (!allowed) {
+        res.status(403).json({ error: "Forbidden" });
+        return;
+      }
+      next();
+    } catch (err) {
+      logger.error("Error authorizing video media:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }, express.static(VIDEO_FILES_DIR, {
+    maxAge: 0,
+    immutable: false,
     setHeaders: (res, filePath) => {
+      res.setHeader("Cache-Control", "private, no-cache");
       // Browsers require text/vtt for <track> subtitles to load.
       if (filePath.endsWith(".vtt")) res.setHeader("Content-Type", "text/vtt; charset=utf-8");
     },
@@ -1670,6 +1730,14 @@ async function startServer() {
       };
       const token = signToken(payload, Boolean(rememberMe));
 
+      res.cookie("video_media_token", token, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: "strict",
+        maxAge: rememberMe ? 30 * 24 * 60 * 60 * 1000 : 8 * 60 * 60 * 1000,
+        path: "/uploads/videos",
+      });
+
       // Record the login time (fire-and-forget so a slow write can't block sign-in).
       prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } })
         .catch((e) => logger.warn(`Could not update lastLoginAt for ${user.email}: ${e?.message}`));
@@ -1695,6 +1763,16 @@ async function startServer() {
       logger.error("Login error:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
+  });
+
+  app.post("/api/auth/logout", (_req, res) => {
+    res.clearCookie("video_media_token", {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "strict",
+      path: "/uploads/videos",
+    });
+    res.json({ success: true });
   });
 
   /**
@@ -4733,6 +4811,27 @@ async function startServer() {
   // (AVCHD camera files), .avi, .mkv, .wmv, .flv, .mov, etc. — is transcoded to
   // MP4 with ffmpeg so students can play it directly on the site.
   const WEB_NATIVE_VIDEO = new Set([".mp4", ".webm"]);
+  const cancelledTranscodes = new Set<string>();
+  const transcodeInputs = new Map<string, string>();
+
+  // A conversion interrupted by a process/container restart cannot resume.
+  // Sidecar job files let startup remove the raw source and expose a failed
+  // state instead of leaving the lesson stuck on "Converting" forever.
+  for (const jobName of fs.readdirSync(VIDEO_FILES_DIR).filter((name) => name.endsWith(".job"))) {
+    const outputName = jobName.slice(0, -4);
+    const outputPath = path.join(VIDEO_FILES_DIR, outputName);
+    try {
+      const sourceName = fs.readFileSync(path.join(VIDEO_FILES_DIR, jobName), "utf8").trim();
+      if (sourceName && sourceName === path.basename(sourceName)) {
+        fs.rmSync(path.join(VIDEO_FILES_DIR, sourceName), { force: true });
+      }
+      fs.rmSync(`${outputPath}.tmp.mp4`, { force: true });
+      fs.writeFileSync(`${outputPath}.failed`, "Video conversion was interrupted; please re-upload the file.");
+      fs.rmSync(path.join(VIDEO_FILES_DIR, jobName), { force: true });
+    } catch (err) {
+      logger.warn(`Could not recover interrupted video conversion ${jobName}: ${String(err)}`);
+    }
+  }
   const transcodeToMp4 = (inputPath: string, outputPath: string): Promise<void> =>
     new Promise((resolve, reject) => {
       const ff = spawn("ffmpeg", [
@@ -4757,28 +4856,28 @@ async function startServer() {
       );
     });
 
-  app.post("/api/videos/files", authMiddleware, uploadVideoFile, async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
-      res.status(403).json({ error: "Forbidden" });
-      return;
-    }
-    const file = (req as any).file as Express.Multer.File | undefined;
-    if (!file) {
-      res.status(400).json({ error: "Video file is required" });
-      return;
-    }
+  app.post(
+    "/api/videos/files",
+    authMiddleware,
+    requireAnyRole("ADMIN", "TEACHER"),
+    uploadVideoFile,
+    async (req, res) => {
+      const file = (req as any).file as Express.Multer.File | undefined;
+      if (!file) {
+        res.status(400).json({ error: "Video file is required" });
+        return;
+      }
 
-    const ext = path.extname(file.originalname).toLowerCase();
-    if (WEB_NATIVE_VIDEO.has(ext)) {
-      res.json({
-        url: `/uploads/videos/${file.filename}`,
-        originalName: file.originalname,
-        size: file.size,
-        mimeType: file.mimetype,
-      });
-      return;
-    }
+      const ext = path.extname(file.originalname).toLowerCase();
+      if (WEB_NATIVE_VIDEO.has(ext)) {
+        res.json({
+          url: `/uploads/videos/${file.filename}`,
+          originalName: file.originalname,
+          size: file.size,
+          mimeType: file.mimetype,
+        });
+        return;
+      }
 
     // Non-web format → transcode to MP4 in the BACKGROUND so the uploader isn't
     // blocked for the whole conversion. Respond immediately with the eventual
@@ -4786,31 +4885,96 @@ async function startServer() {
     // (which checks the filesystem) and shows "Converting…" until it's ready.
     // ffmpeg writes to a .tmp.mp4 and we atomically rename on success, so the
     // final file only appears when it's fully playable.
-    const outName = `${crypto.randomUUID()}.mp4`;
-    const outPath = path.join(VIDEO_FILES_DIR, outName);
-    const tmpPath = `${outPath}.tmp.mp4`;
+      const outName = `${crypto.randomUUID()}.mp4`;
+      const outPath = path.join(VIDEO_FILES_DIR, outName);
+      const tmpPath = `${outPath}.tmp.mp4`;
+      const jobPath = `${outPath}.job`;
+      transcodeInputs.set(outName, file.path);
 
-    res.json({
-      url: `/uploads/videos/${outName}`,
-      originalName: file.originalname,
-      size: file.size,
-      mimeType: "video/mp4",
-      converted: true,
-      processing: true,
-      originalFormat: ext.replace(".", "").toUpperCase(),
-    });
+      try {
+        await fs.promises.writeFile(jobPath, file.filename, "utf8");
+      } catch (err) {
+        transcodeInputs.delete(outName);
+        await fs.promises.unlink(file.path).catch(() => {});
+        logger.error("Could not create video transcode job:", err);
+        res.status(500).json({ error: "Could not start video conversion" });
+        return;
+      }
 
-    transcodeToMp4(file.path, tmpPath)
-      .then(async () => {
-        await fs.promises.rename(tmpPath, outPath).catch(() => {});
-        await fs.promises.unlink(file.path).catch(() => {});
-      })
-      .catch(async (err: any) => {
-        logger.error("Video transcode failed:", err);
-        await fs.promises.unlink(tmpPath).catch(() => {});
-        await fs.promises.unlink(file.path).catch(() => {});
-        await fs.promises.writeFile(`${outPath}.failed`, String(err?.message ?? "failed")).catch(() => {});
+      res.json({
+        url: `/uploads/videos/${outName}`,
+        originalName: file.originalname,
+        size: file.size,
+        mimeType: "video/mp4",
+        converted: true,
+        processing: true,
+        originalFormat: ext.replace(".", "").toUpperCase(),
       });
+
+      transcodeToMp4(file.path, tmpPath)
+        .then(async () => {
+          await fs.promises.rename(tmpPath, outPath);
+          await fs.promises.unlink(file.path).catch(() => {});
+          if (cancelledTranscodes.has(outName)) {
+            await fs.promises.unlink(outPath).catch(() => {});
+          }
+        })
+        .catch(async (err: any) => {
+          logger.error("Video transcode failed:", err);
+          await fs.promises.unlink(tmpPath).catch(() => {});
+          await fs.promises.unlink(file.path).catch(() => {});
+          if (!cancelledTranscodes.has(outName)) {
+            await fs.promises.writeFile(`${outPath}.failed`, String(err?.message ?? "failed")).catch(() => {});
+          }
+        })
+        .finally(() => {
+          transcodeInputs.delete(outName);
+          cancelledTranscodes.delete(outName);
+          fs.promises.unlink(jobPath).catch(() => {});
+        });
+    }
+  );
+
+  // Discard an upload that has not been attached to a saved lesson. This is
+  // called by Remove and Cancel in the form and deliberately refuses to delete
+  // media already referenced by a lesson.
+  app.delete("/api/videos/files", authMiddleware, requireAnyRole("ADMIN", "TEACHER"), async (req, res) => {
+    const url = String(req.query.url || "");
+    const prefix = "/uploads/videos/";
+    const filename = url.startsWith(prefix) ? url.slice(prefix.length) : "";
+    if (!filename || filename !== path.basename(filename)) {
+      res.status(400).json({ error: "Invalid video file URL" });
+      return;
+    }
+
+    try {
+      const linked = await prisma.videoLesson.findFirst({
+        where: { OR: [{ videoUrl: url }, { captionsUrl: url }] },
+        select: { id: true },
+      });
+      if (linked) {
+        res.status(409).json({ error: "Video file is already attached to a lesson" });
+        return;
+      }
+
+      cancelledTranscodes.add(filename);
+      const target = path.join(VIDEO_FILES_DIR, filename);
+      await Promise.all([
+        fs.promises.unlink(target).catch(() => {}),
+        fs.promises.unlink(`${target}.tmp.mp4`).catch(() => {}),
+        fs.promises.unlink(`${target}.failed`).catch(() => {}),
+      ]);
+      // The source file is removed by the transcode promise. Keeping it open
+      // until ffmpeg exits avoids platform-specific failures during cancellation.
+      if (!transcodeInputs.has(filename)) {
+        cancelledTranscodes.delete(filename);
+        await fs.promises.unlink(`${target}.job`).catch(() => {});
+      }
+      res.json({ success: true });
+    } catch (err) {
+      logger.error("Error discarding video upload:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
   });
 
   // Transcode status for an uploaded video file (filesystem is the source of
@@ -4830,15 +4994,40 @@ async function startServer() {
   });
 
   // Caption/subtitle (.vtt/.srt) upload — stored alongside videos.
-  app.post("/api/videos/captions", authMiddleware, uploadCaptionFile, async (req, res) => {
-    const jwtUser = (req as any).user as JwtPayload;
-    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
-      res.status(403).json({ error: "Forbidden" });
-      return;
-    }
+  app.post("/api/videos/captions", authMiddleware, requireAnyRole("ADMIN", "TEACHER"), uploadCaptionFile, async (req, res) => {
     const file = (req as any).file as Express.Multer.File | undefined;
     if (!file) { res.status(400).json({ error: "Subtitle file is required" }); return; }
+    if (path.extname(file.filename).toLowerCase() === ".srt") {
+      try {
+        const srt = await fs.promises.readFile(file.path, "utf8");
+        const vttName = `${path.basename(file.filename, ".srt")}.vtt`;
+        const vttPath = path.join(VIDEO_FILES_DIR, vttName);
+        const vtt = `WEBVTT\n\n${srt.replace(/^\uFEFF/, "").replace(/(\d{2}:\d{2}:\d{2}),(\d{3})/g, "$1.$2")}`;
+        await fs.promises.writeFile(vttPath, vtt, "utf8");
+        await fs.promises.unlink(file.path).catch(() => {});
+        res.json({ url: `/uploads/videos/${vttName}`, originalName: file.originalname });
+        return;
+      } catch (err) {
+        await fs.promises.unlink(file.path).catch(() => {});
+        logger.error("Subtitle conversion failed:", err);
+        res.status(400).json({ error: "Could not convert the SRT subtitle file" });
+        return;
+      }
+    }
     res.json({ url: `/uploads/videos/${file.filename}`, originalName: file.originalname });
+  });
+
+  app.post("/api/videos/media-session", authMiddleware, (req, res) => {
+    const token = req.headers.authorization?.replace(/^Bearer\s+/i, "");
+    if (!token) { res.status(400).json({ error: "Token required" }); return; }
+    res.cookie("video_media_token", token, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "strict",
+      maxAge: 8 * 60 * 60 * 1000,
+      path: "/uploads/videos",
+    });
+    res.json({ success: true });
   });
 
   app.get("/api/videos", authMiddleware, async (req, res) => {
@@ -4952,19 +5141,9 @@ async function startServer() {
         return;
       }
 
-      // If videoUrl is changing and the old URL was an uploaded file, delete the old file
-      if (videoUrl && videoUrl !== currentVideo.videoUrl && currentVideo.videoUrl.startsWith("/uploads/videos/")) {
-        const filename = currentVideo.videoUrl.replace("/uploads/videos/", "");
-        const filePath = path.join(VIDEO_FILES_DIR, filename);
-        if (fs.existsSync(filePath)) {
-          try {
-            fs.unlinkSync(filePath);
-            logger.info(`Deleted old video file: ${filePath}`);
-          } catch (err) {
-            logger.error(`Failed to delete old video file: ${filePath}`, err);
-            // Continue with update even if file deletion fails
-          }
-        }
+      if (jwtUser.role === "TEACHER" && currentVideo.uploadedById !== jwtUser.userId) {
+        res.status(403).json({ error: "You can only edit video lessons you uploaded" });
+        return;
       }
 
       const updated = await prisma.videoLesson.update({
@@ -4984,6 +5163,32 @@ async function startServer() {
           ...(dueDate !== undefined && { dueDate: dueDate ? new Date(dueDate) : null }),
         },
       });
+
+      // Delete the superseded file only after the database update commits. If
+      // the update fails, the existing lesson remains fully playable.
+      if (videoUrl && videoUrl !== currentVideo.videoUrl && currentVideo.videoUrl.startsWith("/uploads/videos/")) {
+        const filename = currentVideo.videoUrl.replace("/uploads/videos/", "");
+        if (filename === path.basename(filename)) {
+          cancelledTranscodes.add(filename);
+          const filePath = path.join(VIDEO_FILES_DIR, filename);
+          await Promise.all([
+            fs.promises.unlink(filePath).catch(() => {}),
+            fs.promises.unlink(`${filePath}.failed`).catch(() => {}),
+            fs.promises.unlink(`${filePath}.tmp.mp4`).catch(() => {}),
+          ]);
+          if (!transcodeInputs.has(filename)) {
+            cancelledTranscodes.delete(filename);
+            await fs.promises.unlink(`${filePath}.job`).catch(() => {});
+          }
+        }
+      }
+
+      if (captionsUrl !== undefined && captionsUrl !== currentVideo.captionsUrl && currentVideo.captionsUrl?.startsWith("/uploads/videos/")) {
+        const captionName = currentVideo.captionsUrl.replace("/uploads/videos/", "");
+        if (captionName === path.basename(captionName)) {
+          await fs.promises.unlink(path.join(VIDEO_FILES_DIR, captionName)).catch(() => {});
+        }
+      }
 
       await createAuditLog(
         jwtUser.userId,
@@ -5023,22 +5228,39 @@ async function startServer() {
         return;
       }
 
+      if (jwtUser.role === "TEACHER" && video.uploadedById !== jwtUser.userId) {
+        res.status(403).json({ error: "You can only delete video lessons you uploaded" });
+        return;
+      }
+
+      // Commit the database deletion first. A database failure must not leave a
+      // surviving lesson record that points at a file we already destroyed.
+      await prisma.videoLesson.delete({ where: { id } });
+
       // Delete the video file from disk if it's an uploaded file
       if (video.videoUrl.startsWith("/uploads/videos/")) {
         const filename = video.videoUrl.replace("/uploads/videos/", "");
         const filePath = path.join(VIDEO_FILES_DIR, filename);
-        if (fs.existsSync(filePath)) {
-          try {
-            fs.unlinkSync(filePath);
-            logger.info(`Deleted video file: ${filePath}`);
-          } catch (err) {
-            logger.error(`Failed to delete video file: ${filePath}`, err);
-            // Continue with database deletion even if file deletion fails
+        if (filename === path.basename(filename)) {
+          cancelledTranscodes.add(filename);
+          await Promise.all([
+            fs.promises.unlink(filePath).catch(() => {}),
+            fs.promises.unlink(`${filePath}.failed`).catch(() => {}),
+            fs.promises.unlink(`${filePath}.tmp.mp4`).catch(() => {}),
+          ]);
+          if (!transcodeInputs.has(filename)) {
+            cancelledTranscodes.delete(filename);
+            await fs.promises.unlink(`${filePath}.job`).catch(() => {});
           }
         }
       }
 
-      await prisma.videoLesson.delete({ where: { id } });
+      if (video.captionsUrl?.startsWith("/uploads/videos/")) {
+        const captionName = video.captionsUrl.replace("/uploads/videos/", "");
+        if (captionName === path.basename(captionName)) {
+          await fs.promises.unlink(path.join(VIDEO_FILES_DIR, captionName)).catch(() => {});
+        }
+      }
 
       await createAuditLog(
         jwtUser.userId,

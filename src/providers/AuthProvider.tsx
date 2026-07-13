@@ -173,6 +173,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(() => {
+    void fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
     sessionStorage.removeItem('auth_token');
     sessionStorage.removeItem('auth_user');
     localStorage.removeItem('auth_token');

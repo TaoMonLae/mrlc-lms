@@ -31,6 +31,8 @@ services:
       SEED_ON_START: "${SEED_ON_START:-false}"
       # Where uploaded e-books are stored (mounted as a persistent volume below).
       EBOOK_DIR: "/app/data/ebooks"
+      # Where uploaded and transcoded lesson videos are stored.
+      VIDEO_FILES_DIR: "/app/data/videos"
       # Where database backups are written (persistent volume below).
       BACKUP_DIR: "/app/data/backups"
       # How many daily backups to keep (older ones are pruned).
@@ -38,6 +40,8 @@ services:
     volumes:
       # Persist uploaded e-book files across container rebuilds/recreations.
       - ebook_data:/app/data/ebooks
+      # Persist uploaded lesson videos across container rebuilds/recreations.
+      - video_data:/app/data/videos
       # Persist database backups.
       - backup_data:/app/data/backups
     ports:
@@ -46,4 +50,5 @@ services:
 volumes:
   db_data:
   ebook_data:
+  video_data:
   backup_data:

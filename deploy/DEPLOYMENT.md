@@ -58,8 +58,8 @@ sudo apt install -y postgresql postgresql-contrib
 sudo systemctl start postgresql
 sudo systemctl enable postgresql
 
-# nginx and Certbot
-sudo apt install -y nginx certbot python3-certbot-nginx
+# nginx, Certbot, and lesson-video conversion
+sudo apt install -y nginx certbot python3-certbot-nginx ffmpeg
 
 # PM2
 sudo npm install -g pm2
@@ -115,6 +115,7 @@ APP_URL="https://gedmrlc.monrefugeelc.com"
 PORT=8000
 NODE_ENV=production
 EBOOK_DIR="/opt/mrlc-lms/data/ebooks"
+VIDEO_FILES_DIR="/opt/mrlc-lms/data/videos"
 BACKUP_DIR="/opt/mrlc-lms/data/backups"
 BACKUP_RETENTION=14
 BACKUP_HOUR=2
