@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { Sparkles, X, Send, Copy, Check, Trash2 } from "lucide-react";
 import { useAuth } from "../../providers/AuthProvider";
 import { apiSend } from "../../lib/api";
 import { useFloatingPanel } from "../../providers/FloatingPanelProvider";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
+import MiniMarkdown from "./MiniMarkdown";
 
 interface Message {
   id: string;
@@ -15,14 +16,16 @@ interface Message {
 }
 
 const QUICK_PROMPTS = [
+  { label: "📋 What needs my attention?", prompt: "Give me a quick summary of what needs my attention right now — pending grading, exams closing soon, and anything notable." },
+  { label: "📊 Exam results", prompt: "Summarize the results of my most recent exam — average, pass rate, and how many are still awaiting grading." },
+  { label: "🔎 Look up a student", prompt: "Look up this student and summarize how they're doing: " },
   { label: "📝 Lesson Plan", prompt: "Draft a detailed lesson plan for teaching a high school class about " },
-  { label: "❓ Quiz Generator", prompt: "Generate 5 multiple-choice questions with answers on the topic of " },
-  { label: "📢 Announcement", prompt: "Draft a warm school announcement notifying parents about " },
-  { label: "🔄 Translate to Mon/Burmese", prompt: "Translate the following text into Mon and Burmese: " }
+  { label: "🔄 Translate to Mon/Burmese", prompt: "Translate the following text into Mon and Burmese: " },
 ];
 
 export default function AIAssistantWidget() {
   const { user } = useAuth();
+  const location = useLocation();
   // Coordinated with the Chat widget so only one floating panel is ever
   // expanded at a time -- both anchor to the bottom-right corner.
   const { isOpen: open, isOtherOpen: chatOpen, setOpen } = useFloatingPanel('ai');
@@ -51,9 +54,14 @@ export default function AIAssistantWidget() {
     setLoading(true);
 
     try {
+      // Send recent conversation for memory, and the current page so the
+      // assistant knows what the user is looking at. The backend builds the
+      // system prompt + role-scoped situation snapshot.
+      const history = messages.slice(-10).map((m) => ({ role: m.role, content: m.content }));
       const response = await apiSend<{ reply: string }>("/api/ai/chat", "POST", {
         prompt,
-        systemInstruction: "You are an AI assistant built specifically for the Mon Refugee Learning Centre (MRLC) Learning Management System. Your goal is to help teachers and school administrators draft lesson plans, generate examination/quiz questions, translate announcements into local languages (English, Burmese, Mon), write student case notes, and assist with general administrative duties. Always output clear, helpful, and formatted answers in markdown where applicable."
+        messages: history,
+        pageContext: { path: location.pathname, title: typeof document !== "undefined" ? document.title : "" },
       });
 
       const assistantMessage: Message = {
@@ -106,7 +114,7 @@ export default function AIAssistantWidget() {
                 <Sparkles className="h-5 w-5 animate-pulse" />
                 <div>
                   <h3 className="font-semibold leading-tight text-sm sm:text-base">MRLC AI Assistant</h3>
-                  <p className="text-[10px] opacity-80">Free Gemma/Gemini integration for Teachers & Admins</p>
+                  <p className="text-[10px] opacity-80">Context-aware · knows your classes, exams &amp; activity (read-only)</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -133,7 +141,7 @@ export default function AIAssistantWidget() {
                   <div>
                     <h4 className="font-medium text-slate-900 dark:text-white text-sm sm:text-base">How can I help you today?</h4>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      Choose a quick prompt below or type your request in the chat.
+                      I can see your classes, exams, grading queue and recent activity (read-only). Ask about what's happening, or pick a prompt below.
                     </p>
                   </div>
                   <div className="grid grid-cols-1 gap-2 pt-2 text-left">
@@ -160,8 +168,15 @@ export default function AIAssistantWidget() {
                           : "bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-200"
                       }`}
                     >
-                      <p className="whitespace-pre-wrap break-words leading-relaxed">{m.content}</p>
-                      
+                      {m.role === "assistant" ? (
+                        <MiniMarkdown
+                          content={m.content}
+                          className="break-words leading-relaxed [&_p]:my-1 [&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-0.5 [&_h1]:text-base [&_h1]:font-bold [&_h1]:mt-2 [&_h2]:text-sm [&_h2]:font-bold [&_h2]:mt-2 [&_h3]:font-semibold [&_h3]:mt-1.5 [&_strong]:font-semibold [&_a]:text-indigo-600 [&_a]:underline dark:[&_a]:text-indigo-400 [&_code]:rounded [&_code]:bg-slate-200/70 [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[0.85em] dark:[&_code]:bg-slate-800 [&_pre]:my-2 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-slate-900 [&_pre]:p-3 [&_pre]:text-slate-100 [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_blockquote]:border-l-2 [&_blockquote]:border-slate-300 [&_blockquote]:pl-3 [&_blockquote]:italic [&_table]:my-2 [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_th]:border-slate-300 [&_th]:bg-slate-100 [&_th]:px-2 [&_th]:py-1 [&_th]:text-left [&_td]:border [&_td]:border-slate-200 [&_td]:px-2 [&_td]:py-1 dark:[&_th]:border-slate-700 dark:[&_th]:bg-slate-800 dark:[&_td]:border-slate-700 [&_hr]:my-2 [&_hr]:border-slate-200"
+                        />
+                      ) : (
+                        <p className="whitespace-pre-wrap break-words leading-relaxed">{m.content}</p>
+                      )}
+
                       {/* Copy Action for AI Responses */}
                       {m.role === "assistant" && (
                         <div className="mt-2 flex justify-end">
@@ -195,28 +210,37 @@ export default function AIAssistantWidget() {
             </div>
 
             {/* Input Bar */}
-            <div className="border-t border-slate-100 p-3 dark:border-slate-800 flex gap-2">
-              <Input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSend();
-                  }
-                }}
-                placeholder="Ask AI assistant..."
-                className="text-xs sm:text-sm h-10 flex-1"
-                disabled={loading}
-              />
-              <Button
-                onClick={() => handleSend()}
-                disabled={loading || !input.trim()}
-                className="h-10 w-10 shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white"
-                size="icon"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
+            <div className="border-t border-slate-100 p-3 dark:border-slate-800">
+              <div className="mb-1.5 flex items-center gap-1.5 text-[10px] text-slate-400">
+                <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 dark:bg-slate-800">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  Aware of this page · read-only
+                </span>
+              </div>
+              <div className="flex items-end gap-2">
+                <textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
+                  placeholder="Ask about your classes, exams, grading… (Shift+Enter for a new line)"
+                  rows={1}
+                  disabled={loading}
+                  className="flex-1 resize-none max-h-32 min-h-[40px] rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 disabled:opacity-50 dark:border-slate-800 dark:bg-canvas dark:text-slate-100"
+                />
+                <Button
+                  onClick={() => handleSend()}
+                  disabled={loading || !input.trim()}
+                  className="h-10 w-10 shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white"
+                  size="icon"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </motion.div>
         )}

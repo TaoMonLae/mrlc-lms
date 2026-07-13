@@ -25,6 +25,7 @@ import { registerConductRoutes } from "./conduct";
 import { registerDictionaryRoutes } from "./dictionary";
 import { registerGutenbergRoutes } from "./gutenberg";
 import { registerSnakeGameRoutes } from "./snakeGame";
+import { registerAiAssistantRoutes } from "./aiAssistant";
 import { registerCheckersGameRoutes } from "./checkersGame";
 import cookieParser from "cookie-parser";
 import { BADGE_CATALOG, getBadgeLevel } from "./lib/badges";
@@ -12700,91 +12701,10 @@ async function startServer() {
     res.json({ url: `/uploads/branding/${file.filename}` });
   });
 
-  /**
-   * POST /api/ai/chat
-   * Generates AI responses for teachers and admins.
-   */
-  app.post("/api/ai/chat", authMiddleware, async (req, res) => {
-    const user = (req as any).user as JwtPayload;
-    if (user.role !== "ADMIN" && user.role !== "TEACHER") {
-      res.status(403).json({ error: "Forbidden: AI Assistant is restricted to Admins and Teachers" });
-      return;
-    }
-
-    const { prompt, systemInstruction } = req.body;
-    if (!prompt) {
-      res.status(400).json({ error: "Prompt is required" });
-      return;
-    }
-
-    const provider = process.env.AI_PROVIDER || "gemini";
-
-    try {
-      if (provider === "gemini") {
-        const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey || apiKey === "MY_GEMINI_API_KEY") {
-          res.status(500).json({ error: "Gemini API key is not configured in .env" });
-          return;
-        }
-
-        const model = process.env.GEMINI_MODEL || "gemini-2.0-flash";
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: prompt }] }],
-              systemInstruction: systemInstruction ? { parts: [{ text: systemInstruction }] } : undefined,
-            }),
-          }
-        );
-
-        if (!response.ok) {
-          const errText = await response.text();
-          logger.error(`Gemini API error: ${errText}`);
-          res.status(response.status).json({ error: `Gemini API returned status ${response.status}` });
-          return;
-        }
-
-        const data = await response.json() as any;
-        const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated.";
-        res.json({ reply });
-      } else if (provider === "ollama") {
-        const url = process.env.OLLAMA_API_URL || "http://localhost:11434/api/chat";
-        const model = process.env.OLLAMA_MODEL || "gemma2:9b";
-
-        const response = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model,
-            messages: [
-              ...(systemInstruction ? [{ role: "system", content: systemInstruction }] : []),
-              { role: "user", content: prompt }
-            ],
-            stream: false,
-          }),
-        });
-
-        if (!response.ok) {
-          const errText = await response.text();
-          logger.error(`Ollama API error: ${errText}`);
-          res.status(response.status).json({ error: `Ollama API returned status ${response.status}` });
-          return;
-        }
-
-        const data = await response.json() as any;
-        const reply = data.message?.content || "No response generated.";
-        res.json({ reply });
-      } else {
-        res.status(400).json({ error: `Unsupported AI provider: ${provider}` });
-      }
-    } catch (err: any) {
-      logger.error("Error generating AI response:", err);
-      res.status(500).json({ error: err.message || "Internal server error during AI generation" });
-    }
-  });
+  // POST /api/ai/chat — context-aware, read-only AI assistant (Admins/Teachers).
+  // Implemented in ./aiAssistant with conversation memory, page context, a
+  // role-scoped situation snapshot, and read-only data tools.
+  registerAiAssistantRoutes({ app, prisma, authMiddleware, logger });
 
   // ── Data Export (CSV / JSON) ─────────────────────────────────────────────────
   const toCsv = (rows: Record<string, any>[]): string => {
