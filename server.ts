@@ -12512,6 +12512,92 @@ async function startServer() {
     }
   });
 
+  // ADMIN ONLY: permanently remove an exam and every record owned by it.
+  // This is deliberately separate from DELETE /api/exams/:id, which remains a
+  // reversible archive action for normal exam management.
+  app.delete("/api/admin/exams/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN") { res.status(403).json({ error: "Admin access required" }); return; }
+    const { id } = req.params;
+    try {
+      const exam = await prisma.exam.findUnique({
+        where: { id },
+        include: {
+          questions: { select: { id: true, imageUrl: true } },
+          stimuli: { select: { mediaUrl: true } },
+          attempts: { select: { id: true } },
+          assignments: { select: { id: true } },
+          accommodations: { select: { id: true } },
+          rubrics: { select: { id: true } },
+        },
+      });
+      if (!exam) { res.status(404).json({ error: "Exam not found" }); return; }
+      if (req.body?.confirmation !== "DELETE" || req.body?.title !== exam.title) {
+        res.status(400).json({ error: "Type the exact exam title and DELETE to confirm permanent removal" });
+        return;
+      }
+
+      const attemptIds = exam.attempts.map((row) => row.id);
+      const questionIds = exam.questions.map((row) => row.id);
+      const linkedRubrics = await prisma.gradingRubric.findMany({
+        where: { OR: [{ examId: id }, ...(questionIds.length ? [{ questionId: { in: questionIds } }] : [])] },
+        select: { id: true },
+      });
+      const rubricIds = [...new Set([...exam.rubrics.map((row) => row.id), ...linkedRubrics.map((row) => row.id)])];
+      await prisma.$transaction(async (tx) => {
+        // Remove cross-linked grading rows before their attempts/questions/rubrics.
+        if (attemptIds.length || questionIds.length || rubricIds.length) {
+          await tx.manualGrade.deleteMany({
+            where: { OR: [
+              ...(attemptIds.length ? [{ attemptId: { in: attemptIds } }] : []),
+              ...(questionIds.length ? [{ questionId: { in: questionIds } }] : []),
+              ...(rubricIds.length ? [{ rubricId: { in: rubricIds } }] : []),
+            ] },
+          });
+        }
+        await tx.examAttempt.deleteMany({ where: { examId: id } });
+        await tx.examAssignment.deleteMany({ where: { examId: id } });
+        await tx.examAccommodation.deleteMany({ where: { examId: id } });
+        if (rubricIds.length) await tx.gradingRubric.deleteMany({ where: { id: { in: rubricIds } } });
+        await tx.examQuestion.deleteMany({ where: { examId: id } });
+        await tx.examBlueprintRule.deleteMany({ where: { examId: id } });
+        await tx.question.deleteMany({ where: { examId: id } });
+        await tx.questionGroup.deleteMany({ where: { examId: id } });
+        await tx.stimulus.deleteMany({ where: { examId: id } });
+        await tx.examSection.deleteMany({ where: { examId: id } });
+        await tx.examResultPolicy.deleteMany({ where: { examId: id } });
+        await tx.questionStatistic.deleteMany({ where: { examId: id } });
+        await tx.exam.delete({ where: { id } });
+      });
+
+      // Remove local exam media only when no other record references the URL.
+      const mediaUrls = [...new Set([
+        ...exam.questions.map((row) => row.imageUrl),
+        ...exam.stimuli.map((row) => row.mediaUrl),
+      ].filter((url): url is string => typeof url === "string" && url.startsWith("/uploads/exam-media/")))];
+      await Promise.allSettled(mediaUrls.map(async (url) => {
+        const [questionRefs, stimulusRefs] = await Promise.all([
+          prisma.question.count({ where: { imageUrl: url } }),
+          prisma.stimulus.count({ where: { mediaUrl: url } }),
+        ]);
+        if (questionRefs || stimulusRefs) return;
+        const filename = path.basename(url.split("?")[0]);
+        if (filename) await fs.promises.unlink(path.join(EXAM_MEDIA_DIR, filename)).catch((err: any) => { if (err?.code !== "ENOENT") throw err; });
+      }));
+
+      await createAuditLog(
+        jwtUser.userId, jwtUser.email, "PERMANENT_DELETE", "EXAM", id,
+        `Exam '${exam.title}' permanently deleted with ${exam.questions.length} question(s) and ${exam.attempts.length} attempt(s).`,
+        req.ip, req.headers["user-agent"] || null, "WARNING",
+      );
+      res.json({ ok: true, id, title: exam.title });
+    } catch (err: any) {
+      if (err?.code === "P2025") { res.status(404).json({ error: "Exam not found" }); return; }
+      logger.error("Error permanently deleting exam:", err);
+      res.status(500).json({ error: "Could not permanently delete exam" });
+    }
+  });
+
   const EXAM_TYPE_TO_GRADE_CATEGORY: Record<string, string> = {
     QUIZ: "QUIZ",
     MIDTERM: "MIDTERM",

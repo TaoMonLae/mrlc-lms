@@ -166,6 +166,7 @@ import SchoolSettings from "./pages/settings/SchoolSettings";
 import BrandingSettings from "./pages/settings/BrandingSettings";
 import SystemSettings from "./pages/settings/SystemSettings";
 import BackupAndRestore from "./pages/settings/BackupAndRestore";
+import ExamDataManagement from "./pages/settings/ExamDataManagement";
 import NewsSources from "./pages/settings/NewsSources";
 import AuditLogPage from "./pages/settings/AuditLog";
 import ExportDataPage from "./pages/settings/ExportData";
@@ -436,6 +437,7 @@ export default function App() {
                     <Route path="roles" element={<RolesPermissions />} />
                     <Route path="news-sources" element={<NewsSources />} />
                     <Route path="backup" element={<BackupAndRestore />} />
+                    <Route path="exam-records" element={<ExamDataManagement />} />
                   </Route>
                   {/* Standalone pages — not part of the settings sub-nav layout */}
                   <Route path="/settings/audit-log" element={<AuditLogPage />} />
