@@ -4596,6 +4596,12 @@ async function startServer() {
           externalUrl: externalUrl || null,
           totalCopies: 1,
           availableCopies: 1,
+          // These are NOT NULL text[] columns without a DB default; Prisma 7
+          // sends NULL when omitted, which violates the constraint. Pass empty
+          // arrays explicitly so uploads succeed on the current schema.
+          tags: [],
+          subjectAreas: [],
+          gradeLevels: [],
         }
       });
 

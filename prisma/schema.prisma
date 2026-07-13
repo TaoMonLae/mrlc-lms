@@ -776,9 +776,9 @@ model LibraryResource {
 
   // Organization
   category     String?
-  tags         String[]
-  subjectAreas String[]
-  gradeLevels  String[]
+  tags         String[] @default([])
+  subjectAreas String[] @default([])
+  gradeLevels  String[] @default([])
 
   // Audit
   uploadedById   String?
