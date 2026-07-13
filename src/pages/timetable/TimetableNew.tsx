@@ -17,45 +17,20 @@ export default function TimetableNew() {
 
   const handleSubmit = async (values: any) => {
     setIsLoading(true);
-    // One entry per selected day (falls back to the single dayOfWeek).
-    const days: string[] = Array.isArray(values.daysOfWeek) && values.daysOfWeek.length
-      ? values.daysOfWeek
-      : [values.dayOfWeek];
     try {
       const token = sessionStorage.getItem('auth_token');
-      const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
-      let created = 0;
-      const failures: string[] = [];
-
-      for (const day of days) {
-        const { daysOfWeek, ...rest } = values;
-        const res = await fetch('/api/timetable', {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({ ...rest, dayOfWeek: day }),
-        });
-        if (res.ok) {
-          created++;
-        } else {
-          const err = await res.json().catch(() => ({}));
-          const details = Array.isArray(err.conflicts)
-            ? `: ${err.conflicts.map((c: any) => c.message).join(', ')}`
-            : '';
-          failures.push(`${day.slice(0, 3)} — ${err.error || 'failed'}${details}`);
-        }
+      const res = await fetch('/api/timetable', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(values),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        const details = Array.isArray(err.conflicts) ? `: ${err.conflicts.map((conflict: any) => conflict.message).join(', ')}` : '';
+        throw new Error(`${err.error || 'Failed to create schedule item'}${details}`);
       }
-
-      if (created > 0) {
-        toast.success(
-          days.length > 1
-            ? `Created ${created} of ${days.length} day${days.length > 1 ? 's' : ''}${failures.length ? ` (${failures.length} skipped)` : ''}`
-            : 'Schedule item created successfully'
-        );
-      }
-      if (failures.length) {
-        toast.error(failures.join(' · '));
-      }
-      if (created > 0) navigate(backUrl);
+      toast.success('Schedule item created successfully');
+      navigate(backUrl);
     } catch (error: any) {
       toast.error(error.message || 'Failed to create schedule item');
     } finally {
@@ -64,7 +39,7 @@ export default function TimetableNew() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-center gap-3">
         <Button
           variant="ghost"

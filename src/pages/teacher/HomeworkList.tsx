@@ -212,10 +212,7 @@ export default function HomeworkList() {
         <div className="space-y-3">
           {rows.map((r) => {
             const { total, submitted, marked } = summarize(r);
-            // Compare calendar dates (not instants) so a homework due "today"
-            // doesn't flip to overdue at UTC midnight, hours before the end
-            // of the day in the user's own timezone (e.g. Myanmar, UTC+6:30).
-            const overdue = r.dueDate.slice(0, 10) < localToday() && r.status === 'OPEN';
+            const overdue = new Date(r.dueDate) < new Date() && r.status === 'OPEN';
             return (
               <Link key={r.id} to={`/teacher/homework/${r.id}`}
                 className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:border-aubergine-300 dark:border-surface-raised dark:bg-surface-indigo sm:flex-row sm:items-center sm:justify-between">

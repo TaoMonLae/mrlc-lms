@@ -19,6 +19,7 @@ import AttendanceReportsPage from "./pages/attendance/AttendanceReports";
 
 import ExamNew from "./pages/exams/ExamNew";
 import ExamProfile from "./pages/exams/ExamProfile";
+import ExamEdit from "./pages/exams/ExamEdit";
 import ExamTake from "./pages/exams/ExamTake";
 import ExamResults from "./pages/exams/ExamResults";
 import ExamsList from "./pages/exams/ExamsList";
@@ -36,7 +37,6 @@ const InvigilatorDashboard = lazy(() => import("./pages/exam2/InvigilatorDashboa
 const AccommodationManagement = lazy(() => import("./pages/exam2/AccommodationManagement"));
 const PrintableExport = lazy(() => import("./pages/exam2/PrintableExport"));
 const ExamAuthoring = lazy(() => import("./pages/exam2/ExamAuthoring"));
-const GuidedStudio = lazy(() => import("./pages/exams/GuidedStudio"));
 const QuestionBank = lazy(() => import("./pages/bank/QuestionBank"));
 const QuestionEditor = lazy(() => import("./pages/bank/QuestionEditor"));
 const TopicManager = lazy(() => import("./pages/bank/TopicManager"));
@@ -174,10 +174,6 @@ import ArticleReader from "./pages/news/ArticleReader";
 
 import SudokuSelectPage from "./pages/games/sudoku/index";
 import SudokuPlayPage from "./pages/games/sudoku/PlayPage";
-import SnakeSelectPage from "./pages/games/snake/index";
-import SnakePlayPage from "./pages/games/snake/PlayPage";
-import CheckersSelectPage from "./pages/games/checkers/index";
-import CheckersPlayPage from "./pages/games/checkers/PlayPage";
 
 import Dictionary from "./pages/dictionary/Dictionary";
 
@@ -329,12 +325,6 @@ export default function App() {
                 <Route path="/games/sudoku" element={<SudokuSelectPage />} />
                 <Route path="/games/sudoku/play" element={<SudokuPlayPage />} />
 
-                <Route path="/games/snake" element={<SnakeSelectPage />} />
-                <Route path="/games/snake/play" element={<SnakePlayPage />} />
-
-                <Route path="/games/checkers" element={<CheckersSelectPage />} />
-                <Route path="/games/checkers/play" element={<CheckersPlayPage />} />
-
                 <Route path="/timetable" element={<TimetablePage />} />
 
                 <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'TEACHER']} />}>
@@ -375,10 +365,7 @@ export default function App() {
                   <Route path="/exams" element={<ExamsList />} />
                   <Route path="/exams/new" element={<ExamNew />} />
                   <Route path="/exams/:id" element={<ExamProfile />} />
-                  {/* Classic edit removed — the Guided Studio is the only builder.
-                      Keep the /edit path as a redirect so old links/bookmarks resolve. */}
-                  <Route path="/exams/:id/edit" element={<GuidedStudio />} />
-                  <Route path="/exams/:id/studio" element={<GuidedStudio />} />
+                  <Route path="/exams/:id/edit" element={<ExamEdit />} />
                   <Route path="/exams/:id/preview" element={<ExamPreview />} />
                   
                   <Route path="/teachers" element={<TeachersList />} />

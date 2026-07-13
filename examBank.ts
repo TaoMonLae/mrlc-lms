@@ -29,39 +29,6 @@ export function seededShuffle<T>(arr: T[], seed: string): T[] {
   return a;
 }
 
-// ─── Drag-and-drop (Wayground-style fill-in-the-blank) ──────────────────────
-// A DRAG_DROP question's `options` JSON is: { text, blanks: [{id, answer}], distractors: [...] }
-// where `text` is the passage with blanks marked as "{{<blankId>}}" tokens.
-// The student drags word chips from a shuffled word bank into those blanks.
-export interface DragBlank { id: string; answer: string }
-export interface DragBankItem { key: string; label: string }
-
-// Canonical (pre-shuffle) bank order: each blank's own answer, in blank
-// order, followed by the extra distractor words. `key` is that item's index
-// in this canonical order — a stable id that lets grading resolve a placed
-// chip back to its word regardless of what shuffled order the student saw.
-export function dragDropBank(options: any): DragBankItem[] {
-  const blanks: DragBlank[] = Array.isArray(options?.blanks) ? options.blanks : [];
-  const distractors: string[] = Array.isArray(options?.distractors) ? options.distractors : [];
-  const labels = [...blanks.map((b) => String(b?.answer ?? "")), ...distractors.map((d) => String(d ?? ""))].filter(Boolean);
-  return labels.map((label, i) => ({ key: String(i), label }));
-}
-
-// Authoring input: a passage with blanked-out words marked as "[[word]]",
-// e.g. "The [[cat]] sat on the [[mat]]." → parsed into the {{id}}-token text
-// plus a blanks list, matching the shape dragDropBank()/scoring expect.
-export function parseDragBlankText(raw: string): { text: string; blanks: DragBlank[] } {
-  let i = 0;
-  const blanks: DragBlank[] = [];
-  const text = String(raw || "").replace(/\[\[(.+?)\]\]/g, (_m: string, word: string) => {
-    i += 1;
-    const id = String(i);
-    blanks.push({ id, answer: word.trim() });
-    return `{{${id}}}`;
-  });
-  return { text, blanks };
-}
-
 export async function composeQuestionSet(prisma: any, examId: string, seed: string): Promise<any[]> {
   const fixedLinks: any[] = await prisma.examQuestion
     .findMany({ where: { examId }, include: { question: { include: { optionRows: { orderBy: { orderIndex: "asc" } } } } }, orderBy: { displayOrder: "asc" } })
@@ -118,9 +85,12 @@ export function freezeAttempt(questions: any[], exam: any, seed: string) {
   for (const qid of order) {
     const q = byId[qid];
     if (!q) continue;
-    // Word bank is always shuffled (regardless of exam.shuffleOptions) —
-    // an unshuffled bank would trivially leak the answer order to students.
-    const dragBank = q.type === "DRAG_DROP" ? seededShuffle(dragDropBank(q.options), `${seed}:drag:${qid}`) : [];
+    const rawPairs = q.type === "DRAG_DROP" && q.options && !Array.isArray(q.options) && Array.isArray((q.options as any).pairs)
+      ? (q.options as any).pairs
+      : [];
+    let dragItems = rawPairs.map((pair: any) => String(pair?.item || "")).filter(Boolean);
+    const dragTargets = rawPairs.map((pair: any) => String(pair?.target || "")).filter(Boolean);
+    if (q.type === "DRAG_DROP" && exam.shuffleOptions) dragItems = seededShuffle(dragItems, `${seed}:drag:${qid}`);
     let opts: { key: string; text: string; correct?: boolean; weight?: number | null }[] = [];
     if (Array.isArray(q.optionRows) && q.optionRows.length) {
       opts = q.optionRows.map((o: any) => ({ key: o.id, text: o.text, correct: o.isCorrect, weight: o.weight }));
@@ -134,12 +104,9 @@ export function freezeAttempt(questions: any[], exam: any, seed: string) {
       points: q.pointsOverride ?? q.defaultPoints ?? q.points ?? 0,
       passageText: q.passageText ?? null,
       imageUrl: q.imageUrl ?? null,
-      // Needed so the player renders multi-answer questions as multi-select;
-      // omitting it made every frozen question render single-select.
-      partialCredit: q.partialCredit ?? false,
       options: opts.map((o) => ({ key: o.key, text: o.text })),
-      dragText: q.type === "DRAG_DROP" ? String(q.options?.text ?? "") : undefined,
-      dragBank: q.type === "DRAG_DROP" ? dragBank : undefined,
+      dragItems: q.type === "DRAG_DROP" ? dragItems : undefined,
+      dragTargets: q.type === "DRAG_DROP" ? dragTargets : undefined,
     });
   }
   return { questionOrder: order, optionOrder, frozenContent };
@@ -284,10 +251,11 @@ export function registerExamBankRoutes(deps: Deps): void {
     if (!b.text || !b.type) { res.status(400).json({ error: "text and type are required" }); return; }
     if (!(await canEditSubject(req, b.subjectId))) { res.status(403).json({ error: "Not your subject" }); return; }
     const options: any[] = Array.isArray(b.options) ? b.options : [];
-    const dragParsed = b.type === "DRAG_DROP" ? parseDragBlankText(b.dragBlankText || "") : { text: "", blanks: [] };
-    const dragDistractors: string[] = Array.isArray(b.dragDistractors) ? b.dragDistractors.map((d: any) => String(d || "").trim()).filter(Boolean) : [];
-    if (b.type === "DRAG_DROP" && dragParsed.blanks.length < 1) {
-      res.status(400).json({ error: "Mark at least one blank in the passage using [[word]]" }); return;
+    const dragDropPairs = Array.isArray(b.dragDropPairs) ? b.dragDropPairs.map((pair: any) => ({ item: String(pair?.item || "").trim(), target: String(pair?.target || "").trim() })) : [];
+    const hasUniquePairs = (pairs: any[]) => new Set(pairs.map((pair: any) => pair.item.toLocaleLowerCase())).size === pairs.length
+      && new Set(pairs.map((pair: any) => pair.target.toLocaleLowerCase())).size === pairs.length;
+    if (b.type === "DRAG_DROP" && (dragDropPairs.length < 2 || dragDropPairs.some((pair: any) => !pair.item || !pair.target) || !hasUniquePairs(dragDropPairs))) {
+      res.status(400).json({ error: "Drag-and-drop questions need at least two complete pairs with unique items and drop zones" }); return;
     }
     try {
       const row = await prisma.question.create({
@@ -299,7 +267,7 @@ export function registerExamBankRoutes(deps: Deps): void {
           explanation: sanitizeHTML(b.explanation) || null, status: "DRAFT", version: 1,
           tags: Array.isArray(b.tags) ? b.tags : [], language: b.language || null,
           correctAnswer: b.correctAnswer || null, correctAnswers: b.correctAnswers ?? null,
-          options: b.type === "DRAG_DROP" ? { text: dragParsed.text, blanks: dragParsed.blanks, distractors: dragDistractors } : null,
+          options: b.type === "DRAG_DROP" ? { pairs: dragDropPairs } : null,
           partialCredit: !!b.partialCredit, caseSensitive: !!b.caseSensitive,
           requiresManualGrading: !!b.requiresManualGrading,
           numericTolerance: (num(b.numericTolerance) !== null && num(b.numericTolerance) >= 0) ? num(b.numericTolerance) : null,
@@ -327,14 +295,14 @@ export function registerExamBankRoutes(deps: Deps): void {
       }
       if (b.type !== undefined) data.type = b.type;
       if (b.type !== undefined && b.type !== "DRAG_DROP") data.options = null;
-      if (b.type === "DRAG_DROP" || b.dragBlankText !== undefined) {
-        const dragParsed = parseDragBlankText(b.dragBlankText || "");
-        const dragDistractors: string[] = Array.isArray(b.dragDistractors) ? b.dragDistractors.map((d: any) => String(d || "").trim()).filter(Boolean) : [];
-        if ((b.type === "DRAG_DROP" || existing.type === "DRAG_DROP") && dragParsed.blanks.length < 1) {
-          res.status(400).json({ error: "Mark at least one blank in the passage using [[word]]" }); return;
+      if (b.type === "DRAG_DROP" || b.dragDropPairs !== undefined) {
+        const pairs = Array.isArray(b.dragDropPairs) ? b.dragDropPairs.map((pair: any) => ({ item: String(pair?.item || "").trim(), target: String(pair?.target || "").trim() })) : [];
+        const uniquePairs = new Set(pairs.map((pair: any) => pair.item.toLocaleLowerCase())).size === pairs.length
+          && new Set(pairs.map((pair: any) => pair.target.toLocaleLowerCase())).size === pairs.length;
+        if ((b.type === "DRAG_DROP" || existing.type === "DRAG_DROP") && (pairs.length < 2 || pairs.some((pair: any) => !pair.item || !pair.target) || !uniquePairs)) {
+          res.status(400).json({ error: "Drag-and-drop questions need at least two complete pairs with unique items and drop zones" }); return;
         }
-        data.options = (b.type === "DRAG_DROP" || (b.type === undefined && existing.type === "DRAG_DROP"))
-          ? { text: dragParsed.text, blanks: dragParsed.blanks, distractors: dragDistractors } : null;
+        data.options = (b.type === "DRAG_DROP" || (b.type === undefined && existing.type === "DRAG_DROP")) ? { pairs } : null;
       }
       if (b.subjectId !== undefined) data.subjectId = b.subjectId || null;
       if (b.topicId !== undefined) data.topicId = b.topicId || null;

@@ -3,8 +3,9 @@
 import * as React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, BookOpen, Eye, EyeOff, Pencil, Check, X } from "lucide-react";
+import { Plus, Trash2, BookOpen, Eye, EyeOff, Pencil, Check, X, Download, Upload } from "lucide-react";
 import { apiGet, apiSend } from "../../../lib/api";
+import { toast } from "sonner";
 
 interface Word {
   id: string;
@@ -22,6 +23,35 @@ const DIFFICULTIES = ["easy", "medium", "hard"] as const;
 const inputCls =
   "bg-white/10 text-white placeholder-white/40 border border-white/20 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-purple-400";
 
+function parseCSV(text: string): string[][] {
+  const lines = text.split(/\r?\n/);
+  const result: string[][] = [];
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    
+    const row: string[] = [];
+    let insideQuote = false;
+    let currentVal = "";
+    
+    for (let j = 0; j < line.length; j++) {
+      const char = line[j];
+      if (char === '"') {
+        insideQuote = !insideQuote;
+      } else if (char === ',' && !insideQuote) {
+        row.push(currentVal.trim());
+        currentVal = "";
+      } else {
+        currentVal += char;
+      }
+    }
+    row.push(currentVal.trim());
+    result.push(row);
+  }
+  return result;
+}
+
 export default function CheckerVocabularyManager() {
   const [words, setWords] = React.useState<Word[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -31,6 +61,84 @@ export default function CheckerVocabularyManager() {
   const [form, setForm] = React.useState({ word: "", definition: "", partOfSpeech: "", difficulty: "medium" });
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [editForm, setEditForm] = React.useState<Partial<Word>>({});
+
+  const downloadTemplate = () => {
+    const csvContent = "word,definition,partOfSpeech,difficulty,language\nexample,a representative form or pattern,noun,easy,en\nvocabulary,all the words used by a particular person,noun,medium,en";
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "checkers_vocabulary_template.csv");
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleImportCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const text = event.target?.result as string;
+      if (!text) return;
+
+      try {
+        const rows = parseCSV(text);
+        if (rows.length < 2) {
+          setError("CSV file is empty or missing headers");
+          return;
+        }
+
+        const headers = rows[0].map(h => h.toLowerCase().trim());
+        const wordIdx = headers.indexOf("word");
+        const defIdx = headers.indexOf("definition");
+        const posIdx = headers.indexOf("partofspeech");
+        const diffIdx = headers.indexOf("difficulty");
+        const langIdx = headers.indexOf("language");
+
+        if (wordIdx === -1 || defIdx === -1) {
+          setError("CSV must contain 'word' and 'definition' columns");
+          return;
+        }
+
+        const parsedWords = [];
+        for (let i = 1; i < rows.length; i++) {
+          const row = rows[i];
+          if (!row[wordIdx] || !row[defIdx]) continue;
+
+          parsedWords.push({
+            word: row[wordIdx].trim(),
+            definition: row[defIdx].trim(),
+            partOfSpeech: posIdx !== -1 && row[posIdx] ? row[posIdx].trim() : undefined,
+            difficulty: diffIdx !== -1 && ["easy", "medium", "hard"].includes(row[diffIdx].toLowerCase()) 
+              ? row[diffIdx].toLowerCase() 
+              : "medium",
+            language: langIdx !== -1 && row[langIdx] ? row[langIdx].trim() : "en",
+          });
+        }
+
+        if (parsedWords.length === 0) {
+          setError("No valid vocabulary rows found in CSV");
+          return;
+        }
+
+        setSaving(true);
+        setError(null);
+        
+        await apiSend("/api/checkers-game/vocabulary/import", "POST", parsedWords);
+        toast.success(`Successfully imported ${parsedWords.length} words!`);
+        await load();
+      } catch (err: any) {
+        setError(err.message || "Failed to parse or import CSV");
+      } finally {
+        setSaving(false);
+        if (e.target) e.target.value = ""; // Reset file input
+      }
+    };
+    reader.readAsText(file);
+  };
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -114,6 +222,35 @@ export default function CheckerVocabularyManager() {
       <p className="text-xs text-white/60 mb-4">
         Words you add here are mixed with the dictionary in the Vocabulary game for all students.
       </p>
+
+      {/* CSV template & import actions */}
+      <div className="flex flex-wrap gap-2 mb-4 border-b border-white/10 pb-4">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={downloadTemplate}
+          className="bg-white/5 text-white border-white/20 text-xs hover:bg-white/10 hover:text-white"
+        >
+          <Download className="size-3.5 mr-1" /> Download CSV Template
+        </Button>
+        <div className="relative">
+          <input
+            type="file"
+            accept=".csv"
+            onChange={handleImportCSV}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            disabled={saving}
+          />
+          <Button
+            size="sm"
+            variant="outline"
+            className="bg-white/5 text-white border-white/20 text-xs hover:bg-white/10 hover:text-white pointer-events-none"
+            disabled={saving}
+          >
+            <Upload className="size-3.5 mr-1" /> Import CSV
+          </Button>
+        </div>
+      </div>
 
       {/* Add form */}
       <div className="grid grid-cols-1 sm:grid-cols-[1fr_2fr_auto_auto] gap-2 mb-3">

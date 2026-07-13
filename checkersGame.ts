@@ -135,6 +135,35 @@ export function registerCheckersGameRoutes({
     }
   });
 
+  // Bulk import words.
+  router.post("/vocabulary/import", authMiddleware, requireEditor, async (req: Request, res: Response) => {
+    try {
+      const itemsSchema = z.array(wordSchema);
+      const items = itemsSchema.parse(req.body);
+      const user = (req as any).user;
+
+      const created = await prisma.$transaction(
+        items.map((item) =>
+          prisma.checkerVocabularyWord.create({
+            data: {
+              ...item,
+              createdById: user?.userId ?? null,
+              createdByName: user?.email ?? null,
+            },
+          })
+        )
+      );
+
+      res.json({ success: true, count: created.length });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ success: false, error: "Invalid words data", details: error.issues });
+      }
+      console.error("Error importing vocabulary words:", error);
+      res.status(500).json({ success: false, error: "Failed to import vocabulary words" });
+    }
+  });
+
   // Update a word (edit fields or toggle active).
   router.put("/vocabulary/:id", authMiddleware, requireEditor, async (req: Request, res: Response) => {
     try {

@@ -2,7 +2,7 @@ import express from "express";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import rateLimit from "express-rate-limit";
-import { composeQuestionSet, freezeAttempt, dragDropBank, seededShuffle } from "./examBank";
+import { composeQuestionSet, freezeAttempt } from "./examBank";
 
 interface JwtPayload { userId: string; role: string; email: string; }
 
@@ -98,14 +98,17 @@ export function registerExamPhase2Routes(deps: Deps): void {
   }
 
   function sanitizeQuestion(q: any) {
+    const rawPairs = q.type === "DRAG_DROP" && q.options && !Array.isArray(q.options) && Array.isArray(q.options.pairs)
+      ? q.options.pairs
+      : [];
     return {
       id: q.id,
       text: q.text,
       type: q.type,
       points: q.points,
       options: q.type === "DRAG_DROP" ? null : q.options ?? null,
-      dragText: q.type === "DRAG_DROP" ? String(q.options?.text ?? "") : undefined,
-      dragBank: q.type === "DRAG_DROP" ? seededShuffle(dragDropBank(q.options), `dq:${q.id}`) : undefined,
+      dragItems: q.type === "DRAG_DROP" ? rawPairs.map((pair: any) => String(pair?.item || "")).filter(Boolean) : undefined,
+      dragTargets: q.type === "DRAG_DROP" ? rawPairs.map((pair: any) => String(pair?.target || "")).filter(Boolean) : undefined,
       orderIndex: q.orderIndex,
       sectionId: q.sectionId ?? null,
       groupId: q.groupId ?? null,
@@ -474,8 +477,12 @@ export function registerExamPhase2Routes(deps: Deps): void {
           id: q.id, text: q.text, type: q.type,
           points: q.pointsOverride ?? q.defaultPoints ?? q.points ?? 0,
           options,
-          dragText: q.type === "DRAG_DROP" ? String(q.options?.text ?? "") : undefined,
-          dragBank: q.type === "DRAG_DROP" ? dragDropBank(q.options) : undefined,
+          dragItems: q.type === "DRAG_DROP" && q.options && !Array.isArray(q.options) && Array.isArray(q.options.pairs)
+            ? q.options.pairs.map((pair: any) => String(pair?.item || "")).filter(Boolean)
+            : undefined,
+          dragTargets: q.type === "DRAG_DROP" && q.options && !Array.isArray(q.options) && Array.isArray(q.options.pairs)
+            ? q.options.pairs.map((pair: any) => String(pair?.target || "")).filter(Boolean)
+            : undefined,
           passageText: q.passageText ?? null, imageUrl: q.imageUrl ?? null,
         };
       });
@@ -499,11 +506,11 @@ export function registerExamPhase2Routes(deps: Deps): void {
       ordered = attempt.frozenContent.map((q: any) => ({
         id: q.id, text: q.text, type: q.type, points: q.points,
         options: Array.isArray(q.options) ? q.options.map((o: any) => ({ value: o.key, text: o.text })) : null,
-        dragText: typeof q.dragText === "string" ? q.dragText : undefined,
-        dragBank: Array.isArray(q.dragBank) ? q.dragBank : undefined,
+        dragItems: Array.isArray(q.dragItems) ? q.dragItems : undefined,
+        dragTargets: Array.isArray(q.dragTargets) ? q.dragTargets : undefined,
         passageText: q.passageText ?? null,
         imageUrl: q.imageUrl ?? null,
-        partialCredit: q.partialCredit ?? false,
+        partialCredit: false,
       }));
     } else {
       const questions = exam.questions || (await prisma.question.findMany({ where: { examId: exam.id } }));
@@ -660,91 +667,53 @@ export function registerExamPhase2Routes(deps: Deps): void {
   // ── auto-scoring engine (partial credit, negative marking, tolerances) ───────
   function scoreObjective(q: any, ans: any): { score: number; correct: boolean | null; manual: boolean } {
     const max = q.points || 0;
-    // Clamp every result: a wrong answer can go as low as -negativePoints (or
-    // minScore, if configured) and no result may exceed the question's max.
-    const lowerBound = q.minScore != null
-      ? q.minScore
-      : (q.negativePoints ? -Math.abs(q.negativePoints) : 0);
-    const clamp = (s: number) => Math.min(max, Math.max(lowerBound, s));
-    const wrongScore = () => clamp(q.negativePoints ? -Math.abs(q.negativePoints) : 0);
+    const floor = (s: number) => {
+      let v = s;
+      if (q.minScore != null) v = Math.max(v, q.minScore);
+      return Math.max(v, q.negativePoints ? -Math.abs(q.negativePoints) : (q.partialCredit ? v : Math.min(v, max)) );
+    };
+    // Manual types.
+    if (["ESSAY", "WRITTEN"].includes(q.type) || q.requiresManualGrading) return { score: 0, correct: null, manual: true };
 
-    // Manual types. Short answer is graded manually per the exam design (the
-    // stored correctAnswer is a model answer / rubric note, not an exact key).
-    if (["SHORT_ANSWER", "ESSAY", "WRITTEN", "EXTENDED"].includes(q.type) || q.requiresManualGrading) return { score: 0, correct: null, manual: true };
+    if (q.type === "DRAG_DROP") {
+      const pairs = q.options && !Array.isArray(q.options) && Array.isArray(q.options.pairs) ? q.options.pairs : [];
+      const matches = ans?.selectedOptions && !Array.isArray(ans.selectedOptions) && typeof ans.selectedOptions === "object" ? ans.selectedOptions : {};
+      const normalize = (value: unknown) => String(value || "").trim().toLocaleLowerCase();
+      const correctCount = pairs.filter((pair: any) => normalize(matches[pair.item]) === normalize(pair.target)).length;
+      const correct = pairs.length > 0 && correctCount === pairs.length;
+      const score = q.partialCredit && pairs.length ? (max * correctCount) / pairs.length : (correct ? max : 0);
+      return { score, correct, manual: false };
+    }
 
-    // Accepted correct answers (option keys/ids or a single correctAnswer) —
-    // used by both single-choice and multi-select scoring below.
+    // Multi-select with per-option weighting.
+    if (Array.isArray(ans?.selectedOptions) && q.optionWeights) {
+      const weights: Record<string, number> = q.optionWeights as any;
+      let raw = 0;
+      for (const opt of ans.selectedOptions) raw += Number(weights[opt] || 0);
+      let score = q.partialCredit ? raw * max : (raw >= 1 ? max : 0);
+      score = Math.min(score, max);
+      if (q.minScore != null) score = Math.max(score, q.minScore);
+      return { score, correct: score >= max, manual: false };
+    }
+
+    // Text / numeric / single-choice.
+    const given = (ans?.answerText ?? "").toString();
     const accepted: string[] = Array.isArray(q.correctAnswers) && q.correctAnswers.length
       ? q.correctAnswers.map((s: any) => String(s))
       : (q.correctAnswer != null ? [String(q.correctAnswer)] : []);
-    const norm = (s: string) => (q.caseSensitive ? String(s).trim() : String(s).trim().toLowerCase());
-
-    if (q.type === "DRAG_DROP") {
-      // The student's answer is { [blankId]: bankKey } — bankKey is an index
-      // into the canonical (pre-shuffle) word bank built by dragDropBank(),
-      // which resolves back to the word text placed in that blank.
-      const blanks: { id: string; answer: string }[] = q.options && !Array.isArray(q.options) && Array.isArray(q.options.blanks) ? q.options.blanks : [];
-      const bank = dragDropBank(q.options);
-      const bankLabel: Record<string, string> = {};
-      for (const item of bank) bankLabel[item.key] = item.label;
-      const matches = ans?.selectedOptions && !Array.isArray(ans.selectedOptions) && typeof ans.selectedOptions === "object" ? ans.selectedOptions : {};
-      const normalize = (value: unknown) => String(value || "").trim().toLocaleLowerCase();
-      const correctCount = blanks.filter((b) => normalize(bankLabel[matches[b.id]]) === normalize(b.answer)).length;
-      const correct = blanks.length > 0 && correctCount === blanks.length;
-      const score = q.partialCredit && blanks.length ? (max * correctCount) / blanks.length : (correct ? max : 0);
-      return { score: clamp(score), correct, manual: false };
-    }
-
-    // Multi-select answers arrive as an array of chosen option keys.
-    if (Array.isArray(ans?.selectedOptions)) {
-      const chosen = ans.selectedOptions.map((s: any) => String(s));
-
-      // Weighted scoring when per-option weights are configured.
-      if (q.optionWeights) {
-        const weights: Record<string, number> = q.optionWeights as any;
-        let raw = 0;
-        for (const opt of chosen) raw += Number(weights[opt] || 0);
-        const score = q.partialCredit ? raw * max : (raw >= 1 ? max : 0);
-        return { score: clamp(score), correct: score >= max, manual: false };
-      }
-
-      // No weights: score by comparing the chosen set against the correct set.
-      // This is what makes partial-credit / multi-answer questions gradeable
-      // even when the author didn't assign per-option weights (previously such
-      // answers fell through to the text path and always scored 0).
-      if (accepted.length) {
-        const correctSet = new Set(accepted.map(norm));
-        const chosenNorm = chosen.map(norm);
-        const chosenSet = new Set(chosenNorm);
-        const correctChosen = [...correctSet].filter((c) => chosenSet.has(c)).length;
-        const wrongChosen = chosenNorm.filter((c) => !correctSet.has(c)).length;
-        const exact = correctChosen === correctSet.size && wrongChosen === 0;
-        let score: number;
-        if (q.partialCredit) {
-          // +1 per correct pick, -1 per wrong pick, as a fraction of the answer.
-          score = max * Math.max(0, (correctChosen - wrongChosen) / correctSet.size);
-        } else {
-          score = exact ? max : 0;
-        }
-        return { score: clamp(score), correct: exact, manual: false };
-      }
-      return { score: 0, correct: false, manual: false };
-    }
-
-    // Text / numeric / single-choice (stored in answerText).
-    const given = (ans?.answerText ?? "").toString();
-    if (!given.trim()) return { score: 0, correct: false, manual: false }; // blank — never penalised
+    if (!given.trim()) return { score: 0, correct: false, manual: false }; // blank
 
     // numeric tolerance
     if (q.numericTolerance != null && q.numericTolerance >= 0 && accepted.length && !isNaN(Number(given))) {
       const g = Number(given);
       const hit = accepted.some((a) => !isNaN(Number(a)) && Math.abs(g - Number(a)) <= q.numericTolerance);
-      if (hit) return { score: clamp(max), correct: true, manual: false };
-      return { score: wrongScore(), correct: false, manual: false };
+      if (hit) return { score: max, correct: true, manual: false };
+      return { score: q.negativePoints ? -Math.abs(q.negativePoints) : 0, correct: false, manual: false };
     }
+    const norm = (s: string) => (q.caseSensitive ? s.trim() : s.trim().toLowerCase());
     const hit = accepted.some((a) => norm(a) === norm(given));
-    if (hit) return { score: clamp(max), correct: true, manual: false };
-    return { score: wrongScore(), correct: false, manual: false };
+    if (hit) return { score: max, correct: true, manual: false };
+    return { score: q.negativePoints ? -Math.abs(q.negativePoints) : 0, correct: false, manual: false };
   }
 
   // Shared submission finalizer. Used by manual submit and auto-submit on expiry.
@@ -884,10 +853,6 @@ export function registerExamPhase2Routes(deps: Deps): void {
         // For legacy MCQs the correct answer is stored as an option *index*; show
         // the option *text* so it matches the student's (text) answer.
         const correctText = (q: any) => {
-          if (q.type === "DRAG_DROP") {
-            const blanks = q.options && !Array.isArray(q.options) && Array.isArray((q.options as any).blanks) ? (q.options as any).blanks : [];
-            return blanks.length ? blanks.map((b: any, i: number) => `${i + 1}. ${b.answer}`).join("   ") : null;
-          }
           if (Array.isArray(q.optionRows) && q.optionRows.length) {
             return q.optionRows.filter((o: any) => o.isCorrect).map((o: any) => o.text).join(", ");
           }
@@ -904,47 +869,11 @@ export function registerExamPhase2Routes(deps: Deps): void {
         const correctAnswers = (q: any) => Array.isArray(q.optionRows) && q.optionRows.length
           ? q.optionRows.filter((o: any) => o.isCorrect).map((o: any) => o.text)
           : q.correctAnswers;
-        // Drag-drop answers live in selectedOptions ({ [blankId]: bankKey }),
-        // not answerText, so the plain answerText lookup below always showed
-        // "—" for these questions even when answered and correctly graded.
-        // Render them as numbered "1. word" lines matching the blank order.
-        const yourAnswerText = (q: any, ans: any) => {
-          if (q.type === "DRAG_DROP") {
-            const blanks = q.options && !Array.isArray(q.options) && Array.isArray((q.options as any).blanks) ? (q.options as any).blanks : [];
-            const bank = dragDropBank(q.options);
-            const bankLabel: Record<string, string> = {};
-            for (const item of bank) bankLabel[item.key] = item.label;
-            const matches = ans?.selectedOptions && !Array.isArray(ans.selectedOptions) && typeof ans.selectedOptions === "object" ? ans.selectedOptions : {};
-            const lines = blanks.map((b: any, i: number) => matches[b.id] != null && bankLabel[matches[b.id]] ? `${i + 1}. ${bankLabel[matches[b.id]]}` : null).filter(Boolean);
-            return lines.length ? lines.join("   ") : null;
-          }
-          return ans?.answerText ?? null;
-        };
-        // A per-blank breakdown for the review screen (which blank the student
-        // got right/wrong, their word vs. the correct one) — richer than the
-        // one-line yourAnswer/correctAnswer summary, and only meaningful when
-        // showCorrect is on (it would otherwise leak the answer key).
-        const dragDropRows = (q: any, ans: any) => {
-          if (q.type !== "DRAG_DROP" || !showCorrect) return undefined;
-          const blanks = q.options && !Array.isArray(q.options) && Array.isArray((q.options as any).blanks) ? (q.options as any).blanks : [];
-          if (!blanks.length) return undefined;
-          const bank = dragDropBank(q.options);
-          const bankLabel: Record<string, string> = {};
-          for (const item of bank) bankLabel[item.key] = item.label;
-          const matches = ans?.selectedOptions && !Array.isArray(ans.selectedOptions) && typeof ans.selectedOptions === "object" ? ans.selectedOptions : {};
-          const norm = (s: string) => String(s || "").trim().toLocaleLowerCase();
-          return blanks.map((b: any, i: number) => {
-            const yourWord = matches[b.id] != null ? bankLabel[matches[b.id]] : null;
-            const isCorrect = !!yourWord && norm(yourWord) === norm(b.answer);
-            return { label: `Blank ${i + 1}`, your: yourWord || null, correct: b.answer, isCorrect };
-          });
-        };
         questions = orderedQs.map((q: any) => ({
           id: q.id, text: q.text, passageText: q.passageText ?? null,
           ...(showCorrect ? { correctAnswer: correctText(q), correctAnswers: correctAnswers(q) } : {}),
           ...(showExpl ? { explanation: q.explanation } : {}),
-          yourAnswer: yourAnswerText(q, ansByQ[q.id]),
-          dragDropRows: dragDropRows(q, ansByQ[q.id]),
+          yourAnswer: ansByQ[q.id]?.answerText ?? null,
           pointsAwarded: showScore ? ansByQ[q.id]?.pointsAwarded ?? null : undefined,
           feedback: showFeedback ? fbByQ[q.id]?.overallComment ?? null : undefined,
         }));
@@ -1554,10 +1483,6 @@ function registerGradingAndOps(deps: any) {
       }
       // Legacy MCQ stores the correct answer as an option index; show the text.
       const correctText = (q: any) => {
-        if (q.type === "DRAG_DROP") {
-          const blanks = q.options && !Array.isArray(q.options) && Array.isArray((q.options as any).blanks) ? (q.options as any).blanks : [];
-          return blanks.length ? blanks.map((b: any, i: number) => `${i + 1}. ${b.answer}`).join("   ") : null;
-        }
         if (q.correctAnswer == null) return q.correctAnswer;
         if (Array.isArray(q.options) && q.options.length) {
           const idx = Number(q.correctAnswer);
@@ -1575,10 +1500,7 @@ function registerGradingAndOps(deps: any) {
         sections: exam.sections.map((s: any) => ({ id: s.id, title: s.title, instructions: s.instructions })),
         stimuli: exam.stimuli.map((s: any) => ({ id: s.id, type: s.type, title: s.title, content: s.content, mediaUrl: s.mediaUrl })),
         questions: questions.map((q: any, i: number) => ({
-          number: i + 1, id: q.id, text: q.text, type: q.type, points: q.points,
-          options: q.type === "DRAG_DROP" ? null : q.options,
-          dragText: q.type === "DRAG_DROP" ? String(q.options?.text ?? "") : undefined,
-          dragBank: q.type === "DRAG_DROP" ? seededShuffle(dragDropBank(q.options), `print:${version}:${q.id}`).map((item) => item.label) : undefined,
+          number: i + 1, id: q.id, text: q.text, type: q.type, points: q.points, options: q.options,
           stimulusId: q.stimulusId, sectionId: q.sectionId,
           ...(withKey ? { correctAnswer: correctText(q), correctAnswers: q.correctAnswers } : {}),
         })),

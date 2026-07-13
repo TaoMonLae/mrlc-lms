@@ -6,12 +6,10 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { apiGet, apiSend } from '../../lib/api';
 import { ArrowLeft, Plus, Trash2, Save, Eye } from 'lucide-react';
-import { parseDragBlankText, toDragBlankText, splitDragText } from '../../lib/dragBlanks';
 
 const TYPES = ['MULTIPLE_CHOICE', 'TRUE_FALSE', 'SHORT_ANSWER', 'ESSAY', 'DRAG_DROP'];
 const DIFFICULTY = ['EASY', 'MEDIUM', 'HARD'];
 const CHOICE_TYPES = ['MULTIPLE_CHOICE', 'TRUE_FALSE'];
-const DRAG_DROP_PLACEHOLDER = 'The [[cat]] sat on the [[mat]].';
 
 export default function QuestionEditor() {
   const { id } = useParams();
@@ -25,7 +23,7 @@ export default function QuestionEditor() {
     subjectId: '', topicId: '', subtopic: '', explanation: '', language: '', tags: '',
     partialCredit: false, caseSensitive: false, requiresManualGrading: false, correctAnswer: '',
     options: [{ text: '', isCorrect: false }, { text: '', isCorrect: false }],
-    dragBlankText: '', dragDistractors: '',
+    dragDropPairs: [{ item: '', target: '' }, { item: '', target: '' }],
   });
 
   useEffect(() => {
@@ -38,24 +36,22 @@ export default function QuestionEditor() {
       partialCredit: q.partialCredit, caseSensitive: q.caseSensitive, requiresManualGrading: q.requiresManualGrading,
       correctAnswer: q.correctAnswer || '', status: q.status,
       options: (q.optionRows || []).length ? q.optionRows.map((o: any) => ({ text: o.text, isCorrect: o.isCorrect, weight: o.weight })) : [{ text: '', isCorrect: false }, { text: '', isCorrect: false }],
-      dragBlankText: q.type === 'DRAG_DROP' && q.options ? toDragBlankText(q.options.text || '', q.options.blanks || []) : '',
-      dragDistractors: q.type === 'DRAG_DROP' && Array.isArray(q.options?.distractors) ? q.options.distractors.join(', ') : '',
+      dragDropPairs: q.type === 'DRAG_DROP' && Array.isArray(q.options?.pairs) ? q.options.pairs : [{ item: '', target: '' }, { item: '', target: '' }],
     })).catch(() => toast.error('Could not load question'));
   }, [id, editing]);
 
   const setOpt = (i: number, patch: any) => setF((o: any) => ({ ...o, options: o.options.map((x: any, idx: number) => idx === i ? { ...x, ...patch } : x) }));
   const isChoice = CHOICE_TYPES.includes(f.type);
   const isDragDrop = f.type === 'DRAG_DROP';
-  const dragParsed = parseDragBlankText(f.dragBlankText || '');
 
   const save = async () => {
     if (!f.text) return toast.error('Question text required');
-    if (isDragDrop && dragParsed.blanks.length < 1) return toast.error('Mark at least one blank in the passage using [[word]]');
+    if (isDragDrop && (f.dragDropPairs.length < 2 || f.dragDropPairs.some((pair: any) => !pair.item.trim() || !pair.target.trim()))) return toast.error('Add at least two complete matching pairs');
     const payload = {
       ...f, defaultPoints: Number(f.defaultPoints) || 1, estimatedTimeSeconds: Number(f.estimatedTimeSeconds) || null,
       tags: f.tags ? f.tags.split(',').map((t: string) => t.trim()).filter(Boolean) : [],
       options: isChoice ? f.options.filter((o: any) => o.text) : [],
-      dragDistractors: isDragDrop ? f.dragDistractors.split(',').map((s: string) => s.trim()).filter(Boolean) : undefined,
+      dragDropPairs: isDragDrop ? f.dragDropPairs : undefined,
     };
     try {
       const saved = editing ? await apiSend(`/api/question-bank/${id}`, 'PUT', payload) : await apiSend('/api/question-bank', 'POST', payload);
@@ -80,15 +76,7 @@ export default function QuestionEditor() {
           {isChoice && f.options.filter((o: any) => o.text).map((o: any, i: number) => (
             <div key={i} className={`px-4 py-2 rounded-lg border ${o.isCorrect ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-900/20' : 'border-slate-200 dark:border-surface-raised'}`}>{o.text}{o.isCorrect && ' ✓'}</div>
           ))}
-          {isDragDrop && (
-            <div className="rounded-lg border border-slate-200 p-3 text-sm leading-relaxed dark:border-surface-raised">
-              {splitDragText(dragParsed.text).map((seg, i) => seg.kind === 'text'
-                ? <span key={i}>{seg.text}</span>
-                : <span key={i} className="mx-1 inline-block rounded border border-emerald-300 bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400">
-                    {dragParsed.blanks.find((b) => b.id === seg.blankId)?.answer}
-                  </span>)}
-            </div>
-          )}
+          {isDragDrop && <div className="grid gap-2 sm:grid-cols-2">{f.dragDropPairs.filter((pair: any) => pair.item || pair.target).map((pair: any, i: number) => <div key={i} className="rounded-lg border border-slate-200 p-3 text-sm dark:border-surface-raised"><span className="font-medium">{pair.item || '(item)'}</span><span className="mx-2 text-slate-400">→</span><span>{pair.target || '(drop zone)'}</span></div>)}</div>}
           {f.explanation && <p className="text-xs text-slate-500 italic">Explanation: {f.explanation}</p>}
         </div>
       ) : (
@@ -120,26 +108,16 @@ export default function QuestionEditor() {
               <Button variant="outline" size="sm" onClick={() => setF({ ...f, options: [...f.options, { text: '', isCorrect: false }] })}><Plus className="h-3 w-3 mr-1" /> Add option</Button>
             </div>
           ) : isDragDrop ? (
-            <div className="space-y-3">
-              <div>
-                <Label>Passage <span className="font-normal text-slate-400">— wrap each word students must drag into place with double brackets, e.g. [[word]]</span></Label>
-                <textarea className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas p-2 text-sm"
-                  placeholder={DRAG_DROP_PLACEHOLDER} value={f.dragBlankText} onChange={(e) => setF({ ...f, dragBlankText: e.target.value })} />
-              </div>
-              {dragParsed.blanks.length > 0 && (
-                <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-3 text-sm leading-relaxed dark:border-surface-raised dark:bg-canvas/50">
-                  <p className="mb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Preview</p>
-                  {splitDragText(dragParsed.text).map((seg, i) => seg.kind === 'text'
-                    ? <span key={i}>{seg.text}</span>
-                    : <span key={i} className="mx-1 inline-block rounded border border-emerald-300 bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400">
-                        {dragParsed.blanks.find((b) => b.id === seg.blankId)?.answer}
-                      </span>)}
+            <div className="space-y-2">
+              <Label>Matching pairs</Label>
+              {f.dragDropPairs.map((pair: any, i: number) => (
+                <div key={i} className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_auto]">
+                  <Input placeholder="Draggable item" value={pair.item} onChange={(e) => setF({ ...f, dragDropPairs: f.dragDropPairs.map((x: any, index: number) => index === i ? { ...x, item: e.target.value } : x) })} />
+                  <Input placeholder="Correct drop zone" value={pair.target} onChange={(e) => setF({ ...f, dragDropPairs: f.dragDropPairs.map((x: any, index: number) => index === i ? { ...x, target: e.target.value } : x) })} />
+                  <Button variant="ghost" size="icon" disabled={f.dragDropPairs.length <= 2} className="text-red-500" onClick={() => setF({ ...f, dragDropPairs: f.dragDropPairs.filter((_: any, index: number) => index !== i) })}><Trash2 className="h-4 w-4" /></Button>
                 </div>
-              )}
-              <div>
-                <Label>Extra wrong words <span className="font-normal text-slate-400">(optional, comma-separated)</span></Label>
-                <Input placeholder="e.g. red, tall" value={f.dragDistractors} onChange={(e) => setF({ ...f, dragDistractors: e.target.value })} />
-              </div>
+              ))}
+              <Button variant="outline" size="sm" onClick={() => setF({ ...f, dragDropPairs: [...f.dragDropPairs, { item: '', target: '' }] })}><Plus className="h-3 w-3 mr-1" /> Add pair</Button>
             </div>
           ) : (
             <div><Label>Accepted answer(s)</Label><Input placeholder="Comma-separated for short answer" value={f.correctAnswer} onChange={(e) => setF({ ...f, correctAnswer: e.target.value })} /></div>

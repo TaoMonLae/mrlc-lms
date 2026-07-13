@@ -72,34 +72,6 @@ export default function FeesDashboard() {
   const classOptions = Array.from(new Set(fees.map((f) => f.class).filter((className) => className && className !== '—')));
   const currency = fees.find((f) => f.currency)?.currency || systemSettings.currency || 'MYR';
 
-  // Paid / partial / unpaid student counts (respect the active filters so the
-  // breakdown matches what's shown in the table).
-  const paidCount = filteredFees.filter((f) => f.status === 'PAID').length;
-  const partialCount = filteredFees.filter((f) => f.status === 'PARTIAL').length;
-  const unpaidCount = filteredFees.filter((f) => f.status === 'UNPAID').length;
-
-  // Export the currently-filtered rows to CSV (client-side, no server round-trip).
-  const exportCsv = () => {
-    if (filteredFees.length === 0) return;
-    const headers = ['Student', 'Student ID', 'Class', 'Status', 'Total Due', 'Paid', 'Balance', 'Last Payment'];
-    const esc = (v: any) => {
-      const s = v == null ? '' : String(v);
-      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-    };
-    const rows = filteredFees.map((f) => [
-      f.studentName, f.studentIdNumber, f.class, f.status,
-      f.totalDue ?? 0, f.totalPaid ?? 0, f.balance ?? 0,
-      f.lastPaymentDate ? format(new Date(f.lastPaymentDate), 'yyyy-MM-dd') : '',
-    ]);
-    const csv = [headers.join(','), ...rows.map((r) => r.map(esc).join(','))].join('\n');
-    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `fees-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -110,7 +82,7 @@ export default function FeesDashboard() {
         <div className="flex gap-2 w-full sm:w-auto">
           {hasPermission('manage_fees') && (
             <>
-              <Button variant="outline" className="w-full sm:w-auto" onClick={exportCsv} disabled={filteredFees.length === 0}>
+              <Button variant="outline" className="w-full sm:w-auto">
                 <Download className="mr-2 h-4 w-4" /> Export Report
               </Button>
               <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto" render={<Link to="/fees/payments/new" />} nativeButton={false}>
@@ -136,25 +108,6 @@ export default function FeesDashboard() {
              {collectionRate}%
            </p>
         </div>
-      </div>
-
-      {/* Paid / Partial / Unpaid student breakdown — click a chip to filter. */}
-      <div className="flex flex-wrap gap-2">
-        {[
-          { key: 'ALL', label: 'All', count: filteredFees.length, cls: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200' },
-          { key: 'PAID', label: 'Paid', count: paidCount, cls: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' },
-          { key: 'PARTIAL', label: 'Partial', count: partialCount, cls: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400' },
-          { key: 'UNPAID', label: 'Unpaid', count: unpaidCount, cls: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
-        ].map((s) => (
-          <button
-            key={s.key}
-            onClick={() => setStatusFilter(s.key)}
-            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${s.cls} ${statusFilter === s.key ? 'ring-2 ring-offset-1 ring-slate-400 dark:ring-offset-canvas' : 'opacity-90 hover:opacity-100'}`}
-          >
-            {s.label}
-            <span className="rounded-full bg-white/60 px-1.5 dark:bg-black/20">{s.count}</span>
-          </button>
-        ))}
       </div>
 
       <div className="bg-white dark:bg-surface-indigo rounded-xl border border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">

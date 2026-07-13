@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { apiGet } from '../../lib/api';
 import QRCode from 'qrcode';
 import { Printer, KeyRound } from 'lucide-react';
-import { splitDragText } from '../../lib/dragBlanks';
 
 /** Printable exam export. Builds a branded, print-ready sheet with a candidate
  *  ID block, QR code and answer sheet; supports A/B/C versions and answer keys. */
@@ -70,22 +69,10 @@ export default function PrintableExport() {
                   {q.options.map((o: any, i: number) => <li key={i}>{String(typeof o === 'object' ? o.text ?? o.value : o)}</li>)}
                 </ol>
               )}
-              {q.type === 'DRAG_DROP' && typeof q.dragText === 'string' && (
-                <div className="ml-8 mt-1 text-sm">
-                  <p className="leading-relaxed">
-                    {splitDragText(q.dragText).map((seg: any, i: number) => seg.kind === 'text'
-                      ? <span key={i}>{seg.text}</span>
-                      : <span key={i} className="mx-1 inline-block border-b border-slate-500 px-3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>)}
-                  </p>
-                  {Array.isArray(q.dragBank) && q.dragBank.length > 0 && (
-                    <p className="mt-1.5 text-xs"><span className="font-semibold">Word bank: </span>{q.dragBank.join('   ')}</p>
-                  )}
-                </div>
-              )}
               {answerKey && (q.correctAnswer != null || q.correctAnswers) && (
                 <p className="ml-8 text-sm text-red-600 font-semibold mt-1">Answer: {q.correctAnswer ?? (Array.isArray(q.correctAnswers) ? q.correctAnswers.join(' / ') : '')}</p>
               )}
-              {!answerKey && q.type !== 'DRAG_DROP' && (!Array.isArray(q.options) || !q.options.length) && <div className="ml-8 mt-2 border-b border-slate-300 h-12" />}
+              {!answerKey && (!Array.isArray(q.options) || !q.options.length) && <div className="ml-8 mt-2 border-b border-slate-300 h-12" />}
             </li>
           ))}
         </ol>

@@ -28,15 +28,9 @@ const DEFAULT_SOURCES = [
   // IT / technology
   { name: "TechCrunch", feedUrl: "https://techcrunch.com/feed/", category: "IT" },
   { name: "Ars Technica", feedUrl: "https://feeds.arstechnica.com/arstechnica/index", category: "IT" },
-  { name: "The Verge", feedUrl: "https://www.theverge.com/rss/index.xml", category: "IT" },
-  // AI (.AI)
-  { name: "AI News", feedUrl: "https://www.artificialintelligence-news.com/feed/", category: "AI" },
-  { name: "MIT Technology Review — AI", feedUrl: "https://www.technologyreview.com/topic/artificial-intelligence/feed/", category: "AI" },
   // Education / educational
   { name: "EdSurge", feedUrl: "https://www.edsurge.com/articles_rss", category: "Education" },
   { name: "Inside Higher Ed", feedUrl: "https://www.insidehighered.com/rss.xml", category: "Education" },
-  { name: "KQED MindShift", feedUrl: "https://ww2.kqed.org/mindshift/feed/", category: "Education" },
-  { name: "eSchool News", feedUrl: "https://www.eschoolnews.com/category/top-news/feed/", category: "Education" },
   // Myanmar — independent outlets only (deliberately excludes state/military-
   // run media like Global New Light of Myanmar or MRTV, given the audience).
   { name: "The Irrawaddy", feedUrl: "https://www.irrawaddy.com/feed", category: "Myanmar" },
@@ -45,7 +39,6 @@ const DEFAULT_SOURCES = [
   { name: "BBC Burmese", feedUrl: "https://feeds.bbci.co.uk/burmese/rss.xml", category: "Myanmar" },
   { name: "Independent Mon News Agency (IMNA)", feedUrl: "https://monnews.org/feed/", category: "Myanmar" },
   { name: "Karen News", feedUrl: "https://karennews.org/feed/", category: "Myanmar" },
-  { name: "DVB English", feedUrl: "https://english.dvb.no/feed", category: "Myanmar" },
   // Malaysia
   { name: "Malaysiakini", feedUrl: "https://www.malaysiakini.com/rss/en/news.rss", category: "Malaysia" },
   { name: "Malay Mail", feedUrl: "https://www.malaymail.com/feed/rss/malaysia", category: "Malaysia" },

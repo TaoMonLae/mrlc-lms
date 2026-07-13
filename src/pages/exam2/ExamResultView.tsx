@@ -45,23 +45,8 @@ export default function ExamResultView() {
                 </div>
               )}
               <p className="font-medium text-slate-900 dark:text-white">{q.text}</p>
-              {Array.isArray(q.dragDropRows) && q.dragDropRows.length > 0 ? (
-                <div className="mt-3 flex flex-col gap-2">
-                  {q.dragDropRows.map((row: any, i: number) => (
-                    <div key={i} className="flex flex-wrap items-center gap-2 text-sm">
-                      <span className={row.isCorrect ? 'font-black text-emerald-600' : 'font-black text-red-500'}>{row.isCorrect ? '✓' : '✕'}</span>
-                      <span className="min-w-[70px] text-slate-500">{row.label}</span>
-                      <span className={row.isCorrect ? 'font-semibold text-emerald-600' : row.your ? 'font-semibold text-red-500' : 'font-semibold text-slate-400'}>{row.your || '—'}</span>
-                      {!row.isCorrect && <><span className="text-slate-400">→ correct:</span><span className="font-bold text-emerald-600">{row.correct}</span></>}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <>
-                  <p className="text-sm text-slate-500 mt-2">Your answer: <span className="font-semibold">{q.yourAnswer || '—'}</span></p>
-                  {q.correctAnswer != null && <p className="text-sm text-emerald-600 mt-1">Correct: {q.correctAnswer}</p>}
-                </>
-              )}
+              <p className="text-sm text-slate-500 mt-2">Your answer: <span className="font-semibold">{q.yourAnswer || '—'}</span></p>
+              {q.correctAnswer != null && <p className="text-sm text-emerald-600 mt-1">Correct: {q.correctAnswer}</p>}
               {q.explanation && <p className="text-xs text-slate-500 mt-2 italic">{q.explanation}</p>}
               {q.feedback && <p className="text-xs text-aubergine-600 mt-2">Teacher: {q.feedback}</p>}
               {q.pointsAwarded != null && <p className="text-xs font-bold text-slate-400 mt-2">{q.pointsAwarded} pts</p>}
