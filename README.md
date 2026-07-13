@@ -1,404 +1,441 @@
-# MRLC LMS — Mon Refugee Learning Centre
+# MRLC LMS
 
-> A comprehensive Learning Management System for the Mon Refugee Learning Centre (GED School)
+Learning management and school operations platform for the Mon Refugee Learning Centre (MRLC) GED School.
 
-**Developed by Tao Mon Lae**
+MRLC LMS combines teaching, assessment, student services, communication, finance, digital resources, and school administration in one role-based web application. A single Express server exposes the API and serves the Vite/React frontend, with PostgreSQL managed through Prisma.
 
----
+- Default local URL: `http://localhost:8000`
+- Primary runtime: Node.js 20, Express, React 19, PostgreSQL 16
+- Developed by Tao Mon Lae
 
-## Overview
+## Latest updates — July 2026
 
-MRLC LMS is a full-featured, single-school Learning Management System designed specifically for the Mon Refugee Learning Centre. It provides a complete digital platform for managing students, teachers, classes, subjects, attendance, homework, examinations, digital library resources, physical book catalog with borrowing management, fee tracking (with discounts and partial payments), student conduct/discipline tracking, case management, announcements, GED readiness tracking with gamified student engagement (streaks & badges), a curated news digest, a community Social Space with moderation, built-in Sudoku and Snake games (the latter with a vocabulary-learning mode and class leaderboards), role-based access control, and configurable school branding.
+### Flashcards
 
-The application is built as a unified Node.js/Express server that serves both the API and the compiled Vite/React frontend, backed by a PostgreSQL database managed through Prisma ORM.
+- Teacher-created decks with class assignment, Community sharing, cloning, images, LaTeX, and CSV import/export.
+- Four study modes: flip cards, configurable quiz, matching game, and speech-assisted spelling.
+- Per-card mastery, student progress bars, attempt history, personal bests, elapsed-time tracking, and teacher progress reports.
+- Keyboard controls for study mode: Space/Enter to flip and arrow keys to navigate.
+- Fixed duplicate/incorrect quiz choices and stale “study still learning” cards.
+- Hardened deck validation, assignment authorization, image cleanup, clone behavior, and attempt validation.
 
-**Server:** `http://localhost:8000` (configurable via `PORT` environment variable)
+### Exams
 
----
+- Guided exam creation and editing with safer partial updates and validation for schedules, duration, pass marks, attempt limits, access codes, and status transitions.
+- Reusable question bank, topic management, blueprints, drag-and-drop questions, passages, and expanded question types.
+- Scheduling, targeted assignment, accommodations, invigilator tools, lockdown controls, printable exports, rubrics, manual grading, and question analytics.
+- Fixed attempt limits, invalidated-attempt numbering, paused/resumed attempt behavior, session conflicts, empty exams, and access-code configuration.
+- Attempts are graded from their immutable question snapshot, so later answer-key or point edits do not change an attempt already in progress.
+
+### Video lessons
+
+- Chunked uploads for lesson videos up to 500 MB.
+- Native MP4/WebM playback; MOV, AVI, MKV, WMV, FLV, MTS/M2TS, TS, M4V, MPG/MPEG, and 3GP sources are converted in the background to browser-compatible MP4.
+- Conversion uses H.264 video, AAC audio, `yuv420p`, even dimensions, and fast-start metadata.
+- Converted files are validated with `ffprobe` before they are published, preventing broken `0:00 / --:--` players.
+- Processing, failure, retry/re-upload, cancellation, restart recovery, captions, required viewing, and teacher watch analytics are supported.
+
+### E-Library
+
+- PDF and EPUB batch upload with metadata and cover extraction.
+- Files up to 100 MB may be uploaded; files over 50 MB are compressed automatically and must be 50 MB or smaller after compression.
+- PDF compression uses Ghostscript. EPUB compression rebuilds the archive and optimizes embedded images.
+- PDF and EPUB readers support zoom in/out, Single Page, Two Page, Fit to Width, and Fit to Height modes.
+- Resume position, full-book search, table of contents, highlights, full-page reading, selected-word dictionary lookup, and highlight-to-flashcard creation.
+- Reading analytics show books opened, books completed at 90%+, percentage read, active reading time, open count, and last-read activity by student.
+- Optional Project Gutenberg import through Gutendex.
+
+### Platform fixes
+
+- PixelBlast TypeScript compatibility fixes.
+- Improved upload validation, failure messages, cleanup of abandoned files, and persistent-storage behavior.
+- Continued improvements to fees, reports, timetable, chat, Social Space moderation, dictionary data, games, and responsive/dark-mode UI.
 
 ## Features
 
-### Core Functionality
+### Teaching and learning
 
-| Module | Description |
-|--------|-------------|
-| **User Management** | Role-based access for Admin, Teacher, Student, Librarian, HR, and Finance users with granular permissions |
-| **Student Management** | Comprehensive student profiles, enrollment tracking, and academic history |
-| **Teacher Management** | Teacher profiles, class assignments, and workload tracking |
-| **Class Management** | Class creation, enrollment, teacher assignment, and scheduling |
-| **Subject Management** | Subject catalog with prerequisites and difficulty levels |
-| **Attendance** | Daily and session-based attendance tracking with reporting, analytics, and bulk marking |
-| **Homework** | Assignment creation, submission tracking, on-time scoring, and gradebook sync |
-| **Examinations** | Exam creation, scheduling, reusable question bank, advanced proctoring (lockdown browser, accommodations, invigilator dashboard), and automated + manual grading |
-| **Gradebook** | Student progress tracking, grade reports, and performance analytics |
-| **GED Readiness & Engagement** | Per-subject mastery tracker (6-stage readiness pipeline tied to real exam performance), attendance streaks, and achievement badges to keep students motivated |
-| **Flashcards** | Teacher-authored study decks with class assignment, deck sharing/cloning between teachers, and four student study modes (classic flip cards with mastery tracking, quiz with multiple question types, matching game, and spelling practice) |
-| **Digital Library** | E-book (EPUB/PDF) collection with resume-reading position, in-book search, highlights, in-book dictionary lookup, batch upload with auto metadata/cover extraction, one-click Project Gutenberg import, and a full-page reading mode |
-| **Dictionary** | Offline English dictionary (definitions, parts of speech, examples, synonyms) plus English-to-Myanmar and English/Myanmar/Thai-to-Mon translations, with no internet required |
-| **Physical Library** | Book catalog, borrowing system, and due date management |
-| **Fee Management** | Manual fee charges with optional discounts and partial payments (plus an optional bulk Fee Structures / Assign Fees workflow), balance top-ups, QR-verifiable receipts, and a Fees dashboard that correctly shows Paid/Partial/Unpaid |
-| **Financial Management** | Income/expense tracking, budget vs. actual reporting, monthly finance summaries, expense management, and donor/donation tracking with PDF/Excel export |
-| **Conduct & Discipline** | Handbook-derived rule catalog with severity tiers, per-student violation logging by teachers/admin/case workers, and per-student/per-rule violation counts |
-| **Case Management** | Student case notes, interventions, and follow-up tracking |
-| **Announcements** | School-wide announcements with rich text and media support |
-| **Timetable** | Class scheduling with conflict detection and calendar view, including a per-class view on the Class Profile page |
-| **Reports** | Comprehensive reporting across all modules with export options |
-| **Settings** | School branding, system configuration, and backup management |
+| Module | Capabilities |
+| --- | --- |
+| Classes and subjects | Enrollment, teacher assignment, class profiles, subject profiles, prerequisites, and timetable views |
+| Attendance | Daily and session attendance, bulk marking, reports, analytics, and truancy-oriented monitoring |
+| Homework | Assignment creation, student submissions, tracking, scoring, and gradebook integration |
+| Exams | Guided authoring, question bank, scheduling, attempts, proctoring, accommodations, grading, analytics, and printable output |
+| Gradebook | Marks, class reports, individual progress, and GED readiness tracking |
+| Flashcards | Deck creation, sharing, class assignment, mastery, quiz, match, spelling, and progress reporting |
+| Lesson planner | Teacher planning and classroom resource organization |
+| Video lessons | Upload/conversion, captions, required viewing, progress, and watch analytics |
+| E-Library | PDF/EPUB management, reading tools, progress, highlights, dictionary lookup, and analytics |
+| Resource library | Class/subject resources and external links |
+| Physical library | Book catalog, borrowing, returns, and due-date management |
+| Dictionary | Offline English definitions and English/Myanmar/Thai/Mon lookup data |
 
-### Specialized Features
+### School operations
 
-- **Flashcards**: Teachers build decks (with LaTeX math and image support) and assign them to classes; students study via classic flip cards, a quiz mode (multiple choice, true/false, fill-in-the-blank with configurable question types), a timed matching game (with difficulty/size presets), and a spelling mode using browser speech synthesis. Includes per-card mastery tracking, attempt history with personal bests, teacher-facing progress dashboards, CSV import/export, and deck sharing/cloning between teachers
-- **AI Assistant**: Built-in AI assistant for Admins and Teachers with quick prompts for lesson planning, quiz generation, announcement drafting, and multi-language translation (English/Mon/Burmese)
-- **Chat System**: Real-time messaging with typing indicators, presence, sticker support, and a message-reporting/moderation queue for admins
-- **Social Space**: 24-hour ephemeral community feed (photos and text) with likes, comments (editable by their author), cursor-paginated "Load more", and a post/comment reporting + admin moderation queue
-- **Conduct & Discipline**: A rule catalog transcribed from the school handbook (with severity tiers), so teachers/admin/case workers can log which rule a student broke and see running per-student violation counts instead of relying on free-text case notes
-- **Sudoku**: A built-in, fully offline Sudoku game — five difficulties, hints, notes, undo/redo, keyboard shortcuts, and a custom puzzle creator with uniqueness checking. A native port of the open-source [super-sudoku](https://github.com/TN1ck/super-sudoku) project by Tom Nick (MIT licensed) — see **Acknowledgments** below
-- **Snake**: A built-in Snake game with two modes — a Classic mode (adjustable board size and speed, high-score tracking) and a Vocabulary mode where each food item is a dictionary word that's spoken aloud and shown with its definition as you collect it. Keyboard (arrows/WASD), on-screen D-pad for touch devices, pause/resume, per-mode high scores, and class leaderboards backed by the student's account so scores and words-learned persist across sessions
-- **Dictionary**: Search any English word for its definitions (grouped by part of speech), example sentences, synonyms, a Myanmar (Burmese) translation, and matching Mon dictionary entries where available — or paste a Mon word directly to see its English/Myanmar/Thai definitions and IPA pronunciation. Daily "Word of the Day" and recent-search history, backed entirely by offline data, so it works with no internet connection. See **Acknowledgments** below
-- **News & Daily Digest**: Curated multi-source RSS feed (world, tech, education, and Myanmar-focused independent outlets) with a clean in-app reading view
-- **Video Management**: Educational video library with categories, captions, and required-viewing tracking
-- **Document Management**: Secure document generation and printing
-- **Lesson Planner**: Teacher lesson planning and resource management
-- **Admissions**: Student application and enrollment workflow
-- **HR, Payroll & Leave**: Staff directory with departments/designations, monthly payroll, and leave request/approval workflow
-- **Financial Management**: Comprehensive financial dashboard with income/expense tracking, budget vs. actual reporting, monthly finance summaries, expense management, and donor/donation tracking with PDF and Excel export
-- **Bank Integration**: Fee payment tracking and reconciliation
-- **Global Search**: Cross-module search with deep links into students, classes, exams, and more
+| Module | Capabilities |
+| --- | --- |
+| Users and permissions | Admin, Teacher, Student, Librarian, HR, Finance, and other permission-based staff access |
+| Admissions | Application review and enrollment workflow |
+| Student and teacher records | Profiles, assignments, academic information, photos, and documents |
+| HR and payroll | Staff directory, departments, designations, payroll runs, payslips, and leave |
+| Fees | Charges, discounts, partial payments, balance payments, fee structures, assignments, receipts, and statements |
+| Finance | Expenses, vendors, budgets, income/expense reporting, monthly summaries, donors, and donations |
+| Conduct and cases | Rule catalog, violation history, restricted case notes, interventions, and follow-up |
+| Duties | Duty definitions, rosters, student views, and performance tracking |
+| Reports | Attendance, fees, exams, students, classes, finance, and monthly summaries with export/print support |
+| Settings | Branding, language, permissions, news sources, backups, audit logs, and data export |
 
-### Multi-Language Support
+### Communication and engagement
 
-The LMS includes built-in internationalization (i18n) with support for:
+- Real-time chat with presence, typing indicators, stickers, media, reporting, and moderation.
+- Social Space with 24-hour posts, likes, editable comments, pagination, reporting, and admin moderation.
+- Announcements with rich content and audience visibility.
+- Curated RSS news and an in-app article reader.
+- AI assistant for lesson planning, quiz generation, announcements, and translation using Gemini or a local Ollama model.
+- Sudoku, Snake vocabulary mode, and Checkers with account-backed scores or learning activity where applicable.
+- Global search across major school records.
 
-- **English** (`en.po`) – Default language
-- **Burmese** (`my.po`) – မြန်မာ
-- **Mon** (`mnw.po`) – ဘာသာမန်
+### Languages
 
-Adding new languages is straightforward—simply add a `.po` file to `src/i18n/locales/` and the system will automatically register it. The default language can be configured in **Settings → System Settings → Language**.
+The interface supports English, Burmese, and Mon through locale files under `src/i18n/locales/`. The school-wide default is configurable in Settings, and users can select their own preference where supported.
 
----
+## Architecture
 
-## Recent Updates
+```text
+Browser
+  └─ React 19 + TypeScript + Vite + Tailwind CSS
+       └─ JSON/file APIs over Express 4
+            ├─ Prisma 7 → PostgreSQL
+            ├─ Persistent uploads in data/ or configured volumes
+            ├─ ffmpeg/ffprobe for video conversion
+            ├─ Ghostscript + Sharp/JSZip for e-book compression
+            └─ pg_dump for managed database backups
+```
 
-### Latest Features & Improvements
+The production build creates:
 
-**Dictionary (NEW)**
-- Offline English dictionary, backed by the bundled WordNet database — no internet connection needed for a lookup
-- Definitions grouped by part of speech, with example sentences, clickable synonyms, a "Word of the Day," and recent-search history
-- English-to-Myanmar translations alongside the English definition, from an offline dataset (Zawgyi-encoded source text converted to standard Unicode) — see **Acknowledgments** for the licensing caveat on this data
-- Mon dictionary: search an English word to see matching Mon entries, or paste a Mon word directly to see its IPA pronunciation and definitions in English, Myanmar, and Thai — 21,000+ Mon headwords, cleanly MIT-licensed
+- `dist/index.html` and `dist/assets/` for the browser application.
+- `dist/server.cjs` for the server runtime.
 
-**E-Library improvements**
-- Resume reading: both the PDF and EPUB readers now pick up where you left off automatically
-- In-book search across the whole book, jump straight to a match
-- Highlight passages while reading; Teachers/Admins can turn a highlight straight into a flashcard in one of their decks
-- Select any word while reading to see its definition (English/Myanmar/Mon) in a popup, without leaving the book — works in full page (fullscreen) reading mode too
-- Multi-file batch upload with auto-detected title/author/cover per file, sorting and category filters, and a "Continue Reading" strip on the library home
-- Import free public-domain books directly from Project Gutenberg by title/author search — one click downloads the EPUB and cover and adds it to the library. Admins/Teachers/Librarians only, via "Import from Gutenberg" on the E-Library page — see **Acknowledgments**
-- A full-page reading mode, and a fix for the table-of-contents dropdown overflowing into the page controls
-- The Dictionary and the E-Library's in-book Define lookup are both usable without signing in
+## Requirements
 
-**Fee Management overhaul**
-- Manual fee charges can now be recorded directly against a student with an optional discount and an optional partial payment — no separate Fee Structure required
-- A "Pay Balance" / "Record Additional Payment" action lets staff top up a partially-paid charge until it's fully settled
-- Receipts and student fee statements now show Amount Due, Amount Paid, Discount, and Balance separately, plus a real Paid/Partial/Unpaid status
-- Fee Structures (the optional bulk-billing workflow) got working "Add Item", "Add Discount", and "Create Plan" forms, per-item delete, and an Archive action, plus an "Assign Fees" safeguard against structures with no items
-- Fixed a structural bug where Unpaid/Partial fees could never appear in the Fees dashboard or Fee Collection report
+### Required
 
-**Conduct & Discipline (NEW)**
-- Rule catalog transcribed from the school's own Rules, Regulations & Hostel Guidelines handbook, with severity tiers (Minor/Moderate/Serious)
-- Teachers, admin, and case workers can log which rule a student broke, with a running per-student/per-rule violation count
+- Node.js 20 LTS or newer
+- npm
+- PostgreSQL 16 or a compatible supported PostgreSQL release
+- A persistent filesystem for uploads and backups
 
-**Social Space improvements**
-- Reporting: any user can flag a post or comment; admins get a Reports queue with Remove/Dismiss actions
-- Cursor-based pagination ("Load more") instead of fetching the entire feed on every load and poll
-- Comments can now be edited by their author (with an "(edited)" indicator), not just deleted
+### Required for all production features
 
-**Sudoku (NEW)**
-- A native, fully offline Sudoku game — five difficulties, hints, notes, undo/redo, keyboard shortcuts, and a custom puzzle creator
-- Ported from the open-source [super-sudoku](https://github.com/TN1ck/super-sudoku) project (MIT licensed) — see **Acknowledgments**
+- `ffmpeg` and `ffprobe` — non-browser video conversion and output validation
+- Ghostscript (`gs`) — PDF compression above the 50 MB stored-file limit
+- `pg_dump` matching the database server major version — manual and automatic backups
 
-**Snake Game (NEW)**
-- Two modes: **Classic** (grow the snake, avoid walls and yourself) and **Vocabulary** (each food is a dictionary word, spoken aloud with its definition shown as you collect it — words are pulled from the English–Myanmar dictionary)
-- Classic mode adds selectable board size (Small/Medium/Large) and speed (Slow/Normal/Fast), with per-mode high scores saved locally
-- Vocabulary scores, words-learned, and game stats persist to the student's account (`SnakeGameScore` table) and feed class leaderboards and a progress panel
-- Controls: Arrow keys / WASD, Space to pause and resume, and an on-screen D-pad on touch devices
-- Reworked the movement engine to use a buffered turn queue — fixes instant-death on 180° reversals and false self-collisions when following your own tail, and stops fast perpendicular turns from being dropped
-- Canvas rendering hardened: device-pixel-ratio scaling for crisp visuals, a `roundRect` fallback for older browsers, immediate redraw on resize/board-size change, and a width cap so the board fits the viewport
-- Fixed a bug where opening the Vocabulary game logged the user out — its API routes now run through auth middleware, so a logged-in user gets real data instead of a 401 that tripped the global session interceptor
+The provided Docker image installs these tools. For a manual Ubuntu/Debian deployment:
 
-**Other fixes**
-- Teacher ↔ Subject assignment (previously a misleading text field that didn't actually link them)
-- Per-class Timetable view on the Class Profile page
-- Chat messages intermittently disappearing (a stale-response race condition)
-- Fee record / student dropdowns not loading for the Accountant role
-- A spurious "failed to load" error flashing on student sign-in
-- Print/PDF output not matching the on-screen preview for reports and receipts
-- Documents page gained working Delete and Cancel actions
+```bash
+sudo apt-get update
+sudo apt-get install -y ffmpeg ghostscript postgresql-client
+```
 
-**Flashcards**
-- Teacher-managed study decks assigned to one or more classes, with a Community tab for sharing/cloning decks between teachers
-- Four student study modes: classic flip cards, quiz (multiple choice, true/false, fill-in-the-blank — mix and match question types), a matching game with Easy/Medium/Hard/Expert size presets, and a spelling mode with text-to-speech
-- Per-card mastery tracking ("still learning" vs. "know it"), attempt history with personal bests, and a teacher-facing progress dashboard per deck
-- Rich cards support LaTeX math and image attachments; CSV import/export for quick deck authoring
+If the distribution package does not match PostgreSQL 16, install `postgresql-client-16` from the PostgreSQL Apt repository as shown in `deploy/ubuntu-setup.sh`.
 
-**AI Assistant**
-- Built-in AI assistant for Admins and Teachers
-- Quick prompt templates for lesson planning, quiz generation, announcements, and translation
-- Multi-language support (English, Mon, Burmese)
-- Floating panel design coordinated with chat system
+## Quick start
 
-**Enhanced Financial Management**
-- Comprehensive financial dashboard with real-time metrics
-- Income and expense tracking with detailed reporting
-- Budget vs. Actual analysis with visualizations
-- Monthly finance summaries with trend analysis
-- Expense management with edit/delete capabilities
-- Donor and donation tracking
-- PDF and Excel export for all financial reports
+1. Clone the repository and create the environment file.
 
-**UI/UX Improvements**
-- Fixed widget overlapping issues (AI Assistant and Chat widgets)
-- Enhanced mobile responsiveness across all pages
-- Improved dark mode contrast and readability
-- Floating panel system for better space management
-- Consistent PDF layouts across reports and receipts
-
-**Production Readiness**
-- Enhanced security configurations
-- Improved error handling and logging
-- Database backup management
-- Environment variable validation
-- Production deployment optimizations
-
----
-
-## Tech Stack
-
-- **Frontend**: React 19 · Vite 6 · TypeScript · Tailwind CSS v4 · Radix UI · Lucide Icons · Motion (animations) · Sonner (toast notifications)
-- **Backend**: Express 4 · Node.js · Winston logging · JWT authentication
-- **Database**: PostgreSQL · Prisma 7 ORM
-- **File Processing**: Multer (uploads) · epubjs (e-books) · react-pdf (PDFs)
-- **Security**: Helmet · CORS · Express rate-limiting · bcrypt password hashing · DOMPurify (XSS prevention)
-- **Build Tools**: esbuild (server bundle) · Vite (client bundle)
-
----
-
-## Getting Started
-
-### Prerequisites
-
-- **Node.js** 18 or higher
-- **PostgreSQL** database server
-
-### Installation
-
-1. **Clone and setup environment**
    ```bash
    git clone <repository-url>
    cd mrlc-lms
    cp .env.example .env
    ```
 
-2. **Configure environment variables**
-   Edit `.env` and set at minimum:
-   ```
+2. Set at least these values in `.env`.
+
+   ```dotenv
    DATABASE_URL="postgresql://USER:PASSWORD@localhost:5432/school_lms"
-   SESSION_SECRET="a-random-string-at-least-16-characters"
-   ```
-   
-   > **Important**: `SESSION_SECRET` must be 16+ characters or the server will refuse to start. Generate with: `openssl rand -base64 48`
-
-3. **Install dependencies**
-   ```bash
-   npm install
+   SESSION_SECRET="replace-with-a-random-secret-at-least-16-characters"
+   APP_URL="http://localhost:8000"
+   PORT="8000"
    ```
 
-4. **Setup database**
+   Generate a production secret with `openssl rand -base64 48`.
+
+3. Install dependencies and prepare the database.
+
    ```bash
-   # Apply migrations and generate Prisma client
+   npm ci
    npx prisma migrate deploy
    npx prisma generate
-   
-   # Create starter accounts (first run only)
+   ```
+
+4. Optionally seed starter accounts and dictionary data.
+
+   ```bash
    npm run seed
-
-   # Optional: load the English-to-Myanmar dictionary data (first run only, ~27k words)
    npm run seed:en-my-dictionary
-
-   # Optional: load the Mon dictionary data (first run only, ~21k words)
    npm run seed:mon-dictionary
    ```
 
-5. **Start development server**
+5. Start development mode.
+
    ```bash
    npm run dev
    ```
-   
-   Open **http://localhost:8000**
 
-### Seeded Accounts
+Open `http://localhost:8000`.
 
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | admin@mrlc.edu | admin123 |
-| Teacher | teacher@mrlc.edu | teacher123 |
-| Student | student@mrlc.edu | student123 |
+### Starter accounts
 
-> **Note**: A **Librarian** user can be created from Users → Create User to access the Book Catalog features.
+When `SEED_ADMIN_PASSWORD`, `SEED_TEACHER_PASSWORD`, and `SEED_STUDENT_PASSWORD` are not configured, the seed uses these demo credentials and forces a password change:
 
----
+| Role | Email | Demo password |
+| --- | --- | --- |
+| Admin | `admin@mrlc.edu` | `admin123` |
+| Teacher | `teacher@mrlc.edu` | `teacher123` |
+| Student | `student@mrlc.edu` | `student123` |
+
+Never use the demo passwords in production. Set the three seed password variables before the first production seed.
+
+## Environment configuration
+
+| Variable | Required | Default | Purpose |
+| --- | --- | --- | --- |
+| `DATABASE_URL` | Yes | — | PostgreSQL connection string |
+| `SESSION_SECRET` | Yes | — | JWT signing secret; minimum 16 characters |
+| `APP_URL` | Production | `http://localhost:3000` in server fallback | Exact allowed CORS origin; normally the public HTTPS origin |
+| `PORT` | No | `8000` | HTTP listening port |
+| `EBOOK_DIR` | No | `./data/ebooks` | Persistent PDF/EPUB storage |
+| `VIDEO_FILES_DIR` | No | `./data/videos` | Persistent uploaded and converted video storage |
+| `BACKUP_DIR` | No | `./data/backups` | PostgreSQL backup storage |
+| `BACKUP_RETENTION` | No | `14` | Number of backups retained |
+| `BACKUP_HOUR` | No | `2` | Local hour for scheduled backups |
+| `SEED_ADMIN_PASSWORD` | No | Demo password | Initial admin password |
+| `SEED_TEACHER_PASSWORD` | No | Demo password | Initial teacher password |
+| `SEED_STUDENT_PASSWORD` | No | Demo password | Initial student password |
+| `AI_PROVIDER` | No | `gemini` | `gemini` or `ollama` |
+| `GEMINI_API_KEY` | Gemini only | — | Google Gemini API key |
+| `GEMINI_MODEL` | No | `gemini-2.0-flash` in server code | Gemini model name |
+| `OLLAMA_API_URL` | Ollama only | `http://localhost:11434/api/chat` | Local Ollama chat endpoint |
+| `OLLAMA_MODEL` | No | `gemma2:9b` | Local Ollama model |
+
+Additional upload directories can be overridden for advanced deployments; see the constants near the top of `server.ts` and `flashcards.ts`.
+
+## File limits and processing
+
+### E-books
+
+- Accepted formats: PDF and EPUB.
+- Maximum incoming file size: 100 MB.
+- Stored-file target: 50 MB or less.
+- Files over 50 MB are compressed during upload.
+- Upload fails with an actionable error if compression cannot reduce the result to 50 MB or less.
+- Very large or damaged PDFs may require repair outside the LMS before upload.
+
+### Videos
+
+- Maximum assembled file size: 500 MB.
+- Large files use resumable-style chunked transport in the form UI.
+- MP4 and WebM are stored directly.
+- Other supported formats are converted asynchronously to MP4.
+- Keep the application process and persistent video volume available until conversion completes.
+- A process restart marks an interrupted conversion as failed so it can be re-uploaded instead of remaining stuck forever.
+
+### Persistence
+
+Do not treat `data/` as disposable build output. At minimum, preserve:
+
+- E-books and covers
+- Lesson videos, captions, and conversion state
+- Flashcard images
+- Student and staff documents/profile media
+- Database backups
+
+Docker Compose already uses named volumes for the database, e-books, videos, and backups. Add or bind additional upload directories if your deployment overrides them.
+
+## Development commands
+
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Start Express and Vite development mode |
+| `npm run lint` | Run the TypeScript type checker (`tsc --noEmit`) |
+| `npm run build` | Build the Vite client and bundled Express server |
+| `npm run start` | Run `dist/server.cjs` in production mode |
+| `npm run smoke` | Run the configured API smoke suite |
+| `npm run seed` | Create/update starter school records and accounts |
+| `npm run seed:en-my-dictionary` | Import the English–Myanmar dataset |
+| `npm run seed:mon-dictionary` | Import the Mon dictionary dataset |
+| `npx prisma migrate deploy` | Apply committed database migrations |
+| `npx prisma validate` | Validate the Prisma schema |
+
+Before committing or deploying application changes:
+
+```bash
+npm run lint
+npm run build
+npx prisma validate
+```
 
 ## Deployment
 
-### Docker Deployment (Recommended)
+### Docker Compose
 
-The fastest way to deploy the complete stack (application + database):
+Docker is the simplest way to run the complete stack because the image includes the native media and backup tools.
 
 ```bash
-# First run — builds containers and creates starter accounts
-SEED_ON_START=true docker compose up --build
-
-# Subsequent runs
-docker compose up
+export SESSION_SECRET="$(openssl rand -base64 48)"
+export APP_URL="https://your-lms.example.org"
+SEED_ON_START=true docker compose up --build -d
 ```
 
-See **DOCKER.md** for detailed deployment instructions.
-
-### Production Build (Without Docker)
+After the first successful seed, remove `SEED_ON_START=true` from subsequent starts.
 
 ```bash
-# Build client and server bundles
-npm run build
+docker compose up -d
+docker compose logs -f app
+```
 
-# Start production server
+The container entrypoint waits for PostgreSQL, applies migrations, optionally seeds, and then starts `dist/server.cjs`. See [DOCKER.md](DOCKER.md) and [deploy/DEPLOYMENT.md](deploy/DEPLOYMENT.md) for detailed server and reverse-proxy guidance.
+
+### Manual production build
+
+```bash
+npm ci
+npx prisma migrate deploy
+npm run build
 NODE_ENV=production npm run start
 ```
 
-**Production requirements:**
-- Set `NODE_ENV=production`
-- Configure production `DATABASE_URL` and `SESSION_SECRET`
-- The production server serves static assets from `dist/`
+Run the app behind an HTTPS reverse proxy and set `APP_URL` to that exact public origin.
 
-### Useful Scripts
+### PM2
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server with hot reload |
-| `npm run build` | Build production bundles (client + server) |
-| `npm run start` | Run production build |
-| `npm run seed` | Create starter admin/teacher/student accounts |
-| `npm run lint` | Type-check with TypeScript compiler |
-
----
-
-## Security Features
-
-- **Authentication**: JWT-based auth with secure token storage
-- **Authorization**: Server-side role checks on all protected endpoints
-- **Password Security**: bcrypt hashing with salt rounds
-- **XSS Protection**: DOMPurify sanitization on all user-generated content
-- **Rate Limiting**: Configurable rate limits on sensitive endpoints
-- **Secure Headers**: Helmet middleware for security headers
-- **CORS**: Configurable cross-origin resource sharing
-- **Proxy Support**: `trust proxy` enabled for reverse proxy deployments
-
----
-
-## Project Structure
-
+```bash
+npm ci
+npx prisma migrate deploy
+npm run build
+NODE_ENV=production pm2 start dist/server.cjs --name mrlc-lms --update-env
+pm2 save
 ```
+
+For an existing process:
+
+```bash
+pm2 restart mrlc-lms --update-env
+pm2 status
+pm2 logs mrlc-lms --lines 200
+```
+
+If PM2 repeatedly changes from `online` to `errored`, inspect the logs before restarting again. Common causes are a missing/short `SESSION_SECRET`, an unreachable database, unapplied migrations, missing `dist/server.cjs`, a port already in use, or missing native tools/persistent-directory permissions.
+
+## Backups
+
+Backups are controlled from Settings and use `pg_dump`. The scheduler writes to `BACKUP_DIR`, runs at `BACKUP_HOUR`, and prunes older files according to `BACKUP_RETENTION`.
+
+Use a PostgreSQL client matching the server major version. Copy backups off the application host as part of the production disaster-recovery plan; a local backup on the same disk is not sufficient by itself.
+
+## Security
+
+- JWT authentication with bcrypt password hashing.
+- Server-enforced roles and granular permission checks.
+- Ownership and class-scope checks on student, exam, accommodation, media, flashcard, and analytics APIs.
+- Helmet security headers, restricted CORS, and rate limiting.
+- DOMPurify sanitization for rendered user content.
+- Audit logs for sensitive administrative and academic changes.
+- Restricted case-management and personally identifiable student data.
+- Path, type, size, ownership, and attachment validation for uploaded files.
+
+Production operators should also enforce HTTPS, protect database and backup credentials, restrict filesystem permissions, monitor PM2/container logs, and regularly test restoration from backup.
+
+## Project structure
+
+```text
 mrlc-lms/
 ├── src/
-│   ├── pages/          # Route components (student, teacher, admin, etc.)
-│   │   ├── games/sudoku/  # Sudoku UI (board, menus, contexts) — see Acknowledgments
-│   │   ├── games/snake/   # Snake game UI (classic + vocabulary modes, context, leaderboard)
-│   │   ├── dictionary/    # Dictionary search page — see Acknowledgments
-│   │   └── elibrary/      # E-Library reader (PDF/EPUB, progress, search, highlights)
-│   ├── lib/            # App-specific API clients, utilities, helpers
-│   │   └── sudoku/     # Sudoku engine (solvers, generator, puzzle data access)
-│   ├── i18n/           # Internationalization files (.po)
-│   ├── hooks/          # Custom React hooks
-│   ├── providers/      # Context providers
-│   └── types/          # TypeScript type definitions
-├── lib/                # Shared utilities (imported as @/lib/*), e.g. badge catalog, GED constants
-├── components/         # Shared/reusable UI components (imported as @/components/*), incl. shadcn/ui primitives
-├── hooks/              # Shared hooks (imported as @/hooks/*)
+│   ├── App.tsx                 # Routes and role/permission boundaries
+│   ├── pages/                  # Feature and role pages
+│   │   ├── elibrary/           # PDF/EPUB list, upload, reader, analytics
+│   │   ├── exam2/              # Advanced exam workflow
+│   │   ├── flashcards/         # Deck, study, game, and progress UI
+│   │   └── games/              # Sudoku, Snake, and Checkers
+│   ├── components/             # App-specific components
+│   ├── lib/                    # API and feature utilities
+│   ├── providers/              # React providers
+│   └── i18n/                   # Locale setup and translations
+├── components/                 # Shared UI primitives and visual components
+├── lib/                        # Shared domain utilities
 ├── prisma/
-│   ├── schema.prisma   # Database schema
-│   ├── migrations/     # Database migration files
-│   └── seed.ts         # Seed script for starter accounts
-├── public/
-│   ├── stickers/       # Built-in sticker packs for chat
-│   └── sudokus/        # Sudoku puzzle data files, by difficulty
-├── data/               # Runtime data directory (uploads, backups, etc.)
-├── deploy/             # Deployment configurations
-├── server.ts           # Express server entry point (core API routes)
-├── examBank.ts         # Reusable question bank (question pooling, randomized composition)
-├── examPhase2.ts       # Advanced exam features (lockdown browser, accommodations, rubrics, invigilator dashboard)
-├── flashcards.ts       # Flashcards feature (decks, study modes, mastery/attempts, sharing, image uploads)
-├── conduct.ts          # Conduct/Discipline feature (rule catalog, violation logging)
-├── snakeGame.ts        # Snake game API (vocabulary words, score saving, leaderboards, progress)
-├── dictionary.ts       # Offline English dictionary (WordNet lookup) — see Acknowledgments
-└── news.ts             # News/daily digest RSS aggregation
+│   ├── schema.prisma           # Database schema
+│   ├── migrations/             # Versioned migrations
+│   └── seed*.ts                # Core and dictionary seeders
+├── data/                       # Runtime uploads and backups; persist in production
+├── deploy/                     # Ubuntu, Docker, Nginx, and deployment guidance
+├── server.ts                   # Main Express API and server startup
+├── examBank.ts                 # Question bank and exam composition
+├── examPhase2.ts               # Attempts, scheduling, accommodations, grading
+├── flashcards.ts               # Flashcard API and image lifecycle
+├── aiAssistant.ts              # Gemini/Ollama assistant integration
+├── dictionary.ts               # Offline dictionary services
+├── gutenberg.ts                # Gutendex/Project Gutenberg import
+├── news.ts                     # RSS aggregation
+├── conduct.ts                  # Rules and conduct records
+├── snakeGame.ts                # Vocabulary game persistence
+├── checkersGame.ts             # Checkers game services
+├── Dockerfile
+├── docker-compose.yml
+└── package.json
 ```
 
-> Note: `@/*` resolves to the project root (see `tsconfig.json` / `vite.config.ts`), so both `src/` and the root-level `lib/`, `components/`, `hooks/` directories are reachable via the `@/` alias.
+The `@/` alias resolves from the repository root, so shared root-level modules and `src/` modules can both be imported through that alias.
 
----
+## Troubleshooting
 
-## Configuration
+### The app exits immediately
 
-### Environment Variables
+Check:
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `DATABASE_URL` | Yes | — | PostgreSQL connection string |
-| `SESSION_SECRET` | Yes | — | Secret for signing JWT tokens (≥16 chars) |
-| `APP_URL` | No | `http://localhost:8000` | Public origin for CORS |
-| `PORT` | No | `8000` | Server listening port |
-| `EBOOK_DIR` | No | `./data/ebooks` | E-book storage location |
-| `VIDEO_FILES_DIR` | No | `./data/videos` | Uploaded and transcoded lesson-video storage |
-| `BACKUP_DIR` | No | `./data/backups` | Database backup location |
-| `BACKUP_RETENTION` | No | `14` | Number of backups to retain |
-| `BACKUP_HOUR` | No | `2` | Hour for daily backup (0-23) |
+```bash
+pm2 logs mrlc-lms --lines 200
+npx prisma migrate deploy
+test -f dist/server.cjs && echo "build exists"
+```
 
-### Backup Configuration
+Confirm `DATABASE_URL`, `SESSION_SECRET`, `APP_URL`, port availability, and write permissions for persistent directories.
 
-Automatic database backups can be enabled in **Settings → System Settings**. Backups use `pg_dump` and are stored in `BACKUP_DIR` with retention based on `BACKUP_RETENTION`.
+### A converted video is blank or remains in processing
 
----
+- Verify `ffmpeg -version` and `ffprobe -version` work for the same operating-system user running the LMS.
+- Check the application logs for the conversion error.
+- Ensure `VIDEO_FILES_DIR` is writable and persistent.
+- Re-upload conversions marked as interrupted after a process restart.
 
-## Acknowledgments
+### A PDF over 50 MB cannot be stored
 
-The built-in **Sudoku** game (`src/pages/games/sudoku/`, `src/lib/sudoku/`) is a native port of [**super-sudoku**](https://github.com/TN1ck/super-sudoku) by **Tom Nick** (TN1ck), used and adapted under the MIT License:
+- Verify `gs --version` works for the application user.
+- The source may already be highly compressed; the upload is rejected if the output remains over 50 MB.
+- Optimize scanned pages externally or split the PDF before retrying.
 
-> Copyright (c) Tom Nick.
-> Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files, to deal in the Software without restriction, subject to the MIT License terms in the upstream repository.
+### Browser/API requests fail after deployment
 
-The puzzle generator, solvers, and core game logic were ported closely to the original; the surrounding UI chrome (theming, layout, and internationalization) was adapted to fit natively into MRLC LMS.
+- Set `APP_URL` to the exact HTTPS origin used in the browser.
+- Ensure the reverse proxy forwards to the configured `PORT`.
+- Rebuild after frontend changes and restart with updated environment variables.
 
-The built-in **Dictionary** (`/dictionary`) is powered by [**WordPOS**](https://github.com/moos/wordpos) and the [**Princeton WordNet 3.1**](https://wordnet.princeton.edu/) database (via the `wordnet-db` package), bundled as an offline dependency so lookups work with no internet connection. WordNet is distributed under its own permissive license:
+## Notable third-party data and acknowledgments
 
-> This software and database is being provided to you, the LICENSEE, by Princeton University under the following license. By obtaining, using and/or copying this software and database, you agree that you have read, understood, and will comply with these terms and conditions: Permission to use, copy, modify and distribute this software and database and its documentation for any purpose and without fee or royalty is hereby granted, provided that you agree to comply with the following copyright notice and statements, including the disclaimer, and that the same appear on ALL copies of the software, database and documentation, including modifications that you make for internal use or for distribution.
+- Sudoku is adapted from [super-sudoku](https://github.com/TN1ck/super-sudoku) by Tom Nick under the MIT License.
+- English definitions use [WordPOS](https://github.com/moos/wordpos) and Princeton WordNet 3.1.
+- English-to-Myanmar translations originate from the ornagai/MZ dictionary dataset; its data license is not independently verifiable, so it is retained for internal, non-commercial school use with provenance documented in `prisma/seedEnMyDictionary.ts`.
+- Mon dictionary entries come from [MonDictDB](https://github.com/Barnista/MonDictDB) under the MIT License.
+- Project Gutenberg search/import uses the public [Gutendex](https://github.com/garethbjohnson/gutendex) service and downloads selected public-domain books on demand.
 
-The Dictionary's **English-to-Myanmar translations** were imported from the [**ornagai-V2**](https://github.com/saturngod/ornagai-V2) project by Htain Lin Shwe (MIT-licensed code), whose own README states its word list was originally sourced from a separate "MZ dictionary" product. That means, unlike WordNet above, **this translation data does not carry a clean, verifiable open license of its own** — it's included here as an internal, non-commercial school tool with that provenance on record, not as freely-licensed content. See `prisma/seedEnMyDictionary.ts` for the full note. The source data was also Zawgyi-encoded (the pre-2019 de facto Myanmar font encoding); it was converted to standard Unicode using the Z2U rule table from Google's [**myanmar-tools**](https://github.com/googlei18n/myanmar-tools) project, Apache License 2.0.
+Review the upstream licenses and the source notes before redistributing third-party data.
 
-The Dictionary's **Mon dictionary data** (21,086 Mon headwords with IPA pronunciation and English/Myanmar/Thai definitions) was imported from [**MonDictDB**](https://github.com/Barnista/MonDictDB) by Barnista, MIT License, Copyright (c) 2025 Barnista — a purpose-built, contributor-authored Mon dictionary, not sourced from a third-party commercial product. Unlike the English-to-Myanmar data above, this dataset carries a clean, verifiable open license. See `prisma/seedMonDictionary.ts` for the import notes.
+## License and support
 
-The E-Library's **"Import from Gutenberg"** feature (`gutenberg.ts`) searches and downloads books via [**Gutendex**](https://github.com/garethbjohnson/gutendex) (`gutendex.com`), a free, public, read-only API over [**Project Gutenberg**](https://www.gutenberg.org)'s own catalog of 70,000+ books. Unlike the datasets above, nothing from Gutenberg is bundled with the app — books are fetched live, on demand, only when an admin/teacher/librarian explicitly chooses to import one, directly from Project Gutenberg's own servers. Every book in Project Gutenberg's US catalog is in the public domain, so imported books carry no licensing caveat.
+All rights reserved except for separately licensed third-party components and data noted above.
 
-These are the only third-party-derived components in the app — everything else in this repository is covered by the license below.
-
----
-
-## Support & Contributing
-
-For issues, questions, or contributions related to MRLC LMS, please refer to the project repository or contact the development team.
-
----
-
-**License:** All rights reserved (except the Sudoku module noted under Acknowledgments, which remains MIT licensed)
-
-**Developed by Tao Mon Lae**
+For deployment details, see [deploy/DEPLOYMENT.md](deploy/DEPLOYMENT.md). For project-specific issues, use the repository issue tracker or contact the MRLC development team.
 
 © 2026 Mon Refugee Learning Centre
