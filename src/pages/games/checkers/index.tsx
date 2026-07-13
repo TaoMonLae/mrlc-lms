@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import PixelBlast from "@/components/PixelBlast";
 import { useAuth } from "../../../providers/AuthProvider";
 import CheckerVocabularyManager from "./CheckerVocabularyManager";
+import { Dices, BookOpen, Bot, Users, Gamepad2, Check, type LucideIcon } from "lucide-react";
 
 function GameSelect() {
   const navigate = useNavigate();
@@ -16,19 +17,19 @@ function GameSelect() {
   const canManageVocab = user?.role === "ADMIN" || user?.role === "TEACHER";
   const [showVocabManager, setShowVocabManager] = React.useState(false);
 
-  const gameModes = [
+  const gameModes: { id: string; title: string; description: string; icon: LucideIcon; color: string }[] = [
     {
       id: "classic",
       title: "Classic Mode",
       description: "Play against AI or a friend. Choose your opponent below!",
-      icon: "🎲",
+      icon: Dices,
       color: "from-purple-500 to-indigo-500",
     },
     {
       id: "vocabulary",
       title: "Vocabulary Mode",
       description: "Learn new words while you play! Each turn reveals a vocabulary word.",
-      icon: "📚",
+      icon: BookOpen,
       color: "from-emerald-500 to-teal-500",
     },
   ];
@@ -69,7 +70,7 @@ function GameSelect() {
               onClick={() => navigate(`/games/checkers?mode=${gameMode.id}`)}
             >
               <div className="flex flex-col gap-3">
-                <div className="text-4xl">{gameMode.icon}</div>
+                <gameMode.icon className="h-9 w-9 text-white" />
                 <div>
                   <h3 className="text-xl font-bold text-white">{gameMode.title}</h3>
                   <p className="text-sm text-white/80 mt-1">{gameMode.description}</p>
@@ -93,14 +94,14 @@ function GameSelect() {
               onClick={() => setOpponentType("AI")}
               className={opponentType === "AI" ? "bg-purple-500" : "bg-white/10 text-white border-white/30"}
             >
-              🤖 AI Opponent
+              <Bot className="h-4 w-4 mr-2" /> AI Opponent
             </Button>
             <Button
               variant={opponentType === "HUMAN" ? "default" : "outline"}
               onClick={() => setOpponentType("HUMAN")}
               className={opponentType === "HUMAN" ? "bg-purple-500" : "bg-white/10 text-white border-white/30"}
             >
-              👥 Human (Local)
+              <Users className="h-4 w-4 mr-2" /> Human (Local)
             </Button>
           </div>
         </div>
@@ -138,18 +139,24 @@ function GameSelect() {
         size="lg"
         className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold text-lg py-6"
       >
-        🎮 Start Game
+        <Gamepad2 className="h-5 w-5 mr-2" /> Start Game
       </Button>
 
       {/* Features Info */}
       <div className="bg-white/5 rounded-lg p-4 border border-white/10">
         <h3 className="text-sm font-semibold text-white mb-2">Game Features</h3>
-        <ul className="text-xs text-white/70 space-y-1">
-          <li>✓ Undo moves to fix mistakes</li>
-          <li>✓ Sound effects (can be muted)</li>
-          <li>✓ AI opponent with 3 difficulty levels</li>
-          <li>✓ Full checkers rules (forced jumps, multi-jumps, kings)</li>
-          <li>✓ Vocabulary mode - learn words while playing!</li>
+        <ul className="text-xs text-white/70 space-y-1.5">
+          {[
+            "Undo moves to fix mistakes",
+            "Sound effects (can be muted)",
+            "AI opponent with 3 difficulty levels",
+            "Full checkers rules (forced jumps, multi-jumps, kings)",
+            "Vocabulary mode - learn words while playing!",
+          ].map((feature) => (
+            <li key={feature} className="flex items-center gap-2">
+              <Check className="h-3.5 w-3.5 shrink-0 text-emerald-400" /> {feature}
+            </li>
+          ))}
         </ul>
       </div>
 
@@ -161,7 +168,7 @@ function GameSelect() {
             onClick={() => setShowVocabManager((s) => !s)}
             className="bg-white/10 text-white border-white/30 hover:bg-white/20"
           >
-            📚 {showVocabManager ? "Hide" : "Manage"} Vocabulary
+            <BookOpen className="h-4 w-4 mr-2" /> {showVocabManager ? "Hide" : "Manage"} Vocabulary
           </Button>
           {showVocabManager && (
             <div className="mt-3">
@@ -205,9 +212,7 @@ function CheckersSelectInner() {
         <div className="mb-8 flex flex-col gap-2">
           <div className="flex gap-4 items-center justify-between">
             <h1 className="flex items-center gap-2 text-2xl font-bold text-white drop-shadow-lg">
-              <span className="text-3xl" role="img" aria-label="Checkers">
-                🎲
-              </span>
+              <Dices className="h-7 w-7" aria-label="Checkers" />
               Checkers Game
             </h1>
             <Button

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { apiSend } from "../../../lib/api";
+import { Volume2, VolumeX, Crown, Undo2 } from "lucide-react";
 
 // ── Vocabulary quiz helpers ──────────────────────────────────────────────────
 type VocabWord = { word: string; definition: string; partOfSpeech: string };
@@ -1093,7 +1094,7 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
             onClick={toggleSound}
             className="bg-white/20 text-white border-white/30"
           >
-            {soundEnabled ? "🔊" : "🔇"}
+            {soundEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
           </Button>
         </div>
       </Card>
@@ -1182,7 +1183,7 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
                           : "bg-gray-900 text-white"
                       )}
                     >
-                      {square.piece.type === "king" ? "♔" : ""}
+                      {square.piece.type === "king" && <Crown className="h-4 w-4 sm:h-5 sm:w-5" />}
                     </div>
                   )}
                   {isValidMove && !square.piece && (
@@ -1230,7 +1231,7 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
               variant="outline"
               className="bg-white/20 text-white border-white/30 disabled:opacity-50"
             >
-              ↶ Undo
+              <Undo2 className="h-4 w-4 mr-1" /> Undo
             </Button>
             <Button
               onClick={handleRestart}
