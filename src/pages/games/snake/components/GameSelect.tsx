@@ -4,7 +4,7 @@ import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trophy, BookOpen, Zap, Users, Settings } from "lucide-react";
+import { Trophy, BookOpen, Zap, Users, Settings, RefreshCw } from "lucide-react";
 import Leaderboard from "./Leaderboard";
 import VocabularyManager from "./VocabularyManager";
 import { fetchOrMock } from "../../../../lib/api";
@@ -39,8 +39,11 @@ export default function GameSelect() {
   const [leaderboard, setLeaderboard] = React.useState<LeaderboardEntry[]>([]);
   const [boardMode, setBoardMode] = React.useState<"CLASSIC" | "VOCABULARY">("CLASSIC");
 
-  // Load the real leaderboard from the API whenever the tab is opened or the
-  // time range / mode changes.
+  const [refreshKey, setRefreshKey] = React.useState(0);
+  const refreshLeaderboard = React.useCallback(() => setRefreshKey((k) => k + 1), []);
+
+  // Load the real leaderboard from the API whenever the tab is opened, the
+  // time range / mode changes, or a refresh is requested.
   React.useEffect(() => {
     if (activeTab !== "leaderboard") return;
     let active = true;
@@ -62,7 +65,22 @@ export default function GameSelect() {
     return () => {
       active = false;
     };
-  }, [activeTab, timeRange, boardMode]);
+  }, [activeTab, timeRange, boardMode, refreshKey]);
+
+  // Auto-refresh when the student returns to this tab/window after playing, so
+  // a score they just earned shows up without a manual reload.
+  React.useEffect(() => {
+    if (activeTab !== "leaderboard") return;
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refreshLeaderboard();
+    };
+    window.addEventListener("focus", refreshLeaderboard);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.removeEventListener("focus", refreshLeaderboard);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [activeTab, refreshLeaderboard]);
 
   const gameModes = [
     {
@@ -205,6 +223,9 @@ export default function GameSelect() {
                 onClick={() => setBoardMode("VOCABULARY")}
               >
                 <BookOpen className="size-4 mr-1" /> Vocabulary
+              </Button>
+              <Button variant="outline" size="sm" onClick={refreshLeaderboard} disabled={loading} title="Refresh">
+                <RefreshCw className={`size-4 ${loading ? "animate-spin" : ""}`} />
               </Button>
             </div>
           </div>
