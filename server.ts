@@ -7082,14 +7082,29 @@ async function startServer() {
         include: { class: true },
       });
 
+      // Existing (student, item) assignments — so re-running "Assign Fees"
+      // (e.g. after adding new students) doesn't create DUPLICATE charges that
+      // would double a student's amount due in the fees overview.
+      const itemIds = structure.items.map((i) => i.id);
+      const existing = await prisma.feeAssignment.findMany({
+        where: { feeItemId: { in: itemIds } },
+        select: { studentId: true, feeItemId: true },
+      });
+      const alreadyAssigned = new Set(existing.map((e) => `${e.studentId}:${e.feeItemId}`));
+
       // Create assignments
       const assignments = [];
+      let skipped = 0;
       for (const student of students) {
         for (const item of structure.items) {
           // Check if student meets criteria
           if (item.classIds.length > 0 && !item.classIds.includes(student.classId || "")) continue;
           if (item.applicableTo === "BOARDING_STUDENTS" && !student.educationLevel?.includes("BOARDING")) continue;
           if (item.applicableTo === "DAY_STUDENTS" && student.educationLevel?.includes("BOARDING")) continue;
+
+          // Skip if this student already has this fee item assigned.
+          if (alreadyAssigned.has(`${student.id}:${item.id}`)) { skipped++; continue; }
+          alreadyAssigned.add(`${student.id}:${item.id}`);
 
           const dueDate = item.dueDate || new Date(structure.effectiveFromDate);
 
@@ -7116,12 +7131,16 @@ async function startServer() {
         "ASSIGN",
         "FEE_STRUCTURE",
         structure.id,
-        `Assigned fees to ${assignments.length} students`,
+        `Assigned fees: ${assignments.length} created, ${skipped} skipped (already assigned)`,
         req.ip,
         req.headers["user-agent"] || null
       );
 
-      res.json({ message: `Created ${assignments.length} fee assignments`, count: assignments.length });
+      res.json({
+        message: `Created ${assignments.length} fee assignments${skipped ? `, skipped ${skipped} already assigned` : ""}`,
+        count: assignments.length,
+        skipped,
+      });
     } catch (err) {
       logger.error("Error assigning fees:", err);
       res.status(500).json({ error: "Internal Server Error" });
@@ -7177,19 +7196,26 @@ async function startServer() {
         return;
       }
 
-      // Create FeePayment
+      // Create FeePayment. Link it to the assignment (assignmentId) so the fees
+      // overview — which sums assignments plus ONLY orphan (assignmentId: null)
+      // payments — doesn't double-count this payment as a separate charge.
+      // Also set paidAmount so the record is internally consistent, and use the
+      // school's configured currency instead of a hard-coded "MYR".
+      const feeProfile = await prisma.schoolProfile.findFirst();
       const payment = await prisma.feePayment.create({
         data: {
           studentId: assignment.studentId,
+          assignmentId: assignment.id,
           amount: assignment.outstandingAmount,
-          currency: "MYR",
+          paidAmount: assignment.outstandingAmount,
+          currency: feeProfile?.currency || "MYR",
           dueDate: assignment.dueDate,
           paidDate: new Date(),
           status: "PAID",
           description: assignment.feeItem?.name || "Fee payment",
           paymentMethod: req.body.paymentMethod || "OTHER",
           notes: req.body.notes,
-        },
+        } as any,
       });
 
       // Update assignment
