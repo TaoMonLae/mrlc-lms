@@ -326,6 +326,7 @@ export function registerExamBankRoutes(deps: Deps): void {
           bankId: b.bankId || null, difficulty: DIFFICULTY.includes(b.difficulty) ? b.difficulty : null,
           defaultPoints: num(b.defaultPoints), estimatedTimeSeconds: num(b.estimatedTimeSeconds),
           explanation: sanitizeHTML(b.explanation) || null, status: "DRAFT", version: 1,
+          passageText: sanitizeHTML(b.passageText || "") || null, imageUrl: b.imageUrl || null,
           tags: Array.isArray(b.tags) ? b.tags : [], language: b.language || null,
           correctAnswer: b.correctAnswer || null, correctAnswers: b.correctAnswers ?? null,
           options: b.type === "DRAG_DROP" ? { text: dragParsed.text, blanks: dragParsed.blanks, distractors: dragDistractors } : null,
@@ -351,8 +352,8 @@ export function registerExamBankRoutes(deps: Deps): void {
       if (existing.status === "ARCHIVED" && !isAdmin(req)) { res.status(409).json({ error: "Archived — restore first (admin)" }); return; }
 
       const data: any = {};
-      for (const k of ["text", "explanation", "subtopic", "language", "correctAnswer"]) if (b[k] !== undefined) {
-        data[k] = (k === "text" || k === "explanation") ? sanitizeHTML(b[k] || "") : (b[k] || null);
+      for (const k of ["text", "explanation", "passageText", "subtopic", "language", "correctAnswer", "imageUrl"]) if (b[k] !== undefined) {
+        data[k] = (k === "text" || k === "explanation" || k === "passageText") ? (sanitizeHTML(b[k] || "") || null) : (b[k] || null);
       }
       if (b.type !== undefined) data.type = b.type;
       if (b.type !== undefined && b.type !== "DRAG_DROP") data.options = null;

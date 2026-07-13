@@ -21,6 +21,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import MathField from '../../components/MathField';
 import MathText from '../../components/MathText';
+import QuestionImageField from '../../components/QuestionImageField';
 
 /* ------------------------------------------------------------------ */
 /* Types & config                                                      */
@@ -41,7 +42,12 @@ interface Question {
   /** model answer / rubric note for manually-graded types */
   sample?: string;
   explanation?: string;
+  passageText?: string;
+  imageUrl?: string | null;
 }
+
+type Audience = 'GED' | 'K12_ELEMENTARY' | 'K12_MIDDLE' | 'K12_HIGH';
+type QuestionTheme = 'classic' | 'ged' | 'colorful' | 'focus';
 
 interface Accom {
   id: string;
@@ -87,14 +93,14 @@ const isObjective = (t: UIType) => typeDef(t).objective;
 const singleCorrect = (t: UIType) => t === 'MCQ' || t === 'TF' || t === 'DROPDOWN';
 
 const C = {
-  purple: '#7a3dff', purpleText: '#6325e6', purpleDeep: '#4f1cb8',
-  tint50: '#f5f0ff', tint100: '#f0e9ff', tint7: '#f7f2ff', tintBar: '#faf8ff',
-  ink: '#080808', muted: '#6b6b6b', muted2: '#8a8a8a',
-  border: '#e4e2dd', border2: '#ececec', border3: '#e6e6e6',
-  canvas: '#f4f3f0', panel: '#fcfcfc',
-  green: '#00b81d', greenText: '#0a7a1c', greenBg: '#f2fcf3',
-  amber: '#c88a00', amberText: '#b26a00', amberBg: '#fff8e8',
-  blue: '#146ef5', blueBg: '#eef4ff',
+  purple: '#7a3dff', purpleText: 'var(--gs-purple-text)', purpleDeep: '#4f1cb8',
+  tint50: 'var(--gs-tint-50)', tint100: 'var(--gs-tint-100)', tint7: 'var(--gs-tint-7)', tintBar: 'var(--gs-tint-bar)',
+  ink: 'var(--gs-ink)', muted: 'var(--gs-muted)', muted2: 'var(--gs-muted-2)',
+  border: 'var(--gs-border)', border2: 'var(--gs-border-2)', border3: 'var(--gs-border-3)',
+  canvas: 'var(--gs-canvas)', panel: 'var(--gs-panel)', surface: 'var(--gs-surface)', preview: 'var(--gs-preview)', action: 'var(--gs-action)',
+  green: '#00b81d', greenText: 'var(--gs-green-text)', greenBg: 'var(--gs-green-bg)',
+  amber: '#c88a00', amberText: 'var(--gs-amber-text)', amberBg: 'var(--gs-amber-bg)',
+  blue: '#146ef5', blueBg: 'var(--gs-blue-bg)',
 };
 
 /* ------------------------------------------------------------------ */
@@ -104,7 +110,7 @@ const C = {
 /** Reconstruct an editor question from a loaded backend question. */
 function fromBackend(q: any, index: number): Question {
   const id = q.id || `q_${Date.now()}_${index}`;
-  const base: Question = { id, uiType: 'MCQ', text: q.text || '', points: Number(q.points) || 5, options: [], sample: '', explanation: q.explanation || '' };
+  const base: Question = { id, uiType: 'MCQ', text: q.text || '', points: Number(q.points) || 5, options: [], sample: '', explanation: q.explanation || '', passageText: q.passageText || '', imageUrl: q.imageUrl || null };
   const opts = q.options;
   const bt = q.type as string;
 
@@ -165,15 +171,16 @@ function fromBackend(q: any, index: number): Question {
 /** Produce the backend save payload for one editor question. */
 function toBackend(q: Question) {
   const firstCorrect = q.options.findIndex((o) => o.c);
+  const media = { passageText: q.passageText?.trim() || null, imageUrl: q.imageUrl || null };
   switch (q.uiType) {
     case 'TF':
-      return { questionText: q.text, type: 'TRUE_FALSE', points: q.points, choices: ['True', 'False'], correctAnswer: String(Math.max(0, firstCorrect)), explanation: q.explanation || null };
+      return { questionText: q.text, type: 'TRUE_FALSE', points: q.points, choices: ['True', 'False'], correctAnswer: String(Math.max(0, firstCorrect)), explanation: q.explanation || null, ...media };
     case 'SHORT':
-      return { questionText: q.text, type: 'SHORT_ANSWER', points: q.points, choices: null, correctAnswer: q.sample || null, explanation: q.explanation || null };
+      return { questionText: q.text, type: 'SHORT_ANSWER', points: q.points, choices: null, correctAnswer: q.sample || null, explanation: q.explanation || null, ...media };
     case 'ESSAY':
-      return { questionText: q.text, type: 'ESSAY', points: q.points, choices: null, correctAnswer: q.sample || null, explanation: q.explanation || null };
+      return { questionText: q.text, type: 'ESSAY', points: q.points, choices: null, correctAnswer: q.sample || null, explanation: q.explanation || null, ...media };
     case 'EXTENDED':
-      return { questionText: q.text, type: 'EXTENDED', points: q.points, choices: null, correctAnswer: q.sample || null, explanation: q.explanation || null };
+      return { questionText: q.text, type: 'EXTENDED', points: q.points, choices: null, correctAnswer: q.sample || null, explanation: q.explanation || null, ...media };
     case 'DRAG': {
       // Build "[[word]]" raw text by filling each "___" with the correct words in order.
       const answers = q.options.filter((o) => o.c).map((o) => o.t);
@@ -183,10 +190,10 @@ function toBackend(q: Question) {
       let bi = 0;
       const text = raw.replace(/\[\[([^\]]+)\]\]/g, (_m, w) => { const id = `b${bi++}`; blanks.push({ id, answer: w }); return `{{${id}}}`; });
       const distractors = q.options.filter((o) => !o.c).map((o) => o.t);
-      return { questionText: text, type: 'DRAG_DROP', points: q.points, choices: { text, blanks, distractors }, correctAnswer: null, explanation: q.explanation || null };
+      return { questionText: text, type: 'DRAG_DROP', points: q.points, choices: { text, blanks, distractors }, correctAnswer: null, explanation: q.explanation || null, ...media };
     }
     case 'DROPDOWN':
-      return { questionText: q.text, type: 'DROPDOWN', points: q.points, choices: q.options.map((o) => o.t), correctAnswer: String(Math.max(0, firstCorrect)), explanation: q.explanation || null };
+      return { questionText: q.text, type: 'DROPDOWN', points: q.points, choices: q.options.map((o) => o.t), correctAnswer: String(Math.max(0, firstCorrect)), explanation: q.explanation || null, ...media };
     case 'HOTSPOT': {
       // Multi-select (per design). Player stores the chosen option keys, which
       // for these string choices are the option texts — so correctAnswers holds
@@ -200,10 +207,11 @@ function toBackend(q: Question) {
         correctAnswers: correctTexts,
         partialCredit: true,
         explanation: q.explanation || null,
+        ...media,
       };
     }
     default: // MCQ (and reloaded GED_*)
-      return { questionText: q.text, type: q.origType || 'MCQ', points: q.points, choices: q.options.map((o) => o.t), correctAnswer: String(Math.max(0, firstCorrect)), explanation: q.explanation || null };
+      return { questionText: q.text, type: q.origType || 'MCQ', points: q.points, choices: q.options.map((o) => o.t), correctAnswer: String(Math.max(0, firstCorrect)), explanation: q.explanation || null, ...media };
   }
 }
 
@@ -240,6 +248,8 @@ export default function GuidedStudio() {
   const [examType, setExamType] = useState<'QUIZ' | 'MIDTERM' | 'FINAL' | 'MOCK'>('FINAL');
   const [duration, setDuration] = useState(60);
   const [instructions, setInstructions] = useState('');
+  const [audience, setAudience] = useState<Audience>('GED');
+  const [questionTheme, setQuestionTheme] = useState<QuestionTheme>('ged');
   const [status, setStatus] = useState<'DRAFT' | 'PUBLISHED' | 'CLOSED'>('DRAFT');
   const [hasAttempts, setHasAttempts] = useState(false);
 
@@ -257,6 +267,9 @@ export default function GuidedStudio() {
   const [shuffle, setShuffle] = useState(false);
   const [allowPause, setAllowPause] = useState(true);
   const [lockdown, setLockdown] = useState(false);
+  const [requireFullscreen, setRequireFullscreen] = useState(false);
+  const [blockClipboard, setBlockClipboard] = useState(false);
+  const [warnOnFocusLoss, setWarnOnFocusLoss] = useState(true);
   const [honorAccom, setHonorAccom] = useState(false);
   const [accom, setAccom] = useState<Accom[]>([]);
   const [accomOpen, setAccomOpen] = useState(true);
@@ -310,6 +323,8 @@ export default function GuidedStudio() {
       setHasAttempts(Boolean(exam.attempts?.length));
       const s = exam.settings || {};
       setInstructions(s.instructions || '');
+      setAudience((['GED', 'K12_ELEMENTARY', 'K12_MIDDLE', 'K12_HIGH'].includes(s.audience) ? s.audience : 'GED') as Audience);
+      setQuestionTheme((['classic', 'ged', 'colorful', 'focus'].includes(s.questionTheme) ? s.questionTheme : 'ged') as QuestionTheme);
 
       // Availability window — real columns first, settings JSON as fallback.
       const from = exam.availableFrom || s.startDate;
@@ -324,6 +339,9 @@ export default function GuidedStudio() {
       setShuffle(exam.shuffleQuestions != null ? !!exam.shuffleQuestions : !!s.shuffleQuestions);
       setAllowPause(s.allowPause !== false);
       setLockdown(!!s.lockdownBrowser);
+      setRequireFullscreen(!!s.antiCheat?.requireFullscreen);
+      setBlockClipboard(!!s.antiCheat?.blockClipboard);
+      setWarnOnFocusLoss(s.antiCheat?.warnOnFocusLoss !== false);
 
       // Pass mark — exam.passMark is stored in POINTS; convert to a percentage.
       const qs = (exam.questions || []).map(fromBackend);
@@ -402,7 +420,7 @@ export default function GuidedStudio() {
   const cur = questions[sel];
 
   const addQuestion = (t: UIType) => {
-    const q: Question = { id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`, uiType: t, text: '', points: 5, options: defaultOptions(t), sample: '', explanation: '' };
+    const q: Question = { id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`, uiType: t, text: '', points: 5, options: defaultOptions(t), sample: '', explanation: '', passageText: '', imageUrl: null };
     setQuestions((prev) => { const next = [...prev, q]; setSel(next.length - 1); return next; });
     setShowTypePicker(false);
     setStep('questions');
@@ -469,6 +487,22 @@ export default function GuidedStudio() {
     }
   };
 
+  const applyPreset = (preset: Audience) => {
+    setAudience(preset);
+    if (preset === 'GED') {
+      setExamType('MOCK'); setDuration(45); setQuestionTheme('ged'); setPassMark(65);
+      setInstructions('Read each question carefully. Use the passage, image, or data provided before selecting your answer.');
+    } else if (preset === 'K12_ELEMENTARY') {
+      setExamType('QUIZ'); setDuration(20); setQuestionTheme('colorful'); setPassMark(60); setLockdown(false);
+      setInstructions('Take your time, read every question, and choose your best answer.');
+    } else if (preset === 'K12_MIDDLE') {
+      setExamType('QUIZ'); setDuration(40); setQuestionTheme('classic'); setPassMark(65);
+    } else {
+      setExamType('FINAL'); setDuration(60); setQuestionTheme('focus'); setPassMark(70);
+    }
+    toast.success('Exam style applied. You can customize every setting.');
+  };
+
   /* ---------------- save / publish ---------------- */
   const buildSettings = () => ({
     enableTimer: true, autoSubmit: true,
@@ -479,6 +513,8 @@ export default function GuidedStudio() {
     allowedAttempts: attempts,
     instructions,
     allowPause, lockdownBrowser: lockdown, honorAccommodations: honorAccom,
+    audience, questionTheme,
+    antiCheat: { requireFullscreen, blockClipboard, warnOnFocusLoss },
     accommodations: honorAccom ? accom : [],
     passMark, releaseScores: release, autoGrade, allowRegrade, latePenalty, syncGradebook,
   });
@@ -558,6 +594,11 @@ export default function GuidedStudio() {
         setStep('questions');
         return;
       }
+      const dragIdx = questions.findIndex((q) => q.uiType === 'DRAG' && (q.text.match(/_{2,}/g)?.length || 0) !== q.options.filter((o) => o.c).length);
+      if (dragIdx !== -1) {
+        toast.error(`Question ${dragIdx + 1} needs exactly one marked correct word for each blank.`);
+        setSel(dragIdx); setStep('questions'); return;
+      }
     }
     setSaving(true);
     let downstreamWarned = false;
@@ -628,11 +669,18 @@ export default function GuidedStudio() {
   /* Render                                                            */
   /* ================================================================ */
   return (
-    <div style={{ background: C.canvas, minHeight: '100vh', padding: '20px 16px', fontFamily: 'Inter, ui-sans-serif, system-ui' }}>
-      <div style={{ maxWidth: 1320, margin: '0 auto', background: '#fff', border: `1px solid ${C.border}`, borderRadius: 20, boxShadow: '0 20px 50px -30px rgba(0,0,0,.35)', overflow: 'hidden' }}>
+    <div className="guided-studio" style={{ background: C.canvas, minHeight: '100vh', padding: '20px 16px', fontFamily: 'Inter, ui-sans-serif, system-ui' }}>
+      <style>{`
+        .guided-studio{--gs-ink:#111018;--gs-muted:#66646f;--gs-muted-2:#85828f;--gs-border:#dfdde5;--gs-border-2:#ebe9ef;--gs-border-3:#e4e2e9;--gs-canvas:#f4f3f0;--gs-panel:#fcfcfc;--gs-surface:#fff;--gs-preview:#fbfbfb;--gs-action:#17131d;--gs-purple-text:#6325e6;--gs-tint-50:#f5f0ff;--gs-tint-100:#f0e9ff;--gs-tint-7:#f7f2ff;--gs-tint-bar:#faf8ff;--gs-green-text:#0a7a1c;--gs-green-bg:#f2fcf3;--gs-amber-text:#9a5c00;--gs-amber-bg:#fff8e8;--gs-blue-bg:#eef4ff;color-scheme:light}
+        .guided-studio input,.guided-studio textarea,.guided-studio select{color:var(--gs-ink);background-color:var(--gs-surface)}
+        @media(prefers-color-scheme:dark){.guided-studio{--gs-ink:#f5f3fa;--gs-muted:#b3afbd;--gs-muted-2:#9691a1;--gs-border:#3d3946;--gs-border-2:#34313c;--gs-border-3:#484351;--gs-canvas:#131117;--gs-panel:#1c1921;--gs-surface:#211e27;--gs-preview:#18161d;--gs-action:#7a3dff;--gs-purple-text:#cbb7ff;--gs-tint-50:#2d2340;--gs-tint-100:#3a2b53;--gs-tint-7:#251f30;--gs-tint-bar:#211b2a;--gs-green-text:#74e88a;--gs-green-bg:#18351f;--gs-amber-text:#ffd27a;--gs-amber-bg:#3b2d12;--gs-blue-bg:#172b4f;color-scheme:dark}}
+        @media(max-width:1100px){.gs-workspace{grid-template-columns:220px minmax(0,1fr)!important}.gs-live-preview{display:none}.gs-topbar{flex-wrap:wrap}}
+        @media(max-width:720px){.guided-studio{padding:0!important}.gs-workspace{display:block!important}.gs-rail{border-right:0!important;border-bottom:1px solid var(--gs-border-2);max-height:250px}.gs-editor{padding:20px 16px!important}.gs-topbar{padding:12px!important}.gs-topbar>button{flex:1}.gs-detail-grid{grid-template-columns:1fr!important}}
+      `}</style>
+      <div style={{ maxWidth: 1320, margin: '0 auto', background: C.surface, border: `1px solid ${C.border}`, borderRadius: 20, boxShadow: '0 20px 50px -30px rgba(0,0,0,.35)', overflow: 'hidden' }}>
 
         {/* ---------- Top bar ---------- */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '15px 24px', borderBottom: `1px solid ${C.border2}` }}>
+        <div className="gs-topbar" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '15px 24px', borderBottom: `1px solid ${C.border2}` }}>
           <div style={{ width: 34, height: 34, borderRadius: 9, background: C.purple, display: 'grid', placeItems: 'center', color: '#fff', fontWeight: 900, flexShrink: 0 }}>
             {(title[0] || 'E').toUpperCase()}
           </div>
@@ -651,15 +699,15 @@ export default function GuidedStudio() {
             <IconToggle active={previewDevice === 'phone'} onClick={() => setPreviewDevice('phone')}><Smartphone size={15} /></IconToggle>
           </div>
           <button onClick={() => setPlayerOpen(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: C.purpleText, background: '#fff', border: `1.5px solid ${C.tint100}`, borderRadius: 10, padding: '8px 13px', cursor: 'pointer' }}>
+            style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: C.purpleText, background: C.surface, border: `1.5px solid ${C.tint100}`, borderRadius: 10, padding: '8px 13px', cursor: 'pointer' }}>
             <Play size={13} fill="currentColor" /> Preview as student
           </button>
           <button onClick={() => save(status === 'DRAFT' ? 'DRAFT' : undefined)} disabled={saving}
-            style={{ fontSize: 13, fontWeight: 700, color: C.ink, background: '#fff', border: `1px solid ${C.border3}`, borderRadius: 10, padding: '8px 14px', cursor: saving ? 'not-allowed' : 'pointer' }}>
+            style={{ fontSize: 13, fontWeight: 700, color: C.ink, background: C.surface, border: `1px solid ${C.border3}`, borderRadius: 10, padding: '8px 14px', cursor: saving ? 'not-allowed' : 'pointer' }}>
             {status === 'DRAFT' ? 'Save draft' : 'Save changes'}
           </button>
           <button onClick={() => save('PUBLISHED')} disabled={saving}
-            style={{ fontSize: 13, fontWeight: 800, color: '#fff', background: C.ink, border: 'none', borderRadius: 10, padding: '9px 18px', cursor: 'pointer' }}>
+            style={{ fontSize: 13, fontWeight: 800, color: '#fff', background: C.action, border: 'none', borderRadius: 10, padding: '9px 18px', cursor: 'pointer' }}>
             {saving ? '…' : 'Publish'}
           </button>
         </div>
@@ -675,10 +723,10 @@ export default function GuidedStudio() {
         </div>
 
         {/* ---------- Body grid ---------- */}
-        <div style={{ display: 'grid', gridTemplateColumns: '248px 1fr 320px', minHeight: 640 }}>
+        <div className="gs-workspace" style={{ display: 'grid', gridTemplateColumns: '248px 1fr 320px', minHeight: 640 }}>
 
           {/* Left rail */}
-          <div style={{ background: C.panel, borderRight: `1px solid ${C.border2}`, padding: '18px 14px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+          <div className="gs-rail" style={{ background: C.panel, borderRight: `1px solid ${C.border2}`, padding: '18px 14px', display: 'flex', flexDirection: 'column', gap: 18 }}>
             <div>
               <RailLabel>Setup</RailLabel>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 8 }}>
@@ -707,7 +755,7 @@ export default function GuidedStudio() {
                       style={{
                         display: 'flex', alignItems: 'center', gap: 7, padding: '8px 9px', borderRadius: 10, cursor: 'pointer',
                         border: `1px solid ${sel === i ? C.tint100 : 'transparent'}`,
-                        background: sel === i ? C.tint100 : '#fff',
+                        background: sel === i ? C.tint100 : C.surface,
                         boxShadow: sel === i ? 'none' : '0 1px 0 rgba(0,0,0,.02)',
                         borderTop: isOver ? `2px solid ${C.purple}` : undefined,
                         opacity: drag?.from === i ? 0.4 : 1, transition: 'all .12s',
@@ -734,13 +782,13 @@ export default function GuidedStudio() {
                   <Plus size={14} /> Add question
                 </button>
                 {showTypePicker && (
-                  <div style={{ position: 'absolute', bottom: '100%', left: 0, right: 0, marginBottom: 6, zIndex: 30, background: '#fff', border: `1px solid ${C.border3}`, borderRadius: 12, boxShadow: '0 24px 50px -18px rgba(0,0,0,.4)', padding: 6, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  <div style={{ position: 'absolute', bottom: '100%', left: 0, right: 0, marginBottom: 6, zIndex: 30, background: C.surface, border: `1px solid ${C.border3}`, borderRadius: 12, boxShadow: '0 24px 50px -18px rgba(0,0,0,.4)', padding: 6, display: 'flex', flexDirection: 'column', gap: 3 }}>
                     <div style={{ padding: '4px 8px 6px' }}><RailLabel>Choose a type</RailLabel></div>
                     {TYPES.map((t) => (
                       <button key={t.key} onClick={() => addQuestion(t.key)}
-                        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 9px', borderRadius: 8, border: '1px solid transparent', background: '#fff', cursor: 'pointer', fontSize: 12.5, fontWeight: 600, color: C.ink, textAlign: 'left', whiteSpace: 'nowrap' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 9px', borderRadius: 8, border: '1px solid transparent', background: C.surface, cursor: 'pointer', fontSize: 12.5, fontWeight: 600, color: C.ink, textAlign: 'left', whiteSpace: 'nowrap' }}
                         onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = C.tint7; (e.currentTarget as HTMLButtonElement).style.borderColor = C.tint100; }}
-                        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = '#fff'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'transparent'; }}>
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = C.surface; (e.currentTarget as HTMLButtonElement).style.borderColor = 'transparent'; }}>
                         <span style={{ width: 9, height: 9, borderRadius: 999, background: t.color, flexShrink: 0 }} />
                         <span style={{ flex: 1 }}>{t.label}</span>
                         {t.ged && <span style={{ fontSize: 8.5, fontWeight: 800, color: C.blue, background: C.blueBg, padding: '2px 5px', borderRadius: 4, letterSpacing: '.04em' }}>GED</span>}
@@ -753,8 +801,8 @@ export default function GuidedStudio() {
           </div>
 
           {/* Center editor */}
-          <div style={{ padding: '26px 32px', overflow: 'auto' }}>
-            {step === 'details' && <DetailsStep {...{ title, setTitle, subjectId, setSubjectId, classId, setClassId, examType, setExamType, subjects, classes, duration, setDuration, instructions, setInstructions, goNext: () => setStep('questions') }} />}
+          <div className="gs-editor" style={{ padding: '26px 32px', overflow: 'auto' }}>
+            {step === 'details' && <DetailsStep {...{ title, setTitle, subjectId, setSubjectId, classId, setClassId, examType, setExamType, subjects, classes, duration, setDuration, instructions, setInstructions, audience, questionTheme, setQuestionTheme, applyPreset, goNext: () => setStep('questions') }} />}
             {step === 'questions' && (
               cur ? (
                 <QuestionEditor
@@ -766,7 +814,7 @@ export default function GuidedStudio() {
               ) : <EmptyEditor onAdd={() => setShowTypePicker(true)} />
             )}
             {step === 'schedule' && (
-              <ScheduleStep {...{ opensAt, setOpensAt, closesAt, setClosesAt, windowInfo, attempts, setAttempts, shuffle, setShuffle, allowPause, setAllowPause, lockdown, setLockdown, honorAccom, setHonorAccom, accom, setAccom, accomOpen, setAccomOpen, roster, duration, goNext: () => setStep('grading') }} />
+              <ScheduleStep {...{ opensAt, setOpensAt, closesAt, setClosesAt, windowInfo, attempts, setAttempts, shuffle, setShuffle, allowPause, setAllowPause, lockdown, setLockdown, requireFullscreen, setRequireFullscreen, blockClipboard, setBlockClipboard, warnOnFocusLoss, setWarnOnFocusLoss, honorAccom, setHonorAccom, accom, setAccom, accomOpen, setAccomOpen, roster, duration, goNext: () => setStep('grading') }} />
             )}
             {step === 'grading' && (
               <GradingStep {...{ totalPoints, autoPoints, manualPoints, passMark, setPassMark, passPoints, release, setRelease, autoGrade, setAutoGrade, showAnswers, setShowAnswers, allowRegrade, setAllowRegrade, latePenalty, setLatePenalty, syncGradebook, setSyncGradebook, goPublish: () => save('PUBLISHED') }} />
@@ -774,7 +822,7 @@ export default function GuidedStudio() {
           </div>
 
           {/* Right live preview */}
-          <div style={{ borderLeft: `1px solid ${C.border2}`, background: '#fbfbfb', padding: '18px 18px', overflow: 'auto' }}>
+          <div className="gs-live-preview" style={{ borderLeft: `1px solid ${C.border2}`, background: C.preview, padding: '18px 18px', overflow: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
               <RailLabel>Live student preview</RailLabel>
               <button onClick={() => setPreviewDevice((d) => (d === 'desktop' ? 'phone' : 'desktop'))} style={{ fontSize: 11, fontWeight: 700, color: C.purpleText, background: 'transparent', border: 'none', cursor: 'pointer' }}>
@@ -824,7 +872,7 @@ function StatusPill({ status }: { status: string }) {
 }
 
 function IconToggle({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return <button onClick={onClick} style={{ display: 'grid', placeItems: 'center', width: 34, height: 30, border: 'none', cursor: 'pointer', color: active ? C.purpleText : '#a7a7a7', background: active ? C.tint50 : '#fff' }}>{children}</button>;
+  return <button onClick={onClick} style={{ display: 'grid', placeItems: 'center', width: 34, height: 30, border: 'none', cursor: 'pointer', color: active ? C.purpleText : '#a7a7a7', background: active ? C.tint50 : C.surface }}>{children}</button>;
 }
 
 function StepRow({ icon, label, done, active, onClick }: { icon: React.ReactNode; label: string; done: boolean; active: boolean; onClick: () => void }) {
@@ -832,7 +880,7 @@ function StepRow({ icon, label, done, active, onClick }: { icon: React.ReactNode
     <button onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 9px', borderRadius: 10, border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%', background: active ? C.tint100 : 'transparent' }}>
       <span style={{
         width: 20, height: 20, borderRadius: 999, display: 'grid', placeItems: 'center', flexShrink: 0,
-        background: done ? C.green : active ? C.purple : '#fff',
+        background: done ? C.green : active ? C.purple : C.surface,
         border: done || active ? 'none' : '2px solid #dcdcdc',
         color: '#fff',
       }}>
@@ -880,12 +928,28 @@ function QuestionEditor(props: {
           const active = q.uiType === t.key;
           return (
             <button key={t.key} onClick={() => switchType(t.key)}
-              style={{ fontSize: 12.5, fontWeight: 700, padding: '6px 12px', borderRadius: 8, cursor: 'pointer', border: `1px solid ${active ? t.color : C.border3}`, background: active ? t.color : '#fff', color: active ? '#fff' : C.ink }}>
+              style={{ fontSize: 12.5, fontWeight: 700, padding: '6px 12px', borderRadius: 8, cursor: 'pointer', border: `1px solid ${active ? t.color : C.border3}`, background: active ? t.color : C.surface, color: active ? '#fff' : C.ink }}>
               {t.label}
             </button>
           );
         })}
       </div>
+
+      {q.uiType === 'MCQ' && (
+        <div style={{ maxWidth: 300, marginBottom: 18 }}>
+          <RailLabel>Question standard</RailLabel>
+          <Select value={q.origType || 'MCQ'} onValueChange={(origType) => update({ origType: origType === 'MCQ' ? undefined : origType })}>
+            <SelectTrigger style={{ marginTop: 7 }}><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="MCQ">Standard multiple choice</SelectItem>
+              <SelectItem value="GED_RLA_PASSAGE">GED Reasoning Through Language Arts</SelectItem>
+              <SelectItem value="GED_MATH">GED Mathematical Reasoning</SelectItem>
+              <SelectItem value="GED_SCIENCE">GED Science</SelectItem>
+              <SelectItem value="GED_SOCIAL_STUDIES">GED Social Studies</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {/* QUESTION label + math toggle */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -903,6 +967,20 @@ function QuestionEditor(props: {
       />
       <p style={{ fontSize: 11, color: C.muted2, margin: '6px 0 20px' }}>Inline $…$ · display $$…$$</p>
 
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(180px,.7fr)', gap: 14, marginBottom: 20 }}>
+        <div>
+          <RailLabel>Reading passage or source (optional)</RailLabel>
+          <textarea value={q.passageText || ''} onChange={(e) => update({ passageText: e.target.value })} rows={5}
+            placeholder="Paste a reading passage, source text, chart description, or scenario. Students see it beside the question."
+            style={{ width: '100%', marginTop: 8, border: `1px solid ${C.border3}`, borderRadius: 12, padding: '10px 12px', fontSize: 13, outline: 'none', resize: 'vertical', fontFamily: 'inherit', color: C.ink, background: C.surface }} />
+        </div>
+        <div>
+          <RailLabel>Question picture (optional)</RailLabel>
+          <div style={{ marginTop: 8 }}><QuestionImageField value={q.imageUrl} onChange={(imageUrl) => update({ imageUrl })} /></div>
+          <p style={{ fontSize: 10.5, color: C.muted, marginTop: 6 }}>PNG, JPG, WebP, or GIF · up to 10 MB.</p>
+        </div>
+      </div>
+
       {/* type-specific editors */}
       {optionLike && (
         <div>
@@ -916,9 +994,9 @@ function QuestionEditor(props: {
           )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
             {q.options.map((o, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 9, border: `1px solid ${o.c ? '#bfead0' : C.border3}`, background: o.c ? '#f4fdf6' : '#fff', borderRadius: 10, padding: '6px 10px' }}>
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 9, border: `1px solid ${o.c ? '#bfead0' : C.border3}`, background: o.c ? C.greenBg : C.surface, borderRadius: 10, padding: '6px 10px' }}>
                 <button onClick={() => setCorrect(i)} title="Mark correct"
-                  style={{ width: 24, height: 24, borderRadius: 999, flexShrink: 0, display: 'grid', placeItems: 'center', cursor: 'pointer', border: o.c ? 'none' : '1.5px solid #d3d3d3', background: o.c ? C.green : '#fff', color: '#fff' }}>
+                  style={{ width: 24, height: 24, borderRadius: 999, flexShrink: 0, display: 'grid', placeItems: 'center', cursor: 'pointer', border: o.c ? 'none' : '1.5px solid #d3d3d3', background: o.c ? C.green : C.surface, color: '#fff' }}>
                   {o.c && <Check size={13} strokeWidth={3} />}
                 </button>
                 <input value={o.t} onChange={(e) => setOptText(i, e.target.value)} placeholder={`Option ${i + 1}`}
@@ -939,8 +1017,8 @@ function QuestionEditor(props: {
           <p style={{ fontSize: 11.5, color: C.muted2, margin: '4px 0 10px' }}>Use <code style={{ background: C.tint50, padding: '1px 5px', borderRadius: 4 }}>___</code> in the question for each blank. Correct words fill blanks in order; the rest become decoys.</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {q.options.map((o, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 9, border: `1px solid ${o.c ? '#bfead0' : C.border3}`, background: o.c ? '#f4fdf6' : '#fff', borderRadius: 10, padding: '6px 10px' }}>
-                <button onClick={() => setCorrect(i)} style={{ width: 24, height: 24, borderRadius: 999, flexShrink: 0, display: 'grid', placeItems: 'center', cursor: 'pointer', border: o.c ? 'none' : '1.5px solid #d3d3d3', background: o.c ? C.green : '#fff', color: '#fff' }}>{o.c && <Check size={13} strokeWidth={3} />}</button>
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 9, border: `1px solid ${o.c ? '#bfead0' : C.border3}`, background: o.c ? C.greenBg : C.surface, borderRadius: 10, padding: '6px 10px' }}>
+                <button onClick={() => setCorrect(i)} style={{ width: 24, height: 24, borderRadius: 999, flexShrink: 0, display: 'grid', placeItems: 'center', cursor: 'pointer', border: o.c ? 'none' : '1.5px solid #d3d3d3', background: o.c ? C.green : C.surface, color: '#fff' }}>{o.c && <Check size={13} strokeWidth={3} />}</button>
                 <input value={o.t} onChange={(e) => setOptText(i, e.target.value)} placeholder={`Word ${i + 1}`} style={{ flex: 1, border: 'none', outline: 'none', fontSize: 14, background: 'transparent' }} />
                 <button onClick={() => delOpt(i)} disabled={q.options.length <= 2} style={{ border: 'none', background: 'transparent', color: '#cdcdcd', cursor: 'pointer', opacity: q.options.length <= 2 ? 0.4 : 1 }}><X size={15} /></button>
               </div>
@@ -964,7 +1042,7 @@ function QuestionEditor(props: {
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 26, paddingTop: 18, borderTop: `1px solid ${C.border2}` }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <RailLabel>Points</RailLabel>
-          <input type="number" min={0} value={q.points} onChange={(e) => update({ points: Number(e.target.value) })}
+          <input type="number" min={1} value={q.points} onChange={(e) => update({ points: Math.max(1, Number(e.target.value) || 1) })}
             style={{ width: 70, border: `1px solid ${C.border3}`, borderRadius: 9, padding: '7px 10px', fontSize: 14, outline: 'none' }} />
         </div>
         <button onClick={generateSimilar} disabled={generating}
@@ -1000,6 +1078,22 @@ function DetailsStep(p: any) {
       <h2 style={{ fontSize: 24, fontWeight: 800, color: C.ink }}>Exam details</h2>
       <p style={{ fontSize: 13.5, color: C.muted, margin: '4px 0 22px' }}>The basics students and the gradebook rely on.</p>
 
+      <Field label="Student level & test style">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 8 }}>
+          {[
+            ['GED', 'GED practice', 'Passage-led, neutral test UI'],
+            ['K12_ELEMENTARY', 'K–5', 'Larger, colorful student controls'],
+            ['K12_MIDDLE', 'Grades 6–8', 'Balanced classroom assessment'],
+            ['K12_HIGH', 'Grades 9–12', 'Focused high-school exam'],
+          ].map(([key, label, note]) => (
+            <button key={key} type="button" onClick={() => p.applyPreset(key)} style={{ textAlign: 'left', padding: '10px 12px', borderRadius: 11, cursor: 'pointer', border: `1.5px solid ${p.audience === key ? C.purple : C.border3}`, background: p.audience === key ? C.tint50 : C.surface, color: C.ink }}>
+              <div style={{ fontSize: 13, fontWeight: 800 }}>{label}</div>
+              <div style={{ fontSize: 10.5, color: C.muted, marginTop: 2 }}>{note}</div>
+            </button>
+          ))}
+        </div>
+      </Field>
+
       <Field label="Title"><input value={p.title} onChange={(e: any) => p.setTitle(e.target.value)} style={inputStyle} placeholder="e.g. Algebra II — Unit 4 Mock" /></Field>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
         <Field label="Subject">
@@ -1027,9 +1121,18 @@ function DetailsStep(p: any) {
         </Select>
       </Field>
       <Field label="Time limit (minutes)"><input type="number" min={1} value={p.duration} onChange={(e: any) => p.setDuration(Number(e.target.value))} style={inputStyle} /></Field>
+      <Field label="Student question theme">
+        <Select value={p.questionTheme} onValueChange={p.setQuestionTheme}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ged">GED neutral</SelectItem><SelectItem value="classic">Classroom classic</SelectItem>
+            <SelectItem value="colorful">Colorful K–5</SelectItem><SelectItem value="focus">High-contrast focus</SelectItem>
+          </SelectContent>
+        </Select>
+      </Field>
       <Field label="Instructions"><textarea value={p.instructions} onChange={(e: any) => p.setInstructions(e.target.value)} rows={4} style={{ ...inputStyle, resize: 'vertical', fontFamily: 'inherit' }} placeholder="Shown to students before they begin." /></Field>
 
-      <button onClick={p.goNext} style={{ marginTop: 8, fontSize: 13, fontWeight: 700, color: '#fff', background: C.ink, border: 'none', borderRadius: 10, padding: '10px 18px', cursor: 'pointer' }}>Continue to questions →</button>
+      <button onClick={p.goNext} style={{ marginTop: 8, fontSize: 13, fontWeight: 700, color: '#fff', background: C.action, border: 'none', borderRadius: 10, padding: '10px 18px', cursor: 'pointer' }}>Continue to questions →</button>
     </div>
   );
 }
@@ -1073,7 +1176,7 @@ function ScheduleStep(p: any) {
         <RailLabel>Attempts allowed</RailLabel>
         <div style={{ display: 'inline-flex', border: `1px solid ${C.border3}`, borderRadius: 10, overflow: 'hidden', marginTop: 8 }}>
           {[{ v: 1, l: '1' }, { v: 2, l: '2' }, { v: 0, l: 'Unlimited' }].map((o) => (
-            <button key={o.v} onClick={() => p.setAttempts(o.v)} style={{ fontSize: 13, fontWeight: 700, padding: '8px 16px', border: 'none', cursor: 'pointer', background: p.attempts === o.v ? C.ink : '#fff', color: p.attempts === o.v ? '#fff' : C.ink }}>{o.l}</button>
+            <button key={o.v} onClick={() => p.setAttempts(o.v)} style={{ fontSize: 13, fontWeight: 700, padding: '8px 16px', border: 'none', cursor: 'pointer', background: p.attempts === o.v ? C.action : C.surface, color: p.attempts === o.v ? '#fff' : C.ink }}>{o.l}</button>
           ))}
         </div>
       </div>
@@ -1082,6 +1185,12 @@ function ScheduleStep(p: any) {
         <Toggle on={p.shuffle} onChange={p.setShuffle} label="Shuffle question order" />
         <Toggle on={p.allowPause} onChange={p.setAllowPause} label="Allow pause & resume" />
         <Toggle on={p.lockdown} onChange={p.setLockdown} label="Lockdown browser" />
+        {p.lockdown && <div style={{ padding: '4px 14px 10px', border: `1px solid ${C.border2}`, borderRadius: 12, background: C.panel }}>
+          <Toggle on={p.requireFullscreen} onChange={p.setRequireFullscreen} label="Require fullscreen during the attempt" />
+          <Toggle on={p.blockClipboard} onChange={p.setBlockClipboard} label="Block copy, paste, context menu, and print" />
+          <Toggle on={p.warnOnFocusLoss} onChange={p.setWarnOnFocusLoss} label="Record tab and window focus changes" />
+          <p style={{ fontSize: 11, color: C.muted, margin: '8px 0 2px' }}>Integrity events are visible to teachers. Browser controls deter common actions but cannot guarantee prevention on every device.</p>
+        </div>}
         <Toggle on={p.honorAccom} onChange={p.setHonorAccom} label="Honor accommodations" />
       </div>
 
@@ -1089,7 +1198,7 @@ function ScheduleStep(p: any) {
         <AccommodationPanel accom={p.accom} setAccom={p.setAccom} open={p.accomOpen} setOpen={p.setAccomOpen} roster={p.roster} duration={p.duration} />
       )}
 
-      <button onClick={p.goNext} style={{ marginTop: 22, fontSize: 13, fontWeight: 700, color: '#fff', background: C.ink, border: 'none', borderRadius: 10, padding: '10px 18px', cursor: 'pointer' }}>Continue to grading →</button>
+      <button onClick={p.goNext} style={{ marginTop: 22, fontSize: 13, fontWeight: 700, color: '#fff', background: C.action, border: 'none', borderRadius: 10, padding: '10px 18px', cursor: 'pointer' }}>Continue to grading →</button>
     </div>
   );
 }
@@ -1121,7 +1230,7 @@ function AccommodationPanel({ accom, setAccom, open, setOpen, roster, duration }
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
                 <div style={{ display: 'inline-flex', border: `1px solid ${C.border3}`, borderRadius: 8, overflow: 'hidden' }}>
                   {[1, 1.25, 1.5, 2].map((m) => (
-                    <button key={m} onClick={() => upd(a.id, { multiplier: m })} style={{ fontSize: 12, fontWeight: 700, padding: '5px 10px', border: 'none', cursor: 'pointer', background: a.multiplier === m ? C.purple : '#fff', color: a.multiplier === m ? '#fff' : C.ink }}>{m}×</button>
+                    <button key={m} onClick={() => upd(a.id, { multiplier: m })} style={{ fontSize: 12, fontWeight: 700, padding: '5px 10px', border: 'none', cursor: 'pointer', background: a.multiplier === m ? C.purple : C.surface, color: a.multiplier === m ? '#fff' : C.ink }}>{m}×</button>
                   ))}
                 </div>
                 <ChipToggle on={a.readAloud} onClick={() => upd(a.id, { readAloud: !a.readAloud })} label="Read-aloud" />
@@ -1130,7 +1239,7 @@ function AccommodationPanel({ accom, setAccom, open, setOpen, roster, duration }
               </div>
             </div>
           ))}
-          <button onClick={add} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px', borderRadius: 10, border: `1.5px dashed ${C.tint100}`, background: '#fff', color: C.purpleText, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}><Plus size={13} /> Add student override</button>
+          <button onClick={add} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px', borderRadius: 10, border: `1.5px dashed ${C.tint100}`, background: C.surface, color: C.purpleText, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}><Plus size={13} /> Add student override</button>
         </div>
       )}
     </div>
@@ -1138,7 +1247,7 @@ function AccommodationPanel({ accom, setAccom, open, setOpen, roster, duration }
 }
 
 function ChipToggle({ on, onClick, label }: { on: boolean; onClick: () => void; label: string }) {
-  return <button onClick={onClick} style={{ fontSize: 12, fontWeight: 700, padding: '5px 11px', borderRadius: 999, cursor: 'pointer', border: `1px solid ${on ? C.purple : C.border3}`, background: on ? C.tint50 : '#fff', color: on ? C.purpleText : C.muted }}>{label}</button>;
+  return <button onClick={onClick} style={{ fontSize: 12, fontWeight: 700, padding: '5px 11px', borderRadius: 999, cursor: 'pointer', border: `1px solid ${on ? C.purple : C.border3}`, background: on ? C.tint50 : C.surface, color: on ? C.purpleText : C.muted }}>{label}</button>;
 }
 
 /* ------------------------------------------------------------------ */
@@ -1175,7 +1284,7 @@ function GradingStep(p: any) {
         {[{ k: 'immediately', l: 'Immediately' }, { k: 'approve', l: 'When I approve' }, { k: 'closed', l: 'After exam closes' }].map((o) => {
           const on = p.release === o.k;
           return (
-            <button key={o.k} onClick={() => p.setRelease(o.k)} style={{ padding: '14px 12px', borderRadius: 12, cursor: 'pointer', textAlign: 'left', fontSize: 13, fontWeight: 700, border: `1.5px solid ${on ? C.purple : C.border3}`, background: on ? C.tint50 : '#fff', color: on ? C.purpleText : C.ink }}>{o.l}</button>
+            <button key={o.k} onClick={() => p.setRelease(o.k)} style={{ padding: '14px 12px', borderRadius: 12, cursor: 'pointer', textAlign: 'left', fontSize: 13, fontWeight: 700, border: `1.5px solid ${on ? C.purple : C.border3}`, background: on ? C.tint50 : C.surface, color: on ? C.purpleText : C.ink }}>{o.l}</button>
           );
         })}
       </div>
@@ -1188,7 +1297,7 @@ function GradingStep(p: any) {
         <Toggle on={p.syncGradebook} onChange={p.setSyncGradebook} label="Sync to gradebook" />
       </div>
 
-      <button onClick={p.goPublish} style={{ marginTop: 22, fontSize: 13, fontWeight: 700, color: '#fff', background: C.ink, border: 'none', borderRadius: 10, padding: '10px 18px', cursor: 'pointer' }}>Review & publish →</button>
+      <button onClick={p.goPublish} style={{ marginTop: 22, fontSize: 13, fontWeight: 700, color: '#fff', background: C.action, border: 'none', borderRadius: 10, padding: '10px 18px', cursor: 'pointer' }}>Review & publish →</button>
     </div>
   );
 }
@@ -1213,7 +1322,7 @@ function renderQuestionText(text: string) {
 function PreviewCard({ q, index, total, minutes }: { q?: Question; index: number; total: number; minutes: number }) {
   if (!q) return <div style={{ padding: 24, textAlign: 'center', color: C.muted2, fontSize: 13 }}>Select or add a question to preview.</div>;
   return (
-    <div style={{ borderRadius: 16, background: '#fff', border: `1px solid ${C.border2}`, boxShadow: '0 8px 24px -14px rgba(0,0,0,.25)', overflow: 'hidden' }}>
+    <div style={{ borderRadius: 16, background: C.surface, border: `1px solid ${C.border2}`, boxShadow: '0 8px 24px -14px rgba(0,0,0,.25)', overflow: 'hidden' }}>
       <div style={{ height: 5, background: 'linear-gradient(90deg,#7a3dff,#ed52cb)' }} />
       <div style={{ padding: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
@@ -1221,6 +1330,8 @@ function PreviewCard({ q, index, total, minutes }: { q?: Question; index: number
           <span style={{ fontSize: 11, color: C.muted2 }}>◷ {String(minutes).padStart(2, '0')}:00</span>
         </div>
         <div style={{ fontSize: 15, fontWeight: 700, color: C.ink, marginBottom: 14, lineHeight: 1.4 }}>{renderQuestionText(q.text || 'Your question text appears here.')}</div>
+        {q.passageText && <div style={{ fontSize: 12, lineHeight: 1.55, whiteSpace: 'pre-wrap', color: C.muted, background: C.panel, border: `1px solid ${C.border2}`, borderRadius: 10, padding: 10, marginBottom: 12 }}>{q.passageText}</div>}
+        {q.imageUrl && <img src={q.imageUrl} alt="Question illustration" style={{ display: 'block', maxWidth: '100%', maxHeight: 180, objectFit: 'contain', borderRadius: 10, marginBottom: 12, border: `1px solid ${C.border2}` }} />}
         <StudentInput q={q} value={null} onChange={() => {}} small />
       </div>
     </div>
@@ -1274,7 +1385,7 @@ function StudentInput({ q, value, onChange, small }: { q: Question; value: any; 
       {q.options.map((o, i) => {
         const on = value === i;
         return (
-          <button key={i} onClick={() => onChange(i)} style={{ display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', padding: optPad, borderRadius: 12, cursor: 'pointer', border: `2px solid ${on ? C.purple : C.border3}`, background: on ? '#f5f0ff' : '#fff', fontSize: fs, color: C.ink, transition: 'all .15s' }}>
+          <button key={i} onClick={() => onChange(i)} style={{ display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', padding: optPad, borderRadius: 12, cursor: 'pointer', border: `2px solid ${on ? C.purple : C.border3}`, background: on ? C.tint50 : C.surface, fontSize: fs, color: C.ink, transition: 'all .15s' }}>
             {!small && <span style={{ width: 26, height: 26, borderRadius: 999, border: `1px solid ${on ? C.purple : '#d3d3d3'}`, color: on ? C.purpleText : C.muted, display: 'grid', placeItems: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{String.fromCharCode(65 + i)}</span>}
             <span style={{ flex: 1 }}><MathText text={o.t || `Option ${String.fromCharCode(65 + i)}`} /></span>
           </button>
@@ -1307,9 +1418,9 @@ function StudentPlayer({ questions, title, minutes, onClose }: { questions: Ques
   if (!q) {
     return (
       <div style={overlayStyle}>
-        <div style={{ background: '#fff', borderRadius: 16, padding: 40, textAlign: 'center' }}>
+        <div style={{ background: C.surface, borderRadius: 16, padding: 40, textAlign: 'center' }}>
           <p style={{ fontSize: 15, color: C.muted }}>No questions to preview yet.</p>
-          <button onClick={onClose} style={{ marginTop: 14, fontSize: 13, fontWeight: 700, color: '#fff', background: C.ink, border: 'none', borderRadius: 10, padding: '9px 18px', cursor: 'pointer' }}>Close</button>
+          <button onClick={onClose} style={{ marginTop: 14, fontSize: 13, fontWeight: 700, color: '#fff', background: C.action, border: 'none', borderRadius: 10, padding: '9px 18px', cursor: 'pointer' }}>Close</button>
         </div>
       </div>
     );
@@ -1326,7 +1437,7 @@ function StudentPlayer({ questions, title, minutes, onClose }: { questions: Ques
           </div>
         </div>
         <TimerRing frac={frac} mm={mm} />
-        <button onClick={onClose} style={{ width: 36, height: 36, borderRadius: 999, border: `1px solid ${C.border3}`, background: '#fff', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><X size={17} /></button>
+        <button onClick={onClose} style={{ width: 36, height: 36, borderRadius: 999, border: `1px solid ${C.border3}`, background: C.surface, color: C.ink, cursor: 'pointer', display: 'grid', placeItems: 'center' }}><X size={17} /></button>
       </div>
 
       {/* progress dots */}
@@ -1341,15 +1452,17 @@ function StudentPlayer({ questions, title, minutes, onClose }: { questions: Ques
       <div style={{ flex: 1, overflow: 'auto', display: 'grid', placeItems: 'start center', padding: '40px 24px' }}>
         <div style={{ width: '100%', maxWidth: 720 }}>
           <h2 style={{ fontSize: 24, fontWeight: 800, color: C.ink, lineHeight: 1.35, marginBottom: 26 }}>{renderQuestionText(q.text || 'Question text')}</h2>
+          {q.passageText && <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.7, background: C.panel, border: `1px solid ${C.border2}`, borderRadius: 14, padding: 18, marginBottom: 20, color: C.ink }}>{q.passageText}</div>}
+          {q.imageUrl && <img src={q.imageUrl} alt="Question illustration" style={{ display: 'block', maxWidth: '100%', maxHeight: 320, objectFit: 'contain', borderRadius: 12, marginBottom: 20 }} />}
           <StudentInput q={q} value={answers[pIdx] ?? null} onChange={(v) => setAnswers((a) => ({ ...a, [pIdx]: v }))} />
         </div>
       </div>
 
       {/* footer */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderTop: `1px solid ${C.border2}` }}>
-        <button onClick={() => setPIdx((i) => Math.max(0, i - 1))} disabled={pIdx === 0} style={{ fontSize: 13, fontWeight: 700, color: C.ink, background: '#fff', border: `1px solid ${C.border3}`, borderRadius: 10, padding: '9px 16px', cursor: pIdx === 0 ? 'not-allowed' : 'pointer', opacity: pIdx === 0 ? 0.4 : 1 }}>← Previous</button>
+        <button onClick={() => setPIdx((i) => Math.max(0, i - 1))} disabled={pIdx === 0} style={{ fontSize: 13, fontWeight: 700, color: C.ink, background: C.surface, border: `1px solid ${C.border3}`, borderRadius: 10, padding: '9px 16px', cursor: pIdx === 0 ? 'not-allowed' : 'pointer', opacity: pIdx === 0 ? 0.4 : 1 }}>← Previous</button>
         {pIdx < total - 1 ? (
-          <button onClick={() => setPIdx((i) => i + 1)} style={{ fontSize: 13, fontWeight: 700, color: '#fff', background: C.ink, border: 'none', borderRadius: 10, padding: '9px 18px', cursor: 'pointer' }}>Next →</button>
+          <button onClick={() => setPIdx((i) => i + 1)} style={{ fontSize: 13, fontWeight: 700, color: '#fff', background: C.action, border: 'none', borderRadius: 10, padding: '9px 18px', cursor: 'pointer' }}>Next →</button>
         ) : (
           <button onClick={() => { toast.success('Exam submitted (preview).'); onClose(); }} style={{ fontSize: 13, fontWeight: 800, color: '#fff', background: C.green, border: 'none', borderRadius: 10, padding: '9px 20px', cursor: 'pointer' }}>Submit exam</button>
         )}
@@ -1358,7 +1471,7 @@ function StudentPlayer({ questions, title, minutes, onClose }: { questions: Ques
   );
 }
 
-const overlayStyle: React.CSSProperties = { position: 'fixed', inset: 0, zIndex: 60, background: '#f4f3f0', display: 'flex', flexDirection: 'column', fontFamily: 'Inter, ui-sans-serif, system-ui' };
+const overlayStyle: React.CSSProperties = { position: 'fixed', inset: 0, zIndex: 60, background: C.canvas, color: C.ink, display: 'flex', flexDirection: 'column', fontFamily: 'Inter, ui-sans-serif, system-ui' };
 
 function TimerRing({ frac, mm }: { frac: number; mm: number }) {
   const r = 22, circ = 2 * Math.PI * r;
@@ -1382,7 +1495,7 @@ function TimerRing({ frac, mm }: { frac: number; mm: number }) {
 function PublishModal({ title, className, count, points, onEdit, onDashboard }: { title: string; className: string; count: number; points: number; onEdit: () => void; onDashboard: () => void }) {
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 70, background: 'rgba(20,16,30,.45)', backdropFilter: 'blur(4px)', display: 'grid', placeItems: 'center', padding: 20 }}>
-      <div style={{ width: '100%', maxWidth: 420, background: '#fff', borderRadius: 20, padding: 30, textAlign: 'center', boxShadow: '0 30px 70px -20px rgba(0,0,0,.5)', animation: 'gs-pop .18s ease' }}>
+      <div style={{ width: '100%', maxWidth: 420, background: C.surface, borderRadius: 20, padding: 30, textAlign: 'center', boxShadow: '0 30px 70px -20px rgba(0,0,0,.5)', animation: 'gs-pop .18s ease' }}>
         <div style={{ width: 60, height: 60, borderRadius: 999, background: C.greenBg, display: 'grid', placeItems: 'center', margin: '0 auto 16px' }}>
           <Check size={30} strokeWidth={3} color={C.greenText} />
         </div>
@@ -1391,8 +1504,8 @@ function PublishModal({ title, className, count, points, onEdit, onDashboard }: 
           "{title || 'Untitled exam'}" is live{className ? ` for ${className}` : ''} — {count} questions · {points} points.
         </p>
         <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={onEdit} style={{ flex: 1, fontSize: 13, fontWeight: 700, color: C.ink, background: '#fff', border: `1px solid ${C.border3}`, borderRadius: 11, padding: '11px', cursor: 'pointer' }}>Back to editing</button>
-          <button onClick={onDashboard} style={{ flex: 1, fontSize: 13, fontWeight: 800, color: '#fff', background: C.ink, border: 'none', borderRadius: 11, padding: '11px', cursor: 'pointer' }}>View dashboard</button>
+          <button onClick={onEdit} style={{ flex: 1, fontSize: 13, fontWeight: 700, color: C.ink, background: C.surface, border: `1px solid ${C.border3}`, borderRadius: 11, padding: '11px', cursor: 'pointer' }}>Back to editing</button>
+          <button onClick={onDashboard} style={{ flex: 1, fontSize: 13, fontWeight: 800, color: '#fff', background: C.action, border: 'none', borderRadius: 11, padding: '11px', cursor: 'pointer' }}>View dashboard</button>
         </div>
       </div>
       <style>{`@keyframes gs-pop{from{transform:scale(.94);opacity:0}to{transform:scale(1);opacity:1}}`}</style>

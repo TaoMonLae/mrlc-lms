@@ -175,7 +175,15 @@ const examMediaUpload = multer({
     },
   }),
   limits: { fileSize: 10 * 1024 * 1024 },
-  fileFilter: imageUploadFilter,
+  fileFilter: (_req, file, cb) => {
+    const allowed = new Map([
+      [".png", "image/png"], [".jpg", "image/jpeg"], [".jpeg", "image/jpeg"],
+      [".webp", "image/webp"], [".gif", "image/gif"],
+    ]);
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowed.get(ext) === file.mimetype) cb(null, true);
+    else cb(new Error("Only PNG, JPG, WEBP, and GIF image files are allowed"));
+  },
 });
 
 const homeworkMediaUpload = multer({
@@ -967,7 +975,7 @@ const schemas = {
     reviewNote: optStr,
   }),
   exam: z.object({
-    title: reqStr, classId: reqStr, subjectId: reqStr,
+    title: z.string().trim().min(1, "title is required").max(200), classId: reqStr, subjectId: reqStr,
     examType: z.enum(["QUIZ", "MIDTERM", "FINAL", "MOCK"]).optional(),
     duration: z.coerce.number().int().min(1).nullable().optional(),
     totalMarks: z.coerce.number().min(0).nullable().optional(),
@@ -976,7 +984,7 @@ const schemas = {
     questions: z.array(z.object({
       questionText: optStr,
       type: z.enum(["MULTIPLE_CHOICE", "TRUE_FALSE", "SHORT_ANSWER", "ESSAY", "MCQ", "WRITTEN", "GED_RLA_PASSAGE", "GED_MATH", "GED_SCIENCE", "GED_SOCIAL_STUDIES", "DRAG_DROP", "DROPDOWN", "HOTSPOT", "EXTENDED"]).optional(),
-      points: z.coerce.number().min(0).optional(),
+      points: z.coerce.number().min(1).optional(),
       choices: z.any().optional(), correctAnswer: z.any().optional(),
       correctAnswers: z.any().optional(),
       partialCredit: z.boolean().optional(),
@@ -12229,12 +12237,16 @@ async function startServer() {
     });
   };
 
-  app.post("/api/exam-media", authMiddleware, uploadExamMedia, async (req, res) => {
+  const examMediaRoleGuard: express.RequestHandler = (req, res, next) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
       res.status(403).json({ error: "Forbidden" });
       return;
     }
+    next();
+  };
+
+  app.post("/api/exam-media", authMiddleware, examMediaRoleGuard, uploadExamMedia, async (req, res) => {
     const file = (req as any).file as Express.Multer.File | undefined;
     if (!file) { res.status(400).json({ error: "Image file is required" }); return; }
     res.status(201).json({ url: `/uploads/exam-media/${file.filename}` });
@@ -12246,7 +12258,7 @@ async function startServer() {
     if (!String(q?.text || "").trim()) return `${label} is missing question text`;
     if (!q.examId && q.status !== "APPROVED") return `${label} is a bank question that has not been approved`;
     const points = Number(q?.pointsOverride ?? q?.defaultPoints ?? q?.points);
-    if (!Number.isFinite(points) || points < 0) return `${label} has invalid points`;
+    if (!Number.isFinite(points) || points <= 0) return `${label} must be worth at least 1 point`;
     if (MANUAL_QUESTION_TYPES.has(q.type) || q.requiresManualGrading) return null;
     if (q.type === "DRAG_DROP") {
       return Array.isArray(q.options?.blanks) && q.options.blanks.length > 0
@@ -12275,11 +12287,16 @@ async function startServer() {
       return;
     }
     const { title, classId, subjectId, examType, duration, totalMarks, questions, settings, status } = req.body;
-    if (!title || !classId || !subjectId) {
+    if (!String(title || "").trim() || !classId || !subjectId) {
       res.status(400).json({ error: "title, classId, and subjectId are required" });
       return;
     }
     try {
+      const [targetClass, targetSubject] = await Promise.all([
+        prisma.class.findUnique({ where: { id: classId }, select: { id: true } }),
+        prisma.subject.findUnique({ where: { id: subjectId }, select: { id: true } }),
+      ]);
+      if (!targetClass || !targetSubject) { res.status(400).json({ error: "Select a valid class and subject" }); return; }
       if (!(await canManageExamClass(jwtUser, classId))) {
         res.status(403).json({ error: "Forbidden: You cannot create exams for this class" });
         return;
@@ -12355,11 +12372,16 @@ async function startServer() {
     }
     const { id } = req.params;
     const { title, classId, subjectId, examType, duration, totalMarks, questions, settings, status } = req.body;
-    if (!title || !classId || !subjectId) {
+    if (!String(title || "").trim() || !classId || !subjectId) {
       res.status(400).json({ error: "title, classId, and subjectId are required" });
       return;
     }
     try {
+      const [targetClass, targetSubject] = await Promise.all([
+        prisma.class.findUnique({ where: { id: classId }, select: { id: true } }),
+        prisma.subject.findUnique({ where: { id: subjectId }, select: { id: true } }),
+      ]);
+      if (!targetClass || !targetSubject) { res.status(400).json({ error: "Select a valid class and subject" }); return; }
       if (!(await canManageExamClass(jwtUser, classId))) {
         res.status(403).json({ error: "Forbidden: You cannot update exams for this class" });
         return;
@@ -12636,6 +12658,9 @@ async function startServer() {
               isCompleted: true,
               startedAt: true,
               completedAt: true,
+              securityWarnings: true,
+              autoSubmitted: true,
+              integrityEvents: true,
               studentId: true,
               student: { select: { studentCode: true, user: true } },
               answers: {
@@ -12696,9 +12721,9 @@ async function startServer() {
           status: attempt.isCompleted ? (attempt.answers.some((a) => a.answerText && a.pointsAwarded == null) ? "NEEDS_GRADING" : "GRADED") : "IN_PROGRESS",
           startedAt: attempt.startedAt,
           completedAt: attempt.completedAt,
-          securityWarnings: 0,
-          autoSubmitted: false,
-          integrityEvents: [],
+          securityWarnings: attempt.securityWarnings,
+          autoSubmitted: attempt.autoSubmitted,
+          integrityEvents: Array.isArray(attempt.integrityEvents) ? attempt.integrityEvents : [],
           answers: attempt.answers.map((answer) => ({
             id: answer.id,
             questionId: answer.questionId,

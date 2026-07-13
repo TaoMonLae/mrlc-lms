@@ -18,6 +18,7 @@ import { splitDragText } from '../../lib/dragBlanks';
 type DragBankItem = { key: string; label: string };
 type Q = { id: string; text: string; type: string; points: number; options: any; partialCredit?: boolean; passageText?: string | null; imageUrl?: string | null; dragText?: string; dragBank?: DragBankItem[] };
 type Answer = { answerText?: string; selectedOptions?: string[] | Record<string, string>; flaggedForReview?: boolean };
+type ExamSettings = { audience?: string; questionTheme?: string; lockdownBrowser?: boolean; antiCheat?: { requireFullscreen?: boolean; blockClipboard?: boolean; warnOnFocusLoss?: boolean } };
 
 // A small rotating palette so drag chips read as playful/colorful (Wayground
 // style) rather than one flat color — purely cosmetic, keyed by chip index.
@@ -46,15 +47,20 @@ export default function ExamPlayer() {
   const [savedAt, setSavedAt] = useState<string>('');
   const [saving, setSaving] = useState(false);
   const [examTitle, setExamTitle] = useState('');
+  const [examSettings, setExamSettings] = useState<ExamSettings>({});
+  const [securityWarnings, setSecurityWarnings] = useState(0);
   const [blocked, setBlocked] = useState<string>('');
   const [selectedDragItem, setSelectedDragItem] = useState<string | null>(null);
   const dirty = useRef<Set<string>>(new Set());
+  const answerVersions = useRef<Record<string, number>>({});
   const answersRef = useRef(answers);
   answersRef.current = answers;
   // True only once a real countdown has been seeded (remaining > 0). Guards the
   // auto-submit effect so a seeded remaining=0 (untimed exam / missing
   // serverDeadline) can't submit the attempt the instant it loads.
   const timerArmed = useRef(false);
+  const fullscreenEntered = useRef(false);
+  const lastIntegrityEvent = useRef<Record<string, number>>({});
 
   const post = useCallback(async (path: string, body?: any) => {
     const res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: body ? JSON.stringify(body) : undefined });
@@ -72,6 +78,7 @@ export default function ExamPlayer() {
     if (data.autoSubmitted) { toast.info('Time expired — your attempt was submitted.'); navigate(`/exam2/attempts/${attemptId}/result`); return; }
     setQuestions(data.questions || []);
     setExamTitle(data.exam?.title || 'Exam');
+    setExamSettings(data.exam?.settings || {});
     setSessionToken(data.attempt?.sessionToken || '');
     setCanPause(!!data.attempt?.canPause);
     const seeded = data.attempt?.remainingSeconds ?? 0;
@@ -103,13 +110,14 @@ export default function ExamPlayer() {
   const save = useCallback(async (reason: string) => {
     if (!attemptId) return;
     const toSave = Array.from(dirty.current);
-    const payload = (toSave.length ? toSave : Object.keys(answersRef.current)).map((qid) => ({
+    const savedVersions = Object.fromEntries(toSave.map((qid) => [qid, answerVersions.current[qid] || 0]));
+    const payload = toSave.map((qid) => ({
       questionId: qid, ...answersRef.current[qid],
     }));
     setSaving(true);
     const { ok, status, data } = await post(`/api/attempts/${attemptId}/save`, { sessionToken, reason, answers: payload });
     setSaving(false);
-    if (ok) { dirty.current.clear(); setSavedAt(data.lastSavedAt || new Date().toISOString()); if (typeof data.remainingSeconds === 'number') { if (data.remainingSeconds > 0) timerArmed.current = true; setRemaining(data.remainingSeconds); } return true; }
+    if (ok) { toSave.forEach((qid) => { if ((answerVersions.current[qid] || 0) === savedVersions[qid]) dirty.current.delete(qid); }); setSavedAt(data.lastSavedAt || new Date().toISOString()); if (typeof data.remainingSeconds === 'number') { if (data.remainingSeconds > 0) timerArmed.current = true; setRemaining(data.remainingSeconds); } return true; }
     if (status === 409 && data.error === 'SESSION_CONFLICT') { setBlocked('This attempt was opened in another window or device. This session is now read-only.'); return false; }
     if (status === 409 && data.error === 'ATTEMPT_PAUSED') { setBlocked('This attempt has been paused. Resume it from My Exams before continuing.'); return false; }
     if (status === 409 && (data.error === 'TIME_EXPIRED' || data.autoSubmitted)) { toast.info('Time expired — submitted.'); navigate(`/exam2/attempts/${attemptId}/result`); return false; }
@@ -141,9 +149,47 @@ export default function ExamPlayer() {
     return () => window.removeEventListener('beforeunload', h);
   }, [attemptId, sessionToken]);
 
-  const setAnswer = (qid: string, patch: Answer) => { setAnswers((p) => ({ ...p, [qid]: { ...p[qid], ...patch } })); dirty.current.add(qid); };
+  useEffect(() => { setSelectedDragItem(null); }, [idx]);
 
-  const goTo = async (next: number) => { await save('NAVIGATE'); setIdx(Math.max(0, Math.min(questions.length - 1, next))); };
+  const setAnswer = (qid: string, patch: Answer) => { setAnswers((p) => ({ ...p, [qid]: { ...p[qid], ...patch } })); answerVersions.current[qid] = (answerVersions.current[qid] || 0) + 1; dirty.current.add(qid); };
+
+  const goTo = async (next: number) => { if (await save('NAVIGATE')) setIdx(Math.max(0, Math.min(questions.length - 1, next))); };
+
+  const reportIntegrity = useCallback(async (type: string, detail?: string) => {
+    if (!attemptId || !sessionToken || !examSettings.lockdownBrowser) return;
+    const now = Date.now();
+    if (now - (lastIntegrityEvent.current[type] || 0) < 1500) return;
+    lastIntegrityEvent.current[type] = now;
+    const { ok, data } = await post(`/api/attempts/${attemptId}/integrity-event`, { sessionToken, type, detail });
+    if (ok) setSecurityWarnings(Number(data.securityWarnings) || 0);
+  }, [attemptId, sessionToken, examSettings.lockdownBrowser, post]);
+
+  useEffect(() => {
+    if (!examSettings.lockdownBrowser || loading || blocked) return;
+    const anti = examSettings.antiCheat || {};
+    const visibility = () => { if (document.hidden && anti.warnOnFocusLoss !== false) void reportIntegrity('FOCUS_LOST', 'Exam tab became hidden'); };
+    const fullscreen = () => { if (fullscreenEntered.current && !document.fullscreenElement) void reportIntegrity('FULLSCREEN_EXIT'); };
+    const clipboard = (event: ClipboardEvent) => {
+      const type = event.type === 'paste' ? 'PASTE_ATTEMPT' : 'COPY_ATTEMPT';
+      if (anti.blockClipboard) event.preventDefault();
+      void reportIntegrity(type);
+    };
+    const context = (event: MouseEvent) => { if (anti.blockClipboard) event.preventDefault(); void reportIntegrity('CONTEXT_MENU'); };
+    const keydown = (event: KeyboardEvent) => {
+      const mod = event.metaKey || event.ctrlKey;
+      if (mod && event.key.toLowerCase() === 'p') { if (anti.blockClipboard) event.preventDefault(); void reportIntegrity('PRINT_ATTEMPT'); }
+      if ((event.key === 'F12') || (mod && event.shiftKey && ['i', 'j', 'c'].includes(event.key.toLowerCase()))) void reportIntegrity('DEVTOOLS_SHORTCUT');
+    };
+    document.addEventListener('visibilitychange', visibility); document.addEventListener('fullscreenchange', fullscreen);
+    document.addEventListener('copy', clipboard); document.addEventListener('cut', clipboard); document.addEventListener('paste', clipboard);
+    document.addEventListener('contextmenu', context); document.addEventListener('keydown', keydown);
+    return () => { document.removeEventListener('visibilitychange', visibility); document.removeEventListener('fullscreenchange', fullscreen); document.removeEventListener('copy', clipboard); document.removeEventListener('cut', clipboard); document.removeEventListener('paste', clipboard); document.removeEventListener('contextmenu', context); document.removeEventListener('keydown', keydown); };
+  }, [examSettings, loading, blocked, reportIntegrity]);
+
+  const enterFullscreen = async () => {
+    try { await document.documentElement.requestFullscreen(); fullscreenEntered.current = true; }
+    catch { toast.error('Fullscreen could not be started on this device.'); }
+  };
 
   const handlePause = async () => {
     if (!canPause) return;
@@ -171,6 +217,7 @@ export default function ExamPlayer() {
       <Button onClick={() => navigate('/exam2/resume')}>Back to my exams</Button>
     </div>
   );
+  if (!questions.length) return <div className="mx-auto mt-20 max-w-xl rounded-xl border border-amber-200 bg-amber-50 p-8 text-center text-amber-900 dark:bg-amber-900/10 dark:text-amber-100"><AlertTriangle className="mx-auto mb-3 h-9 w-9" /><h2 className="font-bold">No questions are available</h2><p className="mt-1 text-sm">Ask your teacher to review this exam before you continue.</p></div>;
 
   const q = questions[idx];
   const mm = String(Math.floor(remaining / 60)).padStart(2, '0');
@@ -215,7 +262,8 @@ export default function ExamPlayer() {
     const matches = dragMatches(q.id);
     const usedKeys = new Set(Object.values(matches));
     const availableChips = bank.filter((chip) => !usedKeys.has(chip.key));
-    const allPlaced = bank.length > 0 && availableChips.length === 0;
+    const blankIds = segments.filter((segment) => segment.kind === 'blank').map((segment: any) => segment.blankId);
+    const allPlaced = blankIds.length > 0 && blankIds.every((blankId) => Boolean(matches[blankId]));
     const chipColor = (key: string) => CHIP_COLORS[Math.max(0, bank.findIndex((c) => c.key === key)) % CHIP_COLORS.length];
     return (
       <div key={q.id} className="animate-in fade-in slide-in-from-bottom-2 space-y-5 duration-300">
@@ -226,7 +274,7 @@ export default function ExamPlayer() {
             const key = matches[seg.blankId];
             const chip = key ? bank.find((c) => c.key === key) : undefined;
             return (
-              <span key={i}
+              <button key={i} type="button" aria-label={chip ? `Blank filled with ${chip.label}` : 'Empty answer blank'}
                 onDragOver={(event) => event.preventDefault()}
                 onDrop={(event) => { event.preventDefault(); const k = event.dataTransfer.getData('text/plain'); if (bank.some((c) => c.key === k)) placeChip(seg.blankId, k); }}
                 onClick={() => (selectedDragItem ? placeChip(seg.blankId, selectedDragItem) : chip ? clearBlank(seg.blankId) : undefined)}
@@ -238,14 +286,14 @@ export default function ExamPlayer() {
                     : 'border-dashed border-slate-300 bg-slate-50 dark:border-surface-raised dark:bg-surface-raised/40'
                 }`}>
                 {chip ? <span key={key} className={`animate-in zoom-in-75 -mx-1 rounded px-1 duration-200 ${chipColor(key)}`}>{chip.label}</span> : ' '}
-              </span>
+              </button>
             );
           })}
         </div>
         <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 dark:border-surface-raised dark:bg-surface-raised/30">
           <p className="mb-2.5 text-xs font-bold uppercase tracking-widest text-slate-400">Word bank — drag from here</p>
           {allPlaced ? (
-            <p className="animate-in zoom-in-95 flex items-center gap-1.5 text-sm font-bold text-emerald-600 duration-300">✓ All words placed — nice work!</p>
+            <p className="animate-in zoom-in-95 flex items-center gap-1.5 text-sm font-bold text-emerald-600 duration-300">✓ All blanks filled — you can tap a blank to change it.</p>
           ) : (
             <div className="flex flex-wrap gap-2" aria-label="Draggable words">
               {availableChips.map((chip) => (
@@ -314,8 +362,12 @@ export default function ExamPlayer() {
 
   const hasPassage = Boolean(q?.passageText);
 
+  const themeClass = examSettings.questionTheme === 'colorful'
+    ? 'exam-theme-colorful [&_.exam-card]:rounded-3xl [&_.exam-card]:border-2 [&_.exam-card]:border-violet-200 dark:[&_.exam-card]:border-violet-800'
+    : examSettings.questionTheme === 'focus' ? 'exam-theme-focus contrast-125' : '';
+
   return (
-    <div className={`${hasPassage ? 'max-w-6xl' : 'max-w-3xl'} mx-auto pb-24`} data-no-i18n>
+    <div className={`${hasPassage ? 'max-w-6xl' : 'max-w-3xl'} ${themeClass} mx-auto pb-24`} data-no-i18n>
       <div className="sticky top-0 z-10 bg-white/90 dark:bg-canvas/90 backdrop-blur border-b border-slate-200 dark:border-surface-raised py-3 mb-6 flex items-center justify-between">
         <div>
           <h1 className="font-bold text-slate-900 dark:text-white">{examTitle}</h1>
@@ -326,10 +378,17 @@ export default function ExamPlayer() {
         </div>
       </div>
 
+      {examSettings.lockdownBrowser && (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100">
+          <div><span className="font-bold">Integrity monitoring active.</span> Focus, fullscreen, clipboard, print, and restricted shortcut events may be recorded. {securityWarnings > 0 && <span className="ml-1 font-bold">Warnings: {securityWarnings}</span>}</div>
+          {examSettings.antiCheat?.requireFullscreen && !document.fullscreenElement && <Button size="sm" variant="outline" onClick={enterFullscreen}>Enter fullscreen</Button>}
+        </div>
+      )}
+
       {hasPassage ? (
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
           {/* Left Column: Passage */}
-          <div className="md:col-span-6 bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-4 max-h-[60vh] md:max-h-[70vh] overflow-y-auto sticky top-20">
+          <div className="exam-card md:col-span-6 bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-4 max-h-[60vh] md:max-h-[70vh] overflow-y-auto md:sticky top-20">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b pb-2 dark:border-surface-raised">Passage</h3>
             <div className="text-sm text-slate-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
               <MathText>{q.passageText || ''}</MathText>
@@ -337,7 +396,7 @@ export default function ExamPlayer() {
           </div>
 
           {/* Right Column: Question & Answer */}
-          <div className="md:col-span-6 bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-5">
+          <div className="exam-card md:col-span-6 bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Question {idx + 1} of {questions.length} · {q?.points} pts</span>
               <Button variant="ghost" size="sm" onClick={() => setAnswer(q.id, { flaggedForReview: !answers[q.id]?.flaggedForReview })} className={answers[q.id]?.flaggedForReview ? 'text-amber-600' : 'text-slate-400'}>
@@ -350,14 +409,15 @@ export default function ExamPlayer() {
           </div>
         </div>
       ) : (
-        <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-5">
+        <div className="exam-card bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 shadow-sm space-y-5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Question {idx + 1} of {questions.length} · {q?.points} pts</span>
             <Button variant="ghost" size="sm" onClick={() => setAnswer(q.id, { flaggedForReview: !answers[q.id]?.flaggedForReview })} className={answers[q.id]?.flaggedForReview ? 'text-amber-600' : 'text-slate-400'}>
               <Flag className="h-4 w-4 mr-1" /> {answers[q.id]?.flaggedForReview ? 'Flagged' : 'Flag'}
             </Button>
           </div>
-          <p className="text-base font-medium text-slate-900 dark:text-white whitespace-pre-wrap">{q?.text}</p>
+          <p className="text-base font-medium text-slate-900 dark:text-white whitespace-pre-wrap"><MathText>{q?.text || ''}</MathText></p>
+          {q?.imageUrl && <img src={q.imageUrl} alt="Question illustration" className="max-h-80 max-w-full rounded-lg border border-slate-200 object-contain dark:border-surface-raised" />}
           {renderAnswerInput()}
         </div>
       )}

@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { apiGet, apiSend } from '../../lib/api';
 import { ArrowLeft, Plus, Trash2, Save, Eye } from 'lucide-react';
 import { parseDragBlankText, toDragBlankText, splitDragText } from '../../lib/dragBlanks';
+import QuestionImageField from '../../components/QuestionImageField';
 
 const TYPES = ['MULTIPLE_CHOICE', 'TRUE_FALSE', 'SHORT_ANSWER', 'ESSAY', 'DRAG_DROP'];
 const DIFFICULTY = ['EASY', 'MEDIUM', 'HARD'];
@@ -22,7 +23,7 @@ export default function QuestionEditor() {
   const [preview, setPreview] = useState(false);
   const [f, setF] = useState<any>({
     text: '', type: 'MULTIPLE_CHOICE', difficulty: 'MEDIUM', defaultPoints: 1, estimatedTimeSeconds: 60,
-    subjectId: '', topicId: '', subtopic: '', explanation: '', language: '', tags: '',
+    subjectId: '', topicId: '', subtopic: '', explanation: '', passageText: '', imageUrl: null, language: '', tags: '',
     partialCredit: false, caseSensitive: false, requiresManualGrading: false, correctAnswer: '',
     options: [{ text: '', isCorrect: false }, { text: '', isCorrect: false }],
     dragBlankText: '', dragDistractors: '',
@@ -34,7 +35,7 @@ export default function QuestionEditor() {
     if (editing) apiGet(`/api/question-bank/${id}`).then((q) => setF({
       text: q.text || '', type: q.type, difficulty: q.difficulty || 'MEDIUM', defaultPoints: q.defaultPoints ?? q.points ?? 1,
       estimatedTimeSeconds: q.estimatedTimeSeconds ?? 60, subjectId: q.subjectId || '', topicId: q.topicId || '',
-      subtopic: q.subtopic || '', explanation: q.explanation || '', language: q.language || '', tags: (q.tags || []).join(', '),
+      subtopic: q.subtopic || '', explanation: q.explanation || '', passageText: q.passageText || '', imageUrl: q.imageUrl || null, language: q.language || '', tags: (q.tags || []).join(', '),
       partialCredit: q.partialCredit, caseSensitive: q.caseSensitive, requiresManualGrading: q.requiresManualGrading,
       correctAnswer: q.correctAnswer || '', status: q.status,
       options: (q.optionRows || []).length ? q.optionRows.map((o: any) => ({ text: o.text, isCorrect: o.isCorrect, weight: o.weight })) : [{ text: '', isCorrect: false }, { text: '', isCorrect: false }],
@@ -49,10 +50,18 @@ export default function QuestionEditor() {
   const dragParsed = parseDragBlankText(f.dragBlankText || '');
 
   const save = async () => {
-    if (!f.text) return toast.error('Question text required');
+    if (!f.text.trim()) return toast.error('Question text required');
+    const points = Number(f.defaultPoints);
+    if (!Number.isFinite(points) || points <= 0) return toast.error('Points must be greater than zero');
+    if (isChoice) {
+      const choices = f.options.filter((o: any) => o.text.trim());
+      if (choices.length < 2) return toast.error('Add at least two answer options');
+      if (!choices.some((o: any) => o.isCorrect)) return toast.error('Mark at least one correct answer');
+      if (!f.partialCredit && choices.filter((o: any) => o.isCorrect).length !== 1) return toast.error('Mark exactly one correct answer, or enable partial credit');
+    }
     if (isDragDrop && dragParsed.blanks.length < 1) return toast.error('Mark at least one blank in the passage using [[word]]');
     const payload = {
-      ...f, defaultPoints: Number(f.defaultPoints) || 1, estimatedTimeSeconds: Number(f.estimatedTimeSeconds) || null,
+      ...f, text: f.text.trim(), defaultPoints: points, estimatedTimeSeconds: Number(f.estimatedTimeSeconds) || null,
       tags: f.tags ? f.tags.split(',').map((t: string) => t.trim()).filter(Boolean) : [],
       options: isChoice ? f.options.filter((o: any) => o.text) : [],
       dragDistractors: isDragDrop ? f.dragDistractors.split(',').map((s: string) => s.trim()).filter(Boolean) : undefined,
@@ -77,6 +86,8 @@ export default function QuestionEditor() {
       {preview ? (
         <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-6 space-y-3">
           <p className="text-base font-medium text-slate-900 dark:text-white whitespace-pre-wrap">{f.text || '(no text)'}</p>
+          {f.passageText && <div className="whitespace-pre-wrap rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm leading-relaxed dark:border-surface-raised dark:bg-canvas">{f.passageText}</div>}
+          {f.imageUrl && <img src={f.imageUrl} alt="Question illustration" className="max-h-72 max-w-full rounded-lg object-contain" />}
           {isChoice && f.options.filter((o: any) => o.text).map((o: any, i: number) => (
             <div key={i} className={`px-4 py-2 rounded-lg border ${o.isCorrect ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-900/20' : 'border-slate-200 dark:border-surface-raised'}`}>{o.text}{o.isCorrect && ' ✓'}</div>
           ))}
@@ -94,8 +105,10 @@ export default function QuestionEditor() {
       ) : (
         <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-5 space-y-4">
           <div><Label>Question text</Label><textarea className="w-full min-h-[100px] rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas p-2 text-sm" value={f.text} onChange={(e) => setF({ ...f, text: e.target.value })} /></div>
+          <div><Label>Reading passage or source (optional)</Label><textarea className="w-full min-h-[100px] rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas p-2 text-sm" value={f.passageText} onChange={(e) => setF({ ...f, passageText: e.target.value })} placeholder="Shown beside the question in the student player." /></div>
+          <div><Label>Question picture (optional)</Label><div className="mt-2"><QuestionImageField value={f.imageUrl} onChange={(imageUrl) => setF({ ...f, imageUrl })} /></div></div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div><Label>Type</Label><select className="w-full h-10 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-2 text-sm" value={f.type} onChange={(e) => setF({ ...f, type: e.target.value })}>{TYPES.map((t) => <option key={t} value={t}>{t.replace('_', ' ')}</option>)}</select></div>
+            <div><Label>Type</Label><select className="w-full h-10 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-2 text-sm" value={f.type} onChange={(e) => { const type = e.target.value; setF({ ...f, type, options: type === 'TRUE_FALSE' ? [{ text: 'True', isCorrect: true }, { text: 'False', isCorrect: false }] : f.options }); }}>{TYPES.map((t) => <option key={t} value={t}>{t.replace('_', ' ')}</option>)}</select></div>
             <div><Label>Difficulty</Label><select className="w-full h-10 rounded-md border border-slate-200 dark:border-surface-raised bg-white dark:bg-canvas px-2 text-sm" value={f.difficulty} onChange={(e) => setF({ ...f, difficulty: e.target.value })}>{DIFFICULTY.map((d) => <option key={d} value={d}>{d}</option>)}</select></div>
             <div><Label>Points</Label><Input type="number" value={f.defaultPoints} onChange={(e) => setF({ ...f, defaultPoints: e.target.value })} /></div>
             <div><Label>Time (s)</Label><Input type="number" value={f.estimatedTimeSeconds} onChange={(e) => setF({ ...f, estimatedTimeSeconds: e.target.value })} /></div>

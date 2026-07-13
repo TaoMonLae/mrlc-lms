@@ -45,7 +45,11 @@ export function registerExamPhase2Routes(deps: Deps): void {
   const isTeacher = (req: express.Request) => TEACHER_ROLES.includes(user(req).role);
   const ipOf = (req: express.Request) => (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.ip || null;
   const uaOf = (req: express.Request) => (req.headers["user-agent"] as string) || null;
-  const num = (v: any): number | null => (v === null || v === undefined || v === "" || isNaN(Number(v)) ? null : Number(v));
+  const num = (v: any): number | null => {
+    if (v === null || v === undefined || v === "") return null;
+    const parsed = Number(v);
+    return Number.isFinite(parsed) ? parsed : null;
+  };
 
   const examLimiter = rateLimit({
     windowMs: 60 * 1000,
@@ -609,7 +613,19 @@ export function registerExamPhase2Routes(deps: Deps): void {
         canPause: !!accommodation?.additionalBreaks,
         serverTime: new Date().toISOString(),
       },
-      exam: { id: exam.id, title: exam.title, durationMinutes: exam.durationMinutes, totalMarks: exam.totalMarks },
+      exam: {
+        id: exam.id, title: exam.title, durationMinutes: exam.durationMinutes, totalMarks: exam.totalMarks,
+        settings: {
+          audience: exam.settings?.audience || "GED",
+          questionTheme: exam.settings?.questionTheme || "ged",
+          lockdownBrowser: !!exam.settings?.lockdownBrowser,
+          antiCheat: {
+            requireFullscreen: !!exam.settings?.antiCheat?.requireFullscreen,
+            blockClipboard: !!exam.settings?.antiCheat?.blockClipboard,
+            warnOnFocusLoss: exam.settings?.antiCheat?.warnOnFocusLoss !== false,
+          },
+        },
+      },
       questions: ordered,
       // saved answers (student's own, no correctness leaked)
       answers: answers.map((a: any) => ({ questionId: a.questionId, answerText: a.answerText, selectedOptions: a.selectedOptions, flaggedForReview: a.flaggedForReview })),
@@ -666,6 +682,22 @@ export function registerExamPhase2Routes(deps: Deps): void {
       }
 
       const answers: any[] = Array.isArray(b.answers) ? b.answers : [];
+      const reason = String(b.reason || "AUTOSAVE").toUpperCase();
+      if (!["AUTOSAVE", "NAVIGATE", "PAUSE", "SUBMIT"].includes(reason)) {
+        res.status(400).json({ error: "Invalid save reason" }); return;
+      }
+      if (answers.length > 250 || answers.some((a) => typeof a?.answerText === "string" && a.answerText.length > 50000)) {
+        res.status(400).json({ error: "Answer payload is too large" }); return;
+      }
+      const invalidSelections = answers.some((a) => {
+        const value = a?.selectedOptions;
+        if (value == null) return false;
+        if (Array.isArray(value)) return value.length > 100 || value.some((v) => typeof v !== "string" || v.length > 500);
+        if (typeof value !== "object") return true;
+        const entries = Object.entries(value);
+        return entries.length > 100 || entries.some(([k, v]) => k.length > 200 || typeof v !== "string" || v.length > 500);
+      });
+      if (invalidSelections) { res.status(400).json({ error: "Invalid selected options" }); return; }
       const allowedQuestionIds = new Set<string>(
         Array.isArray(attempt.selectedQuestionIds) && attempt.selectedQuestionIds.length
           ? attempt.selectedQuestionIds
@@ -699,8 +731,8 @@ export function registerExamPhase2Routes(deps: Deps): void {
           await tx.examAttempt.update({ where: { id: attempt.id }, data: { lastSavedAt: now } });
           // Lightweight immutable snapshot for recovery/audit.
           const snap = await tx.examAnswer.findMany({ where: { attemptId: attempt.id }, select: { questionId: true, answerText: true, selectedOptions: true, flaggedForReview: true } });
-          await tx.attemptSnapshot.create({ data: { attemptId: attempt.id, reason: (b.reason || "AUTOSAVE").toUpperCase(), answers: snap, questionOrder: attempt.questionOrder ?? undefined, remainingSeconds: remainingSeconds(attempt) } });
-          await tx.attemptEvent.create({ data: { attemptId: attempt.id, type: (b.reason || "AUTOSAVE").toUpperCase(), actorRole: "STUDENT", ipAddress: ipOf(req), userAgent: uaOf(req) } });
+          await tx.attemptSnapshot.create({ data: { attemptId: attempt.id, reason, answers: snap, questionOrder: attempt.questionOrder ?? undefined, remainingSeconds: remainingSeconds(attempt) } });
+          await tx.attemptEvent.create({ data: { attemptId: attempt.id, type: reason, actorRole: "STUDENT", ipAddress: ipOf(req), userAgent: uaOf(req) } });
         } catch (err: any) {
           logger.error("Transaction failed during autosave:", err);
           throw err;
@@ -712,6 +744,29 @@ export function registerExamPhase2Routes(deps: Deps): void {
       logger.error("autosave failed", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
+  });
+
+  const INTEGRITY_EVENT_TYPES = new Set(["FOCUS_LOST", "FULLSCREEN_EXIT", "COPY_ATTEMPT", "PASTE_ATTEMPT", "CONTEXT_MENU", "PRINT_ATTEMPT", "DEVTOOLS_SHORTCUT"]);
+  app.post("/api/attempts/:attemptId/integrity-event", authMiddleware, examLimiter, async (req, res) => {
+    const b = req.body || {};
+    try {
+      const student = await studentForReq(req);
+      const attempt = await prisma.examAttempt.findUnique({ where: { id: req.params.attemptId } });
+      if (!attempt) { res.status(404).json({ error: "Attempt not found" }); return; }
+      if (!student || attempt.studentId !== student.id) { res.status(403).json({ error: "Forbidden" }); return; }
+      if (attempt.state !== "IN_PROGRESS") { res.status(409).json({ error: "Attempt is not active" }); return; }
+      if (!hasCurrentSession(attempt, b.sessionToken)) { res.status(409).json({ error: "SESSION_CONFLICT" }); return; }
+      const type = String(b.type || "").toUpperCase();
+      if (!INTEGRITY_EVENT_TYPES.has(type)) { res.status(400).json({ error: "Invalid integrity event" }); return; }
+      const detail = String(b.detail || "").slice(0, 300);
+      const existing = Array.isArray(attempt.integrityEvents) ? attempt.integrityEvents : [];
+      const event = { type, detail: detail || undefined, at: new Date().toISOString() };
+      const updated = await prisma.$transaction(async (tx: any) => {
+        await tx.attemptEvent.create({ data: { attemptId: attempt.id, type, actorRole: "STUDENT", payload: detail ? { detail } : undefined, ipAddress: ipOf(req), userAgent: uaOf(req) } });
+        return tx.examAttempt.update({ where: { id: attempt.id }, data: { securityWarnings: { increment: 1 }, integrityEvents: [...existing.slice(-99), event] }, select: { securityWarnings: true } });
+      });
+      res.json({ ok: true, securityWarnings: updated.securityWarnings });
+    } catch (err) { logger.error("integrity event failed", err); res.status(500).json({ error: "Internal Server Error" }); }
   });
 
   // PAUSE — freezes the clock (records remaining time at pause).

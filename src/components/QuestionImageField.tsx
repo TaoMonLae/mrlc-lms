@@ -21,6 +21,9 @@ export default function QuestionImageField({ value, onChange, disabled }: Props)
   const pick = () => inputRef.current?.click();
 
   const upload = async (file: File) => {
+    const allowed = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
+    if (!allowed.has(file.type)) { toast.error('Use a PNG, JPG, WebP, or GIF image.'); return; }
+    if (file.size > 10 * 1024 * 1024) { toast.error('Question images must be 10 MB or smaller.'); return; }
     setUploading(true);
     try {
       const fd = new FormData();
@@ -42,7 +45,7 @@ export default function QuestionImageField({ value, onChange, disabled }: Props)
       <input
         ref={inputRef}
         type="file"
-        accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+        accept="image/png,image/jpeg,image/webp,image/gif"
         className="hidden"
         onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f); }}
       />
