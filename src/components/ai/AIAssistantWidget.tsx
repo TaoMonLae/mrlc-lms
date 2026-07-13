@@ -26,6 +26,7 @@ const QUICK_PROMPTS = [
 export default function AIAssistantWidget() {
   const { user } = useAuth();
   const location = useLocation();
+  const firstName = (user?.name || "").trim().split(/\s+/)[0] || "there";
   // Coordinated with the Chat widget so only one floating panel is ever
   // expanded at a time -- both anchor to the bottom-right corner.
   const { isOpen: open, isOtherOpen: chatOpen, setOpen } = useFloatingPanel('ai');
@@ -91,10 +92,10 @@ export default function AIAssistantWidget() {
       {!open && !chatOpen && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed bottom-4 right-[68px] z-50 grid h-11 w-11 place-items-center rounded-full bg-gradient-to-tr from-violet-600 to-indigo-600 text-white shadow-lg transition duration-300 hover:scale-105 hover:shadow-indigo-500/30"
+          className="group fixed bottom-4 right-[68px] z-50 grid h-11 w-11 place-items-center rounded-full bg-gradient-to-tr from-aubergine-600 to-fuchsia-500 text-white shadow-lg shadow-aubergine-500/30 ring-1 ring-white/20 transition duration-300 hover:scale-105 hover:shadow-aubergine-500/50"
           title="AI School Assistant"
         >
-          <Sparkles className="h-5 w-5" />
+          <Sparkles className="h-5 w-5 transition-transform duration-300 group-hover:rotate-12" />
         </button>
       )}
 
@@ -106,26 +107,40 @@ export default function AIAssistantWidget() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 400 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed inset-y-0 right-0 z-50 flex w-full flex-col border-l border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-canvas sm:max-w-md"
+            className="fixed inset-y-0 right-0 z-50 flex w-full flex-col border-l border-slate-200/70 bg-white shadow-2xl dark:border-slate-800 dark:bg-canvas sm:max-w-[420px]"
           >
+            {/* Top accent bar (app aubergine → pink) */}
+            <div className="h-1 w-full shrink-0 bg-gradient-to-r from-aubergine-600 to-fuchsia-500" />
+
             {/* Header */}
-            <div className="flex items-center justify-between bg-gradient-to-r from-violet-600 to-indigo-600 p-4 text-white">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 animate-pulse" />
+            <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-tr from-aubergine-600 to-fuchsia-500 text-white shadow-sm shadow-aubergine-500/30">
+                  <Sparkles className="h-[18px] w-[18px]" />
+                </div>
                 <div>
-                  <h3 className="font-semibold leading-tight text-sm sm:text-base">MRLC AI Assistant</h3>
-                  <p className="text-[10px] opacity-80">Context-aware · knows your classes, exams &amp; activity (read-only)</p>
+                  <h3 className="text-sm font-bold leading-tight text-slate-900 dark:text-white">AI Assistant</h3>
+                  <p className="mt-0.5 flex items-center gap-1 text-[10px] text-slate-400">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    Context-aware · read-only
+                  </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                {messages.length > 0 && (
+                  <button
+                    onClick={() => setMessages([])}
+                    className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
+                    title="Clear conversation"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                )}
                 <button
-                  onClick={() => setMessages([])}
-                  className="rounded-lg p-1 hover:bg-white/10"
-                  title="Clear conversation"
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
+                  title="Close"
                 >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-                <button onClick={() => setOpen(false)} className="rounded-lg p-1 hover:bg-white/10">
                   <X className="h-5 w-5" />
                 </button>
               </div>
@@ -134,44 +149,48 @@ export default function AIAssistantWidget() {
             {/* Chat Area */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
               {messages.length === 0 ? (
-                <div className="flex h-full flex-col justify-center space-y-4 px-2 py-8 text-center">
-                  <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-indigo-50 dark:bg-slate-900">
-                    <Sparkles className="h-6 w-6 text-indigo-600" />
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-slate-900 dark:text-white text-sm sm:text-base">How can I help you today?</h4>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      I can see your classes, exams, grading queue and recent activity (read-only). Ask about what's happening, or pick a prompt below.
+                <div className="flex h-full flex-col justify-center space-y-5 px-1 py-6">
+                  <div className="text-center">
+                    <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-tr from-aubergine-600 to-fuchsia-500 text-white shadow-lg shadow-aubergine-500/30">
+                      <Sparkles className="h-7 w-7" />
+                    </div>
+                    <h4 className="mt-3 text-base font-bold text-slate-900 dark:text-white">Hi {firstName} 👋</h4>
+                    <p className="mx-auto mt-1 max-w-[19rem] text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                      I can see your classes, exams, grading queue, attendance and recent activity — all read-only. Ask me anything, or start here:
                     </p>
                   </div>
-                  <div className="grid grid-cols-1 gap-2 pt-2 text-left">
+                  <div className="grid grid-cols-1 gap-2 text-left">
                     {QUICK_PROMPTS.map((qp, idx) => (
                       <button
                         key={idx}
-                        onClick={() => {
-                          setInput(qp.prompt);
-                        }}
-                        className="rounded-lg border border-slate-100 bg-slate-50/50 p-2.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-900 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-300 dark:hover:bg-slate-800 transition"
+                        onClick={() => setInput(qp.prompt)}
+                        className="group flex items-center gap-2 rounded-xl border border-slate-100 bg-slate-50/60 p-3 text-left text-xs font-medium text-slate-700 transition-colors hover:border-aubergine-200 hover:bg-aubergine-50 hover:text-aubergine-900 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-300 dark:hover:border-aubergine-900/50 dark:hover:bg-aubergine-900/20"
                       >
-                        {qp.label}
+                        <span className="flex-1">{qp.label}</span>
+                        <Send className="h-3.5 w-3.5 shrink-0 text-slate-300 transition-colors group-hover:text-aubergine-500" />
                       </button>
                     ))}
                   </div>
                 </div>
               ) : (
                 messages.map((m) => (
-                  <div key={m.id} className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}>
+                  <div key={m.id} className={`flex items-start gap-2.5 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                    {m.role === "assistant" && (
+                      <div className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-gradient-to-tr from-aubergine-600 to-fuchsia-500 text-white shadow-sm">
+                        <Sparkles className="h-3.5 w-3.5" />
+                      </div>
+                    )}
                     <div
-                      className={`relative max-w-[85%] rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm ${
+                      className={`relative max-w-[82%] px-3.5 py-2.5 text-xs sm:text-sm ${
                         m.role === "user"
-                          ? "bg-indigo-600 text-white"
-                          : "bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-200"
+                          ? "rounded-2xl rounded-br-md bg-aubergine-600 text-white"
+                          : "rounded-2xl rounded-tl-md bg-aubergine-50 text-slate-800 dark:bg-slate-800/70 dark:text-slate-100"
                       }`}
                     >
                       {m.role === "assistant" ? (
                         <MiniMarkdown
                           content={m.content}
-                          className="break-words leading-relaxed [&_p]:my-1 [&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-0.5 [&_h1]:text-base [&_h1]:font-bold [&_h1]:mt-2 [&_h2]:text-sm [&_h2]:font-bold [&_h2]:mt-2 [&_h3]:font-semibold [&_h3]:mt-1.5 [&_strong]:font-semibold [&_a]:text-indigo-600 [&_a]:underline dark:[&_a]:text-indigo-400 [&_code]:rounded [&_code]:bg-slate-200/70 [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[0.85em] dark:[&_code]:bg-slate-800 [&_pre]:my-2 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-slate-900 [&_pre]:p-3 [&_pre]:text-slate-100 [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_blockquote]:border-l-2 [&_blockquote]:border-slate-300 [&_blockquote]:pl-3 [&_blockquote]:italic [&_table]:my-2 [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_th]:border-slate-300 [&_th]:bg-slate-100 [&_th]:px-2 [&_th]:py-1 [&_th]:text-left [&_td]:border [&_td]:border-slate-200 [&_td]:px-2 [&_td]:py-1 dark:[&_th]:border-slate-700 dark:[&_th]:bg-slate-800 dark:[&_td]:border-slate-700 [&_hr]:my-2 [&_hr]:border-slate-200"
+                          className="break-words leading-relaxed [&_p]:my-1 [&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-0.5 [&_h1]:text-base [&_h1]:font-bold [&_h1]:mt-2 [&_h2]:text-sm [&_h2]:font-bold [&_h2]:mt-2 [&_h3]:font-semibold [&_h3]:mt-1.5 [&_strong]:font-semibold [&_a]:text-aubergine-700 [&_a]:underline dark:[&_a]:text-aubergine-300 [&_code]:rounded [&_code]:bg-aubergine-100/70 [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[0.85em] dark:[&_code]:bg-slate-900 [&_pre]:my-2 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-slate-900 [&_pre]:p-3 [&_pre]:text-slate-100 [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_blockquote]:border-l-2 [&_blockquote]:border-aubergine-300 [&_blockquote]:pl-3 [&_blockquote]:italic [&_table]:my-2 [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_th]:border-slate-300 [&_th]:bg-white/60 [&_th]:px-2 [&_th]:py-1 [&_th]:text-left [&_td]:border [&_td]:border-slate-200 [&_td]:px-2 [&_td]:py-1 dark:[&_th]:border-slate-700 dark:[&_th]:bg-slate-800 dark:[&_td]:border-slate-700 [&_hr]:my-2 [&_hr]:border-slate-200"
                         />
                       ) : (
                         <p className="whitespace-pre-wrap break-words leading-relaxed">{m.content}</p>
@@ -182,7 +201,7 @@ export default function AIAssistantWidget() {
                         <div className="mt-2 flex justify-end">
                           <button
                             onClick={() => handleCopy(m.content, m.id)}
-                            className="flex items-center gap-1 text-[10px] text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400"
+                            className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-aubergine-600 dark:text-slate-500 dark:hover:text-aubergine-300"
                           >
                             {copiedId === m.id ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                             {copiedId === m.id ? "Copied" : "Copy"}
@@ -195,29 +214,26 @@ export default function AIAssistantWidget() {
               )}
 
               {loading && (
-                <div className="flex justify-start">
-                  <div className="flex items-center gap-2 rounded-2xl bg-slate-100 dark:bg-slate-900 px-3 py-2 text-xs text-slate-500 dark:text-slate-400">
+                <div className="flex items-start gap-2.5 justify-start">
+                  <div className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-gradient-to-tr from-aubergine-600 to-fuchsia-500 text-white shadow-sm">
+                    <Sparkles className="h-3.5 w-3.5 animate-pulse" />
+                  </div>
+                  <div className="flex items-center gap-2 rounded-2xl rounded-tl-md bg-aubergine-50 px-3.5 py-2.5 text-xs text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
                     <span className="flex gap-1">
-                      <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:-0.3s]" />
-                      <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:-0.15s]" />
-                      <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce" />
+                      <span className="h-1.5 w-1.5 rounded-full bg-aubergine-400 animate-bounce [animation-delay:-0.3s]" />
+                      <span className="h-1.5 w-1.5 rounded-full bg-aubergine-400 animate-bounce [animation-delay:-0.15s]" />
+                      <span className="h-1.5 w-1.5 rounded-full bg-aubergine-400 animate-bounce" />
                     </span>
-                    Generating assistance...
+                    Thinking…
                   </div>
                 </div>
               )}
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input Bar */}
+            {/* Composer */}
             <div className="border-t border-slate-100 p-3 dark:border-slate-800">
-              <div className="mb-1.5 flex items-center gap-1.5 text-[10px] text-slate-400">
-                <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 dark:bg-slate-800">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  Aware of this page · read-only
-                </span>
-              </div>
-              <div className="flex items-end gap-2">
+              <div className="flex items-end gap-2 rounded-2xl border border-slate-200 bg-white p-1.5 pl-3 shadow-sm transition-colors focus-within:border-aubergine-400 focus-within:ring-1 focus-within:ring-aubergine-400 dark:border-slate-800 dark:bg-canvas">
                 <textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
@@ -227,20 +243,23 @@ export default function AIAssistantWidget() {
                       handleSend();
                     }
                   }}
-                  placeholder="Ask about your classes, exams, grading… (Shift+Enter for a new line)"
+                  placeholder="Ask about your classes, exams, grading…"
                   rows={1}
                   disabled={loading}
-                  className="flex-1 resize-none max-h-32 min-h-[40px] rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 disabled:opacity-50 dark:border-slate-800 dark:bg-canvas dark:text-slate-100"
+                  className="max-h-32 min-h-[28px] flex-1 resize-none border-0 bg-transparent py-1.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-0 disabled:opacity-50 dark:text-slate-100"
                 />
                 <Button
                   onClick={() => handleSend()}
                   disabled={loading || !input.trim()}
-                  className="h-10 w-10 shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white"
+                  className="h-8 w-8 shrink-0 rounded-xl bg-aubergine-600 text-white hover:bg-aubergine-700 disabled:opacity-40"
                   size="icon"
                 >
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
+              <p className="mt-1.5 px-1 text-center text-[10px] text-slate-400">
+                Read-only · sees your classes, exams &amp; activity · <kbd className="rounded bg-slate-100 px-1 dark:bg-slate-800">Shift+Enter</kbd> for a new line
+              </p>
             </div>
           </motion.div>
         )}
