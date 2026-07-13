@@ -37,6 +37,7 @@ interface TimetableEntry {
   room: string | null;
   status: string;
   scheduleType: string;
+  notes: string | null;
 }
 
 interface ScheduleSession {
@@ -49,6 +50,8 @@ interface ScheduleSession {
   room: string;
   classId: string | null;
   color: string;
+  status: string;
+  scheduleType: string;
 }
 
 /** Parse "HH:MM" into minutes for sorting/duration math. */
@@ -85,18 +88,32 @@ export default function TeacherTimetable() {
     apiGet<TimetableEntry[]>('/api/timetable')
       .then((rows) => {
         const sessions = (rows ?? [])
-          .filter((e) => e.status !== 'CANCELLED' && e.scheduleType === 'CLASS')
-          .map<ScheduleSession>((e) => ({
-            id: e.id,
-            day: DAY_FROM_API[e.dayOfWeek] || e.dayOfWeek,
-            time: `${e.startTime} - ${e.endTime}`,
-            startTime: e.startTime,
-            endTime: e.endTime,
-            subject: e.subjectName || e.className || 'Scheduled Period',
-            room: e.room || '—',
-            classId: e.classId,
-            color: e.subjectColor || 'bg-blue-500',
-          }))
+          .map<ScheduleSession>((e) => {
+            let subject = e.subjectName || e.className || 'Scheduled Period';
+            if (e.scheduleType === 'HOLIDAY') subject = e.notes || 'School Holiday';
+            else if (e.scheduleType === 'SPECIAL_EVENT') subject = e.notes || 'Special Event';
+            
+            let color = e.subjectColor || 'bg-blue-500';
+            if (e.status === 'CANCELLED') color = 'bg-slate-500';
+            else if (e.scheduleType === 'HOLIDAY') color = 'bg-rose-500';
+            else if (e.scheduleType === 'SPECIAL_EVENT') color = 'bg-amber-500';
+            else if (e.scheduleType === 'EXAM') color = 'bg-purple-500';
+            else if (e.scheduleType === 'MEETING') color = 'bg-cyan-500';
+
+            return {
+              id: e.id,
+              day: DAY_FROM_API[e.dayOfWeek] || e.dayOfWeek,
+              time: `${e.startTime} - ${e.endTime}`,
+              startTime: e.startTime,
+              endTime: e.endTime,
+              subject,
+              room: e.room || '—',
+              classId: e.classId,
+              color,
+              status: e.status || 'ACTIVE',
+              scheduleType: e.scheduleType || 'CLASS',
+            };
+          })
           .sort((a, b) => toMinutes(a.startTime) - toMinutes(b.startTime));
         setTeacherSchedule(sessions);
       })
@@ -105,11 +122,17 @@ export default function TeacherTimetable() {
 
   // Derived summary stats from the real schedule.
   const weeklyHours = useMemo(
-    () => teacherSchedule.reduce((acc, s) => acc + (toMinutes(s.endTime) - toMinutes(s.startTime)) / 60, 0),
+    () => teacherSchedule
+      .filter((s) => s.status !== 'CANCELLED' && ['CLASS', 'EXAM'].includes(s.scheduleType))
+      .reduce((acc, s) => acc + (toMinutes(s.endTime) - toMinutes(s.startTime)) / 60, 0),
     [teacherSchedule]
   );
   const activeModules = useMemo(
-    () => new Set(teacherSchedule.map((s) => s.classId || s.subject)).size,
+    () => new Set(
+      teacherSchedule
+        .filter((s) => s.status !== 'CANCELLED' && s.classId)
+        .map((s) => s.classId)
+    ).size,
     [teacherSchedule]
   );
   // Next upcoming session: today's remaining sessions, else the next day's first.
@@ -118,14 +141,16 @@ export default function TeacherTimetable() {
     const todayName = now.toLocaleDateString('en-US', { weekday: 'long' });
     const nowMin = now.getHours() * 60 + now.getMinutes();
     const todayLater = teacherSchedule
-      .filter((s) => s.day === todayName && toMinutes(s.startTime) >= nowMin)
+      .filter((s) => s.day === todayName && s.status !== 'CANCELLED' && toMinutes(s.startTime) >= nowMin)
       .sort((a, b) => toMinutes(a.startTime) - toMinutes(b.startTime));
     if (todayLater.length) return { session: todayLater[0], label: `Today, ${todayLater[0].startTime}` };
     const order = DAYS;
     const todayIdx = order.indexOf(todayName);
     for (let i = 1; i <= order.length; i++) {
       const dayName = order[(todayIdx + i) % order.length];
-      const next = teacherSchedule.filter((s) => s.day === dayName).sort((a, b) => toMinutes(a.startTime) - toMinutes(b.startTime));
+      const next = teacherSchedule
+        .filter((s) => s.day === dayName && s.status !== 'CANCELLED')
+        .sort((a, b) => toMinutes(a.startTime) - toMinutes(b.startTime));
       if (next.length) return { session: next[0], label: `${dayName}, ${next[0].startTime}` };
     }
     return null;
@@ -292,16 +317,16 @@ export default function TeacherTimetable() {
                                 .map((session) => (
                                     <div
                                       key={session.id}
-                                      className="group relative p-3 rounded-xl bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised shadow-sm hover:border-aubergine-300 hover:shadow-md transition-all cursor-pointer"
-                                      onClick={() => navigate(`/teacher/classes/${session.classId}`)}
-                                      title={`Open ${session.subject}`}
+                                      className={`group relative p-3 rounded-xl bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised shadow-sm hover:border-aubergine-300 hover:shadow-md transition-all ${session.classId ? 'cursor-pointer' : 'cursor-default'}`}
+                                      onClick={() => session.classId && navigate(`/teacher/classes/${session.classId}`)}
+                                      title={session.classId ? `Open ${session.subject}` : undefined}
                                     >
                                         <div className={`absolute left-0 top-3 bottom-3 w-1 ${session.color} rounded-r-full`} />
                                         <div className="space-y-1.5 ml-2">
                                             <div className="flex items-center gap-1 text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
                                                 <Clock className="h-2.5 w-2.5" /> {session.time}
                                             </div>
-                                            <h5 className="text-xs font-bold text-slate-900 dark:text-white uppercase leading-tight group-hover:text-aubergine-600 transition-colors">
+                                            <h5 className={`text-xs font-bold text-slate-900 dark:text-white uppercase leading-tight group-hover:text-aubergine-600 transition-colors ${session.status === 'CANCELLED' ? 'line-through opacity-70' : ''}`}>
                                                 {session.subject}
                                             </h5>
                                             <div className="flex items-center gap-1.5 pt-1">

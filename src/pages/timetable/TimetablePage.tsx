@@ -72,6 +72,11 @@ const colorClass = (entry: TimetableEntry) => {
   return entry.subjectColor || 'bg-blue-500';
 };
 
+const borderPrintClass = (entry: TimetableEntry) => {
+  const bg = colorClass(entry);
+  return bg.replace('bg-', 'print:border-l-') + ' print:border-l-4';
+};
+
 // ── date/time helpers ─────────────────────────────────────────────────────────
 
 /** Minutes since midnight from "HH:mm". */
@@ -94,6 +99,13 @@ const addDays = (d: Date, n: number) => {
   return out;
 };
 
+const parseLocalDate = (dateVal: string | Date | null | undefined) => {
+  if (!dateVal) return null;
+  const str = typeof dateVal === 'string' ? dateVal : dateVal.toISOString();
+  const [y, m, d] = str.slice(0, 10).split('-').map(Number);
+  return new Date(y, m - 1, d);
+};
+
 const sameLocalDate = (a: Date, b: Date) =>
   a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 
@@ -104,17 +116,21 @@ const fmtRange = (a: Date, b: Date) =>
 /** Should this entry appear on the given calendar date? */
 function occursOn(entry: TimetableEntry, date: Date): boolean {
   // One-off entries pinned to a date show only on that date.
-  if (entry.eventDate) return sameLocalDate(new Date(entry.eventDate), date);
+  if (entry.eventDate) {
+    const evDate = parseLocalDate(entry.eventDate);
+    return evDate ? sameLocalDate(evDate, date) : false;
+  }
   if (entry.recurrence === 'ONCE') return true; // legacy one-offs without a date
 
   // Recurring entries respect their effective window.
-  const from = entry.effectiveFrom ? new Date(entry.effectiveFrom) : null;
-  const until = entry.effectiveUntil ? new Date(entry.effectiveUntil) : null;
-  if (from && date < new Date(from.getFullYear(), from.getMonth(), from.getDate())) return false;
-  if (until && date > new Date(until.getFullYear(), until.getMonth(), until.getDate(), 23, 59, 59)) return false;
+  const from = parseLocalDate(entry.effectiveFrom);
+  const until = parseLocalDate(entry.effectiveUntil);
+  if (from && date < from) return false;
+  if (until && date > until) return false;
 
   if (entry.recurrence === 'BIWEEKLY' && from) {
-    const weeks = Math.floor((mondayOf(date).getTime() - mondayOf(from).getTime()) / (7 * 86_400_000));
+    const diffDays = Math.round((mondayOf(date).getTime() - mondayOf(from).getTime()) / 86_400_000);
+    const weeks = Math.floor(diffDays / 7);
     return weeks % 2 === 0;
   }
   return true;
@@ -449,7 +465,7 @@ function ScheduleCard({ entry, viewType, canManage, onDelete, mobile = false, co
 }) {
   const counterpart = viewType === 'teacher' ? (entry.className || 'No class') : (entry.teacherName || 'Unassigned');
   return (
-    <div className={`${colorClass(entry)} relative h-full overflow-hidden rounded-lg text-white shadow-sm ${mobile ? 'flex gap-3 p-3' : compact ? 'p-1.5' : 'p-2.5'} print:bg-white print:text-slate-900 print:shadow-none print:ring-1 print:ring-slate-300`}>
+    <div className={`${colorClass(entry)} ${borderPrintClass(entry)} relative h-full overflow-hidden rounded-lg text-white shadow-sm ${mobile ? 'flex gap-3 p-3' : compact ? 'p-1.5' : 'p-2.5'} print:bg-white print:text-slate-900 print:shadow-none print:ring-1 print:ring-slate-300`}>
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-1">
           <p className={`font-bold uppercase tracking-wider opacity-85 ${compact ? 'text-[9px]' : 'text-[10px]'}`}>{entry.startTime}–{entry.endTime}</p>
@@ -459,7 +475,7 @@ function ScheduleCard({ entry, viewType, canManage, onDelete, mobile = false, co
             </Badge>
           )}
         </div>
-        <h3 className={`truncate font-bold ${compact ? 'text-xs' : 'mt-0.5 text-sm'}`}>{entryTitle(entry)}</h3>
+        <h3 className={`truncate font-bold ${compact ? 'text-xs' : 'mt-0.5 text-sm'} ${entry.status === 'CANCELLED' ? 'line-through opacity-70' : ''}`}>{entryTitle(entry)}</h3>
         {!compact && (
           <div className="mt-1 space-y-0.5 text-[11px] opacity-90">
             <p className="flex items-center gap-1 truncate"><MapPin className="h-3 w-3 shrink-0" />{entry.room || 'No room'}</p>
@@ -476,7 +492,7 @@ function ScheduleCard({ entry, viewType, canManage, onDelete, mobile = false, co
       {canManage && (
         <div className={mobile ? 'print:hidden' : 'absolute right-1 top-1 print:hidden'}>
           <DropdownMenu>
-            <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className={`text-white hover:bg-white/20 ${compact ? 'h-5 w-5' : 'h-6 w-6'}`} />}>
+            <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className={`text-white hover:bg-white/20 ${compact ? 'h-5 w-5' : 'h-6 w-6'}`} />} nativeButton={true}>
               <MoreVertical className="h-3.5 w-3.5" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-36">

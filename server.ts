@@ -13605,47 +13605,40 @@ async function startServer() {
           select: { id: true, classId: true, subjectId: true }
         });
 
-        const sessionIds = teacherSessions.map(s => s.id);
-
         if (classId && classId !== "all") {
           // Verify teacher has access to requested class via sessions
-          const classSessionIds = teacherSessions
-            .filter(s => s.classId === classId)
-            .map(s => s.id);
-          if (classSessionIds.length === 0) {
+          const hasAccess = teacherSessions.some(s => s.classId === classId);
+          if (!hasAccess) {
             res.status(403).json({ error: "Forbidden: No sessions for this class" });
             return;
           }
-          where.timetableEntryId = { in: classSessionIds };
-        } else {
-          where.timetableEntryId = { in: sessionIds };
         }
 
-        if (subjectId && subjectId !== "all") {
-          const subjectSessionIds = teacherSessions
-            .filter(s => s.subjectId === subjectId)
-            .map(s => s.id);
-          where.timetableEntryId = { in: subjectSessionIds };
+        let filteredSessions = teacherSessions;
+        if (classId && classId !== "all") {
+          filteredSessions = filteredSessions.filter(s => s.classId === classId);
         }
+        if (subjectId && subjectId !== "all") {
+          filteredSessions = filteredSessions.filter(s => s.subjectId === subjectId);
+        }
+
+        where.timetableEntryId = { in: filteredSessions.map(s => s.id) };
       } else {
         // Admin can filter by class and/or subject
+        const sessionFilters: any = { status: "ACTIVE" };
         if (classId && classId !== "all") {
-          const classSessions = await prisma.timetableEntry.findMany({
-            where: { classId, status: "ACTIVE" },
-            select: { id: true }
-          });
-          where.timetableEntryId = { in: classSessions.map(s => s.id) };
+          sessionFilters.classId = classId;
         }
         if (subjectId && subjectId !== "all") {
-          const subjectSessions = await prisma.timetableEntry.findMany({
-            where: { subjectId, status: "ACTIVE" },
+          sessionFilters.subjectId = subjectId;
+        }
+
+        if ((classId && classId !== "all") || (subjectId && subjectId !== "all")) {
+          const classOrSubjectSessions = await prisma.timetableEntry.findMany({
+            where: sessionFilters,
             select: { id: true }
           });
-          const existingIds = where.timetableEntryId?.in || [];
-          const subjectSessionIds = subjectSessions.map(s => s.id);
-          where.timetableEntryId = Array.isArray(existingIds) && existingIds.length > 0
-            ? { in: subjectSessionIds.filter((id: string) => existingIds.includes(id)) }
-            : { in: subjectSessionIds };
+          where.timetableEntryId = { in: classOrSubjectSessions.map(s => s.id) };
         }
       }
 

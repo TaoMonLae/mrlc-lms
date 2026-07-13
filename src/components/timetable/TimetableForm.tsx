@@ -51,6 +51,8 @@ const timetableSchema = z.object({
   effectiveUntil: z.string().optional(),
   eventDate: z.string().optional(),
   notes: z.string().optional(),
+  status: z.enum(['ACTIVE', 'CANCELLED', 'SUBSTITUTED']).optional(),
+  cancellationReason: z.string().optional(),
 }).superRefine((data, ctx) => {
   if (['CLASS', 'EXAM'].includes(data.scheduleType)) {
     if (!data.classId) ctx.addIssue({ code: 'custom', path: ['classId'], message: 'Class is required' });
@@ -59,6 +61,23 @@ const timetableSchema = z.object({
   }
   if (data.substituteTeacherId && data.substituteTeacherId === data.teacherId) {
     ctx.addIssue({ code: 'custom', path: ['substituteTeacherId'], message: 'Substitute must be a different teacher' });
+  }
+  if (data.startTime && data.endTime) {
+    const toMin = (t: string) => {
+      const [h, m] = t.split(':').map(Number);
+      return (h || 0) * 60 + (m || 0);
+    };
+    if (toMin(data.startTime) >= toMin(data.endTime)) {
+      ctx.addIssue({ code: 'custom', path: ['endTime'], message: 'End time must be after start time' });
+    }
+  }
+  
+  const isRecurring = data.recurrence === 'WEEKLY' || data.recurrence === 'BIWEEKLY';
+  if (isRecurring) {
+    if (!data.effectiveFrom) ctx.addIssue({ code: 'custom', path: ['effectiveFrom'], message: 'Effective From date is required' });
+    if (!data.effectiveUntil) ctx.addIssue({ code: 'custom', path: ['effectiveUntil'], message: 'Effective Until date is required' });
+  } else {
+    if (!data.eventDate) ctx.addIssue({ code: 'custom', path: ['eventDate'], message: 'Event date is required for single occurrences' });
   }
 });
 
@@ -115,17 +134,40 @@ export function TimetableForm({ initialData, onSubmit, isLoading, defaultClassId
       effectiveUntil: (initialData as any)?.effectiveUntil?.slice(0, 10) || '',
       eventDate: (initialData as any)?.eventDate?.slice(0, 10) || '',
       notes: initialData?.notes || '',
+      status: initialData?.status || 'ACTIVE',
+      cancellationReason: initialData?.cancellationReason || '',
     },
   });
 
+  const scheduleType = form.watch('scheduleType') || 'CLASS';
+  const recurrence = form.watch('recurrence') || 'WEEKLY';
+  const status = form.watch('status') || 'ACTIVE';
+
+  const isClassOrExam = ['CLASS', 'EXAM'].includes(scheduleType);
+  const hasTeacher = ['CLASS', 'EXAM', 'MEETING'].includes(scheduleType);
+  const isRecurring = recurrence === 'WEEKLY' || recurrence === 'BIWEEKLY';
+
   const handleEnrichedSubmit = (values: TimetableFormValues) => {
+    const sType = values.scheduleType || 'CLASS';
+    const isC = ['CLASS', 'EXAM'].includes(sType);
+    const hasT = ['CLASS', 'EXAM', 'MEETING'].includes(sType);
+    const isRec = values.recurrence === 'WEEKLY' || values.recurrence === 'BIWEEKLY';
+
     onSubmit({
       ...values,
-      className: classOptions.find(c => c.id === values.classId)?.name,
-      subjectName: subjectOptions.find(s => s.id === values.subjectId)?.name,
-      teacherName: teacherOptions.find(t => t.id === values.teacherId)?.name,
-      substituteTeacherName: teacherOptions.find(t => t.id === values.substituteTeacherId)?.name,
-      subjectColor: values.subjectId ? colorForSubject(values.subjectId) : 'bg-amber-500',
+      classId: isC ? (values.classId || null) : null,
+      subjectId: isC ? (values.subjectId || null) : null,
+      teacherId: hasT ? (values.teacherId || null) : null,
+      substituteTeacherId: isC ? (values.substituteTeacherId || null) : null,
+      className: isC ? (classOptions.find(c => c.id === values.classId)?.name || null) : null,
+      subjectName: isC ? (subjectOptions.find(s => s.id === values.subjectId)?.name || null) : null,
+      teacherName: hasT ? (teacherOptions.find(t => t.id === values.teacherId)?.name || null) : null,
+      substituteTeacherName: isC ? (teacherOptions.find(t => t.id === values.substituteTeacherId)?.name || null) : null,
+      subjectColor: isC && values.subjectId ? colorForSubject(values.subjectId) : 'bg-amber-500',
+      effectiveFrom: isRec ? (values.effectiveFrom || null) : null,
+      effectiveUntil: isRec ? (values.effectiveUntil || null) : null,
+      eventDate: !isRec ? (values.eventDate || null) : null,
+      cancellationReason: values.status === 'CANCELLED' ? (values.cancellationReason || null) : null,
     } as any);
   };
 
@@ -135,113 +177,123 @@ export function TimetableForm({ initialData, onSubmit, isLoading, defaultClassId
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Assignment Settings */}
           <div className="space-y-6">
-            <Card className="border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
-              <div className="bg-slate-50 dark:bg-surface-raised/50 px-4 py-3 border-b border-slate-200 dark:border-surface-raised">
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <User className="h-4 w-4 text-aubergine-600" />
-                  Primary Assignment
-                </h3>
-              </div>
-              <CardContent className="pt-6 space-y-4">
-                <FormField
-                  control={form.control}
-                  name="classId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                        <BookOpen className="h-3 w-3" /> Class
-                      </FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || ""}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a class" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {CLASS_OPTIONS.map((option) => (
-                            <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
+            {(isClassOrExam || hasTeacher) && (
+              <Card className="border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
+                <div className="bg-slate-50 dark:bg-surface-raised/50 px-4 py-3 border-b border-slate-200 dark:border-surface-raised">
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <User className="h-4 w-4 text-aubergine-600" />
+                    Primary Assignment
+                  </h3>
+                </div>
+                <CardContent className="pt-6 space-y-4">
+                  {isClassOrExam && (
+                    <FormField
+                      control={form.control}
+                      name="classId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2">
+                            <BookOpen className="h-3 w-3" /> Class
+                          </FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value || ""}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a class" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {CLASS_OPTIONS.map((option) => (
+                                <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   )}
-                />
 
-                <FormField
-                  control={form.control}
-                  name="subjectId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                        <CalendarDays className="h-3 w-3" /> Subject
-                      </FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || ""}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a subject" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {SUBJECT_OPTIONS.map((option) => (
-                            <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
+                  {isClassOrExam && (
+                    <FormField
+                      control={form.control}
+                      name="subjectId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2">
+                            <CalendarDays className="h-3 w-3" /> Subject
+                          </FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value || ""}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a subject" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {SUBJECT_OPTIONS.map((option) => (
+                                <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   )}
-                />
 
-                <FormField
-                  control={form.control}
-                  name="teacherId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                        <User className="h-3 w-3" /> Teacher
-                      </FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || ""}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Assign a teacher" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {TEACHER_OPTIONS.map((option) => (
-                            <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
+                  {hasTeacher && (
+                    <FormField
+                      control={form.control}
+                      name="teacherId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2">
+                            <User className="h-3 w-3" /> Teacher
+                          </FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value || ""}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Assign a teacher" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {TEACHER_OPTIONS.map((option) => (
+                                <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   )}
-                />
 
-                <FormField
-                  control={form.control}
-                  name="substituteTeacherId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Substitute Teacher</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || ""}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Optional substitute" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {TEACHER_OPTIONS.map((option) => (
-                            <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
+                  {isClassOrExam && (
+                    <FormField
+                      control={form.control}
+                      name="substituteTeacherId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Substitute Teacher</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value || ""}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Optional substitute" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {TEACHER_OPTIONS.map((option) => (
+                                <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   )}
-                />
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
 
             <Card className="border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
               <div className="bg-slate-50 dark:bg-surface-raised/50 px-4 py-3 border-b border-slate-200 dark:border-surface-raised">
@@ -419,40 +471,46 @@ export function TimetableForm({ initialData, onSubmit, isLoading, defaultClassId
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="effectiveFrom"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Effective From</FormLabel>
-                        <FormControl><Input type="date" {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="effectiveUntil"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Effective Until</FormLabel>
-                        <FormControl><Input type="date" {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="eventDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Event Date</FormLabel>
-                        <FormControl><Input type="date" {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {isRecurring && (
+                    <FormField
+                      control={form.control}
+                      name="effectiveFrom"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Effective From</FormLabel>
+                          <FormControl><Input type="date" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                  {isRecurring && (
+                    <FormField
+                      control={form.control}
+                      name="effectiveUntil"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Effective Until</FormLabel>
+                          <FormControl><Input type="date" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                  {!isRecurring && (
+                    <FormField
+                      control={form.control}
+                      name="eventDate"
+                      render={({ field }) => (
+                        <FormItem className="col-span-1 md:col-span-2">
+                          <FormLabel>Event Date</FormLabel>
+                          <FormControl><Input type="date" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                 </div>
 
                 <div className="bg-aubergine-50 dark:bg-aubergine-900/20 p-4 rounded-lg flex gap-3 text-[11px] text-aubergine-700 dark:text-aubergine-400">
@@ -461,6 +519,57 @@ export function TimetableForm({ initialData, onSubmit, isLoading, defaultClassId
                 </div>
               </CardContent>
             </Card>
+
+            {initialData && (
+              <Card className="border-slate-200 dark:border-surface-raised shadow-sm overflow-hidden">
+                <div className="bg-slate-50 dark:bg-surface-raised/50 px-4 py-3 border-b border-slate-200 dark:border-surface-raised">
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <CalendarDays className="h-4 w-4 text-aubergine-600" />
+                    Status & Cancellation
+                  </h3>
+                </div>
+                <CardContent className="pt-6 space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || "ACTIVE"}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="ACTIVE">Active</SelectItem>
+                            <SelectItem value="SUBSTITUTED">Substituted</SelectItem>
+                            <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {status === 'CANCELLED' && (
+                    <FormField
+                      control={form.control}
+                      name="cancellationReason"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Cancellation Reason</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Reason for cancellation..." {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             <div className="flex flex-col gap-3">
               <Button 
