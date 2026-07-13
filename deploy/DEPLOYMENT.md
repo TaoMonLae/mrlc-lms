@@ -58,8 +58,8 @@ sudo apt install -y postgresql postgresql-contrib
 sudo systemctl start postgresql
 sudo systemctl enable postgresql
 
-# nginx, Certbot, and lesson-video conversion
-sudo apt install -y nginx certbot python3-certbot-nginx ffmpeg
+# nginx, Certbot, video conversion, and PDF compression
+sudo apt install -y nginx certbot python3-certbot-nginx ffmpeg ghostscript
 
 # PM2
 sudo npm install -g pm2

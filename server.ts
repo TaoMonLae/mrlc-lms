@@ -16,6 +16,8 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient, type Role } from "@prisma/client";
 import dotenv from "dotenv";
 import { spawn } from "child_process";
+import JSZip from "jszip";
+import sharp from "sharp";
 import { registerExamPhase2Routes } from "./examPhase2";
 import { composeQuestionSet, registerExamBankRoutes } from "./examBank";
 import { registerNewsRoutes } from "./news";
@@ -37,6 +39,8 @@ dotenv.config();
 // the database. Override the location with the EBOOK_DIR env var.
 const EBOOK_DIR = process.env.EBOOK_DIR || path.join(process.cwd(), "data", "ebooks");
 fs.mkdirSync(EBOOK_DIR, { recursive: true });
+const MAX_STORED_EBOOK_BYTES = 50 * 1024 * 1024;
+const MAX_EBOOK_UPLOAD_BYTES = 100 * 1024 * 1024;
 // Ebook cover thumbnails (auto-extracted client-side from the EPUB's embedded
 // cover or a rendered PDF first page, or picked manually) — served statically,
 // unlike the book files themselves which stream through an auth-checked route.
@@ -99,7 +103,9 @@ const ebookUpload = multer({
       cb(null, `${crypto.randomUUID()}${ext}`);
     },
   }),
-  limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB
+  // Files above 50 MB are compressed after upload. The larger transport limit
+  // leaves enough room for a useful reduction while bounding CPU and memory.
+  limits: { fileSize: MAX_EBOOK_UPLOAD_BYTES },
   fileFilter: (_req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
     if (ext === ".pdf" || ext === ".epub") cb(null, true);
@@ -13400,13 +13406,122 @@ async function startServer() {
   // ── E-Library (EPUB/PDF) API ────────────────────────────────────────────────
   const canManageEbooks = (role: string) => role === "ADMIN" || role === "TEACHER" || role === "LIBRARIAN";
 
+  const runEbookCompressor = (command: string, args: string[]): Promise<void> =>
+    new Promise((resolve, reject) => {
+      const child = spawn(command, args);
+      let stderr = "";
+      child.stderr.on("data", (data) => { stderr = (stderr + data.toString()).slice(-4000); });
+      child.on("error", reject);
+      child.on("close", (code) => {
+        if (code === 0) resolve();
+        else reject(new Error(`${command} exited ${code}: ${stderr.slice(-600)}`));
+      });
+    });
+
+  const compressPdf = async (inputPath: string, outputPath: string) => {
+    await runEbookCompressor("gs", [
+      "-sDEVICE=pdfwrite",
+      "-dCompatibilityLevel=1.6",
+      "-dPDFSETTINGS=/ebook",
+      "-dNOPAUSE",
+      "-dQUIET",
+      "-dBATCH",
+      "-dDetectDuplicateImages=true",
+      "-dCompressFonts=true",
+      `-sOutputFile=${outputPath}`,
+      inputPath,
+    ]);
+  };
+
+  const optimizeEpubImage = async (name: string, input: Buffer): Promise<Buffer> => {
+    const ext = path.extname(name).toLowerCase();
+    try {
+      const image = sharp(input, { animated: false, limitInputPixels: 80_000_000 })
+        .rotate()
+        .resize({ width: 1920, height: 1920, fit: "inside", withoutEnlargement: true });
+      let optimized: Buffer;
+      if (ext === ".jpg" || ext === ".jpeg") optimized = await image.jpeg({ quality: 74, mozjpeg: true }).toBuffer();
+      else if (ext === ".png") optimized = await image.png({ compressionLevel: 9, palette: true, quality: 82 }).toBuffer();
+      else if (ext === ".webp") optimized = await image.webp({ quality: 76 }).toBuffer();
+      else return input;
+      return optimized.length < input.length ? optimized : input;
+    } catch {
+      // A malformed or unsupported image should not make an otherwise valid
+      // EPUB unusable; retain that entry and continue compressing the archive.
+      return input;
+    }
+  };
+
+  const compressEpub = async (inputPath: string, outputPath: string) => {
+    const source = await fs.promises.readFile(inputPath);
+    const inputZip = await JSZip.loadAsync(source, { checkCRC32: true });
+    const entries = Object.values(inputZip.files);
+    const expandedBytes = entries.reduce((total, entry) =>
+      total + Number((entry as any)?._data?.uncompressedSize || 0), 0);
+    if (expandedBytes > 500 * 1024 * 1024) {
+      throw new Error("EPUB expands beyond the 500 MB safety limit");
+    }
+
+    const mimeEntry = inputZip.file("mimetype");
+    if (!mimeEntry || (await mimeEntry.async("string")).trim() !== "application/epub+zip") {
+      throw new Error("Invalid EPUB: missing application/epub+zip mimetype");
+    }
+
+    // EPUB requires `mimetype` to be the first entry and stored without ZIP
+    // compression. Add it before rebuilding the remaining archive.
+    const outputZip = new JSZip();
+    outputZip.file("mimetype", "application/epub+zip", { compression: "STORE" });
+    const imageExtensions = new Set([".jpg", ".jpeg", ".png", ".webp"]);
+    for (const entry of entries) {
+      if (entry.name === "mimetype") continue;
+      if (entry.dir) {
+        outputZip.folder(entry.name);
+        continue;
+      }
+      let content = await entry.async("nodebuffer");
+      if (imageExtensions.has(path.extname(entry.name).toLowerCase())) {
+        content = await optimizeEpubImage(entry.name, content);
+      }
+      outputZip.file(entry.name, content, { compression: "DEFLATE", compressionOptions: { level: 9 } });
+    }
+    const compressed = await outputZip.generateAsync({
+      type: "nodebuffer",
+      compression: "DEFLATE",
+      compressionOptions: { level: 9 },
+      mimeType: "application/epub+zip",
+    });
+    await fs.promises.writeFile(outputPath, compressed, { flag: "wx" });
+  };
+
+  const compressOversizedEbook = async (file: Express.Multer.File) => {
+    if (file.size <= MAX_STORED_EBOOK_BYTES) return { size: file.size, compressed: false };
+    const ext = path.extname(file.originalname).toLowerCase();
+    const temporaryPath = `${file.path}.compressing${ext}`;
+    try {
+      if (ext === ".pdf") await compressPdf(file.path, temporaryPath);
+      else await compressEpub(file.path, temporaryPath);
+
+      const compressedSize = (await fs.promises.stat(temporaryPath)).size;
+      if (compressedSize >= file.size) {
+        throw new Error("Compression did not reduce the file size");
+      }
+      if (compressedSize > MAX_STORED_EBOOK_BYTES) {
+        throw new Error(`Compressed file is still ${(compressedSize / (1024 * 1024)).toFixed(1)} MB`);
+      }
+      await fs.promises.rename(temporaryPath, file.path);
+      return { size: compressedSize, compressed: true };
+    } finally {
+      await fs.promises.unlink(temporaryPath).catch(() => {});
+    }
+  };
+
   // Wrap multer so upload errors (wrong type / too large) return 400, not 500.
   const uploadEbookFile = (req: express.Request, res: express.Response, next: express.NextFunction) => {
     ebookUpload.single("file")(req, res, (err: any) => {
       if (err) {
         const message =
           err instanceof multer.MulterError
-            ? (err.code === "LIMIT_FILE_SIZE" ? "File exceeds the 100 MB limit" : err.message)
+            ? (err.code === "LIMIT_FILE_SIZE" ? "File exceeds the 100 MB upload limit" : err.message)
             : err.message || "Upload failed";
         res.status(400).json({ error: message });
         return;
@@ -13563,6 +13678,17 @@ async function startServer() {
       }
       const format = path.extname(file.originalname).toLowerCase() === ".epub" ? "EPUB" : "PDF";
       try {
+        let storedFile: { size: number; compressed: boolean };
+        try {
+          storedFile = await compressOversizedEbook(file);
+        } catch (compressionError: any) {
+          await fs.promises.unlink(file.path).catch(() => {});
+          logger.warn(`Could not compress oversized ${format}: ${String(compressionError?.message || compressionError)}`);
+          res.status(400).json({
+            error: `This ${format} is larger than 50 MB and could not be compressed below the limit. ${compressionError?.message || ""}`.trim(),
+          });
+          return;
+        }
         const ebook = await prisma.ebook.create({
           data: {
             title,
@@ -13574,7 +13700,7 @@ async function startServer() {
             format,
             fileName: file.filename,
             originalName: file.originalname,
-            fileSize: file.size,
+            fileSize: storedFile.size,
             visibility: visibility || "ALL",
             downloadAllowed: downloadAllowed === "true" || downloadAllowed === true,
             uploadedById: jwtUser.userId,
@@ -13583,7 +13709,7 @@ async function startServer() {
         });
         await createAuditLog(
           jwtUser.userId, jwtUser.email, "CREATE", "EBOOK", ebook.id,
-          `E-book '${title}' (${format}) uploaded.`,
+          `E-book '${title}' (${format}) uploaded${storedFile.compressed ? " and compressed" : ""}.`,
           req.ip, req.headers["user-agent"] || null, "SUCCESS"
         );
         res.status(201).json(ebook);

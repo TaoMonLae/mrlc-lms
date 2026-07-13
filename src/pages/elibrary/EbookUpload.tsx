@@ -18,7 +18,8 @@ import { toast } from 'sonner';
 import { useUser } from '../../lib/permissions';
 import { EBOOK_CATEGORY_DATALIST_ID, EbookCategoryOptions } from '../../lib/ebookCategories';
 
-const MAX_MB = 50;
+const COMPRESSION_THRESHOLD_MB = 50;
+const MAX_UPLOAD_MB = 100;
 
 interface QueuedFile {
   key: string;
@@ -117,8 +118,8 @@ export default function EbookUpload() {
         toast.error(`${f.name}: only PDF and EPUB files are allowed.`);
         continue;
       }
-      if (f.size > MAX_MB * 1024 * 1024) {
-        toast.error(`${f.name}: file is too large (max ${MAX_MB} MB).`);
+      if (f.size > MAX_UPLOAD_MB * 1024 * 1024) {
+        toast.error(`${f.name}: file is too large (max ${MAX_UPLOAD_MB} MB before compression).`);
         continue;
       }
       accepted.push({
@@ -137,7 +138,11 @@ export default function EbookUpload() {
 
     // Auto-fill title/author and cover art in the background for each file.
     accepted.forEach(async (entry) => {
-      const result = isEpub(entry.file) ? await extractEpubMeta(entry.file) : await extractPdfMeta(entry.file);
+      // Avoid decoding a very large book twice in the browser. The server will
+      // compress it during upload; metadata remains editable in this form.
+      const result = entry.file.size > COMPRESSION_THRESHOLD_MB * 1024 * 1024
+        ? {}
+        : isEpub(entry.file) ? await extractEpubMeta(entry.file) : await extractPdfMeta(entry.file);
       const coverPreview = result.coverBlob ? URL.createObjectURL(result.coverBlob) : null;
       setQueue((prev) => prev.map((q) => (q.key === entry.key
         ? {
@@ -263,7 +268,7 @@ export default function EbookUpload() {
           />
           <UploadCloud className="h-8 w-8 text-slate-400 mx-auto mb-2" />
           <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Click or drag files here</p>
-          <p className="text-xs text-slate-500 mt-1">PDF or EPUB · up to {MAX_MB} MB each · multiple files supported</p>
+          <p className="text-xs text-slate-500 mt-1">PDF or EPUB · up to {MAX_UPLOAD_MB} MB each · files over {COMPRESSION_THRESHOLD_MB} MB are compressed automatically</p>
         </div>
 
         {/* Queued files */}
@@ -284,6 +289,9 @@ export default function EbookUpload() {
                   <div className="flex items-center gap-2">
                     <FileText className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                     <p className="text-xs text-slate-500 truncate">{q.file.name} · {(q.file.size / (1024 * 1024)).toFixed(1)} MB</p>
+                    {q.file.size > COMPRESSION_THRESHOLD_MB * 1024 * 1024 && (
+                      <span className="shrink-0 text-[10px] font-medium text-amber-600 dark:text-amber-400">Will compress</span>
+                    )}
                   </div>
                   <Input
                     value={q.title}
