@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { BookOpenCheck, CalendarDays, Paperclip, Plus, Upload } from 'lucide-react';
+import { BookOpenCheck, CalendarDays, Paperclip, Plus, Search, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,8 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePermissions } from '../../lib/permissions';
-import { apiGet, apiSend, authHeaders } from '../../lib/api';
-import { localToday } from '../../lib/dates';
+import { apiGet, apiSend } from '../../lib/api';
+import { formatDateOnly, localToday } from '../../lib/dates';
+import { HOMEWORK_FILE_ACCEPT, removeUnusedHomeworkMedia, uploadHomeworkFile } from '../../lib/homeworkMedia';
 
 interface HomeworkRow {
   id: string;
@@ -32,20 +33,31 @@ export default function HomeworkList() {
   const prefill = (location.state as { prefill?: { title: string; instructions: string; attachmentUrl: string } } | null)?.prefill;
   const [rows, setRows] = useState<HomeworkRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [classes, setClasses] = useState<{ id: string; name: string }[]>([]);
   const [subjects, setSubjects] = useState<{ id: string; name: string }[]>([]);
   const [showForm, setShowForm] = useState(!!prefill);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState<'all' | 'open' | 'closed' | 'past-due'>('all');
+  const stagedUpload = useRef('');
   const [form, setForm] = useState({
     title: prefill?.title || '', instructions: prefill?.instructions || '', classId: '', subjectId: '',
     dueDate: localToday(), maxMarks: '', attachmentUrl: prefill?.attachmentUrl || '',
   });
 
   const load = () => {
+    setLoading(true);
+    setLoadError('');
     apiGet<HomeworkRow[]>('/api/homework')
       .then((data) => setRows(Array.isArray(data) ? data : []))
-      .catch((e: any) => toast.error(e?.message || 'Failed to load homework'))
+      .catch((e: any) => {
+        const message = e?.message || 'Failed to load homework';
+        setRows([]);
+        setLoadError(message);
+        toast.error(message);
+      })
       .finally(() => setLoading(false));
   };
 
@@ -54,27 +66,29 @@ export default function HomeworkList() {
     if (isAdmin) {
       apiGet<any[]>('/api/classes')
         .then((d) => setClasses((d || []).map((c: any) => ({ id: c.id, name: c.name }))))
-        .catch(() => {});
+        .catch((e: any) => toast.error(e?.message || 'Failed to load classes'));
     } else {
       apiGet<any[]>('/api/teacher/classes')
         .then((d) => setClasses((d || []).map((c: any) => ({ id: c.classInfo?.id ?? c.id, name: c.classInfo?.name ?? c.name }))))
-        .catch(() => {});
+        .catch((e: any) => toast.error(e?.message || 'Failed to load classes'));
     }
     apiGet<any[]>('/api/subjects')
       .then((d) => setSubjects((d || []).map((s: any) => ({ id: s.id, name: s.name }))))
-      .catch(() => {});
+      .catch((e: any) => toast.error(e?.message || 'Failed to load subjects'));
+    return () => {
+      if (stagedUpload.current) void removeUnusedHomeworkMedia(stagedUpload.current).catch(() => {});
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const uploadAttachment = async (file: File) => {
     setUploading(true);
     try {
-      const fd = new FormData();
-      fd.append('file', file);
-      const res = await fetch('/api/homework-media', { method: 'POST', headers: authHeaders(), body: fd });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'Upload failed');
-      setForm((f) => ({ ...f, attachmentUrl: data.url }));
+      const url = await uploadHomeworkFile(file);
+      const previous = stagedUpload.current;
+      stagedUpload.current = url;
+      setForm((f) => ({ ...f, attachmentUrl: url }));
+      if (previous && previous !== url) await removeUnusedHomeworkMedia(previous).catch(() => {});
       toast.success('Attachment uploaded');
     } catch (e: any) {
       toast.error(e.message || 'Upload failed');
@@ -83,9 +97,26 @@ export default function HomeworkList() {
     }
   };
 
+  const removeAttachment = async () => {
+    const uploaded = stagedUpload.current;
+    stagedUpload.current = '';
+    setForm((current) => ({ ...current, attachmentUrl: '' }));
+    if (uploaded) await removeUnusedHomeworkMedia(uploaded).catch(() => {});
+  };
+
+  const closeForm = () => {
+    void removeAttachment();
+    setShowForm(false);
+    setForm({ title: '', instructions: '', classId: '', subjectId: '', dueDate: localToday(), maxMarks: '', attachmentUrl: '' });
+  };
+
   const create = async () => {
     if (!form.title.trim() || !form.classId || !form.dueDate) {
       toast.error('Title, class and due date are required');
+      return;
+    }
+    if (form.maxMarks !== '' && (!Number.isFinite(Number(form.maxMarks)) || Number(form.maxMarks) <= 0)) {
+      toast.error('Max marks must be a number greater than 0');
       return;
     }
     setSaving(true);
@@ -95,6 +126,7 @@ export default function HomeworkList() {
         subjectId: form.subjectId || null, dueDate: form.dueDate,
         maxMarks: form.maxMarks || null, attachmentUrl: form.attachmentUrl || null,
       });
+      stagedUpload.current = '';
       toast.success('Homework assigned');
       setShowForm(false);
       setForm({ title: '', instructions: '', classId: '', subjectId: '', dueDate: localToday(), maxMarks: '', attachmentUrl: '' });
@@ -113,6 +145,16 @@ export default function HomeworkList() {
     return { total, submitted, marked };
   };
 
+  const filteredRows = useMemo(() => rows.filter((row) => {
+    const searchText = `${row.title} ${row.class.name} ${row.subject?.name ?? ''}`.toLowerCase();
+    if (query.trim() && !searchText.includes(query.trim().toLowerCase())) return false;
+    const pastDue = row.status === 'OPEN' && row.dueDate.slice(0, 10) < localToday();
+    if (filter === 'open' && row.status !== 'OPEN') return false;
+    if (filter === 'closed' && row.status !== 'CLOSED') return false;
+    if (filter === 'past-due' && !pastDue) return false;
+    return true;
+  }), [filter, query, rows]);
+
   return (
     <div className="mx-auto max-w-5xl space-y-6 pb-12">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -122,7 +164,7 @@ export default function HomeworkList() {
           </h1>
           <p className="mt-1 text-sm text-slate-500">Assign work, collect submissions, and mark them — with optional scores.</p>
         </div>
-        <Button onClick={() => setShowForm((v) => !v)}>
+        <Button onClick={() => showForm ? closeForm() : setShowForm(true)}>
           <Plus className="mr-2 h-4 w-4" /> {showForm ? 'Cancel' : 'Assign Homework'}
         </Button>
       </div>
@@ -132,7 +174,7 @@ export default function HomeworkList() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2 md:col-span-2">
               <Label>Title *</Label>
-              <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Fractions worksheet p. 12-13" />
+              <Input maxLength={200} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Fractions worksheet p. 12-13" />
             </div>
             <div className="space-y-2">
               <Label>Class *</Label>
@@ -145,9 +187,10 @@ export default function HomeworkList() {
             </div>
             <div className="space-y-2">
               <Label>Subject</Label>
-              <Select value={form.subjectId} onValueChange={(v) => setForm({ ...form, subjectId: v })}>
+              <Select value={form.subjectId || 'none'} onValueChange={(v) => setForm({ ...form, subjectId: v === 'none' ? '' : v })}>
                 <SelectTrigger className="w-full"><SelectValue placeholder="Optional" /></SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="none">No subject</SelectItem>
                   {subjects.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -162,7 +205,7 @@ export default function HomeworkList() {
             </div>
             <div className="space-y-2 md:col-span-2">
               <Label>Instructions</Label>
-              <Textarea rows={3} value={form.instructions} onChange={(e) => setForm({ ...form, instructions: e.target.value })} placeholder="What should students do?" />
+              <Textarea rows={3} maxLength={20000} value={form.instructions} onChange={(e) => setForm({ ...form, instructions: e.target.value })} placeholder="What should students do?" />
             </div>
             <div className="space-y-2 md:col-span-2">
               <Label>
@@ -174,12 +217,12 @@ export default function HomeworkList() {
               </Label>
               <div className="flex items-center gap-3">
                 {form.attachmentUrl.startsWith('/news/') || form.attachmentUrl.startsWith('/elibrary/') ? (
-                  <Button type="button" variant="outline" size="sm" onClick={() => setForm({ ...form, attachmentUrl: '' })}>
+                  <Button type="button" variant="outline" size="sm" onClick={removeAttachment}>
                     {form.attachmentUrl.startsWith('/elibrary/') ? 'Remove book link' : 'Remove article link'}
                   </Button>
                 ) : (
-                  <input type="file" accept="image/*,.pdf,.doc,.docx" className="text-sm" disabled={uploading}
-                    onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAttachment(f); }} />
+                  <input type="file" accept={HOMEWORK_FILE_ACCEPT} className="max-w-full text-sm" disabled={uploading}
+                    onChange={(e) => { const f = e.target.files?.[0]; e.currentTarget.value = ''; if (f) uploadAttachment(f); }} />
                 )}
                 {form.attachmentUrl && (
                   <a href={form.attachmentUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-aubergine-600 underline">
@@ -190,6 +233,11 @@ export default function HomeworkList() {
                       ? 'open book'
                       : 'attached'}
                   </a>
+                )}
+                {form.attachmentUrl.startsWith('/uploads/homework-media/') && (
+                  <Button type="button" variant="ghost" size="sm" onClick={removeAttachment} disabled={uploading} aria-label="Remove attachment">
+                    <X className="h-4 w-4" />
+                  </Button>
                 )}
               </div>
             </div>
@@ -202,15 +250,41 @@ export default function HomeworkList() {
         </div>
       )}
 
+      {!loading && rows.length > 0 && (
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Input className="pl-9" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search homework, class or subject" />
+          </div>
+          <Select value={filter} onValueChange={(value) => setFilter(value as typeof filter)}>
+            <SelectTrigger className="w-full sm:w-44"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All homework</SelectItem>
+              <SelectItem value="open">Open</SelectItem>
+              <SelectItem value="past-due">Past due</SelectItem>
+              <SelectItem value="closed">Closed</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       {loading ? (
         <p className="py-14 text-center text-sm text-slate-500">Loading homework…</p>
+      ) : loadError ? (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-5 py-10 text-center dark:border-rose-900/50 dark:bg-rose-950/20">
+          <p className="text-sm text-rose-700 dark:text-rose-300">{loadError}</p>
+          <Button variant="outline" size="sm" className="mt-3" onClick={load}>Try again</Button>
+        </div>
       ) : rows.length === 0 ? (
         <p className="rounded-xl border border-dashed border-slate-200 py-16 text-center text-sm text-slate-400 dark:border-surface-raised">
           No homework assigned yet. Use “Assign Homework” to create the first one.
         </p>
       ) : (
         <div className="space-y-3">
-          {rows.map((r) => {
+          {filteredRows.length === 0 && (
+            <p className="rounded-xl border border-dashed border-slate-200 py-12 text-center text-sm text-slate-400 dark:border-surface-raised">No homework matches these filters.</p>
+          )}
+          {filteredRows.map((r) => {
             const { total, submitted, marked } = summarize(r);
             // Compare calendar dates (not instants) so a homework due "today"
             // doesn't flip to overdue at UTC midnight, hours before the end
@@ -228,7 +302,7 @@ export default function HomeworkList() {
                   <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
                     <span>{r.class.name}</span>
                     {r.subject && <span>· {r.subject.name}</span>}
-                    <span className="flex items-center gap-1"><CalendarDays className="h-3 w-3" /> due {new Date(r.dueDate).toLocaleDateString()}</span>
+                    <span className="flex items-center gap-1"><CalendarDays className="h-3 w-3" /> due {formatDateOnly(r.dueDate)}</span>
                     {r.maxMarks != null && <span>· {r.maxMarks} marks</span>}
                   </p>
                 </div>

@@ -181,18 +181,30 @@ const examMediaUpload = multer({
 const homeworkMediaUpload = multer({
   storage: multer.diskStorage({
     destination: (_req, _file, cb) => cb(null, HOMEWORK_MEDIA_DIR),
-    filename: (_req, file, cb) => {
+    filename: (req, file, cb) => {
       const ext = path.extname(file.originalname).toLowerCase();
-      cb(null, `${crypto.randomUUID()}${ext}`);
+      const userId = String((req as any).user?.userId ?? "");
+      const ownerPrefix = /^[0-9a-f-]{36}$/i.test(userId) ? `${userId}-` : "";
+      cb(null, `${ownerPrefix}${crypto.randomUUID()}${ext}`);
     },
   }),
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     // Photos of paper work plus PDFs/docs.
-    const ok = file.mimetype.startsWith("image/") ||
-      ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"].includes(file.mimetype);
+    const ext = path.extname(file.originalname).toLowerCase();
+    const allowedTypes: Record<string, string> = {
+      ".png": "image/png",
+      ".jpg": "image/jpeg",
+      ".jpeg": "image/jpeg",
+      ".webp": "image/webp",
+      ".gif": "image/gif",
+      ".pdf": "application/pdf",
+      ".doc": "application/msword",
+      ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    };
+    const ok = allowedTypes[ext] === file.mimetype;
     if (ok) cb(null, true);
-    else cb(new Error("Only images, PDF or Word files are allowed"));
+    else cb(new Error("Only PNG, JPG, WEBP, GIF, PDF or Word files are allowed"));
   },
 });
 
@@ -18284,12 +18296,67 @@ async function startServer() {
   // ── Homework ─────────────────────────────────────────────────────────────────
   const hw = () => (prisma as any).homework;
   const hwSub = () => (prisma as any).homeworkSubmission;
+  const HOMEWORK_TITLE_MAX = 200;
+  const HOMEWORK_INSTRUCTIONS_MAX = 20_000;
+  const HOMEWORK_SUBMISSION_MAX = 20_000;
+  const HOMEWORK_FEEDBACK_MAX = 5_000;
+  const HOMEWORK_MEDIA_URL = /^\/uploads\/homework-media\/((?:([0-9a-f-]{36})-)?[0-9a-f-]{36}\.(?:png|jpe?g|webp|gif|pdf|docx?))$/i;
+  const HOMEWORK_RESOURCE_URL = /^\/(?:news\/[0-9a-f-]{36}|elibrary\/[0-9a-f-]{36}\/read)$/i;
+
+  const parseHomeworkMediaUrl = (value: unknown): string | null => {
+    if (typeof value !== "string") return null;
+    const trimmed = value.trim();
+    return HOMEWORK_MEDIA_URL.test(trimmed) ? trimmed : null;
+  };
+
+  const parseHomeworkAttachmentUrl = (value: unknown, allowResourceLink: boolean): string | null => {
+    if (value === null || value === undefined || value === "") return null;
+    const uploaded = parseHomeworkMediaUrl(value);
+    if (uploaded) return uploaded;
+    if (allowResourceLink && typeof value === "string" && HOMEWORK_RESOURCE_URL.test(value.trim())) return value.trim();
+    return null;
+  };
+
+  const deleteHomeworkMedia = async (url: unknown) => {
+    const parsed = parseHomeworkMediaUrl(url);
+    if (!parsed) return;
+    const match = parsed.match(HOMEWORK_MEDIA_URL);
+    if (!match) return;
+    await fs.promises.unlink(path.join(HOMEWORK_MEDIA_DIR, match[1])).catch(() => {});
+  };
+
+  const deleteHomeworkMediaIfUnreferenced = async (url: unknown) => {
+    const parsed = parseHomeworkMediaUrl(url);
+    if (!parsed) return;
+    const [assignmentCount, submissionCount] = await Promise.all([
+      hw().count({ where: { attachmentUrl: parsed } }),
+      hwSub().count({ where: { attachmentUrl: parsed } }),
+    ]);
+    if (!assignmentCount && !submissionCount) await deleteHomeworkMedia(parsed);
+  };
+
+  const parseHomeworkDueDate = (value: unknown): Date | null => {
+    if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+    const date = new Date(`${value}T00:00:00.000Z`);
+    return Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value ? null : date;
+  };
+
+  const parseHomeworkMaxMarks = (value: unknown): number | null | undefined => {
+    if (value === null || value === undefined || value === "") return null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+  };
 
   /** The requesting teacher's record, or null. */
   const ownTeacher = (userId: string) => prisma.teacher.findUnique({ where: { userId } });
 
   // Upload an attachment (teacher worksheet or student photo of paper work).
   app.post("/api/homework-media", authMiddleware, (req, res, next) => {
+    const role = ((req as any).user as JwtPayload).role;
+    if (!(["ADMIN", "TEACHER", "STUDENT"] as string[]).includes(role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
     homeworkMediaUpload.single("file")(req, res, (err: any) => {
       if (!err) return next();
       const message = err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE"
@@ -18302,18 +18369,63 @@ async function startServer() {
     res.status(201).json({ url: `/uploads/homework-media/${file.filename}` });
   });
 
+  // Remove a cancelled/replaced upload, but never a file currently referenced
+  // by an assignment or submission.
+  app.delete("/api/homework-media", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const role = jwtUser.role;
+    if (!(["ADMIN", "TEACHER", "STUDENT"] as string[]).includes(role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const url = parseHomeworkMediaUrl(req.body?.url);
+    if (!url) { res.status(400).json({ error: "Invalid homework media URL" }); return; }
+    const ownerId = url.match(HOMEWORK_MEDIA_URL)?.[2] ?? null;
+    if (role !== "ADMIN" && ownerId !== jwtUser.userId) {
+      res.status(403).json({ error: "You can only remove files you uploaded" });
+      return;
+    }
+    try {
+      const [assignmentCount, submissionCount] = await Promise.all([
+        hw().count({ where: { attachmentUrl: url } }),
+        hwSub().count({ where: { attachmentUrl: url } }),
+      ]);
+      if (assignmentCount || submissionCount) {
+        res.status(409).json({ error: "This file is attached to homework and cannot be removed" });
+        return;
+      }
+      await deleteHomeworkMedia(url);
+      res.json({ success: true });
+    } catch (err) {
+      logger.error("Error deleting homework media:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
   // Create homework (teacher for their own classes; admin for any).
   app.post("/api/homework", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") { res.status(403).json({ error: "Forbidden" }); return; }
     const { title, instructions, classId, subjectId, dueDate, maxMarks, attachmentUrl } = req.body || {};
-    if (!title || !classId || !dueDate) { res.status(400).json({ error: "title, classId and dueDate are required" }); return; }
-    const due = new Date(dueDate);
-    if (isNaN(due.getTime())) { res.status(400).json({ error: "Invalid dueDate" }); return; }
+    const cleanTitle = String(title ?? "").trim();
+    const due = parseHomeworkDueDate(dueDate);
+    const parsedMaxMarks = parseHomeworkMaxMarks(maxMarks);
+    const parsedAttachment = parseHomeworkAttachmentUrl(attachmentUrl, true);
+    if (!cleanTitle || typeof classId !== "string" || !due) { res.status(400).json({ error: "Title, class and a valid due date are required" }); return; }
+    if (cleanTitle.length > HOMEWORK_TITLE_MAX) { res.status(400).json({ error: `Title must be ${HOMEWORK_TITLE_MAX} characters or fewer` }); return; }
+    if (String(instructions ?? "").length > HOMEWORK_INSTRUCTIONS_MAX) { res.status(400).json({ error: "Instructions are too long" }); return; }
+    if (parsedMaxMarks === undefined) { res.status(400).json({ error: "Max marks must be a number greater than 0" }); return; }
+    if (attachmentUrl && !parsedAttachment) { res.status(400).json({ error: "Invalid homework attachment" }); return; }
     try {
+      const classRecord = await prisma.class.findUnique({ where: { id: classId }, select: { id: true } });
+      if (!classRecord) { res.status(404).json({ error: "Class not found" }); return; }
       if (!(await canManageExamClass(jwtUser, classId))) {
         res.status(403).json({ error: "Forbidden: not your class" });
         return;
+      }
+      if (subjectId) {
+        const subject = await prisma.subject.findUnique({ where: { id: String(subjectId) }, select: { id: true } });
+        if (!subject) { res.status(400).json({ error: "Subject not found" }); return; }
       }
       // Homework belongs to a teacher; admins must have a linked teacher record
       // or we attribute it to the class's first teacher.
@@ -18326,14 +18438,14 @@ async function startServer() {
 
       const created = await hw().create({
         data: {
-          title: String(title).trim(),
-          instructions: instructions ? String(instructions) : null,
-          attachmentUrl: attachmentUrl || null,
+          title: cleanTitle,
+          instructions: String(instructions ?? "").trim() || null,
+          attachmentUrl: parsedAttachment,
           classId,
           subjectId: subjectId || null,
           teacherId: teacher.id,
           dueDate: due,
-          maxMarks: maxMarks != null && maxMarks !== "" && !isNaN(Number(maxMarks)) ? Number(maxMarks) : null,
+          maxMarks: parsedMaxMarks,
         },
       });
       await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "HOMEWORK", created.id,
@@ -18356,7 +18468,8 @@ async function startServer() {
       if (classId) where.classId = classId;
       if (jwtUser.role === "TEACHER") {
         const classIds = await getTeacherClassIds(jwtUser.userId);
-        where.classId = classId && classIds.includes(classId) ? classId : { in: classIds };
+        if (classId && !classIds.includes(classId)) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+        where.classId = classId || { in: classIds };
       }
       const rows = await hw().findMany({
         where,
@@ -18384,7 +18497,7 @@ async function startServer() {
       const row = await hw().findUnique({
         where: { id: req.params.id },
         include: {
-          class: { include: { students: { include: { user: { select: { firstName: true, lastName: true } } } } } },
+          class: { include: { students: { include: { user: { select: { firstName: true, lastName: true } } }, orderBy: { studentCode: "asc" } } } },
           subject: { select: { id: true, name: true } },
           submissions: true,
         },
@@ -18411,14 +18524,78 @@ async function startServer() {
       if (!existing) { res.status(404).json({ error: "Homework not found" }); return; }
       if (!(await canManageExamClass(jwtUser, existing.classId))) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
       const data: any = {};
-      if (b.title !== undefined) data.title = String(b.title).trim();
-      if (b.instructions !== undefined) data.instructions = b.instructions || null;
-      if (b.attachmentUrl !== undefined) data.attachmentUrl = b.attachmentUrl || null;
-      if (b.subjectId !== undefined) data.subjectId = b.subjectId || null;
-      if (b.dueDate) { const d = new Date(b.dueDate); if (!isNaN(d.getTime())) data.dueDate = d; }
-      if (b.maxMarks !== undefined) data.maxMarks = b.maxMarks === null || b.maxMarks === "" ? null : Number(b.maxMarks) || null;
-      if (b.status !== undefined) data.status = b.status === "CLOSED" ? "CLOSED" : "OPEN";
-      const updated = await hw().update({ where: { id: req.params.id }, data });
+      if (b.title !== undefined) {
+        const title = String(b.title).trim();
+        if (!title) { res.status(400).json({ error: "Title is required" }); return; }
+        if (title.length > HOMEWORK_TITLE_MAX) { res.status(400).json({ error: `Title must be ${HOMEWORK_TITLE_MAX} characters or fewer` }); return; }
+        data.title = title;
+      }
+      if (b.instructions !== undefined) {
+        const instructions = String(b.instructions ?? "").trim();
+        if (instructions.length > HOMEWORK_INSTRUCTIONS_MAX) { res.status(400).json({ error: "Instructions are too long" }); return; }
+        data.instructions = instructions || null;
+      }
+      if (b.attachmentUrl !== undefined) {
+        const attachment = parseHomeworkAttachmentUrl(b.attachmentUrl, true);
+        if (b.attachmentUrl && !attachment) { res.status(400).json({ error: "Invalid homework attachment" }); return; }
+        data.attachmentUrl = attachment;
+      }
+      if (b.subjectId !== undefined) {
+        if (b.subjectId) {
+          const subject = await prisma.subject.findUnique({ where: { id: String(b.subjectId) }, select: { id: true } });
+          if (!subject) { res.status(400).json({ error: "Subject not found" }); return; }
+        }
+        data.subjectId = b.subjectId || null;
+      }
+      if (b.dueDate !== undefined) {
+        const due = parseHomeworkDueDate(b.dueDate);
+        if (!due) { res.status(400).json({ error: "Invalid due date" }); return; }
+        data.dueDate = due;
+      }
+      if (b.maxMarks !== undefined) {
+        const maxMarks = parseHomeworkMaxMarks(b.maxMarks);
+        if (maxMarks === undefined) { res.status(400).json({ error: "Max marks must be a number greater than 0" }); return; }
+        if (maxMarks === null && existing.gradeItemId) {
+          res.status(409).json({ error: "Max marks cannot be removed after this homework has been synced to the gradebook" });
+          return;
+        }
+        if (maxMarks !== null) {
+          const highestScore = await hwSub().findFirst({
+            where: { homeworkId: existing.id, status: "MARKED", score: { not: null } },
+            orderBy: { score: "desc" },
+            select: { score: true },
+          });
+          if (highestScore?.score != null && highestScore.score > maxMarks) {
+            res.status(409).json({ error: `Max marks cannot be lower than the current highest score (${highestScore.score})` });
+            return;
+          }
+        }
+        data.maxMarks = maxMarks;
+      }
+      if (b.status !== undefined) {
+        if (b.status !== "OPEN" && b.status !== "CLOSED") { res.status(400).json({ error: "Invalid homework status" }); return; }
+        data.status = b.status;
+      }
+      const updated = await prisma.$transaction(async (tx) => {
+        const row = await (tx as any).homework.update({ where: { id: req.params.id }, data });
+        if (existing.gradeItemId) {
+          await tx.gradeItem.updateMany({
+            where: { id: existing.gradeItemId },
+            data: {
+              title: `Homework: ${row.title}`,
+              maxMarks: row.maxMarks,
+              date: row.dueDate,
+              subjectId: row.subjectId,
+            },
+          });
+        }
+        return row;
+      });
+      if (b.attachmentUrl !== undefined && existing.attachmentUrl !== updated.attachmentUrl) {
+        await deleteHomeworkMediaIfUnreferenced(existing.attachmentUrl);
+      }
+      await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "HOMEWORK", existing.id,
+        `Homework '${updated.title}' updated.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
       res.json(updated);
     } catch (err) {
       logger.error("Error updating homework:", err);
@@ -18430,10 +18607,17 @@ async function startServer() {
     const jwtUser = (req as any).user as JwtPayload;
     if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") { res.status(403).json({ error: "Forbidden" }); return; }
     try {
-      const existing = await hw().findUnique({ where: { id: req.params.id } });
+      const existing = await hw().findUnique({ where: { id: req.params.id }, include: { submissions: { select: { attachmentUrl: true } } } });
       if (!existing) { res.status(404).json({ error: "Homework not found" }); return; }
       if (!(await canManageExamClass(jwtUser, existing.classId))) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
-      await hw().delete({ where: { id: req.params.id } });
+      await prisma.$transaction(async (tx) => {
+        if (existing.gradeItemId) await tx.gradeItem.deleteMany({ where: { id: existing.gradeItemId } });
+        await (tx as any).homework.delete({ where: { id: req.params.id } });
+      });
+      await Promise.all([
+        deleteHomeworkMediaIfUnreferenced(existing.attachmentUrl),
+        ...existing.submissions.map((submission: any) => deleteHomeworkMediaIfUnreferenced(submission.attachmentUrl)),
+      ]);
       await createAuditLog(jwtUser.userId, jwtUser.email, "DELETE", "HOMEWORK", req.params.id,
         `Homework '${existing.title}' deleted.`, req.ip, req.headers["user-agent"] || null, "WARNING");
       res.json({ success: true });
@@ -18478,10 +18662,14 @@ async function startServer() {
     const jwtUser = (req as any).user as JwtPayload;
     if (jwtUser.role !== "STUDENT") { res.status(403).json({ error: "Only students can submit homework" }); return; }
     const { text, attachmentUrl } = req.body || {};
-    if (!String(text ?? "").trim() && !attachmentUrl) {
+    const cleanText = String(text ?? "").trim();
+    const parsedAttachment = parseHomeworkAttachmentUrl(attachmentUrl, false);
+    if (!cleanText && !parsedAttachment) {
       res.status(400).json({ error: "Add some text or attach a photo/file" });
       return;
     }
+    if (cleanText.length > HOMEWORK_SUBMISSION_MAX) { res.status(400).json({ error: "Submission text is too long" }); return; }
+    if (attachmentUrl && !parsedAttachment) { res.status(400).json({ error: "Invalid homework attachment" }); return; }
     try {
       const student = await prisma.student.findUnique({ where: { userId: jwtUser.userId } });
       if (!student) { res.status(403).json({ error: "No student profile" }); return; }
@@ -18493,14 +18681,26 @@ async function startServer() {
       if (existing?.status === "MARKED") { res.status(409).json({ error: "Already marked — ask your teacher to reopen it if you need to resubmit" }); return; }
 
       const data = {
-        text: String(text ?? "").trim() || null,
-        attachmentUrl: attachmentUrl || null,
+        text: cleanText || null,
+        attachmentUrl: parsedAttachment,
         submittedAt: new Date(),
         status: "SUBMITTED",
+        score: null,
+        markedAt: null,
+        markedById: null,
       };
-      const sub = existing
-        ? await hwSub().update({ where: { id: existing.id }, data })
-        : await hwSub().create({ data: { ...data, homeworkId: homework.id, studentId: student.id } });
+      const sub = await prisma.$transaction(async (tx) => {
+        const saved = existing
+          ? await (tx as any).homeworkSubmission.update({ where: { id: existing.id }, data })
+          : await (tx as any).homeworkSubmission.create({ data: { ...data, homeworkId: homework.id, studentId: student.id } });
+        if (homework.gradeItemId) {
+          await tx.grade.deleteMany({ where: { gradeItemId: homework.gradeItemId, studentId: student.id } });
+        }
+        return saved;
+      });
+      if (existing?.attachmentUrl && existing.attachmentUrl !== parsedAttachment) {
+        await deleteHomeworkMediaIfUnreferenced(existing.attachmentUrl);
+      }
 
       // Check badges for homework submission
       checkAndAwardBadges(student.id, 'HOMEWORK').catch(err =>
@@ -18521,31 +18721,53 @@ async function startServer() {
     if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") { res.status(403).json({ error: "Forbidden" }); return; }
     const { studentId, score, feedback, status } = req.body || {};
     if (!studentId) { res.status(400).json({ error: "studentId is required" }); return; }
-    const newStatus = status === "REDO" ? "REDO" : "MARKED";
+    if (status !== "MARKED" && status !== "REDO") { res.status(400).json({ error: "Invalid marking status" }); return; }
+    const newStatus = status;
     try {
       const homework = await hw().findUnique({ where: { id: req.params.id } });
       if (!homework) { res.status(404).json({ error: "Homework not found" }); return; }
       if (!(await canManageExamClass(jwtUser, homework.classId))) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+      const student = await prisma.student.findUnique({ where: { id: String(studentId) }, select: { id: true, classId: true } });
+      if (!student || student.classId !== homework.classId) { res.status(400).json({ error: "Student is not in this homework class" }); return; }
 
       const parsedScore = score === null || score === undefined || score === "" ? null : Number(score);
-      if (parsedScore != null && (isNaN(parsedScore) || parsedScore < 0)) { res.status(400).json({ error: "Invalid score" }); return; }
+      if (parsedScore != null && (!Number.isFinite(parsedScore) || parsedScore < 0)) { res.status(400).json({ error: "Invalid score" }); return; }
+      if (parsedScore != null && homework.maxMarks == null) { res.status(400).json({ error: "Set max marks before recording a score" }); return; }
       if (parsedScore != null && homework.maxMarks != null && parsedScore > homework.maxMarks) {
         res.status(400).json({ error: `Score cannot exceed ${homework.maxMarks}` });
         return;
       }
 
+      const cleanFeedback = String(feedback ?? "").trim();
+      if (cleanFeedback.length > HOMEWORK_FEEDBACK_MAX) { res.status(400).json({ error: "Feedback is too long" }); return; }
       const markData = {
         status: newStatus,
         score: newStatus === "MARKED" ? parsedScore : null,
-        feedback: feedback ? String(feedback) : null,
+        feedback: cleanFeedback || null,
         markedAt: new Date(),
         markedById: jwtUser.userId,
       };
-      const sub = await hwSub().upsert({
-        where: { homeworkId_studentId: { homeworkId: homework.id, studentId } },
-        update: markData,
-        create: { homeworkId: homework.id, studentId, ...markData },
+      const sub = await prisma.$transaction(async (tx) => {
+        const saved = await (tx as any).homeworkSubmission.upsert({
+          where: { homeworkId_studentId: { homeworkId: homework.id, studentId } },
+          update: markData,
+          create: { homeworkId: homework.id, studentId, ...markData },
+        });
+        if (homework.gradeItemId) {
+          if (newStatus === "MARKED" && parsedScore != null) {
+            await tx.grade.upsert({
+              where: { gradeItemId_studentId: { gradeItemId: homework.gradeItemId, studentId } },
+              update: { marks: parsedScore, comment: cleanFeedback || null, gradedById: jwtUser.userId },
+              create: { gradeItemId: homework.gradeItemId, studentId, marks: parsedScore, comment: cleanFeedback || null, gradedById: jwtUser.userId },
+            });
+          } else {
+            await tx.grade.deleteMany({ where: { gradeItemId: homework.gradeItemId, studentId } });
+          }
+        }
+        return saved;
       });
+      await createAuditLog(jwtUser.userId, jwtUser.email, newStatus === "REDO" ? "REDO" : "MARK", "HOMEWORK_SUBMISSION", sub.id,
+        `Homework '${homework.title}' ${newStatus === "REDO" ? "returned for redo" : "marked"}.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
       res.json(sub);
     } catch (err) {
       logger.error("Error marking homework:", err);
@@ -18563,7 +18785,7 @@ async function startServer() {
       if (!(await canManageExamClass(jwtUser, homework.classId))) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
       if (homework.maxMarks == null) { res.status(400).json({ error: "Set max marks on this homework before syncing to the gradebook" }); return; }
       const scored = homework.submissions.filter((s: any) => s.status === "MARKED" && s.score != null);
-      if (scored.length === 0) { res.status(400).json({ error: "No scored submissions to sync yet" }); return; }
+      if (scored.length === 0 && !homework.gradeItemId) { res.status(400).json({ error: "No scored submissions to sync yet" }); return; }
 
       const result = await prisma.$transaction(async (tx) => {
         let gradeItemId = homework.gradeItemId as string | null;
@@ -18586,8 +18808,23 @@ async function startServer() {
           gradeItemId = item.id;
           await (tx as any).homework.update({ where: { id: homework.id }, data: { gradeItemId } });
         } else {
-          await tx.gradeItem.update({ where: { id: gradeItemId }, data: { maxMarks: homework.maxMarks } });
+          await tx.gradeItem.update({
+            where: { id: gradeItemId },
+            data: {
+              title: `Homework: ${homework.title}`,
+              maxMarks: homework.maxMarks,
+              date: homework.dueDate,
+              subjectId: homework.subjectId,
+            },
+          });
         }
+        const scoredStudentIds = scored.map((submission: any) => submission.studentId);
+        await tx.grade.deleteMany({
+          where: {
+            gradeItemId,
+            ...(scoredStudentIds.length ? { studentId: { notIn: scoredStudentIds } } : {}),
+          },
+        });
         for (const s of scored) {
           await tx.grade.upsert({
             where: { gradeItemId_studentId: { gradeItemId, studentId: s.studentId } },

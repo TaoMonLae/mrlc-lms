@@ -21,3 +21,11 @@ export function toLocalDateString(d: Date): string {
 export function parseLocalDate(dateStr: string): Date {
   return new Date(`${dateStr}T00:00:00`);
 }
+
+/** Format a stored ISO date as a calendar date without timezone drift. */
+export function formatDateOnly(value: string): string {
+  const date = value.slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(date)
+    ? new Date(`${date}T00:00:00`).toLocaleDateString()
+    : value;
+}

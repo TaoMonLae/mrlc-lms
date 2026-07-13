@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { apiGet, apiSend } from '../../lib/api';
-import { toLocalDateString } from '../../lib/dates';
+import { formatDateOnly } from '../../lib/dates';
 
 interface Submission {
   id: string;
@@ -41,28 +41,43 @@ export default function HomeworkDetail() {
   const navigate = useNavigate();
   const [data, setData] = useState<Detail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [drafts, setDrafts] = useState<Record<string, { score: string; feedback: string }>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [subjects, setSubjects] = useState<{ id: string; name: string }[]>([]);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [actionBusy, setActionBusy] = useState<'status' | 'sync' | 'delete' | null>(null);
+  const [studentQuery, setStudentQuery] = useState('');
+  const [studentFilter, setStudentFilter] = useState<'all' | 'submitted' | 'marked' | 'redo' | 'missing'>('all');
   const [editForm, setEditForm] = useState({ title: '', subjectId: '', dueDate: '', maxMarks: '', instructions: '' });
 
   const load = () => {
+    setLoading(true);
+    setLoadError('');
     apiGet<Detail>(`/api/homework/${id}`)
       .then(setData)
-      .catch((e: any) => toast.error(e?.message || 'Failed to load homework'))
+      .catch((e: any) => {
+        const message = e?.message || 'Failed to load homework';
+        setLoadError(message);
+        setData(null);
+        toast.error(message);
+      })
       .finally(() => setLoading(false));
   };
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [id]);
-  useEffect(() => { apiGet<any[]>('/api/subjects').then((d) => setSubjects((d || []).map((s: any) => ({ id: s.id, name: s.name })))).catch(() => {}); }, []);
+  useEffect(() => {
+    apiGet<any[]>('/api/subjects')
+      .then((d) => setSubjects((d || []).map((s: any) => ({ id: s.id, name: s.name }))))
+      .catch((e: any) => toast.error(e?.message || 'Failed to load subjects'));
+  }, []);
 
   const startEdit = () => {
     if (!data) return;
     setEditForm({
       title: data.title,
       subjectId: data.subject?.id ?? '',
-      dueDate: toLocalDateString(new Date(data.dueDate)),
+      dueDate: data.dueDate.slice(0, 10),
       maxMarks: data.maxMarks != null ? String(data.maxMarks) : '',
       instructions: data.instructions ?? '',
     });
@@ -71,6 +86,14 @@ export default function HomeworkDetail() {
 
   const saveEdit = async () => {
     if (!editForm.title.trim() || !editForm.dueDate) { toast.error('Title and due date are required'); return; }
+    if (editForm.maxMarks !== '' && (!Number.isFinite(Number(editForm.maxMarks)) || Number(editForm.maxMarks) <= 0)) {
+      toast.error('Max marks must be a number greater than 0');
+      return;
+    }
+    if (data?.gradeItemId && editForm.maxMarks === '') {
+      toast.error('Max marks cannot be removed after syncing to the gradebook');
+      return;
+    }
     setSaving(true);
     try {
       await apiSend(`/api/homework/${id}`, 'PUT', {
@@ -94,9 +117,10 @@ export default function HomeworkDetail() {
 
   const mark = async (studentId: string, status: 'MARKED' | 'REDO') => {
     const d = drafts[studentId] || { score: '', feedback: '' };
-    if (status === 'MARKED' && d.score && data?.maxMarks != null && Number(d.score) > data.maxMarks) {
-      toast.error(`Score cannot exceed ${data.maxMarks}`);
-      return;
+    if (status === 'MARKED' && d.score !== '') {
+      const score = Number(d.score);
+      if (!Number.isFinite(score) || score < 0) { toast.error('Enter a valid score of 0 or more'); return; }
+      if (data?.maxMarks != null && score > data.maxMarks) { toast.error(`Score cannot exceed ${data.maxMarks}`); return; }
     }
     setBusy(studentId);
     try {
@@ -104,6 +128,11 @@ export default function HomeworkDetail() {
         studentId, status, score: status === 'MARKED' && d.score !== '' ? Number(d.score) : null, feedback: d.feedback || null,
       });
       toast.success(status === 'MARKED' ? 'Marked' : 'Sent back for redo');
+      setDrafts((current) => {
+        const next = { ...current };
+        delete next[studentId];
+        return next;
+      });
       load();
     } catch (e: any) {
       toast.error(e.message || 'Failed to mark');
@@ -114,34 +143,55 @@ export default function HomeworkDetail() {
 
   const toggleClosed = async () => {
     if (!data) return;
+    setActionBusy('status');
     try {
       await apiSend(`/api/homework/${id}`, 'PUT', { status: data.status === 'CLOSED' ? 'OPEN' : 'CLOSED' });
       toast.success(data.status === 'CLOSED' ? 'Reopened for submissions' : 'Closed to new submissions');
       load();
     } catch (e: any) { toast.error(e.message || 'Failed'); }
+    finally { setActionBusy(null); }
   };
 
   const syncGradebook = async () => {
+    setActionBusy('sync');
     try {
       const r = await apiSend<{ count: number }>(`/api/homework/${id}/sync-gradebook`, 'POST');
       toast.success(`${r.count} score(s) synced to the gradebook`);
       load();
     } catch (e: any) { toast.error(e.message || 'Failed to sync'); }
+    finally { setActionBusy(null); }
   };
 
   const remove = async () => {
     if (!confirm('Delete this homework and all its submissions?')) return;
+    setActionBusy('delete');
     try {
       await apiSend(`/api/homework/${id}`, 'DELETE');
       toast.success('Homework deleted');
       navigate('/teacher/homework');
-    } catch (e: any) { toast.error(e.message || 'Failed to delete'); }
+    } catch (e: any) { toast.error(e.message || 'Failed to delete'); setActionBusy(null); }
   };
 
   if (loading) return <p className="py-14 text-center text-sm text-slate-500">Loading…</p>;
-  if (!data) return <p className="py-14 text-center text-sm text-slate-500">Homework not found.</p>;
+  if (!data) return (
+    <div className="py-14 text-center text-sm text-slate-500">
+      <p>{loadError || 'Homework not found.'}</p>
+      {loadError && <Button variant="outline" size="sm" className="mt-3" onClick={load}>Try again</Button>}
+    </div>
+  );
 
   const scoredCount = data.submissions.filter((s) => s.status === 'MARKED' && s.score != null).length;
+  const submittedCount = data.submissions.filter((s) => s.status === 'SUBMITTED').length;
+  const markedCount = data.submissions.filter((s) => s.status === 'MARKED').length;
+  const redoCount = data.submissions.filter((s) => s.status === 'REDO').length;
+  const filteredStudents = data.class.students.filter((student) => {
+    const submission = subFor(student.id);
+    const name = `${student.user?.firstName ?? ''} ${student.user?.lastName ?? ''} ${student.studentCode}`.toLowerCase();
+    if (studentQuery.trim() && !name.includes(studentQuery.trim().toLowerCase())) return false;
+    if (studentFilter === 'missing') return !submission;
+    if (studentFilter !== 'all') return submission?.status.toLowerCase() === studentFilter;
+    return true;
+  });
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 pb-12">
@@ -154,13 +204,14 @@ export default function HomeworkDetail() {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2 md:col-span-2">
                 <Label>Title *</Label>
-                <Input value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} />
+                <Input maxLength={200} value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label>Subject</Label>
-                <Select value={editForm.subjectId} onValueChange={(v) => setEditForm({ ...editForm, subjectId: v })}>
+                <Select value={editForm.subjectId || 'none'} onValueChange={(v) => setEditForm({ ...editForm, subjectId: v === 'none' ? '' : v })}>
                   <SelectTrigger className="w-full"><SelectValue placeholder="Optional" /></SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="none">No subject</SelectItem>
                     {subjects.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -172,10 +223,11 @@ export default function HomeworkDetail() {
               <div className="space-y-2">
                 <Label>Max marks <span className="text-xs text-slate-400">(leave blank for check-off only)</span></Label>
                 <Input type="number" min="1" value={editForm.maxMarks} onChange={(e) => setEditForm({ ...editForm, maxMarks: e.target.value })} placeholder="e.g. 20" />
+                {data.gradeItemId && <p className="text-xs text-slate-400">Required because this homework is linked to the gradebook.</p>}
               </div>
               <div className="space-y-2 md:col-span-2">
                 <Label>Instructions</Label>
-                <Textarea rows={3} value={editForm.instructions} onChange={(e) => setEditForm({ ...editForm, instructions: e.target.value })} />
+                <Textarea rows={3} maxLength={20000} value={editForm.instructions} onChange={(e) => setEditForm({ ...editForm, instructions: e.target.value })} />
               </div>
             </div>
             <div className="flex justify-end gap-2">
@@ -193,7 +245,7 @@ export default function HomeworkDetail() {
                 {data.status === 'CLOSED' && <Badge variant="secondary">Closed</Badge>}
               </h1>
               <p className="mt-1 text-sm text-slate-500">
-                {data.class.name}{data.subject ? ` · ${data.subject.name}` : ''} · due {new Date(data.dueDate).toLocaleDateString()}
+                {data.class.name}{data.subject ? ` · ${data.subject.name}` : ''} · due {formatDateOnly(data.dueDate)}
                 {data.maxMarks != null ? ` · out of ${data.maxMarks}` : ' · check-off (no marks)'}
               </p>
               {data.instructions && <p className="mt-2 max-w-2xl whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">{data.instructions}</p>}
@@ -210,18 +262,18 @@ export default function HomeworkDetail() {
               )}
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" size="sm" onClick={startEdit}>
+              <Button variant="outline" size="sm" onClick={startEdit} disabled={actionBusy !== null}>
                 <Pencil className="mr-2 h-4 w-4" /> Edit
               </Button>
-              <Button variant="outline" size="sm" onClick={toggleClosed}>
+              <Button variant="outline" size="sm" onClick={toggleClosed} disabled={actionBusy !== null}>
                 {data.status === 'CLOSED' ? <><LockOpen className="mr-2 h-4 w-4" /> Reopen</> : <><Lock className="mr-2 h-4 w-4" /> Close</>}
               </Button>
               {data.maxMarks != null && (
-                <Button variant="outline" size="sm" onClick={syncGradebook} disabled={scoredCount === 0} title={scoredCount === 0 ? 'Mark some submissions with scores first' : undefined}>
-                  <ClipboardList className="mr-2 h-4 w-4" /> Sync to Gradebook{data.gradeItemId ? ' ✓' : ''}
+                <Button variant="outline" size="sm" onClick={syncGradebook} disabled={(scoredCount === 0 && !data.gradeItemId) || actionBusy !== null} title={scoredCount === 0 && !data.gradeItemId ? 'Mark some submissions with scores first' : undefined}>
+                  <ClipboardList className="mr-2 h-4 w-4" /> {actionBusy === 'sync' ? 'Syncing…' : `Sync to Gradebook${data.gradeItemId ? ' ✓' : ''}`}
                 </Button>
               )}
-              <Button variant="outline" size="sm" className="text-rose-600" onClick={remove}>
+              <Button variant="outline" size="sm" className="text-rose-600" onClick={remove} disabled={actionBusy !== null}>
                 <Trash2 className="mr-2 h-4 w-4" /> Delete
               </Button>
             </div>
@@ -229,8 +281,36 @@ export default function HomeworkDetail() {
         )}
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-surface-raised dark:bg-surface-indigo">
-        <table className="w-full text-left text-sm">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {[
+          ['Submitted', submittedCount, 'text-sky-600'],
+          ['Marked', markedCount, 'text-emerald-600'],
+          ['Redo', redoCount, 'text-amber-600'],
+          ['Missing', data.class.students.length - data.submissions.length, 'text-rose-600'],
+        ].map(([label, value, color]) => (
+          <div key={String(label)} className="rounded-xl border border-slate-200 bg-white p-3 text-center shadow-sm dark:border-surface-raised dark:bg-surface-indigo">
+            <p className={`text-xl font-bold ${color}`}>{value}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{label}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <Input className="flex-1" value={studentQuery} onChange={(e) => setStudentQuery(e.target.value)} placeholder="Search student name or code" />
+        <Select value={studentFilter} onValueChange={(value) => setStudentFilter(value as typeof studentFilter)}>
+          <SelectTrigger className="w-full sm:w-40"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All students</SelectItem>
+            <SelectItem value="submitted">Submitted</SelectItem>
+            <SelectItem value="marked">Marked</SelectItem>
+            <SelectItem value="redo">Redo</SelectItem>
+            <SelectItem value="missing">Missing</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm dark:border-surface-raised dark:bg-surface-indigo">
+        <table className="min-w-[760px] w-full text-left text-sm">
           <thead className="bg-slate-50 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:bg-surface-raised/50">
             <tr>
               <th className="px-4 py-3">Student</th>
@@ -241,7 +321,7 @@ export default function HomeworkDetail() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {data.class.students.map((st) => {
+            {filteredStudents.map((st) => {
               const sub = subFor(st.id);
               const name = `${st.user?.firstName ?? ''} ${st.user?.lastName ?? ''}`.trim() || st.studentCode;
               const d = drafts[st.id] ?? { score: sub?.score != null ? String(sub.score) : '', feedback: sub?.feedback ?? '' };
@@ -288,16 +368,17 @@ export default function HomeworkDetail() {
                     <Input
                       className="h-8"
                       value={d.feedback}
+                      maxLength={5000}
                       placeholder="Optional feedback"
                       onChange={(e) => setDrafts((prev) => ({ ...prev, [st.id]: { ...d, feedback: e.target.value } }))}
                     />
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-1.5">
-                      <Button size="sm" variant="outline" className="h-8 text-emerald-600" disabled={busy === st.id} onClick={() => mark(st.id, 'MARKED')}>
+                      <Button size="sm" variant="outline" className="h-8 text-emerald-600" disabled={busy !== null} onClick={() => mark(st.id, 'MARKED')}>
                         <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Mark
                       </Button>
-                      <Button size="sm" variant="ghost" className="h-8 text-amber-600" disabled={busy === st.id || !sub} onClick={() => mark(st.id, 'REDO')} title="Send back for redo">
+                      <Button size="sm" variant="ghost" className="h-8 text-amber-600" disabled={busy !== null || !sub} onClick={() => mark(st.id, 'REDO')} title="Send back for redo">
                         <RotateCcw className="h-3.5 w-3.5" />
                       </Button>
                     </div>
@@ -305,8 +386,10 @@ export default function HomeworkDetail() {
                 </tr>
               );
             })}
-            {data.class.students.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-10 text-center text-slate-500">No students in this class.</td></tr>
+            {filteredStudents.length === 0 && (
+              <tr><td colSpan={data.maxMarks != null ? 5 : 4} className="px-4 py-10 text-center text-slate-500">
+                {data.class.students.length === 0 ? 'No students in this class.' : 'No students match these filters.'}
+              </td></tr>
             )}
           </tbody>
         </table>
