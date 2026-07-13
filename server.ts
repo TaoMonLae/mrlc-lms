@@ -4612,9 +4612,13 @@ async function startServer() {
       );
 
       res.status(201).json(resource);
-    } catch (err) {
+    } catch (err: any) {
       logger.error("Error creating library resource:", err);
-      res.status(500).json({ error: "Internal Server Error" });
+      // Surface the real cause (admin/teacher-only route). A Prisma error here
+      // usually means the DB is out of sync with schema.prisma — run
+      // `npx prisma generate && npx prisma db push`, then restart the server.
+      const detail = err?.code ? `${err.code}: ${err?.message ?? ""}` : err?.message;
+      res.status(500).json({ error: detail || "Internal Server Error" });
     }
   });
 
@@ -13008,10 +13012,14 @@ async function startServer() {
           req.ip, req.headers["user-agent"] || null, "SUCCESS"
         );
         res.status(201).json(ebook);
-      } catch (err) {
+      } catch (err: any) {
         fs.promises.unlink(file.path).catch(() => {});
         logger.error("Error creating ebook:", err);
-        res.status(500).json({ error: "Internal Server Error" });
+        // Surface the real cause (admin/teacher-only route). A Prisma error here
+        // usually means the DB is out of sync with schema.prisma — run
+        // `npx prisma generate && npx prisma db push`, then restart the server.
+        const detail = err?.code ? `${err.code}: ${err?.message ?? ""}` : err?.message;
+        res.status(500).json({ error: detail || "Internal Server Error" });
       }
     }
   );
