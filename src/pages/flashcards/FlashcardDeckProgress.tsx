@@ -87,7 +87,7 @@ export default function FlashcardDeckProgress() {
                     <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{s.name || s.studentCode}</td>
                     <td className="px-4 py-3">
                       {data.totalCards > 0 ? (
-                        <Badge variant="outline">{s.known} / {data.totalCards}</Badge>
+                        <Badge variant="outline">{s.known} / {data.totalCards} ({Math.round((s.known / data.totalCards) * 100)}%)</Badge>
                       ) : '—'}
                     </td>
                     <td className="px-4 py-3">{pct(s.bestByMode.QUIZ)}</td>
@@ -96,7 +96,7 @@ export default function FlashcardDeckProgress() {
                       {s.bestByMode.MATCH ? `${s.bestByMode.MATCH.total - s.bestByMode.MATCH.score} mistakes` : '—'}
                     </td>
                     <td className="px-4 py-3 text-slate-500">
-                      {s.lastActivity ? new Date(s.lastActivity).toLocaleDateString() : 'No activity yet'}
+                      {s.lastActivity ? new Date(s.lastActivity).toLocaleString() : 'No activity yet'}
                     </td>
                   </tr>
                 ))}

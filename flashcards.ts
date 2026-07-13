@@ -19,6 +19,9 @@ interface Deps {
 }
 
 const FLASHCARD_IMAGE_DIR = process.env.FLASHCARD_IMAGE_DIR || path.join(process.cwd(), "data", "flashcards");
+const MAX_CARDS_PER_DECK = 500;
+const MAX_ATTEMPT_DURATION_MS = 24 * 60 * 60 * 1000;
+const FLASHCARD_IMAGE_URL_RE = /^\/uploads\/flashcards\/[0-9a-f-]+\.(?:png|jpe?g|webp|gif)$/i;
 fs.mkdirSync(FLASHCARD_IMAGE_DIR, { recursive: true });
 
 const flashcardImageUpload = multer({
@@ -66,27 +69,32 @@ export function registerFlashcardRoutes(deps: Deps): void {
         id: typeof c?.id === "string" && c.id.trim() ? c.id.trim() : undefined,
         term: (c?.term ?? "").toString().trim().slice(0, 500),
         definition: (c?.definition ?? "").toString().trim().slice(0, 2000),
-        imageUrl: c?.imageUrl ? c.imageUrl.toString().trim().slice(0, 500) : null,
+        imageUrl: typeof c?.imageUrl === "string" && FLASHCARD_IMAGE_URL_RE.test(c.imageUrl.trim())
+          ? c.imageUrl.trim()
+          : null,
       }))
       .filter((c) => c.term && c.definition);
   }
 
-  // Best-effort cleanup of image files that are actually going away (deck
-  // update replaces all cards, deck delete removes them all) -- mirrors the
-  // social post image cleanup elsewhere in the app. `keepUrls` lets an update
-  // that re-submits the same imageUrl for an edited card avoid deleting a
-  // file the new row still points at. Never blocks the request.
-  async function deleteCardImages(deckId: string, keepUrls: Set<string> = new Set()) {
-    try {
-      const cards = await prisma.flashcardCard.findMany({ where: { deckId, imageUrl: { not: null } }, select: { imageUrl: true } });
-      for (const c of cards) {
-        if (!c.imageUrl || keepUrls.has(c.imageUrl)) continue;
-        try {
-          const fp = path.join(FLASHCARD_IMAGE_DIR, path.basename(c.imageUrl));
-          if (fs.existsSync(fp)) fs.unlinkSync(fp);
-        } catch { /* ignore */ }
-      }
-    } catch { /* ignore */ }
+  function hasIncompleteCard(raw: any): boolean {
+    return Array.isArray(raw) && raw.some((card: any) => {
+      const hasTerm = !!(card?.term ?? "").toString().trim();
+      const hasDefinition = !!(card?.definition ?? "").toString().trim();
+      return hasTerm !== hasDefinition;
+    });
+  }
+
+  // Only remove files created by this module. Cleanup is deliberately run
+  // after the database mutation succeeds so a failed save cannot leave cards
+  // pointing at images that have already disappeared.
+  function deleteImageUrls(urls: Iterable<string | null | undefined>) {
+    for (const url of urls) {
+      if (!url || !FLASHCARD_IMAGE_URL_RE.test(url)) continue;
+      try {
+        const fp = path.join(FLASHCARD_IMAGE_DIR, path.basename(url));
+        if (fs.existsSync(fp)) fs.unlinkSync(fp);
+      } catch { /* best effort */ }
+    }
   }
 
   const deckSummarySelect = {
@@ -140,6 +148,14 @@ export function registerFlashcardRoutes(deps: Deps): void {
     return new Set(allowed.map((c: any) => c.classId)).size === new Set(classIds).size;
   }
 
+  async function referencesExist(subjectId: string | null, classIds: string[]): Promise<boolean> {
+    const [subject, classCount] = await Promise.all([
+      subjectId ? prisma.subject.findUnique({ where: { id: subjectId }, select: { id: true } }) : Promise.resolve(true),
+      classIds.length ? prisma.class.count({ where: { id: { in: classIds } } }) : Promise.resolve(0),
+    ]);
+    return !!subject && classCount === classIds.length;
+  }
+
   function isBetterAttempt(candidate: any, previous: any): boolean {
     if (!previous) return true;
     const candidatePct = candidate.score / candidate.total;
@@ -176,6 +192,24 @@ export function registerFlashcardRoutes(deps: Deps): void {
       res.status(201).json({ url: `/uploads/flashcards/${file.filename}` });
     },
   );
+
+  // Removes an upload that was never attached to a saved card (for example
+  // when a teacher removes a just-uploaded image or cancels a new deck).
+  app.delete("/api/flashcards/image-upload", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!["TEACHER", "ADMIN"].includes(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    const imageUrl = typeof req.body?.imageUrl === "string" ? req.body.imageUrl.trim() : "";
+    if (!FLASHCARD_IMAGE_URL_RE.test(imageUrl)) { res.status(400).json({ error: "Invalid image URL" }); return; }
+    try {
+      const attached = await prisma.flashcardCard.findFirst({ where: { imageUrl }, select: { id: true } });
+      if (attached) { res.status(409).json({ error: "Image is attached to a saved card" }); return; }
+      deleteImageUrls([imageUrl]);
+      res.json({ success: true });
+    } catch (err) {
+      logger.error("Error deleting unused flashcard image:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
 
   // ── Teacher/admin: list decks I own (or all, for ADMIN) ──────────────────────
   app.get("/api/flashcards/decks", authMiddleware, async (req, res) => {
@@ -240,11 +274,21 @@ export function registerFlashcardRoutes(deps: Deps): void {
         orderBy: { updatedAt: "desc" },
         select: deckSummarySelect,
       });
+      const deckIds = decks.map((d: any) => d.id);
+      const knownMasteries = deckIds.length ? await prisma.flashcardCardMastery.findMany({
+        where: { studentId: student.id, status: "KNOWN", card: { deckId: { in: deckIds } } },
+        select: { card: { select: { deckId: true } } },
+      }) : [];
+      const knownByDeck: Record<string, number> = {};
+      for (const mastery of knownMasteries) {
+        const deckId = mastery.card.deckId;
+        knownByDeck[deckId] = (knownByDeck[deckId] || 0) + 1;
+      }
       const authorNames = await getDeckAuthorNames(decks.map((d: any) => d.id));
       res.json(decks.map((d: any) => ({
         id: d.id, title: d.title, description: d.description,
         updatedAt: d.updatedAt, subject: d.subject, teacherName: fullName(d.teacher?.user), authorName: authorNames.get(d.id) || fullName(d.teacher?.user),
-        cardCount: d._count.cards,
+        cardCount: d._count.cards, knownCount: knownByDeck[d.id] || 0,
       })));
     } catch (err) {
       logger.error("Error listing assigned flashcard decks:", err);
@@ -267,7 +311,8 @@ export function registerFlashcardRoutes(deps: Deps): void {
       });
       if (!deck) { res.status(404).json({ error: "Deck not found" }); return; }
 
-      let allowed = jwtUser.role === "ADMIN" || deck.teacher?.userId === jwtUser.userId;
+      const canManage = jwtUser.role === "ADMIN" || deck.teacher?.userId === jwtUser.userId;
+      let allowed = canManage;
       // A shared deck can be previewed by any other teacher browsing the
       // Community tab, so they can see what's inside before cloning it.
       if (!allowed && jwtUser.role === "TEACHER" && deck.shared) allowed = true;
@@ -281,7 +326,9 @@ export function registerFlashcardRoutes(deps: Deps): void {
       res.json({
         id: deck.id, title: deck.title, description: deck.description, shared: deck.shared,
         subject: deck.subject, teacherName: fullName(deck.teacher?.user), authorName: authorNames.get(deck.id) || fullName(deck.teacher?.user),
-        classes: deck.classLinks.map((l: any) => l.class),
+        // Class assignments are private management data; community previews
+        // and students only need the deck content itself.
+        classes: canManage ? deck.classLinks.map((l: any) => l.class) : [],
         cards: deck.cards.map((c: any) => ({ id: c.id, term: c.term, definition: c.definition, imageUrl: c.imageUrl ?? null })),
       });
     } catch (err) {
@@ -296,13 +343,16 @@ export function registerFlashcardRoutes(deps: Deps): void {
     if (!["TEACHER", "ADMIN"].includes(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
     const title = (req.body?.title ?? "").toString().trim().slice(0, 200);
     const description = (req.body?.description ?? "").toString().trim().slice(0, 1000) || null;
-    const subjectId = req.body?.subjectId || null;
+    const subjectId = typeof req.body?.subjectId === "string" && req.body.subjectId.trim() ? req.body.subjectId.trim() : null;
     const shared = Boolean(req.body?.shared);
     const classIds: string[] = Array.from(new Set(Array.isArray(req.body?.classIds) ? req.body.classIds.filter((c: any) => typeof c === "string") : []));
     const cards = normalizeCards(req.body?.cards);
     if (!title) { res.status(400).json({ error: "Title is required" }); return; }
+    if (hasIncompleteCard(req.body?.cards)) { res.status(400).json({ error: "Every started card needs both a term and a definition" }); return; }
     if (cards.length === 0) { res.status(400).json({ error: "Add at least one card (term + definition)" }); return; }
+    if (cards.length > MAX_CARDS_PER_DECK) { res.status(400).json({ error: `A deck can contain at most ${MAX_CARDS_PER_DECK} cards` }); return; }
     try {
+      if (!(await referencesExist(subjectId, classIds))) { res.status(400).json({ error: "One or more selected classes or the subject no longer exists" }); return; }
       // A deck belongs to a teacher record. Teachers own their own decks;
       // an admin without a linked teacher profile is attributed via the
       // first assigned class's teacher (same fallback /api/homework uses).
@@ -351,12 +401,15 @@ export function registerFlashcardRoutes(deps: Deps): void {
 
       const title = (req.body?.title ?? "").toString().trim().slice(0, 200);
       const description = (req.body?.description ?? "").toString().trim().slice(0, 1000) || null;
-      const subjectId = req.body?.subjectId || null;
+      const subjectId = typeof req.body?.subjectId === "string" && req.body.subjectId.trim() ? req.body.subjectId.trim() : null;
       const shared = Boolean(req.body?.shared);
       const classIds: string[] = Array.from(new Set(Array.isArray(req.body?.classIds) ? req.body.classIds.filter((c: any) => typeof c === "string") : []));
       const cards = normalizeCards(req.body?.cards);
       if (!title) { res.status(400).json({ error: "Title is required" }); return; }
+      if (hasIncompleteCard(req.body?.cards)) { res.status(400).json({ error: "Every started card needs both a term and a definition" }); return; }
       if (cards.length === 0) { res.status(400).json({ error: "Add at least one card (term + definition)" }); return; }
+      if (cards.length > MAX_CARDS_PER_DECK) { res.status(400).json({ error: `A deck can contain at most ${MAX_CARDS_PER_DECK} cards` }); return; }
+      if (!(await referencesExist(subjectId, classIds))) { res.status(400).json({ error: "One or more selected classes or the subject no longer exists" }); return; }
       const canUseClasses = await validateTeacherClassAccess(jwtUser, existing.teacherId, classIds);
       if (!canUseClasses) { res.status(403).json({ error: "You can only assign decks to your own classes" }); return; }
 
@@ -366,7 +419,7 @@ export function registerFlashcardRoutes(deps: Deps): void {
       if (invalidIds.length > 0) { res.status(400).json({ error: "One or more cards do not belong to this deck" }); return; }
 
       const keepImageUrls = new Set(cards.map((c) => c.imageUrl).filter((u): u is string => !!u));
-      await deleteCardImages(existing.id, keepImageUrls);
+      const removedImageUrls = existing.cards.map((c: any) => c.imageUrl).filter((url: string | null) => url && !keepImageUrls.has(url));
 
       await prisma.$transaction(async (tx: any) => {
         await tx.flashcardCard.deleteMany({
@@ -393,6 +446,7 @@ export function registerFlashcardRoutes(deps: Deps): void {
           }
         }
       });
+      deleteImageUrls(removedImageUrls);
 
       await createAuditLog(
         jwtUser.userId, jwtUser.email, "UPDATE", "FLASHCARD_DECK", existing.id,
@@ -412,14 +466,14 @@ export function registerFlashcardRoutes(deps: Deps): void {
     try {
       const existing = await prisma.flashcardDeck.findUnique({
         where: { id: req.params.id },
-        include: { teacher: { select: { userId: true } } },
+        include: { teacher: { select: { userId: true } }, cards: { select: { imageUrl: true } } },
       });
       if (!existing) { res.status(404).json({ error: "Deck not found" }); return; }
       if (jwtUser.role !== "ADMIN" && existing.teacher?.userId !== jwtUser.userId) {
         res.status(403).json({ error: "Forbidden" }); return;
       }
-      await deleteCardImages(existing.id);
       await prisma.flashcardDeck.delete({ where: { id: existing.id } }); // cards/classLinks cascade
+      deleteImageUrls(existing.cards.map((c: any) => c.imageUrl));
       await createAuditLog(
         jwtUser.userId, jwtUser.email, "DELETE", "FLASHCARD_DECK", existing.id,
         `Deleted flashcard deck "${existing.title}"`,
@@ -451,17 +505,21 @@ export function registerFlashcardRoutes(deps: Deps): void {
     const total = Number(req.body?.total);
     const durationMs = req.body?.durationMs != null ? Number(req.body.durationMs) : null;
     if (!ATTEMPT_MODES.includes(mode)) { res.status(400).json({ error: "Invalid mode" }); return; }
-    if (!Number.isFinite(score) || !Number.isFinite(total) || total <= 0 || score < 0 || score > total) {
+    if (!Number.isSafeInteger(score) || !Number.isSafeInteger(total) || total <= 0 || score < 0 || score > total) {
       res.status(400).json({ error: "Invalid score/total" }); return;
     }
-    if (durationMs != null && (!Number.isFinite(durationMs) || durationMs < 0)) {
+    if (durationMs != null && (!Number.isSafeInteger(durationMs) || durationMs < 0 || durationMs > MAX_ATTEMPT_DURATION_MS)) {
       res.status(400).json({ error: "Invalid duration" }); return;
     }
     try {
       const student = await getStudentForReq(req);
       if (!student) { res.status(404).json({ error: "Student profile not found" }); return; }
-      const deck = await prisma.flashcardDeck.findUnique({ where: { id: req.params.id } });
+      const deck = await prisma.flashcardDeck.findUnique({
+        where: { id: req.params.id },
+        select: { id: true, _count: { select: { cards: true } } },
+      });
       if (!deck) { res.status(404).json({ error: "Deck not found" }); return; }
+      if (total > deck._count.cards) { res.status(400).json({ error: "Attempt total exceeds the number of cards in this deck" }); return; }
       const canAccess = await studentCanAccessDeck(student.id, deck.id);
       if (!canAccess) { res.status(403).json({ error: "Forbidden" }); return; }
 
@@ -486,13 +544,13 @@ export function registerFlashcardRoutes(deps: Deps): void {
       if (!deck) { res.status(404).json({ error: "Deck not found" }); return; }
       const canAccess = await studentCanAccessDeck(student.id, deck.id);
       if (!canAccess) { res.status(403).json({ error: "Forbidden" }); return; }
-      const attempts = await prisma.flashcardAttempt.findMany({
-        where: { deckId: deck.id, studentId: student.id },
-        orderBy: { createdAt: "desc" },
-        take: 20,
-      });
+      const attemptWhere = { deckId: deck.id, studentId: student.id };
+      const [attempts, bestCandidates] = await Promise.all([
+        prisma.flashcardAttempt.findMany({ where: attemptWhere, orderBy: { createdAt: "desc" }, take: 20 }),
+        prisma.flashcardAttempt.findMany({ where: attemptWhere }),
+      ]);
       const bestByMode: Record<string, any> = {};
-      for (const a of attempts) {
+      for (const a of bestCandidates) {
         const prev = bestByMode[a.mode];
         if (isBetterAttempt(a, prev)) bestByMode[a.mode] = a;
       }
@@ -588,8 +646,8 @@ export function registerFlashcardRoutes(deps: Deps): void {
 
       const [masteries, attempts] = await Promise.all([
         studentIds.length ? prisma.flashcardCardMastery.findMany({
-          where: { studentId: { in: studentIds }, cardId: { in: cardIds }, status: "KNOWN" },
-          select: { studentId: true },
+          where: { studentId: { in: studentIds }, cardId: { in: cardIds } },
+          select: { studentId: true, status: true, updatedAt: true },
         }) : [],
         studentIds.length ? prisma.flashcardAttempt.findMany({
           where: { studentId: { in: studentIds }, deckId: deck.id },
@@ -598,12 +656,19 @@ export function registerFlashcardRoutes(deps: Deps): void {
       ]);
 
       const knownCountByStudent: Record<string, number> = {};
-      for (const m of masteries) knownCountByStudent[m.studentId] = (knownCountByStudent[m.studentId] || 0) + 1;
+      const lastActivityByStudent: Record<string, any> = {};
+      for (const m of masteries) {
+        if (m.status === "KNOWN") knownCountByStudent[m.studentId] = (knownCountByStudent[m.studentId] || 0) + 1;
+        if (!lastActivityByStudent[m.studentId] || m.updatedAt > lastActivityByStudent[m.studentId]) {
+          lastActivityByStudent[m.studentId] = m.updatedAt;
+        }
+      }
 
       const bestByStudentMode: Record<string, Record<string, any>> = {};
-      const lastActivityByStudent: Record<string, any> = {};
       for (const a of attempts) {
-        if (!lastActivityByStudent[a.studentId]) lastActivityByStudent[a.studentId] = a.createdAt;
+        if (!lastActivityByStudent[a.studentId] || a.createdAt > lastActivityByStudent[a.studentId]) {
+          lastActivityByStudent[a.studentId] = a.createdAt;
+        }
         bestByStudentMode[a.studentId] = bestByStudentMode[a.studentId] || {};
         const prev = bestByStudentMode[a.studentId][a.mode];
         if (isBetterAttempt(a, prev)) bestByStudentMode[a.studentId][a.mode] = a;
@@ -631,6 +696,8 @@ export function registerFlashcardRoutes(deps: Deps): void {
   app.post("/api/flashcards/decks/:id/clone", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (!["TEACHER", "ADMIN"].includes(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    const clonedImageUrls: string[] = [];
+    let cloneCreated = false;
     try {
       const source = await prisma.flashcardDeck.findUnique({
         where: { id: req.params.id },
@@ -647,14 +714,16 @@ export function registerFlashcardRoutes(deps: Deps): void {
       // clone at the source's file) so deleting either deck later can't
       // orphan or break the other's images.
       const cloneImageUrl = (url: string | null): string | null => {
-        if (!url) return null;
+        if (!url || !FLASHCARD_IMAGE_URL_RE.test(url)) return null;
         try {
           const srcPath = path.join(FLASHCARD_IMAGE_DIR, path.basename(url));
           if (!fs.existsSync(srcPath)) return null;
           const ext = path.extname(srcPath) || ".jpg";
           const destName = `${crypto.randomUUID()}${ext}`;
           fs.copyFileSync(srcPath, path.join(FLASHCARD_IMAGE_DIR, destName));
-          return `/uploads/flashcards/${destName}`;
+          const clonedUrl = `/uploads/flashcards/${destName}`;
+          clonedImageUrls.push(clonedUrl);
+          return clonedUrl;
         } catch {
           return null;
         }
@@ -662,7 +731,7 @@ export function registerFlashcardRoutes(deps: Deps): void {
 
       const clone = await prisma.flashcardDeck.create({
         data: {
-          title: `${source.title} (Copy)`,
+          title: `${source.title} (Copy)`.slice(0, 200),
           description: source.description,
           subjectId: source.subjectId,
           teacherId: teacher.id,
@@ -672,6 +741,7 @@ export function registerFlashcardRoutes(deps: Deps): void {
           },
         },
       });
+      cloneCreated = true;
 
       await createAuditLog(
         jwtUser.userId, jwtUser.email, "CREATE", "FLASHCARD_DECK", clone.id,
@@ -680,6 +750,7 @@ export function registerFlashcardRoutes(deps: Deps): void {
       );
       res.status(201).json({ id: clone.id });
     } catch (err) {
+      if (!cloneCreated) deleteImageUrls(clonedImageUrls);
       logger.error("Error cloning flashcard deck:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }

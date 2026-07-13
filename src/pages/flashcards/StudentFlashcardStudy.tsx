@@ -48,9 +48,17 @@ export default function StudentFlashcardStudy() {
   const [loading, setLoading] = useState(true);
   const [mastery, setMastery] = useState<Record<string, string>>({});
   const [onlyLearning, setOnlyLearning] = useState(false);
+  const [savingMastery, setSavingMastery] = useState(false);
 
   useEffect(() => {
     if (!id) return;
+    setLoading(true);
+    setDeck(null);
+    setOrder([]);
+    setIndex(0);
+    setFlipped(false);
+    setMastery({});
+    setOnlyLearning(false);
     apiGet<DeckDetail>(`/api/flashcards/decks/${id}`)
       .then((d) => { setDeck(d); setOrder(d.cards || []); })
       .catch((e: any) => toast.error(e?.message || 'Failed to load deck'))
@@ -60,8 +68,7 @@ export default function StudentFlashcardStudy() {
         .then((m) => setMastery(m || {}))
         .catch(() => {});
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, isStudent]);
 
   const current = order[index];
   const progress = useMemo(() => (order.length ? Math.round(((index + 1) / order.length) * 100) : 0), [index, order.length]);
@@ -86,9 +93,10 @@ export default function StudentFlashcardStudy() {
   };
 
   const markMastery = async (status: 'KNOWN' | 'LEARNING') => {
-    if (!current) return;
+    if (!current || savingMastery) return;
     const cardId = current.id;
     const previousStatus = mastery[cardId];
+    setSavingMastery(true);
     setMastery((prev) => ({ ...prev, [current.id]: status }));
     try {
       await apiSend(`/api/flashcards/cards/${cardId}/mastery`, 'PUT', { status });
@@ -101,9 +109,40 @@ export default function StudentFlashcardStudy() {
       });
       toast.error('Could not save your progress');
       return;
+    } finally {
+      setSavingMastery(false);
     }
-    goNext();
+    if (onlyLearning && status === 'KNOWN') {
+      setFlipped(false);
+      setOrder((prev) => {
+        const next = prev.filter((card) => card.id !== cardId);
+        setIndex((currentIndex) => Math.min(currentIndex, Math.max(0, next.length - 1)));
+        return next;
+      });
+    } else {
+      goNext();
+    }
   };
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!order.length || event.metaKey || event.ctrlKey || event.altKey) return;
+      const target = event.target as HTMLElement | null;
+      if (target?.closest('button, a, input, textarea, select, [contenteditable="true"]')) return;
+      if (event.key === ' ' || event.key === 'Enter') {
+        event.preventDefault();
+        setFlipped((value) => !value);
+      } else if (event.key === 'ArrowRight') {
+        setFlipped(false);
+        setIndex((value) => Math.min(value + 1, order.length - 1));
+      } else if (event.key === 'ArrowLeft') {
+        setFlipped(false);
+        setIndex((value) => Math.max(value - 1, 0));
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [order.length]);
 
   if (loading) {
     return (
@@ -197,7 +236,7 @@ export default function StudentFlashcardStudy() {
               </div>
             </button>
           </ElectricBorder>
-          <p className="text-center text-xs text-slate-400">Tap the card to flip it</p>
+          <p className="text-center text-xs text-slate-400">Tap the card or press Space to flip · Arrow keys move between cards</p>
 
           <div className="flex items-center justify-between gap-3">
             <Button variant="outline" onClick={goPrev} disabled={index === 0}>
@@ -222,6 +261,7 @@ export default function StudentFlashcardStudy() {
                 variant="outline"
                 className={mastery[current.id] === 'LEARNING' ? 'border-amber-400 text-amber-700' : ''}
                 onClick={() => markMastery('LEARNING')}
+                disabled={savingMastery}
               >
                 <Circle className="mr-2 h-4 w-4" /> Still learning
               </Button>
@@ -229,6 +269,7 @@ export default function StudentFlashcardStudy() {
                 variant="outline"
                 className={mastery[current.id] === 'KNOWN' ? 'border-emerald-400 text-emerald-700' : ''}
                 onClick={() => markMastery('KNOWN')}
+                disabled={savingMastery}
               >
                 <CheckCircle2 className="mr-2 h-4 w-4" /> Know it
               </Button>

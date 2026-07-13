@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { ArrowLeft, Brain, CheckCircle2, XCircle, RotateCw, Grid3x3, SpellCheck, Settings2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -25,7 +25,7 @@ interface Question {
 interface AnsweredRecord { type: QType; term: string; correct: string; picked: string; isCorrect: boolean }
 
 const TYPE_OPTIONS: { key: QType; label: string; desc: string }[] = [
-  { key: 'MC', label: 'Multiple Choice', desc: 'Pick the correct definition from four options' },
+  { key: 'MC', label: 'Multiple Choice', desc: 'Pick the correct definition from up to four options' },
   { key: 'TF', label: 'True / False', desc: 'Say whether the shown definition matches the term' },
   { key: 'FILL', label: 'Fill in the Blank', desc: 'Type the term from its definition' },
 ];
@@ -53,19 +53,21 @@ function correctAnswerFor(q: Question): string {
 function buildQuestions(cards: CardT[], types: QType[]): Question[] {
   const pool = shuffle(cards);
   return pool.map((card) => {
-    const type = types[Math.floor(Math.random() * types.length)];
+    const distinctOtherDefinitions = Array.from(new Set(
+      cards.filter((candidate) => candidate.id !== card.id && candidate.definition !== card.definition).map((candidate) => candidate.definition),
+    ));
+    const viableTypes = types.filter((candidateType) => candidateType === 'FILL' || distinctOtherDefinitions.length > 0);
+    const type = viableTypes[Math.floor(Math.random() * viableTypes.length)] ?? 'FILL';
     if (type === 'MC') {
-      const others = cards.filter((c) => c.id !== card.id).map((c) => c.definition);
-      const distractors = shuffle(others).slice(0, 3);
+      const distractors = shuffle(distinctOtherDefinitions).slice(0, 3);
       return {
         cardId: card.id, type, term: card.term, definition: card.definition, imageUrl: card.imageUrl,
         choices: shuffle([card.definition, ...distractors]),
       };
     }
     if (type === 'TF') {
-      const others = cards.filter((c) => c.id !== card.id);
-      const isMatchTrue = others.length === 0 ? true : Math.random() < 0.5;
-      const candidateDefinition = isMatchTrue ? card.definition : others[Math.floor(Math.random() * others.length)].definition;
+      const isMatchTrue = Math.random() < 0.5;
+      const candidateDefinition = isMatchTrue ? card.definition : distinctOtherDefinitions[Math.floor(Math.random() * distinctOtherDefinitions.length)];
       return {
         cardId: card.id, type, term: card.term, definition: card.definition, imageUrl: card.imageUrl,
         candidateDefinition, isMatchTrue, choices: ['True', 'False'],
@@ -95,16 +97,21 @@ export default function FlashcardQuiz() {
   const [answers, setAnswers] = useState<AnsweredRecord[]>([]);
   const [finished, setFinished] = useState(false);
   const [bestScore, setBestScore] = useState<{ score: number; total: number } | null>(null);
+  const startedAtRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!id) return;
+    setLoading(true);
+    setDeck(null);
+    setStarted(false);
+    setBestScore(null);
     apiGet<DeckDetail>(`/api/flashcards/decks/${id}`)
       .then((d) => setDeck(d))
       .catch((e: any) => toast.error(e?.message || 'Failed to load deck'))
       .finally(() => setLoading(false));
     if (isStudentRoute) loadBest();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, isStudentRoute]);
 
   const loadBest = () => {
     if (!id) return;
@@ -122,6 +129,7 @@ export default function FlashcardQuiz() {
     setQuestions(buildQuestions(deck.cards, enabledTypes));
     setIndex(0); setAnswered(null); setTextDraft(''); setAnswers([]); setFinished(false);
     setStarted(true);
+    startedAtRef.current = Date.now();
   };
 
   const current = questions[index];
@@ -149,9 +157,10 @@ export default function FlashcardQuiz() {
       const finalScore = answers.filter((a) => a.isCorrect).length;
       setFinished(true);
       if (isStudentRoute && id) {
-        apiSend(`/api/flashcards/decks/${id}/attempts`, 'POST', { mode: 'QUIZ', score: finalScore, total: questions.length })
+        const durationMs = startedAtRef.current ? Date.now() - startedAtRef.current : null;
+        apiSend(`/api/flashcards/decks/${id}/attempts`, 'POST', { mode: 'QUIZ', score: finalScore, total: questions.length, durationMs })
           .then(loadBest)
-          .catch(() => {});
+          .catch(() => toast.error('Your quiz result could not be saved'));
       }
       return;
     }

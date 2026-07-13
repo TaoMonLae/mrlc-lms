@@ -70,6 +70,10 @@ export default function FlashcardMatch() {
 
   useEffect(() => {
     if (!id) return;
+    setLoading(true);
+    setDeck(null);
+    setGameStarted(false);
+    setBestRun(null);
     apiGet<DeckDetail>(`/api/flashcards/decks/${id}`)
       .then((d) => {
         setDeck(d);
@@ -83,7 +87,7 @@ export default function FlashcardMatch() {
       .finally(() => setLoading(false));
     if (isStudentRoute) loadBest();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, isStudentRoute]);
 
   const loadBest = () => {
     if (!id) return;
@@ -142,7 +146,7 @@ export default function FlashcardMatch() {
           const score = Math.max(0, totalPairs - mistakes);
           apiSend(`/api/flashcards/decks/${id}/attempts`, 'POST', { mode: 'MATCH', score, total: totalPairs, durationMs })
             .then(loadBest)
-            .catch(() => {});
+            .catch(() => toast.error('Your match result could not be saved'));
         }
       }
     } else {

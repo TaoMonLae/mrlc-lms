@@ -56,17 +56,25 @@ export default function FlashcardSpelling() {
   const [finished, setFinished] = useState(false);
   const [bestScore, setBestScore] = useState<{ score: number; total: number } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const startedAtRef = useRef<number | null>(null);
   const speechSupported = typeof window !== 'undefined' && 'speechSynthesis' in window;
 
   useEffect(() => {
     if (!id) return;
+    setLoading(true);
+    setDeck(null);
+    setOrder([]);
+    setIndex(0);
+    setAnswers([]);
+    setFinished(false);
+    setBestScore(null);
     apiGet<DeckDetail>(`/api/flashcards/decks/${id}`)
-      .then((d) => { setDeck(d); setOrder(shuffle(d.cards || [])); })
+      .then((d) => { setDeck(d); setOrder(shuffle(d.cards || [])); startedAtRef.current = Date.now(); })
       .catch((e: any) => toast.error(e?.message || 'Failed to load deck'))
       .finally(() => setLoading(false));
     if (isStudentRoute) loadBest();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, isStudentRoute]);
 
   const loadBest = () => {
     if (!id) return;
@@ -80,10 +88,10 @@ export default function FlashcardSpelling() {
   // Read the term aloud automatically each time a new card comes up -- the
   // whole point of spelling mode is hearing it before you see it.
   useEffect(() => {
-    if (current && !checked) speak(current.term);
+    if (current && !checked && speechSupported) speak(current.term);
     inputRef.current?.focus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index, order.length]);
+  }, [index, order.length, speechSupported]);
 
   const score = useMemo(() => answers.filter((a) => a.correct).length, [answers]);
 
@@ -101,9 +109,10 @@ export default function FlashcardSpelling() {
       const finalScore = answers.filter((a) => a.correct).length;
       setFinished(true);
       if (isStudentRoute && id) {
-        apiSend(`/api/flashcards/decks/${id}/attempts`, 'POST', { mode: 'SPELL', score: finalScore, total: order.length })
+        const durationMs = startedAtRef.current ? Date.now() - startedAtRef.current : null;
+        apiSend(`/api/flashcards/decks/${id}/attempts`, 'POST', { mode: 'SPELL', score: finalScore, total: order.length, durationMs })
           .then(loadBest)
-          .catch(() => {});
+          .catch(() => toast.error('Your spelling result could not be saved'));
       }
       return;
     }
@@ -114,6 +123,7 @@ export default function FlashcardSpelling() {
     if (!deck) return;
     setOrder(shuffle(deck.cards));
     setIndex(0); setInput(''); setChecked(null); setAnswers([]); setFinished(false);
+    startedAtRef.current = Date.now();
   };
 
   if (loading) {
