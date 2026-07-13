@@ -50,6 +50,8 @@ const LIBRARY_FILE_DIR = process.env.LIBRARY_FILE_DIR || path.join(process.cwd()
 fs.mkdirSync(LIBRARY_FILE_DIR, { recursive: true });
 const VIDEO_FILES_DIR = process.env.VIDEO_FILES_DIR || path.join(process.cwd(), "data", "videos");
 fs.mkdirSync(VIDEO_FILES_DIR, { recursive: true });
+const VIDEO_CHUNK_DIR = path.join(VIDEO_FILES_DIR, ".chunks");
+fs.mkdirSync(VIDEO_CHUNK_DIR, { recursive: true });
 const ADMISSION_FILE_DIR = process.env.ADMISSION_FILE_DIR || path.join(process.cwd(), "data", "admissions");
 fs.mkdirSync(ADMISSION_FILE_DIR, { recursive: true });
 const STUDENT_DOC_DIR = process.env.STUDENT_DOC_DIR || path.join(process.cwd(), "data", "student-docs");
@@ -281,6 +283,8 @@ const studentDocUpload = multer({
   },
 });
 
+const ALLOWED_VIDEO_EXTENSIONS = new Set([".mp4", ".webm", ".mov", ".avi", ".mkv", ".flv", ".wmv", ".mts", ".m2ts", ".ts", ".m4v", ".mpg", ".mpeg", ".3gp"]);
+
 const videoFileUpload = multer({
   storage: multer.diskStorage({
     destination: (_req, _file, cb) => cb(null, VIDEO_FILES_DIR),
@@ -293,11 +297,18 @@ const videoFileUpload = multer({
   fileFilter: (_req, file, cb) => {
     // .mts/.m2ts (AVCHD) and the other non-web formats are accepted, then
     // transcoded to browser-playable MP4 on upload (see /api/videos/files).
-    const allowed = new Set([".mp4", ".webm", ".mov", ".avi", ".mkv", ".flv", ".wmv", ".mts", ".m2ts", ".ts", ".m4v", ".mpg", ".mpeg", ".3gp"]);
     const ext = path.extname(file.originalname).toLowerCase();
-    if (allowed.has(ext)) cb(null, true);
+    if (ALLOWED_VIDEO_EXTENSIONS.has(ext)) cb(null, true);
     else cb(new Error("Unsupported video format. Allowed: MP4, WebM, MOV, AVI, MKV, FLV, WMV, MTS, M2TS, TS, M4V, MPG, 3GP"));
   },
+});
+
+// Cloudflare limits a single proxied request to 100 MB on Free/Pro plans. The
+// browser sends large videos as 20 MiB pieces, so each request stays well below
+// that ceiling. Only one piece is held in memory at a time.
+const videoChunkUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 21 * 1024 * 1024 },
 });
 
 // Subtitle/caption files live alongside videos and are served from the same dir.
@@ -4033,6 +4044,17 @@ async function startServer() {
     });
   };
 
+  const uploadVideoChunk = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    videoChunkUpload.single("chunk")(req, res, (err: any) => {
+      if (!err) return next();
+      const message =
+        err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE"
+          ? "Video upload chunks must be 20 MB or smaller"
+          : err.message || "Chunk upload failed";
+      res.status(400).json({ error: message });
+    });
+  };
+
   const uploadCaptionFile = (req: express.Request, res: express.Response, next: express.NextFunction) => {
     captionFileUpload.single("captions")(req, res, (err: any) => {
       if (!err) return next();
@@ -4811,8 +4833,19 @@ async function startServer() {
   // (AVCHD camera files), .avi, .mkv, .wmv, .flv, .mov, etc. — is transcoded to
   // MP4 with ffmpeg so students can play it directly on the site.
   const WEB_NATIVE_VIDEO = new Set([".mp4", ".webm"]);
+  const MAX_VIDEO_BYTES = 500 * 1024 * 1024;
+  const MAX_VIDEO_CHUNKS = 30;
   const cancelledTranscodes = new Set<string>();
   const transcodeInputs = new Map<string, string>();
+
+  // Remove abandoned chunk sessions after 24 hours.
+  const chunkExpiry = Date.now() - 24 * 60 * 60 * 1000;
+  for (const name of fs.readdirSync(VIDEO_CHUNK_DIR)) {
+    const chunkPath = path.join(VIDEO_CHUNK_DIR, name);
+    try {
+      if (fs.statSync(chunkPath).mtimeMs < chunkExpiry) fs.rmSync(chunkPath, { force: true });
+    } catch { /* another cleanup may already have removed it */ }
+  }
 
   // A conversion interrupted by a process/container restart cannot resume.
   // Sidecar job files let startup remove the raw source and expose a failed
@@ -4856,6 +4889,69 @@ async function startServer() {
       );
     });
 
+  const finishStoredVideoUpload = async (file: Express.Multer.File, res: express.Response) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (WEB_NATIVE_VIDEO.has(ext)) {
+      res.json({
+        url: `/uploads/videos/${file.filename}`,
+        originalName: file.originalname,
+        size: file.size,
+        mimeType: file.mimetype,
+      });
+      return;
+    }
+
+    // Non-web format → transcode to MP4 in the background. ffmpeg writes to a
+    // temporary path and atomically renames it only when playback is ready.
+    const outName = `${crypto.randomUUID()}.mp4`;
+    const outPath = path.join(VIDEO_FILES_DIR, outName);
+    const tmpPath = `${outPath}.tmp.mp4`;
+    const jobPath = `${outPath}.job`;
+    transcodeInputs.set(outName, file.path);
+
+    try {
+      await fs.promises.writeFile(jobPath, file.filename, "utf8");
+    } catch (err) {
+      transcodeInputs.delete(outName);
+      await fs.promises.unlink(file.path).catch(() => {});
+      logger.error("Could not create video transcode job:", err);
+      res.status(500).json({ error: "Could not start video conversion" });
+      return;
+    }
+
+    res.json({
+      url: `/uploads/videos/${outName}`,
+      originalName: file.originalname,
+      size: file.size,
+      mimeType: "video/mp4",
+      converted: true,
+      processing: true,
+      originalFormat: ext.replace(".", "").toUpperCase(),
+    });
+
+    transcodeToMp4(file.path, tmpPath)
+      .then(async () => {
+        await fs.promises.rename(tmpPath, outPath);
+        await fs.promises.unlink(file.path).catch(() => {});
+        if (cancelledTranscodes.has(outName)) {
+          await fs.promises.unlink(outPath).catch(() => {});
+        }
+      })
+      .catch(async (err: any) => {
+        logger.error("Video transcode failed:", err);
+        await fs.promises.unlink(tmpPath).catch(() => {});
+        await fs.promises.unlink(file.path).catch(() => {});
+        if (!cancelledTranscodes.has(outName)) {
+          await fs.promises.writeFile(`${outPath}.failed`, String(err?.message ?? "failed")).catch(() => {});
+        }
+      })
+      .finally(() => {
+        transcodeInputs.delete(outName);
+        cancelledTranscodes.delete(outName);
+        fs.promises.unlink(jobPath).catch(() => {});
+      });
+  };
+
   app.post(
     "/api/videos/files",
     authMiddleware,
@@ -4867,73 +4963,145 @@ async function startServer() {
         res.status(400).json({ error: "Video file is required" });
         return;
       }
-
-      const ext = path.extname(file.originalname).toLowerCase();
-      if (WEB_NATIVE_VIDEO.has(ext)) {
-        res.json({
-          url: `/uploads/videos/${file.filename}`,
-          originalName: file.originalname,
-          size: file.size,
-          mimeType: file.mimetype,
-        });
-        return;
-      }
-
-    // Non-web format → transcode to MP4 in the BACKGROUND so the uploader isn't
-    // blocked for the whole conversion. Respond immediately with the eventual
-    // MP4 url and processing:true; the player polls /api/videos/transcode-status
-    // (which checks the filesystem) and shows "Converting…" until it's ready.
-    // ffmpeg writes to a .tmp.mp4 and we atomically rename on success, so the
-    // final file only appears when it's fully playable.
-      const outName = `${crypto.randomUUID()}.mp4`;
-      const outPath = path.join(VIDEO_FILES_DIR, outName);
-      const tmpPath = `${outPath}.tmp.mp4`;
-      const jobPath = `${outPath}.job`;
-      transcodeInputs.set(outName, file.path);
-
-      try {
-        await fs.promises.writeFile(jobPath, file.filename, "utf8");
-      } catch (err) {
-        transcodeInputs.delete(outName);
-        await fs.promises.unlink(file.path).catch(() => {});
-        logger.error("Could not create video transcode job:", err);
-        res.status(500).json({ error: "Could not start video conversion" });
-        return;
-      }
-
-      res.json({
-        url: `/uploads/videos/${outName}`,
-        originalName: file.originalname,
-        size: file.size,
-        mimeType: "video/mp4",
-        converted: true,
-        processing: true,
-        originalFormat: ext.replace(".", "").toUpperCase(),
-      });
-
-      transcodeToMp4(file.path, tmpPath)
-        .then(async () => {
-          await fs.promises.rename(tmpPath, outPath);
-          await fs.promises.unlink(file.path).catch(() => {});
-          if (cancelledTranscodes.has(outName)) {
-            await fs.promises.unlink(outPath).catch(() => {});
-          }
-        })
-        .catch(async (err: any) => {
-          logger.error("Video transcode failed:", err);
-          await fs.promises.unlink(tmpPath).catch(() => {});
-          await fs.promises.unlink(file.path).catch(() => {});
-          if (!cancelledTranscodes.has(outName)) {
-            await fs.promises.writeFile(`${outPath}.failed`, String(err?.message ?? "failed")).catch(() => {});
-          }
-        })
-        .finally(() => {
-          transcodeInputs.delete(outName);
-          cancelledTranscodes.delete(outName);
-          fs.promises.unlink(jobPath).catch(() => {});
-        });
+      await finishStoredVideoUpload(file, res);
     }
   );
+
+  type VideoChunkManifest = {
+    userId: string;
+    originalName: string;
+    totalChunks: number;
+    createdAt: string;
+  };
+  const validUploadId = (value: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+  const chunkManifestPath = (uploadId: string) => path.join(VIDEO_CHUNK_DIR, `${uploadId}.json`);
+  const chunkPartPath = (uploadId: string, index: number) => path.join(VIDEO_CHUNK_DIR, `${uploadId}.${index}.part`);
+  const readChunkManifest = async (uploadId: string): Promise<VideoChunkManifest> =>
+    JSON.parse(await fs.promises.readFile(chunkManifestPath(uploadId), "utf8"));
+  const removeChunkSession = async (uploadId: string, totalChunks: number) => {
+    await Promise.all([
+      ...Array.from({ length: totalChunks }, (_, index) => fs.promises.unlink(chunkPartPath(uploadId, index)).catch(() => {})),
+      fs.promises.unlink(chunkManifestPath(uploadId)).catch(() => {}),
+    ]);
+  };
+
+  app.post(
+    "/api/videos/files/chunks",
+    authMiddleware,
+    requireAnyRole("ADMIN", "TEACHER"),
+    uploadVideoChunk,
+    async (req, res) => {
+      const jwtUser = (req as any).user as JwtPayload;
+      const chunk = (req as any).file as Express.Multer.File | undefined;
+      const uploadId = String(req.body?.uploadId || "");
+      const originalName = path.basename(String(req.body?.originalName || ""));
+      const chunkIndex = Number(req.body?.chunkIndex);
+      const totalChunks = Number(req.body?.totalChunks);
+      const ext = path.extname(originalName).toLowerCase();
+
+      if (!chunk || chunk.size === 0 || !validUploadId(uploadId) ||
+          !Number.isInteger(chunkIndex) || !Number.isInteger(totalChunks) ||
+          chunkIndex < 0 || totalChunks < 1 || totalChunks > MAX_VIDEO_CHUNKS || chunkIndex >= totalChunks ||
+          !originalName || !ALLOWED_VIDEO_EXTENSIONS.has(ext)) {
+        res.status(400).json({ error: "Invalid video upload chunk" });
+        return;
+      }
+
+      try {
+        const manifestPath = chunkManifestPath(uploadId);
+        let manifest: VideoChunkManifest;
+        if (!fs.existsSync(manifestPath)) {
+          if (chunkIndex !== 0) {
+            res.status(409).json({ error: "Upload must start with the first chunk" });
+            return;
+          }
+          manifest = { userId: jwtUser.userId, originalName, totalChunks, createdAt: new Date().toISOString() };
+          await fs.promises.writeFile(manifestPath, JSON.stringify(manifest), { flag: "wx" });
+        } else {
+          manifest = await readChunkManifest(uploadId);
+        }
+
+        if (manifest.userId !== jwtUser.userId || manifest.originalName !== originalName || manifest.totalChunks !== totalChunks) {
+          res.status(403).json({ error: "Upload session does not match this file" });
+          return;
+        }
+        await fs.promises.writeFile(chunkPartPath(uploadId, chunkIndex), chunk.buffer);
+        res.json({ received: chunkIndex, totalChunks });
+      } catch (err: any) {
+        logger.error("Video chunk upload failed:", err);
+        res.status(err?.code === "EEXIST" ? 409 : 500).json({ error: "Could not store video upload chunk" });
+      }
+    }
+  );
+
+  app.post("/api/videos/files/chunks/complete", authMiddleware, requireAnyRole("ADMIN", "TEACHER"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const uploadId = String(req.body?.uploadId || "");
+    if (!validUploadId(uploadId)) {
+      res.status(400).json({ error: "Invalid upload session" });
+      return;
+    }
+
+    let assembledPath = "";
+    try {
+      const manifest = await readChunkManifest(uploadId);
+      if (manifest.userId !== jwtUser.userId) {
+        res.status(403).json({ error: "Upload session belongs to another user" });
+        return;
+      }
+
+      const parts = Array.from({ length: manifest.totalChunks }, (_, index) => chunkPartPath(uploadId, index));
+      const stats = await Promise.all(parts.map((part) => fs.promises.stat(part)));
+      const totalSize = stats.reduce((sum, stat) => sum + stat.size, 0);
+      if (totalSize <= 0 || totalSize > MAX_VIDEO_BYTES) {
+        await removeChunkSession(uploadId, manifest.totalChunks);
+        res.status(400).json({ error: "Video files must be 500 MB or smaller" });
+        return;
+      }
+
+      const ext = path.extname(manifest.originalName).toLowerCase();
+      const assembledName = `${crypto.randomUUID()}${ext}`;
+      assembledPath = path.join(VIDEO_FILES_DIR, assembledName);
+      const output = await fs.promises.open(assembledPath, "wx");
+      try {
+        for (const part of parts) await output.write(await fs.promises.readFile(part));
+      } finally {
+        await output.close();
+      }
+      await removeChunkSession(uploadId, manifest.totalChunks);
+
+      const assembledFile = {
+        originalname: manifest.originalName,
+        filename: assembledName,
+        path: assembledPath,
+        size: totalSize,
+        mimetype: `video/${ext.slice(1)}`,
+      } as Express.Multer.File;
+      await finishStoredVideoUpload(assembledFile, res);
+    } catch (err: any) {
+      if (assembledPath) await fs.promises.unlink(assembledPath).catch(() => {});
+      logger.error("Could not assemble video upload:", err);
+      res.status(err?.code === "ENOENT" ? 409 : 500).json({
+        error: err?.code === "ENOENT" ? "One or more video chunks are missing" : "Could not assemble video upload",
+      });
+    }
+  });
+
+  app.delete("/api/videos/files/chunks/:uploadId", authMiddleware, requireAnyRole("ADMIN", "TEACHER"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const uploadId = String(req.params.uploadId || "");
+    if (!validUploadId(uploadId)) { res.status(400).json({ error: "Invalid upload session" }); return; }
+    try {
+      const manifest = await readChunkManifest(uploadId);
+      if (manifest.userId !== jwtUser.userId) { res.status(403).json({ error: "Forbidden" }); return; }
+      await removeChunkSession(uploadId, manifest.totalChunks);
+      res.json({ success: true });
+    } catch (err: any) {
+      if (err?.code === "ENOENT") { res.json({ success: true }); return; }
+      logger.error("Could not discard chunk upload:", err);
+      res.status(500).json({ error: "Could not discard upload session" });
+    }
+  });
 
   // Discard an upload that has not been attached to a saved lesson. This is
   // called by Remove and Cancel in the form and deliberately refuses to delete

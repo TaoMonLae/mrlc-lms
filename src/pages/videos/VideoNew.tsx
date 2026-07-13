@@ -82,6 +82,7 @@ export default function VideoNew() {
   const {
     file: videoFile,
     uploading: uploadingVideo,
+    uploadProgress: videoUploadProgress,
     uploadedUrl: uploadedVideoUrl,
     inputRef: videoInputRef,
     handleFileChange,
@@ -254,7 +255,7 @@ export default function VideoNew() {
                       className="w-full"
                     >
                       <Upload className="mr-2 h-4 w-4" />
-                      {uploadingVideo ? 'Uploading / converting…' : 'Choose Video File'}
+                      {uploadingVideo ? `Uploading ${videoUploadProgress}%…` : 'Choose Video File'}
                     </Button>
                     <p className="text-xs text-slate-500">
                       Supports {ALLOWED_VIDEO_EXTENSIONS.map((e) => e.replace('.', '').toUpperCase()).join(', ')} files up to {MAX_VIDEO_FILE_SIZE_DISPLAY}.

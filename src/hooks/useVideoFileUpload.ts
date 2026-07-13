@@ -8,6 +8,19 @@ import {
 } from '../lib/video/constants';
 import type { VideoUploadResponse } from '../lib/video/types';
 
+const VIDEO_CHUNK_SIZE = 20 * 1024 * 1024;
+
+async function uploadErrorMessage(res: Response, fallback: string): Promise<string> {
+  const text = await res.text();
+  if (res.headers.get('content-type')?.includes('application/json')) {
+    try { return JSON.parse(text).error || fallback; } catch { return fallback; }
+  }
+  if (res.headers.get('content-type')?.includes('text/html')) {
+    return `Server error (${res.status}): ${res.statusText}`;
+  }
+  return text || fallback;
+}
+
 interface UseVideoFileUploadOptions {
   /** Callback invoked when a file is successfully uploaded */
   onUploadComplete?: (url: string, fileName: string) => void;
@@ -59,6 +72,7 @@ interface UseVideoFileUploadOptions {
 export function useVideoFileUpload({ onUploadComplete, onUploadRemoved }: UseVideoFileUploadOptions = {}) {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -112,33 +126,61 @@ export function useVideoFileUpload({ onUploadComplete, onUploadRemoved }: UseVid
 
   const uploadFile = async (fileToUpload: File) => {
     const token = sessionStorage.getItem('auth_token');
-    const formData = new FormData();
-    formData.append('video', fileToUpload);
+    let chunkUploadId: string | null = null;
 
     setUploading(true);
+    setUploadProgress(0);
     try {
-      const res = await fetch('/api/videos/files', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
+      let res: Response;
+      if (fileToUpload.size > VIDEO_CHUNK_SIZE) {
+        chunkUploadId = crypto.randomUUID();
+        const totalChunks = Math.ceil(fileToUpload.size / VIDEO_CHUNK_SIZE);
+
+        for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex += 1) {
+          const start = chunkIndex * VIDEO_CHUNK_SIZE;
+          const chunk = fileToUpload.slice(start, Math.min(start + VIDEO_CHUNK_SIZE, fileToUpload.size));
+          const chunkBody = new FormData();
+          chunkBody.append('uploadId', chunkUploadId);
+          chunkBody.append('originalName', fileToUpload.name);
+          chunkBody.append('chunkIndex', String(chunkIndex));
+          chunkBody.append('totalChunks', String(totalChunks));
+          chunkBody.append('chunk', chunk, `${fileToUpload.name}.part`);
+
+          const chunkRes = await fetch('/api/videos/files/chunks', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+            body: chunkBody,
+          });
+          if (!chunkRes.ok) {
+            throw new Error(await uploadErrorMessage(chunkRes, `Failed to upload part ${chunkIndex + 1}`));
+          }
+          setUploadProgress(Math.round(((chunkIndex + 1) / totalChunks) * 95));
+        }
+
+        res = await fetch('/api/videos/files/chunks/complete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ uploadId: chunkUploadId }),
+        });
+      } else {
+        const formData = new FormData();
+        formData.append('video', fileToUpload);
+        res = await fetch('/api/videos/files', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+      }
 
       if (!res.ok) {
-        let errorMessage = 'Failed to upload video file';
-        const text = await res.text();
-        if (res.headers.get('content-type')?.includes('application/json')) {
-          try {
-            errorMessage = JSON.parse(text).error || errorMessage;
-          } catch { /* keep the fallback */ }
-        } else if (res.headers.get('content-type')?.includes('text/html')) {
-          errorMessage = `Server error (${res.status}): ${res.statusText}`;
-        } else if (text) {
-          errorMessage = text;
-        }
-        throw new Error(errorMessage);
+        throw new Error(await uploadErrorMessage(res, 'Failed to upload video file'));
       }
 
       const data: VideoUploadResponse = await res.json();
+      setUploadProgress(100);
       setUploadedUrl(data.url);
 
       onUploadComplete?.(data.url, data.originalName);
@@ -150,6 +192,12 @@ export function useVideoFileUpload({ onUploadComplete, onUploadRemoved }: UseVid
       );
       return data;
     } catch (error: unknown) {
+      if (chunkUploadId) {
+        await fetch(`/api/videos/files/chunks/${chunkUploadId}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        }).catch(() => {});
+      }
       const message = error instanceof Error ? error.message : 'Failed to upload video file';
       toast.error(message);
       setFile(null);
@@ -193,6 +241,7 @@ export function useVideoFileUpload({ onUploadComplete, onUploadRemoved }: UseVid
   return {
     file,
     uploading,
+    uploadProgress,
     uploadedUrl,
     inputRef,
     handleFileChange,
