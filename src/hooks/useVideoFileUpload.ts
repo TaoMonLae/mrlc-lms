@@ -119,8 +119,22 @@ export function useVideoFileUpload({ onUploadComplete }: UseVideoFileUploadOptio
       });
 
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || 'Failed to upload video file');
+        // Try to parse as JSON first, fallback to HTML/text
+        let errorMessage = 'Failed to upload video file';
+        try {
+          const err = await res.json();
+          errorMessage = err.error || errorMessage;
+        } catch {
+          // Response is not JSON (likely HTML error page from infrastructure)
+          const contentType = res.headers.get('content-type');
+          if (contentType?.includes('text/html')) {
+            errorMessage = `Server error (${res.status}): ${res.statusText}`;
+          } else {
+            const text = await res.text();
+            errorMessage = text || errorMessage;
+          }
+        }
+        throw new Error(errorMessage);
       }
 
       const data: VideoUploadResponse = await res.json();

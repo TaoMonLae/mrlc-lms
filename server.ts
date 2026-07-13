@@ -1442,12 +1442,12 @@ async function startServer() {
             useDefaults: true,
             directives: {
               "default-src": ["'self'"],
-              "script-src": ["'self'"],
+              "script-src": ["'self'", "https://static.cloudflareinsights.com"],
               "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
               "font-src": ["'self'", "https://fonts.gstatic.com", "data:"],
               "img-src": ["'self'", "data:", "https:", "blob:"],
               "media-src": ["'self'", "https:", "blob:"],
-              "connect-src": ["'self'"],
+              "connect-src": ["'self'", "https://fonts.googleapis.com", "https://fonts.gstatic.com"],
               "worker-src": ["'self'", "blob:"],
               "frame-src": [
                 "'self'",
