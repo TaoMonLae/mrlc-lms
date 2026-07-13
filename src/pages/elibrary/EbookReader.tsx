@@ -51,6 +51,9 @@ interface SearchResult {
   excerpt: string;
 }
 
+type ReaderPageView = 'single' | 'two';
+type ReaderFitMode = 'width' | 'height';
+
 async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit = {}, timeoutMs = 30000) {
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
@@ -640,7 +643,9 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards }: {
   const [numPages, setNumPages] = useState(0);
   const [page, setPage] = useState(1);
   const [scale, setScale] = useState(1);
-  const [width, setWidth] = useState<number>(0);
+  const [pageView, setPageView] = useState<ReaderPageView>('single');
+  const [fitMode, setFitMode] = useState<ReaderFitMode>('width');
+  const [viewport, setViewport] = useState({ width: 0, height: 0 });
   const [err, setErr] = useState<string | null>(null);
 
   const [pendingPage, setPendingPage] = useState<number | null>(null);
@@ -706,9 +711,10 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards }: {
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const ro = new ResizeObserver(() => setWidth(el.clientWidth - 32));
+    const measure = () => setViewport({ width: el.clientWidth, height: el.clientHeight });
+    const ro = new ResizeObserver(measure);
     ro.observe(el);
-    setWidth(el.clientWidth - 32);
+    measure();
     return () => ro.disconnect();
   }, []);
 
@@ -723,8 +729,19 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards }: {
     return () => clearTimeout(t);
   }, [numPages, err]);
 
-  const go = (delta: number) =>
-    setPage((p) => Math.min(Math.max(1, p + delta), numPages || 1));
+  const pageStep = pageView === 'two' ? 2 : 1;
+  const go = (direction: number) =>
+    setPage((p) => Math.min(Math.max(1, p + direction * pageStep), numPages || 1));
+
+  const changePageView = (value: ReaderPageView) => {
+    setPageView(value);
+    if (value === 'two') setPage((current) => current % 2 === 0 ? current - 1 : current);
+  };
+
+  const visiblePages = pageView === 'two' && page < numPages ? [page, page + 1] : [page];
+  const availableWidth = Math.max(240, viewport.width - 32 - (pageView === 'two' ? 16 : 0));
+  const fittedPageWidth = (availableWidth / visiblePages.length) * scale;
+  const fittedPageHeight = Math.max(240, viewport.height - 32) * scale;
 
   const onError = (e: unknown) => {
     const msg = (e as Error)?.message || String(e);
@@ -805,7 +822,7 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards }: {
             <p className="text-xs text-slate-500 mt-1 break-words">{err}</p>
           </div>
         ) : (
-          <div ref={pageWrapRef} onMouseUp={onMouseUp}>
+          <div ref={pageWrapRef} onMouseUp={onMouseUp} className="flex items-start justify-center gap-4">
             <Document
               file={file}
               onLoadSuccess={(pdf: any) => { setNumPages(pdf.numPages); pdfRef.current = pdf; setErr(null); }}
@@ -813,14 +830,20 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards }: {
               onSourceError={onError}
               loading={<div className="flex items-center justify-center h-40 text-slate-500"><Loader2 className="h-5 w-5 animate-spin" /></div>}
             >
-              <Page
-                pageNumber={page}
-                width={width > 0 ? Math.min(width, 1000) * scale : undefined}
-                renderAnnotationLayer={false}
-                renderTextLayer
-                className="shadow-lg"
-                onRenderError={onError}
-              />
+              <div className="flex items-start justify-center gap-4">
+                {visiblePages.map((pageNumber) => (
+                  <Page
+                    key={pageNumber}
+                    pageNumber={pageNumber}
+                    width={fitMode === 'width' && viewport.width > 0 ? fittedPageWidth : undefined}
+                    height={fitMode === 'height' && viewport.height > 0 ? fittedPageHeight : undefined}
+                    renderAnnotationLayer={false}
+                    renderTextLayer
+                    className="shadow-lg"
+                    onRenderError={onError}
+                  />
+                ))}
+              </div>
             </Document>
           </div>
         )}
@@ -838,13 +861,35 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards }: {
       <div className="shrink-0 flex flex-wrap items-center justify-center gap-2 border-t border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo px-4 py-2">
         <Button variant="outline" size="icon" onClick={() => go(-1)} disabled={page <= 1}><ChevronLeft className="h-4 w-4" /></Button>
         <span className="text-xs font-medium text-slate-600 dark:text-slate-300 tabular-nums px-2">
-          Page {page} / {numPages || '…'}
+          {pageView === 'two' && page < numPages ? `Pages ${page}–${page + 1}` : `Page ${page}`} / {numPages || '…'}
         </span>
-        <Button variant="outline" size="icon" onClick={() => go(1)} disabled={page >= numPages}><ChevronRight className="h-4 w-4" /></Button>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => go(1)}
+          disabled={page + visiblePages.length - 1 >= numPages}
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
         <div className="w-px h-5 bg-slate-200 dark:bg-surface-raised mx-1" />
         <Button variant="outline" size="icon" onClick={() => setScale((s) => Math.max(0.5, +(s - 0.2).toFixed(2)))} title="Zoom out"><ZoomOut className="h-4 w-4" /></Button>
         <span className="text-xs text-slate-500 tabular-nums w-10 text-center">{Math.round(scale * 100)}%</span>
         <Button variant="outline" size="icon" onClick={() => setScale((s) => Math.min(2.5, +(s + 0.2).toFixed(2)))} title="Zoom in"><ZoomIn className="h-4 w-4" /></Button>
+        <div className="w-px h-5 bg-slate-200 dark:bg-surface-raised mx-1" />
+        <Select value={pageView} onValueChange={(value) => changePageView(value as ReaderPageView)}>
+          <SelectTrigger className="h-9 w-[132px]" title="Page view"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="single">Single Page</SelectItem>
+            <SelectItem value="two">Two Page</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={fitMode} onValueChange={(value) => { setFitMode(value as ReaderFitMode); setScale(1); }}>
+          <SelectTrigger className="h-9 w-[125px]" title="Fit mode"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="width">Fit to Width</SelectItem>
+            <SelectItem value="height">Fit to Height</SelectItem>
+          </SelectContent>
+        </Select>
         <div className="w-px h-5 bg-slate-200 dark:bg-surface-raised mx-1" />
         <Button variant="outline" size="icon" onClick={() => setShowSearch(true)} title="Search in book" disabled={!numPages}><Search className="h-4 w-4" /></Button>
         <Button variant="outline" size="icon" onClick={() => setShowHighlights(true)} title="My highlights">
@@ -977,6 +1022,9 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards }: {
   const [ready, setReady] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [appearance, setAppearance] = useState<EpubAppearance>(loadEpubAppearance);
+  const [zoom, setZoom] = useState(100);
+  const [pageView, setPageView] = useState<ReaderPageView>('single');
+  const [fitMode, setFitMode] = useState<ReaderFitMode>('width');
   const appearanceRef = useRef(appearance);
 
   const [highlights, setHighlights] = useState<HighlightRow[]>([]);
@@ -1036,7 +1084,7 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards }: {
           width: '100%',
           height: '100%',
           flow: 'paginated',
-          spread: 'auto',
+          spread: 'none',
         });
         rendRef.current = rendition;
         applyEpubAppearance(rendition, appearance);
@@ -1087,18 +1135,30 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards }: {
     if (rendRef.current) applyEpubAppearance(rendRef.current, appearance);
   }, [appearance, ready]);
 
-  // Force single-page spread on narrow viewports (a two-page spread is
-  // unreadable on a phone-width reader panel).
+  // EPUB text is reflowable, so zoom changes its base font size rather than
+  // scaling an iframe bitmap. This keeps text crisp and repaginates naturally.
   useEffect(() => {
-    const el = viewerRef.current?.parentElement;
+    if (!rendRef.current) return;
+    try { rendRef.current.themes.fontSize(`${zoom}%`); } catch { /* rendition is still opening */ }
+  }, [zoom, ready]);
+
+  useEffect(() => {
+    if (!rendRef.current) return;
+    try { rendRef.current.spread(pageView === 'two' ? 'always' : 'none', 0); } catch { /* rendition is still opening */ }
+  }, [pageView, ready]);
+
+  // Keep EPUB.js informed when fit mode, fullscreen, or the surrounding
+  // layout changes. Fit-to-height uses a comfortable page-width cap; fit-to-
+  // width consumes the whole reader width. Both retain the selected spread.
+  useEffect(() => {
+    const el = viewerRef.current;
     if (!el) return;
-    const ro = new ResizeObserver(([entry]) => {
-      const w = entry.contentRect.width;
-      try { rendRef.current?.spread(w < 640 ? 'none' : 'auto'); } catch { /* not ready yet */ }
+    const ro = new ResizeObserver(() => {
+      try { rendRef.current?.resize(el.clientWidth, el.clientHeight); } catch { /* not ready yet */ }
     });
     ro.observe(el);
     return () => ro.disconnect();
-  }, [ready]);
+  }, [ready, fitMode, pageView]);
 
   const clearSelection = () => {
     try { selection?.contents?.window?.getSelection?.()?.removeAllRanges(); } catch { /* noop */ }
@@ -1165,7 +1225,7 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards }: {
 
   return (
     <div className="h-full flex flex-col relative">
-      <div className={`flex-1 min-h-0 relative ${EPUB_APPEARANCE_SURFACE[appearance]}`}>
+      <div className={`flex-1 min-h-0 relative overflow-auto custom-scrollbar flex justify-center ${EPUB_APPEARANCE_SURFACE[appearance]}`}>
         {err ? (
           <div className="h-full flex flex-col items-center justify-center text-center px-6">
             <BookOpen className="h-10 w-10 text-slate-300 mb-3" />
@@ -1173,7 +1233,15 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards }: {
             <p className="text-xs text-slate-500 mt-1 break-words">{err}</p>
           </div>
         ) : (
-          <div ref={viewerRef} className="h-full w-full" />
+          <div
+            ref={viewerRef}
+            className="h-full shrink-0"
+            style={{
+              width: fitMode === 'width'
+                ? '100%'
+                : pageView === 'two' ? 'min(100%, 1200px)' : 'min(100%, 760px)',
+            }}
+          />
         )}
         {selection && (
           <SelectionBar
@@ -1203,6 +1271,24 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards }: {
           </Select>
         )}
         <Button variant="outline" size="icon" onClick={() => rendRef.current?.next()} disabled={!ready} className="shrink-0"><ChevronRight className="h-4 w-4" /></Button>
+        <div className="w-px h-5 bg-slate-200 dark:bg-surface-raised mx-1 shrink-0" />
+        <Button variant="outline" size="icon" onClick={() => setZoom((value) => Math.max(60, value - 10))} title="Zoom out" disabled={!ready}><ZoomOut className="h-4 w-4" /></Button>
+        <span className="text-xs text-slate-500 tabular-nums w-10 text-center">{zoom}%</span>
+        <Button variant="outline" size="icon" onClick={() => setZoom((value) => Math.min(200, value + 10))} title="Zoom in" disabled={!ready}><ZoomIn className="h-4 w-4" /></Button>
+        <Select value={pageView} onValueChange={(value) => setPageView(value as ReaderPageView)} disabled={!ready}>
+          <SelectTrigger className="h-9 w-[132px]" title="Page view"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="single">Single Page</SelectItem>
+            <SelectItem value="two">Two Page</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={fitMode} onValueChange={(value) => setFitMode(value as ReaderFitMode)} disabled={!ready}>
+          <SelectTrigger className="h-9 w-[125px]" title="Fit mode"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="width">Fit to Width</SelectItem>
+            <SelectItem value="height">Fit to Height</SelectItem>
+          </SelectContent>
+        </Select>
         <div className="w-px h-5 bg-slate-200 dark:bg-surface-raised mx-1 shrink-0" />
         <Button variant="outline" size="icon" onClick={() => setShowSearch(true)} title="Search in book" disabled={!ready} className="shrink-0"><Search className="h-4 w-4" /></Button>
         <Button variant="outline" size="icon" onClick={() => setShowHighlights(true)} title="My highlights" className="shrink-0">
