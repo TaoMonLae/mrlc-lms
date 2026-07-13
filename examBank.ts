@@ -134,6 +134,9 @@ export function freezeAttempt(questions: any[], exam: any, seed: string) {
       points: q.pointsOverride ?? q.defaultPoints ?? q.points ?? 0,
       passageText: q.passageText ?? null,
       imageUrl: q.imageUrl ?? null,
+      // Needed so the player renders multi-answer questions as multi-select;
+      // omitting it made every frozen question render single-select.
+      partialCredit: q.partialCredit ?? false,
       options: opts.map((o) => ({ key: o.key, text: o.text })),
       dragText: q.type === "DRAG_DROP" ? String(q.options?.text ?? "") : undefined,
       dragBank: q.type === "DRAG_DROP" ? dragBank : undefined,

@@ -81,10 +81,10 @@ const TYPES: TypeDef[] = [
 ];
 const typeDef = (t: UIType) => TYPES.find((x) => x.key === t)!;
 const isObjective = (t: UIType) => typeDef(t).objective;
-// HOTSPOT is included: it's stored and graded as a single-select choice
-// question (toBackend saves one correctAnswer index), so the editor must not
-// let the author mark several regions correct — only the first would be saved.
-const singleCorrect = (t: UIType) => t === 'MCQ' || t === 'TF' || t === 'DROPDOWN' || t === 'HOTSPOT';
+// Per the design: single-select for MCQ / True-False / Drop-down; multi-select
+// for Drag & Hot spot. HOTSPOT stores all correct regions via correctAnswers +
+// partialCredit (see toBackend), so multiple may be marked.
+const singleCorrect = (t: UIType) => t === 'MCQ' || t === 'TF' || t === 'DROPDOWN';
 
 const C = {
   purple: '#7a3dff', purpleText: '#6325e6', purpleDeep: '#4f1cb8',
@@ -120,10 +120,18 @@ function fromBackend(q: any, index: number): Question {
     base.uiType = 'ESSAY'; base.sample = q.correctAnswer || '';
   } else if (bt === 'WRITTEN') {
     base.uiType = 'EXTENDED'; base.sample = q.correctAnswer || '';
-  } else if (bt === 'DROPDOWN' || bt === 'HOTSPOT') {
-    // First-class GED types (graded as single-select choice questions).
-    base.uiType = bt;
+  } else if (bt === 'DROPDOWN') {
+    base.uiType = 'DROPDOWN';
     base.options = optsToArr(Array.isArray(opts) ? opts : [], q.correctAnswer);
+  } else if (bt === 'HOTSPOT') {
+    // Multi-select: reconstruct correct regions from correctAnswers (texts),
+    // falling back to a single correctAnswer index for older data.
+    base.uiType = 'HOTSPOT';
+    const arr: string[] = Array.isArray(opts) ? opts : [];
+    const correctTexts: string[] = Array.isArray(q.correctAnswers) ? q.correctAnswers.map((s: any) => String(s)) : [];
+    base.options = correctTexts.length
+      ? arr.map((t) => ({ t, c: correctTexts.includes(t) }))
+      : optsToArr(arr, q.correctAnswer);
   } else if (bt === 'EXTENDED') {
     base.uiType = 'EXTENDED'; base.sample = q.correctAnswer || '';
   } else if (bt === 'DRAG_DROP') {
@@ -179,8 +187,21 @@ function toBackend(q: Question) {
     }
     case 'DROPDOWN':
       return { questionText: q.text, type: 'DROPDOWN', points: q.points, choices: q.options.map((o) => o.t), correctAnswer: String(Math.max(0, firstCorrect)), explanation: q.explanation || null };
-    case 'HOTSPOT':
-      return { questionText: q.text, type: 'HOTSPOT', points: q.points, choices: q.options.map((o) => o.t), correctAnswer: String(Math.max(0, firstCorrect)), explanation: q.explanation || null };
+    case 'HOTSPOT': {
+      // Multi-select (per design). Player stores the chosen option keys, which
+      // for these string choices are the option texts — so correctAnswers holds
+      // the correct option texts, and partialCredit makes the player render it
+      // as multi-select and the grader score it by set comparison.
+      const correctTexts = q.options.filter((o) => o.c).map((o) => o.t);
+      return {
+        questionText: q.text, type: 'HOTSPOT', points: q.points,
+        choices: q.options.map((o) => o.t),
+        correctAnswer: String(Math.max(0, firstCorrect)),
+        correctAnswers: correctTexts,
+        partialCredit: true,
+        explanation: q.explanation || null,
+      };
+    }
     default: // MCQ (and reloaded GED_*)
       return { questionText: q.text, type: q.origType || 'MCQ', points: q.points, choices: q.options.map((o) => o.t), correctAnswer: String(Math.max(0, firstCorrect)), explanation: q.explanation || null };
   }
@@ -502,10 +523,13 @@ export default function GuidedStudio() {
     if (!title.trim()) { toast.error('Please enter an exam title.'); setStep('details'); return; }
     if (!subjectId) { toast.error('Please select a subject.'); setStep('details'); return; }
     if ((nextStatus === 'PUBLISHED') && questions.length === 0) { toast.error('Add at least one question before publishing.'); setStep('questions'); return; }
-    // Guard the "no correct answer → silently defaults to option 0" trap: every
-    // single-select objective question must have a correct answer marked.
+    // Every auto-graded question with options (MCQ/TF/Drop-down/Hot spot/Drag)
+    // must have at least one correct answer marked — otherwise it can't be
+    // graded (and single-select ones would silently default to option 0).
     if (nextStatus === 'PUBLISHED') {
-      const badIdx = questions.findIndex((q) => singleCorrect(q.uiType) && !q.options.some((o) => o.c));
+      const badIdx = questions.findIndex(
+        (q) => isObjective(q.uiType) && q.options.length > 0 && !q.options.some((o) => o.c)
+      );
       if (badIdx !== -1) {
         toast.error(`Question ${badIdx + 1} has no correct answer marked.`);
         setSel(badIdx);

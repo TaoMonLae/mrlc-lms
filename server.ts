@@ -927,6 +927,8 @@ const schemas = {
     questions: z.array(z.object({
       questionText: optStr, type: optStr, points: optNum,
       choices: z.any().optional(), correctAnswer: z.any().optional(),
+      correctAnswers: z.any().optional(),
+      partialCredit: z.boolean().optional(),
       passageText: optStr.optional().nullable(),
       explanation: optStr.optional().nullable(),
       imageUrl: nullableStr,
@@ -11789,6 +11791,8 @@ async function startServer() {
                   points: Number(q.points) || 5,
                   options: q.choices || null,
                   correctAnswer: q.correctAnswer != null ? String(q.correctAnswer) : null,
+                  correctAnswers: q.correctAnswers ?? null,
+                  partialCredit: !!q.partialCredit,
                   passageText: q.passageText || null,
                   explanation: q.explanation || null,
                   imageUrl: q.imageUrl || null,

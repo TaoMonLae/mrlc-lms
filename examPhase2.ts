@@ -503,7 +503,7 @@ export function registerExamPhase2Routes(deps: Deps): void {
         dragBank: Array.isArray(q.dragBank) ? q.dragBank : undefined,
         passageText: q.passageText ?? null,
         imageUrl: q.imageUrl ?? null,
-        partialCredit: false,
+        partialCredit: q.partialCredit ?? false,
       }));
     } else {
       const questions = exam.questions || (await prisma.question.findMany({ where: { examId: exam.id } }));
@@ -668,8 +668,9 @@ export function registerExamPhase2Routes(deps: Deps): void {
     const clamp = (s: number) => Math.min(max, Math.max(lowerBound, s));
     const wrongScore = () => clamp(q.negativePoints ? -Math.abs(q.negativePoints) : 0);
 
-    // Manual types.
-    if (["ESSAY", "WRITTEN", "EXTENDED"].includes(q.type) || q.requiresManualGrading) return { score: 0, correct: null, manual: true };
+    // Manual types. Short answer is graded manually per the exam design (the
+    // stored correctAnswer is a model answer / rubric note, not an exact key).
+    if (["SHORT_ANSWER", "ESSAY", "WRITTEN", "EXTENDED"].includes(q.type) || q.requiresManualGrading) return { score: 0, correct: null, manual: true };
 
     // Accepted correct answers (option keys/ids or a single correctAnswer) —
     // used by both single-choice and multi-select scoring below.
