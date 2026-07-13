@@ -10013,3 +10013,4327 @@ msgstr "ကျောင်းသားကြေး"
 msgid "Student Library"
 msgstr "ကျောင်းသားစာကြည့်တိုက်"
 
+# Extracted string
+msgid "PixelBlast interactive background"
+msgstr "PixelBlast အပြန်အလှန်သက်ရောက်မှုရှိသော နောက်ခံ"
+
+# Extracted string
+msgid "Search students, teachers, classes..."
+msgstr "ကျောင်းသားများ၊ ဆရာများ၊ အတန်းများကို ရှာဖွေရန်..."
+
+# Extracted string
+msgid "Try a name, student ID, teacher code, or class name"
+msgstr "အမည်၊ ကျောင်းသား ID၊ ဆရာကုဒ် သို့မဟုတ် အတန်းအမည်ကို စမ်းသပ်ရိုက်ထည့်ပါ"
+
+# Extracted string
+msgid "Students, teachers, and classes"
+msgstr "ကျောင်းသားများ၊ ဆရာများနှင့် အတန်းများ"
+
+# Extracted string
+msgid "↑↓"
+msgstr "↑↓"
+
+# Extracted string
+msgid "Enter"
+msgstr "Enter"
+
+# Extracted string
+msgid "Esc"
+msgstr "Esc"
+
+# Extracted string
+msgid "close"
+msgstr "ပိတ်ရန်"
+
+# Extracted string
+msgid "Copied to clipboard!"
+msgstr "ကလစ်ဘုတ်သို့ ကူးယူပြီးပါပြီ။"
+
+# Extracted string
+msgid "AI School Assistant"
+msgstr "AI ကျောင်းကူညီပေးသူ"
+
+# Extracted string
+msgid "Clear conversation"
+msgstr "စကားဝိုင်းကို ရှင်းလင်းရန်"
+
+# Extracted string
+msgid "Ask AI assistant..."
+msgstr "AI ကူညီပေးသူကို မေးမြန်းရန်..."
+
+# Extracted string
+msgid "MRLC AI Assistant"
+msgstr "MRLC AI ကူညီပေးသူ"
+
+# Extracted string
+msgid "Free Gemma/Gemini integration for Teachers & Admins"
+msgstr "ဆရာများနှင့် စီမံခန့်ခွဲသူများအတွက် အခမဲ့ Gemma/Gemini ပေါင်းစပ်မှု"
+
+# Extracted string
+msgid "How can I help you today?"
+msgstr "ဒီနေ့ ဘာကူညီပေးရမလဲ။"
+
+# Extracted string
+msgid "Choose a quick prompt below or type your request in the chat."
+msgstr "အောက်ပါ အချက်ပေးစာတိုများမှ ရွေးချယ်ပါ သို့မဟုတ် စကားဝိုင်းထဲတွင် သင့်တောင်းဆိုချက်ကို ရိုက်ထည့်ပါ။"
+
+# Extracted string
+msgid "Generating assistance..."
+msgstr "အကူအညီ ရယူနေပါသည်..."
+
+# Extracted string
+msgid "prev"
+msgstr "ရှေ့သို့"
+
+# Extracted string
+msgid "No vendors found"
+msgstr "ရောင်းချသူများ မတွေ့ရှိပါ။"
+
+# Extracted string
+msgid "= 100) return"
+msgstr ""
+
+# Extracted string
+msgid "Allocated"
+msgstr "ခွဲဝေချထားမှု"
+
+# Extracted string
+msgid "Spent"
+msgstr "သုံးစွဲမှု"
+
+# Extracted string
+msgid "Remaining"
+msgstr "လက်ကျန်"
+
+# Extracted string
+msgid "Budget"
+msgstr "ဘတ်ဂျက်"
+
+# Extracted string
+msgid "Actual"
+msgstr "အမှန်တကယ်"
+
+# Extracted string
+msgid "Variance"
+msgstr "ကွာခြားချက်"
+
+# Extracted string
+msgid "0 ? \"up\" : change"
+msgstr "0 ? \"up\" : change"
+
+# Extracted string
+msgid "0 ? \"text-green-600\" : trend"
+msgstr "0 ? \"text-green-600\" : trend"
+
+# Extracted string
+msgid "Open search (Ctrl+K)"
+msgstr "ရှာဖွေရန် (Ctrl+K)"
+
+# Extracted string
+msgid "⌘K"
+msgstr "⌘K"
+
+# Extracted string
+msgid "News"
+msgstr "သတင်းများ"
+
+# Extracted string
+msgid "Games"
+msgstr "ဂိမ်းများ"
+
+# Extracted string
+msgid "Snake Game"
+msgstr "မြွေဂိမ်း"
+
+# Extracted string
+msgid "Sudoku"
+msgstr "ဆူဒိုကူ"
+
+# Extracted string
+msgid "Checkers"
+msgstr "ချက်ကာဂိမ်း"
+
+# Extracted string
+msgid "Dictionary"
+msgstr "အဘိဓာန်"
+
+# Extracted string
+msgid "Flashcards"
+msgstr "မှတ်ဉာဏ်ကတ်များ"
+
+# Extracted string
+msgid "Financial Dashboard"
+msgstr "ဘဏ္ဍာရေး ဒက်ရှ်ဘုတ်"
+
+# Extracted string
+msgid "Fee Structures"
+msgstr "လခ သတ်မှတ်ချက်များ"
+
+# Extracted string
+msgid "Donations"
+msgstr "အလှူငွေများ"
+
+# Extracted string
+msgid "Donors"
+msgstr "အလှူရှင်များ"
+
+# Extracted string
+msgid "Expenses"
+msgstr "အသုံးစရိတ်များ"
+
+# Extracted string
+msgid "Vendors"
+msgstr "ရောင်းချသူများ"
+
+# Extracted string
+msgid "Budgets"
+msgstr "ဘတ်ဂျက်များ"
+
+# Extracted string
+msgid "Student Duties"
+msgstr "ကျောင်းသားတာဝန်များ"
+
+# Extracted string
+msgid "Conduct"
+msgstr "အကျင့်စာရိတ္တ"
+
+# Extracted string
+msgid "My Payroll"
+msgstr "ကျွန်ုပ်၏ လစာငွေ"
+
+# Extracted string
+msgid "My Duties"
+msgstr "ကျွန်ုပ်၏ တာဝန်များ"
+
+# Extracted string
+msgid "string | number): Record"
+msgstr ""
+
+# Extracted string
+msgid "= ([] as Array"
+msgstr ""
+
+# Extracted string
+msgid "String(n))).indexOf(char)"
+msgstr ""
+
+# Extracted string
+msgid "Enter your email or username"
+msgstr "အီးမေးလ် သို့မဟုတ် အသုံးပြုသူအမည်ကို ရိုက်ထည့်ပါ"
+
+# Extracted string
+msgid "Email or username"
+msgstr "အီးမေးလ် သို့မဟုတ် အသုံးပြုသူအမည်"
+
+# Extracted string
+msgid "Cursor effect updated"
+msgstr "မောက်စ်ညွှန်တံအကျိုးသက်ရောက်မှုကို မွမ်းမံပြီးပါပြီ"
+
+# Extracted string
+msgid "Manage your personal account and preferences."
+msgstr "သင်၏ ကိုယ်ပိုင်အကောင့်နှင့် စိတ်ကြိုက်ရွေးချယ်မှုများကို စီမံခန့်ခွဲပါ။"
+
+# Extracted string
+msgid "Change Password"
+msgstr "စကားဝှက် ပြောင်းရန်"
+
+# Extracted string
+msgid "Cursor Effect"
+msgstr "မောက်စ်ညွှန်တံ အကျိုးသက်ရောက်မှု"
+
+# Extracted string
+msgid "Pick your own decorative mouse-cursor effect, overriding the school-wide default just for your account."
+msgstr "သင့်အကောင့်တစ်ခုတည်းအတွက် ကျောင်းတစ်ခုလုံး၏ မူရင်းသတ်မှတ်ချက်ကို ကျော်လွန်ပြီး သင်နှစ်သက်ရာ မောက်စ်ညွှန်တံ အလှဆင်မှုကို ရွေးချယ်ပါ။"
+
+# Extracted string
+msgid "Effect"
+msgstr "အကျိုးသက်ရောက်မှု"
+
+# Extracted string
+msgid "Automatically disabled for anyone with \"reduce motion\" enabled in their OS."
+msgstr "OS တွင် \"လှုပ်ရှားမှု လျှော့ချရန်\" ကို ဖွင့်ထားသူများအတွက် အလိုအလျောက် ပိတ်ထားပါမည်။"
+
+# Extracted string
+msgid "Mark at least one blank in the passage using [[word]]"
+msgstr "[[စကားလုံး]] ကို အသုံးပြု၍ စာပိုဒ်တွင် အနည်းဆုံး ကွက်လပ်တစ်ခုကို မှတ်သားပါ"
+
+# Extracted string
+msgid "e.g. red, tall"
+msgstr "ဥပမာ- အနီရောင်၊ အရပ်ရှည်သော"
+
+# Extracted string
+msgid "— wrap each word students must drag into place with double brackets, e.g. [[word]]"
+msgstr "— ကျောင်းသားများ ဆွဲယူထည့်ရမည့် စကားလုံးတိုင်းကို ကွင်းစကွင်းပိတ်အထပ်ဖြင့် ပတ်ထားပါ၊ ဥပမာ- [[စကားလုံး]]"
+
+# Extracted string
+msgid "Extra wrong words"
+msgstr "မှားယွင်းသော အပိုစကားလုံးများ"
+
+# Extracted string
+msgid "(optional, comma-separated)"
+msgstr "(ရွေးချယ်နိုင်သည်၊ ကော်မာဖြင့် ပိုင်းခြားရန်)"
+
+# Extracted string
+msgid "Failed to load budget"
+msgstr "ဘတ်ဂျက်ကို ဖွင့်၍မရပါ"
+
+# Extracted string
+msgid "Budget deleted successfully"
+msgstr "ဘတ်ဂျက်ကို အောင်မြင်စွာ ဖျက်လိုက်ပါပြီ"
+
+# Extracted string
+msgid "Are you sure you want to delete this budget?"
+msgstr "ဤဘတ်ဂျက်ကို ဖျက်ရန် သေချာပါသလား။"
+
+# Extracted string
+msgid "Budget not found"
+msgstr "ဘတ်ဂျက် မတွေ့ရှိပါ"
+
+# Extracted string
+msgid "Utilization"
+msgstr "အသုံးချမှုနှုန်း"
+
+# Extracted string
+msgid "Used"
+msgstr "သုံးပြီးသား"
+
+# Extracted string
+msgid "Budget Period"
+msgstr "ဘတ်ဂျက်ကာလ"
+
+# Extracted string
+msgid "Fiscal Year"
+msgstr "ဘဏ္ဍာရေးနှစ်"
+
+# Extracted string
+msgid "Budget Settings"
+msgstr "ဘတ်ဂျက် ဆက်တင်များ"
+
+# Extracted string
+msgid "Alert Threshold"
+msgstr "သတိပေးချက် သတ်မှတ်ချက်"
+
+# Extracted string
+msgid "Strict Limit"
+msgstr "တင်းကျပ်သော ကန့်သတ်ချက်"
+
+# Extracted string
+msgid "Associated Expenses"
+msgstr "ဆက်စပ် အသုံးစရိတ်များ"
+
+# Extracted string
+msgid "View All Expenses"
+msgstr "အသုံးစရိတ်အားလုံးကို ကြည့်ရှုရန်"
+
+# Extracted string
+msgid "Budget updated successfully"
+msgstr "ဘတ်ဂျက်ကို အောင်မြင်စွာ မွမ်းမံပြီးပါပြီ"
+
+# Extracted string
+msgid "e.g., Operating Expenses 2024"
+msgstr "ဥပမာ- ၂၀၂၄ လုပ်ငန်းလည်ပတ်မှုစရိတ်များ"
+
+# Extracted string
+msgid "Budget code (optional)"
+msgstr "ဘတ်ဂျက်ကုဒ် (ရွေးချယ်နိုင်သည်)"
+
+# Extracted string
+msgid "Budget description and purpose"
+msgstr "ဘတ်ဂျက် အကြောင်းအရာနှင့် ရည်ရွယ်ချက်"
+
+# Extracted string
+msgid "Select category"
+msgstr "အမျိုးအစား ရွေးချယ်ပါ"
+
+# Extracted string
+msgid "Comma-separated tags"
+msgstr "ကော်မာဖြင့် ပိုင်းခြားထားသော တဂ်များ"
+
+# Extracted string
+msgid "Additional notes or comments"
+msgstr "အပိုဆောင်း မှတ်စုများ သို့မဟုတ် မှတ်ချက်များ"
+
+# Extracted string
+msgid "Edit Budget"
+msgstr "ဘတ်ဂျက် ပြင်ဆင်ရန်"
+
+# Extracted string
+msgid "Update budget allocation"
+msgstr "ဘတ်ဂျက် ခွဲဝေမှုကို မွမ်းမံရန်"
+
+# Extracted string
+msgid "Basic Information"
+msgstr "အခြေခံ အချက်အလက်များ"
+
+# Extracted string
+msgid "Budget Name *"
+msgstr "ဘတ်ဂျက် အမည် *"
+
+# Extracted string
+msgid "Fiscal Year *"
+msgstr "ဘဏ္ဍာရေးနှစ် *"
+
+# Extracted string
+msgid "Budget Code"
+msgstr "ဘတ်ဂျက်ကုဒ်"
+
+# Extracted string
+msgid "Start Date *"
+msgstr "စတင်မည့် ရက်စွဲ *"
+
+# Extracted string
+msgid "End Date *"
+msgstr "ကုန်ဆုံးမည့် ရက်စွဲ *"
+
+# Extracted string
+msgid "Budget Allocation"
+msgstr "ဘတ်ဂျက် ခွဲဝေမှု"
+
+# Extracted string
+msgid "Allocated Amount *"
+msgstr "ခွဲဝေပေးထားသော ပမာဏ *"
+
+# Extracted string
+msgid "MYR - Malaysian Ringgit"
+msgstr "MYR - မလေးရှားရင်းဂစ်"
+
+# Extracted string
+msgid "USD - US Dollar"
+msgstr "USD - အမေရိကန်ဒေါ်လာ"
+
+# Extracted string
+msgid "EUR - Euro"
+msgstr "EUR - ယူရို"
+
+# Extracted string
+msgid "GBP - British Pound"
+msgstr "GBP - ဗြိတိန်ပေါင်"
+
+# Extracted string
+msgid "SGD - Singapore Dollar"
+msgstr "SGD - စင်ကာပူဒေါ်လာ"
+
+# Extracted string
+msgid "THB - Thai Baht"
+msgstr "THB - ထိုင်းဘတ်"
+
+# Extracted string
+msgid "Alert Threshold (%)"
+msgstr "သတိပေးချက် သတ်မှတ်ချက် (%)"
+
+# Extracted string
+msgid "Strict Limit - Block expenses when exceeded"
+msgstr "တင်းကျပ်သော ကန့်သတ်ချက် - ကျော်လွန်ပါက အသုံးစရိတ်များကို ပိတ်ပင်ရန်"
+
+# Extracted string
+msgid "Additional Information"
+msgstr "အပိုဆောင်း အချက်အလက်များ"
+
+# Extracted string
+msgid "Tags"
+msgstr "တဂ်များ"
+
+# Extracted string
+msgid "Budget created successfully"
+msgstr "ဘတ်ဂျက်ကို အောင်မြင်စွာ ဖန်တီးပြီးပါပြီ"
+
+# Extracted string
+msgid "New Budget"
+msgstr "ဘတ်ဂျက်အသစ်"
+
+# Extracted string
+msgid "Create a new budget allocation"
+msgstr "ဘတ်ဂျက်ခွဲဝေမှုအသစ်တစ်ခု ဖန်တီးရန်"
+
+# Extracted string
+msgid "Alert when budget usage exceeds this percentage"
+msgstr "ဘတ်ဂျက်အသုံးပြုမှု ဤရာခိုင်နှုန်းထက် ကျော်လွန်ပါက သတိပေးရန်"
+
+# Extracted string
+msgid "Search budgets..."
+msgstr "ဘတ်ဂျက်များကို ရှာဖွေရန်..."
+
+# Extracted string
+msgid "All Years"
+msgstr "နှစ်အားလုံး"
+
+# Extracted string
+msgid "Track and manage budget allocations."
+msgstr "ဘတ်ဂျက် ခွဲဝေမှုများကို ခြေရာခံပြီး စီမံခန့်ခွဲရန်။"
+
+# Extracted string
+msgid "Create Budget"
+msgstr "ဘတ်ဂျက် ဖန်တီးရန်"
+
+# Extracted string
+msgid "Total Allocated"
+msgstr "စုစုပေါင်း ခွဲဝေမှု"
+
+# Extracted string
+msgid "Total Spent"
+msgstr "စုစုပေါင်း သုံးစွဲမှု"
+
+# Extracted string
+msgid "Total Remaining"
+msgstr "စုစုပေါင်း လက်ကျန်"
+
+# Extracted string
+msgid "Exhausted"
+msgstr "ကုန်ဆုံးသွားပြီ"
+
+# Extracted string
+msgid "Exceeded"
+msgstr "ကျော်လွန်သွားပြီ"
+
+# Extracted string
+msgid "Budget Name"
+msgstr "ဘတ်ဂျက်အမည်"
+
+# Extracted string
+msgid "Delete this message for everyone?"
+msgstr "ဤစာတိုကို လူတိုင်းအတွက် ဖျက်မည်လား။"
+
+# Extracted string
+msgid "Search conversations"
+msgstr "စကားဝိုင်းများကို ရှာဖွေရန်"
+
+# Extracted string
+msgid "Delete message"
+msgstr "စာတို ဖျက်ရန်"
+
+# Extracted string
+msgid "No matching conversations."
+msgstr "ကိုက်ညီသော စကားဝိုင်းများ မရှိပါ။"
+
+# Extracted string
+msgid "Class created"
+msgstr "အတန်း ဖန်တီးပြီးပါပြီ"
+
+# Extracted string
+msgid "Weekly Schedule"
+msgstr "အပတ်စဉ် အချိန်ဇယား"
+
+# Extracted string
+msgid "View Full Timetable"
+msgstr "အချိန်ဇယားအပြည့်အစုံကို ကြည့်ရန်"
+
+# Extracted string
+msgid "Loading timetable…"
+msgstr "အချိန်ဇယားကို ဖွင့်နေပါသည်..."
+
+# Extracted string
+msgid "No schedule yet"
+msgstr "အချိန်ဇယား မရှိသေးပါ"
+
+# Extracted string
+msgid "Select the rule that was broken"
+msgstr "ချိုးဖောက်ခဲ့သော စည်းကမ်းကို ရွေးချယ်ပါ"
+
+# Extracted string
+msgid "Logged. This is ${ordinal} ${studentName} has broken rule ${selectedRule?.code}."
+msgstr ""
+
+# Extracted string
+msgid "Record removed"
+msgstr "မှတ်တမ်းကို ဖယ်ရှားပြီးပါပြီ"
+
+# Extracted string
+msgid "Remove this record (${v.studentName} — rule ${v.ruleCode})? This cannot be undone."
+msgstr "ဤမှတ်တမ်း (${v.studentName} — စည်းကမ်း ${v.ruleCode}) ကို ဖယ်ရှားမလား။ ပြန်ပြင်၍မရပါ။"
+
+# Extracted string
+msgid "Select the rule"
+msgstr "စည်းကမ်းကို ရွေးချယ်ပါ"
+
+# Extracted string
+msgid "What happened, where, and any context…"
+msgstr "မည်သည့်အရာ ဖြစ်ပျက်ခဲ့သလဲ၊ မည်သည့်နေရာနှင့် အခြားအကြောင်းအရာများ..."
+
+# Extracted string
+msgid "Log rule violations against the school handbook and track how many times each student has broken a rule."
+msgstr "ကျောင်းစည်းကမ်းစာအုပ်နှင့်အညီ စည်းကမ်းချိုးဖောက်မှုများကို မှတ်တမ်းတင်ပြီး ကျောင်းသားတစ်ဦးစီ၏ စည်းကမ်းချိုးဖောက်မှု အကြိမ်ရေကို ခြေရာခံရန်။"
+
+# Extracted string
+msgid "Report Violation"
+msgstr "စည်းကမ်းချိုးဖောက်မှုကို တိုင်ကြားရန်"
+
+# Extracted string
+msgid "Report a Rule Violation"
+msgstr "စည်းကမ်းချိုးဖောက်မှုတစ်ခုကို တိုင်ကြားရန်"
+
+# Extracted string
+msgid "Loading history…"
+msgstr "ရာဇဝင်ကို ဖွင့်နေပါသည်..."
+
+# Extracted string
+msgid "No prior violations on record."
+msgstr "မှတ်တမ်းတင်ထားသော ယခင်စည်းကမ်းချိုးဖောက်မှုများ မရှိပါ။"
+
+# Extracted string
+msgid "Rule broken"
+msgstr "ချိုးဖောက်သော စည်းကမ်း"
+
+# Extracted string
+msgid "Note (optional)"
+msgstr "မှတ်စု (ရွေးချယ်နိုင်သည်)"
+
+# Extracted string
+msgid "All Severities"
+msgstr "ပြင်းထန်မှုအဆင့် အားလုံး"
+
+# Extracted string
+msgid "Minor"
+msgstr "သာမန်"
+
+# Extracted string
+msgid "Moderate"
+msgstr "အသင့်အတင့်"
+
+# Extracted string
+msgid "Serious"
+msgstr "ပြင်းထန်သော"
+
+# Extracted string
+msgid "Rule"
+msgstr "စည်းကမ်း"
+
+# Extracted string
+msgid "Severity"
+msgstr "ပြင်းထန်မှု"
+
+# Extracted string
+msgid "Reported By"
+msgstr "တိုင်ကြားသူ"
+
+# Extracted string
+msgid "No conduct records yet."
+msgstr "ကျင့်ဝတ်မှတ်တမ်းများ မရှိသေးပါ။"
+
+# Extracted string
+msgid "Pronounce"
+msgstr "အသံထွက်ရန်"
+
+# Extracted string
+msgid "Type an English word, or paste a Mon word…"
+msgstr "အင်္ဂလိပ်စကားလုံးတစ်လုံး ရိုက်ထည့်ပါ သို့မဟုတ် မွန်စကားလုံးတစ်လုံး ကူးယူထည့်ပါ..."
+
+# Extracted string
+msgid "Dictionary search"
+msgstr "အဘိဓာန် ရှာဖွေမှု"
+
+# Extracted string
+msgid "Clear recent searches"
+msgstr "မကြာသေးမီက ရှာဖွေမှုများကို ရှင်းလင်းရန်"
+
+# Extracted string
+msgid "Another word"
+msgstr "အခြားစကားလုံးတစ်လုံး"
+
+# Extracted string
+msgid "Myanmar Translation (မြန်မာဘာသာပြန်)"
+msgstr "မြန်မာဘာသာပြန်"
+
+# Extracted string
+msgid "Mon Dictionary (ဘာသာမန်)"
+msgstr "မွန်အဘိဓာန်"
+
+# Extracted string
+msgid "Example"
+msgstr "ဥပမာ"
+
+# Extracted string
+msgid "Look up any English word — definitions, examples, synonyms, and Myanmar/Mon translations — or paste a Mon word directly. Free to use, no sign-in required."
+msgstr "မည်သည့်အင်္ဂလိပ်စကားလုံးကိုမဆို ရှာဖွေပါ — အဓိပ္ပာယ်ဖွင့်ဆိုချက်များ၊ ဥပမာများ၊ အဓိပ္ပာယ်တူစကားလုံးများနှင့် မြန်မာ/မွန်ဘာသာပြန်များ — သို့မဟုတ် မွန်စကားလုံးကို တိုက်ရိုက်ကူးယူထည့်ပါ။ အခမဲ့အသုံးပြုနိုင်ပြီး အကောင့်ဝင်ရန် မလိုပါ။"
+
+# Extracted string
+msgid "Recent:"
+msgstr "မကြာသေးမီက-"
+
+# Extracted string
+msgid "Featured Word"
+msgstr "အထူးပြုစကားလုံး"
+
+# Extracted string
+msgid "Search for a word above to get started."
+msgstr "စတင်ရန် အပေါ်တွင် စကားလုံးတစ်လုံး ရှာဖွေပါ။"
+
+# Extracted string
+msgid "Document deleted"
+msgstr "စာရွက်စာတမ်းကို ဖျက်လိုက်ပါပြီ"
+
+# Extracted string
+msgid "Permanently delete ${d.documentNumber}? This cannot be undone (use Cancel instead if you just want to invalidate it while keeping a record)."
+msgstr "${d.documentNumber} ကို အပြီးတိုင် ဖျက်မလား။ ပြန်ပြင်၍မရပါ။ (မှတ်တမ်းကို ဆက်လက်ထိန်းသိမ်းထားရှိပြီး ပယ်ဖျက်လိုပါက ယင်းအစား Cancel ကို အသုံးပြုပါ)။"
+
+# Extracted string
+msgid "Please enter a campaign name"
+msgstr "လှုပ်ရှားမှုအမည်ကို ဖြည့်သွင်းပါ"
+
+# Extracted string
+msgid "Please enter a valid goal amount"
+msgstr "မှန်ကန်သော ရည်မှန်းချက်ပမာဏကို ဖြည့်သွင်းပါ"
+
+# Extracted string
+msgid "Please select a start and end date"
+msgstr "စတင်မည့်ရက်နှင့် ပြီးဆုံးမည့်ရက်ကို ရွေးချယ်ပါ"
+
+# Extracted string
+msgid "Campaign created successfully"
+msgstr "လှုပ်ရှားမှုကို အောင်မြင်စွာ ဖန်တီးပြီးပါပြီ"
+
+# Extracted string
+msgid "e.g. Back to School Fund 2026"
+msgstr "ဥပမာ- ကျောင်းပြန်တက်ရေးရန်ပုံငွေ ၂၀၂၆"
+
+# Extracted string
+msgid "What is this campaign raising money for?"
+msgstr "ဤလှုပ်ရှားမှုသည် ဘာအတွက် ရန်ပုံငွေရှာဖွေနေခြင်းဖြစ်သနည်း။"
+
+# Extracted string
+msgid "e.g. Alumni, Parents, Corporate"
+msgstr "ဥပမာ- ကျောင်းသားဟောင်းများ၊ မိဘများ၊ ကုမ္ပဏီများ"
+
+# Extracted string
+msgid "Additional notes or internal comments"
+msgstr "အပိုဆောင်းမှတ်စုများ သို့မဟုတ် အတွင်းပိုင်းမှတ်ချက်များ"
+
+# Extracted string
+msgid "New Campaign"
+msgstr "လှုပ်ရှားမှုအသစ်"
+
+# Extracted string
+msgid "Launch a new fundraising campaign"
+msgstr "ရန်ပုံငွေရှာဖွေရေး လှုပ်ရှားမှုအသစ်တစ်ခု စတင်ရန်"
+
+# Extracted string
+msgid "Campaign Details"
+msgstr "လှုပ်ရှားမှု အသေးစိတ်အချက်အလက်များ"
+
+# Extracted string
+msgid "Campaign Name *"
+msgstr "လှုပ်ရှားမှုအမည် *"
+
+# Extracted string
+msgid "Goal Amount *"
+msgstr "ရည်မှန်းချက်ပမာဏ *"
+
+# Extracted string
+msgid "Paused"
+msgstr "ခေတ္တရပ်ဆိုင်းထားသည်"
+
+# Extracted string
+msgid "Failed to load campaigns"
+msgstr "လှုပ်ရှားမှုများကို ဖွင့်၍မရပါ"
+
+# Extracted string
+msgid "Fundraising Campaigns"
+msgstr "ရန်ပုံငွေရှာဖွေရေး လှုပ်ရှားမှုများ"
+
+# Extracted string
+msgid "Manage donation campaigns and track progress"
+msgstr "အလှူငွေရှာဖွေရေး လှုပ်ရှားမှုများကို စီမံခန့်ခွဲပြီး တိုးတက်မှုကို ခြေရာခံရန်"
+
+# Extracted string
+msgid "Total Campaigns"
+msgstr "စုစုပေါင်း လှုပ်ရှားမှုများ"
+
+# Extracted string
+msgid "Total Goal"
+msgstr "စုစုပေါင်း ရည်မှန်းချက်"
+
+# Extracted string
+msgid "Total Raised"
+msgstr "စုစုပေါင်း ရရှိငွေ"
+
+# Extracted string
+msgid "All Campaigns"
+msgstr "လှုပ်ရှားမှုအားလုံး"
+
+# Extracted string
+msgid "No campaigns found"
+msgstr "လှုပ်ရှားမှုများ မတွေ့ရှိပါ"
+
+# Extracted string
+msgid "Failed to load donation"
+msgstr "အလှူငွေအချက်အလက်ကို ဖွင့်၍မရပါ"
+
+# Extracted string
+msgid "Please select a donor"
+msgstr "အလှူရှင်ကို ရွေးချယ်ပါ"
+
+# Extracted string
+msgid "Please enter a valid donation amount"
+msgstr "မှန်ကန်သောအလှူငွေပမာဏကို ဖြည့်သွင်းပါ"
+
+# Extracted string
+msgid "Donation updated successfully"
+msgstr "အလှူငွေမှတ်တမ်းကို အောင်မြင်စွာ မွမ်းမံပြီးပါပြီ"
+
+# Extracted string
+msgid "Donation deleted successfully"
+msgstr "အလှူငွေမှတ်တမ်းကို အောင်မြင်စွာ ဖျက်လိုက်ပါပြီ"
+
+# Extracted string
+msgid "Delete this donation? This cannot be undone."
+msgstr "ဤအလှူငွေမှတ်တမ်းကို ဖျက်မည်လား။ ပြန်ပြင်၍မရနိုင်ပါ။"
+
+# Extracted string
+msgid "Select donor"
+msgstr "အလှူရှင် ရွေးချယ်ပါ"
+
+# Extracted string
+msgid "No campaign"
+msgstr "လှုပ်ရှားမှု မရှိပါ"
+
+# Extracted string
+msgid "Select method"
+msgstr "နည်းလမ်း ရွေးချယ်ပါ"
+
+# Extracted string
+msgid "Transaction / check number"
+msgstr "ငွေလွှဲမှု / ချက်လက်မှတ်နံပါတ်"
+
+# Extracted string
+msgid "e.g. Scholarship fund"
+msgstr "ဥပမာ- ပညာသင်ဆုရန်ပုံငွေ"
+
+# Extracted string
+msgid "e.g. Unrestricted"
+msgstr "ဥပမာ- အကန့်အသတ်မရှိ"
+
+# Extracted string
+msgid "Edit Donation"
+msgstr "အလှူငွေမှတ်တမ်း ပြင်ဆင်ရန်"
+
+# Extracted string
+msgid "Donation Details"
+msgstr "အလှူငွေမှတ်တမ်း အသေးစိတ်"
+
+# Extracted string
+msgid "Donor *"
+msgstr "အလှူရှင် *"
+
+# Extracted string
+msgid "Amount *"
+msgstr "ပမာဏ *"
+
+# Extracted string
+msgid "Donation Type"
+msgstr "လှူဒါန်းမှုအမျိုးအစား"
+
+# Extracted string
+msgid "One-time"
+msgstr "တစ်ကြိမ်တည်း"
+
+# Extracted string
+msgid "Recurring - Monthly"
+msgstr "လစဉ် လှူဒါန်းမှု"
+
+# Extracted string
+msgid "Recurring - Quarterly"
+msgstr "သုံးလတစ်ကြိမ် လှူဒါန်းမှု"
+
+# Extracted string
+msgid "Recurring - Yearly"
+msgstr "နှစ်စဉ် လှူဒါန်းမှု"
+
+# Extracted string
+msgid "In-kind"
+msgstr "ပစ္စည်းအလှူ"
+
+# Extracted string
+msgid "Received"
+msgstr "လက်ခံရရှိသည်"
+
+# Extracted string
+msgid "Processed"
+msgstr "ဆောင်ရွက်ပြီး"
+
+# Extracted string
+msgid "Refunded"
+msgstr "ပြန်အမ်းပြီး"
+
+# Extracted string
+msgid "Donation Date *"
+msgstr "လှူဒါန်းသည့်ရက်စွဲ *"
+
+# Extracted string
+msgid "Campaign"
+msgstr "လှုပ်ရှားမှု"
+
+# Extracted string
+msgid "Payment Information"
+msgstr "ငွေပေးချေမှု အချက်အလက်များ"
+
+# Extracted string
+msgid "Payment Method"
+msgstr "ငွေပေးချေမှုစနစ်"
+
+# Extracted string
+msgid "Check"
+msgstr "ချက်လက်မှတ်"
+
+# Extracted string
+msgid "Credit Card"
+msgstr "ခရက်ဒစ်ကတ်"
+
+# Extracted string
+msgid "Debit Card"
+msgstr "ဒက်ဘစ်ကတ်"
+
+# Extracted string
+msgid "Online Payment"
+msgstr "အွန်လိုင်း ငွေပေးချေမှု"
+
+# Extracted string
+msgid "Wire Transfer"
+msgstr "ဘဏ်ငွေလွှဲခြင်း"
+
+# Extracted string
+msgid "Payment Reference"
+msgstr "ငွေပေးချေမှု ရည်ညွှန်းချက်"
+
+# Extracted string
+msgid "Tax Deductible"
+msgstr "အခွန်နှုတ်ယူခွင့်ရှိသော"
+
+# Extracted string
+msgid "A tax receipt can be issued for this donation"
+msgstr "ဤလှူဒါန်းမှုအတွက် အခွန်ပြေစာ ထုတ်ပေးနိုင်သည်"
+
+# Extracted string
+msgid "Purpose"
+msgstr "ရည်ရွယ်ချက်"
+
+# Extracted string
+msgid "Failed to load donors or campaigns"
+msgstr "အလှူရှင်များ သို့မဟုတ် လှုပ်ရှားမှုများကို ဖွင့်၍မရပါ"
+
+# Extracted string
+msgid "Donation recorded successfully"
+msgstr "အလှူငွေမှတ်တမ်းကို အောင်မြင်စွာ မှတ်တမ်းတင်ပြီးပါပြီ"
+
+# Extracted string
+msgid "Record Donation"
+msgstr "လှူဒါန်းမှုကို မှတ်တမ်းတင်ရန်"
+
+# Extracted string
+msgid "Log a new donation from a donor"
+msgstr "အလှူရှင်ထံမှ လှူဒါန်းမှုအသစ်ကို မှတ်တမ်းတင်ရန်"
+
+# Extracted string
+msgid "Failed to load donation data"
+msgstr "အလှူငွေအချက်အလက်များကို ဖွင့်၍မရပါ"
+
+# Extracted string
+msgid "Delete donation from \"${donation.donor?.name || 'this donor'}\" (${formatMoney(donation.amount, currency)})? This cannot be undone."
+msgstr "\"${donation.donor?.name || 'ဤအလှူရှင်'}\" ထံမှ လှူဒါန်းမှု (${formatMoney(donation.amount, currency)}) ကို ဖျက်မလား။ ပြန်ပြင်၍မရပါ။"
+
+# Extracted string
+msgid "Track donations and fundraising campaigns"
+msgstr "လှူဒါန်းမှုများနှင့် ရန်ပုံငွေရှာဖွေရေး လှုပ်ရှားမှုများကို ခြေရာခံရန်"
+
+# Extracted string
+msgid "Campaigns"
+msgstr "လှုပ်ရှားမှုများ"
+
+# Extracted string
+msgid "New Donation"
+msgstr "အလှူငွေမှတ်တမ်းအသစ်"
+
+# Extracted string
+msgid "Total Donations"
+msgstr "စုစုပေါင်း လှူဒါန်းမှုများ"
+
+# Extracted string
+msgid "Total Amount"
+msgstr "စုစုပေါင်း ပမာဏ"
+
+# Extracted string
+msgid "Active Campaigns"
+msgstr "လက်ရှိလုပ်ဆောင်နေသော လှုပ်ရှားမှုများ"
+
+# Extracted string
+msgid "Recent Donations"
+msgstr "မကြာသေးမီက လှူဒါန်းမှုများ"
+
+# Extracted string
+msgid "No donations recorded"
+msgstr "လှူဒါန်းမှုမှတ်တမ်း မရှိပါ"
+
+# Extracted string
+msgid "Goal"
+msgstr "ရည်မှန်းချက်"
+
+# Extracted string
+msgid "Raised"
+msgstr "ရရှိငွေ"
+
+# Extracted string
+msgid "Please enter donor name"
+msgstr "အလှူရှင်အမည်ကို ဖြည့်သွင်းပါ"
+
+# Extracted string
+msgid "Donor updated successfully"
+msgstr "အလှူရှင်အချက်အလက်ကို အောင်မြင်စွာ မွမ်းမံပြီးပါပြီ"
+
+# Extracted string
+msgid "Enter donor name"
+msgstr "အလှူရှင်အမည် ဖြည့်သွင်းပါ"
+
+# Extracted string
+msgid "Organization name (if applicable)"
+msgstr "အဖွဲ့အစည်းအမည် (သက်ဆိုင်ပါက)"
+
+# Extracted string
+msgid "e.g. Major Donor, Recurring Supporter"
+msgstr "ဥပမာ- အဓိကအလှူရှင်၊ ပုံမှန်ပံ့ပိုးကူညီသူ"
+
+# Extracted string
+msgid "email@example.com"
+msgstr "email@example.com"
+
+# Extracted string
+msgid "Select preference"
+msgstr "စိတ်ကြိုက်ရွေးချယ်မှုကို ရွေးချယ်ပါ"
+
+# Extracted string
+msgid "Enter street address"
+msgstr "လမ်းအမည် ဖြည့်သွင်းပါ"
+
+# Extracted string
+msgid "City"
+msgstr "မြို့"
+
+# Extracted string
+msgid "Postal code"
+msgstr "စာတိုက်သင်္ကေတ"
+
+# Extracted string
+msgid "Tax identification number"
+msgstr "အခွန်ထမ်းမှတ်ပုံတင်နံပါတ်"
+
+# Extracted string
+msgid "Edit Donor"
+msgstr "အလှူရှင်အချက်အလက် ပြင်ဆင်ရန်"
+
+# Extracted string
+msgid "Update donor information"
+msgstr "အလှူရှင်အချက်အလက်ကို မွမ်းမံရန်"
+
+# Extracted string
+msgid "Donor Name *"
+msgstr "အလှူရှင်အမည် *"
+
+# Extracted string
+msgid "Donor Type"
+msgstr "အလှူရှင်အမျိုးအစား"
+
+# Extracted string
+msgid "Individual"
+msgstr "တစ်ဦးချင်း"
+
+# Extracted string
+msgid "Organization"
+msgstr "အဖွဲ့အစည်း"
+
+# Extracted string
+msgid "Alumnus"
+msgstr "ကျောင်းသားဟောင်း"
+
+# Extracted string
+msgid "Parent"
+msgstr "မိဘ"
+
+# Extracted string
+msgid "Grant Agency"
+msgstr "ထောက်ပံ့ကြေးပေးအပ်သည့်အဖွဲ့အစည်း"
+
+# Extracted string
+msgid "Preferred Contact Method"
+msgstr "ဦးစားပေး ဆက်သွယ်ရန် နည်းလမ်း"
+
+# Extracted string
+msgid "Mail"
+msgstr "စာတိုက်"
+
+# Extracted string
+msgid "Receipt Preference"
+msgstr "ပြေစာ လက်ခံလိုသည့် ပုံစံ"
+
+# Extracted string
+msgid "Do Not Contact"
+msgstr "မဆက်သွယ်ပါနှင့်"
+
+# Extracted string
+msgid "Suppress outreach communications to this donor"
+msgstr "ဤအလှူရှင်ထံ ဆက်သွယ်တောင်းခံမှုများကို ရပ်ဆိုင်းထားရန်"
+
+# Extracted string
+msgid "Address"
+msgstr "လိပ်စာ"
+
+# Extracted string
+msgid "Street Address"
+msgstr "လမ်းလိပ်စာ"
+
+# Extracted string
+msgid "Postal Code"
+msgstr "စာတိုက်သင်္ကေတ"
+
+# Extracted string
+msgid "Tax ID"
+msgstr "အခွန်ထမ်းနံပါတ်"
+
+# Extracted string
+msgid "Inactive donors are hidden from default lists"
+msgstr "လှုပ်ရှားမှုမရှိသော အလှူရှင်များကို မူရင်းစာရင်းများတွင် ဝှက်ထားပါသည်"
+
+# Extracted string
+msgid "Donor deactivated"
+msgstr "အလှူရှင်ကို ပိုတ်လိုက်ပါပြီ"
+
+# Extracted string
+msgid "Donor reactivated"
+msgstr "အလှူရှင်ကို ပြန်လည်ဖွင့်လှစ်လိုက်ပါပြီ"
+
+# Extracted string
+msgid "Deactivate donor \"${donor.name}\"? Their donation history is kept, but they'll be marked inactive."
+msgstr "အလှူရှင် \"${donor.name}\" ကို ပိတ်မလား။ ၎င်းတို့၏ လှူဒါန်းမှုရာဇဝင်ကို ထိန်းသိမ်းထားမည်ဖြစ်သော်လည်း ၎င်းတို့ကို လှုပ်ရှားမှုမရှိဟု မှတ်သားပါမည်။"
+
+# Extracted string
+msgid "Search donors..."
+msgstr "အလှူရှင်များကို ရှာဖွေရန်..."
+
+# Extracted string
+msgid "Reactivate donor"
+msgstr "အလှူရှင်ကို ပြန်လည်ဖွင့်လှစ်ရန်"
+
+# Extracted string
+msgid "Manage donor database and relationships"
+msgstr "အလှူရှင်အချက်အလက်နှင့် ဆက်ဆံရေးများကို စီမံခန့်ခွဲရန်"
+
+# Extracted string
+msgid "Add Donor"
+msgstr "အလှူရှင် ထည့်သွင်းရန်"
+
+# Extracted string
+msgid "Total Donors"
+msgstr "စုစုပေါင်း အလှူရှင်များ"
+
+# Extracted string
+msgid "Across all donors"
+msgstr "အလှူရှင်အားလုံးအနက်"
+
+# Extracted string
+msgid "Organizations"
+msgstr "အဖွဲ့အစည်းများ"
+
+# Extracted string
+msgid "Corporate donors"
+msgstr "ကော်ပိုရိတ်အလှူရှင်များ"
+
+# Extracted string
+msgid "Individuals"
+msgstr "တစ်ဦးချင်း"
+
+# Extracted string
+msgid "Personal donors"
+msgstr "ကိုယ်ပိုင်အလှူရှင်များ"
+
+# Extracted string
+msgid "Donor"
+msgstr "အလှူရှင်"
+
+# Extracted string
+msgid "No donors found matching your criteria"
+msgstr "ရှာဖွေမှုနှင့် ကိုက်ညီသော အလှူရှင် မတွေ့ရှိပါ"
+
+# Extracted string
+msgid "Donor created successfully"
+msgstr "အလှူရှင်ကို အောင်မြင်စွာ ဖန်တီးပြီးပါပြီ"
+
+# Extracted string
+msgid "New Donor"
+msgstr "အလှူရှင်အသစ်"
+
+# Extracted string
+msgid "Add a new donor to the database"
+msgstr "အလှူရှင်အသစ်တစ်ဦးကို အချက်အလက်စနစ်သို့ ထည့်သွင်းရန်"
+
+# Extracted string
+msgid "Donor not found"
+msgstr "အလှူရှင် မတွေ့ရှိပါ"
+
+# Extracted string
+msgid "Back to Donors"
+msgstr "အလှူရှင်များစာရင်းသို့ ပြန်သွားရန်"
+
+# Extracted string
+msgid "Deactivate"
+msgstr "ပိတ်ရန်"
+
+# Extracted string
+msgid "Reactivate"
+msgstr "ပြန်ဖွင့်ရန်"
+
+# Extracted string
+msgid "Total Donated"
+msgstr "စုစုပေါင်း လှူဒါန်းမှု"
+
+# Extracted string
+msgid "All time"
+msgstr "အချိန်အားလုံး"
+
+# Extracted string
+msgid "Donation Count"
+msgstr "လှူဒါန်းမှုအကြိမ်ရေ"
+
+# Extracted string
+msgid "Total donations"
+msgstr "စုစုပေါင်း လှူဒါန်းမှုများ"
+
+# Extracted string
+msgid "Average Donation"
+msgstr "ပျမ်းမျှ လှူဒါန်းမှု"
+
+# Extracted string
+msgid "Per donation"
+msgstr "တစ်ကြိမ်လျှင်"
+
+# Extracted string
+msgid "Last Donation"
+msgstr "နောက်ဆုံး လှူဒါန်းမှု"
+
+# Extracted string
+msgid "Most recent activity"
+msgstr "မကြာသေးမီက လှုပ်ရှားမှု"
+
+# Extracted string
+msgid "Preferred Contact"
+msgstr "ဦးစားပေး ဆက်သွယ်မှု"
+
+# Extracted string
+msgid "Donation"
+msgstr "လှူဒါန်းမှု"
+
+# Extracted string
+msgid "No donations recorded yet"
+msgstr "လှူဒါန်းမှုများ မှတ်တမ်းတင်ထားခြင်း မရှိသေးပါ"
+
+# Extracted string
+msgid "Record First Donation"
+msgstr "ပထမဆုံး လှူဒါန်းမှုကို မှတ်တမ်းတင်ရန်"
+
+# Extracted string
+msgid "Manage chore rosters, assignments, and performance."
+msgstr "တာဝန်ကျဇယားများ၊ တာဝန်ပေးအပ်မှုများနှင့် စွမ်းဆောင်ရည်များကို စီမံခန့်ခွဲရန်။"
+
+# Extracted string
+msgid "Duty Types"
+msgstr "တာဝန် အမျိုးအစားများ"
+
+# Extracted string
+msgid "Manage Rosters"
+msgstr "ဇယားများကို စီမံခန့်ခွဲရန်"
+
+# Extracted string
+msgid "Active Rosters"
+msgstr "လက်ရှိ တာဝန်ကျဇယားများ"
+
+# Extracted string
+msgid "Today's Duties"
+msgstr "ယနေ့ တာဝန်များ"
+
+# Extracted string
+msgid "scheduled for today"
+msgstr "ယနေ့အတွက် သတ်မှတ်ထားသော တာဝန်"
+
+# Extracted string
+msgid "Completed Today"
+msgstr "ယနေ့ ပြီးစီးမှု"
+
+# Extracted string
+msgid "Leaderboard"
+msgstr "ဦးဆောင်သူဇယား"
+
+# Extracted string
+msgid "View top performers"
+msgstr "စွမ်းဆောင်ရည်အကောင်းဆုံးသူများကို ကြည့်ရှုရန်"
+
+# Extracted string
+msgid "No duties scheduled for today."
+msgstr "ယနေ့အတွက် မည်သည့်တာဝန်မှ သတ်မှတ်ထားခြင်း မရှိပါ။"
+
+# Extracted string
+msgid "Rosters"
+msgstr "တာဝန်ကျဇယားများ"
+
+# Extracted string
+msgid "Create one"
+msgstr "တစ်ခု ဖန်တီးရန်"
+
+# Extracted string
+msgid "See your own duty assignments and history."
+msgstr "သင်၏ တာဝန်ပေးအပ်မှုများနှင့် တာဝန်ထမ်းဆောင်မှု ရာဇဝင်ကို ကြည့်ရှုရန်။"
+
+# Extracted string
+msgid "Please enter a duty name"
+msgstr "တာဝန်အမည်ကို ဖြည့်သွင်းပါ"
+
+# Extracted string
+msgid "Duty type removed"
+msgstr "တာဝန်အမျိုးအစားကို ဖယ်ရှားလိုက်ပါပြီ"
+
+# Extracted string
+msgid "Remove this duty type? If it has assignment history it will be deactivated instead of deleted."
+msgstr "ဤတာဝန်အမျိုးအစားကို ဖယ်ရှားမလား။ ၎င်းတွင် တာဝန်ပေးအပ်မှုရာဇဝင် ရှိပါက ဖျက်မည့်အစား ပိတ်လိုက်ပါမည်။"
+
+# Extracted string
+msgid "e.g. Kitchen Cleanup"
+msgstr "ဥပမာ- မီးဖိုချောင်သန့်ရှင်းရေး"
+
+# Extracted string
+msgid "Configure the chores students can be assigned"
+msgstr "ကျောင်းသားများကို တာဝန်ပေးနိုင်မည့် အိမ်မှုကိစ္စများကို သတ်မှတ်ရန်"
+
+# Extracted string
+msgid "Add Duty Type"
+msgstr "တာဝန်အမျိုးအစား ထည့်ရန်"
+
+# Extracted string
+msgid "Name *"
+msgstr "အမည် *"
+
+# Extracted string
+msgid "Students Required"
+msgstr "လိုအပ်သော ကျောင်းသားဦးရေ"
+
+# Extracted string
+msgid "Points Awarded"
+msgstr "ပေးအပ်မည့် အမှတ်"
+
+# Extracted string
+msgid "No duty types yet."
+msgstr "တာဝန်အမျိုးအစားများ မရှိသေးပါ။"
+
+# Extracted string
+msgid "Duty Performance"
+msgstr "တာဝန် စွမ်းဆောင်ရည်"
+
+# Extracted string
+msgid "Top performers by points and completion rate (last 90 days by default)"
+msgstr "ရမှတ်နှင့် ပြီးစီးမှုနှုန်းအလိုက် အကောင်းဆုံးစွမ်းဆောင်နိုင်သူများ (ယခင်ရက်ပေါင်း ၉၀ အတွက် မူရင်းအတိုင်းပြသသည်)"
+
+# Extracted string
+msgid "Assigned"
+msgstr "တာဝန်ပေးထားပြီး"
+
+# Extracted string
+msgid "Completion Rate"
+msgstr "ပြီးစီးမှုနှုန်း"
+
+# Extracted string
+msgid "Avg Rating"
+msgstr "ပျမ်းမျှ သတ်မှတ်ချက်"
+
+# Extracted string
+msgid "No duty activity in this period."
+msgstr "ဤကာလအတွင်း မည်သည့်တာဝန်ဆောင်ရွက်မှုမှ မရှိပါ။"
+
+# Extracted string
+msgid "Failed to load roster"
+msgstr "တာဝန်ကျဇယားကို ဖွင့်၍မရပါ"
+
+# Extracted string
+msgid "Select at least one student and one duty type"
+msgstr "အနည်းဆုံး ကျောင်းသားတစ်ဦးနှင့် တာဝန်အမျိုးအစားတစ်ခုကို ရွေးချယ်ပါ"
+
+# Extracted string
+msgid "Created ${result.created} assignments${result.unfilled.length > 0 ?"
+msgstr ""
+
+# Extracted string
+msgid "Fill in duty, student, and date"
+msgstr "တာဝန်၊ ကျောင်းသားနှင့် ရက်စွဲကို ဖြည့်သွင်းပါ"
+
+# Extracted string
+msgid "Assignment added"
+msgstr "တာဝန်ပေးအပ်မှု ထည့်ပြီးပါပြီ"
+
+# Extracted string
+msgid "Roster published"
+msgstr "တာဝန်ကျဇယားကို ထုတ်ပြန်ပြီးပါပြီ"
+
+# Extracted string
+msgid "Remove this assignment?"
+msgstr "ဤတာဝန်ပေးအပ်မှုကို ဖျက်မည်လား။"
+
+# Extracted string
+msgid "Roster not found"
+msgstr "တာဝန်ကျဇယား မတွေ့ရှိပါ"
+
+# Extracted string
+msgid "Auto-Assign"
+msgstr "အလိုအလျောက် တာဝန်ပေးရန်"
+
+# Extracted string
+msgid "Add Assignment Manually"
+msgstr "ကိုယ်တိုင် တာဝန်ပေးရန်"
+
+# Extracted string
+msgid "Duty Type"
+msgstr "တာဝန် အမျိုးအစား"
+
+# Extracted string
+msgid "Duty"
+msgstr "တာဝန်"
+
+# Extracted string
+msgid "Rating"
+msgstr "အဆင့်သတ်မှတ်ချက်"
+
+# Extracted string
+msgid "No assignments yet."
+msgstr "တာဝန်ပေးအပ်မှုများ မရှိသေးပါ။"
+
+# Extracted string
+msgid "Please fill in name and date range"
+msgstr "အမည်နှင့် ရက်စွဲကာလကို ဖြည့်သွင်းပါ"
+
+# Extracted string
+msgid "Roster created"
+msgstr "တာဝန်ကျဇယား ဖန်တီးပြီးပါပြီ"
+
+# Extracted string
+msgid "e.g. Week 45, November 2026"
+msgstr "ဥပမာ- တစ်ပတ် ၄၅၊ နိုဝင်ဘာ ၂၀၂၆"
+
+# Extracted string
+msgid "Duty Rosters"
+msgstr "တာဝန်ကျဇယားများ"
+
+# Extracted string
+msgid "Weekly or monthly duty periods"
+msgstr "အပတ်စဉ် သို့မဟုတ် လစဉ် တာဝန်ကျကာလများ"
+
+# Extracted string
+msgid "New Roster"
+msgstr "တာဝန်ကျဇယားအသစ်"
+
+# Extracted string
+msgid "Roster Name *"
+msgstr "တာဝန်ကျဇယားအမည် *"
+
+# Extracted string
+msgid "Period Type"
+msgstr "ကာလအမျိုးအစား"
+
+# Extracted string
+msgid "Monthly"
+msgstr "လစဉ်"
+
+# Extracted string
+msgid "Termly"
+msgstr "ပညာသင်ကာလအလိုက်"
+
+# Extracted string
+msgid "Max Duties / Week / Student"
+msgstr "ကျောင်းသားတစ်ဦးလျှင် တစ်ပတ်အတွင်း အများဆုံးတာဝန်အရေအတွက်"
+
+# Extracted string
+msgid "No rosters yet."
+msgstr "တာဝန်ကျဇယားများ မရှိသေးပါ။"
+
+# Extracted string
+msgid "Failed to load your duties"
+msgstr "သင့်တာဝန်များကို ဖွင့်၍မရပါ"
+
+# Extracted string
+msgid "Your assigned chores and duty history"
+msgstr "သင့်အား ပေးအပ်ထားသော တာဝန်များနှင့် တာဝန်ထမ်းဆောင်မှု ရာဇဝင်"
+
+# Extracted string
+msgid "Upcoming"
+msgstr "နောင်လာမည့်"
+
+# Extracted string
+msgid "No upcoming duties."
+msgstr "နောင်လာမည့် တာဝန်များ မရှိပါ။"
+
+# Extracted string
+msgid "Mark Done"
+msgstr "ပြီးစီးကြောင်း မှတ်သားရန်"
+
+# Extracted string
+msgid "No duty history yet."
+msgstr "တာဝန်ထမ်းဆောင်မှု ရာဇဝင် မရှိသေးပါ။"
+
+# Extracted string
+msgid "Choose an image file."
+msgstr "ပုံဖိုင်တစ်ခုကို ရွေးချယ်ပါ။"
+
+# Extracted string
+msgid "Cover updated — click Save changes to keep it."
+msgstr "မျက်နှာဖုံးကို မွမ်းမံပြီးပါပြီ — သိမ်းဆည်းရန်အတွက် 'Save changes' ကို နှိပ်ပါ။"
+
+# Extracted string
+msgid "Choose or type a genre/category"
+msgstr "အမျိုးအစား သို့မဟုတ် ကဏ္ဍကို ရွေးချယ်ပါ သို့မဟုတ် ရိုက်ထည့်ပါ"
+
+# Extracted string
+msgid "Optional — shown on the E-Library list."
+msgstr "ရွေးချယ်နိုင်သည် — အီး-စာကြည့်တိုက်စာရင်းတွင် ပြသပါမည်။"
+
+# Extracted string
+msgid "Assign as homework"
+msgstr "အိမ်စာအဖြစ် သတ်မှတ်ရန်"
+
+# Extracted string
+msgid "Import from Gutenberg"
+msgstr "Gutenberg မှ တင်သွင်းရန်"
+
+# Extracted string
+msgid "Continue Reading"
+msgstr "ဆက်လက်ဖတ်ရှုရန်"
+
+# Extracted string
+msgid "All categories"
+msgstr "အမျိုးအစားအားလုံး"
+
+# Extracted string
+msgid "Full page view is not supported in this browser."
+msgstr "ဤဘရောက်ဇာတွင် စာမျက်နှာအပြည့်ဖြင့် ကြည့်ရှုခြင်းကို မပံ့ပိုးပါ။"
+
+# Extracted string
+msgid "Type at least 2 characters."
+msgstr "အနည်းဆုံး စာလုံး ၂ လုံး ရိုက်ထည့်ပါ။"
+
+# Extracted string
+msgid "Choose a deck."
+msgstr "ကတ်စုတစ်ခုကို ရွေးချယ်ပါ။"
+
+# Extracted string
+msgid "Term and definition are required."
+msgstr "ဝေါဟာရနှင့် အဓိပ္ပာယ်ဖွင့်ဆိုချက် လိုအပ်သည်။"
+
+# Extracted string
+msgid "Added to flashcard deck."
+msgstr "မှတ်ဉာဏ်ကတ်စုထဲသို့ ထည့်ပြီးပါပြီ။"
+
+# Extracted string
+msgid "Highlight saved."
+msgstr "စာသားအသားပေးခြယ်မှုကို သိမ်းဆည်းပြီးပါပြီ။"
+
+# Extracted string
+msgid "Could not delete highlight."
+msgstr "စာသားအသားပေးခြယ်မှုကို ဖျက်၍မရပါ။"
+
+# Extracted string
+msgid "The word or concept"
+msgstr "စကားလုံး သို့မဟုတ် သဘောတရား"
+
+# Extracted string
+msgid "Search in book"
+msgstr "စာအုပ်ထဲတွင် ရှာဖွေရန်"
+
+# Extracted string
+msgid "My highlights"
+msgstr "ကျွန်ုပ်၏ စာသားအသားပေးခြယ်မှုများ"
+
+# Extracted string
+msgid "Reading appearance"
+msgstr "စာဖတ်ရှုသည့် ပုံစံ"
+
+# Extracted string
+msgid "Light appearance"
+msgstr "တောက်ပသောပုံစံ"
+
+# Extracted string
+msgid "Warm appearance"
+msgstr "နွေးထွေးသောပုံစံ"
+
+# Extracted string
+msgid "Dark appearance"
+msgstr "မှောင်သောပုံစံ"
+
+# Extracted string
+msgid "Assign as Homework"
+msgstr "အိမ်စာအဖြစ် သတ်မှတ်ရန်"
+
+# Extracted string
+msgid "Define"
+msgstr "အဓိပ္ပာယ်သတ်မှတ်ရန်"
+
+# Extracted string
+msgid "Highlight"
+msgstr "အသားပေးခြယ်ရန်"
+
+# Extracted string
+msgid "Flashcard"
+msgstr "မှတ်ဉာဏ်ကတ်"
+
+# Extracted string
+msgid "Myanmar"
+msgstr "မြန်မာ"
+
+# Extracted string
+msgid "Mon"
+msgstr "မွန်"
+
+# Extracted string
+msgid "Open full Dictionary →"
+msgstr "အဘိဓာန်အပြည့်အစုံကို ဖွင့်ရန် →"
+
+# Extracted string
+msgid "My Highlights"
+msgstr "ကျွန်ုပ်၏ စာသားအသားပေးခြယ်မှုများ"
+
+# Extracted string
+msgid "No highlights yet — select some text while reading to save one."
+msgstr "အသားပေးခြယ်မှု မရှိသေးပါ — စာဖတ်နေစဉ် စာသားအချို့ကို ရွေးချယ်ပြီး သိမ်းဆည်းပါ။"
+
+# Extracted string
+msgid "Search in Book"
+msgstr "စာအုပ်ထဲတွင် ရှာဖွေရန်"
+
+# Extracted string
+msgid "Searching the whole book — this can take a moment for longer titles…"
+msgstr "စာအုပ်တစ်အုပ်လုံးကို ရှာဖွေနေပါသည် — စာအုပ်ရှည်များအတွက် ခဏမျှ ကြာနိုင်ပါသည်..."
+
+# Extracted string
+msgid "No matches found."
+msgstr "ကိုက်ညီမှု မတွေ့ရှိပါ။"
+
+# Extracted string
+msgid "Add to Flashcard Deck"
+msgstr "မှတ်ဉာဏ်ကတ်စုသို့ ထည့်ရန်"
+
+# Extracted string
+msgid "Loading decks…"
+msgstr "ကတ်စုများကို ဖွင့်နေပါသည်..."
+
+# Extracted string
+msgid "You don't have any flashcard decks yet. Create one from the Flashcards page first."
+msgstr "သင့်တွင် မှတ်ဉာဏ်ကတ်စုများ မရှိသေးပါ။ Flashcards စာမျက်နှာမှ အရင်ဆုံး ဖန်တီးပါ။"
+
+# Extracted string
+msgid "Deck"
+msgstr "ကတ်စု"
+
+# Extracted string
+msgid "Definition"
+msgstr "အဓိပ္ပာယ်ဖွင့်ဆိုချက်"
+
+# Extracted string
+msgid "${f.name}: only PDF and EPUB files are allowed."
+msgstr "${f.name}: PDF နှင့် EPUB ဖိုင်များကိုသာ ခွင့်ပြုသည်။"
+
+# Extracted string
+msgid "${f.name}: file is too large (max ${MAX_MB} MB)."
+msgstr "${f.name}: ဖိုင်အရွယ်အစား ကြီးလွန်းသည် (အများဆုံး ${MAX_MB} MB)။"
+
+# Extracted string
+msgid "Add at least one PDF or EPUB file."
+msgstr "အနည်းဆုံး PDF သို့မဟုတ် EPUB ဖိုင်တစ်ခု ထည့်သွင်းပါ။"
+
+# Extracted string
+msgid "Every file needs a title."
+msgstr "ဖိုင်တိုင်းတွင် ခေါင်းစဉ်တစ်ခု လိုအပ်သည်။"
+
+# Extracted string
+msgid "${okCount} of ${queue.length} uploaded — fix the failed ones and try again."
+msgstr "${queue.length} တွင် ${okCount} ခုကို တင်ပြီးပါပြီ — မအောင်မြင်သော ဖိုင်များကို ပြင်ဆင်ပြီး ပြန်လည်ကြိုးစားပါ။"
+
+# Extracted string
+msgid "Upload failed."
+msgstr "တင်ခြင်း မအောင်မြင်ပါ။"
+
+# Extracted string
+msgid "Author (optional)"
+msgstr "စာရေးဆရာ (ရွေးချယ်နိုင်သည်)"
+
+# Extracted string
+msgid "Add one or more EPUB or PDF files to the E-Library."
+msgstr "အီး-စာကြည့်တိုက်ထဲသို့ EPUB သို့မဟုတ် PDF ဖိုင်တစ်ခု သို့မဟုတ် တစ်ခုထက်ပို၍ ထည့်သွင်းပါ။"
+
+# Extracted string
+msgid "Click or drag files here"
+msgstr "ဤနေရာတွင် ဖိုင်များကို နှိပ်ပါ သို့မဟုတ် ဆွဲယူထည့်ပါ"
+
+# Extracted string
+msgid "\"${book.title}\" added to the E-Library."
+msgstr "\"${book.title}\" ကို အီး-စာကြည့်တိုက်သို့ ထည့်သွင်းပြီးပါပြီ။"
+
+# Extracted string
+msgid "Search by title or author…"
+msgstr "ခေါင်းစဉ် သို့မဟုတ် စာရေးဆရာဖြင့် ရှာဖွေရန်..."
+
+# Extracted string
+msgid "Import from Project Gutenberg"
+msgstr "Project Gutenberg မှ တင်သွင်းရန်"
+
+# Extracted string
+msgid "Search 70,000+ free, public-domain books and add them to your E-Library with one click."
+msgstr "အခမဲ့၊ အများပြည်သူသုံး စာအုပ်ပေါင်း ၇၀,၀၀၀ ကျော်ကို ရှာဖွေပြီး တစ်ချက်နှိပ်ရုံဖြင့် သင့်အီး-စာကြည့်တိုက်ထဲသို့ ထည့်သွင်းပါ။"
+
+# Extracted string
+msgid "In library"
+msgstr "စာကြည့်တိုက်ထဲတွင် ရှိသည်"
+
+# Extracted string
+msgid "Open in Studio →"
+msgstr "စတူဒီယိုတွင် ဖွင့်ရန် →"
+
+# Extracted string
+msgid "Draggable words"
+msgstr "ဆွဲယူနိုင်သော စကားလုံးများ"
+
+# Extracted string
+msgid "Drag a word into each blank, or tap a word then tap a blank."
+msgstr "ကွက်လပ်တစ်ခုစီထဲသို့ စကားလုံးတစ်လုံးကို ဆွဲယူထည့်ပါ၊ သို့မဟုတ် စကားလုံးတစ်လုံးကို နှိပ်ပြီးနောက် ကွက်လပ်ကို နှိပ်ပါ။"
+
+# Extracted string
+msgid "Word bank — drag from here"
+msgstr "စကားလုံးဘဏ် — ဤနေရာမှ ဆွဲယူပါ"
+
+# Extracted string
+msgid "✓ All words placed — nice work!"
+msgstr "✓ စကားလုံးအားလုံး နေရာချပြီးပါပြီ — ကောင်းမွန်သောလုပ်ဆောင်ချက်ဖြစ်သည်!"
+
+# Extracted string
+msgid "Select an answer…"
+msgstr "အဖြေတစ်ခုကို ရွေးချယ်ပါ..."
+
+# Extracted string
+msgid "Your answers are safely submitted. Results appear here once your teacher finishes marking and releases them — check back later."
+msgstr "သင့်အဖြေများကို ဘေးကင်းစွာ တင်ပြပြီးပါပြီ။ ဆရာက အမှတ်ခြစ်ပြီး ထုတ်ပြန်ပေးပါက ရလဒ်များ ဤနေရာတွင် ပေါ်လာပါမည် — နောက်မှ ပြန်လည်စစ်ဆေးပါ။"
+
+# Extracted string
+msgid "→ correct:"
+msgstr "→ မှန်ကန်သော-"
+
+# Extracted string
+msgid "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
+msgstr "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
+
+# Extracted string
+msgid "Word bank:"
+msgstr "စကားလုံးဘဏ်-"
+
+# Extracted string
+msgid "Draft created — build it in the Studio."
+msgstr "မူကြမ်း ဖန်တီးပြီးပါပြီ — စတူဒီယိုတွင် တည်ဆောက်ပါ။"
+
+# Extracted string
+msgid "e.g. Algebra II — Unit 4 Mock"
+msgstr "ဥပမာ- အက္ခရာသင်္ချာ ၂ — အခန်း ၄ စမ်းသပ်စစ်ဆေးမှု"
+
+# Extracted string
+msgid "New assessment"
+msgstr "အကဲဖြတ်မှုအသစ်"
+
+# Extracted string
+msgid "Just the basics — you'll build questions, scheduling and grading in the Studio."
+msgstr "အခြေခံအချက်များသာ ဖြစ်သည် — စတူဒီယိုတွင် မေးခွန်းများ၊ အချိန်ဇယားဆွဲခြင်းနှင့် အဆင့်သတ်မှတ်ခြင်းတို့ကို တည်ဆောက်ရပါမည်။"
+
+# Extracted string
+msgid "Exam type"
+msgstr "စာမေးပွဲ အမျိုးအစား"
+
+# Extracted string
+msgid "&nbsp;"
+msgstr "&nbsp;"
+
+# Extracted string
+msgid "Synced ${res?.count ?? 0} score(s) to gradebook"
+msgstr "ရမှတ် ${res?.count ?? 0} ခုကို အမှတ်စာရင်းသို့ ထည့်သွင်းပြီးပါပြီ"
+
+# Extracted string
+msgid "Sync best exam scores into the gradebook for this class?"
+msgstr "ဤအတန်းအတွက် အကောင်းဆုံး စာမေးပွဲရမှတ်များကို အမှတ်စာရင်းသို့ ထည့်သွင်းမလား။"
+
+# Extracted string
+msgid "Open in Studio"
+msgstr "စတူဒီယိုတွင် ဖွင့်ရန်"
+
+# Extracted string
+msgid "Added 3 AI-generated variants."
+msgstr "AI ဖြင့် ဖန်တီးထားသော ပုံစံကွဲ ၃ ခုကို ထည့်သွင်းပြီးပါပြီ။"
+
+# Extracted string
+msgid "Add at least one question before publishing."
+msgstr "မထုတ်ပြန်မီ အနည်းဆုံး မေးခွန်းတစ်ခု ထည့်သွင်းပါ။"
+
+# Extracted string
+msgid "Question ${badIdx + 1} has no correct answer marked."
+msgstr ""
+
+# Extracted string
+msgid "Saved."
+msgstr "သိမ်းဆည်းပြီးပါပြီ။"
+
+# Extracted string
+msgid "Exam submitted (preview)."
+msgstr "စာမေးပွဲကို တင်ပြပြီးပါပြီ (နမူနာကြည့်ရှုမှု)။"
+
+# Extracted string
+msgid "Untitled exam"
+msgstr "ခေါင်းစဉ်မရှိသော စာမေးပွဲ"
+
+# Extracted string
+msgid "Type the question. Use $…$ for inline math and $$…$$ for a display equation."
+msgstr "မေးခွန်းကို ရိုက်ထည့်ပါ။ စာကြောင်းတွင်း သင်္ချာဖော်မြူလာအတွက် $...$ နှင့် သီးခြားပြသရန် သင်္ချာဖော်မြူလာအတွက် $$...$$ ကို အသုံးပြုပါ။"
+
+# Extracted string
+msgid "Guidance for graders (not shown to students)."
+msgstr "အမှတ်ပေးသူများအတွက် လမ်းညွှန်ချက် (ကျောင်းသားများကို ပြသမည်မဟုတ်ပါ)။"
+
+# Extracted string
+msgid "Shown to students before they begin."
+msgstr "ကျောင်းသားများ မစတင်မီ ၎င်းတို့အား ပြသပါမည်။"
+
+# Extracted string
+msgid "IEP/504 note"
+msgstr "IEP/504 မှတ်စု"
+
+# Extracted string
+msgid "(i"
+msgstr ""
+
+# Extracted string
+msgid "Preview as student"
+msgstr "ကျောင်းသားအဖြစ် နမူနာကြည့်ရှုရန်"
+
+# Extracted string
+msgid "Exam readiness"
+msgstr "စာမေးပွဲ အသင့်ဖြစ်မှု"
+
+# Extracted string
+msgid "Setup"
+msgstr "ပြင်ဆင်သတ်မှတ်မှု"
+
+# Extracted string
+msgid "Outline"
+msgstr "အကျဉ်းချုပ်"
+
+# Extracted string
+msgid "Add question"
+msgstr "မေးခွန်းထည့်ရန်"
+
+# Extracted string
+msgid "Choose a type"
+msgstr "အမျိုးအစားတစ်ခုကို ရွေးချယ်ပါ"
+
+# Extracted string
+msgid "Live student preview"
+msgstr "ကျောင်းသားမြင်ရမည့်ပုံစံ"
+
+# Extracted string
+msgid "This is exactly what students see."
+msgstr "၎င်းသည် ကျောင်းသားများ မြင်တွေ့ရမည့် ပုံစံအတိုင်း ဖြစ်သည်။"
+
+# Extracted string
+msgid ": active ?"
+msgstr ""
+
+# Extracted string
+msgid "Inline $…$ · display $$…$$"
+msgstr "စာကြောင်းတွင်း သင်္ချာဖော်မြူလာ $...$ · သီးခြားပြသရန် သင်္ချာဖော်မြူလာ $$...$$"
+
+# Extracted string
+msgid "Word bank — tap the circle to mark words that fill a blank"
+msgstr "စကားလုံးဘဏ် — ကွက်လပ်ဖြည့်ရမည့် စကားလုံးများကို မှတ်သားရန် စက်ဝိုင်းပုံကို နှိပ်ပါ"
+
+# Extracted string
+msgid "Use"
+msgstr "အသုံးပြုရန်"
+
+# Extracted string
+msgid "in the question for each blank. Correct words fill blanks in order; the rest become decoys."
+msgstr "မေးခွန်းရှိ ကွက်လပ်တစ်ခုစီအတွက် အသုံးပြုရန်။ မှန်ကန်သောစကားလုံးများသည် ကွက်လပ်များကို စဉ်အလိုက် ဖြည့်စွက်ပေးမည်ဖြစ်ပြီး ကျန်စကားလုံးများသည် အဖြေမှားများ ဖြစ်လာပါမည်။"
+
+# Extracted string
+msgid "Add word"
+msgstr "စကားလုံးထည့်ရန်"
+
+# Extracted string
+msgid "Model answer / rubric note"
+msgstr "နမူနာအဖြေ / အမှတ်ပေးသတ်မှတ်ချက် မှတ်စု"
+
+# Extracted string
+msgid "Graded manually in the grading queue."
+msgstr "အမှတ်ပေးတန်းစီဇယားတွင် ကိုယ်တိုင် အမှတ်ပေးထားသည်။"
+
+# Extracted string
+msgid "No questions yet"
+msgstr "မေးခွန်းများ မရှိသေးပါ"
+
+# Extracted string
+msgid "Add your first question to get started."
+msgstr "စတင်ရန် သင်၏ ပထမဆုံး မေးခွန်းကို ထည့်သွင်းပါ။"
+
+# Extracted string
+msgid "Exam details"
+msgstr "စာမေးပွဲ အသေးစိတ်"
+
+# Extracted string
+msgid "The basics students and the gradebook rely on."
+msgstr "ကျောင်းသားများနှင့် အမှတ်စာရင်းအတွက် အခြေခံအချက်များ။"
+
+# Extracted string
+msgid "Continue to questions →"
+msgstr "မေးခွန်းများသို့ ဆက်သွားရန် →"
+
+# Extracted string
+msgid "Schedule & access"
+msgstr "အချိန်ဇယားနှင့် ဝင်ရောက်ခွင့်"
+
+# Extracted string
+msgid "When and how students can take the exam."
+msgstr "ကျောင်းသားများ စာမေးပွဲကို မည်သည့်အချိန်၊ မည်သို့ ဖြေဆိုနိုင်သနည်း။"
+
+# Extracted string
+msgid "Availability window"
+msgstr "ဖြေဆိုနိုင်သော အချိန်အပိုင်းအခြား"
+
+# Extracted string
+msgid "Opens"
+msgstr "စတင်ဖွင့်လှစ်ချိန်"
+
+# Extracted string
+msgid "Closes"
+msgstr "ပိတ်မည့်အချိန်"
+
+# Extracted string
+msgid "Attempts allowed"
+msgstr "ဖြေဆိုခွင့်အကြိမ်ရေ"
+
+# Extracted string
+msgid "Continue to grading →"
+msgstr "အမှတ်ပေးခြင်းသို့ ဆက်သွားရန် →"
+
+# Extracted string
+msgid "Add student override"
+msgstr "ကျောင်းသားအလိုက် ကန့်သတ်ချက်ပြင်ဆင်ရန်"
+
+# Extracted string
+msgid "Grading & results"
+msgstr "အမှတ်ပေးခြင်းနှင့် ရလဒ်များ"
+
+# Extracted string
+msgid "How the exam is scored and shared back."
+msgstr "စာမေးပွဲ အမှတ်ပေးပုံနှင့် ရလဒ်များကို ပြန်လည်မျှဝေပုံ။"
+
+# Extracted string
+msgid "Score breakdown"
+msgstr "ရမှတ်များ အသေးစိတ်ခွဲခြားမှု"
+
+# Extracted string
+msgid "Release scores"
+msgstr "ရမှတ်များကို ထုတ်ပြန်ရန်"
+
+# Extracted string
+msgid "Review & publish →"
+msgstr "ပြန်လည်သုံးသပ်ပြီး ထုတ်ပြန်ရန် →"
+
+# Extracted string
+msgid "Select or add a question to preview."
+msgstr "နမူနာကြည့်ရန် မေးခွန်းတစ်ခုကို ရွေးချယ်ပါ သို့မဟုတ် ထည့်သွင်းပါ။"
+
+# Extracted string
+msgid "No questions to preview yet."
+msgstr "နမူနာကြည့်ရန် မေးခွန်းများ မရှိသေးပါ။"
+
+# Extracted string
+msgid "Autosaved · preview mode"
+msgstr "အလိုအလျောက်သိမ်းဆည်းပြီး · နမူနာကြည့်ရှုမှုစနစ်"
+
+# Extracted string
+msgid "← Previous"
+msgstr "← ယခင်"
+
+# Extracted string
+msgid "Next →"
+msgstr "နောက်သို့ →"
+
+# Extracted string
+msgid "Submit exam"
+msgstr "စာမေးပွဲတင်ပြရန်"
+
+# Extracted string
+msgid "MIN"
+msgstr "မိနစ်"
+
+# Extracted string
+msgid "Exam published"
+msgstr "စာမေးပွဲကို ထုတ်ပြန်ပြီးပါပြီ"
+
+# Extracted string
+msgid "Back to editing"
+msgstr "တည်းဖြတ်ခြင်းသို့ ပြန်သွားရန်"
+
+# Extracted string
+msgid "View dashboard"
+msgstr "ဒက်ရှ်ဘုတ်ကို ကြည့်ရန်"
+
+# Extracted string
+msgid "Failed to load expense"
+msgstr "အသုံးစရိတ်ကို ဖွင့်၍မရပါ"
+
+# Extracted string
+msgid "Expense submitted for approval"
+msgstr "အသုံးစရိတ်ကို အတည်ပြုချက်ရယူရန် တင်ပြပြီးပါပြီ"
+
+# Extracted string
+msgid "Failed to submit expense"
+msgstr "အသုံးစရိတ် တင်ပြခြင်း မအောင်မြင်ပါ"
+
+# Extracted string
+msgid "Expense approved"
+msgstr "အသုံးစရိတ်ကို အတည်ပြုပြီးပါပြီ"
+
+# Extracted string
+msgid "Failed to approve expense"
+msgstr "အသုံးစရိတ် အတည်ပြုခြင်း မအောင်မြင်ပါ"
+
+# Extracted string
+msgid "Expense rejected"
+msgstr "အသုံးစရိတ်ကို ငြင်းပယ်လိုက်ပါပြီ"
+
+# Extracted string
+msgid "Failed to reject expense"
+msgstr "အသုံးစရိတ် ငြင်းပယ်ခြင်း မအောင်မြင်ပါ"
+
+# Extracted string
+msgid "Failed to record payment"
+msgstr "ငွေပေးချေမှု မှတ်တမ်းတင်ခြင်း မအောင်မြင်ပါ"
+
+# Extracted string
+msgid "Expense not found"
+msgstr "အသုံးစရိတ် မတွေ့ရှိပါ"
+
+# Extracted string
+msgid "Expense Details"
+msgstr "အသုံးစရိတ် အသေးစိတ်အချက်အလက်များ"
+
+# Extracted string
+msgid "Submit for Approval"
+msgstr "အတည်ပြုချက်ရယူရန် တင်ပြရန်"
+
+# Extracted string
+msgid "Reject"
+msgstr "ငြင်းပယ်ရန်"
+
+# Extracted string
+msgid "Expense Information"
+msgstr "အသုံးစရိတ် အချက်အလက်များ"
+
+# Extracted string
+msgid "Financial Details"
+msgstr "ဘဏ္ဍာရေးဆိုင်ရာ အသေးစိတ်အချက်အလက်များ"
+
+# Extracted string
+msgid "Tax"
+msgstr "အခွန်"
+
+# Extracted string
+msgid "Expense Date"
+msgstr "အသုံးစရိတ်ရက်စွဲ"
+
+# Extracted string
+msgid "Vendor Information"
+msgstr "ရောင်းချသူ အချက်အလက်များ"
+
+# Extracted string
+msgid "Vendor Name"
+msgstr "ရောင်းချသူအမည်"
+
+# Extracted string
+msgid "Invoice Number"
+msgstr "အင်ဗွိုက်စ်နံပါတ်"
+
+# Extracted string
+msgid "Contact Person"
+msgstr "ဆက်သွယ်ရမည့်သူ"
+
+# Extracted string
+msgid "Approval Trail"
+msgstr "အတည်ပြုချက် လမ်းကြောင်း"
+
+# Extracted string
+msgid "Submitted:"
+msgstr "တင်ပြပြီးရက်-"
+
+# Extracted string
+msgid "Approved:"
+msgstr "အတည်ပြုပြီးရက်-"
+
+# Extracted string
+msgid "Paid:"
+msgstr "ပေးချေပြီးရက်-"
+
+# Extracted string
+msgid "Expense updated successfully"
+msgstr "အသုံးစရိတ်ကို အောင်မြင်စွာ မွမ်းမံပြီးပါပြီ"
+
+# Extracted string
+msgid "Expense deleted successfully"
+msgstr "အသုံးစရိတ်ကို အောင်မြင်စွာ ဖျက်လိုက်ပါပြီ"
+
+# Extracted string
+msgid "Are you sure you want to delete this expense?"
+msgstr "ဤအသုံးစရိတ်ကို ဖျက်ရန် သေချာပါသလား။"
+
+# Extracted string
+msgid "Enter expense title"
+msgstr "အသုံးစရိတ် ခေါင်းစဉ် ရိုက်ထည့်ပါ"
+
+# Extracted string
+msgid "Enter expense description"
+msgstr "အသုံးစရိတ် အကြောင်းအရာ ရိုက်ထည့်ပါ"
+
+# Extracted string
+msgid "Select vendor"
+msgstr "ရောင်းချသူ ရွေးချယ်ပါ"
+
+# Extracted string
+msgid "Enter invoice number"
+msgstr "အင်ဗွိုက်စ်နံပါတ် ရိုက်ထည့်ပါ"
+
+# Extracted string
+msgid "Select payment method"
+msgstr "ငွေပေးချေမှုစနစ် ရွေးချယ်ပါ"
+
+# Extracted string
+msgid "Select budget"
+msgstr "ဘတ်ဂျက် ရွေးချယ်ပါ"
+
+# Extracted string
+msgid "e.g., 2024-2025"
+msgstr "ဥပမာ- ၂၀၂၄-၂၀၂၅"
+
+# Extracted string
+msgid "Edit Expense"
+msgstr "အသုံးစရိတ် ပြင်ဆင်ရန်"
+
+# Extracted string
+msgid "Update expense details"
+msgstr "အသုံးစရိတ် အသေးစိတ်အချက်အလက်များကို မွမ်းမံရန်"
+
+# Extracted string
+msgid "Category *"
+msgstr "အမျိုးအစား *"
+
+# Extracted string
+msgid "Tax Amount"
+msgstr "အခွန် ပမာဏ"
+
+# Extracted string
+msgid "Expense Date *"
+msgstr "အသုံးစရိတ်ရက်စွဲ *"
+
+# Extracted string
+msgid "Vendor & Payment"
+msgstr "ရောင်းချသူနှင့် ငွေပေးချေမှု"
+
+# Extracted string
+msgid "Vendor"
+msgstr "ရောင်းချသူ"
+
+# Extracted string
+msgid "Vendor Invoice Number"
+msgstr "ရောင်းချသူ၏ အင်ဗွိုက်စ်နံပါတ်"
+
+# Extracted string
+msgid "Expense created successfully"
+msgstr "အသုံးစရိတ်ကို အောင်မြင်စွာ ဖန်တီးပြီးပါပြီ"
+
+# Extracted string
+msgid "New Expense"
+msgstr "အသုံးစရိတ်အသစ်"
+
+# Extracted string
+msgid "Create a new expense record"
+msgstr "အသုံးစရိတ်မှတ်တမ်းအသစ်တစ်ခု ဖန်တီးရန်"
+
+# Extracted string
+msgid "Delete expense \"${expense.title}\"? This cannot be undone."
+msgstr "အသုံးစရိတ် \"${expense.title}\" ကို ဖျက်မလား။ ပြန်ပြင်၍မရပါ။"
+
+# Extracted string
+msgid "Search expenses..."
+msgstr "အသုံးစရိတ်များကို ရှာဖွေရန်..."
+
+# Extracted string
+msgid "All Categories"
+msgstr "အမျိုးအစားအားလုံး"
+
+# Extracted string
+msgid "Track and manage school expenses."
+msgstr "ကျောင်း၏ အသုံးစရိတ်များကို ခြေရာခံပြီး စီမံခန့်ခွဲရန်။"
+
+# Extracted string
+msgid "Excel"
+msgstr "Excel"
+
+# Extracted string
+msgid "Total Expenses"
+msgstr "စုစုပေါင်း အသုံးစရိတ်များ"
+
+# Extracted string
+msgid "Awaiting Approval"
+msgstr "အတည်ပြုချက် စောင့်ဆိုင်းနေဆဲ"
+
+# Extracted string
+msgid "Pending Approval"
+msgstr "အတည်ပြုချက် စောင့်ဆိုင်းဆဲ"
+
+# Extracted string
+msgid "Rejected"
+msgstr "ငြင်းပယ်ထားသည်"
+
+# Extracted string
+msgid "No expenses to show."
+msgstr "ပြသရန် အသုံးစရိတ်များ မရှိပါ။"
+
+# Extracted string
+msgid "Failed to load assignments"
+msgstr "တာဝန်ပေးအပ်မှုများကို ဖွင့်၍မရပါ"
+
+# Extracted string
+msgid "Fee Assignments"
+msgstr "လခ ပေးဆောင်ရမည့်သူများ"
+
+# Extracted string
+msgid "View and manage student fee assignments"
+msgstr "ကျောင်းသားလခ ပေးဆောင်ရမည့်သူများကို ကြည့်ရှုပြီး စီမံခန့်ခွဲရန်"
+
+# Extracted string
+msgid "Total Assignments"
+msgstr "စုစုပေါင်း ပေးအပ်မှုများ"
+
+# Extracted string
+msgid "No assignments found"
+msgstr "တာဝန်ပေးအပ်မှုများ မတွေ့ရှိပါ"
+
+# Extracted string
+msgid "Fee Item"
+msgstr "လခ အမျိုးအစား"
+
+# Extracted string
+msgid "Failed to load discounts"
+msgstr "လျှော့စျေးအချက်အလက်များကို ဖွင့်၍မရပါ"
+
+# Extracted string
+msgid "Fee Discounts"
+msgstr "လခ လျှော့စျေးများ"
+
+# Extracted string
+msgid "Manage fee discounts and scholarships"
+msgstr "လခ လျှော့စျေးများနှင့် ပညာသင်ဆုများကို စီမံခန့်ခွဲရန်"
+
+# Extracted string
+msgid "New Discount"
+msgstr "လျှော့စျေးအသစ်"
+
+# Extracted string
+msgid "No discounts configured"
+msgstr "လျှော့စျေးများ သတ်မှတ်ထားခြင်း မရှိပါ"
+
+# Extracted string
+msgid "Value"
+msgstr "တန်ဖိုး"
+
+# Extracted string
+msgid "Validity"
+msgstr "သက်တမ်း"
+
+# Extracted string
+msgid "Failed to load fee structure"
+msgstr "လခ သတ်မှတ်ချက်ပုံစံကို ဖွင့်၍မရပါ"
+
+# Extracted string
+msgid "Fee structure deleted successfully"
+msgstr "လခ သတ်မှတ်ချက်ပုံစံကို အောင်မြင်စွာ ဖျက်လိုက်ပါပြီ"
+
+# Extracted string
+msgid "Fee structure archived"
+msgstr "လခ သတ်မှတ်ချက်ပုံစံကို မော်ကွန်းတင်ပြီးပါပြီ"
+
+# Extracted string
+msgid "Fee item removed"
+msgstr "လခ အမျိုးအစားကို ဖယ်ရှားလိုက်ပါပြီ"
+
+# Extracted string
+msgid "Name and a positive amount are required"
+msgstr "အမည်နှင့် အပေါင်းကိန်းဖြစ်သော ပမာဏတစ်ခု လိုအပ်ပါသည်"
+
+# Extracted string
+msgid "Fee item added"
+msgstr "လခ အမျိုးအစား ထည့်ပြီးပါပြီ"
+
+# Extracted string
+msgid "Name and a positive value are required"
+msgstr "အမည်နှင့် အပေါင်းကိန်းဖြစ်သော တန်ဖိုးတစ်ခု လိုအပ်ပါသည်"
+
+# Extracted string
+msgid "Discount added"
+msgstr "လျှော့စျေး ထည့်ပြီးပါပြီ"
+
+# Extracted string
+msgid "Payment plan created"
+msgstr "ငွေပေးချေမှု အစီအစဉ် ဖန်တီးပြီးပါပြီ"
+
+# Extracted string
+msgid "This will assign fee items to all applicable students. Continue?"
+msgstr "၎င်းသည် သက်ဆိုင်ရာကျောင်းသားအားလုံးကို လခအမျိုးအစားများ သတ်မှတ်ပေးပါမည်။ ဆက်လုပ်မလား။"
+
+# Extracted string
+msgid "Are you sure you want to delete this fee structure?"
+msgstr "ဤလခ သတ်မှတ်ချက်ပုံစံကို ဖျက်ရန် သေချာပါသလား။"
+
+# Extracted string
+msgid "Archive this fee structure? It will stop applying to new students, and you can edit or delete it again."
+msgstr "ဤလခ သတ်မှတ်ချက်ပုံစံကို မော်ကွန်းတင်မည်လား။ ၎င်းသည် ကျောင်းသားသစ်များထံ သတ်မှတ်ခြင်းကို ရပ်ဆိုင်းသွားမည်ဖြစ်ပြီး ၎င်းကို ထပ်မံတည်းဖြတ်ရန် သို့မဟုတ် ဖျက်ရန် ဆောင်ရွက်နိုင်သည်။"
+
+# Extracted string
+msgid "Remove \"${item.name}\"?"
+msgstr "\"${item.name}\" ကို ဖယ်ရှားမလား။"
+
+# Extracted string
+msgid "e.g., Tuition Fee"
+msgstr "ဥပမာ- သင်တန်းကြေး"
+
+# Extracted string
+msgid "e.g., Sibling Discount"
+msgstr "ဥပမာ- ညီအစ်ကိုမောင်နှမ လျှော့စျေး"
+
+# Extracted string
+msgid "e.g., 2026 Installment Plan"
+msgstr "ဥပမာ- ၂၀၂၆ အရစ်ကျပေးချေမှု အစီအစဉ်"
+
+# Extracted string
+msgid "Fee structure not found"
+msgstr "လခ သတ်မှတ်ချက်ပုံစံ မတွေ့ရှိပါ"
+
+# Extracted string
+msgid "This structure has no fee items yet, so \"Assign Fees\" won't create anything. Archive it, add at least one item, then reactivate it from the Edit page."
+msgstr "ဤသတ်မှတ်ချက်ပုံစံတွင် လခအမျိုးအစားများ မရှိသေးသဖြင့် \"Assign Fees\" သည် မည်သည့်အရာမျှ ဖန်တီးမည်မဟုတ်ပါ။ ၎င်းကို မော်ကွန်းတင်ပါ၊ အနည်းဆုံး အမျိုးအစားတစ်ခု ထည့်သွင်းပါ၊ ထို့နောက် ပြင်ဆင်ရန်စာမျက်နှာမှ ပြန်လည်ဖွင့်လှစ်ပါ။"
+
+# Extracted string
+msgid "Fee Items"
+msgstr "လခ အမျိုးအစားများ"
+
+# Extracted string
+msgid "Assignments"
+msgstr "လခ ပေးဆောင်မှုများ"
+
+# Extracted string
+msgid "Discounts"
+msgstr "လျှော့စျေးများ"
+
+# Extracted string
+msgid "Payment Plans"
+msgstr "ငွေပေးချေမှု အစီအစဉ်များ"
+
+# Extracted string
+msgid "Student Assignments"
+msgstr "ကျောင်းသားများ၏ လခပေးဆောင်ရမည့် သတ်မှတ်ချက်များ"
+
+# Extracted string
+msgid "No assignments yet. Add at least one fee item, activate this structure, then click \"Assign Fees\" above."
+msgstr "လခ သတ်မှတ်ချက်များ မရှိသေးပါ။ အနည်းဆုံး လခအမျိုးအစားတစ်ခု ထည့်သွင်းပါ၊ ဤသတ်မှတ်ချက်ပုံစံကို စတင်ဖွင့်လှစ်ပြီး အပေါ်ရှိ \"Assign Fees\" ကို နှိပ်ပါ။"
+
+# Extracted string
+msgid "Available Discounts"
+msgstr "ရရှိနိုင်သော လျှော့စျေးများ"
+
+# Extracted string
+msgid "No payment plans configured"
+msgstr "ငွေပေးချေမှု အစီအစဉ်များ သတ်မှတ်ထားခြင်း မရှိပါ"
+
+# Extracted string
+msgid "Add Item"
+msgstr "အမျိုးအစား ထည့်ရန်"
+
+# Extracted string
+msgid "Add Fee Item"
+msgstr "လခ အမျိုးအစား ထည့်ရန်"
+
+# Extracted string
+msgid "Frequency"
+msgstr "အကြိမ်ရေ"
+
+# Extracted string
+msgid "One Time"
+msgstr "တစ်ကြိမ်တည်း"
+
+# Extracted string
+msgid "Per Term"
+msgstr "တစ်နှစ်ပတ်လုံး"
+
+# Extracted string
+msgid "Yearly"
+msgstr "နှစ်စဉ်"
+
+# Extracted string
+msgid "Applies To"
+msgstr "သက်ဆိုင်သည့် ကျောင်းသားစု"
+
+# Extracted string
+msgid "Boarding Students"
+msgstr "အဆောင်နေ ကျောင်းသားများ"
+
+# Extracted string
+msgid "Day Students"
+msgstr "နေ့ကျောင်းသားများ"
+
+# Extracted string
+msgid "Add Discount"
+msgstr "လျှော့စျေး ထည့်ရန်"
+
+# Extracted string
+msgid "Fixed Amount"
+msgstr "သတ်မှတ်ထားသော ပမာဏ"
+
+# Extracted string
+msgid "Sibling Discount"
+msgstr "ညီအစ်ကိုမောင်နှမ လျှော့စျေး"
+
+# Extracted string
+msgid "Scholarship"
+msgstr "ပညာသင်ဆု"
+
+# Extracted string
+msgid "Early Payment"
+msgstr "စောစီးစွာ ငွေပေးချေမှု"
+
+# Extracted string
+msgid "Valid From"
+msgstr "စတင် အကျုံးဝင်မည့်ရက်"
+
+# Extracted string
+msgid "Valid To"
+msgstr "ကုန်ဆုံးမည့်ရက်"
+
+# Extracted string
+msgid "Create Plan"
+msgstr "အစီအစဉ် ဖန်တီးရန်"
+
+# Extracted string
+msgid "Create Payment Plan"
+msgstr "ငွေပေးချေမှု အစီအစဉ် ဖန်တီးရန်"
+
+# Extracted string
+msgid "Plan Name *"
+msgstr "အစီအစဉ် အမည် *"
+
+# Extracted string
+msgid "# Installments *"
+msgstr "အရစ်ကျ အကြိမ်ရေ *"
+
+# Extracted string
+msgid "First Installment Due *"
+msgstr "ပထမဆုံးအကြိမ် ပေးဆောင်ရန် ရက်စွဲ *"
+
+# Extracted string
+msgid "Fee structure updated successfully"
+msgstr "လခ သတ်မှတ်ချက်ပုံစံကို အောင်မြင်စွာ မွမ်းမံပြီးပါပြီ"
+
+# Extracted string
+msgid "e.g., 2024-2025 Annual Fees"
+msgstr "ဥပမာ- ၂၀၂၄-၂၀၂၅ နှစ်စဉ်ကြေးများ"
+
+# Extracted string
+msgid "e.g., Term 1, Semester 1"
+msgstr "ဥပမာ- ပထမနှစ်ဝက်၊ ပထမပညာသင်ကာလ"
+
+# Extracted string
+msgid "Describe this fee structure..."
+msgstr "ဤလခ သတ်မှတ်ချက်ပုံစံကို ရှင်းလင်းဖော်ပြပါ..."
+
+# Extracted string
+msgid "Edit Fee Structure"
+msgstr "လခ သတ်မှတ်ချက်ပုံစံ ပြင်ဆင်ရန်"
+
+# Extracted string
+msgid "Update fee structure details"
+msgstr "လခ သတ်မှတ်ချက်ပုံစံ အသေးစိတ်ကို မွမ်းမံရန်"
+
+# Extracted string
+msgid "Structure Name *"
+msgstr "သတ်မှတ်ချက်ပုံစံအမည် *"
+
+# Extracted string
+msgid "Academic Year *"
+msgstr "ပညာသင်နှစ် *"
+
+# Extracted string
+msgid "Term (Optional)"
+msgstr "ပညာသင်ကာလ (ရွေးချယ်နိုင်သည်)"
+
+# Extracted string
+msgid "Configuration"
+msgstr "ပြင်ဆင်သတ်မှတ်ချက်များ"
+
+# Extracted string
+msgid "Apply to specific classes only"
+msgstr "သတ်မှတ်ထားသော အတန်းများအတွက်သာ သက်ဆိုင်စေရန်"
+
+# Extracted string
+msgid "Apply to boarding students only"
+msgstr "အဆောင်နေကျောင်းသားများအတွက်သာ သက်ဆိုင်စေရန်"
+
+# Extracted string
+msgid "Apply to day students only"
+msgstr "နေ့ကျောင်းသားများအတွက်သာ သက်ဆိုင်စေရန်"
+
+# Extracted string
+msgid "Effective Period"
+msgstr "အသက်ဝင်မည့် ကာလ"
+
+# Extracted string
+msgid "Effective From *"
+msgstr "စတင်အသက်ဝင်မည့်ရက် *"
+
+# Extracted string
+msgid "Effective To (Optional)"
+msgstr "ပြီးဆုံးမည့်ရက် (ရွေးချယ်နိုင်သည်)"
+
+# Extracted string
+msgid "Fee structure created successfully"
+msgstr "လခ သတ်မှတ်ချက်ပုံစံကို အောင်မြင်စွာ ဖန်တီးပြီးပါပြီ"
+
+# Extracted string
+msgid "New Fee Structure"
+msgstr "လခ သတ်မှတ်ချက်ပုံစံအသစ်"
+
+# Extracted string
+msgid "Create a new fee structure for your school"
+msgstr "သင့်ကျောင်းအတွက် လခ သတ်မှတ်ချက်ပုံစံအသစ်တစ်ခု ဖန်တီးရန်"
+
+# Extracted string
+msgid "Failed to load fee structures"
+msgstr "လခ သတ်မှတ်ချက်ပုံစံများကို ဖွင့်၍မရပါ"
+
+# Extracted string
+msgid "Are you sure you want to delete \"${name}\"?"
+msgstr ""
+
+# Extracted string
+msgid "Search structures..."
+msgstr "သတ်မှတ်ချက်ပုံစံများကို ရှာဖွေရန်..."
+
+# Extracted string
+msgid "Manage fee types and academic year structures"
+msgstr "လခအမျိုးအစားများနှင့် ပညာသင်နှစ် သတ်မှတ်ချက်ပုံစံများကို စီမံခန့်ခွဲရန်"
+
+# Extracted string
+msgid "New Structure"
+msgstr "သတ်မှတ်ချက်ပုံစံအသစ်"
+
+# Extracted string
+msgid "Total Structures"
+msgstr "စုစုပေါင်း သတ်မှတ်ချက်ပုံစံများ"
+
+# Extracted string
+msgid "This Year"
+msgstr "ယခုနှစ်"
+
+# Extracted string
+msgid "No fee structures found. Create one to get started."
+msgstr "လခ သတ်မှတ်ချက်ပုံစံများ မတွေ့ရှိပါ။ စတင်ရန် တစ်ခု ဖန်တီးပါ။"
+
+# Extracted string
+msgid "Charge a student a fee directly, with an optional discount and partial payment."
+msgstr "ကျောင်းသားတစ်ဦးအား လခ တိုက်ရိုက်ကောက်ခံရန် (ရွေးချယ်နိုင်သော လျှော့စျေးနှင့် တစ်စိတ်တစ်ပိုင်းပေးချေမှုတို့ ပါဝင်နိုင်သည်)။"
+
+# Extracted string
+msgid "Amount Due (after discount)"
+msgstr "ပေးရန်ကျန်ငွေ (လျှော့စျေး နှုတ်ပြီးနောက်)"
+
+# Extracted string
+msgid "Leave blank to record the full amount due as paid. Enter a smaller number for a partial payment."
+msgstr "သတ်မှတ်ထားသော ပမာဏအပြည့် ပေးချေပြီးကြောင်း မှတ်တမ်းတင်ရန် ကွက်လပ်ထားခဲ့ပါ။ တစ်စိတ်တစ်ပိုင်း ပေးချေမှုအတွက် ပိုမိုနည်းပါးသော ဂဏန်းတစ်ခုကို ရိုက်ထည့်ပါ။"
+
+# Extracted string
+msgid "Balance Remaining"
+msgstr "လက်ကျန် ကျန်ငွေ"
+
+# Extracted string
+msgid "Balance Due Date (optional)"
+msgstr "ကျန်ငွေ ပေးဆောင်ရမည့် ရက်စွဲ (ရွေးချယ်နိုင်သည်)"
+
+# Extracted string
+msgid "Enter a reason for voiding this payment"
+msgstr "ဤငွေပေးချေမှုကို ပယ်ဖျက်ရသည့် အကြောင်းရင်းကို ဖြည့်သွင်းပါ"
+
+# Extracted string
+msgid "Payment voided"
+msgstr "ငွေပေးချေမှုကို ပယ်ဖျက်လိုက်ပါပြီ"
+
+# Extracted string
+msgid "Enter an amount greater than 0"
+msgstr "၀ ထက်ကြီးသော ပမာဏတစ်ခုကို ရိုက်ထည့်ပါ"
+
+# Extracted string
+msgid "Payment recorded"
+msgstr "ငွေပေးချေမှုကို မှတ်တမ်းတင်ပြီးပါပြီ"
+
+# Extracted string
+msgid "Payment verification QR"
+msgstr "ငွေပေးချေမှု စစ်ဆေးရန် QR"
+
+# Extracted string
+msgid "Example: Duplicate receipt recorded in error"
+msgstr "ဥပမာ- မှားယွင်းစွာ မှတ်တမ်းတင်မိသော မိတ္တူပြေစာ"
+
+# Extracted string
+msgid "Record Additional Payment"
+msgstr "ထပ်ဆောင်းငွေပေးချေမှုကို မှတ်တမ်းတင်ရန်"
+
+# Extracted string
+msgid "Download PDF"
+msgstr "PDF ဒေါင်းလုဒ်လုပ်ရန်"
+
+# Extracted string
+msgid "This payment has been voided."
+msgstr "ဤငွေပေးချေမှုကို ပယ်ဖျက်လိုက်ပြီး ဖြစ်သည်။"
+
+# Extracted string
+msgid "Discount"
+msgstr "လျှော့စျေး"
+
+# Extracted string
+msgid "Amount Due"
+msgstr "ပေးဆောင်ရန် ပမာဏ"
+
+# Extracted string
+msgid "Amount Paid"
+msgstr "ပေးချေပြီးသော ပမာဏ"
+
+# Extracted string
+msgid "Void Reason"
+msgstr "ပယ်ဖျက်ရသည့် အကြောင်းရင်း"
+
+# Extracted string
+msgid "Outstanding balance:"
+msgstr "ပေးရန်ကျန်ရှိသော လက်ကျန်ငွေ-"
+
+# Extracted string
+msgid "Payment Date"
+msgstr "ငွေပေးချေသည့်ရက်စွဲ"
+
+# Extracted string
+msgid "Notes (optional)"
+msgstr "မှတ်စု (ရွေးချယ်နိုင်သည်)"
+
+# Extracted string
+msgid "Pay Balance"
+msgstr "ကျန်ငွေ ပေးချေရန်"
+
+# Extracted string
+msgid "Record Payment Toward Balance"
+msgstr "လက်ကျန်ငွေပေးချေမှုကို မှတ်တမ်းတင်ရန်"
+
+# Extracted string
+msgid "Official Receipt Verification"
+msgstr "တရားဝင်ပြေစာ စစ်ဆေးခြင်း"
+
+# Extracted string
+msgid "Verifying..."
+msgstr "စစ်ဆေးနေဆဲ..."
+
+# Extracted string
+msgid "Receipt Not Found"
+msgstr "ပြေစာ မတွေ့ရှိပါ"
+
+# Extracted string
+msgid "No payment receipt matches this verification link. It may be invalid or mistyped."
+msgstr "ဤစစ်ဆေးမှုလင့်ခ်နှင့် ကိုက်ညီသော ငွေပေးချေမှုပြေစာ မရှိပါ။ ၎င်းသည် မမှန်ကန်ခြင်း သို့မဟုတ် စာလုံးမှားယွင်းခြင်း ဖြစ်နိုင်ပါသည်။"
+
+# Extracted string
+msgid "Valid Payment Receipt"
+msgstr "တရားဝင် ငွေပေးချေမှုပြေစာ"
+
+# Extracted string
+msgid "Voided Receipt"
+msgstr "ပယ်ဖျက်ထားသော ပြေစာ"
+
+# Extracted string
+msgid "This payment receipt has been voided and should not be accepted as proof of payment."
+msgstr "ဤငွေပေးချေမှုပြေစာအား ပယ်ဖျက်လိုက်ပြီး ဖြစ်သဖြင့် ငွေပေးချေမှုအထောက်အထားအဖြစ် လက်မခံသင့်ပါ။"
+
+# Extracted string
+msgid "Only receipt verification details are shown. Private student financial notes are never disclosed on this page."
+msgstr "ပြေစာစစ်ဆေးခြင်း အသေးစိတ်အချက်အလက်များကိုသာ ပြသထားပါသည်။ ကျောင်းသား၏ ကိုယ်ရေးကိုယ်တာ ဘဏ္ဍာရေးဆိုင်ရာ မှတ်စုများကို ဤစာမျက်နှာတွင် မည်သည့်အခါမျှ ထုတ်ဖော်ပြသမည် မဟုတ်ပါ။"
+
+# Extracted string
+msgid "Budget vs Actual Report"
+msgstr "ဘတ်ဂျက်နှင့် အမှန်တကယ်သုံးစွဲမှု နှိုင်းယှဉ်ချက် အစီရင်ခံစာ"
+
+# Extracted string
+msgid "No data available"
+msgstr "အချက်အလက် မရှိပါ"
+
+# Extracted string
+msgid "Compare budgeted amounts with actual spending"
+msgstr "ဘတ်ဂျက်လျာထားငွေနှင့် အမှန်တကယ်အသုံးပြုမှုကို နှိုင်းယှဉ်ရန်"
+
+# Extracted string
+msgid "CSV"
+msgstr "CSV"
+
+# Extracted string
+msgid "Budgeted amount"
+msgstr "ဘတ်ဂျက်လျာထားငွေ"
+
+# Extracted string
+msgid "According to budget"
+msgstr "ဘတ်ဂျက်သတ်မှတ်ချက်အရ"
+
+# Extracted string
+msgid "Actual Expenses"
+msgstr "အမှန်တကယ် အသုံးစရိတ်များ"
+
+# Extracted string
+msgid "Recorded expenses"
+msgstr "မှတ်တမ်းတင်ထားသော အသုံးစရိတ်များ"
+
+# Extracted string
+msgid "Total Variance"
+msgstr "စုစုပေါင်း ကွာခြားချက်"
+
+# Extracted string
+msgid "Overall Utilization"
+msgstr "စုစုပေါင်း သုံးစွဲမှုနှုန်း"
+
+# Extracted string
+msgid "Card View"
+msgstr "ကတ်ပုံစံဖြင့် ကြည့်ရန်"
+
+# Extracted string
+msgid "Table View"
+msgstr "ဇယားပုံစံဖြင့် ကြည့်ရန်"
+
+# Extracted string
+msgid "Variance %"
+msgstr "ကွာခြားချက် ရာခိုင်နှုန်း"
+
+# Extracted string
+msgid "Total Budgets"
+msgstr "စုစုပေါင်း ဘတ်ဂျက်များ"
+
+# Extracted string
+msgid "Over Budget"
+msgstr "ဘတ်ဂျက်ကျော်လွန်မှု"
+
+# Extracted string
+msgid "On Track"
+msgstr "ပုံမှန်အတိုင်းရှိမှု"
+
+# Extracted string
+msgid "Under Budget"
+msgstr "ဘတ်ဂျက်မပြည့်မီမှု"
+
+# Extracted string
+msgid "b.utilization"
+msgstr "b.utilization"
+
+# Extracted string
+msgid "Overall Health"
+msgstr "စုစုပေါင်း အခြေအနေ"
+
+# Extracted string
+msgid "Failed to load financial data"
+msgstr "ဘဏ္ဍာရေးအချက်အလက်များကို ဖွင့်၍မရပါ"
+
+# Extracted string
+msgid "Total Revenue"
+msgstr "စုစုပေါင်း ဝင်ငွေ"
+
+# Extracted string
+msgid "Outstanding Fees"
+msgstr "ပေးရန်ကျန်ရှိသော လခများ"
+
+# Extracted string
+msgid "Budget Utilization"
+msgstr "ဘတ်ဂျက် သုံးစွဲမှု"
+
+# Extracted string
+msgid "Income Trend"
+msgstr "ဝင်ငွေ ဦးတည်ချက်"
+
+# Extracted string
+msgid "Expense Trend"
+msgstr "အသုံးစရိတ် ဦးတည်ချက်"
+
+# Extracted string
+msgid "Net Cash Flow"
+msgstr "အသားတင် ငွေကြေးစီးဆင်းမှု"
+
+# Extracted string
+msgid "Monthly Report"
+msgstr "လစဉ် အစီရင်ခံစာ"
+
+# Extracted string
+msgid "Loading financial data..."
+msgstr "ဘဏ္ဍာရေးအချက်အလက်များကို ဖွင့်နေပါသည်..."
+
+# Extracted string
+msgid "Cash Flow Analysis"
+msgstr "ငွေကြေးစီးဆင်းမှု ဆန်းစစ်ချက်"
+
+# Extracted string
+msgid "Cash Flow Summary"
+msgstr "ငွေကြေးစီးဆင်းမှု အကျဉ်းချုပ်"
+
+# Extracted string
+msgid "Cash Inflow"
+msgstr "ငွေကြေးစီးဝင်မှု"
+
+# Extracted string
+msgid "Cash Outflow"
+msgstr "ငွေကြေးစီးထွက်မှု"
+
+# Extracted string
+msgid "Budget Utilization Overview"
+msgstr "ဘတ်ဂျက် သုံးစွဲမှု အကျဉ်းချုပ်"
+
+# Extracted string
+msgid "View All Budgets"
+msgstr "ဘတ်ဂျက်အားလုံးကို ကြည့်ရန်"
+
+# Extracted string
+msgid "Action Required"
+msgstr "လုပ်ဆောင်ရန် လိုအပ်ချက်"
+
+# Extracted string
+msgid "Review"
+msgstr "ပြန်လည်သုံးသပ်ရန်"
+
+# Extracted string
+msgid "Overdue Fees"
+msgstr "နောက်ကျနေသော လခများ"
+
+# Extracted string
+msgid "View Fees"
+msgstr "လခများကို ကြည့်ရန်"
+
+# Extracted string
+msgid "Quick Actions"
+msgstr "ဖြတ်လမ်း လုပ်ဆောင်ချက်များ"
+
+# Extracted string
+msgid "View Budgets"
+msgstr "ဘတ်ဂျက်များကို ကြည့်ရန်"
+
+# Extracted string
+msgid "Financial Reports"
+msgstr "ဘဏ္ဍာရေး အစီရင်ခံစာများ"
+
+# Extracted string
+msgid "Income &amp; Expense"
+msgstr "ဝင်ငွေနှင့် အသုံးစရိတ်"
+
+# Extracted string
+msgid "Budget vs Actual"
+msgstr "ဘတ်ဂျက်နှင့် အမှန်တကယ်သုံးစွဲမှု"
+
+# Extracted string
+msgid "Income & Expense Report"
+msgstr "ဝင်ငွေနှင့် အသုံးစရိတ် အစီရင်ခံစာ"
+
+# Extracted string
+msgid "Analyze financial performance and trends"
+msgstr "ဘဏ္ဍာရေးစွမ်းဆောင်ရည်နှင့် ဦးတည်ချက်များကို ဆန်းစစ်ရန်"
+
+# Extracted string
+msgid "Total Income"
+msgstr "စုစုပေါင်း ဝင်ငွေ"
+
+# Extracted string
+msgid "Net Surplus"
+msgstr "အသားတင် ပိုလျှံငွေ"
+
+# Extracted string
+msgid "Income by Source"
+msgstr "ဝင်ငွေရရှိရာ လမ်းကြောင်းအလိုက်"
+
+# Extracted string
+msgid "Breakdown of income sources"
+msgstr "ဝင်ငွေရရှိရာ လမ်းကြောင်းများ ခွဲခြားဖော်ပြချက်"
+
+# Extracted string
+msgid "Expenses by Category"
+msgstr "အမျိုးအစားအလိုက် အသုံးစရိတ်များ"
+
+# Extracted string
+msgid "Breakdown of expense categories"
+msgstr "အသုံးစရိတ်အမျိုးအစားများ ခွဲခြားဖော်ပြချက်"
+
+# Extracted string
+msgid "No income transactions recorded for this period."
+msgstr "ဤကာလအတွင်း မှတ်တမ်းတင်ထားသော ဝင်ငွေလွှဲပြောင်းမှု မရှိပါ။"
+
+# Extracted string
+msgid "Reference"
+msgstr "ရည်ညွှန်းချက်"
+
+# Extracted string
+msgid "No expense transactions recorded for this period."
+msgstr "ဤကာလအတွင်း မှတ်တမ်းတင်ထားသော အသုံးစရိတ်လွှဲပြောင်းမှု မရှိပါ။"
+
+# Extracted string
+msgid "Monthly Finance Report"
+msgstr "လစဉ် ဘဏ္ဍာရေး အစီရင်ခံစာ"
+
+# Extracted string
+msgid "Pick a month for its summary, or scan the full year below"
+msgstr "လစဉ်အကျဉ်းချုပ်အတွက် လတစ်ခုကို ရွေးချယ်ပါ၊ သို့မဟုတ် အောက်တွင် တစ်နှစ်ပတ်လုံးကို ကြည့်ရှုပါ"
+
+# Extracted string
+msgid "Income"
+msgstr "ဝင်ငွေ"
+
+# Extracted string
+msgid "Approved &amp; paid expenses"
+msgstr "အတည်ပြုပြီး ပေးချေပြီးသော အသုံးစရိတ်များ"
+
+# Extracted string
+msgid "This month"
+msgstr "ယခုလ"
+
+# Extracted string
+msgid "Running Balance"
+msgstr "စုစုပေါင်း လက်ကျန်ငွေ"
+
+# Extracted string
+msgid "Monthly totals with running cumulative balance, for context"
+msgstr "နှိုင်းယှဉ်နိုင်ရန်အတွက် လက်ကျန်စုစုပေါင်းနှင့် လစဉ်စုစုပေါင်းများ"
+
+# Extracted string
+msgid "Income sources, expenses, and running balance (selected month highlighted)"
+msgstr "ဝင်ငွေရလမ်းများ၊ အသုံးစရိတ်များနှင့် စုစုပေါင်းလက်ကျန်ငွေ (ရွေးချယ်ထားသော လကို အသားပေးပြသထားသည်)"
+
+# Extracted string
+msgid "Cumulative"
+msgstr "စုပေါင်း"
+
+# Extracted string
+msgid "Add some cards before exporting"
+msgstr "ဒေါင်းလုဒ်မလုပ်မီ ကတ်အချို့ ထည့်သွင်းပါ"
+
+# Extracted string
+msgid "No term/definition rows found in that file"
+msgstr "ထိုဖိုင်ထဲတွင် ဝေါဟာရ/အဓိပ္ပာယ်ဖွင့်ဆိုချက် အတန်းများ မတွေ့ရှိပါ"
+
+# Extracted string
+msgid "Imported ${imported.length} card${imported.length === 1 ? '' : 's'}"
+msgstr ""
+
+# Extracted string
+msgid "Could not read that CSV file"
+msgstr "ထို CSV ဖိုင်ကို ဖတ်၍မရပါ"
+
+# Extracted string
+msgid "Give the deck a title"
+msgstr "ကတ်စုအား ခေါင်းစဉ်တစ်ခု ပေးပါ"
+
+# Extracted string
+msgid "Add at least one card with both a term and a definition"
+msgstr "ဝေါဟာရနှင့် အဓိပ္ပာယ်ဖွင့်ဆိုချက် နှစ်ခုလုံးပါဝင်သော ကတ်အနည်းဆုံးတစ်ခု ထည့်သွင်းပါ"
+
+# Extracted string
+msgid "Deck updated"
+msgstr "ကတ်စုကို မွမ်းမံပြီးပါပြီ"
+
+# Extracted string
+msgid "Deck created"
+msgstr "ကတ်စုကို ဖန်တီးပြီးပါပြီ"
+
+# Extracted string
+msgid "e.g. Chapter 5 Vocabulary"
+msgstr "ဥပမာ- အခန်း ၅ ဝေါဟာရများ"
+
+# Extracted string
+msgid "What this deck covers"
+msgstr "ဤကတ်စုတွင် မည်သည့်အရာများ ပါဝင်သနည်း"
+
+# Extracted string
+msgid "No subject"
+msgstr "ဘာသာရပ်မရှိပါ"
+
+# Extracted string
+msgid "Add an image to this card"
+msgstr "ဤကတ်ထဲသို့ ပုံတစ်ပုံ ထည့်သွင်းပါ"
+
+# Extracted string
+msgid "Loading deck…"
+msgstr "ကတ်စုကို ဖွင့်နေပါသည်..."
+
+# Extracted string
+msgid "Description (optional)"
+msgstr "အကြောင်းအရာ (ရွေးချယ်နိုင်သည်)"
+
+# Extracted string
+msgid "Assign to classes"
+msgstr "အတန်းများသို့ သတ်မှတ်ပေးရန်"
+
+# Extracted string
+msgid "No classes available."
+msgstr "အတန်းများ မရှိပါ။"
+
+# Extracted string
+msgid "Students in the selected classes will be able to study this deck. You can leave this unassigned and set it later."
+msgstr "ရွေးချယ်ထားသော အတန်းများရှိ ကျောင်းသားများသည် ဤကတ်စုကို လေ့လာနိုင်မည်ဖြစ်သည်။ ၎င်းကို မသတ်မှတ်ဘဲ ထားနိုင်ပြီး နောက်မှ သတ်မှတ်နိုင်သည်။"
+
+# Extracted string
+msgid "Share this deck with other teachers -- they'll be able to find it in Community and clone a copy into their own library, but can't edit your original."
+msgstr "ဤကတ်စုကို အခြားဆရာများနှင့် မျှဝေပါ — ၎င်းတို့သည် ၎င်းကို ကွန်မြူနတီတွင် ရှာဖွေနိုင်ပြီး ၎င်းတို့၏ကိုယ်ပိုင်စာကြည့်တိုက်ထဲသို့ ကူးယူနိုင်သော်လည်း သင့်မူရင်းကို တည်းဖြတ်၍မရပါ။"
+
+# Extracted string
+msgid "Cards"
+msgstr "ကတ်များ"
+
+# Extracted string
+msgid "Add Card"
+msgstr "ကတ်ထည့်ရန်"
+
+# Extracted string
+msgid "Two columns: term, definition. A header row is optional."
+msgstr "ကော်လံနှစ်ခု- ဝေါဟာရ၊ အဓိပ္ပာယ်ဖွင့်ဆိုချက်။ ခေါင်းစဉ်အတန်းသည် ရွေးချယ်နိုင်သည်။"
+
+# Extracted string
+msgid "Tip: wrap math in"
+msgstr "အကြံပြုချက်- သင်္ချာဖော်မြူလာကို ဤသို့ ပတ်ထားပါ-"
+
+# Extracted string
+msgid "(e.g."
+msgstr "(ဥပမာ-"
+
+# Extracted string
+msgid "$x^2 + 1$"
+msgstr "$x^2 + 1$"
+
+# Extracted string
+msgid "remove"
+msgstr "ဖယ်ရှားရန်"
+
+# Extracted string
+msgid "Couldn't load progress for this deck."
+msgstr "ဤကတ်စုအတွက် တိုးတက်မှုအခြေအနေကို ဖွင့်၍မရပါ။"
+
+# Extracted string
+msgid "Back to Flashcards"
+msgstr "မှတ်ဉာဏ်ကတ်များသို့ ပြန်သွားရန်"
+
+# Extracted string
+msgid "Student Progress"
+msgstr "ကျောင်းသား တိုးတက်မှုအခြေအနေ"
+
+# Extracted string
+msgid "No students yet -- assign this deck to a class to see progress here."
+msgstr "ကျောင်းသားများ မရှိသေးပါ -- ဤနေရာတွင် တိုးတက်မှုအခြေအနေကို မြင်တွေ့နိုင်ရန် ဤကတ်စုကို အတန်းတစ်ခုထံ သတ်မှတ်ပေးပါ။"
+
+# Extracted string
+msgid "Mastery"
+msgstr "ကျွမ်းကျင်မှု"
+
+# Extracted string
+msgid "Spelling"
+msgstr "စာလုံးပေါင်း"
+
+# Extracted string
+msgid "Match"
+msgstr "ယှဉ်တွဲခြင်း"
+
+# Extracted string
+msgid "Last Activity"
+msgstr "နောက်ဆုံး လုပ်ဆောင်မှု"
+
+# Extracted string
+msgid "Deck deleted"
+msgstr "ကတ်စုကို ဖျက်လိုက်ပါပြီ"
+
+# Extracted string
+msgid "This deck has no cards to export"
+msgstr "ဤကတ်စုတွင် ထုတ်ယူရန် ကတ်များ မရှိပါ"
+
+# Extracted string
+msgid "Cloned \"${deck.title}\" into your decks"
+msgstr "\"${deck.title}\" ကို သင့်ကတ်စုများထဲသို့ ကူးယူပြီးပါပြီ"
+
+# Extracted string
+msgid "Delete the deck \"${deck.title}\"? This cannot be undone."
+msgstr "ကတ်စု \"${deck.title}\" ကို ဖျက်မလား။ ပြန်ပြင်၍မရပါ။"
+
+# Extracted string
+msgid "Shared with other teachers"
+msgstr "အခြားဆရာများနှင့် မျှဝေထားသည်"
+
+# Extracted string
+msgid "Student progress"
+msgstr "ကျောင်းသား တိုးတက်မှုအခြေအနေ"
+
+# Extracted string
+msgid "Build study decks and assign them to your classes."
+msgstr "လေ့လာမှု ကတ်စုများကို တည်ဆောက်ပြီး သင့်အတန်းများသို့ သတ်မှတ်ပေးရန်။"
+
+# Extracted string
+msgid "New Deck"
+msgstr "ကတ်စုအသစ်"
+
+# Extracted string
+msgid "My Decks"
+msgstr "ကျွန်ုပ်၏ ကတ်စုများ"
+
+# Extracted string
+msgid "Community"
+msgstr "ကွန်မြူနတီ"
+
+# Extracted string
+msgid "No flashcard decks yet"
+msgstr "မှတ်ဉာဏ်ကတ်စုများ မရှိသေးပါ"
+
+# Extracted string
+msgid "Create your first deck to help students study key terms, or clone one from Community."
+msgstr "ကျောင်းသားများ အဓိကဝေါဟာရများကို လေ့လာနိုင်ရန် သင့်ပထမဆုံး ကတ်စုကို ဖန်တီးပါ သို့မဟုတ် ကွန်မြူနတီမှ တစ်ခုကို ကူးယူပါ။"
+
+# Extracted string
+msgid "Not assigned to any class yet"
+msgstr "မည်သည့်အတန်းကိုမျှ သတ်မှတ်ရသေးပါ"
+
+# Extracted string
+msgid "Spell"
+msgstr "စာလုံးပေါင်းရန်"
+
+# Extracted string
+msgid "No shared decks yet"
+msgstr "မျှဝေထားသော ကတ်စုများ မရှိသေးပါ"
+
+# Extracted string
+msgid "When other teachers share a deck, it'll show up here for you to clone."
+msgstr "အခြားဆရာများ ကတ်စုတစ်ခုကို မျှဝေသောအခါ၊ ၎င်းကို ကူးယူရန် ဤနေရာတွင် ပေါ်လာပါမည်။"
+
+# Extracted string
+msgid "Loading match game…"
+msgstr "တွဲဖက်ဂိမ်းကို ဖွင့်နေပါသည်..."
+
+# Extracted string
+msgid "Deck not found, or it isn't assigned to your class."
+msgstr "ကတ်စု မတွေ့ရှိပါ သို့မဟုတ် သင့်အတန်းအတွက် သတ်မှတ်ထားခြင်း မရှိပါ။"
+
+# Extracted string
+msgid "Match mode needs at least 2 cards in this deck."
+msgstr "တွဲဖက်ဂိမ်းအတွက် ဤကတ်စုတွင် အနည်းဆုံး ကတ် ၂ ကတ် လိုအပ်သည်။"
+
+# Extracted string
+msgid "Study"
+msgstr "လေ့လာရန်"
+
+# Extracted string
+msgid "Difficulty / grid size"
+msgstr "ခက်ခဲမှုအဆင့် / ဇယားကွက်အရွယ်အစား"
+
+# Extracted string
+msgid "p.pairs"
+msgstr "p.pairs"
+
+# Extracted string
+msgid "All Cards"
+msgstr "ကတ်များအားလုံး"
+
+# Extracted string
+msgid "Start Game"
+msgstr "ဂိမ်းစတင်ရန်"
+
+# Extracted string
+msgid "Match Complete"
+msgstr "တွဲဖက်ခြင်း ပြီးစီးပါပြီ"
+
+# Extracted string
+msgid "Change Size"
+msgstr "အရွယ်အစား ပြောင်းရန်"
+
+# Extracted string
+msgid "Play Again"
+msgstr "ပြန်လည်ဆော့ကစားရန်"
+
+# Extracted string
+msgid "Loading quiz…"
+msgstr "ဉာဏ်စမ်းမေးခွန်းကို ဖွင့်နေပါသည်..."
+
+# Extracted string
+msgid "Quiz mode needs at least 2 cards in this deck."
+msgstr "ဉာဏ်စမ်းမေးခွန်းအတွက် ဤကတ်စုတွင် အနည်းဆုံး ကတ် ၂ ကတ် လိုအပ်သည်။"
+
+# Extracted string
+msgid "Question types"
+msgstr "မေးခွန်း အမျိုးအစားများ"
+
+# Extracted string
+msgid "Start Quiz"
+msgstr "ဉာဏ်စမ်း စတင်ရန်"
+
+# Extracted string
+msgid "Quiz Complete"
+msgstr "ဉာဏ်စမ်းမေးခွန်း ပြီးစီးပါပြီ"
+
+# Extracted string
+msgid "Review missed questions"
+msgstr "မှားယွင်းခဲ့သော မေးခွန်းများကို ပြန်လည်ကြည့်ရှုရန်"
+
+# Extracted string
+msgid "Change Types"
+msgstr "အမျိုးအစား ပြောင်းရန်"
+
+# Extracted string
+msgid "Retake Quiz"
+msgstr "ဉာဏ်စမ်း ပြန်လည်ဖြေဆိုရန်"
+
+# Extracted string
+msgid "Does this definition match the term?"
+msgstr "ဤအဓိပ္ပာယ်ဖွင့်ဆိုချက်သည် ဝေါဟာရနှင့် ကိုက်ညီပါသလား။"
+
+# Extracted string
+msgid "Type the term for this definition"
+msgstr "ဤအဓိပ္ပာယ်ဖွင့်ဆိုချက်အတွက် ဝေါဟာရကို ရိုက်ထည့်ပါ"
+
+# Extracted string
+msgid "Check Answer"
+msgstr "အဖြေ စစ်ဆေးရန်"
+
+# Extracted string
+msgid "This browser can't read words aloud"
+msgstr "ဤဘရောက်ဇာသည် စကားလုံးများကို အသံထွက်ဖတ်၍မရပါ"
+
+# Extracted string
+msgid "Type the spelling…"
+msgstr "စာလုံးပေါင်းကို ရိုက်ထည့်ပါ..."
+
+# Extracted string
+msgid "Loading spelling quiz…"
+msgstr "စာလုံးပေါင်း ဉာဏ်စမ်းကို ဖွင့်နေပါသည်..."
+
+# Extracted string
+msgid "This deck has no cards to spell yet."
+msgstr "ဤကတ်စုတွင် စာလုံးပေါင်းရန် ကတ်များ မရှိသေးပါ။"
+
+# Extracted string
+msgid "Spelling Quiz Complete"
+msgstr "စာလုံးပေါင်း ဉာဏ်စမ်း ပြီးစီးပါပြီ"
+
+# Extracted string
+msgid "Words to practice"
+msgstr "လေ့ကျင့်ရန် စကားလုံးများ"
+
+# Extracted string
+msgid "Hear the word again"
+msgstr "စကားလုံးကို ပြန်လည်နားထောင်ရန်"
+
+# Extracted string
+msgid "Your browser can't read words aloud, so the definition is your only clue."
+msgstr "သင့်ဘရောက်ဇာသည် စကားလုံးများကို အသံထွက်ဖတ်၍မရသောကြောင့် အဓိပ္ပာယ်ဖွင့်ဆိုချက်သည်သာ သင်၏တစ်ဦးတည်းသော အရိပ်အမြွက်ဖြစ်သည်။"
+
+# Extracted string
+msgid "Check Spelling"
+msgstr "စာလုံးပေါင်း စစ်ဆေးရန်"
+
+# Extracted string
+msgid "Study decks your teachers have assigned to your class."
+msgstr "သင့်ဆရာများမှ သင့်အတန်းအတွက် သတ်မှတ်ပေးထားသော ကတ်စုများကို လေ့လာပါ။"
+
+# Extracted string
+msgid "No decks assigned yet"
+msgstr "မည်သည့်ကတ်စုမှ မသတ်မှတ်ရသေးပါ"
+
+# Extracted string
+msgid "Check back once your teacher assigns a flashcard deck to your class."
+msgstr "သင့်ဆရာက သင့်အတန်းအတွက် မှတ်ဉာဏ်ကတ်စုတစ်ခု သတ်မှတ်ပေးပြီးလျှင် ပြန်လည်စစ်ဆေးပါ။"
+
+# Extracted string
+msgid "Could not save your progress"
+msgstr "သင့်တိုးတက်မှုအခြေအနေကို သိမ်းဆည်း၍မရပါ"
+
+# Extracted string
+msgid "Flip card"
+msgstr "ကတ်လှန်ရန်"
+
+# Extracted string
+msgid "Restart in order"
+msgstr "အစီအစဉ်အလိုက် ပြန်လည်စတင်ရန်"
+
+# Extracted string
+msgid "You know every card in this deck. Nice work!"
+msgstr "သင် ဤကတ်စုရှိ ကတ်အားလုံးကို သိရှိပြီးပါပြီ။ ကောင်းမွန်သောလုပ်ဆောင်ချက်ဖြစ်သည်!"
+
+# Extracted string
+msgid "Study all cards anyway"
+msgstr "သို့သော်လည်း ကတ်အားလုံးကို လေ့လာပါ"
+
+# Extracted string
+msgid "Tap the card to flip it"
+msgstr "လှန်ရန် ကတ်ကို နှိပ်ပါ"
+
+# Extracted string
+msgid "Still learning"
+msgstr "လေ့လာဆဲ"
+
+# Extracted string
+msgid "Know it"
+msgstr "သိရှိပြီးသား"
+
+# Extracted string
+msgid "Opponent:"
+msgstr "ပြိုင်ဘက်-"
+
+# Extracted string
+msgid "AI"
+msgstr "AI"
+
+# Extracted string
+msgid "Human (Local)"
+msgstr "လူ (ကိုယ်တိုင်)"
+
+# Extracted string
+msgid "Difficulty:"
+msgstr "ခက်ခဲမှုအဆင့်-"
+
+# Extracted string
+msgid "Easy"
+msgstr "လွယ်ကူသော"
+
+# Extracted string
+msgid "Hard"
+msgstr "ခက်ခဲသော"
+
+# Extracted string
+msgid "VS"
+msgstr "VS"
+
+# Extracted string
+msgid "AI is thinking..."
+msgstr "AI စဉ်းစားနေပါသည်..."
+
+# Extracted string
+msgid "No words answered correctly this game — try again!"
+msgstr "ဤဂိမ်းတွင် မည်သည့်စကားလုံးကိုမျှ မှန်ကန်အောင် မဖြေဆိုနိုင်ခဲ့ပါ — ပြန်လည်ကြိုးစားပါ။"
+
+# Extracted string
+msgid "↶ Undo"
+msgstr "↶ ပြန်ပြင်ရန်"
+
+# Extracted string
+msgid "Restart"
+msgstr "ပြန်လည်စတင်ရန်"
+
+# Extracted string
+msgid "Forfeit"
+msgstr "အရှုံးပေးရန်"
+
+# Extracted string
+msgid "Answer to make your move"
+msgstr "ရွှေ့ရန်အတွက် ဖြေဆိုပါ"
+
+# Extracted string
+msgid "Which definition is correct?"
+msgstr "မည်သည့်အဓိပ္ပာယ်ဖွင့်ဆိုချက် မှန်ကန်သနည်း။"
+
+# Extracted string
+msgid "Word"
+msgstr "စကားလုံး"
+
+# Extracted string
+msgid "Part of speech (optional, e.g. noun)"
+msgstr "ဝါစင်္ဂ (ရွေးချယ်နိုင်သည်၊ ဥပမာ- နာမ်)"
+
+# Extracted string
+msgid "Manage Vocabulary"
+msgstr "ဝေါဟာရများကို စီမံခန့်ခွဲရန်"
+
+# Extracted string
+msgid "Words you add here are mixed with the dictionary in the Vocabulary game for all students."
+msgstr "ဤနေရာတွင် သင်ထည့်သွင်းသော စကားလုံးများကို ကျောင်းသားအားလုံးအတွက် ဝေါဟာရဂိမ်းရှိ အဘိဓာန်နှင့် ရောနှောပြသပါမည်။"
+
+# Extracted string
+msgid "No custom words yet — add one above."
+msgstr "စိတ်ကြိုက်စကားလုံးများ မရှိသေးပါ — အပေါ်တွင် တစ်ခု ထည့်သွင်းပါ။"
+
+# Extracted string
+msgid "hidden"
+msgstr "ဝှက်ထားသော"
+
+# Extracted string
+msgid "Select Game Mode"
+msgstr "ဂိမ်းမုဒ်ကို ရွေးချယ်ပါ"
+
+# Extracted string
+msgid "Game Settings"
+msgstr "ဂိမ်း ဆက်တင်များ"
+
+# Extracted string
+msgid "Opponent"
+msgstr "ပြိုင်ဘက်"
+
+# Extracted string
+msgid "🤖 AI Opponent"
+msgstr "🤖 AI ပြိုင်ဘက်"
+
+# Extracted string
+msgid "👥 Human (Local)"
+msgstr "👥 လူ (ကိုယ်တိုင်)"
+
+# Extracted string
+msgid "AI Difficulty"
+msgstr "AI ခက်ခဲမှုအဆင့်"
+
+# Extracted string
+msgid "🎮 Start Game"
+msgstr "🎮 ဂိမ်းစတင်ရန်"
+
+# Extracted string
+msgid "Game Features"
+msgstr "ဂိမ်း၏ ထူးခြားချက်များ"
+
+# Extracted string
+msgid "✓ Undo moves to fix mistakes"
+msgstr "✓ အမှားများကို ပြင်ဆင်ရန် အလှည့်များကို ပြန်ပြင်နိုင်သည်"
+
+# Extracted string
+msgid "✓ Sound effects (can be muted)"
+msgstr "✓ အသံသက်ရောက်မှုများ (အသံပိတ်နိုင်သည်)"
+
+# Extracted string
+msgid "✓ AI opponent with 3 difficulty levels"
+msgstr "✓ ခက်ခဲမှုအဆင့် ၃ ဆင့်ရှိသော AI ပြိုင်ဘက်"
+
+# Extracted string
+msgid "✓ Full checkers rules (forced jumps, multi-jumps, kings)"
+msgstr "✓ ပြည့်စုံသော ချက်ကာဂိမ်းစည်းမျဉ်းများ"
+
+# Extracted string
+msgid "✓ Vocabulary mode - learn words while playing!"
+msgstr "✓ ဝေါဟာရစနစ် - ကစားရင်း စကားလုံးများ လေ့လာနိုင်သည်!"
+
+# Extracted string
+msgid "🎲"
+msgstr "🎲"
+
+# Extracted string
+msgid "Checkers Game"
+msgstr "ချက်ကာဂိမ်း"
+
+# Extracted string
+msgid "Classic board game with AI opponent and vocabulary learning!"
+msgstr "AI ပြိုင်ဘက်နှင့် ဝေါဟာရလေ့လာမှု ပါဝင်သော ရှေးရိုးရာဘုတ်ဂိမ်း!"
+
+# Extracted string
+msgid "Swipe the board to steer — or tap:"
+msgstr "ထိန်းကျောင်းရန် ဘုတ်ကို ပွတ်ဆွဲပါ — သို့မဟုတ် နှိပ်ပါ-"
+
+# Extracted string
+msgid "Score:"
+msgstr "ရမှတ်-"
+
+# Extracted string
+msgid "Best:"
+msgstr "အကောင်းဆုံးရမှတ်-"
+
+# Extracted string
+msgid "SPEED"
+msgstr "အရှိန်"
+
+# Extracted string
+msgid "BOARD SIZE"
+msgstr "ဘုတ်အရွယ်အစား"
+
+# Extracted string
+msgid "How to Play ▼"
+msgstr "ကစားနည်း ▼"
+
+# Extracted string
+msgid "🎮 Arrow keys or WASD to move"
+msgstr "🎮 ရွှေ့ရန် မြှားခလုတ်များ သို့မဟုတ် WASD ကို သုံးပါ"
+
+# Extracted string
+msgid "🍎 Eat food to grow and score"
+msgstr "🍎 ကြီးထွားရန်နှင့် အမှတ်ရရန် အစာစားပါ"
+
+# Extracted string
+msgid "⚠️ Avoid walls and yourself"
+msgstr "⚠️ နံရံများနှင့် သင့်ကိုယ်သင် တိုက်မိခြင်းကို ရှောင်ကြဉ်ပါ"
+
+# Extracted string
+msgid "⏸️ Pause anytime to take a break"
+msgstr "⏸️ ခေတ္တနားရန် အချိန်မရွေး ရပ်တန့်နိုင်သည်"
+
+# Extracted string
+msgid "📱 Use touch controls on mobile"
+msgstr "📱 မိုဘိုင်းဖုန်းပေါ်တွင် ထိတွေ့ထိန်းချုပ်မှုများကို အသုံးပြုပါ"
+
+# Extracted string
+msgid "Game Modes"
+msgstr "ဂိမ်းစနစ်များ"
+
+# Extracted string
+msgid "Vocabulary"
+msgstr "ဝေါဟာရ"
+
+# Extracted string
+msgid "Choose Game Mode"
+msgstr "ဂိမ်းစနစ် ရွေးချယ်ပါ"
+
+# Extracted string
+msgid "Class Leaderboard"
+msgstr "အတန်းအလိုက် ဦးဆောင်သူဇယား"
+
+# Extracted string
+msgid "Classic"
+msgstr "ရိုးရိုးစနစ်"
+
+# Extracted string
+msgid "This Week"
+msgstr "ယခုသီတင်းပတ်"
+
+# Extracted string
+msgid "This Month"
+msgstr "ယခုလ"
+
+# Extracted string
+msgid "All Time"
+msgstr "အချိန်အားလုံး"
+
+# Extracted string
+msgid "Loading leaderboard..."
+msgstr "ဦးဆောင်သူဇယားကို ဖွင့်နေပါသည်..."
+
+# Extracted string
+msgid "No scores yet. Be the first to play!"
+msgstr "ရမှတ်များ မရှိသေးပါ။ ပထမဆုံး ကစားသူ ဖြစ်လိုက်ပါ!"
+
+# Extracted string
+msgid "You"
+msgstr "သင်"
+
+# Extracted string
+msgid "No vocabulary learning data available yet. Start playing Vocabulary Snake to track your progress!"
+msgstr "ဝေါဟာရလေ့လာမှုဆိုင်ရာ အချက်အလက်များ မရှိသေးပါ။ သင်၏တိုးတက်မှုကို ခြေရာခံရန် ဝေါဟာရမြွေဂိမ်းကို စတင်ကစားပါ!"
+
+# Extracted string
+msgid "Recent Performance"
+msgstr "မကြာသေးမီက စွမ်းဆောင်ရည်"
+
+# Extracted string
+msgid "Top Learned Words"
+msgstr "လေ့လာမှုအများဆုံး စကားလုံးများ"
+
+# Extracted string
+msgid "Learning Progress"
+msgstr "လေ့လာမှု တိုးတက်မှုအဆင့်"
+
+# Extracted string
+msgid "Are you sure you want to delete this word?"
+msgstr "ဤစကားလုံးကို ဖျက်ရန် သေချာပါသလား။"
+
+# Extracted string
+msgid "Successfully imported ${validWords.length} vocabulary words from CSV!"
+msgstr "CSV မှ ဝေါဟာရစကားလုံး ${validWords.length} လုံးကို အောင်မြင်စွာ တင်သွင်းပြီးပါပြီ။"
+
+# Extracted string
+msgid "Successfully imported ${normalizedWords.length} vocabulary words from JSON!"
+msgstr "JSON မှ ဝေါဟာရစကားလုံး ${normalizedWords.length} လုံးကို အောင်မြင်စွာ တင်သွင်းပြီးပါပြီ။"
+
+# Extracted string
+msgid "Error importing vocabulary: ${error instanceof Error ? error.message : \"Please check the file format\"}"
+msgstr "ဝေါဟာရ တင်သွင်းရာတွင် အမှားဖြစ်ပေါ်ခဲ့သည်- ${error instanceof Error ? error.message : \"ကျေးဇယားပြု၍ ဖိုင်ပုံစံကို စစ်ဆေးပါ\"}"
+
+# Extracted string
+msgid "Please fill in the word and definition"
+msgstr "စကားလုံးနှင့် အဓိပ္ပာယ်ဖွင့်ဆိုချက်ကို ဖြည့်စွက်ပါ"
+
+# Extracted string
+msgid "Search words or definitions..."
+msgstr "စကားလုံးများ သို့မဟုတ် အဓိပ္ပာယ်ဖွင့်ဆိုချက်များကို ရှာဖွေရန်..."
+
+# Extracted string
+msgid "EPHEMERAL"
+msgstr "EPHEMERAL"
+
+# Extracted string
+msgid "Lasting for a very short time"
+msgstr "အချိန်အလွန်တိုတောင်းသော ကာလတစ်ခုသာ တည်တံ့သော"
+
+# Extracted string
+msgid "Loading vocabulary..."
+msgstr "ဝေါဟာရများကို ဖွင့်နေပါသည်..."
+
+# Extracted string
+msgid "Vocabulary Management"
+msgstr "ဝေါဟာရ စီမံခန့်ခွဲမှု"
+
+# Extracted string
+msgid "Add Word"
+msgstr "စကားလုံးထည့်ရန်"
+
+# Extracted string
+msgid "CSV Template"
+msgstr "CSV နမူနာပုံစံ"
+
+# Extracted string
+msgid "Import CSV/JSON"
+msgstr "CSV/JSON တင်သွင်းရန်"
+
+# Extracted string
+msgid "CSV Format Recommended"
+msgstr "CSV ဖော်မတ်ကို အသုံးပြုရန် အကြံပြုပါသည်"
+
+# Extracted string
+msgid "word,definition,partOfSpeech,difficulty,language"
+msgstr "word,definition,partOfSpeech,difficulty,language"
+
+# Extracted string
+msgid "Download the CSV Template to see the exact format. Both CSV and JSON imports are supported."
+msgstr "တိကျသော ဖော်မတ်ကို ကြည့်ရှုရန် CSV နမူနာပုံစံကို ဒေါင်းလုဒ်လုပ်ပါ။ CSV နှင့် JSON တင်သွင်းမှု နှစ်မျိုးလုံးကို ပံ့ပိုးထားသည်။"
+
+# Extracted string
+msgid "Add New Vocabulary Word"
+msgstr "ဝေါဟာရစကားလုံးအသစ် ထည့်သွင်းရန်"
+
+# Extracted string
+msgid "Part of Speech"
+msgstr "ဝါစင်္ဂ"
+
+# Extracted string
+msgid "Select..."
+msgstr "ရွေးချယ်ပါ..."
+
+# Extracted string
+msgid "Noun"
+msgstr "နာမ်"
+
+# Extracted string
+msgid "Verb"
+msgstr "ကြိယာ"
+
+# Extracted string
+msgid "Adjective"
+msgstr "နာမဝိသေသန"
+
+# Extracted string
+msgid "Adverb"
+msgstr "ကြိယာဝိသေသန"
+
+# Extracted string
+msgid "Preposition"
+msgstr "ဝိဘတ်"
+
+# Extracted string
+msgid "Conjunction"
+msgstr "သမ္ဗန္ဓ"
+
+# Extracted string
+msgid "Interjection"
+msgstr "အာမေဍိတ်"
+
+# Extracted string
+msgid "Words:"
+msgstr "စကားလုံးများ-"
+
+# Extracted string
+msgid "Start Learning"
+msgstr "စတင်လေ့လာရန်"
+
+# Extracted string
+msgid "Learn More"
+msgstr "ပိုမိုလေ့လာရန်"
+
+# Extracted string
+msgid "YOUR PROGRESS"
+msgstr "သင်၏ တိုးတက်မှုအခြေအနေ"
+
+# Extracted string
+msgid "Total Words:"
+msgstr "စုစုပေါင်း စကားလုံးများ-"
+
+# Extracted string
+msgid "Games:"
+msgstr "ကစားခဲ့သော ဂိမ်းများ-"
+
+# Extracted string
+msgid "Average Score:"
+msgstr "ပျမ်းမျှရမှတ်-"
+
+# Extracted string
+msgid "📚 Collect books to learn vocabulary"
+msgstr "📚 ဝေါဟာရလေ့လာရန် စာအုပ်များကို စုဆောင်းပါ"
+
+# Extracted string
+msgid "🔊 Click speaker for pronunciation"
+msgstr "🔊 အသံထွက်နားထောင်ရန် စပီကာပုံကို နှိပ်ပါ"
+
+# Extracted string
+msgid "⏸️ Press Space to pause anytime"
+msgstr "⏸️ အချိန်မရွေး ခေတ္တရပ်ရန် Space ခလုတ်ကို နှိပ်ပါ"
+
+# Extracted string
+msgid "Snake"
+msgstr "မြွေဂိမ်း"
+
+# Extracted string
+msgid "🐍"
+msgstr "🐍"
+
+# Extracted string
+msgid "Classic snake game with class leaderboards and vocabulary challenges!"
+msgstr "အတန်းအလိုက် ဦးဆောင်သူဇယားနှင့် ဝေါဟာရစိန်ခေါ်မှုများ ပါဝင်သော ရိုးရာမြွေဂိမ်း!"
+
+# Extracted string
+msgid "Are you sure you want to restart this game? Your progress will be lost."
+msgstr "ဤဂိမ်းကို ပြန်စရန် သေချာပါသလား။ သင်၏ ရမှတ်များ ဆုံးရှုံးသွားပါမည်။"
+
+# Extracted string
+msgid "You are currently playing sudoku ${translateCollectionName(gameState.sudokuCollectionName)} #${gameState.sudokuIndex + 1}, do you want to pause it and start ${translateCollectionName(sudokuCollectionName)} #${sudokuIndex}?"
+msgstr ""
+
+# Extracted string
+msgid "This sudoku doesn't seem to be valid."
+msgstr "ဤဆူဒိုကူသည် မှန်ကန်ပုံမပေါ်ပါ။"
+
+# Extracted string
+msgid "Clear"
+msgstr "ရှင်းလင်းရန်"
+
+# Extracted string
+msgid "New game"
+msgstr "ဂိမ်းအသစ်"
+
+# Extracted string
+msgid "Select new sudoku"
+msgstr "ဆူဒိုကူအသစ် ရွေးချယ်ပါ"
+
+# Extracted string
+msgid "Shortcuts"
+msgstr "ဖြတ်လမ်းခလုတ်များ"
+
+# Extracted string
+msgid "Arrow keys: Move around the board"
+msgstr "မြှားခလုတ်များ- ဘုတ်ပေါ်တွင် ရွှေ့ရန်"
+
+# Extracted string
+msgid "Number keys: Write a note or set the sudoku number"
+msgstr "နံပါတ်ခလုတ်များ- မှတ်စုရေးရန် သို့မဟုတ် ဆူဒိုကူနံပါတ် သတ်မှတ်ရန်"
+
+# Extracted string
+msgid "Backspace: Delete a number"
+msgstr "Backspace- နံပါတ်တစ်ခုကို ဖျက်ရန်"
+
+# Extracted string
+msgid "Escape: Pause/unpause the game"
+msgstr "Escape- ဂိမ်းကို ခေတ္တရပ်ရန်/ပြန်စရန်"
+
+# Extracted string
+msgid "H: Hint"
+msgstr "H: အရိပ်အမြွက်"
+
+# Extracted string
+msgid "N: Enter/exit note mode"
+msgstr "N- မှတ်စုရေးစနစ်သို့ ဝင်ရောက်ရန်/ထွက်ရန်"
+
+# Extracted string
+msgid "CTRL + Z: Undo"
+msgstr "CTRL + Z: ပြန်ပြင်ရန်"
+
+# Extracted string
+msgid "CTRL + Y: Redo"
+msgstr "CTRL + Y: ရှေ့သို့ပြန်လုပ်ရန်"
+
+# Extracted string
+msgid "CTRL + C/V: Copy/paste notes"
+msgstr "CTRL + C/V: မှတ်စုများကို ကူးယူရန်/ကူးထည့်ရန်"
+
+# Extracted string
+msgid "Show auto generated notes"
+msgstr "အလိုအလျောက် ဖန်တီးထားသော မှတ်စုများကို ပြသရန်"
+
+# Extracted string
+msgid "Highlight wrong entries"
+msgstr "မှားယွင်းနေသော ကိန်းဂဏန်းများကို အသားပေးပြရန်"
+
+# Extracted string
+msgid "Highlight conflicts"
+msgstr "တိုက်ဆိုင်နေသော ကိန်းဂဏန်းများကို အသားပေးပြရန်"
+
+# Extracted string
+msgid "Show circle menu when a cell is clicked (desktop only)"
+msgstr "အကွက်ကို နှိပ်သည့်အခါ စက်ဝိုင်းပုံစံ မီနူးကို ပြသရန် (ကွန်ပျူတာအတွက်သာ)"
+
+# Extracted string
+msgid "Show occurrences of numbers in number buttons"
+msgstr "နံပါတ်ခလုတ်များတွင် နံပါတ်များပေါ်ပေါက်မှုကို ပြသရန်"
+
+# Extracted string
+msgid "About"
+msgstr "အကြောင်းအရာ"
+
+# Extracted string
+msgid "super-sudoku"
+msgstr "ဆူပါဆူဒိုကူ"
+
+# Extracted string
+msgid "🎉 Congrats, you won! 🎉"
+msgstr "🎉 ဂုဏ်ယူပါသည်၊ သင် အနိုင်ရရှိသွားပါပြီ။ 🎉"
+
+# Extracted string
+msgid "Are you sure? This will restart the sudoku and reset the timer. It will continue to say that you solved it."
+msgstr "သေချာပါသလား။ ၎င်းသည် ဆူဒိုကူကို ပြန်လည်စတင်ပြီး အချိန်တိုင်းကိရိယာကို ပြန်လည်သတ်မှတ်ပါမည်။ သင် ဖြေရှင်းနိုင်ခဲ့သည်ဟု ဆက်လက်ပြသနေပါမည်။"
+
+# Extracted string
+msgid "You cannot delete the base collection."
+msgstr "အခြေခံစုစည်းမှုကို သင် ဖျက်၍မရပါ။"
+
+# Extracted string
+msgid "Are you sure you want to delete collection \"${translateCollectionName(activeCollection.name)}\"? This will delete all sudokus in it."
+msgstr "စုစည်းမှု \"${translateCollectionName(activeCollection.name)}\" ကို ဖျက်ရန် သေချာပါသလား။ ၎င်းသည် ထိုစုစည်းမှုရှိ ဆူဒိုကူအားလုံးကို ဖျက်ပစ်ပါမည်။"
+
+# Extracted string
+msgid "Continue"
+msgstr "ဆက်လက်လုပ်ဆောင်ရန်"
+
+# Extracted string
+msgid "There are no sudokus in this collection. Add one by clicking the \"Add sudoku\" button."
+msgstr "ဤစုစည်းမှုတွင် ဆူဒိုကူများ မရှိသေးပါ။ \"Add sudoku\" ခလုတ်ကို နှိပ်ပြီး တစ်ခု ထည့်သွင်းပါ။"
+
+# Extracted string
+msgid "+ New Collection"
+msgstr "+ စုစည်းမှုအသစ်"
+
+# Extracted string
+msgid "Add sudoku +"
+msgstr "ဆူဒိုကူထည့်ရန် +"
+
+# Extracted string
+msgid "Close new sudoku creator"
+msgstr "ဆူဒိုကူ ဖန်တီးမှု ကိရိယာကို ပိတ်ရန်"
+
+# Extracted string
+msgid "Delete collection"
+msgstr "စုစည်းမှုကို ဖျက်ရန်"
+
+# Extracted string
+msgid "Create new sudoku"
+msgstr "ဆူဒိုကူအသစ် ဖန်တီးရန်"
+
+# Extracted string
+msgid "Loading puzzles…"
+msgstr "ပဟေဠိများကို ဖွင့်နေပါသည်..."
+
+# Extracted string
+msgid "Undo"
+msgstr "ပြန်ပြင်ရန်"
+
+# Extracted string
+msgid "Erase"
+msgstr "ဖျက်ပစ်ရန်"
+
+# Extracted string
+msgid "Hint"
+msgstr "အရိပ်အမြွက်"
+
+# Extracted string
+msgid "Select a new sudoku to play or continue with an already started game."
+msgstr "ကစားရန် ဆူဒိုကူအသစ်တစ်ခုကို ရွေးချယ်ပါ သို့မဟုတ် စတင်ထားပြီးသော ဂိမ်းကို ဆက်လက်ကစားပါ။"
+
+# Extracted string
+msgid "Your own pay history — base salary, allowances, and deductions for each finalized pay period."
+msgstr "သင့်ကိုယ်ပိုင် လစာရာဇဝင် — သတ်မှတ်ထားသော လစာပေးချေမှု ကာလတစ်ခုစီအတွက် အခြေခံလစာ၊ ထောက်ပံ့ကြေးများနှင့် နုတ်ယူငွေများ။"
+
+# Extracted string
+msgid "No payroll records yet"
+msgstr "လစာပေးချေမှု မှတ်တမ်းများ မရှိသေးပါ"
+
+# Extracted string
+msgid "Your payslips will appear here once a payroll run including you has been finalized."
+msgstr "သင့်အား ထည့်သွင်းထားသော လစာပေးချေမှုတစ်ခုကို အပြီးသတ်သတ်မှတ်ပြီးပါက သင်၏ လစာရှင်းတမ်းပြေစာများ ဤနေရာတွင် ပေါ်လာပါမည်။"
+
+# Extracted string
+msgid "Pay Period"
+msgstr "လစာပေးချေမှုကာလ"
+
+# Extracted string
+msgid "Net Pay"
+msgstr "အသားတင်လစာငွေ"
+
+# Extracted string
+msgid "Article not found"
+msgstr "ဆောင်းပါး မတွေ့ရှိပါ"
+
+# Extracted string
+msgid "Clear selection"
+msgstr "ရွေးချယ်ထားသည်များကို ရှင်းလင်းရန်"
+
+# Extracted string
+msgid "Loading article..."
+msgstr "ဆောင်းပါးကို ဖွင့်နေပါသည်..."
+
+# Extracted string
+msgid "Back to all news"
+msgstr "သတင်းအားလုံးသို့ ပြန်သွားရန်"
+
+# Extracted string
+msgid "Failed to load news"
+msgstr "သတင်းများကို ဖွင့်၍မရပါ"
+
+# Extracted string
+msgid "News refreshed"
+msgstr "သတင်းများကို အသစ်ပြန်လုပ်ပြီးပါပြီ"
+
+# Extracted string
+msgid "Search articles..."
+msgstr "ဆောင်းပါးများကို ရှာဖွေရန်..."
+
+# Extracted string
+msgid "Refresh now"
+msgstr "ယခု အသစ်ပြန်လုပ်ရန်"
+
+# Extracted string
+msgid "Sources"
+msgstr "သတင်းရင်းမြစ်များ"
+
+# Extracted string
+msgid "Full Article"
+msgstr "ဆောင်းပါးအပြီးသတ်"
+
+# Extracted string
+msgid "Loading news..."
+msgstr "သတင်းများကို ဖွင့်နေပါသည်..."
+
+# Extracted string
+msgid "No articles yet"
+msgstr "ဆောင်းပါးများ မရှိသေးပါ"
+
+# Extracted string
+msgid "Failed to load news sources"
+msgstr "သတင်းရင်းမြစ်များကို ဖွင့်၍မရပါ"
+
+# Extracted string
+msgid "Name and feed URL are required"
+msgstr "အမည်နှင့် feed URL လိုအပ်ပါသည်"
+
+# Extracted string
+msgid "Source added — fetching its articles now"
+msgstr "သတင်းရင်းမြစ် ထည့်သွင်းပြီးပါပြီ — ယခု ဆောင်းပါးများကို ရယူနေပါသည်"
+
+# Extracted string
+msgid "Source removed"
+msgstr "သတင်းရင်းမြစ်ကို ဖယ်ရှားလိုက်ပါပြီ"
+
+# Extracted string
+msgid "Fetched ${result.count} article(s) from ${source.name}"
+msgstr "${source.name} မှ ဆောင်းပါး ${result.count} စောင်ကို ရယူပြီးပါပြီ"
+
+# Extracted string
+msgid "Remove \"${source.name}\"? Its ${source._count.articles} cached article(s) will also be deleted."
+msgstr "\"${source.name}\" ကို ဖယ်ရှားမလား။ ၎င်း၏ သိမ်းဆည်းထားသော ဆောင်းပါး ${source._count.articles} ခုလည်း ပျက်သွားပါမည်။"
+
+# Extracted string
+msgid "e.g. BBC World News"
+msgstr "ဥပမာ- BBC ကမ္ဘာ့သတင်း"
+
+# Extracted string
+msgid "https://example.com/rss.xml"
+msgstr "https://example.com/rss.xml"
+
+# Extracted string
+msgid "World"
+msgstr "ကမ္ဘာ့သတင်း"
+
+# Extracted string
+msgid "News Sources"
+msgstr "သတင်းရင်းမြစ်များ"
+
+# Extracted string
+msgid "RSS Feed URL"
+msgstr "RSS Feed URL"
+
+# Extracted string
+msgid "Category (optional)"
+msgstr "အမျိုးအစား (ရွေးချယ်နိုင်သည်)"
+
+# Extracted string
+msgid "Source"
+msgstr "သတင်းရင်းမြစ်"
+
+# Extracted string
+msgid "Articles"
+msgstr "ဆောင်းပါးများ"
+
+# Extracted string
+msgid "Last Fetched"
+msgstr "နောက်ဆုံး ရယူခဲ့ချိန်"
+
+# Extracted string
+msgid "No sources yet — add one above."
+msgstr "သတင်းရင်းမြစ်များ မရှိသေးပါ — အပေါ်တွင် တစ်ခု ထည့်သွင်းပါ။"
+
+# Extracted string
+msgid "Error"
+msgstr "အမှား"
+
+# Extracted string
+msgid "Cursor Effects"
+msgstr "မောက်စ်ညွှန်တံ အကျိုးသက်ရောက်မှုများ"
+
+# Extracted string
+msgid "A fun, purely decorative effect that follows the mouse across the whole app."
+msgstr "အက်ပ်တစ်ခုလုံးတွင် မောက်စ်နောက်သို့ လိုက်ပါသော ပျော်စရာကောင်းပြီး အလှဆင်သက်သက်ဖြစ်သည့် အကျိုးသက်ရောက်မှု။"
+
+# Extracted string
+msgid "Rainbow Trail"
+msgstr "သက်တံရောင်လမ်းကြောင်း"
+
+# Extracted string
+msgid "Splash Cursor (fluid)"
+msgstr "ရေစင်မောက်စ်ပုံစံ (အရည်)"
+
+# Extracted string
+msgid "Ribbons"
+msgstr "ဖဲကြိုးပုံစံ"
+
+# Extracted string
+msgid "Ghost Cursor (smoke trail)"
+msgstr "သရဲတစ္ဆေမောက်စ်ပုံစံ (မီးခိုးလမ်းကြောင်း)"
+
+# Extracted string
+msgid "Click Spark"
+msgstr "ကလစ်နှိပ်သည့်အခါ မီးပွားပုံစံ"
+
+# Extracted string
+msgid "Target Cursor (reticle)"
+msgstr "ပစ်မှတ်ညွှန်တံပုံစံ"
+
+# Extracted string
+msgid "Applies for every user across the whole app. Automatically disabled for anyone with \"reduce motion\" enabled in their OS."
+msgstr "အက်ပ်တစ်ခုလုံးရှိ အသုံးပြုသူတိုင်းအတွက် အကျုံးဝင်သည်။ OS တွင် \"လှုပ်ရှားမှု လျှော့ချရန်\" ကို ဖွင့်ထားသူများအတွက် အလိုအလျောက် ပိတ်ထားပါမည်။"
+
+# Extracted string
+msgid "Comment cannot be empty"
+msgstr "မှတ်ချက်သည် အလွတ်မဖြစ်ရပါ"
+
+# Extracted string
+msgid "Reported. An admin will review it."
+msgstr "တိုင်ကြားပြီးပါပြီ။ ကြီးကြပ်သူက ပြန်လည်သုံးသပ်ပါမည်။"
+
+# Extracted string
+msgid "Report this post to the admin team?"
+msgstr "ဤပို့စ်ကို ကြီးကြပ်သူအဖွဲ့ထံ တိုင်ကြားမည်လား။"
+
+# Extracted string
+msgid "Report this comment to the admin team?"
+msgstr "ဤမှတ်ချက်ကို ကြီးကြပ်သူအဖွဲ့ထံ တိုင်ကြားမည်လား။"
+
+# Extracted string
+msgid "reported"
+msgstr "တိုင်ကြားထားပြီး"
+
+# Extracted string
+msgid "(edited)"
+msgstr "(ပြင်ဆင်ပြီး)"
+
+# Extracted string
+msgid "Reported content"
+msgstr "တိုင်ကြားထားသော အကြောင်းအရာများ"
+
+# Extracted string
+msgid "Nothing reported right now."
+msgstr "လက်ရှိတွင် တိုင်ကြားထားသည့်အရာ မရှိပါ။"
+
+# Extracted string
+msgid "Remove content"
+msgstr "အကြောင်းအရာ ဖယ်ရှားရန်"
+
+# Extracted string
+msgid "Nothing new yet —"
+msgstr "အသစ်အဆန်း မရှိသေးပါ —"
+
+# Extracted string
+msgid "browse the library"
+msgstr "စာကြည့်တိုက်တွင် ရှာဖွေပါ"
+
+# Extracted string
+msgid "Read the article"
+msgstr "ဆောင်းပါး ဖတ်ရန်"
+
+# Extracted string
+msgid "Read the book"
+msgstr "စာအုပ် ဖတ်ရန်"
+
+# Extracted string
+msgid "Couldn't load your profile right now. Please refresh the page or contact the administrative office if this keeps happening."
+msgstr "သင့်ကိုယ်ရေးအချက်အလက်ကို လက်ရှိတွင် ဖွင့်၍မရပါ။ စာမျက်နှာကို အသစ်ပြန်လုပ်ပါ သို့မဟုတ် ဤသို့ ဆက်လက်ဖြစ်ပွားနေပါက စီမံခန့်ခွဲရေးရုံးသို့ ဆက်သွယ်ပါ။"
+
+# Extracted string
+msgid "${name} marked as Dropped."
+msgstr "${name} ကို ကျောင်းထွက် (Dropped) အဖြစ် မှတ်သားပြီးပါပြီ။"
+
+# Extracted string
+msgid "Student ID did not match — nothing was deleted."
+msgstr "ကျောင်းသား ID မကိုက်ညီပါ — မည်သည့်အရာကိုမျှ မဖျက်လိုက်ပါ။"
+
+# Extracted string
+msgid "${name} permanently deleted."
+msgstr "${name} ကို အပြီးတိုင် ဖျက်ပစ်ပြီးပါပြီ။"
+
+# Extracted string
+msgid "Mark ${name} as Dropped (left the school)? They'll disappear from active class rosters and attendance marking, but all their grades, attendance, and exam history is kept. You can reverse this later from Edit Details."
+msgstr "${name} အား ကျောင်းထွက် (Dropped) အဖြစ် သတ်မှတ်မလား။ ၎င်းတို့သည် အတန်းစာရင်းများနှင့် တက်ရောက်မှုစာရင်းများမှ ပျောက်ကွယ်သွားမည်ဖြစ်သော်လည်း ၎င်းတို့၏ ရမှတ်များ၊ တက်ရောက်မှုနှင့် စာမေးပွဲရာဇဝင်အားလုံးကို ထိန်းသိမ်းထားမည်ဖြစ်သည်။ ၎င်းကို နောက်ပိုင်းတွင် Edit Details မှတစ်ဆင့် ပြန်လည်ပြောင်းလဲနိုင်သည်။"
+
+# Extracted string
+msgid "Remove Student"
+msgstr "ကျောင်းသားအား ဖယ်ရှားရန်"
+
+# Extracted string
+msgid "Mark as Left (Dropped)"
+msgstr "ထွက်ခွာသည် (Dropped) ဟု မှတ်သားရန်"
+
+# Extracted string
+msgid "Delete Permanently"
+msgstr "အပြီးတိုင် ဖျက်ရန်"
+
+# Extracted string
+msgid "Quick Facts"
+msgstr "အချက်အလက်အကျဉ်း"
+
+# Extracted string
+msgid "Loading case records…"
+msgstr "အမှုမှတ်တမ်းများကို ဖွင့်နေပါသည်..."
+
+# Extracted string
+msgid "No case records for this student."
+msgstr "ဤကျောင်းသားအတွက် မည်သည့်အမှုမှတ်တမ်းမှ မရှိပါ။"
+
+# Extracted string
+msgid "Title and due date are required"
+msgstr "ခေါင်းစဉ်နှင့် သတ်မှတ်ရက် လိုအပ်သည်"
+
+# Extracted string
+msgid "Homework updated"
+msgstr "အိမ်စာ မွမ်းမံပြီးပါပြီ"
+
+# Extracted string
+msgid "Linked News article"
+msgstr "ချိတ်ဆက်ထားသော သတင်းဆောင်းပါး"
+
+# Extracted string
+msgid "Linked E-Book"
+msgstr "ချိတ်ဆက်ထားသော အီး-စာအုပ်"
+
+# Extracted string
+msgid "Today's Sessions"
+msgstr "ယနေ့ သင်ခန်းစာများ"
+
+# Extracted string
+msgid "Specialization (comma separated)"
+msgstr "အထူးပြုဘာသာရပ်များ (ကော်မာဖြင့် ပိုင်းခြားရန်)"
+
+# Extracted string
+msgid "Subjects tab → Assign Subject"
+msgstr "ဘာသာရပ်များ တက်ဘ် → ဘာသာရပ် သတ်မှတ်ပေးရန်"
+
+# Extracted string
+msgid "on their profile page."
+msgstr "၎င်းတို့၏ ကိုယ်ရေးအချက်အလက် စာမျက်နှာတွင်။"
+
+# Extracted string
+msgid "Subject assigned"
+msgstr "ဘာသာရပ် သတ်မှတ်ပေးပြီးပါပြီ"
+
+# Extracted string
+msgid "Remove this subject from the teacher?"
+msgstr "ဤဘာသာရပ်အား ဆရာထံမှ ဖယ်ရှားမည်လား။"
+
+# Extracted string
+msgid "Assign Subject"
+msgstr "ဘာသာရပ် သတ်မှတ်ပေးရန်"
+
+# Extracted string
+msgid "This teacher is already assigned to every subject."
+msgstr "ဤဆရာအား ဘာသာရပ်အားလုံး သတ်မှတ်ပေးပြီး ဖြစ်သည်။"
+
+# Extracted string
+msgid "Teacher ID did not match — nothing was deleted."
+msgstr "ဆရာ ID မကိုက်ညီပါ — မည်သည့်အရာကိုမျှ မဖျက်လိုက်ပါ။"
+
+# Extracted string
+msgid "Can be used to sign in instead of the email address."
+msgstr "အီးမေးလ်လိပ်စာအစား အကောင့်ဝင်ရန် အသုံးပြုနိုင်သည်။"
+
+# Extracted string
+msgid "This account is linked to a teacher profile. Delete the teacher from the Teachers page instead."
+msgstr "ဤအကောင့်သည် ဆရာကိုယ်ရေးအချက်အလက်နှင့် ချိတ်ဆက်ထားသည်။ ဆရာအား ဆရာများစာမျက်နှာမှတစ်ဆင့်သာ ဖျက်ပေးပါ။"
+
+# Extracted string
+msgid "This account is linked to a student profile. Delete the student from the Students page instead."
+msgstr "ဤအကောင့်သည် ကျောင်းသားကိုယ်ရေးအချက်အလက်နှင့် ချိတ်ဆက်ထားသည်။ ကျောင်းသားအား ကျောင်းသားများစာမျက်နှာမှတစ်ဆင့်သာ ဖျက်ပေးပါ။"
+
+# Extracted string
+msgid "Cannot delete the last active administrator."
+msgstr "နောက်ဆုံးကျန်ရှိသော လက်ရှိစီမံခန့်ခွဲသူကို ဖျက်၍မရပါ။"
+
+# Extracted string
+msgid "Email did not match — nothing was deleted."
+msgstr "အီးမေးလ် မကိုက်ညီပါ — မည်သည့်အရာကိုမျှ မဖျက်လိုက်ပါ။"
+
+# Extracted string
+msgid "${user.name} permanently deleted."
+msgstr "${user.name} ကို အပြီးတိုင် ဖျက်ပစ်ပြီးပါပြီ။"
+
+# Extracted string
+msgid "Failed to load vendor"
+msgstr "ရောင်းချသူအချက်အလက်ကို ဖွင့်၍မရပါ"
+
+# Extracted string
+msgid "Vendor deleted successfully"
+msgstr "ရောင်းချသူမှတ်တမ်းကို အောင်မြင်စွာ ဖျက်လိုက်ပါပြီ"
+
+# Extracted string
+msgid "Are you sure you want to delete this vendor?"
+msgstr "ဤရောင်းချသူကို ဖျက်ရန် သေချာပါသလား။"
+
+# Extracted string
+msgid "Vendor not found"
+msgstr "ရောင်းချသူ မတွေ့ရှိပါ"
+
+# Extracted string
+msgid "Website"
+msgstr "ဝဘ်ဆိုက်"
+
+# Extracted string
+msgid "Financial Information"
+msgstr "ဘဏ္ဍာရေးဆိုင်ရာ အချက်အလက်များ"
+
+# Extracted string
+msgid "Tax ID / GST Registration"
+msgstr "အခွန်နံပါတ် / GST မှတ်ပုံတင်ခြင်း"
+
+# Extracted string
+msgid "Payment Terms"
+msgstr "ငွေပေးချေမှု သတ်မှတ်ချက်များ"
+
+# Extracted string
+msgid "Bank Name"
+msgstr "ဘဏ်အမည်"
+
+# Extracted string
+msgid "Bank Account"
+msgstr "ဘဏ်အကောင့်"
+
+# Extracted string
+msgid "Purchase History"
+msgstr "ဝယ်ယူမှုမှတ်တမ်း"
+
+# Extracted string
+msgid "Total Purchases"
+msgstr "စုစုပေါင်း ဝယ်ယူမှုများ"
+
+# Extracted string
+msgid "Total Transactions"
+msgstr "စုစုပေါင်း အရောင်းအဝယ်ပြုလုပ်မှုများ"
+
+# Extracted string
+msgid "Last Purchase"
+msgstr "နောက်ဆုံး ဝယ်ယူမှု"
+
+# Extracted string
+msgid "Recent Expenses"
+msgstr "မကြာသေးမီက အသုံးစရိတ်များ"
+
+# Extracted string
+msgid "Please enter vendor name"
+msgstr "ရောင်းချသူအမည်ကို ဖြည့်သွင်းပါ"
+
+# Extracted string
+msgid "Vendor updated successfully"
+msgstr "ရောင်းချသူအချက်အလက်ကို အောင်မြင်စွာ မွမ်းမံပြီးပါပြီ"
+
+# Extracted string
+msgid "Enter vendor name"
+msgstr "ရောင်းချသူအမည် ဖြည့်သွင်းပါ"
+
+# Extracted string
+msgid "Enter vendor description"
+msgstr "ရောင်းချသူ အကြောင်းအရာ ရိုက်ထည့်ပါ"
+
+# Extracted string
+msgid "Primary contact name"
+msgstr "အဓိက ဆက်သွယ်ရမည့်သူ၏ အမည်"
+
+# Extracted string
+msgid "https://example.com"
+msgstr "https://example.com"
+
+# Extracted string
+msgid "e.g., NET 30, COD"
+msgstr "ဥပမာ- NET 30၊ COD"
+
+# Extracted string
+msgid "Bank name"
+msgstr "ဘဏ်အမည်"
+
+# Extracted string
+msgid "Account number"
+msgstr "အကောင့်နံပါတ်"
+
+# Extracted string
+msgid "Edit Vendor"
+msgstr "ရောင်းချသူ ပြင်ဆင်ရန်"
+
+# Extracted string
+msgid "Update vendor information"
+msgstr "ရောင်းချသူအချက်အလက်ကို မွမ်းမံရန်"
+
+# Extracted string
+msgid "Vendor Name *"
+msgstr "ရောင်းချသူအမည် *"
+
+# Extracted string
+msgid "Active Vendor"
+msgstr "လက်ရှိလုပ်ဆောင်နေသော ရောင်းချသူ"
+
+# Extracted string
+msgid "Vendor created successfully"
+msgstr "ရောင်းချသူမှတ်တမ်းကို အောင်မြင်စွာ ဖန်တီးပြီးပါပြီ"
+
+# Extracted string
+msgid "New Vendor"
+msgstr "ရောင်းချသူအသစ်"
+
+# Extracted string
+msgid "Add a new supplier or service provider"
+msgstr "ပစ္စည်းပေးသွင်းသူ သို့မဟုတ် ဝန်ဆောင်မှုပေးသူအသစ်တစ်ခု ထည့်သွင်းရန်"
+
+# Extracted string
+msgid "Search vendors..."
+msgstr "ရောင်းချသူများကို ရှာဖွေရန်..."
+
+# Extracted string
+msgid "Manage suppliers and service providers."
+msgstr "ပစ္စည်းပေးသွင်းသူများနှင့် ဝန်ဆောင်မှုပေးသူများကို စီမံခန့်ခွဲရန်။"
+
+# Extracted string
+msgid "Add Vendor"
+msgstr "ရောင်းချသူ ထည့်ရန်"
+
+# Extracted string
+msgid "Total Vendors"
+msgstr "စုစုပေါင်း ရောင်းချသူများ"
+
+# Extracted string
+msgid "Active Vendors"
+msgstr "လက်ရှိ လုပ်ဆောင်နေသော ရောင်းချသူများ"
+
+# Extracted string
+msgid "Expense Count"
+msgstr "အသုံးစရိတ် အရေအတွက်"
+
