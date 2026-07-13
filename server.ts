@@ -4874,12 +4874,19 @@ async function startServer() {
       const ff = spawn("ffmpeg", [
         "-y",
         "-i", inputPath,
+        "-map", "0:v:0",
+        "-map", "0:a:0?",
         "-c:v", "libx264",
         "-preset", "veryfast",
         "-crf", "23",
+        // H.264/yuv420p requires even dimensions. Phone and screen-recording
+        // sources can be odd-sized, which otherwise makes ffmpeg fail.
+        "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2",
         "-pix_fmt", "yuv420p", // browser-decodable chroma
         "-c:a", "aac",
         "-b:a", "128k",
+        "-sn",
+        "-dn",
         "-movflags", "+faststart", // progressive streaming (moov atom first)
         outputPath,
       ]);
@@ -4891,6 +4898,44 @@ async function startServer() {
       ff.on("close", (code) =>
         code === 0 ? resolve() : reject(new Error(`ffmpeg exited ${code}: ${stderrTail.slice(-400)}`))
       );
+    });
+
+  // ffmpeg can occasionally exit successfully after producing an empty or
+  // zero-duration container (for example from a truncated camera recording).
+  // Never publish that file as ready: browsers show it as 0:00 / --:--.
+  const validateConvertedVideo = (filePath: string): Promise<void> =>
+    new Promise((resolve, reject) => {
+      const probe = spawn("ffprobe", [
+        "-v", "error",
+        "-select_streams", "v:0",
+        "-show_entries", "stream=codec_name,width,height:format=duration",
+        "-of", "json",
+        filePath,
+      ]);
+      let stdout = "";
+      let stderr = "";
+      probe.stdout.on("data", (data) => { stdout = (stdout + data.toString()).slice(-10000); });
+      probe.stderr.on("data", (data) => { stderr = (stderr + data.toString()).slice(-2000); });
+      probe.on("error", reject);
+      probe.on("close", (code) => {
+        if (code !== 0) {
+          reject(new Error(`ffprobe exited ${code}: ${stderr.slice(-400)}`));
+          return;
+        }
+        try {
+          const result = JSON.parse(stdout);
+          const stream = result?.streams?.[0];
+          const duration = Number(result?.format?.duration);
+          const width = Number(stream?.width);
+          const height = Number(stream?.height);
+          if (stream?.codec_name !== "h264" || !Number.isFinite(width) || width < 1 || !Number.isFinite(height) || height < 1 || !Number.isFinite(duration) || duration <= 0) {
+            throw new Error("Converted file has no playable H.264 video or duration");
+          }
+          resolve();
+        } catch (err) {
+          reject(err);
+        }
+      });
     });
 
   const finishStoredVideoUpload = async (file: Express.Multer.File, res: express.Response) => {
@@ -4935,6 +4980,7 @@ async function startServer() {
 
     transcodeToMp4(file.path, tmpPath)
       .then(async () => {
+        await validateConvertedVideo(tmpPath);
         await fs.promises.rename(tmpPath, outPath);
         await fs.promises.unlink(file.path).catch(() => {});
         if (cancelledTranscodes.has(outName)) {

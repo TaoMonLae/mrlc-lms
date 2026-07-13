@@ -17,12 +17,12 @@ export function VideoPlayerControls({ videoRef, duration, onProgress }: VideoPla
   const [isHovering, setIsHovering] = useState(false);
   const [hasCaptions, setHasCaptions] = useState(false);
   const [captionsOn, setCaptionsOn] = useState(false);
+  const [mediaDuration, setMediaDuration] = useState(0);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  const video = videoRef.current;
 
   // Detect a subtitle/caption track and reflect its current on/off state.
   useEffect(() => {
+    const video = videoRef.current;
     if (!video) return;
     const sync = () => {
       const tracks = video.textTracks;
@@ -36,9 +36,10 @@ export function VideoPlayerControls({ videoRef, duration, onProgress }: VideoPla
       video.textTracks.removeEventListener?.('addtrack', sync);
       video.textTracks.removeEventListener?.('change', sync);
     };
-  }, [video]);
+  }, [videoRef]);
 
   const toggleCaptions = () => {
+    const video = videoRef.current;
     if (!video || video.textTracks.length === 0) return;
     const track = video.textTracks[0];
     track.mode = track.mode === 'showing' ? 'hidden' : 'showing';
@@ -47,27 +48,34 @@ export function VideoPlayerControls({ videoRef, duration, onProgress }: VideoPla
 
   // Update play state from video element
   useEffect(() => {
+    const video = videoRef.current;
     if (!video) return;
 
     const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
     const handleTimeUpdate = () => setCurrentTime(video.currentTime);
-    const handleLoadedMetadata = () => {
-      if (duration) setCurrentTime(video.currentTime);
+    const syncDuration = () => {
+      setCurrentTime(video.currentTime);
+      if (Number.isFinite(video.duration) && video.duration > 0) {
+        setMediaDuration(video.duration);
+      }
     };
 
     video.addEventListener('play', handlePlay);
     video.addEventListener('pause', handlePause);
     video.addEventListener('timeupdate', handleTimeUpdate);
-    video.addEventListener('loadedmetadata', handleLoadedMetadata);
+    video.addEventListener('loadedmetadata', syncDuration);
+    video.addEventListener('durationchange', syncDuration);
+    syncDuration();
 
     return () => {
       video.removeEventListener('play', handlePlay);
       video.removeEventListener('pause', handlePause);
       video.removeEventListener('timeupdate', handleTimeUpdate);
-      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      video.removeEventListener('loadedmetadata', syncDuration);
+      video.removeEventListener('durationchange', syncDuration);
     };
-  }, [video, duration]);
+  }, [videoRef]);
 
   // Auto-hide controls
   useEffect(() => {
@@ -87,6 +95,7 @@ export function VideoPlayerControls({ videoRef, duration, onProgress }: VideoPla
   }, [isHovering, isPlaying]);
 
   const togglePlay = () => {
+    const video = videoRef.current;
     if (!video) return;
     if (isPlaying) {
       video.pause();
@@ -96,12 +105,14 @@ export function VideoPlayerControls({ videoRef, duration, onProgress }: VideoPla
   };
 
   const toggleMute = () => {
+    const video = videoRef.current;
     if (!video) return;
     video.muted = !video.muted;
     setIsMuted(video.muted);
   };
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const video = videoRef.current;
     if (!video) return;
     const newTime = parseFloat(e.target.value);
     video.currentTime = newTime;
@@ -110,12 +121,14 @@ export function VideoPlayerControls({ videoRef, duration, onProgress }: VideoPla
   };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const video = videoRef.current;
     if (!video) return;
     video.volume = parseFloat(e.target.value);
     setIsMuted(video.volume === 0);
   };
 
   const setSpeed = (speed: number) => {
+    const video = videoRef.current;
     if (!video) return;
     video.playbackRate = speed;
     setPlaybackSpeed(speed);
@@ -123,6 +136,7 @@ export function VideoPlayerControls({ videoRef, duration, onProgress }: VideoPla
   };
 
   const toggleFullscreen = () => {
+    const video = videoRef.current;
     if (!video) return;
     if (document.pictureInPictureElement) {
       document.exitPictureInPicture();
@@ -142,7 +156,8 @@ export function VideoPlayerControls({ videoRef, duration, onProgress }: VideoPla
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const progressPercent = duration && duration > 0 ? (currentTime / duration) * 100 : 0;
+  const effectiveDuration = duration && duration > 0 ? duration : mediaDuration;
+  const progressPercent = effectiveDuration > 0 ? (currentTime / effectiveDuration) * 100 : 0;
 
   return (
     <div
@@ -161,7 +176,7 @@ export function VideoPlayerControls({ videoRef, duration, onProgress }: VideoPla
         <input
           type="range"
           min={0}
-          max={duration || 100}
+          max={effectiveDuration || 100}
           value={currentTime}
           onChange={handleSeek}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
@@ -186,7 +201,7 @@ export function VideoPlayerControls({ videoRef, duration, onProgress }: VideoPla
 
         {/* Time display */}
         <div className="text-white text-xs font-mono" aria-live="polite" aria-atomic="true">
-          {formatTime(currentTime)} / {duration ? formatTime(duration) : '--:--'}
+          {formatTime(currentTime)} / {effectiveDuration ? formatTime(effectiveDuration) : '--:--'}
         </div>
 
         {/* Volume */}
@@ -265,6 +280,7 @@ export function VideoPlayerControls({ videoRef, duration, onProgress }: VideoPla
         {/* Restart */}
         <button
           onClick={() => {
+            const video = videoRef.current;
             if (video) {
               video.currentTime = 0;
               setCurrentTime(0);
