@@ -660,13 +660,23 @@ export function registerExamPhase2Routes(deps: Deps): void {
   // ── auto-scoring engine (partial credit, negative marking, tolerances) ───────
   function scoreObjective(q: any, ans: any): { score: number; correct: boolean | null; manual: boolean } {
     const max = q.points || 0;
-    const floor = (s: number) => {
-      let v = s;
-      if (q.minScore != null) v = Math.max(v, q.minScore);
-      return Math.max(v, q.negativePoints ? -Math.abs(q.negativePoints) : (q.partialCredit ? v : Math.min(v, max)) );
-    };
+    // Clamp every result: a wrong answer can go as low as -negativePoints (or
+    // minScore, if configured) and no result may exceed the question's max.
+    const lowerBound = q.minScore != null
+      ? q.minScore
+      : (q.negativePoints ? -Math.abs(q.negativePoints) : 0);
+    const clamp = (s: number) => Math.min(max, Math.max(lowerBound, s));
+    const wrongScore = () => clamp(q.negativePoints ? -Math.abs(q.negativePoints) : 0);
+
     // Manual types.
     if (["ESSAY", "WRITTEN", "EXTENDED"].includes(q.type) || q.requiresManualGrading) return { score: 0, correct: null, manual: true };
+
+    // Accepted correct answers (option keys/ids or a single correctAnswer) —
+    // used by both single-choice and multi-select scoring below.
+    const accepted: string[] = Array.isArray(q.correctAnswers) && q.correctAnswers.length
+      ? q.correctAnswers.map((s: any) => String(s))
+      : (q.correctAnswer != null ? [String(q.correctAnswer)] : []);
+    const norm = (s: string) => (q.caseSensitive ? String(s).trim() : String(s).trim().toLowerCase());
 
     if (q.type === "DRAG_DROP") {
       // The student's answer is { [blankId]: bankKey } — bankKey is an index
@@ -681,38 +691,59 @@ export function registerExamPhase2Routes(deps: Deps): void {
       const correctCount = blanks.filter((b) => normalize(bankLabel[matches[b.id]]) === normalize(b.answer)).length;
       const correct = blanks.length > 0 && correctCount === blanks.length;
       const score = q.partialCredit && blanks.length ? (max * correctCount) / blanks.length : (correct ? max : 0);
-      return { score, correct, manual: false };
+      return { score: clamp(score), correct, manual: false };
     }
 
-    // Multi-select with per-option weighting.
-    if (Array.isArray(ans?.selectedOptions) && q.optionWeights) {
-      const weights: Record<string, number> = q.optionWeights as any;
-      let raw = 0;
-      for (const opt of ans.selectedOptions) raw += Number(weights[opt] || 0);
-      let score = q.partialCredit ? raw * max : (raw >= 1 ? max : 0);
-      score = Math.min(score, max);
-      if (q.minScore != null) score = Math.max(score, q.minScore);
-      return { score, correct: score >= max, manual: false };
+    // Multi-select answers arrive as an array of chosen option keys.
+    if (Array.isArray(ans?.selectedOptions)) {
+      const chosen = ans.selectedOptions.map((s: any) => String(s));
+
+      // Weighted scoring when per-option weights are configured.
+      if (q.optionWeights) {
+        const weights: Record<string, number> = q.optionWeights as any;
+        let raw = 0;
+        for (const opt of chosen) raw += Number(weights[opt] || 0);
+        const score = q.partialCredit ? raw * max : (raw >= 1 ? max : 0);
+        return { score: clamp(score), correct: score >= max, manual: false };
+      }
+
+      // No weights: score by comparing the chosen set against the correct set.
+      // This is what makes partial-credit / multi-answer questions gradeable
+      // even when the author didn't assign per-option weights (previously such
+      // answers fell through to the text path and always scored 0).
+      if (accepted.length) {
+        const correctSet = new Set(accepted.map(norm));
+        const chosenNorm = chosen.map(norm);
+        const chosenSet = new Set(chosenNorm);
+        const correctChosen = [...correctSet].filter((c) => chosenSet.has(c)).length;
+        const wrongChosen = chosenNorm.filter((c) => !correctSet.has(c)).length;
+        const exact = correctChosen === correctSet.size && wrongChosen === 0;
+        let score: number;
+        if (q.partialCredit) {
+          // +1 per correct pick, -1 per wrong pick, as a fraction of the answer.
+          score = max * Math.max(0, (correctChosen - wrongChosen) / correctSet.size);
+        } else {
+          score = exact ? max : 0;
+        }
+        return { score: clamp(score), correct: exact, manual: false };
+      }
+      return { score: 0, correct: false, manual: false };
     }
 
-    // Text / numeric / single-choice.
+    // Text / numeric / single-choice (stored in answerText).
     const given = (ans?.answerText ?? "").toString();
-    const accepted: string[] = Array.isArray(q.correctAnswers) && q.correctAnswers.length
-      ? q.correctAnswers.map((s: any) => String(s))
-      : (q.correctAnswer != null ? [String(q.correctAnswer)] : []);
-    if (!given.trim()) return { score: 0, correct: false, manual: false }; // blank
+    if (!given.trim()) return { score: 0, correct: false, manual: false }; // blank — never penalised
 
     // numeric tolerance
     if (q.numericTolerance != null && q.numericTolerance >= 0 && accepted.length && !isNaN(Number(given))) {
       const g = Number(given);
       const hit = accepted.some((a) => !isNaN(Number(a)) && Math.abs(g - Number(a)) <= q.numericTolerance);
-      if (hit) return { score: max, correct: true, manual: false };
-      return { score: q.negativePoints ? -Math.abs(q.negativePoints) : 0, correct: false, manual: false };
+      if (hit) return { score: clamp(max), correct: true, manual: false };
+      return { score: wrongScore(), correct: false, manual: false };
     }
-    const norm = (s: string) => (q.caseSensitive ? s.trim() : s.trim().toLowerCase());
     const hit = accepted.some((a) => norm(a) === norm(given));
-    if (hit) return { score: max, correct: true, manual: false };
-    return { score: q.negativePoints ? -Math.abs(q.negativePoints) : 0, correct: false, manual: false };
+    if (hit) return { score: clamp(max), correct: true, manual: false };
+    return { score: wrongScore(), correct: false, manual: false };
   }
 
   // Shared submission finalizer. Used by manual submit and auto-submit on expiry.

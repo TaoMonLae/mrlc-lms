@@ -81,7 +81,10 @@ const TYPES: TypeDef[] = [
 ];
 const typeDef = (t: UIType) => TYPES.find((x) => x.key === t)!;
 const isObjective = (t: UIType) => typeDef(t).objective;
-const singleCorrect = (t: UIType) => t === 'MCQ' || t === 'TF' || t === 'DROPDOWN';
+// HOTSPOT is included: it's stored and graded as a single-select choice
+// question (toBackend saves one correctAnswer index), so the editor must not
+// let the author mark several regions correct — only the first would be saved.
+const singleCorrect = (t: UIType) => t === 'MCQ' || t === 'TF' || t === 'DROPDOWN' || t === 'HOTSPOT';
 
 const C = {
   purple: '#7a3dff', purpleText: '#6325e6', purpleDeep: '#4f1cb8',
@@ -499,6 +502,17 @@ export default function GuidedStudio() {
     if (!title.trim()) { toast.error('Please enter an exam title.'); setStep('details'); return; }
     if (!subjectId) { toast.error('Please select a subject.'); setStep('details'); return; }
     if ((nextStatus === 'PUBLISHED') && questions.length === 0) { toast.error('Add at least one question before publishing.'); setStep('questions'); return; }
+    // Guard the "no correct answer → silently defaults to option 0" trap: every
+    // single-select objective question must have a correct answer marked.
+    if (nextStatus === 'PUBLISHED') {
+      const badIdx = questions.findIndex((q) => singleCorrect(q.uiType) && !q.options.some((o) => o.c));
+      if (badIdx !== -1) {
+        toast.error(`Question ${badIdx + 1} has no correct answer marked.`);
+        setSel(badIdx);
+        setStep('questions');
+        return;
+      }
+    }
     setSaving(true);
     let downstreamWarned = false;
     const warn = () => { if (!downstreamWarned) { downstreamWarned = true; toast.message('Saved. Some scheduling/grading settings could not sync (exam system may not be fully migrated).'); } };

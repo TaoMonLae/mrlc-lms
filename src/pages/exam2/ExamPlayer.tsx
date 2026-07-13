@@ -51,6 +51,10 @@ export default function ExamPlayer() {
   const dirty = useRef<Set<string>>(new Set());
   const answersRef = useRef(answers);
   answersRef.current = answers;
+  // True only once a real countdown has been seeded (remaining > 0). Guards the
+  // auto-submit effect so a seeded remaining=0 (untimed exam / missing
+  // serverDeadline) can't submit the attempt the instant it loads.
+  const timerArmed = useRef(false);
 
   const post = useCallback(async (path: string, body?: any) => {
     const res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: body ? JSON.stringify(body) : undefined });
@@ -70,7 +74,9 @@ export default function ExamPlayer() {
     setExamTitle(data.exam?.title || 'Exam');
     setSessionToken(data.attempt?.sessionToken || '');
     setCanPause(!!data.attempt?.canPause);
-    setRemaining(data.attempt?.remainingSeconds ?? 0);
+    const seeded = data.attempt?.remainingSeconds ?? 0;
+    if (seeded > 0) timerArmed.current = true;
+    setRemaining(seeded);
     setSavedAt(data.attempt?.lastSavedAt || '');
     const map: Record<string, Answer> = {};
     for (const a of data.answers || []) map[a.questionId] = { answerText: a.answerText ?? '', selectedOptions: a.selectedOptions ?? [], flaggedForReview: a.flaggedForReview };
@@ -88,7 +94,9 @@ export default function ExamPlayer() {
   }, [loading, blocked]);
 
   useEffect(() => {
-    if (!loading && remaining === 0 && !blocked) { handleSubmit(true); }
+    // Only auto-submit when a real timer has counted down to zero — never on a
+    // seeded remaining=0 for an untimed attempt.
+    if (!loading && remaining === 0 && !blocked && timerArmed.current) { handleSubmit(true); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [remaining, loading]);
 
@@ -101,7 +109,7 @@ export default function ExamPlayer() {
     setSaving(true);
     const { ok, status, data } = await post(`/api/attempts/${attemptId}/save`, { sessionToken, reason, answers: payload });
     setSaving(false);
-    if (ok) { dirty.current.clear(); setSavedAt(data.lastSavedAt || new Date().toISOString()); if (typeof data.remainingSeconds === 'number') setRemaining(data.remainingSeconds); return true; }
+    if (ok) { dirty.current.clear(); setSavedAt(data.lastSavedAt || new Date().toISOString()); if (typeof data.remainingSeconds === 'number') { if (data.remainingSeconds > 0) timerArmed.current = true; setRemaining(data.remainingSeconds); } return true; }
     if (status === 409 && data.error === 'SESSION_CONFLICT') { setBlocked('This attempt was opened in another window or device. This session is now read-only.'); return false; }
     if (status === 409 && (data.error === 'TIME_EXPIRED' || data.autoSubmitted)) { toast.info('Time expired — submitted.'); navigate(`/exam2/attempts/${attemptId}/result`); return false; }
     return false;
