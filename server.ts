@@ -291,10 +291,12 @@ const videoFileUpload = multer({
   }),
   limits: { fileSize: 500 * 1024 * 1024 }, // 500MB for video files
   fileFilter: (_req, file, cb) => {
-    const allowed = new Set([".mp4", ".webm", ".mov", ".avi", ".mkv", ".flv", ".wmv"]);
+    // .mts/.m2ts (AVCHD) and the other non-web formats are accepted, then
+    // transcoded to browser-playable MP4 on upload (see /api/videos/files).
+    const allowed = new Set([".mp4", ".webm", ".mov", ".avi", ".mkv", ".flv", ".wmv", ".mts", ".m2ts", ".ts", ".m4v", ".mpg", ".mpeg", ".3gp"]);
     const ext = path.extname(file.originalname).toLowerCase();
     if (allowed.has(ext)) cb(null, true);
-    else cb(new Error("Only video files (MP4, WebM, MOV, AVI, MKV, FLV, WMV) are allowed"));
+    else cb(new Error("Unsupported video format. Allowed: MP4, WebM, MOV, AVI, MKV, FLV, WMV, MTS, M2TS, TS, M4V, MPG, 3GP"));
   },
 });
 
@@ -4727,6 +4729,34 @@ async function startServer() {
 
   // ── Video Lessons API ────────────────────────────────────────────────────────
   // Video file upload endpoint
+  // Browsers can only play MP4 (H.264/AAC) and WebM. Anything else — .mts/.m2ts
+  // (AVCHD camera files), .avi, .mkv, .wmv, .flv, .mov, etc. — is transcoded to
+  // MP4 with ffmpeg so students can play it directly on the site.
+  const WEB_NATIVE_VIDEO = new Set([".mp4", ".webm"]);
+  const transcodeToMp4 = (inputPath: string, outputPath: string): Promise<void> =>
+    new Promise((resolve, reject) => {
+      const ff = spawn("ffmpeg", [
+        "-y",
+        "-i", inputPath,
+        "-c:v", "libx264",
+        "-preset", "veryfast",
+        "-crf", "23",
+        "-pix_fmt", "yuv420p", // browser-decodable chroma
+        "-c:a", "aac",
+        "-b:a", "128k",
+        "-movflags", "+faststart", // progressive streaming (moov atom first)
+        outputPath,
+      ]);
+      let stderrTail = "";
+      ff.stderr.on("data", (d) => {
+        stderrTail = (stderrTail + d.toString()).slice(-4000);
+      });
+      ff.on("error", reject);
+      ff.on("close", (code) =>
+        code === 0 ? resolve() : reject(new Error(`ffmpeg exited ${code}: ${stderrTail.slice(-400)}`))
+      );
+    });
+
   app.post("/api/videos/files", authMiddleware, uploadVideoFile, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
@@ -4738,11 +4768,42 @@ async function startServer() {
       res.status(400).json({ error: "Video file is required" });
       return;
     }
+
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (WEB_NATIVE_VIDEO.has(ext)) {
+      res.json({
+        url: `/uploads/videos/${file.filename}`,
+        originalName: file.originalname,
+        size: file.size,
+        mimeType: file.mimetype,
+      });
+      return;
+    }
+
+    // Non-web format → transcode to MP4. The uploader waits (spawn is async, so
+    // other requests keep serving). The original is removed once converted.
+    const outName = `${crypto.randomUUID()}.mp4`;
+    const outPath = path.join(VIDEO_FILES_DIR, outName);
+    try {
+      await transcodeToMp4(file.path, outPath);
+    } catch (err: any) {
+      await fs.promises.unlink(file.path).catch(() => {});
+      await fs.promises.unlink(outPath).catch(() => {});
+      logger.error("Video transcode failed:", err);
+      res.status(500).json({
+        error: "Could not convert this video for web playback. Try re-exporting as MP4, or check the file isn't corrupt.",
+      });
+      return;
+    }
+    await fs.promises.unlink(file.path).catch(() => {});
+    const outSize = await fs.promises.stat(outPath).then((s) => s.size).catch(() => file.size);
     res.json({
-      url: `/uploads/videos/${file.filename}`,
+      url: `/uploads/videos/${outName}`,
       originalName: file.originalname,
-      size: file.size,
-      mimeType: file.mimetype,
+      size: outSize,
+      mimeType: "video/mp4",
+      converted: true,
+      originalFormat: ext.replace(".", "").toUpperCase(),
     });
   });
 

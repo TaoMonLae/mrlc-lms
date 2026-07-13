@@ -282,7 +282,7 @@ export default function VideoEdit() {
                     <input
                       ref={videoInputRef}
                       type="file"
-                      accept="video/mp4,video/webm,video/quicktime,video/x-msvideo,video/x-matroska,video/x-flv,video/x-ms-wmv,.mp4,.webm,.mov,.avi,.mkv,.flv,.wmv"
+                      accept="video/*,.mp4,.webm,.mov,.avi,.mkv,.flv,.wmv,.mts,.m2ts,.ts,.m4v,.mpg,.mpeg,.3gp"
                       className="hidden"
                       onChange={handleFileChange}
                       disabled={uploadingVideo}

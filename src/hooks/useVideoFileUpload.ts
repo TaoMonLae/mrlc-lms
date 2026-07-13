@@ -128,7 +128,11 @@ export function useVideoFileUpload({ onUploadComplete }: UseVideoFileUploadOptio
 
       onUploadComplete?.(data.url, data.originalName);
 
-      toast.success('Video file uploaded successfully');
+      toast.success(
+        (data as any).converted
+          ? `Converted ${(data as any).originalFormat || 'video'} to MP4 for web playback`
+          : 'Video file uploaded successfully'
+      );
       return data;
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Failed to upload video file';

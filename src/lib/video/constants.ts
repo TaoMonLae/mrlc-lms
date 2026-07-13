@@ -23,12 +23,26 @@ export const ALLOWED_VIDEO_TYPES = [
   'video/x-matroska',
   'video/x-flv',
   'video/x-ms-wmv',
+  'video/mp2t', // .mts / .m2ts / .ts (AVCHD, transport stream)
+  'video/x-m4v',
+  'video/mpeg',
+  'video/3gpp',
 ] as const;
 
 /**
- * Allowed file extensions for video uploads
+ * Allowed file extensions for video uploads. Non-web formats (.mts, .m2ts,
+ * .avi, .mkv, .wmv, .flv, .mov, …) are transcoded to MP4 on the server so they
+ * play directly in the browser.
  */
-export const ALLOWED_VIDEO_EXTENSIONS = ['.mp4', '.webm', '.mov', '.avi', '.mkv', '.flv', '.wmv'] as const;
+export const ALLOWED_VIDEO_EXTENSIONS = [
+  '.mp4', '.webm', '.mov', '.avi', '.mkv', '.flv', '.wmv',
+  '.mts', '.m2ts', '.ts', '.m4v', '.mpg', '.mpeg', '.3gp',
+] as const;
+
+/**
+ * Formats that browsers can play directly (no server transcode needed).
+ */
+export const WEB_NATIVE_VIDEO_EXTENSIONS = ['.mp4', '.webm'] as const;
 
 /**
  * Auto-hide delay for video player controls (milliseconds)

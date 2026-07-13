@@ -237,7 +237,7 @@ export default function VideoNew() {
                     <input
                       ref={videoInputRef}
                       type="file"
-                      accept="video/mp4,video/webm,video/quicktime,video/x-msvideo,video/x-matroska,video/x-flv,video/x-ms-wmv,.mp4,.webm,.mov,.avi,.mkv,.flv,.wmv"
+                      accept="video/*,.mp4,.webm,.mov,.avi,.mkv,.flv,.wmv,.mts,.m2ts,.ts,.m4v,.mpg,.mpeg,.3gp"
                       className="hidden"
                       onChange={handleFileChange}
                       disabled={uploadingVideo}
@@ -250,10 +250,11 @@ export default function VideoNew() {
                       className="w-full"
                     >
                       <Upload className="mr-2 h-4 w-4" />
-                      {uploadingVideo ? 'Uploading...' : 'Choose Video File'}
+                      {uploadingVideo ? 'Uploading / converting…' : 'Choose Video File'}
                     </Button>
                     <p className="text-xs text-slate-500">
-                      Supports {ALLOWED_VIDEO_EXTENSIONS.map((e) => e.replace('.', '').toUpperCase()).join(', ')} files up to {MAX_VIDEO_FILE_SIZE_DISPLAY}
+                      Supports {ALLOWED_VIDEO_EXTENSIONS.map((e) => e.replace('.', '').toUpperCase()).join(', ')} files up to {MAX_VIDEO_FILE_SIZE_DISPLAY}.
+                      Non-MP4 files (e.g. MTS, AVI, MKV) are automatically converted to MP4 for web playback — large files may take a few minutes.
                     </p>
                   </>
                 ) : (
