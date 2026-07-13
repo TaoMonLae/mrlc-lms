@@ -237,6 +237,7 @@ export default function GuidedStudio() {
   const [title, setTitle] = useState('');
   const [classId, setClassId] = useState('');
   const [subjectId, setSubjectId] = useState('');
+  const [examType, setExamType] = useState<'QUIZ' | 'MIDTERM' | 'FINAL' | 'MOCK'>('FINAL');
   const [duration, setDuration] = useState(60);
   const [instructions, setInstructions] = useState('');
   const [status, setStatus] = useState<'DRAFT' | 'PUBLISHED' | 'CLOSED'>('DRAFT');
@@ -303,6 +304,7 @@ export default function GuidedStudio() {
       setTitle(exam.title || '');
       setClassId(exam.classId || '');
       setSubjectId(exam.subjectId || '');
+      setExamType((['QUIZ', 'MIDTERM', 'FINAL', 'MOCK'].includes(exam.type) ? exam.type : 'FINAL') as typeof examType);
       setDuration(Number(exam.durationMinutes) || 60);
       setStatus((exam.status as any) || 'DRAFT');
       setHasAttempts(Boolean(exam.attempts?.length));
@@ -490,7 +492,7 @@ export default function GuidedStudio() {
    */
   const reconcileAccommodations = async (): Promise<Accom[]> => {
     if (!id) return accom;
-    const existing = await apiGet<any[]>(`/api/accommodations?examId=${id}`).catch(() => [] as any[]);
+    const existing = await apiGet<any[]>(`/api/accommodations?examId=${id}`);
     const keep = new Set<string>();
     const wanted = honorAccom ? accom.filter((a) => a.studentId) : [];
 
@@ -502,18 +504,18 @@ export default function GuidedStudio() {
         readerSupport: a.readAloud, additionalBreaks: a.breaks, notes: a.note || null,
       };
       if (a.accId) {
-        await apiSend(`/api/accommodations/${a.accId}`, 'PUT', body).catch(() => {});
+        await apiSend(`/api/accommodations/${a.accId}`, 'PUT', body);
         keep.add(a.accId);
         result.push(a);
       } else {
-        const row = await apiSend<any>('/api/accommodations', 'POST', body).catch(() => null);
+        const row = await apiSend<any>('/api/accommodations', 'POST', body);
         if (row?.id) { keep.add(row.id); result.push({ ...a, accId: row.id }); }
         else result.push(a);
       }
     }
     // Remove rows that are no longer wanted.
     for (const row of existing) {
-      if (!keep.has(row.id)) await apiSend(`/api/accommodations/${row.id}`, 'DELETE').catch(() => {});
+      if (!keep.has(row.id)) await apiSend(`/api/accommodations/${row.id}`, 'DELETE');
     }
     return result;
   };
@@ -522,11 +524,22 @@ export default function GuidedStudio() {
     if (!id) return;
     if (!title.trim()) { toast.error('Please enter an exam title.'); setStep('details'); return; }
     if (!subjectId) { toast.error('Please select a subject.'); setStep('details'); return; }
+    if (!classId) { toast.error('Please select a class.'); setStep('details'); return; }
+    if (!Number.isFinite(duration) || duration < 1) { toast.error('Duration must be at least 1 minute.'); setStep('details'); return; }
     if ((nextStatus === 'PUBLISHED') && questions.length === 0) { toast.error('Add at least one question before publishing.'); setStep('questions'); return; }
     // Every auto-graded question with options (MCQ/TF/Drop-down/Hot spot/Drag)
     // must have at least one correct answer marked — otherwise it can't be
     // graded (and single-select ones would silently default to option 0).
     if (nextStatus === 'PUBLISHED') {
+      if (windowInfo?.warning) { toast.error(windowInfo.warning); setStep('schedule'); return; }
+      if (release === 'closed' && !closesAt) { toast.error('Set a close time for scheduled result release.'); setStep('schedule'); return; }
+      const emptyIdx = questions.findIndex((q) => !q.text.trim());
+      if (emptyIdx !== -1) {
+        toast.error(`Question ${emptyIdx + 1} is missing its question text.`);
+        setSel(emptyIdx);
+        setStep('questions');
+        return;
+      }
       const badIdx = questions.findIndex(
         (q) => isObjective(q.uiType) && q.options.length > 0 && !q.options.some((o) => o.c)
       );
@@ -536,43 +549,66 @@ export default function GuidedStudio() {
         setStep('questions');
         return;
       }
+      const emptyOptionIdx = questions.findIndex(
+        (q) => isObjective(q.uiType) && q.options.some((o) => !o.t.trim())
+      );
+      if (emptyOptionIdx !== -1) {
+        toast.error(`Question ${emptyOptionIdx + 1} has an empty answer option.`);
+        setSel(emptyOptionIdx);
+        setStep('questions');
+        return;
+      }
     }
     setSaving(true);
     let downstreamWarned = false;
     const warn = () => { if (!downstreamWarned) { downstreamWarned = true; toast.message('Saved. Some scheduling/grading settings could not sync (exam system may not be fully migrated).'); } };
     try {
+      const publishingDraft = nextStatus === 'PUBLISHED' && status !== 'PUBLISHED';
+      const basePayload = {
+        title: title.trim(), classId, subjectId, examType,
+        duration, totalMarks: totalPoints, settings: buildSettings(),
+      };
       // 1) Base exam: title, questions, settings mirror, status.
       await apiSend(`/api/exams/${id}`, 'PUT', {
-        title: title.trim(), classId, subjectId, examType: 'MOCK',
-        status: nextStatus || status,
-        duration, totalMarks: totalPoints, settings: buildSettings(),
+        ...basePayload,
+        // Keep a new exam private until its scheduling and release policy have
+        // saved successfully; the final publish transition happens below.
+        status: publishingDraft ? 'DRAFT' : (nextStatus || status),
         questions: hasAttempts ? undefined : questions.map(toBackend),
       });
 
-      // 2) Real scheduling/scoring columns the taking flow reads (best-effort).
-      await apiSend(`/api/exams/${id}/schedule`, 'PUT', {
+      // 2) Real scheduling/scoring columns the taking flow reads.
+      const scheduleSave = apiSend(`/api/exams/${id}/schedule`, 'PUT', {
         availableFrom: opensAt ? new Date(opensAt).toISOString() : null,
         availableUntil: closesAt ? new Date(closesAt).toISOString() : null,
         attemptLimit: attempts === 0 ? UNLIMITED_ATTEMPTS : attempts,
         durationMinutes: duration,
         shuffleQuestions: shuffle,
         passMark: passPoints, // stored in points to match attempt.score
-      }).catch(warn);
+      });
+      if (publishingDraft) await scheduleSave; else await scheduleSave.catch(warn);
 
       // 3) Result-release policy consumed by isResultReleased().
-      await apiSend(`/api/exams/${id}/result-policy`, 'PUT', {
+      const policySave = apiSend(`/api/exams/${id}/result-policy`, 'PUT', {
         releaseMode: RELEASE_TO_MODE[release],
         releaseAt: release === 'closed' && closesAt ? new Date(closesAt).toISOString() : null,
         showScore: release !== 'closed',
         showCorrectAnswers: showAnswers,
         showPassFail: true,
-      }).catch(warn);
+      });
+      if (publishingDraft) await policySave; else await policySave.catch(warn);
 
       // 4) Per-student accommodations → effective exam duration for those students.
       try {
         const reconciled = await reconcileAccommodations();
         setAccom(reconciled);
       } catch { warn(); }
+
+      // 5) Publish only after the required downstream settings have succeeded.
+      // Omitting `questions` here preserves the just-saved question set.
+      if (publishingDraft) {
+        await apiSend(`/api/exams/${id}`, 'PUT', { ...basePayload, status: 'PUBLISHED' });
+      }
 
       if (nextStatus) setStatus(nextStatus);
       if (nextStatus === 'PUBLISHED') setPublished(true);
@@ -606,7 +642,7 @@ export default function GuidedStudio() {
               style={{ fontSize: 17, fontWeight: 800, color: C.ink, border: 'none', outline: 'none', width: '100%', background: 'transparent' }}
             />
             <div style={{ fontSize: 12, color: C.muted2, marginTop: 1 }}>
-              {[className, subjectName].filter(Boolean).join(' · ') || 'Grade · Subject'} · auto-saved
+              {[className, subjectName].filter(Boolean).join(' · ') || 'Grade · Subject'} · save changes before leaving
             </div>
           </div>
           <StatusPill status={status} />
@@ -617,6 +653,10 @@ export default function GuidedStudio() {
           <button onClick={() => setPlayerOpen(true)}
             style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: C.purpleText, background: '#fff', border: `1.5px solid ${C.tint100}`, borderRadius: 10, padding: '8px 13px', cursor: 'pointer' }}>
             <Play size={13} fill="currentColor" /> Preview as student
+          </button>
+          <button onClick={() => save(status === 'DRAFT' ? 'DRAFT' : undefined)} disabled={saving}
+            style={{ fontSize: 13, fontWeight: 700, color: C.ink, background: '#fff', border: `1px solid ${C.border3}`, borderRadius: 10, padding: '8px 14px', cursor: saving ? 'not-allowed' : 'pointer' }}>
+            {status === 'DRAFT' ? 'Save draft' : 'Save changes'}
           </button>
           <button onClick={() => save('PUBLISHED')} disabled={saving}
             style={{ fontSize: 13, fontWeight: 800, color: '#fff', background: C.ink, border: 'none', borderRadius: 10, padding: '9px 18px', cursor: 'pointer' }}>
@@ -714,7 +754,7 @@ export default function GuidedStudio() {
 
           {/* Center editor */}
           <div style={{ padding: '26px 32px', overflow: 'auto' }}>
-            {step === 'details' && <DetailsStep {...{ title, setTitle, subjectId, setSubjectId, classId, setClassId, subjects, classes, duration, setDuration, instructions, setInstructions, goNext: () => setStep('questions') }} />}
+            {step === 'details' && <DetailsStep {...{ title, setTitle, subjectId, setSubjectId, classId, setClassId, examType, setExamType, subjects, classes, duration, setDuration, instructions, setInstructions, goNext: () => setStep('questions') }} />}
             {step === 'questions' && (
               cur ? (
                 <QuestionEditor
@@ -975,6 +1015,17 @@ function DetailsStep(p: any) {
           </Select>
         </Field>
       </div>
+      <Field label="Exam type">
+        <Select value={p.examType} onValueChange={p.setExamType}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="QUIZ">Quiz</SelectItem>
+            <SelectItem value="MIDTERM">Midterm</SelectItem>
+            <SelectItem value="FINAL">Final</SelectItem>
+            <SelectItem value="MOCK">Mock exam</SelectItem>
+          </SelectContent>
+        </Select>
+      </Field>
       <Field label="Time limit (minutes)"><input type="number" min={1} value={p.duration} onChange={(e: any) => p.setDuration(Number(e.target.value))} style={inputStyle} /></Field>
       <Field label="Instructions"><textarea value={p.instructions} onChange={(e: any) => p.setInstructions(e.target.value)} rows={4} style={{ ...inputStyle, resize: 'vertical', fontFamily: 'inherit' }} placeholder="Shown to students before they begin." /></Field>
 

@@ -63,18 +63,28 @@ export function parseDragBlankText(raw: string): { text: string; blanks: DragBla
 }
 
 export async function composeQuestionSet(prisma: any, examId: string, seed: string): Promise<any[]> {
+  const legacyQuestions: any[] = await prisma.question
+    .findMany({ where: { examId }, include: { optionRows: { orderBy: { orderIndex: "asc" } } }, orderBy: { orderIndex: "asc" } })
+    .catch(() => [] as any[]);
   const fixedLinks: any[] = await prisma.examQuestion
     .findMany({ where: { examId }, include: { question: { include: { optionRows: { orderBy: { orderIndex: "asc" } } } } }, orderBy: { displayOrder: "asc" } })
     .catch(() => [] as any[]);
   const rules: any[] = await prisma.examBlueprintRule.findMany({ where: { examId } }).catch(() => [] as any[]);
 
-  if (!fixedLinks.length && !rules.length) {
-    return prisma.question.findMany({ where: { examId }, orderBy: { orderIndex: "asc" } });
-  }
-
   const chosen: any[] = [];
   const used = new Set<string>();
   const usable = (q: any) => q && !["RETIRED", "ARCHIVED"].includes(q.status);
+
+  // Exams can mix questions created in Guided Studio with reusable bank links.
+  // Previously, adding the first bank link made every Studio question disappear
+  // from delivery because the legacy set was only used as an all-or-nothing
+  // fallback.
+  for (const q of legacyQuestions) {
+    if (usable(q) && !used.has(q.id)) {
+      used.add(q.id);
+      chosen.push(q);
+    }
+  }
 
   for (const link of fixedLinks) {
     if (link.question && usable(link.question) && !used.has(link.question.id)) {
@@ -137,6 +147,25 @@ export function freezeAttempt(questions: any[], exam: any, seed: string) {
       // Needed so the player renders multi-answer questions as multi-select;
       // omitting it made every frozen question render single-select.
       partialCredit: q.partialCredit ?? false,
+      // Keep the scoring key/config immutable too. attemptPayload() explicitly
+      // whitelists student-facing fields, so these values never leave the server.
+      correctAnswer: Array.isArray(q.optionRows) && q.optionRows.length
+        ? (q.optionRows.find((o: any) => o.isCorrect)?.id ?? q.correctAnswer ?? null)
+        : (q.correctAnswer ?? null),
+      correctAnswers: Array.isArray(q.optionRows) && q.optionRows.length
+        ? q.optionRows.filter((o: any) => o.isCorrect).map((o: any) => o.id)
+        : (q.correctAnswers ?? null),
+      optionWeights: Array.isArray(q.optionRows) && q.optionRows.length
+        ? (q.optionRows.some((o: any) => o.weight != null)
+            ? Object.fromEntries(q.optionRows.filter((o: any) => o.weight != null).map((o: any) => [o.id, o.weight]))
+            : null)
+        : (q.optionWeights ?? null),
+      negativePoints: q.negativePoints ?? null,
+      minScore: q.minScore ?? null,
+      numericTolerance: q.numericTolerance ?? null,
+      caseSensitive: q.caseSensitive ?? false,
+      requiresManualGrading: q.requiresManualGrading ?? false,
+      scoringOptions: q.type === "DRAG_DROP" ? q.options : undefined,
       options: opts.map((o) => ({ key: o.key, text: o.text })),
       dragText: q.type === "DRAG_DROP" ? String(q.options?.text ?? "") : undefined,
       dragBank: q.type === "DRAG_DROP" ? dragBank : undefined,

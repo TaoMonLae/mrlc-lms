@@ -56,7 +56,7 @@ export default function ResumeAttempt() {
               </div>
             </div>
             {e.activeAttemptId ? (
-              <Button onClick={() => navigate(`/exam2/attempts/${e.activeAttemptId}/play`)} className="bg-amber-500 hover:bg-amber-600 text-white"><RotateCcw className="h-4 w-4 mr-1" /> Resume</Button>
+              <Button onClick={() => start(e)} className="bg-amber-500 hover:bg-amber-600 text-white"><RotateCcw className="h-4 w-4 mr-1" /> Resume</Button>
             ) : exhausted ? (
               <Button disabled variant="outline">No attempts left</Button>
             ) : !e.openNow ? (

@@ -17,7 +17,7 @@ import { PrismaClient, type Role } from "@prisma/client";
 import dotenv from "dotenv";
 import { spawn } from "child_process";
 import { registerExamPhase2Routes } from "./examPhase2";
-import { registerExamBankRoutes } from "./examBank";
+import { composeQuestionSet, registerExamBankRoutes } from "./examBank";
 import { registerNewsRoutes } from "./news";
 import { registerPayrollPdfRoutes } from "./payrollPdf";
 import { registerFlashcardRoutes } from "./flashcards";
@@ -951,10 +951,14 @@ const schemas = {
   exam: z.object({
     title: reqStr, classId: reqStr, subjectId: reqStr,
     examType: z.enum(["QUIZ", "MIDTERM", "FINAL", "MOCK"]).optional(),
-    duration: optNum, totalMarks: optNum, status: optStr,
+    duration: z.coerce.number().int().min(1).nullable().optional(),
+    totalMarks: z.coerce.number().min(0).nullable().optional(),
+    status: z.enum(["DRAFT", "SCHEDULED", "ACTIVE", "CLOSED", "ARCHIVED", "PUBLISHED"]).optional(),
     settings: z.any().optional(),
     questions: z.array(z.object({
-      questionText: optStr, type: optStr, points: optNum,
+      questionText: optStr,
+      type: z.enum(["MULTIPLE_CHOICE", "TRUE_FALSE", "SHORT_ANSWER", "ESSAY", "MCQ", "WRITTEN", "GED_RLA_PASSAGE", "GED_MATH", "GED_SCIENCE", "GED_SOCIAL_STUDIES", "DRAG_DROP", "DROPDOWN", "HOTSPOT", "EXTENDED"]).optional(),
+      points: z.coerce.number().min(0).optional(),
       choices: z.any().optional(), correctAnswer: z.any().optional(),
       correctAnswers: z.any().optional(),
       partialCredit: z.boolean().optional(),
@@ -12011,7 +12015,7 @@ async function startServer() {
         }
         // Students must never receive correctAnswer for exam questions.
         exams = await prisma.exam.findMany({
-          where: { classId: student.classId, status: { not: "ARCHIVED" } },
+          where: { classId: student.classId, status: { in: ["PUBLISHED", "ACTIVE", "SCHEDULED"] } },
           include: {
             class: true,
             subject: true,
@@ -12129,7 +12133,7 @@ async function startServer() {
           res.status(404).json({ error: "Exam not found" });
           return;
         }
-        if (exam.status !== "PUBLISHED") {
+        if (!["PUBLISHED", "ACTIVE", "SCHEDULED"].includes(exam.status)) {
           const attempt = await prisma.examAttempt.findFirst({
             where: { studentId: student.id, examId: exam.id },
             orderBy: { attemptNumber: "desc" },
@@ -12172,6 +12176,34 @@ async function startServer() {
     res.status(201).json({ url: `/uploads/exam-media/${file.filename}` });
   });
 
+  const MANUAL_QUESTION_TYPES = new Set(["SHORT_ANSWER", "ESSAY", "WRITTEN", "EXTENDED"]);
+  function publishQuestionError(q: any, index: number): string | null {
+    const label = `Question ${index + 1}`;
+    if (!String(q?.text || "").trim()) return `${label} is missing question text`;
+    if (!q.examId && q.status !== "APPROVED") return `${label} is a bank question that has not been approved`;
+    const points = Number(q?.pointsOverride ?? q?.defaultPoints ?? q?.points);
+    if (!Number.isFinite(points) || points < 0) return `${label} has invalid points`;
+    if (MANUAL_QUESTION_TYPES.has(q.type) || q.requiresManualGrading) return null;
+    if (q.type === "DRAG_DROP") {
+      return Array.isArray(q.options?.blanks) && q.options.blanks.length > 0
+        ? null
+        : `${label} has no configured blanks`;
+    }
+    const rowKey = Array.isArray(q.optionRows) && q.optionRows.some((o: any) => o.isCorrect);
+    const jsonKey = q.correctAnswer != null || (Array.isArray(q.correctAnswers) && q.correctAnswers.length > 0);
+    return rowKey || jsonKey ? null : `${label} has no correct answer`;
+  }
+
+  async function assertExamPublishable(tx: any, examId: string) {
+    const composed = await composeQuestionSet(tx, examId, `publish:${examId}`);
+    if (!composed.length) throw Object.assign(new Error("Add at least one question before publishing"), { http: 400 });
+    const badIndex = composed.findIndex((q: any, i: number) => publishQuestionError(q, i) !== null);
+    if (badIndex !== -1) {
+      throw Object.assign(new Error(publishQuestionError(composed[badIndex], badIndex) || "Invalid question"), { http: 400 });
+    }
+    return composed.reduce((sum: number, q: any) => sum + Number(q.pointsOverride ?? q.defaultPoints ?? q.points ?? 0), 0);
+  }
+
   app.post("/api/exams", authMiddleware, validate(schemas.exam), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
@@ -12191,7 +12223,7 @@ async function startServer() {
       const result = await prisma.$transaction(async (tx) => {
         const exam = await tx.exam.create({
           data: {
-            title,
+            title: title.trim(),
             classId,
             subjectId,
             type: examType || "FINAL",
@@ -12203,21 +12235,29 @@ async function startServer() {
           }
         });
         if (questions && Array.isArray(questions)) {
-          for (const q of questions) {
+          for (let i = 0; i < questions.length; i++) {
+            const q = questions[i];
             await tx.question.create({
               data: {
                 examId: exam.id,
-                text: q.questionText,
+                text: String(q.questionText || ""),
                 type: q.type || "MCQ",
-                points: Number(q.points) || 5,
+                points: Number(q.points ?? 5),
+                orderIndex: i,
                 options: q.choices || null,
                 correctAnswer: q.correctAnswer != null ? String(q.correctAnswer) : null,
+                correctAnswers: q.correctAnswers ?? null,
+                partialCredit: !!q.partialCredit,
                 passageText: q.passageText || null,
                 explanation: q.explanation || null,
                 imageUrl: q.imageUrl || null,
               }
             });
           }
+        }
+        if ((status || "DRAFT") === "PUBLISHED") {
+          const computedTotal = await assertExamPublishable(tx, exam.id);
+          return tx.exam.update({ where: { id: exam.id }, data: { totalMarks: computedTotal } });
         }
         return exam;
       });
@@ -12238,6 +12278,7 @@ async function startServer() {
     } catch (err: any) {
       if (err?.code === "P2021" || err?.code === "P2022") { logExamDatabaseError("Error creating exam", err); res.status(503).json({ error: "Exam database is out of date — run `npx prisma migrate deploy` then restart the server." }); return; }
       logExamDatabaseError("Error creating exam", err);
+      if (err.http) { res.status(err.http).json({ error: err.message }); return; }
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
@@ -12274,11 +12315,17 @@ async function startServer() {
           include: { attempts: { select: { id: true } } },
         });
         if (!existing) throw Object.assign(new Error("Exam not found"), { http: 404 });
+        if (existing.attempts.length > 0 && questions !== undefined) {
+          throw Object.assign(new Error("Questions cannot be replaced after students have started this exam"), { http: 409 });
+        }
+        if (existing.attempts.length > 0 && (classId !== existing.classId || subjectId !== existing.subjectId || (examType && examType !== existing.type))) {
+          throw Object.assign(new Error("Class, subject, and exam type cannot change after students have started"), { http: 409 });
+        }
 
         const exam = await tx.exam.update({
           where: { id },
           data: {
-            title,
+            title: title.trim(),
             classId,
             subjectId,
             type: examType || "FINAL",
@@ -12289,16 +12336,18 @@ async function startServer() {
           },
         });
 
-        if (existing.attempts.length === 0) {
+        if (existing.attempts.length === 0 && questions !== undefined) {
           await tx.question.deleteMany({ where: { examId: id } });
           if (questions && Array.isArray(questions)) {
-            for (const q of questions) {
+            for (let i = 0; i < questions.length; i++) {
+              const q = questions[i];
               await tx.question.create({
                 data: {
                   examId: id,
-                  text: q.questionText,
+                  text: String(q.questionText || ""),
                   type: q.type || "MCQ",
-                  points: Number(q.points) || 5,
+                  points: Number(q.points ?? 5),
+                  orderIndex: i,
                   options: q.choices || null,
                   correctAnswer: q.correctAnswer != null ? String(q.correctAnswer) : null,
                   correctAnswers: q.correctAnswers ?? null,
@@ -12310,6 +12359,11 @@ async function startServer() {
               });
             }
           }
+        }
+
+        if (exam.status === "PUBLISHED") {
+          const computedTotal = await assertExamPublishable(tx, id);
+          return tx.exam.update({ where: { id }, data: { totalMarks: computedTotal } });
         }
 
         return exam;
@@ -12331,8 +12385,8 @@ async function startServer() {
     } catch (err: any) {
       if (err?.code === "P2021" || err?.code === "P2022") { logExamDatabaseError("Error updating exam", err); res.status(503).json({ error: "Exam database is out of date — run `npx prisma migrate deploy` then restart the server." }); return; }
       logExamDatabaseError("Error updating exam", err);
-      if (err.http === 404) {
-        res.status(404).json({ error: err.message });
+      if (err.http) {
+        res.status(err.http).json({ error: err.message });
         return;
       }
       res.status(500).json({ error: "Internal Server Error" });
@@ -12494,6 +12548,10 @@ async function startServer() {
   app.get("/api/exams/:id/results", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { id } = req.params;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Students must use the policy-gated attempt result endpoint" });
+      return;
+    }
     try {
       const exam = await prisma.exam.findUnique({
         where: { id },
@@ -12544,14 +12602,6 @@ async function startServer() {
           res.status(403).json({ error: "Forbidden" });
           return;
         }
-      } else if (jwtUser.role === "STUDENT") {
-        const student = await prisma.student.findUnique({ where: { userId: jwtUser.userId } });
-        if (!student || student.classId !== exam.classId) {
-          res.status(404).json({ error: "Exam not found" });
-          return;
-        }
-        scopedAttempts = exam.attempts.filter((a) => a.studentId === student.id);
-        canGrade = false;
       } else if (!canGrade) {
         res.status(403).json({ error: "Forbidden" });
         return;
@@ -14739,7 +14789,7 @@ async function startServer() {
   function isResultReleased(attempt: any, policy: any): boolean {
     const mode = policy?.releaseMode || "IMMEDIATE";
     if (mode === "IMMEDIATE") return ["SUBMITTED", "AUTO_SUBMITTED", "FINALIZED", "RELEASED"].includes(attempt.state);
-    if (mode === "SCHEDULED") return !!(policy?.releaseAt && Date.now() >= new Date(policy.releaseAt).getTime());
+    if (mode === "SCHEDULED") return !!(policy?.releaseAt && attempt.isCompleted && Date.now() >= new Date(policy.releaseAt).getTime());
     if (mode === "AFTER_GRADING") return ["FINALIZED", "RELEASED"].includes(attempt.state);
     return false; // HIDDEN or unknown
   }
@@ -14798,7 +14848,7 @@ async function startServer() {
             status: !released ? "Submitted" : (attempt.score != null ? "Graded" : "Grading"),
             score: scoreVisible ? `${attempt.score}/${e.totalMarks}` : null,
           });
-        } else if (e.status === "PUBLISHED") {
+        } else if (["PUBLISHED", "ACTIVE", "SCHEDULED"].includes(e.status)) {
           // Skip exams whose window has fully closed and can't be late-started.
           if (e.availableUntil && now > new Date(e.availableUntil).getTime() && !e.allowLateStart) continue;
           // Show the real close date when scheduled; otherwise there is no deadline.
@@ -14869,7 +14919,7 @@ async function startServer() {
       const profile = await prisma.schoolProfile.findFirst();
       const [att, attempts, fees, classmates, readiness] = await Promise.all([
         prisma.attendance.findMany({ where: { studentId: s.id } }),
-        prisma.examAttempt.findMany({ where: { studentId: s.id, isCompleted: true }, include: { exam: { include: { subject: true } } }, orderBy: { completedAt: "desc" } }),
+        prisma.examAttempt.findMany({ where: { studentId: s.id, isCompleted: true }, include: { exam: { include: { subject: true, resultPolicy: true } } }, orderBy: { completedAt: "desc" } }),
         prisma.feePayment.findMany({ where: { studentId: s.id } }),
         s.classId ? prisma.student.count({ where: { classId: s.classId } }) : Promise.resolve(0),
         prisma.gedReadiness.findMany({ where: { studentId: s.id } }),
@@ -14878,7 +14928,7 @@ async function startServer() {
       const attendanceRate = att.length ? round1((present / att.length) * 100) : 0;
       const readinessBySubject: Record<string, any> = {};
       for (const r of readiness) readinessBySubject[r.subject] = { status: r.status };
-      const graded = attempts.filter((a) => a.score != null);
+      const graded = attempts.filter((a) => a.score != null && isResultReleased(a, a.exam.resultPolicy) && a.exam.resultPolicy?.showScore !== false);
       const examAverage = graded.length
         ? round1(graded.reduce((acc, a) => acc + ((a.score! / (a.exam.totalMarks || 100)) * 100), 0) / graded.length)
         : 0;
@@ -14886,7 +14936,7 @@ async function startServer() {
       const paid = fees.filter((f) => f.status === "PAID").reduce((acc, f) => acc + f.amount, 0);
       const upcoming = s.classId
         ? await prisma.exam.findMany({
-            where: { classId: s.classId, date: { gte: new Date() } },
+            where: { classId: s.classId, status: { in: ["PUBLISHED", "ACTIVE", "SCHEDULED"] }, OR: [{ availableFrom: { gte: new Date() } }, { availableFrom: null, date: { gte: new Date() } }] },
             include: { subject: true }, orderBy: { date: "asc" }, take: 5,
           })
         : [];

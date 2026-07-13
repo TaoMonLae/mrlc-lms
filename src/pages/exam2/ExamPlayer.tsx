@@ -111,6 +111,7 @@ export default function ExamPlayer() {
     setSaving(false);
     if (ok) { dirty.current.clear(); setSavedAt(data.lastSavedAt || new Date().toISOString()); if (typeof data.remainingSeconds === 'number') { if (data.remainingSeconds > 0) timerArmed.current = true; setRemaining(data.remainingSeconds); } return true; }
     if (status === 409 && data.error === 'SESSION_CONFLICT') { setBlocked('This attempt was opened in another window or device. This session is now read-only.'); return false; }
+    if (status === 409 && data.error === 'ATTEMPT_PAUSED') { setBlocked('This attempt has been paused. Resume it from My Exams before continuing.'); return false; }
     if (status === 409 && (data.error === 'TIME_EXPIRED' || data.autoSubmitted)) { toast.info('Time expired — submitted.'); navigate(`/exam2/attempts/${attemptId}/result`); return false; }
     return false;
   }, [attemptId, sessionToken, post, navigate]);
@@ -124,7 +125,18 @@ export default function ExamPlayer() {
 
   // save on unload
   useEffect(() => {
-    const h = () => { if (dirty.current.size) navigator.sendBeacon?.(`/api/attempts/${attemptId}/save`, new Blob([JSON.stringify({ sessionToken, reason: 'AUTOSAVE', answers: Object.keys(answersRef.current).map((qid) => ({ questionId: qid, ...answersRef.current[qid] })) })], { type: 'application/json' })); };
+    // sendBeacon cannot attach the bearer token used by this app, so those
+    // unload saves were rejected with 401. keepalive fetch preserves auth while
+    // still allowing the browser to finish the request during navigation.
+    const h = () => {
+      if (!dirty.current.size) return;
+      void fetch(`/api/attempts/${attemptId}/save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ sessionToken, reason: 'AUTOSAVE', answers: Object.keys(answersRef.current).map((qid) => ({ questionId: qid, ...answersRef.current[qid] })) }),
+        keepalive: true,
+      });
+    };
     window.addEventListener('beforeunload', h);
     return () => window.removeEventListener('beforeunload', h);
   }, [attemptId, sessionToken]);
