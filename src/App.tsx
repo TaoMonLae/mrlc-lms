@@ -339,15 +339,23 @@ export default function App() {
 
                 <Route path="/timetable" element={<TimetablePage />} />
 
+                <Route element={<ProtectedRoute requiredPermission="manage_students" />}>
+                  <Route path="/students/new" element={<StudentNew />} />
+                  <Route path="/students/:id/edit" element={<StudentEdit />} />
+                </Route>
+
+                <Route element={<ProtectedRoute requiredPermission="manage_teachers" />}>
+                  <Route path="/teachers" element={<TeachersList />} />
+                  <Route path="/teachers/new" element={<TeacherNew />} />
+                </Route>
+
                 <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'TEACHER']} />}>
                   <Route path="/announcements/new" element={<AnnouncementNew />} />
                   <Route path="/announcements/:id/edit" element={<AnnouncementEdit />} />
                   <Route path="/timetable/new" element={<TimetableNew />} />
                   <Route path="/timetable/:id/edit" element={<TimetableEdit />} />
                   <Route path="/students" element={<StudentsList />} />
-                  <Route path="/students/new" element={<StudentNew />} />
                   <Route path="/students/:id" element={<StudentProfile />} />
-                  <Route path="/students/:id/edit" element={<StudentEdit />} />
                   
                   <Route path="/classes" element={<ClassesList />} />
                   <Route path="/classes/new" element={<ClassNew />} />
@@ -383,8 +391,6 @@ export default function App() {
                   <Route path="/exams/:id/studio" element={<GuidedStudio />} />
                   <Route path="/exams/:id/preview" element={<ExamPreview />} />
                   
-                  <Route path="/teachers" element={<TeachersList />} />
-                  <Route path="/teachers/new" element={<TeacherNew />} />
                   <Route path="/teachers/:id" element={<TeacherProfile />} />
                   <Route path="/teachers/:id/edit" element={<TeacherEdit />} />
 

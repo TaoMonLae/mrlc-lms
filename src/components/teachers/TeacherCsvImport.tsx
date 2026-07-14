@@ -16,12 +16,12 @@ import { apiSend } from '../../lib/api';
 
 // These must match the columns the /api/teachers/import endpoint reads.
 const TEMPLATE_COLUMNS = [
-  'firstName', 'lastName', 'email', 'password', 'subjects', 'joinedDate', 'baseSalary', 'teacherCode',
+  'firstName', 'lastName', 'email', 'password', 'employmentType', 'subjects', 'phone', 'joinedDate', 'baseSalary', 'teacherCode', 'notes',
 ];
 
 const SAMPLE_ROWS = [
-  ['Tao', 'Mon Lae', 'tao.monlae@example.com', '', 'Mathematics, Science', '2026-01-15', '1500', ''],
-  ['Su', 'Myat', 'su.myat@example.com', 'Welcome2026', 'English', '2026-06-01', '', 'TCH-CUSTOM1'],
+  ['Tao', 'Mon Lae', 'tao.monlae@example.com', '', 'FULL_TIME', 'Mathematics, Science', '+60123456789', '2026-01-15', '1500', '', ''],
+  ['Su', 'Myat', 'su.myat@example.com', 'Welcome2026', 'VOLUNTEER', 'English', '', '2026-06-01', '', 'TCH-CUSTOM1', 'Weekend classes'],
 ];
 
 /** Downloads the teacher import template CSV (headers + example rows). */
@@ -68,6 +68,10 @@ export function TeacherCsvImport({ onImported }: { onImported?: () => void }) {
           if (!String(r.lastName || '').trim()) missing.push('lastName');
           if (!String(r.email || '').trim()) missing.push('email');
           if (missing.length) errs.push({ row: i + 2, message: `Missing ${missing.join(', ')}` });
+          const employmentType = String(r.employmentType || 'FULL_TIME').trim().toUpperCase();
+          if (!['FULL_TIME', 'PART_TIME', 'VOLUNTEER'].includes(employmentType)) {
+            errs.push({ row: i + 2, message: 'employmentType must be FULL_TIME, PART_TIME, or VOLUNTEER' });
+          }
         });
         setRows(parsed);
         setClientErrors(errs);
@@ -115,7 +119,7 @@ export function TeacherCsvImport({ onImported }: { onImported?: () => void }) {
             <div className="text-sm">
               <p className="font-medium text-slate-900 dark:text-white">Step 1 — Get the template</p>
               <p className="text-slate-500 dark:text-slate-400">
-                Required columns: <code className="text-xs">firstName</code>, <code className="text-xs">lastName</code>, <code className="text-xs">email</code>. Optional: password (min 6 chars), subjects (comma-separated), joinedDate (YYYY-MM-DD), baseSalary, teacherCode (auto-generated if blank).
+                Required columns: <code className="text-xs">firstName</code>, <code className="text-xs">lastName</code>, <code className="text-xs">email</code>. Optional: password (min 6 chars), employmentType (FULL_TIME, PART_TIME, or VOLUNTEER; defaults to FULL_TIME), subjects, phone, joinedDate, baseSalary, teacherCode, and notes.
               </p>
               <Button onClick={downloadTeacherTemplate} variant="ghost" size="sm" className="mt-1 -ml-2 text-aubergine-600">
                 <Download className="mr-2 h-4 w-4" /> Download template (with example rows)

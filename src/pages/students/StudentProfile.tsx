@@ -36,6 +36,7 @@ export default function StudentProfile() {
   // Case records (discipline/welfare notes) are sensitive -- only show the
   // tab at all to roles the permission model actually grants case access to.
   const canViewCases = isAdmin || hasPermission('view_cases');
+  const canViewFees = isAdmin || hasPermission('view_fees');
   const [student, setStudent] = React.useState<any>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [attendanceData, setAttendanceData] = React.useState<any>(null);
@@ -91,7 +92,7 @@ export default function StudentProfile() {
           if (profileDataRes.ok) {
             const profileData = await profileDataRes.json();
             setExamData(profileData.exams || null);
-            setFeesData(profileData.fees || null);
+            setFeesData(canViewFees ? (profileData.fees || null) : null);
           }
         } catch (err) {
           console.error('Error fetching profile tab data:', err);
@@ -215,10 +216,12 @@ export default function StudentProfile() {
         </Button>
 
         <div className="flex gap-2">
-          <Button variant="outline" render={<Link to={`/students/${id}/edit`} />} nativeButton={false}>
-            <Edit className="mr-2 h-4 w-4" />
-            Edit Profile
-          </Button>
+          {isAdmin && (
+            <Button variant="outline" render={<Link to={`/students/${id}/edit`} />} nativeButton={false}>
+              <Edit className="mr-2 h-4 w-4" />
+              Edit Profile
+            </Button>
+          )}
           <Button variant="secondary" className="text-aubergine-600 bg-aubergine-50 hover:bg-aubergine-100 dark:bg-aubergine-900/20 dark:hover:bg-aubergine-900/40" render={<Link to="/reports/students" />} nativeButton={false}>
             <FileText className="mr-2 h-4 w-4" />
             Generate Report
@@ -265,8 +268,8 @@ export default function StudentProfile() {
           onPhotoUploaded={(url) => setStudent((prev: any) => prev ? { ...prev, profilePhotoUrl: url } : prev)}
           targetType="student"
           targetId={s.id}
-          contactText="Edit Profile"
-          onContactClick={() => navigate(`/students/${id}/edit`)}
+          contactText={isAdmin ? 'Edit Profile' : 'Back to Students'}
+          onContactClick={() => navigate(isAdmin ? `/students/${id}/edit` : '/students')}
         />
       </div>
 
@@ -347,7 +350,9 @@ export default function StudentProfile() {
                 <TabsTrigger value="overview" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-aubergine-600 rounded-none h-14 px-6 font-semibold">Overview</TabsTrigger>
                 <TabsTrigger value="attendance" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-aubergine-600 rounded-none h-14 px-6 font-semibold">Attendance</TabsTrigger>
                 <TabsTrigger value="exams" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-aubergine-600 rounded-none h-14 px-6 font-semibold">Exams</TabsTrigger>
-                <TabsTrigger value="fees" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-aubergine-600 rounded-none h-14 px-6 font-semibold">Fees</TabsTrigger>
+                {canViewFees && (
+                  <TabsTrigger value="fees" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-aubergine-600 rounded-none h-14 px-6 font-semibold">Fees</TabsTrigger>
+                )}
                 <TabsTrigger value="documents" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-aubergine-600 rounded-none h-14 px-6 font-semibold flex items-center gap-2">
                   <FileText className="h-4 w-4" />
                   Documents
@@ -398,20 +403,22 @@ export default function StudentProfile() {
                   </div>
                 </div>
 
-                <div className="p-4 border border-slate-200 dark:border-surface-raised rounded-lg flex items-start gap-4">
-                  <div className="h-10 w-10 rounded-full bg-aubergine-100 flex items-center justify-center text-aubergine-600 shrink-0">
-                    <CreditCard className="h-5 w-5" />
+                {canViewFees && (
+                  <div className="p-4 border border-slate-200 dark:border-surface-raised rounded-lg flex items-start gap-4">
+                    <div className="h-10 w-10 rounded-full bg-aubergine-100 flex items-center justify-center text-aubergine-600 shrink-0">
+                      <CreditCard className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-xl font-bold text-slate-900 dark:text-white">
+                        {feesData ? formatCurrency(feesData.totalPaid, feeCurrency) : 'N/A'}
+                      </p>
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Paid</p>
+                      {feesData && (
+                        <p className="text-[10px] text-slate-400 mt-1">{feesData.paymentCount} payment(s)</p>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xl font-bold text-slate-900 dark:text-white">
-                      {feesData ? formatCurrency(feesData.totalPaid, feeCurrency) : 'N/A'}
-                    </p>
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Paid</p>
-                    {feesData && (
-                      <p className="text-[10px] text-slate-400 mt-1">{feesData.paymentCount} payment(s)</p>
-                    )}
-                  </div>
-                </div>
+                )}
               </div>
             </TabsContent>
 
@@ -522,7 +529,7 @@ export default function StudentProfile() {
               )}
             </TabsContent>
 
-            <TabsContent value="fees" className="p-6 m-0 border-none min-h-[300px] focus-visible:outline-none focus-visible:ring-0">
+            {canViewFees && <TabsContent value="fees" className="p-6 m-0 border-none min-h-[300px] focus-visible:outline-none focus-visible:ring-0">
               {feesData && feesData.rows?.length > 0 ? (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -575,7 +582,7 @@ export default function StudentProfile() {
                   </div>
                 </div>
               )}
-            </TabsContent>
+            </TabsContent>}
 
             <TabsContent value="documents" className="p-6 m-0 border-none focus-visible:outline-none focus-visible:ring-0">
               <StudentDocuments studentId={id || ''} />

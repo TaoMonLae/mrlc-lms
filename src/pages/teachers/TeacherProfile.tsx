@@ -35,7 +35,6 @@ export default function TeacherProfile() {
   const navigate = useNavigate();
   const { isAdmin, hasPermission } = usePermissions();
   const [activeTab, setActiveTab] = useState('overview');
-  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
   const [teacher, setTeacher] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [myTeacherId, setMyTeacherId] = useState<string | null>(null);
@@ -55,6 +54,8 @@ export default function TeacherProfile() {
       .catch(() => {});
   }, [isAdmin]);
   const canEdit = isAdmin || (myTeacherId !== null && myTeacherId === id);
+  const backTarget = isAdmin ? '/teachers' : '/teacher/dashboard';
+  const backLabel = isAdmin ? 'Back to Teachers' : 'Back to Dashboard';
 
   const fetchTeacher = async () => {
     if (!id) return;
@@ -162,9 +163,9 @@ export default function TeacherProfile() {
   if (loading) {
     return (
       <div className="space-y-6 max-w-[1200px] mx-auto pb-20">
-        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/teachers" />} nativeButton={false}>
+        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to={backTarget} />} nativeButton={false}>
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Teachers
+          {backLabel}
         </Button>
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -177,9 +178,9 @@ export default function TeacherProfile() {
   if (!teacher) {
     return (
       <div className="space-y-6 max-w-[1200px] mx-auto pb-20">
-        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/teachers" />} nativeButton={false}>
+        <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to={backTarget} />} nativeButton={false}>
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Teachers
+          {backLabel}
         </Button>
         <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-8 text-center text-slate-500">
           Teacher profile not found.
@@ -188,21 +189,13 @@ export default function TeacherProfile() {
     );
   }
 
-  const handleCreateAccount = () => {
-    setIsCreatingAccount(true);
-    setTimeout(() => {
-      toast.success('Login account created successfully');
-      setIsCreatingAccount(false);
-    }, 1500);
-  };
-
   return (
     <div className="space-y-6 max-w-[1200px] mx-auto pb-20">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to="/teachers" />} nativeButton={false}>
+          <Button variant="ghost" size="sm" className="-ml-3 mb-2 text-slate-500 hover:text-slate-900 dark:hover:text-white" render={<Link to={backTarget} />} nativeButton={false}>
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Teachers
+            {backLabel}
           </Button>
           <HoloProfileHeader
             name={`${teacher.firstName} ${teacher.lastName}`}
@@ -227,16 +220,15 @@ export default function TeacherProfile() {
               <Edit className="mr-2 h-4 w-4" /> Edit Profile
             </Button>
           )}
-          {!teacher.userId ? (
-            <Button onClick={handleCreateAccount} className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isCreatingAccount}>
-              <ShieldCheck className="mr-2 h-4 w-4" />
-              {isCreatingAccount ? 'Creating...' : 'Create Account'}
+          {isAdmin && (!teacher.userId ? (
+            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground" render={<Link to={`/users/new?teacherId=${teacher.id}`} />} nativeButton={false}>
+              <ShieldCheck className="mr-2 h-4 w-4" /> Create Account
             </Button>
           ) : (
-            <Button variant="secondary" className="text-blue-600 bg-blue-50 hover:bg-blue-100">
-               <UserCircle className="mr-2 h-4 w-4" /> Manage Account
+            <Button variant="secondary" className="text-blue-600 bg-blue-50 hover:bg-blue-100" render={<Link to="/users" />} nativeButton={false}>
+              <UserCircle className="mr-2 h-4 w-4" /> Manage Account
             </Button>
-          )}
+          ))}
         </div>
       </div>
 

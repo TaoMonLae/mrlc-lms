@@ -1037,7 +1037,7 @@ const schemas = {
   teacherCreate: z.object({
     firstName: reqStr, lastName: reqStr, email,
     phone: optStr, gender: optStr, address: optStr,
-    employmentType: optStr, joinedDate: optStr,
+    employmentType: z.enum(["FULL_TIME", "PART_TIME", "VOLUNTEER"]).optional(), joinedDate: optStr,
     subjects: z.union([z.array(z.string()), optStr]).optional(), notes: optStr,
     baseSalary: optNum,
   }),
@@ -2160,6 +2160,17 @@ async function startServer() {
     }
   });
 
+  // A teacher may only see students in classes assigned to their teacher
+  // profile. Keep this helper near the first route that needs it so People
+  // endpoints cannot accidentally fall back to an all-students query.
+  async function getTeacherClassIds(userId: string): Promise<string[]> {
+    const teacher = await prisma.teacher.findUnique({
+      where: { userId },
+      include: { classes: true },
+    });
+    return teacher?.classes.map((assignment) => assignment.classId) || [];
+  }
+
   // ── Students API ────────────────────────────────────────────────────────────
   app.get("/api/students", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
@@ -2173,7 +2184,11 @@ async function startServer() {
       return;
     }
     try {
+      const classIds = jwtUser.role === "TEACHER"
+        ? await getTeacherClassIds(jwtUser.userId)
+        : null;
       const students = await prisma.student.findMany({
+        where: classIds ? { classId: { in: classIds } } : undefined,
         include: {
           user: {
             select: {
@@ -2254,7 +2269,7 @@ async function startServer() {
             status: status || "ACTIVE",
           },
           include: {
-            user: true,
+            user: { select: { id: true, firstName: true, lastName: true, email: true, username: true, role: true, isActive: true, profilePhotoUrl: true } },
             class: true,
           }
         });
@@ -2392,13 +2407,25 @@ async function startServer() {
       const student = await prisma.student.findUnique({
         where: { id },
         include: {
-          user: true,
+          user: {
+            select: {
+              id: true, firstName: true, lastName: true, email: true,
+              profilePhotoUrl: true, isActive: true,
+            },
+          },
           class: true,
         }
       });
       if (!student) {
         res.status(404).json({ error: "Student not found" });
         return;
+      }
+      if (jwtUser.role === "TEACHER") {
+        const classIds = await getTeacherClassIds(jwtUser.userId);
+        if (!student.classId || !classIds.includes(student.classId)) {
+          res.status(403).json({ error: "You can only view students in your assigned classes" });
+          return;
+        }
       }
       res.json(student);
     } catch (err) {
@@ -2417,11 +2444,26 @@ async function startServer() {
     try {
       const student = await prisma.student.findUnique({
         where: { id },
-        include: { user: true, class: true },
+        include: {
+          user: {
+            select: {
+              id: true, firstName: true, lastName: true, email: true,
+              profilePhotoUrl: true, isActive: true,
+            },
+          },
+          class: true,
+        },
       });
       if (!student) {
         res.status(404).json({ error: "Student not found" });
         return;
+      }
+      if (jwtUser.role === "TEACHER") {
+        const classIds = await getTeacherClassIds(jwtUser.userId);
+        if (!student.classId || !classIds.includes(student.classId)) {
+          res.status(403).json({ error: "You can only view students in your assigned classes" });
+          return;
+        }
       }
 
       const profile = await prisma.schoolProfile.findFirst();
@@ -2432,11 +2474,20 @@ async function startServer() {
           include: { exam: { include: { subject: true } } },
           orderBy: { completedAt: "desc" },
         }),
-        prisma.feePayment.findMany({
-          where: { studentId: id },
-          include: { student: { include: { user: true, class: true } } },
-          orderBy: [{ paidDate: "desc" }, { createdAt: "desc" }],
-        }),
+        jwtUser.role === "ADMIN"
+          ? prisma.feePayment.findMany({
+              where: { studentId: id },
+              include: {
+                student: {
+                  include: {
+                    user: { select: { firstName: true, lastName: true, email: true } },
+                    class: true,
+                  },
+                },
+              },
+              orderBy: [{ paidDate: "desc" }, { createdAt: "desc" }],
+            })
+          : Promise.resolve([]),
         student.classId
           ? prisma.exam.findMany({
               where: { classId: student.classId },
@@ -2495,14 +2546,16 @@ async function startServer() {
           results: examResults,
           available: availableExams,
         },
-        fees: {
-          currency,
-          totalExpected,
-          totalPaid,
-          balance: Math.max(0, totalExpected - totalPaid),
-          paymentCount: fees.length,
-          rows: feeRows,
-        },
+        fees: jwtUser.role === "ADMIN"
+          ? {
+              currency,
+              totalExpected,
+              totalPaid,
+              balance: Math.max(0, totalExpected - totalPaid),
+              paymentCount: fees.length,
+              rows: feeRows,
+            }
+          : null,
       });
     } catch (err) {
       logger.error("Error fetching student profile data:", err);
@@ -2576,7 +2629,7 @@ async function startServer() {
             status,
           },
           include: {
-            user: true,
+            user: { select: { id: true, firstName: true, lastName: true, email: true, username: true, role: true, isActive: true, profilePhotoUrl: true } },
             class: true,
           }
         });
@@ -2715,6 +2768,10 @@ async function startServer() {
       res.status(400).json({ error: "firstName, email, password, and role are required" });
       return;
     }
+    if ((teacherId && role !== "TEACHER") || (studentId && role !== "STUDENT") || (teacherId && studentId)) {
+      res.status(400).json({ error: "A profile can only be linked to an account with the matching Teacher or Student role" });
+      return;
+    }
     try {
       const passwordHash = await bcrypt.hash(password, 10);
       const user = await prisma.$transaction(async (tx) => {
@@ -2725,11 +2782,15 @@ async function startServer() {
         } as any);
         // Optionally link an existing teacher/student profile to the new account.
         if (teacherId) {
-          await tx.teacher.updateMany({ where: { userId: created.id }, data: { userId: null } });
+          const profile = await tx.teacher.findUnique({ where: { id: teacherId }, select: { userId: true } });
+          if (!profile) throw Object.assign(new Error("Teacher profile not found"), { http: 404 });
+          if (profile.userId) throw Object.assign(new Error("That teacher profile is already linked to another account"), { http: 400 });
           await tx.teacher.update({ where: { id: teacherId }, data: { userId: created.id } });
         }
         if (studentId) {
-          await tx.student.updateMany({ where: { userId: created.id }, data: { userId: null } });
+          const profile = await tx.student.findUnique({ where: { id: studentId }, select: { userId: true } });
+          if (!profile) throw Object.assign(new Error("Student profile not found"), { http: 404 });
+          if (profile.userId) throw Object.assign(new Error("That student profile is already linked to another account"), { http: 400 });
           await tx.student.update({ where: { id: studentId }, data: { userId: created.id } });
         }
         return created;
@@ -2744,6 +2805,7 @@ async function startServer() {
       res.status(201).json(user);
     } catch (err: any) {
       logger.error("Error creating user:", err);
+      if (err.http) { res.status(err.http).json({ error: err.message }); return; }
       if (err.code === "P2002") {
         const target = String(err.meta?.target || "");
         res.status(400).json({ error: target.includes("username") ? "Username already exists" : "Email already exists" });
@@ -2773,6 +2835,7 @@ async function startServer() {
         // (name, code, subject specialization), not their pay details.
         select: {
           id: true,
+          userId: jwtUser.role === "ADMIN",
           teacherCode: true,
           specialization: true,
           employmentType: true,
@@ -2813,7 +2876,14 @@ async function startServer() {
     try {
       const teacher = await prisma.teacher.findUnique({
         where: { userId: jwtUser.userId },
-        include: { user: true },
+        include: {
+          user: {
+            select: {
+              id: true, firstName: true, lastName: true, email: true,
+              username: true, role: true, isActive: true, profilePhotoUrl: true,
+            },
+          },
+        },
       });
       if (!teacher) { res.status(404).json({ error: "No teacher profile linked to this account" }); return; }
       res.json(teacher);
@@ -2880,7 +2950,12 @@ async function startServer() {
         if (teacher.userId && Object.keys(userData).length) {
           await tx.user.update({ where: { id: teacher.userId }, data: userData });
         }
-        return tx.teacher.findUnique({ where: { id: t.id }, include: { user: true } });
+        return tx.teacher.findUnique({
+          where: { id: t.id },
+          include: {
+            user: { select: { id: true, firstName: true, lastName: true, email: true, username: true, role: true, isActive: true, profilePhotoUrl: true } },
+          },
+        });
       });
 
       await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "TEACHER", id,
@@ -2925,13 +3000,22 @@ async function startServer() {
       const teacher = await prisma.teacher.findUnique({
         where: { id },
         include: {
-          user: true,
+          user: {
+            select: {
+              id: true, firstName: true, lastName: true, email: true,
+              username: true, role: true, isActive: true, profilePhotoUrl: true,
+            },
+          },
           classes: { include: { class: true } },
           subjects: { include: { subject: true } },
         },
       });
       if (!teacher) {
         res.status(404).json({ error: "Teacher not found" });
+        return;
+      }
+      if (jwtUser.role === "TEACHER" && teacher.userId !== jwtUser.userId) {
+        res.status(403).json({ error: "You can only view your own teacher profile" });
         return;
       }
       res.json(teacher);
@@ -3011,13 +3095,6 @@ async function startServer() {
   });
 
   // ── Teacher class scoping (used by classes, exams, gradebook, reports) ───────
-  const getTeacherClassIds = async (userId: string): Promise<string[]> => {
-    const teacher = await prisma.teacher.findUnique({
-      where: { userId },
-      include: { classes: true },
-    });
-    return teacher?.classes.map((ct) => ct.classId) || [];
-  };
   const teacherClassIds = async (req: express.Request): Promise<string[]> => {
     const jwtUser = (req as any).user as JwtPayload;
     if (jwtUser.role === "ADMIN") {
@@ -13194,6 +13271,10 @@ async function startServer() {
     const jwtUser = (req as any).user as JwtPayload;
     const { firstName, lastName, email, username, role, status, teacherId, studentId } = req.body;
     const userId = req.params.id;
+    if ((teacherId && role && role !== "TEACHER") || (studentId && role && role !== "STUDENT") || (teacherId && studentId)) {
+      res.status(400).json({ error: "A profile can only be linked to an account with the matching Teacher or Student role" });
+      return;
+    }
     try {
       const user = await prisma.$transaction(async (tx) => {
         // See the cast note near the login route re: stale Prisma types.
@@ -13214,6 +13295,11 @@ async function startServer() {
         if (teacherId !== undefined) {
           await tx.teacher.updateMany({ where: { userId }, data: { userId: null } });
           if (teacherId) {
+            const profile = await tx.teacher.findUnique({ where: { id: teacherId }, select: { userId: true } });
+            if (!profile) throw Object.assign(new Error("Teacher profile not found"), { http: 404 });
+            if (profile.userId && profile.userId !== userId) {
+              throw Object.assign(new Error("That teacher profile is already linked to another account"), { http: 400 });
+            }
             await tx.teacher.update({ where: { id: teacherId }, data: { userId } });
           }
         }
@@ -13221,6 +13307,11 @@ async function startServer() {
         if (studentId !== undefined) {
           await tx.student.updateMany({ where: { userId }, data: { userId: null } });
           if (studentId) {
+            const profile = await tx.student.findUnique({ where: { id: studentId }, select: { userId: true } });
+            if (!profile) throw Object.assign(new Error("Student profile not found"), { http: 404 });
+            if (profile.userId && profile.userId !== userId) {
+              throw Object.assign(new Error("That student profile is already linked to another account"), { http: 400 });
+            }
             await tx.student.update({ where: { id: studentId }, data: { userId } });
           }
         }
@@ -13231,6 +13322,7 @@ async function startServer() {
       res.json(user);
     } catch (err: any) {
       logger.error("Error updating user:", err);
+      if (err.http) { res.status(err.http).json({ error: err.message }); return; }
       if (err.code === "P2002") {
         const target = String(err.meta?.target || "");
         res.status(400).json({ error: target.includes("username") ? "Username already in use" : "Email already in use" });
@@ -13369,7 +13461,7 @@ async function startServer() {
       const result = await prisma.$transaction(async (tx) => {
         const passwordHash = await bcrypt.hash(tempPassword, 10);
         const user = await tx.user.create({
-          data: { firstName, lastName, email, passwordHash, role: "TEACHER", isActive: true, mustChangePassword: true },
+          data: { firstName, lastName, email: email.toLowerCase(), passwordHash, role: "TEACHER", isActive: true, mustChangePassword: true },
         });
         const teacherCode = `TCH-${Date.now().toString().slice(-6)}`;
         const teacher = await tx.teacher.create({
@@ -13377,8 +13469,13 @@ async function startServer() {
             userId: user.id,
             teacherCode,
             specialization: specialization || null,
+            phone: phone || null,
+            gender: gender || null,
+            address: address || null,
+            employmentType: employmentType || "FULL_TIME",
             hireDate: joinedDate ? new Date(joinedDate) : new Date(),
             baseSalary: baseSalary != null ? Number(baseSalary) : 0,
+            notes: notes || null,
           },
           include: { user: { select: { firstName: true, lastName: true, email: true, isActive: true } } },
         });
@@ -13428,6 +13525,11 @@ async function startServer() {
       }
 
       const subjectList = s(r.subjects).split(",").map((x) => x.trim()).filter(Boolean);
+      const employmentType = s(r.employmentType).toUpperCase() || "FULL_TIME";
+      if (!["FULL_TIME", "PART_TIME", "VOLUNTEER"].includes(employmentType)) {
+        errors.push({ row: rowNo, message: "employmentType must be FULL_TIME, PART_TIME, or VOLUNTEER" });
+        continue;
+      }
       const joined = s(r.joinedDate);
       const hireDate = joined && !isNaN(Date.parse(joined)) ? new Date(joined) : new Date();
       const baseSalaryRaw = s(r.baseSalary);
@@ -13454,8 +13556,11 @@ async function startServer() {
               userId: user.id,
               teacherCode: s(r.teacherCode) || `TCH-${codeBase}${String(i).padStart(3, "0")}`,
               specialization: subjectList.join(", ") || null,
+              phone: s(r.phone) || null,
+              employmentType,
               hireDate,
               baseSalary,
+              notes: s(r.notes) || null,
             },
           });
         });

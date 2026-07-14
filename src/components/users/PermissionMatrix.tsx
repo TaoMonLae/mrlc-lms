@@ -35,13 +35,13 @@ export default function PermissionMatrix({ showAllPermissions = false, className
   };
 
   return (
-    <div className={`space-y-4 ${className}`}>
+    <div className={`min-w-0 space-y-4 ${className}`}>
       <div className="text-sm text-slate-600 dark:text-slate-400">
         <p>Overview of role permissions across the system. Green checkmarks indicate access.</p>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
+      <div className="max-w-full overflow-x-auto overscroll-x-contain">
+        <table className="min-w-[900px] w-full border-collapse">
           <thead>
             <tr className="border-b border-slate-200 dark:border-slate-700">
               <th className="text-left p-3 text-sm font-semibold text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-800">

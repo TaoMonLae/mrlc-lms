@@ -208,6 +208,9 @@ export default function TeacherEdit() {
                     <SelectItem value="VOLUNTEER">Volunteer</SelectItem>
                   </SelectContent>
                 </Select>
+                <p className="text-[11px] text-slate-500">
+                  Employment type does not change account permissions. Assigned classes and subjects determine academic access.
+                </p>
                 {errors.employmentType && <p className="text-xs text-red-500 font-medium">{errors.employmentType.message}</p>}
               </div>
             </div>

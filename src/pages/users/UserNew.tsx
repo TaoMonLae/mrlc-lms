@@ -18,7 +18,7 @@ import { toast } from 'sonner';
 
 const ROLE_DESCRIPTIONS: Record<string, string> = {
   ADMIN: 'Full system access including user management, settings, and all features',
-  TEACHER: 'Can manage classes, students, attendance, exams, and create educational content',
+  TEACHER: 'Can work with assigned classes and students, record attendance, manage assessments, and create educational content',
   STUDENT: 'Can view their own grades, attendance, fees, and access educational materials',
   STAFF: 'Basic access to view information and assist with administrative tasks',
   ACCOUNTANT: 'Can manage fees, payments, and financial records',

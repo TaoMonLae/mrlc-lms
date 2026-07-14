@@ -223,7 +223,7 @@ export default function UsersList() {
         <div className="flex flex-col sm:flex-row gap-2">
           <Button variant="outline" onClick={() => setRoleManagementOpen(true)}>
             <Settings className="mr-2 h-4 w-4" />
-            Roles & Permissions
+            Role Access
           </Button>
           <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto" render={<Link to="/users/new" />} nativeButton={false}>
             <Plus className="mr-2 h-4 w-4" />
@@ -492,11 +492,6 @@ export default function UsersList() {
       <RoleManagement
         open={roleManagementOpen}
         onClose={() => setRoleManagementOpen(false)}
-        onSave={(roleConfig) => {
-          // Handle role configuration save
-          console.log('Role configuration saved:', roleConfig);
-          // In a real implementation, this would save to backend
-        }}
       />
     </div>
   );

@@ -163,14 +163,18 @@ export default function StudentsList() {
           <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Manage student records, enrollment, and academic profiles.</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <div className="flex gap-2">
-            <StudentTemplateButton />
-            <StudentCsvImport onImported={reloadStudents} />
-          </div>
-          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto" render={<Link to="/students/new" />} nativeButton={false}>
-            <UserPlus className="mr-2 h-4 w-4" />
-            Add Student
-          </Button>
+          {isAdmin && (
+            <>
+              <div className="flex gap-2">
+                <StudentTemplateButton />
+                <StudentCsvImport onImported={reloadStudents} />
+              </div>
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto" render={<Link to="/students/new" />} nativeButton={false}>
+                <UserPlus className="mr-2 h-4 w-4" />
+                Add Student
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -276,9 +280,11 @@ export default function StudentsList() {
                                   <DropdownMenuItem render={<Link to={`/students/${student.id}`} />}>
                                     View Profile
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem render={<Link to={`/students/${student.id}/edit`} />}>
-                                    Edit Details
-                                  </DropdownMenuItem>
+                                  {isAdmin && (
+                                    <DropdownMenuItem render={<Link to={`/students/${student.id}/edit`} />}>
+                                      Edit Details
+                                    </DropdownMenuItem>
+                                  )}
                                 </DropdownMenuGroup>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem className="text-aubergine-600" render={<Link to="/attendance" />}>
@@ -366,9 +372,11 @@ export default function StudentsList() {
                       <DropdownMenuItem render={<Link to={`/students/${student.id}`} />}>
                         View Profile
                       </DropdownMenuItem>
-                      <DropdownMenuItem render={<Link to={`/students/${student.id}/edit`} />}>
-                        Edit
-                      </DropdownMenuItem>
+                      {isAdmin && (
+                        <DropdownMenuItem render={<Link to={`/students/${student.id}/edit`} />}>
+                          Edit
+                        </DropdownMenuItem>
+                      )}
                       {isAdmin && student.status !== 'DROPPED' && (
                         <DropdownMenuItem className="text-amber-600" onClick={() => markDropped(student)}>
                           <UserMinus className="mr-2 h-4 w-4" />

@@ -51,6 +51,7 @@ interface TeacherData {
 export default function TeachersList() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [employmentFilter, setEmploymentFilter] = useState<string>('all');
   const [teachers, setTeachers] = useState<TeacherData[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -161,8 +162,9 @@ export default function TeachersList() {
       teacher.subjects?.some((s: string) => s.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const matchesStatus = statusFilter === 'all' || teacher.status === statusFilter;
+    const matchesEmployment = employmentFilter === 'all' || teacher.employmentType === employmentFilter;
 
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesStatus && matchesEmployment;
   });
 
   return (
@@ -203,6 +205,17 @@ export default function TeachersList() {
               <SelectItem value="INACTIVE">Inactive</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={employmentFilter} onValueChange={setEmploymentFilter}>
+            <SelectTrigger className="w-full md:w-[165px]">
+              <SelectValue placeholder="Employment" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Employment</SelectItem>
+              <SelectItem value="FULL_TIME">Full Time</SelectItem>
+              <SelectItem value="PART_TIME">Part Time</SelectItem>
+              <SelectItem value="VOLUNTEER">Volunteer</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -215,7 +228,7 @@ export default function TeachersList() {
         <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-12 text-center">
           <Users className="h-12 w-12 mx-auto text-slate-200 mb-3" />
           <p className="text-lg font-medium text-slate-900 dark:text-white">No teachers found</p>
-          <p className="text-sm text-slate-500">{searchTerm || statusFilter !== 'all' ? 'Try adjusting your filters.' : 'Add your first teacher to get started.'}</p>
+          <p className="text-sm text-slate-500">{searchTerm || statusFilter !== 'all' || employmentFilter !== 'all' ? 'Try adjusting your filters.' : 'Add your first teacher to get started.'}</p>
         </div>
       ) : (
         <>
