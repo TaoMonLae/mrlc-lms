@@ -23,6 +23,8 @@ import {
   Permission,
   PERMISSION_LABELS,
   PERMISSION_CATEGORIES,
+  ROLE_LABELS,
+  ROLE_DESCRIPTIONS,
   ROLE_PERMISSIONS,
 } from '@/src/lib/permissions';
 import PermissionMatrix from '../../components/users/PermissionMatrix';
@@ -32,27 +34,23 @@ interface RoleManagementProps {
   onClose: () => void;
 }
 
-const ROLE_LABELS: Record<UserRole, string> = {
-  ADMIN: 'Administrator',
-  TEACHER: 'Teacher',
-  STUDENT: 'Student',
-  STAFF: 'Staff',
-  ACCOUNTANT: 'Accountant',
-  CASE_WORKER: 'Case Worker',
-  LIBRARIAN: 'Librarian',
-};
-
 const CATEGORY_LABELS: Record<string, string> = {
   USER_MANAGEMENT: 'User Management',
   STUDENT_MANAGEMENT: 'Student Management',
   TEACHER_MANAGEMENT: 'Teacher Management',
   ACADEMIC_MANAGEMENT: 'Academic Management',
   EXAM_MANAGEMENT: 'Exam & Assessment',
+  GRADEBOOK: 'Gradebook & GED Readiness',
+  DOCUMENTS: 'Documents',
   ATTENDANCE_MANAGEMENT: 'Attendance Management',
   FINANCIAL_MANAGEMENT: 'Financial Management',
+  EXPENSE_MANAGEMENT: 'Expenses & Budgets',
+  DONATION_MANAGEMENT: 'Donations & Campaigns',
+  DUTY_MANAGEMENT: 'Student Duties',
   LIBRARY_MANAGEMENT: 'Library & Resources',
   COMMUNICATIONS: 'Communications',
   CASE_MANAGEMENT: 'Case Management',
+  CONDUCT_MANAGEMENT: 'Conduct & Discipline',
   SYSTEM_MANAGEMENT: 'System & Reports',
   CONTENT_MANAGEMENT: 'Content Management',
   SUPER_ADMIN: 'Super Admin',
@@ -102,11 +100,8 @@ export default function RoleManagement({ open, onClose }: RoleManagementProps) {
               <Badge variant="secondary">{currentPermissions.length} permissions</Badge>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              {selectedRole === 'TEACHER'
-                ? 'Full-time, part-time, and volunteer are employment classifications. They all use the Teacher role; class and subject assignments determine which academic records a teacher can access.'
-                : selectedRole === 'ADMIN'
-                  ? 'Administrators have full system access.'
-                  : 'Every active user with this role receives the access listed below.'}
+              {ROLE_DESCRIPTIONS[selectedRole]}
+              {selectedRole === 'TEACHER' && ' Full-time, part-time, and volunteer are employment classifications; assignments determine academic data scope.'}
             </p>
           </div>
 

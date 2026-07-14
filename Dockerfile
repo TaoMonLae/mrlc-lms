@@ -25,7 +25,8 @@ ENV NODE_ENV=production
 ENV PORT=8000
 
 # openssl/ca-certificates for Prisma; ffmpeg converts uploaded lesson videos;
-# Ghostscript compresses oversized PDF e-books; libarchive-tools reads CBR/CBZ archives;
+# Ghostscript compresses oversized PDF e-books; libarchive-tools accelerates CBR/CBZ reads
+# while the app retains portable WebAssembly/JavaScript fallbacks;
 # postgresql-client-16 provides a pg_dump
 # that matches the Postgres 16 server (an older client refuses a newer server).
 RUN apt-get update \

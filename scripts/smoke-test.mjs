@@ -53,7 +53,7 @@ async function main() {
     console.error(`\nCannot reach ${BASE}. Is the server running?\n`);
     process.exit(2);
   }
-  const loginRes = await req('POST', '/api/auth/login', { body: { email: EMAIL, password: PASSWORD } });
+  const loginRes = await req('POST', '/api/auth/login', { body: { identifier: EMAIL, password: PASSWORD } });
   if (!loginRes.ok) {
     bad('login', `${loginRes.status} — check SMOKE_EMAIL/SMOKE_PASSWORD`);
     summary();

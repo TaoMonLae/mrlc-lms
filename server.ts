@@ -31,6 +31,19 @@ import { registerAiAssistantRoutes } from "./aiAssistant";
 import { registerCheckersGameRoutes } from "./checkersGame";
 import cookieParser from "cookie-parser";
 import { BADGE_CATALOG, getBadgeLevel } from "./lib/badges";
+import { roleHasPermission, type Permission, type UserRole } from "./shared/permissions";
+import {
+  copyArtifactOffsite,
+  createZipArtifact,
+  isSafeBackupName,
+  listBackupArtifacts,
+  pruneBackupArtifacts,
+  verifyZipStructure,
+  type BackupArtifact,
+  type ZipSource,
+} from "./lib/backupArtifacts";
+import { checkWritableDirectory, probeCommand, summarizeHealth, type HealthCheckResult } from "./lib/systemHealth";
+import { extractRarEntry, listRarImageEntries } from "./lib/portableRar";
 
 dotenv.config();
 
@@ -40,11 +53,9 @@ dotenv.config();
 const EBOOK_DIR = process.env.EBOOK_DIR || path.join(process.cwd(), "data", "ebooks");
 fs.mkdirSync(EBOOK_DIR, { recursive: true });
 const MAX_STORED_EBOOK_BYTES = 50 * 1024 * 1024;
-const MAX_EBOOK_UPLOAD_BYTES = 100 * 1024 * 1024;
-// Comic archives are already compressed containers and cannot be usefully
-// recompressed without altering their page images. Keep the transport bound,
-// but allow the original CBR/CBZ up to that same 100 MB limit.
-const MAX_STORED_COMIC_BYTES = MAX_EBOOK_UPLOAD_BYTES;
+const MAX_STANDARD_EBOOK_UPLOAD_BYTES = 100 * 1024 * 1024;
+const MAX_EBOOK_UPLOAD_BYTES = 250 * 1024 * 1024;
+const MAX_STORED_COMIC_BYTES = 100 * 1024 * 1024;
 // Ebook cover thumbnails (auto-extracted client-side from the EPUB's embedded
 // cover or a rendered PDF first page, or picked manually) — served statically,
 // unlike the book files themselves which stream through an auth-checked route.
@@ -363,39 +374,47 @@ const captionFileUpload = multer({
 // the location with BACKUP_DIR and how many to keep with BACKUP_RETENTION.
 const BACKUP_DIR = process.env.BACKUP_DIR || path.join(process.cwd(), "data", "backups");
 const BACKUP_RETENTION = Math.max(1, Number(process.env.BACKUP_RETENTION || 14));
+const OFFSITE_BACKUP_DIR = process.env.OFFSITE_BACKUP_DIR?.trim() || null;
+const FLASHCARD_IMAGE_DIR = process.env.FLASHCARD_IMAGE_DIR || path.join(process.cwd(), "data", "flashcards");
+const BACKUP_UPLOAD_SOURCES = [
+  ["ebooks", EBOOK_DIR],
+  ["ebook-covers", EBOOK_COVER_DIR],
+  ["branding", BRANDING_ASSET_DIR],
+  ["profile-photos", PROFILE_PHOTO_DIR],
+  ["library", LIBRARY_FILE_DIR],
+  ["videos", VIDEO_FILES_DIR],
+  ["admissions", ADMISSION_FILE_DIR],
+  ["student-docs", STUDENT_DOC_DIR],
+  ["exam-media", EXAM_MEDIA_DIR],
+  ["chat-media", CHAT_MEDIA_DIR],
+  ["homework-media", HOMEWORK_MEDIA_DIR],
+  ["stickers", STICKER_UPLOAD_DIR],
+  ["social", SOCIAL_DIR],
+  ["flashcards", FLASHCARD_IMAGE_DIR],
+] as const;
 
-interface BackupFile { name: string; size: number; createdAt: string; }
-
-function listBackups(): BackupFile[] {
-  try {
-    if (!fs.existsSync(BACKUP_DIR)) return [];
-    return fs
-      .readdirSync(BACKUP_DIR)
-      .filter((f) => f.endsWith(".dump"))
-      .map((name) => {
-        const st = fs.statSync(path.join(BACKUP_DIR, name));
-        return { name, size: st.size, createdAt: st.mtime.toISOString() };
-      })
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  } catch {
-    return [];
-  }
+function listBackups(): BackupArtifact[] {
+  return listBackupArtifacts(BACKUP_DIR, OFFSITE_BACKUP_DIR);
 }
 
-function pruneBackups(): void {
-  const files = listBackups();
-  for (const f of files.slice(BACKUP_RETENTION)) {
-    fs.promises.unlink(path.join(BACKUP_DIR, f.name)).catch(() => {});
-  }
+const backupStamp = () => new Date().toISOString().replace(/[:.]/g, "-");
+
+async function finalizeBackup(filePath: string): Promise<BackupArtifact> {
+  const offsite = await copyArtifactOffsite(filePath, OFFSITE_BACKUP_DIR);
+  await pruneBackupArtifacts(BACKUP_DIR, BACKUP_RETENTION, OFFSITE_BACKUP_DIR);
+  const stat = await fs.promises.stat(filePath);
+  const artifact = listBackups().find((item) => item.name === path.basename(filePath));
+  if (!artifact) throw new Error("Backup was created but could not be indexed");
+  return { ...artifact, size: stat.size, offsite };
 }
 
 // Runs pg_dump in custom format (restore with pg_restore). Resolves with the file.
-function runBackup(): Promise<BackupFile> {
+function runBackup(): Promise<BackupArtifact> {
   return new Promise((resolve, reject) => {
     const dbUrl = process.env.DATABASE_URL;
     if (!dbUrl) return reject(new Error("DATABASE_URL is not set"));
     fs.mkdirSync(BACKUP_DIR, { recursive: true });
-    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const stamp = backupStamp();
     const name = `mrlc-${stamp}.dump`;
     const filePath = path.join(BACKUP_DIR, name);
 
@@ -405,17 +424,36 @@ function runBackup(): Promise<BackupFile> {
     dump.on("error", (err) =>
       reject(new Error(`pg_dump could not start (is postgresql-client installed?): ${err.message}`)),
     );
-    dump.on("close", (code) => {
+    dump.on("close", async (code) => {
       if (code !== 0) {
         fs.promises.unlink(filePath).catch(() => {});
         return reject(new Error(`pg_dump failed (exit ${code}): ${stderr.trim()}`));
       }
-      let size = 0;
-      try { size = fs.statSync(filePath).size; } catch { /* ignore */ }
-      pruneBackups();
-      resolve({ name, size, createdAt: new Date().toISOString() });
+      try {
+        resolve(await finalizeBackup(filePath));
+      } catch (error) {
+        reject(error);
+      }
     });
   });
+}
+
+async function runFileBackup(): Promise<BackupArtifact> {
+  await fs.promises.mkdir(BACKUP_DIR, { recursive: true });
+  const filePath = path.join(BACKUP_DIR, `mrlc-files-${backupStamp()}.zip`);
+  const availableSources: ZipSource[] = BACKUP_UPLOAD_SOURCES
+    .filter(([, sourcePath]) => fs.existsSync(sourcePath))
+    .map(([label, sourcePath]) => ({ sourcePath, archivePath: label }));
+  availableSources.unshift({
+    archivePath: "backup-manifest.json",
+    content: JSON.stringify({
+      createdAt: new Date().toISOString(),
+      type: "uploaded-files",
+      directories: availableSources.map((source) => source.archivePath),
+    }, null, 2),
+  });
+  await createZipArtifact(filePath, availableSources);
+  return finalizeBackup(filePath);
 }
 
 // ─── Logger ──────────────────────────────────────────────────────────────────
@@ -560,7 +598,7 @@ if (!JWT_SECRET || JWT_SECRET.length < 16) {
 
 export interface JwtPayload {
   userId: string;
-  role: string;
+  role: UserRole;
   email: string;
 }
 
@@ -601,29 +639,14 @@ function authMiddleware(
   }
 }
 
-function requireRole(role: string) {
+function requirePermission(permission: Permission) {
   return (
     req: express.Request,
     res: express.Response,
     next: express.NextFunction
   ): void => {
     const user = (req as any).user as JwtPayload | undefined;
-    if (!user || user.role !== role) {
-      res.status(403).json({ error: "Forbidden: Insufficient permissions" });
-      return;
-    }
-    next();
-  };
-}
-
-function requireAnyRole(...roles: string[]) {
-  return (
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction
-  ): void => {
-    const user = (req as any).user as JwtPayload | undefined;
-    if (!user || !roles.includes(user.role)) {
+    if (!user || !roleHasPermission(user.role, permission)) {
       res.status(403).json({ error: "Forbidden: Insufficient permissions" });
       return;
     }
@@ -2152,7 +2175,7 @@ async function startServer() {
   });
 
   // ── Audit logs API ─────────────────────────────────────────────────────────
-  app.get("/api/audit-logs", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.get("/api/audit-logs", authMiddleware, requirePermission("view_audit_logs"), async (req, res) => {
     try {
       const logs = await prisma.auditLog.findMany({
         orderBy: { createdAt: "desc" }
@@ -2213,7 +2236,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/students", authMiddleware, requireRole("ADMIN"), validate(schemas.student), async (req, res) => {
+  app.post("/api/students", authMiddleware, requirePermission("manage_students"), validate(schemas.student), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const {
       firstName, lastName, email, studentCode, preferredName, dateOfBirth, enrollmentDate,
@@ -2311,7 +2334,7 @@ async function startServer() {
   // Bulk import from a parsed CSV. Each row is validated and created independently
   // so one bad row never aborts the whole batch — the response reports per-row
   // outcomes. `className` is matched (case-insensitively) to an existing class.
-  app.post("/api/students/import", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.post("/api/students/import", authMiddleware, requirePermission("manage_students"), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const rows: any[] = Array.isArray(req.body?.rows) ? req.body.rows : [];
     if (rows.length === 0) { res.status(400).json({ error: "No rows to import" }); return; }
@@ -2567,7 +2590,7 @@ async function startServer() {
     }
   });
 
-  app.put("/api/students/:id", authMiddleware, requireRole("ADMIN"), validate(schemas.studentUpdate), async (req, res) => {
+  app.put("/api/students/:id", authMiddleware, requirePermission("manage_students"), validate(schemas.studentUpdate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { id } = req.params;
     const {
@@ -2661,7 +2684,7 @@ async function startServer() {
     }
   });
 
-  app.delete("/api/students/:id", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.delete("/api/students/:id", authMiddleware, requirePermission("manage_students"), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { id } = req.params;
     try {
@@ -2746,7 +2769,7 @@ async function startServer() {
   });
 
   // ── Users API ───────────────────────────────────────────────────────────────
-  app.get("/api/users", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.get("/api/users", authMiddleware, requirePermission("view_users"), async (req, res) => {
     try {
       // See the cast note near the login route re: stale Prisma types
       // (username was added to the schema after this client was generated).
@@ -2765,7 +2788,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/users", authMiddleware, requireRole("ADMIN"), validate(schemas.userCreate), async (req, res) => {
+  app.post("/api/users", authMiddleware, requirePermission("manage_users"), validate(schemas.userCreate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { firstName, lastName, email, username, password, role, status, teacherId, studentId } = req.body;
     if (!firstName || !email || !password || !role) {
@@ -2974,7 +2997,7 @@ async function startServer() {
   });
 
   // Activate / deactivate a teacher (toggles the linked user account).
-  app.put("/api/teachers/:id/status", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.put("/api/teachers/:id/status", authMiddleware, requirePermission("manage_teachers"), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { id } = req.params;
     const status = req.body?.status === "INACTIVE" ? "INACTIVE" : "ACTIVE";
@@ -3029,7 +3052,7 @@ async function startServer() {
     }
   });
 
-  app.delete("/api/teachers/:id", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.delete("/api/teachers/:id", authMiddleware, requirePermission("manage_teachers"), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { id } = req.params;
     try {
@@ -3176,7 +3199,7 @@ async function startServer() {
   });
 
   // Assign a teacher to a class.
-  app.post("/api/classes/:id/teachers", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.post("/api/classes/:id/teachers", authMiddleware, requirePermission("manage_classes"), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { id } = req.params;
     const { teacherId } = req.body || {};
@@ -3204,7 +3227,7 @@ async function startServer() {
   });
 
   // Remove a teacher from a class.
-  app.delete("/api/classes/:id/teachers/:teacherId", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.delete("/api/classes/:id/teachers/:teacherId", authMiddleware, requirePermission("manage_classes"), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { id, teacherId } = req.params;
     try {
@@ -3220,7 +3243,7 @@ async function startServer() {
   });
 
   // Assign a subject to a class.
-  app.post("/api/classes/:id/subjects", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.post("/api/classes/:id/subjects", authMiddleware, requirePermission("manage_classes"), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { id } = req.params;
     const { subjectId } = req.body || {};
@@ -3251,7 +3274,7 @@ async function startServer() {
   });
 
   // Remove a subject from a class.
-  app.delete("/api/classes/:id/subjects/:subjectId", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.delete("/api/classes/:id/subjects/:subjectId", authMiddleware, requirePermission("manage_classes"), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { id, subjectId } = req.params;
     try {
@@ -3267,7 +3290,7 @@ async function startServer() {
   });
 
   // Assign students to a class (moves them from their current class, if any).
-  app.post("/api/classes/:id/students", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.post("/api/classes/:id/students", authMiddleware, requirePermission("manage_classes"), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { id } = req.params;
     const studentIds: string[] = Array.isArray(req.body?.studentIds)
@@ -3304,7 +3327,7 @@ async function startServer() {
   });
 
   // Remove a student from a class (leaves the student unassigned).
-  app.delete("/api/classes/:id/students/:studentId", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.delete("/api/classes/:id/students/:studentId", authMiddleware, requirePermission("manage_classes"), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { id, studentId } = req.params;
     try {
@@ -3321,7 +3344,7 @@ async function startServer() {
   });
 
   // Fix teachers with NULL userId by matching email to user accounts
-  app.post("/api/admin/fix-teacher-userids", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.post("/api/admin/fix-teacher-userids", authMiddleware, requirePermission("manage_all"), async (req, res) => {
     try {
       const teachersWithoutUser = await prisma.teacher.findMany({
         where: { userId: null },
@@ -3490,7 +3513,7 @@ async function startServer() {
   });
 
   // Assign a teacher to a subject (populates the SubjectTeacher join table).
-  app.post("/api/subjects/:id/teachers", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.post("/api/subjects/:id/teachers", authMiddleware, requirePermission("manage_subjects"), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { id } = req.params;
     const { teacherId } = req.body || {};
@@ -3518,7 +3541,7 @@ async function startServer() {
   });
 
   // Remove a teacher from a subject.
-  app.delete("/api/subjects/:id/teachers/:teacherId", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.delete("/api/subjects/:id/teachers/:teacherId", authMiddleware, requirePermission("manage_subjects"), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { id, teacherId } = req.params;
     try {
@@ -4684,7 +4707,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/admissions/:id/convert", authMiddleware, requireRole("ADMIN"), validate(schemas.admissionConvert), async (req, res) => {
+  app.post("/api/admissions/:id/convert", authMiddleware, requirePermission("manage_admissions"), validate(schemas.admissionConvert), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
       const result = await prisma.$transaction(async (tx) => {
@@ -5155,7 +5178,7 @@ async function startServer() {
   app.post(
     "/api/videos/files",
     authMiddleware,
-    requireAnyRole("ADMIN", "TEACHER"),
+    requirePermission("manage_videos"),
     uploadVideoFile,
     async (req, res) => {
       const file = (req as any).file as Express.Multer.File | undefined;
@@ -5188,7 +5211,7 @@ async function startServer() {
   app.post(
     "/api/videos/files/chunks",
     authMiddleware,
-    requireAnyRole("ADMIN", "TEACHER"),
+    requirePermission("manage_videos"),
     uploadVideoChunk,
     async (req, res) => {
       const jwtUser = (req as any).user as JwtPayload;
@@ -5234,7 +5257,7 @@ async function startServer() {
     }
   );
 
-  app.post("/api/videos/files/chunks/complete", authMiddleware, requireAnyRole("ADMIN", "TEACHER"), async (req, res) => {
+  app.post("/api/videos/files/chunks/complete", authMiddleware, requirePermission("manage_videos"), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const uploadId = String(req.body?.uploadId || "");
     if (!validUploadId(uploadId)) {
@@ -5287,7 +5310,7 @@ async function startServer() {
     }
   });
 
-  app.delete("/api/videos/files/chunks/:uploadId", authMiddleware, requireAnyRole("ADMIN", "TEACHER"), async (req, res) => {
+  app.delete("/api/videos/files/chunks/:uploadId", authMiddleware, requirePermission("manage_videos"), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const uploadId = String(req.params.uploadId || "");
     if (!validUploadId(uploadId)) { res.status(400).json({ error: "Invalid upload session" }); return; }
@@ -5306,7 +5329,7 @@ async function startServer() {
   // Discard an upload that has not been attached to a saved lesson. This is
   // called by Remove and Cancel in the form and deliberately refuses to delete
   // media already referenced by a lesson.
-  app.delete("/api/videos/files", authMiddleware, requireAnyRole("ADMIN", "TEACHER"), async (req, res) => {
+  app.delete("/api/videos/files", authMiddleware, requirePermission("manage_videos"), async (req, res) => {
     const url = String(req.query.url || "");
     const prefix = "/uploads/videos/";
     const filename = url.startsWith(prefix) ? url.slice(prefix.length) : "";
@@ -5362,7 +5385,7 @@ async function startServer() {
   });
 
   // Caption/subtitle (.vtt/.srt) upload — stored alongside videos.
-  app.post("/api/videos/captions", authMiddleware, requireAnyRole("ADMIN", "TEACHER"), uploadCaptionFile, async (req, res) => {
+  app.post("/api/videos/captions", authMiddleware, requirePermission("manage_videos"), uploadCaptionFile, async (req, res) => {
     const file = (req as any).file as Express.Multer.File | undefined;
     if (!file) { res.status(400).json({ error: "Subtitle file is required" }); return; }
     if (path.extname(file.filename).toLowerCase() === ".srt") {
@@ -6779,7 +6802,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/operations/admissions", authMiddleware, requireRole("ADMIN"), validate(schemas.admissionApplication), async (req, res) => {
+  app.post("/api/operations/admissions", authMiddleware, requirePermission("manage_all"), validate(schemas.admissionApplication), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
       const record = await (prisma as any).admissionApplication.create({
@@ -6801,7 +6824,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/operations/calendar-events", authMiddleware, requireRole("ADMIN"), validate(schemas.calendarEvent), async (req, res) => {
+  app.post("/api/operations/calendar-events", authMiddleware, requirePermission("manage_all"), validate(schemas.calendarEvent), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const startDate = toOptionalDate(req.body.startDate);
     if (!startDate) {
@@ -6828,7 +6851,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/operations/assignments", authMiddleware, requireRole("ADMIN"), validate(schemas.assignment), async (req, res) => {
+  app.post("/api/operations/assignments", authMiddleware, requirePermission("manage_all"), validate(schemas.assignment), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
       const record = await (prisma as any).assignment.create({
@@ -6851,7 +6874,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/operations/certificates", authMiddleware, requireRole("ADMIN"), validate(schemas.certificateRecord), async (req, res) => {
+  app.post("/api/operations/certificates", authMiddleware, requirePermission("manage_all"), validate(schemas.certificateRecord), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
       const record = await (prisma as any).certificateRecord.create({
@@ -6877,7 +6900,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/operations/communications", authMiddleware, requireRole("ADMIN"), validate(schemas.communicationLog), async (req, res) => {
+  app.post("/api/operations/communications", authMiddleware, requirePermission("manage_all"), validate(schemas.communicationLog), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
       const record = await (prisma as any).communicationLog.create({
@@ -6902,7 +6925,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/operations/inventory", authMiddleware, requireRole("ADMIN"), validate(schemas.inventoryItem), async (req, res) => {
+  app.post("/api/operations/inventory", authMiddleware, requirePermission("manage_all"), validate(schemas.inventoryItem), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
       const record = await (prisma as any).inventoryItem.create({
@@ -6925,7 +6948,7 @@ async function startServer() {
   });
 
   // Update / delete a communication log (so NEEDS_FOLLOW_UP can be resolved).
-  app.put("/api/operations/communications/:id", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.put("/api/operations/communications/:id", authMiddleware, requirePermission("manage_all"), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const b = req.body || {};
     try {
@@ -6948,7 +6971,7 @@ async function startServer() {
     }
   });
 
-  app.delete("/api/operations/communications/:id", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.delete("/api/operations/communications/:id", authMiddleware, requirePermission("manage_all"), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
       await (prisma as any).communicationLog.delete({ where: { id: req.params.id } });
@@ -6962,7 +6985,7 @@ async function startServer() {
   });
 
   // Update / delete an inventory item (condition, quantity, location changes).
-  app.put("/api/operations/inventory/:id", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.put("/api/operations/inventory/:id", authMiddleware, requirePermission("manage_all"), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const b = req.body || {};
     try {
@@ -6984,7 +7007,7 @@ async function startServer() {
     }
   });
 
-  app.delete("/api/operations/inventory/:id", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.delete("/api/operations/inventory/:id", authMiddleware, requirePermission("manage_all"), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
       await (prisma as any).inventoryItem.delete({ where: { id: req.params.id } });
@@ -13252,7 +13275,7 @@ async function startServer() {
   });
 
   // ── Users (single + update) ─────────────────────────────────────────────────
-  app.get("/api/users/:id", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.get("/api/users/:id", authMiddleware, requirePermission("view_users"), async (req, res) => {
     try {
       // See the cast note near the login route re: stale Prisma types.
       const user = await prisma.user.findUnique({
@@ -13271,7 +13294,7 @@ async function startServer() {
     }
   });
 
-  app.put("/api/users/:id", authMiddleware, requireRole("ADMIN"), validate(schemas.userUpdate), async (req, res) => {
+  app.put("/api/users/:id", authMiddleware, requirePermission("manage_users"), validate(schemas.userUpdate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { firstName, lastName, email, username, role, status, teacherId, studentId } = req.body;
     const userId = req.params.id;
@@ -13337,7 +13360,7 @@ async function startServer() {
     }
   });
 
-  app.delete("/api/users/:id", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.delete("/api/users/:id", authMiddleware, requirePermission("manage_users"), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { id } = req.params;
     try {
@@ -13423,7 +13446,7 @@ async function startServer() {
   });
 
   // Admin resets a user's password directly to a chosen value.
-  app.post("/api/users/:id/reset-password", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.post("/api/users/:id/reset-password", authMiddleware, requirePermission("reset_passwords"), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const newPassword = (req.body?.newPassword ?? "").toString();
     if (newPassword.length < 6) {
@@ -13448,7 +13471,7 @@ async function startServer() {
   });
 
   // ── Teachers (create) ───────────────────────────────────────────────────────
-  app.post("/api/teachers", authMiddleware, requireRole("ADMIN"), validate(schemas.teacherCreate), async (req, res) => {
+  app.post("/api/teachers", authMiddleware, requirePermission("manage_teachers"), validate(schemas.teacherCreate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { firstName, lastName, email, phone, gender, address, employmentType, joinedDate, subjects, notes, baseSalary } = req.body;
     if (!firstName || !lastName || !email) {
@@ -13496,7 +13519,7 @@ async function startServer() {
   });
 
   // Bulk import teachers from parsed CSV rows. Mirrors /api/students/import.
-  app.post("/api/teachers/import", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.post("/api/teachers/import", authMiddleware, requirePermission("manage_teachers"), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const rows: any[] = Array.isArray(req.body?.rows) ? req.body.rows : [];
     if (rows.length === 0) { res.status(400).json({ error: "No rows to import" }); return; }
@@ -13584,7 +13607,7 @@ async function startServer() {
   });
 
   // ── Classes (create) ────────────────────────────────────────────────────────
-  app.post("/api/classes", authMiddleware, requireRole("ADMIN"), validate(schemas.classCreate), async (req, res) => {
+  app.post("/api/classes", authMiddleware, requirePermission("manage_classes"), validate(schemas.classCreate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { name, level, academicYear, description, room, capacity, status } = req.body;
     if (!name || !level || !academicYear) {
@@ -13609,7 +13632,7 @@ async function startServer() {
     }
   });
 
-  app.put("/api/classes/:id", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.put("/api/classes/:id", authMiddleware, requirePermission("manage_classes"), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { id } = req.params;
     const { name, level, academicYear, room, capacity, description, status } = req.body || {};
@@ -13730,7 +13753,7 @@ async function startServer() {
     }
   });
 
-  app.put("/api/settings", authMiddleware, requireRole("ADMIN"), validate(schemas.settingsUpdate), async (req, res) => {
+  app.put("/api/settings", authMiddleware, requirePermission("manage_settings"), validate(schemas.settingsUpdate), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const b = req.body || {};
 
@@ -13798,7 +13821,7 @@ async function startServer() {
     });
   };
 
-  app.post("/api/settings/assets", authMiddleware, requireRole("ADMIN"), uploadBrandingAsset, async (req, res) => {
+  app.post("/api/settings/assets", authMiddleware, requirePermission("manage_settings"), uploadBrandingAsset, async (req, res) => {
     const file = (req as any).file as Express.Multer.File | undefined;
     if (!file) {
       res.status(400).json({ error: "Image file is required" });
@@ -13871,7 +13894,49 @@ async function startServer() {
     })),
   };
 
-  app.get("/api/export/:module", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  const loadAllExportData = async () => {
+    const entries = await Promise.all(Object.entries(exportLoaders).map(async ([moduleId, loader]) =>
+      [moduleId, await loader()] as const));
+    return Object.fromEntries(entries) as Record<string, Record<string, any>[]>;
+  };
+
+  const runDataBackup = async (format: "json" | "csv"): Promise<BackupArtifact> => {
+    await fs.promises.mkdir(BACKUP_DIR, { recursive: true });
+    const data = await loadAllExportData();
+    if (format === "json") {
+      const filePath = path.join(BACKUP_DIR, `mrlc-data-${backupStamp()}.json`);
+      const temporaryPath = `${filePath}.writing`;
+      try {
+        await fs.promises.writeFile(temporaryPath, JSON.stringify({
+          createdAt: new Date().toISOString(),
+          schema: 1,
+          modules: data,
+        }, null, 2), { flag: "wx" });
+        await fs.promises.rename(temporaryPath, filePath);
+      } finally {
+        await fs.promises.unlink(temporaryPath).catch(() => {});
+      }
+      return finalizeBackup(filePath);
+    }
+
+    const filePath = path.join(BACKUP_DIR, `mrlc-data-csv-${backupStamp()}.zip`);
+    const sources: ZipSource[] = Object.entries(data).map(([moduleId, rows]) => ({
+      archivePath: `${moduleId}.csv`,
+      content: toCsv(rows),
+    }));
+    sources.unshift({
+      archivePath: "backup-manifest.json",
+      content: JSON.stringify({
+        createdAt: new Date().toISOString(),
+        type: "csv-data-export",
+        modules: Object.fromEntries(Object.entries(data).map(([moduleId, rows]) => [moduleId, rows.length])),
+      }, null, 2),
+    });
+    await createZipArtifact(filePath, sources);
+    return finalizeBackup(filePath);
+  };
+
+  app.get("/api/export/:module", authMiddleware, requirePermission("export_data"), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const moduleId = req.params.module;
     const format = (req.query.format === "json" ? "json" : "csv") as "json" | "csv";
@@ -13899,7 +13964,7 @@ async function startServer() {
   });
 
   // ── E-Library (EPUB/PDF/CBR/CBZ) API ────────────────────────────────────────
-  const canManageEbooks = (role: string) => role === "ADMIN" || role === "TEACHER" || role === "LIBRARIAN";
+  const canManageEbooks = (role: UserRole) => roleHasPermission(role, "manage_ebooks");
 
   const COMIC_FORMATS = new Set(["CBR", "CBZ"]);
   const COMIC_IMAGE_EXTENSIONS = new Set([
@@ -13922,8 +13987,8 @@ async function startServer() {
     return "PDF";
   };
 
-  // libarchive handles both RAR-based CBR and a broader set of ZIP variants
-  // than JSZip (including archives produced with less common ZIP encoders).
+  // Prefer native libarchive when installed; portable WebAssembly RAR and
+  // JavaScript ZIP readers below keep CBR/CBZ available on minimal hosts.
   // Arguments are passed directly to spawn (no shell), so archive filenames
   // cannot become commands.
   const runComicArchiveCommand = (args: string[], maxBytes: number): Promise<Buffer> =>
@@ -13966,9 +14031,6 @@ async function startServer() {
         else reject(new Error(`Could not read comic archive${stderr ? `: ${stderr.trim().slice(-400)}` : ""}`));
       });
     });
-
-  const isComicArchiveCommandUnavailable = (error: unknown) =>
-    String((error as Error)?.message || error).includes("Comic archive support is unavailable");
 
   const clearComicArchiveCache = (filePath: string) => {
     comicManifestCache.delete(filePath);
@@ -14025,19 +14087,29 @@ async function startServer() {
         .map((entry) => entry.trim())
         .filter((entry) => entry && !entry.endsWith("/") && COMIC_IMAGE_EXTENSIONS.has(path.extname(entry).toLowerCase()));
     } catch (archiveError) {
-      if (path.extname(filePath).toLowerCase() !== ".cbz") {
-        if (isComicArchiveCommandUnavailable(archiveError)) {
-          throw new Error("CBR support requires libarchive-tools (bsdtar) on the server");
+      const extension = path.extname(filePath).toLowerCase();
+      if (extension === ".cbr") {
+        try {
+          pages = await listRarImageEntries(filePath, {
+            imageExtensions: COMIC_IMAGE_EXTENSIONS,
+            maxPages: MAX_COMIC_PAGES,
+            maxPageBytes: MAX_COMIC_PAGE_BYTES,
+            maxExpandedBytes: 500 * 1024 * 1024,
+          });
+        } catch (fallbackError: any) {
+          throw new Error(`Could not read CBR archive: ${fallbackError?.message || "invalid RAR data"}`);
         }
+      } else if (extension === ".cbz") {
+        try {
+          const archive = await loadCbzWithJsZip(filePath);
+          pages = Object.values(archive.files)
+            .filter((entry) => !entry.dir && COMIC_IMAGE_EXTENSIONS.has(path.extname(entry.name).toLowerCase()))
+            .map((entry) => entry.name);
+        } catch (fallbackError: any) {
+          throw new Error(`Could not read CBZ archive: ${fallbackError?.message || "invalid ZIP data"}`);
+        }
+      } else {
         throw archiveError;
-      }
-      try {
-        const archive = await loadCbzWithJsZip(filePath);
-        pages = Object.values(archive.files)
-          .filter((entry) => !entry.dir && COMIC_IMAGE_EXTENSIONS.has(path.extname(entry.name).toLowerCase()))
-          .map((entry) => entry.name);
-      } catch (fallbackError: any) {
-        throw new Error(`Could not read CBZ archive: ${fallbackError?.message || "invalid ZIP data"}`);
       }
     }
     pages.sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
@@ -14052,19 +14124,20 @@ async function startServer() {
     try {
       bytes = await runComicArchiveCommand(["-xOf", filePath, "--", entry], MAX_COMIC_PAGE_BYTES);
     } catch (archiveError) {
-      if (path.extname(filePath).toLowerCase() !== ".cbz") {
-        if (isComicArchiveCommandUnavailable(archiveError)) {
-          throw new Error("CBR support requires libarchive-tools (bsdtar) on the server");
-        }
+      const extension = path.extname(filePath).toLowerCase();
+      if (extension === ".cbr") {
+        bytes = await extractRarEntry(filePath, entry, MAX_COMIC_PAGE_BYTES);
+      } else if (extension === ".cbz") {
+        const archive = await loadCbzWithJsZip(filePath);
+        const page = archive.file(entry);
+        if (!page) throw new Error("Comic page is missing from the archive");
+        const declaredSize = Number((page as any)?._data?.uncompressedSize || 0);
+        if (declaredSize > MAX_COMIC_PAGE_BYTES) throw new Error("Comic page exceeds the 25 MB safety limit");
+        bytes = await page.async("nodebuffer");
+        if (bytes.length > MAX_COMIC_PAGE_BYTES) throw new Error("Comic page exceeds the 25 MB safety limit");
+      } else {
         throw archiveError;
       }
-      const archive = await loadCbzWithJsZip(filePath);
-      const page = archive.file(entry);
-      if (!page) throw new Error("Comic page is missing from the archive");
-      const declaredSize = Number((page as any)?._data?.uncompressedSize || 0);
-      if (declaredSize > MAX_COMIC_PAGE_BYTES) throw new Error("Comic page exceeds the 25 MB safety limit");
-      bytes = await page.async("nodebuffer");
-      if (bytes.length > MAX_COMIC_PAGE_BYTES) throw new Error("Comic page exceeds the 25 MB safety limit");
     }
     const metadata = await sharp(bytes, { limitInputPixels: 80_000_000 }).metadata();
     if (!metadata.width || !metadata.height || metadata.width * metadata.height > 80_000_000) {
@@ -14160,25 +14233,111 @@ async function startServer() {
     await fs.promises.writeFile(outputPath, compressed, { flag: "wx" });
   };
 
+  const optimizeComicImage = async (name: string, input: Buffer): Promise<Buffer> => {
+    const ext = path.extname(name).toLowerCase();
+    try {
+      const image = sharp(input, { animated: false, limitInputPixels: 80_000_000 })
+        .rotate()
+        .resize({ width: 2400, height: 3600, fit: "inside", withoutEnlargement: true });
+      let optimized: Buffer;
+      if ([".jpg", ".jpeg", ".jpe", ".jfif"].includes(ext)) {
+        optimized = await image.jpeg({ quality: 78, mozjpeg: true }).toBuffer();
+      } else if (ext === ".png") {
+        optimized = await image.png({ compressionLevel: 9, palette: true, quality: 86 }).toBuffer();
+      } else if (ext === ".webp") {
+        optimized = await image.webp({ quality: 80, effort: 5 }).toBuffer();
+      } else if (ext === ".avif") {
+        optimized = await image.avif({ quality: 58, effort: 5 }).toBuffer();
+      } else {
+        return input;
+      }
+      return optimized.length < input.length ? optimized : input;
+    } catch {
+      return input;
+    }
+  };
+
+  const writeZipStream = (archive: JSZip, outputPath: string): Promise<void> =>
+    new Promise((resolve, reject) => {
+      const output = fs.createWriteStream(outputPath, { flags: "wx" });
+      const stream = archive.generateNodeStream({
+        type: "nodebuffer",
+        streamFiles: true,
+        compression: "DEFLATE",
+        compressionOptions: { level: 9 },
+      });
+      let settled = false;
+      const fail = (error: Error) => {
+        if (settled) return;
+        settled = true;
+        output.destroy();
+        reject(error);
+      };
+      output.on("error", fail);
+      stream.on("error", fail);
+      output.on("finish", () => {
+        if (settled) return;
+        settled = true;
+        resolve();
+      });
+      stream.pipe(output);
+    });
+
+  const compressCbz = async (inputPath: string, outputPath: string) => {
+    const source = await fs.promises.readFile(inputPath);
+    const inputZip = await JSZip.loadAsync(source, { checkCRC32: true });
+    const entries = Object.values(inputZip.files);
+    const expandedBytes = entries.reduce((total, entry) =>
+      total + Number((entry as any)?._data?.uncompressedSize || 0), 0);
+    if (expandedBytes > 750 * 1024 * 1024) {
+      throw new Error("CBZ expands beyond the 750 MB safety limit");
+    }
+
+    const outputZip = new JSZip();
+    let imageCount = 0;
+    for (const entry of entries) {
+      if (entry.dir) {
+        outputZip.folder(entry.name);
+        continue;
+      }
+      let content = await entry.async("nodebuffer");
+      if (COMIC_IMAGE_EXTENSIONS.has(path.extname(entry.name).toLowerCase())) {
+        imageCount += 1;
+        if (imageCount > MAX_COMIC_PAGES) throw new Error(`Comic archive has too many pages (maximum ${MAX_COMIC_PAGES})`);
+        content = await optimizeComicImage(entry.name, content);
+      }
+      outputZip.file(entry.name, content, { compression: "DEFLATE", compressionOptions: { level: 9 } });
+    }
+    if (imageCount === 0) throw new Error("Comic archive contains no supported image pages");
+    await writeZipStream(outputZip, outputPath);
+  };
+
   const compressOversizedEbook = async (file: Express.Multer.File) => {
     const ext = path.extname(file.originalname).toLowerCase();
-    if (ext === ".cbr" || ext === ".cbz") {
+    if (ext === ".cbr") {
       if (file.size <= MAX_STORED_COMIC_BYTES) return { size: file.size, compressed: false };
-      throw new Error("CBR and CBZ files must be 100 MB or smaller");
+      throw new Error("CBR files must be 100 MB or smaller; convert oversized CBR files to CBZ for automatic compression");
+    }
+    if (ext === ".cbz" && file.size <= MAX_STORED_COMIC_BYTES) return { size: file.size, compressed: false };
+    if (ext !== ".cbz" && file.size > MAX_STANDARD_EBOOK_UPLOAD_BYTES) {
+      throw new Error(`${ext.slice(1).toUpperCase()} files must be 100 MB or smaller`);
     }
     if (file.size <= MAX_STORED_EBOOK_BYTES) return { size: file.size, compressed: false };
     const temporaryPath = `${file.path}.compressing${ext}`;
     try {
       if (ext === ".pdf") await compressPdf(file.path, temporaryPath);
-      else await compressEpub(file.path, temporaryPath);
+      else if (ext === ".epub") await compressEpub(file.path, temporaryPath);
+      else await compressCbz(file.path, temporaryPath);
 
       const compressedSize = (await fs.promises.stat(temporaryPath)).size;
       if (compressedSize >= file.size) {
         throw new Error("Compression did not reduce the file size");
       }
-      if (compressedSize > MAX_STORED_EBOOK_BYTES) {
+      const storedLimit = ext === ".cbz" ? MAX_STORED_COMIC_BYTES : MAX_STORED_EBOOK_BYTES;
+      if (compressedSize > storedLimit) {
         throw new Error(`Compressed file is still ${(compressedSize / (1024 * 1024)).toFixed(1)} MB`);
       }
+      clearComicArchiveCache(file.path);
       await fs.promises.rename(temporaryPath, file.path);
       return { size: compressedSize, compressed: true };
     } finally {
@@ -14192,7 +14351,7 @@ async function startServer() {
       if (err) {
         const message =
           err instanceof multer.MulterError
-            ? (err.code === "LIMIT_FILE_SIZE" ? "File exceeds the 100 MB upload limit" : err.message)
+            ? (err.code === "LIMIT_FILE_SIZE" ? "File exceeds the 250 MB upload limit" : err.message)
             : err.message || "Upload failed";
         res.status(400).json({ error: message });
         return;
@@ -14438,6 +14597,20 @@ async function startServer() {
       const format = ebookFormatFromName(file.originalname);
       let generatedCoverPath: string | null = null;
       try {
+        let storedFile: { size: number; compressed: boolean };
+        try {
+          storedFile = await compressOversizedEbook(file);
+        } catch (compressionError: any) {
+          await fs.promises.unlink(file.path).catch(() => {});
+          clearComicArchiveCache(file.path);
+          logger.warn(`Could not compress oversized ${format}: ${String(compressionError?.message || compressionError)}`);
+          res.status(400).json({
+            error: COMIC_FORMATS.has(format)
+              ? (compressionError?.message || `This ${format} exceeds the comic upload limit.`)
+              : `This ${format} is larger than 50 MB and could not be compressed below the limit. ${compressionError?.message || ""}`.trim(),
+          });
+          return;
+        }
         let resolvedCoverUrl = coverUrl || null;
         if (COMIC_FORMATS.has(format)) {
           try {
@@ -14460,19 +14633,6 @@ async function startServer() {
             res.status(400).json({ error: archiveError?.message || "Invalid comic archive" });
             return;
           }
-        }
-        let storedFile: { size: number; compressed: boolean };
-        try {
-          storedFile = await compressOversizedEbook(file);
-        } catch (compressionError: any) {
-          await fs.promises.unlink(file.path).catch(() => {});
-          logger.warn(`Could not compress oversized ${format}: ${String(compressionError?.message || compressionError)}`);
-          res.status(400).json({
-            error: COMIC_FORMATS.has(format)
-              ? (compressionError?.message || `This ${format} exceeds the comic upload limit.`)
-              : `This ${format} is larger than 50 MB and could not be compressed below the limit. ${compressionError?.message || ""}`.trim(),
-          });
-          return;
         }
         const ebook = await prisma.ebook.create({
           data: {
@@ -14856,18 +15016,19 @@ async function startServer() {
     }
   });
 
-  // ── Database backups (admin) ─────────────────────────────────────────────────
-  app.get("/api/backups", authMiddleware, requireRole("ADMIN"), async (_req, res) => {
+  // ── Backups and verification ─────────────────────────────────────────────────
+  app.get("/api/backups", authMiddleware, requirePermission("manage_settings"), async (_req, res) => {
     const settings = await prisma.schoolProfile.findFirst({ select: { backupEnabled: true } }).catch(() => null);
     res.json({
       backups: listBackups(),
       retention: BACKUP_RETENTION,
       enabled: settings?.backupEnabled ?? false,
       backupHour: Number(process.env.BACKUP_HOUR || 2),
+      offsiteConfigured: Boolean(OFFSITE_BACKUP_DIR),
     });
   });
 
-  app.post("/api/backups/run", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.post("/api/backups/run", authMiddleware, requirePermission("manage_settings"), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
       const backup = await runBackup();
@@ -14888,22 +15049,102 @@ async function startServer() {
     }
   });
 
-  app.get("/api/backups/:name/download", authMiddleware, requireRole("ADMIN"), async (req, res) => {
-    // Traversal-safe: the name must exactly match a file that listBackups()
-    // found in BACKUP_DIR (names come from readdir, so no paths are possible).
-    // Older backups used different naming (mrlc_lms_backup_*), so a strict
-    // pattern here wrongly rejected files the history table shows.
+  app.post("/api/backups/files", authMiddleware, requirePermission("manage_settings"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const backup = await runFileBackup();
+      await createAuditLog(
+        jwtUser.userId, jwtUser.email, "BACKUP", "SYSTEM", null,
+        `Uploaded-files backup created (${backup.name}).`,
+        req.ip, req.headers["user-agent"] || null, "SUCCESS"
+      );
+      res.status(201).json(backup);
+    } catch (err: any) {
+      logger.error("File backup failed:", err);
+      res.status(500).json({ error: err.message || "File backup failed" });
+    }
+  });
+
+  app.post("/api/backups/data", authMiddleware, requirePermission("manage_settings"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const format = req.query.format === "csv" ? "csv" : "json";
+    try {
+      const backup = await runDataBackup(format);
+      await createAuditLog(
+        jwtUser.userId, jwtUser.email, "BACKUP", "SYSTEM", null,
+        `${format.toUpperCase()} data backup created (${backup.name}).`,
+        req.ip, req.headers["user-agent"] || null, "SUCCESS"
+      );
+      res.status(201).json(backup);
+    } catch (err: any) {
+      logger.error(`${format.toUpperCase()} data backup failed:`, err);
+      res.status(500).json({ error: err.message || "Data backup failed" });
+    }
+  });
+
+  const verifyDatabaseBackup = (filePath: string): Promise<{ valid: boolean; detail: string }> =>
+    new Promise((resolve) => {
+      const child = spawn("pg_restore", ["--list", filePath], { stdio: ["ignore", "ignore", "pipe"] });
+      let stderr = "";
+      child.stderr.on("data", (chunk) => { stderr = `${stderr}${chunk.toString()}`.slice(-1500); });
+      child.on("error", (error) => resolve({ valid: false, detail: `pg_restore could not start: ${error.message}` }));
+      child.on("close", (code) => resolve({
+        valid: code === 0,
+        detail: code === 0 ? "pg_restore successfully read the archive catalog" : `pg_restore exited ${code}: ${stderr.trim()}`,
+      }));
+    });
+
+  app.post("/api/backups/:name/verify", authMiddleware, requirePermission("manage_settings"), async (req, res) => {
     const name = req.params.name;
-    if (name.includes("/") || name.includes("\\") || name.includes("..")) {
+    if (!isSafeBackupName(name)) {
       res.status(400).json({ error: "Invalid backup name" });
       return;
     }
-    const known = listBackups().some((b) => b.name === name);
-    if (!known) {
+    const artifact = listBackups().find((item) => item.name === name);
+    if (!artifact) {
       res.status(404).json({ error: "Backup not found" });
       return;
     }
-    res.setHeader("Content-Type", "application/octet-stream");
+    try {
+      const filePath = path.join(BACKUP_DIR, name);
+      let result: { valid: boolean; detail: string };
+      if (artifact.kind === "database") result = await verifyDatabaseBackup(filePath);
+      else if (artifact.kind === "json") {
+        const parsed = JSON.parse(await fs.promises.readFile(filePath, "utf8"));
+        result = parsed?.schema === 1 && parsed?.modules
+          ? { valid: true, detail: "JSON parsed successfully and contains the expected backup structure" }
+          : { valid: false, detail: "JSON is readable but does not contain the expected backup structure" };
+      } else result = await verifyZipStructure(filePath);
+      const jwtUser = (req as any).user as JwtPayload;
+      await createAuditLog(
+        jwtUser.userId, jwtUser.email, "VERIFY", "BACKUP", name,
+        `${result.valid ? "Verified" : "Verification failed for"} ${name}: ${result.detail}`,
+        req.ip, req.headers["user-agent"] || null, result.valid ? "SUCCESS" : "DANGER"
+      ).catch(() => {});
+      res.status(result.valid ? 200 : 422).json(result);
+    } catch (err: any) {
+      res.status(422).json({ valid: false, detail: err.message || "Backup verification failed" });
+    }
+  });
+
+  app.get("/api/backups/:name/download", authMiddleware, requirePermission("manage_settings"), async (req, res) => {
+    const name = req.params.name;
+    if (!isSafeBackupName(name)) {
+      res.status(400).json({ error: "Invalid backup name" });
+      return;
+    }
+    const artifact = listBackups().find((item) => item.name === name);
+    if (!artifact) {
+      res.status(404).json({ error: "Backup not found" });
+      return;
+    }
+    const contentTypes = {
+      database: "application/octet-stream",
+      files: "application/zip",
+      json: "application/json",
+      csv: "application/zip",
+    } as const;
+    res.setHeader("Content-Type", contentTypes[artifact.kind]);
     res.setHeader("Content-Disposition", `attachment; filename="${name.replace(/"/g, "")}"`);
     fs.createReadStream(path.join(BACKUP_DIR, name)).pipe(res);
   });
@@ -14974,6 +15215,67 @@ async function startServer() {
       logger.error("Health check failed (database unreachable):", err);
       res.status(503).json({ status: "error", db: "down" });
     }
+  });
+
+  app.get("/api/system/health", authMiddleware, requirePermission("manage_settings"), async (_req, res) => {
+    const checks: HealthCheckResult[] = [];
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+      checks.push({ id: "database", label: "Database", status: "ok", detail: "PostgreSQL query succeeded", required: true });
+    } catch (error: any) {
+      checks.push({ id: "database", label: "Database", status: "error", detail: error?.message || "Database query failed", required: true });
+    }
+
+    const directoryChecks = [
+      ["backups", "Local backup storage", BACKUP_DIR],
+      ["ebooks", "E-library storage", EBOOK_DIR],
+      ["documents", "Student document storage", STUDENT_DOC_DIR],
+      ["videos", "Video storage", VIDEO_FILES_DIR],
+      ...(OFFSITE_BACKUP_DIR ? [["offsite", "Off-site backup storage", OFFSITE_BACKUP_DIR]] : []),
+    ] as string[][];
+    checks.push(...await Promise.all(directoryChecks.map(([id, label, directory]) =>
+      checkWritableDirectory(id, label, directory))));
+    checks.push(...await Promise.all([
+      probeCommand("pg_dump", "Database backup utility", "pg_dump", ["--version"], true),
+      probeCommand("pg_restore", "Database restore verifier", "pg_restore", ["--version"], true),
+      probeCommand("ffmpeg", "Video converter", "ffmpeg", ["-version"], false),
+      probeCommand("ffprobe", "Video inspector", "ffprobe", ["-version"], false),
+      probeCommand("ghostscript", "PDF compressor", "gs", ["--version"], false),
+    ]));
+    checks.push({
+      id: "portable-cbr",
+      label: "Portable CBR reader",
+      status: "ok",
+      detail: "Bundled WebAssembly RAR fallback is available; bsdtar is optional",
+      required: true,
+    });
+
+    const settings = await prisma.schoolProfile.findFirst({ select: { backupEnabled: true } }).catch(() => null);
+    const databaseBackup = listBackups().find((artifact) => artifact.kind === "database");
+    if (settings?.backupEnabled) {
+      const ageHours = databaseBackup
+        ? Math.round((Date.now() - new Date(databaseBackup.createdAt).getTime()) / 3_600_000)
+        : null;
+      checks.push({
+        id: "backup-freshness",
+        label: "Scheduled backup freshness",
+        status: ageHours !== null && ageHours <= 30 ? "ok" : "warning",
+        detail: ageHours === null ? "Automatic backups are enabled, but no database backup exists" : `Newest database backup is ${ageHours} hours old`,
+        required: false,
+      });
+    }
+
+    const status = summarizeHealth(checks);
+    res.status(status === "error" ? 503 : 200).json({
+      status,
+      checkedAt: new Date().toISOString(),
+      checks,
+      backups: {
+        total: listBackups().length,
+        newestDatabase: databaseBackup?.createdAt || null,
+        offsiteConfigured: Boolean(OFFSITE_BACKUP_DIR),
+      },
+    });
   });
 
   // ── Reports API (aggregations) ───────────────────────────────────────────────
@@ -17376,7 +17678,7 @@ async function startServer() {
   });
 
   // Reissue: re-generate from a fresh snapshot, mark the old one REISSUED, link them.
-  app.post("/api/documents/:id/reissue", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.post("/api/documents/:id/reissue", authMiddleware, requirePermission("manage_all"), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
       const old = await prisma.generatedDocument.findUnique({ where: { id: req.params.id } });
@@ -17445,7 +17747,7 @@ async function startServer() {
     const STALE_MS = 20 * 60 * 60 * 1000; // treat a backup as "due" if newest is older than this
 
     const newestBackupAgeMs = (): number => {
-      const [newest] = listBackups(); // sorted newest-first
+      const newest = listBackups().find((artifact) => artifact.kind === "database");
       return newest ? Date.now() - new Date(newest.createdAt).getTime() : Infinity;
     };
 
@@ -17554,7 +17856,7 @@ async function startServer() {
   // ── Phase 3 reusable question bank routes ───────────────────────────────────
   registerExamBankRoutes({ app, prisma, authMiddleware, createAuditLog, logger, canManageExamClass });
   // ── News / Daily Digest (RSS aggregation) ───────────────────────────────────
-  const { refreshAllSources: refreshAllNewsSources } = registerNewsRoutes({ app, prisma, authMiddleware, requireRole, createAuditLog, logger });
+  const { refreshAllSources: refreshAllNewsSources } = registerNewsRoutes({ app, prisma, authMiddleware, requirePermission, createAuditLog, logger });
   // ── Payroll PDF export ──────────────────────────────────────────────────────
   registerPayrollPdfRoutes({ app, prisma, authMiddleware, payrollCanManage, createAuditLog, logger });
   // ── Flashcards (teacher-authored study decks assigned to classes) ──────────
@@ -17639,7 +17941,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/chat/sticker-packs", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.post("/api/chat/sticker-packs", authMiddleware, requirePermission("manage_all"), async (req, res) => {
     const name = sanitizePack(req.body?.name);
     if (!name) { res.status(400).json({ error: "A valid pack name is required" }); return; }
     try {
@@ -17658,7 +17960,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/chat/sticker-packs/:pack/stickers", authMiddleware, requireRole("ADMIN"), (req, res) => {
+  app.post("/api/chat/sticker-packs/:pack/stickers", authMiddleware, requirePermission("manage_all"), (req, res) => {
     // Store pack name on request for multer storage to access
     (req as any).stickerPack = sanitizePack(req.params.pack) || "Custom";
     stickerUpload.array("files", 50)(req, res, (err: any) => {
@@ -17688,7 +17990,7 @@ async function startServer() {
     });
   });
 
-  app.delete("/api/chat/sticker-packs/:pack/stickers/:file", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.delete("/api/chat/sticker-packs/:pack/stickers/:file", authMiddleware, requirePermission("manage_all"), async (req, res) => {
     const pack = sanitizePack(req.params.pack);
     const file = sanitizeFile(req.params.file);
     if (!pack || !file) { res.status(400).json({ error: "Invalid pack or file name" }); return; }
@@ -17709,7 +18011,7 @@ async function startServer() {
     }
   });
 
-  app.delete("/api/chat/sticker-packs/:pack", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.delete("/api/chat/sticker-packs/:pack", authMiddleware, requirePermission("manage_all"), async (req, res) => {
     const pack = sanitizePack(req.params.pack);
     if (!pack) { res.status(400).json({ error: "Invalid pack name" }); return; }
 
@@ -17949,7 +18251,7 @@ async function startServer() {
   });
 
   // ── Social Space moderation (ADMIN) ──────────────────────────────────────────
-  app.get("/api/social/reports", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.get("/api/social/reports", authMiddleware, requirePermission("manage_all"), async (req, res) => {
     try {
       const status = req.query.status ? String(req.query.status) : "OPEN";
       const reports = await (prisma as any).socialReport.findMany({
@@ -17976,7 +18278,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/social/reports/:id/resolve", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.post("/api/social/reports/:id/resolve", authMiddleware, requirePermission("manage_all"), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const action = String(req.body?.action || "DISMISSED"); // ACTIONED | DISMISSED
     try {
@@ -18558,7 +18860,7 @@ async function startServer() {
   });
 
   // ── Chat moderation (ADMIN) ──────────────────────────────────────────────────
-  app.get("/api/chat/reports", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.get("/api/chat/reports", authMiddleware, requirePermission("manage_all"), async (req, res) => {
     try {
       const status = req.query.status ? String(req.query.status) : "OPEN";
       const reports = await prisma.chatMessageReport.findMany({
@@ -18579,7 +18881,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/chat/reports/:id/resolve", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.post("/api/chat/reports/:id/resolve", authMiddleware, requirePermission("manage_all"), async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const action = String(req.body?.action || "DISMISSED"); // ACTIONED | DISMISSED
     try {

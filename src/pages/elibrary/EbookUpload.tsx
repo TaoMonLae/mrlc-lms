@@ -20,8 +20,10 @@ import { useUser } from '../../lib/permissions';
 import { EBOOK_CATEGORY_DATALIST_ID, EbookCategoryOptions } from '../../lib/ebookCategories';
 
 const COMPRESSION_THRESHOLD_MB = 50;
-const MAX_UPLOAD_MB = 100;
-const MAX_COMIC_UPLOAD_MB = 100;
+const MAX_DOCUMENT_UPLOAD_MB = 100;
+const MAX_CBR_UPLOAD_MB = 100;
+const MAX_CBZ_UPLOAD_MB = 250;
+const CBZ_COMPRESSION_THRESHOLD_MB = 100;
 
 interface QueuedFile {
   key: string;
@@ -147,12 +149,13 @@ export default function EbookUpload() {
         toast.error(`${f.name}: only PDF, EPUB, CBR, and CBZ files are allowed.`);
         continue;
       }
-      if (['.cbr', '.cbz'].includes(ext) && f.size > MAX_COMIC_UPLOAD_MB * 1024 * 1024) {
-        toast.error(`${f.name}: comic archives must be ${MAX_COMIC_UPLOAD_MB} MB or smaller.`);
-        continue;
-      }
-      if (f.size > MAX_UPLOAD_MB * 1024 * 1024) {
-        toast.error(`${f.name}: file is too large (max ${MAX_UPLOAD_MB} MB before compression).`);
+      const maxMb = ext === '.cbz'
+        ? MAX_CBZ_UPLOAD_MB
+        : ext === '.cbr'
+          ? MAX_CBR_UPLOAD_MB
+          : MAX_DOCUMENT_UPLOAD_MB;
+      if (f.size > maxMb * 1024 * 1024) {
+        toast.error(`${f.name}: this format has a ${maxMb} MB upload limit.`);
         continue;
       }
       accepted.push({
@@ -311,7 +314,7 @@ export default function EbookUpload() {
           />
           <UploadCloud className="h-8 w-8 text-slate-400 mx-auto mb-2" />
           <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Click or drag files here</p>
-          <p className="text-xs text-slate-500 mt-1">PDF, EPUB, CBR, or CBZ · up to {MAX_UPLOAD_MB} MB per file</p>
+          <p className="text-xs text-slate-500 mt-1">PDF, EPUB, or CBR up to 100 MB · CBZ up to {MAX_CBZ_UPLOAD_MB} MB</p>
         </div>
 
         {/* Queued files */}
@@ -332,7 +335,8 @@ export default function EbookUpload() {
                   <div className="flex items-center gap-2">
                     <FileText className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                     <p className="text-xs text-slate-500 truncate">{q.file.name} · {(q.file.size / (1024 * 1024)).toFixed(1)} MB</p>
-                    {q.file.size > COMPRESSION_THRESHOLD_MB * 1024 * 1024 && (isPdf(q.file) || isEpub(q.file)) && (
+                    {((q.file.size > COMPRESSION_THRESHOLD_MB * 1024 * 1024 && (isPdf(q.file) || isEpub(q.file)))
+                      || (q.file.size > CBZ_COMPRESSION_THRESHOLD_MB * 1024 * 1024 && isCbz(q.file))) && (
                       <span className="shrink-0 text-[10px] font-medium text-amber-600 dark:text-amber-400">Will compress</span>
                     )}
                   </div>

@@ -1,5 +1,6 @@
 import express from "express";
 import Parser from "rss-parser";
+import type { Permission } from "./shared/permissions";
 
 interface JwtPayload { userId: string; role: string; email: string; }
 
@@ -7,7 +8,7 @@ interface Deps {
   app: express.Express;
   prisma: any;
   authMiddleware: express.RequestHandler;
-  requireRole: (role: string) => express.RequestHandler;
+  requirePermission: (permission: Permission) => express.RequestHandler;
   createAuditLog: (
     userId: string | null, userName: string | null, action: string,
     entityType: string, entityId: string | null, description: string,
@@ -120,7 +121,7 @@ function fullContentFrom(item: any): string | null {
 }
 
 export function registerNewsRoutes(deps: Deps): { refreshAllSources: () => Promise<void> } {
-  const { app, prisma, authMiddleware, requireRole, createAuditLog, logger } = deps;
+  const { app, prisma, authMiddleware, requirePermission, createAuditLog, logger } = deps;
   // Some publishers (notably WordPress sites behind Cloudflare, e.g. The
   // Irrawaddy, Frontier Myanmar) reject requests that carry Node's default
   // "no User-Agent" / generic client signature, even though the same feed
@@ -305,7 +306,7 @@ export function registerNewsRoutes(deps: Deps): { refreshAllSources: () => Promi
   });
 
   // ── admin-only source management ──────────────────────────────────────────
-  app.get("/api/news-sources", authMiddleware, requireRole("ADMIN"), async (_req, res) => {
+  app.get("/api/news-sources", authMiddleware, requirePermission("manage_settings"), async (_req, res) => {
     try {
       const sources = await prisma.newsSource.findMany({
         include: { _count: { select: { articles: true } } },
@@ -319,7 +320,7 @@ export function registerNewsRoutes(deps: Deps): { refreshAllSources: () => Promi
     }
   });
 
-  app.post("/api/news-sources", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.post("/api/news-sources", authMiddleware, requirePermission("manage_settings"), async (req, res) => {
     const jwtUser = user(req);
     const { name, feedUrl, category } = req.body || {};
     if (!name || !feedUrl) { res.status(400).json({ error: "name and feedUrl are required" }); return; }
@@ -345,7 +346,7 @@ export function registerNewsRoutes(deps: Deps): { refreshAllSources: () => Promi
     }
   });
 
-  app.put("/api/news-sources/:id", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.put("/api/news-sources/:id", authMiddleware, requirePermission("manage_settings"), async (req, res) => {
     const jwtUser = user(req);
     const { name, feedUrl, category, enabled } = req.body || {};
     try {
@@ -369,7 +370,7 @@ export function registerNewsRoutes(deps: Deps): { refreshAllSources: () => Promi
     }
   });
 
-  app.delete("/api/news-sources/:id", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.delete("/api/news-sources/:id", authMiddleware, requirePermission("manage_settings"), async (req, res) => {
     const jwtUser = user(req);
     try {
       const source = await prisma.newsSource.delete({ where: { id: req.params.id } });
@@ -383,7 +384,7 @@ export function registerNewsRoutes(deps: Deps): { refreshAllSources: () => Promi
     }
   });
 
-  app.post("/api/news-sources/:id/refresh", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.post("/api/news-sources/:id/refresh", authMiddleware, requirePermission("manage_settings"), async (req, res) => {
     try {
       const source = await prisma.newsSource.findUnique({ where: { id: req.params.id } });
       if (!source) { res.status(404).json({ error: "Not found" }); return; }
@@ -395,7 +396,7 @@ export function registerNewsRoutes(deps: Deps): { refreshAllSources: () => Promi
     }
   });
 
-  app.post("/api/news/refresh", authMiddleware, requireRole("ADMIN"), async (req, res) => {
+  app.post("/api/news/refresh", authMiddleware, requirePermission("manage_settings"), async (req, res) => {
     const jwtUser = user(req);
     try {
       await refreshAllSources();

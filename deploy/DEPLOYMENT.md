@@ -119,6 +119,8 @@ VIDEO_FILES_DIR="/opt/mrlc-lms/data/videos"
 BACKUP_DIR="/opt/mrlc-lms/data/backups"
 BACKUP_RETENTION=14
 BACKUP_HOUR=2
+# Optional: mount this on separate storage before enabling it.
+# OFFSITE_BACKUP_DIR="/mnt/offsite/mrlc-backups"
 EOF
 
 chmod 600 .env

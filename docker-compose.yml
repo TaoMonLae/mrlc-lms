@@ -37,7 +37,10 @@ services:
       BACKUP_DIR: "/app/data/backups"
       # How many daily backups to keep (older ones are pruned).
       BACKUP_RETENTION: "${BACKUP_RETENTION:-14}"
+      OFFSITE_BACKUP_DIR: "${OFFSITE_BACKUP_DIR:-}"
     volumes:
+      # Persist all other uploaded files (documents, covers, branding, chat, etc.).
+      - upload_data:/app/data
       # Persist uploaded e-book files across container rebuilds/recreations.
       - ebook_data:/app/data/ebooks
       # Persist uploaded lesson videos across container rebuilds/recreations.
@@ -52,3 +55,4 @@ volumes:
   ebook_data:
   video_data:
   backup_data:
+  upload_data:

@@ -38,7 +38,7 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 ### E-Library
 
 - PDF and EPUB batch upload with metadata and cover extraction.
-- Files up to 100 MB may be uploaded; files over 50 MB are compressed automatically and must be 50 MB or smaller after compression.
+- PDF/EPUB files up to 100 MB may be uploaded and files over 50 MB are compressed automatically. CBR supports up to 100 MB; CBZ supports up to 250 MB and is automatically optimized to a 100 MB stored-file target.
 - PDF compression uses Ghostscript. EPUB compression rebuilds the archive and optimizes embedded images.
 - PDF and EPUB readers support zoom in/out, Single Page, Two Page, Fit to Width, and Fit to Height modes.
 - Resume position, full-book search, table of contents, highlights, full-page reading, selected-word dictionary lookup, and highlight-to-flashcard creation.
@@ -132,6 +132,8 @@ The production build creates:
 - Ghostscript (`gs`) — PDF compression above the 50 MB stored-file limit
 - `pg_dump` matching the database server major version — manual and automatic backups
 
+CBR reading includes a bundled WebAssembly RAR fallback, so `bsdtar` is optional. The Docker image still installs `libarchive-tools` as a native accelerator.
+
 The provided Docker image installs these tools. For a manual Ubuntu/Debian deployment:
 
 ```bash
@@ -211,6 +213,7 @@ Never use the demo passwords in production. Set the three seed password variable
 | `BACKUP_DIR` | No | `./data/backups` | PostgreSQL backup storage |
 | `BACKUP_RETENTION` | No | `14` | Number of backups retained |
 | `BACKUP_HOUR` | No | `2` | Local hour for scheduled backups |
+| `OFFSITE_BACKUP_DIR` | No | unset | Separate mounted directory that receives a copy of every backup artifact |
 | `SEED_ADMIN_PASSWORD` | No | Demo password | Initial admin password |
 | `SEED_TEACHER_PASSWORD` | No | Demo password | Initial teacher password |
 | `SEED_STUDENT_PASSWORD` | No | Demo password | Initial student password |
@@ -226,11 +229,11 @@ Additional upload directories can be overridden for advanced deployments; see th
 
 ### E-books
 
-- Accepted formats: PDF and EPUB.
-- Maximum incoming file size: 100 MB.
-- Stored-file target: 50 MB or less.
-- Files over 50 MB are compressed during upload.
-- Upload fails with an actionable error if compression cannot reduce the result to 50 MB or less.
+- Accepted formats: PDF, EPUB, CBR, and CBZ.
+- PDF/EPUB maximum incoming size: 100 MB; stored-file target: 50 MB or less.
+- CBR maximum incoming and stored size: 100 MB.
+- CBZ maximum incoming size: 250 MB; archives over 100 MB are rebuilt with optimized page images and must finish at 100 MB or less.
+- Upload fails with an actionable error if compression cannot reach the format's stored-file target.
 - Very large or damaged PDFs may require repair outside the LMS before upload.
 
 ### Videos
@@ -331,9 +334,9 @@ If PM2 repeatedly changes from `online` to `errored`, inspect the logs before re
 
 ## Backups
 
-Backups are controlled from Settings and use `pg_dump`. The scheduler writes to `BACKUP_DIR`, runs at `BACKUP_HOUR`, and prunes older files according to `BACKUP_RETENTION`.
+Backups are controlled from Settings. Database snapshots use `pg_dump`; admins can also create uploaded-file ZIP archives and JSON/CSV application exports. Artifacts can be integrity-checked from the history table. The scheduler writes to `BACKUP_DIR`, runs at `BACKUP_HOUR`, and prunes each backup type according to `BACKUP_RETENTION`.
 
-Use a PostgreSQL client matching the server major version. Copy backups off the application host as part of the production disaster-recovery plan; a local backup on the same disk is not sufficient by itself.
+Use a PostgreSQL client matching the server major version. Set `OFFSITE_BACKUP_DIR` to a separately mounted disk or replicated share to copy every artifact off the application volume; a local backup on the same disk is not sufficient by itself. Settings → System Health reports storage writability, database reachability, backup freshness, and missing native utilities.
 
 ## Security
 

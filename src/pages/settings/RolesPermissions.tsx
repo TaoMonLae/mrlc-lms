@@ -1,68 +1,57 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, Shield } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Shield, Users } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import PermissionMatrix from '../../components/users/PermissionMatrix';
+import {
+  ROLE_DESCRIPTIONS, ROLE_LABELS, ROLE_PERMISSIONS, USER_ROLES,
+} from '../../lib/permissions';
 
 export default function RolesPermissions() {
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6 p-4 sm:p-6">
       <div>
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Roles & Permissions</h2>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">View system-wide role configurations. (Read-only)</p>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">
+          Authoritative system access reference. Role rules are shared by the API, navigation, and protected pages.
+        </p>
       </div>
 
-      <div className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-slate-200 dark:border-surface-raised flex items-center gap-3">
-          <div className="h-10 w-10 bg-purple-100 dark:bg-purple-900/30 text-purple-600 rounded-lg flex items-center justify-center">
-            <Shield className="h-5 w-5" />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Role Definitions</h3>
-            <p className="text-sm text-slate-500">Modules accessible by each role.</p>
-          </div>
-        </div>
-        
-        <div className="p-0 overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 dark:bg-surface-raised/50 text-slate-500 font-semibold border-b border-slate-200 dark:border-surface-raised">
-              <tr>
-                <th className="px-6 py-4">Role</th>
-                <th className="px-6 py-4">Description & Access Areas</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              <tr className="hover:bg-slate-50 dark:hover:bg-surface-raised/50">
-                <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">ADMIN</td>
-                <td className="px-6 py-4">
-                  <p className="text-slate-700 dark:text-slate-300 font-medium mb-1">Full system access.</p>
-                  <p className="text-slate-500 dark:text-slate-300">Can manage users, roles, settings, students, teachers, classes, subjects, exams, attendance, system configs.</p>
-                </td>
-              </tr>
-              <tr className="hover:bg-slate-50 dark:hover:bg-surface-raised/50">
-                <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">TEACHER</td>
-                <td className="px-6 py-4">
-                  <p className="text-slate-700 dark:text-slate-300 font-medium mb-1">Academic & classroom management.</p>
-                  <p className="text-slate-500 dark:text-slate-300">Can access Teacher Dashboard, assigned classes, attendance for assigned classes, exams for their subjects, library, and specific reports. Cannot access user management.</p>
-                </td>
-              </tr>
-              <tr className="hover:bg-slate-50 dark:hover:bg-surface-raised/50">
-                <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">STUDENT</td>
-                <td className="px-6 py-4">
-                  <p className="text-slate-700 dark:text-slate-300 font-medium mb-1">Personal academic portal.</p>
-                  <p className="text-slate-500 dark:text-slate-300">Can access Student Dashboard, own profile, own attendance history, own exam results, general library, and fee balance. Cannot edit academic records.</p>
-                </td>
-              </tr>
-              <tr className="hover:bg-slate-50 dark:hover:bg-surface-raised/50">
-                <td className="px-6 py-4 font-bold text-slate-400 italic">STAFF</td>
-                <td className="px-6 py-4">
-                  <p className="text-slate-700 dark:text-slate-300 font-medium mb-1">General administration (Future).</p>
-                  <p className="text-slate-500 dark:text-slate-300">Assigned specific custom permissions for library, HR, or front-desk management.</p>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {USER_ROLES.map((role) => {
+          const permissions = ROLE_PERMISSIONS[role];
+          const fullAccess = permissions.includes('manage_all');
+          return (
+            <section key={role} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-surface-raised dark:bg-surface-indigo">
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 text-purple-600 dark:bg-purple-900/30">
+                    {role === 'STUDENT' || role === 'TEACHER' ? <Users className="h-5 w-5" /> : <Shield className="h-5 w-5" />}
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-slate-900 dark:text-white">{ROLE_LABELS[role]}</h3>
+                    <p className="text-[11px] font-medium tracking-wide text-slate-400">{role}</p>
+                  </div>
+                </div>
+                <Badge variant={fullAccess ? 'default' : 'secondary'}>
+                  {fullAccess ? 'Full access' : `${permissions.length} grants`}
+                </Badge>
+              </div>
+              <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">{ROLE_DESCRIPTIONS[role]}</p>
+              {role === 'TEACHER' && (
+                <p className="mt-3 rounded-lg bg-blue-50 p-3 text-xs text-blue-800 dark:bg-blue-900/20 dark:text-blue-200">
+                  Full-time, part-time, and volunteer are employment types. Their academic data scope comes from class and subject assignments.
+                </p>
+              )}
+            </section>
+          );
+        })}
       </div>
+
+      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6 dark:border-surface-raised dark:bg-surface-indigo">
+        <h3 className="mb-1 text-lg font-semibold text-slate-900 dark:text-white">Access matrix</h3>
+        <p className="mb-4 text-sm text-slate-500">This read-only matrix is generated from the same registry used by access checks.</p>
+        <PermissionMatrix showAllPermissions />
+      </section>
     </div>
   );
 }

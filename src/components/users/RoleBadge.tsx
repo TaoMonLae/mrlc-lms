@@ -1,6 +1,6 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { UserRole } from '@/src/lib/permissions';
+import { ROLE_LABELS, UserRole } from '@/src/lib/permissions';
 import { Shield, GraduationCap, User, Users, DollarSign, Briefcase, BookOpen } from 'lucide-react';
 
 interface RoleBadgeProps {
@@ -45,16 +45,6 @@ const ROLE_CONFIG: Record<UserRole, { icon: any; color: string; description: str
     color: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400 border-cyan-200 dark:border-cyan-900',
     description: 'Library management'
   },
-};
-
-const ROLE_LABELS: Record<UserRole, string> = {
-  ADMIN: 'Administrator',
-  TEACHER: 'Teacher',
-  STUDENT: 'Student',
-  STAFF: 'Staff',
-  ACCOUNTANT: 'Accountant',
-  CASE_WORKER: 'Case Worker',
-  LIBRARIAN: 'Librarian',
 };
 
 export default function RoleBadge({ role, showDescription = false, className = '' }: RoleBadgeProps) {
