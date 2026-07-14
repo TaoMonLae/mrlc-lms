@@ -148,7 +148,7 @@ export default function EbookList() {
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
             <BookMarked className="h-6 w-6 text-accent-purple" /> E-Library
           </h1>
-          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Read EPUB and PDF books online.</p>
+          <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Read PDF, EPUB, CBR, and CBZ books online.</p>
         </div>
         {canManage && (
           <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
@@ -209,6 +209,8 @@ export default function EbookList() {
             <SelectItem value="All">All formats</SelectItem>
             <SelectItem value="PDF">PDF</SelectItem>
             <SelectItem value="EPUB">EPUB</SelectItem>
+            <SelectItem value="CBR">CBR</SelectItem>
+            <SelectItem value="CBZ">CBZ</SelectItem>
           </SelectContent>
         </Select>
         <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortValue)}>
@@ -257,7 +259,7 @@ export default function EbookList() {
           <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
             {ebooks.length === 0 ? 'No e-books yet.' : 'No books match your search.'}
           </p>
-          {canManage && ebooks.length === 0 && <p className="text-xs text-slate-500 mt-1">Click “Upload Book” to add an EPUB or PDF.</p>}
+          {canManage && ebooks.length === 0 && <p className="text-xs text-slate-500 mt-1">Click “Upload Book” to add a PDF, EPUB, CBR, or CBZ file.</p>}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">

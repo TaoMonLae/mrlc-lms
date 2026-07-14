@@ -1665,7 +1665,7 @@ model Ebook {
   language    String?
   coverUrl    String?
 
-  format       String // "PDF" | "EPUB"
+  format       String // "PDF" | "EPUB" | "CBR" | "CBZ"
   fileName     String // stored file name on disk (uuid + ext)
   originalName String? // original upload filename
   fileSize     Int? // bytes

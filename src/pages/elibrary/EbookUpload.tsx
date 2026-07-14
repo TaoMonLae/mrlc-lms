@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { pdfjs } from 'react-pdf';
 import ePub from 'epubjs';
+import JSZip from 'jszip';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,6 +36,14 @@ interface QueuedFile {
 
 function isEpub(file: File) {
   return file.name.toLowerCase().endsWith('.epub');
+}
+
+function isPdf(file: File) {
+  return file.name.toLowerCase().endsWith('.pdf');
+}
+
+function isCbz(file: File) {
+  return file.name.toLowerCase().endsWith('.cbz');
 }
 
 // Reads the EPUB's own metadata (title/author) and embedded cover image so
@@ -91,6 +100,22 @@ async function extractPdfMeta(file: File): Promise<{ title?: string; coverBlob?:
   }
 }
 
+// CBZ is a ZIP archive of image pages. Use the naturally first page as its
+// cover preview; CBR metadata is extracted by the server-side archive reader.
+async function extractCbzMeta(file: File): Promise<{ coverBlob?: Blob }> {
+  try {
+    const zip = await JSZip.loadAsync(await file.arrayBuffer());
+    const imageExtensions = /\.(jpe?g|png|webp|gif)$/i;
+    const pages = Object.values(zip.files)
+      .filter((entry) => !entry.dir && imageExtensions.test(entry.name))
+      .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+    if (!pages[0]) return {};
+    return { coverBlob: await pages[0].async('blob') };
+  } catch {
+    return {};
+  }
+}
+
 export default function EbookUpload() {
   const navigate = useNavigate();
   const { user } = useUser();
@@ -114,8 +139,12 @@ export default function EbookUpload() {
     const accepted: QueuedFile[] = [];
     for (const f of list) {
       const ext = f.name.toLowerCase().slice(f.name.lastIndexOf('.'));
-      if (ext !== '.pdf' && ext !== '.epub') {
-        toast.error(`${f.name}: only PDF and EPUB files are allowed.`);
+      if (!['.pdf', '.epub', '.cbr', '.cbz'].includes(ext)) {
+        toast.error(`${f.name}: only PDF, EPUB, CBR, and CBZ files are allowed.`);
+        continue;
+      }
+      if (['.cbr', '.cbz'].includes(ext) && f.size > COMPRESSION_THRESHOLD_MB * 1024 * 1024) {
+        toast.error(`${f.name}: comic archives must be ${COMPRESSION_THRESHOLD_MB} MB or smaller.`);
         continue;
       }
       if (f.size > MAX_UPLOAD_MB * 1024 * 1024) {
@@ -125,7 +154,7 @@ export default function EbookUpload() {
       accepted.push({
         key: `${f.name}-${f.size}-${f.lastModified}`,
         file: f,
-        title: f.name.replace(/\.(pdf|epub)$/i, ''),
+        title: f.name.replace(/\.(pdf|epub|cbr|cbz)$/i, ''),
         author: '',
         coverBlob: null,
         coverPreview: null,
@@ -140,9 +169,15 @@ export default function EbookUpload() {
     accepted.forEach(async (entry) => {
       // Avoid decoding a very large book twice in the browser. The server will
       // compress it during upload; metadata remains editable in this form.
-      const result = entry.file.size > COMPRESSION_THRESHOLD_MB * 1024 * 1024
+      const result: { title?: string; author?: string; coverBlob?: Blob } = entry.file.size > COMPRESSION_THRESHOLD_MB * 1024 * 1024
         ? {}
-        : isEpub(entry.file) ? await extractEpubMeta(entry.file) : await extractPdfMeta(entry.file);
+        : isEpub(entry.file)
+          ? await extractEpubMeta(entry.file)
+          : isPdf(entry.file)
+            ? await extractPdfMeta(entry.file)
+            : isCbz(entry.file)
+              ? await extractCbzMeta(entry.file)
+              : {};
       const coverPreview = result.coverBlob ? URL.createObjectURL(result.coverBlob) : null;
       setQueue((prev) => prev.map((q) => (q.key === entry.key
         ? {
@@ -212,7 +247,7 @@ export default function EbookUpload() {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (queue.length === 0) { toast.error('Add at least one PDF or EPUB file.'); return; }
+    if (queue.length === 0) { toast.error('Add at least one PDF, EPUB, CBR, or CBZ file.'); return; }
     if (queue.some((q) => !q.title.trim())) { toast.error('Every file needs a title.'); return; }
 
     setSubmitting(true);
@@ -246,7 +281,7 @@ export default function EbookUpload() {
         </Button>
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">Upload E-book{isBatch ? 's' : ''}</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-300">Add one or more EPUB or PDF files to the E-Library.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-300">Add PDF, EPUB, CBR, or CBZ books to the E-Library.</p>
         </div>
       </div>
 
@@ -262,13 +297,13 @@ export default function EbookUpload() {
             ref={fileInputRef}
             type="file"
             multiple
-            accept=".pdf,.epub,application/pdf,application/epub+zip"
+            accept=".pdf,.epub,.cbr,.cbz,application/pdf,application/epub+zip,application/vnd.rar,application/zip"
             className="hidden"
             onChange={(e) => { pickFiles(e.target.files); e.target.value = ''; }}
           />
           <UploadCloud className="h-8 w-8 text-slate-400 mx-auto mb-2" />
           <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Click or drag files here</p>
-          <p className="text-xs text-slate-500 mt-1">PDF or EPUB · up to {MAX_UPLOAD_MB} MB each · files over {COMPRESSION_THRESHOLD_MB} MB are compressed automatically</p>
+          <p className="text-xs text-slate-500 mt-1">PDF, EPUB, CBR, or CBZ · up to {MAX_UPLOAD_MB} MB for documents and {COMPRESSION_THRESHOLD_MB} MB for comics</p>
         </div>
 
         {/* Queued files */}
@@ -289,7 +324,7 @@ export default function EbookUpload() {
                   <div className="flex items-center gap-2">
                     <FileText className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                     <p className="text-xs text-slate-500 truncate">{q.file.name} · {(q.file.size / (1024 * 1024)).toFixed(1)} MB</p>
-                    {q.file.size > COMPRESSION_THRESHOLD_MB * 1024 * 1024 && (
+                    {q.file.size > COMPRESSION_THRESHOLD_MB * 1024 * 1024 && (isPdf(q.file) || isEpub(q.file)) && (
                       <span className="shrink-0 text-[10px] font-medium text-amber-600 dark:text-amber-400">Will compress</span>
                     )}
                   </div>

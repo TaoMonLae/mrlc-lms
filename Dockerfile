@@ -25,7 +25,7 @@ ENV NODE_ENV=production
 ENV PORT=8000
 
 # openssl/ca-certificates for Prisma; ffmpeg converts uploaded lesson videos;
-# Ghostscript compresses oversized PDF e-books;
+# Ghostscript compresses oversized PDF e-books; libarchive-tools reads CBR archives;
 # postgresql-client-16 provides a pg_dump
 # that matches the Postgres 16 server (an older client refuses a newer server).
 RUN apt-get update \
@@ -34,7 +34,7 @@ RUN apt-get update \
   && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc -o /etc/apt/trusted.gpg.d/pgdg.asc \
   && echo "deb http://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
   && apt-get update \
-  && apt-get install -y --no-install-recommends postgresql-client-16 ffmpeg ghostscript \
+  && apt-get install -y --no-install-recommends postgresql-client-16 ffmpeg ghostscript libarchive-tools \
   && apt-get purge -y curl gnupg && apt-get autoremove -y \
   && rm -rf /var/lib/apt/lists/*
 

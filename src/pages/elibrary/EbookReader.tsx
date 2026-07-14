@@ -33,7 +33,7 @@ interface EbookMeta {
   id: string;
   title: string;
   author?: string | null;
-  format: string; // "PDF" | "EPUB"
+  format: string; // "PDF" | "EPUB" | "CBR" | "CBZ"
   downloadAllowed: boolean;
 }
 
@@ -304,6 +304,8 @@ export default function EbookReader() {
           <EpubView id={meta.id} token={token} blob={epubBlob} bookTitle={meta.title} canMakeFlashcards={canMakeFlashcards} />
         ) : meta && meta.format.toUpperCase() === 'PDF' ? (
           <PdfView id={meta.id} token={token} bookTitle={meta.title} canMakeFlashcards={canMakeFlashcards} />
+        ) : meta && ['CBR', 'CBZ'].includes(meta.format.toUpperCase()) ? (
+          <ComicView id={meta.id} token={token} format={meta.format.toUpperCase()} />
         ) : null}
       </div>
     </div>
@@ -660,6 +662,192 @@ function AddToFlashcardsDialog({ token, defaultDefinition, onClose }: {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/* ─────────────────────── CBR / CBZ comic reader ─────────────────────── */
+type ComicDirection = 'ltr' | 'rtl';
+
+function ComicPageImage({ id, token, page, width, height }: {
+  id: string;
+  token: string | null;
+  page: number;
+  width?: number;
+  height?: number;
+}) {
+  const [src, setSrc] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    let objectUrl: string | null = null;
+    setSrc(null);
+    setError(null);
+    fetch(`/api/ebooks/${id}/comic/pages/${page}`, { headers: authHeaders(token) })
+      .then(async (res) => {
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error || `Could not load page ${page}`);
+        }
+        return res.blob();
+      })
+      .then((blob) => {
+        if (cancelled) return;
+        objectUrl = URL.createObjectURL(blob);
+        setSrc(objectUrl);
+      })
+      .catch((err: any) => { if (!cancelled) setError(err.message || `Could not load page ${page}`); });
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [id, page, token]);
+
+  if (error) {
+    return (
+      <div className="flex min-h-40 min-w-40 items-center justify-center rounded border border-red-200 bg-red-50 p-4 text-center text-xs text-red-700">
+        {error}
+      </div>
+    );
+  }
+  if (!src) {
+    return <div className="flex h-48 w-36 items-center justify-center rounded bg-white shadow"><Loader2 className="h-5 w-5 animate-spin text-slate-400" /></div>;
+  }
+  return (
+    <img
+      src={src}
+      alt={`Comic page ${page}`}
+      draggable={false}
+      className="max-w-none select-none bg-white shadow-xl"
+      style={{ width: width ? `${width}px` : 'auto', height: height ? `${height}px` : 'auto' }}
+    />
+  );
+}
+
+function ComicView({ id, token, format }: { id: string; token: string | null; format: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [pageCount, setPageCount] = useState(0);
+  const [page, setPage] = useState(1);
+  const [scale, setScale] = useState(1);
+  const [pageView, setPageView] = useState<ReaderPageView>('single');
+  const [fitMode, setFitMode] = useState<ReaderFitMode>('width');
+  const [direction, setDirection] = useState<ComicDirection>('ltr');
+  const [viewport, setViewport] = useState({ width: 0, height: 0 });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [progressLoaded, setProgressLoaded] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    Promise.all([
+      fetch(`/api/ebooks/${id}/comic/manifest`, { headers: authHeaders(token) }).then(async (res) => {
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error || `Could not open this ${format} file.`);
+        }
+        return res.json() as Promise<{ pageCount: number }>;
+      }),
+      fetchProgress(id, token),
+    ])
+      .then(([manifest, progress]) => {
+        if (cancelled) return;
+        setPageCount(manifest.pageCount);
+        const savedPage = Number.parseInt(progress?.location || '', 10);
+        setPage(Number.isFinite(savedPage) ? Math.min(Math.max(1, savedPage), manifest.pageCount) : 1);
+        setProgressLoaded(true);
+      })
+      .catch((err: any) => { if (!cancelled) setError(err.message || `Could not open this ${format} file.`); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [format, id, token]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const measure = () => setViewport({ width: el.clientWidth, height: el.clientHeight });
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    measure();
+    return () => observer.disconnect();
+  }, []);
+
+  const debouncedSave = useDebouncedCallback((current: number, total: number) => {
+    saveProgress(id, token, String(current), total > 0 ? Math.round((current / total) * 1000) / 10 : null);
+  }, 700);
+  useEffect(() => {
+    if (progressLoaded && pageCount > 0) debouncedSave(page, pageCount);
+  }, [debouncedSave, page, pageCount, progressLoaded]);
+
+  const pageStep = pageView === 'two' ? 2 : 1;
+  const go = useCallback((delta: number) => {
+    setPage((current) => Math.min(Math.max(1, current + delta * pageStep), pageCount || 1));
+    window.dispatchEvent(new Event('ebook-reader-activity'));
+  }, [pageCount, pageStep]);
+
+  const changePageView = (value: ReaderPageView) => {
+    setPageView(value);
+    if (value === 'two') setPage((current) => current % 2 === 0 ? current - 1 : current);
+  };
+
+  const pageNumbers = pageView === 'two' && page < pageCount ? [page, page + 1] : [page];
+  const displayPages = direction === 'rtl' && pageNumbers.length === 2 ? [...pageNumbers].reverse() : pageNumbers;
+  const gap = displayPages.length === 2 ? 16 : 0;
+  const targetWidth = fitMode === 'width' && viewport.width > 0
+    ? Math.max(220, ((viewport.width - 32 - gap) / displayPages.length) * scale)
+    : undefined;
+  const targetHeight = fitMode === 'height' && viewport.height > 0
+    ? Math.max(240, (viewport.height - 32) * scale)
+    : undefined;
+
+  if (loading) {
+    return <div className="flex h-full items-center justify-center text-slate-500"><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Opening comic…</div>;
+  }
+  if (error) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center px-6 text-center">
+        <BookOpen className="mb-3 h-10 w-10 text-slate-300" />
+        <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Could not display this {format} comic.</p>
+        <p className="mt-1 max-w-md text-xs text-slate-500">{error}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative flex h-full flex-col" onKeyDown={(event) => {
+      if (event.key === 'ArrowLeft') go(direction === 'rtl' ? 1 : -1);
+      if (event.key === 'ArrowRight') go(direction === 'rtl' ? -1 : 1);
+    }} tabIndex={0}>
+      <div ref={containerRef} className="flex min-h-0 flex-1 items-start justify-center gap-4 overflow-auto p-4 custom-scrollbar">
+        {displayPages.map((pageNumber) => (
+          <ComicPageImage key={pageNumber} id={id} token={token} page={pageNumber} width={targetWidth} height={targetHeight} />
+        ))}
+      </div>
+      <div className="flex shrink-0 flex-wrap items-center justify-center gap-2 border-t border-slate-200 bg-white px-3 py-2 dark:border-surface-raised dark:bg-surface-indigo">
+        <Button variant="outline" size="icon" onClick={() => go(-1)} disabled={page <= 1} title="Previous page"><ChevronLeft className="h-4 w-4" /></Button>
+        <span className="min-w-24 px-1 text-center text-xs font-medium tabular-nums text-slate-600 dark:text-slate-300">
+          {pageNumbers.length === 2 ? `Pages ${page}–${page + 1}` : `Page ${page}`} / {pageCount}
+        </span>
+        <Button variant="outline" size="icon" onClick={() => go(1)} disabled={page + pageNumbers.length - 1 >= pageCount} title="Next page"><ChevronRight className="h-4 w-4" /></Button>
+        <div className="mx-1 h-5 w-px bg-slate-200 dark:bg-surface-raised" />
+        <Button variant="outline" size="icon" onClick={() => setScale((value) => Math.max(0.5, +(value - 0.2).toFixed(2)))} title="Zoom out"><ZoomOut className="h-4 w-4" /></Button>
+        <span className="w-10 text-center text-xs tabular-nums text-slate-500">{Math.round(scale * 100)}%</span>
+        <Button variant="outline" size="icon" onClick={() => setScale((value) => Math.min(3, +(value + 0.2).toFixed(2)))} title="Zoom in"><ZoomIn className="h-4 w-4" /></Button>
+        <Select value={pageView} onValueChange={(value) => changePageView(value as ReaderPageView)}>
+          <SelectTrigger className="h-9 w-[126px]" title="Page view"><SelectValue /></SelectTrigger>
+          <SelectContent><SelectItem value="single">Single Page</SelectItem><SelectItem value="two">Two Page</SelectItem></SelectContent>
+        </Select>
+        <Select value={fitMode} onValueChange={(value) => { setFitMode(value as ReaderFitMode); setScale(1); }}>
+          <SelectTrigger className="h-9 w-[120px]" title="Fit mode"><SelectValue /></SelectTrigger>
+          <SelectContent><SelectItem value="width">Fit Width</SelectItem><SelectItem value="height">Fit Height</SelectItem></SelectContent>
+        </Select>
+        <Select value={direction} onValueChange={(value) => setDirection(value as ComicDirection)}>
+          <SelectTrigger className="h-9 w-[142px]" title="Reading direction"><SelectValue /></SelectTrigger>
+          <SelectContent><SelectItem value="ltr">Left to Right</SelectItem><SelectItem value="rtl">Right to Left</SelectItem></SelectContent>
+        </Select>
+      </div>
+    </div>
   );
 }
 
