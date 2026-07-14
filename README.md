@@ -38,7 +38,7 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 ### E-Library
 
 - PDF and EPUB batch upload with metadata and cover extraction.
-- PDF/EPUB files up to 100 MB may be uploaded and files over 50 MB are compressed automatically. CBR supports up to 100 MB; CBZ supports up to 250 MB and is automatically optimized to a 100 MB stored-file target.
+- PDF/EPUB files up to 100 MB may be uploaded and files over 50 MB are compressed automatically. CBR and CBZ support uploads up to 250 MB; comic archives over 100 MB are automatically optimized to a 100 MB stored-file target. Oversized CBR files are converted to CBZ during optimization.
 - PDF compression uses Ghostscript. EPUB compression rebuilds the archive and optimizes embedded images.
 - PDF and EPUB readers support zoom in/out, Single Page, Two Page, Fit to Width, and Fit to Height modes.
 - Resume position, full-book search, table of contents, highlights, full-page reading, selected-word dictionary lookup, and highlight-to-flashcard creation.
@@ -239,8 +239,7 @@ Password-reset requests are stored in a retryable email outbox. Configure SMTP i
 
 - Accepted formats: PDF, EPUB, CBR, and CBZ.
 - PDF/EPUB maximum incoming size: 100 MB; stored-file target: 50 MB or less.
-- CBR maximum incoming and stored size: 100 MB.
-- CBZ maximum incoming size: 250 MB; archives over 100 MB are rebuilt with optimized page images and must finish at 100 MB or less.
+- CBR/CBZ maximum incoming size: 250 MB; browser uploads are sent in 20 MB chunks to work through common reverse-proxy limits. Archives over 100 MB are rebuilt with optimized page images and must finish at 100 MB or less. Oversized CBR files are stored as CBZ because the portable runtime can read but cannot safely create RAR archives.
 - Upload fails with an actionable error if compression cannot reach the format's stored-file target.
 - Very large or damaged PDFs may require repair outside the LMS before upload.
 

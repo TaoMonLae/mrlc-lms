@@ -21,9 +21,10 @@ import { EBOOK_CATEGORY_DATALIST_ID, EbookCategoryOptions } from '../../lib/eboo
 
 const COMPRESSION_THRESHOLD_MB = 50;
 const MAX_DOCUMENT_UPLOAD_MB = 100;
-const MAX_CBR_UPLOAD_MB = 100;
+const MAX_CBR_UPLOAD_MB = 250;
 const MAX_CBZ_UPLOAD_MB = 250;
-const CBZ_COMPRESSION_THRESHOLD_MB = 100;
+const COMIC_COMPRESSION_THRESHOLD_MB = 100;
+const UPLOAD_CHUNK_BYTES = 20 * 1024 * 1024;
 
 interface QueuedFile {
   key: string;
@@ -47,6 +48,10 @@ function isPdf(file: File) {
 
 function isCbz(file: File) {
   return file.name.toLowerCase().endsWith('.cbz');
+}
+
+function isCbr(file: File) {
+  return file.name.toLowerCase().endsWith('.cbr');
 }
 
 // Reads the EPUB's own metadata (title/author) and embedded cover image so
@@ -209,6 +214,7 @@ export default function EbookUpload() {
 
   const uploadOne = async (entry: QueuedFile, token: string | null): Promise<boolean> => {
     updateEntry(entry.key, { status: 'uploading' });
+    let chunkUploadId: string | null = null;
     try {
       let coverUrl = '';
       if (entry.coverBlob) {
@@ -231,19 +237,54 @@ export default function EbookUpload() {
         // A failed cover upload isn't fatal — the book still uploads without one.
       }
 
-      const fd = new FormData();
-      fd.append('file', entry.file);
-      fd.append('title', entry.title.trim() || entry.file.name);
-      fd.append('author', entry.author);
-      fd.append('category', category);
-      fd.append('language', language);
-      fd.append('description', description);
-      fd.append('visibility', visibility);
-      fd.append('downloadAllowed', String(downloadAllowed));
-      fd.append('uploadedByName', user?.name || user?.email || '');
-      if (coverUrl) fd.append('coverUrl', coverUrl);
+      const metadata = {
+        title: entry.title.trim() || entry.file.name,
+        author: entry.author,
+        category,
+        language,
+        description,
+        visibility,
+        downloadAllowed: String(downloadAllowed),
+        uploadedByName: user?.name || user?.email || '',
+        coverUrl,
+      };
 
-      const res = await fetch('/api/ebooks', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd });
+      let res: Response;
+      if (entry.file.size > UPLOAD_CHUNK_BYTES) {
+        chunkUploadId = crypto.randomUUID();
+        const totalChunks = Math.ceil(entry.file.size / UPLOAD_CHUNK_BYTES);
+        for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex += 1) {
+          const start = chunkIndex * UPLOAD_CHUNK_BYTES;
+          const chunk = entry.file.slice(start, Math.min(start + UPLOAD_CHUNK_BYTES, entry.file.size));
+          const chunkForm = new FormData();
+          chunkForm.append('uploadId', chunkUploadId);
+          chunkForm.append('originalName', entry.file.name);
+          chunkForm.append('chunkIndex', String(chunkIndex));
+          chunkForm.append('totalChunks', String(totalChunks));
+          chunkForm.append('chunk', chunk, `${entry.file.name}.part`);
+          const chunkRes = await fetch('/api/ebooks/chunks', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+            body: chunkForm,
+          });
+          if (!chunkRes.ok) {
+            const error = await chunkRes.json().catch(() => ({}));
+            throw new Error(error.error || `Failed to upload part ${chunkIndex + 1}`);
+          }
+        }
+        res = await fetch('/api/ebooks/chunks/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ uploadId: chunkUploadId, ...metadata }),
+        });
+      } else {
+        const fd = new FormData();
+        fd.append('file', entry.file);
+        for (const [key, value] of Object.entries(metadata)) {
+          if (value) fd.append(key, value);
+        }
+        res = await fetch('/api/ebooks', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd });
+      }
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || 'Upload failed');
@@ -251,6 +292,12 @@ export default function EbookUpload() {
       updateEntry(entry.key, { status: 'done' });
       return true;
     } catch (err: any) {
+      if (chunkUploadId) {
+        await fetch(`/api/ebooks/chunks/${chunkUploadId}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        }).catch(() => {});
+      }
       updateEntry(entry.key, { status: 'error', error: err.message || 'Upload failed' });
       return false;
     }
@@ -314,7 +361,7 @@ export default function EbookUpload() {
           />
           <UploadCloud className="h-8 w-8 text-slate-400 mx-auto mb-2" />
           <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Click or drag files here</p>
-          <p className="text-xs text-slate-500 mt-1">PDF, EPUB, or CBR up to 100 MB · CBZ up to {MAX_CBZ_UPLOAD_MB} MB</p>
+          <p className="text-xs text-slate-500 mt-1">PDF or EPUB up to 100 MB · CBR or CBZ up to {MAX_CBZ_UPLOAD_MB} MB</p>
         </div>
 
         {/* Queued files */}
@@ -336,8 +383,10 @@ export default function EbookUpload() {
                     <FileText className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                     <p className="text-xs text-slate-500 truncate">{q.file.name} · {(q.file.size / (1024 * 1024)).toFixed(1)} MB</p>
                     {((q.file.size > COMPRESSION_THRESHOLD_MB * 1024 * 1024 && (isPdf(q.file) || isEpub(q.file)))
-                      || (q.file.size > CBZ_COMPRESSION_THRESHOLD_MB * 1024 * 1024 && isCbz(q.file))) && (
-                      <span className="shrink-0 text-[10px] font-medium text-amber-600 dark:text-amber-400">Will compress</span>
+                      || (q.file.size > COMIC_COMPRESSION_THRESHOLD_MB * 1024 * 1024 && (isCbr(q.file) || isCbz(q.file)))) && (
+                      <span className="shrink-0 text-[10px] font-medium text-amber-600 dark:text-amber-400">
+                        {isCbr(q.file) ? 'Will optimize to CBZ' : 'Will compress'}
+                      </span>
                     )}
                   </div>
                   <Input

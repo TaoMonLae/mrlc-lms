@@ -18,6 +18,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient, type Role } from "@prisma/client";
 import dotenv from "dotenv";
 import { spawn } from "child_process";
+import { ZipArchive } from "archiver";
 import JSZip from "jszip";
 import sharp from "sharp";
 import { registerExamPhase2Routes } from "./examPhase2";
@@ -54,6 +55,8 @@ dotenv.config();
 // the database. Override the location with the EBOOK_DIR env var.
 const EBOOK_DIR = process.env.EBOOK_DIR || path.join(process.cwd(), "data", "ebooks");
 fs.mkdirSync(EBOOK_DIR, { recursive: true });
+const EBOOK_CHUNK_DIR = path.join(EBOOK_DIR, ".chunks");
+fs.mkdirSync(EBOOK_CHUNK_DIR, { recursive: true });
 const MAX_STORED_EBOOK_BYTES = 50 * 1024 * 1024;
 const MAX_STANDARD_EBOOK_UPLOAD_BYTES = 100 * 1024 * 1024;
 const MAX_EBOOK_UPLOAD_BYTES = 250 * 1024 * 1024;
@@ -120,14 +123,19 @@ const ebookUpload = multer({
       cb(null, `${crypto.randomUUID()}${ext}`);
     },
   }),
-  // Files above 50 MB are compressed after upload. The larger transport limit
-  // leaves enough room for a useful reduction while bounding CPU and memory.
+  // Documents use lower per-format limits below. Comic archives may arrive at
+  // up to 250 MB so oversized CBR/CBZ files can be optimized after transport.
   limits: { fileSize: MAX_EBOOK_UPLOAD_BYTES },
   fileFilter: (_req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
     if ([".pdf", ".epub", ".cbr", ".cbz"].includes(ext)) cb(null, true);
     else cb(new Error("Only .pdf, .epub, .cbr, and .cbz files are allowed"));
   },
+});
+
+const ebookChunkUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 21 * 1024 * 1024 },
 });
 
 const ebookCoverUpload = multer({
@@ -15136,11 +15144,87 @@ async function startServer() {
     await writeZipStream(outputZip, outputPath);
   };
 
-  const compressOversizedEbook = async (file: Express.Multer.File) => {
+  const writeDirectoryAsCbz = (sourceDirectory: string, outputPath: string): Promise<void> =>
+    new Promise((resolve, reject) => {
+      const output = fs.createWriteStream(outputPath, { flags: "wx" });
+      const archive = new ZipArchive({ zlib: { level: 9 } });
+      let settled = false;
+      const fail = (error: Error) => {
+        if (settled) return;
+        settled = true;
+        output.destroy();
+        archive.abort();
+        reject(error);
+      };
+      output.on("error", fail);
+      output.on("close", () => {
+        if (settled) return;
+        settled = true;
+        resolve();
+      });
+      archive.on("error", fail);
+      archive.pipe(output);
+      archive.directory(sourceDirectory, false);
+      void archive.finalize().catch(fail);
+    });
+
+  // RAR creation is not available in the portable runtime. Rebuild an
+  // oversized CBR as an optimized CBZ instead, keeping page order while using
+  // a temporary directory so hundreds of megabytes are not held in memory.
+  const compressCbrToCbz = async (inputPath: string, outputPath: string) => {
+    const pages = await getComicPages(inputPath);
+    const temporaryDirectory = await fs.promises.mkdtemp(path.join(EBOOK_DIR, ".cbr-compress-"));
+    let expandedBytes = 0;
+    try {
+      for (let index = 0; index < pages.length; index += 1) {
+        const page = pages[index];
+        const input = await extractComicPage(inputPath, page);
+        expandedBytes += input.length;
+        if (expandedBytes > 750 * 1024 * 1024) {
+          throw new Error("CBR expands beyond the 750 MB compression safety limit");
+        }
+        const optimized = await optimizeComicImage(page, input);
+        const originalExtension = path.extname(page).toLowerCase();
+        const extension = COMIC_IMAGE_EXTENSIONS.has(originalExtension) ? originalExtension : ".jpg";
+        const pageName = `${String(index + 1).padStart(5, "0")}${extension}`;
+        await fs.promises.writeFile(path.join(temporaryDirectory, pageName), optimized, { flag: "wx" });
+      }
+      await writeDirectoryAsCbz(temporaryDirectory, outputPath);
+    } finally {
+      await fs.promises.rm(temporaryDirectory, { recursive: true, force: true });
+    }
+  };
+
+  const compressOversizedEbook = async (file: Express.Multer.File): Promise<{
+    size: number;
+    compressed: boolean;
+    format?: "CBZ";
+  }> => {
     const ext = path.extname(file.originalname).toLowerCase();
     if (ext === ".cbr") {
       if (file.size <= MAX_STORED_COMIC_BYTES) return { size: file.size, compressed: false };
-      throw new Error("CBR files must be 100 MB or smaller; convert oversized CBR files to CBZ for automatic compression");
+      const temporaryPath = `${file.path}.compressing.cbz`;
+      const convertedPath = path.join(path.dirname(file.path), `${path.parse(file.filename).name}.cbz`);
+      try {
+        await compressCbrToCbz(file.path, temporaryPath);
+        const compressedSize = (await fs.promises.stat(temporaryPath)).size;
+        if (compressedSize > MAX_STORED_COMIC_BYTES) {
+          throw new Error(`Optimized CBR is still ${(compressedSize / (1024 * 1024)).toFixed(1)} MB; the stored comic limit is 100 MB`);
+        }
+        clearComicArchiveCache(file.path);
+        await fs.promises.rename(temporaryPath, convertedPath);
+        try {
+          await fs.promises.unlink(file.path);
+        } catch (error) {
+          await fs.promises.unlink(convertedPath).catch(() => {});
+          throw error;
+        }
+        file.path = convertedPath;
+        file.filename = path.basename(convertedPath);
+        return { size: compressedSize, compressed: true, format: "CBZ" };
+      } finally {
+        await fs.promises.unlink(temporaryPath).catch(() => {});
+      }
     }
     if (ext === ".cbz" && file.size <= MAX_STORED_COMIC_BYTES) return { size: file.size, compressed: false };
     if (ext !== ".cbz" && file.size > MAX_STANDARD_EBOOK_UPLOAD_BYTES) {
@@ -15393,19 +15477,7 @@ async function startServer() {
     }
   );
 
-  app.post(
-    "/api/ebooks",
-    authMiddleware,
-    (req, res, next) => {
-      const jwtUser = (req as any).user as JwtPayload;
-      if (!canManageEbooks(jwtUser.role)) {
-        res.status(403).json({ error: "Forbidden" });
-        return;
-      }
-      next();
-    },
-    uploadEbookFile,
-    async (req, res) => {
+  const finishEbookUpload = async (req: express.Request, res: express.Response) => {
       const jwtUser = (req as any).user as JwtPayload;
       const file = (req as any).file as Express.Multer.File | undefined;
       if (!file) {
@@ -15418,12 +15490,13 @@ async function startServer() {
         res.status(400).json({ error: "title is required" });
         return;
       }
-      const format = ebookFormatFromName(file.originalname);
+      let format = ebookFormatFromName(file.originalname);
       let generatedCoverPath: string | null = null;
       try {
-        let storedFile: { size: number; compressed: boolean };
+        let storedFile: Awaited<ReturnType<typeof compressOversizedEbook>>;
         try {
           storedFile = await compressOversizedEbook(file);
+          if (storedFile.format) format = storedFile.format;
         } catch (compressionError: any) {
           await fs.promises.unlink(file.path).catch(() => {});
           clearComicArchiveCache(file.path);
@@ -15493,8 +15566,173 @@ async function startServer() {
         const detail = err?.code ? `${err.code}: ${err?.message ?? ""}` : err?.message;
         res.status(500).json({ error: detail || "Internal Server Error" });
       }
+    };
+
+  const requireEbookManager = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageEbooks(jwtUser.role)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
     }
+    next();
+  };
+
+  app.post(
+    "/api/ebooks",
+    authMiddleware,
+    requireEbookManager,
+    uploadEbookFile,
+    finishEbookUpload,
   );
+
+  type EbookChunkManifest = {
+    userId: string;
+    originalName: string;
+    totalChunks: number;
+    createdAt: string;
+  };
+  const MAX_EBOOK_CHUNKS = 13;
+  const ebookChunkManifestPath = (uploadId: string) => path.join(EBOOK_CHUNK_DIR, `${uploadId}.json`);
+  const ebookChunkPartPath = (uploadId: string, index: number) => path.join(EBOOK_CHUNK_DIR, `${uploadId}.${index}.part`);
+  const readEbookChunkManifest = async (uploadId: string): Promise<EbookChunkManifest> =>
+    JSON.parse(await fs.promises.readFile(ebookChunkManifestPath(uploadId), "utf8"));
+  const removeEbookChunkSession = async (uploadId: string, totalChunks: number) => {
+    await Promise.all([
+      ...Array.from({ length: totalChunks }, (_, index) => fs.promises.unlink(ebookChunkPartPath(uploadId, index)).catch(() => {})),
+      fs.promises.unlink(ebookChunkManifestPath(uploadId)).catch(() => {}),
+    ]);
+  };
+
+  const ebookChunkExpiry = Date.now() - 24 * 60 * 60 * 1000;
+  for (const name of fs.readdirSync(EBOOK_CHUNK_DIR)) {
+    const chunkPath = path.join(EBOOK_CHUNK_DIR, name);
+    try {
+      if (fs.statSync(chunkPath).mtimeMs < ebookChunkExpiry) fs.rmSync(chunkPath, { force: true });
+    } catch { /* another cleanup may already have removed it */ }
+  }
+
+  const uploadEbookChunk = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    ebookChunkUpload.single("chunk")(req, res, (err: any) => {
+      if (!err) return next();
+      const message = err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE"
+        ? "E-book upload chunks must be 20 MB or smaller"
+        : err.message || "Chunk upload failed";
+      res.status(400).json({ error: message });
+    });
+  };
+
+  app.post("/api/ebooks/chunks", authMiddleware, requireEbookManager, uploadEbookChunk, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const chunk = (req as any).file as Express.Multer.File | undefined;
+    const uploadId = String(req.body?.uploadId || "");
+    const originalName = path.basename(String(req.body?.originalName || ""));
+    const chunkIndex = Number(req.body?.chunkIndex);
+    const totalChunks = Number(req.body?.totalChunks);
+    const extension = path.extname(originalName).toLowerCase();
+
+    if (!chunk || chunk.size === 0 || !validUploadId(uploadId) ||
+        !Number.isInteger(chunkIndex) || !Number.isInteger(totalChunks) ||
+        chunkIndex < 0 || totalChunks < 1 || totalChunks > MAX_EBOOK_CHUNKS || chunkIndex >= totalChunks ||
+        ![".pdf", ".epub", ".cbr", ".cbz"].includes(extension)) {
+      res.status(400).json({ error: "Invalid e-book upload chunk" });
+      return;
+    }
+
+    try {
+      const manifestPath = ebookChunkManifestPath(uploadId);
+      let manifest: EbookChunkManifest;
+      if (!fs.existsSync(manifestPath)) {
+        if (chunkIndex !== 0) {
+          res.status(409).json({ error: "Upload must start with the first chunk" });
+          return;
+        }
+        manifest = { userId: jwtUser.userId, originalName, totalChunks, createdAt: new Date().toISOString() };
+        await fs.promises.writeFile(manifestPath, JSON.stringify(manifest), { flag: "wx" });
+      } else {
+        manifest = await readEbookChunkManifest(uploadId);
+      }
+      if (manifest.userId !== jwtUser.userId || manifest.originalName !== originalName || manifest.totalChunks !== totalChunks) {
+        res.status(403).json({ error: "Upload session does not match this file" });
+        return;
+      }
+      await fs.promises.writeFile(ebookChunkPartPath(uploadId, chunkIndex), chunk.buffer);
+      res.json({ received: chunkIndex, totalChunks });
+    } catch (err: any) {
+      logger.error("E-book chunk upload failed:", err);
+      res.status(err?.code === "EEXIST" ? 409 : 500).json({ error: "Could not store e-book upload chunk" });
+    }
+  });
+
+  app.post("/api/ebooks/chunks/complete", authMiddleware, requireEbookManager, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const uploadId = String(req.body?.uploadId || "");
+    if (!validUploadId(uploadId)) {
+      res.status(400).json({ error: "Invalid upload session" });
+      return;
+    }
+
+    let assembledPath = "";
+    try {
+      const manifest = await readEbookChunkManifest(uploadId);
+      if (manifest.userId !== jwtUser.userId) {
+        res.status(403).json({ error: "Upload session belongs to another user" });
+        return;
+      }
+      const parts = Array.from({ length: manifest.totalChunks }, (_, index) => ebookChunkPartPath(uploadId, index));
+      const stats = await Promise.all(parts.map((part) => fs.promises.stat(part)));
+      const totalSize = stats.reduce((sum, stat) => sum + stat.size, 0);
+      const extension = path.extname(manifest.originalName).toLowerCase();
+      const maximumSize = [".cbr", ".cbz"].includes(extension)
+        ? MAX_EBOOK_UPLOAD_BYTES
+        : MAX_STANDARD_EBOOK_UPLOAD_BYTES;
+      if (totalSize <= 0 || totalSize > maximumSize) {
+        await removeEbookChunkSession(uploadId, manifest.totalChunks);
+        res.status(400).json({ error: `This format has a ${Math.round(maximumSize / (1024 * 1024))} MB upload limit` });
+        return;
+      }
+
+      const assembledName = `${crypto.randomUUID()}${extension}`;
+      assembledPath = path.join(EBOOK_DIR, assembledName);
+      const output = await fs.promises.open(assembledPath, "wx");
+      try {
+        for (const part of parts) await output.write(await fs.promises.readFile(part));
+      } finally {
+        await output.close();
+      }
+      await removeEbookChunkSession(uploadId, manifest.totalChunks);
+
+      (req as any).file = {
+        originalname: manifest.originalName,
+        filename: assembledName,
+        path: assembledPath,
+        size: totalSize,
+        mimetype: contentType(extension.slice(1)),
+      } as Express.Multer.File;
+      await finishEbookUpload(req, res);
+    } catch (err: any) {
+      if (assembledPath) await fs.promises.unlink(assembledPath).catch(() => {});
+      logger.error("Could not assemble e-book upload:", err);
+      res.status(err?.code === "ENOENT" ? 409 : 500).json({
+        error: err?.code === "ENOENT" ? "One or more e-book chunks are missing" : "Could not assemble e-book upload",
+      });
+    }
+  });
+
+  app.delete("/api/ebooks/chunks/:uploadId", authMiddleware, requireEbookManager, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const uploadId = String(req.params.uploadId || "");
+    if (!validUploadId(uploadId)) { res.status(400).json({ error: "Invalid upload session" }); return; }
+    try {
+      const manifest = await readEbookChunkManifest(uploadId);
+      if (manifest.userId !== jwtUser.userId) { res.status(403).json({ error: "Forbidden" }); return; }
+      await removeEbookChunkSession(uploadId, manifest.totalChunks);
+      res.json({ success: true });
+    } catch (err: any) {
+      if (err?.code === "ENOENT") { res.json({ success: true }); return; }
+      logger.error("Could not discard e-book chunk upload:", err);
+      res.status(500).json({ error: "Could not discard upload session" });
+    }
+  });
 
   app.get("/api/ebooks/:id", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;

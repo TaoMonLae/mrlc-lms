@@ -59,6 +59,12 @@ test('new student-success, notification, and session APIs are available', async 
 
   const invalidReset = await request.post('/api/auth/reset-password', { data: { token: 'x'.repeat(43), newPassword: 'NewPassword123!' } });
   expect(invalidReset.status()).toBe(400);
+
+  const invalidEbookUpload = await request.post('/api/ebooks/chunks/complete', {
+    headers,
+    data: { uploadId: 'not-an-upload-id' },
+  });
+  expect(invalidEbookUpload.status()).toBe(400);
 });
 
 test('administrator can see every role from the shared registry', async ({ page }) => {
