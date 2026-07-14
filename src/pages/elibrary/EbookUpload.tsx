@@ -21,6 +21,7 @@ import { EBOOK_CATEGORY_DATALIST_ID, EbookCategoryOptions } from '../../lib/eboo
 
 const COMPRESSION_THRESHOLD_MB = 50;
 const MAX_UPLOAD_MB = 100;
+const MAX_COMIC_UPLOAD_MB = 100;
 
 interface QueuedFile {
   key: string;
@@ -105,12 +106,15 @@ async function extractPdfMeta(file: File): Promise<{ title?: string; coverBlob?:
 async function extractCbzMeta(file: File): Promise<{ coverBlob?: Blob }> {
   try {
     const zip = await JSZip.loadAsync(await file.arrayBuffer());
-    const imageExtensions = /\.(jpe?g|png|webp|gif)$/i;
+    const imageExtensions = /\.(jpe?g|jpe|jfif|png|webp)$/i;
     const pages = Object.values(zip.files)
       .filter((entry) => !entry.dir && imageExtensions.test(entry.name))
       .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
     if (!pages[0]) return {};
-    return { coverBlob: await pages[0].async('blob') };
+    const ext = pages[0].name.toLowerCase().slice(pages[0].name.lastIndexOf('.'));
+    const mimeType = ext === '.png' ? 'image/png' : ext === '.webp' ? 'image/webp' : 'image/jpeg';
+    const bytes = await pages[0].async('uint8array');
+    return { coverBlob: new Blob([bytes], { type: mimeType }) };
   } catch {
     return {};
   }
@@ -143,8 +147,8 @@ export default function EbookUpload() {
         toast.error(`${f.name}: only PDF, EPUB, CBR, and CBZ files are allowed.`);
         continue;
       }
-      if (['.cbr', '.cbz'].includes(ext) && f.size > COMPRESSION_THRESHOLD_MB * 1024 * 1024) {
-        toast.error(`${f.name}: comic archives must be ${COMPRESSION_THRESHOLD_MB} MB or smaller.`);
+      if (['.cbr', '.cbz'].includes(ext) && f.size > MAX_COMIC_UPLOAD_MB * 1024 * 1024) {
+        toast.error(`${f.name}: comic archives must be ${MAX_COMIC_UPLOAD_MB} MB or smaller.`);
         continue;
       }
       if (f.size > MAX_UPLOAD_MB * 1024 * 1024) {
@@ -206,7 +210,11 @@ export default function EbookUpload() {
       let coverUrl = '';
       if (entry.coverBlob) {
         const coverForm = new FormData();
-        const ext = entry.coverBlob.type === 'image/png' ? 'png' : 'jpg';
+        const ext = entry.coverBlob.type === 'image/png'
+          ? 'png'
+          : entry.coverBlob.type === 'image/webp'
+            ? 'webp'
+            : 'jpg';
         coverForm.append('cover', entry.coverBlob, `cover.${ext}`);
         const coverRes = await fetch('/api/ebooks/cover-upload', {
           method: 'POST',
@@ -303,7 +311,7 @@ export default function EbookUpload() {
           />
           <UploadCloud className="h-8 w-8 text-slate-400 mx-auto mb-2" />
           <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Click or drag files here</p>
-          <p className="text-xs text-slate-500 mt-1">PDF, EPUB, CBR, or CBZ · up to {MAX_UPLOAD_MB} MB for documents and {COMPRESSION_THRESHOLD_MB} MB for comics</p>
+          <p className="text-xs text-slate-500 mt-1">PDF, EPUB, CBR, or CBZ · up to {MAX_UPLOAD_MB} MB per file</p>
         </div>
 
         {/* Queued files */}

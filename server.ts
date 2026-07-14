@@ -41,6 +41,10 @@ const EBOOK_DIR = process.env.EBOOK_DIR || path.join(process.cwd(), "data", "ebo
 fs.mkdirSync(EBOOK_DIR, { recursive: true });
 const MAX_STORED_EBOOK_BYTES = 50 * 1024 * 1024;
 const MAX_EBOOK_UPLOAD_BYTES = 100 * 1024 * 1024;
+// Comic archives are already compressed containers and cannot be usefully
+// recompressed without altering their page images. Keep the transport bound,
+// but allow the original CBR/CBZ up to that same 100 MB limit.
+const MAX_STORED_COMIC_BYTES = MAX_EBOOK_UPLOAD_BYTES;
 // Ebook cover thumbnails (auto-extracted client-side from the EPUB's embedded
 // cover or a rendered PDF first page, or picked manually) — served statically,
 // unlike the book files themselves which stream through an auth-checked route.
@@ -1542,7 +1546,7 @@ async function startServer() {
             directives: {
               "default-src": ["'self'"],
               "script-src": ["'self'", "https://static.cloudflareinsights.com"],
-              "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+              "style-src": ["'self'", "'unsafe-inline'", "blob:", "https://fonts.googleapis.com"],
               "font-src": ["'self'", "https://fonts.gstatic.com", "data:"],
               "img-src": ["'self'", "data:", "https:", "blob:"],
               "media-src": ["'self'", "https:", "blob:"],
@@ -13898,7 +13902,10 @@ async function startServer() {
   const canManageEbooks = (role: string) => role === "ADMIN" || role === "TEACHER" || role === "LIBRARIAN";
 
   const COMIC_FORMATS = new Set(["CBR", "CBZ"]);
-  const COMIC_IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif"]);
+  const COMIC_IMAGE_EXTENSIONS = new Set([
+    ".jpg", ".jpeg", ".jpe", ".jfif", ".png", ".webp", ".gif", ".avif",
+    ".bmp", ".tif", ".tiff",
+  ]);
   const MAX_COMIC_PAGES = 2000;
   const MAX_COMIC_PAGE_BYTES = 25 * 1024 * 1024;
   const comicManifestCache = new Map<string, { mtimeMs: number; pages: string[] }>();
@@ -13911,9 +13918,10 @@ async function startServer() {
     return "PDF";
   };
 
-  // CBR uses libarchive's bsdtar for RAR extraction. Arguments are passed
-  // directly to spawn (no shell), so archive filenames cannot become commands.
-  // CBZ is handled by the already-bundled JSZip and needs no system command.
+  // libarchive handles both RAR-based CBR and a broader set of ZIP variants
+  // than JSZip (including archives produced with less common ZIP encoders).
+  // Arguments are passed directly to spawn (no shell), so archive filenames
+  // cannot become commands.
   const runComicArchiveCommand = (args: string[], maxBytes: number): Promise<Buffer> =>
     new Promise((resolve, reject) => {
       const child = spawn("bsdtar", args, { stdio: ["ignore", "pipe", "pipe"] });
@@ -13949,23 +13957,11 @@ async function startServer() {
     const stat = await fs.promises.stat(filePath);
     const cached = comicManifestCache.get(filePath);
     if (cached?.mtimeMs === stat.mtimeMs) return cached.pages;
-    let pages: string[];
-    if (path.extname(filePath).toLowerCase() === ".cbz") {
-      const archive = await JSZip.loadAsync(await fs.promises.readFile(filePath), { checkCRC32: true });
-      const entries = Object.values(archive.files);
-      const expandedBytes = entries.reduce((total, entry) =>
-        total + Number((entry as any)?._data?.uncompressedSize || 0), 0);
-      if (expandedBytes > 500 * 1024 * 1024) throw new Error("CBZ expands beyond the 500 MB safety limit");
-      pages = entries
-        .filter((entry) => !entry.dir && COMIC_IMAGE_EXTENSIONS.has(path.extname(entry.name).toLowerCase()))
-        .map((entry) => entry.name);
-    } else {
-      const listing = (await runComicArchiveCommand(["-tf", filePath], 2 * 1024 * 1024)).toString("utf8");
-      pages = listing
-        .split(/\r?\n/)
-        .map((entry) => entry.trim())
-        .filter((entry) => entry && !entry.endsWith("/") && COMIC_IMAGE_EXTENSIONS.has(path.extname(entry).toLowerCase()));
-    }
+    const listing = (await runComicArchiveCommand(["-tf", filePath], 2 * 1024 * 1024)).toString("utf8");
+    const pages = listing
+      .split(/\r?\n/)
+      .map((entry) => entry.trim())
+      .filter((entry) => entry && !entry.endsWith("/") && COMIC_IMAGE_EXTENSIONS.has(path.extname(entry).toLowerCase()));
     pages.sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
     if (pages.length === 0) throw new Error("Comic archive contains no supported image pages");
     if (pages.length > MAX_COMIC_PAGES) throw new Error(`Comic archive has too many pages (maximum ${MAX_COMIC_PAGES})`);
@@ -13974,18 +13970,7 @@ async function startServer() {
   };
 
   const extractComicPage = async (filePath: string, entry: string) => {
-    let bytes: Buffer;
-    if (path.extname(filePath).toLowerCase() === ".cbz") {
-      const archive = await JSZip.loadAsync(await fs.promises.readFile(filePath), { checkCRC32: true });
-      const page = archive.file(entry);
-      if (!page) throw new Error("Comic page is missing from the archive");
-      const declaredSize = Number((page as any)?._data?.uncompressedSize || 0);
-      if (declaredSize > MAX_COMIC_PAGE_BYTES) throw new Error("Comic page exceeds the 25 MB safety limit");
-      bytes = await page.async("nodebuffer");
-      if (bytes.length > MAX_COMIC_PAGE_BYTES) throw new Error("Comic page exceeds the 25 MB safety limit");
-    } else {
-      bytes = await runComicArchiveCommand(["-xOf", filePath, "--", entry], MAX_COMIC_PAGE_BYTES);
-    }
+    const bytes = await runComicArchiveCommand(["-xOf", filePath, "--", entry], MAX_COMIC_PAGE_BYTES);
     const metadata = await sharp(bytes, { limitInputPixels: 80_000_000 }).metadata();
     if (!metadata.width || !metadata.height || metadata.width * metadata.height > 80_000_000) {
       throw new Error("Comic page dimensions exceed the safety limit");
@@ -14081,11 +14066,12 @@ async function startServer() {
   };
 
   const compressOversizedEbook = async (file: Express.Multer.File) => {
-    if (file.size <= MAX_STORED_EBOOK_BYTES) return { size: file.size, compressed: false };
     const ext = path.extname(file.originalname).toLowerCase();
     if (ext === ".cbr" || ext === ".cbz") {
-      throw new Error("CBR and CBZ files must be 50 MB or smaller");
+      if (file.size <= MAX_STORED_COMIC_BYTES) return { size: file.size, compressed: false };
+      throw new Error("CBR and CBZ files must be 100 MB or smaller");
     }
+    if (file.size <= MAX_STORED_EBOOK_BYTES) return { size: file.size, compressed: false };
     const temporaryPath = `${file.path}.compressing${ext}`;
     try {
       if (ext === ".pdf") await compressPdf(file.path, temporaryPath);
@@ -14387,7 +14373,9 @@ async function startServer() {
           await fs.promises.unlink(file.path).catch(() => {});
           logger.warn(`Could not compress oversized ${format}: ${String(compressionError?.message || compressionError)}`);
           res.status(400).json({
-            error: `This ${format} is larger than 50 MB and could not be compressed below the limit. ${compressionError?.message || ""}`.trim(),
+            error: COMIC_FORMATS.has(format)
+              ? (compressionError?.message || `This ${format} exceeds the comic upload limit.`)
+              : `This ${format} is larger than 50 MB and could not be compressed below the limit. ${compressionError?.message || ""}`.trim(),
           });
           return;
         }
@@ -14563,13 +14551,23 @@ async function startServer() {
         return;
       }
       const entry = pages[pageIndex - 1];
-      const bytes = await extractComicPage(filePath, entry);
+      let bytes = await extractComicPage(filePath, entry);
       const ext = path.extname(entry).toLowerCase();
       const mimeTypes: Record<string, string> = {
-        ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
-        ".webp": "image/webp", ".gif": "image/gif",
+        ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".jpe": "image/jpeg", ".jfif": "image/jpeg",
+        ".png": "image/png", ".webp": "image/webp", ".gif": "image/gif", ".avif": "image/avif",
       };
-      res.setHeader("Content-Type", mimeTypes[ext] || "application/octet-stream");
+      let mimeType = mimeTypes[ext];
+      // Browsers do not consistently display BMP or TIFF. Convert only those
+      // pages on demand while preserving the original archive for downloads.
+      if (!mimeType) {
+        bytes = await sharp(bytes, { limitInputPixels: 80_000_000 })
+          .rotate()
+          .jpeg({ quality: 90, mozjpeg: true })
+          .toBuffer();
+        mimeType = "image/jpeg";
+      }
+      res.setHeader("Content-Type", mimeType);
       res.setHeader("Content-Length", bytes.length);
       res.setHeader("Cache-Control", "private, max-age=86400");
       res.send(bytes);

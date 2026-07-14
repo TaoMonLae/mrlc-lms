@@ -238,7 +238,7 @@ export default function EbookReader() {
   return (
     <div
       ref={readerRef}
-      className={`flex flex-col -m-2 ${isFullscreen ? 'h-screen bg-white dark:bg-canvas p-3' : 'h-[calc(100vh-7rem)]'}`}
+      className={`flex flex-col -m-2 ${isFullscreen ? 'h-dvh bg-white dark:bg-canvas p-3' : 'h-[calc(100dvh-7rem)]'}`}
     >
       {/* Toolbar */}
       <div className="flex items-center gap-3 px-1 pb-3 shrink-0">
@@ -667,22 +667,27 @@ function AddToFlashcardsDialog({ token, defaultDefinition, onClose }: {
 
 /* ─────────────────────── CBR / CBZ comic reader ─────────────────────── */
 type ComicDirection = 'ltr' | 'rtl';
+type ComicFitMode = ReaderFitMode | 'page';
 
-function ComicPageImage({ id, token, page, width, height }: {
+function ComicPageImage({ id, token, page, fitMode, availableWidth, availableHeight, scale }: {
   id: string;
   token: string | null;
   page: number;
-  width?: number;
-  height?: number;
+  fitMode: ComicFitMode;
+  availableWidth: number;
+  availableHeight: number;
+  scale: number;
 }) {
   const [src, setSrc] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [dimensions, setDimensions] = useState<{ width: number; height: number } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     let objectUrl: string | null = null;
     setSrc(null);
     setError(null);
+    setDimensions(null);
     fetch(`/api/ebooks/${id}/comic/pages/${page}`, { headers: authHeaders(token) })
       .then(async (res) => {
         if (!res.ok) {
@@ -713,13 +718,33 @@ function ComicPageImage({ id, token, page, width, height }: {
   if (!src) {
     return <div className="flex h-48 w-36 items-center justify-center rounded bg-white shadow"><Loader2 className="h-5 w-5 animate-spin text-slate-400" /></div>;
   }
+
+  let renderedWidth: number | undefined;
+  if (dimensions && availableWidth > 0 && availableHeight > 0) {
+    const aspectRatio = dimensions.width / dimensions.height;
+    const fittedWidth = fitMode === 'height'
+      ? availableHeight * aspectRatio
+      : fitMode === 'page'
+        ? Math.min(availableWidth, availableHeight * aspectRatio)
+        : availableWidth;
+    renderedWidth = Math.max(1, fittedWidth * scale);
+  }
+
   return (
     <img
       src={src}
       alt={`Comic page ${page}`}
       draggable={false}
       className="max-w-none select-none bg-white shadow-xl"
-      style={{ width: width ? `${width}px` : 'auto', height: height ? `${height}px` : 'auto' }}
+      onLoad={(event) => setDimensions({
+        width: event.currentTarget.naturalWidth,
+        height: event.currentTarget.naturalHeight,
+      })}
+      style={{
+        width: renderedWidth ? `${renderedWidth}px` : 'auto',
+        height: 'auto',
+        maxWidth: renderedWidth ? 'none' : '100%',
+      }}
     />
   );
 }
@@ -730,7 +755,7 @@ function ComicView({ id, token, format }: { id: string; token: string | null; fo
   const [page, setPage] = useState(1);
   const [scale, setScale] = useState(1);
   const [pageView, setPageView] = useState<ReaderPageView>('single');
-  const [fitMode, setFitMode] = useState<ReaderFitMode>('width');
+  const [fitMode, setFitMode] = useState<ComicFitMode>('page');
   const [direction, setDirection] = useState<ComicDirection>('ltr');
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
   const [loading, setLoading] = useState(true);
@@ -786,6 +811,25 @@ function ComicView({ id, token, format }: { id: string; token: string | null; fo
     window.dispatchEvent(new Event('ebook-reader-activity'));
   }, [pageCount, pageStep]);
 
+  const zoomOut = useCallback(() => setScale((value) => Math.max(0.5, +(value - 0.2).toFixed(2))), []);
+  const zoomIn = useCallback(() => setScale((value) => Math.min(3, +(value + 0.2).toFixed(2))), []);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest('input, textarea, select, button, [role="combobox"]')) return;
+      if (event.key === 'ArrowLeft') go(direction === 'rtl' ? 1 : -1);
+      else if (event.key === 'ArrowRight') go(direction === 'rtl' ? -1 : 1);
+      else if (event.key === '+' || event.key === '=') zoomIn();
+      else if (event.key === '-') zoomOut();
+      else if (event.key === '0') setScale(1);
+      else return;
+      event.preventDefault();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [direction, go, zoomIn, zoomOut]);
+
   const changePageView = (value: ReaderPageView) => {
     setPageView(value);
     if (value === 'two') setPage((current) => current % 2 === 0 ? current - 1 : current);
@@ -794,12 +838,10 @@ function ComicView({ id, token, format }: { id: string; token: string | null; fo
   const pageNumbers = pageView === 'two' && page < pageCount ? [page, page + 1] : [page];
   const displayPages = direction === 'rtl' && pageNumbers.length === 2 ? [...pageNumbers].reverse() : pageNumbers;
   const gap = displayPages.length === 2 ? 16 : 0;
-  const targetWidth = fitMode === 'width' && viewport.width > 0
-    ? Math.max(220, ((viewport.width - 32 - gap) / displayPages.length) * scale)
-    : undefined;
-  const targetHeight = fitMode === 'height' && viewport.height > 0
-    ? Math.max(240, (viewport.height - 32) * scale)
-    : undefined;
+  const availableWidth = viewport.width > 0
+    ? Math.max(1, (viewport.width - 32 - gap) / displayPages.length)
+    : 0;
+  const availableHeight = viewport.height > 0 ? Math.max(1, viewport.height - 32) : 0;
 
   if (loading) {
     return <div className="flex h-full items-center justify-center text-slate-500"><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Opening comic…</div>;
@@ -815,13 +857,19 @@ function ComicView({ id, token, format }: { id: string; token: string | null; fo
   }
 
   return (
-    <div className="relative flex h-full flex-col" onKeyDown={(event) => {
-      if (event.key === 'ArrowLeft') go(direction === 'rtl' ? 1 : -1);
-      if (event.key === 'ArrowRight') go(direction === 'rtl' ? -1 : 1);
-    }} tabIndex={0}>
+    <div className="relative flex h-full flex-col" role="region" aria-label={`${format} comic reader`}>
       <div ref={containerRef} className="flex min-h-0 flex-1 items-start justify-center gap-4 overflow-auto p-4 custom-scrollbar">
         {displayPages.map((pageNumber) => (
-          <ComicPageImage key={pageNumber} id={id} token={token} page={pageNumber} width={targetWidth} height={targetHeight} />
+          <ComicPageImage
+            key={pageNumber}
+            id={id}
+            token={token}
+            page={pageNumber}
+            fitMode={fitMode}
+            availableWidth={availableWidth}
+            availableHeight={availableHeight}
+            scale={scale}
+          />
         ))}
       </div>
       <div className="flex shrink-0 flex-wrap items-center justify-center gap-2 border-t border-slate-200 bg-white px-3 py-2 dark:border-surface-raised dark:bg-surface-indigo">
@@ -831,16 +879,27 @@ function ComicView({ id, token, format }: { id: string; token: string | null; fo
         </span>
         <Button variant="outline" size="icon" onClick={() => go(1)} disabled={page + pageNumbers.length - 1 >= pageCount} title="Next page"><ChevronRight className="h-4 w-4" /></Button>
         <div className="mx-1 h-5 w-px bg-slate-200 dark:bg-surface-raised" />
-        <Button variant="outline" size="icon" onClick={() => setScale((value) => Math.max(0.5, +(value - 0.2).toFixed(2)))} title="Zoom out"><ZoomOut className="h-4 w-4" /></Button>
-        <span className="w-10 text-center text-xs tabular-nums text-slate-500">{Math.round(scale * 100)}%</span>
-        <Button variant="outline" size="icon" onClick={() => setScale((value) => Math.min(3, +(value + 0.2).toFixed(2)))} title="Zoom in"><ZoomIn className="h-4 w-4" /></Button>
+        <Button variant="outline" size="icon" onClick={zoomOut} title="Zoom out (-)"><ZoomOut className="h-4 w-4" /></Button>
+        <button
+          type="button"
+          onClick={() => setScale(1)}
+          title="Reset zoom to 100% (0)"
+          className="w-11 rounded px-1 py-2 text-center text-xs tabular-nums text-slate-500 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:hover:bg-surface-raised"
+        >
+          {Math.round(scale * 100)}%
+        </button>
+        <Button variant="outline" size="icon" onClick={zoomIn} title="Zoom in (+)"><ZoomIn className="h-4 w-4" /></Button>
         <Select value={pageView} onValueChange={(value) => changePageView(value as ReaderPageView)}>
           <SelectTrigger className="h-9 w-[126px]" title="Page view"><SelectValue /></SelectTrigger>
           <SelectContent><SelectItem value="single">Single Page</SelectItem><SelectItem value="two">Two Page</SelectItem></SelectContent>
         </Select>
-        <Select value={fitMode} onValueChange={(value) => { setFitMode(value as ReaderFitMode); setScale(1); }}>
+        <Select value={fitMode} onValueChange={(value) => { setFitMode(value as ComicFitMode); setScale(1); }}>
           <SelectTrigger className="h-9 w-[120px]" title="Fit mode"><SelectValue /></SelectTrigger>
-          <SelectContent><SelectItem value="width">Fit Width</SelectItem><SelectItem value="height">Fit Height</SelectItem></SelectContent>
+          <SelectContent>
+            <SelectItem value="page">Fit Page</SelectItem>
+            <SelectItem value="width">Fit Width</SelectItem>
+            <SelectItem value="height">Fit Height</SelectItem>
+          </SelectContent>
         </Select>
         <Select value={direction} onValueChange={(value) => setDirection(value as ComicDirection)}>
           <SelectTrigger className="h-9 w-[142px]" title="Reading direction"><SelectValue /></SelectTrigger>
