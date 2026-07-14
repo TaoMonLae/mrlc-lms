@@ -59,7 +59,7 @@ const EBOOK_CHUNK_DIR = path.join(EBOOK_DIR, ".chunks");
 fs.mkdirSync(EBOOK_CHUNK_DIR, { recursive: true });
 const MAX_STORED_EBOOK_BYTES = 50 * 1024 * 1024;
 const MAX_STANDARD_EBOOK_UPLOAD_BYTES = 100 * 1024 * 1024;
-const MAX_EBOOK_UPLOAD_BYTES = 250 * 1024 * 1024;
+const MAX_EBOOK_UPLOAD_BYTES = 500 * 1024 * 1024;
 const COMIC_COMPRESSION_THRESHOLD_BYTES = 50 * 1024 * 1024;
 const MAX_STORED_COMIC_BYTES = 100 * 1024 * 1024;
 // Ebook cover thumbnails (auto-extracted client-side from the EPUB's embedded
@@ -125,7 +125,7 @@ const ebookUpload = multer({
     },
   }),
   // Documents use lower per-format limits below. Comic archives may arrive at
-  // up to 250 MB so oversized CBR/CBZ files can be optimized after transport.
+  // up to 500 MB so oversized CBR/CBZ files can be optimized after transport.
   limits: { fileSize: MAX_EBOOK_UPLOAD_BYTES },
   fileFilter: (_req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
@@ -15260,7 +15260,7 @@ async function startServer() {
       if (err) {
         const message =
           err instanceof multer.MulterError
-            ? (err.code === "LIMIT_FILE_SIZE" ? "File exceeds the 250 MB upload limit" : err.message)
+            ? (err.code === "LIMIT_FILE_SIZE" ? "File exceeds the 500 MB upload limit" : err.message)
             : err.message || "Upload failed";
         res.status(400).json({ error: message });
         return;
@@ -15592,7 +15592,8 @@ async function startServer() {
     totalChunks: number;
     createdAt: string;
   };
-  const MAX_EBOOK_CHUNKS = 13;
+  // A 500 MB comic is transported as twenty-five 20 MB chunks.
+  const MAX_EBOOK_CHUNKS = 25;
   const ebookChunkManifestPath = (uploadId: string) => path.join(EBOOK_CHUNK_DIR, `${uploadId}.json`);
   const ebookChunkPartPath = (uploadId: string, index: number) => path.join(EBOOK_CHUNK_DIR, `${uploadId}.${index}.part`);
   const readEbookChunkManifest = async (uploadId: string): Promise<EbookChunkManifest> =>
