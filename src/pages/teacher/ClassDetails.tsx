@@ -191,7 +191,7 @@ export default function ClassDetails() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"
@@ -206,8 +206,8 @@ export default function ClassDetails() {
 
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-slate-200 dark:border-surface-raised">
         <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{classInfo.name}</h1>
+          <div className="flex min-w-0 flex-wrap items-center gap-3">
+            <h1 className="min-w-0 break-words text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight sm:text-3xl">{classInfo.name}</h1>
             <Badge className="bg-aubergine-600 text-white border-none font-bold text-[10px] uppercase tracking-widest px-2 py-0.5">
               {classInfo.level}
             </Badge>
@@ -237,15 +237,15 @@ export default function ClassDetails() {
         </div>
       </div>
 
-      <Tabs defaultValue="students" className="w-full">
-        <TabsList className="bg-slate-100/50 dark:bg-surface-indigo/50 p-1 border border-slate-200 dark:border-surface-raised h-12 w-full max-w-2xl justify-start">
-          <TabsTrigger value="students" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:shadow-sm px-6 h-full font-bold text-[11px] uppercase tracking-widest text-slate-500 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white">
+      <Tabs defaultValue="students" className="min-w-0 w-full">
+        <TabsList className="custom-scrollbar h-12 w-full max-w-2xl justify-start overflow-x-auto bg-slate-100/50 p-1 border border-slate-200 dark:border-surface-raised dark:bg-surface-indigo/50">
+          <TabsTrigger value="students" className="shrink-0 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:shadow-sm px-4 sm:px-6 h-full font-bold text-[11px] uppercase tracking-widest text-slate-500 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white">
             <Users className="h-4 w-4 mr-2" /> Students
           </TabsTrigger>
-          <TabsTrigger value="attendance" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:shadow-sm px-6 h-full font-bold text-[11px] uppercase tracking-widest text-slate-500 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white">
+          <TabsTrigger value="attendance" className="shrink-0 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:shadow-sm px-4 sm:px-6 h-full font-bold text-[11px] uppercase tracking-widest text-slate-500 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white">
             <UserCheck className="h-4 w-4 mr-2" /> Attendance Summary
           </TabsTrigger>
-          <TabsTrigger value="exams" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:shadow-sm px-6 h-full font-bold text-[11px] uppercase tracking-widest text-slate-500 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white">
+          <TabsTrigger value="exams" className="shrink-0 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:shadow-sm px-4 sm:px-6 h-full font-bold text-[11px] uppercase tracking-widest text-slate-500 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white">
             <FileText className="h-4 w-4 mr-2" /> Exam History
           </TabsTrigger>
         </TabsList>
@@ -283,8 +283,8 @@ export default function ClassDetails() {
           </div>
 
           {showFilters && (
-            <div className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-surface-raised/40 rounded-lg border border-slate-200 dark:border-surface-raised">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-4 p-4 bg-slate-50 dark:bg-surface-raised/40 rounded-lg border border-slate-200 dark:border-surface-raised sm:flex-row sm:items-center">
+              <div className="flex flex-wrap items-center gap-2">
                 <label className="text-xs font-bold text-slate-500 uppercase">Attendance:</label>
                 <Select value={attendanceFilter} onValueChange={setAttendanceFilter}>
                   <SelectTrigger className="h-8 w-32">
@@ -308,15 +308,15 @@ export default function ClassDetails() {
             {filteredStudents.map((student) => (
               <Card key={student.id} className="group border-slate-200 dark:border-surface-raised overflow-hidden hover:shadow-md transition-shadow">
                 <CardContent className="p-0">
-                  <div className="p-5 flex items-center gap-4">
+                  <div className="p-5 flex min-w-0 items-center gap-4">
                     <Avatar className="h-12 w-12 border-2 border-white dark:border-surface-raised shadow-sm">
                       <AvatarImage
                         src={student.profilePhotoUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${student.name}`}
                       />
                       <AvatarFallback>{student.name.substring(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
-                    <div>
-                      <h4 className="font-bold text-slate-900 dark:text-white group-hover:text-aubergine-600 transition-colors">{student.name}</h4>
+                    <div className="min-w-0">
+                      <h4 className="break-words font-bold text-slate-900 dark:text-white group-hover:text-aubergine-600 transition-colors">{student.name}</h4>
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{student.studentId}</p>
                     </div>
                   </div>

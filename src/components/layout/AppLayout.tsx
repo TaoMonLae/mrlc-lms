@@ -34,13 +34,13 @@ export function AppLayout() {
         <AppSidebar />
         <SidebarInset className="flex min-w-0 flex-col overflow-hidden bg-transparent">
           <TopBar />
-          <main id="main-content" className="min-w-0 flex-1 overflow-y-auto custom-scrollbar" tabIndex={-1}>
+          <main id="main-content" className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar" tabIndex={-1}>
             <motion.div
               key={location.pathname}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.15 }}
-              className="p-4 sm:p-6 lg:p-8"
+              className="w-full min-w-0 max-w-full p-4 sm:p-6 lg:p-8"
             >
               <Outlet />
             </motion.div>

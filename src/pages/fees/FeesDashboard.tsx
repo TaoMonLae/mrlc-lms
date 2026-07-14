@@ -101,13 +101,13 @@ export default function FeesDashboard() {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="min-w-0 max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Fees & Payments</h1>
           <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Manage student fees and track payments.</p>
         </div>
-        <div className="flex gap-2 w-full sm:w-auto">
+        <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto">
           {hasPermission('manage_fees') && (
             <>
               <Button variant="outline" className="w-full sm:w-auto" onClick={exportCsv} disabled={filteredFees.length === 0}>
@@ -168,9 +168,9 @@ export default function FeesDashboard() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="flex w-full md:w-auto gap-3">
+          <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 md:flex md:w-auto">
             <Select value={classFilter} onValueChange={setClassFilter}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-full md:w-[140px]">
                 <SelectValue placeholder="Class" />
               </SelectTrigger>
               <SelectContent>
@@ -181,7 +181,7 @@ export default function FeesDashboard() {
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-full md:w-[140px]">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>

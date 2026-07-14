@@ -142,7 +142,7 @@ export default function EbookList() {
   };
 
   return (
-    <div className="space-y-6 pb-10">
+    <div className="min-w-0 max-w-full space-y-6 pb-10">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
@@ -151,14 +151,14 @@ export default function EbookList() {
           <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Read EPUB and PDF books online.</p>
         </div>
         {canManage && (
-          <div className="flex items-center gap-2">
-            <Button variant="outline" render={<Link to="/elibrary/analytics" />} nativeButton={false}>
+          <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
+            <Button variant="outline" className="w-full sm:w-auto" render={<Link to="/elibrary/analytics" />} nativeButton={false}>
               <BarChart3 className="mr-2 h-4 w-4" /> Reading Analytics
             </Button>
-            <Button variant="outline" render={<Link to="/elibrary/gutenberg" />} nativeButton={false}>
+            <Button variant="outline" className="w-full sm:w-auto" render={<Link to="/elibrary/gutenberg" />} nativeButton={false}>
               <BookMarked className="mr-2 h-4 w-4" /> Import from Gutenberg
             </Button>
-            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground" render={<Link to="/elibrary/upload" />} nativeButton={false}>
+            <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground sm:w-auto" render={<Link to="/elibrary/upload" />} nativeButton={false}>
               <Plus className="mr-2 h-4 w-4" /> Upload Book
             </Button>
           </div>
@@ -166,9 +166,9 @@ export default function EbookList() {
       </div>
 
       {continueReading.length > 0 && (
-        <div className="space-y-2">
+        <div className="min-w-0 max-w-full space-y-2">
           <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Continue Reading</h2>
-          <div className="flex gap-3 overflow-x-auto custom-scrollbar pb-1">
+          <div className="flex max-w-full gap-3 overflow-x-auto custom-scrollbar pb-1">
             {continueReading.map((p) => (
               <button
                 key={p.ebook.id}
@@ -197,12 +197,12 @@ export default function EbookList() {
       )}
 
       <div className="flex flex-col md:flex-row gap-3">
-        <div className="relative flex-1">
+        <div className="relative min-w-0 flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search title, author, category…" className="pl-9" />
         </div>
         <Select value={formatFilter} onValueChange={setFormatFilter}>
-          <SelectTrigger className="w-[150px]">
+          <SelectTrigger className="w-full md:w-[150px]">
             <div className="flex items-center gap-2"><Filter className="h-3.5 w-3.5" /><SelectValue /></div>
           </SelectTrigger>
           <SelectContent>
@@ -212,7 +212,7 @@ export default function EbookList() {
           </SelectContent>
         </Select>
         <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortValue)}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-full md:w-[180px]">
             <div className="flex items-center gap-2"><ArrowUpDown className="h-3.5 w-3.5" /><SelectValue /></div>
           </SelectTrigger>
           <SelectContent>
@@ -225,7 +225,7 @@ export default function EbookList() {
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setCategory('All')}
-            className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+            className={`max-w-full break-words px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
               category === 'All'
                 ? 'bg-primary text-primary-foreground border-primary'
                 : 'bg-white dark:bg-surface-indigo text-slate-600 dark:text-slate-300 border-slate-200 dark:border-surface-raised hover:border-primary/50'
@@ -237,7 +237,7 @@ export default function EbookList() {
             <button
               key={c}
               onClick={() => setCategory(c)}
-              className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+              className={`max-w-full break-words px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
                 category === c
                   ? 'bg-primary text-primary-foreground border-primary'
                   : 'bg-white dark:bg-surface-indigo text-slate-600 dark:text-slate-300 border-slate-200 dark:border-surface-raised hover:border-primary/50'
@@ -262,7 +262,7 @@ export default function EbookList() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {filtered.map((b) => (
-            <div key={b.id} className="group bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-md overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col">
+            <div key={b.id} className="group min-w-0 bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-md overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col">
               <div className="flex gap-4 p-4 flex-1">
                 <div className="h-24 w-16 shrink-0 rounded-sm bg-accent-purple/10 border border-slate-100 dark:border-surface-raised flex items-center justify-center overflow-hidden">
                   {b.coverUrl ? <img src={b.coverUrl} alt="" className="h-full w-full object-cover" /> : <BookMarked className="h-7 w-7 text-accent-purple" />}
@@ -279,8 +279,8 @@ export default function EbookList() {
                   {b.category && <p className="text-[10px] text-slate-400 mt-0.5">{b.category}</p>}
                 </div>
               </div>
-              <div className="px-4 pb-4 pt-1 flex items-center gap-2">
-                <Button className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground" onClick={() => navigate(`/elibrary/${b.id}/read`)}>
+              <div className="px-4 pb-4 pt-1 flex flex-wrap items-center gap-2">
+                <Button className="basis-full bg-primary hover:bg-primary/90 text-primary-foreground sm:basis-auto sm:flex-1" onClick={() => navigate(`/elibrary/${b.id}/read`)}>
                   <BookOpen className="mr-2 h-4 w-4" /> Read
                 </Button>
                 {b.downloadAllowed && (

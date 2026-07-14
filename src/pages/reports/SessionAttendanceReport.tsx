@@ -143,11 +143,11 @@ export default function SessionAttendanceReport() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight dark:text-white uppercase">Session Attendance Report</h1>
+          <h1 className="text-xl font-bold text-slate-900 tracking-tight dark:text-white uppercase sm:text-2xl">Session Attendance Report</h1>
           <p className="text-sm text-slate-500 mt-1 font-medium">View attendance by subject and session.</p>
         </div>
         <Button onClick={exportToCSV} disabled={!data || loading} variant="outline" size="sm" className="gap-2">
@@ -158,8 +158,8 @@ export default function SessionAttendanceReport() {
       {/* Filters */}
       <Card className="border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-sm">
         <CardContent className="p-4">
-          <div className="flex flex-wrap gap-4">
-            <div className="flex flex-col gap-1.5 min-w-[140px]">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="flex min-w-0 flex-col gap-1.5">
               <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Month</span>
               <Input
                 type="month"
@@ -168,10 +168,10 @@ export default function SessionAttendanceReport() {
                 className="h-10"
               />
             </div>
-            <div className="flex flex-col gap-1.5 min-w-[200px]">
+            <div className="flex min-w-0 flex-col gap-1.5">
               <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Class</span>
               <Select value={classId} onValueChange={setClassId}>
-                <SelectTrigger className="h-10">
+                <SelectTrigger className="h-10 w-full">
                   <SelectValue placeholder="All Classes" />
                 </SelectTrigger>
                 <SelectContent>
@@ -182,10 +182,10 @@ export default function SessionAttendanceReport() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex flex-col gap-1.5 min-w-[200px]">
+            <div className="flex min-w-0 flex-col gap-1.5">
               <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Subject</span>
               <Select value={subjectId} onValueChange={setSubjectId}>
-                <SelectTrigger className="h-10">
+                <SelectTrigger className="h-10 w-full">
                   <SelectValue placeholder="All Subjects" />
                 </SelectTrigger>
                 <SelectContent>

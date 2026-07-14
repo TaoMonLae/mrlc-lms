@@ -233,7 +233,12 @@ export function AppSidebar() {
                 <span className="text-xs text-white/55 truncate">{user?.role || 'Guest'}</span>
               </div>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end" side="right" sideOffset={10}>
+          <DropdownMenuContent
+            className="w-56 max-w-[calc(100vw-2rem)]"
+            align={isMobile ? "start" : "end"}
+            side={isMobile ? "top" : "right"}
+            sideOffset={isMobile ? 8 : 10}
+          >
             <DropdownMenuGroup>
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <div className="px-2 py-3">
@@ -247,7 +252,7 @@ export function AppSidebar() {
                 />
               </div>
               <DropdownMenuSeparator />
-              <DropdownMenuItem render={<Link to="/profile" className="w-full flex items-center" />}>
+              <DropdownMenuItem render={<Link to="/profile" onClick={closeOnMobile} className="w-full flex items-center" />}>
                 <User className="mr-2 h-4 w-4" />
                 My Profile
               </DropdownMenuItem>

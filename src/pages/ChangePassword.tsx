@@ -41,15 +41,15 @@ export default function ChangePasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 font-sans">
+    <div className="flex min-h-dvh items-start justify-center bg-slate-50 px-4 py-8 font-sans sm:items-center">
       <div className="w-full max-w-md">
-        <div className="flex flex-col items-center gap-6 mb-8">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blurple-600 text-white shadow-xl shadow-blurple-600/20">
+        <div className="mb-8 flex flex-col items-center gap-5">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-aubergine-600 text-white shadow-xl shadow-aubergine-600/20">
             <KeyRound className="h-9 w-9" />
           </div>
           <div className="text-center">
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">Change your password</h1>
-            <p className="text-xs text-slate-500 mt-1 uppercase tracking-[0.2em] font-bold">MRLC LMS</p>
+            <p className="mt-1 text-xs font-bold uppercase tracking-[0.2em] text-slate-600">MRLC LMS</p>
           </div>
         </div>
 
@@ -58,7 +58,7 @@ export default function ChangePasswordPage() {
             <CardTitle className="text-xl font-bold text-slate-900">
               {forced ? "Set a new password" : "Update password"}
             </CardTitle>
-            <CardDescription className="text-slate-500 font-medium">
+            <CardDescription className="font-medium leading-relaxed text-slate-600">
               {forced
                 ? "For security, please replace the temporary password before continuing."
                 : "Enter your current password and choose a new one."}
@@ -73,31 +73,31 @@ export default function ChangePasswordPage() {
                 </div>
               )}
               <div className="space-y-2">
-                <Label htmlFor="current" className="text-xs font-bold uppercase tracking-wider text-slate-500">Current password</Label>
+                <Label htmlFor="current" className="text-xs font-bold uppercase tracking-wider text-slate-700">Current password</Label>
                 <Input id="current" type="password" autoComplete="current-password"
-                  className="h-11 border-slate-200 bg-slate-50/50 text-slate-900 dark:bg-slate-50/50 dark:text-slate-900 dark:border-slate-200"
+                  className="h-11 border-slate-300 bg-white text-slate-900 focus-visible:border-aubergine-600 focus-visible:ring-aubergine-600/25 dark:border-slate-300 dark:bg-white dark:text-slate-900"
                   value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="new" className="text-xs font-bold uppercase tracking-wider text-slate-500">New password</Label>
+                <Label htmlFor="new" className="text-xs font-bold uppercase tracking-wider text-slate-700">New password</Label>
                 <Input id="new" type="password" autoComplete="new-password"
-                  className="h-11 border-slate-200 bg-slate-50/50 text-slate-900 dark:bg-slate-50/50 dark:text-slate-900 dark:border-slate-200"
+                  className="h-11 border-slate-300 bg-white text-slate-900 focus-visible:border-aubergine-600 focus-visible:ring-aubergine-600/25 dark:border-slate-300 dark:bg-white dark:text-slate-900"
                   value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required />
-                <p className="text-xs text-slate-400">At least 8 characters.</p>
+                <p className="text-xs font-medium text-slate-600">At least 8 characters.</p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirm" className="text-xs font-bold uppercase tracking-wider text-slate-500">Confirm new password</Label>
+                <Label htmlFor="confirm" className="text-xs font-bold uppercase tracking-wider text-slate-700">Confirm new password</Label>
                 <Input id="confirm" type="password" autoComplete="new-password"
-                  className="h-11 border-slate-200 bg-slate-50/50 text-slate-900 dark:bg-slate-50/50 dark:text-slate-900 dark:border-slate-200"
+                  className="h-11 border-slate-300 bg-white text-slate-900 focus-visible:border-aubergine-600 focus-visible:ring-aubergine-600/25 dark:border-slate-300 dark:bg-white dark:text-slate-900"
                   value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
               </div>
             </CardContent>
             <CardFooter className="flex-col gap-3">
               <Button type="submit" disabled={submitting}
-                className="w-full h-12 text-sm font-bold bg-blurple-600 hover:bg-blurple-700 text-white transition-all group">
+                className="group h-12 w-full bg-aubergine-600 text-sm font-bold text-white shadow-sm transition-all hover:bg-aubergine-700 disabled:bg-aubergine-200 disabled:text-aubergine-950 disabled:opacity-100">
                 {submitting ? "Saving…" : (<>Update password <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" /></>)}
               </Button>
-              <button type="button" onClick={logout} className="text-xs text-slate-400 hover:text-slate-600 font-medium">
+              <button type="button" onClick={logout} className="min-h-9 rounded px-3 text-sm font-semibold text-slate-600 underline-offset-4 hover:text-slate-900 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-aubergine-600">
                 Sign out instead
               </button>
             </CardFooter>
