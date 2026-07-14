@@ -23,7 +23,7 @@ const COMPRESSION_THRESHOLD_MB = 50;
 const MAX_DOCUMENT_UPLOAD_MB = 100;
 const MAX_CBR_UPLOAD_MB = 250;
 const MAX_CBZ_UPLOAD_MB = 250;
-const COMIC_COMPRESSION_THRESHOLD_MB = 100;
+const COMIC_COMPRESSION_THRESHOLD_MB = 50;
 const UPLOAD_CHUNK_BYTES = 20 * 1024 * 1024;
 
 interface QueuedFile {
@@ -361,7 +361,7 @@ export default function EbookUpload() {
           />
           <UploadCloud className="h-8 w-8 text-slate-400 mx-auto mb-2" />
           <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Click or drag files here</p>
-          <p className="text-xs text-slate-500 mt-1">PDF or EPUB up to 100 MB · CBR or CBZ up to {MAX_CBZ_UPLOAD_MB} MB</p>
+          <p className="text-xs text-slate-500 mt-1">PDF or EPUB up to 100 MB · CBR or CBZ up to {MAX_CBZ_UPLOAD_MB} MB (compressed from 50 MB)</p>
         </div>
 
         {/* Queued files */}
@@ -383,7 +383,7 @@ export default function EbookUpload() {
                     <FileText className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                     <p className="text-xs text-slate-500 truncate">{q.file.name} · {(q.file.size / (1024 * 1024)).toFixed(1)} MB</p>
                     {((q.file.size > COMPRESSION_THRESHOLD_MB * 1024 * 1024 && (isPdf(q.file) || isEpub(q.file)))
-                      || (q.file.size > COMIC_COMPRESSION_THRESHOLD_MB * 1024 * 1024 && (isCbr(q.file) || isCbz(q.file)))) && (
+                      || (q.file.size >= COMIC_COMPRESSION_THRESHOLD_MB * 1024 * 1024 && (isCbr(q.file) || isCbz(q.file)))) && (
                       <span className="shrink-0 text-[10px] font-medium text-amber-600 dark:text-amber-400">
                         {isCbr(q.file) ? 'Will optimize to CBZ' : 'Will compress'}
                       </span>

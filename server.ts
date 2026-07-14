@@ -60,6 +60,7 @@ fs.mkdirSync(EBOOK_CHUNK_DIR, { recursive: true });
 const MAX_STORED_EBOOK_BYTES = 50 * 1024 * 1024;
 const MAX_STANDARD_EBOOK_UPLOAD_BYTES = 100 * 1024 * 1024;
 const MAX_EBOOK_UPLOAD_BYTES = 250 * 1024 * 1024;
+const COMIC_COMPRESSION_THRESHOLD_BYTES = 50 * 1024 * 1024;
 const MAX_STORED_COMIC_BYTES = 100 * 1024 * 1024;
 // Ebook cover thumbnails (auto-extracted client-side from the EPUB's embedded
 // cover or a rendered PDF first page, or picked manually) — served statically,
@@ -15168,8 +15169,8 @@ async function startServer() {
       void archive.finalize().catch(fail);
     });
 
-  // RAR creation is not available in the portable runtime. Rebuild an
-  // oversized CBR as an optimized CBZ instead, keeping page order while using
+  // RAR creation is not available in the portable runtime. Rebuild a CBR that
+  // meets the compression threshold as an optimized CBZ, keeping page order while using
   // a temporary directory so hundreds of megabytes are not held in memory.
   const compressCbrToCbz = async (inputPath: string, outputPath: string) => {
     const pages = await getComicPages(inputPath);
@@ -15202,7 +15203,7 @@ async function startServer() {
   }> => {
     const ext = path.extname(file.originalname).toLowerCase();
     if (ext === ".cbr") {
-      if (file.size <= MAX_STORED_COMIC_BYTES) return { size: file.size, compressed: false };
+      if (file.size < COMIC_COMPRESSION_THRESHOLD_BYTES) return { size: file.size, compressed: false };
       const temporaryPath = `${file.path}.compressing.cbz`;
       const convertedPath = path.join(path.dirname(file.path), `${path.parse(file.filename).name}.cbz`);
       try {
@@ -15226,11 +15227,11 @@ async function startServer() {
         await fs.promises.unlink(temporaryPath).catch(() => {});
       }
     }
-    if (ext === ".cbz" && file.size <= MAX_STORED_COMIC_BYTES) return { size: file.size, compressed: false };
+    if (ext === ".cbz" && file.size < COMIC_COMPRESSION_THRESHOLD_BYTES) return { size: file.size, compressed: false };
     if (ext !== ".cbz" && file.size > MAX_STANDARD_EBOOK_UPLOAD_BYTES) {
       throw new Error(`${ext.slice(1).toUpperCase()} files must be 100 MB or smaller`);
     }
-    if (file.size <= MAX_STORED_EBOOK_BYTES) return { size: file.size, compressed: false };
+    if (ext !== ".cbz" && file.size <= MAX_STORED_EBOOK_BYTES) return { size: file.size, compressed: false };
     const temporaryPath = `${file.path}.compressing${ext}`;
     try {
       if (ext === ".pdf") await compressPdf(file.path, temporaryPath);
