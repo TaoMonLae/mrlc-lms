@@ -13909,6 +13909,10 @@ async function startServer() {
   const MAX_COMIC_PAGES = 2000;
   const MAX_COMIC_PAGE_BYTES = 25 * 1024 * 1024;
   const comicManifestCache = new Map<string, { mtimeMs: number; pages: string[] }>();
+  const MAX_CACHED_CBZ_BYTES = 120 * 1024 * 1024;
+  const cbzArchiveCache = new Map<string, { mtimeMs: number; size: number; archive: JSZip }>();
+  let cachedCbzBytes = 0;
+  let comicArchiveCommandAvailable: boolean | null = null;
 
   const ebookFormatFromName = (name: string) => {
     const ext = path.extname(name).toLowerCase();
@@ -13924,6 +13928,10 @@ async function startServer() {
   // cannot become commands.
   const runComicArchiveCommand = (args: string[], maxBytes: number): Promise<Buffer> =>
     new Promise((resolve, reject) => {
+      if (comicArchiveCommandAvailable === false) {
+        reject(new Error("Comic archive support is unavailable: bsdtar was not found on the server"));
+        return;
+      }
       const child = spawn("bsdtar", args, { stdio: ["ignore", "pipe", "pipe"] });
       const chunks: Buffer[] = [];
       let total = 0;
@@ -13944,24 +13952,94 @@ async function startServer() {
         chunks.push(chunk);
       });
       child.stderr.on("data", (chunk) => { stderr = (stderr + chunk.toString()).slice(-2000); });
-      child.on("error", (error) => fail(new Error(`Comic archive support is unavailable: ${error.message}`)));
+      child.on("error", (error: NodeJS.ErrnoException) => {
+        if (error.code === "ENOENT") comicArchiveCommandAvailable = false;
+        fail(new Error(`Comic archive support is unavailable: ${error.message}`));
+      });
       child.on("close", (code) => {
         if (settled) return;
         settled = true;
-        if (code === 0) resolve(Buffer.concat(chunks));
+        if (code === 0) {
+          comicArchiveCommandAvailable = true;
+          resolve(Buffer.concat(chunks));
+        }
         else reject(new Error(`Could not read comic archive${stderr ? `: ${stderr.trim().slice(-400)}` : ""}`));
       });
     });
+
+  const isComicArchiveCommandUnavailable = (error: unknown) =>
+    String((error as Error)?.message || error).includes("Comic archive support is unavailable");
+
+  const clearComicArchiveCache = (filePath: string) => {
+    comicManifestCache.delete(filePath);
+    const cached = cbzArchiveCache.get(filePath);
+    if (cached) {
+      cachedCbzBytes -= cached.size;
+      cbzArchiveCache.delete(filePath);
+    }
+  };
+
+  // Portable CBZ fallback for hosts that do not install the Docker runtime
+  // packages. Cache at most roughly one maximum-size archive so page requests
+  // do not reread the whole ZIP, while keeping server memory bounded.
+  const loadCbzWithJsZip = async (filePath: string) => {
+    const stat = await fs.promises.stat(filePath);
+    const cached = cbzArchiveCache.get(filePath);
+    if (cached?.mtimeMs === stat.mtimeMs) {
+      cbzArchiveCache.delete(filePath);
+      cbzArchiveCache.set(filePath, cached);
+      return cached.archive;
+    }
+    if (cached) {
+      cachedCbzBytes -= cached.size;
+      cbzArchiveCache.delete(filePath);
+    }
+
+    const archive = await JSZip.loadAsync(await fs.promises.readFile(filePath));
+    const entries = Object.values(archive.files);
+    const expandedBytes = entries.reduce((total, entry) =>
+      total + Number((entry as any)?._data?.uncompressedSize || 0), 0);
+    if (expandedBytes > 500 * 1024 * 1024) throw new Error("CBZ expands beyond the 500 MB safety limit");
+
+    while (cachedCbzBytes + stat.size > MAX_CACHED_CBZ_BYTES && cbzArchiveCache.size > 0) {
+      const oldestPath = cbzArchiveCache.keys().next().value as string | undefined;
+      if (!oldestPath) break;
+      const oldest = cbzArchiveCache.get(oldestPath);
+      if (oldest) cachedCbzBytes -= oldest.size;
+      cbzArchiveCache.delete(oldestPath);
+    }
+    cbzArchiveCache.set(filePath, { mtimeMs: stat.mtimeMs, size: stat.size, archive });
+    cachedCbzBytes += stat.size;
+    return archive;
+  };
 
   const getComicPages = async (filePath: string): Promise<string[]> => {
     const stat = await fs.promises.stat(filePath);
     const cached = comicManifestCache.get(filePath);
     if (cached?.mtimeMs === stat.mtimeMs) return cached.pages;
-    const listing = (await runComicArchiveCommand(["-tf", filePath], 2 * 1024 * 1024)).toString("utf8");
-    const pages = listing
-      .split(/\r?\n/)
-      .map((entry) => entry.trim())
-      .filter((entry) => entry && !entry.endsWith("/") && COMIC_IMAGE_EXTENSIONS.has(path.extname(entry).toLowerCase()));
+    let pages: string[];
+    try {
+      const listing = (await runComicArchiveCommand(["-tf", filePath], 2 * 1024 * 1024)).toString("utf8");
+      pages = listing
+        .split(/\r?\n/)
+        .map((entry) => entry.trim())
+        .filter((entry) => entry && !entry.endsWith("/") && COMIC_IMAGE_EXTENSIONS.has(path.extname(entry).toLowerCase()));
+    } catch (archiveError) {
+      if (path.extname(filePath).toLowerCase() !== ".cbz") {
+        if (isComicArchiveCommandUnavailable(archiveError)) {
+          throw new Error("CBR support requires libarchive-tools (bsdtar) on the server");
+        }
+        throw archiveError;
+      }
+      try {
+        const archive = await loadCbzWithJsZip(filePath);
+        pages = Object.values(archive.files)
+          .filter((entry) => !entry.dir && COMIC_IMAGE_EXTENSIONS.has(path.extname(entry.name).toLowerCase()))
+          .map((entry) => entry.name);
+      } catch (fallbackError: any) {
+        throw new Error(`Could not read CBZ archive: ${fallbackError?.message || "invalid ZIP data"}`);
+      }
+    }
     pages.sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
     if (pages.length === 0) throw new Error("Comic archive contains no supported image pages");
     if (pages.length > MAX_COMIC_PAGES) throw new Error(`Comic archive has too many pages (maximum ${MAX_COMIC_PAGES})`);
@@ -13970,7 +14048,24 @@ async function startServer() {
   };
 
   const extractComicPage = async (filePath: string, entry: string) => {
-    const bytes = await runComicArchiveCommand(["-xOf", filePath, "--", entry], MAX_COMIC_PAGE_BYTES);
+    let bytes: Buffer;
+    try {
+      bytes = await runComicArchiveCommand(["-xOf", filePath, "--", entry], MAX_COMIC_PAGE_BYTES);
+    } catch (archiveError) {
+      if (path.extname(filePath).toLowerCase() !== ".cbz") {
+        if (isComicArchiveCommandUnavailable(archiveError)) {
+          throw new Error("CBR support requires libarchive-tools (bsdtar) on the server");
+        }
+        throw archiveError;
+      }
+      const archive = await loadCbzWithJsZip(filePath);
+      const page = archive.file(entry);
+      if (!page) throw new Error("Comic page is missing from the archive");
+      const declaredSize = Number((page as any)?._data?.uncompressedSize || 0);
+      if (declaredSize > MAX_COMIC_PAGE_BYTES) throw new Error("Comic page exceeds the 25 MB safety limit");
+      bytes = await page.async("nodebuffer");
+      if (bytes.length > MAX_COMIC_PAGE_BYTES) throw new Error("Comic page exceeds the 25 MB safety limit");
+    }
     const metadata = await sharp(bytes, { limitInputPixels: 80_000_000 }).metadata();
     if (!metadata.width || !metadata.height || metadata.width * metadata.height > 80_000_000) {
       throw new Error("Comic page dimensions exceed the safety limit");
@@ -14361,7 +14456,7 @@ async function startServer() {
           } catch (archiveError: any) {
             await fs.promises.unlink(file.path).catch(() => {});
             if (generatedCoverPath) await fs.promises.unlink(generatedCoverPath).catch(() => {});
-            comicManifestCache.delete(file.path);
+            clearComicArchiveCache(file.path);
             res.status(400).json({ error: archiveError?.message || "Invalid comic archive" });
             return;
           }
@@ -14406,7 +14501,7 @@ async function startServer() {
       } catch (err: any) {
         fs.promises.unlink(file.path).catch(() => {});
         if (generatedCoverPath) fs.promises.unlink(generatedCoverPath).catch(() => {});
-        comicManifestCache.delete(file.path);
+        clearComicArchiveCache(file.path);
         logger.error("Error creating ebook:", err);
         // Surface the real cause (admin/teacher-only route). A Prisma error here
         // usually means the DB is out of sync with schema.prisma — run
@@ -14479,7 +14574,7 @@ async function startServer() {
       if (!ebook) { res.status(404).json({ error: "E-book not found" }); return; }
       await prisma.ebook.delete({ where: { id: req.params.id } });
       const deletedFilePath = path.join(EBOOK_DIR, ebook.fileName);
-      comicManifestCache.delete(deletedFilePath);
+      clearComicArchiveCache(deletedFilePath);
       fs.promises.unlink(deletedFilePath).catch(() => {});
       if (ebook.coverUrl?.startsWith("/uploads/ebook-covers/")) {
         const coverFileName = path.basename(ebook.coverUrl);
