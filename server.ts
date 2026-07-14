@@ -3,7 +3,6 @@ import path from "path";
 import fs from "fs";
 import crypto from "crypto";
 import multer from "multer";
-import { createServer as createViteServer } from "vite";
 import { z } from "zod";
 import helmet from "helmet";
 import cors from "cors";
@@ -11,6 +10,9 @@ import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import winston from "winston";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import nodemailer from "nodemailer";
+import * as OTPAuth from "otpauth";
+import QRCode from "qrcode";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient, type Role } from "@prisma/client";
@@ -485,6 +487,122 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
+// ─── Transactional email outbox ─────────────────────────────────────────────
+// Password-reset and notification emails are persisted before delivery. This
+// makes transient SMTP outages retryable instead of silently losing messages.
+const APP_URL = (process.env.APP_URL || "http://localhost:8000").replace(/\/$/, "");
+const SMTP_HOST = process.env.SMTP_HOST?.trim();
+const SMTP_PORT = Math.max(1, Number(process.env.SMTP_PORT || 587));
+const SMTP_FROM = process.env.SMTP_FROM?.trim() || "MRLC LMS <no-reply@mrlc.local>";
+const smtpTransport = SMTP_HOST ? nodemailer.createTransport({
+  host: SMTP_HOST,
+  port: SMTP_PORT,
+  secure: String(process.env.SMTP_SECURE || "").toLowerCase() === "true" || SMTP_PORT === 465,
+  auth: process.env.SMTP_USER && process.env.SMTP_PASS
+    ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+    : undefined,
+}) : null;
+
+function escapeEmailHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  })[character] || character);
+}
+
+async function queueEmail(input: {
+  userId?: string | null;
+  toEmail: string;
+  subject: string;
+  textBody: string;
+  htmlBody?: string | null;
+  dedupeKey?: string | null;
+}) {
+  const create = {
+    userId: input.userId || null,
+    toEmail: input.toEmail.trim().toLowerCase(),
+    subject: input.subject,
+    textBody: input.textBody,
+    htmlBody: input.htmlBody || null,
+    dedupeKey: input.dedupeKey || null,
+  };
+  if (input.dedupeKey) {
+    return prisma.emailOutbox.upsert({
+      where: { dedupeKey: input.dedupeKey },
+      update: {},
+      create,
+    });
+  }
+  return prisma.emailOutbox.create({ data: create });
+}
+
+let emailBatchRunning = false;
+async function processEmailOutbox() {
+  if (!smtpTransport || emailBatchRunning) return;
+  emailBatchRunning = true;
+  try {
+    const messages = await prisma.emailOutbox.findMany({
+      where: { status: "QUEUED", nextAttemptAt: { lte: new Date() }, attempts: { lt: 5 } },
+      orderBy: { createdAt: "asc" },
+      take: 10,
+    });
+    for (const message of messages) {
+      const claimed = await prisma.emailOutbox.updateMany({
+        where: { id: message.id, status: "QUEUED" },
+        data: { status: "SENDING" },
+      });
+      if (!claimed.count) continue;
+      try {
+        await smtpTransport.sendMail({
+          from: SMTP_FROM,
+          to: message.toEmail,
+          subject: message.subject,
+          text: message.textBody || undefined,
+          html: message.htmlBody || undefined,
+        });
+        await prisma.emailOutbox.update({
+          where: { id: message.id },
+          data: {
+            status: "SENT", sentAt: new Date(), attempts: { increment: 1 }, lastError: null,
+            // Reset links and other potentially sensitive content should not
+            // remain in the database after successful delivery.
+            textBody: null, htmlBody: null,
+          },
+        });
+        if (message.dedupeKey?.startsWith("notification:")) {
+          const notificationId = message.dedupeKey.slice("notification:".length);
+          await prisma.notificationDelivery.updateMany({
+            where: { notificationId, channel: "EMAIL" },
+            data: { status: "SENT", sentAt: new Date(), attempts: { increment: 1 }, lastError: null },
+          });
+        }
+      } catch (error: any) {
+        const attempts = message.attempts + 1;
+        const lastError = String(error?.message || "Email delivery failed").slice(0, 500);
+        await prisma.emailOutbox.update({
+          where: { id: message.id },
+          data: {
+            status: attempts >= 5 ? "FAILED" : "QUEUED",
+            attempts,
+            lastError,
+            nextAttemptAt: new Date(Date.now() + Math.min(60, 2 ** attempts) * 60_000),
+          },
+        });
+        if (message.dedupeKey?.startsWith("notification:")) {
+          const notificationId = message.dedupeKey.slice("notification:".length);
+          await prisma.notificationDelivery.updateMany({
+            where: { notificationId, channel: "EMAIL" },
+            data: { status: attempts >= 5 ? "FAILED" : "QUEUED", attempts: { increment: 1 }, lastError },
+          });
+        }
+      }
+    }
+  } catch (error) {
+    logger.error("Email outbox worker failed:", error);
+  } finally {
+    emailBatchRunning = false;
+  }
+}
+
 function getExpenseGrossAmount(expense: { amount: number; taxAmount?: number | null }): number {
   return expense.amount + (expense.taxAmount ?? 0);
 }
@@ -600,6 +718,7 @@ export interface JwtPayload {
   userId: string;
   role: UserRole;
   email: string;
+  sessionId?: string;
 }
 
 function signToken(payload: JwtPayload, rememberMe = false): string {
@@ -612,17 +731,86 @@ function verifyToken(token: string): JwtPayload {
   return jwt.verify(token, JWT_SECRET as string) as JwtPayload;
 }
 
+function hashSecurityToken(value: string): string {
+  return crypto.createHash("sha256").update(value).digest("hex");
+}
+
+const mfaEncryptionKey = crypto.createHash("sha256").update(`${JWT_SECRET}:mfa-secret`).digest();
+function encryptMfaSecret(secret: string): string {
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv("aes-256-gcm", mfaEncryptionKey, iv);
+  const ciphertext = Buffer.concat([cipher.update(secret, "utf8"), cipher.final()]);
+  return [iv, cipher.getAuthTag(), ciphertext].map((part) => part.toString("base64url")).join(".");
+}
+
+function decryptMfaSecret(encrypted: string): string {
+  const [ivValue, tagValue, ciphertextValue] = encrypted.split(".");
+  if (!ivValue || !tagValue || !ciphertextValue) throw new Error("Invalid encrypted MFA secret");
+  const decipher = crypto.createDecipheriv("aes-256-gcm", mfaEncryptionKey, Buffer.from(ivValue, "base64url"));
+  decipher.setAuthTag(Buffer.from(tagValue, "base64url"));
+  return Buffer.concat([
+    decipher.update(Buffer.from(ciphertextValue, "base64url")),
+    decipher.final(),
+  ]).toString("utf8");
+}
+
+function createTotp(secret: string, email: string) {
+  return new OTPAuth.TOTP({
+    issuer: "MRLC LMS",
+    label: email,
+    algorithm: "SHA1",
+    digits: 6,
+    period: 30,
+    secret: OTPAuth.Secret.fromBase32(secret),
+  });
+}
+
+function generateRecoveryCodes(): { codes: string[]; hashes: string[] } {
+  const codes = Array.from({ length: 10 }, () => {
+    const value = crypto.randomBytes(8).toString("hex").toUpperCase();
+    return `${value.slice(0, 4)}-${value.slice(4, 8)}-${value.slice(8, 12)}-${value.slice(12)}`;
+  });
+  return { codes, hashes: codes.map((code) => hashSecurityToken(code.replaceAll("-", ""))) };
+}
+
+async function verifyAndConsumeMfaCode(input: {
+  userId: string;
+  email: string;
+  encryptedSecret: string;
+  recoveryCodeHashes: string[];
+  code: string;
+}): Promise<boolean> {
+  const trimmed = input.code.trim();
+  if (/^\d{6}$/.test(trimmed)) {
+    const secret = decryptMfaSecret(input.encryptedSecret);
+    return createTotp(secret, input.email).validate({ token: trimmed, window: 1 }) !== null;
+  }
+
+  const canonical = trimmed.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const candidate = Buffer.from(hashSecurityToken(canonical), "hex");
+  const index = input.recoveryCodeHashes.findIndex((stored) => {
+    const expected = Buffer.from(stored, "hex");
+    return expected.length === candidate.length && crypto.timingSafeEqual(expected, candidate);
+  });
+  if (index < 0) return false;
+  await prisma.user.update({
+    where: { id: input.userId },
+    data: { mfaRecoveryCodeHashes: input.recoveryCodeHashes.filter((_, current) => current !== index) },
+  });
+  return true;
+}
+
 // ─── Auth Middleware ──────────────────────────────────────────────────────────
 /**
  * Verifies the JWT from the Authorization header (Bearer <token>).
  * Sets req.user on success; returns 401 on failure.
  * NEVER trusts client-supplied role headers.
  */
-function authMiddleware(
+async function authMiddleware(
   req: express.Request,
   res: express.Response,
   next: express.NextFunction
-): void {
+): Promise<void> {
   const authHeader = req.headers["authorization"];
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     res.status(401).json({ error: "Unauthorized: No token provided" });
@@ -632,6 +820,16 @@ function authMiddleware(
   const token = authHeader.slice(7); // strip "Bearer "
   try {
     const payload = verifyToken(token);
+    if (payload.sessionId) {
+      const session = await prisma.authSession.findUnique({ where: { id: payload.sessionId } });
+      if (!session || session.userId !== payload.userId || session.revokedAt || session.expiresAt <= new Date()) {
+        res.status(401).json({ error: "Unauthorized: Session expired or revoked" });
+        return;
+      }
+      if (Date.now() - session.lastSeenAt.getTime() > 5 * 60 * 1000) {
+        prisma.authSession.update({ where: { id: session.id }, data: { lastSeenAt: new Date() } }).catch(() => {});
+      }
+    }
     (req as any).user = payload;
     next();
   } catch {
@@ -752,7 +950,20 @@ const username = z.string().trim().min(3, "must be at least 3 characters").regex
 const schemas = {
   // "identifier" accepts either an email address or a username so a single
   // login field can look up either kind of account.
-  login: z.object({ identifier: reqStr, password: z.string().min(1, "is required"), rememberMe: z.boolean().optional() }),
+  login: z.object({
+    identifier: reqStr,
+    password: z.string().min(1, "is required"),
+    rememberMe: z.boolean().optional(),
+    mfaCode: z.string().trim().min(6).max(32).optional(),
+  }),
+  forgotPassword: z.object({ identifier: reqStr }),
+  resetPassword: z.object({
+    token: z.string().min(32, "is invalid").max(256, "is invalid"),
+    newPassword: z.string().min(8, "must be at least 8 characters").max(128, "is too long"),
+  }),
+  mfaPassword: z.object({ password: z.string().min(1, "is required") }),
+  mfaCode: z.object({ code: z.string().trim().min(6).max(32) }),
+  mfaDisable: z.object({ password: z.string().min(1), code: z.string().trim().min(6).max(32) }),
   verifyPassword: z.object({ password: z.string().min(1, "is required") }),
   changePassword: z.object({
     currentPassword: z.string().min(1, "is required"),
@@ -1758,6 +1969,17 @@ async function startServer() {
       return (acct ? "acct:" + acct + "|" : "") + "ip:" + ipKeyGenerator(req.ip || "");
     },
   });
+  const passwordResetLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Too many password reset requests. Please wait 15 minutes and try again." },
+    keyGenerator: (req) => {
+      const account = String(req.body?.identifier || "").trim().toLowerCase();
+      return `${account ? `acct:${account}|` : ""}ip:${ipKeyGenerator(req.ip || "")}`;
+    },
+  });
 
   // Rate limiters for chat endpoints to prevent spam and DoS
   const chatMessageLimiter = rateLimit({
@@ -1785,6 +2007,90 @@ async function startServer() {
   });
 
   // ── Auth routes ─────────────────────────────────────────────────────────────
+  app.post("/api/auth/forgot-password", passwordResetLimiter, validate(schemas.forgotPassword), async (req, res) => {
+    const startedAt = Date.now();
+    const identifier = String(req.body.identifier || "").trim();
+    const genericResponse = { message: "If that account exists, a password reset link has been sent." };
+    try {
+      const user = await prisma.user.findFirst({
+        where: {
+          isActive: true,
+          OR: [
+            { email: { equals: identifier, mode: "insensitive" } },
+            { username: { equals: identifier, mode: "insensitive" } },
+          ],
+        },
+        select: { id: true, email: true, firstName: true, lastName: true },
+      });
+      if (user) {
+        const rawToken = crypto.randomBytes(32).toString("base64url");
+        const resetToken = await prisma.$transaction(async (tx) => {
+          await tx.passwordResetToken.updateMany({
+            where: { userId: user.id, usedAt: null },
+            data: { usedAt: new Date() },
+          });
+          return tx.passwordResetToken.create({
+            data: {
+              userId: user.id,
+              tokenHash: hashSecurityToken(rawToken),
+              expiresAt: new Date(Date.now() + 30 * 60 * 1000),
+              requestedIp: req.ip || null,
+            },
+          });
+        });
+        const resetUrl = `${APP_URL}/reset-password?token=${encodeURIComponent(rawToken)}`;
+        const displayName = user.firstName || user.lastName || "there";
+        await queueEmail({
+          userId: user.id,
+          toEmail: user.email,
+          subject: "Reset your MRLC LMS password",
+          dedupeKey: `password-reset:${resetToken.id}`,
+          textBody: `Hello ${displayName},\n\nUse this link to reset your MRLC LMS password. It expires in 30 minutes:\n${resetUrl}\n\nIf you did not request this, you can ignore this message.`,
+          htmlBody: `<p>Hello ${escapeEmailHtml(displayName)},</p><p>Use the button below to reset your MRLC LMS password. This link expires in 30 minutes.</p><p><a href="${escapeEmailHtml(resetUrl)}" style="display:inline-block;padding:12px 18px;background:#4338ca;color:#fff;text-decoration:none;border-radius:8px">Reset password</a></p><p>If you did not request this, you can ignore this message.</p>`,
+        });
+        void processEmailOutbox();
+        void createAuditLog(user.id, user.email, "REQUEST", "PASSWORD_RESET", resetToken.id,
+          "Password reset requested.", req.ip || null, req.headers["user-agent"] || null, "WARNING");
+      }
+    } catch (error) {
+      // Never reveal whether a matching account exists. Operational failures
+      // remain visible in server logs and the outbox health check.
+      logger.error("Password reset request failed:", error);
+    }
+    const remainingDelay = 300 - (Date.now() - startedAt);
+    if (remainingDelay > 0) await new Promise((resolve) => setTimeout(resolve, remainingDelay));
+    res.status(202).json(genericResponse);
+  });
+
+  app.post("/api/auth/reset-password", passwordResetLimiter, validate(schemas.resetPassword), async (req, res) => {
+    const { token, newPassword } = req.body as { token: string; newPassword: string };
+    try {
+      const resetToken = await prisma.passwordResetToken.findUnique({
+        where: { tokenHash: hashSecurityToken(token) },
+        include: { user: { select: { id: true, email: true, isActive: true } } },
+      });
+      if (!resetToken || resetToken.usedAt || resetToken.expiresAt <= new Date() || !resetToken.user.isActive) {
+        res.status(400).json({ error: "This password reset link is invalid or has expired." });
+        return;
+      }
+      const passwordHash = await bcrypt.hash(newPassword, 10);
+      await prisma.$transaction([
+        prisma.user.update({
+          where: { id: resetToken.userId },
+          data: { passwordHash, mustChangePassword: false },
+        }),
+        prisma.passwordResetToken.update({ where: { id: resetToken.id }, data: { usedAt: new Date() } }),
+        prisma.authSession.updateMany({ where: { userId: resetToken.userId, revokedAt: null }, data: { revokedAt: new Date() } }),
+      ]);
+      await createAuditLog(resetToken.userId, resetToken.user.email, "UPDATE", "PASSWORD", resetToken.userId,
+        "Password reset completed; all existing sessions were revoked.", req.ip || null, req.headers["user-agent"] || null, "WARNING");
+      res.json({ success: true });
+    } catch (error) {
+      logger.error("Password reset failed:", error);
+      res.status(500).json({ error: "Password reset could not be completed." });
+    }
+  });
+
   /**
    * POST /api/auth/login
    * Body: { identifier: string, password: string }
@@ -1792,10 +2098,11 @@ async function startServer() {
    * Returns: { token: string, user: { id, email, role } }
    */
   app.post("/api/auth/login", authLimiter, validate(schemas.login), async (req, res) => {
-    const { identifier, password, rememberMe } = req.body as {
+    const { identifier, password, rememberMe, mfaCode } = req.body as {
       identifier?: string;
       password?: string;
       rememberMe?: boolean;
+      mfaCode?: string;
     };
 
     if (!identifier || !password) {
@@ -1834,10 +2141,39 @@ async function startServer() {
         return;
       }
 
+      if (user.mfaEnabled) {
+        if (!user.mfaSecretEncrypted) {
+          logger.error(`MFA is enabled without a secret for user ${user.id}`);
+          res.status(503).json({ error: "MFA configuration is unavailable. Contact an administrator." });
+          return;
+        }
+        if (!mfaCode) {
+          res.json({ mfaRequired: true });
+          return;
+        }
+        const mfaValid = await verifyAndConsumeMfaCode({
+          userId: user.id,
+          email: user.email,
+          encryptedSecret: user.mfaSecretEncrypted,
+          recoveryCodeHashes: user.mfaRecoveryCodeHashes,
+          code: mfaCode,
+        });
+        if (!mfaValid) {
+          res.status(401).json({ error: "Invalid authentication or recovery code", mfaRequired: true });
+          return;
+        }
+      }
+
       const payload: JwtPayload = {
         userId: user.id,
         role: user.role,
         email: user.email,
+        sessionId: (await prisma.authSession.create({ data: {
+          userId: user.id,
+          expiresAt: new Date(Date.now() + (rememberMe ? 30 * 24 * 60 * 60 * 1000 : 8 * 60 * 60 * 1000)),
+          ipAddress: req.ip || null,
+          userAgent: req.headers["user-agent"] || null,
+        } })).id,
       };
       const token = signToken(payload, Boolean(rememberMe));
 
@@ -1868,6 +2204,8 @@ async function startServer() {
           isActive: user.isActive,
           mustChangePassword: user.mustChangePassword,
           cursorEffect: (user as any).cursorEffect || null,
+          mfaEnabled: user.mfaEnabled,
+          mfaRecommended: ["ADMIN", "ACCOUNTANT"].includes(user.role) && !user.mfaEnabled,
         },
       });
     } catch (err) {
@@ -1876,7 +2214,9 @@ async function startServer() {
     }
   });
 
-  app.post("/api/auth/logout", (_req, res) => {
+  app.post("/api/auth/logout", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.sessionId) await prisma.authSession.updateMany({ where: { id: jwtUser.sessionId, userId: jwtUser.userId }, data: { revokedAt: new Date() } });
     res.clearCookie("video_media_token", {
       httpOnly: true,
       secure: isProduction,
@@ -1907,6 +2247,7 @@ async function startServer() {
           isActive: true,
           mustChangePassword: true,
           cursorEffect: true,
+          mfaEnabled: true,
         },
       } as any);
       if (!user || !user.isActive) {
@@ -1918,6 +2259,147 @@ async function startServer() {
       logger.error("Error fetching user profile:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
+  });
+
+  app.get("/api/auth/mfa", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const user = await prisma.user.findUnique({
+      where: { id: jwtUser.userId },
+      select: { mfaEnabled: true, mfaEnrolledAt: true, mfaRecoveryCodeHashes: true, role: true },
+    });
+    if (!user) { res.status(404).json({ error: "User not found" }); return; }
+    res.json({
+      enabled: user.mfaEnabled,
+      enrolledAt: user.mfaEnrolledAt,
+      recoveryCodesRemaining: user.mfaRecoveryCodeHashes.length,
+      recommendedForRole: ["ADMIN", "ACCOUNTANT"].includes(user.role),
+    });
+  });
+
+  app.post("/api/auth/mfa/setup", authMiddleware, validate(schemas.mfaPassword), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const user = await prisma.user.findUnique({
+      where: { id: jwtUser.userId },
+      select: { id: true, email: true, passwordHash: true, mfaEnabled: true },
+    });
+    if (!user?.passwordHash || !(await bcrypt.compare(req.body.password, user.passwordHash))) {
+      res.status(401).json({ error: "Current password is incorrect" }); return;
+    }
+    if (user.mfaEnabled) { res.status(409).json({ error: "MFA is already enabled" }); return; }
+    const secret = new OTPAuth.Secret({ size: 20 }).base32;
+    const totp = createTotp(secret, user.email);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { mfaSecretEncrypted: encryptMfaSecret(secret), mfaRecoveryCodeHashes: [] },
+    });
+    res.json({
+      manualKey: secret,
+      otpAuthUrl: totp.toString(),
+      qrCodeDataUrl: await QRCode.toDataURL(totp.toString(), { width: 240, margin: 1, errorCorrectionLevel: "M" }),
+    });
+  });
+
+  app.post("/api/auth/mfa/enable", authMiddleware, validate(schemas.mfaCode), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const user = await prisma.user.findUnique({
+      where: { id: jwtUser.userId },
+      select: { id: true, email: true, mfaEnabled: true, mfaSecretEncrypted: true },
+    });
+    if (!user?.mfaSecretEncrypted) { res.status(400).json({ error: "Start MFA setup first" }); return; }
+    if (user.mfaEnabled) { res.status(409).json({ error: "MFA is already enabled" }); return; }
+    const secret = decryptMfaSecret(user.mfaSecretEncrypted);
+    if (createTotp(secret, user.email).validate({ token: req.body.code, window: 1 }) === null) {
+      res.status(400).json({ error: "The authentication code is invalid or expired" }); return;
+    }
+    const recovery = generateRecoveryCodes();
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: user.id },
+        data: { mfaEnabled: true, mfaEnrolledAt: new Date(), mfaRecoveryCodeHashes: recovery.hashes },
+      }),
+      prisma.authSession.updateMany({
+        where: { userId: user.id, revokedAt: null, ...(jwtUser.sessionId ? { id: { not: jwtUser.sessionId } } : {}) },
+        data: { revokedAt: new Date() },
+      }),
+    ]);
+    await createAuditLog(user.id, user.email, "ENABLE", "MFA", user.id,
+      "Multi-factor authentication enabled; other sessions revoked.", req.ip || null, req.headers["user-agent"] || null, "WARNING");
+    res.json({ success: true, recoveryCodes: recovery.codes });
+  });
+
+  app.post("/api/auth/mfa/recovery-codes", authMiddleware, validate(schemas.mfaDisable), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const user = await prisma.user.findUnique({
+      where: { id: jwtUser.userId },
+      select: { id: true, email: true, passwordHash: true, mfaEnabled: true, mfaSecretEncrypted: true, mfaRecoveryCodeHashes: true },
+    });
+    if (!user?.mfaEnabled || !user.mfaSecretEncrypted || !user.passwordHash) {
+      res.status(400).json({ error: "MFA is not enabled" }); return;
+    }
+    if (!(await bcrypt.compare(req.body.password, user.passwordHash))) {
+      res.status(401).json({ error: "Current password is incorrect" }); return;
+    }
+    if (!(await verifyAndConsumeMfaCode({
+      userId: user.id, email: user.email, encryptedSecret: user.mfaSecretEncrypted,
+      recoveryCodeHashes: user.mfaRecoveryCodeHashes, code: req.body.code,
+    }))) { res.status(400).json({ error: "Invalid authentication or recovery code" }); return; }
+    const recovery = generateRecoveryCodes();
+    await prisma.user.update({ where: { id: user.id }, data: { mfaRecoveryCodeHashes: recovery.hashes } });
+    res.json({ recoveryCodes: recovery.codes });
+  });
+
+  app.post("/api/auth/mfa/disable", authMiddleware, validate(schemas.mfaDisable), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const user = await prisma.user.findUnique({
+      where: { id: jwtUser.userId },
+      select: { id: true, email: true, passwordHash: true, mfaEnabled: true, mfaSecretEncrypted: true, mfaRecoveryCodeHashes: true },
+    });
+    if (!user?.mfaEnabled || !user.mfaSecretEncrypted || !user.passwordHash) {
+      res.status(400).json({ error: "MFA is not enabled" }); return;
+    }
+    if (!(await bcrypt.compare(req.body.password, user.passwordHash))) {
+      res.status(401).json({ error: "Current password is incorrect" }); return;
+    }
+    if (!(await verifyAndConsumeMfaCode({
+      userId: user.id, email: user.email, encryptedSecret: user.mfaSecretEncrypted,
+      recoveryCodeHashes: user.mfaRecoveryCodeHashes, code: req.body.code,
+    }))) { res.status(400).json({ error: "Invalid authentication or recovery code" }); return; }
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: user.id },
+        data: { mfaEnabled: false, mfaSecretEncrypted: null, mfaRecoveryCodeHashes: [], mfaEnrolledAt: null },
+      }),
+      prisma.authSession.updateMany({
+        where: { userId: user.id, revokedAt: null, ...(jwtUser.sessionId ? { id: { not: jwtUser.sessionId } } : {}) },
+        data: { revokedAt: new Date() },
+      }),
+    ]);
+    await createAuditLog(user.id, user.email, "DISABLE", "MFA", user.id,
+      "Multi-factor authentication disabled; other sessions revoked.", req.ip || null, req.headers["user-agent"] || null, "WARNING");
+    res.json({ success: true });
+  });
+
+  app.get("/api/auth/sessions", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const sessions = await prisma.authSession.findMany({
+      where: { userId: jwtUser.userId, revokedAt: null, expiresAt: { gt: new Date() } },
+      select: { id: true, ipAddress: true, userAgent: true, lastSeenAt: true, expiresAt: true, createdAt: true },
+      orderBy: { lastSeenAt: "desc" },
+    });
+    res.json(sessions.map((session) => ({ ...session, current: session.id === jwtUser.sessionId })));
+  });
+  app.delete("/api/auth/sessions/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    await prisma.authSession.updateMany({ where: { id: req.params.id, userId: jwtUser.userId }, data: { revokedAt: new Date() } });
+    res.json({ success: true, current: req.params.id === jwtUser.sessionId });
+  });
+  app.post("/api/auth/sessions/revoke-others", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    await prisma.authSession.updateMany({
+      where: { userId: jwtUser.userId, revokedAt: null, ...(jwtUser.sessionId ? { id: { not: jwtUser.sessionId } } : {}) },
+      data: { revokedAt: new Date() },
+    });
+    res.json({ success: true });
   });
 
   // Any authenticated user may set their own personal cursor-effect
@@ -4120,6 +4602,332 @@ async function startServer() {
     }
   });
 
+  // ── Student Success, interventions, and notifications ─────────────────────
+  const ensureNotification = async (input: {
+    userId: string; type: string; title: string; message: string; href?: string | null; sourceId: string;
+  }) => {
+    const preference = await prisma.notificationPreference.upsert({
+      where: { userId: input.userId }, update: {}, create: { userId: input.userId },
+      include: { user: { select: { email: true } } },
+    });
+    const typeEnabled = input.type === "HOMEWORK_DUE"
+      ? preference.homeworkReminders
+      : input.type.startsWith("HOMEWORK_")
+        ? preference.resultNotifications
+      : input.type === "EXAM_RESULT"
+        ? preference.resultNotifications
+        : input.type.startsWith("INTERVENTION_")
+          ? preference.interventionReminders
+          : true;
+    if (!typeEnabled) return null;
+    if (!preference.inAppEnabled && !preference.emailEnabled) return null;
+    const notification = await prisma.notification.upsert({
+      where: { userId_sourceId: { userId: input.userId, sourceId: input.sourceId } },
+      update: { title: input.title, message: input.message, href: input.href ?? null },
+      create: {
+        ...input,
+        href: input.href ?? null,
+        deliveries: {
+          create: [
+            ...(preference.inAppEnabled ? [{ channel: "IN_APP", status: "SENT", attempts: 1, sentAt: new Date() }] : []),
+            ...(preference.emailEnabled ? [{ channel: "EMAIL", status: "QUEUED" }] : []),
+          ],
+        },
+      },
+    });
+    if (preference.emailEnabled) {
+      const href = input.href ? `${APP_URL}${input.href.startsWith("/") ? input.href : `/${input.href}`}` : APP_URL;
+      await queueEmail({
+        userId: input.userId,
+        toEmail: preference.user.email,
+        subject: input.title,
+        dedupeKey: `notification:${notification.id}`,
+        textBody: `${input.message}\n\nOpen MRLC LMS: ${href}`,
+        htmlBody: `<p>${escapeEmailHtml(input.message)}</p><p><a href="${escapeEmailHtml(href)}">Open MRLC LMS</a></p>`,
+      });
+      void processEmailOutbox();
+    }
+    return notification;
+  };
+
+  const syncStudentNotifications = async (userId: string) => {
+    const student = await prisma.student.findUnique({ where: { userId }, select: { id: true, classId: true } });
+    if (!student) return;
+    const preference = await prisma.notificationPreference.upsert({
+      where: { userId }, update: {}, create: { userId },
+    });
+    const now = new Date();
+    if (preference.homeworkReminders && student.classId) {
+      const deadline = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+      const due = await prisma.homework.findMany({
+        where: {
+          classId: student.classId, status: "OPEN", dueDate: { gte: now, lte: deadline },
+          submissions: { none: { studentId: student.id } },
+        },
+        include: { subject: { select: { name: true } } },
+        take: 20,
+      });
+      await Promise.all(due.map((homework) => ensureNotification({
+        userId, type: "HOMEWORK_DUE", title: "Homework due soon",
+        message: `${homework.title}${homework.subject?.name ? ` · ${homework.subject.name}` : ""} is due ${homework.dueDate.toLocaleDateString()}.`,
+        href: "/student/homework", sourceId: `homework-due:${homework.id}`,
+      })));
+    }
+    if (preference.resultNotifications) {
+      const [submissions, attempts] = await Promise.all([
+        prisma.homeworkSubmission.findMany({
+          where: { studentId: student.id, status: { in: ["MARKED", "REDO"] }, markedAt: { not: null } },
+          include: { homework: { select: { title: true } } }, orderBy: { markedAt: "desc" }, take: 20,
+        }),
+        prisma.examAttempt.findMany({
+          where: { studentId: student.id, releasedAt: { not: null } },
+          include: { exam: { select: { title: true } } }, orderBy: { releasedAt: "desc" }, take: 20,
+        }),
+      ]);
+      await Promise.all([
+        ...submissions.map((submission) => ensureNotification({
+          userId, type: submission.status === "REDO" ? "HOMEWORK_REDO" : "HOMEWORK_MARKED",
+          title: submission.status === "REDO" ? "Homework needs changes" : "Homework marked",
+          message: submission.status === "REDO"
+            ? `${submission.homework.title} was returned with feedback. Please update and resubmit it.`
+            : `${submission.homework.title} has been marked${submission.score == null ? "." : `: ${submission.score} points.`}`,
+          href: "/student/homework", sourceId: `homework-result:${submission.id}:${submission.updatedAt.getTime()}`,
+        })),
+        ...attempts.map((attempt) => ensureNotification({
+          userId, type: "EXAM_RESULT", title: "Exam result released",
+          message: `${attempt.exam.title} is ready to view${attempt.score == null ? "." : `: ${attempt.score} points.`}`,
+          href: `/exam2/attempts/${attempt.id}/result`, sourceId: `exam-result:${attempt.id}:${attempt.releasedAt?.getTime()}`,
+        })),
+      ]);
+    }
+  };
+
+  const syncInterventionNotifications = async (userId: string) => {
+    const preference = await prisma.notificationPreference.upsert({
+      where: { userId }, update: {}, create: { userId },
+    });
+    if (!preference.interventionReminders) return;
+    const now = new Date();
+    const deadline = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+    const plans = await prisma.interventionPlan.findMany({
+      where: {
+        assignedToId: userId,
+        status: { notIn: ["COMPLETED", "CANCELLED"] },
+        dueDate: { lte: deadline },
+      },
+      include: { student: { include: { user: { select: { firstName: true, lastName: true } } } } },
+      take: 30,
+      orderBy: { dueDate: "asc" },
+    });
+    await Promise.all(plans.map((plan) => {
+      const studentName = `${plan.student.user?.firstName || ""} ${plan.student.user?.lastName || ""}`.trim() || plan.student.studentCode;
+      const overdue = Boolean(plan.dueDate && plan.dueDate < now);
+      return ensureNotification({
+        userId,
+        type: "INTERVENTION_DUE",
+        title: overdue ? "Intervention action overdue" : "Intervention review due soon",
+        message: `${plan.title} for ${studentName} ${overdue ? "is overdue" : "is due within 48 hours"}.`,
+        href: "/student-success",
+        sourceId: `intervention-due:${plan.id}:${overdue ? "overdue" : "due"}`,
+      });
+    }));
+  };
+
+  app.get("/api/student-success", authMiddleware, requirePermission("view_interventions"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const since = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
+      const classIds = jwtUser.role === "TEACHER" ? await getTeacherClassIds(jwtUser.userId) : null;
+      const students = await prisma.student.findMany({
+        where: { status: "ACTIVE", ...(classIds ? { classId: { in: classIds } } : {}) },
+        include: {
+          user: { select: { firstName: true, lastName: true, profilePhotoUrl: true } },
+          class: { select: { name: true } },
+          attendances: { where: { date: { gte: since } }, select: { status: true } },
+          homeworkSubmissions: { where: { homework: { dueDate: { gte: since } } }, select: { homeworkId: true } },
+          examAttempts: {
+            where: { completedAt: { gte: since }, score: { not: null }, exam: { totalMarks: { gt: 0 } } },
+            select: { score: true, exam: { select: { totalMarks: true } } },
+          },
+          gedReadiness: { select: { status: true } },
+          interventions: { where: { status: { notIn: ["COMPLETED", "CANCELLED"] } }, select: { id: true } },
+          caseRecords: { where: { status: { in: ["OPEN", "IN_PROGRESS"] } }, select: { id: true } },
+        },
+        orderBy: { studentCode: "asc" },
+      });
+      const eligibleClassIds = [...new Set(students.map((student) => student.classId).filter(Boolean))] as string[];
+      const homeworks = eligibleClassIds.length ? await prisma.homework.findMany({
+        where: { classId: { in: eligibleClassIds }, dueDate: { gte: since, lt: new Date() } },
+        select: { id: true, classId: true },
+      }) : [];
+      const result = students.map((student) => {
+        const reasons: { code: string; label: string; severity: "HIGH" | "MEDIUM" }[] = [];
+        const countableAttendance = student.attendances.filter((row) => row.status !== "EXCUSED");
+        const attendanceTotal = countableAttendance.length;
+        const attended = student.attendances.filter((row) => row.status === "PRESENT" || row.status === "LATE").length;
+        const attendanceRate = attendanceTotal ? Math.round((attended / attendanceTotal) * 100) : null;
+        const submitted = new Set(student.homeworkSubmissions.map((row) => row.homeworkId));
+        const missingHomework = homeworks.filter((row) => row.classId === student.classId && !submitted.has(row.id)).length;
+        const examAverage = student.examAttempts.length
+          ? Math.round(student.examAttempts.reduce((sum, row) => {
+              return sum + (Number(row.score || 0) / Number(row.exam.totalMarks)) * 100;
+            }, 0) / student.examAttempts.length)
+          : null;
+        const developingGed = student.gedReadiness.filter((row) => row.status === "NOT_READY" || row.status === "DEVELOPING").length;
+        if (attendanceRate != null && attendanceTotal >= 3 && attendanceRate < 80) reasons.push({ code: "ATTENDANCE", label: `Attendance is ${attendanceRate}%`, severity: attendanceRate < 65 ? "HIGH" : "MEDIUM" });
+        if (missingHomework >= 2) reasons.push({ code: "HOMEWORK", label: `${missingHomework} overdue homework items`, severity: missingHomework >= 4 ? "HIGH" : "MEDIUM" });
+        if (examAverage != null && student.examAttempts.length >= 2 && examAverage < 60) reasons.push({ code: "EXAMS", label: `Recent exam average is ${examAverage}`, severity: examAverage < 45 ? "HIGH" : "MEDIUM" });
+        if (developingGed >= 2) reasons.push({ code: "GED", label: `${developingGed} GED areas need support`, severity: developingGed >= 4 ? "HIGH" : "MEDIUM" });
+        const score = Math.min(100, reasons.reduce((sum, reason) => sum + (reason.severity === "HIGH" ? 30 : 18), 0));
+        return {
+          id: student.id, studentCode: student.studentCode,
+          name: `${student.user?.firstName || ""} ${student.user?.lastName || ""}`.trim() || student.preferredName || student.studentCode,
+          profilePhotoUrl: student.user?.profilePhotoUrl || student.profilePhotoUrl, className: student.class?.name || "Unassigned",
+          risk: score >= 50 ? "HIGH" : score >= 18 ? "MEDIUM" : "LOW", score, reasons,
+          metrics: { attendanceRate, missingHomework, examAverage, developingGed },
+          activeInterventions: student.interventions.length, openCases: student.caseRecords.length,
+        };
+      }).sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
+      res.json({ students: result, thresholds: { attendance: 80, missingHomework: 2, examAverage: 60, gedAreas: 2 } });
+    } catch (err) {
+      logger.error("Error calculating student success risks:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/interventions", authMiddleware, requirePermission("view_interventions"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const classIds = jwtUser.role === "TEACHER" ? await getTeacherClassIds(jwtUser.userId) : null;
+      const rows = await prisma.interventionPlan.findMany({
+        where: {
+          ...(classIds ? { student: { classId: { in: classIds } } } : {}),
+          ...(typeof req.query.studentId === "string" ? { studentId: req.query.studentId } : {}),
+        },
+        include: {
+          student: { include: { user: { select: { firstName: true, lastName: true } }, class: { select: { name: true } } } },
+          assignedTo: { select: { id: true, firstName: true, lastName: true, role: true } },
+          createdBy: { select: { firstName: true, lastName: true } },
+        }, orderBy: [{ status: "asc" }, { dueDate: "asc" }, { createdAt: "desc" }],
+      });
+      res.json(rows);
+    } catch (err) {
+      logger.error("Error fetching interventions:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/interventions/assignees", authMiddleware, requirePermission("view_interventions"), async (_req, res) => {
+    const users = await prisma.user.findMany({
+      where: { isActive: true, role: { in: ["ADMIN", "TEACHER", "CASE_WORKER"] } },
+      select: { id: true, firstName: true, lastName: true, role: true }, orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
+    });
+    res.json(users);
+  });
+
+  app.post("/api/interventions", authMiddleware, requirePermission("manage_interventions"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { studentId, title, reason, priority, assignedToId, dueDate, notes } = req.body || {};
+    if (!studentId || !String(title || "").trim() || !String(reason || "").trim()) {
+      res.status(400).json({ error: "Student, title, and reason are required" }); return;
+    }
+    if (!["LOW", "MEDIUM", "HIGH", "URGENT"].includes(priority || "MEDIUM")) { res.status(400).json({ error: "Invalid priority" }); return; }
+    try {
+      if (jwtUser.role === "TEACHER") {
+        const student = await prisma.student.findUnique({ where: { id: studentId }, select: { classId: true } });
+        const classIds = await getTeacherClassIds(jwtUser.userId);
+        if (!student?.classId || !classIds.includes(student.classId)) { res.status(403).json({ error: "Forbidden: student is not in your class" }); return; }
+      }
+      const row = await prisma.interventionPlan.create({ data: {
+        studentId, title: String(title).trim(), reason: String(reason).trim(), priority: priority || "MEDIUM",
+        assignedToId: assignedToId || null, dueDate: dueDate ? new Date(dueDate) : null,
+        notes: String(notes || "").trim() || null, createdById: jwtUser.userId,
+      }});
+      if (assignedToId && assignedToId !== jwtUser.userId) await ensureNotification({
+        userId: assignedToId, type: "INTERVENTION_ASSIGNED", title: "Intervention assigned",
+        message: `${row.title} has been assigned to you.`, href: "/student-success", sourceId: `intervention-assigned:${row.id}`,
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "INTERVENTION", row.id,
+        `Intervention '${row.title}' created for student ${studentId}.`, req.ip, req.headers["user-agent"] || null, "WARNING");
+      res.status(201).json(row);
+    } catch (err) {
+      logger.error("Error creating intervention:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.patch("/api/interventions/:id", authMiddleware, requirePermission("manage_interventions"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const allowedStatuses = ["OPEN", "IN_PROGRESS", "MONITORING", "COMPLETED", "CANCELLED"];
+    const data: any = {};
+    for (const key of ["title", "reason", "notes", "outcome", "assignedToId", "dueDate"] as const) {
+      if (req.body?.[key] !== undefined) data[key] = req.body[key] || null;
+    }
+    if (req.body?.priority !== undefined) {
+      if (!["LOW", "MEDIUM", "HIGH", "URGENT"].includes(req.body.priority)) { res.status(400).json({ error: "Invalid priority" }); return; }
+      data.priority = req.body.priority;
+    }
+    if (req.body?.status !== undefined) {
+      if (!allowedStatuses.includes(req.body.status)) { res.status(400).json({ error: "Invalid status" }); return; }
+      data.status = req.body.status; data.completedAt = req.body.status === "COMPLETED" ? new Date() : null;
+    }
+    if (data.dueDate) data.dueDate = new Date(data.dueDate);
+    try {
+      const existing = await prisma.interventionPlan.findUnique({ where: { id: req.params.id }, include: { student: { select: { classId: true } } } });
+      if (!existing) { res.status(404).json({ error: "Intervention not found" }); return; }
+      if (jwtUser.role === "TEACHER") {
+        const classIds = await getTeacherClassIds(jwtUser.userId);
+        if (!existing.student.classId || !classIds.includes(existing.student.classId)) { res.status(403).json({ error: "Forbidden" }); return; }
+      }
+      const row = await prisma.interventionPlan.update({ where: { id: req.params.id }, data });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "INTERVENTION", row.id,
+        `Intervention '${row.title}' updated to ${row.status}.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.json(row);
+    } catch (err) {
+      logger.error("Error updating intervention:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/notifications", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      await Promise.all([
+        jwtUser.role === "STUDENT" ? syncStudentNotifications(jwtUser.userId) : Promise.resolve(),
+        syncInterventionNotifications(jwtUser.userId),
+      ]);
+      const preference = await prisma.notificationPreference.upsert({ where: { userId: jwtUser.userId }, update: {}, create: { userId: jwtUser.userId } });
+      const rows = preference.inAppEnabled ? await prisma.notification.findMany({
+        where: { userId: jwtUser.userId }, orderBy: { createdAt: "desc" }, take: 50,
+      }) : [];
+      res.json({ notifications: rows, unreadCount: rows.filter((row) => !row.readAt).length, preferences: preference });
+    } catch (err: any) {
+      if (err?.code === "P2021" || err?.code === "P2022") { res.json({ notifications: [], unreadCount: 0, migrationRequired: true }); return; }
+      logger.error("Error fetching notifications:", err); res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.patch("/api/notifications/:id/read", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    await prisma.notification.updateMany({ where: { id: req.params.id, userId: jwtUser.userId }, data: { readAt: new Date() } });
+    res.json({ success: true });
+  });
+  app.post("/api/notifications/read-all", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    await prisma.notification.updateMany({ where: { userId: jwtUser.userId, readAt: null }, data: { readAt: new Date() } });
+    res.json({ success: true });
+  });
+  app.put("/api/notifications/preferences", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const fields = ["inAppEnabled", "homeworkReminders", "resultNotifications", "interventionReminders", "emailEnabled"] as const;
+    const data: Record<string, boolean> = {};
+    for (const field of fields) if (typeof req.body?.[field] === "boolean") data[field] = req.body[field];
+    const preference = await prisma.notificationPreference.upsert({
+      where: { userId: jwtUser.userId }, update: data, create: { userId: jwtUser.userId, ...data },
+    });
+    res.json(preference);
+  });
+
   // ── Cases (Support/Safeguarding) API ──────────────────────────────────────
   app.get("/api/cases", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
@@ -4873,6 +5681,8 @@ async function startServer() {
           classId: classId || null,
           subjectId: subjectId || null,
           externalUrl: externalUrl || null,
+          uploadedById: jwtUser.userId,
+          uploadedByName: jwtUser.email,
           totalCopies: 1,
           availableCopies: 1,
           // These are NOT NULL text[] columns without a DB default; Prisma 7
@@ -4943,6 +5753,11 @@ async function startServer() {
     const { id } = req.params;
     const { title, description, type, visibility, classId, subjectId, externalUrl } = req.body;
     try {
+      const existing = await prisma.libraryResource.findUnique({ where: { id } });
+      if (!existing) { res.status(404).json({ error: "Resource not found" }); return; }
+      if (jwtUser.role === "TEACHER" && existing.uploadedById !== jwtUser.userId) {
+        res.status(403).json({ error: "You can only edit resources you uploaded" }); return;
+      }
       const updated = await prisma.libraryResource.update({
         where: { id },
         data: {
@@ -4983,7 +5798,16 @@ async function startServer() {
     }
     const { id } = req.params;
     try {
+      const existing = await prisma.libraryResource.findUnique({ where: { id } });
+      if (!existing) { res.status(404).json({ error: "Resource not found" }); return; }
+      if (jwtUser.role === "TEACHER" && existing.uploadedById !== jwtUser.userId) {
+        res.status(403).json({ error: "You can only delete resources you uploaded" }); return;
+      }
       await prisma.libraryResource.delete({ where: { id } });
+      if (existing.externalUrl?.startsWith("/uploads/library/")) {
+        const filename = existing.externalUrl.slice("/uploads/library/".length);
+        if (filename && filename === path.basename(filename)) await fs.promises.unlink(path.join(LIBRARY_FILE_DIR, filename)).catch(() => {});
+      }
 
       await createAuditLog(
         jwtUser.userId,
@@ -4991,7 +5815,7 @@ async function startServer() {
         "DELETE",
         "LIBRARY",
         id,
-        `Library resource ID ${id} deleted.`,
+        `Library resource '${existing.title}' deleted.`,
         req.ip,
         req.headers["user-agent"] || null,
         "SUCCESS"
@@ -15249,6 +16073,29 @@ async function startServer() {
       detail: "Bundled WebAssembly RAR fallback is available; bsdtar is optional",
       required: true,
     });
+    const queuedEmails = await prisma.emailOutbox.count({ where: { status: { in: ["QUEUED", "SENDING"] } } }).catch(() => 0);
+    if (!smtpTransport) {
+      checks.push({
+        id: "smtp",
+        label: "Email delivery",
+        status: "warning",
+        detail: `SMTP is not configured; ${queuedEmails} email${queuedEmails === 1 ? " is" : "s are"} queued`,
+        required: false,
+      });
+    } else {
+      try {
+        await smtpTransport.verify();
+        checks.push({
+          id: "smtp", label: "Email delivery", status: "ok",
+          detail: `SMTP connection verified; ${queuedEmails} email${queuedEmails === 1 ? "" : "s"} queued`, required: false,
+        });
+      } catch (error: any) {
+        checks.push({
+          id: "smtp", label: "Email delivery", status: "warning",
+          detail: `SMTP verification failed: ${String(error?.message || "connection failed").slice(0, 300)}`, required: false,
+        });
+      }
+    }
 
     const settings = await prisma.schoolProfile.findFirst({ select: { backupEnabled: true } }).catch(() => null);
     const databaseBackup = listBackups().find((artifact) => artifact.kind === "database");
@@ -19790,7 +20637,7 @@ async function startServer() {
       const homework = await hw().findUnique({ where: { id: req.params.id } });
       if (!homework) { res.status(404).json({ error: "Homework not found" }); return; }
       if (!(await canManageExamClass(jwtUser, homework.classId))) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
-      const student = await prisma.student.findUnique({ where: { id: String(studentId) }, select: { id: true, classId: true } });
+      const student = await prisma.student.findUnique({ where: { id: String(studentId) }, select: { id: true, classId: true, userId: true } });
       if (!student || student.classId !== homework.classId) { res.status(400).json({ error: "Student is not in this homework class" }); return; }
 
       const parsedScore = score === null || score === undefined || score === "" ? null : Number(score);
@@ -19831,6 +20678,16 @@ async function startServer() {
       });
       await createAuditLog(jwtUser.userId, jwtUser.email, newStatus === "REDO" ? "REDO" : "MARK", "HOMEWORK_SUBMISSION", sub.id,
         `Homework '${homework.title}' ${newStatus === "REDO" ? "returned for redo" : "marked"}.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      if (student.userId) await ensureNotification({
+        userId: student.userId,
+        type: newStatus === "REDO" ? "HOMEWORK_REDO" : "HOMEWORK_MARKED",
+        title: newStatus === "REDO" ? "Homework needs changes" : "Homework marked",
+        message: newStatus === "REDO"
+          ? `${homework.title} was returned with feedback. Please update and resubmit it.`
+          : `${homework.title} has been marked${parsedScore == null ? "." : `: ${parsedScore} points.`}`,
+        href: "/student/homework",
+        sourceId: `homework-result:${sub.id}:${sub.updatedAt.getTime()}`,
+      });
       res.json(sub);
     } catch (err) {
       logger.error("Error marking homework:", err);
@@ -20131,6 +20988,8 @@ async function startServer() {
 
   // ── SPA fallback — registered AFTER every /api route so it never shadows one ──
   if (!isProduction) {
+    // Keep the development server out of the production dependency/runtime path.
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
@@ -20183,11 +21042,26 @@ async function startServer() {
     logger.info(`Mode: ${process.env.NODE_ENV || "development"}`);
   });
 
+  if (smtpTransport) {
+    // Recover jobs left in-flight by an interrupted process, then poll the
+    // durable outbox. unref() lets the process exit normally during shutdown.
+    await prisma.emailOutbox.updateMany({
+      where: { status: "SENDING", updatedAt: { lt: new Date(Date.now() - 10 * 60 * 1000) } },
+      data: { status: "QUEUED", nextAttemptAt: new Date() },
+    });
+    void processEmailOutbox();
+  } else {
+    logger.warn("SMTP_HOST is not configured; email will remain queued until SMTP is configured.");
+  }
+  const emailWorker = setInterval(() => void processEmailOutbox(), 30_000);
+  if (typeof (emailWorker as any).unref === "function") (emailWorker as any).unref();
+
   let shuttingDown = false;
   const shutdown = async () => {
     if (shuttingDown) return; // ignore repeated Ctrl+C
     shuttingDown = true;
     logger.info("Shutting down server...");
+    clearInterval(emailWorker);
     // End long-lived SSE chat streams; otherwise they keep the server open.
     for (const set of chatStreams.values()) for (const r of set) { try { r.end(); } catch { /* ignore */ } }
     // Force-close lingering keep-alive sockets so server.close() can complete.

@@ -13,6 +13,9 @@ import {
 import { toast } from 'sonner';
 import { useAuth } from '../providers/AuthProvider';
 import { ProfilePhotoUploader } from '@/src/components/profile/ProfilePhotoUploader';
+import { NotificationPreferences } from '@/src/components/profile/NotificationPreferences';
+import { SessionManagement } from '@/src/components/profile/SessionManagement';
+import { MfaSettings } from '@/src/components/profile/MfaSettings';
 
 const CURSOR_EFFECT_OPTIONS: { value: string; label: string }[] = [
   { value: 'SCHOOL_DEFAULT', label: "Use school default" },
@@ -126,6 +129,9 @@ export default function MyProfile() {
           </Button>
         </div>
       </div>
+      <NotificationPreferences />
+      <MfaSettings />
+      <SessionManagement />
     </div>
   );
 }

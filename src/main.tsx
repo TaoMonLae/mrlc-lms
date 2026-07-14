@@ -6,9 +6,11 @@ import './index.css';
 import './styles/print.css';
 import {registerServiceWorker} from './registerSW';
 import {installAuthInterceptor} from './lib/authInterceptor';
+import {startOfflineSync} from './lib/offlineQueue';
 
 // Install before anything fetches, so expired sessions are handled everywhere.
 installAuthInterceptor();
+startOfflineSync();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

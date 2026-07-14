@@ -31,6 +31,8 @@ export interface User {
   status: UserStatus;
   mustChangePassword?: boolean;
   cursorEffect?: string | null;
+  mfaEnabled?: boolean;
+  mfaRecommended?: boolean;
   studentId?: string;
   teacherId?: string;
   lastLoginAt?: string;

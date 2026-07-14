@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Search, Moon, Sun, Monitor, Bell, Megaphone, Pin, Calendar, Clock } from "lucide-react";
+import { Search, Moon, Sun, Monitor, Bell, Megaphone, Pin, Calendar, Clock, Settings } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,9 @@ import { format } from "date-fns";
 import { SearchDialog } from "../SearchDialog";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useUser } from "@/src/lib/permissions";
+import { apiGet, apiSend } from "@/src/lib/api";
+
+type NotificationRow = { id: string; type: string; title: string; message: string; href?: string | null; readAt?: string | null; createdAt: string };
 
 export function TopBar() {
   const { setTheme } = useTheme();
@@ -40,7 +43,9 @@ export function TopBar() {
   }, [canSearch]);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [notifications, setNotifications] = useState<NotificationRow[]>([]);
   const [viewedAnnouncements, setViewedAnnouncements] = useState<Set<string>>(new Set());
+  const viewedAnnouncementsKey = `viewed_announcements:${user?.id || 'anonymous'}`;
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -48,8 +53,10 @@ export function TopBar() {
   }, []);
 
   useEffect(() => {
-    // Load viewed announcements from localStorage
-    const storedViewed = localStorage.getItem("viewed_announcements");
+    // Keep read state separate on shared devices so one person's bell does
+    // not hide another person's unread announcements.
+    setViewedAnnouncements(new Set());
+    const storedViewed = localStorage.getItem(viewedAnnouncementsKey);
     if (storedViewed) {
       try {
         setViewedAnnouncements(new Set(JSON.parse(storedViewed)));
@@ -57,17 +64,19 @@ export function TopBar() {
         console.error("Failed to parse viewed announcements:", e);
       }
     }
-  }, []);
+  }, [viewedAnnouncementsKey]);
 
   // Fetch on mount AND whenever the bell is opened, so announcements published
   // after page load show up without a full refresh.
   useEffect(() => {
     if (!notifOpen && announcements.length > 0) return;
-    const token = sessionStorage.getItem("auth_token");
-    fetch("/api/announcements", { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data) => setAnnouncements(Array.isArray(data) ? data : []))
-      .catch(() => setAnnouncements([]));
+    Promise.all([
+      apiGet<any[]>("/api/announcements").catch(() => []),
+      apiGet<{ notifications: NotificationRow[] }>("/api/notifications").catch(() => ({ notifications: [] })),
+    ]).then(([announcementRows, notificationData]) => {
+      setAnnouncements(Array.isArray(announcementRows) ? announcementRows : []);
+      setNotifications(notificationData.notifications || []);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [notifOpen]);
 
@@ -83,22 +92,31 @@ export function TopBar() {
   const unreadAnnouncements = activeAnnouncements.filter(
     (ann) => !viewedAnnouncements.has(ann.id)
   );
+  const unreadNotifications = notifications.filter((notification) => !notification.readAt);
+  const unreadCount = unreadAnnouncements.length + unreadNotifications.length;
 
   // Mark announcement as viewed when clicked
   const markAsViewed = (announcementId: string) => {
     setViewedAnnouncements((prev) => {
       const updated = new Set(prev);
       updated.add(announcementId);
-      localStorage.setItem("viewed_announcements", JSON.stringify([...updated]));
+      localStorage.setItem(viewedAnnouncementsKey, JSON.stringify([...updated]));
       return updated;
     });
   };
 
   // Mark all as viewed
-  const markAllAsViewed = () => {
+  const markAllAsViewed = async () => {
     const allIds = activeAnnouncements.map((ann) => ann.id);
     setViewedAnnouncements(new Set(allIds));
-    localStorage.setItem("viewed_announcements", JSON.stringify(allIds));
+    localStorage.setItem(viewedAnnouncementsKey, JSON.stringify(allIds));
+    setNotifications((rows) => rows.map((row) => ({ ...row, readAt: row.readAt || new Date().toISOString() })));
+    await apiSend('/api/notifications/read-all', 'POST').catch(() => undefined);
+  };
+
+  const markNotificationRead = async (notificationId: string) => {
+    setNotifications((rows) => rows.map((row) => row.id === notificationId ? { ...row, readAt: row.readAt || new Date().toISOString() } : row));
+    await apiSend(`/api/notifications/${notificationId}/read`, 'PATCH').catch(() => undefined);
   };
 
   return (
@@ -111,13 +129,13 @@ export function TopBar() {
             className="relative hidden w-full max-w-md md:block text-left"
             aria-label="Open search (Ctrl+K)"
           >
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-600 dark:text-slate-300">
               <Search className="h-5 w-5" />
             </span>
-            <span className="block w-full rounded-md border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-surface-raised py-2 pl-10 pr-3 text-sm text-slate-400 transition-all hover:border-aubergine-400">
+            <span className="block w-full rounded-md border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-surface-raised py-2 pl-10 pr-3 text-sm text-slate-600 dark:text-slate-300 transition-all hover:border-aubergine-400">
               Search students, teachers, classes...
             </span>
-            <kbd className="absolute right-3 top-1/2 -translate-y-1/2 rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-slate-400 dark:border-white/10 dark:bg-surface-indigo">
+            <kbd className="absolute right-3 top-1/2 -translate-y-1/2 rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:border-white/10 dark:bg-surface-indigo dark:text-slate-300">
               ⌘K
             </kbd>
           </button>
@@ -194,13 +212,13 @@ export function TopBar() {
                 variant="ghost"
                 size="icon"
                 className="relative h-10 w-10 text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-surface-raised rounded-full transition-colors hidden sm:flex"
-                aria-label={`View ${unreadAnnouncements.length} unread announcements`}
+                aria-label={`View ${unreadCount} unread notifications`}
               />
             }
             nativeButton={true}
           >
             <Bell className="h-5 w-5" />
-            {unreadAnnouncements.length > 0 && (
+            {unreadCount > 0 && (
               <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
             )}
           </DropdownMenuTrigger>
@@ -209,17 +227,17 @@ export function TopBar() {
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-white/10">
               <div className="flex items-center gap-2">
-                <Megaphone className="h-4 w-4 text-aubergine-500" />
+                <Bell className="h-4 w-4 text-aubergine-500" />
                 <span className="font-semibold text-sm text-slate-900 dark:text-white">
-                  Announcements
+                  Notifications
                 </span>
-                {unreadAnnouncements.length > 0 && (
+                {unreadCount > 0 && (
                   <Badge className="h-4 px-1.5 text-[10px] bg-aubergine-600 text-white border-none">
-                    {unreadAnnouncements.length}
+                    {unreadCount}
                   </Badge>
                 )}
               </div>
-              {unreadAnnouncements.length > 0 && (
+              {unreadCount > 0 && (
                 <button
                   onClick={markAllAsViewed}
                   className="text-xs text-aubergine-600 hover:text-aubergine-700 font-medium"
@@ -231,12 +249,28 @@ export function TopBar() {
 
             {/* List */}
             <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-white/10">
-              {activeAnnouncements.length === 0 ? (
+              {notifications.length === 0 && activeAnnouncements.length === 0 ? (
                 <div className="py-8 text-center text-sm text-slate-400">
-                  No announcements
+                  You're all caught up
                 </div>
               ) : (
-                activeAnnouncements.map((ann) => (
+                <>
+                {notifications.map((notification) => (
+                  <Link
+                    key={notification.id}
+                    to={notification.href || '#'}
+                    onClick={() => { void markNotificationRead(notification.id); setNotifOpen(false); }}
+                    className="flex flex-col gap-1 px-4 py-3 hover:bg-slate-50 dark:hover:bg-surface-raised"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-sm font-medium text-slate-900 dark:text-white">{notification.title}</span>
+                      {!notification.readAt && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-aubergine-500" />}
+                    </div>
+                    <p className="text-xs leading-relaxed text-slate-500">{notification.message}</p>
+                    <span className="text-[10px] text-slate-400">{format(new Date(notification.createdAt), 'MMM d, yyyy')}</span>
+                  </Link>
+                ))}
+                {activeAnnouncements.map((ann) => (
                   <div
                     key={ann.id}
                     onClick={() => markAsViewed(ann.id)}
@@ -270,18 +304,19 @@ export function TopBar() {
                       </span>
                     </Link>
                   </div>
-                ))
+                ))}
+                </>
               )}
             </div>
 
             {/* Footer */}
             <div className="border-t border-slate-100 dark:border-white/10 px-4 py-2">
               <Link
-                to="/announcements"
+                to="/profile#notifications"
                 onClick={() => setNotifOpen(false)}
                 className="text-xs text-aubergine-600 hover:text-aubergine-700 font-medium"
               >
-                View all announcements →
+                <Settings className="mr-1 inline h-3 w-3" /> Notification preferences →
               </Link>
             </div>
           </DropdownMenuContent>

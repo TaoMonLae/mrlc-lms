@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { apiGet } from '../../lib/api';
+import { apiGet, apiSend, authHeaders } from '../../lib/api';
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,12 +24,14 @@ import {
   Globe,
   Link2,
   Edit,
-  Trash2
+  Trash2,
+  HardDriveDownload,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import { toast } from "sonner";
+import { usePermissions, useUser } from '../../lib/permissions';
 
 interface ResourceRow {
   id: string; title: string; type: string; uploadedBy: string;
@@ -37,6 +39,7 @@ interface ResourceRow {
   fileSize: number | null;
   downloadCount: number;
   lastDownloaded: string | null;
+  uploadedById: string | null;
 }
 
 // Map a LibraryResource row from /api/library into this page's display shape.
@@ -45,7 +48,8 @@ function mapLibraryResource(r: any): ResourceRow {
     id: r.id,
     title: r.title,
     type: (r.type || 'FILE').toUpperCase(),
-    uploadedBy: r.author || '—',
+    uploadedBy: r.uploadedByName || r.author || '—',
+    uploadedById: r.uploadedById || null,
     date: r.createdAt ? new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : '—',
     visibility: r.visibility || 'PUBLIC',
     url: r.externalUrl || null,
@@ -56,6 +60,8 @@ function mapLibraryResource(r: any): ResourceRow {
 }
 
 export default function TeacherLibrary() {
+  const { user } = useUser();
+  const { isAdmin } = usePermissions();
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [resources, setResources] = useState<ResourceRow[]>([]);
@@ -127,6 +133,26 @@ export default function TeacherLibrary() {
     }).catch(() => {
       toast.error("Could not copy link. Please copy the URL manually.");
     });
+  };
+
+  const handleDelete = async (resource: ResourceRow) => {
+    if (!confirm(`Delete "${resource.title}"? This also removes its uploaded file.`)) return;
+    try {
+      await apiSend(`/api/library/${resource.id}`, 'DELETE');
+      setResources((rows) => rows.filter((row) => row.id !== resource.id));
+      toast.success('Resource deleted');
+    } catch (error: any) { toast.error(error?.message || 'Could not delete resource'); }
+  };
+
+  const saveOffline = async (resource: ResourceRow) => {
+    if (!resource.url || !resource.url.startsWith('/')) { toast.info('Only uploaded school files can be saved offline.'); return; }
+    try {
+      const response = await fetch(resource.url, { headers: authHeaders() });
+      if (!response.ok) throw new Error('Download failed');
+      const cache = await caches.open('mrlc-learning-resources-v1');
+      await cache.put(resource.url, response.clone());
+      toast.success('Saved for offline use on this device');
+    } catch { toast.error('Could not save this resource offline'); }
   };
 
   return (
@@ -243,6 +269,10 @@ export default function TeacherLibrary() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => void saveOffline(resource)} disabled={!resource.url?.startsWith('/')}>
+                          <HardDriveDownload className="h-4 w-4 mr-2" />
+                          Save for offline
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => {
                           if (resource.url) {
                             navigator.clipboard.writeText(resource.url);
@@ -264,20 +294,17 @@ export default function TeacherLibrary() {
                           <Download className="h-4 w-4 mr-2" />
                           Download
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => toast.info('Edit functionality coming soon.')}
-                          disabled={!resource.url}
-                        >
+                        <DropdownMenuItem render={<Link to={`/library/${resource.id}/edit`} />} disabled={!isAdmin && resource.uploadedById !== user?.id}>
                           <Edit className="h-4 w-4 mr-2" />
                           Edit Details
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => toast.info('Delete functionality coming soon.')}
-                          disabled
+                          onClick={() => void handleDelete(resource)}
+                          disabled={!isAdmin && resource.uploadedById !== user?.id}
                           className="text-red-600"
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
-                          Delete (Coming Soon)
+                          Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

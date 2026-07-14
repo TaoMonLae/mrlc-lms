@@ -7,7 +7,13 @@ import React, {
   useState,
   useCallback,
 } from 'react';
-import { LANGUAGES, DEFAULT_LANGUAGE, getLanguage, type Language } from './catalog';
+import {
+  LANGUAGES,
+  DEFAULT_LANGUAGE,
+  getLanguage,
+  loadLanguageMessages,
+  type Language,
+} from './catalog';
 import { DomTranslator } from './domTranslator';
 
 const STORAGE_KEY = 'mrlc-lms-lang';
@@ -34,12 +40,19 @@ function readStoredLang(): string {
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLangState] = useState<string>(readStoredLang);
+  const [messages, setMessages] = useState<Record<string, string>>({});
   const translatorRef = useRef<DomTranslator | null>(null);
 
-  const messages = useMemo(
-    () => getLanguage(lang)?.messages ?? {},
-    [lang]
-  );
+  useEffect(() => {
+    let active = true;
+    setMessages({});
+    void loadLanguageMessages(lang).then((catalog) => {
+      if (active) setMessages(catalog);
+    });
+    return () => {
+      active = false;
+    };
+  }, [lang]);
 
   // Set up the DOM translator once.
   useEffect(() => {

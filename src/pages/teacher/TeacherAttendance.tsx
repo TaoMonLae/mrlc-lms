@@ -22,7 +22,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { apiGet, apiSend } from "../../lib/api";
+import { apiGet } from "../../lib/api";
+import { sendOrQueueMutation } from "../../lib/offlineQueue";
 
 interface RosterStudent { id: string; name: string; studentId: string; photo?: string | null; }
 interface TimetableSession {
@@ -181,14 +182,16 @@ export default function TeacherAttendance() {
         payload.subjectId = sessionForApi.subjectId;
       }
 
-      await apiSend('/api/attendance', 'POST', payload);
+      const result = await sendOrQueueMutation({ path: '/api/attendance', method: 'POST', body: payload });
 
       const successMsg = mode === 'session'
         ? `Session attendance saved for ${sessionForApi?.subjectName}!`
         : 'Daily attendance saved successfully!';
 
-      toast.success(successMsg, {
-        description: `${students.length} students recorded for ${new Date(sessionDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}.`,
+      toast.success(result.queued ? 'Attendance saved offline' : successMsg, {
+        description: result.queued
+          ? `${students.length} records will sync automatically when this device reconnects.`
+          : `${students.length} students recorded for ${new Date(sessionDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}.`,
       });
     } catch (err: any) {
       toast.error(err.message || 'Failed to save attendance.');

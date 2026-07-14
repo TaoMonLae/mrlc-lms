@@ -40,6 +40,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm run audit:prod
       - run: npx prisma migrate deploy
       - run: npm run seed
       - run: npm run test:unit

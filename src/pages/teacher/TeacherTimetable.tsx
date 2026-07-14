@@ -80,6 +80,13 @@ function formatWeekLabel(weekStart: Date): string {
 export default function TeacherTimetable() {
   const [view, setView] = useState<'week' | 'day'>('week');
   const [weekOffset, setWeekOffset] = useState(0); // 0 = current week
+  const [showFilters, setShowFilters] = useState(false);
+  const [typeFilter, setTypeFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [selectedDay, setSelectedDay] = useState(() => {
+    const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+    return DAYS.includes(today) ? today : DAYS[0];
+  });
   const [teacherSchedule, setTeacherSchedule] = useState<ScheduleSession[]>([]);
   const navigate = useNavigate();
 
@@ -135,6 +142,11 @@ export default function TeacherTimetable() {
     ).size,
     [teacherSchedule]
   );
+  const filteredSchedule = useMemo(() => teacherSchedule.filter((session) => (
+    (typeFilter === 'ALL' || session.scheduleType === typeFilter)
+    && (statusFilter === 'ALL' || session.status === statusFilter)
+  )), [teacherSchedule, typeFilter, statusFilter]);
+  const displayedDays = view === 'day' ? [selectedDay] : DAYS;
   // Next upcoming session: today's remaining sessions, else the next day's first.
   const upcomingSession = useMemo(() => {
     const now = new Date();
@@ -167,7 +179,7 @@ export default function TeacherTimetable() {
 
   const handleExportCsv = () => {
     const header = 'Day,Time,Subject,Room\n';
-    const rows = teacherSchedule
+    const rows = filteredSchedule
       .map(s => `${s.day},"${s.time}","${s.subject}","${s.room}"`)
       .join('\n');
     const blob = new Blob([header + rows], { type: 'text/csv;charset=utf-8;' });
@@ -292,27 +304,64 @@ export default function TeacherTimetable() {
                   id="timetable-filter-btn"
                   variant="outline"
                   size="sm"
-                  className="hidden sm:flex h-8 px-3 font-bold text-[10px] uppercase tracking-widest border-slate-200 dark:border-surface-raised"
-                  onClick={() => toast.info('Filter options coming soon.')}
+                  className="flex h-8 px-3 font-bold text-[10px] uppercase tracking-widest border-slate-200 dark:border-surface-raised"
+                  onClick={() => setShowFilters((open) => !open)}
+                  aria-expanded={showFilters}
+                  aria-controls="timetable-filters"
                 >
                     <Filter className="h-3.5 w-3.5 mr-2" /> Filters
                 </Button>
             </div>
         </div>
 
-        <div className="p-0 overflow-x-auto">
-            <div className="min-w-[1000px]">
-                <div className="grid grid-cols-6 border-b border-slate-100 dark:border-surface-raised">
-                    {DAYS.map(day => (
+        {(showFilters || view === 'day') && (
+          <div id="timetable-filters" className="flex flex-wrap items-end gap-3 border-b border-slate-100 bg-white px-4 py-3 dark:border-surface-raised dark:bg-surface-indigo print:hidden">
+            {view === 'day' && (
+              <label className="space-y-1 text-xs font-semibold text-slate-700 dark:text-slate-200">
+                <span className="block">Day</span>
+                <select value={selectedDay} onChange={(event) => setSelectedDay(event.target.value)} className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm dark:border-surface-raised dark:bg-surface-raised">
+                  {DAYS.map((day) => <option key={day} value={day}>{day}</option>)}
+                </select>
+              </label>
+            )}
+            {showFilters && (
+              <>
+                <label className="space-y-1 text-xs font-semibold text-slate-700 dark:text-slate-200">
+                  <span className="block">Session type</span>
+                  <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)} className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm dark:border-surface-raised dark:bg-surface-raised">
+                    <option value="ALL">All types</option>
+                    {[...new Set(teacherSchedule.map((session) => session.scheduleType))].sort().map((type) => <option key={type} value={type}>{type.replaceAll('_', ' ')}</option>)}
+                  </select>
+                </label>
+                <label className="space-y-1 text-xs font-semibold text-slate-700 dark:text-slate-200">
+                  <span className="block">Status</span>
+                  <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm dark:border-surface-raised dark:bg-surface-raised">
+                    <option value="ALL">All statuses</option>
+                    {[...new Set(teacherSchedule.map((session) => session.status))].sort().map((status) => <option key={status} value={status}>{status.replaceAll('_', ' ')}</option>)}
+                  </select>
+                </label>
+                {(typeFilter !== 'ALL' || statusFilter !== 'ALL') && (
+                  <Button variant="ghost" size="sm" onClick={() => { setTypeFilter('ALL'); setStatusFilter('ALL'); }}>Clear filters</Button>
+                )}
+                <span className="pb-2 text-xs text-slate-600 dark:text-slate-300" role="status">{filteredSchedule.length} session{filteredSchedule.length === 1 ? '' : 's'}</span>
+              </>
+            )}
+          </div>
+        )}
+
+        <div className="p-0 overflow-x-auto" tabIndex={0} role="region" aria-label="Teaching schedule grid">
+            <div className={view === 'week' ? 'min-w-[1000px]' : 'min-w-0'}>
+                <div className="grid border-b border-slate-100 dark:border-surface-raised" style={{ gridTemplateColumns: `repeat(${displayedDays.length}, minmax(0, 1fr))` }}>
+                    {displayedDays.map(day => (
                         <div key={day} className="px-4 py-3 text-center border-r border-slate-100 dark:border-surface-raised last:border-r-0">
                             <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{day}</span>
                         </div>
                     ))}
                 </div>
-                <div className="grid grid-cols-6 h-[600px]">
-                    {DAYS.map(day => (
+                <div className="grid h-[600px]" style={{ gridTemplateColumns: `repeat(${displayedDays.length}, minmax(0, 1fr))` }}>
+                    {displayedDays.map(day => (
                         <div key={day} className="border-r border-slate-100 dark:border-surface-raised last:border-r-0 p-3 space-y-3 relative bg-slate-50/20 dark:bg-surface-indigo/10">
-                            {teacherSchedule
+                            {filteredSchedule
                                 .filter(session => session.day === day)
                                 .map((session) => (
                                     <div

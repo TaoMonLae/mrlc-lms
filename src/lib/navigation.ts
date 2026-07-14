@@ -32,7 +32,8 @@ import {
   BookA,
   Turtle,
   Gamepad2,
-  Dice5
+  Dice5,
+  HeartPulse,
 } from "lucide-react";
 import { UserRole } from "./permissions";
 
@@ -143,6 +144,7 @@ export const ADMIN_NAV: AdminNavEntry[] = [
       { title: "School Operations", url: "/operations", icon: ClipboardList },
       { title: "Student Duties", url: "/duties", icon: CalendarCheck },
       { title: "Cases", url: "/cases", icon: AlertCircle },
+      { title: "Student Success", url: "/student-success", icon: HeartPulse },
       { title: "Conduct", url: "/conduct", icon: ShieldAlert },
       { title: "Reports", url: "/reports", icon: BarChart3 },
     ],
@@ -152,6 +154,7 @@ export const ADMIN_NAV: AdminNavEntry[] = [
     icon: Settings,
     items: [
       { title: "Settings", url: "/settings", icon: Settings },
+      { title: "Account & Security", url: "/profile", icon: ShieldAlert },
       { title: "Audit Log", url: "/settings/audit-log", icon: FileText },
       { title: "Export Data", url: "/settings/export", icon: Download },
     ],
@@ -190,6 +193,7 @@ export const TEACHER_NAV: AdminNavEntry[] = [
       { title: "Documents", url: "/documents", icon: FileText },
       { title: "Flashcards", url: "/flashcards", icon: Layers },
       { title: "Conduct", url: "/conduct", icon: ShieldAlert },
+      { title: "Student Success", url: "/student-success", icon: HeartPulse },
     ],
   },
   {
@@ -215,6 +219,7 @@ export const TEACHER_NAV: AdminNavEntry[] = [
   { title: "Reports", url: "/teacher/reports", icon: BarChart3 },
   { title: "My Payroll", url: "/my-payroll", icon: Wallet },
   { title: "My Profile", url: "/teacher/profile", icon: UserSquare2 },
+  { title: "Account & Security", url: "/profile", icon: ShieldAlert },
 ];
 
 /** Grouped sidebar for the STUDENT role. */
@@ -260,6 +265,7 @@ export const STUDENT_NAV: AdminNavEntry[] = [
     ],
   },
   { title: "My Profile", url: "/student/profile", icon: UserSquare2 },
+  { title: "Account & Security", url: "/profile", icon: ShieldAlert },
 ];
 
 /** Roles with a grouped sidebar; everyone else gets the flat list. */
@@ -496,10 +502,22 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     roles: ["ADMIN", "CASE_WORKER"],
   },
   {
+    title: "Student Success",
+    url: "/student-success",
+    icon: HeartPulse,
+    roles: ["ADMIN", "TEACHER", "CASE_WORKER"],
+  },
+  {
     title: "Conduct",
     url: "/conduct",
     icon: ShieldAlert,
     roles: ["ADMIN", "TEACHER", "CASE_WORKER", "STAFF"],
+  },
+  {
+    title: "Account & Security",
+    url: "/profile",
+    icon: ShieldAlert,
+    roles: ["STAFF", "ACCOUNTANT", "CASE_WORKER", "LIBRARIAN"],
   },
   {
     title: "Operations",

@@ -1,28 +1,30 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AppLayout } from "./components/layout/AppLayout";
+const AppLayout = lazy(() => import("./components/layout/AppLayout").then((module) => ({ default: module.AppLayout })));
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
-import LoginPage from "./pages/Login";
-import ChangePassword from "./pages/ChangePassword";
-import DashboardPage from "./pages/Dashboard";
-import MyProfile from "./pages/MyProfile";
-import MyPayroll from "./pages/hr/MyPayroll";
+const LoginPage = lazy(() => import("./pages/Login"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const ChangePassword = lazy(() => import("./pages/ChangePassword"));
+const DashboardPage = lazy(() => import("./pages/Dashboard"));
+const MyProfile = lazy(() => import("./pages/MyProfile"));
+const MyPayroll = lazy(() => import("./pages/hr/MyPayroll"));
 import { PlaceholderPage } from "./pages/Placeholder";
-import StudentsList from "./pages/students/StudentsList";
-import StudentNew from "./pages/students/StudentNew";
-import StudentProfile from "./pages/students/StudentProfile";
-import StudentEdit from "./pages/students/StudentEdit";
-import SessionAttendanceReport from "./pages/reports/SessionAttendanceReport";
-import AttendanceAnalytics from "./pages/analytics/AttendanceAnalytics";
-import BulkAttendance from "./pages/teacher/BulkAttendance";
-import AttendanceReportsPage from "./pages/attendance/AttendanceReports";
+const StudentsList = lazy(() => import("./pages/students/StudentsList"));
+const StudentNew = lazy(() => import("./pages/students/StudentNew"));
+const StudentProfile = lazy(() => import("./pages/students/StudentProfile"));
+const StudentEdit = lazy(() => import("./pages/students/StudentEdit"));
+const SessionAttendanceReport = lazy(() => import("./pages/reports/SessionAttendanceReport"));
+const AttendanceAnalytics = lazy(() => import("./pages/analytics/AttendanceAnalytics"));
+const BulkAttendance = lazy(() => import("./pages/teacher/BulkAttendance"));
+const AttendanceReportsPage = lazy(() => import("./pages/attendance/AttendanceReports"));
 
-import ExamNew from "./pages/exams/ExamNew";
-import ExamProfile from "./pages/exams/ExamProfile";
-import ExamTake from "./pages/exams/ExamTake";
-import ExamResults from "./pages/exams/ExamResults";
-import ExamsList from "./pages/exams/ExamsList";
-import ExamPreview from "./pages/exams/ExamPreview";
+const ExamNew = lazy(() => import("./pages/exams/ExamNew"));
+const ExamProfile = lazy(() => import("./pages/exams/ExamProfile"));
+const ExamTake = lazy(() => import("./pages/exams/ExamTake"));
+const ExamResults = lazy(() => import("./pages/exams/ExamResults"));
+const ExamsList = lazy(() => import("./pages/exams/ExamsList"));
+const ExamPreview = lazy(() => import("./pages/exams/ExamPreview"));
 
 const ExamPlayer = lazy(() => import("./pages/exam2/ExamPlayer"));
 const ResumeAttempt = lazy(() => import("./pages/exam2/ResumeAttempt"));
@@ -41,199 +43,200 @@ const QuestionBank = lazy(() => import("./pages/bank/QuestionBank"));
 const QuestionEditor = lazy(() => import("./pages/bank/QuestionEditor"));
 const TopicManager = lazy(() => import("./pages/bank/TopicManager"));
 
-import TeachersList from "./pages/teachers/TeachersList";
-import TeacherNew from "./pages/teachers/TeacherNew";
-import TeacherProfile from "./pages/teachers/TeacherProfile";
-import TeacherEdit from "./pages/teachers/TeacherEdit";
+const TeachersList = lazy(() => import("./pages/teachers/TeachersList"));
+const TeacherNew = lazy(() => import("./pages/teachers/TeacherNew"));
+const TeacherProfile = lazy(() => import("./pages/teachers/TeacherProfile"));
+const TeacherEdit = lazy(() => import("./pages/teachers/TeacherEdit"));
 
-import ClassesList from "./pages/classes/ClassesList";
-import ClassNew from "./pages/classes/ClassNew";
-import ClassProfile from "./pages/classes/ClassProfile";
-import ClassEdit from "./pages/classes/ClassEdit";
+const ClassesList = lazy(() => import("./pages/classes/ClassesList"));
+const ClassNew = lazy(() => import("./pages/classes/ClassNew"));
+const ClassProfile = lazy(() => import("./pages/classes/ClassProfile"));
+const ClassEdit = lazy(() => import("./pages/classes/ClassEdit"));
 
-import SubjectsList from "./pages/subjects/SubjectsList";
-import SubjectNew from "./pages/subjects/SubjectNew";
-import SubjectProfile from "./pages/subjects/SubjectProfile";
-import SubjectEdit from "./pages/subjects/SubjectEdit";
+const SubjectsList = lazy(() => import("./pages/subjects/SubjectsList"));
+const SubjectNew = lazy(() => import("./pages/subjects/SubjectNew"));
+const SubjectProfile = lazy(() => import("./pages/subjects/SubjectProfile"));
+const SubjectEdit = lazy(() => import("./pages/subjects/SubjectEdit"));
 
-import UsersList from "./pages/users/UsersList";
-import UserNew from "./pages/users/UserNew";
-import UserEdit from "./pages/users/UserEdit";
+const UsersList = lazy(() => import("./pages/users/UsersList"));
+const UserNew = lazy(() => import("./pages/users/UserNew"));
+const UserEdit = lazy(() => import("./pages/users/UserEdit"));
 
-import LibraryList from "./pages/library/LibraryList";
-import LibraryNew from "./pages/library/LibraryNew";
-import LibraryDetail from "./pages/library/LibraryDetail";
-import LibraryEdit from "./pages/library/LibraryEdit";
+const LibraryList = lazy(() => import("./pages/library/LibraryList"));
+const LibraryNew = lazy(() => import("./pages/library/LibraryNew"));
+const LibraryDetail = lazy(() => import("./pages/library/LibraryDetail"));
+const LibraryEdit = lazy(() => import("./pages/library/LibraryEdit"));
 
-import EbookList from "./pages/elibrary/EbookList";
+const EbookList = lazy(() => import("./pages/elibrary/EbookList"));
 const EbookReader = lazy(() => import("./pages/elibrary/EbookReader"));
-import EbookUpload from "./pages/elibrary/EbookUpload";
-import EbookEdit from "./pages/elibrary/EbookEdit";
-import GutenbergImport from "./pages/elibrary/GutenbergImport";
-import EbookAnalytics from "./pages/elibrary/EbookAnalytics";
+const EbookUpload = lazy(() => import("./pages/elibrary/EbookUpload"));
+const EbookEdit = lazy(() => import("./pages/elibrary/EbookEdit"));
+const GutenbergImport = lazy(() => import("./pages/elibrary/GutenbergImport"));
+const EbookAnalytics = lazy(() => import("./pages/elibrary/EbookAnalytics"));
 
-import FeesDashboard from "./pages/fees/FeesDashboard";
-import PaymentNew from "./pages/fees/PaymentNew";
-import StudentFeeProfile from "./pages/fees/StudentFeeProfile";
-import PaymentReceipt from "./pages/fees/PaymentReceipt";
-import VerifyPaymentReceipt from "./pages/fees/VerifyPaymentReceipt";
+const FeesDashboard = lazy(() => import("./pages/fees/FeesDashboard"));
+const PaymentNew = lazy(() => import("./pages/fees/PaymentNew"));
+const StudentFeeProfile = lazy(() => import("./pages/fees/StudentFeeProfile"));
+const PaymentReceipt = lazy(() => import("./pages/fees/PaymentReceipt"));
+const VerifyPaymentReceipt = lazy(() => import("./pages/fees/VerifyPaymentReceipt"));
 
-import ExpensesDashboard from "./pages/expenses/ExpensesDashboard";
-import ExpenseNew from "./pages/expenses/ExpenseNew";
-import ExpenseEdit from "./pages/expenses/ExpenseEdit";
-import ExpenseDetail from "./pages/expenses/ExpenseDetail";
+const ExpensesDashboard = lazy(() => import("./pages/expenses/ExpensesDashboard"));
+const ExpenseNew = lazy(() => import("./pages/expenses/ExpenseNew"));
+const ExpenseEdit = lazy(() => import("./pages/expenses/ExpenseEdit"));
+const ExpenseDetail = lazy(() => import("./pages/expenses/ExpenseDetail"));
 
-import VendorsPage from "./pages/vendors/VendorsPage";
-import VendorNew from "./pages/vendors/VendorNew";
-import VendorEdit from "./pages/vendors/VendorEdit";
-import VendorDetail from "./pages/vendors/VendorDetail";
+const VendorsPage = lazy(() => import("./pages/vendors/VendorsPage"));
+const VendorNew = lazy(() => import("./pages/vendors/VendorNew"));
+const VendorEdit = lazy(() => import("./pages/vendors/VendorEdit"));
+const VendorDetail = lazy(() => import("./pages/vendors/VendorDetail"));
 
-import BudgetsPage from "./pages/budgets/BudgetsPage";
-import BudgetNew from "./pages/budgets/BudgetNew";
-import BudgetDetail from "./pages/budgets/BudgetDetail";
-import BudgetEdit from "./pages/budgets/BudgetEdit";
+const BudgetsPage = lazy(() => import("./pages/budgets/BudgetsPage"));
+const BudgetNew = lazy(() => import("./pages/budgets/BudgetNew"));
+const BudgetDetail = lazy(() => import("./pages/budgets/BudgetDetail"));
+const BudgetEdit = lazy(() => import("./pages/budgets/BudgetEdit"));
 
-import FeeStructuresDashboard from "./pages/fee-structures/FeeStructuresDashboard";
-import FeeStructureDetail from "./pages/fee-structures/FeeStructureDetail";
-import FeeStructureNew from "./pages/fee-structures/FeeStructureNew";
-import FeeStructureEdit from "./pages/fee-structures/FeeStructureEdit";
-import FeeAssignmentsPage from "./pages/fee-structures/FeeAssignmentsPage";
-import FeeDiscountsPage from "./pages/fee-structures/FeeDiscountsPage";
+const FeeStructuresDashboard = lazy(() => import("./pages/fee-structures/FeeStructuresDashboard"));
+const FeeStructureDetail = lazy(() => import("./pages/fee-structures/FeeStructureDetail"));
+const FeeStructureNew = lazy(() => import("./pages/fee-structures/FeeStructureNew"));
+const FeeStructureEdit = lazy(() => import("./pages/fee-structures/FeeStructureEdit"));
+const FeeAssignmentsPage = lazy(() => import("./pages/fee-structures/FeeAssignmentsPage"));
+const FeeDiscountsPage = lazy(() => import("./pages/fee-structures/FeeDiscountsPage"));
 
-import FinancialDashboard from "./pages/financial/FinancialDashboard";
-import BudgetVsActualReport from "./pages/financial/BudgetVsActualReport";
-import IncomeExpenseReport from "./pages/financial/IncomeExpenseReport";
-import MonthlyFinanceReport from "./pages/financial/MonthlyFinanceReport";
-import DonationsDashboard from "./pages/donations/DonationsDashboard";
-import CampaignsPage from "./pages/donations/CampaignsPage";
-import DonorList from "./pages/donations/DonorList";
-import DonorProfile from "./pages/donations/DonorProfile";
-import DonorNew from "./pages/donations/DonorNew";
-import DonorEdit from "./pages/donations/DonorEdit";
-import DonationNew from "./pages/donations/DonationNew";
-import DonationEdit from "./pages/donations/DonationEdit";
-import CampaignNew from "./pages/donations/CampaignNew";
+const FinancialDashboard = lazy(() => import("./pages/financial/FinancialDashboard"));
+const BudgetVsActualReport = lazy(() => import("./pages/financial/BudgetVsActualReport"));
+const IncomeExpenseReport = lazy(() => import("./pages/financial/IncomeExpenseReport"));
+const MonthlyFinanceReport = lazy(() => import("./pages/financial/MonthlyFinanceReport"));
+const DonationsDashboard = lazy(() => import("./pages/donations/DonationsDashboard"));
+const CampaignsPage = lazy(() => import("./pages/donations/CampaignsPage"));
+const DonorList = lazy(() => import("./pages/donations/DonorList"));
+const DonorProfile = lazy(() => import("./pages/donations/DonorProfile"));
+const DonorNew = lazy(() => import("./pages/donations/DonorNew"));
+const DonorEdit = lazy(() => import("./pages/donations/DonorEdit"));
+const DonationNew = lazy(() => import("./pages/donations/DonationNew"));
+const DonationEdit = lazy(() => import("./pages/donations/DonationEdit"));
+const CampaignNew = lazy(() => import("./pages/donations/CampaignNew"));
 
-import DutiesDashboard from "./pages/duties/DutiesDashboard";
-import DutyDefinitionsPage from "./pages/duties/DutyDefinitionsPage";
-import DutyRostersPage from "./pages/duties/DutyRostersPage";
-import DutyRosterDetail from "./pages/duties/DutyRosterDetail";
-import StudentDutyView from "./pages/duties/StudentDutyView";
-import DutyPerformancePage from "./pages/duties/DutyPerformancePage";
-import CasesDashboard from "./pages/cases/CasesDashboard";
-import ConductDashboard from "./pages/conduct/ConductDashboard";
-import CaseNew from "./pages/cases/CaseNew";
-import CaseDetail from "./pages/cases/CaseDetail";
-import CaseEdit from "./pages/cases/CaseEdit";
+const DutiesDashboard = lazy(() => import("./pages/duties/DutiesDashboard"));
+const DutyDefinitionsPage = lazy(() => import("./pages/duties/DutyDefinitionsPage"));
+const DutyRostersPage = lazy(() => import("./pages/duties/DutyRostersPage"));
+const DutyRosterDetail = lazy(() => import("./pages/duties/DutyRosterDetail"));
+const StudentDutyView = lazy(() => import("./pages/duties/StudentDutyView"));
+const DutyPerformancePage = lazy(() => import("./pages/duties/DutyPerformancePage"));
+const CasesDashboard = lazy(() => import("./pages/cases/CasesDashboard"));
+const ConductDashboard = lazy(() => import("./pages/conduct/ConductDashboard"));
+const StudentSuccessHub = lazy(() => import("./pages/student-success/StudentSuccessHub"));
+const CaseNew = lazy(() => import("./pages/cases/CaseNew"));
+const CaseDetail = lazy(() => import("./pages/cases/CaseDetail"));
+const CaseEdit = lazy(() => import("./pages/cases/CaseEdit"));
 
-import ReportsDashboard from "./pages/reports/ReportsDashboard";
-import AttendanceReport from "./pages/reports/AttendanceReport";
-import FeesReport from "./pages/reports/FeesReport";
-import StudentProfileReport from "./pages/reports/StudentProfileReport";
-import ExamResultsReport from "./pages/reports/ExamResultsReport";
-import ClassPerformanceReport from "./pages/reports/ClassPerformanceReport";
-import MonthlySummaryReport from "./pages/reports/MonthlySummaryReport";
-import SchoolOperations from "./pages/operations/SchoolOperations";
-import TeacherMyProfile from "./pages/teacher/MyProfile";
-import HomeworkList from "./pages/teacher/HomeworkList";
-import HomeworkDetail from "./pages/teacher/HomeworkDetail";
-import StudentHomework from "./pages/student/StudentHomework";
-import FlashcardDecks from "./pages/flashcards/FlashcardDecks";
-import FlashcardDeckForm from "./pages/flashcards/FlashcardDeckForm";
-import StudentFlashcardDecks from "./pages/flashcards/StudentFlashcardDecks";
-import StudentFlashcardStudy from "./pages/flashcards/StudentFlashcardStudy";
-import FlashcardQuiz from "./pages/flashcards/FlashcardQuiz";
-import FlashcardMatch from "./pages/flashcards/FlashcardMatch";
-import FlashcardSpelling from "./pages/flashcards/FlashcardSpelling";
-import FlashcardDeckProgress from "./pages/flashcards/FlashcardDeckProgress";
-import StaffDirectory from "./pages/hr/StaffDirectory";
-import StaffProfile from "./pages/hr/StaffProfile";
-import Departments from "./pages/hr/Departments";
-import Payroll from "./pages/hr/Payroll";
-import Leave from "./pages/hr/Leave";
-import PayslipPrint from "./pages/hr/PayslipPrint";
-import PayrollRunPrint from "./pages/hr/PayrollRunPrint";
-import ChatPage from "./pages/chat/ChatPage";
-import SocialSpace from "./pages/social/SocialSpace";
-import ChatModeration from "./pages/chat/ChatModeration";
-import ChatStickers from "./pages/chat/ChatStickers";
-import AdmissionsList from "./pages/admissions/AdmissionsList";
-import AdmissionDetail from "./pages/admissions/AdmissionDetail";
+const ReportsDashboard = lazy(() => import("./pages/reports/ReportsDashboard"));
+const AttendanceReport = lazy(() => import("./pages/reports/AttendanceReport"));
+const FeesReport = lazy(() => import("./pages/reports/FeesReport"));
+const StudentProfileReport = lazy(() => import("./pages/reports/StudentProfileReport"));
+const ExamResultsReport = lazy(() => import("./pages/reports/ExamResultsReport"));
+const ClassPerformanceReport = lazy(() => import("./pages/reports/ClassPerformanceReport"));
+const MonthlySummaryReport = lazy(() => import("./pages/reports/MonthlySummaryReport"));
+const SchoolOperations = lazy(() => import("./pages/operations/SchoolOperations"));
+const TeacherMyProfile = lazy(() => import("./pages/teacher/MyProfile"));
+const HomeworkList = lazy(() => import("./pages/teacher/HomeworkList"));
+const HomeworkDetail = lazy(() => import("./pages/teacher/HomeworkDetail"));
+const StudentHomework = lazy(() => import("./pages/student/StudentHomework"));
+const FlashcardDecks = lazy(() => import("./pages/flashcards/FlashcardDecks"));
+const FlashcardDeckForm = lazy(() => import("./pages/flashcards/FlashcardDeckForm"));
+const StudentFlashcardDecks = lazy(() => import("./pages/flashcards/StudentFlashcardDecks"));
+const StudentFlashcardStudy = lazy(() => import("./pages/flashcards/StudentFlashcardStudy"));
+const FlashcardQuiz = lazy(() => import("./pages/flashcards/FlashcardQuiz"));
+const FlashcardMatch = lazy(() => import("./pages/flashcards/FlashcardMatch"));
+const FlashcardSpelling = lazy(() => import("./pages/flashcards/FlashcardSpelling"));
+const FlashcardDeckProgress = lazy(() => import("./pages/flashcards/FlashcardDeckProgress"));
+const StaffDirectory = lazy(() => import("./pages/hr/StaffDirectory"));
+const StaffProfile = lazy(() => import("./pages/hr/StaffProfile"));
+const Departments = lazy(() => import("./pages/hr/Departments"));
+const Payroll = lazy(() => import("./pages/hr/Payroll"));
+const Leave = lazy(() => import("./pages/hr/Leave"));
+const PayslipPrint = lazy(() => import("./pages/hr/PayslipPrint"));
+const PayrollRunPrint = lazy(() => import("./pages/hr/PayrollRunPrint"));
+const ChatPage = lazy(() => import("./pages/chat/ChatPage"));
+const SocialSpace = lazy(() => import("./pages/social/SocialSpace"));
+const ChatModeration = lazy(() => import("./pages/chat/ChatModeration"));
+const ChatStickers = lazy(() => import("./pages/chat/ChatStickers"));
+const AdmissionsList = lazy(() => import("./pages/admissions/AdmissionsList"));
+const AdmissionDetail = lazy(() => import("./pages/admissions/AdmissionDetail"));
 
-import RolesPermissions from "./pages/settings/RolesPermissions";
-import SettingsLayout from "./pages/settings/SettingsLayout";
-import SchoolSettings from "./pages/settings/SchoolSettings";
-import BrandingSettings from "./pages/settings/BrandingSettings";
-import SystemSettings from "./pages/settings/SystemSettings";
-import BackupAndRestore from "./pages/settings/BackupAndRestore";
-import SystemHealth from "./pages/settings/SystemHealth";
-import ExamDataManagement from "./pages/settings/ExamDataManagement";
-import NewsSources from "./pages/settings/NewsSources";
-import AuditLogPage from "./pages/settings/AuditLog";
-import ExportDataPage from "./pages/settings/ExportData";
+const RolesPermissions = lazy(() => import("./pages/settings/RolesPermissions"));
+const SettingsLayout = lazy(() => import("./pages/settings/SettingsLayout"));
+const SchoolSettings = lazy(() => import("./pages/settings/SchoolSettings"));
+const BrandingSettings = lazy(() => import("./pages/settings/BrandingSettings"));
+const SystemSettings = lazy(() => import("./pages/settings/SystemSettings"));
+const BackupAndRestore = lazy(() => import("./pages/settings/BackupAndRestore"));
+const SystemHealth = lazy(() => import("./pages/settings/SystemHealth"));
+const ExamDataManagement = lazy(() => import("./pages/settings/ExamDataManagement"));
+const NewsSources = lazy(() => import("./pages/settings/NewsSources"));
+const AuditLogPage = lazy(() => import("./pages/settings/AuditLog"));
+const ExportDataPage = lazy(() => import("./pages/settings/ExportData"));
 
-import NewsFeed from "./pages/news/NewsFeed";
-import ArticleReader from "./pages/news/ArticleReader";
+const NewsFeed = lazy(() => import("./pages/news/NewsFeed"));
+const ArticleReader = lazy(() => import("./pages/news/ArticleReader"));
 
-import SudokuSelectPage from "./pages/games/sudoku/index";
-import SudokuPlayPage from "./pages/games/sudoku/PlayPage";
-import SnakeSelectPage from "./pages/games/snake/index";
-import SnakePlayPage from "./pages/games/snake/PlayPage";
-import CheckersSelectPage from "./pages/games/checkers/index";
-import CheckersPlayPage from "./pages/games/checkers/PlayPage";
+const SudokuSelectPage = lazy(() => import("./pages/games/sudoku/index"));
+const SudokuPlayPage = lazy(() => import("./pages/games/sudoku/PlayPage"));
+const SnakeSelectPage = lazy(() => import("./pages/games/snake/index"));
+const SnakePlayPage = lazy(() => import("./pages/games/snake/PlayPage"));
+const CheckersSelectPage = lazy(() => import("./pages/games/checkers/index"));
+const CheckersPlayPage = lazy(() => import("./pages/games/checkers/PlayPage"));
 
-import Dictionary from "./pages/dictionary/Dictionary";
+const Dictionary = lazy(() => import("./pages/dictionary/Dictionary"));
 
-import AnnouncementsList from "./pages/announcements/AnnouncementsList";
-import AnnouncementNew from "./pages/announcements/AnnouncementNew";
-import AnnouncementDetail from "./pages/announcements/AnnouncementDetail";
-import AnnouncementEdit from "./pages/announcements/AnnouncementEdit";
+const AnnouncementsList = lazy(() => import("./pages/announcements/AnnouncementsList"));
+const AnnouncementNew = lazy(() => import("./pages/announcements/AnnouncementNew"));
+const AnnouncementDetail = lazy(() => import("./pages/announcements/AnnouncementDetail"));
+const AnnouncementEdit = lazy(() => import("./pages/announcements/AnnouncementEdit"));
 
-import GradebookPage from "./pages/gradebook/Gradebook";
-import GedReadinessPage from "./pages/gradebook/GedReadiness";
-import StudentProgress from "./pages/gradebook/StudentProgress";
-import GradebookClassReport from "./pages/gradebook/GradebookClassReport";
+const GradebookPage = lazy(() => import("./pages/gradebook/Gradebook"));
+const GedReadinessPage = lazy(() => import("./pages/gradebook/GedReadiness"));
+const StudentProgress = lazy(() => import("./pages/gradebook/StudentProgress"));
+const GradebookClassReport = lazy(() => import("./pages/gradebook/GradebookClassReport"));
 
-import DocumentsPage from "./pages/documents/Documents";
-import DocumentPrint from "./pages/documents/DocumentPrint";
-import VerifyDocument from "./pages/documents/VerifyDocument";
-import StudentDocumentsPage from "./pages/student/StudentDocuments";
+const DocumentsPage = lazy(() => import("./pages/documents/Documents"));
+const DocumentPrint = lazy(() => import("./pages/documents/DocumentPrint"));
+const VerifyDocument = lazy(() => import("./pages/documents/VerifyDocument"));
+const StudentDocumentsPage = lazy(() => import("./pages/student/StudentDocuments"));
 
-import TimetablePage from "./pages/timetable/TimetablePage";
-import TimetableNew from "./pages/timetable/TimetableNew";
-import TimetableEdit from "./pages/timetable/TimetableEdit";
+const TimetablePage = lazy(() => import("./pages/timetable/TimetablePage"));
+const TimetableNew = lazy(() => import("./pages/timetable/TimetableNew"));
+const TimetableEdit = lazy(() => import("./pages/timetable/TimetableEdit"));
 
-import StudentDashboard from "./pages/student/StudentDashboard";
-import StudentProfilePage from "./pages/student/StudentProfilePage";
-import StudentAttendance from "./pages/student/StudentAttendance";
-import StudentExams from "./pages/student/StudentExams";
-import StudentResults from "./pages/student/StudentResults";
-import StudentLibrary from "./pages/student/StudentLibrary";
-import StudentFees from "./pages/student/StudentFees";
-import StudentVideos from "./pages/student/StudentVideos";
+const StudentDashboard = lazy(() => import("./pages/student/StudentDashboard"));
+const StudentProfilePage = lazy(() => import("./pages/student/StudentProfilePage"));
+const StudentAttendance = lazy(() => import("./pages/student/StudentAttendance"));
+const StudentExams = lazy(() => import("./pages/student/StudentExams"));
+const StudentResults = lazy(() => import("./pages/student/StudentResults"));
+const StudentLibrary = lazy(() => import("./pages/student/StudentLibrary"));
+const StudentFees = lazy(() => import("./pages/student/StudentFees"));
+const StudentVideos = lazy(() => import("./pages/student/StudentVideos"));
 
-import TeacherDashboard from "./pages/teacher/TeacherDashboard";
-import TeacherClasses from "./pages/teacher/TeacherClasses";
-import ClassDetails from "./pages/teacher/ClassDetails";
-import TeacherAttendance from "./pages/teacher/TeacherAttendance";
-import TeacherExams from "./pages/teacher/TeacherExams";
-import TeacherLibrary from "./pages/teacher/TeacherLibrary";
-import TeacherReports from "./pages/teacher/TeacherReports";
-import TeacherTimetable from "./pages/teacher/TeacherTimetable";
-import TeacherVideos from "./pages/teacher/TeacherVideos";
-import LessonPlanner from "./pages/teacher/LessonPlanner";
+const TeacherDashboard = lazy(() => import("./pages/teacher/TeacherDashboard"));
+const TeacherClasses = lazy(() => import("./pages/teacher/TeacherClasses"));
+const ClassDetails = lazy(() => import("./pages/teacher/ClassDetails"));
+const TeacherAttendance = lazy(() => import("./pages/teacher/TeacherAttendance"));
+const TeacherExams = lazy(() => import("./pages/teacher/TeacherExams"));
+const TeacherLibrary = lazy(() => import("./pages/teacher/TeacherLibrary"));
+const TeacherReports = lazy(() => import("./pages/teacher/TeacherReports"));
+const TeacherTimetable = lazy(() => import("./pages/teacher/TeacherTimetable"));
+const TeacherVideos = lazy(() => import("./pages/teacher/TeacherVideos"));
+const LessonPlanner = lazy(() => import("./pages/teacher/LessonPlanner"));
 
-import VideoList from "./pages/videos/VideoList";
-import VideoNew from "./pages/videos/VideoNew";
-import VideoDetail from "./pages/videos/VideoDetail";
-import VideoEdit from "./pages/videos/VideoEdit";
+const VideoList = lazy(() => import("./pages/videos/VideoList"));
+const VideoNew = lazy(() => import("./pages/videos/VideoNew"));
+const VideoDetail = lazy(() => import("./pages/videos/VideoDetail"));
+const VideoEdit = lazy(() => import("./pages/videos/VideoEdit"));
 
-import BooksList from "./pages/books/BooksList";
-import BookNew from "./pages/books/BookNew";
-import BookDetail from "./pages/books/BookDetail";
-import BookEdit from "./pages/books/BookEdit";
+const BooksList = lazy(() => import("./pages/books/BooksList"));
+const BookNew = lazy(() => import("./pages/books/BookNew"));
+const BookDetail = lazy(() => import("./pages/books/BookDetail"));
+const BookEdit = lazy(() => import("./pages/books/BookEdit"));
 
-import UnauthorizedPage from "./pages/Unauthorized";
+const UnauthorizedPage = lazy(() => import("./pages/Unauthorized"));
 
 import { ThemeProvider } from "./components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -243,7 +246,7 @@ import { SettingsProvider } from "./providers/SettingsProvider";
 import { AuthProvider } from "./providers/AuthProvider";
 import { I18nProvider } from "./i18n/I18nProvider";
 
-import LandingPage from "./pages/Landing";
+const LandingPage = lazy(() => import("./pages/Landing"));
 import CursorEffect from "./components/CursorEffect";
 import DynamicFavicon from "./components/DynamicFavicon";
 
@@ -255,9 +258,12 @@ export default function App() {
         <SettingsProvider>
         <TooltipProvider>
           <BrowserRouter>
+          <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-sm text-slate-500">Loading page…</div>}>
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
             <Route path="/verify/payment/:id" element={<VerifyPaymentReceipt />} />
             <Route path="/verify/:token" element={<VerifyDocument />} />
@@ -553,6 +559,10 @@ export default function App() {
                   <Route path="/conduct" element={<ConductDashboard />} />
                 </Route>
 
+                <Route element={<ProtectedRoute requiredPermission="view_interventions" />}>
+                  <Route path="/student-success" element={<StudentSuccessHub />} />
+                </Route>
+
                 <Route element={<ProtectedRoute requiredPermission="view_reports" />}>
                   <Route path="/reports" element={<ReportsDashboard />} />
                   <Route path="/reports/attendance" element={<AttendanceReport />} />
@@ -595,6 +605,7 @@ export default function App() {
             
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          </Suspense>
           <Toaster position="top-right" closeButton richColors />
           <CursorEffect />
           <DynamicFavicon />

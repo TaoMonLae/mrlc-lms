@@ -206,8 +206,14 @@ Never use the demo passwords in production. Set the three seed password variable
 | --- | --- | --- | --- |
 | `DATABASE_URL` | Yes | — | PostgreSQL connection string |
 | `SESSION_SECRET` | Yes | — | JWT signing secret; minimum 16 characters |
-| `APP_URL` | Production | `http://localhost:3000` in server fallback | Exact allowed CORS origin; normally the public HTTPS origin |
+| `APP_URL` | Production | `http://localhost:8000` in server fallback | Exact public origin used for CORS and password-reset links; normally the public HTTPS origin |
 | `PORT` | No | `8000` | HTTP listening port |
+| `SMTP_HOST` | Password recovery | — | SMTP server used by the durable email outbox |
+| `SMTP_PORT` | No | `587` | SMTP server port |
+| `SMTP_SECURE` | No | `false` | Use implicit TLS; normally `true` for port 465 |
+| `SMTP_USER` | Provider-specific | — | SMTP username |
+| `SMTP_PASS` | Provider-specific | — | SMTP password or app password |
+| `SMTP_FROM` | No | `MRLC LMS <no-reply@mrlc.local>` | From address for password resets and notifications |
 | `EBOOK_DIR` | No | `./data/ebooks` | Persistent PDF/EPUB storage |
 | `VIDEO_FILES_DIR` | No | `./data/videos` | Persistent uploaded and converted video storage |
 | `BACKUP_DIR` | No | `./data/backups` | PostgreSQL backup storage |
@@ -224,6 +230,8 @@ Never use the demo passwords in production. Set the three seed password variable
 | `OLLAMA_MODEL` | No | `gemma2:9b` | Local Ollama model |
 
 Additional upload directories can be overridden for advanced deployments; see the constants near the top of `server.ts` and `flashcards.ts`.
+
+Password-reset requests are stored in a retryable email outbox. Configure SMTP in production, then verify **Settings → System Health → Email delivery** before relying on self-service recovery. MFA uses standard TOTP authenticator apps; recovery codes are displayed once and stored only as hashes.
 
 ## File limits and processing
 

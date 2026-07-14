@@ -18,8 +18,9 @@ interface AuthContextType {
   login: (
     identifier: string,
     password: string,
-    rememberMe?: boolean
-  ) => Promise<{ success: boolean; error?: string }>;
+    rememberMe?: boolean,
+    mfaCode?: string,
+  ) => Promise<{ success: boolean; error?: string; mfaRequired?: boolean }>;
   logout: () => void;
   // Patches the in-memory user (and its cached copy in session/local
   // storage) after a self-service change like a personal preference update,
@@ -50,6 +51,8 @@ function mapApiUser(apiUser: Record<string, any>): User {
     status: apiUser.isActive ? 'ACTIVE' : 'DISABLED',
     mustChangePassword: Boolean(apiUser.mustChangePassword),
     cursorEffect: apiUser.cursorEffect ?? null,
+    mfaEnabled: Boolean(apiUser.mfaEnabled),
+    mfaRecommended: Boolean(apiUser.mfaRecommended) || (['ADMIN', 'ACCOUNTANT'].includes(apiUser.role) && !apiUser.mfaEnabled),
     createdAt: apiUser.createdAt ?? new Date().toISOString(),
     updatedAt: apiUser.updatedAt ?? new Date().toISOString(),
   };
@@ -135,20 +138,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (
       identifier: string,
       password: string,
-      rememberMe = false
-    ): Promise<{ success: boolean; error?: string }> => {
+      rememberMe = false,
+      mfaCode?: string,
+    ): Promise<{ success: boolean; error?: string; mfaRequired?: boolean }> => {
       try {
         const res = await fetch('/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ identifier, password, rememberMe }),
+          body: JSON.stringify({ identifier, password, rememberMe, mfaCode }),
         });
 
         const data = await res.json();
 
         if (!res.ok) {
-          return { success: false, error: data.error ?? 'Login failed' };
+          return { success: false, error: data.error ?? 'Login failed', mfaRequired: Boolean(data.mfaRequired) };
         }
+
+        if (data.mfaRequired) return { success: false, mfaRequired: true };
 
         sessionStorage.setItem('auth_token', data.token);
         sessionStorage.setItem('auth_user', JSON.stringify(data.user));
@@ -173,7 +179,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(() => {
-    void fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    const token = sessionStorage.getItem('auth_token');
+    void fetch('/api/auth/logout', { method: 'POST', headers: token ? { Authorization: `Bearer ${token}` } : {} }).catch(() => {});
     sessionStorage.removeItem('auth_token');
     sessionStorage.removeItem('auth_user');
     localStorage.removeItem('auth_token');

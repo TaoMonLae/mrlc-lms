@@ -24,6 +24,7 @@ export const PERMISSIONS = [
   'manage_ebooks', 'manage_documents', 'view_documents',
   'manage_announcements', 'view_announcements', 'send_notifications',
   'manage_cases', 'view_cases', 'manage_own_cases', 'manage_conduct', 'view_conduct',
+  'manage_interventions', 'view_interventions',
   'manage_timetable', 'view_timetable', 'view_audit_logs', 'export_data', 'view_reports',
   'manage_settings', 'manage_videos', 'view_videos', 'manage_all',
 ] as const;
@@ -59,7 +60,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, readonly Permission[]> = {
     'manage_assigned_attendance', 'manage_assigned_exams', 'manage_grades', 'view_grades',
     'manage_ged_readiness', 'issue_documents', 'manage_own_library', 'manage_ebooks',
     'manage_announcements', 'manage_videos', 'export_data', 'send_notifications',
-    'manage_conduct', 'view_conduct',
+    'manage_conduct', 'view_conduct', 'manage_interventions', 'view_interventions',
   ],
   STUDENT: [
     'view_own_student', 'view_library', 'view_books', 'view_documents', 'view_announcements',
@@ -80,7 +81,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, readonly Permission[]> = {
   ],
   CASE_WORKER: [
     'manage_cases', 'manage_own_cases', 'view_cases', 'view_students', 'view_documents',
-    'export_data', 'manage_conduct', 'view_conduct',
+    'export_data', 'manage_conduct', 'view_conduct', 'manage_interventions', 'view_interventions',
   ],
   LIBRARIAN: [
     'manage_library', 'manage_books', 'manage_ebooks', 'manage_documents', 'view_library',
@@ -103,7 +104,7 @@ export const PERMISSION_CATEGORIES = {
   DUTY_MANAGEMENT: ['manage_duties', 'view_duties', 'view_own_duties'],
   LIBRARY_MANAGEMENT: ['manage_library', 'manage_own_library', 'view_library', 'manage_books', 'view_books', 'manage_ebooks'],
   COMMUNICATIONS: ['manage_announcements', 'view_announcements', 'send_notifications'],
-  CASE_MANAGEMENT: ['manage_cases', 'view_cases', 'manage_own_cases'],
+  CASE_MANAGEMENT: ['manage_cases', 'view_cases', 'manage_own_cases', 'manage_interventions', 'view_interventions'],
   CONDUCT_MANAGEMENT: ['manage_conduct', 'view_conduct'],
   SYSTEM_MANAGEMENT: ['manage_timetable', 'view_timetable', 'view_audit_logs', 'export_data', 'view_reports', 'manage_settings'],
   CONTENT_MANAGEMENT: ['manage_videos', 'view_videos'],
@@ -133,6 +134,7 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   manage_documents: 'Manage Documents', view_documents: 'View Documents', manage_announcements: 'Manage Announcements',
   view_announcements: 'View Announcements', send_notifications: 'Send Notifications', manage_cases: 'Manage Cases',
   view_cases: 'View Cases', manage_own_cases: 'Manage Own Cases', manage_conduct: 'Manage Conduct/Discipline',
+  manage_interventions: 'Manage Student Interventions', view_interventions: 'View Student Success',
   view_conduct: 'View Conduct/Discipline', manage_timetable: 'Manage Timetable', view_timetable: 'View Timetable',
   view_audit_logs: 'View Audit Logs', export_data: 'Export Data', view_reports: 'View Reports', manage_settings: 'Manage Settings',
   manage_videos: 'Manage Videos', view_videos: 'View Videos', manage_all: 'Full System Access',

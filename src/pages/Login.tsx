@@ -14,7 +14,7 @@ import {
   ShieldCheck,
   AlertCircle,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -48,6 +48,8 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(true);
   const [heroUrl, setHeroUrl] = useState<string>(HERO_FALLBACK);
   const [heroOk, setHeroOk] = useState(false);
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [mfaCode, setMfaCode] = useState("");
 
   // Pull the school's branding (logo + name + contact + login background) from
   // the public endpoint.
@@ -87,8 +89,18 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginFormValues) => {
     setServerError(null);
-    const result = await login(data.identifier, data.password, rememberMe);
+    if (mfaRequired && mfaCode.trim().length < 6) {
+      setServerError("Enter the 6-digit authentication code or a recovery code.");
+      return;
+    }
+    const result = await login(data.identifier, data.password, rememberMe, mfaCode.trim() || undefined);
+    if (result.mfaRequired && !result.error) {
+      setMfaRequired(true);
+      requestAnimationFrame(() => document.getElementById("mfa-code")?.focus());
+      return;
+    }
     if (!result.success) {
+      if (result.mfaRequired) setMfaRequired(true);
       setServerError(result.error ?? "Login failed. Please try again.");
     } else {
       let destination = "/dashboard";
@@ -124,7 +136,7 @@ export default function LoginPage() {
       )}
       <div className="leading-tight">
         <p className="text-sm font-extrabold uppercase tracking-tight text-slate-900">{schoolName}</p>
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-600">GED School LMS Portal</p>
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-700">GED School LMS Portal</p>
       </div>
     </div>
   );
@@ -197,7 +209,7 @@ export default function LoginPage() {
             >
               <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight xl:text-5xl">
                 <span className="block text-blue-700">Learn.</span>
-                <span className="block text-emerald-600">Grow.</span>
+                <span className="block text-emerald-700">Grow.</span>
                 <span className="block text-blue-700">Achieve.</span>
               </h1>
               <div className="mt-4 h-1 w-12 rounded-full bg-blue-700" />
@@ -216,7 +228,7 @@ export default function LoginPage() {
             >
               <div className="text-center">
                 <h2 className="text-2xl font-extrabold text-blue-800">Welcome Back</h2>
-                <p className="mt-1 text-sm font-medium text-slate-500">Access your GED Learning Portal</p>
+                <p className="mt-1 text-sm font-medium text-slate-600">Access your GED Learning Portal</p>
               </div>
 
               <form onSubmit={handleSubmit(onSubmit)} className="mt-5 space-y-4" noValidate>
@@ -281,9 +293,28 @@ export default function LoginPage() {
                   )}
                 </div>
 
+                {mfaRequired && (
+                  <div className="space-y-1.5">
+                    <label htmlFor="mfa-code" className="text-sm font-semibold text-slate-700">Authentication code</label>
+                    <div className="relative">
+                      <ShieldCheck className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" aria-hidden="true" />
+                      <Input
+                        id="mfa-code"
+                        value={mfaCode}
+                        onChange={(event) => setMfaCode(event.target.value)}
+                        placeholder="6-digit code or recovery code"
+                        autoComplete="one-time-code"
+                        inputMode="text"
+                        className="h-12 border-slate-200 bg-slate-50/70 pl-10 text-slate-900 placeholder:text-slate-500"
+                      />
+                    </div>
+                    <p className="text-xs text-slate-600">Open your authenticator app, or enter one unused recovery code.</p>
+                  </div>
+                )}
+
                 {/* Remember + Forgot */}
                 <div className="flex items-center justify-between">
-                  <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-600 select-none">
+                  <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-700 select-none">
                     <input
                       type="checkbox"
                       checked={rememberMe}
@@ -292,9 +323,9 @@ export default function LoginPage() {
                     />
                     Remember me
                   </label>
-                  <a href={helpHref} className="text-sm font-semibold text-blue-700 hover:text-blue-800 hover:underline">
+                  <Link to="/forgot-password" className="text-sm font-semibold text-blue-700 hover:text-blue-800 hover:underline">
                     Forgot Password?
-                  </a>
+                  </Link>
                 </div>
 
                 {/* Sign in */}
@@ -319,7 +350,7 @@ export default function LoginPage() {
                 </Button>
 
                 {/* Divider */}
-                <div className="flex items-center gap-3 py-0.5 text-xs font-medium text-slate-400">
+                <div className="flex items-center gap-3 py-0.5 text-xs font-medium text-slate-600">
                   <span className="h-px flex-1 bg-slate-200" />
                   or
                   <span className="h-px flex-1 bg-slate-200" />
@@ -341,16 +372,16 @@ export default function LoginPage() {
         {/* Footer note */}
         <footer className="px-6 pb-6 sm:px-10">
           <div className="text-center sm:text-right">
-            <p className="flex items-center justify-center gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-500 sm:justify-end">
+            <p className="flex items-center justify-center gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-600 sm:justify-end">
               <ShieldCheck className="h-4 w-4" /> Protected area for authorized personnel only
             </p>
             {(contactEmail || contactPhone) && (
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-sm text-slate-600">
                 Need help?{" "}
                 {contactEmail && (
                   <a className="font-bold text-blue-700 hover:underline" href={`mailto:${contactEmail}`}>{contactEmail}</a>
                 )}
-                {contactEmail && contactPhone ? <span className="text-slate-400"> &nbsp;•&nbsp; </span> : null}
+                {contactEmail && contactPhone ? <span className="text-slate-600"> &nbsp;•&nbsp; </span> : null}
                 {contactPhone && (
                   <a className="font-bold text-slate-600 hover:underline" href={`tel:${contactPhone}`}>{contactPhone}</a>
                 )}

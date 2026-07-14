@@ -25,6 +25,12 @@ services:
       DATABASE_URL: "postgresql://${POSTGRES_USER:-mrlc}:${POSTGRES_PASSWORD:-mrlc_password}@db:5432/${POSTGRES_DB:-school_lms}"
       SESSION_SECRET: "${SESSION_SECRET:-change-me-to-a-long-random-string}"
       APP_URL: "${APP_URL:-http://localhost:8000}"
+      SMTP_HOST: "${SMTP_HOST:-}"
+      SMTP_PORT: "${SMTP_PORT:-587}"
+      SMTP_SECURE: "${SMTP_SECURE:-false}"
+      SMTP_USER: "${SMTP_USER:-}"
+      SMTP_PASS: "${SMTP_PASS:-}"
+      SMTP_FROM: "${SMTP_FROM:-MRLC LMS <no-reply@mrlc.local>}"
       PORT: "8000"
       NODE_ENV: "production"
       # Set to "true" on first run to create the starter accounts, then remove.

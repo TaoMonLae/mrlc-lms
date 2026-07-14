@@ -2,10 +2,8 @@ import { parsePo } from './po';
 
 export interface Language {
   code: string;
-  /** Human-readable name, taken from the .po "Language-Team" header or the code. */
+  /** Human-readable name shown in the language switcher. */
   label: string;
-  /** msgid -> msgstr */
-  messages: Record<string, string>;
 }
 
 // Auto-discovery: every .po file under ./locales becomes a selectable language.
@@ -14,8 +12,7 @@ export interface Language {
 const files = import.meta.glob('./locales/*.po', {
   query: '?raw',
   import: 'default',
-  eager: true,
-}) as Record<string, string>;
+}) as Record<string, () => Promise<string>>;
 
 // Friendly display names for common codes; falls back to the .po header/code.
 const KNOWN_NAMES: Record<string, string> = {
@@ -30,17 +27,10 @@ const KNOWN_NAMES: Record<string, string> = {
 };
 
 function buildLanguages(): Language[] {
-  const langs: Language[] = [];
-  for (const [path, raw] of Object.entries(files)) {
+  const langs: Language[] = Object.keys(files).map((path) => {
     const code = path.split('/').pop()!.replace(/\.po$/, '');
-    const { messages, headers } = parsePo(raw);
-    const label =
-      KNOWN_NAMES[code] ||
-      headers['Language-Team'] ||
-      headers['Language'] ||
-      code.toUpperCase();
-    langs.push({ code, label, messages });
-  }
+    return { code, label: KNOWN_NAMES[code] || code.toUpperCase() };
+  });
   // English first, then alphabetical by label.
   langs.sort((a, b) => {
     if (a.code === 'en') return -1;
@@ -56,4 +46,21 @@ export const DEFAULT_LANGUAGE = 'en';
 
 export function getLanguage(code: string): Language | undefined {
   return LANGUAGES.find((l) => l.code === code);
+}
+
+const messageCache = new Map<string, Promise<Record<string, string>>>();
+
+/** Load and parse a catalog only when its language is selected. */
+export function loadLanguageMessages(code: string): Promise<Record<string, string>> {
+  if (code === DEFAULT_LANGUAGE) return Promise.resolve({});
+
+  const existing = messageCache.get(code);
+  if (existing) return existing;
+
+  const path = Object.keys(files).find((file) => file.endsWith(`/${code}.po`));
+  if (!path) return Promise.resolve({});
+
+  const pending = files[path]().then((raw) => parsePo(raw).messages);
+  messageCache.set(code, pending);
+  return pending;
 }

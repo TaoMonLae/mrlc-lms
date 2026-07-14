@@ -127,7 +127,7 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="text-3xl font-bold text-slate-900 dark:text-white">{stat.value}</div>
-            <p className={`mt-1 text-xs font-semibold ${stat.title === 'Active Cases' ? 'text-aubergine-500' : 'text-green-600'}`}>
+            <p className={`mt-1 text-xs font-semibold ${stat.title === 'Active Cases' ? 'text-aubergine-700 dark:text-aubergine-300' : 'text-green-700 dark:text-green-300'}`}>
               {stat.description}
             </p>
           </Card>
@@ -145,7 +145,7 @@ export default function DashboardPage() {
           </Button>
         </div>
         {announcements.length === 0 ? (
-          <p className="text-sm text-slate-400">{loading ? "Loading…" : "No active announcements."}</p>
+          <p className="text-sm text-slate-600 dark:text-slate-300">{loading ? "Loading…" : "No active announcements."}</p>
         ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {announcements.map((ann) => (
@@ -163,7 +163,7 @@ export default function DashboardPage() {
               <h4 className="text-sm font-bold text-slate-800 dark:text-white line-clamp-1 group-hover:text-aubergine-600 transition-colors">
                 {ann.title}
               </h4>
-              <div className="mt-3 flex items-center justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+              <div className="mt-3 flex items-center justify-between text-[10px] text-slate-600 dark:text-slate-300 font-bold uppercase tracking-wider">
                 <span>{formatDate(ann.date)}</span>
                 <span className="opacity-0 group-hover:opacity-100 transition-opacity">Read more →</span>
               </div>
@@ -182,7 +182,7 @@ export default function DashboardPage() {
             </h3>
             <Link to="/timetable" className="text-[10px] text-aubergine-600 font-bold uppercase tracking-widest hover:underline transition-all">Full Timetable</Link>
           </div>
-          <div className="p-0 overflow-x-auto">
+          <div className="p-0 overflow-x-auto" tabIndex={0} role="region" aria-label="Today's schedule table">
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-50 dark:bg-surface-raised/50 text-slate-500 dark:text-slate-300 font-semibold text-[11px] uppercase tracking-wider border-b border-slate-100 dark:border-surface-raised">
                 <tr>
@@ -196,7 +196,7 @@ export default function DashboardPage() {
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {schedule.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-slate-400">
+                    <td colSpan={5} className="px-6 py-8 text-center text-slate-600 dark:text-slate-300">
                       {loading ? "Loading…" : "No classes scheduled for today."}
                     </td>
                   </tr>
@@ -228,14 +228,14 @@ export default function DashboardPage() {
           <CardContent className="p-4 flex-1">
             <div className="space-y-5">
               {recentCases.length === 0 ? (
-                <p className="text-xs text-slate-400 dark:text-slate-500">{loading ? "Loading…" : "No recent cases."}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-300">{loading ? "Loading…" : "No recent cases."}</p>
               ) : recentCases.map((activity) => (
                 <Link to={`/cases/${activity.id}`} key={activity.id} className="flex gap-3 items-start group">
                   <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-aubergine-500"></div>
                   <div className="space-y-1">
                     <p className="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-tight group-hover:text-aubergine-600 dark:group-hover:text-aubergine-400">{activity.name}</p>
                     <p className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-300 font-medium">{activity.detail}</p>
-                    <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{activity.status} · {formatDate(activity.time)}</p>
+                    <p className="text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-widest">{activity.status} · {formatDate(activity.time)}</p>
                   </div>
                 </Link>
               ))}

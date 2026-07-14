@@ -235,28 +235,39 @@ enum DutyRosterStatus {
 }
 
 model User {
-  id                 String    @id @default(uuid())
-  email              String    @unique
-  username           String?   @unique
-  passwordHash       String?
-  firstName          String
-  lastName           String
-  profilePhotoUrl    String?
+  id                    String    @id @default(uuid())
+  email                 String    @unique
+  username              String?   @unique
+  passwordHash          String?
+  firstName             String
+  lastName              String
+  profilePhotoUrl       String?
   // Personal override for the decorative mouse-cursor effect. Null means
   // "use the school-wide default" set in Settings > System > Cursor Effects.
-  cursorEffect       String?
-  role               Role      @default(STUDENT)
-  isActive           Boolean   @default(true)
-  mustChangePassword Boolean   @default(false)
-  lastLoginAt        DateTime?
+  cursorEffect          String?
+  role                  Role      @default(STUDENT)
+  isActive              Boolean   @default(true)
+  mustChangePassword    Boolean   @default(false)
+  lastLoginAt           DateTime?
+  mfaEnabled            Boolean   @default(false)
+  mfaSecretEncrypted    String?
+  mfaRecoveryCodeHashes String[]  @default([])
+  mfaEnrolledAt         DateTime?
 
-  studentProfile      Student?
-  teacherProfile      Teacher?
-  employeeProfile     Employee?
-  recordedAttendances Attendance[]       @relation("RecordedBy")
-  caseNotes           CaseNote[]
-  sentMessages        Message[]          @relation("SentMessages")
-  receivedMessages    MessageRecipient[] @relation("ReceivedMessages")
+  studentProfile         Student?
+  teacherProfile         Teacher?
+  employeeProfile        Employee?
+  recordedAttendances    Attendance[]            @relation("RecordedBy")
+  caseNotes              CaseNote[]
+  sentMessages           Message[]               @relation("SentMessages")
+  receivedMessages       MessageRecipient[]      @relation("ReceivedMessages")
+  assignedInterventions  InterventionPlan[]      @relation("InterventionAssignee")
+  createdInterventions   InterventionPlan[]      @relation("InterventionCreator")
+  notifications          Notification[]
+  notificationPreference NotificationPreference?
+  authSessions           AuthSession[]
+  passwordResetTokens    PasswordResetToken[]
+  queuedEmails           EmailOutbox[]
 
   conversationsCreated       Conversation[]            @relation("ConversationCreatedBy")
   conversationParticipations ConversationParticipant[]
@@ -373,6 +384,7 @@ model Student {
   flashcardMastery    FlashcardCardMastery[]
   flashcardAttempts   FlashcardAttempt[]
   ruleViolations      RuleViolation[]
+  interventions       InterventionPlan[]
   snakeGameScores     SnakeGameScore[]
   checkerGameScores   CheckerGameScore[]
 
@@ -1343,6 +1355,126 @@ model CaseNote {
 
   @@index([caseRecordId])
   @@index([createdById])
+}
+
+model InterventionPlan {
+  id           String    @id @default(uuid())
+  title        String
+  reason       String
+  priority     String    @default("MEDIUM")
+  status       String    @default("OPEN")
+  dueDate      DateTime?
+  notes        String?
+  outcome      String?
+  studentId    String
+  student      Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  assignedToId String?
+  assignedTo   User?     @relation("InterventionAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  createdById  String
+  createdBy    User      @relation("InterventionCreator", fields: [createdById], references: [id])
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([studentId])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model Notification {
+  id         String                 @id @default(uuid())
+  userId     String
+  user       User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type       String
+  title      String
+  message    String
+  href       String?
+  sourceId   String?
+  readAt     DateTime?
+  createdAt  DateTime               @default(now())
+  deliveries NotificationDelivery[]
+
+  @@unique([userId, sourceId])
+  @@index([userId, readAt, createdAt])
+}
+
+model NotificationPreference {
+  id                    String   @id @default(uuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  inAppEnabled          Boolean  @default(true)
+  homeworkReminders     Boolean  @default(true)
+  resultNotifications   Boolean  @default(true)
+  interventionReminders Boolean  @default(true)
+  emailEnabled          Boolean  @default(false)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model NotificationDelivery {
+  id             String       @id @default(uuid())
+  notificationId String
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  channel        String       @default("IN_APP")
+  status         String       @default("QUEUED")
+  attempts       Int          @default(0)
+  lastError      String?
+  sentAt         DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([status, channel, createdAt])
+  @@index([notificationId])
+}
+
+model AuthSession {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ipAddress  String?
+  userAgent  String?
+  lastSeenAt DateTime  @default(now())
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId, revokedAt, expiresAt])
+}
+
+model PasswordResetToken {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash   String    @unique
+  expiresAt   DateTime
+  usedAt      DateTime?
+  requestedIp String?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId, usedAt, expiresAt])
+  @@index([expiresAt])
+}
+
+model EmailOutbox {
+  id            String    @id @default(uuid())
+  dedupeKey     String?   @unique
+  userId        String?
+  user          User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  toEmail       String
+  subject       String
+  textBody      String?
+  htmlBody      String?
+  status        String    @default("QUEUED")
+  attempts      Int       @default(0)
+  nextAttemptAt DateTime  @default(now())
+  lastError     String?
+  sentAt        DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([status, nextAttemptAt, createdAt])
+  @@index([userId])
 }
 
 model VideoLesson {
@@ -3525,23 +3657,23 @@ model CheckerGameScore {
   className String?
 
   // For tracking wins/losses/draws
-  result     String @default("PLAYING") // WIN | LOSE | DRAW | PLAYING | ABANDONED
-  score      Int    @default(0) // Points earned (pieces captured + bonuses)
-  highScore  Boolean @default(false) // Whether this was a personal best at the time
+  result    String  @default("PLAYING") // WIN | LOSE | DRAW | PLAYING | ABANDONED
+  score     Int     @default(0) // Points earned (pieces captured + bonuses)
+  highScore Boolean @default(false) // Whether this was a personal best at the time
 
-  gameMode  String @default("CLASSIC") // CLASSIC | VOCABULARY | PVP
+  gameMode String @default("CLASSIC") // CLASSIC | VOCABULARY | PVP
 
   // Game details
-  opponentType String @default("HUMAN") // HUMAN | AI | CPU
-  difficulty    String? // EASY | MEDIUM | HARD (for AI games)
-  gameDuration  Int // seconds
-  movesCount    Int @default(0) // Total moves made in the game
+  opponentType String  @default("HUMAN") // HUMAN | AI | CPU
+  difficulty   String? // EASY | MEDIUM | HARD (for AI games)
+  gameDuration Int // seconds
+  movesCount   Int     @default(0) // Total moves made in the game
 
   // Pieces captured
-  playerPiecesCaptured Int  @default(0)
+  playerPiecesCaptured   Int @default(0)
   opponentPiecesCaptured Int @default(0)
-  playerKingsEarned     Int  @default(0)
-  opponentKingsEarned   Int  @default(0)
+  playerKingsEarned      Int @default(0)
+  opponentKingsEarned    Int @default(0)
 
   // Vocabulary mode details
   vocabularyWords Int      @default(0) // Words learned in vocabulary mode
@@ -3566,13 +3698,13 @@ model CheckerGameScore {
 // mixed with the built-in English–Myanmar dictionary when building quizzes, so
 // staff can curate class-specific words that reach every student.
 model CheckerVocabularyWord {
-  id           String   @id @default(uuid())
+  id           String  @id @default(uuid())
   word         String
   definition   String
   partOfSpeech String? // noun | verb | adjective | ...
-  difficulty   String   @default("medium") // easy | medium | hard
-  language     String   @default("en")
-  active       Boolean  @default(true) // soft-hide instead of delete when false
+  difficulty   String  @default("medium") // easy | medium | hard
+  language     String  @default("en")
+  active       Boolean @default(true) // soft-hide instead of delete when false
 
   createdById   String? // User.id of the teacher/admin who added it
   createdByName String?

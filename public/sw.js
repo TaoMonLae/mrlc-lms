@@ -6,9 +6,10 @@
  *   - SPA navigations: network-first, falling back to the cached app shell,
  *     then an offline page.
  */
-const VERSION = 'mrlc-v1';
+const VERSION = 'mrlc-v2';
 const STATIC_CACHE = `static-${VERSION}`;
 const FONT_CACHE = `fonts-${VERSION}`;
+const RESOURCE_CACHE = 'mrlc-learning-resources-v1';
 
 const PRECACHE = [
   '/',
@@ -38,7 +39,7 @@ self.addEventListener('activate', (event) => {
       .then((keys) =>
         Promise.all(
           keys
-            .filter((k) => k !== STATIC_CACHE && k !== FONT_CACHE)
+            .filter((k) => k !== STATIC_CACHE && k !== FONT_CACHE && k !== RESOURCE_CACHE)
             .map((k) => caches.delete(k)),
         ),
       )
@@ -62,7 +63,7 @@ function isViteDev(url) {
   );
 }
 
-const ASSET_RE = /\.(?:js|mjs|css|woff2?|ttf|otf|png|jpe?g|svg|gif|ico|webp)$/;
+const ASSET_RE = /\.(?:js|mjs|css|woff2?|ttf|otf|png|jpe?g|svg|gif|ico|webp|pdf|docx?|xlsx?|pptx?|zip)$/;
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
@@ -83,6 +84,13 @@ self.addEventListener('fetch', (event) => {
   // Google Fonts — cache-first.
   if (url.origin === 'https://fonts.googleapis.com' || url.origin === 'https://fonts.gstatic.com') {
     event.respondWith(cacheFirst(req, FONT_CACHE));
+    return;
+  }
+
+  // Teaching resources explicitly saved for offline use survive app-shell
+  // upgrades and are served from their dedicated cache.
+  if (url.origin === location.origin && url.pathname.startsWith('/uploads/library/')) {
+    event.respondWith(cacheFirst(req, RESOURCE_CACHE));
     return;
   }
 
