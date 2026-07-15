@@ -2,6 +2,7 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 import crypto from "crypto";
+import { cleanEbookTitle, findDuplicateEbookTitle } from "./lib/ebookTitles";
 
 interface JwtPayload { userId: string; role: string; email: string; }
 
@@ -150,6 +151,12 @@ export function registerGutenbergRoutes(deps: Deps): void {
       const metaResp = await fetch(`${GUTENDEX_BASE}/${id}`);
       if (!metaResp.ok) { res.status(404).json({ error: "Book not found on Project Gutenberg." }); return; }
       const book: GutendexBook = await metaResp.json();
+      const cleanedTitle = cleanEbookTitle(book.title);
+      const duplicate = await findDuplicateEbookTitle(prisma, cleanedTitle);
+      if (duplicate) {
+        res.status(409).json({ error: `A book titled "${duplicate.title}" already exists.` });
+        return;
+      }
       const epubUrl = pickEpubUrl(book.formats || {});
       if (!epubUrl) { res.status(400).json({ error: "No EPUB is available for this book." }); return; }
 
@@ -179,7 +186,7 @@ export function registerGutenbergRoutes(deps: Deps): void {
       const author = (book.authors || []).map((a) => a.name).join(", ") || null;
       const ebook = await prisma.ebook.create({
         data: {
-          title: book.title,
+          title: cleanedTitle,
           author,
           description: null,
           category: category || inferGutenbergCategory(book),

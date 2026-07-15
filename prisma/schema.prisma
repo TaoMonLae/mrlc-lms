@@ -1789,13 +1789,15 @@ model InventoryItem {
 }
 
 model Ebook {
-  id          String  @id @default(uuid())
-  title       String
-  author      String?
-  description String?
-  category    String?
-  language    String?
-  coverUrl    String?
+  id           String  @id @default(uuid())
+  title        String
+  author       String?
+  description  String?
+  category     String?
+  seriesName   String?
+  seriesNumber Int?
+  language     String?
+  coverUrl     String?
 
   format       String // "PDF" | "EPUB" | "CBR" | "CBZ"
   fileName     String // stored file name on disk (uuid + ext)
@@ -1817,6 +1819,7 @@ model Ebook {
   @@index([title])
   @@index([author])
   @@index([category])
+  @@index([seriesName, seriesNumber])
   @@index([format])
 }
 

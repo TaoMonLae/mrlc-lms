@@ -47,6 +47,7 @@ import {
 } from "./lib/backupArtifacts";
 import { checkWritableDirectory, probeCommand, summarizeHealth, type HealthCheckResult } from "./lib/systemHealth";
 import { extractRarEntry, listRarImageEntries } from "./lib/portableRar";
+import { cleanEbookTitle, findDuplicateEbookTitle } from "./lib/ebookTitles";
 
 dotenv.config();
 
@@ -1349,6 +1350,7 @@ const schemas = {
   }),
   ebookUpdate: z.object({
     title: optStr, author: optStr, description: optStr, category: optStr,
+    seriesName: optStr, seriesNumber: z.union([z.number().int().positive(), z.string()]).optional().nullable(),
     language: optStr, coverUrl: optStr,
     visibility: z.enum(["ALL", "STUDENTS", "TEACHERS_ONLY"]).optional(),
     downloadAllowed: z.union([z.boolean(), z.string()]).optional(),
@@ -15350,7 +15352,7 @@ async function startServer() {
         orderBy: { createdAt: "desc" },
         select: {
           id: true, title: true, author: true, description: true, category: true,
-          language: true, coverUrl: true, format: true, fileSize: true,
+          seriesName: true, seriesNumber: true, language: true, coverUrl: true, format: true, fileSize: true,
           visibility: true, downloadAllowed: true, uploadedByName: true, createdAt: true,
         },
       });
@@ -15358,6 +15360,22 @@ async function startServer() {
     } catch (err) {
       logger.error("Error fetching ebooks:", err);
       res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Fast preflight for upload/edit forms. Creation and update still repeat
+  // this check server-side so API clients cannot bypass duplicate protection.
+  app.get("/api/ebooks/title-availability", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageEbooks(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    const title = cleanEbookTitle(req.query.title);
+    if (!title) { res.status(400).json({ error: "title is required" }); return; }
+    try {
+      const duplicate = await findDuplicateEbookTitle(prisma, title, String(req.query.excludeId || "") || undefined);
+      res.json({ available: !duplicate, duplicate: duplicate ? { id: duplicate.id, title: duplicate.title } : null });
+    } catch (err) {
+      logger.error("Error checking e-book title availability:", err);
+      res.status(500).json({ error: "Could not check title availability" });
     }
   });
 
@@ -15485,10 +15503,47 @@ async function startServer() {
         res.status(400).json({ error: "An .epub, .pdf, .cbr, or .cbz file is required" });
         return;
       }
-      const { title, author, description, category, language, visibility, downloadAllowed, coverUrl, uploadedByName } = req.body;
-      if (!title) {
+      const {
+        title, author, description, category, seriesName, seriesNumber,
+        language, visibility, downloadAllowed, coverUrl, uploadedByName,
+      } = req.body;
+      const cleanedTitle = cleanEbookTitle(title);
+      const cleanedSeriesName = cleanEbookTitle(seriesName) || null;
+      const parsedSeriesNumber = seriesNumber === "" || seriesNumber === null || seriesNumber === undefined
+        ? null
+        : Number(seriesNumber);
+      const submittedCoverPath = typeof coverUrl === "string" && coverUrl.startsWith("/uploads/ebook-covers/")
+        ? path.join(EBOOK_COVER_DIR, path.basename(coverUrl))
+        : null;
+      const deleteSubmittedCover = () => submittedCoverPath
+        ? fs.promises.unlink(submittedCoverPath).catch(() => {})
+        : Promise.resolve();
+      if (!cleanedTitle) {
         fs.promises.unlink(file.path).catch(() => {});
+        void deleteSubmittedCover();
         res.status(400).json({ error: "title is required" });
+        return;
+      }
+      if (parsedSeriesNumber !== null && (!Number.isInteger(parsedSeriesNumber) || parsedSeriesNumber < 1)) {
+        fs.promises.unlink(file.path).catch(() => {});
+        void deleteSubmittedCover();
+        res.status(400).json({ error: "Series number must be a positive whole number" });
+        return;
+      }
+      let duplicate: { id: string; title: string } | null;
+      try {
+        duplicate = await findDuplicateEbookTitle(prisma, cleanedTitle);
+      } catch (err) {
+        fs.promises.unlink(file.path).catch(() => {});
+        void deleteSubmittedCover();
+        logger.error("Could not check e-book title uniqueness:", err);
+        res.status(500).json({ error: "Could not check whether this title already exists" });
+        return;
+      }
+      if (duplicate) {
+        fs.promises.unlink(file.path).catch(() => {});
+        void deleteSubmittedCover();
+        res.status(409).json({ error: `A book titled "${duplicate.title}" already exists.` });
         return;
       }
       let format = ebookFormatFromName(file.originalname);
@@ -15500,6 +15555,7 @@ async function startServer() {
           if (storedFile.format) format = storedFile.format;
         } catch (compressionError: any) {
           await fs.promises.unlink(file.path).catch(() => {});
+          await deleteSubmittedCover();
           clearComicArchiveCache(file.path);
           logger.warn(`Could not compress oversized ${format}: ${String(compressionError?.message || compressionError)}`);
           res.status(400).json({
@@ -15527,6 +15583,7 @@ async function startServer() {
           } catch (archiveError: any) {
             await fs.promises.unlink(file.path).catch(() => {});
             if (generatedCoverPath) await fs.promises.unlink(generatedCoverPath).catch(() => {});
+            await deleteSubmittedCover();
             clearComicArchiveCache(file.path);
             res.status(400).json({ error: archiveError?.message || "Invalid comic archive" });
             return;
@@ -15534,10 +15591,12 @@ async function startServer() {
         }
         const ebook = await prisma.ebook.create({
           data: {
-            title,
+            title: cleanedTitle,
             author: author || null,
             description: description || null,
             category: category || null,
+            seriesName: cleanedSeriesName,
+            seriesNumber: cleanedSeriesName ? parsedSeriesNumber : null,
             language: language || null,
             coverUrl: resolvedCoverUrl,
             format,
@@ -15552,13 +15611,14 @@ async function startServer() {
         });
         await createAuditLog(
           jwtUser.userId, jwtUser.email, "CREATE", "EBOOK", ebook.id,
-          `E-book '${title}' (${format}) uploaded${storedFile.compressed ? " and compressed" : ""}.`,
+          `E-book '${cleanedTitle}' (${format}) uploaded${storedFile.compressed ? " and compressed" : ""}.`,
           req.ip, req.headers["user-agent"] || null, "SUCCESS"
         );
         res.status(201).json(ebook);
       } catch (err: any) {
         fs.promises.unlink(file.path).catch(() => {});
         if (generatedCoverPath) fs.promises.unlink(generatedCoverPath).catch(() => {});
+        void deleteSubmittedCover();
         clearComicArchiveCache(file.path);
         logger.error("Error creating ebook:", err);
         // Surface the real cause (admin/teacher-only route). A Prisma error here
@@ -15758,21 +15818,64 @@ async function startServer() {
       res.status(403).json({ error: "Forbidden" });
       return;
     }
-    const { title, author, description, category, language, visibility, downloadAllowed, coverUrl } = req.body;
+    const {
+      title, author, description, category, seriesName, seriesNumber,
+      language, visibility, downloadAllowed, coverUrl,
+    } = req.body;
+    let pendingCoverPath: string | null = null;
     try {
+      const current = await prisma.ebook.findUnique({ where: { id: req.params.id } });
+      if (!current) { res.status(404).json({ error: "E-book not found" }); return; }
+      if (coverUrl !== undefined && coverUrl !== current.coverUrl && typeof coverUrl === "string" && coverUrl.startsWith("/uploads/ebook-covers/")) {
+        pendingCoverPath = path.join(EBOOK_COVER_DIR, path.basename(coverUrl));
+      }
+      const discardPendingCover = () => pendingCoverPath
+        ? fs.promises.unlink(pendingCoverPath).catch(() => {})
+        : Promise.resolve();
+      const cleanedTitle = title === undefined ? undefined : cleanEbookTitle(title);
+      if (title !== undefined && !cleanedTitle) {
+        await discardPendingCover();
+        res.status(400).json({ error: "title is required" });
+        return;
+      }
+      if (cleanedTitle) {
+        const duplicate = await findDuplicateEbookTitle(prisma, cleanedTitle, req.params.id);
+        if (duplicate) {
+          await discardPendingCover();
+          res.status(409).json({ error: `A book titled "${duplicate.title}" already exists.` });
+          return;
+        }
+      }
+      const cleanedSeriesName = seriesName === undefined ? undefined : cleanEbookTitle(seriesName) || null;
+      const parsedSeriesNumber = seriesNumber === "" || seriesNumber === null || seriesNumber === undefined
+        ? null
+        : Number(seriesNumber);
+      if (parsedSeriesNumber !== null && (!Number.isInteger(parsedSeriesNumber) || parsedSeriesNumber < 1)) {
+        await discardPendingCover();
+        res.status(400).json({ error: "Series number must be a positive whole number" });
+        return;
+      }
       const updated = await prisma.ebook.update({
         where: { id: req.params.id },
         data: {
-          ...(title && { title }),
+          ...(cleanedTitle && { title: cleanedTitle }),
           ...(author !== undefined && { author: author || null }),
           ...(description !== undefined && { description: description || null }),
           ...(category !== undefined && { category: category || null }),
+          ...(cleanedSeriesName !== undefined && { seriesName: cleanedSeriesName }),
+          ...((seriesNumber !== undefined || cleanedSeriesName === null) && {
+            seriesNumber: cleanedSeriesName === null ? null : parsedSeriesNumber,
+          }),
           ...(language !== undefined && { language: language || null }),
           ...(coverUrl !== undefined && { coverUrl: coverUrl || null }),
           ...(visibility && { visibility }),
           ...(downloadAllowed !== undefined && { downloadAllowed: parseBoolean(downloadAllowed) }),
         },
       });
+      pendingCoverPath = null;
+      if (coverUrl !== undefined && coverUrl !== current.coverUrl && current.coverUrl?.startsWith("/uploads/ebook-covers/")) {
+        fs.promises.unlink(path.join(EBOOK_COVER_DIR, path.basename(current.coverUrl))).catch(() => {});
+      }
       await createAuditLog(
         jwtUser.userId, jwtUser.email, "UPDATE", "EBOOK", updated.id,
         `E-book '${updated.title}' updated.`,
@@ -15781,6 +15884,7 @@ async function startServer() {
       const { fileName, ...meta } = updated;
       res.json(meta);
     } catch (err: any) {
+      if (pendingCoverPath) await fs.promises.unlink(pendingCoverPath).catch(() => {});
       if (err.code === "P2025") { res.status(404).json({ error: "E-book not found" }); return; }
       logger.error("Error updating ebook:", err);
       res.status(500).json({ error: "Internal Server Error" });
@@ -15913,7 +16017,8 @@ async function startServer() {
       if (!fs.existsSync(filePath)) { res.status(404).json({ error: "File missing" }); return; }
       const extensionByFormat: Record<string, string> = { EPUB: ".epub", PDF: ".pdf", CBR: ".cbr", CBZ: ".cbz" };
       const ext = extensionByFormat[ebook.format.toUpperCase()] || "";
-      const safeName = (ebook.originalName || `${ebook.title}${ext}`).replace(/[^\w.\- ]+/g, "_");
+      const baseName = path.parse(ebook.originalName || ebook.title).name || ebook.title;
+      const safeName = `${baseName}${ext}`.replace(/[^\w.\- ]+/g, "_");
       streamEbookFile(req, res, filePath, ebook.format, `attachment; filename="${safeName}"`);
     } catch (err) {
       logger.error("Error downloading ebook:", err);

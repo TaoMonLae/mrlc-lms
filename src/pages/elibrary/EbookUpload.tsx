@@ -18,6 +18,7 @@ import {
 import { toast } from 'sonner';
 import { useUser } from '../../lib/permissions';
 import { EBOOK_CATEGORY_DATALIST_ID, EbookCategoryOptions } from '../../lib/ebookCategories';
+import { normalizeEbookTitle } from '../../../lib/ebookTitles';
 
 const COMPRESSION_THRESHOLD_MB = 50;
 const MAX_DOCUMENT_UPLOAD_MB = 100;
@@ -134,6 +135,8 @@ export default function EbookUpload() {
 
   const [queue, setQueue] = useState<QueuedFile[]>([]);
   const [category, setCategory] = useState('');
+  const [seriesName, setSeriesName] = useState('');
+  const [seriesStart, setSeriesStart] = useState('1');
   const [language, setLanguage] = useState('');
   const [description, setDescription] = useState('');
   const [visibility, setVisibility] = useState('ALL');
@@ -212,10 +215,17 @@ export default function EbookUpload() {
     });
   };
 
-  const uploadOne = async (entry: QueuedFile, token: string | null): Promise<boolean> => {
+  const uploadOne = async (entry: QueuedFile, token: string | null, queueIndex: number): Promise<boolean> => {
     updateEntry(entry.key, { status: 'uploading' });
     let chunkUploadId: string | null = null;
     try {
+      const availabilityRes = await fetch(`/api/ebooks/title-availability?title=${encodeURIComponent(entry.title.trim())}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const availability = await availabilityRes.json().catch(() => ({}));
+      if (!availabilityRes.ok) throw new Error(availability.error || 'Could not check this title');
+      if (!availability.available) throw new Error(`A book titled "${availability.duplicate?.title || entry.title.trim()}" already exists.`);
+
       let coverUrl = '';
       if (entry.coverBlob) {
         const coverForm = new FormData();
@@ -241,6 +251,8 @@ export default function EbookUpload() {
         title: entry.title.trim() || entry.file.name,
         author: entry.author,
         category,
+        seriesName: seriesName.trim(),
+        seriesNumber: seriesName.trim() ? String(Number(seriesStart) + queueIndex) : '',
         language,
         description,
         visibility,
@@ -307,14 +319,24 @@ export default function EbookUpload() {
     e.preventDefault();
     if (queue.length === 0) { toast.error('Add at least one PDF, EPUB, CBR, or CBZ file.'); return; }
     if (queue.some((q) => !q.title.trim())) { toast.error('Every file needs a title.'); return; }
+    const titleKeys = queue.map((q) => normalizeEbookTitle(q.title));
+    if (new Set(titleKeys).size !== titleKeys.length) {
+      toast.error('Each queued book must have a unique title.');
+      return;
+    }
+    const firstSeriesNumber = Number(seriesStart);
+    if (seriesName.trim() && (!Number.isInteger(firstSeriesNumber) || firstSeriesNumber < 1)) {
+      toast.error('Starting volume must be a positive whole number.');
+      return;
+    }
 
     setSubmitting(true);
     const token = sessionStorage.getItem('auth_token');
     let okCount = 0;
-    for (const entry of queue) {
+    for (const [queueIndex, entry] of queue.entries()) {
       if (entry.status === 'done') { okCount++; continue; }
       // eslint-disable-next-line no-await-in-loop
-      const ok = await uploadOne(entry, token);
+      const ok = await uploadOne(entry, token, queueIndex);
       if (ok) okCount++;
     }
     setSubmitting(false);
@@ -425,7 +447,7 @@ export default function EbookUpload() {
             {isBatch ? 'These settings apply to all files above.' : 'Book settings.'}
           </p>
           <div className="space-y-2">
-            <Label>Category</Label>
+            <Label>Genre / category</Label>
             <Input
               value={category}
               onChange={(e) => setCategory(e.target.value)}
@@ -437,6 +459,29 @@ export default function EbookUpload() {
           <div className="space-y-2">
             <Label>Language</Label>
             <Input value={language} onChange={(e) => setLanguage(e.target.value)} placeholder="e.g. English" />
+          </div>
+          <div className="space-y-2">
+            <Label>Book series</Label>
+            <Input
+              value={seriesName}
+              onChange={(e) => setSeriesName(e.target.value)}
+              placeholder="e.g. Harry Potter (optional)"
+            />
+            <p className="text-[11px] text-slate-500">Books with the same series name appear in one expandable card.</p>
+          </div>
+          <div className="space-y-2">
+            <Label>Starting volume</Label>
+            <Input
+              type="number"
+              min={1}
+              step={1}
+              value={seriesStart}
+              onChange={(e) => setSeriesStart(e.target.value)}
+              disabled={!seriesName.trim()}
+            />
+            {isBatch && seriesName.trim() && (
+              <p className="text-[11px] text-slate-500">Volumes will be numbered in the upload order.</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label>Visible to</Label>

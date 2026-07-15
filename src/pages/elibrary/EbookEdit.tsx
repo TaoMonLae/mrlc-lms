@@ -24,6 +24,8 @@ export default function EbookEdit() {
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
   const [category, setCategory] = useState('');
+  const [seriesName, setSeriesName] = useState('');
+  const [seriesNumber, setSeriesNumber] = useState('');
   const [language, setLanguage] = useState('');
   const [description, setDescription] = useState('');
   const [visibility, setVisibility] = useState('ALL');
@@ -42,6 +44,8 @@ export default function EbookEdit() {
         setTitle(b.title || '');
         setAuthor(b.author || '');
         setCategory(b.category || '');
+        setSeriesName(b.seriesName || '');
+        setSeriesNumber(b.seriesNumber ? String(b.seriesNumber) : '');
         setLanguage(b.language || '');
         setDescription(b.description || '');
         setVisibility(b.visibility || 'ALL');
@@ -79,13 +83,21 @@ export default function EbookEdit() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) { toast.error('Title is required.'); return; }
+    if (seriesName.trim() && (!Number.isInteger(Number(seriesNumber)) || Number(seriesNumber) < 1)) {
+      toast.error('Series volume must be a positive whole number.');
+      return;
+    }
     setSaving(true);
     try {
       const token = sessionStorage.getItem('auth_token');
       const res = await fetch(`/api/ebooks/${id}`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: title.trim(), author, category, language, description, visibility, downloadAllowed, coverUrl }),
+        body: JSON.stringify({
+          title: title.trim(), author, category, seriesName,
+          seriesNumber: seriesName.trim() ? Number(seriesNumber) : null,
+          language, description, visibility, downloadAllowed, coverUrl,
+        }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -154,7 +166,7 @@ export default function EbookEdit() {
             <Input value={author} onChange={(e) => setAuthor(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label>Category</Label>
+            <Label>Genre / category</Label>
             <Input
               value={category}
               onChange={(e) => setCategory(e.target.value)}
@@ -166,6 +178,26 @@ export default function EbookEdit() {
           <div className="space-y-2">
             <Label>Language</Label>
             <Input value={language} onChange={(e) => setLanguage(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label>Book series</Label>
+            <Input
+              value={seriesName}
+              onChange={(e) => setSeriesName(e.target.value)}
+              placeholder="Series name (optional)"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Volume number</Label>
+            <Input
+              type="number"
+              min={1}
+              step={1}
+              value={seriesNumber}
+              onChange={(e) => setSeriesNumber(e.target.value)}
+              disabled={!seriesName.trim()}
+              required={Boolean(seriesName.trim())}
+            />
           </div>
           <div className="space-y-2">
             <Label>Visible to</Label>

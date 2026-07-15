@@ -39,6 +39,7 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 
 - PDF and EPUB batch upload with metadata and cover extraction.
 - PDF/EPUB files up to 100 MB may be uploaded and files over 50 MB are compressed automatically. CBR and CBZ support uploads up to 500 MB; comic archives at or above 50 MB are automatically optimized to a 100 MB stored-file ceiling. CBR files that require optimization are converted to CBZ.
+- Books are grouped by genre, and books assigned to a series appear in expandable series cards ordered by volume. Titles are unique across the E-Library regardless of letter case or extra spacing.
 - PDF compression uses Ghostscript. EPUB compression rebuilds the archive and optimizes embedded images.
 - PDF and EPUB readers support zoom in/out, Single Page, Two Page, Fit to Width, and Fit to Height modes.
 - Resume position, full-book search, table of contents, highlights, full-page reading, selected-word dictionary lookup, and highlight-to-flashcard creation.
