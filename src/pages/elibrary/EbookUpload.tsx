@@ -140,6 +140,7 @@ export default function EbookUpload() {
   const navigate = useNavigate();
   const { user } = useUser();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const previewUrlsRef = useRef<Set<string>>(new Set());
 
   const [queue, setQueue] = useState<QueuedFile[]>([]);
   const [category, setCategory] = useState('');
@@ -152,6 +153,11 @@ export default function EbookUpload() {
   const [visibility, setVisibility] = useState('ALL');
   const [downloadAllowed, setDownloadAllowed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => () => {
+    previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+    previewUrlsRef.current.clear();
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -201,6 +207,7 @@ export default function EbookUpload() {
     if (!files) return;
     const list = Array.from(files);
     const accepted: QueuedFile[] = [];
+    const existingKeys = new Set(queue.map((entry) => entry.key));
     for (const f of list) {
       const ext = f.name.toLowerCase().slice(f.name.lastIndexOf('.'));
       if (!['.pdf', '.epub', '.cbr', '.cbz'].includes(ext)) {
@@ -216,8 +223,14 @@ export default function EbookUpload() {
         toast.error(`${f.name}: this format has a ${maxMb} MB upload limit.`);
         continue;
       }
+      const key = `${f.name}-${f.size}-${f.lastModified}`;
+      if (existingKeys.has(key)) {
+        toast.error(`${f.name}: this file is already in the upload queue.`);
+        continue;
+      }
+      existingKeys.add(key);
       accepted.push({
-        key: `${f.name}-${f.size}-${f.lastModified}`,
+        key,
         file: f,
         title: f.name.replace(/\.(pdf|epub|cbr|cbz)$/i, ''),
         author: '',
@@ -244,23 +257,36 @@ export default function EbookUpload() {
               ? await extractCbzMeta(entry.file)
               : {};
       const coverPreview = result.coverBlob ? URL.createObjectURL(result.coverBlob) : null;
-      setQueue((prev) => prev.map((q) => (q.key === entry.key
-        ? {
-          ...q,
-          title: result.title || q.title,
-          author: (result as any).author || q.author,
-          coverBlob: result.coverBlob || null,
-          coverPreview,
-          extracting: false,
+      if (coverPreview) previewUrlsRef.current.add(coverPreview);
+      setQueue((prev) => {
+        if (!prev.some((q) => q.key === entry.key)) {
+          if (coverPreview) {
+            URL.revokeObjectURL(coverPreview);
+            previewUrlsRef.current.delete(coverPreview);
+          }
+          return prev;
         }
-        : q)));
+        return prev.map((q) => (q.key === entry.key
+          ? {
+            ...q,
+            title: result.title || q.title,
+            author: result.author || q.author,
+            coverBlob: result.coverBlob || null,
+            coverPreview,
+            extracting: false,
+          }
+          : q));
+      });
     });
   };
 
   const removeEntry = (key: string) => {
     setQueue((prev) => {
       const entry = prev.find((q) => q.key === key);
-      if (entry?.coverPreview) URL.revokeObjectURL(entry.coverPreview);
+      if (entry?.coverPreview) {
+        URL.revokeObjectURL(entry.coverPreview);
+        previewUrlsRef.current.delete(entry.coverPreview);
+      }
       return prev.filter((q) => q.key !== key);
     });
   };
@@ -423,9 +449,18 @@ export default function EbookUpload() {
         {/* File picker */}
         <div
           onClick={() => fileInputRef.current?.click()}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              fileInputRef.current?.click();
+            }
+          }}
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => { e.preventDefault(); pickFiles(e.dataTransfer.files); }}
-          className="cursor-pointer rounded-lg border-2 border-dashed border-slate-300 dark:border-surface-raised hover:border-primary/60 transition-colors p-8 text-center bg-white dark:bg-surface-indigo"
+          role="button"
+          tabIndex={0}
+          aria-label="Choose PDF, EPUB, CBR, or CBZ files to upload"
+          className="cursor-pointer rounded-lg border-2 border-dashed border-slate-300 dark:border-surface-raised hover:border-primary/60 transition-colors p-8 text-center bg-white dark:bg-surface-indigo focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         >
           <input
             ref={fileInputRef}
@@ -471,6 +506,7 @@ export default function EbookUpload() {
                   <Input
                     value={q.title}
                     onChange={(e) => updateEntry(q.key, { title: e.target.value })}
+                    aria-label={`Title for ${q.file.name}`}
                     placeholder="Title"
                     className="h-8 text-sm"
                     disabled={q.status === 'uploading' || q.status === 'done'}
@@ -478,6 +514,7 @@ export default function EbookUpload() {
                   <Input
                     value={q.author}
                     onChange={(e) => updateEntry(q.key, { author: e.target.value })}
+                    aria-label={`Author for ${q.file.name}`}
                     placeholder="Author (optional)"
                     className="h-8 text-sm"
                     disabled={q.status === 'uploading' || q.status === 'done'}
@@ -489,7 +526,7 @@ export default function EbookUpload() {
                   {q.status === 'done' && <CheckCircle2 className="h-4 w-4 text-green-600" />}
                   {q.status === 'error' && <AlertCircle className="h-4 w-4 text-red-600" />}
                   {q.status === 'pending' && (
-                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeEntry(q.key)}>
+                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8" aria-label={`Remove ${q.file.name} from upload queue`} onClick={() => removeEntry(q.key)}>
                       <X className="h-3.5 w-3.5" />
                     </Button>
                   )}

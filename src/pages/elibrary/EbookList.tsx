@@ -1,9 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   ArrowUpDown, BarChart3, BookMarked, BookOpen, ChevronDown, ChevronLeft,
   ChevronRight, ClipboardList, Download, LibraryBig, Lock, Pencil, Plus,
-  Search, Trash2,
+  Search, Trash2, X,
 } from 'lucide-react';
 import CircularGallery from '@/components/CircularGallery';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +18,7 @@ import {
 import { toast } from 'sonner';
 import { ebookHomeworkPrefill } from '../../lib/ebookHomeworkPrefill';
 import { useUser } from '../../lib/permissions';
+import { ebookMatchesSearch } from '../../../lib/ebookSearch';
 
 export interface Ebook {
   id: string;
@@ -74,8 +75,20 @@ function genreArtwork(label: string) {
 }
 
 function BookCover({ book, className = '' }: { book: Ebook; className?: string }) {
-  if (book.coverUrl) {
-    return <img src={book.coverUrl} alt={`Cover of ${book.title}`} className={`h-full w-full object-cover ${className}`} loading="lazy" />;
+  const [coverFailed, setCoverFailed] = useState(false);
+
+  useEffect(() => setCoverFailed(false), [book.coverUrl]);
+
+  if (book.coverUrl && !coverFailed) {
+    return (
+      <img
+        src={book.coverUrl}
+        alt={`Cover of ${book.title}`}
+        className={`h-full w-full object-cover ${className}`}
+        loading="lazy"
+        onError={() => setCoverFailed(true)}
+      />
+    );
   }
   return (
     <div className={`flex h-full w-full flex-col justify-between bg-gradient-to-br from-primary via-accent-purple to-indigo-800 p-5 text-white ${className}`}>
@@ -103,6 +116,7 @@ export default function EbookList() {
 
   const [ebooks, setEbooks] = useState<Ebook[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortValue>('title');
   const [selectedGenreKey, setSelectedGenreKey] = useState<string | null>(null);
@@ -110,15 +124,20 @@ export default function EbookList() {
   const [continueReading, setContinueReading] = useState<ProgressEntry[]>([]);
   const [expandedSeries, setExpandedSeries] = useState<Set<string>>(new Set());
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const deferredQuery = useDeferredValue(query);
 
   const load = async () => {
+    setLoading(true);
+    setLoadError(null);
     try {
       const token = sessionStorage.getItem('auth_token');
       const res = await fetch('/api/ebooks', { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) throw new Error('Failed to load e-library');
       setEbooks(await res.json());
     } catch (e: any) {
-      toast.error(e.message || 'Failed to load e-library');
+      const message = e.message || 'Failed to load e-library';
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -160,21 +179,26 @@ export default function EbookList() {
 
   const selectedGroup = genreGroups.find((group) => group.key === selectedGenreKey) || null;
 
+  const sortBooks = useCallback((books: Ebook[]) => {
+    const sorted = [...books];
+    if (sortBy === 'title') sorted.sort((a, b) => a.title.localeCompare(b.title));
+    else if (sortBy === 'author') sorted.sort((a, b) => (a.author || '').localeCompare(b.author || ''));
+    else sorted.sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+    return sorted;
+  }, [sortBy]);
+
+  const searchBooks = useMemo(() => sortBooks(
+    ebooks.filter((book) => ebookMatchesSearch(book, deferredQuery)),
+  ), [deferredQuery, ebooks, sortBooks]);
+
   useEffect(() => {
     if (!loading && selectedGenreKey && !selectedGroup) setSelectedGenreKey(null);
   }, [loading, selectedGenreKey, selectedGroup]);
 
   const shelfBooks = useMemo(() => {
     if (!selectedGroup) return [];
-    const q = query.trim().toLocaleLowerCase();
-    const rows = selectedGroup.books.filter((book) => !q || [book.title, book.author, book.seriesName, book.format]
-      .filter(Boolean)
-      .some((value) => String(value).toLocaleLowerCase().includes(q)));
-    const sorted = [...rows];
-    if (sortBy === 'title') sorted.sort((a, b) => a.title.localeCompare(b.title));
-    else if (sortBy === 'author') sorted.sort((a, b) => (a.author || '').localeCompare(b.author || ''));
-    return sorted;
-  }, [query, selectedGroup, sortBy]);
+    return sortBooks(selectedGroup.books.filter((book) => ebookMatchesSearch(book, deferredQuery)));
+  }, [deferredQuery, selectedGroup, sortBooks]);
 
   const shelfGroups = useMemo(() => {
     const series = new Map<string, { key: string; name: string; books: Ebook[] }>();
@@ -227,8 +251,10 @@ export default function EbookList() {
       const anchor = document.createElement('a');
       anchor.href = url;
       anchor.download = `${book.title}.${book.format.toLowerCase()}`;
+      document.body.appendChild(anchor);
       anchor.click();
-      URL.revokeObjectURL(url);
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (e: any) {
       toast.error(e.message || 'Download failed');
     } finally {
@@ -311,7 +337,7 @@ export default function EbookList() {
         )}
       </header>
 
-      {!selectedGroup && continueReading.length > 0 && (
+      {!selectedGroup && !query.trim() && continueReading.length > 0 && (
         <section className="min-w-0 max-w-full space-y-2" aria-labelledby="continue-reading-heading">
           <h2 id="continue-reading-heading" className="text-sm font-semibold text-slate-700 dark:text-slate-200">Continue Reading</h2>
           <div className="flex max-w-full gap-3 overflow-x-auto pb-2 custom-scrollbar">
@@ -341,6 +367,13 @@ export default function EbookList() {
 
       {loading ? (
         <div className="py-24 text-center text-sm text-slate-500" role="status">Loading e-library…</div>
+      ) : loadError ? (
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-6 py-16 text-center dark:border-red-900/50 dark:bg-red-950/20" role="alert">
+          <BookOpen className="mx-auto mb-3 h-11 w-11 text-red-400" />
+          <p className="font-semibold text-slate-900 dark:text-white">The E-Library could not be loaded.</p>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{loadError}</p>
+          <Button variant="outline" className="mt-5 min-h-11" onClick={() => void load()}>Try again</Button>
+        </div>
       ) : ebooks.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-200 bg-white py-20 text-center dark:border-surface-raised dark:bg-surface-indigo">
           <BookOpen className="mx-auto mb-3 h-12 w-12 text-slate-300" />
@@ -348,30 +381,99 @@ export default function EbookList() {
           {canManage && <p className="mt-1 text-xs text-slate-500">Upload a PDF, EPUB, CBR, or CBZ file to create the first shelf.</p>}
         </div>
       ) : !selectedGroup ? (
-        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-surface-raised dark:bg-surface-indigo" aria-labelledby="browse-genres-heading">
-          <div className="flex flex-col gap-2 border-b border-slate-200 px-5 py-5 sm:flex-row sm:items-end sm:justify-between dark:border-surface-raised">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Library collections</p>
-              <h2 id="browse-genres-heading" className="mt-1 text-2xl font-semibold text-slate-900 dark:text-white">Browse genres</h2>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Select a collection to open its bookshelf.</p>
+        <div className="space-y-5">
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-surface-raised dark:bg-surface-indigo" aria-labelledby="search-library-heading">
+            <div className="mx-auto max-w-3xl">
+              <div className="text-center">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Find your next read</p>
+                <h2 id="search-library-heading" className="mt-1 text-2xl font-semibold text-slate-900 dark:text-white">Search the whole library</h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Search by title, author, genre, series, language, or format.</p>
+              </div>
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                <div className="relative min-w-0 flex-1">
+                  <label htmlFor="elibrary-global-search" className="sr-only">Search all books</label>
+                  <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                  <Input
+                    id="elibrary-global-search"
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder="Search all books…"
+                    autoComplete="off"
+                    className="min-h-12 rounded-xl pl-12 pr-12 text-base"
+                  />
+                  {query && (
+                    <button
+                      type="button"
+                      onClick={() => setQuery('')}
+                      aria-label="Clear library search"
+                      className="absolute right-2 top-1/2 flex min-h-10 min-w-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:hover:bg-surface-raised dark:hover:text-white"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+                {query.trim() && (
+                  <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortValue)}>
+                    <SelectTrigger className="min-h-12 w-full rounded-xl sm:w-48" aria-label="Sort search results">
+                      <div className="flex items-center gap-2"><ArrowUpDown className="h-3.5 w-3.5" /><SelectValue /></div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SORT_OPTIONS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
             </div>
-            <p className="text-sm text-slate-500 dark:text-slate-300">{ebooks.length} books · {genreGroups.length} genres</p>
-          </div>
-          <div className="h-[400px] sm:h-[500px]" data-testid="genre-gallery">
-            <CircularGallery
-              items={galleryItems}
-              bend={2.6}
-              borderRadius={0.08}
-              textColor="#64748b"
-              font="600 28px sans-serif"
-              scrollSpeed={2}
-              onItemClick={selectGenre}
-            />
-          </div>
-          <p className="border-t border-slate-100 px-5 py-3 text-center text-xs text-slate-500 dark:border-surface-raised dark:text-slate-300">
-            Drag or scroll to browse. Select a cover to view the books in that genre.
-          </p>
-        </section>
+          </section>
+
+          {query.trim() ? (
+            <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-surface-raised dark:bg-surface-indigo" aria-labelledby="search-results-heading">
+              <div className="flex flex-col gap-1 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-surface-raised">
+                <h2 id="search-results-heading" className="text-lg font-semibold text-slate-900 dark:text-white">Search results</h2>
+                <p className="text-sm text-slate-500 dark:text-slate-300" aria-live="polite">
+                  {searchBooks.length} {searchBooks.length === 1 ? 'book' : 'books'} found for “{query.trim()}”
+                </p>
+              </div>
+              {searchBooks.length > 0 ? (
+                <div className="grid grid-cols-2 gap-x-4 gap-y-7 p-5 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 sm:p-7">
+                  {searchBooks.map(renderBookTile)}
+                </div>
+              ) : (
+                <div className="px-5 py-20 text-center">
+                  <Search className="mx-auto mb-3 h-10 w-10 text-slate-300" />
+                  <p className="font-medium text-slate-700 dark:text-slate-200">No books match “{query.trim()}”.</p>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Try a title, author, genre, or series name.</p>
+                  <Button variant="link" className="mt-2" onClick={() => setQuery('')}>Clear search</Button>
+                </div>
+              )}
+            </section>
+          ) : (
+            <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-surface-raised dark:bg-surface-indigo" aria-labelledby="browse-genres-heading">
+              <div className="flex flex-col gap-2 border-b border-slate-200 px-5 py-5 sm:flex-row sm:items-end sm:justify-between dark:border-surface-raised">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Library collections</p>
+                  <h2 id="browse-genres-heading" className="mt-1 text-2xl font-semibold text-slate-900 dark:text-white">Browse genres</h2>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Select a collection to open its bookshelf.</p>
+                </div>
+                <p className="text-sm text-slate-500 dark:text-slate-300">{ebooks.length} books · {genreGroups.length} genres</p>
+              </div>
+              <div className="h-[400px] sm:h-[500px]" data-testid="genre-gallery">
+                <CircularGallery
+                  items={galleryItems}
+                  bend={2.6}
+                  borderRadius={0.08}
+                  textColor="#64748b"
+                  font="600 28px sans-serif"
+                  scrollSpeed={2}
+                  onItemClick={selectGenre}
+                />
+              </div>
+              <p className="border-t border-slate-100 px-5 py-3 text-center text-xs text-slate-500 dark:border-surface-raised dark:text-slate-300">
+                Drag or scroll to browse. Select a cover to view the books in that genre.
+              </p>
+            </section>
+          )}
+        </div>
       ) : (
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-surface-raised dark:bg-surface-indigo" aria-labelledby="selected-genre-heading">
           <div className="flex flex-col gap-4 border-b border-slate-200 p-4 lg:flex-row lg:items-center lg:justify-between dark:border-surface-raised">

@@ -671,7 +671,18 @@ export default function CircularGallery({
       />
       <div className="sr-only" aria-label="Gallery items">
         {items?.map((item, index) => (
-          <button key={item.id || item.text || index} type="button" onClick={() => onItemClick?.(item)}>
+          <button
+            key={item.id || item.text || index}
+            type="button"
+            onClick={() => onItemClick?.(item)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                event.stopPropagation();
+                onItemClick?.(item);
+              }
+            }}
+          >
             {item.text}
           </button>
         ))}
