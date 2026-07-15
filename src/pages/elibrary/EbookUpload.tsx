@@ -1,13 +1,14 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft, UploadCloud, FileText, Loader2, Lock, Download, X,
-  CheckCircle2, AlertCircle, BookMarked,
+  CheckCircle2, AlertCircle, BookMarked, LibraryBig,
 } from 'lucide-react';
 import { pdfjs } from 'react-pdf';
 import ePub from 'epubjs';
 import JSZip from 'jszip';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -26,6 +27,7 @@ const MAX_CBR_UPLOAD_MB = 500;
 const MAX_CBZ_UPLOAD_MB = 500;
 const COMIC_COMPRESSION_THRESHOLD_MB = 50;
 const UPLOAD_CHUNK_BYTES = 20 * 1024 * 1024;
+const EBOOK_SERIES_DATALIST_ID = 'ebook-series-options';
 
 interface QueuedFile {
   key: string;
@@ -37,6 +39,12 @@ interface QueuedFile {
   extracting: boolean;
   status: 'pending' | 'uploading' | 'done' | 'error';
   error?: string;
+}
+
+interface KnownSeries {
+  name: string;
+  bookCount: number;
+  nextVolume: number;
 }
 
 function isEpub(file: File) {
@@ -135,13 +143,55 @@ export default function EbookUpload() {
 
   const [queue, setQueue] = useState<QueuedFile[]>([]);
   const [category, setCategory] = useState('');
+  const [seriesMode, setSeriesMode] = useState(false);
   const [seriesName, setSeriesName] = useState('');
   const [seriesStart, setSeriesStart] = useState('1');
+  const [knownSeries, setKnownSeries] = useState<KnownSeries[]>([]);
   const [language, setLanguage] = useState('');
   const [description, setDescription] = useState('');
   const [visibility, setVisibility] = useState('ALL');
   const [downloadAllowed, setDownloadAllowed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    const loadKnownSeries = async () => {
+      try {
+        const token = sessionStorage.getItem('auth_token');
+        const res = await fetch('/api/ebooks', { headers: { Authorization: `Bearer ${token}` } });
+        if (!res.ok) return;
+        const books = await res.json();
+        const groups = new Map<string, { name: string; bookCount: number; maxVolume: number }>();
+        for (const book of books) {
+          const name = String(book.seriesName || '').trim();
+          if (!name) continue;
+          const key = name.toLocaleLowerCase();
+          const group = groups.get(key) || { name, bookCount: 0, maxVolume: 0 };
+          group.bookCount += 1;
+          group.maxVolume = Math.max(group.maxVolume, Number(book.seriesNumber) || 0);
+          groups.set(key, group);
+        }
+        if (active) {
+          setKnownSeries(Array.from(groups.values())
+            .map((group) => ({ name: group.name, bookCount: group.bookCount, nextVolume: group.maxVolume + 1 }))
+            .sort((a, b) => a.name.localeCompare(b.name)));
+        }
+      } catch {
+        // Suggestions are optional; series upload still works if they cannot be loaded.
+      }
+    };
+    void loadKnownSeries();
+    return () => { active = false; };
+  }, []);
+
+  const matchingSeries = knownSeries.find((series) =>
+    series.name.toLocaleLowerCase() === seriesName.trim().toLocaleLowerCase());
+
+  const handleSeriesNameChange = (value: string) => {
+    setSeriesName(value);
+    const match = knownSeries.find((series) => series.name.toLocaleLowerCase() === value.trim().toLocaleLowerCase());
+    if (match) setSeriesStart(String(match.nextVolume));
+  };
 
   const updateEntry = (key: string, patch: Partial<QueuedFile>) => {
     setQueue((prev) => prev.map((q) => (q.key === key ? { ...q, ...patch } : q)));
@@ -251,8 +301,8 @@ export default function EbookUpload() {
         title: entry.title.trim() || entry.file.name,
         author: entry.author,
         category,
-        seriesName: seriesName.trim(),
-        seriesNumber: seriesName.trim() ? String(Number(seriesStart) + queueIndex) : '',
+        seriesName: seriesMode ? seriesName.trim() : '',
+        seriesNumber: seriesMode && seriesName.trim() ? String(Number(seriesStart) + queueIndex) : '',
         language,
         description,
         visibility,
@@ -324,8 +374,12 @@ export default function EbookUpload() {
       toast.error('Each queued book must have a unique title.');
       return;
     }
+    if (seriesMode && !seriesName.trim()) {
+      toast.error('Enter a series name or turn off series upload.');
+      return;
+    }
     const firstSeriesNumber = Number(seriesStart);
-    if (seriesName.trim() && (!Number.isInteger(firstSeriesNumber) || firstSeriesNumber < 1)) {
+    if (seriesMode && (!Number.isInteger(firstSeriesNumber) || firstSeriesNumber < 1)) {
       toast.error('Starting volume must be a positive whole number.');
       return;
     }
@@ -389,7 +443,7 @@ export default function EbookUpload() {
         {/* Queued files */}
         {queue.length > 0 && (
           <div className="space-y-3">
-            {queue.map((q) => (
+            {queue.map((q, queueIndex) => (
               <div key={q.key} className="flex gap-3 rounded-lg border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo p-3">
                 <div className="h-16 w-11 shrink-0 rounded-sm bg-accent-purple/10 border border-slate-100 dark:border-surface-raised flex items-center justify-center overflow-hidden">
                   {q.extracting ? (
@@ -409,6 +463,9 @@ export default function EbookUpload() {
                       <span className="shrink-0 text-[10px] font-medium text-amber-600 dark:text-amber-400">
                         {isCbr(q.file) ? 'Will optimize to CBZ' : 'Will compress'}
                       </span>
+                    )}
+                    {seriesMode && seriesName.trim() && (
+                      <Badge variant="outline" className="shrink-0 text-[10px]">Vol. {Number(seriesStart) + queueIndex}</Badge>
                     )}
                   </div>
                   <Input
@@ -442,6 +499,85 @@ export default function EbookUpload() {
           </div>
         )}
 
+        <section className={`rounded-xl border p-4 transition-colors ${seriesMode ? 'border-primary/40 bg-primary/[0.04]' : 'border-slate-200 bg-white dark:border-surface-raised dark:bg-surface-indigo'}`} aria-labelledby="series-upload-heading">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex min-w-0 items-start gap-3">
+              <div className="shrink-0 rounded-lg bg-primary/10 p-2 text-primary"><LibraryBig className="h-5 w-5" /></div>
+              <div>
+                <h2 id="series-upload-heading" className="font-semibold text-slate-900 dark:text-white">Upload as a book series</h2>
+                <p className="mt-0.5 text-xs leading-5 text-slate-500 dark:text-slate-300">Group these books in one expandable series card, such as Harry Potter.</p>
+              </div>
+            </div>
+            <Switch
+              checked={seriesMode}
+              onCheckedChange={setSeriesMode}
+              aria-label="Upload these books as a series"
+            />
+          </div>
+
+          {seriesMode && (
+            <div className="mt-4 space-y-4 border-t border-primary/15 pt-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="ebook-series-name">Series name *</Label>
+                  <Input
+                    id="ebook-series-name"
+                    value={seriesName}
+                    onChange={(e) => handleSeriesNameChange(e.target.value)}
+                    placeholder="e.g. Harry Potter"
+                    list={EBOOK_SERIES_DATALIST_ID}
+                    required
+                    className="min-h-11 text-base sm:text-sm"
+                  />
+                  <datalist id={EBOOK_SERIES_DATALIST_ID}>
+                    {knownSeries.map((series) => <option key={series.name} value={series.name} />)}
+                  </datalist>
+                  <p className="text-[11px] text-slate-500">Choose an existing name to add volumes to that series, or type a new one.</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="ebook-series-start">{isBatch ? 'Starting volume *' : 'Volume number *'}</Label>
+                  <Input
+                    id="ebook-series-start"
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    step={1}
+                    value={seriesStart}
+                    onChange={(e) => setSeriesStart(e.target.value)}
+                    required
+                    className="min-h-11 text-base sm:text-sm"
+                  />
+                  <p className="text-[11px] text-slate-500">
+                    {isBatch ? 'Files are numbered consecutively from top to bottom.' : 'Each volume number can only be used once in a series.'}
+                  </p>
+                </div>
+              </div>
+
+              {matchingSeries && (
+                <div className="flex flex-wrap items-center gap-2 rounded-lg bg-white px-3 py-2 text-xs text-slate-600 ring-1 ring-primary/15 dark:bg-surface-indigo dark:text-slate-300">
+                  <Badge className="bg-primary/10 text-primary hover:bg-primary/10">Existing series</Badge>
+                  <span>{matchingSeries.bookCount} {matchingSeries.bookCount === 1 ? 'book' : 'books'} already grouped · next volume is {matchingSeries.nextVolume}</span>
+                </div>
+              )}
+
+              {queue.length > 0 && seriesName.trim() && Number.isInteger(Number(seriesStart)) && Number(seriesStart) > 0 && (
+                <div className="rounded-lg border border-dashed border-primary/25 bg-white/70 p-3 dark:bg-black/10">
+                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">Series preview</p>
+                  <ol className="mt-2 space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
+                    {queue.slice(0, 5).map((entry, index) => (
+                      <li key={entry.key} className="flex min-w-0 gap-2">
+                        <span className="shrink-0 font-semibold text-primary">Vol. {Number(seriesStart) + index}</span>
+                        <span className="truncate">{entry.title || entry.file.name}</span>
+                      </li>
+                    ))}
+                  </ol>
+                  {queue.length > 5 && <p className="mt-2 text-[11px] text-slate-500">+ {queue.length - 5} more volumes</p>}
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <p className="text-xs text-slate-500 sm:col-span-2 -mb-2">
             {isBatch ? 'These settings apply to all files above.' : 'Book settings.'}
@@ -459,29 +595,6 @@ export default function EbookUpload() {
           <div className="space-y-2">
             <Label>Language</Label>
             <Input value={language} onChange={(e) => setLanguage(e.target.value)} placeholder="e.g. English" />
-          </div>
-          <div className="space-y-2">
-            <Label>Book series</Label>
-            <Input
-              value={seriesName}
-              onChange={(e) => setSeriesName(e.target.value)}
-              placeholder="e.g. Harry Potter (optional)"
-            />
-            <p className="text-[11px] text-slate-500">Books with the same series name appear in one expandable card.</p>
-          </div>
-          <div className="space-y-2">
-            <Label>Starting volume</Label>
-            <Input
-              type="number"
-              min={1}
-              step={1}
-              value={seriesStart}
-              onChange={(e) => setSeriesStart(e.target.value)}
-              disabled={!seriesName.trim()}
-            />
-            {isBatch && seriesName.trim() && (
-              <p className="text-[11px] text-slate-500">Volumes will be numbered in the upload order.</p>
-            )}
           </div>
           <div className="space-y-2">
             <Label>Visible to</Label>

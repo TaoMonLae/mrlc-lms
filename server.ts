@@ -47,7 +47,7 @@ import {
 } from "./lib/backupArtifacts";
 import { checkWritableDirectory, probeCommand, summarizeHealth, type HealthCheckResult } from "./lib/systemHealth";
 import { extractRarEntry, listRarImageEntries } from "./lib/portableRar";
-import { cleanEbookTitle, findDuplicateEbookTitle } from "./lib/ebookTitles";
+import { cleanEbookTitle, findDuplicateEbookSeriesVolume, findDuplicateEbookTitle } from "./lib/ebookTitles";
 
 dotenv.config();
 
@@ -15530,6 +15530,12 @@ async function startServer() {
         res.status(400).json({ error: "Series number must be a positive whole number" });
         return;
       }
+      if (Boolean(cleanedSeriesName) !== (parsedSeriesNumber !== null)) {
+        fs.promises.unlink(file.path).catch(() => {});
+        void deleteSubmittedCover();
+        res.status(400).json({ error: "Series name and volume number are required together" });
+        return;
+      }
       let duplicate: { id: string; title: string } | null;
       try {
         duplicate = await findDuplicateEbookTitle(prisma, cleanedTitle);
@@ -15545,6 +15551,26 @@ async function startServer() {
         void deleteSubmittedCover();
         res.status(409).json({ error: `A book titled "${duplicate.title}" already exists.` });
         return;
+      }
+      if (cleanedSeriesName && parsedSeriesNumber !== null) {
+        let duplicateVolume;
+        try {
+          duplicateVolume = await findDuplicateEbookSeriesVolume(prisma, cleanedSeriesName, parsedSeriesNumber);
+        } catch (err) {
+          fs.promises.unlink(file.path).catch(() => {});
+          void deleteSubmittedCover();
+          logger.error("Could not check e-book series volume uniqueness:", err);
+          res.status(500).json({ error: "Could not check whether this series volume already exists" });
+          return;
+        }
+        if (duplicateVolume) {
+          fs.promises.unlink(file.path).catch(() => {});
+          void deleteSubmittedCover();
+          res.status(409).json({
+            error: `Volume ${parsedSeriesNumber} already exists in "${duplicateVolume.seriesName}" (${duplicateVolume.title}).`,
+          });
+          return;
+        }
       }
       let format = ebookFormatFromName(file.originalname);
       let generatedCoverPath: string | null = null;
@@ -15854,6 +15880,29 @@ async function startServer() {
         await discardPendingCover();
         res.status(400).json({ error: "Series number must be a positive whole number" });
         return;
+      }
+      const resolvedSeriesName = cleanedSeriesName === undefined ? current.seriesName : cleanedSeriesName;
+      const resolvedSeriesNumber = cleanedSeriesName === null
+        ? null
+        : seriesNumber === undefined
+          ? current.seriesNumber
+          : parsedSeriesNumber;
+      if (Boolean(resolvedSeriesName) !== (resolvedSeriesNumber !== null)) {
+        await discardPendingCover();
+        res.status(400).json({ error: "Series name and volume number are required together" });
+        return;
+      }
+      if (resolvedSeriesName && resolvedSeriesNumber !== null) {
+        const duplicateVolume = await findDuplicateEbookSeriesVolume(
+          prisma, resolvedSeriesName, resolvedSeriesNumber, req.params.id,
+        );
+        if (duplicateVolume) {
+          await discardPendingCover();
+          res.status(409).json({
+            error: `Volume ${resolvedSeriesNumber} already exists in "${duplicateVolume.seriesName}" (${duplicateVolume.title}).`,
+          });
+          return;
+        }
       }
       const updated = await prisma.ebook.update({
         where: { id: req.params.id },

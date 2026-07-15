@@ -17,3 +17,22 @@ export const findDuplicateEbookTitle = async (
   });
   return ebooks.find((ebook: { id: string; title: string }) => normalizeEbookTitle(ebook.title) === normalized) || null;
 };
+
+export const findDuplicateEbookSeriesVolume = async (
+  prisma: any,
+  seriesName: unknown,
+  seriesNumber: unknown,
+  excludeId?: string,
+): Promise<{ id: string; title: string; seriesName: string | null; seriesNumber: number | null } | null> => {
+  const normalizedSeries = normalizeEbookTitle(seriesName);
+  const volume = Number(seriesNumber);
+  if (!normalizedSeries || !Number.isInteger(volume) || volume < 1) return null;
+  const ebooks = await prisma.ebook.findMany({
+    where: {
+      seriesNumber: volume,
+      ...(excludeId && { id: { not: excludeId } }),
+    },
+    select: { id: true, title: true, seriesName: true, seriesNumber: true },
+  });
+  return ebooks.find((ebook: { seriesName: string | null }) => normalizeEbookTitle(ebook.seriesName) === normalizedSeries) || null;
+};
