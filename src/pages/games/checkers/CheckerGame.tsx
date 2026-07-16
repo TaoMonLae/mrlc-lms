@@ -6,6 +6,22 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { apiSend } from "../../../lib/api";
 import { Volume2, VolumeX, Crown, Undo2 } from "lucide-react";
+import {
+  applyMove,
+  cloneBoard,
+  countPieces,
+  createInitialBoard,
+  getAllValidMoves,
+  getJumpMovesForPiece,
+  getTurnActions,
+  type Board,
+  type Move,
+  type PlayerColor,
+  type Position,
+  type TurnAction,
+  PLAYER_BLACK,
+  PLAYER_RED,
+} from "./checkerRules";
 
 // ── Vocabulary quiz helpers ──────────────────────────────────────────────────
 type VocabWord = { word: string; definition: string; partOfSpeech: string };
@@ -44,29 +60,6 @@ function buildQuiz(pool: VocabWord[], learned: string[]): VocabQuiz | null {
     correctIndex: options.indexOf(target.definition),
     options,
   };
-}
-
-// Game Constants
-const BOARD_SIZE = 8;
-const PLAYER_RED = "red"; // Player 1 (moves up, captures toward top)
-const PLAYER_BLACK = "black"; // Player 2 (moves down, captures toward bottom)
-
-// Piece Types
-type PieceType = "regular" | "king";
-type PlayerColor = typeof PLAYER_RED | typeof PLAYER_BLACK;
-type BoardSquare = { piece: { color: PlayerColor; type: PieceType } | null };
-type Board = BoardSquare[][];
-
-interface Position {
-  row: number;
-  col: number;
-}
-
-interface Move {
-  from: Position;
-  to: Position;
-  isJump: boolean;
-  jumpedPiece?: Position;
 }
 
 interface GameHistory {
@@ -250,6 +243,9 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
   const opponentTypeRef = React.useRef<OpponentType>(initialOpponentType);
   const winnerRef = React.useRef<PlayerColor | "draw" | null>(null);
   const isAIThinkingRef = React.useRef(false);
+  // A capture chain is one turn. This keeps Undo/history and the move counter
+  // at turn granularity even when a king makes several jumps.
+  const jumpInProgressRef = React.useRef(false);
 
   // Initialize sound manager
   React.useEffect(() => {
@@ -295,28 +291,7 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
 
   // Initialize board
   const initializeBoard = React.useCallback(() => {
-    const newBoard: Board = [];
-    for (let row = 0; row < BOARD_SIZE; row++) {
-      const rowArray: BoardSquare[] = [];
-      for (let col = 0; col < BOARD_SIZE; col++) {
-        // Pieces only on dark squares (where row + col is odd)
-        if ((row + col) % 2 === 1) {
-          if (row < 3) {
-            // Black pieces (top)
-            rowArray.push({ piece: { color: PLAYER_BLACK, type: "regular" } });
-          } else if (row > 4) {
-            // Red pieces (bottom)
-            rowArray.push({ piece: { color: PLAYER_RED, type: "regular" } });
-          } else {
-            rowArray.push({ piece: null });
-          }
-        } else {
-          rowArray.push({ piece: null });
-        }
-      }
-      newBoard.push(rowArray);
-    }
-    return newBoard;
+    return createInitialBoard();
   }, []);
 
   // Initialize game - only run once on mount
@@ -351,184 +326,6 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
     }
   };
 
-  // Clone board
-  const cloneBoard = (board: Board): Board => {
-    return board.map((row) => row.map((sq) => ({ ...sq })));
-  };
-
-  // Get all valid moves for a player
-  const getAllValidMoves = React.useCallback(
-    (boardState: Board, player: PlayerColor): Move[] => {
-      const allMoves: Move[] = [];
-      for (let row = 0; row < BOARD_SIZE; row++) {
-        for (let col = 0; col < BOARD_SIZE; col++) {
-          if (boardState[row][col].piece?.color === player) {
-            allMoves.push(...getValidMovesForPiece(boardState, row, col));
-          }
-        }
-      }
-      // If there are jump moves, only return jumps (forced capture rule)
-      const jumpMoves = allMoves.filter((m) => m.isJump);
-      return jumpMoves.length > 0 ? jumpMoves : allMoves;
-    },
-    []
-  );
-
-  // Get valid moves for a specific piece
-  const getValidMovesForPiece = (boardState: Board, row: number, col: number): Move[] => {
-    const moves: Move[] = [];
-    const piece = boardState[row][col].piece;
-    if (!piece) return moves;
-
-    const directions =
-      piece.type === "king"
-        ? [
-            [-1, -1],
-            [-1, 1],
-            [1, -1],
-            [1, 1],
-          ]
-        : piece.color === PLAYER_RED
-        ? [
-            [-1, -1],
-            [-1, 1],
-          ]
-        : [
-            [1, -1],
-            [1, 1],
-          ];
-
-    // Check for jumps first
-    const jumpMoves: Move[] = [];
-    for (const [dRow, dCol] of directions) {
-      const jumpRow = row + dRow * 2;
-      const jumpCol = col + dCol * 2;
-      const midRow = row + dRow;
-      const midCol = col + dCol;
-
-      if (
-        jumpRow >= 0 &&
-        jumpRow < BOARD_SIZE &&
-        jumpCol >= 0 &&
-        jumpCol < BOARD_SIZE &&
-        boardState[midRow][midCol].piece &&
-        boardState[midRow][midCol].piece!.color !== piece.color &&
-        !boardState[jumpRow][jumpCol].piece
-      ) {
-        jumpMoves.push({
-          from: { row, col },
-          to: { row: jumpRow, col: jumpCol },
-          isJump: true,
-          jumpedPiece: { row: midRow, col: midCol },
-        });
-      }
-    }
-
-    // If there are jumps available, only return jumps
-    if (jumpMoves.length > 0) {
-      return jumpMoves;
-    }
-
-    // Regular moves
-    for (const [dRow, dCol] of directions) {
-      const newRow = row + dRow;
-      const newCol = col + dCol;
-
-      if (
-        newRow >= 0 &&
-        newRow < BOARD_SIZE &&
-        newCol >= 0 &&
-        newCol < BOARD_SIZE &&
-        !boardState[newRow][newCol].piece
-      ) {
-        moves.push({
-          from: { row, col },
-          to: { row: newRow, col: newCol },
-          isJump: false,
-        });
-      }
-    }
-
-    return moves;
-  };
-
-  // Get valid moves for a piece (using current board state)
-  const getValidMoves = React.useCallback(
-    (row: number, col: number): Move[] => {
-      return getValidMovesForPiece(board, row, col);
-    },
-    [board]
-  );
-
-  // Check if player must continue jumping (multi-jump)
-  const mustContinueJump = (boardState: Board, position: Position): boolean => {
-    const piece = boardState[position.row][position.col].piece;
-    if (!piece) return false;
-
-    const directions =
-      piece.type === "king"
-        ? [
-            [-1, -1],
-            [-1, 1],
-            [1, -1],
-            [1, 1],
-          ]
-        : piece.color === PLAYER_RED
-        ? [
-            [-1, -1],
-            [-1, 1],
-          ]
-        : [
-            [1, -1],
-            [1, 1],
-          ];
-
-    for (const [dRow, dCol] of directions) {
-      const jumpRow = position.row + dRow * 2;
-      const jumpCol = position.col + dCol * 2;
-      const midRow = position.row + dRow;
-      const midCol = position.col + dCol;
-
-      if (
-        jumpRow >= 0 &&
-        jumpRow < BOARD_SIZE &&
-        jumpCol >= 0 &&
-        jumpCol < BOARD_SIZE &&
-        boardState[midRow][midCol].piece &&
-        boardState[midRow][midCol].piece!.color !== piece.color &&
-        !boardState[jumpRow][jumpCol].piece
-      ) {
-        return true;
-      }
-    }
-    return false;
-  };
-
-  // Count pieces
-  const countPieces = (boardState: Board) => {
-    let red = 0;
-    let black = 0;
-    let redKingsCount = 0;
-    let blackKingsCount = 0;
-
-    for (let row = 0; row < BOARD_SIZE; row++) {
-      for (let col = 0; col < BOARD_SIZE; col++) {
-        const piece = boardState[row][col].piece;
-        if (piece) {
-          if (piece.color === PLAYER_RED) {
-            red++;
-            if (piece.type === "king") redKingsCount++;
-          } else {
-            black++;
-            if (piece.type === "king") blackKingsCount++;
-          }
-        }
-      }
-    }
-
-    return { red, black, redKingsCount, blackKingsCount };
-  };
-
   // Minimax AI with alpha-beta pruning and depth safeguard
   const minimax = (
     boardState: Board,
@@ -545,21 +342,16 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
     }
 
     const currentPlayer = maximizing ? aiPlayer : (aiPlayer === PLAYER_RED ? PLAYER_BLACK : PLAYER_RED);
-    const moves = getAllValidMoves(boardState, currentPlayer);
+    const actions = getTurnActions(boardState, currentPlayer);
 
-    if (moves.length === 0) {
-      // No moves available - game over
-      const counts = countPieces(boardState);
-      if (currentPlayer === aiPlayer && counts.red === 0) return -1000;
-      if (currentPlayer !== aiPlayer && counts.black === 0) return 1000;
-      return 0; // Draw
+    if (actions.length === 0) {
+      return currentPlayer === aiPlayer ? -1000 - depth : 1000 + depth;
     }
 
     if (maximizing) {
       let maxEval = -Infinity;
-      for (const move of moves) {
-        const newBoard = simulateMove(boardState, move);
-        const evalScore = minimax(newBoard, depth - 1, alpha, beta, false, aiPlayer, currentDepth + 1, maxDepth);
+      for (const action of actions) {
+        const evalScore = minimax(action.board, depth - 1, alpha, beta, false, aiPlayer, currentDepth + 1, maxDepth);
         maxEval = Math.max(maxEval, evalScore);
         alpha = Math.max(alpha, evalScore);
         if (beta <= alpha) break;
@@ -567,42 +359,14 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
       return maxEval;
     } else {
       let minEval = Infinity;
-      for (const move of moves) {
-        const newBoard = simulateMove(boardState, move);
-        const evalScore = minimax(newBoard, depth - 1, alpha, beta, true, aiPlayer, currentDepth + 1, maxDepth);
+      for (const action of actions) {
+        const evalScore = minimax(action.board, depth - 1, alpha, beta, true, aiPlayer, currentDepth + 1, maxDepth);
         minEval = Math.min(minEval, evalScore);
         beta = Math.min(beta, evalScore);
         if (beta <= alpha) break;
       }
       return minEval;
     }
-  };
-
-  // Simulate a move on a copy of the board
-  const simulateMove = (boardState: Board, move: Move): Board => {
-    const newBoard = cloneBoard(boardState);
-    const piece = newBoard[move.from.row][move.from.col].piece!;
-
-    // Move piece
-    newBoard[move.to.row][move.to.col].piece = piece;
-    newBoard[move.from.row][move.from.col].piece = null;
-
-    // Handle capture
-    if (move.isJump && move.jumpedPiece) {
-      newBoard[move.jumpedPiece.row][move.jumpedPiece.col].piece = null;
-    }
-
-    // Check for king promotion
-    if (piece.type === "regular") {
-      if (
-        (piece.color === PLAYER_RED && move.to.row === 0) ||
-        (piece.color === PLAYER_BLACK && move.to.row === BOARD_SIZE - 1)
-      ) {
-        piece.type = "king";
-      }
-    }
-
-    return newBoard;
   };
 
   // Evaluate board for AI
@@ -631,32 +395,31 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
 
   // Get AI move - accepts board as parameter to avoid stale closure issues
   const getAIMove = React.useCallback(
-    (aiPlayer: PlayerColor, boardState: Board): Move | null => {
-      const moves = getAllValidMoves(boardState, aiPlayer);
-      if (moves.length === 0) return null;
+    (aiPlayer: PlayerColor, boardState: Board): TurnAction | null => {
+      const actions = getTurnActions(boardState, aiPlayer);
+      if (actions.length === 0) return null;
 
-      let bestMove = moves[0];
+      let bestAction = actions[0];
       const depths: Record<Difficulty, number> = { EASY: 2, MEDIUM: 4, HARD: 6 };
       const depth = depths[difficulty];
 
       if (depth === 2 && Math.random() < 0.3) {
         // Easy mode: sometimes make a random move
-        return moves[Math.floor(Math.random() * moves.length)];
+        return actions[Math.floor(Math.random() * actions.length)];
       }
 
       let bestScore = -Infinity;
 
-      for (const move of moves) {
-        const newBoard = simulateMove(boardState, move);
-        const score = minimax(newBoard, depth - 1, -Infinity, Infinity, false, aiPlayer);
+      for (const action of actions) {
+        const score = minimax(action.board, depth - 1, -Infinity, Infinity, false, aiPlayer);
 
         if (score > bestScore) {
           bestScore = score;
-          bestMove = move;
+          bestAction = action;
         }
       }
 
-      return bestMove;
+      return bestAction;
     },
     [difficulty, getAllValidMoves, minimax]
   );
@@ -684,11 +447,10 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
       return;
     }
 
-    const piece = board[row][col].piece;
+    const currentBoard = boardRef.current;
+    const piece = currentBoard[row][col].piece;
 
     if (piece && piece.color === currentPlayerRef.current) {
-      soundManagerRef.current?.playSelect();
-
       // If in multi-jump, can only select the jumping piece
       if (selectedPiece && validMoves.length > 0 && validMoves[0].isJump) {
         if (row !== selectedPiece.row || col !== selectedPiece.col) {
@@ -696,8 +458,18 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
         }
       }
 
+      const legalMoves = jumpInProgressRef.current
+        ? getJumpMovesForPiece(currentBoard, { row, col })
+        : getAllValidMoves(currentBoard, currentPlayerRef.current).filter(
+            (move) => move.from.row === row && move.from.col === col,
+          );
+      // Captures are mandatory across the whole board. Do not let a different
+      // piece bypass a required jump by selecting one of its ordinary moves.
+      if (legalMoves.length === 0) return;
+
+      soundManagerRef.current?.playSelect();
       setSelectedPiece({ row, col });
-      setValidMoves(getValidMoves(row, col));
+      setValidMoves(legalMoves);
     } else if (selectedPiece) {
       const move = validMoves.find((m) => m.to.row === row && m.to.col === col);
       if (move) {
@@ -707,9 +479,10 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
   };
 
   // Execute a move
-  const executeMove = (move: Move, isAI: boolean = false) => {
+  const executeMove = (move: Move, isAI: boolean = false, remainingAIMoves: Move[] = []) => {
     const currentPlayerValue = currentPlayerRef.current; // Use ref to avoid stale closure
     const opponentTypeValue = opponentTypeRef.current;
+    const continuingJump = jumpInProgressRef.current;
 
     console.log('[Move] executeMove called - isAI:', isAI, 'currentPlayer:', currentPlayerValue, 'opponentType:', opponentTypeValue);
 
@@ -725,58 +498,39 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
     // position — cloning it would discard the player's move and snap their
     // piece back. boardRef is kept in sync with the latest committed board.
     const currentBoard = boardRef.current;
-    const newBoard = cloneBoard(currentBoard);
-    const piece = newBoard[move.from.row][move.from.col].piece!;
+    const moveResult = applyMove(currentBoard, move);
+    const newBoard = moveResult.board;
 
     // Calculate counts from current board for history
     const counts = countPieces(currentBoard);
 
-    // Save history for undo
-    const historyEntry: GameHistory = {
-      board: cloneBoard(currentBoard),
-      currentPlayer: currentPlayerValue,
-      redPieces: counts.red,
-      blackPieces: counts.black,
-      redKings: counts.redKingsCount,
-      blackKings: counts.blackKingsCount,
-      move,
-    };
+    // Save one snapshot for the whole turn, not one for every jump leg.
+    if (!continuingJump) {
+      const historyEntry: GameHistory = {
+        board: cloneBoard(currentBoard),
+        currentPlayer: currentPlayerValue,
+        redPieces: counts.red,
+        blackPieces: counts.black,
+        redKings: counts.redKingsCount,
+        blackKings: counts.blackKingsCount,
+        move,
+      };
+      setHistory((prev) => [...prev, historyEntry]);
+      setMovesCount((prev) => prev + 1);
+    }
 
-    // Move piece
-    newBoard[move.to.row][move.to.col].piece = piece;
-    newBoard[move.from.row][move.from.col].piece = null;
-
-    // Handle capture
-    let captured = false;
-    if (move.isJump && move.jumpedPiece) {
-      newBoard[move.jumpedPiece.row][move.jumpedPiece.col].piece = null;
-      captured = true;
+    if (moveResult.captured) {
       soundManagerRef.current?.playCapture();
     } else {
       soundManagerRef.current?.playMove();
     }
 
-    // Check for king promotion
-    let promoted = false;
-    if (piece.type === "regular") {
-      if (
-        (piece.color === PLAYER_RED && move.to.row === 0) ||
-        (piece.color === PLAYER_BLACK && move.to.row === BOARD_SIZE - 1)
-      ) {
-        piece.type = "king";
-        promoted = true;
-        soundManagerRef.current?.playKing();
-      }
-    }
-
-    setHistory((prev) => [...prev, historyEntry]);
+    if (moveResult.promoted) soundManagerRef.current?.playKing();
     setBoard(newBoard);
     // Keep the ref in lockstep with the move so a follow-up executeMove (the AI
     // reply, or a multi-jump) reads the updated board without waiting for the
     // sync effect to flush after commit.
     boardRef.current = newBoard;
-    setMovesCount((prev) => prev + 1);
-
     // Update piece counts (recalculate from new board)
     const newCounts = countPieces(newBoard);
     setRedPieces(newCounts.red);
@@ -786,16 +540,29 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
 
     // Check if must continue jumping (multi-jump)
     // Note: King promotion ends the multi-jump sequence
-    if (captured && !promoted) {
-      const canContinue = mustContinueJump(newBoard, move.to);
-      if (canContinue) {
+    if (moveResult.captured && !moveResult.promoted) {
+      const continuationMoves = getJumpMovesForPiece(newBoard, move.to);
+      if (continuationMoves.length > 0) {
+        jumpInProgressRef.current = true;
         setSelectedPiece(move.to);
-        setValidMoves(getValidMovesForPiece(newBoard, move.to.row, move.to.col));
+        setValidMoves(continuationMoves);
+        if (isAI) {
+          const plannedMove = remainingAIMoves[0];
+          const nextMove = continuationMoves.find(
+            (candidate) =>
+              candidate.to.row === plannedMove?.to.row && candidate.to.col === plannedMove?.to.col,
+          ) ?? continuationMoves[0];
+          aiTimeoutRef.current = setTimeout(
+            () => executeMove(nextMove, true, remainingAIMoves.slice(1)),
+            300,
+          );
+        }
         return; // Don't end turn - continue jumping
       }
     }
 
     // End turn
+    jumpInProgressRef.current = false;
     setSelectedPiece(null);
     setValidMoves([]);
 
@@ -804,6 +571,11 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
 
     if (opponentPieces <= 0) {
       setWinner(currentPlayerValue);
+      winnerRef.current = currentPlayerValue;
+      if (isAI) {
+        setIsAIThinking(false);
+        isAIThinkingRef.current = false;
+      }
       // Determine if human player won
       const humanWon = opponentTypeValue === "HUMAN" || currentPlayerValue === PLAYER_RED;
       if (humanWon) {
@@ -819,6 +591,11 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
       if (opponentMoves.length === 0) {
         // Opponent can't move - current player wins
         setWinner(currentPlayerValue);
+        winnerRef.current = currentPlayerValue;
+        if (isAI) {
+          setIsAIThinking(false);
+          isAIThinkingRef.current = false;
+        }
         const humanWon = opponentTypeValue === "HUMAN" || currentPlayerValue === PLAYER_RED;
         if (humanWon) {
           soundManagerRef.current?.playWin();
@@ -828,6 +605,7 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
       } else {
         // Switch player
         setCurrentPlayer(opponent);
+        currentPlayerRef.current = opponent;
 
         console.log('[Move] Turn ended - switching to:', opponent, 'opponentType:', opponentTypeValue);
         console.log('[AI] AI Trigger check - opponentType:', opponentTypeValue, '=== AI:', opponentTypeValue === "AI", 'opponent:', opponent, '=== BLACK:', opponent === PLAYER_BLACK);
@@ -839,6 +617,7 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
           clicksEnabledRef.current = false;
           aiTurnStartRef.current = Date.now();
           setIsAIThinking(true);
+          isAIThinkingRef.current = true;
 
           // Clear any existing timeout
           if (aiTimeoutRef.current) {
@@ -850,25 +629,33 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
             if (winnerRef.current || currentPlayerRef.current !== PLAYER_BLACK) {
               console.log('[AI] Skipping - winner:', winnerRef.current, 'currentPlayer:', currentPlayerRef.current);
               setIsAIThinking(false);
+              isAIThinkingRef.current = false;
               return;
             }
 
             console.log('[AI] Getting move for BLACK, board has pieces:', boardRef.current.flat().filter(sq => sq.piece).length);
-            setIsAIThinking(false);
-            const aiMove = getAIMove(PLAYER_BLACK, boardRef.current);
-            console.log('[AI] AI move:', aiMove);
-            if (aiMove) {
+            const aiAction = getAIMove(PLAYER_BLACK, boardRef.current);
+            console.log('[AI] AI move:', aiAction);
+            if (aiAction) {
               aiMoveCompletedRef.current = Date.now();
-              executeMove(aiMove, true);
-              // Re-enable clicks after a brief delay to flush any queued clicks
-              setTimeout(() => {
-                clicksEnabledRef.current = true;
-                console.log('[AI] Clicks re-enabled after AI move');
-              }, 500);
+              executeMove(aiAction.moves[0], true, aiAction.moves.slice(1));
             } else {
               console.log('[AI] No valid moves for AI');
+              setIsAIThinking(false);
+              isAIThinkingRef.current = false;
+              setWinner(PLAYER_RED);
+              winnerRef.current = PLAYER_RED;
             }
           }, 500);
+        } else if (isAI) {
+          setIsAIThinking(false);
+          isAIThinkingRef.current = false;
+          // Re-enable after the full AI turn (including every forced jump), with
+          // a short guard against a click queued while the AI was moving.
+          setTimeout(() => {
+            clicksEnabledRef.current = true;
+            console.log('[AI] Clicks re-enabled after AI move');
+          }, 300);
         }
       }
     }
@@ -941,7 +728,7 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
 
     // Calculate moves to undo carefully
     let movesToUndo = 1;
-    if (opponentTypeRef.current === "AI") {
+    if (opponentTypeRef.current === "AI" && !jumpInProgressRef.current) {
       // Undo both player and AI moves, but only if we have enough history
       movesToUndo = history.length >= 2 ? 2 : history.length;
     }
@@ -961,6 +748,7 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
       setBoard(lastState.board);
       boardRef.current = lastState.board;
       setCurrentPlayer(lastState.currentPlayer);
+      currentPlayerRef.current = lastState.currentPlayer;
       setRedPieces(lastState.redPieces);
       setBlackPieces(lastState.blackPieces);
       setRedKings(lastState.redKings);
@@ -968,6 +756,9 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
       setSelectedPiece(null);
       setValidMoves([]);
       setHistory(newHistory);
+      jumpInProgressRef.current = false;
+      clicksEnabledRef.current = true;
+      aiTurnStartRef.current = 0;
 
       // Adjust moves count
       setMovesCount((prev) => Math.max(0, prev - movesToUndo));
@@ -1042,6 +833,8 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
     currentPlayerRef.current = PLAYER_RED;
     winnerRef.current = null;
     isAIThinkingRef.current = false;
+    jumpInProgressRef.current = false;
+    aiTurnStartRef.current = 0;
     clicksEnabledRef.current = true; // Re-enable clicks on restart
 
     if (gameMode === "VOCABULARY") {
@@ -1053,6 +846,7 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
   const handleAbandon = () => {
     saveScore("ABANDONED");
     setWinner(PLAYER_BLACK);
+    winnerRef.current = PLAYER_BLACK;
     soundManagerRef.current?.playLose();
   };
 
