@@ -184,6 +184,8 @@ const SnakeSelectPage = lazy(() => import("./pages/games/snake/index"));
 const SnakePlayPage = lazy(() => import("./pages/games/snake/PlayPage"));
 const CheckersSelectPage = lazy(() => import("./pages/games/checkers/index"));
 const CheckersPlayPage = lazy(() => import("./pages/games/checkers/PlayPage"));
+const ChessSelectPage = lazy(() => import("./pages/games/chess/index"));
+const ChessPlayPage = lazy(() => import("./pages/games/chess/PlayPage"));
 
 const Dictionary = lazy(() => import("./pages/dictionary/Dictionary"));
 
@@ -343,6 +345,9 @@ export default function App() {
 
                 <Route path="/games/checkers" element={<CheckersSelectPage />} />
                 <Route path="/games/checkers/play" element={<CheckersPlayPage />} />
+
+                <Route path="/games/chess" element={<ChessSelectPage />} />
+                <Route path="/games/chess/play" element={<ChessPlayPage />} />
 
                 <Route path="/timetable" element={<TimetablePage />} />
 

@@ -34,6 +34,7 @@ import {
   Gamepad2,
   Dice5,
   HeartPulse,
+  Crown,
 } from "lucide-react";
 import { UserRole } from "./permissions";
 
@@ -70,6 +71,7 @@ export const ADMIN_NAV: AdminNavEntry[] = [
       { title: "Snake Game", url: "/games/snake", icon: Turtle },
       { title: "Sudoku", url: "/games/sudoku", icon: Grid3x3 },
       { title: "Checkers", url: "/games/checkers", icon: Dice5 },
+      { title: "Chess", url: "/games/chess", icon: Crown },
     ],
   },
   { title: "Dictionary", url: "/dictionary", icon: BookA },
@@ -174,6 +176,7 @@ export const TEACHER_NAV: AdminNavEntry[] = [
       { title: "Snake Game", url: "/games/snake", icon: Turtle },
       { title: "Sudoku", url: "/games/sudoku", icon: Grid3x3 },
       { title: "Checkers", url: "/games/checkers", icon: Dice5 },
+      { title: "Chess", url: "/games/chess", icon: Crown },
     ],
   },
   { title: "Dictionary", url: "/dictionary", icon: BookA },
@@ -235,6 +238,7 @@ export const STUDENT_NAV: AdminNavEntry[] = [
       { title: "Snake Game", url: "/games/snake", icon: Turtle },
       { title: "Sudoku", url: "/games/sudoku", icon: Grid3x3 },
       { title: "Checkers", url: "/games/checkers", icon: Dice5 },
+      { title: "Chess", url: "/games/chess", icon: Crown },
     ],
   },
   { title: "Dictionary", url: "/dictionary", icon: BookA },
@@ -327,6 +331,11 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     title: "Checkers",
     url: "/games/checkers",
     icon: Dice5,
+  },
+  {
+    title: "Chess",
+    url: "/games/chess",
+    icon: Crown,
   },
   {
     title: "Dictionary",
