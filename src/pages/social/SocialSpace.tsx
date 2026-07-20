@@ -1,9 +1,18 @@
-import { useEffect, useRef, useState } from 'react';
-import { Sparkles, Image as ImageIcon, Camera, Heart, MessageCircle, Send, Trash2, Clock, X, Loader2, Flag, Pencil, Check, ShieldAlert } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import {
+  Sparkles, Image as ImageIcon, Camera, Heart, MessageCircle, Send, Trash2,
+  Clock, X, Loader2, Flag, Pencil, Check, ShieldAlert, GraduationCap,
+  PlayCircle, Users, School, BriefcaseBusiness,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
@@ -16,170 +25,383 @@ import CameraCapture from '../../components/CameraCapture';
 import { useTheme } from '../../components/theme-provider';
 import Lightfall from '@/components/Lightfall';
 
+type PostType = 'POST' | 'CLASS_SNAPSHOT' | 'VIDEO_HIGHLIGHT';
+type Audience = 'SCHOOL' | 'CLASS' | 'STAFF';
+
 interface Comment {
-  id: string; body: string; createdAt: string; editedAt: string | null;
-  user: { id: string; name: string; role: string }; mine: boolean; reportedByMe: boolean;
+  id: string;
+  body: string;
+  createdAt: string;
+  editedAt: string | null;
+  user: { id: string; name: string; role: string };
+  mine: boolean;
+  reportedByMe: boolean;
 }
+
+interface HighlightVideo {
+  id: string;
+  title: string;
+  description: string | null;
+  thumbnailUrl: string | null;
+  duration: number | null;
+  status: string;
+  classId: string | null;
+}
+
 interface Post {
-  id: string; body: string | null; imageUrl: string | null; createdAt: string; expiresAt: string;
+  id: string;
+  type: PostType;
+  audience: Audience;
+  body: string | null;
+  imageUrl: string | null;
+  createdAt: string;
+  expiresAt: string | null;
+  featuredUntil: string | null;
   author: { id: string; name: string; role: string; photo: string | null };
-  mine: boolean; likeCount: number; commentCount: number; likedByMe: boolean; reportedByMe: boolean; comments: Comment[];
+  classInfo: { id: string; name: string; level: string } | null;
+  videoLesson: HighlightVideo | null;
+  mine: boolean;
+  likeCount: number;
+  commentCount: number;
+  likedByMe: boolean;
+  reportedByMe: boolean;
+  comments: Comment[];
+  commentsLoaded: boolean;
+  commentsLoading: boolean;
+  commentsNextCursor: string | null;
 }
+
 interface Report {
-  id: string; status: string; reason: string | null; createdAt: string; reportedBy: string;
-  type: 'POST' | 'COMMENT'; postId: string | null;
+  id: string;
+  status: string;
+  reason: string | null;
+  createdAt: string;
+  reportedBy: string;
+  type: 'POST' | 'COMMENT';
+  postId: string | null;
   content: { body: string | null; imageUrl?: string | null; author: string };
 }
 
+interface ComposerOptions {
+  classes: Array<{ id: string; name: string; level: string }>;
+  videos: Array<{ id: string; title: string; thumbnailUrl: string | null; duration: number | null; classId: string | null }>;
+}
+
 const PAGE_SIZE = 20;
-const roleLabel = (r: string) => r.charAt(0) + r.slice(1).toLowerCase().replace('_', ' ');
-const timeLeft = (iso: string) => { const ms = new Date(iso).getTime() - Date.now(); return ms <= 0 ? 'expiring' : `${formatDistanceToNowStrict(new Date(iso))} left`; };
+const POST_TABS: Array<{ type: PostType; label: string; description: string }> = [
+  { type: 'POST', label: 'Latest', description: '24-hour school posts' },
+  { type: 'CLASS_SNAPSHOT', label: 'Class Snapshots', description: 'Moments from class' },
+  { type: 'VIDEO_HIGHLIGHT', label: 'Video Highlights', description: 'Featured lessons' },
+];
+
+const roleLabel = (role: string) => role.charAt(0) + role.slice(1).toLowerCase().replaceAll('_', ' ');
+const timeLeft = (iso: string | null) => {
+  if (!iso) return 'No expiry';
+  const date = new Date(iso);
+  return date.getTime() <= Date.now() ? 'expiring' : `${formatDistanceToNowStrict(date)} left`;
+};
+const normalisePost = (post: Omit<Post, 'comments' | 'commentsLoaded' | 'commentsLoading' | 'commentsNextCursor'>): Post => ({
+  ...post,
+  comments: [],
+  commentsLoaded: false,
+  commentsLoading: false,
+  commentsNextCursor: null,
+});
+const preserveLoadedComments = (incoming: Post, previous?: Post): Post => previous?.commentsLoaded
+  ? { ...incoming, comments: previous.comments, commentsLoaded: true, commentsLoading: false, commentsNextCursor: previous.commentsNextCursor }
+  : incoming;
 
 export default function SocialSpace() {
   const { user } = useAuth();
   const { theme } = useTheme();
   const { markSeen } = useSocial();
+  const isAdmin = user?.role === 'ADMIN';
+  const isTeacher = user?.role === 'TEACHER';
+  const canCurate = isAdmin || isTeacher;
+
+  const [activeType, setActiveType] = useState<PostType>('POST');
   const [posts, setPosts] = useState<Post[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const hasLoadedMoreRef = useRef(false);
+
+  const [composerType, setComposerType] = useState<PostType>('POST');
   const [body, setBody] = useState('');
   const [photo, setPhoto] = useState<{ blob: Blob; url: string } | null>(null);
+  const photoRef = useRef<{ blob: Blob; url: string } | null>(null);
   const [camera, setCamera] = useState(false);
   const [posting, setPosting] = useState(false);
+  const [audience, setAudience] = useState<Audience>('SCHOOL');
+  const [classId, setClassId] = useState('');
+  const [videoLessonId, setVideoLessonId] = useState('');
+  const [retentionDays, setRetentionDays] = useState('30');
+  const [options, setOptions] = useState<ComposerOptions>({ classes: [], videos: [] });
+
   const [openComments, setOpenComments] = useState<Record<string, boolean>>({});
   const [commentDraft, setCommentDraft] = useState<Record<string, string>>({});
+  const [commentBusy, setCommentBusy] = useState<Record<string, boolean>>({});
+  const [editingPost, setEditingPost] = useState<string | null>(null);
+  const [editPostDraft, setEditPostDraft] = useState('');
   const [editingComment, setEditingComment] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState('');
   const [reportsOpen, setReportsOpen] = useState(false);
   const [reports, setReports] = useState<Report[]>([]);
   const [openReportCount, setOpenReportCount] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
+  const requestRef = useRef(0);
 
-  // How many posts are currently loaded (grows as the user clicks "Load
-  // more"). The periodic poll re-fetches exactly this many from the top,
-  // so it refreshes like/comment counts on everything already on screen
-  // without losing what "Load more" has brought in.
-  const loadedCountRef = useRef(PAGE_SIZE);
+  const replacePhoto = useCallback((next: { blob: Blob; url: string } | null) => {
+    if (photoRef.current) URL.revokeObjectURL(photoRef.current.url);
+    photoRef.current = next;
+    setPhoto(next);
+    if (!next && fileRef.current) fileRef.current.value = '';
+  }, []);
 
-  async function load() {
+  useEffect(() => () => {
+    if (photoRef.current) URL.revokeObjectURL(photoRef.current.url);
+  }, []);
+
+  const load = useCallback(async (replace = false) => {
+    const requestId = ++requestRef.current;
     try {
-      const data = await apiGet<{ posts: Post[]; nextCursor: string | null }>(`/api/social${qs({ limit: String(loadedCountRef.current) })}`);
-      setPosts(data.posts);
-      setNextCursor(data.nextCursor);
-      loadedCountRef.current = Math.max(PAGE_SIZE, data.posts.length);
-    } catch (err: any) { toast.error(err.message || 'Could not load Social Space'); }
-    finally { setLoading(false); }
-  }
+      const data = await apiGet<{ posts: Array<Omit<Post, 'comments' | 'commentsLoaded' | 'commentsLoading' | 'commentsNextCursor'>>; nextCursor: string | null }>(
+        `/api/social${qs({ type: activeType, limit: String(PAGE_SIZE) })}`
+      );
+      if (requestId !== requestRef.current) return;
+      const incoming = data.posts.map(normalisePost);
+      setPosts((previous) => {
+        if (replace) return incoming;
+        const previousById = new Map(previous.map((post) => [post.id, post]));
+        const incomingIds = new Set(incoming.map((post) => post.id));
+        const refreshed = incoming.map((post) => preserveLoadedComments(post, previousById.get(post.id)));
+        const retained = previous.filter((post) => !incomingIds.has(post.id) && (!post.expiresAt || new Date(post.expiresAt).getTime() > Date.now()));
+        return [...refreshed, ...retained];
+      });
+      if (replace || !hasLoadedMoreRef.current) setNextCursor(data.nextCursor);
+      await markSeen();
+    } catch (err: any) {
+      if (replace) toast.error(err.message || 'Could not load Social Space');
+    } finally {
+      if (requestId === requestRef.current) setLoading(false);
+    }
+  }, [activeType, markSeen]);
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setPosts([]);
+    setNextCursor(null);
+    hasLoadedMoreRef.current = false;
+    const start = async () => {
+      try { await apiSend('/api/social/media-session', 'POST', {}); } catch { /* feed error will surface if auth is invalid */ }
+      if (active) await load(true);
+    };
+    start();
+    const timer = window.setInterval(() => { if (active) load(false); }, 20_000);
+    return () => { active = false; window.clearInterval(timer); requestRef.current += 1; };
+  }, [activeType]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!canCurate) return;
+    apiGet<ComposerOptions>('/api/social/composer-options').then(setOptions).catch(() => {});
+  }, [canCurate]);
+
+  useEffect(() => {
+    if (composerType === 'CLASS_SNAPSHOT') {
+      setAudience('CLASS');
+      setRetentionDays('30');
+    } else if (composerType === 'VIDEO_HIGHLIGHT') {
+      setAudience(isTeacher ? 'CLASS' : 'SCHOOL');
+      setRetentionDays('7');
+      replacePhoto(null);
+    } else {
+      setAudience('SCHOOL');
+      setRetentionDays('1');
+      setVideoLessonId('');
+    }
+  }, [composerType, isTeacher, replacePhoto]);
 
   async function loadMore() {
     if (!nextCursor || loadingMore) return;
     setLoadingMore(true);
     try {
-      const data = await apiGet<{ posts: Post[]; nextCursor: string | null }>(`/api/social${qs({ limit: String(PAGE_SIZE), cursor: nextCursor })}`);
-      setPosts((prev) => [...prev, ...data.posts]);
+      const data = await apiGet<{ posts: Array<Omit<Post, 'comments' | 'commentsLoaded' | 'commentsLoading' | 'commentsNextCursor'>>; nextCursor: string | null }>(
+        `/api/social${qs({ type: activeType, limit: String(PAGE_SIZE), cursor: nextCursor })}`
+      );
+      setPosts((previous) => {
+        const existing = new Set(previous.map((post) => post.id));
+        return [...previous, ...data.posts.filter((post) => !existing.has(post.id)).map(normalisePost)];
+      });
       setNextCursor(data.nextCursor);
-      loadedCountRef.current += data.posts.length;
-    } catch (err: any) { toast.error(err.message || 'Could not load more posts'); }
-    finally { setLoadingMore(false); }
+      hasLoadedMoreRef.current = true;
+    } catch (err: any) {
+      toast.error(err.message || 'Could not load more posts');
+    } finally {
+      setLoadingMore(false);
+    }
   }
-
-  useEffect(() => { load(); const t = setInterval(load, 20000); return () => clearInterval(t); }, []);
-  // Visiting the feed counts as "seen" -- clears the sidebar badge for new
-  // posts/comments the same way opening a chat thread clears its unread badge.
-  useEffect(() => { markSeen(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const isAdmin = user?.role === 'ADMIN';
 
   async function loadReports() {
     try {
       const data = await apiGet<Report[]>('/api/social/reports?status=OPEN');
       setReports(data);
       setOpenReportCount(data.length);
-    } catch { /* silent -- reviewed on demand, not critical to the feed */ }
+    } catch { /* moderation panel is non-critical to the feed */ }
   }
   useEffect(() => { if (isAdmin) loadReports(); }, [isAdmin]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function pickPhoto(blob: Blob) { setPhoto({ blob, url: URL.createObjectURL(blob) }); setCamera(false); }
+  function pickPhoto(blob: Blob) {
+    replacePhoto({ blob, url: URL.createObjectURL(blob) });
+    setCamera(false);
+  }
 
   async function submit() {
-    if (!body.trim() && !photo) { toast.error('Add a photo or some text'); return; }
+    if (composerType === 'POST' && !body.trim() && !photo) { toast.error('Add a photo or some text'); return; }
+    if (composerType === 'CLASS_SNAPSHOT' && !photo) { toast.error('Add a photo for the class snapshot'); return; }
+    if ((composerType === 'CLASS_SNAPSHOT' || audience === 'CLASS') && !classId) { toast.error('Choose a class'); return; }
+    if (composerType === 'VIDEO_HIGHLIGHT' && !videoLessonId) { toast.error('Choose a video lesson'); return; }
     setPosting(true);
     try {
       const fd = new FormData();
+      fd.append('type', composerType);
+      fd.append('audience', audience);
+      fd.append('retentionDays', retentionDays);
       if (body.trim()) fd.append('body', body.trim());
-      if (photo) fd.append('file', photo.blob, 'post.jpg');
+      if (classId) fd.append('classId', classId);
+      if (videoLessonId) fd.append('videoLessonId', videoLessonId);
+      if (photo) fd.append('file', photo.blob, 'social-image.jpg');
       const res = await fetch('/api/social', { method: 'POST', headers: authHeaders(), body: fd });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'Could not post');
-      setBody(''); setPhoto(null);
-      toast.success('Posted — disappears in 24 hours');
-      load();
-    } catch (err: any) { toast.error(err.message || 'Could not post'); }
-    finally { setPosting(false); }
+      if (!res.ok) throw new Error(data.error || 'Could not publish');
+      setBody('');
+      setClassId('');
+      setVideoLessonId('');
+      replacePhoto(null);
+      toast.success(composerType === 'POST' ? 'Posted — disappears in 24 hours' : composerType === 'CLASS_SNAPSHOT' ? 'Class snapshot published' : 'Video highlight published');
+      if (activeType !== composerType) setActiveType(composerType);
+      else load(true);
+    } catch (err: any) {
+      toast.error(err.message || 'Could not publish');
+    } finally {
+      setPosting(false);
+    }
   }
 
-  async function toggleLike(p: Post) {
-    setPosts((prev) => prev.map((x) => x.id === p.id ? { ...x, likedByMe: !x.likedByMe, likeCount: x.likeCount + (x.likedByMe ? -1 : 1) } : x));
-    try { await apiSend(`/api/social/${p.id}/like`, 'POST', {}); }
-    catch { load(); }
+  async function toggleLike(post: Post) {
+    setPosts((previous) => previous.map((item) => item.id === post.id
+      ? { ...item, likedByMe: !item.likedByMe, likeCount: Math.max(0, item.likeCount + (item.likedByMe ? -1 : 1)) }
+      : item));
+    try { await apiSend(`/api/social/${post.id}/like`, 'POST', {}); }
+    catch { load(false); }
   }
 
-  async function addComment(p: Post) {
-    const text = (commentDraft[p.id] || '').trim();
-    if (!text) return;
-    setCommentDraft((d) => ({ ...d, [p.id]: '' }));
+  async function fetchComments(postId: string, cursor?: string, append = false) {
+    setPosts((previous) => previous.map((post) => post.id === postId ? { ...post, commentsLoading: true } : post));
     try {
-      const c = await apiSend<Comment>(`/api/social/${p.id}/comments`, 'POST', { body: text });
-      setPosts((prev) => prev.map((x) => x.id === p.id ? { ...x, comments: [...x.comments, { ...c, editedAt: null, reportedByMe: false }], commentCount: x.commentCount + 1 } : x));
-    } catch (err: any) { toast.error(err.message || 'Could not comment'); }
+      const data = await apiGet<{ comments: Comment[]; nextCursor: string | null }>(
+        `/api/social/${postId}/comments${qs({ limit: '20', cursor })}`
+      );
+      setPosts((previous) => previous.map((post) => post.id === postId ? {
+        ...post,
+        comments: append ? [...post.comments, ...data.comments.filter((comment) => !post.comments.some((existing) => existing.id === comment.id))] : data.comments,
+        commentsLoaded: true,
+        commentsLoading: false,
+        commentsNextCursor: data.nextCursor,
+      } : post));
+    } catch (err: any) {
+      setPosts((previous) => previous.map((post) => post.id === postId ? { ...post, commentsLoading: false } : post));
+      toast.error(err.message || 'Could not load comments');
+    }
   }
 
-  function startEditComment(c: Comment) { setEditingComment(c.id); setEditDraft(c.body); }
+  function toggleComments(post: Post) {
+    const opening = !openComments[post.id];
+    setOpenComments((current) => ({ ...current, [post.id]: opening }));
+    if (opening && !post.commentsLoaded) fetchComments(post.id);
+  }
+
+  async function addComment(post: Post) {
+    const text = (commentDraft[post.id] || '').trim();
+    if (!text || commentBusy[post.id]) return;
+    setCommentBusy((current) => ({ ...current, [post.id]: true }));
+    try {
+      const comment = await apiSend<Comment>(`/api/social/${post.id}/comments`, 'POST', { body: text });
+      setCommentDraft((current) => ({ ...current, [post.id]: '' }));
+      setPosts((previous) => previous.map((item) => item.id === post.id
+        ? { ...item, comments: [...item.comments, { ...comment, editedAt: null, reportedByMe: false }], commentsLoaded: true, commentCount: item.commentCount + 1 }
+        : item));
+    } catch (err: any) {
+      toast.error(err.message || 'Could not comment');
+    } finally {
+      setCommentBusy((current) => ({ ...current, [post.id]: false }));
+    }
+  }
+
+  function startEditComment(comment: Comment) { setEditingComment(comment.id); setEditDraft(comment.body); }
 
   async function saveEditComment(postId: string, commentId: string) {
     const text = editDraft.trim();
     if (!text) { toast.error('Comment cannot be empty'); return; }
     try {
       const updated = await apiSend<Comment>(`/api/social/comments/${commentId}`, 'PUT', { body: text });
-      setPosts((prev) => prev.map((x) => x.id === postId
-        ? { ...x, comments: x.comments.map((c) => c.id === commentId ? { ...c, body: updated.body, editedAt: updated.editedAt } : c) }
-        : x));
+      setPosts((previous) => previous.map((post) => post.id === postId
+        ? { ...post, comments: post.comments.map((comment) => comment.id === commentId ? { ...comment, body: updated.body, editedAt: updated.editedAt } : comment) }
+        : post));
       setEditingComment(null);
     } catch (err: any) { toast.error(err.message || 'Could not save edit'); }
   }
 
   async function removePost(id: string) {
     if (!window.confirm('Delete this post?')) return;
-    try { await apiSend(`/api/social/${id}`, 'DELETE'); setPosts((prev) => prev.filter((p) => p.id !== id)); }
-    catch (err: any) { toast.error(err.message || 'Could not delete'); }
-  }
-
-  async function removeComment(postId: string, commentId: string) {
     try {
-      await apiSend(`/api/social/comments/${commentId}`, 'DELETE');
-      setPosts((prev) => prev.map((x) => x.id === postId ? { ...x, comments: x.comments.filter((c) => c.id !== commentId), commentCount: x.commentCount - 1 } : x));
+      await apiSend(`/api/social/${id}`, 'DELETE');
+      setPosts((previous) => previous.filter((post) => post.id !== id));
     } catch (err: any) { toast.error(err.message || 'Could not delete'); }
   }
 
-  async function reportPost(p: Post) {
-    if (p.reportedByMe) return;
-    if (!window.confirm('Report this post to the admin team?')) return;
+  function startEditPost(post: Post) {
+    setEditingPost(post.id);
+    setEditPostDraft(post.body || '');
+  }
+
+  async function saveEditPost(post: Post) {
+    const body = editPostDraft.trim();
+    if (post.type === 'POST' && !body && !post.imageUrl) { toast.error('Post cannot be empty'); return; }
     try {
-      await apiSend(`/api/social/${p.id}/report`, 'POST', {});
-      setPosts((prev) => prev.map((x) => x.id === p.id ? { ...x, reportedByMe: true } : x));
+      const updated = await apiSend<{ body: string | null }>(`/api/social/${post.id}`, 'PUT', { body });
+      setPosts((previous) => previous.map((item) => item.id === post.id ? { ...item, body: updated.body } : item));
+      setEditingPost(null);
+      toast.success('Post updated');
+    } catch (err: any) { toast.error(err.message || 'Could not update post'); }
+  }
+
+  async function removeComment(postId: string, commentId: string) {
+    if (!window.confirm('Delete this comment?')) return;
+    try {
+      await apiSend(`/api/social/comments/${commentId}`, 'DELETE');
+      setPosts((previous) => previous.map((post) => post.id === postId
+        ? { ...post, comments: post.comments.filter((comment) => comment.id !== commentId), commentCount: Math.max(0, post.commentCount - 1) }
+        : post));
+    } catch (err: any) { toast.error(err.message || 'Could not delete'); }
+  }
+
+  async function reportPost(post: Post) {
+    if (post.reportedByMe || !window.confirm('Report this post to the admin team?')) return;
+    try {
+      await apiSend(`/api/social/${post.id}/report`, 'POST', {});
+      setPosts((previous) => previous.map((item) => item.id === post.id ? { ...item, reportedByMe: true } : item));
       toast.success('Reported. An admin will review it.');
     } catch (err: any) { toast.error(err.message || 'Could not report'); }
   }
 
-  async function reportComment(postId: string, c: Comment) {
-    if (c.reportedByMe) return;
-    if (!window.confirm('Report this comment to the admin team?')) return;
+  async function reportComment(postId: string, comment: Comment) {
+    if (comment.reportedByMe || !window.confirm('Report this comment to the admin team?')) return;
     try {
-      await apiSend(`/api/social/comments/${c.id}/report`, 'POST', {});
-      setPosts((prev) => prev.map((x) => x.id === postId
-        ? { ...x, comments: x.comments.map((cc) => cc.id === c.id ? { ...cc, reportedByMe: true } : cc) }
-        : x));
+      await apiSend(`/api/social/comments/${comment.id}/report`, 'POST', {});
+      setPosts((previous) => previous.map((post) => post.id === postId
+        ? { ...post, comments: post.comments.map((item) => item.id === comment.id ? { ...item, reportedByMe: true } : item) }
+        : post));
       toast.success('Reported. An admin will review it.');
     } catch (err: any) { toast.error(err.message || 'Could not report'); }
   }
@@ -187,12 +409,15 @@ export default function SocialSpace() {
   async function resolveReport(id: string, action: 'ACTIONED' | 'DISMISSED') {
     try {
       await apiSend(`/api/social/reports/${id}/resolve`, 'POST', { action });
-      setReports((prev) => prev.filter((r) => r.id !== id));
-      setOpenReportCount((n) => Math.max(0, n - 1));
-      if (action === 'ACTIONED') load(); // the removed post/comment may be visible in the feed right now
+      setReports((previous) => previous.filter((report) => report.id !== id));
+      setOpenReportCount((count) => Math.max(0, count - 1));
+      if (action === 'ACTIONED') load(true);
       toast.success(action === 'ACTIONED' ? 'Content removed' : 'Report dismissed');
     } catch (err: any) { toast.error(err.message || 'Could not resolve report'); }
   }
+
+  const selectedVideo = options.videos.find((video) => video.id === videoLessonId);
+  const needsClass = composerType === 'CLASS_SNAPSHOT' || audience === 'CLASS';
 
   return (
     <div className="relative isolate -m-4 min-h-[calc(100vh-4rem)] overflow-hidden bg-slate-50 sm:-m-6 lg:-m-8 dark:bg-canvas">
@@ -210,133 +435,254 @@ export default function SocialSpace() {
         />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-2xl space-y-6 p-4 sm:p-6 lg:p-8">
-      {/* Header banner — content now floats over the full-page background
-          above (translucent + blurred instead of its own opaque card). */}
-      <div className="rounded-xl border border-slate-200/80 bg-white/80 backdrop-blur-sm dark:border-surface-raised/80 dark:bg-surface-indigo/70">
-        <div className="flex items-center justify-between gap-3 p-4">
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-aubergine-100 p-2 text-aubergine-700 dark:bg-aubergine-900/30 dark:text-aubergine-400"><Sparkles className="h-5 w-5" /></div>
-            <div>
-              <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Social Space</h1>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Share a photo or a thought with the school. Everything disappears after 24 hours.</p>
+      <div className="relative z-10 mx-auto max-w-3xl space-y-5 p-4 sm:p-6 lg:p-8">
+        <div className="rounded-xl border border-slate-200/80 bg-white/80 backdrop-blur-sm dark:border-surface-raised/80 dark:bg-surface-indigo/70">
+          <div className="flex items-center justify-between gap-3 p-4">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-aubergine-100 p-2 text-aubergine-700 dark:bg-aubergine-900/30 dark:text-aubergine-400"><Sparkles className="h-5 w-5" /></div>
+              <div>
+                <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Social Space</h1>
+                <p className="text-sm text-slate-500 dark:text-slate-400">School moments, class snapshots, and lessons worth watching.</p>
+              </div>
             </div>
+            {isAdmin && (
+              <Button variant="outline" size="sm" className="relative shrink-0" onClick={() => { setReportsOpen(true); loadReports(); }}>
+                <ShieldAlert className="mr-1.5 h-4 w-4" /> Reports
+                {openReportCount > 0 && <Badge className="ml-1.5 h-5 min-w-5 justify-center bg-red-600 px-1 text-white hover:bg-red-600">{openReportCount}</Badge>}
+              </Button>
+            )}
           </div>
-          {isAdmin && (
-            <Button variant="outline" size="sm" className="relative shrink-0" onClick={() => { setReportsOpen(true); loadReports(); }}>
-              <ShieldAlert className="mr-1.5 h-4 w-4" /> Reports
-              {openReportCount > 0 && <Badge className="ml-1.5 h-5 min-w-5 justify-center bg-red-600 px-1 text-white hover:bg-red-600">{openReportCount}</Badge>}
-            </Button>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2" role="tablist" aria-label="Social Space sections">
+          {POST_TABS.map((tab) => (
+            <button
+              key={tab.type}
+              type="button"
+              role="tab"
+              aria-selected={activeType === tab.type}
+              onClick={() => setActiveType(tab.type)}
+              className={`rounded-xl border px-2 py-3 text-center backdrop-blur-sm transition-colors ${activeType === tab.type
+                ? 'border-aubergine-400 bg-white/95 text-aubergine-700 shadow-sm dark:border-aubergine-500 dark:bg-surface-indigo dark:text-aubergine-300'
+                : 'border-slate-200/80 bg-white/65 text-slate-500 hover:bg-white/90 dark:border-surface-raised/80 dark:bg-surface-indigo/60 dark:text-slate-400'}`}
+            >
+              <span className="block text-xs font-semibold sm:text-sm">{tab.label}</span>
+              <span className="mt-0.5 hidden text-[10px] opacity-70 sm:block">{tab.description}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="space-y-4 rounded-xl border border-slate-200/80 bg-white/85 p-4 backdrop-blur-sm dark:border-surface-raised/80 dark:bg-surface-indigo/75">
+          {canCurate && (
+            <div className="grid grid-cols-3 gap-2">
+              {POST_TABS.map((item) => (
+                <Button key={item.type} type="button" size="sm" variant={composerType === item.type ? 'default' : 'outline'} onClick={() => setComposerType(item.type)}>
+                  {item.type === 'POST' ? 'Quick Post' : item.type === 'CLASS_SNAPSHOT' ? 'Snapshot' : 'Highlight'}
+                </Button>
+              ))}
+            </div>
           )}
-        </div>
-      </div>
 
-      {/* Composer */}
-      <div className="space-y-3 rounded-xl border border-slate-200/80 bg-white/80 backdrop-blur-sm p-4 dark:border-surface-raised/80 dark:bg-surface-indigo/70">
-        <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={2} maxLength={1000} placeholder="What's happening?" className="resize-none" />
-        {photo && (
-          <div className="relative inline-block">
-            <img src={photo.url} alt="preview" className="max-h-48 rounded-lg" />
-            <button onClick={() => setPhoto(null)} className="absolute -top-2 -right-2 rounded-full bg-white p-0.5 shadow ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-600"><X className="h-4 w-4 text-rose-500" /></button>
-          </div>
-        )}
-        <div className="flex items-center justify-between">
-          <div className="flex gap-1">
-            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) setPhoto({ blob: f, url: URL.createObjectURL(f) }); }} />
-            <Button variant="ghost" size="sm" onClick={() => fileRef.current?.click()}><ImageIcon className="mr-1 h-4 w-4" /> Photo</Button>
-            <Button variant="ghost" size="sm" onClick={() => setCamera(true)}><Camera className="mr-1 h-4 w-4" /> Camera</Button>
-          </div>
-          <Button onClick={submit} disabled={posting || (!body.trim() && !photo)}>{posting ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : null} Post (24h)</Button>
-        </div>
-      </div>
+          {composerType !== 'VIDEO_HIGHLIGHT' && (
+            <Textarea
+              value={body}
+              onChange={(event) => setBody(event.target.value)}
+              rows={2}
+              maxLength={1000}
+              placeholder={composerType === 'CLASS_SNAPSHOT' ? 'What was the class learning or celebrating?' : "What's happening?"}
+              className="resize-none"
+            />
+          )}
 
-      {/* Feed */}
-      {loading ? <p className="text-sm text-slate-400 dark:text-slate-500">Loading…</p> :
-        posts.length === 0 ? <div className="rounded-xl border border-dashed border-slate-200 py-16 text-center text-sm text-slate-400 dark:border-slate-700 dark:text-slate-500">Nothing here yet. Be the first to post!</div> :
-        <div className="space-y-4">
-          {posts.map((p) => (
-            <div key={p.id} className="overflow-hidden rounded-xl border border-slate-200/80 bg-white/80 backdrop-blur-sm dark:border-surface-raised/80 dark:bg-surface-indigo/70">
-              <div className="flex items-center justify-between p-3">
-                <div className="flex items-center gap-2">
-                  <div className="grid h-9 w-9 place-items-center overflow-hidden rounded-full bg-aubergine-100 text-xs font-bold text-aubergine-700 dark:bg-aubergine-900/30 dark:text-aubergine-400">
-                    {p.author.photo ? <img src={p.author.photo} alt="" className="h-full w-full object-cover" /> : p.author.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-900 dark:text-white">{p.author.name} <Badge variant="outline" className="ml-1 text-[9px] uppercase dark:border-slate-600 dark:text-slate-300">{roleLabel(p.author.role)}</Badge></p>
-                    <p className="flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500"><Clock className="h-3 w-3" /> {timeLeft(p.expiresAt)}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-0.5">
-                  {!p.mine && (
-                    <Button variant="ghost" size="icon" className="h-8 w-8" disabled={p.reportedByMe} title={p.reportedByMe ? 'Already reported' : 'Report post'} onClick={() => reportPost(p)}>
-                      <Flag className={`h-3.5 w-3.5 ${p.reportedByMe ? 'fill-amber-500 text-amber-500' : 'text-slate-400 dark:text-slate-500'}`} />
-                    </Button>
-                  )}
-                  {(p.mine || isAdmin) && <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => removePost(p.id)}><Trash2 className="h-4 w-4 text-slate-400 dark:text-slate-500" /></Button>}
-                </div>
+          {composerType === 'VIDEO_HIGHLIGHT' && (
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <Label>Video lesson</Label>
+                <Select value={videoLessonId} onValueChange={(value) => {
+                  setVideoLessonId(value);
+                  const video = options.videos.find((item) => item.id === value);
+                  if (video?.classId) { setClassId(video.classId); setAudience('CLASS'); }
+                }}>
+                  <SelectTrigger><SelectValue placeholder="Choose a published video" /></SelectTrigger>
+                  <SelectContent>
+                    {options.videos.map((video) => <SelectItem key={video.id} value={video.id}>{video.title}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
-
-              {p.body && <p className="whitespace-pre-wrap px-3 pb-3 text-sm text-slate-800 dark:text-slate-200">{p.body}</p>}
-              {p.imageUrl && <img src={p.imageUrl} alt="post" className="max-h-[28rem] w-full object-cover" />}
-
-              <div className="flex items-center gap-4 p-3">
-                <button onClick={() => toggleLike(p)} className={`flex items-center gap-1 text-sm ${p.likedByMe ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400'}`}>
-                  <Heart className={`h-5 w-5 ${p.likedByMe ? 'fill-rose-500 text-rose-500 dark:fill-rose-400 dark:text-rose-400' : ''}`} /> {p.likeCount > 0 && p.likeCount}
-                </button>
-                <button onClick={() => setOpenComments((o) => ({ ...o, [p.id]: !o[p.id] }))} className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
-                  <MessageCircle className="h-5 w-5" /> {p.commentCount > 0 && p.commentCount}
-                </button>
-              </div>
-
-              {openComments[p.id] && (
-                <div className="space-y-2 border-t border-slate-100 p-3 dark:border-slate-700">
-                  {p.comments.map((c) => (
-                    <div key={c.id} className="group flex items-start justify-between gap-2 text-sm">
-                      {editingComment === c.id ? (
-                        <div className="flex flex-1 items-center gap-2">
-                          <Input value={editDraft} onChange={(e) => setEditDraft(e.target.value)}
-                            onKeyDown={(e) => { if (e.key === 'Enter') saveEditComment(p.id, c.id); if (e.key === 'Escape') setEditingComment(null); }}
-                            className="h-8 dark:bg-slate-800 dark:border-slate-600 dark:text-white" autoFocus />
-                          <Button size="icon" className="h-8 w-8 shrink-0" onClick={() => saveEditComment(p.id, c.id)}><Check className="h-4 w-4" /></Button>
-                        </div>
-                      ) : (
-                        <>
-                          <p>
-                            <span className="font-medium text-slate-800 dark:text-slate-200">{c.user.name}</span>{' '}
-                            <span className="text-slate-600 dark:text-slate-400">{c.body}</span>{' '}
-                            {c.editedAt && <span className="text-[10px] text-slate-400 dark:text-slate-500">(edited)</span>}
-                          </p>
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 shrink-0">
-                            {c.mine && <button onClick={() => startEditComment(c)} title="Edit"><Pencil className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" /></button>}
-                            {!c.mine && (
-                              <button onClick={() => reportComment(p.id, c)} disabled={c.reportedByMe} title={c.reportedByMe ? 'Already reported' : 'Report comment'}>
-                                <Flag className={`h-3.5 w-3.5 ${c.reportedByMe ? 'fill-amber-500 text-amber-500' : 'text-slate-400 dark:text-slate-500'}`} />
-                              </button>
-                            )}
-                            {(c.mine || isAdmin) && <button onClick={() => removeComment(p.id, c.id)} title="Delete"><Trash2 className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" /></button>}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  ))}
-                  <div className="flex items-center gap-2 pt-1">
-                    <Input value={commentDraft[p.id] || ''} onChange={(e) => setCommentDraft((d) => ({ ...d, [p.id]: e.target.value }))}
-                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addComment(p); } }} placeholder="Add a comment…" className="h-9 dark:bg-slate-800 dark:border-slate-600 dark:text-white" />
-                    <Button size="icon" className="h-9 w-9 shrink-0" onClick={() => addComment(p)} disabled={!(commentDraft[p.id] || '').trim()}><Send className="h-4 w-4" /></Button>
-                  </div>
+              <Textarea value={body} onChange={(event) => setBody(event.target.value)} rows={2} maxLength={1000} placeholder="Why should students watch this?" className="resize-none" />
+              {selectedVideo && (
+                <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/30">
+                  <PlayCircle className="h-8 w-8 shrink-0 text-aubergine-600" />
+                  <div className="min-w-0"><p className="truncate text-sm font-medium">{selectedVideo.title}</p><p className="text-xs text-slate-500">Ready to feature</p></div>
                 </div>
               )}
             </div>
-          ))}
-          {nextCursor && (
-            <div className="flex justify-center pt-2">
-              <Button variant="outline" onClick={loadMore} disabled={loadingMore}>
-                {loadingMore && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Load more
-              </Button>
+          )}
+
+          {photo && (
+            <div className="relative inline-block">
+              <img src={photo.url} alt="Selected social upload preview" className="max-h-56 rounded-lg" />
+              <button type="button" onClick={() => replacePhoto(null)} aria-label="Remove selected photo" className="absolute -right-2 -top-2 rounded-full bg-white p-1 shadow ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-600"><X className="h-4 w-4 text-rose-500" /></button>
             </div>
           )}
-        </div>}
+
+          {canCurate && composerType !== 'POST' && (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {isAdmin && composerType === 'VIDEO_HIGHLIGHT' && (
+                <div className="space-y-1.5">
+                  <Label>Audience</Label>
+                  <Select value={audience} onValueChange={(value) => { setAudience(value as Audience); if (value !== 'CLASS') setClassId(''); }}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="SCHOOL">Whole school</SelectItem>
+                      <SelectItem value="CLASS">One class</SelectItem>
+                      <SelectItem value="STAFF">Staff only</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {needsClass && (
+                <div className="space-y-1.5">
+                  <Label>Class</Label>
+                  <Select value={classId} onValueChange={setClassId}>
+                    <SelectTrigger><SelectValue placeholder="Choose a class" /></SelectTrigger>
+                    <SelectContent>
+                      {options.classes.map((klass) => <SelectItem key={klass.id} value={klass.id}>{klass.name} · {klass.level}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              <div className="space-y-1.5">
+                <Label>Keep visible</Label>
+                <Select value={retentionDays} onValueChange={setRetentionDays}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7">7 days</SelectItem>
+                    <SelectItem value="30">30 days</SelectItem>
+                    <SelectItem value="90">90 days</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            {composerType !== 'VIDEO_HIGHLIGHT' ? (
+              <div className="flex gap-1">
+                <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) replacePhoto({ blob: file, url: URL.createObjectURL(file) }); }} />
+                <Button type="button" variant="ghost" size="sm" onClick={() => fileRef.current?.click()}><ImageIcon className="mr-1 h-4 w-4" /> Photo</Button>
+                <Button type="button" variant="ghost" size="sm" onClick={() => setCamera(true)}><Camera className="mr-1 h-4 w-4" /> Camera</Button>
+              </div>
+            ) : <span />}
+            <Button onClick={submit} disabled={posting || (composerType === 'POST' && !body.trim() && !photo)}>
+              {posting && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
+              {composerType === 'POST' ? 'Post (24h)' : composerType === 'CLASS_SNAPSHOT' ? 'Publish Snapshot' : 'Feature Video'}
+            </Button>
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-14 text-sm text-slate-500"><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading…</div>
+        ) : posts.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-slate-300 bg-white/60 py-16 text-center text-sm text-slate-500 backdrop-blur-sm dark:border-slate-700 dark:bg-surface-indigo/50">
+            {activeType === 'POST' ? 'Nothing here yet. Be the first to post!' : activeType === 'CLASS_SNAPSHOT' ? 'No class snapshots have been published yet.' : 'No video highlights right now.'}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {posts.map((post) => (
+              <article key={post.id} className="overflow-hidden rounded-xl border border-slate-200/80 bg-white/85 backdrop-blur-sm dark:border-surface-raised/80 dark:bg-surface-indigo/75">
+                <div className="flex items-start justify-between p-3">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <div className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full bg-aubergine-100 text-xs font-bold text-aubergine-700 dark:bg-aubergine-900/30 dark:text-aubergine-400">
+                      {post.author.photo ? <img src={post.author.photo} alt="" className="h-full w-full object-cover" /> : post.author.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-slate-900 dark:text-white">{post.author.name} <Badge variant="outline" className="ml-1 text-[9px] uppercase dark:border-slate-600 dark:text-slate-300">{roleLabel(post.author.role)}</Badge></p>
+                      <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px] text-slate-500">
+                        <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {timeLeft(post.expiresAt)}</span>
+                        {post.classInfo && <Badge variant="secondary" className="h-4 px-1.5 text-[9px]"><GraduationCap className="mr-1 h-2.5 w-2.5" />{post.classInfo.name}</Badge>}
+                        {post.audience === 'SCHOOL' && post.type !== 'POST' && <span className="flex items-center gap-1"><School className="h-3 w-3" /> School</span>}
+                        {post.audience === 'STAFF' && <span className="flex items-center gap-1"><BriefcaseBusiness className="h-3 w-3" /> Staff</span>}
+                        {post.audience === 'CLASS' && <span className="flex items-center gap-1"><Users className="h-3 w-3" /> Class</span>}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-0.5">
+                    {!post.mine && <Button variant="ghost" size="icon" className="h-8 w-8" disabled={post.reportedByMe} title={post.reportedByMe ? 'Already reported' : 'Report post'} onClick={() => reportPost(post)}><Flag className={`h-3.5 w-3.5 ${post.reportedByMe ? 'fill-amber-500 text-amber-500' : 'text-slate-400'}`} /></Button>}
+                    {(post.mine || isAdmin) && <Button variant="ghost" size="icon" className="h-8 w-8" title="Edit post" onClick={() => startEditPost(post)}><Pencil className="h-4 w-4 text-slate-400" /></Button>}
+                    {(post.mine || isAdmin) && <Button variant="ghost" size="icon" className="h-8 w-8" title="Delete post" onClick={() => removePost(post.id)}><Trash2 className="h-4 w-4 text-slate-400" /></Button>}
+                  </div>
+                </div>
+
+                {editingPost === post.id ? (
+                  <div className="space-y-2 px-3 pb-3">
+                    <Textarea value={editPostDraft} onChange={(event) => setEditPostDraft(event.target.value)} rows={2} maxLength={1000} className="resize-none" autoFocus />
+                    <div className="flex justify-end gap-2">
+                      <Button type="button" size="sm" variant="ghost" onClick={() => setEditingPost(null)}>Cancel</Button>
+                      <Button type="button" size="sm" onClick={() => saveEditPost(post)}><Check className="mr-1 h-4 w-4" />Save</Button>
+                    </div>
+                  </div>
+                ) : post.body ? <p className="whitespace-pre-wrap px-3 pb-3 text-sm text-slate-800 dark:text-slate-200">{post.body}</p> : null}
+                {post.imageUrl && <img src={post.imageUrl} alt={post.body || (post.type === 'CLASS_SNAPSHOT' ? 'Class snapshot' : 'Social post')} className="max-h-[32rem] w-full object-cover" loading="lazy" />}
+
+                {post.type === 'VIDEO_HIGHLIGHT' && post.videoLesson && (
+                  <Link to={`/videos/${post.videoLesson.id}`} className="group/video mx-3 mb-3 flex overflow-hidden rounded-xl border border-slate-200 bg-slate-50 transition hover:border-aubergine-300 hover:shadow-sm dark:border-slate-700 dark:bg-slate-900/30">
+                    <div className="relative grid h-24 w-36 shrink-0 place-items-center overflow-hidden bg-slate-200 dark:bg-slate-800">
+                      {post.videoLesson.thumbnailUrl && <img src={post.videoLesson.thumbnailUrl} alt="" className="h-full w-full object-cover" />}
+                      <PlayCircle className="absolute h-10 w-10 text-white drop-shadow" />
+                    </div>
+                    <div className="min-w-0 p-3">
+                      <Badge className="mb-1 bg-aubergine-600 text-[9px] text-white">Featured lesson</Badge>
+                      <p className="line-clamp-2 text-sm font-semibold text-slate-900 group-hover/video:text-aubergine-700 dark:text-white">{post.videoLesson.title}</p>
+                      <p className="mt-1 text-xs text-slate-500">Watch video lesson</p>
+                    </div>
+                  </Link>
+                )}
+
+                <div className="flex items-center gap-4 p-3">
+                  <button type="button" onClick={() => toggleLike(post)} aria-label={post.likedByMe ? 'Unlike post' : 'Like post'} className={`flex items-center gap-1 text-sm ${post.likedByMe ? 'text-rose-600' : 'text-slate-500 hover:text-rose-600'}`}>
+                    <Heart className={`h-5 w-5 ${post.likedByMe ? 'fill-rose-500 text-rose-500' : ''}`} /> {post.likeCount > 0 && post.likeCount}
+                  </button>
+                  <button type="button" onClick={() => toggleComments(post)} aria-expanded={Boolean(openComments[post.id])} className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-200">
+                    <MessageCircle className="h-5 w-5" /> {post.commentCount > 0 && post.commentCount}
+                  </button>
+                </div>
+
+                {openComments[post.id] && (
+                  <div className="space-y-3 border-t border-slate-100 p-3 dark:border-slate-700">
+                    {post.commentsLoading && post.comments.length === 0 ? (
+                      <p className="flex items-center justify-center py-3 text-xs text-slate-500"><Loader2 className="mr-2 h-4 w-4 animate-spin" />Loading comments…</p>
+                    ) : post.comments.map((comment) => (
+                      <div key={comment.id} className="group flex items-start justify-between gap-2 text-sm">
+                        {editingComment === comment.id ? (
+                          <div className="flex flex-1 items-center gap-2">
+                            <Input value={editDraft} onChange={(event) => setEditDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') saveEditComment(post.id, comment.id); if (event.key === 'Escape') setEditingComment(null); }} className="h-8" autoFocus />
+                            <Button size="icon" className="h-8 w-8 shrink-0" onClick={() => saveEditComment(post.id, comment.id)}><Check className="h-4 w-4" /></Button>
+                          </div>
+                        ) : (
+                          <>
+                            <p className="min-w-0 break-words"><span className="font-medium text-slate-800 dark:text-slate-200">{comment.user.name}</span>{' '}<span className="text-slate-600 dark:text-slate-400">{comment.body}</span>{' '}{comment.editedAt && <span className="text-[10px] text-slate-400">(edited)</span>}</p>
+                            <div className="flex shrink-0 items-center gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+                              {comment.mine && <button type="button" onClick={() => startEditComment(comment)} title="Edit comment" aria-label="Edit comment"><Pencil className="h-4 w-4 text-slate-400" /></button>}
+                              {!comment.mine && <button type="button" onClick={() => reportComment(post.id, comment)} disabled={comment.reportedByMe} title={comment.reportedByMe ? 'Already reported' : 'Report comment'} aria-label="Report comment"><Flag className={`h-4 w-4 ${comment.reportedByMe ? 'fill-amber-500 text-amber-500' : 'text-slate-400'}`} /></button>}
+                              {(comment.mine || isAdmin) && <button type="button" onClick={() => removeComment(post.id, comment.id)} title="Delete comment" aria-label="Delete comment"><Trash2 className="h-4 w-4 text-slate-400" /></button>}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ))}
+                    {post.commentsNextCursor && <Button type="button" variant="ghost" size="sm" className="w-full" disabled={post.commentsLoading} onClick={() => fetchComments(post.id, post.commentsNextCursor || undefined, true)}>{post.commentsLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Load more comments</Button>}
+                    <div className="flex items-center gap-2 pt-1">
+                      <Input value={commentDraft[post.id] || ''} onChange={(event) => setCommentDraft((current) => ({ ...current, [post.id]: event.target.value }))} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); addComment(post); } }} placeholder="Add a comment…" className="h-9" />
+                      <Button size="icon" className="h-9 w-9 shrink-0" onClick={() => addComment(post)} disabled={commentBusy[post.id] || !(commentDraft[post.id] || '').trim()}>{commentBusy[post.id] ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}</Button>
+                    </div>
+                  </div>
+                )}
+              </article>
+            ))}
+            {nextCursor && <div className="flex justify-center pt-2"><Button variant="outline" onClick={loadMore} disabled={loadingMore}>{loadingMore && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Load more</Button></div>}
+          </div>
+        )}
       </div>
 
       {camera && <CameraCapture onCapture={pickPhoto} onClose={() => setCamera(false)} />}
@@ -344,24 +690,15 @@ export default function SocialSpace() {
       {isAdmin && (
         <Dialog open={reportsOpen} onOpenChange={setReportsOpen}>
           <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Reported content</DialogTitle>
-            </DialogHeader>
+            <DialogHeader><DialogTitle>Reported content</DialogTitle></DialogHeader>
             <div className="max-h-[60vh] space-y-3 overflow-y-auto">
-              {reports.length === 0 ? (
-                <p className="py-8 text-center text-sm text-slate-400">Nothing reported right now.</p>
-              ) : reports.map((r) => (
-                <div key={r.id} className="rounded-lg border border-slate-200 p-3 dark:border-surface-raised">
-                  <div className="flex items-center justify-between text-xs text-slate-400">
-                    <span>{r.type === 'POST' ? 'Post' : 'Comment'} by {r.content.author} · reported by {r.reportedBy}</span>
-                  </div>
-                  {r.content.body && <p className="mt-1 text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap">{r.content.body}</p>}
-                  {r.content.imageUrl && <img src={r.content.imageUrl} alt="reported" className="mt-2 max-h-40 rounded-md" />}
-                  {r.reason && <p className="mt-1 text-xs italic text-slate-500">Reason: {r.reason}</p>}
-                  <div className="mt-2 flex gap-2">
-                    <Button size="sm" variant="destructive" onClick={() => resolveReport(r.id, 'ACTIONED')}>Remove content</Button>
-                    <Button size="sm" variant="outline" onClick={() => resolveReport(r.id, 'DISMISSED')}>Dismiss</Button>
-                  </div>
+              {reports.length === 0 ? <p className="py-8 text-center text-sm text-slate-400">Nothing reported right now.</p> : reports.map((report) => (
+                <div key={report.id} className="rounded-lg border border-slate-200 p-3 dark:border-surface-raised">
+                  <p className="text-xs text-slate-400">{report.type === 'POST' ? 'Post' : 'Comment'} by {report.content.author} · reported by {report.reportedBy}</p>
+                  {report.content.body && <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-200">{report.content.body}</p>}
+                  {report.content.imageUrl && <img src={report.content.imageUrl} alt="Reported content" className="mt-2 max-h-40 rounded-md" />}
+                  {report.reason && <p className="mt-1 text-xs italic text-slate-500">Reason: {report.reason}</p>}
+                  <div className="mt-2 flex gap-2"><Button size="sm" variant="destructive" onClick={() => resolveReport(report.id, 'ACTIONED')}>Remove content</Button><Button size="sm" variant="outline" onClick={() => resolveReport(report.id, 'DISMISSED')}>Dismiss</Button></div>
                 </div>
               ))}
             </div>

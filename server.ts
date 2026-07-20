@@ -35,6 +35,7 @@ import { registerCheckersGameRoutes } from "./checkersGame";
 import cookieParser from "cookie-parser";
 import { BADGE_CATALOG, getBadgeLevel } from "./lib/badges";
 import { roleHasPermission, type Permission, type UserRole } from "./shared/permissions";
+import { canCurateSocialContent, canViewSocialAudience, normaliseSocialRetentionDays } from "./shared/socialPolicy";
 import {
   copyArtifactOffsite,
   createZipArtifact,
@@ -274,15 +275,16 @@ const stickerUpload = multer({
 });
 
 const socialUpload = multer({
-  storage: multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, SOCIAL_DIR),
-    filename: (_req, file, cb) => {
-      const ext = path.extname(file.originalname).toLowerCase() || ".jpg";
-      cb(null, `${crypto.randomUUID()}${ext}`);
-    },
-  }),
+  // Keep untrusted social images in memory until Sharp has decoded and
+  // normalised them. This avoids persisting SVG/script payloads, strips image
+  // metadata, caps dimensions, and prevents orphan files when validation fails.
+  storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
-  fileFilter: imageUploadFilter,
+  fileFilter: (_req, file, cb) => {
+    const allowed = new Set(["image/jpeg", "image/png", "image/webp"]);
+    if (allowed.has(file.mimetype)) cb(null, true);
+    else cb(new Error("Only JPG, PNG, and WEBP image files are allowed"));
+  },
 });
 
 const libraryFileUpload = multer({
@@ -999,14 +1001,16 @@ const schemas = {
     firstName: reqStr, lastName: reqStr, email,
     username: z.union([username, z.literal("")]).optional(),
     password: z.string().min(6, "must be at least 6 characters"),
-    role: userRole, status: optStr,
+    role: userRole,
+    status: z.enum(["ACTIVE", "DISABLED"]).optional(),
     teacherId: nullableStr, studentId: nullableStr,
   }),
   userUpdate: z.object({
     firstName: optStr, lastName: optStr,
     email: z.union([email, z.literal("")]).optional(),
     username: z.union([username, z.literal("")]).optional(),
-    role: userRole.optional(), status: optStr,
+    role: userRole.optional(),
+    status: z.enum(["ACTIVE", "DISABLED"]).optional(),
     teacherId: nullableStr, studentId: nullableStr,
   }),
   attendance: z.object({
@@ -1851,8 +1855,62 @@ async function startServer() {
     maxAge: isProduction ? "30d" : 0,
     immutable: isProduction,
   }));
-  app.use("/uploads/social", express.static(SOCIAL_DIR, {
-    maxAge: isProduction ? "1d" : 0,
+  // Social photos may contain minors and class-only activity. Authenticate the
+  // native <img> request with a narrowly-scoped httpOnly cookie and enforce the
+  // same audience rules as the JSON feed before serving the file.
+  app.use("/uploads/social", async (req, res, next) => {
+    let jwtUser: JwtPayload;
+    try {
+      jwtUser = verifyToken(String(req.cookies?.social_media_token || ""));
+    } catch {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    const filename = req.path.replace(/^\/+/, "");
+    if (!filename || filename !== path.basename(filename)) {
+      res.status(400).json({ error: "Invalid social image" });
+      return;
+    }
+
+    try {
+      const post = await (prisma as any).socialPost.findFirst({
+        where: { imageUrl: `/uploads/social/${filename}` },
+        select: { audience: true, classId: true, publishStatus: true, expiresAt: true },
+      });
+      if (!post || post.publishStatus !== "PUBLISHED" || (post.expiresAt && new Date(post.expiresAt) <= new Date())) {
+        res.status(404).json({ error: "Social image not found" });
+        return;
+      }
+
+      let viewerClassIds: string[] = [];
+      if (post.audience === "CLASS" && post.classId) {
+        if (jwtUser.role === "TEACHER") {
+          const teacher = await prisma.teacher.findUnique({ where: { userId: jwtUser.userId }, include: { classes: true } });
+          viewerClassIds = teacher?.classes.map((row) => row.classId) ?? [];
+        } else if (jwtUser.role === "STUDENT") {
+          const student = await prisma.student.findUnique({ where: { userId: jwtUser.userId }, select: { classId: true } });
+          viewerClassIds = student?.classId ? [student.classId] : [];
+        }
+      }
+      const allowed = canViewSocialAudience({
+        role: jwtUser.role,
+        audience: post.audience,
+        postClassId: post.classId,
+        viewerClassIds,
+      });
+      if (!allowed) {
+        res.status(403).json({ error: "Forbidden" });
+        return;
+      }
+      next();
+    } catch (err) {
+      logger.error("Error authorizing social image:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }, express.static(SOCIAL_DIR, {
+    maxAge: isProduction ? "1h" : 0,
+    immutable: false,
   }));
   app.use("/uploads/library", express.static(LIBRARY_FILE_DIR, {
     maxAge: isProduction ? "30d" : 0,
@@ -1881,18 +1939,22 @@ async function startServer() {
       const mediaUrl = `/uploads/videos/${filename}`;
       const lesson = await prisma.videoLesson.findFirst({
         where: { OR: [{ videoUrl: mediaUrl }, { captionsUrl: mediaUrl }] },
-        select: { visibility: true, status: true },
+        select: { visibility: true, status: true, classId: true },
       });
       if (!lesson) {
         res.status(404).json({ error: "Video file not found" });
         return;
       }
 
-      const allowed = jwtUser.role === "ADMIN" ||
+      let allowed = jwtUser.role === "ADMIN" ||
         jwtUser.role === "TEACHER" ||
         (jwtUser.role === "STUDENT" &&
           lesson.status === "PUBLISHED" &&
           ["ALL", "STUDENTS"].includes(lesson.visibility));
+      if (allowed && jwtUser.role === "STUDENT" && lesson.classId) {
+        const student = await prisma.student.findUnique({ where: { userId: jwtUser.userId }, select: { classId: true } });
+        allowed = student?.classId === lesson.classId;
+      }
       if (!allowed) {
         res.status(403).json({ error: "Forbidden" });
         return;
@@ -2195,6 +2257,13 @@ async function startServer() {
         maxAge: rememberMe ? 30 * 24 * 60 * 60 * 1000 : 8 * 60 * 60 * 1000,
         path: "/uploads/videos",
       });
+      res.cookie("social_media_token", token, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: "strict",
+        maxAge: rememberMe ? 30 * 24 * 60 * 60 * 1000 : 8 * 60 * 60 * 1000,
+        path: "/uploads/social",
+      });
 
       // Record the login time (fire-and-forget so a slow write can't block sign-in).
       prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } })
@@ -2234,6 +2303,12 @@ async function startServer() {
       sameSite: "strict",
       path: "/uploads/videos",
     });
+    res.clearCookie("social_media_token", {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "strict",
+      path: "/uploads/social",
+    });
     res.json({ success: true });
   });
 
@@ -2259,13 +2334,26 @@ async function startServer() {
           mustChangePassword: true,
           cursorEffect: true,
           mfaEnabled: true,
+          lastLoginAt: true,
         },
       } as any);
       if (!user || !user.isActive) {
         res.status(401).json({ error: "User not found or disabled" });
         return;
       }
-      res.json({ user });
+
+      // This endpoint is hit on every page load, so explicit logins are not
+      // the only sessions that matter. Stamp lastLoginAt here too — but only
+      // once per day, so "Last login" reflects the most recent day of active
+      // use rather than constantly showing "now".
+      const lastLogin = user.lastLoginAt ? new Date(user.lastLoginAt).getTime() : 0;
+      if (Date.now() - lastLogin > 24 * 60 * 60 * 1000) {
+        prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } })
+          .catch((e) => logger.warn(`Could not update lastLoginAt for ${user.email}: ${e?.message}`));
+      }
+
+      const { lastLoginAt: _omit, ...userPayload } = user as any;
+      res.json({ user: userPayload });
     } catch (err) {
       logger.error("Error fetching user profile:", err);
       res.status(500).json({ error: "Internal Server Error" });
@@ -6261,7 +6349,15 @@ async function startServer() {
     try {
       let where: any = {};
       if (jwtUser.role === "STUDENT") {
-        where = { visibility: { in: ["ALL", "STUDENTS"] }, status: "PUBLISHED" };
+        const student = await prisma.student.findUnique({ where: { userId: jwtUser.userId }, select: { classId: true } });
+        where = {
+          visibility: { in: ["ALL", "STUDENTS"] },
+          status: "PUBLISHED",
+          OR: [
+            { classId: null },
+            ...(student?.classId ? [{ classId: student.classId }] : []),
+          ],
+        };
       } else if (jwtUser.role === "TEACHER") {
         where = { visibility: { in: ["ALL", "STUDENTS", "TEACHERS_ONLY"] } };
       }
@@ -6285,6 +6381,10 @@ async function startServer() {
     const { title, description, videoUrl, thumbnailUrl, captionsUrl, duration, classId, subjectId, visibility, status, uploadedByName, isRequired, dueDate } = req.body;
     if (!title || !videoUrl) {
       res.status(400).json({ error: "title and videoUrl are required" });
+      return;
+    }
+    if (jwtUser.role === "TEACHER" && classId && !(await canAccessTeacherClass(req, classId))) {
+      res.status(403).json({ error: "You can only assign videos to your assigned classes" });
       return;
     }
     try {
@@ -6340,6 +6440,13 @@ async function startServer() {
         res.status(404).json({ error: "Video lesson not found" });
         return;
       }
+      if (jwtUser.role === "STUDENT" && video.classId) {
+        const student = await prisma.student.findUnique({ where: { userId: jwtUser.userId }, select: { classId: true } });
+        if (student?.classId !== video.classId) {
+          res.status(404).json({ error: "Video lesson not found" });
+          return;
+        }
+      }
       if (jwtUser.role === "TEACHER" && !["ALL", "STUDENTS", "TEACHERS_ONLY"].includes(video.visibility)) {
         res.status(404).json({ error: "Video lesson not found" });
         return;
@@ -6369,6 +6476,10 @@ async function startServer() {
 
       if (jwtUser.role === "TEACHER" && currentVideo.uploadedById !== jwtUser.userId) {
         res.status(403).json({ error: "You can only edit video lessons you uploaded" });
+        return;
+      }
+      if (jwtUser.role === "TEACHER" && classId !== undefined && classId && !(await canAccessTeacherClass(req, classId))) {
+        res.status(403).json({ error: "You can only assign videos to your assigned classes" });
         return;
       }
 
@@ -14138,6 +14249,15 @@ async function startServer() {
       return;
     }
     try {
+      const existing = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { firstName: true, lastName: true, email: true, role: true },
+      });
+      if (!existing) {
+        res.status(404).json({ error: "User not found" });
+        return;
+      }
+
       const user = await prisma.$transaction(async (tx) => {
         // See the cast note near the login route re: stale Prisma types.
         const updated = await tx.user.update({
@@ -14152,6 +14272,17 @@ async function startServer() {
           },
           select: { id: true, firstName: true, lastName: true, email: true, username: true, role: true, isActive: true },
         } as any);
+
+        // If the role changed away from TEACHER/STUDENT, detach profiles that
+        // no longer match so the account can't be left as e.g. an ADMIN still
+        // linked to a Student record (which also blocks deletion).
+        const effectiveRole = role ?? updated.role;
+        if (effectiveRole !== "TEACHER" && teacherId === undefined) {
+          await tx.teacher.updateMany({ where: { userId }, data: { userId: null } });
+        }
+        if (effectiveRole !== "STUDENT" && studentId === undefined) {
+          await tx.student.updateMany({ where: { userId }, data: { userId: null } });
+        }
 
         // Link / unlink a teacher profile (Teacher.userId is unique).
         if (teacherId !== undefined) {
@@ -14180,7 +14311,7 @@ async function startServer() {
         return updated;
       });
       await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "USER", user.id,
-        `User '${user.firstName} ${user.lastName}' updated.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+        `User '${existing.firstName} ${existing.lastName}' (${existing.email}) updated.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
       res.json(user);
     } catch (err: any) {
       logger.error("Error updating user:", err);
@@ -19077,7 +19208,20 @@ async function startServer() {
       // Social posts (likes/comments cascade).
       const posts = await prisma.socialPost.findMany({ where: { expiresAt: { lte: now } }, select: { id: true, imageUrl: true } });
       if (posts.length) {
-        await prisma.socialPost.deleteMany({ where: { id: { in: posts.map((p) => p.id) } } });
+        const postIds = posts.map((p) => p.id);
+        await prisma.$transaction(async (tx) => {
+          await (tx as any).socialReport.updateMany({
+            where: {
+              status: "OPEN",
+              OR: [
+                { postId: { in: postIds } },
+                { comment: { postId: { in: postIds } } },
+              ],
+            },
+            data: { status: "DISMISSED", reviewedAt: now },
+          });
+          await tx.socialPost.deleteMany({ where: { id: { in: postIds } } });
+        });
         for (const p of posts) if (p.imageUrl) { try { const fp = path.join(SOCIAL_DIR, path.basename(p.imageUrl)); if (fs.existsSync(fp)) fs.unlinkSync(fp); } catch { /* ignore */ } }
       }
       // Ephemeral chat photos.
@@ -19272,9 +19416,7 @@ async function startServer() {
     }
   });
 
-  // ── Social Space (ephemeral 24h community posts + likes + comments) ──────────
-  // Any signed-in user can post (image and/or text), like, and comment; everyone
-  // sees the feed. Posts auto-expire after 24h (cleanupExpiredSocial sweeps them).
+  // ── Social Space (24h posts + class snapshots + video highlights) ────────────
   const uploadSocial: express.RequestHandler = (req, res, next) => {
     socialUpload.single("file")(req, res, (err: any) => {
       if (!err) return next();
@@ -19283,56 +19425,190 @@ async function startServer() {
     });
   };
 
-  app.post("/api/social", authMiddleware, uploadSocial, async (req, res) => {
+  const socialAudienceWhere = async (jwtUser: JwtPayload): Promise<any> => {
+    if (jwtUser.role === "ADMIN") return {};
+    if (jwtUser.role === "TEACHER") {
+      const classIds = await getTeacherClassIds(jwtUser.userId);
+      return {
+        OR: [
+          { audience: "SCHOOL" },
+          { audience: "STAFF" },
+          ...(classIds.length ? [{ audience: "CLASS", classId: { in: classIds } }] : []),
+        ],
+      };
+    }
+    if (jwtUser.role === "STUDENT") {
+      const student = await prisma.student.findUnique({ where: { userId: jwtUser.userId }, select: { classId: true } });
+      return {
+        OR: [
+          { audience: "SCHOOL" },
+          ...(student?.classId ? [{ audience: "CLASS", classId: student.classId }] : []),
+        ],
+      };
+    }
+    return { audience: { in: ["SCHOOL", "STAFF"] } };
+  };
+
+  const socialVisibleWhere = async (jwtUser: JwtPayload): Promise<any> => ({
+    AND: [
+      { publishStatus: "PUBLISHED" },
+      { OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] },
+      await socialAudienceWhere(jwtUser),
+    ],
+  });
+
+  const findVisibleSocialPost = async (id: string, jwtUser: JwtPayload): Promise<any | null> =>
+    (prisma as any).socialPost.findFirst({
+      where: { AND: [{ id }, await socialVisibleWhere(jwtUser)] },
+      include: { author: { select: { id: true } } },
+    });
+
+  app.post("/api/social/media-session", authMiddleware, (req, res) => {
+    const token = req.headers.authorization?.replace(/^Bearer\s+/i, "");
+    if (!token) { res.status(400).json({ error: "Token required" }); return; }
+    res.cookie("social_media_token", token, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "strict",
+      maxAge: 8 * 60 * 60 * 1000,
+      path: "/uploads/social",
+    });
+    res.json({ success: true });
+  });
+
+  app.get("/api/social/composer-options", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
-    const file = (req as any).file as Express.Multer.File | undefined;
-    const body = (req.body?.body ?? "").toString().trim().slice(0, 1000) || null;
-    if (!file && !body) { res.status(400).json({ error: "Add a photo or some text" }); return; }
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
+      res.json({ classes: [], videos: [] });
+      return;
+    }
     try {
-      const post = await prisma.socialPost.create({
-        data: {
-          authorId: jwtUser.userId, body,
-          imageUrl: file ? `/uploads/social/${file.filename}` : null,
-          expiresAt: new Date(Date.now() + EPHEMERAL_TTL_MS),
-        },
-      });
-      res.status(201).json({ id: post.id });
+      const classIds = jwtUser.role === "ADMIN" ? null : await getTeacherClassIds(jwtUser.userId);
+      const [classes, videos] = await Promise.all([
+        prisma.class.findMany({
+          where: { status: { not: "ARCHIVED" }, ...(classIds ? { id: { in: classIds } } : {}) },
+          select: { id: true, name: true, level: true },
+          orderBy: { name: "asc" },
+        }),
+        prisma.videoLesson.findMany({
+          where: { status: "PUBLISHED", ...(jwtUser.role === "TEACHER" ? { uploadedById: jwtUser.userId } : {}) },
+          select: { id: true, title: true, thumbnailUrl: true, duration: true, classId: true, uploadedById: true },
+          orderBy: { createdAt: "desc" },
+          take: 100,
+        }),
+      ]);
+      res.json({ classes, videos });
     } catch (err) {
-      logger.error("Error creating social post:", err);
+      logger.error("Error loading Social Space composer options:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
 
-  // Cursor-paginated: ?cursor=<postId>&limit=<n> (default/most 20, capped at
-  // 50). Without this the feed always fetched every non-expired post in one
-  // shot, which was fine at small scale but would only get slower as a
-  // school's daily post volume grows. Ordered by createdAt desc, so the
-  // cursor is "give me posts older than this one".
+  app.post("/api/social", authMiddleware, uploadSocial, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const file = (req as any).file as Express.Multer.File | undefined;
+    const body = (req.body?.body ?? "").toString().trim().slice(0, 1000) || null;
+    const allowedTypes = new Set(["POST", "CLASS_SNAPSHOT", "VIDEO_HIGHLIGHT"]);
+    const allowedAudiences = new Set(["SCHOOL", "CLASS", "STAFF"]);
+    const type = allowedTypes.has(String(req.body?.type)) ? String(req.body.type) : "POST";
+    let audience = allowedAudiences.has(String(req.body?.audience)) ? String(req.body.audience) : "SCHOOL";
+    let classId = req.body?.classId ? String(req.body.classId) : null;
+    const videoLessonId = req.body?.videoLessonId ? String(req.body.videoLessonId) : null;
+    const retentionDays = normaliseSocialRetentionDays(type as "POST" | "CLASS_SNAPSHOT" | "VIDEO_HIGHLIGHT", req.body?.retentionDays);
+    const isCurator = canCurateSocialContent(jwtUser.role);
+
+    if (type === "POST" && !file && !body) { res.status(400).json({ error: "Add a photo or some text" }); return; }
+    if (type !== "POST" && !isCurator) { res.status(403).json({ error: "Only administrators and teachers can publish curated content" }); return; }
+    if (type === "CLASS_SNAPSHOT" && !file) { res.status(400).json({ error: "A class snapshot requires a photo" }); return; }
+    if (type === "VIDEO_HIGHLIGHT" && !videoLessonId) { res.status(400).json({ error: "Choose a video lesson to highlight" }); return; }
+
+    // Students and non-teaching staff keep the existing informal school-post
+    // capability. Only admins/teachers may target staff or a specific class.
+    if (!isCurator) { audience = "SCHOOL"; classId = null; }
+    if (type === "CLASS_SNAPSHOT") audience = "CLASS";
+    if (jwtUser.role === "TEACHER" && type === "VIDEO_HIGHLIGHT") audience = "CLASS";
+    if (audience === "CLASS" && !classId) { res.status(400).json({ error: "Choose a class for this content" }); return; }
+
+    let imageUrl: string | null = null;
+    try {
+      if (classId) {
+        const klass = await prisma.class.findUnique({ where: { id: classId }, select: { id: true } });
+        if (!klass) { res.status(400).json({ error: "Class not found" }); return; }
+        if (jwtUser.role === "TEACHER" && !(await canAccessTeacherClass(req, classId))) {
+          res.status(403).json({ error: "You can only publish to your assigned classes" });
+          return;
+        }
+      }
+
+      if (videoLessonId) {
+        const video = await prisma.videoLesson.findUnique({ where: { id: videoLessonId }, select: { id: true, status: true, classId: true, uploadedById: true } });
+        if (!video || video.status !== "PUBLISHED") { res.status(400).json({ error: "Choose a published video lesson" }); return; }
+        if (jwtUser.role === "TEACHER" && video.uploadedById !== jwtUser.userId) {
+          res.status(403).json({ error: "Teachers can only highlight videos they uploaded" });
+          return;
+        }
+        if (video.classId && classId && video.classId !== classId) {
+          res.status(400).json({ error: "The highlighted video is assigned to a different class" });
+          return;
+        }
+      }
+
+      if (file) {
+        const filename = `${crypto.randomUUID()}.webp`;
+        await sharp(file.buffer, { limitInputPixels: 40_000_000 })
+          .rotate()
+          .resize({ width: 2400, height: 2400, fit: "inside", withoutEnlargement: true })
+          .webp({ quality: 85 })
+          .toFile(path.join(SOCIAL_DIR, filename));
+        imageUrl = `/uploads/social/${filename}`;
+      }
+
+      const expiresAt = type === "POST"
+        ? new Date(Date.now() + EPHEMERAL_TTL_MS)
+        : new Date(Date.now() + retentionDays * 24 * 60 * 60 * 1000);
+      const post = await (prisma as any).socialPost.create({
+        data: {
+          authorId: jwtUser.userId,
+          type,
+          audience,
+          publishStatus: "PUBLISHED",
+          body,
+          imageUrl,
+          classId,
+          videoLessonId: type === "VIDEO_HIGHLIGHT" ? videoLessonId : null,
+          featuredUntil: type === "VIDEO_HIGHLIGHT" ? expiresAt : null,
+          expiresAt,
+        },
+      });
+      res.status(201).json({ id: post.id });
+    } catch (err) {
+      if (imageUrl) await fs.promises.unlink(path.join(SOCIAL_DIR, path.basename(imageUrl))).catch(() => {});
+      logger.error("Error creating social post:", err);
+      const message = err instanceof Error && /Input image|pixel limit|unsupported image/i.test(err.message)
+        ? "The selected image could not be processed"
+        : "Internal Server Error";
+      res.status(500).json({ error: message });
+    }
+  });
+
   app.get("/api/social", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const limit = Math.min(50, Math.max(1, parseInt(String(req.query.limit ?? "20"), 10) || 20));
     const cursor = req.query.cursor ? String(req.query.cursor) : undefined;
+    const requestedType = String(req.query.type || "POST");
+    const type = ["POST", "CLASS_SNAPSHOT", "VIDEO_HIGHLIGHT"].includes(requestedType) ? requestedType : "POST";
     try {
-      const posts = await prisma.socialPost.findMany({
-        where: { expiresAt: { gt: new Date() } },
-        orderBy: { createdAt: "desc" },
+      const posts = await (prisma as any).socialPost.findMany({
+        where: { AND: [{ type }, await socialVisibleWhere(jwtUser)] },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         take: limit + 1,
         ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
         include: {
           author: { select: { id: true, firstName: true, lastName: true, role: true, profilePhotoUrl: true } },
+          class: { select: { id: true, name: true, level: true } },
+          videoLesson: { select: { id: true, title: true, description: true, thumbnailUrl: true, duration: true, status: true, classId: true } },
           _count: { select: { likes: true, comments: true } },
           likes: { where: { userId: jwtUser.userId }, select: { id: true } },
-          comments: {
-            orderBy: { createdAt: "asc" },
-            include: {
-              user: { select: { id: true, firstName: true, lastName: true, role: true } },
-              // Cast: SocialReport is a new model (see the
-              // add_social_reports_and_comment_edit migration) not yet
-              // reflected in this environment's generated Prisma client
-              // typings -- the real client is regenerated before deploy.
-              ...( { reports: { where: { reportedById: jwtUser.userId }, select: { id: true } } } as any),
-            },
-          },
           ...( { reports: { where: { reportedById: jwtUser.userId }, select: { id: true } } } as any),
         } as any,
       });
@@ -19340,17 +19616,14 @@ async function startServer() {
       const page = hasMore ? posts.slice(0, limit) : posts;
       res.json({
         posts: page.map((p: any) => ({
-          id: p.id, body: p.body, imageUrl: p.imageUrl, createdAt: p.createdAt, expiresAt: p.expiresAt,
+          id: p.id, type: p.type, audience: p.audience, publishStatus: p.publishStatus,
+          body: p.body, imageUrl: p.imageUrl, createdAt: p.createdAt, expiresAt: p.expiresAt, featuredUntil: p.featuredUntil,
           author: { id: p.author.id, name: fullName(p.author), role: p.author.role, photo: p.author.profilePhotoUrl ?? null },
+          classInfo: p.class ? { id: p.class.id, name: p.class.name, level: p.class.level } : null,
+          videoLesson: p.videoLesson ?? null,
           mine: p.authorId === jwtUser.userId,
           likeCount: p._count.likes, commentCount: p._count.comments, likedByMe: p.likes.length > 0,
           reportedByMe: (p.reports ?? []).length > 0,
-          comments: p.comments.map((c: any) => ({
-            id: c.id, body: c.body, createdAt: c.createdAt, editedAt: c.editedAt ?? null,
-            user: { id: c.user.id, name: fullName(c.user), role: c.user.role },
-            mine: c.userId === jwtUser.userId,
-            reportedByMe: (c.reports ?? []).length > 0,
-          })),
         })),
         nextCursor: hasMore ? page[page.length - 1].id : null,
       });
@@ -19366,7 +19639,16 @@ async function startServer() {
       const post = await prisma.socialPost.findUnique({ where: { id: req.params.id } });
       if (!post) { res.status(404).json({ error: "Post not found" }); return; }
       if (post.authorId !== jwtUser.userId && jwtUser.role !== "ADMIN") { res.status(403).json({ error: "Forbidden" }); return; }
-      await prisma.socialPost.delete({ where: { id: post.id } }); // likes/comments cascade
+      await prisma.$transaction(async (tx) => {
+        await (tx as any).socialReport.updateMany({
+          where: {
+            status: "OPEN",
+            OR: [{ postId: post.id }, { comment: { postId: post.id } }],
+          },
+          data: { status: "ACTIONED", reviewedById: jwtUser.userId, reviewedAt: new Date() },
+        });
+        await tx.socialPost.delete({ where: { id: post.id } }); // likes/comments cascade
+      });
       if (post.imageUrl) { try { const fp = path.join(SOCIAL_DIR, path.basename(post.imageUrl)); if (fs.existsSync(fp)) fs.unlinkSync(fp); } catch { /* ignore */ } }
       res.json({ success: true });
     } catch (err) {
@@ -19375,9 +19657,26 @@ async function startServer() {
     }
   });
 
+  app.put("/api/social/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const body = (req.body?.body ?? "").toString().trim().slice(0, 1000) || null;
+    try {
+      const post = await (prisma as any).socialPost.findUnique({ where: { id: req.params.id } });
+      if (!post) { res.status(404).json({ error: "Post not found" }); return; }
+      if (post.authorId !== jwtUser.userId && jwtUser.role !== "ADMIN") { res.status(403).json({ error: "Forbidden" }); return; }
+      if (post.type === "POST" && !body && !post.imageUrl) { res.status(400).json({ error: "Post cannot be empty" }); return; }
+      const updated = await (prisma as any).socialPost.update({ where: { id: post.id }, data: { body } });
+      res.json({ id: updated.id, body: updated.body, updatedAt: updated.updatedAt });
+    } catch (err) {
+      logger.error("Error editing social post:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
   app.post("/api/social/:id/like", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
+      if (!(await findVisibleSocialPost(req.params.id, jwtUser))) { res.status(404).json({ error: "Post not found" }); return; }
       const existing = await prisma.socialLike.findUnique({ where: { postId_userId: { postId: req.params.id, userId: jwtUser.userId } } });
       if (existing) {
         await prisma.socialLike.delete({ where: { id: existing.id } });
@@ -19393,11 +19692,44 @@ async function startServer() {
     }
   });
 
+  app.get("/api/social/:id/comments", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const limit = Math.min(50, Math.max(1, parseInt(String(req.query.limit ?? "20"), 10) || 20));
+    const cursor = req.query.cursor ? String(req.query.cursor) : undefined;
+    try {
+      if (!(await findVisibleSocialPost(req.params.id, jwtUser))) { res.status(404).json({ error: "Post not found" }); return; }
+      const comments = await (prisma as any).socialComment.findMany({
+        where: { postId: req.params.id },
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+        take: limit + 1,
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+        include: {
+          user: { select: { id: true, firstName: true, lastName: true, role: true } },
+          reports: { where: { reportedById: jwtUser.userId }, select: { id: true } },
+        },
+      });
+      const hasMore = comments.length > limit;
+      const page = hasMore ? comments.slice(0, limit) : comments;
+      res.json({
+        comments: page.map((c: any) => ({
+          id: c.id, body: c.body, createdAt: c.createdAt, editedAt: c.editedAt ?? null,
+          user: { id: c.user.id, name: fullName(c.user), role: c.user.role },
+          mine: c.userId === jwtUser.userId, reportedByMe: c.reports.length > 0,
+        })),
+        nextCursor: hasMore ? page[page.length - 1].id : null,
+      });
+    } catch (err) {
+      logger.error("Error listing social comments:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
   app.post("/api/social/:id/comments", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const body = (req.body?.body ?? "").toString().trim().slice(0, 500);
     if (!body) { res.status(400).json({ error: "Comment cannot be empty" }); return; }
     try {
+      if (!(await findVisibleSocialPost(req.params.id, jwtUser))) { res.status(404).json({ error: "Post not found" }); return; }
       const c = await prisma.socialComment.create({
         data: { postId: req.params.id, userId: jwtUser.userId, body },
         include: { user: { select: { id: true, firstName: true, lastName: true, role: true } } },
@@ -19416,7 +19748,13 @@ async function startServer() {
       const c = await prisma.socialComment.findUnique({ where: { id: req.params.id } });
       if (!c) { res.status(404).json({ error: "Comment not found" }); return; }
       if (c.userId !== jwtUser.userId && jwtUser.role !== "ADMIN") { res.status(403).json({ error: "Forbidden" }); return; }
-      await prisma.socialComment.delete({ where: { id: c.id } });
+      await prisma.$transaction(async (tx) => {
+        await (tx as any).socialReport.updateMany({
+          where: { commentId: c.id, status: "OPEN" },
+          data: { status: "ACTIONED", reviewedById: jwtUser.userId, reviewedAt: new Date() },
+        });
+        await tx.socialComment.delete({ where: { id: c.id } });
+      });
       res.json({ success: true });
     } catch (err) {
       logger.error("Error deleting comment:", err);
@@ -19458,8 +19796,9 @@ async function startServer() {
   app.post("/api/social/:id/report", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
-      const post = await prisma.socialPost.findUnique({ where: { id: req.params.id } });
+      const post = await findVisibleSocialPost(req.params.id, jwtUser);
       if (!post) { res.status(404).json({ error: "Post not found" }); return; }
+      if (post.authorId === jwtUser.userId) { res.status(400).json({ error: "You cannot report your own post" }); return; }
       await (prisma as any).socialReport.create({
         data: { postId: req.params.id, reportedById: jwtUser.userId, reason: (req.body?.reason ?? "").toString().slice(0, 500) || null },
       });
@@ -19476,8 +19815,10 @@ async function startServer() {
   app.post("/api/social/comments/:id/report", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
-      const comment = await prisma.socialComment.findUnique({ where: { id: req.params.id } });
+      const comment = await prisma.socialComment.findUnique({ where: { id: req.params.id }, include: { post: true } });
       if (!comment) { res.status(404).json({ error: "Comment not found" }); return; }
+      if (!(await findVisibleSocialPost(comment.postId, jwtUser))) { res.status(404).json({ error: "Comment not found" }); return; }
+      if (comment.userId === jwtUser.userId) { res.status(400).json({ error: "You cannot report your own comment" }); return; }
       await (prisma as any).socialReport.create({
         data: { commentId: req.params.id, reportedById: jwtUser.userId, reason: (req.body?.reason ?? "").toString().slice(0, 500) || null },
       });
@@ -19523,15 +19864,37 @@ async function startServer() {
     const jwtUser = (req as any).user as JwtPayload;
     const action = String(req.body?.action || "DISMISSED"); // ACTIONED | DISMISSED
     try {
-      const report = await (prisma as any).socialReport.findUnique({ where: { id: req.params.id } });
+      const report = await (prisma as any).socialReport.findUnique({
+        where: { id: req.params.id },
+        include: { post: { select: { imageUrl: true } } },
+      });
       if (!report) { res.status(404).json({ error: "Report not found" }); return; }
       if (action === "ACTIONED") {
-        if (report.postId) await prisma.socialPost.delete({ where: { id: report.postId } }).catch(() => {});
-        else if (report.commentId) await prisma.socialComment.delete({ where: { id: report.commentId } }).catch(() => {});
+        await prisma.$transaction(async (tx) => {
+          const reportModel = (tx as any).socialReport;
+          if (report.postId) {
+            await reportModel.updateMany({
+              where: { postId: report.postId, status: "OPEN" },
+              data: { status: "ACTIONED", reviewedById: jwtUser.userId, reviewedAt: new Date() },
+            });
+            await tx.socialPost.delete({ where: { id: report.postId } });
+          } else if (report.commentId) {
+            await reportModel.updateMany({
+              where: { commentId: report.commentId, status: "OPEN" },
+              data: { status: "ACTIONED", reviewedById: jwtUser.userId, reviewedAt: new Date() },
+            });
+            await tx.socialComment.delete({ where: { id: report.commentId } });
+          }
+        });
+        if (report.post?.imageUrl) {
+          await fs.promises.unlink(path.join(SOCIAL_DIR, path.basename(report.post.imageUrl))).catch(() => {});
+        }
+        res.json({ success: true, status: "ACTIONED" });
+        return;
       }
       const updated = await (prisma as any).socialReport.update({
         where: { id: req.params.id },
-        data: { status: action === "ACTIONED" ? "ACTIONED" : "DISMISSED", reviewedById: jwtUser.userId, reviewedAt: new Date() },
+        data: { status: "DISMISSED", reviewedById: jwtUser.userId, reviewedAt: new Date() },
       });
       res.json(updated);
     } catch (err) {
@@ -19553,13 +19916,13 @@ async function startServer() {
       // real machine runs `npx prisma migrate deploy` + `prisma generate`.
       const seen = await (prisma as any).socialSeen.findUnique({ where: { userId: jwtUser.userId } });
       const since = seen?.lastSeenAt ?? new Date(0);
-      const now = new Date();
+      const visibleWhere = await socialVisibleWhere(jwtUser);
       const [newPosts, newComments] = await Promise.all([
-        prisma.socialPost.count({
-          where: { expiresAt: { gt: now }, authorId: { not: jwtUser.userId }, createdAt: { gt: since } },
+        (prisma as any).socialPost.count({
+          where: { AND: [visibleWhere, { authorId: { not: jwtUser.userId }, createdAt: { gt: since } }] },
         }),
         prisma.socialComment.count({
-          where: { userId: { not: jwtUser.userId }, createdAt: { gt: since }, post: { expiresAt: { gt: now } } },
+          where: { userId: { not: jwtUser.userId }, createdAt: { gt: since }, post: visibleWhere },
         }),
       ]);
       res.json({ unread: newPosts + newComments });

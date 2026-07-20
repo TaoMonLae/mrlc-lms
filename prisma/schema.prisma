@@ -444,6 +444,7 @@ model Class {
   lessonPlans        LessonPlan[]
   homework           Homework[]
   flashcardDeckLinks FlashcardDeckClass[]
+  socialPosts        SocialPost[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1498,6 +1499,7 @@ model VideoLesson {
   updatedAt DateTime @updatedAt
 
   progressRecords VideoProgress[]
+  socialPosts     SocialPost[]
 
   @@index([classId])
   @@index([subjectId])
@@ -3347,17 +3349,43 @@ model DutyAssignment {
 }
 
 // -----------------------------------------------------------------------------
-// SOCIAL SPACE (ephemeral 24h community posts: image/text + likes + comments)
+// SOCIAL SPACE (24h posts + curated class snapshots and video highlights)
 // -----------------------------------------------------------------------------
 
+enum SocialPostType {
+  POST
+  CLASS_SNAPSHOT
+  VIDEO_HIGHLIGHT
+}
+
+enum SocialAudience {
+  SCHOOL
+  CLASS
+  STAFF
+}
+
+enum SocialPublishStatus {
+  DRAFT
+  PUBLISHED
+}
+
 model SocialPost {
-  id        String   @id @default(uuid())
-  authorId  String
-  author    User     @relation("SocialAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  body      String?
-  imageUrl  String?
-  createdAt DateTime @default(now())
-  expiresAt DateTime
+  id            String              @id @default(uuid())
+  authorId      String
+  author        User                @relation("SocialAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  type          SocialPostType      @default(POST)
+  audience      SocialAudience      @default(SCHOOL)
+  publishStatus SocialPublishStatus @default(PUBLISHED)
+  body          String?
+  imageUrl      String?
+  classId       String?
+  class         Class?              @relation(fields: [classId], references: [id], onDelete: SetNull)
+  videoLessonId String?
+  videoLesson   VideoLesson?        @relation(fields: [videoLessonId], references: [id], onDelete: SetNull)
+  featuredUntil DateTime?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  expiresAt     DateTime?
 
   likes    SocialLike[]
   comments SocialComment[]
@@ -3366,6 +3394,9 @@ model SocialPost {
   @@index([authorId])
   @@index([expiresAt])
   @@index([createdAt])
+  @@index([type, publishStatus, createdAt])
+  @@index([audience, classId])
+  @@index([videoLessonId])
 }
 
 model SocialLike {
@@ -3410,9 +3441,9 @@ enum SocialReportStatus {
 model SocialReport {
   id           String             @id @default(uuid())
   postId       String?
-  post         SocialPost?        @relation(fields: [postId], references: [id], onDelete: Cascade)
+  post         SocialPost?        @relation(fields: [postId], references: [id], onDelete: SetNull)
   commentId    String?
-  comment      SocialComment?     @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  comment      SocialComment?     @relation(fields: [commentId], references: [id], onDelete: SetNull)
   reportedById String
   reportedBy   User               @relation("SocialReporter", fields: [reportedById], references: [id], onDelete: Cascade)
   reason       String?
