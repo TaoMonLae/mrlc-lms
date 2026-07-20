@@ -195,6 +195,11 @@ const Lightfall = ({
   const rendererRef = useRef(null);
   const mouseTargetRef = useRef([0, 0]);
   const lastTimeRef = useRef(0);
+  // Keep paused in a ref so toggling visibility (tab hidden / scrolled away)
+  // can short-circuit the render loop WITHOUT tearing down the WebGL context
+  // (which would recompile shaders and flash the background on every toggle).
+  const pausedRef = useRef(paused);
+  pausedRef.current = paused;
 
   useEffect(() => {
     const container = containerRef.current;
@@ -295,7 +300,7 @@ const Lightfall = ({
       } else {
         lastTimeRef.current = t;
       }
-      if (!paused && programRef.current && meshRef.current) {
+      if (!pausedRef.current && programRef.current && meshRef.current) {
         try {
           renderer.render({ scene: meshRef.current });
         } catch (e) {
@@ -328,7 +333,6 @@ const Lightfall = ({
     };
   }, [
     dpr,
-    paused,
     colors,
     backgroundColor,
     speed,

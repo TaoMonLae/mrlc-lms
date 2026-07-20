@@ -3392,6 +3392,7 @@ model SocialPost {
   likes    SocialLike[]
   comments SocialComment[]
   reports  SocialReport[]
+  media    SocialMediaAsset[]
 
   @@index([authorId])
   @@index([expiresAt])
@@ -3402,15 +3403,48 @@ model SocialPost {
 }
 
 model SocialLike {
-  id        String     @id @default(uuid())
+  id        String          @id @default(uuid())
   postId    String
-  post      SocialPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  post      SocialPost      @relation(fields: [postId], references: [id], onDelete: Cascade)
   userId    String
-  user      User       @relation("SocialLiker", fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime   @default(now())
+  user      User            @relation("SocialLiker", fields: [userId], references: [id], onDelete: Cascade)
+  // FB/IG-style reaction. Defaults to LIKE so existing rows keep working
+  // after the column is added; a user's single row per post flips between
+  // reaction types (or is removed entirely) as they tap the picker.
+  reaction  SocialReaction  @default(LIKE)
+  createdAt DateTime        @default(now())
 
   @@unique([postId, userId])
   @@index([postId])
+  @@index([postId, reaction])
+}
+
+// Ordered media attachments for a post (photos only for now; video stays
+// via the existing VideoLesson highlight flow). `imageUrl` on SocialPost is
+// kept as a denormalised cover (the first asset's url) so the existing feed
+// query and the /uploads/social auth gate keep working unchanged.
+model SocialMediaAsset {
+  id        String     @id @default(uuid())
+  postId    String
+  post      SocialPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  url       String
+  // 0-based display order within the post; the carousel honours this.
+  position  Int        @default(0)
+  width     Int?
+  height    Int?
+  mime      String?
+  createdAt DateTime   @default(now())
+
+  @@index([postId, position])
+}
+
+enum SocialReaction {
+  LIKE
+  LOVE
+  HAHA
+  WOW
+  SAD
+  ANGRY
 }
 
 model SocialComment {

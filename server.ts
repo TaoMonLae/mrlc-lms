@@ -1875,8 +1875,12 @@ async function startServer() {
     }
 
     try {
+      const url = `/uploads/social/${filename}`;
+      // Match either the denormalised cover (imageUrl) or any attached asset.
+      // Both point back to the same SocialPost, whose audience/expiry governs
+      // access; assets cascade-delete with the post so a stale URL just 404s.
       const post = await (prisma as any).socialPost.findFirst({
-        where: { imageUrl: `/uploads/social/${filename}` },
+        where: { OR: [{ imageUrl: url }, { media: { some: { url } } }] },
         select: { audience: true, classId: true, publishStatus: true, expiresAt: true },
       });
       if (!post || post.publishStatus !== "PUBLISHED" || (post.expiresAt && new Date(post.expiresAt) <= new Date())) {
@@ -19432,6 +19436,29 @@ async function startServer() {
     });
   };
 
+  // Multi-photo variant for FB/IG-style posts (max 8). Accepts the same field
+  // name ("files") the client sends; falls back to the legacy single "file"
+  // field so older clients keep working. Same file-type/size limits as single.
+  const SOCIAL_MAX_FILES = 8;
+  const uploadSocialMedia: express.RequestHandler = (req, res, next) => {
+    socialUpload.array("files", SOCIAL_MAX_FILES)(req, res, (err: any) => {
+      if (err) {
+        const msg = err instanceof multer.MulterError
+          ? (err.code === "LIMIT_FILE_SIZE" ? "Each image must be 10 MB or smaller"
+            : err.code === "LIMIT_FILE_COUNT" ? `A post can have at most ${SOCIAL_MAX_FILES} photos`
+            : err.message)
+          : (err.message || "Upload failed");
+        res.status(400).json({ error: msg });
+        return;
+      }
+      // Accept the legacy single-file field too ("file") for older clients.
+      const files = (req as any).files as Express.Multer.File[] | undefined;
+      const single = (req as any).file as Express.Multer.File | undefined;
+      if (!files?.length && single) (req as any).files = [single];
+      next();
+    });
+  };
+
   const socialAudienceWhere = async (jwtUser: JwtPayload): Promise<any> => {
     if (jwtUser.role === "ADMIN") return {};
     if (jwtUser.role === "TEACHER") {
@@ -19511,9 +19538,9 @@ async function startServer() {
     }
   });
 
-  app.post("/api/social", authMiddleware, uploadSocial, async (req, res) => {
+  app.post("/api/social", authMiddleware, uploadSocialMedia, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
-    const file = (req as any).file as Express.Multer.File | undefined;
+    const files = ((req as any).files as Express.Multer.File[] | undefined) ?? [];
     const body = (req.body?.body ?? "").toString().trim().slice(0, 1000) || null;
     const allowedTypes = new Set(["POST", "CLASS_SNAPSHOT", "VIDEO_HIGHLIGHT"]);
     const allowedAudiences = new Set(["SCHOOL", "CLASS", "STAFF"]);
@@ -19524,9 +19551,10 @@ async function startServer() {
     const retentionDays = normaliseSocialRetentionDays(type as "POST" | "CLASS_SNAPSHOT" | "VIDEO_HIGHLIGHT", req.body?.retentionDays);
     const isCurator = canCurateSocialContent(jwtUser.role);
 
-    if (type === "POST" && !file && !body) { res.status(400).json({ error: "Add a photo or some text" }); return; }
+    if (type === "POST" && files.length === 0 && !body) { res.status(400).json({ error: "Add a photo or some text" }); return; }
     if (type !== "POST" && !isCurator) { res.status(403).json({ error: "Only administrators and teachers can publish curated content" }); return; }
-    if (type === "CLASS_SNAPSHOT" && !file) { res.status(400).json({ error: "A class snapshot requires a photo" }); return; }
+    if (type === "CLASS_SNAPSHOT" && files.length === 0) { res.status(400).json({ error: "A class snapshot requires a photo" }); return; }
+    if (type === "VIDEO_HIGHLIGHT" && files.length > 0) { res.status(400).json({ error: "Video highlights can't have photo attachments" }); return; }
     if (type === "VIDEO_HIGHLIGHT" && !videoLessonId) { res.status(400).json({ error: "Choose a video lesson to highlight" }); return; }
 
     // Students and non-teaching staff keep the existing informal school-post
@@ -19536,7 +19564,7 @@ async function startServer() {
     if (jwtUser.role === "TEACHER" && type === "VIDEO_HIGHLIGHT") audience = "CLASS";
     if (audience === "CLASS" && !classId) { res.status(400).json({ error: "Choose a class for this content" }); return; }
 
-    let imageUrl: string | null = null;
+    const writtenFiles: string[] = []; // tracked for cleanup on failure
     try {
       if (classId) {
         const klass = await prisma.class.findUnique({ where: { id: classId }, select: { id: true } });
@@ -19560,14 +19588,20 @@ async function startServer() {
         }
       }
 
-      if (file) {
+      // Transcode every uploaded image to webp (strips metadata, caps size,
+      // rejects SVG/script payloads). Keep insertion order for carousel.
+      const assets: Array<{ url: string; width: number | null; height: number | null; mime: string }> = [];
+      for (const file of files) {
         const filename = `${crypto.randomUUID()}.webp`;
-        await sharp(file.buffer, { limitInputPixels: 40_000_000 })
-          .rotate()
-          .resize({ width: 2400, height: 2400, fit: "inside", withoutEnlargement: true })
-          .webp({ quality: 85 })
-          .toFile(path.join(SOCIAL_DIR, filename));
-        imageUrl = `/uploads/social/${filename}`;
+        const dest = path.join(SOCIAL_DIR, filename);
+        const pipeline = sharp(file.buffer, { limitInputPixels: 40_000_000 }).rotate()
+          .resize({ width: 2400, height: 2400, fit: "inside", withoutEnlargement: true });
+        const [{ width, height }] = await Promise.all([
+          pipeline.metadata(),
+          pipeline.clone().webp({ quality: 85 }).toFile(dest),
+        ]);
+        writtenFiles.push(filename);
+        assets.push({ url: `/uploads/social/${filename}`, width: width ?? null, height: height ?? null, mime: "image/webp" });
       }
 
       const expiresAt = type === "POST"
@@ -19580,16 +19614,24 @@ async function startServer() {
           audience,
           publishStatus: "PUBLISHED",
           body,
-          imageUrl,
+          // Denormalised cover = first asset, so the existing feed query and
+          // the /uploads/social auth gate (which looks posts up by imageUrl)
+          // keep working for posts with one or many photos.
+          imageUrl: assets[0]?.url ?? null,
           classId,
           videoLessonId: type === "VIDEO_HIGHLIGHT" ? videoLessonId : null,
           featuredUntil: type === "VIDEO_HIGHLIGHT" ? expiresAt : null,
           expiresAt,
+          media: assets.length
+            ? { create: assets.map((asset, index) => ({ url: asset.url, position: index, width: asset.width, height: asset.height, mime: asset.mime })) }
+            : undefined,
         },
       });
       res.status(201).json({ id: post.id });
     } catch (err) {
-      if (imageUrl) await fs.promises.unlink(path.join(SOCIAL_DIR, path.basename(imageUrl))).catch(() => {});
+      for (const filename of writtenFiles) {
+        await fs.promises.unlink(path.join(SOCIAL_DIR, filename)).catch(() => {});
+      }
       logger.error("Error creating social post:", err);
       const message = err instanceof Error && /Input image|pixel limit|unsupported image/i.test(err.message)
         ? "The selected image could not be processed"
@@ -19614,13 +19656,26 @@ async function startServer() {
           author: { select: { id: true, firstName: true, lastName: true, role: true, profilePhotoUrl: true } },
           class: { select: { id: true, name: true, level: true } },
           videoLesson: { select: { id: true, title: true, description: true, thumbnailUrl: true, duration: true, status: true, classId: true } },
+          media: { orderBy: { position: "asc" }, select: { id: true, url: true, position: true, width: true, height: true, mime: true } },
           _count: { select: { likes: true, comments: true } },
-          likes: { where: { userId: jwtUser.userId }, select: { id: true } },
+          likes: { where: { userId: jwtUser.userId }, select: { id: true, reaction: true } },
           ...( { reports: { where: { reportedById: jwtUser.userId }, select: { id: true } } } as any),
         } as any,
       });
       const hasMore = posts.length > limit;
       const page = hasMore ? posts.slice(0, limit) : posts;
+      // Reaction tallies are grouped in one query per page (small page sizes)
+      // rather than a per-post query, to keep the feed list cheap.
+      const postIds = page.map((p: any) => p.id);
+      const reactionRows = postIds.length
+        ? await (prisma as any).socialLike.groupBy({ by: ["postId", "reaction"], where: { postId: { in: postIds } }, _count: { _all: true } })
+        : [];
+      const reactionMap = new Map<string, Record<string, number>>();
+      for (const r of reactionRows) {
+        const entry = reactionMap.get(r.postId) ?? {};
+        entry[r.reaction] = r._count._all;
+        reactionMap.set(r.postId, entry);
+      }
       res.json({
         posts: page.map((p: any) => ({
           id: p.id, type: p.type, audience: p.audience, publishStatus: p.publishStatus,
@@ -19628,8 +19683,11 @@ async function startServer() {
           author: { id: p.author.id, name: fullName(p.author), role: p.author.role, photo: p.author.profilePhotoUrl ?? null },
           classInfo: p.class ? { id: p.class.id, name: p.class.name, level: p.class.level } : null,
           videoLesson: p.videoLesson ?? null,
+          media: p.media ?? [],
           mine: p.authorId === jwtUser.userId,
-          likeCount: p._count.likes, commentCount: p._count.comments, likedByMe: p.likes.length > 0,
+          likeCount: p._count.likes, commentCount: p._count.comments,
+          likedByMe: p.likes.length > 0, reactionByMe: p.likes[0]?.reaction ?? null,
+          reactionCounts: reactionMap.get(p.id) ?? {},
           reportedByMe: (p.reports ?? []).length > 0,
         })),
         nextCursor: hasMore ? page[page.length - 1].id : null,
@@ -19643,7 +19701,10 @@ async function startServer() {
   app.delete("/api/social/:id", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
-      const post = await prisma.socialPost.findUnique({ where: { id: req.params.id } });
+      const post = await (prisma as any).socialPost.findUnique({
+        where: { id: req.params.id },
+        include: { media: { select: { url: true } } },
+      });
       if (!post) { res.status(404).json({ error: "Post not found" }); return; }
       if (post.authorId !== jwtUser.userId && jwtUser.role !== "ADMIN") { res.status(403).json({ error: "Forbidden" }); return; }
       await prisma.$transaction(async (tx) => {
@@ -19654,9 +19715,13 @@ async function startServer() {
           },
           data: { status: "ACTIONED", reviewedById: jwtUser.userId, reviewedAt: new Date() },
         });
-        await tx.socialPost.delete({ where: { id: post.id } }); // likes/comments cascade
+        await tx.socialPost.delete({ where: { id: post.id } }); // likes/comments/media cascade
       });
-      if (post.imageUrl) { try { const fp = path.join(SOCIAL_DIR, path.basename(post.imageUrl)); if (fs.existsSync(fp)) fs.unlinkSync(fp); } catch { /* ignore */ } }
+      // Best-effort cleanup of every attached file on disk (cover + extra photos).
+      const urls = [post.imageUrl, ...post.media.map((m: any) => m.url)].filter(Boolean) as string[];
+      for (const url of urls) {
+        try { const fp = path.join(SOCIAL_DIR, path.basename(url)); if (fs.existsSync(fp)) fs.unlinkSync(fp); } catch { /* ignore */ }
+      }
       res.json({ success: true });
     } catch (err) {
       logger.error("Error deleting social post:", err);
@@ -19682,15 +19747,25 @@ async function startServer() {
 
   app.post("/api/social/:id/like", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
+    const allowedReactions = new Set(["LIKE", "LOVE", "HAHA", "WOW", "SAD", "ANGRY"]);
+    const requested = String(req.body?.reaction || "LIKE").toUpperCase();
+    const reaction = allowedReactions.has(requested) ? requested : "LIKE";
     try {
       if (!(await findVisibleSocialPost(req.params.id, jwtUser))) { res.status(404).json({ error: "Post not found" }); return; }
       const existing = await prisma.socialLike.findUnique({ where: { postId_userId: { postId: req.params.id, userId: jwtUser.userId } } });
       if (existing) {
-        await prisma.socialLike.delete({ where: { id: existing.id } });
-        res.json({ liked: false });
+        // Tapping the same reaction again removes it (toggle off); tapping a
+        // different one switches your reaction. Mirrors FB/IG behaviour.
+        if (existing.reaction === reaction) {
+          await prisma.socialLike.delete({ where: { id: existing.id } });
+          res.json({ liked: false, reaction: null });
+        } else {
+          const updated = await prisma.socialLike.update({ where: { id: existing.id }, data: { reaction } as any });
+          res.json({ liked: true, reaction: updated.reaction });
+        }
       } else {
-        await prisma.socialLike.create({ data: { postId: req.params.id, userId: jwtUser.userId } });
-        res.json({ liked: true });
+        await prisma.socialLike.create({ data: { postId: req.params.id, userId: jwtUser.userId, reaction } as any });
+        res.json({ liked: true, reaction });
       }
     } catch (err: any) {
       if (err?.code === "P2003") { res.status(404).json({ error: "Post not found" }); return; }
@@ -19873,7 +19948,7 @@ async function startServer() {
     try {
       const report = await (prisma as any).socialReport.findUnique({
         where: { id: req.params.id },
-        include: { post: { select: { imageUrl: true } } },
+        include: { post: { select: { imageUrl: true, media: { select: { url: true } } } } },
       });
       if (!report) { res.status(404).json({ error: "Report not found" }); return; }
       if (action === "ACTIONED") {
@@ -19893,8 +19968,10 @@ async function startServer() {
             await tx.socialComment.delete({ where: { id: report.commentId } });
           }
         });
-        if (report.post?.imageUrl) {
-          await fs.promises.unlink(path.join(SOCIAL_DIR, path.basename(report.post.imageUrl))).catch(() => {});
+        // Best-effort removal of every attached file (cover + extra photos).
+        const urls = [report.post?.imageUrl, ...(report.post?.media ?? []).map((m: any) => m.url)].filter(Boolean) as string[];
+        for (const url of urls) {
+          await fs.promises.unlink(path.join(SOCIAL_DIR, path.basename(url))).catch(() => {});
         }
         res.json({ success: true, status: "ACTIONED" });
         return;

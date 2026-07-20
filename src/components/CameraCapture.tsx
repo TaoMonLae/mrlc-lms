@@ -20,9 +20,16 @@ export default function CameraCapture({ onCapture, onClose }: Props) {
   const [noCamera, setNoCamera] = useState(false);
   const [shot, setShot] = useState<string | null>(null); // preview data URL
   const shotBlobRef = useRef<Blob | null>(null);
+  const shotUrlRef = useRef<string | null>(null);
+
+  function clearShot() {
+    if (shotUrlRef.current) { URL.revokeObjectURL(shotUrlRef.current); shotUrlRef.current = null; }
+    shotBlobRef.current = null;
+    setShot(null);
+  }
 
   async function start() {
-    setShot(null); shotBlobRef.current = null;
+    clearShot();
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
       streamRef.current = stream;
@@ -40,7 +47,7 @@ export default function CameraCapture({ onCapture, onClose }: Props) {
   useEffect(() => {
     if (!navigator.mediaDevices?.getUserMedia) { setNoCamera(true); return; }
     start();
-    return () => stop();
+    return () => { stop(); clearShot(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -56,7 +63,9 @@ export default function CameraCapture({ onCapture, onClose }: Props) {
     canvas.toBlob((blob) => {
       if (!blob) { toast.error('Could not capture photo'); return; }
       shotBlobRef.current = blob;
-      setShot(URL.createObjectURL(blob));
+      const url = URL.createObjectURL(blob);
+      shotUrlRef.current = url;
+      setShot(url);
       stop();
     }, 'image/jpeg', 0.9);
   }
@@ -99,7 +108,7 @@ export default function CameraCapture({ onCapture, onClose }: Props) {
             <Camera className="h-6 w-6" />
           </Button>
         )}
-        <Button variant="ghost" className="text-white/80 hover:text-white" onClick={() => { stop(); onClose(); }}><X className="mr-1 h-4 w-4" /> Cancel</Button>
+        <Button variant="ghost" className="text-white/80 hover:text-white" onClick={() => { stop(); clearShot(); onClose(); }}><X className="mr-1 h-4 w-4" /> Cancel</Button>
       </div>
     </div>
   );
