@@ -139,14 +139,9 @@ export function registerExamPhase2Routes(deps: Deps): void {
     return rows.find((r: any) => r.examId === examId) || rows.find((r: any) => r.examId === null) || null;
   }
 
-  function seededShuffle<T>(arr: T[], seed: string): T[] {
-    const a = [...arr];
-    let h = 0;
-    for (let i = 0; i < seed.length; i++) h = (Math.imul(31, h) + seed.charCodeAt(i)) | 0;
-    const rand = () => { h = (Math.imul(1103515245, h) + 12345) & 0x7fffffff; return h / 0x7fffffff; };
-    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
-    return a;
-  }
+  // seededShuffle is imported from ./examBank so all shuffles share one PRNG.
+  // (A local copy previously shadowed the import with a different algorithm,
+  // producing inconsistent orders for the same seed.)
 
   app.put("/api/exams/:id/schedule", authMiddleware, teacherGuard, examGuard(), async (req, res) => {
     const { id } = req.params;
@@ -497,7 +492,16 @@ export function registerExamPhase2Routes(deps: Deps): void {
       const sessionToken = crypto.randomUUID();
       const randomSeed = `${student.id}:${examId}:${Date.now()}:${Math.random().toString(36).substring(7)}`;
 
-      const attempt = await prisma.$transaction(async (tx: any) => {
+      // Two concurrent `start` calls can both read the same prior-attempt set,
+      // compute the same next attemptNumber, and both insert — exceeding the
+      // limit. The (studentId, examId, attemptNumber) unique constraint turns
+      // the loser's insert into a P2002; retry so the loser recomputes against
+      // fresh state. The limit check re-runs each attempt, so the cap holds.
+      let attempt: any = null;
+      let lastErr: any = null;
+      for (let raceRetry = 0; raceRetry < 3 && !attempt; raceRetry++) {
+        try {
+          attempt = await prisma.$transaction(async (tx: any) => {
         const priorAttempts = await tx.examAttempt.findMany({ where: { studentId: student.id, examId }, select: { state: true, attemptNumber: true } });
         const used = priorAttempts.filter((a: any) => a.state !== "INVALIDATED").length;
         if (used >= limit) throw Object.assign(new Error("No attempts remaining"), { http: 409 });
@@ -529,7 +533,14 @@ export function registerExamPhase2Routes(deps: Deps): void {
         await tx.attemptEvent.create({ data: { attemptId: newAttempt.id, type: "START", actorRole: "STUDENT", ipAddress: ipOf(req), userAgent: uaOf(req) } }).catch(() => {});
         if (assignment) await tx.examAssignment.update({ where: { id: assignment.id }, data: { status: "STARTED" } }).catch(() => {});
         return newAttempt;
-      });
+          });
+        } catch (err: any) {
+          lastErr = err;
+          // P2002 = attemptNumber taken by a concurrent start; loop and recompute.
+          if (err?.code !== "P2002") throw err;
+        }
+      }
+      if (!attempt) throw lastErr;
 
       res.status(201).json(await attemptPayload(attempt, exam, student.id));
     } catch (err: any) {
@@ -643,13 +654,16 @@ export function registerExamPhase2Routes(deps: Deps): void {
         res.status(409).json({ error: "ATTEMPT_PAUSED", message: "This attempt is paused. Resume it from My Exams." });
         return;
       }
-      if (["IN_PROGRESS", "PAUSED"].includes(attempt.state) && !hasCurrentSession(attempt, req.headers["x-exam-session"])) {
+      // PAUSED is handled by the early return above; only a live IN_PROGRESS
+      // attempt carries a session to conflict with.
+      if (attempt.state === "IN_PROGRESS" && !hasCurrentSession(attempt, req.headers["x-exam-session"])) {
         res.status(409).json({ error: "SESSION_CONFLICT", message: "This attempt is open in another window or device." });
         return;
       }
 
-      // Server-authoritative expiry → auto-submit.
-      if (["IN_PROGRESS", "PAUSED"].includes(attempt.state) && isExpired(attempt)) {
+      // Server-authoritative expiry → auto-submit. Only an in-progress attempt
+      // can expire (PAUSED freezes the clock).
+      if (attempt.state === "IN_PROGRESS" && isExpired(attempt)) {
         const finalized = await finalizeSubmission(attempt.id, true, ipOf(req), uaOf(req));
         return res.json({ autoSubmitted: true, attempt: { id: finalized.id, state: finalized.state, remainingSeconds: 0 } });
       }
@@ -774,7 +788,8 @@ export function registerExamPhase2Routes(deps: Deps): void {
     try {
       const student = await studentForReq(req);
       const attempt = await prisma.examAttempt.findUnique({ where: { id: req.params.attemptId }, include: { accommodation: { select: { additionalBreaks: true } } } });
-      if (!attempt || !student || attempt.studentId !== student.id) { res.status(403).json({ error: "Forbidden" }); return; }
+      if (!attempt) { res.status(404).json({ error: "Attempt not found" }); return; }
+      if (!student || attempt.studentId !== student.id) { res.status(403).json({ error: "Forbidden" }); return; }
       if (attempt.state !== "IN_PROGRESS") { res.status(409).json({ error: "Not in progress" }); return; }
       if (!hasCurrentSession(attempt, req.body?.sessionToken)) { res.status(409).json({ error: "SESSION_CONFLICT", message: "This attempt is open in another session." }); return; }
       if (!attempt.accommodation?.additionalBreaks) { res.status(403).json({ error: "Only an invigilator can pause this attempt" }); return; }
