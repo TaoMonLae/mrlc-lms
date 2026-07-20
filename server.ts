@@ -32,6 +32,7 @@ import { registerGutenbergRoutes } from "./gutenberg";
 import { registerSnakeGameRoutes } from "./snakeGame";
 import { registerAiAssistantRoutes } from "./aiAssistant";
 import { registerCheckersGameRoutes } from "./checkersGame";
+import { registerChessGameRoutes } from "./chessGame";
 import cookieParser from "cookie-parser";
 import { BADGE_CATALOG, getBadgeLevel } from "./lib/badges";
 import { roleHasPermission, type Permission, type UserRole } from "./shared/permissions";
@@ -19257,6 +19258,12 @@ async function startServer() {
 
   // ── Checkers Game (educational mini-game) ────────────────────────────────────
   registerCheckersGameRoutes({ app, prisma, authMiddleware });
+
+  // ── Chess Game (online multiplayer + leaderboard) ────────────────────────────
+  // chatNotify is defined further down (real-time push section) but function
+  // declarations are hoisted within this scope, so the reference below is safe
+  // — it's only ever invoked later, once a real HTTP request comes in.
+  registerChessGameRoutes({ app, prisma, authMiddleware, chatNotify });
 
   // NOTE: the SPA catch-all (Vite middleware in dev / static dist in prod) is
   // registered at the very end of startServer, AFTER every /api route, so it can

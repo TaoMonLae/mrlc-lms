@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bot, Check, Crown, Gamepad2, Swords, Users } from "lucide-react";
+import { Bot, Check, Crown, Gamepad2, Swords, Trophy, Users, Wifi } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useAuth } from "../../../providers/AuthProvider";
 
-type Opponent = "AI" | "HUMAN";
+type Opponent = "AI" | "HUMAN" | "ONLINE";
 type Difficulty = "EASY" | "MEDIUM" | "HARD";
 
 const difficulties: { id: Difficulty; label: string; description: string }[] = [
@@ -17,10 +18,16 @@ const difficulties: { id: Difficulty; label: string; description: string }[] = [
 
 export default function ChessSelectPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [opponent, setOpponent] = useState<Opponent>("AI");
   const [difficulty, setDifficulty] = useState<Difficulty>("MEDIUM");
+  const canPlayOnline = !user || user.role === "STUDENT" || user.role === "ADMIN";
 
   const startGame = () => {
+    if (opponent === "ONLINE") {
+      navigate("/games/chess/lobby");
+      return;
+    }
     const params = new URLSearchParams({ opponent });
     if (opponent === "AI") params.set("difficulty", difficulty);
     navigate(`/games/chess/play?${params.toString()}`);
@@ -36,11 +43,18 @@ export default function ChessSelectPage() {
               <div className="grid size-12 place-items-center rounded-2xl bg-[#759954] text-3xl shadow-lg">♞</div>
               <h1 className="text-3xl font-bold tracking-tight">Chess</h1>
             </div>
-            <p className="max-w-xl text-white/65">Play a complete game of chess against the computer or a friend on this device.</p>
+            <p className="max-w-xl text-white/65">Play a complete game of chess against the computer, a friend on this device, or challenge a classmate online.</p>
           </div>
-          <Button variant="outline" onClick={() => navigate(-1)} className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white">
-            ◀ Back
-          </Button>
+          <div className="flex shrink-0 gap-2">
+            {canPlayOnline && (
+              <Button variant="outline" onClick={() => navigate("/games/chess/leaderboard")} className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white">
+                <Trophy className="mr-2 size-4" /> Leaderboard
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => navigate(-1)} className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white">
+              ◀ Back
+            </Button>
+          </div>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1.15fr_.85fr]">
@@ -61,7 +75,9 @@ export default function ChessSelectPage() {
             <div className="flex items-center justify-between gap-4 p-5">
               <div>
                 <p className="font-semibold">Classical starting position</p>
-                <p className="text-sm text-white/50">You play White against the computer.</p>
+                <p className="text-sm text-white/50">
+                  {opponent === "AI" ? "You play White against the computer." : opponent === "HUMAN" ? "Pass the device between two players." : "Colours are assigned randomly when a challenge is accepted."}
+                </p>
               </div>
               <Crown className="size-7 text-amber-400" />
             </div>
@@ -70,17 +86,26 @@ export default function ChessSelectPage() {
           <div className="space-y-5">
             <Card className="border-white/10 bg-[#262522]/95 p-5 text-white">
               <h2 className="mb-4 text-lg font-semibold">Choose an opponent</h2>
-              <div className="grid grid-cols-2 gap-3">
-                <button type="button" onClick={() => setOpponent("AI")} className={`rounded-xl border p-4 text-left transition ${opponent === "AI" ? "border-[#98b873] bg-[#759954]/25" : "border-white/10 bg-white/[.03] hover:bg-white/[.07]"}`}>
-                  <Bot className="mb-3 size-6" />
-                  <span className="block font-semibold">Computer</span>
-                  <span className="text-xs text-white/50">Play as White</span>
-                </button>
-                <button type="button" onClick={() => setOpponent("HUMAN")} className={`rounded-xl border p-4 text-left transition ${opponent === "HUMAN" ? "border-[#98b873] bg-[#759954]/25" : "border-white/10 bg-white/[.03] hover:bg-white/[.07]"}`}>
-                  <Users className="mb-3 size-6" />
-                  <span className="block font-semibold">Local friend</span>
-                  <span className="text-xs text-white/50">Share this device</span>
-                </button>
+              <div className={`grid gap-3 ${canPlayOnline ? "grid-cols-1" : "grid-cols-2"}`}>
+                {canPlayOnline && (
+                  <button type="button" onClick={() => setOpponent("ONLINE")} className={`rounded-xl border p-4 text-left transition ${opponent === "ONLINE" ? "border-[#98b873] bg-[#759954]/25" : "border-white/10 bg-white/[.03] hover:bg-white/[.07]"}`}>
+                    <Wifi className="mb-3 size-6" />
+                    <span className="block font-semibold">Challenge a classmate</span>
+                    <span className="text-xs text-white/50">Online multiplayer</span>
+                  </button>
+                )}
+                <div className="grid grid-cols-2 gap-3">
+                  <button type="button" onClick={() => setOpponent("AI")} className={`rounded-xl border p-4 text-left transition ${opponent === "AI" ? "border-[#98b873] bg-[#759954]/25" : "border-white/10 bg-white/[.03] hover:bg-white/[.07]"}`}>
+                    <Bot className="mb-3 size-6" />
+                    <span className="block font-semibold">Computer</span>
+                    <span className="text-xs text-white/50">Play as White</span>
+                  </button>
+                  <button type="button" onClick={() => setOpponent("HUMAN")} className={`rounded-xl border p-4 text-left transition ${opponent === "HUMAN" ? "border-[#98b873] bg-[#759954]/25" : "border-white/10 bg-white/[.03] hover:bg-white/[.07]"}`}>
+                    <Users className="mb-3 size-6" />
+                    <span className="block font-semibold">Local friend</span>
+                    <span className="text-xs text-white/50">Share this device</span>
+                  </button>
+                </div>
               </div>
             </Card>
 
@@ -103,9 +128,15 @@ export default function ChessSelectPage() {
               </Card>
             )}
 
+            {opponent === "ONLINE" && (
+              <Card className="border-white/10 bg-[#262522]/95 p-5 text-sm text-white/60">
+                Send challenges to classmates, see who's online, and pick up games right where you left off — all from the multiplayer lobby.
+              </Card>
+            )}
+
             <Button onClick={startGame} size="lg" className="h-14 w-full bg-[#759954] text-base font-bold text-white shadow-lg hover:bg-[#86a962]">
-              {opponent === "AI" ? <Swords className="mr-2 size-5" /> : <Gamepad2 className="mr-2 size-5" />}
-              Start game
+              {opponent === "AI" ? <Swords className="mr-2 size-5" /> : opponent === "ONLINE" ? <Wifi className="mr-2 size-5" /> : <Gamepad2 className="mr-2 size-5" />}
+              {opponent === "ONLINE" ? "Open multiplayer lobby" : "Start game"}
             </Button>
           </div>
         </div>

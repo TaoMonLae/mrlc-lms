@@ -387,6 +387,8 @@ model Student {
   interventions       InterventionPlan[]
   snakeGameScores     SnakeGameScore[]
   checkerGameScores   CheckerGameScore[]
+  chessMatchesWhite   ChessMatch[]            @relation("ChessWhite")
+  chessMatchesBlack   ChessMatch[]            @relation("ChessBlack")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -3748,4 +3750,50 @@ model CheckerVocabularyWord {
 
   @@index([active])
   @@index([word])
+}
+
+// CHESS GAME — online multiplayer (educational mini-game)
+// -----------------------------------------------------------------------------
+// A single row covers the full lifecycle of one game between two students:
+// challenge sent (PENDING) → accepted (ACTIVE) → finished (FINISHED), or
+// DECLINED/CANCELLED if the challenge never turned into a game. The board is
+// authoritative on the server — `fen` is the current position and `moves` is
+// the SAN history — so a client can never spoof a move; every move is
+// re-validated server-side with chess.js before being applied.
+model ChessMatch {
+  id String @id @default(uuid())
+
+  whiteId String
+  white   Student @relation("ChessWhite", fields: [whiteId], references: [id], onDelete: Cascade)
+  blackId String
+  black   Student @relation("ChessBlack", fields: [blackId], references: [id], onDelete: Cascade)
+
+  // studentId of whichever side sent the invite — lets the UI show "X
+  // challenged you" vs. "waiting for X to accept" without extra lookups.
+  challengerId String
+
+  classId   String?
+  className String?
+
+  status String @default("PENDING") // PENDING | ACTIVE | FINISHED | DECLINED | CANCELLED
+
+  fen       String   @default("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+  moves     String[] @default([]) // SAN history, in order
+  turnColor String   @default("w") // "w" | "b" — whose move it is right now
+
+  result       String? // WHITE_WINS | BLACK_WINS | DRAW
+  resultReason String? // CHECKMATE | RESIGNATION | STALEMATE | REPETITION | INSUFFICIENT_MATERIAL | FIFTY_MOVE | DECLINED | ABANDONED
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  respondedAt DateTime?
+  startedAt   DateTime?
+  endedAt     DateTime?
+  lastMoveAt  DateTime?
+
+  @@index([whiteId])
+  @@index([blackId])
+  @@index([status])
+  @@index([classId])
+  @@index([updatedAt])
 }

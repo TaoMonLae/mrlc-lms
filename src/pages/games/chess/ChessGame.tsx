@@ -2,17 +2,47 @@
 
 import * as React from "react";
 import { Chess, type Color, type Move, type PieceSymbol, type Square } from "chess.js";
-import { Bot, Flag, FlipVertical2, History, RotateCcw, Undo2, Users } from "lucide-react";
+import { toast } from "sonner";
+import { Bot, Flag, FlipVertical2, History, Loader2, RotateCcw, Swords, Undo2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { UserAvatar } from "@/components/ui/user-avatar";
+import { apiGet, apiSend } from "../../../lib/api";
+import { useChat } from "../../../providers/ChatProvider";
 
-type Opponent = "AI" | "HUMAN";
+type Opponent = "AI" | "HUMAN" | "ONLINE";
 type Difficulty = "EASY" | "MEDIUM" | "HARD";
 type PromotionPiece = "q" | "r" | "b" | "n";
+
+export interface OnlinePlayer {
+  studentId: string;
+  userId: string | null;
+  name: string;
+  profilePhotoUrl: string | null;
+  className: string | null;
+}
+
+export interface OnlineMatch {
+  id: string;
+  status: "PENDING" | "ACTIVE" | "FINISHED" | "DECLINED" | "CANCELLED";
+  fen: string;
+  moves: string[];
+  turnColor: "w" | "b";
+  result: "WHITE_WINS" | "BLACK_WINS" | "DRAW" | null;
+  resultReason: string | null;
+  challengerId: string;
+  myColor: "w" | "b" | null;
+  white: OnlinePlayer | null;
+  black: OnlinePlayer | null;
+}
 
 interface ChessGameProps {
   opponent: Opponent;
   difficulty: Difficulty;
+  /** Required when opponent === "ONLINE". */
+  matchId?: string;
+  /** Called when the player wants to leave an online game (e.g. back to lobby). */
+  onExit?: () => void;
 }
 
 const pieceGlyphs: Record<Color, Record<PieceSymbol, string>> = {
@@ -94,6 +124,32 @@ function getStatus(game: Chess, resigned: Color | null) {
   return `${game.turn() === "w" ? "White" : "Black"} to move`;
 }
 
+const REASON_LABEL: Record<string, string> = {
+  CHECKMATE: "Checkmate",
+  RESIGNATION: "Resignation",
+  STALEMATE: "Draw by stalemate",
+  REPETITION: "Draw by repetition",
+  INSUFFICIENT_MATERIAL: "Draw by insufficient material",
+  FIFTY_MOVE: "Draw by fifty-move rule",
+};
+
+function getOnlineStatus(match: OnlineMatch, game: Chess): string {
+  if (match.status === "FINISHED") {
+    const reason = REASON_LABEL[match.resultReason ?? ""] ?? "Game over";
+    if (match.result === "DRAW") return reason;
+    const winnerColor = match.result === "WHITE_WINS" ? "w" : "b";
+    const iWon = match.myColor === winnerColor;
+    const winnerName = winnerColor === "w" ? match.white?.name : match.black?.name;
+    if (match.resultReason === "RESIGNATION") {
+      const resignerName = winnerColor === "w" ? match.black?.name : match.white?.name;
+      return `${resignerName ?? "Opponent"} resigned · ${iWon ? "You win!" : `${winnerName ?? "Opponent"} wins`}`;
+    }
+    return `${reason} · ${iWon ? "You win!" : `${winnerName ?? "Opponent"} wins`}`;
+  }
+  if (game.isCheck()) return `${game.turn() === match.myColor ? "You're" : "Opponent's"} in check`;
+  return match.turnColor === match.myColor ? "Your move" : `Waiting for ${match.turnColor === "w" ? match.white?.name : match.black?.name ?? "opponent"}`;
+}
+
 function capturedPieces(game: Chess, color: Color): PieceSymbol[] {
   const starting: Record<PieceSymbol, number> = { p: 8, n: 2, b: 2, r: 2, q: 1, k: 1 };
   const current: Record<PieceSymbol, number> = { p: 0, n: 0, b: 0, r: 0, q: 0, k: 0 };
@@ -101,20 +157,89 @@ function capturedPieces(game: Chess, color: Color): PieceSymbol[] {
   return (["q", "r", "b", "n", "p"] as PieceSymbol[]).flatMap((type) => Array(Math.max(0, starting[type] - current[type])).fill(type));
 }
 
-export default function ChessGame({ opponent, difficulty }: ChessGameProps) {
+function materialScore(game: Chess, color: Color): number {
+  let score = 0;
+  for (const row of game.board()) for (const piece of row) if (piece) score += (piece.color === color ? 1 : -1) * (piece.type === "k" ? 0 : pieceValues[piece.type]) / 100;
+  return score;
+}
+
+export default function ChessGame({ opponent, difficulty, matchId, onExit }: ChessGameProps) {
   const gameRef = React.useRef(new Chess());
   const aiTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const [revision, setRevision] = React.useState(0);
   const [selected, setSelected] = React.useState<Square | null>(null);
   const [legalMoves, setLegalMoves] = React.useState<Move[]>([]);
   const [flipped, setFlipped] = React.useState(false);
+  const [flippedAuto, setFlippedAuto] = React.useState(false);
   const [thinking, setThinking] = React.useState(false);
   const [resigned, setResigned] = React.useState<Color | null>(null);
   const [pendingPromotion, setPendingPromotion] = React.useState<{ from: Square; to: Square } | null>(null);
+  const [confirmingResign, setConfirmingResign] = React.useState(false);
   const game = gameRef.current;
-  const gameOver = game.isGameOver() || resigned !== null;
-  const history = game.history({ verbose: true });
-  const lastMove = history.at(-1);
+
+  // ── Online (multiplayer) sync ───────────────────────────────────────────────
+  const isOnline = opponent === "ONLINE" && !!matchId;
+  const [match, setMatch] = React.useState<OnlineMatch | null>(null);
+  const [onlineLoading, setOnlineLoading] = React.useState(isOnline);
+  const [onlineError, setOnlineError] = React.useState<string | null>(null);
+  const [submittingMove, setSubmittingMove] = React.useState(false);
+  const chat = useChat();
+
+  const applyMatch = React.useCallback((m: OnlineMatch) => {
+    setMatch(m);
+    try {
+      gameRef.current = new Chess(m.fen);
+    } catch {
+      gameRef.current = new Chess();
+    }
+    setSelected(null);
+    setLegalMoves([]);
+    setPendingPromotion(null);
+    setRevision((v) => v + 1);
+  }, []);
+
+  const refreshMatch = React.useCallback(async () => {
+    if (!matchId) return;
+    try {
+      const data = await apiGet<{ success: boolean; match: OnlineMatch }>(`/api/games/chess/matches/${matchId}`);
+      setOnlineError(null);
+      applyMatch(data.match);
+    } catch (err: any) {
+      setOnlineError(err?.message || "Couldn't load this game");
+    } finally {
+      setOnlineLoading(false);
+    }
+  }, [matchId, applyMatch]);
+
+  React.useEffect(() => {
+    if (!isOnline) return;
+    refreshMatch();
+    const interval = setInterval(refreshMatch, 3500);
+    return () => clearInterval(interval);
+  }, [isOnline, refreshMatch]);
+
+  React.useEffect(() => {
+    if (!isOnline) return;
+    const type = chat.lastEvent?.type;
+    if (typeof type === "string" && type.startsWith("chess_") && chat.lastEvent?.matchId === matchId) {
+      refreshMatch();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chat.lastEvent, isOnline, matchId]);
+
+  // Orient the board with "me" at the bottom by default, once we know my colour.
+  React.useEffect(() => {
+    if (isOnline && match?.myColor === "b" && !flippedAuto) {
+      setFlipped(true);
+      setFlippedAuto(true);
+    }
+  }, [isOnline, match?.myColor, flippedAuto]);
+
+  const gameOver = isOnline ? match?.status === "FINISHED" : game.isGameOver() || resigned !== null;
+  const history = isOnline ? [] : game.history({ verbose: true });
+  const onlineHistory = isOnline ? match?.moves ?? [] : [];
+  const lastMove = isOnline ? undefined : history.at(-1);
+  const historyLength = isOnline ? onlineHistory.length : history.length;
 
   const refresh = React.useCallback(() => {
     setSelected(null);
@@ -138,7 +263,25 @@ export default function ChessGame({ opponent, difficulty }: ChessGameProps) {
     };
   }, [difficulty, game, opponent, refresh, resigned, revision]);
 
+  const submitOnlineMove = async (from: Square, to: Square, promotion?: PromotionPiece) => {
+    if (!matchId) return;
+    setSubmittingMove(true);
+    setSelected(null);
+    setLegalMoves([]);
+    setPendingPromotion(null);
+    try {
+      const data = await apiSend<{ success: boolean; match: OnlineMatch }>(`/api/games/chess/matches/${matchId}/move`, "POST", { from, to, promotion });
+      applyMatch(data.match);
+    } catch (err: any) {
+      toast.error(err?.message || "That move didn't go through");
+      refreshMatch();
+    } finally {
+      setSubmittingMove(false);
+    }
+  };
+
   const completeMove = (from: Square, to: Square, promotion?: PromotionPiece) => {
+    if (isOnline) return submitOnlineMove(from, to, promotion);
     try {
       game.move({ from, to, promotion });
       refresh();
@@ -149,7 +292,12 @@ export default function ChessGame({ opponent, difficulty }: ChessGameProps) {
   };
 
   const handleSquareClick = (square: Square) => {
-    if (thinking || gameOver || pendingPromotion || (opponent === "AI" && game.turn() === "b")) return;
+    if (pendingPromotion) return;
+    if (isOnline) {
+      if (!match || match.status !== "ACTIVE" || submittingMove || match.myColor !== match.turnColor) return;
+    } else {
+      if (thinking || gameOver || (opponent === "AI" && game.turn() === "b")) return;
+    }
     const piece = game.get(square);
     const destinationMoves = selected ? legalMoves.filter((move) => move.to === square) : [];
 
@@ -158,7 +306,8 @@ export default function ChessGame({ opponent, difficulty }: ChessGameProps) {
       else completeMove(selected, square);
       return;
     }
-    if (piece?.color === game.turn()) {
+    const mySide = isOnline ? match?.myColor : game.turn();
+    if (piece?.color === game.turn() && (!isOnline || piece.color === mySide)) {
       setSelected(square);
       setLegalMoves(game.moves({ square, verbose: true }));
     } else {
@@ -183,15 +332,91 @@ export default function ChessGame({ opponent, difficulty }: ChessGameProps) {
     refresh();
   };
 
+  const resignOnline = async () => {
+    if (!matchId) return;
+    setConfirmingResign(false);
+    try {
+      const data = await apiSend<{ success: boolean; match: OnlineMatch }>(`/api/games/chess/matches/${matchId}/resign`, "POST", {});
+      applyMatch(data.match);
+    } catch (err: any) {
+      toast.error(err?.message || "Couldn't resign");
+    }
+  };
+
   const displayedRanks = flipped ? [1, 2, 3, 4, 5, 6, 7, 8] : [8, 7, 6, 5, 4, 3, 2, 1];
   const displayedFiles = flipped ? [...files].reverse() : [...files];
   const capturedWhite = capturedPieces(game, "w");
   const capturedBlack = capturedPieces(game, "b");
+  const material = materialScore(game, "w");
+
+  // King square for the side in check, to draw a warning glow around it.
+  let checkSquare: Square | null = null;
+  if (game.isCheck()) {
+    const turn = game.turn();
+    outer: for (const row of game.board()) {
+      for (const piece of row) {
+        if (piece?.type === "k" && piece.color === turn) { checkSquare = piece.square; break outer; }
+      }
+    }
+  }
+
+  const topPlayer = isOnline
+    ? (match?.myColor === "w" ? match?.black : match?.white)
+    : null;
+  const bottomPlayer = isOnline
+    ? (match?.myColor === "w" ? match?.white : match?.black)
+    : null;
+  const topColor: Color = isOnline ? (match?.myColor === "w" ? "b" : "w") : "b";
+  const bottomColor: Color = isOnline ? (match?.myColor === "w" ? "w" : "b") : "w";
+
+  if (isOnline && onlineLoading) {
+    return (
+      <div className="grid min-h-[50vh] place-items-center text-white/60">
+        <div className="flex items-center gap-2 text-sm"><Loader2 className="size-4 animate-spin" /> Loading game…</div>
+      </div>
+    );
+  }
+
+  if (isOnline && (onlineError || !match)) {
+    return (
+      <Card className="mx-auto max-w-md border-white/10 bg-[#262522] p-6 text-center text-white">
+        <p className="mb-4 text-white/70">{onlineError || "This game couldn't be found."}</p>
+        <Button onClick={onExit} className="bg-[#759954] hover:bg-[#86a962]">Back to lobby</Button>
+      </Card>
+    );
+  }
+
+  if (isOnline && (match!.status === "DECLINED" || match!.status === "CANCELLED")) {
+    return (
+      <Card className="mx-auto max-w-md border-white/10 bg-[#262522] p-6 text-center text-white">
+        <p className="mb-4 text-white/70">{match!.status === "DECLINED" ? "This challenge was declined." : "This challenge was cancelled."}</p>
+        <Button onClick={onExit} className="bg-[#759954] hover:bg-[#86a962]">Back to lobby</Button>
+      </Card>
+    );
+  }
+
+  if (isOnline && match!.status === "PENDING") {
+    const myStudentId = match!.myColor === "w" ? match!.white?.studentId : match!.black?.studentId;
+    const iAmChallenger = match!.challengerId === myStudentId;
+    const opponentName = (match!.myColor === "w" ? match!.black?.name : match!.white?.name) ?? "your opponent";
+    return (
+      <Card className="mx-auto max-w-md border-white/10 bg-[#262522] p-6 text-center text-white">
+        <div className="mb-3 text-4xl">⏳</div>
+        <p className="mb-1 text-lg font-semibold">{iAmChallenger ? `Waiting for ${opponentName} to accept` : `${opponentName} challenged you`}</p>
+        <p className="mb-5 text-sm text-white/50">{iAmChallenger ? "You'll be notified the moment they respond." : "Accept the challenge from the lobby to start playing."}</p>
+        <Button variant="outline" onClick={onExit} className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white">Back to lobby</Button>
+      </Card>
+    );
+  }
 
   return (
     <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_22rem]">
       <div className="mx-auto w-full max-w-[min(82vh,760px)]">
-        <PlayerBar label={opponent === "AI" ? `Computer · ${difficulty.toLowerCase()}` : "Black"} icon={opponent === "AI" ? <Bot className="size-4" /> : <Users className="size-4" />} active={!gameOver && game.turn() === "b"} thinking={thinking} captured={capturedWhite} color="w" />
+        {isOnline ? (
+          <OnlinePlayerBar player={topPlayer} active={!gameOver && match!.turnColor === topColor} color={topColor} captured={topColor === "w" ? capturedBlack : capturedWhite} material={topColor === "w" ? material : -material} />
+        ) : (
+          <PlayerBar label={opponent === "AI" ? `Computer · ${difficulty.toLowerCase()}` : "Black"} icon={opponent === "AI" ? <Bot className="size-4" /> : <Users className="size-4" />} active={!gameOver && game.turn() === "b"} thinking={thinking} captured={capturedWhite} color="w" material={material} />
+        )}
 
         <div className="relative mt-2 aspect-square w-full overflow-hidden rounded-[4px] shadow-[0_16px_50px_rgba(0,0,0,.5)]" role="grid" aria-label="Chess board">
           <div className="grid h-full w-full grid-cols-8 grid-rows-8">
@@ -202,6 +427,7 @@ export default function ChessGame({ opponent, difficulty }: ChessGameProps) {
               const isLight = (files.indexOf(file) + rank) % 2 === 1;
               const isSelected = selected === square;
               const wasLastMove = lastMove?.from === square || lastMove?.to === square;
+              const isCheckSquare = checkSquare === square;
               const showFile = rowIndex === 7;
               const showRank = colIndex === 0;
               return (
@@ -213,15 +439,22 @@ export default function ChessGame({ opponent, difficulty }: ChessGameProps) {
                   onClick={() => handleSquareClick(square)}
                   className={`relative grid min-h-0 min-w-0 place-items-center select-none ${isLight ? "bg-[#eeeed2]" : "bg-[#769656]"} ${wasLastMove ? "after:absolute after:inset-0 after:bg-yellow-300/45" : ""} ${isSelected ? "after:absolute after:inset-0 after:bg-yellow-300/60" : ""}`}
                 >
+                  {isCheckSquare && <span className="absolute inset-0 z-10 rounded-[2px] bg-red-500/55 [box-shadow:inset_0_0_18px_6px_rgba(220,38,38,.85)]" />}
                   {showRank && <span className={`absolute left-1 top-0.5 z-20 text-[clamp(.52rem,1.2vw,.8rem)] font-bold ${isLight ? "text-[#769656]" : "text-[#eeeed2]"}`}>{rank}</span>}
                   {showFile && <span className={`absolute bottom-0 right-1 z-20 text-[clamp(.52rem,1.2vw,.8rem)] font-bold ${isLight ? "text-[#769656]" : "text-[#eeeed2]"}`}>{file}</span>}
                   {move && !piece && <span className="absolute z-20 size-[28%] rounded-full bg-black/20" />}
                   {move && piece && <span className="absolute inset-[5%] z-20 rounded-full border-[clamp(3px,.65vw,7px)] border-black/20" />}
-                  {piece && <span className={`relative z-10 block translate-y-[-1%] text-[clamp(2rem,9.2vw,5.8rem)] leading-none ${piece.color === "w" ? "text-white [text-shadow:0_2px_1px_#555,0_0_1px_#111]" : "text-[#202020] [text-shadow:0_1px_0_#666]"}`}>{pieceGlyphs[piece.color][piece.type]}</span>}
+                  {piece && <span className={`relative z-10 block translate-y-[-1%] text-[clamp(2rem,9.2vw,5.8rem)] leading-none transition-transform duration-150 ${piece.color === "w" ? "text-white [text-shadow:0_2px_1px_#555,0_0_1px_#111]" : "text-[#202020] [text-shadow:0_1px_0_#666]"} ${isSelected ? "scale-110" : ""}`}>{pieceGlyphs[piece.color][piece.type]}</span>}
                 </button>
               );
             }))}
           </div>
+
+          {isOnline && submittingMove && (
+            <div className="absolute inset-0 z-30 grid place-items-center bg-black/25">
+              <Loader2 className="size-6 animate-spin text-white/80" />
+            </div>
+          )}
 
           {pendingPromotion && (
             <div className="absolute inset-0 z-40 grid place-items-center bg-black/45 p-5" role="dialog" aria-label="Choose promotion piece">
@@ -237,56 +470,128 @@ export default function ChessGame({ opponent, difficulty }: ChessGameProps) {
               </div>
             </div>
           )}
+
+          {confirmingResign && (
+            <div className="absolute inset-0 z-40 grid place-items-center bg-black/55 p-5" role="dialog" aria-label="Confirm resignation">
+              <div className="w-full max-w-xs rounded-2xl bg-[#262522] p-5 text-center shadow-2xl">
+                <Flag className="mx-auto mb-2 size-6 text-red-300" />
+                <p className="mb-1 font-semibold">Resign this game?</p>
+                <p className="mb-4 text-sm text-white/50">Your opponent will be credited with the win.</p>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => setConfirmingResign(false)} className="flex-1 border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white">Cancel</Button>
+                  <Button onClick={() => (isOnline ? resignOnline() : (setResigned(game.turn()), setConfirmingResign(false)))} className="flex-1 bg-red-500/90 text-white hover:bg-red-500">Resign</Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {gameOver && (
+            <div className="absolute inset-0 z-30 grid place-items-center bg-black/60 p-5">
+              <div className="w-full max-w-xs rounded-2xl bg-[#262522] p-6 text-center shadow-2xl">
+                <Swords className="mx-auto mb-2 size-7 text-amber-300" />
+                <p className="mb-4 text-base font-semibold leading-snug">{isOnline ? getOnlineStatus(match!, game) : getStatus(game, resigned)}</p>
+                <div className="flex flex-col gap-2">
+                  {isOnline ? (
+                    <Button onClick={onExit} className="bg-[#759954] hover:bg-[#86a962]">Back to lobby</Button>
+                  ) : (
+                    <Button onClick={reset} className="bg-[#759954] hover:bg-[#86a962]"><RotateCcw className="mr-2 size-4" /> Play again</Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
-        <PlayerBar label={opponent === "AI" ? "You · White" : "White"} icon={<span className="text-lg">♔</span>} active={!gameOver && game.turn() === "w"} captured={capturedBlack} color="b" />
+        {isOnline ? (
+          <OnlinePlayerBar player={bottomPlayer} active={!gameOver && match!.turnColor === bottomColor} color={bottomColor} captured={bottomColor === "w" ? capturedBlack : capturedWhite} material={bottomColor === "w" ? material : -material} />
+        ) : (
+          <PlayerBar label={opponent === "AI" ? "You · White" : "White"} icon={<span className="text-lg">♔</span>} active={!gameOver && game.turn() === "w"} captured={capturedBlack} color="b" material={-material} />
+        )}
       </div>
 
       <Card className="overflow-hidden border-white/10 bg-[#262522] text-white shadow-xl">
         <div className="border-b border-white/10 p-4">
-          <p className={`text-base font-semibold ${game.isCheck() && !gameOver ? "text-amber-300" : ""}`}>{getStatus(game, resigned)}</p>
-          <p className="mt-1 text-xs text-white/40">Move {Math.floor(history.length / 2) + 1}</p>
+          <p className={`text-base font-semibold ${game.isCheck() && !gameOver ? "text-amber-300" : ""}`}>{isOnline ? getOnlineStatus(match!, game) : getStatus(game, resigned)}</p>
+          <p className="mt-1 text-xs text-white/40">Move {Math.floor(historyLength / 2) + 1}</p>
         </div>
 
         <div className="min-h-44 max-h-72 overflow-y-auto p-3">
           <div className="mb-2 flex items-center gap-2 px-1 text-xs font-semibold uppercase tracking-wider text-white/35"><History className="size-3.5" /> Moves</div>
-          {!history.length ? (
+          {!historyLength ? (
             <div className="grid min-h-28 place-items-center text-sm text-white/30">Select a piece to begin</div>
           ) : (
             <div className="grid grid-cols-[2.25rem_1fr_1fr] text-sm">
-              {Array.from({ length: Math.ceil(history.length / 2) }, (_, index) => (
-                <React.Fragment key={index}>
-                  <span className="px-2 py-1.5 text-white/30">{index + 1}.</span>
-                  <span className="rounded px-2 py-1.5 font-medium hover:bg-white/5">{history[index * 2]?.san}</span>
-                  <span className="rounded px-2 py-1.5 font-medium hover:bg-white/5">{history[index * 2 + 1]?.san ?? ""}</span>
-                </React.Fragment>
-              ))}
+              {Array.from({ length: Math.ceil(historyLength / 2) }, (_, index) => {
+                const whiteMove = isOnline ? onlineHistory[index * 2] : history[index * 2]?.san;
+                const blackMove = isOnline ? onlineHistory[index * 2 + 1] : history[index * 2 + 1]?.san;
+                const isLastRow = index === Math.ceil(historyLength / 2) - 1;
+                return (
+                  <React.Fragment key={index}>
+                    <span className="px-2 py-1.5 text-white/30">{index + 1}.</span>
+                    <span className={`rounded px-2 py-1.5 font-medium hover:bg-white/5 ${isLastRow && !blackMove ? "bg-white/[.06]" : ""}`}>{whiteMove}</span>
+                    <span className={`rounded px-2 py-1.5 font-medium hover:bg-white/5 ${isLastRow && blackMove ? "bg-white/[.06]" : ""}`}>{blackMove ?? ""}</span>
+                  </React.Fragment>
+                );
+              })}
             </div>
           )}
         </div>
 
         <div className="grid grid-cols-2 gap-2 border-t border-white/10 p-3">
-          <Button variant="outline" onClick={undo} disabled={!history.length || thinking} className="border-white/10 bg-white/5 text-white hover:bg-white/10 hover:text-white"><Undo2 className="mr-2 size-4" /> Undo</Button>
-          <Button variant="outline" onClick={() => setFlipped((value) => !value)} className="border-white/10 bg-white/5 text-white hover:bg-white/10 hover:text-white"><FlipVertical2 className="mr-2 size-4" /> Flip</Button>
-          <Button variant="outline" onClick={reset} className="border-white/10 bg-white/5 text-white hover:bg-white/10 hover:text-white"><RotateCcw className="mr-2 size-4" /> New game</Button>
-          <Button variant="outline" onClick={() => !gameOver && setResigned(game.turn())} disabled={gameOver} className="border-white/10 bg-white/5 text-white hover:bg-red-500/15 hover:text-red-200"><Flag className="mr-2 size-4" /> Resign</Button>
+          {isOnline ? (
+            <>
+              <Button variant="outline" onClick={() => setFlipped((value) => !value)} className="border-white/10 bg-white/5 text-white hover:bg-white/10 hover:text-white"><FlipVertical2 className="mr-2 size-4" /> Flip</Button>
+              <Button variant="outline" onClick={() => !gameOver && setConfirmingResign(true)} disabled={gameOver} className="border-white/10 bg-white/5 text-white hover:bg-red-500/15 hover:text-red-200"><Flag className="mr-2 size-4" /> Resign</Button>
+              <Button variant="outline" onClick={onExit} className="col-span-2 border-white/10 bg-white/5 text-white hover:bg-white/10 hover:text-white">◀ Back to lobby</Button>
+            </>
+          ) : (
+            <>
+              <Button variant="outline" onClick={undo} disabled={!history.length || thinking} className="border-white/10 bg-white/5 text-white hover:bg-white/10 hover:text-white"><Undo2 className="mr-2 size-4" /> Undo</Button>
+              <Button variant="outline" onClick={() => setFlipped((value) => !value)} className="border-white/10 bg-white/5 text-white hover:bg-white/10 hover:text-white"><FlipVertical2 className="mr-2 size-4" /> Flip</Button>
+              <Button variant="outline" onClick={reset} className="border-white/10 bg-white/5 text-white hover:bg-white/10 hover:text-white"><RotateCcw className="mr-2 size-4" /> New game</Button>
+              <Button variant="outline" onClick={() => !gameOver && setConfirmingResign(true)} disabled={gameOver} className="border-white/10 bg-white/5 text-white hover:bg-red-500/15 hover:text-red-200"><Flag className="mr-2 size-4" /> Resign</Button>
+            </>
+          )}
         </div>
       </Card>
     </div>
   );
 }
 
-function PlayerBar({ label, icon, active, thinking = false, captured, color }: { label: string; icon: React.ReactNode; active: boolean; thinking?: boolean; captured: PieceSymbol[]; color: Color }) {
+function PlayerBar({ label, icon, active, thinking = false, captured, color, material }: { label: string; icon: React.ReactNode; active: boolean; thinking?: boolean; captured: PieceSymbol[]; color: Color; material: number }) {
   return (
     <div className="flex min-h-11 items-center justify-between gap-3 px-1 py-2">
       <div className="flex min-w-0 items-center gap-2.5">
-        <span className={`grid size-8 shrink-0 place-items-center rounded-lg ${active ? "bg-[#759954]" : "bg-white/10"}`}>{icon}</span>
+        <span className={`grid size-8 shrink-0 place-items-center rounded-lg transition-colors ${active ? "bg-[#759954]" : "bg-white/10"}`}>{icon}</span>
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold">{label}</p>
-          <div className="flex h-4 items-center text-base leading-none opacity-70">{captured.map((piece, index) => <span key={`${piece}-${index}`} className="-mr-0.5">{pieceGlyphs[color][piece]}</span>)}</div>
+          <div className="flex h-4 items-center gap-1 text-base leading-none opacity-70">
+            <div className="flex">{captured.map((piece, index) => <span key={`${piece}-${index}`} className="-mr-0.5">{pieceGlyphs[color][piece]}</span>)}</div>
+            {material > 0 && <span className="text-[11px] font-semibold text-white/40">+{material}</span>}
+          </div>
         </div>
       </div>
       {thinking && <span className="flex items-center gap-1.5 text-xs text-white/45"><span className="size-1.5 animate-pulse rounded-full bg-[#98b873]" /> Thinking</span>}
+    </div>
+  );
+}
+
+function OnlinePlayerBar({ player, active, color, captured, material }: { player: OnlinePlayer | null | undefined; active: boolean; color: Color; captured: PieceSymbol[]; material: number }) {
+  return (
+    <div className="flex min-h-11 items-center justify-between gap-3 px-1 py-2">
+      <div className="flex min-w-0 items-center gap-2.5">
+        <span className={`relative grid size-8 shrink-0 place-items-center rounded-lg transition-colors ${active ? "bg-[#759954]" : "bg-white/10"}`}>
+          <UserAvatar name={player?.name} src={player?.profilePhotoUrl} className="size-8 text-[11px]" />
+        </span>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold">{player?.name ?? "Waiting…"} <span className="font-normal text-white/35">· {color === "w" ? "White" : "Black"}</span></p>
+          <div className="flex h-4 items-center gap-1 text-base leading-none opacity-70">
+            <div className="flex">{captured.map((piece, index) => <span key={`${piece}-${index}`} className="-mr-0.5">{pieceGlyphs[color][piece]}</span>)}</div>
+            {material > 0 && <span className="text-[11px] font-semibold text-white/40">+{material}</span>}
+          </div>
+        </div>
+      </div>
+      {active && <span className="flex items-center gap-1.5 text-xs text-[#98b873]"><span className="size-1.5 animate-pulse rounded-full bg-[#98b873]" /> To move</span>}
     </div>
   );
 }

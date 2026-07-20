@@ -186,6 +186,8 @@ const CheckersSelectPage = lazy(() => import("./pages/games/checkers/index"));
 const CheckersPlayPage = lazy(() => import("./pages/games/checkers/PlayPage"));
 const ChessSelectPage = lazy(() => import("./pages/games/chess/index"));
 const ChessPlayPage = lazy(() => import("./pages/games/chess/PlayPage"));
+const ChessLobbyPage = lazy(() => import("./pages/games/chess/Lobby"));
+const ChessLeaderboardPage = lazy(() => import("./pages/games/chess/Leaderboard"));
 
 const Dictionary = lazy(() => import("./pages/dictionary/Dictionary"));
 
@@ -348,6 +350,8 @@ export default function App() {
 
                 <Route path="/games/chess" element={<ChessSelectPage />} />
                 <Route path="/games/chess/play" element={<ChessPlayPage />} />
+                <Route path="/games/chess/lobby" element={<ChessLobbyPage />} />
+                <Route path="/games/chess/leaderboard" element={<ChessLeaderboardPage />} />
 
                 <Route path="/timetable" element={<TimetablePage />} />
 

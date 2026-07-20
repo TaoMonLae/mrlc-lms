@@ -12,6 +12,11 @@ interface ChatCtx {
   unreadCount: number;
   onlineUserIds: Set<string>;
   eventTick: number;            // bumps on each live event so views can refetch
+  // Raw payload of the most recent SSE push, whatever its `type`. The stream
+  // is shared app-wide (originally built for chat), so other realtime
+  // features — like chess challenges/moves — piggyback on it instead of
+  // opening a second connection. Consumers should switch on `payload.type`.
+  lastEvent: any;
   isOnline: (userId: string) => boolean;
   setActiveConversation: (id: string | null) => void;
   refresh: () => void;
@@ -33,6 +38,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [conversations, setConversations] = useState<ConvSummary[]>([]);
   const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set());
   const [eventTick, setEventTick] = useState(0);
+  const [lastEvent, setLastEvent] = useState<any>(null);
   const [typing, setTyping] = useState<TypingMap>({});
   const activeRef = useRef<string | null>(null);
   const prevUnreadRef = useRef<Record<string, number>>({});
@@ -112,8 +118,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           });
         }
 
+        setLastEvent(payload);
         setEventTick((t) => t + 1);
-        loadList();
+        // Non-chat events (e.g. chess challenges/moves) share this stream but
+        // don't need the chat conversation list refetched.
+        if (!String(payload?.type || "").startsWith("chess")) loadList();
     };
 
     // The SSE endpoint authenticates from an httpOnly cookie, so set it FIRST and
@@ -168,6 +177,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     unreadCount,
     onlineUserIds,
     eventTick,
+    lastEvent,
     isOnline: (id: string) => onlineUserIds.has(id),
     setActiveConversation: (id) => { activeRef.current = id; },
     refresh: () => { loadList(); loadPresence(); },
@@ -193,7 +203,7 @@ export function useChat(): ChatCtx {
   if (!ctx) {
     // Safe no-op default if used outside the provider.
     return {
-      conversations: [], unreadCount: 0, onlineUserIds: new Set(), eventTick: 0,
+      conversations: [], unreadCount: 0, onlineUserIds: new Set(), eventTick: 0, lastEvent: null,
       isOnline: () => false, setActiveConversation: () => {}, refresh: () => {},
       typingNames: () => [], sendTyping: () => {},
     };
