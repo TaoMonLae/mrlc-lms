@@ -278,6 +278,8 @@ model User {
   socialSeen                 SocialSeen?               @relation("SocialSeenBy")
   socialReportsFiled         SocialReport[]            @relation("SocialReporter")
   reportedRuleViolations     RuleViolation[]           @relation("ReportedRuleViolations")
+  chessMatchesWhite          ChessMatch[]              @relation("ChessWhite")
+  chessMatchesBlack          ChessMatch[]              @relation("ChessBlack")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -387,8 +389,6 @@ model Student {
   interventions       InterventionPlan[]
   snakeGameScores     SnakeGameScore[]
   checkerGameScores   CheckerGameScore[]
-  chessMatchesWhite   ChessMatch[]            @relation("ChessWhite")
-  chessMatchesBlack   ChessMatch[]            @relation("ChessBlack")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -3754,24 +3754,33 @@ model CheckerVocabularyWord {
 
 // CHESS GAME — online multiplayer (educational mini-game)
 // -----------------------------------------------------------------------------
-// A single row covers the full lifecycle of one game between two students:
+// A single row covers the full lifecycle of one game between two people:
 // challenge sent (PENDING) → accepted (ACTIVE) → finished (FINISHED), or
 // DECLINED/CANCELLED if the challenge never turned into a game. The board is
 // authoritative on the server — `fen` is the current position and `moves` is
 // the SAN history — so a client can never spoof a move; every move is
 // re-validated server-side with chess.js before being applied.
+//
+// Players are keyed by User (not Student) so both students (matched with
+// classmates) and staff/teachers (matched with any other staff member,
+// school-wide) can use the same feature. `scope` records which pool a match
+// belongs to and a student can never end up matched against a staff member.
 model ChessMatch {
   id String @id @default(uuid())
 
   whiteId String
-  white   Student @relation("ChessWhite", fields: [whiteId], references: [id], onDelete: Cascade)
+  white   User @relation("ChessWhite", fields: [whiteId], references: [id], onDelete: Cascade)
   blackId String
-  black   Student @relation("ChessBlack", fields: [blackId], references: [id], onDelete: Cascade)
+  black   User @relation("ChessBlack", fields: [blackId], references: [id], onDelete: Cascade)
 
-  // studentId of whichever side sent the invite — lets the UI show "X
+  // User.id of whichever side sent the invite — lets the UI show "X
   // challenged you" vs. "waiting for X to accept" without extra lookups.
   challengerId String
 
+  scope String @default("STUDENT") // STUDENT | STAFF — which pool this game belongs to
+
+  // Only set (and only meaningful) for STUDENT-scope matches, so classmates
+  // can be grouped/labelled. Staff matches are school-wide and leave these null.
   classId   String?
   className String?
 
@@ -3794,6 +3803,7 @@ model ChessMatch {
   @@index([whiteId])
   @@index([blackId])
   @@index([status])
+  @@index([scope])
   @@index([classId])
   @@index([updatedAt])
 }

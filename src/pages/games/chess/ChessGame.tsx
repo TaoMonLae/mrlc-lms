@@ -9,22 +9,25 @@ import { Card } from "@/components/ui/card";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { apiGet, apiSend } from "../../../lib/api";
 import { useChat } from "../../../providers/ChatProvider";
+import { ChessPieceIcon } from "./pieceIcons";
 
 type Opponent = "AI" | "HUMAN" | "ONLINE";
 type Difficulty = "EASY" | "MEDIUM" | "HARD";
 type PromotionPiece = "q" | "r" | "b" | "n";
 
 export interface OnlinePlayer {
-  studentId: string;
-  userId: string | null;
+  id: string; // User.id
   name: string;
   profilePhotoUrl: string | null;
-  className: string | null;
+  // Class name for a student, or a role label ("Teacher", "Staff", ...) for
+  // a staff member.
+  groupLabel: string | null;
 }
 
 export interface OnlineMatch {
   id: string;
   status: "PENDING" | "ACTIVE" | "FINISHED" | "DECLINED" | "CANCELLED";
+  scope: "STUDENT" | "STAFF";
   fen: string;
   moves: string[];
   turnColor: "w" | "b";
@@ -44,11 +47,6 @@ interface ChessGameProps {
   /** Called when the player wants to leave an online game (e.g. back to lobby). */
   onExit?: () => void;
 }
-
-const pieceGlyphs: Record<Color, Record<PieceSymbol, string>> = {
-  w: { k: "♔", q: "♕", r: "♖", b: "♗", n: "♘", p: "♙" },
-  b: { k: "♚", q: "♛", r: "♜", b: "♝", n: "♞", p: "♟" },
-};
 
 const pieceNames: Record<PieceSymbol, string> = { k: "king", q: "queen", r: "rook", b: "bishop", n: "knight", p: "pawn" };
 const pieceValues: Record<PieceSymbol, number> = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20_000 };
@@ -396,8 +394,8 @@ export default function ChessGame({ opponent, difficulty, matchId, onExit }: Che
   }
 
   if (isOnline && match!.status === "PENDING") {
-    const myStudentId = match!.myColor === "w" ? match!.white?.studentId : match!.black?.studentId;
-    const iAmChallenger = match!.challengerId === myStudentId;
+    const myId = match!.myColor === "w" ? match!.white?.id : match!.black?.id;
+    const iAmChallenger = match!.challengerId === myId;
     const opponentName = (match!.myColor === "w" ? match!.black?.name : match!.white?.name) ?? "your opponent";
     return (
       <Card className="mx-auto max-w-md border-white/10 bg-[#262522] p-6 text-center text-white">
@@ -444,7 +442,13 @@ export default function ChessGame({ opponent, difficulty, matchId, onExit }: Che
                   {showFile && <span className={`absolute bottom-0 right-1 z-20 text-[clamp(.52rem,1.2vw,.8rem)] font-bold ${isLight ? "text-[#769656]" : "text-[#eeeed2]"}`}>{file}</span>}
                   {move && !piece && <span className="absolute z-20 size-[28%] rounded-full bg-black/20" />}
                   {move && piece && <span className="absolute inset-[5%] z-20 rounded-full border-[clamp(3px,.65vw,7px)] border-black/20" />}
-                  {piece && <span className={`relative z-10 block translate-y-[-1%] text-[clamp(2rem,9.2vw,5.8rem)] leading-none transition-transform duration-150 ${piece.color === "w" ? "text-white [text-shadow:0_2px_1px_#555,0_0_1px_#111]" : "text-[#202020] [text-shadow:0_1px_0_#666]"} ${isSelected ? "scale-110" : ""}`}>{pieceGlyphs[piece.color][piece.type]}</span>}
+                  {piece && (
+                    <ChessPieceIcon
+                      type={piece.type}
+                      color={piece.color}
+                      className={`relative z-10 h-[80%] w-[80%] shrink-0 transition-transform duration-150 [filter:drop-shadow(0_2px_2px_rgba(0,0,0,.45))] ${isSelected ? "scale-110" : ""}`}
+                    />
+                  )}
                 </button>
               );
             }))}
@@ -462,8 +466,8 @@ export default function ChessGame({ opponent, difficulty, matchId, onExit }: Che
                 <p className="mb-3 text-center text-sm font-semibold">Promote pawn to</p>
                 <div className="flex gap-2">
                   {promotionPieces.map((piece) => (
-                    <button key={piece} type="button" onClick={() => completeMove(pendingPromotion.from, pendingPromotion.to, piece)} className="grid size-16 place-items-center rounded-xl bg-[#eeeed2] text-5xl text-zinc-900 transition hover:scale-105 hover:bg-white" aria-label={`Promote to ${pieceNames[piece]}`}>
-                      {pieceGlyphs[game.turn()][piece]}
+                    <button key={piece} type="button" onClick={() => completeMove(pendingPromotion.from, pendingPromotion.to, piece)} className="grid size-16 place-items-center rounded-xl bg-[#eeeed2] transition hover:scale-105 hover:bg-white" aria-label={`Promote to ${pieceNames[piece]}`}>
+                      <ChessPieceIcon type={piece} color={game.turn()} className="h-11 w-11" />
                     </button>
                   ))}
                 </div>
@@ -505,7 +509,7 @@ export default function ChessGame({ opponent, difficulty, matchId, onExit }: Che
         {isOnline ? (
           <OnlinePlayerBar player={bottomPlayer} active={!gameOver && match!.turnColor === bottomColor} color={bottomColor} captured={bottomColor === "w" ? capturedBlack : capturedWhite} material={bottomColor === "w" ? material : -material} />
         ) : (
-          <PlayerBar label={opponent === "AI" ? "You · White" : "White"} icon={<span className="text-lg">♔</span>} active={!gameOver && game.turn() === "w"} captured={capturedBlack} color="b" material={-material} />
+          <PlayerBar label={opponent === "AI" ? "You · White" : "White"} icon={<ChessPieceIcon type="k" color="w" className="h-5 w-5" />} active={!gameOver && game.turn() === "w"} captured={capturedBlack} color="b" material={-material} />
         )}
       </div>
 
@@ -565,8 +569,8 @@ function PlayerBar({ label, icon, active, thinking = false, captured, color, mat
         <span className={`grid size-8 shrink-0 place-items-center rounded-lg transition-colors ${active ? "bg-[#759954]" : "bg-white/10"}`}>{icon}</span>
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold">{label}</p>
-          <div className="flex h-4 items-center gap-1 text-base leading-none opacity-70">
-            <div className="flex">{captured.map((piece, index) => <span key={`${piece}-${index}`} className="-mr-0.5">{pieceGlyphs[color][piece]}</span>)}</div>
+          <div className="flex h-4 items-center gap-1 leading-none opacity-70">
+            <div className="flex">{captured.map((piece, index) => <ChessPieceIcon key={`${piece}-${index}`} type={piece} color={color} className="-mr-1 h-3.5 w-3.5" />)}</div>
             {material > 0 && <span className="text-[11px] font-semibold text-white/40">+{material}</span>}
           </div>
         </div>
@@ -585,8 +589,8 @@ function OnlinePlayerBar({ player, active, color, captured, material }: { player
         </span>
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold">{player?.name ?? "Waiting…"} <span className="font-normal text-white/35">· {color === "w" ? "White" : "Black"}</span></p>
-          <div className="flex h-4 items-center gap-1 text-base leading-none opacity-70">
-            <div className="flex">{captured.map((piece, index) => <span key={`${piece}-${index}`} className="-mr-0.5">{pieceGlyphs[color][piece]}</span>)}</div>
+          <div className="flex h-4 items-center gap-1 leading-none opacity-70">
+            <div className="flex">{captured.map((piece, index) => <ChessPieceIcon key={`${piece}-${index}`} type={piece} color={color} className="-mr-1 h-3.5 w-3.5" />)}</div>
             {material > 0 && <span className="text-[11px] font-semibold text-white/40">+{material}</span>}
           </div>
         </div>

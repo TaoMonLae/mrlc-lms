@@ -12,18 +12,21 @@ import { useChat } from "../../../providers/ChatProvider";
 import { useAuth } from "../../../providers/AuthProvider";
 import type { OnlineMatch, OnlinePlayer } from "./ChessGame";
 
-interface Classmate extends OnlinePlayer {
+interface Opponent extends OnlinePlayer {
   activeMatchId: string | null;
   activeMatchStatus: "PENDING" | "ACTIVE" | null;
-  isChallenger: boolean | null;
 }
 
 export default function ChessLobbyPage() {
   const navigate = useNavigate();
   const chat = useChat();
   const { user } = useAuth();
-  const [classmates, setClassmates] = React.useState<Classmate[] | null>(null);
-  const [className, setClassName] = React.useState<string | null>(null);
+  const isStudent = user?.role === "STUDENT";
+  const peerWord = isStudent ? "classmate" : "colleague";
+  const peerWordPlural = isStudent ? "Classmates" : "Colleagues";
+
+  const [opponents, setOpponents] = React.useState<Opponent[] | null>(null);
+  const [groupLabel, setGroupLabel] = React.useState<string | null>(null);
   const [note, setNote] = React.useState<string | null>(null);
   const [incoming, setIncoming] = React.useState<OnlineMatch[]>([]);
   const [outgoing, setOutgoing] = React.useState<OnlineMatch[]>([]);
@@ -35,14 +38,14 @@ export default function ChessLobbyPage() {
 
   const loadAll = React.useCallback(async () => {
     try {
-      const [cm, ch, mt] = await Promise.all([
-        apiGet<{ success: boolean; classmates: Classmate[]; className: string | null; note?: string }>("/api/games/chess/classmates"),
+      const [op, ch, mt] = await Promise.all([
+        apiGet<{ success: boolean; opponents: Opponent[]; groupLabel: string | null; note?: string }>("/api/games/chess/opponents"),
         apiGet<{ success: boolean; incoming: OnlineMatch[]; outgoing: OnlineMatch[] }>("/api/games/chess/challenges"),
         apiGet<{ success: boolean; active: OnlineMatch[]; recent: OnlineMatch[] }>("/api/games/chess/matches"),
       ]);
-      setClassmates(cm.classmates);
-      setClassName(cm.className);
-      setNote(cm.note ?? null);
+      setOpponents(op.opponents);
+      setGroupLabel(op.groupLabel);
+      setNote(op.note ?? null);
       setIncoming(ch.incoming);
       setOutgoing(ch.outgoing);
       setActive(mt.active);
@@ -67,10 +70,10 @@ export default function ChessLobbyPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chat.lastEvent]);
 
-  const challenge = async (studentId: string) => {
-    setBusyId(studentId);
+  const challenge = async (opponentId: string) => {
+    setBusyId(opponentId);
     try {
-      await apiSend<{ success: boolean; match: OnlineMatch }>("/api/games/chess/challenges", "POST", { opponentStudentId: studentId });
+      await apiSend<{ success: boolean; match: OnlineMatch }>("/api/games/chess/challenges", "POST", { opponentId });
       toast.success("Challenge sent!");
       loadAll();
     } catch (err: any) {
@@ -115,17 +118,6 @@ export default function ChessLobbyPage() {
     }
   };
 
-  if (user && user.role !== "STUDENT" && user.role !== "ADMIN") {
-    return (
-      <div className="min-h-screen bg-[#161512] p-6 text-center text-white">
-        <div className="mx-auto max-w-md pt-24">
-          <p className="mb-4 text-white/70">Online multiplayer is available for students. Everyone can still play against the computer or pass-and-play locally.</p>
-          <Button onClick={() => navigate("/games/chess")} className="bg-[#759954] hover:bg-[#86a962]">Back to Chess</Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-[#161512] text-white">
       <div className="mx-auto max-w-5xl p-3 sm:p-5 lg:p-7">
@@ -134,7 +126,7 @@ export default function ChessLobbyPage() {
             <div className="grid size-10 place-items-center rounded-xl bg-[#759954] text-2xl">♞</div>
             <div>
               <h1 className="text-xl font-bold">Multiplayer lobby</h1>
-              <p className="text-xs text-white/45">{className ? `${className} · challenge a classmate` : "Challenge a classmate to a game"}</p>
+              <p className="text-xs text-white/45">{groupLabel ? `${groupLabel} · challenge a ${peerWord}` : `Challenge a ${peerWord} to a game`}</p>
             </div>
           </div>
           <div className="flex gap-2">
@@ -223,17 +215,17 @@ export default function ChessLobbyPage() {
             )}
 
             <section>
-              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-white/40">Classmates</h2>
+              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-white/40">{peerWordPlural}</h2>
               {note ? (
                 <Card className="border-white/10 bg-[#262522] p-4 text-sm text-white/60">{note}</Card>
-              ) : !classmates?.length ? (
-                <Card className="border-white/10 bg-[#262522] p-4 text-sm text-white/60">No classmates found to challenge yet.</Card>
+              ) : !opponents?.length ? (
+                <Card className="border-white/10 bg-[#262522] p-4 text-sm text-white/60">No {peerWord}s found to challenge yet.</Card>
               ) : (
                 <div className="grid gap-2 sm:grid-cols-2">
-                  {classmates.map((c) => {
-                    const online = c.userId ? chat.isOnline(c.userId) : false;
+                  {opponents.map((c) => {
+                    const online = chat.isOnline(c.id);
                     return (
-                      <Card key={c.studentId} className="flex items-center justify-between gap-3 border-white/10 bg-[#262522] p-3">
+                      <Card key={c.id} className="flex items-center justify-between gap-3 border-white/10 bg-[#262522] p-3">
                         <div className="flex min-w-0 items-center gap-3">
                           <div className="relative shrink-0">
                             <UserAvatar name={c.name} src={c.profilePhotoUrl} className="size-10 text-sm" />
@@ -241,7 +233,7 @@ export default function ChessLobbyPage() {
                           </div>
                           <div className="min-w-0">
                             <p className="truncate text-sm font-semibold">{c.name}</p>
-                            <p className="text-xs text-white/45">{online ? "Online" : "Offline"}</p>
+                            <p className="text-xs text-white/45">{online ? "Online" : "Offline"}{!isStudent && c.groupLabel ? ` · ${c.groupLabel}` : ""}</p>
                           </div>
                         </div>
                         {c.activeMatchId ? (
@@ -251,8 +243,8 @@ export default function ChessLobbyPage() {
                             <Button size="sm" variant="outline" disabled className="shrink-0 border-white/15 bg-white/5 text-white/50">Pending</Button>
                           )
                         ) : (
-                          <Button size="sm" variant="outline" disabled={busyId === c.studentId} onClick={() => challenge(c.studentId)} className="shrink-0 border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white">
-                            {busyId === c.studentId ? <Loader2 className="size-3.5 animate-spin" /> : "Challenge"}
+                          <Button size="sm" variant="outline" disabled={busyId === c.id} onClick={() => challenge(c.id)} className="shrink-0 border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white">
+                            {busyId === c.id ? <Loader2 className="size-3.5 animate-spin" /> : "Challenge"}
                           </Button>
                         )}
                       </Card>

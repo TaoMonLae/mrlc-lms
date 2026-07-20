@@ -6,10 +6,23 @@ import { z } from "zod";
 const START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 // Chess-club style scoring for the leaderboard: a win is worth more than a
-// draw, a loss is worth nothing. Simple enough for students to understand at
-// a glance.
+// draw, a loss is worth nothing. Simple enough to understand at a glance.
 const POINTS = { WIN: 3, DRAW: 1, LOSS: 0 };
 
+// Everyone who isn't a student is treated as "staff" for matchmaking purposes
+// (teachers, admins, and every other employee role) — they all draw from one
+// school-wide pool, separate from the student/classmate pool.
+const STAFF_ROLES = new Set(["ADMIN", "TEACHER", "STAFF", "ACCOUNTANT", "CASE_WORKER", "LIBRARIAN"]);
+const ROLE_LABEL: Record<string, string> = {
+  ADMIN: "Admin",
+  TEACHER: "Teacher",
+  STAFF: "Staff",
+  ACCOUNTANT: "Accountant",
+  CASE_WORKER: "Case worker",
+  LIBRARIAN: "Librarian",
+};
+
+type Pool = "STUDENT" | "STAFF";
 type ChatNotify = (userIds: string[], payload: any) => void;
 
 export function registerChessGameRoutes({
@@ -30,41 +43,60 @@ export function registerChessGameRoutes({
   const router = Router();
   const notify: ChatNotify = chatNotify ?? (() => {});
 
-  // Resolve the logged-in user's Student record. Chess multiplayer is a
-  // student-to-student feature (mirrors the chat system's rule that students
-  // never get a direct peer-to-peer channel — a game move isn't a message,
-  // but we still keep the whole feature student-scoped and classmate-only).
-  async function requireStudent(req: Request, res: Response): Promise<{ id: string; classId: string | null; className: string | null; userId: string; name: string } | null> {
+  interface Identity {
+    id: string; // User.id — this is what's stored in ChessMatch.whiteId/blackId
+    role: string;
+    pool: Pool;
+    name: string;
+    classId: string | null;
+    className: string | null;
+  }
+
+  // Resolve the logged-in user's identity for matchmaking. Students are
+  // grouped by class (mirrors the chat system's rule that students never get
+  // an open peer-to-peer channel — a chess move isn't a message, but the
+  // feature still stays classmate-scoped for the same reason). Staff/teachers
+  // draw from one school-wide pool instead.
+  async function requireIdentity(req: Request, res: Response): Promise<Identity | null> {
     const userId = (req as any).user?.userId;
     if (!userId) {
       res.status(401).json({ success: false, error: "Authentication required" });
       return null;
     }
-    const student = await prisma.student.findUnique({
-      where: { userId },
-      include: { class: true, user: true },
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { studentProfile: { include: { class: true } } },
     });
-    if (!student) {
-      res.status(403).json({ success: false, error: "Multiplayer chess is available to students only" });
+    if (!user) {
+      res.status(404).json({ success: false, error: "Account not found" });
       return null;
     }
-    return {
-      id: student.id,
-      classId: student.classId,
-      className: student.class?.name ?? null,
-      userId: student.userId!,
-      name: student.user ? `${student.user.firstName} ${student.user.lastName}`.trim() : student.preferredName || "Student",
-    };
+    const name = `${user.firstName} ${user.lastName}`.trim() || user.email;
+    if (user.role === "STUDENT") {
+      if (!user.studentProfile) {
+        res.status(403).json({ success: false, error: "Multiplayer chess isn't available for this account yet" });
+        return null;
+      }
+      return {
+        id: user.id,
+        role: user.role,
+        pool: "STUDENT",
+        name,
+        classId: user.studentProfile.classId,
+        className: user.studentProfile.class?.name ?? null,
+      };
+    }
+    return { id: user.id, role: user.role, pool: "STAFF", name, classId: null, className: null };
   }
 
-  function publicStudent(s: { id: string; preferredName: string | null; profilePhotoUrl: string | null; user: { id: string; firstName: string; lastName: string; profilePhotoUrl: string | null } | null; class?: { name: string } | null } | null) {
-    if (!s) return null;
+  function publicPlayer(u: { id: string; firstName: string; lastName: string; profilePhotoUrl: string | null; role: string; studentProfile?: { class: { name: string } | null } | null } | null) {
+    if (!u) return null;
+    const groupLabel = u.role === "STUDENT" ? (u.studentProfile?.class?.name ?? null) : (ROLE_LABEL[u.role] ?? "Staff");
     return {
-      studentId: s.id,
-      userId: s.user?.id ?? null,
-      name: s.user ? `${s.user.firstName} ${s.user.lastName}`.trim() : s.preferredName || "Student",
-      profilePhotoUrl: s.user?.profilePhotoUrl || s.profilePhotoUrl || null,
-      className: s.class?.name ?? null,
+      id: u.id,
+      name: `${u.firstName} ${u.lastName}`.trim(),
+      profilePhotoUrl: u.profilePhotoUrl || null,
+      groupLabel,
     };
   }
 
@@ -72,17 +104,18 @@ export function registerChessGameRoutes({
     return prisma.chessMatch.findUnique({
       where: { id: matchId },
       include: {
-        white: { include: { user: true, class: true } },
-        black: { include: { user: true, class: true } },
+        white: { include: { studentProfile: { include: { class: true } } } },
+        black: { include: { studentProfile: { include: { class: true } } } },
       },
     });
   }
 
-  function serializeMatch(match: NonNullable<Awaited<ReturnType<typeof matchWithPlayers>>>, viewerStudentId: string) {
-    const myColor: "w" | "b" | null = match.whiteId === viewerStudentId ? "w" : match.blackId === viewerStudentId ? "b" : null;
+  function serializeMatch(match: NonNullable<Awaited<ReturnType<typeof matchWithPlayers>>>, viewerId: string) {
+    const myColor: "w" | "b" | null = match.whiteId === viewerId ? "w" : match.blackId === viewerId ? "b" : null;
     return {
       id: match.id,
       status: match.status,
+      scope: match.scope,
       fen: match.fen,
       moves: match.moves,
       turnColor: match.turnColor,
@@ -92,8 +125,8 @@ export function registerChessGameRoutes({
       classId: match.classId,
       className: match.className,
       myColor,
-      white: publicStudent(match.white as any),
-      black: publicStudent(match.black as any),
+      white: publicPlayer(match.white as any),
+      black: publicPlayer(match.black as any),
       createdAt: match.createdAt,
       updatedAt: match.updatedAt,
       startedAt: match.startedAt,
@@ -102,28 +135,38 @@ export function registerChessGameRoutes({
     };
   }
 
-  // ── Classmates you can challenge ────────────────────────────────────────────
-  router.get("/classmates", authMiddleware, async (req: Request, res: Response) => {
+  // ── Opponents you can challenge ─────────────────────────────────────────────
+  // Students see classmates; staff/teachers see every other staff member.
+  router.get("/opponents", authMiddleware, async (req: Request, res: Response) => {
     try {
-      const me = await requireStudent(req, res);
+      const me = await requireIdentity(req, res);
       if (!me) return;
-      if (!me.classId) {
-        return res.json({ success: true, classmates: [], className: null, note: "You're not assigned to a class yet, so there's no one to challenge here." });
+
+      let candidates: { id: string; firstName: string; lastName: string; profilePhotoUrl: string | null; role: string; studentProfile?: { class: { name: string } | null } | null }[];
+      let note: string | null = null;
+
+      if (me.pool === "STUDENT") {
+        if (!me.classId) {
+          return res.json({ success: true, pool: me.pool, groupLabel: null, opponents: [], note: "You're not assigned to a class yet, so there's no one to challenge here." });
+        }
+        const classmates = await prisma.student.findMany({
+          where: { classId: me.classId, userId: { not: null } },
+          include: { user: true },
+          orderBy: [{ user: { firstName: "asc" } }],
+        });
+        candidates = classmates
+          .filter((c) => c.user && c.userId !== me.id)
+          .map((c) => ({ ...(c.user as any), studentProfile: { class: { name: me.className || "" } } }));
+      } else {
+        const staff = await prisma.user.findMany({
+          where: { role: { in: [...STAFF_ROLES] as any }, isActive: true, id: { not: me.id } },
+          orderBy: [{ firstName: "asc" }],
+        });
+        candidates = staff as any;
       }
 
-      const classmates = await prisma.student.findMany({
-        where: { classId: me.classId, id: { not: me.id } },
-        include: { user: true, class: true },
-        orderBy: [{ user: { firstName: "asc" } }],
-      });
-
-      // Existing challenges/games between me and each classmate, so the UI can
-      // show "Pending" / "Resume" instead of letting a duplicate be sent.
       const existing = await prisma.chessMatch.findMany({
-        where: {
-          status: { in: ["PENDING", "ACTIVE"] },
-          OR: [{ whiteId: me.id }, { blackId: me.id }],
-        },
+        where: { status: { in: ["PENDING", "ACTIVE"] }, OR: [{ whiteId: me.id }, { blackId: me.id }] },
       });
       const byOpponent = new Map<string, (typeof existing)[number]>();
       for (const m of existing) {
@@ -133,34 +176,33 @@ export function registerChessGameRoutes({
 
       res.json({
         success: true,
-        className: me.className,
-        classmates: classmates
-          .filter((c) => c.userId)
-          .map((c) => {
-            const match = byOpponent.get(c.id);
-            return {
-              ...publicStudent(c as any),
-              activeMatchId: match ? match.id : null,
-              activeMatchStatus: match ? match.status : null,
-              isChallenger: match ? match.challengerId === me.id : null,
-            };
-          }),
+        pool: me.pool,
+        groupLabel: me.pool === "STUDENT" ? me.className : "Staff",
+        note,
+        opponents: candidates.map((c) => {
+          const match = byOpponent.get(c.id);
+          return {
+            ...publicPlayer(c as any),
+            activeMatchId: match ? match.id : null,
+            activeMatchStatus: match ? match.status : null,
+          };
+        }),
       });
     } catch (error) {
-      console.error("Error listing chess classmates:", error);
-      res.status(500).json({ success: false, error: "Failed to load classmates" });
+      console.error("Error listing chess opponents:", error);
+      res.status(500).json({ success: false, error: "Failed to load opponents" });
     }
   });
 
   // ── Challenges (pending invites) ────────────────────────────────────────────
   router.get("/challenges", authMiddleware, async (req: Request, res: Response) => {
     try {
-      const me = await requireStudent(req, res);
+      const me = await requireIdentity(req, res);
       if (!me) return;
 
       const pending = await prisma.chessMatch.findMany({
         where: { status: "PENDING", OR: [{ whiteId: me.id }, { blackId: me.id }] },
-        include: { white: { include: { user: true, class: true } }, black: { include: { user: true, class: true } } },
+        include: { white: { include: { studentProfile: { include: { class: true } } } }, black: { include: { studentProfile: { include: { class: true } } } } },
         orderBy: { createdAt: "desc" },
       });
 
@@ -174,32 +216,39 @@ export function registerChessGameRoutes({
     }
   });
 
-  const challengeSchema = z.object({ opponentStudentId: z.string().min(1) });
+  const challengeSchema = z.object({ opponentId: z.string().min(1) });
 
   router.post("/challenges", authMiddleware, async (req: Request, res: Response) => {
     try {
-      const me = await requireStudent(req, res);
+      const me = await requireIdentity(req, res);
       if (!me) return;
-      const { opponentStudentId } = challengeSchema.parse(req.body);
+      const { opponentId } = challengeSchema.parse(req.body);
 
-      if (opponentStudentId === me.id) {
+      if (opponentId === me.id) {
         return res.status(400).json({ success: false, error: "You can't challenge yourself" });
       }
 
-      const opponent = await prisma.student.findUnique({ where: { id: opponentStudentId }, include: { user: true } });
-      if (!opponent || !opponent.userId) {
-        return res.status(404).json({ success: false, error: "Student not found" });
+      const opponentUser = await prisma.user.findUnique({ where: { id: opponentId }, include: { studentProfile: true } });
+      if (!opponentUser || !opponentUser.isActive) {
+        return res.status(404).json({ success: false, error: "Person not found" });
       }
-      if (!me.classId || opponent.classId !== me.classId) {
-        return res.status(403).json({ success: false, error: "You can only challenge a classmate" });
+
+      if (me.pool === "STUDENT") {
+        if (opponentUser.role !== "STUDENT" || !opponentUser.studentProfile || opponentUser.studentProfile.classId !== me.classId) {
+          return res.status(403).json({ success: false, error: "You can only challenge a classmate" });
+        }
+      } else {
+        if (!STAFF_ROLES.has(opponentUser.role)) {
+          return res.status(403).json({ success: false, error: "You can only challenge another staff member" });
+        }
       }
 
       const existing = await prisma.chessMatch.findFirst({
         where: {
           status: { in: ["PENDING", "ACTIVE"] },
           OR: [
-            { whiteId: me.id, blackId: opponentStudentId },
-            { whiteId: opponentStudentId, blackId: me.id },
+            { whiteId: me.id, blackId: opponentId },
+            { whiteId: opponentId, blackId: me.id },
           ],
         },
       });
@@ -211,11 +260,12 @@ export function registerChessGameRoutes({
       const meIsWhite = Math.random() < 0.5;
       const match = await prisma.chessMatch.create({
         data: {
-          whiteId: meIsWhite ? me.id : opponentStudentId,
-          blackId: meIsWhite ? opponentStudentId : me.id,
+          whiteId: meIsWhite ? me.id : opponentId,
+          blackId: meIsWhite ? opponentId : me.id,
           challengerId: me.id,
-          classId: me.classId,
-          className: me.className,
+          scope: me.pool,
+          classId: me.pool === "STUDENT" ? me.classId : null,
+          className: me.pool === "STUDENT" ? me.className : null,
           status: "PENDING",
           fen: START_FEN,
           moves: [],
@@ -223,7 +273,7 @@ export function registerChessGameRoutes({
         },
       });
 
-      notify([opponent.userId], { type: "chess_challenge", matchId: match.id, from: me.name });
+      notify([opponentId], { type: "chess_challenge", matchId: match.id, from: me.name });
       const full = await matchWithPlayers(match.id);
       res.json({ success: true, match: serializeMatch(full!, me.id) });
     } catch (error) {
@@ -235,7 +285,7 @@ export function registerChessGameRoutes({
 
   router.post("/matches/:id/accept", authMiddleware, async (req: Request, res: Response) => {
     try {
-      const me = await requireStudent(req, res);
+      const me = await requireIdentity(req, res);
       if (!me) return;
       const match = await prisma.chessMatch.findUnique({ where: { id: req.params.id } });
       if (!match) return res.status(404).json({ success: false, error: "Challenge not found" });
@@ -247,9 +297,7 @@ export function registerChessGameRoutes({
         where: { id: match.id },
         data: { status: "ACTIVE", respondedAt: new Date(), startedAt: new Date() },
       });
-      const opponentId = match.challengerId;
-      const opponent = await prisma.student.findUnique({ where: { id: opponentId } });
-      if (opponent?.userId) notify([opponent.userId], { type: "chess_accept", matchId: match.id, from: me.name });
+      notify([match.challengerId], { type: "chess_accept", matchId: match.id, from: me.name });
 
       const full = await matchWithPlayers(updated.id);
       res.json({ success: true, match: serializeMatch(full!, me.id) });
@@ -261,7 +309,7 @@ export function registerChessGameRoutes({
 
   router.post("/matches/:id/decline", authMiddleware, async (req: Request, res: Response) => {
     try {
-      const me = await requireStudent(req, res);
+      const me = await requireIdentity(req, res);
       if (!me) return;
       const match = await prisma.chessMatch.findUnique({ where: { id: req.params.id } });
       if (!match) return res.status(404).json({ success: false, error: "Challenge not found" });
@@ -272,8 +320,7 @@ export function registerChessGameRoutes({
         where: { id: match.id },
         data: { status: "DECLINED", respondedAt: new Date(), resultReason: "DECLINED" },
       });
-      const challenger = await prisma.student.findUnique({ where: { id: match.challengerId } });
-      if (challenger?.userId) notify([challenger.userId], { type: "chess_decline", matchId: match.id, from: me.name });
+      notify([match.challengerId], { type: "chess_decline", matchId: match.id, from: me.name });
       res.json({ success: true });
     } catch (error) {
       console.error("Error declining chess challenge:", error);
@@ -283,7 +330,7 @@ export function registerChessGameRoutes({
 
   router.post("/matches/:id/cancel", authMiddleware, async (req: Request, res: Response) => {
     try {
-      const me = await requireStudent(req, res);
+      const me = await requireIdentity(req, res);
       if (!me) return;
       const match = await prisma.chessMatch.findUnique({ where: { id: req.params.id } });
       if (!match) return res.status(404).json({ success: false, error: "Challenge not found" });
@@ -301,11 +348,11 @@ export function registerChessGameRoutes({
   // ── Match state & list ──────────────────────────────────────────────────────
   router.get("/matches", authMiddleware, async (req: Request, res: Response) => {
     try {
-      const me = await requireStudent(req, res);
+      const me = await requireIdentity(req, res);
       if (!me) return;
       const matches = await prisma.chessMatch.findMany({
         where: { OR: [{ whiteId: me.id }, { blackId: me.id }], status: { in: ["ACTIVE", "FINISHED"] } },
-        include: { white: { include: { user: true, class: true } }, black: { include: { user: true, class: true } } },
+        include: { white: { include: { studentProfile: { include: { class: true } } } }, black: { include: { studentProfile: { include: { class: true } } } } },
         orderBy: { updatedAt: "desc" },
         take: 30,
       });
@@ -322,7 +369,7 @@ export function registerChessGameRoutes({
 
   router.get("/matches/:id", authMiddleware, async (req: Request, res: Response) => {
     try {
-      const me = await requireStudent(req, res);
+      const me = await requireIdentity(req, res);
       if (!me) return;
       const match = await matchWithPlayers(req.params.id);
       if (!match) return res.status(404).json({ success: false, error: "Game not found" });
@@ -342,7 +389,7 @@ export function registerChessGameRoutes({
 
   router.post("/matches/:id/move", authMiddleware, async (req: Request, res: Response) => {
     try {
-      const me = await requireStudent(req, res);
+      const me = await requireIdentity(req, res);
       if (!me) return;
       const { from, to, promotion } = moveSchema.parse(req.body);
 
@@ -394,8 +441,7 @@ export function registerChessGameRoutes({
       const updated = await prisma.chessMatch.update({ where: { id: match.id }, data });
 
       const opponentId = myColor === "w" ? match.blackId : match.whiteId;
-      const opponent = await prisma.student.findUnique({ where: { id: opponentId } });
-      if (opponent?.userId) notify([opponent.userId], { type: "chess_move", matchId: match.id });
+      notify([opponentId], { type: "chess_move", matchId: match.id });
 
       const full = await matchWithPlayers(updated.id);
       res.json({ success: true, match: serializeMatch(full!, me.id) });
@@ -408,7 +454,7 @@ export function registerChessGameRoutes({
 
   router.post("/matches/:id/resign", authMiddleware, async (req: Request, res: Response) => {
     try {
-      const me = await requireStudent(req, res);
+      const me = await requireIdentity(req, res);
       if (!me) return;
       const match = await prisma.chessMatch.findUnique({ where: { id: req.params.id } });
       if (!match) return res.status(404).json({ success: false, error: "Game not found" });
@@ -427,8 +473,7 @@ export function registerChessGameRoutes({
       });
 
       const opponentId = myColor === "w" ? match.blackId : match.whiteId;
-      const opponent = await prisma.student.findUnique({ where: { id: opponentId } });
-      if (opponent?.userId) notify([opponent.userId], { type: "chess_resign", matchId: match.id, from: me.name });
+      notify([opponentId], { type: "chess_resign", matchId: match.id, from: me.name });
 
       const full = await matchWithPlayers(updated.id);
       res.json({ success: true, match: serializeMatch(full!, me.id) });
@@ -441,28 +486,32 @@ export function registerChessGameRoutes({
   // ── Leaderboard ──────────────────────────────────────────────────────────────
   router.get("/leaderboard", authMiddleware, async (req: Request, res: Response) => {
     try {
-      const me = await requireStudent(req, res);
+      const me = await requireIdentity(req, res);
       if (!me) return;
-      const scope = req.query.scope === "all" ? "all" : "class";
-      if (scope === "class" && !me.classId) {
-        return res.json({ success: true, scope, className: me.className, leaderboard: [] });
+
+      // Staff play in one school-wide pool (no "class" concept), so the
+      // class/all toggle only applies to the student pool.
+      const scope = me.pool === "STUDENT" && req.query.scope === "all" ? "all" : "class";
+      if (me.pool === "STUDENT" && scope === "class" && !me.classId) {
+        return res.json({ success: true, pool: me.pool, scope, groupLabel: me.className, leaderboard: [] });
       }
 
       const matches = await prisma.chessMatch.findMany({
         where: {
           status: "FINISHED",
-          ...(scope === "class" ? { classId: me.classId } : {}),
+          scope: me.pool,
+          ...(me.pool === "STUDENT" && scope === "class" ? { classId: me.classId } : {}),
         },
         select: { whiteId: true, blackId: true, result: true },
       });
 
-      const studentIds = new Set<string>();
-      for (const m of matches) { studentIds.add(m.whiteId); studentIds.add(m.blackId); }
+      const userIds = new Set<string>();
+      for (const m of matches) { userIds.add(m.whiteId); userIds.add(m.blackId); }
 
-      type Row = { studentId: string; wins: number; losses: number; draws: number; games: number; points: number };
+      type Row = { id: string; wins: number; losses: number; draws: number; games: number; points: number };
       const rows = new Map<string, Row>();
       const bump = (id: string, key: "wins" | "losses" | "draws") => {
-        const row = rows.get(id) ?? { studentId: id, wins: 0, losses: 0, draws: 0, games: 0, points: 0 };
+        const row = rows.get(id) ?? { id, wins: 0, losses: 0, draws: 0, games: 0, points: 0 };
         row[key]++;
         row.games++;
         row.points = row.wins * POINTS.WIN + row.draws * POINTS.DRAW;
@@ -474,18 +523,18 @@ export function registerChessGameRoutes({
         else { bump(m.whiteId, "draws"); bump(m.blackId, "draws"); }
       }
 
-      const students = await prisma.student.findMany({
-        where: { id: { in: [...studentIds] } },
-        include: { user: true, class: true },
+      const users = await prisma.user.findMany({
+        where: { id: { in: [...userIds] } },
+        include: { studentProfile: { include: { class: true } } },
       });
-      const byId = new Map(students.map((s) => [s.id, s]));
+      const byId = new Map(users.map((u) => [u.id, u]));
 
       const leaderboard = [...rows.values()]
-        .map((row) => ({ ...row, ...publicStudent(byId.get(row.studentId) as any) }))
+        .map((row) => ({ ...row, ...publicPlayer(byId.get(row.id) as any) }))
         .sort((a, b) => b.points - a.points || b.wins - a.wins || a.losses - b.losses)
         .map((row, index) => ({ rank: index + 1, ...row }));
 
-      res.json({ success: true, scope, className: me.className, leaderboard });
+      res.json({ success: true, pool: me.pool, scope, groupLabel: me.pool === "STUDENT" ? me.className : "Staff", leaderboard });
     } catch (error) {
       console.error("Error building chess leaderboard:", error);
       res.status(500).json({ success: false, error: "Failed to load leaderboard" });

@@ -11,7 +11,6 @@ import type { OnlinePlayer } from "./ChessGame";
 
 interface LeaderboardRow extends OnlinePlayer {
   rank: number;
-  studentId: string;
   wins: number;
   losses: number;
   draws: number;
@@ -28,7 +27,8 @@ const RANK_STYLE: Record<number, string> = {
 export default function ChessLeaderboardPage() {
   const navigate = useNavigate();
   const [scope, setScope] = React.useState<"class" | "all">("class");
-  const [className, setClassName] = React.useState<string | null>(null);
+  const [pool, setPool] = React.useState<"STUDENT" | "STAFF" | null>(null);
+  const [groupLabel, setGroupLabel] = React.useState<string | null>(null);
   const [rows, setRows] = React.useState<LeaderboardRow[] | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -36,15 +36,20 @@ export default function ChessLeaderboardPage() {
     let cancelled = false;
     setRows(null);
     setError(null);
-    apiGet<{ success: boolean; className: string | null; leaderboard: LeaderboardRow[] }>(`/api/games/chess/leaderboard?scope=${scope}`)
+    apiGet<{ success: boolean; pool: "STUDENT" | "STAFF"; groupLabel: string | null; leaderboard: LeaderboardRow[] }>(`/api/games/chess/leaderboard?scope=${scope}`)
       .then((data) => {
         if (cancelled) return;
-        setClassName(data.className);
+        setPool(data.pool);
+        setGroupLabel(data.groupLabel);
         setRows(data.leaderboard);
       })
       .catch((err) => { if (!cancelled) setError(err?.message || "Couldn't load the leaderboard"); });
     return () => { cancelled = true; };
   }, [scope]);
+
+  const isStudentPool = pool === "STUDENT";
+  const peerWord = isStudentPool ? "classmate" : "colleague";
+  const personColumn = isStudentPool ? "Student" : "Staff";
 
   return (
     <div className="min-h-screen bg-[#161512] text-white">
@@ -54,7 +59,7 @@ export default function ChessLeaderboardPage() {
             <div className="grid size-10 place-items-center rounded-xl bg-amber-500/90 text-2xl"><Trophy className="size-5" /></div>
             <div>
               <h1 className="text-xl font-bold">Chess leaderboard</h1>
-              <p className="text-xs text-white/45">{scope === "class" ? className ?? "Your class" : "Whole school"}</p>
+              <p className="text-xs text-white/45">{isStudentPool ? (scope === "class" ? groupLabel ?? "Your class" : "Whole school") : "Staff"}</p>
             </div>
           </div>
           <div className="flex gap-2">
@@ -62,29 +67,31 @@ export default function ChessLeaderboardPage() {
           </div>
         </div>
 
-        <div className="mb-4 flex gap-2">
-          <button type="button" onClick={() => setScope("class")} className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${scope === "class" ? "bg-[#759954] text-white" : "bg-white/5 text-white/60 hover:bg-white/10"}`}>My class</button>
-          <button type="button" onClick={() => setScope("all")} className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${scope === "all" ? "bg-[#759954] text-white" : "bg-white/5 text-white/60 hover:bg-white/10"}`}>Whole school</button>
-        </div>
+        {isStudentPool && (
+          <div className="mb-4 flex gap-2">
+            <button type="button" onClick={() => setScope("class")} className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${scope === "class" ? "bg-[#759954] text-white" : "bg-white/5 text-white/60 hover:bg-white/10"}`}>My class</button>
+            <button type="button" onClick={() => setScope("all")} className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${scope === "all" ? "bg-[#759954] text-white" : "bg-white/5 text-white/60 hover:bg-white/10"}`}>Whole school</button>
+          </div>
+        )}
 
         {rows === null ? (
           <div className="grid min-h-[30vh] place-items-center text-white/50"><Loader2 className="size-6 animate-spin" /></div>
         ) : error ? (
           <Card className="border-white/10 bg-[#262522] p-6 text-center text-white/70">{error}</Card>
         ) : rows.length === 0 ? (
-          <Card className="border-white/10 bg-[#262522] p-6 text-center text-white/60">No finished games yet — challenge a classmate to get on the board!</Card>
+          <Card className="border-white/10 bg-[#262522] p-6 text-center text-white/60">No finished games yet — challenge a {peerWord} to get on the board!</Card>
         ) : (
           <Card className="overflow-hidden border-white/10 bg-[#262522]">
             <div className="grid grid-cols-[2.5rem_1fr_3rem_3rem_3rem_3.5rem] items-center gap-2 border-b border-white/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-white/35">
               <span>#</span>
-              <span>Student</span>
+              <span>{personColumn}</span>
               <span className="text-center">W</span>
               <span className="text-center">D</span>
               <span className="text-center">L</span>
               <span className="text-right">Pts</span>
             </div>
             {rows.map((row) => (
-              <div key={row.studentId} className="grid grid-cols-[2.5rem_1fr_3rem_3rem_3rem_3.5rem] items-center gap-2 border-b border-white/5 px-4 py-2.5 last:border-b-0">
+              <div key={row.id} className="grid grid-cols-[2.5rem_1fr_3rem_3rem_3rem_3.5rem] items-center gap-2 border-b border-white/5 px-4 py-2.5 last:border-b-0">
                 <span className={`grid size-7 place-items-center rounded-full text-xs font-bold ${RANK_STYLE[row.rank] ?? "bg-white/5 text-white/50"}`}>
                   {row.rank <= 3 ? <Medal className="size-3.5" /> : row.rank}
                 </span>
@@ -92,7 +99,7 @@ export default function ChessLeaderboardPage() {
                   <UserAvatar name={row.name} src={row.profilePhotoUrl} className="size-8 shrink-0 text-[11px]" />
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold">{row.name}</p>
-                    <p className="text-[11px] text-white/40">{row.games} game{row.games === 1 ? "" : "s"}</p>
+                    <p className="text-[11px] text-white/40">{row.games} game{row.games === 1 ? "" : "s"}{!isStudentPool && row.groupLabel ? ` · ${row.groupLabel}` : ""}</p>
                   </div>
                 </div>
                 <span className="text-center text-sm text-[#98b873]">{row.wins}</span>
