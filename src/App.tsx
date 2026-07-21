@@ -190,6 +190,7 @@ const ChessLobbyPage = lazy(() => import("./pages/games/chess/Lobby"));
 const ChessLeaderboardPage = lazy(() => import("./pages/games/chess/Leaderboard"));
 
 const Dictionary = lazy(() => import("./pages/dictionary/Dictionary"));
+const MonLanguage = lazy(() => import("./pages/MonLanguage"));
 
 const AnnouncementsList = lazy(() => import("./pages/announcements/AnnouncementsList"));
 const AnnouncementNew = lazy(() => import("./pages/announcements/AnnouncementNew"));
@@ -338,6 +339,9 @@ export default function App() {
                 {/* News — daily-refreshed RSS digest, available to every authenticated role */}
                 <Route path="/news" element={<NewsFeed />} />
                 <Route path="/news/:id" element={<ArticleReader />} />
+
+                {/* Embedded Mon language learning app — available to every authenticated role */}
+                <Route path="/mon-language" element={<MonLanguage />} />
 
                 <Route path="/games/sudoku" element={<SudokuSelectPage />} />
                 <Route path="/games/sudoku/play" element={<SudokuPlayPage />} />

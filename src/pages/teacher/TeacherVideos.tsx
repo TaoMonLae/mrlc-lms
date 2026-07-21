@@ -35,9 +35,16 @@ export default function TeacherVideos() {
   };
 
   useEffect(() => {
-    apiGet<VideoLesson[]>('/api/videos')
-      .then((d) => setVideos(Array.isArray(d) ? d : []))
-      .catch(() => setVideos([]));
+    const loadVideos = async () => {
+      await apiSend('/api/videos/media-session', 'POST', {}).catch(() => undefined);
+      try {
+        const data = await apiGet<VideoLesson[]>('/api/videos');
+        setVideos(Array.isArray(data) ? data : []);
+      } catch {
+        setVideos([]);
+      }
+    };
+    loadVideos();
   }, []);
 
   const filtered = videos.filter(v =>

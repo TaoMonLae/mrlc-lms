@@ -40,6 +40,7 @@ export default function VideoList() {
   useEffect(() => {
     const fetchVideos = async () => {
       try {
+        await apiSend('/api/videos/media-session', 'POST', {}).catch(() => undefined);
         const data = await apiGet<VideoLesson[]>('/api/videos');
         setVideos(Array.isArray(data) ? data : []);
       } catch (error) {

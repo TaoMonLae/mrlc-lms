@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, Info, Upload, X, Film } from 'lucide-react';
 import { useForm, type Resolver } from 'react-hook-form';
@@ -18,13 +18,18 @@ import {
 import { toast } from 'sonner';
 import { isValidVideoSourceUrl, getVideoThumbnailUrl } from '../../lib/video';
 import {
-  MAX_VIDEO_FILE_SIZE,
   MAX_VIDEO_FILE_SIZE_DISPLAY,
   ALLOWED_VIDEO_EXTENSIONS,
 } from '../../lib/video/constants';
-import type { VideoVisibility, VideoStatus, VideoLesson } from '../../lib/video/types';
+import type { VideoLesson } from '../../lib/video/types';
 import { useVideoFileUpload } from '../../hooks/useVideoFileUpload';
 import { CaptionUploadButton } from '../../components/video/CaptionUploadButton';
+import {
+  discardTemporaryVideoAsset,
+  isValidThumbnailUrl,
+  uploadVideoThumbnail,
+  VideoThumbnailField,
+} from '../../components/video/VideoThumbnailField';
 
 const videoUrlSchema = z.string().min(1, 'Video URL is required').refine(
   isValidVideoSourceUrl,
@@ -35,7 +40,7 @@ const videoSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
   description: z.string().optional(),
   videoUrl: videoUrlSchema,
-  thumbnailUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
+  thumbnailUrl: z.string().refine(isValidThumbnailUrl, 'Must be a valid HTTP(S) URL').optional(),
   captionsUrl: z.string().optional(),
   duration: z.coerce.number().int().min(0).optional(),
   classId: z.string().optional(),
@@ -64,6 +69,7 @@ export default function VideoEdit() {
   const [video, setVideo] = useState<VideoLesson | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploadMethod, setUploadMethod] = useState<'url' | 'file'>('url');
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
 
   const {
     file: videoFile,
@@ -179,13 +185,15 @@ export default function VideoEdit() {
   }
 
   const onSubmit = async (data: FormValues) => {
+    let uploadedThumbnailUrl: string | null = null;
     try {
       const token = sessionStorage.getItem('auth_token');
+      if (thumbnailFile) uploadedThumbnailUrl = await uploadVideoThumbnail(thumbnailFile);
       const payload = {
         ...data,
         classId: data.classId || null,
         subjectId: data.subjectId || null,
-        thumbnailUrl: data.thumbnailUrl || null,
+        thumbnailUrl: uploadedThumbnailUrl || data.thumbnailUrl || null,
         duration: data.duration || null,
       };
 
@@ -206,6 +214,7 @@ export default function VideoEdit() {
       toast.success('Video lesson updated successfully.');
       navigate(`/videos/${id}`);
     } catch (error: any) {
+      if (uploadedThumbnailUrl) await discardTemporaryVideoAsset(uploadedThumbnailUrl);
       toast.error(error.message || 'Failed to update video lesson');
     }
   };
@@ -398,11 +407,13 @@ export default function VideoEdit() {
               {errors.duration && <p className="text-xs text-red-500 font-medium">{errors.duration.message}</p>}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="thumbnailUrl">Thumbnail URL (Optional)</Label>
-              <Input id="thumbnailUrl" {...register('thumbnailUrl')} placeholder="https://..." />
-              {errors.thumbnailUrl && <p className="text-xs text-red-500 font-medium">{errors.thumbnailUrl.message}</p>}
-            </div>
+            <VideoThumbnailField
+              value={thumbnailUrl || ''}
+              file={thumbnailFile}
+              error={errors.thumbnailUrl?.message}
+              onUrlChange={(value) => setValue('thumbnailUrl', value, { shouldValidate: true })}
+              onFileChange={setThumbnailFile}
+            />
 
             <div className="space-y-2">
               <Label htmlFor="captionsUrl">Captions / Subtitles (Optional)</Label>

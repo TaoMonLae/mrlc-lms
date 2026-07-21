@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Video, Search, Filter, Play, Clock, BookOpen, Check, AlertTriangle } from 'lucide-react';
-import { apiGet } from '../../lib/api';
+import { apiGet, apiSend } from '../../lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -25,10 +25,18 @@ export default function StudentVideos() {
   const { progressMap } = useAllVideoProgress();
 
   useEffect(() => {
-    apiGet<VideoLesson[]>('/api/videos')
-      .then((d) => setVideos(Array.isArray(d) ? d : []))
-      .catch(() => setVideos([]))
-      .finally(() => setLoading(false));
+    const loadVideos = async () => {
+      await apiSend('/api/videos/media-session', 'POST', {}).catch(() => undefined);
+      try {
+        const data = await apiGet<VideoLesson[]>('/api/videos');
+        setVideos(Array.isArray(data) ? data : []);
+      } catch {
+        setVideos([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadVideos();
   }, []);
 
   // Build unique subjects list with both ID and name for proper filtering

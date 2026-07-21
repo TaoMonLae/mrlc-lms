@@ -384,6 +384,19 @@ const captionFileUpload = multer({
   },
 });
 
+// Custom video thumbnails are decoded and normalised with Sharp before they
+// are persisted. Keeping the upload in memory until decoding succeeds avoids
+// storing disguised/non-image payloads in the media directory.
+const videoThumbnailUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = new Set(["image/jpeg", "image/png", "image/webp"]);
+    if (allowed.has(file.mimetype)) cb(null, true);
+    else cb(new Error("Only JPG, PNG, and WEBP thumbnail images are allowed"));
+  },
+});
+
 // ─── Database backups ──────────────────────────────────────────────────────────
 // Real pg_dump backups written to disk (a Docker volume in production). Override
 // the location with BACKUP_DIR and how many to keep with BACKUP_RETENTION.
@@ -1808,6 +1821,7 @@ async function startServer() {
                 "https://www.youtube.com",
                 "https://www.youtube-nocookie.com",
                 "https://player.vimeo.com",
+                "https://the-mon-language.web.app",
               ],
               "object-src": ["'self'", "blob:", "data:"],
               "upgrade-insecure-requests": null,
@@ -1985,7 +1999,7 @@ async function startServer() {
     try {
       const mediaUrl = `/uploads/videos/${filename}`;
       const lesson = await prisma.videoLesson.findFirst({
-        where: { OR: [{ videoUrl: mediaUrl }, { captionsUrl: mediaUrl }] },
+        where: { OR: [{ videoUrl: mediaUrl }, { captionsUrl: mediaUrl }, { thumbnailUrl: mediaUrl }] },
         select: { visibility: true, status: true, classId: true },
       });
       if (!lesson) {
@@ -5208,6 +5222,17 @@ async function startServer() {
     });
   };
 
+  const uploadVideoThumbnail = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    videoThumbnailUpload.single("thumbnail")(req, res, (err: any) => {
+      if (!err) return next();
+      const message =
+        err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE"
+          ? "Thumbnail images must be 5 MB or smaller"
+          : err.message || "Upload failed";
+      res.status(400).json({ error: message });
+    });
+  };
+
   const uploadAdmissionFile = (req: express.Request, res: express.Response, next: express.NextFunction) => {
     admissionFileUpload.single("file")(req, res, (err: any) => {
       if (!err) return next();
@@ -6397,7 +6422,7 @@ async function startServer() {
 
     try {
       const linked = await prisma.videoLesson.findFirst({
-        where: { OR: [{ videoUrl: url }, { captionsUrl: url }] },
+        where: { OR: [{ videoUrl: url }, { captionsUrl: url }, { thumbnailUrl: url }] },
         select: { id: true },
       });
       if (linked) {
@@ -6463,6 +6488,29 @@ async function startServer() {
       }
     }
     res.json({ url: `/uploads/videos/${file.filename}`, originalName: file.originalname });
+  });
+
+  // Teacher/admin thumbnail upload. The resulting private media URL can be
+  // saved directly in VideoLesson.thumbnailUrl and is authorised by the same
+  // scoped cookie and lesson visibility rules as the video itself.
+  app.post("/api/videos/thumbnails", authMiddleware, requirePermission("manage_videos"), uploadVideoThumbnail, async (req, res) => {
+    const file = (req as any).file as Express.Multer.File | undefined;
+    if (!file) { res.status(400).json({ error: "Thumbnail image is required" }); return; }
+
+    const filename = `${crypto.randomUUID()}.webp`;
+    const outputPath = path.join(VIDEO_FILES_DIR, filename);
+    try {
+      await sharp(file.buffer, { limitInputPixels: 40_000_000 })
+        .rotate()
+        .resize({ width: 1280, height: 720, fit: "inside", withoutEnlargement: true })
+        .webp({ quality: 84 })
+        .toFile(outputPath);
+      res.json({ url: `/uploads/videos/${filename}`, originalName: file.originalname });
+    } catch (err) {
+      await fs.promises.unlink(outputPath).catch(() => {});
+      logger.warn("Video thumbnail upload rejected:", err);
+      res.status(400).json({ error: "The uploaded file is not a valid thumbnail image" });
+    }
   });
 
   app.post("/api/videos/media-session", authMiddleware, (req, res) => {
@@ -6676,6 +6724,13 @@ async function startServer() {
         }
       }
 
+      if (thumbnailUrl !== undefined && thumbnailUrl !== currentVideo.thumbnailUrl && currentVideo.thumbnailUrl?.startsWith("/uploads/videos/")) {
+        const thumbnailName = currentVideo.thumbnailUrl.replace("/uploads/videos/", "");
+        if (thumbnailName === path.basename(thumbnailName)) {
+          await fs.promises.unlink(path.join(VIDEO_FILES_DIR, thumbnailName)).catch(() => {});
+        }
+      }
+
       await createAuditLog(
         jwtUser.userId,
         jwtUser.email,
@@ -6745,6 +6800,13 @@ async function startServer() {
         const captionName = video.captionsUrl.replace("/uploads/videos/", "");
         if (captionName === path.basename(captionName)) {
           await fs.promises.unlink(path.join(VIDEO_FILES_DIR, captionName)).catch(() => {});
+        }
+      }
+
+      if (video.thumbnailUrl?.startsWith("/uploads/videos/")) {
+        const thumbnailName = video.thumbnailUrl.replace("/uploads/videos/", "");
+        if (thumbnailName === path.basename(thumbnailName)) {
+          await fs.promises.unlink(path.join(VIDEO_FILES_DIR, thumbnailName)).catch(() => {});
         }
       }
 

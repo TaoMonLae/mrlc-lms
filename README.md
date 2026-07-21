@@ -30,6 +30,7 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 ### Video lessons
 
 - Chunked uploads for lesson videos up to 500 MB.
+- Teachers and administrators can upload custom JPG, PNG, or WEBP lesson thumbnails up to 5 MB. Uploaded images are validated, resized, converted to WEBP, previewed in the lesson form, and cleaned up when replaced or deleted.
 - Native MP4/WebM playback; MOV, AVI, MKV, WMV, FLV, MTS/M2TS, TS, M4V, MPG/MPEG, and 3GP sources are converted in the background to browser-compatible MP4.
 - Conversion uses H.264 video, AAC audio, `yuv420p`, even dimensions, and fast-start metadata.
 - Converted files are validated with `ffprobe` before they are published, preventing broken `0:00 / --:--` players.
@@ -45,6 +46,12 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 - Resume position, full-book search, table of contents, highlights, full-page reading, selected-word dictionary lookup, and highlight-to-flashcard creation.
 - Reading analytics show books opened, books completed at 90%+, percentage read, active reading time, open count, and last-read activity by student.
 - Optional Project Gutenberg import through Gutendex.
+
+### Mon language learning
+
+- Every authenticated role has a **Mon Language** navigation tab that embeds [The Mon Language](https://the-mon-language.web.app/) learning app inside the LMS.
+- The embedded page is responsive and includes a direct “Open in new tab” fallback.
+- Production Content Security Policy configuration explicitly permits this trusted iframe origin.
 
 ### Platform fixes
 
@@ -65,8 +72,9 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 | Gradebook | Marks, class reports, individual progress, and GED readiness tracking |
 | Flashcards | Deck creation, sharing, class assignment, mastery, quiz, match, spelling, and progress reporting |
 | Lesson planner | Teacher planning and classroom resource organization |
-| Video lessons | Upload/conversion, captions, required viewing, progress, and watch analytics |
+| Video lessons | Upload/conversion, custom thumbnails, captions, required viewing, progress, and watch analytics |
 | E-Library | PDF/EPUB management, reading tools, progress, highlights, dictionary lookup, and analytics |
+| Mon Language | Embedded Mon language learning and play activities for every authenticated role |
 | Resource library | Class/subject resources and external links |
 | Physical library | Book catalog, borrowing, returns, and due-date management |
 | Dictionary | Offline English definitions and English/Myanmar/Thai/Mon lookup data |
@@ -99,6 +107,8 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 ### Languages
 
 The interface supports English, Burmese, and Mon through locale files under `src/i18n/locales/`. The school-wide default is configurable in Settings, and users can select their own preference where supported.
+
+The **Mon Language** tab at `/mon-language` embeds `https://the-mon-language.web.app/` for all authenticated users. It requires browser access to that external origin; if embedding is unavailable, users can open the learning app in a separate tab from the page header.
 
 ## Architecture
 
@@ -250,6 +260,7 @@ Password-reset requests are stored in a retryable email outbox. Configure SMTP i
 - Large files use resumable-style chunked transport in the form UI.
 - MP4 and WebM are stored directly.
 - Other supported formats are converted asynchronously to MP4.
+- Custom thumbnails accept JPG, PNG, and WEBP files up to 5 MB and are normalized to WEBP with a maximum size of 1280×720.
 - Keep the application process and persistent video volume available until conversion completes.
 - A process restart marks an interrupted conversion as failed so it can be re-uploaded instead of remaining stuck forever.
 
@@ -258,7 +269,7 @@ Password-reset requests are stored in a retryable email outbox. Configure SMTP i
 Do not treat `data/` as disposable build output. At minimum, preserve:
 
 - E-books and covers
-- Lesson videos, captions, and conversion state
+- Lesson videos, thumbnails, captions, and conversion state
 - Flashcard images
 - Student and staff documents/profile media
 - Database backups
@@ -432,6 +443,12 @@ Confirm `DATABASE_URL`, `SESSION_SECRET`, `APP_URL`, port availability, and writ
 - Set `APP_URL` to the exact HTTPS origin used in the browser.
 - Ensure the reverse proxy forwards to the configured `PORT`.
 - Rebuild after frontend changes and restart with updated environment variables.
+
+### The Mon Language tab does not load
+
+- Confirm the browser and server network can reach `https://the-mon-language.web.app/`.
+- Confirm the production `frame-src` Content Security Policy still includes `https://the-mon-language.web.app`.
+- Use **Open in new tab** to distinguish an upstream availability problem from an iframe/CSP problem.
 
 ## Notable third-party data and acknowledgments
 
