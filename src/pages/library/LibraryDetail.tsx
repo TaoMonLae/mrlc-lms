@@ -29,6 +29,12 @@ export default function LibraryDetail() {
 
   useEffect(() => {
     if (!id) return;
+    // Refresh the scoped library-media cookie so the embedded iframe + the
+    // "Open" link (both unauthenticated browser requests) can read the file.
+    const mediaToken = sessionStorage.getItem('auth_token');
+    if (mediaToken) {
+      fetch('/api/library/media-session', { method: 'POST', headers: { Authorization: `Bearer ${mediaToken}` } }).catch(() => {});
+    }
     const fetchResource = async () => {
       try {
         const token = sessionStorage.getItem('auth_token');

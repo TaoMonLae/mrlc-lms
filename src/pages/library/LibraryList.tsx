@@ -47,24 +47,28 @@ export default function LibraryList() {
   const [typeFilter, setTypeFilter] = useState('ALL');
   const [visibilityFilter, setVisibilityFilter] = useState('ALL');
   const [resources, setResources] = useState<Resource[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const token = sessionStorage.getItem('auth_token');
+    // Refresh the scoped library-media cookie so browser <a>/<img> requests to
+    // /uploads/library carry auth (the route rejects unauthenticated GETs).
+    if (token) {
+      fetch('/api/library/media-session', { method: 'POST', headers: { Authorization: `Bearer ${token}` } }).catch(() => {});
+    }
     const fetchResources = async () => {
       try {
         const token = sessionStorage.getItem('auth_token');
-        const res = await fetch('/api/library', {
+        const res = await fetch('/api/library?paginated=1', {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error('Failed to fetch library resources');
         const data = await res.json();
-        setResources(
-          (Array.isArray(data) ? data : []).map((r: any) => ({
-            ...r,
-            status: r.status || 'ACTIVE',
-            uploadedByName: r.uploadedByName || 'School Library',
-          }))
-        );
+        const items = Array.isArray(data?.items) ? data.items : [];
+        setResources(items.map((r: any) => ({ ...r, status: r.status || 'ACTIVE', uploadedByName: r.uploadedByName || 'School Library' })));
+        setNextCursor(data?.nextCursor ?? null);
       } catch (error) {
         console.error('Error fetching library resources:', error);
         toast.error('Failed to load library resources');
@@ -74,6 +78,27 @@ export default function LibraryList() {
     };
     fetchResources();
   }, []);
+
+  const loadMore = async () => {
+    if (!nextCursor || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`/api/library?paginated=1&cursor=${encodeURIComponent(nextCursor)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to load more');
+      const data = await res.json();
+      const items = Array.isArray(data?.items) ? data.items : [];
+      setResources((prev) => [...prev, ...items.map((r: any) => ({ ...r, status: r.status || 'ACTIVE', uploadedByName: r.uploadedByName || 'School Library' }))]);
+      setNextCursor(data?.nextCursor ?? null);
+    } catch (error) {
+      console.error('Error loading more:', error);
+      toast.error('Failed to load more');
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const deleteResource = async (resource: Resource) => {
     if (!confirm(`Delete "${resource.title}"? This cannot be undone.`)) return;
@@ -264,6 +289,13 @@ export default function LibraryList() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+      {nextCursor && (
+        <div className="flex justify-center py-4">
+          <Button variant="outline" onClick={loadMore} disabled={loadingMore}>
+            {loadingMore ? 'Loading…' : 'Load more'}
+          </Button>
         </div>
       )}
     </div>

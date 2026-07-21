@@ -313,16 +313,38 @@ export default function EbookReader() {
 }
 
 /* ─────────────────────── Shared: selection action bar ─────────────────────── */
+const HIGHLIGHT_COLORS = [
+  { value: 'yellow', dot: '#facc15', label: 'Yellow' },
+  { value: 'green', dot: '#4ade80', label: 'Green' },
+  { value: 'blue', dot: '#60a5fa', label: 'Blue' },
+  { value: 'pink', dot: '#f472b6', label: 'Pink' },
+] as const;
+
 function SelectionBar({ text, onHighlight, onFlashcard, onDefine, onDismiss }: {
-  text: string; onHighlight: () => void; onFlashcard?: () => void; onDefine?: () => void; onDismiss: () => void;
+  text: string; onHighlight: (color: string) => void; onFlashcard?: () => void; onDefine?: () => void; onDismiss: () => void;
 }) {
+  const [color, setColor] = useState<string>('yellow');
   return (
     <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full border border-slate-200 dark:border-surface-raised bg-white dark:bg-surface-indigo shadow-lg px-3 py-1.5 max-w-[92%]">
       <span className="hidden sm:inline text-xs text-slate-500 truncate max-w-[180px]">"{text}"</span>
+      <div className="flex items-center gap-1" role="group" aria-label="Highlight color">
+        {HIGHLIGHT_COLORS.map((c) => (
+          <button
+            key={c.value}
+            type="button"
+            title={c.label}
+            aria-label={c.label}
+            aria-pressed={color === c.value}
+            onClick={() => setColor(c.value)}
+            className={`h-5 w-5 rounded-full transition-transform hover:scale-110 ${color === c.value ? 'ring-2 ring-offset-1 ring-slate-400 dark:ring-slate-300' : ''}`}
+            style={{ backgroundColor: c.dot }}
+          />
+        ))}
+      </div>
       {onDefine && (
         <Button size="sm" variant="outline" onClick={onDefine}><BookA className="h-3.5 w-3.5 mr-1.5" /> Define</Button>
       )}
-      <Button size="sm" variant="outline" onClick={onHighlight}><Highlighter className="h-3.5 w-3.5 mr-1.5" /> Highlight</Button>
+      <Button size="sm" variant="outline" onClick={() => onHighlight(color)}><Highlighter className="h-3.5 w-3.5 mr-1.5" /> Highlight</Button>
       {onFlashcard && (
         <Button size="sm" variant="outline" onClick={onFlashcard}><Sparkles className="h-3.5 w-3.5 mr-1.5" /> Flashcard</Button>
       )}
@@ -1031,13 +1053,13 @@ function PdfView({ id, token, bookTitle, canMakeFlashcards }: {
     setSelection(text.length > 0 ? text : null);
   };
 
-  const saveHighlight = async () => {
+  const saveHighlight = async (color: string) => {
     if (!selection) return;
     try {
       const res = await fetch(`/api/ebooks/${id}/highlights`, {
         method: 'POST',
         headers: authHeaders(token, true),
-        body: JSON.stringify({ text: selection, page }),
+        body: JSON.stringify({ text: selection, page, color }),
       });
       if (!res.ok) throw new Error('Could not save highlight.');
       const h = await res.json();
@@ -1472,13 +1494,13 @@ function EpubView({ id, token, blob, bookTitle, canMakeFlashcards }: {
     setSelection(null);
   };
 
-  const saveHighlight = async () => {
+  const saveHighlight = async (color: string) => {
     if (!selection) return;
     try {
       const res = await fetch(`/api/ebooks/${id}/highlights`, {
         method: 'POST',
         headers: authHeaders(token, true),
-        body: JSON.stringify({ text: selection.text, cfi: selection.cfiRange }),
+        body: JSON.stringify({ text: selection.text, cfi: selection.cfiRange, color }),
       });
       if (!res.ok) throw new Error('Could not save highlight.');
       const h: HighlightRow = await res.json();

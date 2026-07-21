@@ -67,6 +67,9 @@ export default function TeacherLibrary() {
   const [resources, setResources] = useState<ResourceRow[]>([]);
 
   useEffect(() => {
+    // Refresh the scoped library-media cookie so window.open() to an
+    // /uploads/library URL is authenticated by the static gate.
+    apiSend('/api/library/media-session', 'POST', {}).catch(() => {});
     apiGet<any[]>('/api/library')
       .then((r) => {
         setResources((r ?? []).map(mapLibraryResource));

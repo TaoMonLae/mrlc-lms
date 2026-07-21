@@ -57,6 +57,12 @@ export default function StudentLibrary() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const token = sessionStorage.getItem('auth_token');
+    // Refresh the scoped library-media cookie so window.open() to an
+    // /uploads/library URL is authenticated by the static gate.
+    if (token) {
+      fetch('/api/library/media-session', { method: 'POST', headers: { Authorization: `Bearer ${token}` } }).catch(() => {});
+    }
     const load = async () => {
       try {
         const token = sessionStorage.getItem('auth_token');

@@ -49,7 +49,7 @@ import {
 } from "./lib/backupArtifacts";
 import { checkWritableDirectory, probeCommand, summarizeHealth, type HealthCheckResult } from "./lib/systemHealth";
 import { extractRarEntry, listRarImageEntries } from "./lib/portableRar";
-import { cleanEbookTitle, findDuplicateEbookSeriesVolume, findDuplicateEbookTitle } from "./lib/ebookTitles";
+import { cleanEbookTitle, findDuplicateEbookSeriesVolume, findDuplicateEbookTitle, normalizedTitleForColumn } from "./lib/ebookTitles";
 
 dotenv.config();
 
@@ -1917,7 +1917,49 @@ async function startServer() {
     maxAge: isProduction ? "1h" : 0,
     immutable: false,
   }));
-  app.use("/uploads/library", express.static(LIBRARY_FILE_DIR, {
+  // Uploaded library files (PDFs/docs/images) are not public static content.
+  // Authenticate via the scoped httpOnly library_media_token cookie (native
+  // <a>/<img> requests can't send a Bearer header), then enforce the resource's
+  // visibility — students must never read TEACHERS_ONLY uploads, even if they
+  // guess the UUID filename.
+  app.use("/uploads/library", async (req, res, next) => {
+    let jwtUser: JwtPayload;
+    try {
+      jwtUser = verifyToken(String(req.cookies?.library_media_token || ""));
+    } catch {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    const filename = req.path.replace(/^\/+/, "");
+    if (!filename || filename !== path.basename(filename)) {
+      res.status(400).json({ error: "Invalid library file" });
+      return;
+    }
+
+    try {
+      const mediaUrl = `/uploads/library/${filename}`;
+      const resource = await prisma.libraryResource.findFirst({
+        where: { externalUrl: mediaUrl },
+        select: { visibility: true },
+      });
+      if (!resource) {
+        res.status(404).json({ error: "Library file not found" });
+        return;
+      }
+      const allowed = jwtUser.role === "ADMIN" ||
+        (jwtUser.role === "TEACHER" && ["ALL", "TEACHERS_ONLY"].includes(resource.visibility)) ||
+        (jwtUser.role === "STUDENT" && ["ALL", "STUDENTS"].includes(resource.visibility));
+      if (!allowed) {
+        res.status(403).json({ error: "Forbidden" });
+        return;
+      }
+      next();
+    } catch (err) {
+      logger.error("Error authorizing library media:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }, express.static(LIBRARY_FILE_DIR, {
     maxAge: isProduction ? "30d" : 0,
     immutable: isProduction,
   }));
@@ -2268,6 +2310,17 @@ async function startServer() {
         sameSite: "strict",
         maxAge: rememberMe ? 30 * 24 * 60 * 60 * 1000 : 8 * 60 * 60 * 1000,
         path: "/uploads/social",
+      });
+      // Scoped media token for library file downloads (PDFs/docs/images).
+      // The /uploads/library route verifies it and checks the resource's
+      // visibility, so TEACHERS_ONLY uploads can't be read by students (and
+      // nothing under /uploads/library is world-readable by URL guessing).
+      res.cookie("library_media_token", token, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: "strict",
+        maxAge: rememberMe ? 30 * 24 * 60 * 60 * 1000 : 8 * 60 * 60 * 1000,
+        path: "/uploads/library",
       });
 
       // Record the login time (fire-and-forget so a slow write can't block sign-in).
@@ -5725,20 +5778,45 @@ async function startServer() {
 
   app.get("/api/library", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
+    // Cursor pagination: clients that pass ?cursor= (or ?paginated=1 for the
+    // first page) get { items, nextCursor }; clients that don't get a legacy
+    // capped array so existing pages keep working without changes. Without
+    // pagination this returned every row, which scaled badly and sorted an
+    // unindexed column.
+    const LIBRARY_PAGE_SIZE = 50;
+    const wantsEnvelope = req.query.cursor != null || req.query.paginated === "1";
+    const cursor = typeof req.query.cursor === "string" && req.query.cursor ? req.query.cursor : null;
     try {
       let resources;
       if (jwtUser.role === "STUDENT") {
         resources = await prisma.libraryResource.findMany({
-          where: { visibility: { in: ["ALL", "STUDENTS"] } }
+          where: { visibility: { in: ["ALL", "STUDENTS"] } },
+          orderBy: { createdAt: "desc" },
+          take: LIBRARY_PAGE_SIZE + 1,
+          ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
         });
       } else if (jwtUser.role === "TEACHER") {
         resources = await prisma.libraryResource.findMany({
-          where: { visibility: { in: ["ALL", "TEACHERS_ONLY"] } }
+          where: { visibility: { in: ["ALL", "TEACHERS_ONLY"] } },
+          orderBy: { createdAt: "desc" },
+          take: LIBRARY_PAGE_SIZE + 1,
+          ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
         });
       } else {
-        resources = await prisma.libraryResource.findMany();
+        resources = await prisma.libraryResource.findMany({
+          orderBy: { createdAt: "desc" },
+          take: LIBRARY_PAGE_SIZE + 1,
+          ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+        });
       }
-      res.json(resources);
+      const hasMore = resources.length > LIBRARY_PAGE_SIZE;
+      const page = hasMore ? resources.slice(0, LIBRARY_PAGE_SIZE) : resources;
+      const nextCursor = hasMore ? page[page.length - 1].id : null;
+      // Legacy clients get the bare array; paginated clients (cursor or
+      // paginated=1) get the envelope. nextCursor is null when there's no
+      // more to load.
+      if (wantsEnvelope) res.json({ items: page, nextCursor });
+      else res.json(page);
     } catch (err) {
       logger.error("Error fetching library resources:", err);
       res.status(500).json({ error: "Internal Server Error" });
@@ -5890,6 +5968,57 @@ async function startServer() {
       res.json(updated);
     } catch (err) {
       logger.error("Error updating library resource:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // Replace the attached file of an existing resource (PDF/image/etc.). Uploads
+  // the new file, swaps externalUrl + size + mime, and unlinks the old file on
+  // disk. Previously there was no way to swap a file after creation — only
+  // metadata could be edited.
+  app.put("/api/library/:id/file", authMiddleware, uploadLibraryFile, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    const file = (req as any).file as Express.Multer.File | undefined;
+    if (!file) { res.status(400).json({ error: "File is required" }); return; }
+    try {
+      const existing = await prisma.libraryResource.findUnique({ where: { id: req.params.id } });
+      if (!existing) { res.status(404).json({ error: "Resource not found" }); return; }
+      if (jwtUser.role === "TEACHER" && existing.uploadedById !== jwtUser.userId) {
+        res.status(403).json({ error: "You can only edit resources you uploaded" });
+        return;
+      }
+      const updated = await prisma.libraryResource.update({
+        where: { id: req.params.id },
+        data: {
+          externalUrl: `/uploads/library/${file.filename}`,
+          fileSize: file.size,
+          mimeType: file.mimetype,
+          // A file replace doesn't bump downloadCount; reset lastDownloaded so
+          // stale analytics on the old file don't linger as if still accurate.
+          lastDownloaded: null,
+        },
+      });
+      // Best-effort removal of the superseded file (cover or prior upload).
+      if (existing.externalUrl?.startsWith("/uploads/library/")) {
+        const oldName = path.basename(existing.externalUrl);
+        if (oldName && oldName === path.basename(oldName) && oldName !== file.filename) {
+          fs.promises.unlink(path.join(LIBRARY_FILE_DIR, oldName)).catch(() => {});
+        }
+      }
+      res.json({
+        url: updated.externalUrl,
+        originalName: file.originalname,
+        size: file.size,
+        mimeType: file.mimetype,
+      });
+    } catch (err) {
+      // Roll back the new upload if the DB update failed, so we don't orphan it.
+      fs.promises.unlink(path.join(LIBRARY_FILE_DIR, file.filename)).catch(() => {});
+      logger.error("Error replacing library file:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
@@ -6345,6 +6474,21 @@ async function startServer() {
       sameSite: "strict",
       maxAge: 8 * 60 * 60 * 1000,
       path: "/uploads/videos",
+    });
+    res.json({ success: true });
+  });
+
+  // Refresh the scoped library media cookie for sessions that pre-date the
+  // auth gate (or whose 8h cookie expired). Mirrors the videos session route.
+  app.post("/api/library/media-session", authMiddleware, (req, res) => {
+    const token = req.headers.authorization?.replace(/^Bearer\s+/i, "");
+    if (!token) { res.status(400).json({ error: "Token required" }); return; }
+    res.cookie("library_media_token", token, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "strict",
+      maxAge: 8 * 60 * 60 * 1000,
+      path: "/uploads/library",
     });
     res.json({ success: true });
   });
@@ -15754,10 +15898,12 @@ async function startServer() {
         const ebook = await prisma.ebook.create({
           data: {
             title: cleanedTitle,
+            titleLower: normalizedTitleForColumn(cleanedTitle),
             author: author || null,
             description: description || null,
             category: category || null,
             seriesName: cleanedSeriesName,
+            seriesNameLower: cleanedSeriesName ? normalizedTitleForColumn(cleanedSeriesName) : null,
             seriesNumber: cleanedSeriesName ? parsedSeriesNumber : null,
             language: language || null,
             coverUrl: resolvedCoverUrl,
@@ -16043,11 +16189,11 @@ async function startServer() {
       const updated = await prisma.ebook.update({
         where: { id: req.params.id },
         data: {
-          ...(cleanedTitle && { title: cleanedTitle }),
+          ...(cleanedTitle && { title: cleanedTitle, titleLower: normalizedTitleForColumn(cleanedTitle) }),
           ...(author !== undefined && { author: author || null }),
           ...(description !== undefined && { description: description || null }),
           ...(category !== undefined && { category: category || null }),
-          ...(cleanedSeriesName !== undefined && { seriesName: cleanedSeriesName }),
+          ...(cleanedSeriesName !== undefined && { seriesName: cleanedSeriesName, seriesNameLower: cleanedSeriesName ? normalizedTitleForColumn(cleanedSeriesName) : null }),
           ...((seriesNumber !== undefined || cleanedSeriesName === null) && {
             seriesNumber: cleanedSeriesName === null ? null : parsedSeriesNumber,
           }),
@@ -20859,35 +21005,10 @@ async function startServer() {
   });
 
   // ── Library Resources API (Enhanced) ─────────────────────────────────────────────
-  app.get("/api/library", authMiddleware, async (req, res) => {
-    try {
-      const resources = await prisma.libraryResource.findMany({
-        orderBy: { createdAt: 'desc' }
-      });
-
-      const formattedResources = resources.map(resource => ({
-        id: resource.id,
-        title: resource.title,
-        author: resource.author || '—',
-        type: (resource.type || 'FILE').toUpperCase(),
-        description: resource.description,
-        externalUrl: resource.externalUrl,
-        fileSize: resource.fileSize || null,
-        downloadCount: resource.downloadCount || 0,
-        lastDownloaded: resource.lastDownloaded || null,
-        category: resource.category || null,
-        tags: resource.tags || [],
-        visibility: resource.visibility || 'ALL',
-        createdAt: resource.createdAt
-      }));
-
-      res.json(formattedResources);
-    } catch (err) {
-      logger.error("Error fetching library resources:", err);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  });
-
+  // NOTE: an earlier duplicate `app.get("/api/library")` lived here with no
+  // visibility filtering. It was unreachable (Express uses first-match, and
+  // the secure handler at the top of the file wins) but was a latent leak
+  // trap — removed. The /download route below is the only one of its kind.
   app.post("/api/library/:id/download", authMiddleware, async (req, res) => {
     const { id } = req.params;
     try {

@@ -54,6 +54,9 @@ export default function LibraryEdit() {
   const [classes, setClasses] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentFileUrl, setCurrentFileUrl] = useState<string | null>(null);
+  const [replacingFile, setReplacingFile] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const {
     register,
@@ -94,6 +97,7 @@ export default function LibraryEdit() {
           subjectId: resource.subjectId || undefined,
           externalUrl: resource.externalUrl || '',
         });
+        setCurrentFileUrl(resource.externalUrl || null);
       } catch (err) {
         console.error('Error loading resource data:', err);
         toast.error('Failed to load resource details');
@@ -147,6 +151,31 @@ export default function LibraryEdit() {
   };
 
   const resourceType = watch('type');
+
+  const replaceFile = async (file: File) => {
+    if (!id) return;
+    setReplacingFile(true);
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch(`/api/library/${id}/file`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Could not replace file');
+      setCurrentFileUrl(data.url);
+      setValue('externalUrl', data.url);
+      toast.success('File replaced.');
+    } catch (e: any) {
+      toast.error(e.message || 'Could not replace file');
+    } finally {
+      setReplacingFile(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
   const selectedClassId = watch('classId') || 'none';
   const selectedSubjectId = watch('subjectId') || 'none';
   const selectedClassLabel =
@@ -264,6 +293,28 @@ export default function LibraryEdit() {
                   <Input id="externalUrl" {...register('externalUrl')} placeholder="https://..." />
                   {errors.externalUrl && <p className="text-xs text-red-500 font-medium">{errors.externalUrl.message}</p>}
                </div>
+            </div>
+          )}
+
+          {resourceType !== 'VIDEO' && resourceType !== 'LINK' && currentFileUrl && (
+            <div className="pt-4 border-t border-slate-100 dark:border-surface-raised space-y-3">
+              <div className="space-y-1">
+                <Label>Attached file</Label>
+                <p className="text-xs text-slate-500 break-all">{currentFileUrl}</p>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,application/pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) replaceFile(f);
+                }}
+              />
+              <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={replacingFile}>
+                {replacingFile ? 'Replacing…' : 'Replace file'}
+              </Button>
             </div>
           )}
 

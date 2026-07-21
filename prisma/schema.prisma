@@ -801,6 +801,12 @@ model LibraryResource {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+  @@index([visibility])
+  // The /uploads/library auth gate looks resources up by externalUrl to check
+  // visibility before serving a file; index it so every file fetch is cheap.
+  @@index([externalUrl])
 }
 
 model FeePayment {
@@ -1795,10 +1801,16 @@ model InventoryItem {
 model Ebook {
   id           String  @id @default(uuid())
   title        String
+  // Normalized title (NFKC + trimmed + whitespace-collapsed + lowercased) used
+  // for duplicate detection. Indexed so findDuplicateEbookTitle is a lookup,
+  // not a full-table scan. Backfilled by migration; kept in sync on write.
+  titleLower   String?
   author       String?
   description  String?
   category     String?
   seriesName   String?
+  // Normalized series name, for the same reason as titleLower.
+  seriesNameLower String?
   seriesNumber Int?
   language     String?
   coverUrl     String?
@@ -1821,9 +1833,11 @@ model Ebook {
   highlights EbookHighlight[]
 
   @@index([title])
+  @@index([titleLower])
   @@index([author])
   @@index([category])
   @@index([seriesName, seriesNumber])
+  @@index([seriesNameLower, seriesNumber])
   @@index([format])
 }
 

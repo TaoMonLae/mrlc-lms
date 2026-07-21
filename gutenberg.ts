@@ -2,7 +2,7 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 import crypto from "crypto";
-import { cleanEbookTitle, findDuplicateEbookTitle } from "./lib/ebookTitles";
+import { cleanEbookTitle, findDuplicateEbookTitle, normalizedTitleForColumn } from "./lib/ebookTitles";
 
 interface JwtPayload { userId: string; role: string; email: string; }
 
@@ -187,6 +187,7 @@ export function registerGutenbergRoutes(deps: Deps): void {
       const ebook = await prisma.ebook.create({
         data: {
           title: cleanedTitle,
+          titleLower: normalizedTitleForColumn(cleanedTitle),
           author,
           description: null,
           category: category || inferGutenbergCategory(book),
