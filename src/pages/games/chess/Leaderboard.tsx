@@ -81,7 +81,7 @@ export default function ChessLeaderboardPage() {
         ) : rows.length === 0 ? (
           <Card className="border-white/10 bg-[#262522] p-6 text-center text-white/60">No finished games yet — challenge a {peerWord} to get on the board!</Card>
         ) : (
-          <Card className="overflow-hidden border-white/10 bg-[#262522]">
+          <Card className="gap-0 overflow-hidden border-white/10 bg-[#262522] py-0">
             <div className="grid grid-cols-[2.5rem_1fr_3rem_3rem_3rem_3.5rem] items-center gap-2 border-b border-white/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-white/35">
               <span>#</span>
               <span>{personColumn}</span>

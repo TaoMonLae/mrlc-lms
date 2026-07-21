@@ -16,8 +16,8 @@ const BACK_RANK: PieceSymbol[] = ["r", "n", "b", "q", "k", "b", "n", "r"];
 
 const difficulties: { id: Difficulty; label: string; description: string }[] = [
   { id: "EASY", label: "Easy", description: "Relaxed play with unpredictable moves" },
-  { id: "MEDIUM", label: "Medium", description: "Looks for captures and safer squares" },
-  { id: "HARD", label: "Hard", description: "Searches ahead before choosing a move" },
+  { id: "MEDIUM", label: "Medium", description: "Checks your best reply before moving" },
+  { id: "HARD", label: "Hard", description: "Plans a couple of moves ahead" },
 ];
 
 export default function ChessSelectPage() {

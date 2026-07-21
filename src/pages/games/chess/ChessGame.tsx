@@ -53,14 +53,21 @@ const pieceValues: Record<PieceSymbol, number> = { p: 100, n: 320, b: 330, r: 50
 const files = ["a", "b", "c", "d", "e", "f", "g", "h"] as const;
 const promotionPieces: PromotionPiece[] = ["q", "r", "b", "n"];
 
+const CENTER_SQUARES = new Set(["c3", "d3", "e3", "f3", "c4", "d4", "e4", "f4", "c5", "d5", "e5", "f5", "c6", "d6", "e6", "f6"]);
+
+// Static material + center-control score. No isCheckmate()/isDraw() calls
+// here on purpose — those internally regenerate chess.js's full legal-move
+// list (the expensive part, since every candidate has to be check-tested),
+// and calling that again on every single leaf of the search tree was the
+// main reason a 3-ply search could take well over a second. minimax() below
+// detects checkmate/stalemate itself from the move list it already has to
+// generate for branching, so this only ever runs on non-terminal positions.
 function evaluate(game: Chess): number {
-  if (game.isCheckmate()) return game.turn() === "b" ? -100_000 : 100_000;
-  if (game.isDraw()) return 0;
   let score = 0;
   for (const row of game.board()) {
     for (const piece of row) {
       if (!piece) continue;
-      const center = ["c3", "d3", "e3", "f3", "c4", "d4", "e4", "f4", "c5", "d5", "e5", "f5", "c6", "d6", "e6", "f6"].includes(piece.square) ? 12 : 0;
+      const center = CENTER_SQUARES.has(piece.square) ? 12 : 0;
       const value = pieceValues[piece.type] + center;
       score += piece.color === "b" ? value : -value;
     }
@@ -68,11 +75,27 @@ function evaluate(game: Chess): number {
   return score;
 }
 
+// Search captures first (roughly most-valuable-victim-first). Alpha-beta
+// pruning only cuts branches once it finds a move good enough to beat the
+// current bound — trying the loudest moves (captures, especially of
+// high-value pieces) earlier finds that bound sooner, so more of the
+// remaining branches get skipped for the same, unchanged final answer.
+function orderMoves(moves: Move[]): Move[] {
+  return [...moves].sort((a, b) => (b.captured ? pieceValues[b.captured] : 0) - (a.captured ? pieceValues[a.captured] : 0));
+}
+
 function minimax(game: Chess, depth: number, alpha: number, beta: number): number {
-  if (depth === 0 || game.isGameOver()) return evaluate(game);
+  const moves = orderMoves(game.moves({ verbose: true }));
+  if (moves.length === 0) {
+    // No legal moves: checkmate if the side to move is in check (inCheck()
+    // is cheap — no move generation needed), otherwise stalemate.
+    if (game.inCheck()) return game.turn() === "b" ? -100_000 : 100_000;
+    return 0;
+  }
+  if (depth === 0) return evaluate(game);
   const maximizing = game.turn() === "b";
   let best = maximizing ? -Infinity : Infinity;
-  for (const move of game.moves({ verbose: true })) {
+  for (const move of moves) {
     game.move(move);
     const score = minimax(game, depth - 1, alpha, beta);
     game.undo();
@@ -88,18 +111,25 @@ function minimax(game: Chess, depth: number, alpha: number, beta: number): numbe
   return best;
 }
 
-function chooseComputerMove(game: Chess, difficulty: Difficulty): Move | null {
-  const moves = game.moves({ verbose: true });
-  if (!moves.length) return null;
-  if (difficulty === "EASY") return moves[Math.floor(Math.random() * moves.length)];
+// Scores each root move at a fixed depth, stopping early if `deadline` (a
+// Date.now() timestamp) passes. Returns however many moves it got through —
+// the caller decides whether a partial pass is trustworthy.
+function scoreMoves(game: Chess, moves: Move[], depth: number, deadline?: number): { move: Move; score: number }[] {
+  const scored: { move: Move; score: number }[] = [];
+  for (const move of moves) {
+    if (deadline && Date.now() > deadline) break;
+    game.move(move);
+    scored.push({ move, score: minimax(game, depth - 1, -Infinity, Infinity) });
+    game.undo();
+  }
+  return scored;
+}
 
-  const searchDepth = difficulty === "HARD" ? 2 : 1;
+function pickBest(scored: { move: Move; score: number }[]): Move | null {
   let bestScore = -Infinity;
   let bestMoves: Move[] = [];
-  for (const move of moves) {
-    game.move(move);
-    const score = minimax(game, searchDepth - 1, -Infinity, Infinity) + (Math.random() * 4 - 2);
-    game.undo();
+  for (const { move, score: raw } of scored) {
+    const score = raw + (Math.random() * 4 - 2); // small jitter for variety among near-equal moves
     if (score > bestScore) {
       bestScore = score;
       bestMoves = [move];
@@ -107,7 +137,42 @@ function chooseComputerMove(game: Chess, difficulty: Difficulty): Move | null {
       bestMoves.push(move);
     }
   }
-  return bestMoves[Math.floor(Math.random() * bestMoves.length)] ?? moves[0];
+  return bestMoves[Math.floor(Math.random() * bestMoves.length)] ?? scored[0]?.move ?? null;
+}
+
+// Progressive deepening with a per-ply time budget: always start from a
+// depth-1 pass (cheap on any hardware — a few dozen positions, no
+// recursion), then only ever ADD a deeper pass if it fully finishes inside
+// its budget, otherwise keep the shallower result. Deadlines are checked
+// before every root move, so the worst-case overrun is bounded by roughly
+// one root move's cost — not an unbounded freeze. This matters because
+// timing chess.js searches in practice showed a lot of variance: a 3-ply
+// search was ~300ms in a quiet position but 1-4+ seconds in a busy
+// middlegame, and that whole search runs synchronously on the UI thread.
+// EASY: a legal move at random — no look-ahead, matches its "relaxed,
+// unpredictable" billing.
+// MEDIUM: tries to reach 2 plies (its move + your best reply) so it
+// actually notices when a move hangs a piece. Previously MEDIUM evaluated
+// only the position right after its own move with zero look-ahead, so
+// despite the "looks for captures and safer squares" description it
+// couldn't see a recapture coming at all.
+// HARD: tries to reach 3 plies for real look-ahead into your follow-up too.
+const PLY_BUDGET_MS = 300;
+
+function chooseComputerMove(game: Chess, difficulty: Difficulty): Move | null {
+  const moves = orderMoves(game.moves({ verbose: true }));
+  if (!moves.length) return null;
+  if (difficulty === "EASY") return moves[Math.floor(Math.random() * moves.length)];
+
+  let scored = scoreMoves(game, moves, 1);
+  const targetDepth = difficulty === "HARD" ? 3 : 2;
+  for (let depth = 2; depth <= targetDepth; depth++) {
+    const attempt = scoreMoves(game, moves, depth, Date.now() + PLY_BUDGET_MS);
+    if (attempt.length < moves.length) break; // ran out of time — the shallower pass stands
+    scored = attempt;
+  }
+
+  return pickBest(scored);
 }
 
 function getStatus(game: Chess, resigned: Color | null) {
@@ -148,17 +213,35 @@ function getOnlineStatus(match: OnlineMatch, game: Chess): string {
   return match.turnColor === match.myColor ? "Your move" : `Waiting for ${match.turnColor === "w" ? match.white?.name : match.black?.name ?? "opponent"}`;
 }
 
+const CAPTURE_ORDER: PieceSymbol[] = ["q", "r", "b", "n", "p"];
+
+// Derived from move history's `captured` field rather than counting pieces
+// left on the board. Counting board pieces looks right until a pawn
+// promotes — the pawn count drops even though nothing was captured, which
+// showed up as a phantom "captured pawn" for the other side.
 function capturedPieces(game: Chess, color: Color): PieceSymbol[] {
-  const starting: Record<PieceSymbol, number> = { p: 8, n: 2, b: 2, r: 2, q: 1, k: 1 };
-  const current: Record<PieceSymbol, number> = { p: 0, n: 0, b: 0, r: 0, q: 0, k: 0 };
-  for (const row of game.board()) for (const piece of row) if (piece?.color === color) current[piece.type]++;
-  return (["q", "r", "b", "n", "p"] as PieceSymbol[]).flatMap((type) => Array(Math.max(0, starting[type] - current[type])).fill(type));
+  const captured: PieceSymbol[] = [];
+  for (const move of game.history({ verbose: true })) {
+    // A move's `captured` piece belongs to whichever side did NOT make the
+    // move — so a capture by the opponent removes one of `color`'s pieces.
+    if (move.captured && move.color !== color) captured.push(move.captured);
+  }
+  return captured.sort((a, b) => CAPTURE_ORDER.indexOf(a) - CAPTURE_ORDER.indexOf(b));
 }
 
-function materialScore(game: Chess, color: Color): number {
-  let score = 0;
-  for (const row of game.board()) for (const piece of row) if (piece) score += (piece.color === color ? 1 : -1) * (piece.type === "k" ? 0 : pieceValues[piece.type]) / 100;
-  return score;
+// Material difference in favor of `color`, in whole pawns. Summed in
+// centipawns (plain integers) and only divided once at the very end —
+// dividing on every term left tiny floating-point remainders (e.g.
+// "+8.881784197001252e-16" instead of an exact 0 at the start position).
+function materialDiff(game: Chess, color: Color): number {
+  let centipawns = 0;
+  for (const row of game.board()) {
+    for (const piece of row) {
+      if (!piece || piece.type === "k") continue;
+      centipawns += (piece.color === color ? 1 : -1) * pieceValues[piece.type];
+    }
+  }
+  return Math.round(centipawns / 100);
 }
 
 export default function ChessGame({ opponent, difficulty, matchId, onExit }: ChessGameProps) {
@@ -185,11 +268,22 @@ export default function ChessGame({ opponent, difficulty, matchId, onExit }: Che
 
   const applyMatch = React.useCallback((m: OnlineMatch) => {
     setMatch(m);
-    try {
-      gameRef.current = new Chess(m.fen);
-    } catch {
-      gameRef.current = new Chess();
+    // Replay the SAN move list from the start rather than just loading the
+    // final `fen`. Loading a bare FEN gives a Chess instance with no move
+    // history, which silently broke two things: the last-move square
+    // highlight (nothing to highlight) and capture tracking (nothing to
+    // derive captures from). Replaying is cheap — a full game is at most a
+    // couple hundred plies — and leaves gameRef with real history, exactly
+    // like the local AI/pass-and-play modes already have.
+    const replay = new Chess();
+    for (const san of m.moves) {
+      try {
+        replay.move(san);
+      } catch {
+        break; // shouldn't happen (server is authoritative), but don't crash the UI
+      }
     }
+    gameRef.current = replay;
     setSelected(null);
     setLegalMoves([]);
     setPendingPromotion(null);
@@ -234,10 +328,11 @@ export default function ChessGame({ opponent, difficulty, matchId, onExit }: Che
   }, [isOnline, match?.myColor, flippedAuto]);
 
   const gameOver = isOnline ? match?.status === "FINISHED" : game.isGameOver() || resigned !== null;
-  const history = isOnline ? [] : game.history({ verbose: true });
-  const onlineHistory = isOnline ? match?.moves ?? [] : [];
-  const lastMove = isOnline ? undefined : history.at(-1);
-  const historyLength = isOnline ? onlineHistory.length : history.length;
+  // gameRef always carries full move history now (online games are rebuilt by
+  // replaying their SAN list in applyMatch), so both modes read the same way.
+  const history = game.history({ verbose: true });
+  const lastMove = history.at(-1);
+  const historyLength = history.length;
 
   const refresh = React.useCallback(() => {
     setSelected(null);
@@ -330,6 +425,15 @@ export default function ChessGame({ opponent, difficulty, matchId, onExit }: Che
     refresh();
   };
 
+  const confirmResign = () => {
+    if (isOnline) {
+      resignOnline();
+    } else {
+      setResigned(game.turn());
+      setConfirmingResign(false);
+    }
+  };
+
   const resignOnline = async () => {
     if (!matchId) return;
     setConfirmingResign(false);
@@ -345,7 +449,7 @@ export default function ChessGame({ opponent, difficulty, matchId, onExit }: Che
   const displayedFiles = flipped ? [...files].reverse() : [...files];
   const capturedWhite = capturedPieces(game, "w");
   const capturedBlack = capturedPieces(game, "b");
-  const material = materialScore(game, "w");
+  const material = materialDiff(game, "w");
 
   // King square for the side in check, to draw a warning glow around it.
   let checkSquare: Square | null = null;
@@ -483,7 +587,7 @@ export default function ChessGame({ opponent, difficulty, matchId, onExit }: Che
                 <p className="mb-4 text-sm text-white/50">Your opponent will be credited with the win.</p>
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={() => setConfirmingResign(false)} className="flex-1 border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white">Cancel</Button>
-                  <Button onClick={() => (isOnline ? resignOnline() : (setResigned(game.turn()), setConfirmingResign(false)))} className="flex-1 bg-red-500/90 text-white hover:bg-red-500">Resign</Button>
+                  <Button onClick={confirmResign} className="flex-1 bg-red-500/90 text-white hover:bg-red-500">Resign</Button>
                 </div>
               </div>
             </div>
@@ -526,8 +630,8 @@ export default function ChessGame({ opponent, difficulty, matchId, onExit }: Che
           ) : (
             <div className="grid grid-cols-[2.25rem_1fr_1fr] text-sm">
               {Array.from({ length: Math.ceil(historyLength / 2) }, (_, index) => {
-                const whiteMove = isOnline ? onlineHistory[index * 2] : history[index * 2]?.san;
-                const blackMove = isOnline ? onlineHistory[index * 2 + 1] : history[index * 2 + 1]?.san;
+                const whiteMove = history[index * 2]?.san;
+                const blackMove = history[index * 2 + 1]?.san;
                 const isLastRow = index === Math.ceil(historyLength / 2) - 1;
                 return (
                   <React.Fragment key={index}>
