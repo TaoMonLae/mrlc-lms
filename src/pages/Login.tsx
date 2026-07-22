@@ -305,7 +305,7 @@ export default function LoginPage() {
                         placeholder="6-digit code or recovery code"
                         autoComplete="one-time-code"
                         inputMode="text"
-                        className="h-12 border-slate-200 bg-slate-50/70 pl-10 text-slate-900 placeholder:text-slate-500"
+                        className="h-12 border-slate-200 bg-slate-50/70 pl-10 text-slate-900 placeholder:text-slate-500 focus:bg-white dark:bg-slate-50/70 dark:border-slate-200 dark:text-slate-900"
                       />
                     </div>
                     <p className="text-xs text-slate-600">Open your authenticator app, or enter one unused recovery code.</p>

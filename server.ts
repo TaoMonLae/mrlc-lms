@@ -21072,8 +21072,28 @@ async function startServer() {
   // the secure handler at the top of the file wins) but was a latent leak
   // trap — removed. The /download route below is the only one of its kind.
   app.post("/api/library/:id/download", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
     const { id } = req.params;
     try {
+      // Enforce the same visibility rules as GET /api/library/:id — this route
+      // previously had no check at all, so any authenticated user could pull a
+      // resource's URL/metadata (and inflate its download count) regardless of
+      // role, even for TEACHERS_ONLY resources a student can't otherwise see.
+      const existing = await prisma.libraryResource.findUnique({ where: { id } });
+      if (!existing) {
+        res.status(404).json({ error: "Resource not found" });
+        return;
+      }
+      const visibility = existing.visibility || "ALL";
+      if (jwtUser.role === "STUDENT" && !["ALL", "STUDENTS"].includes(visibility)) {
+        res.status(404).json({ error: "Resource not found" });
+        return;
+      }
+      if (jwtUser.role === "TEACHER" && !["ALL", "TEACHERS_ONLY"].includes(visibility)) {
+        res.status(404).json({ error: "Resource not found" });
+        return;
+      }
+
       const resource = await prisma.libraryResource.update({
         where: { id },
         data: {

@@ -17,15 +17,34 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 
-const resourceSchema = z.object({
-  title: z.string().min(3, 'Title must be at least 3 characters'),
-  description: z.string().min(10, 'Provide a brief description'),
-  type: z.enum(['PDF', 'IMAGE', 'VIDEO', 'LINK', 'DOCUMENT', 'OTHER']),
-  visibility: z.enum(['TEACHERS_ONLY', 'STUDENTS', 'ALL']),
-  classId: z.string().optional(),
-  subjectId: z.string().optional(),
-  externalUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
-});
+const resourceSchema = z
+  .object({
+    title: z.string().min(3, 'Title must be at least 3 characters'),
+    description: z.string().min(10, 'Provide a brief description'),
+    type: z.enum(['PDF', 'IMAGE', 'VIDEO', 'LINK', 'DOCUMENT', 'OTHER']),
+    visibility: z.enum(['TEACHERS_ONLY', 'STUDENTS', 'ALL']),
+    classId: z.string().optional(),
+    subjectId: z.string().optional(),
+    // Only VIDEO/LINK resources (the "External Link" tab) need a real URL here;
+    // for uploads this holds the server-returned file URL, not user input, so
+    // it shouldn't fail a blanket .url() check if it's ever briefly stale.
+    externalUrl: z.string().optional().or(z.literal('')),
+  })
+  .superRefine((data, ctx) => {
+    if (data.type === 'VIDEO' || data.type === 'LINK') {
+      const url = (data.externalUrl || '').trim();
+      if (!url) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['externalUrl'], message: 'Please provide a valid link/URL' });
+        return;
+      }
+      try {
+        // eslint-disable-next-line no-new
+        new URL(url);
+      } catch {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['externalUrl'], message: 'Must be a valid URL' });
+      }
+    }
+  });
 
 type FormValues = z.infer<typeof resourceSchema>;
 
@@ -105,7 +124,10 @@ export default function LibraryNew() {
       const payload = {
         title: data.title,
         description: data.description,
-        type: activeTab === 'upload' ? data.type : 'LINK',
+        // data.type already reflects the user's selection (defaulted to LINK when
+        // the Link tab is opened, but overridable to VIDEO for embeddable links —
+        // don't clobber that choice back to LINK on submit).
+        type: data.type,
         visibility: data.visibility,
         classId: data.classId || null,
         subjectId: data.subjectId || null,
@@ -169,7 +191,20 @@ export default function LibraryNew() {
                   ? 'border-b-2 border-slate-900 text-slate-900 dark:border-white dark:text-white' 
                   : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
-              onClick={() => setActiveTab('upload')}
+              onClick={() => {
+                setActiveTab('upload');
+                // Switching away from the Link tab: clear its URL (so a stale/invalid
+                // value can't fail validation for a resource that's now a file upload)
+                // and reset the type off LINK/VIDEO so the saved resource matches what's
+                // actually being uploaded.
+                setValue('externalUrl', '');
+                // 'VIDEO' stays as-is — the Upload tab also supports uploading a
+                // self-hosted video file. 'LINK' only makes sense for an external
+                // URL, so reset it to a sensible file default.
+                if (resourceType === 'LINK') {
+                  setValue('type', 'DOCUMENT');
+                }
+              }}
             >
               <UploadCloud className="h-4 w-4" /> File Upload
             </button>

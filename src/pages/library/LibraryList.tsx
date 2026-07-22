@@ -34,7 +34,6 @@ export interface Resource {
   visibility: 'TEACHERS_ONLY' | 'STUDENTS' | 'ALL';
   uploadedById: string;
   uploadedByName: string;
-  status: 'ACTIVE' | 'ARCHIVED';
   createdAt: string;
   updatedAt: string;
 }
@@ -45,7 +44,9 @@ export default function LibraryList() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('ALL');
-  const [visibilityFilter, setVisibilityFilter] = useState('ALL');
+  // 'ANY' means "no visibility filter applied" — kept distinct from the real
+  // visibility value 'ALL' (= "Everyone"), which is also a selectable option.
+  const [visibilityFilter, setVisibilityFilter] = useState('ANY');
   const [resources, setResources] = useState<Resource[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -67,7 +68,7 @@ export default function LibraryList() {
         if (!res.ok) throw new Error('Failed to fetch library resources');
         const data = await res.json();
         const items = Array.isArray(data?.items) ? data.items : [];
-        setResources(items.map((r: any) => ({ ...r, status: r.status || 'ACTIVE', uploadedByName: r.uploadedByName || 'School Library' })));
+        setResources(items.map((r: any) => ({ ...r, uploadedByName: r.uploadedByName || 'School Library' })));
         setNextCursor(data?.nextCursor ?? null);
       } catch (error) {
         console.error('Error fetching library resources:', error);
@@ -90,7 +91,7 @@ export default function LibraryList() {
       if (!res.ok) throw new Error('Failed to load more');
       const data = await res.json();
       const items = Array.isArray(data?.items) ? data.items : [];
-      setResources((prev) => [...prev, ...items.map((r: any) => ({ ...r, status: r.status || 'ACTIVE', uploadedByName: r.uploadedByName || 'School Library' }))]);
+      setResources((prev) => [...prev, ...items.map((r: any) => ({ ...r, uploadedByName: r.uploadedByName || 'School Library' }))]);
       setNextCursor(data?.nextCursor ?? null);
     } catch (error) {
       console.error('Error loading more:', error);
@@ -128,25 +129,26 @@ export default function LibraryList() {
   };
 
   const filteredResources = resources.filter(r => {
-    // Role-based visibility check
-    if (!isAdmin && user) {
-      if (r.visibility === 'TEACHERS_ONLY' && !isTeacher) return false;
-      if (r.visibility === 'STUDENTS' && isTeacher) return true; // teachers usually see student resources
+    // Role-based visibility check. The server already excludes TEACHERS_ONLY
+    // resources from students (and STUDENTS resources from teachers) — this
+    // just mirrors the TEACHERS_ONLY rule client-side as a safety net. It
+    // should only ever narrow results, never short-circuit past the filters
+    // below (a prior version had a stray early `return true` here that did).
+    if (!isAdmin && user && !isTeacher && r.visibility === 'TEACHERS_ONLY') {
+      return false;
     }
 
-    const matchesSearch = r.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const matchesSearch = r.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           r.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = typeFilter === 'ALL' || r.type === typeFilter;
-    const matchesVisibility = visibilityFilter === 'ALL' || r.visibility === visibilityFilter;
+    const matchesVisibility = visibilityFilter === 'ANY' || r.visibility === visibilityFilter;
 
-    return matchesSearch && matchesType && matchesVisibility && r.status === 'ACTIVE';
+    return matchesSearch && matchesType && matchesVisibility;
   });
 
   const canManage = (resource: Resource) => {
     if (isAdmin) return true;
-    if (isTeacher && resource.uploadedById === user?.teacherId) return true;
-    if (isTeacher && resource.uploadedById === user?.id) return true;
-    return false;
+    return isTeacher && resource.uploadedById === user?.id;
   };
 
   return (
@@ -197,8 +199,8 @@ export default function LibraryList() {
                 <SelectValue placeholder="Visibility" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ALL">All Access</SelectItem>
-                <SelectItem value="ALL_LOGGED">Everyone</SelectItem>
+                <SelectItem value="ANY">All Access</SelectItem>
+                <SelectItem value="ALL">Everyone</SelectItem>
                 <SelectItem value="STUDENTS">Students Only</SelectItem>
                 <SelectItem value="TEACHERS_ONLY">Teachers Only</SelectItem>
               </SelectContent>

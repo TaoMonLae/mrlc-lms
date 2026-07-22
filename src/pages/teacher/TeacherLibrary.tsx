@@ -41,6 +41,7 @@ interface ResourceRow {
   lastDownloaded: string | null;
   uploadedById: string | null;
   mimeType: string | null;
+  tags: string[];
 }
 
 // Map a LibraryResource row from /api/library into this page's display shape.
@@ -52,13 +53,28 @@ function mapLibraryResource(r: any): ResourceRow {
     uploadedBy: r.uploadedByName || r.author || '—',
     uploadedById: r.uploadedById || null,
     date: r.createdAt ? new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : '—',
-    visibility: r.visibility || 'PUBLIC',
+    visibility: r.visibility || 'ALL',
     url: r.externalUrl || null,
     fileSize: r.fileSize || null,
     downloadCount: r.downloadCount || 0,
     lastDownloaded: r.lastDownloaded || null,
     mimeType: r.mimeType || null,
+    tags: Array.isArray(r.tags) ? r.tags : [],
   };
+}
+
+// Visibility values are ALL / STUDENTS / TEACHERS_ONLY (see LibraryResource.visibility
+// in prisma/schema.prisma). Map each to a friendly label + icon for display.
+function getVisibilityMeta(visibility: string) {
+  switch (visibility) {
+    case 'TEACHERS_ONLY':
+      return { label: 'Teachers Only', icon: <Lock className="h-3 w-3" /> };
+    case 'STUDENTS':
+      return { label: 'Students Only', icon: <Eye className="h-3 w-3 text-emerald-500" /> };
+    case 'ALL':
+    default:
+      return { label: 'Everyone', icon: <Globe className="h-3 w-3" /> };
+  }
 }
 
 // Resources we can render directly in the in-app viewer (PDFs, images, and
@@ -90,10 +106,14 @@ export default function TeacherLibrary() {
       .catch(() => setResources([]));
   }, []);
 
-  const filteredResources = resources.filter(r =>
-    r.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    (typeFilter === "all" || r.type === typeFilter)
-  );
+  const filteredResources = resources.filter(r => {
+    const q = searchTerm.toLowerCase();
+    const matchesSearch =
+      !q ||
+      r.title.toLowerCase().includes(q) ||
+      r.tags.some(tag => tag.toLowerCase().includes(q));
+    return matchesSearch && (typeFilter === "all" || r.type === typeFilter);
+  });
 
   const handleDownload = async (resourceId: string, resourceUrl: string) => {
     try {
@@ -136,8 +156,8 @@ export default function TeacherLibrary() {
       case 'PDF': return <FileText className="h-5 w-5 text-red-500" />;
       case 'VIDEO': return <Video className="h-5 w-5 text-blue-500" />;
       case 'IMAGE': return <ImageIcon className="h-5 w-5 text-emerald-500" />;
-      case 'DOCX': return <File className="h-5 w-5 text-blue-600" />;
-      case 'ZIP': return <File className="h-5 w-5 text-amber-600" />;
+      case 'DOCUMENT': return <File className="h-5 w-5 text-blue-600" />;
+      case 'LINK': return <Link2 className="h-5 w-5 text-amber-600" />;
       default: return <File className="h-5 w-5 text-slate-400" />;
     }
   };
@@ -206,9 +226,11 @@ export default function TeacherLibrary() {
             <SelectContent>
               <SelectItem value="all">All Formats</SelectItem>
               <SelectItem value="PDF">PDF Documents</SelectItem>
+              <SelectItem value="IMAGE">Images</SelectItem>
               <SelectItem value="VIDEO">Videos</SelectItem>
-              <SelectItem value="DOCX">Word Docs</SelectItem>
-              <SelectItem value="ZIP">Archives</SelectItem>
+              <SelectItem value="DOCUMENT">Documents</SelectItem>
+              <SelectItem value="LINK">Links</SelectItem>
+              <SelectItem value="OTHER">Other</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -230,8 +252,8 @@ export default function TeacherLibrary() {
                     <span>{formatFileSize(resource.fileSize)}</span>
                     <span className="h-1 w-1 rounded-full bg-slate-300" />
                     <div className="flex items-center gap-1">
-                        {resource.visibility === 'PUBLIC' ? <Globe className="h-3 w-3" /> : resource.visibility === 'PRIVATE' ? <Lock className="h-3 w-3" /> : <Eye className="h-3 w-3 text-emerald-500" />}
-                        {resource.visibility}
+                        {getVisibilityMeta(resource.visibility).icon}
+                        {getVisibilityMeta(resource.visibility).label}
                     </div>
                   </div>
                 </div>
@@ -273,7 +295,7 @@ export default function TeacherLibrary() {
                     >
                         <Download className="h-4 w-4" />
                     </Button>
-                    {resource.uploadedBy === 'You' && (
+                    {resource.uploadedById === user?.id && (
                         <Button
                           variant="ghost"
                           size="icon"
