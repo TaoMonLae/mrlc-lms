@@ -17,6 +17,7 @@ type LibraryResource = {
   classId?: string | null;
   visibility?: string | null;
   createdAt: string;
+  mimeType?: string | null;
 };
 
 export default function LibraryDetail() {
@@ -165,6 +166,13 @@ export default function LibraryDetail() {
   const canManage = isAdmin || isTeacher;
   const embedUrl = getEmbedUrl(resource.externalUrl);
 
+  const fileUrl = resource.externalUrl || '';
+  const extension = fileUrl.split('?')[0].split('.').pop()?.toLowerCase() || '';
+  const isSelfHosted = fileUrl.startsWith('/uploads/library/');
+  const isPdf = resource.mimeType === 'application/pdf' || extension === 'pdf';
+  const isImage = (resource.mimeType || '').startsWith('image/') || ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'].includes(extension);
+  const isSelfHostedVideo = isSelfHosted && ((resource.mimeType || '').startsWith('video/') || ['mp4', 'webm', 'ogg', 'mov'].includes(extension));
+
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-10">
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
@@ -222,6 +230,18 @@ export default function LibraryDetail() {
                   allowFullScreen
                 ></iframe>
               </div>
+            ) : isPdf ? (
+              <div className="h-[75vh] w-full bg-slate-100 dark:bg-surface-indigo/50">
+                <iframe src={fileUrl} title={resource.title} className="w-full h-full border-0"></iframe>
+              </div>
+            ) : isImage ? (
+              <div className="flex items-center justify-center bg-slate-50 dark:bg-surface-indigo/50 p-4">
+                <img src={fileUrl} alt={resource.title} className="max-h-[75vh] w-auto max-w-full rounded-lg" />
+              </div>
+            ) : isSelfHostedVideo ? (
+              <div className="w-full bg-black">
+                <video src={fileUrl} controls className="w-full max-h-[75vh]" />
+              </div>
             ) : (
               <div className="p-12 flex flex-col items-center justify-center text-center bg-slate-50 dark:bg-surface-indigo/50">
                 {getIconForType(resource.type)}
@@ -234,6 +254,13 @@ export default function LibraryDetail() {
                     </Button>
                   </div>
                 )}
+              </div>
+            )}
+            {(isPdf || isImage || isSelfHostedVideo) && resource.externalUrl && (
+              <div className="flex justify-end p-3 border-t border-slate-100 dark:border-surface-raised">
+                <Button variant="outline" size="sm" render={<a href={resource.externalUrl} target="_blank" rel="noopener noreferrer" />} nativeButton={false}>
+                  <Download className="mr-2 h-4 w-4" /> Download
+                </Button>
               </div>
             )}
 

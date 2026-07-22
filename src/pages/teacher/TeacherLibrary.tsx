@@ -40,6 +40,7 @@ interface ResourceRow {
   downloadCount: number;
   lastDownloaded: string | null;
   uploadedById: string | null;
+  mimeType: string | null;
 }
 
 // Map a LibraryResource row from /api/library into this page's display shape.
@@ -56,7 +57,19 @@ function mapLibraryResource(r: any): ResourceRow {
     fileSize: r.fileSize || null,
     downloadCount: r.downloadCount || 0,
     lastDownloaded: r.lastDownloaded || null,
+    mimeType: r.mimeType || null,
   };
+}
+
+// Resources we can render directly in the in-app viewer (PDFs, images, and
+// self-hosted video files). Everything else still opens/downloads externally.
+function isPreviewable(resource: Pick<ResourceRow, 'url' | 'mimeType' | 'type'>): boolean {
+  if (!resource.url) return false;
+  const extension = resource.url.split('?')[0].split('.').pop()?.toLowerCase() || '';
+  if (resource.mimeType === 'application/pdf' || extension === 'pdf') return true;
+  if ((resource.mimeType || '').startsWith('image/') || ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'].includes(extension)) return true;
+  if (resource.url.startsWith('/uploads/library/') && ((resource.mimeType || '').startsWith('video/') || ['mp4', 'webm', 'ogg', 'mov'].includes(extension))) return true;
+  return false;
 }
 
 export default function TeacherLibrary() {
@@ -234,6 +247,17 @@ export default function TeacherLibrary() {
                     <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{resource.downloadCount}</p>
                 </div>
                 <div className="flex items-center gap-2 ml-4">
+                    {isPreviewable(resource) && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 text-slate-400 hover:text-aubergine-600"
+                        title="View in app"
+                        render={<Link to={`/library/${resource.id}`} />}
+                      >
+                          <Eye className="h-4 w-4" />
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="icon"

@@ -218,7 +218,7 @@ export const TEACHER_NAV: AdminNavEntry[] = [
     label: "Resources",
     icon: Library,
     items: [
-      { title: "Library", url: "/teacher/library", icon: Library },
+      { title: "Teaching Resources", url: "/teacher/library", icon: Library },
       { title: "E-Library", url: "/elibrary", icon: Tablet },
       { title: "Reading Analytics", url: "/elibrary/analytics", icon: BarChart3 },
       { title: "Video Lessons", url: "/teacher/videos", icon: Video },
@@ -640,7 +640,7 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     roles: ["TEACHER"],
   },
   {
-    title: "Teacher Library",
+    title: "Teaching Resources",
     url: "/teacher/library",
     icon: Library,
     roles: ["TEACHER"],
