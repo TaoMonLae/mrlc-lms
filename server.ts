@@ -25,8 +25,10 @@ import { registerExamPhase2Routes } from "./examPhase2";
 import { composeQuestionSet, registerExamBankRoutes } from "./examBank";
 import { registerNewsRoutes } from "./news";
 import { registerPayrollPdfRoutes } from "./payrollPdf";
+import { registerFeesPdfRoutes } from "./feesPdf";
 import { registerFlashcardRoutes } from "./flashcards";
 import { registerConductRoutes } from "./conduct";
+import { registerConductPdfRoutes } from "./conductPdf";
 import { registerDictionaryRoutes } from "./dictionary";
 import { registerGutenbergRoutes } from "./gutenberg";
 import { registerSnakeGameRoutes } from "./snakeGame";
@@ -19457,10 +19459,14 @@ async function startServer() {
   const { refreshAllSources: refreshAllNewsSources } = registerNewsRoutes({ app, prisma, authMiddleware, requirePermission, createAuditLog, logger });
   // ── Payroll PDF export ──────────────────────────────────────────────────────
   registerPayrollPdfRoutes({ app, prisma, authMiddleware, payrollCanManage, createAuditLog, logger });
+  // ── Fee receipt PDF export ──────────────────────────────────────────────────
+  registerFeesPdfRoutes({ app, prisma, authMiddleware, createAuditLog, logger });
   // ── Flashcards (teacher-authored study decks assigned to classes) ──────────
   registerFlashcardRoutes({ app, prisma, authMiddleware, createAuditLog, logger });
   // ── Conduct (rule catalog + violation logging + counts) ─────────────────────
   registerConductRoutes({ app, prisma, authMiddleware, createAuditLog, logger });
+  // ── Conduct: Disciplinary Notice PDF export ─────────────────────────────────
+  registerConductPdfRoutes({ app, prisma, authMiddleware, createAuditLog, logger });
   registerDictionaryRoutes({ app, prisma, authMiddleware, logger });
   // ── Project Gutenberg import (E-Library) ────────────────────────────────────
   registerGutenbergRoutes({ app, prisma, authMiddleware, logger });

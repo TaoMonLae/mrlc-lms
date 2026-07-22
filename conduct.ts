@@ -107,6 +107,96 @@ export function registerConductRoutes(deps: Deps): void {
     }
   });
 
+  // ── Log a violation against multiple rules at once (one incident) ──────────────
+  // Creates one RuleViolation row per rule (the schema is one-rule-per-record —
+  // see the model comment) but does it in a single transaction so a teacher
+  // reporting "late to class + phone use" in one incident gets one atomic
+  // submission instead of firing the single-rule endpoint N times. The
+  // `actionTaken` field has no dedicated column (phase 1 schema); it's folded
+  // into `note` behind a clear marker so it survives on the record and can be
+  // split back out again for the disciplinary notice PDF.
+  app.post("/api/conduct/violations/batch", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!canManageConduct(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    const { studentId, ruleIds, note, actionTaken, occurredAt } = req.body || {};
+    if (!studentId) { res.status(400).json({ error: "studentId is required" }); return; }
+    if (!Array.isArray(ruleIds) || ruleIds.length === 0) { res.status(400).json({ error: "Select at least one rule" }); return; }
+    const uniqueRuleIds = Array.from(new Set(ruleIds.filter((id: any) => typeof id === "string" && id)));
+    if (uniqueRuleIds.length === 0) { res.status(400).json({ error: "Select at least one rule" }); return; }
+    if (uniqueRuleIds.length > 20) { res.status(400).json({ error: "Too many rules selected at once" }); return; }
+    try {
+      const student = await prisma.student.findUnique({ where: { id: studentId } });
+      if (!student) { res.status(404).json({ error: "Student not found" }); return; }
+
+      const rules = await prisma.conductRule.findMany({ where: { id: { in: uniqueRuleIds } } });
+      if (rules.length !== uniqueRuleIds.length) {
+        res.status(404).json({ error: "One or more selected rules could not be found" });
+        return;
+      }
+
+      let occurred: Date | undefined;
+      if (occurredAt) {
+        const d = new Date(occurredAt);
+        if (!isNaN(d.getTime())) occurred = d;
+      }
+
+      const trimmedNote = note ? String(note).trim().slice(0, 2000) : "";
+      const trimmedAction = actionTaken ? String(actionTaken).trim().slice(0, 1000) : "";
+      const combinedNote = [trimmedNote, trimmedAction ? `Recommended action: ${trimmedAction}` : ""]
+        .filter(Boolean)
+        .join("\n\n") || null;
+
+      const violations = await prisma.$transaction(
+        rules.map((rule: any) =>
+          prisma.ruleViolation.create({
+            data: {
+              studentId,
+              ruleId: rule.id,
+              severity: rule.severity, // snapshot -- later rule edits don't rewrite history
+              note: combinedNote,
+              ...(occurred ? { occurredAt: occurred } : {}),
+              reportedById: jwtUser.userId,
+              reportedByName: jwtUser.email,
+            },
+            include: { rule: true },
+          })
+        )
+      );
+
+      const [minorCount, moderateCount, seriousCount] = await Promise.all([
+        prisma.ruleViolation.count({ where: { studentId, severity: "MINOR" } }),
+        prisma.ruleViolation.count({ where: { studentId, severity: "MODERATE" } }),
+        prisma.ruleViolation.count({ where: { studentId, severity: "SERIOUS" } }),
+      ]);
+      const studentTotals = { minor: minorCount, moderate: moderateCount, serious: seriousCount };
+
+      const ruleCodes = rules.map((r: any) => r.code).join(", ");
+      const worstSeverity = rules.some((r: any) => r.severity === "SERIOUS") ? "SERIOUS"
+        : rules.some((r: any) => r.severity === "MODERATE") ? "MODERATE" : "MINOR";
+      await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "RULE_VIOLATION", violations[0]?.id ?? null,
+        `${fullName(student)} (${student.studentCode}) marked for breaking ${rules.length} rule(s): ${ruleCodes}.`,
+        req.ip, req.headers["user-agent"] || null, worstSeverity === "SERIOUS" ? "WARNING" : "INFO");
+
+      res.status(201).json({
+        violations: violations.map((v: any) => ({
+          id: v.id,
+          studentId: v.studentId,
+          ruleId: v.ruleId,
+          ruleCode: v.rule?.code,
+          ruleTitle: v.rule?.title,
+          article: v.rule?.article,
+          severity: v.severity,
+          note: v.note,
+          occurredAt: v.occurredAt,
+        })),
+        studentTotals,
+      });
+    } catch (err: any) {
+      logger.error("Error logging rule violations (batch):", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
   // ── List violations (with filters) ──────────────────────────────────────────
   app.get("/api/conduct/violations", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;

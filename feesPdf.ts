@@ -1,0 +1,206 @@
+import express from "express";
+import PDFDocument from "pdfkit";
+import QRCode from "qrcode";
+
+interface JwtPayload { userId: string; role: string; email: string; }
+
+interface Deps {
+  app: express.Express;
+  prisma: any;
+  authMiddleware: express.RequestHandler;
+  createAuditLog: (
+    userId: string | null, userName: string | null, action: string,
+    entityType: string, entityId: string | null, description: string,
+    ip: string | null, ua: string | null, severity?: string,
+  ) => Promise<void>;
+  logger: { error: (...a: any[]) => void };
+}
+
+const PAGE_LEFT = 50;
+const PAGE_WIDTH = 495; // A4 usable width at 50pt margins
+
+function money(amount: number, currency?: string | null): string {
+  const code = (currency || "MYR").toUpperCase();
+  const value = Number.isFinite(amount) ? amount : 0;
+  try {
+    return new Intl.NumberFormat("en", { style: "currency", currency: code }).format(value);
+  } catch {
+    return `${code} ${value.toFixed(2)}`;
+  }
+}
+
+function line(doc: PDFKit.PDFDocument, y: number, color = "#e2e8f0", width = 0.75) {
+  doc.moveTo(PAGE_LEFT, y).lineTo(PAGE_LEFT + PAGE_WIDTH, y).lineWidth(width).strokeColor(color).stroke();
+  doc.strokeColor("#000000");
+}
+
+export function registerFeesPdfRoutes(deps: Deps): void {
+  const { app, prisma, authMiddleware, createAuditLog, logger } = deps;
+
+  // Real, downloadable PDF for a single fee receipt. Mirrors the on-screen
+  // /fees/:id/receipt page (PaymentReceipt.tsx) — that page's "Download PDF"
+  // button previously just called window.print() (identical to its own Print
+  // button), so nothing was ever actually saved as a file; this gives it a
+  // real file to fetch and download, same pattern as the payroll register
+  // and the conduct disciplinary notice.
+  app.get("/api/fees/:id/receipt.pdf", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const { id } = req.params;
+    try {
+      const fee = await prisma.feePayment.findUnique({
+        where: { id },
+        include: { student: { include: { user: true, class: true } } },
+      });
+      if (!fee) { res.status(404).json({ error: "Fee receipt not found" }); return; }
+
+      if (jwtUser.role === "STUDENT") {
+        const student = await prisma.student.findUnique({ where: { userId: jwtUser.userId } });
+        if (!student || fee.studentId !== student.id) { res.status(403).json({ error: "Forbidden" }); return; }
+      } else if (!["ADMIN", "ACCOUNTANT", "STAFF"].includes(jwtUser.role)) {
+        res.status(403).json({ error: "Forbidden" });
+        return;
+      }
+
+      const school = await prisma.schoolProfile.findFirst().catch(() => null);
+      const currency = fee.currency || school?.currency || "MYR";
+      const studentName = `${fee.student?.user?.firstName ?? ""} ${fee.student?.user?.lastName ?? ""}`.trim() || "Unknown";
+      const discount = fee.discountAmount || 0;
+      const gross = (fee.amount || 0) + discount;
+      const isWaived = fee.status === "WAIVED";
+      const paidAmount = isWaived ? 0 : (fee.paidAmount ?? (fee.status === "PAID" ? fee.amount : 0));
+      const balance = isWaived ? 0 : Math.max(0, (fee.amount || 0) - paidAmount);
+      const paymentDate = new Date(fee.paidDate || fee.createdAt);
+      const verifyUrl = `${req.protocol}://${req.get("host")}/verify/payment/${fee.id}`;
+
+      let qrBuffer: Buffer | null = null;
+      try { qrBuffer = await QRCode.toBuffer(verifyUrl, { margin: 1, width: 200 }); } catch { qrBuffer = null; }
+
+      const filename = `Receipt-${fee.receiptNumber || fee.id}.pdf`;
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+
+      const doc = new PDFDocument({ size: "A4", margin: 50 });
+      doc.pipe(res);
+
+      // ── Letterhead ──────────────────────────────────────────────────────
+      const headerTop = doc.y;
+      doc.font("Helvetica-Bold").fontSize(16).fillColor("#000000").text(school?.name || "School", PAGE_LEFT, headerTop, { width: 300 });
+      if (school?.address) doc.font("Helvetica").fontSize(9).fillColor("#64748b").text(school.address, PAGE_LEFT, doc.y + 2, { width: 300 });
+      const contactBits = [school?.contactPhone ? `Phone: ${school.contactPhone}` : "", school?.contactEmail ? `Email: ${school.contactEmail}` : ""]
+        .filter(Boolean).join("   ");
+      if (contactBits) doc.font("Helvetica").fontSize(9).fillColor("#64748b").text(contactBits, PAGE_LEFT, doc.y + 2, { width: 300 });
+
+      doc.font("Helvetica-Bold").fontSize(26).fillColor("#cbd5e1").text("RECEIPT", PAGE_LEFT, headerTop, { width: PAGE_WIDTH, align: "right", characterSpacing: 1.5 });
+      doc.font("Helvetica").fontSize(9).fillColor("#475569")
+        .text(`No: ${fee.receiptNumber || "—"}`, PAGE_LEFT, headerTop + 34, { width: PAGE_WIDTH, align: "right" })
+        .text(`Date: ${paymentDate.toLocaleDateString("en-US", { day: "2-digit", month: "short", year: "numeric" })}`, PAGE_LEFT, doc.y, { width: PAGE_WIDTH, align: "right" });
+      doc.font("Helvetica-Bold").fontSize(9).fillColor(isWaived ? "#64748b" : "#059669")
+        .text(isWaived ? "VOIDED" : String(fee.status), PAGE_LEFT, doc.y + 4, { width: PAGE_WIDTH, align: "right" });
+      doc.fillColor("#000000");
+
+      doc.y = Math.max(doc.y, headerTop + 70) + 10;
+      line(doc, doc.y, "#1e293b", 1.25);
+      doc.moveDown(1);
+
+      if (isWaived) {
+        doc.font("Helvetica-Bold").fontSize(9).fillColor("#475569")
+          .text("THIS PAYMENT HAS BEEN VOIDED.", PAGE_LEFT, doc.y, { width: PAGE_WIDTH });
+        doc.fillColor("#000000").moveDown(1);
+      }
+
+      // ── Student info ────────────────────────────────────────────────────
+      const infoTop = doc.y;
+      const colWidth = PAGE_WIDTH / 2;
+      doc.font("Helvetica").fontSize(8).fillColor("#64748b").text("RECEIVED FROM", PAGE_LEFT, infoTop);
+      doc.font("Helvetica-Bold").fontSize(12).fillColor("#000000").text(studentName, PAGE_LEFT, infoTop + 12, { width: colWidth - 10 });
+
+      doc.font("Helvetica").fontSize(8).fillColor("#64748b").text("STUDENT DETAILS", PAGE_LEFT + colWidth, infoTop, { width: colWidth, align: "right" });
+      doc.font("Helvetica-Bold").fontSize(10).fillColor("#000000")
+        .text(fee.student?.studentCode || "—", PAGE_LEFT + colWidth, infoTop + 12, { width: colWidth, align: "right" });
+      doc.font("Helvetica").fontSize(9).fillColor("#475569")
+        .text(fee.student?.class?.name || "—", PAGE_LEFT + colWidth, doc.y, { width: colWidth, align: "right" });
+
+      doc.fillColor("#000000");
+      doc.y = infoTop + 42;
+      doc.rect(PAGE_LEFT, infoTop - 10, PAGE_WIDTH, doc.y - infoTop + 16).strokeColor("#e2e8f0").lineWidth(0.75).stroke();
+      doc.moveDown(1.4);
+
+      // ── Payment details table ─────────────────────────────────────────
+      const rowH = 20;
+      let y = doc.y;
+      const descX = PAGE_LEFT + 8;
+      const amtW = 110;
+      const amtX = PAGE_LEFT + PAGE_WIDTH - amtW - 8;
+
+      doc.rect(PAGE_LEFT, y, PAGE_WIDTH, rowH).fill("#f1f5f9");
+      doc.font("Helvetica-Bold").fontSize(8.5).fillColor("#334155")
+        .text("DESCRIPTION", descX, y + 6)
+        .text("AMOUNT", amtX, y + 6, { width: amtW, align: "right" });
+      doc.fillColor("#000000");
+      y += rowH;
+
+      const tableRow = (label: string, value: string, opts: { bold?: boolean; color?: string; muted?: boolean } = {}) => {
+        doc.font(opts.bold ? "Helvetica-Bold" : "Helvetica").fontSize(opts.bold ? 10 : 9)
+          .fillColor(opts.color || (opts.muted ? "#64748b" : "#000000"))
+          .text(label, descX, y + 5, { width: PAGE_WIDTH - amtW - 16 })
+          .text(value, amtX, y + 5, { width: amtW, align: "right" });
+        doc.fillColor("#000000");
+        y += rowH;
+        line(doc, y, "#f1f5f9");
+      };
+
+      tableRow(fee.description || "Fee Payment", money(gross, currency));
+      if (discount > 0) tableRow("Discount", `-${money(discount, currency)}`, { color: "#059669" });
+      tableRow("Amount Due", money(fee.amount || 0, currency), { muted: true });
+      tableRow("Amount Paid", money(paidAmount, currency), { muted: true });
+
+      doc.rect(PAGE_LEFT, y, PAGE_WIDTH, rowH + 6).fill("#f8fafc");
+      doc.font("Helvetica-Bold").fontSize(11).fillColor(balance > 0 ? "#dc2626" : "#000000")
+        .text(balance > 0 ? "Balance Due" : "Total Paid", descX, y + 8, { width: PAGE_WIDTH - amtW - 16, align: "right" })
+        .text(money(balance > 0 ? balance : paidAmount, currency), amtX, y + 8, { width: amtW, align: "right" });
+      doc.fillColor("#000000");
+      y += rowH + 6;
+      doc.y = y;
+      doc.moveDown(1.6);
+
+      // ── Payment info + QR + signature ──────────────────────────────────
+      const ensureSpace = (needed: number) => { if (doc.y + needed > doc.page.height - 90) doc.addPage(); };
+      ensureSpace(120);
+      const footTop = doc.y;
+      doc.font("Helvetica-Bold").fontSize(9).text("Payment Info", PAGE_LEFT, footTop);
+      doc.font("Helvetica").fontSize(9).fillColor("#475569")
+        .text(`Method: ${(fee.paymentMethod || "CASH").replace("_", " ")}`, PAGE_LEFT, footTop + 14, { width: 260 });
+      if (fee.notes) {
+        doc.font("Helvetica").fontSize(9).fillColor("#475569").text(`Remarks: ${fee.notes}`, PAGE_LEFT, doc.y + 2, { width: 260 });
+      }
+      doc.fillColor("#000000");
+
+      const sigX = PAGE_LEFT + PAGE_WIDTH - 180;
+      if (qrBuffer) {
+        doc.image(qrBuffer, PAGE_LEFT + PAGE_WIDTH - 280, footTop, { width: 70, height: 70 });
+        doc.font("Helvetica").fontSize(6.5).fillColor("#94a3b8")
+          .text("Scan to verify", PAGE_LEFT + PAGE_WIDTH - 280, footTop + 72, { width: 70, align: "center" });
+      }
+      doc.moveTo(sigX, footTop + 58).lineTo(sigX + 180, footTop + 58).lineWidth(0.75).strokeColor("#94a3b8").stroke();
+      doc.font("Helvetica").fontSize(8.5).fillColor("#000000").text("Authorized Signature", sigX, footTop + 62, { width: 180, align: "center" });
+      // recordedBy has no dedicated column on FeePayment — the on-screen
+      // receipt (feeReceiptPayload) always shows the same literal label.
+      doc.font("Helvetica").fontSize(7.5).fillColor("#64748b").text("Processed by: Finance Office", sigX, doc.y, { width: 180, align: "center" });
+      doc.fillColor("#000000");
+
+      doc.y = Math.max(doc.y, footTop + 90);
+      doc.font("Helvetica").fontSize(7).fillColor("#94a3b8")
+        .text("This is a computer-generated receipt. No signature is required.", PAGE_LEFT, doc.page.height - 60, { width: PAGE_WIDTH, align: "center" });
+
+      doc.end();
+
+      createAuditLog(jwtUser.userId, jwtUser.email, "EXPORT", "FEE_PAYMENT", fee.id,
+        `Receipt PDF downloaded for ${studentName} (${fee.receiptNumber || fee.id}).`,
+        (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.ip || null,
+        (req.headers["user-agent"] as string) || null, "INFO").catch(() => {});
+    } catch (err) {
+      logger.error("Error generating fee receipt PDF:", err);
+      if (!res.headersSent) res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+}

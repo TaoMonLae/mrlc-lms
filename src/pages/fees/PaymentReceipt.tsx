@@ -66,8 +66,45 @@ export default function PaymentReceipt() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  const [downloading, setDownloading] = useState(false);
+
   const handlePrint = () => {
     window.print();
+  };
+
+  // Previously this was wired to the same handlePrint() as the Print button —
+  // window.print() only opens the browser's print dialog, it never actually
+  // saves a file, so "Download PDF" silently did nothing a user would
+  // recognize as a download (especially on desktop, where nothing lands in
+  // Downloads unless they manually choose "Save as PDF" in that dialog).
+  // This now fetches a real, server-generated PDF and saves it, the same way
+  // Payroll and the Conduct disciplinary notice already do.
+  const handleDownloadPdf = async () => {
+    if (!id) return;
+    setDownloading(true);
+    try {
+      const token = sessionStorage.getItem('auth_token');
+      const res = await fetch(`/api/fees/${id}/receipt.pdf`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to generate receipt PDF');
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Receipt-${payment?.receiptNumber || id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to download receipt PDF');
+    } finally {
+      setDownloading(false);
+    }
   };
 
   const canManageFees = hasPermission('manage_fees');
@@ -129,37 +166,37 @@ export default function PaymentReceipt() {
           <Button variant="outline" onClick={handlePrint}>
             <Printer className="mr-2 h-4 w-4" /> Print
           </Button>
-          <Button variant="outline" onClick={handlePrint}>
-            <Download className="mr-2 h-4 w-4" /> Download PDF
+          <Button variant="outline" onClick={handleDownloadPdf} disabled={downloading}>
+            {downloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />} Download PDF
           </Button>
         </div>
       </div>
 
       {/* Receipt Paper */}
-      <div className="bg-white text-slate-900 border border-slate-200 shadow-sm p-8 max-w-3xl mx-auto print:border-none print:shadow-none print:p-0">
+      <div className="bg-white text-slate-900 border border-slate-200 shadow-sm p-4 sm:p-8 max-w-3xl mx-auto overflow-x-hidden print:border-none print:shadow-none print:p-0">
 
          {/* Header */}
-         <div className="flex items-start justify-between border-b border-slate-200 pb-6 mb-6">
-            <div className="flex items-center gap-4">
+         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 border-b border-slate-200 pb-6 mb-6">
+            <div className="flex items-center gap-4 min-w-0">
               {brandingSettings.logoUrl ? (
-                <img src={brandingSettings.logoUrl} alt={schoolProfile.name} className="h-16 w-16 object-contain" />
+                <img src={brandingSettings.logoUrl} alt={schoolProfile.name} className="h-16 w-16 shrink-0 object-contain" />
               ) : (
-                <div className="h-16 w-16 bg-slate-100 flex items-center justify-center rounded-lg font-bold text-slate-400 text-2xl">
+                <div className="h-16 w-16 shrink-0 bg-slate-100 flex items-center justify-center rounded-lg font-bold text-slate-400 text-2xl">
                    {schoolProfile.name.charAt(0)}
                 </div>
               )}
-              <div>
+              <div className="min-w-0">
                 <h2 className="text-xl font-bold text-slate-900">{schoolProfile.name}</h2>
                 <p className="text-sm text-slate-500 whitespace-pre-wrap">{schoolProfile.address}</p>
-                <div className="text-sm text-slate-500 mt-1 flex gap-4">
+                <div className="text-sm text-slate-500 mt-1 flex flex-wrap gap-x-4 gap-y-0.5">
                    <span>Phone: {schoolProfile.phone}</span>
                    <span>Email: {schoolProfile.email}</span>
                 </div>
               </div>
             </div>
-            <div className="text-right">
-               <h1 className="text-3xl font-bold text-slate-300 uppercase tracking-widest">RECEIPT</h1>
-               <div className="mt-2 text-sm text-slate-600">
+            <div className="text-left sm:text-right shrink-0">
+               <h1 className="text-2xl sm:text-3xl font-bold text-slate-300 uppercase tracking-widest">RECEIPT</h1>
+               <div className="mt-2 text-sm text-slate-600 break-all sm:break-normal">
                  <p><span className="font-medium">No:</span> {payment.receiptNumber}</p>
                  <p><span className="font-medium">Date:</span> {format(new Date(payment.paymentDate || payment.paidDate || payment.createdAt), 'dd MMM yyyy')}</p>
                </div>
@@ -177,12 +214,12 @@ export default function PaymentReceipt() {
 
          {/* Student Info */}
          <div className="bg-slate-50 p-4 rounded border border-slate-100 mb-8">
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                <div>
                   <p className="text-slate-500 mb-1">Received From</p>
                   <p className="font-semibold text-slate-900 text-lg">{payment.studentName || 'Unknown Student'}</p>
                </div>
-               <div className="text-right">
+               <div className="sm:text-right">
                   <p className="text-slate-500 mb-1">Student Details</p>
                   <p className="font-medium text-slate-900">{payment.studentIdNumber || '—'}</p>
                   <p className="text-slate-600">{payment.class || '—'}</p>
@@ -191,7 +228,7 @@ export default function PaymentReceipt() {
          </div>
 
          {/* Payment Details */}
-         <div className="mb-8">
+         <div className="mb-8 overflow-x-auto">
             <table className="w-full text-sm">
                <thead className="bg-slate-100 border-b border-slate-200">
                   <tr>
@@ -231,20 +268,20 @@ export default function PaymentReceipt() {
             </table>
          </div>
 
-         <div className="grid grid-cols-2 gap-8 text-sm">
+         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 text-sm">
             <div>
                <h4 className="font-semibold text-slate-900 mb-2">Payment Info</h4>
                <p className="text-slate-600"><span className="font-medium">Method:</span> {(payment.paymentMethod || 'CASH').replace('_', ' ')}</p>
                {payment.notes && <p className="text-slate-600 mt-1 whitespace-pre-wrap"><span className="font-medium">Remarks:</span> {payment.notes}</p>}
             </div>
 
-            <div className="flex items-end justify-end gap-6">
-              <div className="text-center">
+            <div className="flex flex-col sm:flex-row items-center sm:items-end justify-center sm:justify-end gap-4 sm:gap-6">
+              <div className="text-center shrink-0">
                 {qr && <img src={qr} alt="Payment verification QR" className="h-24 w-24 mx-auto" />}
                 <p className="text-[10px] text-slate-500 mt-1 flex items-center justify-center gap-1"><ShieldCheck className="h-3 w-3" /> Scan to verify</p>
-                <p className="text-[9px] text-slate-400 font-mono break-all max-w-[150px]">{verifyUrl}</p>
+                <p className="text-[9px] text-slate-400 font-mono break-all max-w-[150px] mx-auto">{verifyUrl}</p>
               </div>
-              <div className="w-48 border-t border-slate-400 pt-2 text-center">
+              <div className="w-full max-w-[220px] sm:w-48 border-t border-slate-400 pt-2 text-center">
                 <p className="font-medium text-slate-900">Authorized Signature</p>
                 <p className="text-slate-500 text-xs mt-1">Processed by: {payment.recordedBy || 'Finance Office'}</p>
               </div>
