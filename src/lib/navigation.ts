@@ -36,6 +36,7 @@ import {
   HeartPulse,
   Crown,
   Languages,
+  Info,
 } from "lucide-react";
 import { UserRole } from "./permissions";
 
@@ -77,6 +78,7 @@ export const ADMIN_NAV: AdminNavEntry[] = [
   },
   { title: "Dictionary", url: "/dictionary", icon: BookA },
   { title: "Mon Language", url: "/mon-language", icon: Languages },
+  { title: "About", url: "/about", icon: Info },
   { title: "Announcements", url: "/announcements", icon: Megaphone },
   { title: "Timetable", url: "/timetable", icon: CalendarDays },
   {
@@ -183,6 +185,7 @@ export const TEACHER_NAV: AdminNavEntry[] = [
   },
   { title: "Dictionary", url: "/dictionary", icon: BookA },
   { title: "Mon Language", url: "/mon-language", icon: Languages },
+  { title: "About", url: "/about", icon: Info },
   { title: "Announcements", url: "/announcements", icon: Megaphone },
   { title: "My Timetable", url: "/teacher/timetable", icon: CalendarDays },
   {
@@ -246,6 +249,7 @@ export const STUDENT_NAV: AdminNavEntry[] = [
   },
   { title: "Dictionary", url: "/dictionary", icon: BookA },
   { title: "Mon Language", url: "/mon-language", icon: Languages },
+  { title: "About", url: "/about", icon: Info },
   { title: "Announcements", url: "/announcements", icon: Megaphone },
   { title: "My Timetable", url: "/timetable", icon: CalendarDays },
   {
@@ -350,6 +354,11 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     title: "Mon Language",
     url: "/mon-language",
     icon: Languages,
+  },
+  {
+    title: "About",
+    url: "/about",
+    icon: Info,
   },
   {
     title: "Students",

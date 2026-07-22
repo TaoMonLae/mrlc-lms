@@ -191,6 +191,7 @@ const ChessLeaderboardPage = lazy(() => import("./pages/games/chess/Leaderboard"
 
 const Dictionary = lazy(() => import("./pages/dictionary/Dictionary"));
 const MonLanguage = lazy(() => import("./pages/MonLanguage"));
+const AboutPage = lazy(() => import("./pages/About"));
 
 const AnnouncementsList = lazy(() => import("./pages/announcements/AnnouncementsList"));
 const AnnouncementNew = lazy(() => import("./pages/announcements/AnnouncementNew"));
@@ -342,6 +343,9 @@ export default function App() {
 
                 {/* Embedded Mon language learning app — available to every authenticated role */}
                 <Route path="/mon-language" element={<MonLanguage />} />
+
+                {/* About / credits — available to every authenticated role */}
+                <Route path="/about" element={<AboutPage />} />
 
                 <Route path="/games/sudoku" element={<SudokuSelectPage />} />
                 <Route path="/games/sudoku/play" element={<SudokuPlayPage />} />

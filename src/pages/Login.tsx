@@ -387,6 +387,7 @@ export default function LoginPage() {
                 )}
               </p>
             )}
+            <p className="mt-2 text-[11px] text-slate-400">Developed by Tao Mon Lae</p>
           </div>
         </footer>
       </main>
