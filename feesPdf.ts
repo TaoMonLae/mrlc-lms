@@ -1,6 +1,9 @@
 import express from "express";
 import PDFDocument from "pdfkit";
 import QRCode from "qrcode";
+import fs from "fs";
+import path from "path";
+import { format as formatDate } from "date-fns";
 
 interface JwtPayload { userId: string; role: string; email: string; }
 
@@ -19,13 +22,41 @@ interface Deps {
 const PAGE_LEFT = 50;
 const PAGE_WIDTH = 495; // A4 usable width at 50pt margins
 
+// Same directory the branding logo upload route (POST /api/settings/assets)
+// writes into and /uploads/branding serves from — see server.ts.
+const BRANDING_ASSET_DIR = process.env.BRANDING_ASSET_DIR || path.join(process.cwd(), "data", "branding");
+
+// Mirrors the client's formatMoney() (src/lib/locale.ts), which uses
+// narrowSymbol so MYR renders as "RM 300.00" instead of "MYR 300.00". This
+// previously omitted currencyDisplay, so the PDF and the on-screen receipt
+// disagreed on every amount.
 function money(amount: number, currency?: string | null): string {
   const code = (currency || "MYR").toUpperCase();
   const value = Number.isFinite(amount) ? amount : 0;
   try {
-    return new Intl.NumberFormat("en", { style: "currency", currency: code }).format(value);
+    return new Intl.NumberFormat("en", { style: "currency", currency: code, currencyDisplay: "narrowSymbol" }).format(value);
   } catch {
     return `${code} ${value.toFixed(2)}`;
+  }
+}
+
+// pdfkit's doc.image() only understands JPEG and PNG. Branding logos can also
+// be uploaded as WEBP/GIF/SVG (see brandingAssetUpload's fileFilter), which
+// would throw if handed to pdfkit directly — read the bytes but only pass
+// them through for a format pdfkit can actually decode; everything else (and
+// any read failure, e.g. an external logoUrl instead of an uploaded file)
+// falls back to null so the caller can draw the same initial-letter avatar
+// the web UI shows when there's no usable logo.
+function readEmbeddableLogo(logoUrl: string | null | undefined): Buffer | null {
+  if (!logoUrl || !logoUrl.startsWith("/uploads/branding/")) return null;
+  const ext = path.extname(logoUrl).toLowerCase();
+  if (![".png", ".jpg", ".jpeg"].includes(ext)) return null;
+  try {
+    const filename = path.basename(logoUrl);
+    if (filename !== path.basename(filename)) return null; // reject path traversal
+    return fs.readFileSync(path.join(BRANDING_ASSET_DIR, filename));
+  } catch {
+    return null;
   }
 }
 
@@ -74,6 +105,7 @@ export function registerFeesPdfRoutes(deps: Deps): void {
 
       let qrBuffer: Buffer | null = null;
       try { qrBuffer = await QRCode.toBuffer(verifyUrl, { margin: 1, width: 200 }); } catch { qrBuffer = null; }
+      const logoBuffer = readEmbeddableLogo(school?.logoUrl);
 
       const filename = `Receipt-${fee.receiptNumber || fee.id}.pdf`;
       res.setHeader("Content-Type", "application/pdf");
@@ -84,19 +116,56 @@ export function registerFeesPdfRoutes(deps: Deps): void {
 
       // ── Letterhead ──────────────────────────────────────────────────────
       const headerTop = doc.y;
-      doc.font("Helvetica-Bold").fontSize(16).fillColor("#000000").text(school?.name || "School", PAGE_LEFT, headerTop, { width: 300 });
-      if (school?.address) doc.font("Helvetica").fontSize(9).fillColor("#64748b").text(school.address, PAGE_LEFT, doc.y + 2, { width: 300 });
+      const LOGO_SIZE = 44;
+      const LOGO_GAP = 12;
+      const textLeft = PAGE_LEFT + LOGO_SIZE + LOGO_GAP;
+      const textWidth = 300 - LOGO_SIZE - LOGO_GAP;
+
+      if (logoBuffer) {
+        doc.image(logoBuffer, PAGE_LEFT, headerTop, { width: LOGO_SIZE, height: LOGO_SIZE, fit: [LOGO_SIZE, LOGO_SIZE] });
+      } else {
+        // Same fallback as the web receipt when there's no (usable) logo: a
+        // light gray square with the school's initial letter.
+        doc.roundedRect(PAGE_LEFT, headerTop, LOGO_SIZE, LOGO_SIZE, 6).fill("#f1f5f9");
+        doc.font("Helvetica-Bold").fontSize(20).fillColor("#94a3b8")
+          .text((school?.name || "S").charAt(0).toUpperCase(), PAGE_LEFT, headerTop + 11, { width: LOGO_SIZE, align: "center" });
+        doc.fillColor("#000000");
+      }
+
+      doc.font("Helvetica-Bold").fontSize(16).fillColor("#000000").text(school?.name || "School", textLeft, headerTop, { width: textWidth });
+      if (school?.address) doc.font("Helvetica").fontSize(9).fillColor("#64748b").text(school.address, textLeft, doc.y + 2, { width: textWidth });
       const contactBits = [school?.contactPhone ? `Phone: ${school.contactPhone}` : "", school?.contactEmail ? `Email: ${school.contactEmail}` : ""]
         .filter(Boolean).join("   ");
-      if (contactBits) doc.font("Helvetica").fontSize(9).fillColor("#64748b").text(contactBits, PAGE_LEFT, doc.y + 2, { width: 300 });
+      if (contactBits) doc.font("Helvetica").fontSize(9).fillColor("#64748b").text(contactBits, textLeft, doc.y + 2, { width: textWidth });
 
       doc.font("Helvetica-Bold").fontSize(26).fillColor("#cbd5e1").text("RECEIPT", PAGE_LEFT, headerTop, { width: PAGE_WIDTH, align: "right", characterSpacing: 1.5 });
       doc.font("Helvetica").fontSize(9).fillColor("#475569")
+        // Match the web receipt's date-fns 'dd MMM yyyy' format exactly (e.g.
+        // "22 Jul 2026") -- toLocaleDateString('en-US', ...) ignores the
+        // requested field order and always renders "Jul 22, 2026" instead.
         .text(`No: ${fee.receiptNumber || "—"}`, PAGE_LEFT, headerTop + 34, { width: PAGE_WIDTH, align: "right" })
-        .text(`Date: ${paymentDate.toLocaleDateString("en-US", { day: "2-digit", month: "short", year: "numeric" })}`, PAGE_LEFT, doc.y, { width: PAGE_WIDTH, align: "right" });
-      doc.font("Helvetica-Bold").fontSize(9).fillColor(isWaived ? "#64748b" : "#059669")
-        .text(isWaived ? "VOIDED" : String(fee.status), PAGE_LEFT, doc.y + 4, { width: PAGE_WIDTH, align: "right" });
+        .text(`Date: ${formatDate(paymentDate, "dd MMM yyyy")}`, PAGE_LEFT, doc.y, { width: PAGE_WIDTH, align: "right" });
+      // Status pill — matches the web receipt's Badge colors per status
+      // (statusColor map in PaymentReceipt.tsx) instead of plain text.
+      const STATUS_COLORS: Record<string, { bg: string; fg: string }> = {
+        PAID: { bg: "#d1fae5", fg: "#065f46" },
+        PARTIAL: { bg: "#fef3c7", fg: "#92400e" },
+        PENDING: { bg: "#fef3c7", fg: "#92400e" },
+        OVERDUE: { bg: "#fee2e2", fg: "#991b1b" },
+        WAIVED: { bg: "#f1f5f9", fg: "#475569" },
+      };
+      const statusText = isWaived ? "VOIDED" : String(fee.status);
+      const statusColors = STATUS_COLORS[isWaived ? "WAIVED" : fee.status] || { bg: "#e2e8f0", fg: "#334155" };
+      doc.font("Helvetica-Bold").fontSize(8);
+      const badgeTextW = doc.widthOfString(statusText);
+      const badgeW = badgeTextW + 16;
+      const badgeH = 14;
+      const badgeX = PAGE_LEFT + PAGE_WIDTH - badgeW;
+      const badgeY = doc.y + 4;
+      doc.roundedRect(badgeX, badgeY, badgeW, badgeH, badgeH / 2).fill(statusColors.bg);
+      doc.fillColor(statusColors.fg).text(statusText, badgeX, badgeY + 3.5, { width: badgeW, align: "center" });
       doc.fillColor("#000000");
+      doc.y = badgeY + badgeH;
 
       doc.y = Math.max(doc.y, headerTop + 70) + 10;
       line(doc, doc.y, "#1e293b", 1.25);
@@ -109,20 +178,25 @@ export function registerFeesPdfRoutes(deps: Deps): void {
       }
 
       // ── Student info ────────────────────────────────────────────────────
+      // Filled light-gray card (bg-slate-50 on the web) rather than just an
+      // outline — drawn first so the text below renders on top of it.
       const infoTop = doc.y;
-      const colWidth = PAGE_WIDTH / 2;
-      doc.font("Helvetica").fontSize(8).fillColor("#64748b").text("RECEIVED FROM", PAGE_LEFT, infoTop);
-      doc.font("Helvetica-Bold").fontSize(12).fillColor("#000000").text(studentName, PAGE_LEFT, infoTop + 12, { width: colWidth - 10 });
+      const infoBoxHeight = 62;
+      doc.roundedRect(PAGE_LEFT, infoTop, PAGE_WIDTH, infoBoxHeight, 6).fill("#f8fafc");
 
-      doc.font("Helvetica").fontSize(8).fillColor("#64748b").text("STUDENT DETAILS", PAGE_LEFT + colWidth, infoTop, { width: colWidth, align: "right" });
+      const infoPadTop = infoTop + 14;
+      const colWidth = PAGE_WIDTH / 2;
+      doc.font("Helvetica").fontSize(8).fillColor("#64748b").text("RECEIVED FROM", PAGE_LEFT + 14, infoPadTop);
+      doc.font("Helvetica-Bold").fontSize(12).fillColor("#000000").text(studentName, PAGE_LEFT + 14, infoPadTop + 12, { width: colWidth - 24 });
+
+      doc.font("Helvetica").fontSize(8).fillColor("#64748b").text("STUDENT DETAILS", PAGE_LEFT + colWidth, infoPadTop, { width: colWidth - 14, align: "right" });
       doc.font("Helvetica-Bold").fontSize(10).fillColor("#000000")
-        .text(fee.student?.studentCode || "—", PAGE_LEFT + colWidth, infoTop + 12, { width: colWidth, align: "right" });
+        .text(fee.student?.studentCode || "—", PAGE_LEFT + colWidth, infoPadTop + 12, { width: colWidth - 14, align: "right" });
       doc.font("Helvetica").fontSize(9).fillColor("#475569")
-        .text(fee.student?.class?.name || "—", PAGE_LEFT + colWidth, doc.y, { width: colWidth, align: "right" });
+        .text(fee.student?.class?.name || "—", PAGE_LEFT + colWidth, doc.y, { width: colWidth - 14, align: "right" });
 
       doc.fillColor("#000000");
-      doc.y = infoTop + 42;
-      doc.rect(PAGE_LEFT, infoTop - 10, PAGE_WIDTH, doc.y - infoTop + 16).strokeColor("#e2e8f0").lineWidth(0.75).stroke();
+      doc.y = infoTop + infoBoxHeight;
       doc.moveDown(1.4);
 
       // ── Payment details table ─────────────────────────────────────────
@@ -176,10 +250,16 @@ export function registerFeesPdfRoutes(deps: Deps): void {
       doc.fillColor("#000000");
 
       const sigX = PAGE_LEFT + PAGE_WIDTH - 180;
+      const qrX = PAGE_LEFT + PAGE_WIDTH - 280;
       if (qrBuffer) {
-        doc.image(qrBuffer, PAGE_LEFT + PAGE_WIDTH - 280, footTop, { width: 70, height: 70 });
+        doc.image(qrBuffer, qrX, footTop, { width: 70, height: 70 });
         doc.font("Helvetica").fontSize(6.5).fillColor("#94a3b8")
-          .text("Scan to verify", PAGE_LEFT + PAGE_WIDTH - 280, footTop + 72, { width: 70, align: "center" });
+          .text("Scan to verify", qrX, footTop + 72, { width: 70, align: "center" });
+        // The web receipt also prints the raw verify URL under the QR (small,
+        // monospace, wraps) — omitted here before, so the PDF had strictly
+        // less information on it than the page it's meant to mirror.
+        doc.font("Courier").fontSize(5.5).fillColor("#cbd5e1")
+          .text(verifyUrl, qrX, footTop + 82, { width: 70, align: "center" });
       }
       doc.moveTo(sigX, footTop + 58).lineTo(sigX + 180, footTop + 58).lineWidth(0.75).strokeColor("#94a3b8").stroke();
       doc.font("Helvetica").fontSize(8.5).fillColor("#000000").text("Authorized Signature", sigX, footTop + 62, { width: 180, align: "center" });
@@ -188,7 +268,7 @@ export function registerFeesPdfRoutes(deps: Deps): void {
       doc.font("Helvetica").fontSize(7.5).fillColor("#64748b").text("Processed by: Finance Office", sigX, doc.y, { width: 180, align: "center" });
       doc.fillColor("#000000");
 
-      doc.y = Math.max(doc.y, footTop + 90);
+      doc.y = Math.max(doc.y, footTop + 100);
       doc.font("Helvetica").fontSize(7).fillColor("#94a3b8")
         .text("This is a computer-generated receipt. No signature is required.", PAGE_LEFT, doc.page.height - 60, { width: PAGE_WIDTH, align: "center" });
 
