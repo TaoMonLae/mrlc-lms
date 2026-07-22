@@ -78,7 +78,6 @@ export const ADMIN_NAV: AdminNavEntry[] = [
   },
   { title: "Dictionary", url: "/dictionary", icon: BookA },
   { title: "Mon Language", url: "/mon-language", icon: Languages },
-  { title: "About", url: "/about", icon: Info },
   { title: "Announcements", url: "/announcements", icon: Megaphone },
   { title: "Timetable", url: "/timetable", icon: CalendarDays },
   {
@@ -165,6 +164,7 @@ export const ADMIN_NAV: AdminNavEntry[] = [
       { title: "Export Data", url: "/settings/export", icon: Download },
     ],
   },
+  { title: "About", url: "/about", icon: Info },
 ];
 
 /** Grouped sidebar for the TEACHER role. */
@@ -185,7 +185,6 @@ export const TEACHER_NAV: AdminNavEntry[] = [
   },
   { title: "Dictionary", url: "/dictionary", icon: BookA },
   { title: "Mon Language", url: "/mon-language", icon: Languages },
-  { title: "About", url: "/about", icon: Info },
   { title: "Announcements", url: "/announcements", icon: Megaphone },
   { title: "My Timetable", url: "/teacher/timetable", icon: CalendarDays },
   {
@@ -229,6 +228,7 @@ export const TEACHER_NAV: AdminNavEntry[] = [
   { title: "My Payroll", url: "/my-payroll", icon: Wallet },
   { title: "My Profile", url: "/teacher/profile", icon: UserSquare2 },
   { title: "Account & Security", url: "/profile", icon: ShieldAlert },
+  { title: "About", url: "/about", icon: Info },
 ];
 
 /** Grouped sidebar for the STUDENT role. */
@@ -249,7 +249,6 @@ export const STUDENT_NAV: AdminNavEntry[] = [
   },
   { title: "Dictionary", url: "/dictionary", icon: BookA },
   { title: "Mon Language", url: "/mon-language", icon: Languages },
-  { title: "About", url: "/about", icon: Info },
   { title: "Announcements", url: "/announcements", icon: Megaphone },
   { title: "My Timetable", url: "/timetable", icon: CalendarDays },
   {
@@ -278,6 +277,7 @@ export const STUDENT_NAV: AdminNavEntry[] = [
   },
   { title: "My Profile", url: "/student/profile", icon: UserSquare2 },
   { title: "Account & Security", url: "/profile", icon: ShieldAlert },
+  { title: "About", url: "/about", icon: Info },
 ];
 
 /** Roles with a grouped sidebar; everyone else gets the flat list. */
@@ -354,11 +354,6 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     title: "Mon Language",
     url: "/mon-language",
     icon: Languages,
-  },
-  {
-    title: "About",
-    url: "/about",
-    icon: Info,
   },
   {
     title: "Students",
@@ -735,5 +730,12 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     url: "/student/videos",
     icon: Video,
     roles: ["STUDENT"],
+  },
+
+  // About — last item, visible to everyone
+  {
+    title: "About",
+    url: "/about",
+    icon: Info,
   },
 ];
