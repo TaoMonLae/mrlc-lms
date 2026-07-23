@@ -1,0 +1,4499 @@
+[
+  {
+    "code": "MRLC-ADVANCED-ENGLISH-CORE-V1",
+    "title": "Advanced English: Core",
+    "description": "High-value advanced words that appear across many respected vocabulary lists.",
+    "language": "English",
+    "imageEmoji": "🧠",
+    "accentColor": "#0f766e",
+    "published": true,
+    "units": [
+      {
+        "title": "Build Your Range",
+        "description": "Ranked advanced words 1–30.",
+        "lessons": [
+          {
+            "title": "Word Set 1–10",
+            "description": "Learn ten ranked advanced words through definitions, choices, and pronunciation.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “an entreaty addressed to someone of superior status”?",
+                "options": [
+                  {
+                    "text": "solicitation",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "solicitation"
+                  },
+                  {
+                    "text": "catalyst",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "catalyst"
+                  },
+                  {
+                    "text": "disparity",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "disparity"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “something that causes an important event to happen”?",
+                "options": [
+                  {
+                    "text": "disparity",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "disparity"
+                  },
+                  {
+                    "text": "catalyst",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "catalyst"
+                  },
+                  {
+                    "text": "paradox",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "paradox"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “inequality or difference in some respect”?",
+                "options": [
+                  {
+                    "text": "paradox",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "paradox"
+                  },
+                  {
+                    "text": "alloy",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "alloy"
+                  },
+                  {
+                    "text": "disparity",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "disparity"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “(logic) a statement that contradicts itself”?",
+                "options": [
+                  {
+                    "text": "paradox",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "paradox"
+                  },
+                  {
+                    "text": "alloy",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "alloy"
+                  },
+                  {
+                    "text": "volatile",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "volatile"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “a mixture containing two or more metallic elements or metallic and nonmetallic elements usually fused together or dissolving into each other when molten”?",
+                "options": [
+                  {
+                    "text": "volatile",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "volatile"
+                  },
+                  {
+                    "text": "alloy",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "alloy"
+                  },
+                  {
+                    "text": "emulate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "emulate"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “likely to change suddenly or become dangerous”?",
+                "options": [
+                  {
+                    "text": "emulate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "emulate"
+                  },
+                  {
+                    "text": "proliferation",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "proliferation"
+                  },
+                  {
+                    "text": "volatile",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "volatile"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “strive to equal or match, especially by imitating”?",
+                "options": [
+                  {
+                    "text": "emulate",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "emulate"
+                  },
+                  {
+                    "text": "proliferation",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "proliferation"
+                  },
+                  {
+                    "text": "efficacy",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "efficacy"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “growth by the rapid multiplication of parts”?",
+                "options": [
+                  {
+                    "text": "efficacy",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "efficacy"
+                  },
+                  {
+                    "text": "proliferation",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "proliferation"
+                  },
+                  {
+                    "text": "dissemination",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "dissemination"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “capacity or power to produce a desired effect”?",
+                "options": [
+                  {
+                    "text": "dissemination",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "dissemination"
+                  },
+                  {
+                    "text": "solicitation",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "solicitation"
+                  },
+                  {
+                    "text": "efficacy",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "efficacy"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “the spreading of information or ideas to many people”?",
+                "options": [
+                  {
+                    "text": "dissemination",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "dissemination"
+                  },
+                  {
+                    "text": "solicitation",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "solicitation"
+                  },
+                  {
+                    "text": "catalyst",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "catalyst"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Word Set 11–20",
+            "description": "Learn ten ranked advanced words through definitions, choices, and pronunciation.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “added to or made greater in amount or number or strength”?",
+                "options": [
+                  {
+                    "text": "augmented",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "augmented"
+                  },
+                  {
+                    "text": "pedestrian",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "pedestrian"
+                  },
+                  {
+                    "text": "austerity",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "austerity"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “lacking wit or imagination”?",
+                "options": [
+                  {
+                    "text": "austerity",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "austerity"
+                  },
+                  {
+                    "text": "pedestrian",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "pedestrian"
+                  },
+                  {
+                    "text": "paradigm",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "paradigm"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “strict economy and reduced spending, often during difficult times”?",
+                "options": [
+                  {
+                    "text": "paradigm",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "paradigm"
+                  },
+                  {
+                    "text": "eccentric",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "eccentric"
+                  },
+                  {
+                    "text": "austerity",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "austerity"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “a typical example, model, or way of understanding something”?",
+                "options": [
+                  {
+                    "text": "paradigm",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "paradigm"
+                  },
+                  {
+                    "text": "eccentric",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "eccentric"
+                  },
+                  {
+                    "text": "refute",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "refute"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “a person with an unusual or odd personality”?",
+                "options": [
+                  {
+                    "text": "refute",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "refute"
+                  },
+                  {
+                    "text": "eccentric",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "eccentric"
+                  },
+                  {
+                    "text": "consecrated",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "consecrated"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “overthrow by argument, evidence, or proof”?",
+                "options": [
+                  {
+                    "text": "consecrated",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "consecrated"
+                  },
+                  {
+                    "text": "precursor",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "precursor"
+                  },
+                  {
+                    "text": "refute",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "refute"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “solemnly dedicated to or set apart for a high or sacred purpose”?",
+                "options": [
+                  {
+                    "text": "consecrated",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "consecrated"
+                  },
+                  {
+                    "text": "precursor",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "precursor"
+                  },
+                  {
+                    "text": "pragmatic",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "pragmatic"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “a person or thing that comes before and signals another”?",
+                "options": [
+                  {
+                    "text": "pragmatic",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "pragmatic"
+                  },
+                  {
+                    "text": "precursor",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "precursor"
+                  },
+                  {
+                    "text": "duplicate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "duplicate"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “focused on practical results rather than theory”?",
+                "options": [
+                  {
+                    "text": "duplicate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "duplicate"
+                  },
+                  {
+                    "text": "augmented",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "augmented"
+                  },
+                  {
+                    "text": "pragmatic",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "pragmatic"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “identically copied from an original”?",
+                "options": [
+                  {
+                    "text": "duplicate",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "duplicate"
+                  },
+                  {
+                    "text": "augmented",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "augmented"
+                  },
+                  {
+                    "text": "pedestrian",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "pedestrian"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Word Set 21–30",
+            "description": "Learn ten ranked advanced words through definitions, choices, and pronunciation.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “having precise or logical relevance to the matter at hand”?",
+                "options": [
+                  {
+                    "text": "pertinent",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "pertinent"
+                  },
+                  {
+                    "text": "venerable",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "venerable"
+                  },
+                  {
+                    "text": "affinity",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "affinity"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “impressive by reason of age”?",
+                "options": [
+                  {
+                    "text": "affinity",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "affinity"
+                  },
+                  {
+                    "text": "venerable",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "venerable"
+                  },
+                  {
+                    "text": "ether",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "ether"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “a close connection marked by community of interests or similarity in nature or character”?",
+                "options": [
+                  {
+                    "text": "ether",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "ether"
+                  },
+                  {
+                    "text": "amalgamation",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "amalgamation"
+                  },
+                  {
+                    "text": "affinity",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "affinity"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “any of a class of organic compounds that have two hydrocarbon groups linked by an oxygen atom”?",
+                "options": [
+                  {
+                    "text": "ether",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "ether"
+                  },
+                  {
+                    "text": "amalgamation",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "amalgamation"
+                  },
+                  {
+                    "text": "dissipated",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "dissipated"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “the process of combining two or more things into one”?",
+                "options": [
+                  {
+                    "text": "dissipated",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "dissipated"
+                  },
+                  {
+                    "text": "amalgamation",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "amalgamation"
+                  },
+                  {
+                    "text": "preclude",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "preclude"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “preoccupied with the pursuit of pleasure and especially games of chance”?",
+                "options": [
+                  {
+                    "text": "preclude",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "preclude"
+                  },
+                  {
+                    "text": "blatant",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "blatant"
+                  },
+                  {
+                    "text": "dissipated",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "dissipated"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “make impossible, especially beforehand”?",
+                "options": [
+                  {
+                    "text": "preclude",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "preclude"
+                  },
+                  {
+                    "text": "blatant",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "blatant"
+                  },
+                  {
+                    "text": "futile",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "futile"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “without any attempt at concealment”?",
+                "options": [
+                  {
+                    "text": "futile",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "futile"
+                  },
+                  {
+                    "text": "blatant",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "blatant"
+                  },
+                  {
+                    "text": "maverick",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "maverick"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “producing no result or effect”?",
+                "options": [
+                  {
+                    "text": "maverick",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "maverick"
+                  },
+                  {
+                    "text": "pertinent",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "pertinent"
+                  },
+                  {
+                    "text": "futile",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "futile"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “someone who exhibits great independence in thought and action”?",
+                "options": [
+                  {
+                    "text": "maverick",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "maverick"
+                  },
+                  {
+                    "text": "pertinent",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "pertinent"
+                  },
+                  {
+                    "text": "venerable",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "venerable"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Deepen Your Mastery",
+        "description": "Ranked advanced words 31–60.",
+        "lessons": [
+          {
+            "title": "Word Set 31–40",
+            "description": "Learn ten ranked advanced words through definitions, choices, and pronunciation.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “a disease that is constantly present to a greater or lesser degree in people of a certain class or in people living in a particular location”?",
+                "options": [
+                  {
+                    "text": "endemic",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "endemic"
+                  },
+                  {
+                    "text": "concise",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "concise"
+                  },
+                  {
+                    "text": "sporadic",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "sporadic"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “expressing much in few words”?",
+                "options": [
+                  {
+                    "text": "sporadic",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "sporadic"
+                  },
+                  {
+                    "text": "concise",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "concise"
+                  },
+                  {
+                    "text": "bolster",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "bolster"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “recurring in scattered and irregular or unpredictable instances”?",
+                "options": [
+                  {
+                    "text": "bolster",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "bolster"
+                  },
+                  {
+                    "text": "myriad",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "myriad"
+                  },
+                  {
+                    "text": "sporadic",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "sporadic"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “to support, strengthen, or improve something”?",
+                "options": [
+                  {
+                    "text": "bolster",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "bolster"
+                  },
+                  {
+                    "text": "myriad",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "myriad"
+                  },
+                  {
+                    "text": "benign",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "benign"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “a large indefinite number”?",
+                "options": [
+                  {
+                    "text": "benign",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "benign"
+                  },
+                  {
+                    "text": "myriad",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "myriad"
+                  },
+                  {
+                    "text": "coveted",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "coveted"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “not dangerous to health”?",
+                "options": [
+                  {
+                    "text": "coveted",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "coveted"
+                  },
+                  {
+                    "text": "meticulous",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "meticulous"
+                  },
+                  {
+                    "text": "benign",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "benign"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “greatly desired”?",
+                "options": [
+                  {
+                    "text": "coveted",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "coveted"
+                  },
+                  {
+                    "text": "meticulous",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "meticulous"
+                  },
+                  {
+                    "text": "precarious",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "precarious"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “marked by precise accordance with details”?",
+                "options": [
+                  {
+                    "text": "precarious",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "precarious"
+                  },
+                  {
+                    "text": "meticulous",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "meticulous"
+                  },
+                  {
+                    "text": "anomaly",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "anomaly"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “affording no ease or reassurance”?",
+                "options": [
+                  {
+                    "text": "anomaly",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "anomaly"
+                  },
+                  {
+                    "text": "endemic",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "endemic"
+                  },
+                  {
+                    "text": "precarious",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "precarious"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “deviation from the normal or common order or form or rule”?",
+                "options": [
+                  {
+                    "text": "anomaly",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "anomaly"
+                  },
+                  {
+                    "text": "endemic",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "endemic"
+                  },
+                  {
+                    "text": "concise",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "concise"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Word Set 41–50",
+            "description": "Learn ten ranked advanced words through definitions, choices, and pronunciation.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “a misconception resulting from incorrect reasoning”?",
+                "options": [
+                  {
+                    "text": "fallacy",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "fallacy"
+                  },
+                  {
+                    "text": "prodigy",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "prodigy"
+                  },
+                  {
+                    "text": "apprehension",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "apprehension"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “an unusually gifted or intelligent (young) person”?",
+                "options": [
+                  {
+                    "text": "apprehension",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "apprehension"
+                  },
+                  {
+                    "text": "prodigy",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "prodigy"
+                  },
+                  {
+                    "text": "elicit",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "elicit"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “fearful expectation or anticipation”?",
+                "options": [
+                  {
+                    "text": "elicit",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "elicit"
+                  },
+                  {
+                    "text": "equivocal",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "equivocal"
+                  },
+                  {
+                    "text": "apprehension",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "apprehension"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “derive by reason”?",
+                "options": [
+                  {
+                    "text": "elicit",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "elicit"
+                  },
+                  {
+                    "text": "equivocal",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "equivocal"
+                  },
+                  {
+                    "text": "ingenuity",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "ingenuity"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “open to two or more interpretations”?",
+                "options": [
+                  {
+                    "text": "ingenuity",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "ingenuity"
+                  },
+                  {
+                    "text": "equivocal",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "equivocal"
+                  },
+                  {
+                    "text": "transient",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "transient"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “the property of being ingenious”?",
+                "options": [
+                  {
+                    "text": "transient",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "transient"
+                  },
+                  {
+                    "text": "rustic",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "rustic"
+                  },
+                  {
+                    "text": "ingenuity",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "ingenuity"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “one who stays for only a short time”?",
+                "options": [
+                  {
+                    "text": "transient",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "transient"
+                  },
+                  {
+                    "text": "rustic",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "rustic"
+                  },
+                  {
+                    "text": "daunting",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "daunting"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “an unsophisticated country person”?",
+                "options": [
+                  {
+                    "text": "daunting",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "daunting"
+                  },
+                  {
+                    "text": "rustic",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "rustic"
+                  },
+                  {
+                    "text": "dormant",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "dormant"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “discouraging through fear”?",
+                "options": [
+                  {
+                    "text": "dormant",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "dormant"
+                  },
+                  {
+                    "text": "fallacy",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "fallacy"
+                  },
+                  {
+                    "text": "daunting",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "daunting"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “in a condition of biological rest or suspended animation”?",
+                "options": [
+                  {
+                    "text": "dormant",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "dormant"
+                  },
+                  {
+                    "text": "fallacy",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "fallacy"
+                  },
+                  {
+                    "text": "prodigy",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "prodigy"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Word Set 51–60",
+            "description": "Learn ten ranked advanced words through definitions, choices, and pronunciation.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “ordinary, routine, and lacking excitement”?",
+                "options": [
+                  {
+                    "text": "mundane",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "mundane"
+                  },
+                  {
+                    "text": "complacent",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "complacent"
+                  },
+                  {
+                    "text": "abatement",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "abatement"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “contented to a fault with oneself or one's actions”?",
+                "options": [
+                  {
+                    "text": "abatement",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "abatement"
+                  },
+                  {
+                    "text": "complacent",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "complacent"
+                  },
+                  {
+                    "text": "clandestine",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "clandestine"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “a reduction in amount, degree, or intensity”?",
+                "options": [
+                  {
+                    "text": "clandestine",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "clandestine"
+                  },
+                  {
+                    "text": "delineated",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "delineated"
+                  },
+                  {
+                    "text": "abatement",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "abatement"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “conducted with or marked by hidden aims or methods”?",
+                "options": [
+                  {
+                    "text": "clandestine",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "clandestine"
+                  },
+                  {
+                    "text": "delineated",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "delineated"
+                  },
+                  {
+                    "text": "steadfast",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "steadfast"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “represented accurately or precisely”?",
+                "options": [
+                  {
+                    "text": "steadfast",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "steadfast"
+                  },
+                  {
+                    "text": "delineated",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "delineated"
+                  },
+                  {
+                    "text": "lucid",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "lucid"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “firm and dependable especially in loyalty”?",
+                "options": [
+                  {
+                    "text": "lucid",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "lucid"
+                  },
+                  {
+                    "text": "promulgated",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "promulgated"
+                  },
+                  {
+                    "text": "steadfast",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "steadfast"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “having a clear mind”?",
+                "options": [
+                  {
+                    "text": "lucid",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "lucid"
+                  },
+                  {
+                    "text": "promulgated",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "promulgated"
+                  },
+                  {
+                    "text": "revere",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "revere"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “formally made public”?",
+                "options": [
+                  {
+                    "text": "revere",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "revere"
+                  },
+                  {
+                    "text": "promulgated",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "promulgated"
+                  },
+                  {
+                    "text": "capitulation",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "capitulation"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “to feel deep respect and admiration for someone or something”?",
+                "options": [
+                  {
+                    "text": "capitulation",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "capitulation"
+                  },
+                  {
+                    "text": "mundane",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "mundane"
+                  },
+                  {
+                    "text": "revere",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "revere"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “the act of surrendering or accepting an opponent's terms”?",
+                "options": [
+                  {
+                    "text": "capitulation",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "capitulation"
+                  },
+                  {
+                    "text": "mundane",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "mundane"
+                  },
+                  {
+                    "text": "complacent",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "complacent"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "code": "MRLC-ADVANCED-ENGLISH-MASTERY-V1",
+    "title": "Advanced English: Mastery",
+    "description": "A deeper ranked vocabulary path for precise reading, writing, and discussion.",
+    "language": "English",
+    "imageEmoji": "📘",
+    "accentColor": "#1d4ed8",
+    "published": true,
+    "units": [
+      {
+        "title": "Build Your Range",
+        "description": "Ranked advanced words 61–90.",
+        "lessons": [
+          {
+            "title": "Word Set 61–70",
+            "description": "Learn ten ranked advanced words through definitions, choices, and pronunciation.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “indirect, slanting, or not expressed straightforwardly”?",
+                "options": [
+                  {
+                    "text": "oblique",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "oblique"
+                  },
+                  {
+                    "text": "opaque",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "opaque"
+                  },
+                  {
+                    "text": "contentious",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "contentious"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “not transmitting or reflecting light or radiant energy”?",
+                "options": [
+                  {
+                    "text": "contentious",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "contentious"
+                  },
+                  {
+                    "text": "opaque",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "opaque"
+                  },
+                  {
+                    "text": "eclectic",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "eclectic"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “inclined or showing an inclination to dispute or disagree, even to engage in law suits”?",
+                "options": [
+                  {
+                    "text": "eclectic",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "eclectic"
+                  },
+                  {
+                    "text": "extrapolation",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "extrapolation"
+                  },
+                  {
+                    "text": "contentious",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "contentious"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “selecting what seems best of various styles or ideas”?",
+                "options": [
+                  {
+                    "text": "eclectic",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "eclectic"
+                  },
+                  {
+                    "text": "extrapolation",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "extrapolation"
+                  },
+                  {
+                    "text": "apathy",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "apathy"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “an inference about the future (or about some hypothetical situation) based on known facts and observations”?",
+                "options": [
+                  {
+                    "text": "apathy",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "apathy"
+                  },
+                  {
+                    "text": "extrapolation",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "extrapolation"
+                  },
+                  {
+                    "text": "pristine",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "pristine"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “an absence of emotion or enthusiasm”?",
+                "options": [
+                  {
+                    "text": "pristine",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "pristine"
+                  },
+                  {
+                    "text": "latent",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "latent"
+                  },
+                  {
+                    "text": "apathy",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "apathy"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “completely free from dirt or contamination”?",
+                "options": [
+                  {
+                    "text": "pristine",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "pristine"
+                  },
+                  {
+                    "text": "latent",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "latent"
+                  },
+                  {
+                    "text": "reproach",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "reproach"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “potentially existing but not presently evident or realized”?",
+                "options": [
+                  {
+                    "text": "reproach",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "reproach"
+                  },
+                  {
+                    "text": "latent",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "latent"
+                  },
+                  {
+                    "text": "consummate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "consummate"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “express criticism towards”?",
+                "options": [
+                  {
+                    "text": "consummate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "consummate"
+                  },
+                  {
+                    "text": "oblique",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "oblique"
+                  },
+                  {
+                    "text": "reproach",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "reproach"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “having or revealing supreme mastery or skill”?",
+                "options": [
+                  {
+                    "text": "consummate",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "consummate"
+                  },
+                  {
+                    "text": "oblique",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "oblique"
+                  },
+                  {
+                    "text": "opaque",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "opaque"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Word Set 71–80",
+            "description": "Learn ten ranked advanced words through definitions, choices, and pronunciation.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “a formal resignation and renunciation of powers”?",
+                "options": [
+                  {
+                    "text": "abdication",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "abdication"
+                  },
+                  {
+                    "text": "abstinence",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "abstinence"
+                  },
+                  {
+                    "text": "hyperbolic",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "hyperbolic"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “the trait of abstaining (especially from alcohol)”?",
+                "options": [
+                  {
+                    "text": "hyperbolic",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "hyperbolic"
+                  },
+                  {
+                    "text": "abstinence",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "abstinence"
+                  },
+                  {
+                    "text": "jargon",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "jargon"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “enlarged beyond truth or reasonableness”?",
+                "options": [
+                  {
+                    "text": "jargon",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "jargon"
+                  },
+                  {
+                    "text": "aberration",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "aberration"
+                  },
+                  {
+                    "text": "hyperbolic",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "hyperbolic"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “specialized technical terminology characteristic of a particular subject”?",
+                "options": [
+                  {
+                    "text": "jargon",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "jargon"
+                  },
+                  {
+                    "text": "aberration",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "aberration"
+                  },
+                  {
+                    "text": "discord",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "discord"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “a departure from what is normal, expected, or usual”?",
+                "options": [
+                  {
+                    "text": "discord",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "discord"
+                  },
+                  {
+                    "text": "aberration",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "aberration"
+                  },
+                  {
+                    "text": "animosity",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "animosity"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “lack of agreement or harmony”?",
+                "options": [
+                  {
+                    "text": "animosity",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "animosity"
+                  },
+                  {
+                    "text": "tractable",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "tractable"
+                  },
+                  {
+                    "text": "discord",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "discord"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “a feeling of ill will arousing active hostility”?",
+                "options": [
+                  {
+                    "text": "animosity",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "animosity"
+                  },
+                  {
+                    "text": "tractable",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "tractable"
+                  },
+                  {
+                    "text": "abridged",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "abridged"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “easily managed (controlled or taught or molded)”?",
+                "options": [
+                  {
+                    "text": "abridged",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "abridged"
+                  },
+                  {
+                    "text": "tractable",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "tractable"
+                  },
+                  {
+                    "text": "ambivalent",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "ambivalent"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “(used of texts) shortened by condensing or rewriting”?",
+                "options": [
+                  {
+                    "text": "ambivalent",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "ambivalent"
+                  },
+                  {
+                    "text": "abdication",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "abdication"
+                  },
+                  {
+                    "text": "abridged",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "abridged"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “uncertain or unable to decide about what course to follow”?",
+                "options": [
+                  {
+                    "text": "ambivalent",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "ambivalent"
+                  },
+                  {
+                    "text": "abdication",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "abdication"
+                  },
+                  {
+                    "text": "abstinence",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "abstinence"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Word Set 81–90",
+            "description": "Learn ten ranked advanced words through definitions, choices, and pronunciation.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “harsh criticism or disapproval”?",
+                "options": [
+                  {
+                    "text": "censure",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "censure"
+                  },
+                  {
+                    "text": "cryptic",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "cryptic"
+                  },
+                  {
+                    "text": "esoteric",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "esoteric"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “of an obscure nature”?",
+                "options": [
+                  {
+                    "text": "esoteric",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "esoteric"
+                  },
+                  {
+                    "text": "cryptic",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "cryptic"
+                  },
+                  {
+                    "text": "hegemony",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "hegemony"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “confined to and understandable by only an enlightened inner circle”?",
+                "options": [
+                  {
+                    "text": "hegemony",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "hegemony"
+                  },
+                  {
+                    "text": "respite",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "respite"
+                  },
+                  {
+                    "text": "esoteric",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "esoteric"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “the dominance or leadership of one social group or nation over others”?",
+                "options": [
+                  {
+                    "text": "hegemony",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "hegemony"
+                  },
+                  {
+                    "text": "respite",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "respite"
+                  },
+                  {
+                    "text": "belligerent",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "belligerent"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “a pause from doing something (as work)”?",
+                "options": [
+                  {
+                    "text": "belligerent",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "belligerent"
+                  },
+                  {
+                    "text": "respite",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "respite"
+                  },
+                  {
+                    "text": "attenuation",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "attenuation"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “hostile, aggressive, and ready to fight”?",
+                "options": [
+                  {
+                    "text": "attenuation",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "attenuation"
+                  },
+                  {
+                    "text": "collusion",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "collusion"
+                  },
+                  {
+                    "text": "belligerent",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "belligerent"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “weakening in force or intensity”?",
+                "options": [
+                  {
+                    "text": "attenuation",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "attenuation"
+                  },
+                  {
+                    "text": "collusion",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "collusion"
+                  },
+                  {
+                    "text": "contiguous",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "contiguous"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “secret agreement”?",
+                "options": [
+                  {
+                    "text": "contiguous",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "contiguous"
+                  },
+                  {
+                    "text": "collusion",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "collusion"
+                  },
+                  {
+                    "text": "astute",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "astute"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “very close or connected in space or time”?",
+                "options": [
+                  {
+                    "text": "astute",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "astute"
+                  },
+                  {
+                    "text": "censure",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "censure"
+                  },
+                  {
+                    "text": "contiguous",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "contiguous"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “marked by practical hardheaded intelligence”?",
+                "options": [
+                  {
+                    "text": "astute",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "astute"
+                  },
+                  {
+                    "text": "censure",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "censure"
+                  },
+                  {
+                    "text": "cryptic",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "cryptic"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Deepen Your Mastery",
+        "description": "Ranked advanced words 91–120.",
+        "lessons": [
+          {
+            "title": "Word Set 91–100",
+            "description": "Learn ten ranked advanced words through definitions, choices, and pronunciation.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “the relation between opposing principles or forces or factors”?",
+                "options": [
+                  {
+                    "text": "antagonism",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "antagonism"
+                  },
+                  {
+                    "text": "arduous",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "arduous"
+                  },
+                  {
+                    "text": "auspicious",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "auspicious"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “characterized by effort to the point of exhaustion”?",
+                "options": [
+                  {
+                    "text": "auspicious",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "auspicious"
+                  },
+                  {
+                    "text": "arduous",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "arduous"
+                  },
+                  {
+                    "text": "absolve",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "absolve"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “auguring favorable circumstances and good luck”?",
+                "options": [
+                  {
+                    "text": "absolve",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "absolve"
+                  },
+                  {
+                    "text": "dichotomy",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "dichotomy"
+                  },
+                  {
+                    "text": "auspicious",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "auspicious"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “to free someone from blame, guilt, or responsibility”?",
+                "options": [
+                  {
+                    "text": "absolve",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "absolve"
+                  },
+                  {
+                    "text": "dichotomy",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "dichotomy"
+                  },
+                  {
+                    "text": "credulity",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "credulity"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “a division into two sharply contrasting parts”?",
+                "options": [
+                  {
+                    "text": "credulity",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "credulity"
+                  },
+                  {
+                    "text": "dichotomy",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "dichotomy"
+                  },
+                  {
+                    "text": "hackney",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "hackney"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “tendency to believe readily”?",
+                "options": [
+                  {
+                    "text": "hackney",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "hackney"
+                  },
+                  {
+                    "text": "zenith",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "zenith"
+                  },
+                  {
+                    "text": "credulity",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "credulity"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “a compact breed of harness horse”?",
+                "options": [
+                  {
+                    "text": "hackney",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "hackney"
+                  },
+                  {
+                    "text": "zenith",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "zenith"
+                  },
+                  {
+                    "text": "dogmatic",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "dogmatic"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “the highest or most successful point”?",
+                "options": [
+                  {
+                    "text": "dogmatic",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "dogmatic"
+                  },
+                  {
+                    "text": "zenith",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "zenith"
+                  },
+                  {
+                    "text": "dissonance",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "dissonance"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “characterized by assertion of unproved or unprovable principles”?",
+                "options": [
+                  {
+                    "text": "dissonance",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "dissonance"
+                  },
+                  {
+                    "text": "antagonism",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "antagonism"
+                  },
+                  {
+                    "text": "dogmatic",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "dogmatic"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “disagreeable sounds”?",
+                "options": [
+                  {
+                    "text": "dissonance",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "dissonance"
+                  },
+                  {
+                    "text": "antagonism",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "antagonism"
+                  },
+                  {
+                    "text": "arduous",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "arduous"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Word Set 101–110",
+            "description": "Learn ten ranked advanced words through definitions, choices, and pronunciation.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “remedy that alleviates pain without curing”?",
+                "options": [
+                  {
+                    "text": "palliative",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "palliative"
+                  },
+                  {
+                    "text": "salient",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "salient"
+                  },
+                  {
+                    "text": "banal",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "banal"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “most noticeable, important, or relevant”?",
+                "options": [
+                  {
+                    "text": "banal",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "banal"
+                  },
+                  {
+                    "text": "salient",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "salient"
+                  },
+                  {
+                    "text": "connoisseur",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "connoisseur"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “repeated too often”?",
+                "options": [
+                  {
+                    "text": "connoisseur",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "connoisseur"
+                  },
+                  {
+                    "text": "forbearance",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "forbearance"
+                  },
+                  {
+                    "text": "banal",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "banal"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “an expert able to appreciate a field”?",
+                "options": [
+                  {
+                    "text": "connoisseur",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "connoisseur"
+                  },
+                  {
+                    "text": "forbearance",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "forbearance"
+                  },
+                  {
+                    "text": "copious",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "copious"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “patient self-control and tolerance”?",
+                "options": [
+                  {
+                    "text": "copious",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "copious"
+                  },
+                  {
+                    "text": "forbearance",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "forbearance"
+                  },
+                  {
+                    "text": "gratuitous",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "gratuitous"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “large in number or quantity (especially of discourse)”?",
+                "options": [
+                  {
+                    "text": "gratuitous",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "gratuitous"
+                  },
+                  {
+                    "text": "polemic",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "polemic"
+                  },
+                  {
+                    "text": "copious",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "copious"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “unnecessary and unwarranted”?",
+                "options": [
+                  {
+                    "text": "gratuitous",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "gratuitous"
+                  },
+                  {
+                    "text": "polemic",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "polemic"
+                  },
+                  {
+                    "text": "autocratic",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "autocratic"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “a strong written or spoken attack on an idea or person”?",
+                "options": [
+                  {
+                    "text": "autocratic",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "autocratic"
+                  },
+                  {
+                    "text": "polemic",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "polemic"
+                  },
+                  {
+                    "text": "stoic",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "stoic"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “offensively self-assured or given to exercising usually unwarranted power”?",
+                "options": [
+                  {
+                    "text": "stoic",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "stoic"
+                  },
+                  {
+                    "text": "palliative",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "palliative"
+                  },
+                  {
+                    "text": "autocratic",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "autocratic"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “seeming unaffected by pleasure or pain”?",
+                "options": [
+                  {
+                    "text": "stoic",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "stoic"
+                  },
+                  {
+                    "text": "palliative",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "palliative"
+                  },
+                  {
+                    "text": "salient",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "salient"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Word Set 111–120",
+            "description": "Learn ten ranked advanced words through definitions, choices, and pronunciation.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “corresponding in size or degree or extent”?",
+                "options": [
+                  {
+                    "text": "commensurate",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "commensurate"
+                  },
+                  {
+                    "text": "tenuous",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "tenuous"
+                  },
+                  {
+                    "text": "euphemism",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "euphemism"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “very weak, slight, or uncertain”?",
+                "options": [
+                  {
+                    "text": "euphemism",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "euphemism"
+                  },
+                  {
+                    "text": "tenuous",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "tenuous"
+                  },
+                  {
+                    "text": "buttress",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "buttress"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “an inoffensive or indirect expression that is substituted for one that is considered offensive or too harsh”?",
+                "options": [
+                  {
+                    "text": "buttress",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "buttress"
+                  },
+                  {
+                    "text": "disinterested",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "disinterested"
+                  },
+                  {
+                    "text": "euphemism",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "euphemism"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “a support usually of stone or brick”?",
+                "options": [
+                  {
+                    "text": "buttress",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "buttress"
+                  },
+                  {
+                    "text": "disinterested",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "disinterested"
+                  },
+                  {
+                    "text": "peruse",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "peruse"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “unaffected by self-interest”?",
+                "options": [
+                  {
+                    "text": "peruse",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "peruse"
+                  },
+                  {
+                    "text": "disinterested",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "disinterested"
+                  },
+                  {
+                    "text": "propriety",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "propriety"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “examine or consider with attention and in detail”?",
+                "options": [
+                  {
+                    "text": "propriety",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "propriety"
+                  },
+                  {
+                    "text": "ephemeral",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "ephemeral"
+                  },
+                  {
+                    "text": "peruse",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "peruse"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “correct or appropriate behavior”?",
+                "options": [
+                  {
+                    "text": "propriety",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "propriety"
+                  },
+                  {
+                    "text": "ephemeral",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "ephemeral"
+                  },
+                  {
+                    "text": "innocuous",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "innocuous"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “lasting a very short time”?",
+                "options": [
+                  {
+                    "text": "innocuous",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "innocuous"
+                  },
+                  {
+                    "text": "ephemeral",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "ephemeral"
+                  },
+                  {
+                    "text": "placid",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "placid"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “not injurious to physical or mental health”?",
+                "options": [
+                  {
+                    "text": "placid",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "placid"
+                  },
+                  {
+                    "text": "commensurate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "commensurate"
+                  },
+                  {
+                    "text": "innocuous",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "innocuous"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “calm, peaceful, and not easily disturbed”?",
+                "options": [
+                  {
+                    "text": "placid",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "placid"
+                  },
+                  {
+                    "text": "commensurate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "commensurate"
+                  },
+                  {
+                    "text": "tenuous",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "tenuous"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "code": "MRLC-ADVANCED-ENGLISH-EXPERT-V1",
+    "title": "Advanced English: Expert",
+    "description": "Challenging, lower-frequency words for ambitious readers and exam preparation.",
+    "language": "English",
+    "imageEmoji": "🏆",
+    "accentColor": "#9333ea",
+    "published": true,
+    "units": [
+      {
+        "title": "Build Your Range",
+        "description": "Ranked advanced words 121–150.",
+        "lessons": [
+          {
+            "title": "Word Set 121–130",
+            "description": "Learn ten ranked advanced words through definitions, choices, and pronunciation.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “indirectly, as, by, or through a substitute”?",
+                "options": [
+                  {
+                    "text": "vicariously",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "vicariously"
+                  },
+                  {
+                    "text": "atrophy",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "atrophy"
+                  },
+                  {
+                    "text": "abject",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "abject"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “a decrease in size of an organ caused by disease or disuse”?",
+                "options": [
+                  {
+                    "text": "abject",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "abject"
+                  },
+                  {
+                    "text": "atrophy",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "atrophy"
+                  },
+                  {
+                    "text": "docile",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "docile"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “of the most contemptible kind”?",
+                "options": [
+                  {
+                    "text": "docile",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "docile"
+                  },
+                  {
+                    "text": "paragon",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "paragon"
+                  },
+                  {
+                    "text": "abject",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "abject"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “willing to be taught or led or supervised or directed”?",
+                "options": [
+                  {
+                    "text": "docile",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "docile"
+                  },
+                  {
+                    "text": "paragon",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "paragon"
+                  },
+                  {
+                    "text": "sedition",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "sedition"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “an ideal instance”?",
+                "options": [
+                  {
+                    "text": "sedition",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "sedition"
+                  },
+                  {
+                    "text": "paragon",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "paragon"
+                  },
+                  {
+                    "text": "aloof",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "aloof"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “an illegal action inciting resistance to lawful authority and tending to cause the disruption or overthrow of the government”?",
+                "options": [
+                  {
+                    "text": "aloof",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "aloof"
+                  },
+                  {
+                    "text": "coalesce",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "coalesce"
+                  },
+                  {
+                    "text": "sedition",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "sedition"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “remote in manner”?",
+                "options": [
+                  {
+                    "text": "aloof",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "aloof"
+                  },
+                  {
+                    "text": "coalesce",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "coalesce"
+                  },
+                  {
+                    "text": "acquiescence",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "acquiescence"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “fuse or cause to grow together”?",
+                "options": [
+                  {
+                    "text": "acquiescence",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "acquiescence"
+                  },
+                  {
+                    "text": "coalesce",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "coalesce"
+                  },
+                  {
+                    "text": "caustic",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "caustic"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “acceptance without protest”?",
+                "options": [
+                  {
+                    "text": "caustic",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "caustic"
+                  },
+                  {
+                    "text": "vicariously",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "vicariously"
+                  },
+                  {
+                    "text": "acquiescence",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "acquiescence"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “sharply critical, sarcastic, or capable of burning”?",
+                "options": [
+                  {
+                    "text": "caustic",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "caustic"
+                  },
+                  {
+                    "text": "vicariously",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "vicariously"
+                  },
+                  {
+                    "text": "atrophy",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "atrophy"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Word Set 131–140",
+            "description": "Learn ten ranked advanced words through definitions, choices, and pronunciation.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “instructive (especially excessively)”?",
+                "options": [
+                  {
+                    "text": "didactic",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "didactic"
+                  },
+                  {
+                    "text": "sordid",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "sordid"
+                  },
+                  {
+                    "text": "spurious",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "spurious"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “meanly avaricious and mercenary”?",
+                "options": [
+                  {
+                    "text": "spurious",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "spurious"
+                  },
+                  {
+                    "text": "sordid",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "sordid"
+                  },
+                  {
+                    "text": "countenance",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "countenance"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “ostensibly valid, but not actually valid”?",
+                "options": [
+                  {
+                    "text": "countenance",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "countenance"
+                  },
+                  {
+                    "text": "refractory",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "refractory"
+                  },
+                  {
+                    "text": "spurious",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "spurious"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “the appearance conveyed by a person's face”?",
+                "options": [
+                  {
+                    "text": "countenance",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "countenance"
+                  },
+                  {
+                    "text": "refractory",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "refractory"
+                  },
+                  {
+                    "text": "ascetic",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "ascetic"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “not responding to treatment”?",
+                "options": [
+                  {
+                    "text": "ascetic",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "ascetic"
+                  },
+                  {
+                    "text": "refractory",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "refractory"
+                  },
+                  {
+                    "text": "juxtaposed",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "juxtaposed"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “practicing great self-denial”?",
+                "options": [
+                  {
+                    "text": "juxtaposed",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "juxtaposed"
+                  },
+                  {
+                    "text": "reticent",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "reticent"
+                  },
+                  {
+                    "text": "ascetic",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "ascetic"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “placed side by side often for comparison”?",
+                "options": [
+                  {
+                    "text": "juxtaposed",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "juxtaposed"
+                  },
+                  {
+                    "text": "reticent",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "reticent"
+                  },
+                  {
+                    "text": "incongruous",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "incongruous"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “temperamentally disinclined to talk”?",
+                "options": [
+                  {
+                    "text": "incongruous",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "incongruous"
+                  },
+                  {
+                    "text": "reticent",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "reticent"
+                  },
+                  {
+                    "text": "prodigal",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "prodigal"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “lacking in harmony or compatibility or appropriateness”?",
+                "options": [
+                  {
+                    "text": "prodigal",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "prodigal"
+                  },
+                  {
+                    "text": "didactic",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "didactic"
+                  },
+                  {
+                    "text": "incongruous",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "incongruous"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “a recklessly extravagant consumer”?",
+                "options": [
+                  {
+                    "text": "prodigal",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "prodigal"
+                  },
+                  {
+                    "text": "didactic",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "didactic"
+                  },
+                  {
+                    "text": "sordid",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "sordid"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Word Set 141–150",
+            "description": "Learn ten ranked advanced words through definitions, choices, and pronunciation.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “in a way that cannot be stopped or prevented”?",
+                "options": [
+                  {
+                    "text": "inexorably",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "inexorably"
+                  },
+                  {
+                    "text": "altruism",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "altruism"
+                  },
+                  {
+                    "text": "deleterious",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "deleterious"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “the quality of unselfish concern for the welfare of others”?",
+                "options": [
+                  {
+                    "text": "deleterious",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "deleterious"
+                  },
+                  {
+                    "text": "altruism",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "altruism"
+                  },
+                  {
+                    "text": "dearth",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "dearth"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “harmful to living things”?",
+                "options": [
+                  {
+                    "text": "dearth",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "dearth"
+                  },
+                  {
+                    "text": "itinerant",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "itinerant"
+                  },
+                  {
+                    "text": "deleterious",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "deleterious"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “an acute insufficiency”?",
+                "options": [
+                  {
+                    "text": "dearth",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "dearth"
+                  },
+                  {
+                    "text": "itinerant",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "itinerant"
+                  },
+                  {
+                    "text": "antithesis",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "antithesis"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “traveling from place to place to work”?",
+                "options": [
+                  {
+                    "text": "antithesis",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "antithesis"
+                  },
+                  {
+                    "text": "itinerant",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "itinerant"
+                  },
+                  {
+                    "text": "abysmal",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "abysmal"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “the juxtaposition of contrasting words or ideas to give a feeling of balance”?",
+                "options": [
+                  {
+                    "text": "abysmal",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "abysmal"
+                  },
+                  {
+                    "text": "anomalous",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "anomalous"
+                  },
+                  {
+                    "text": "antithesis",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "antithesis"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “resembling an abyss in depth”?",
+                "options": [
+                  {
+                    "text": "abysmal",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "abysmal"
+                  },
+                  {
+                    "text": "anomalous",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "anomalous"
+                  },
+                  {
+                    "text": "amorphous",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "amorphous"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “deviating from the general or common order or type”?",
+                "options": [
+                  {
+                    "text": "amorphous",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "amorphous"
+                  },
+                  {
+                    "text": "anomalous",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "anomalous"
+                  },
+                  {
+                    "text": "immutable",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "immutable"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “having no definite form or distinct shape”?",
+                "options": [
+                  {
+                    "text": "immutable",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "immutable"
+                  },
+                  {
+                    "text": "inexorably",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "inexorably"
+                  },
+                  {
+                    "text": "amorphous",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "amorphous"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “not subject or susceptible to change or variation in form or quality or nature”?",
+                "options": [
+                  {
+                    "text": "immutable",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "immutable"
+                  },
+                  {
+                    "text": "inexorably",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "inexorably"
+                  },
+                  {
+                    "text": "altruism",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "altruism"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Deepen Your Mastery",
+        "description": "Ranked advanced words 151–180.",
+        "lessons": [
+          {
+            "title": "Word Set 151–160",
+            "description": "Learn ten ranked advanced words through definitions, choices, and pronunciation.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “requiring secret or mysterious knowledge”?",
+                "options": [
+                  {
+                    "text": "arcane",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "arcane"
+                  },
+                  {
+                    "text": "amiable",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "amiable"
+                  },
+                  {
+                    "text": "nadir",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "nadir"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “disposed to please”?",
+                "options": [
+                  {
+                    "text": "nadir",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "nadir"
+                  },
+                  {
+                    "text": "amiable",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "amiable"
+                  },
+                  {
+                    "text": "erudite",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "erudite"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “an extreme state of adversity”?",
+                "options": [
+                  {
+                    "text": "erudite",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "erudite"
+                  },
+                  {
+                    "text": "obtuse",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "obtuse"
+                  },
+                  {
+                    "text": "nadir",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "nadir"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “having or showing profound knowledge”?",
+                "options": [
+                  {
+                    "text": "erudite",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "erudite"
+                  },
+                  {
+                    "text": "obtuse",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "obtuse"
+                  },
+                  {
+                    "text": "digress",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "digress"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “lacking in insight or discernment”?",
+                "options": [
+                  {
+                    "text": "digress",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "digress"
+                  },
+                  {
+                    "text": "obtuse",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "obtuse"
+                  },
+                  {
+                    "text": "chagrin",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "chagrin"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “lose clarity or turn aside especially from the main subject of attention or course of argument in writing, thinking, or speaking”?",
+                "options": [
+                  {
+                    "text": "chagrin",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "chagrin"
+                  },
+                  {
+                    "text": "tirade",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "tirade"
+                  },
+                  {
+                    "text": "digress",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "digress"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “strong feelings of embarrassment”?",
+                "options": [
+                  {
+                    "text": "chagrin",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "chagrin"
+                  },
+                  {
+                    "text": "tirade",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "tirade"
+                  },
+                  {
+                    "text": "impervious",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "impervious"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “a speech of violent denunciation”?",
+                "options": [
+                  {
+                    "text": "impervious",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "impervious"
+                  },
+                  {
+                    "text": "tirade",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "tirade"
+                  },
+                  {
+                    "text": "intractable",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "intractable"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “not allowing something to pass through or have an effect”?",
+                "options": [
+                  {
+                    "text": "intractable",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "intractable"
+                  },
+                  {
+                    "text": "arcane",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "arcane"
+                  },
+                  {
+                    "text": "impervious",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "impervious"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “difficult to control, manage, or solve”?",
+                "options": [
+                  {
+                    "text": "intractable",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "intractable"
+                  },
+                  {
+                    "text": "arcane",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "arcane"
+                  },
+                  {
+                    "text": "amiable",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "amiable"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Word Set 161–170",
+            "description": "Learn ten ranked advanced words through definitions, choices, and pronunciation.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “the ability to make quick, accurate judgments”?",
+                "options": [
+                  {
+                    "text": "acumen",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "acumen"
+                  },
+                  {
+                    "text": "penitent",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "penitent"
+                  },
+                  {
+                    "text": "extraneous",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "extraneous"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “feeling or expressing remorse for misdeeds”?",
+                "options": [
+                  {
+                    "text": "extraneous",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "extraneous"
+                  },
+                  {
+                    "text": "penitent",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "penitent"
+                  },
+                  {
+                    "text": "tangential",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "tangential"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “not pertinent to the matter under consideration”?",
+                "options": [
+                  {
+                    "text": "tangential",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "tangential"
+                  },
+                  {
+                    "text": "wanton",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "wanton"
+                  },
+                  {
+                    "text": "extraneous",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "extraneous"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “only slightly connected to the main subject”?",
+                "options": [
+                  {
+                    "text": "tangential",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "tangential"
+                  },
+                  {
+                    "text": "wanton",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "wanton"
+                  },
+                  {
+                    "text": "obstinate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "obstinate"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “deliberate, reckless, and without reasonable cause”?",
+                "options": [
+                  {
+                    "text": "obstinate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "obstinate"
+                  },
+                  {
+                    "text": "wanton",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "wanton"
+                  },
+                  {
+                    "text": "acrimonious",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "acrimonious"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “stubbornly refusing to change an opinion or course of action”?",
+                "options": [
+                  {
+                    "text": "acrimonious",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "acrimonious"
+                  },
+                  {
+                    "text": "nebulous",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "nebulous"
+                  },
+                  {
+                    "text": "obstinate",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "obstinate"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “marked by strong resentment or cynicism”?",
+                "options": [
+                  {
+                    "text": "acrimonious",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "acrimonious"
+                  },
+                  {
+                    "text": "nebulous",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "nebulous"
+                  },
+                  {
+                    "text": "foment",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "foment"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “lacking definition or definite content”?",
+                "options": [
+                  {
+                    "text": "foment",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "foment"
+                  },
+                  {
+                    "text": "nebulous",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "nebulous"
+                  },
+                  {
+                    "text": "mercurial",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "mercurial"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “to encourage or stir up trouble, conflict, or rebellion”?",
+                "options": [
+                  {
+                    "text": "mercurial",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "mercurial"
+                  },
+                  {
+                    "text": "acumen",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "acumen"
+                  },
+                  {
+                    "text": "foment",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "foment"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “changing mood or behavior quickly and unpredictably”?",
+                "options": [
+                  {
+                    "text": "mercurial",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "mercurial"
+                  },
+                  {
+                    "text": "acumen",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "acumen"
+                  },
+                  {
+                    "text": "penitent",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "penitent"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Word Set 171–180",
+            "description": "Learn ten ranked advanced words through definitions, choices, and pronunciation.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “strong and sharp”?",
+                "options": [
+                  {
+                    "text": "pungent",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "pungent"
+                  },
+                  {
+                    "text": "fortuitous",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "fortuitous"
+                  },
+                  {
+                    "text": "panacea",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "panacea"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “occurring by happy chance”?",
+                "options": [
+                  {
+                    "text": "panacea",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "panacea"
+                  },
+                  {
+                    "text": "fortuitous",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "fortuitous"
+                  },
+                  {
+                    "text": "capricious",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "capricious"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “hypothetical remedy for all ills or diseases”?",
+                "options": [
+                  {
+                    "text": "capricious",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "capricious"
+                  },
+                  {
+                    "text": "ostentatious",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "ostentatious"
+                  },
+                  {
+                    "text": "panacea",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "panacea"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “determined by chance or impulse or whim rather than by necessity or reason”?",
+                "options": [
+                  {
+                    "text": "capricious",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "capricious"
+                  },
+                  {
+                    "text": "ostentatious",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "ostentatious"
+                  },
+                  {
+                    "text": "surreptitiously",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "surreptitiously"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “intended to attract notice and impress others”?",
+                "options": [
+                  {
+                    "text": "surreptitiously",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "surreptitiously"
+                  },
+                  {
+                    "text": "ostentatious",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "ostentatious"
+                  },
+                  {
+                    "text": "hermetic",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "hermetic"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “secretly, especially to avoid being noticed”?",
+                "options": [
+                  {
+                    "text": "hermetic",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "hermetic"
+                  },
+                  {
+                    "text": "blithe",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "blithe"
+                  },
+                  {
+                    "text": "surreptitiously",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "surreptitiously"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “completely sealed”?",
+                "options": [
+                  {
+                    "text": "hermetic",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "hermetic"
+                  },
+                  {
+                    "text": "blithe",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "blithe"
+                  },
+                  {
+                    "text": "candor",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "candor"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which advanced word means “lacking or showing a lack of due concern”?",
+                "options": [
+                  {
+                    "text": "candor",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "candor"
+                  },
+                  {
+                    "text": "blithe",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "blithe"
+                  },
+                  {
+                    "text": "congenial",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "congenial"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “the quality of being honest and straightforward in attitude and speech”?",
+                "options": [
+                  {
+                    "text": "congenial",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "congenial"
+                  },
+                  {
+                    "text": "pungent",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "pungent"
+                  },
+                  {
+                    "text": "candor",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "candor"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which advanced word means “suitable to your needs”?",
+                "options": [
+                  {
+                    "text": "congenial",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "congenial"
+                  },
+                  {
+                    "text": "pungent",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "pungent"
+                  },
+                  {
+                    "text": "fortuitous",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "fortuitous"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

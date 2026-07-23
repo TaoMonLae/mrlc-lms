@@ -10,6 +10,28 @@ including its two-unit lesson structure and vocabulary challenges. The LMS
 implementation uses its own Express/Prisma backend, authentication, course
 editor, learner UI, progress model, emoji visuals, and browser speech support.
 
+## English word courses
+
+Everyday English Word Quest, Academic English Word Quest, and English Word
+Power select terms from [`dwyl/english-words`](https://github.com/dwyl/english-words)
+at upstream commit `20f5cc9`. The repository's `LICENSE.md` dedicates its
+software to the public domain under the Unlicense, while its README notes that
+copyright in the underlying compiled word list remains with its original
+source. MRLC includes only a curated 180-word selection. Definitions come from
+the separately acknowledged Princeton WordNet database bundled with the LMS.
+
+## Advanced English vocabulary courses
+
+Advanced English: Core, Mastery, and Expert select 180 individual ranked word
+entries from
+[`Isomorpheuss/advanced-english-vocabulary`](https://github.com/Isomorpheuss/advanced-english-vocabulary)
+at upstream commit `7d1bfdb`. That repository does not include a license file
+and aggregates several commercial vocabulary lists. MRLC therefore retains
+only individual words, frequency values, and aggregate intersection counts;
+it does not copy definitions or other expressive content from those lists.
+Course definitions come from the separately acknowledged Princeton WordNet
+database and MRLC-authored clarifications for ambiguous senses.
+
 ## School-provided Mandarin curriculum
 
 The Mandarin Complete Course is generated from `duolingo-chinese.md`, supplied

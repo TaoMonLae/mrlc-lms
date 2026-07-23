@@ -4,6 +4,8 @@ import { nextLanguageQuestStreak } from "../../shared/languageQuest";
 import { importedSpanishCourse } from "../../languageQuestImportedCourses";
 import { mandarinFoundationsCourse } from "../../languageQuestMandarinCourse";
 import { completeMandarinCourse } from "../../languageQuestCompleteMandarinCourse";
+import { englishWordCourses } from "../../languageQuestEnglishWordCourses";
+import { advancedEnglishCourses } from "../../languageQuestAdvancedEnglishCourses";
 
 test("Language Quest starts a new streak on the first active day", () => {
   assert.deepEqual(
@@ -81,6 +83,42 @@ test("the generated Mandarin Complete course contains every supplied translation
   assert.equal(challenges.length, 1870);
   assert.ok(completeMandarinCourse.units.every((unit) => unit.lessons.length <= 30));
   assert.ok(lessons.every((lesson) => lesson.challenges.length <= 50));
+  assert.ok(challenges.every((challenge) => challenge.options.length === 3));
+  assert.ok(challenges.every((challenge) => challenge.options.filter((option) => option.correct).length === 1));
+});
+
+test("the generated English word courses are focused and classroom-ready", () => {
+  const lessons = englishWordCourses.flatMap((course) => course.units.flatMap((unit) => unit.lessons));
+  const challenges = lessons.flatMap((lesson) => lesson.challenges);
+
+  assert.equal(englishWordCourses.length, 3);
+  assert.equal(lessons.length, 18);
+  assert.equal(challenges.length, 180);
+  assert.ok(englishWordCourses.every((course) => course.units.length === 2));
+  assert.ok(englishWordCourses.every((course) => course.units.flatMap((unit) => unit.lessons).length === 6));
+  assert.ok(englishWordCourses.every((course) => course.units.flatMap((unit) => unit.lessons).flatMap((lesson) => lesson.challenges).length === 60));
+  assert.ok(challenges.every((challenge) => challenge.options.length === 3));
+  assert.ok(challenges.every((challenge) => challenge.options.filter((option) => option.correct).length === 1));
+  assert.ok(challenges.every((challenge) => challenge.options.every((option) => option.audioText === option.text)));
+});
+
+test("the ranked advanced English courses have a valid progression", () => {
+  const lessons = advancedEnglishCourses.flatMap((course) => course.units.flatMap((unit) => unit.lessons));
+  const challenges = lessons.flatMap((lesson) => lesson.challenges);
+
+  assert.deepEqual(
+    advancedEnglishCourses.map((course) => course.code),
+    [
+      "MRLC-ADVANCED-ENGLISH-CORE-V1",
+      "MRLC-ADVANCED-ENGLISH-MASTERY-V1",
+      "MRLC-ADVANCED-ENGLISH-EXPERT-V1",
+    ],
+  );
+  assert.equal(lessons.length, 18);
+  assert.equal(challenges.length, 180);
+  assert.ok(advancedEnglishCourses.every((course) => course.units.length === 2));
+  assert.ok(advancedEnglishCourses.every((course) => course.units.flatMap((unit) => unit.lessons).length === 6));
+  assert.ok(advancedEnglishCourses.every((course) => course.units.flatMap((unit) => unit.lessons).flatMap((lesson) => lesson.challenges).length === 60));
   assert.ok(challenges.every((challenge) => challenge.options.length === 3));
   assert.ok(challenges.every((challenge) => challenge.options.filter((option) => option.correct).length === 1));
 });

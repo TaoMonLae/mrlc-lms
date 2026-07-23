@@ -21,6 +21,10 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 - Includes an original **Mandarin Foundations** course with three units, nine lessons, and thirty-six speech-assisted challenges covering beginner conversations and daily life.
 - Converts the school-provided `duolingo-chinese.md` curriculum into **Mandarin Complete Course**, preserving all seventy topics and 1,870 translation pairs across seven units and seventy-one LMS-safe lessons.
 - Run `npm run generate:language-quest-chinese` after editing the Markdown source to rebuild the generated course data.
+- Adds three curated courses from [dwyl/english-words](https://github.com/dwyl/english-words): **Everyday English Word Quest**, **Academic English Word Quest**, and **English Word Power**, with 180 definition and pronunciation challenges backed by the LMS's offline WordNet data.
+- Run `npm run generate:language-quest-english-words` to rebuild the English word courses; set `ENGLISH_WORDS_ALPHA_PATH` to an upstream `words_alpha.txt` checkout to revalidate every selected word.
+- Adds three ranked courses from [Isomorpheuss/advanced-english-vocabulary](https://github.com/Isomorpheuss/advanced-english-vocabulary): **Advanced English: Core**, **Advanced English: Mastery**, and **Advanced English: Expert**, with 180 WordNet-backed challenges selected from words appearing across at least nine vocabulary lists.
+- Run `npm run generate:language-quest-advanced-english` to rebuild the ranked courses; set `ADVANCED_ENGLISH_VOCAB_PATH` to the upstream `9ormore-withfreqandlistcount-413.csv` file to refresh the validated selection.
 
 ### Flashcards
 

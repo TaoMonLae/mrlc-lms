@@ -1,0 +1,4499 @@
+[
+  {
+    "code": "MRLC-ENGLISH-WORDS-EVERYDAY-V1",
+    "title": "Everyday English Word Quest",
+    "description": "Build practical vocabulary for school, home, food, feelings, actions, and places.",
+    "language": "English",
+    "imageEmoji": "💬",
+    "accentColor": "#2563eb",
+    "published": true,
+    "units": [
+      {
+        "title": "Daily Foundations",
+        "description": "Useful vocabulary for school, home, and meals.",
+        "lessons": [
+          {
+            "title": "School",
+            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which word means “a learner who is enrolled in an educational institution”?",
+                "options": [
+                  {
+                    "text": "student",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "student"
+                  },
+                  {
+                    "text": "teacher",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "teacher"
+                  },
+                  {
+                    "text": "classroom",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "classroom"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a person whose occupation is teaching”?",
+                "options": [
+                  {
+                    "text": "classroom",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "classroom"
+                  },
+                  {
+                    "text": "teacher",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "teacher"
+                  },
+                  {
+                    "text": "lesson",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "lesson"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a room in a school where lessons take place”?",
+                "options": [
+                  {
+                    "text": "lesson",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "lesson"
+                  },
+                  {
+                    "text": "homework",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "homework"
+                  },
+                  {
+                    "text": "classroom",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "classroom"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “a unit of instruction”?",
+                "options": [
+                  {
+                    "text": "lesson",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "lesson"
+                  },
+                  {
+                    "text": "homework",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "homework"
+                  },
+                  {
+                    "text": "library",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "library"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “preparatory school work done outside school (especially at home)”?",
+                "options": [
+                  {
+                    "text": "library",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "library"
+                  },
+                  {
+                    "text": "homework",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "homework"
+                  },
+                  {
+                    "text": "pencil",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "pencil"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a room where books are kept”?",
+                "options": [
+                  {
+                    "text": "pencil",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "pencil"
+                  },
+                  {
+                    "text": "notebook",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "notebook"
+                  },
+                  {
+                    "text": "library",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "library"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a thin cylindrical pointed writing implement”?",
+                "options": [
+                  {
+                    "text": "pencil",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "pencil"
+                  },
+                  {
+                    "text": "notebook",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "notebook"
+                  },
+                  {
+                    "text": "question",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "question"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “a book with blank pages for recording notes or memoranda”?",
+                "options": [
+                  {
+                    "text": "question",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "question"
+                  },
+                  {
+                    "text": "notebook",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "notebook"
+                  },
+                  {
+                    "text": "answer",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "answer"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a sentence or request that asks for information”?",
+                "options": [
+                  {
+                    "text": "answer",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "answer"
+                  },
+                  {
+                    "text": "student",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "student"
+                  },
+                  {
+                    "text": "question",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "question"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a reply to a question or a solution to a problem”?",
+                "options": [
+                  {
+                    "text": "answer",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "answer"
+                  },
+                  {
+                    "text": "student",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "student"
+                  },
+                  {
+                    "text": "teacher",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "teacher"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Home",
+            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which word means “a social unit living together”?",
+                "options": [
+                  {
+                    "text": "family",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "family"
+                  },
+                  {
+                    "text": "parent",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "parent"
+                  },
+                  {
+                    "text": "child",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "child"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a mother, father, or person who cares for a child”?",
+                "options": [
+                  {
+                    "text": "child",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "child"
+                  },
+                  {
+                    "text": "parent",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "parent"
+                  },
+                  {
+                    "text": "kitchen",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "kitchen"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a young person of either sex”?",
+                "options": [
+                  {
+                    "text": "kitchen",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "kitchen"
+                  },
+                  {
+                    "text": "bedroom",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "bedroom"
+                  },
+                  {
+                    "text": "child",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "child"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “a room equipped for preparing meals”?",
+                "options": [
+                  {
+                    "text": "kitchen",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "kitchen"
+                  },
+                  {
+                    "text": "bedroom",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "bedroom"
+                  },
+                  {
+                    "text": "window",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "window"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a room used primarily for sleeping”?",
+                "options": [
+                  {
+                    "text": "window",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "window"
+                  },
+                  {
+                    "text": "bedroom",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "bedroom"
+                  },
+                  {
+                    "text": "garden",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "garden"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a framework of wood or metal that contains a glass windowpane and is built into a wall or roof to admit light or air”?",
+                "options": [
+                  {
+                    "text": "garden",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "garden"
+                  },
+                  {
+                    "text": "breakfast",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "breakfast"
+                  },
+                  {
+                    "text": "window",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "window"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a piece of land where flowers, fruit, or vegetables are grown”?",
+                "options": [
+                  {
+                    "text": "garden",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "garden"
+                  },
+                  {
+                    "text": "breakfast",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "breakfast"
+                  },
+                  {
+                    "text": "dinner",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "dinner"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “the first meal of the day (usually in the morning)”?",
+                "options": [
+                  {
+                    "text": "dinner",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "dinner"
+                  },
+                  {
+                    "text": "breakfast",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "breakfast"
+                  },
+                  {
+                    "text": "welcome",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "welcome"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “the main meal of the day served in the evening or at midday”?",
+                "options": [
+                  {
+                    "text": "welcome",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "welcome"
+                  },
+                  {
+                    "text": "family",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "family"
+                  },
+                  {
+                    "text": "dinner",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "dinner"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “received with pleasure or friendly approval”?",
+                "options": [
+                  {
+                    "text": "welcome",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "welcome"
+                  },
+                  {
+                    "text": "family",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "family"
+                  },
+                  {
+                    "text": "parent",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "parent"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Food and Drink",
+            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which word means “fruit with red or yellow or green skin and sweet to tart crisp whitish flesh”?",
+                "options": [
+                  {
+                    "text": "apple",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "apple"
+                  },
+                  {
+                    "text": "banana",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "banana"
+                  },
+                  {
+                    "text": "bread",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "bread"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “elongated crescent-shaped yellow fruit with soft sweet flesh”?",
+                "options": [
+                  {
+                    "text": "bread",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "bread"
+                  },
+                  {
+                    "text": "banana",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "banana"
+                  },
+                  {
+                    "text": "rice",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "rice"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “food made from dough of flour or meal and usually raised with yeast or baking powder and then baked”?",
+                "options": [
+                  {
+                    "text": "rice",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "rice"
+                  },
+                  {
+                    "text": "water",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "water"
+                  },
+                  {
+                    "text": "bread",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "bread"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “grains used as food either unpolished or more often polished”?",
+                "options": [
+                  {
+                    "text": "rice",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "rice"
+                  },
+                  {
+                    "text": "water",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "water"
+                  },
+                  {
+                    "text": "coffee",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "coffee"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a clear liquid that people, animals, and plants need to live”?",
+                "options": [
+                  {
+                    "text": "coffee",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "coffee"
+                  },
+                  {
+                    "text": "water",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "water"
+                  },
+                  {
+                    "text": "vegetable",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "vegetable"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a dark drink made from roasted beans”?",
+                "options": [
+                  {
+                    "text": "vegetable",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "vegetable"
+                  },
+                  {
+                    "text": "hungry",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "hungry"
+                  },
+                  {
+                    "text": "coffee",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "coffee"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “edible seeds or roots or stems or leaves or bulbs or tubers or nonsweet fruits of any of numerous herbaceous plant”?",
+                "options": [
+                  {
+                    "text": "vegetable",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "vegetable"
+                  },
+                  {
+                    "text": "hungry",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "hungry"
+                  },
+                  {
+                    "text": "delicious",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "delicious"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “needing or wanting food”?",
+                "options": [
+                  {
+                    "text": "delicious",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "delicious"
+                  },
+                  {
+                    "text": "hungry",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "hungry"
+                  },
+                  {
+                    "text": "recipe",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "recipe"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “having a very pleasant taste or smell”?",
+                "options": [
+                  {
+                    "text": "recipe",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "recipe"
+                  },
+                  {
+                    "text": "apple",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "apple"
+                  },
+                  {
+                    "text": "delicious",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "delicious"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “directions for making something”?",
+                "options": [
+                  {
+                    "text": "recipe",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "recipe"
+                  },
+                  {
+                    "text": "apple",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "apple"
+                  },
+                  {
+                    "text": "banana",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "banana"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "People on the Move",
+        "description": "Words for actions, emotions, and getting around.",
+        "lessons": [
+          {
+            "title": "Actions",
+            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which word means “the act of traveling by foot”?",
+                "options": [
+                  {
+                    "text": "walk",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "walk"
+                  },
+                  {
+                    "text": "speak",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "speak"
+                  },
+                  {
+                    "text": "listen",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "listen"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “to use your voice to say words”?",
+                "options": [
+                  {
+                    "text": "listen",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "listen"
+                  },
+                  {
+                    "text": "speak",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "speak"
+                  },
+                  {
+                    "text": "write",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "write"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “hear with intention”?",
+                "options": [
+                  {
+                    "text": "write",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "write"
+                  },
+                  {
+                    "text": "carry",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "carry"
+                  },
+                  {
+                    "text": "listen",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "listen"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “to form words or symbols on a surface”?",
+                "options": [
+                  {
+                    "text": "write",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "write"
+                  },
+                  {
+                    "text": "carry",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "carry"
+                  },
+                  {
+                    "text": "open",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "open"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “to hold and move something from one place to another”?",
+                "options": [
+                  {
+                    "text": "open",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "open"
+                  },
+                  {
+                    "text": "carry",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "carry"
+                  },
+                  {
+                    "text": "close",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "close"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “to move something so that it is no longer closed”?",
+                "options": [
+                  {
+                    "text": "close",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "close"
+                  },
+                  {
+                    "text": "begin",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "begin"
+                  },
+                  {
+                    "text": "open",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "open"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “to shut an opening or bring something to an end”?",
+                "options": [
+                  {
+                    "text": "close",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "close"
+                  },
+                  {
+                    "text": "begin",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "begin"
+                  },
+                  {
+                    "text": "finish",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "finish"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “to start doing or being something”?",
+                "options": [
+                  {
+                    "text": "finish",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "finish"
+                  },
+                  {
+                    "text": "begin",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "begin"
+                  },
+                  {
+                    "text": "choose",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "choose"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “to complete something or reach its end”?",
+                "options": [
+                  {
+                    "text": "choose",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "choose"
+                  },
+                  {
+                    "text": "walk",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "walk"
+                  },
+                  {
+                    "text": "finish",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "finish"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “select as an alternative over another”?",
+                "options": [
+                  {
+                    "text": "choose",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "choose"
+                  },
+                  {
+                    "text": "walk",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "walk"
+                  },
+                  {
+                    "text": "speak",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "speak"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Feelings and Character",
+            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which word means “enjoying or showing or marked by joy or pleasure”?",
+                "options": [
+                  {
+                    "text": "happy",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "happy"
+                  },
+                  {
+                    "text": "sad",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "sad"
+                  },
+                  {
+                    "text": "angry",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "angry"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “experiencing or showing sorrow or unhappiness”?",
+                "options": [
+                  {
+                    "text": "angry",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "angry"
+                  },
+                  {
+                    "text": "sad",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "sad"
+                  },
+                  {
+                    "text": "afraid",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "afraid"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “feeling or showing anger”?",
+                "options": [
+                  {
+                    "text": "afraid",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "afraid"
+                  },
+                  {
+                    "text": "excited",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "excited"
+                  },
+                  {
+                    "text": "angry",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "angry"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “feeling fear or worry”?",
+                "options": [
+                  {
+                    "text": "afraid",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "afraid"
+                  },
+                  {
+                    "text": "excited",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "excited"
+                  },
+                  {
+                    "text": "tired",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "tired"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “very enthusiastic and eager”?",
+                "options": [
+                  {
+                    "text": "tired",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "tired"
+                  },
+                  {
+                    "text": "excited",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "excited"
+                  },
+                  {
+                    "text": "calm",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "calm"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “in need of rest or sleep”?",
+                "options": [
+                  {
+                    "text": "calm",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "calm"
+                  },
+                  {
+                    "text": "proud",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "proud"
+                  },
+                  {
+                    "text": "tired",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "tired"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “peaceful and not excited, worried, or upset”?",
+                "options": [
+                  {
+                    "text": "calm",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "calm"
+                  },
+                  {
+                    "text": "proud",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "proud"
+                  },
+                  {
+                    "text": "kind",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "kind"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “feeling self-respect or pleasure in something by which you measure your self-worth”?",
+                "options": [
+                  {
+                    "text": "kind",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "kind"
+                  },
+                  {
+                    "text": "proud",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "proud"
+                  },
+                  {
+                    "text": "brave",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "brave"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “friendly, generous, and considerate toward others”?",
+                "options": [
+                  {
+                    "text": "brave",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "brave"
+                  },
+                  {
+                    "text": "happy",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "happy"
+                  },
+                  {
+                    "text": "kind",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "kind"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “ready to face danger or difficulty with courage”?",
+                "options": [
+                  {
+                    "text": "brave",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "brave"
+                  },
+                  {
+                    "text": "happy",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "happy"
+                  },
+                  {
+                    "text": "sad",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "sad"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Around Town",
+            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which word means “a health facility where patients receive treatment”?",
+                "options": [
+                  {
+                    "text": "hospital",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "hospital"
+                  },
+                  {
+                    "text": "market",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "market"
+                  },
+                  {
+                    "text": "station",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "station"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a place where people buy and sell goods”?",
+                "options": [
+                  {
+                    "text": "station",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "station"
+                  },
+                  {
+                    "text": "market",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "market"
+                  },
+                  {
+                    "text": "airport",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "airport"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a place where trains or buses regularly stop”?",
+                "options": [
+                  {
+                    "text": "airport",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "airport"
+                  },
+                  {
+                    "text": "restaurant",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "restaurant"
+                  },
+                  {
+                    "text": "station",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "station"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “an airfield equipped with control tower and hangars as well as accommodations for passengers and cargo”?",
+                "options": [
+                  {
+                    "text": "airport",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "airport"
+                  },
+                  {
+                    "text": "restaurant",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "restaurant"
+                  },
+                  {
+                    "text": "street",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "street"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a building where people go to eat”?",
+                "options": [
+                  {
+                    "text": "street",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "street"
+                  },
+                  {
+                    "text": "restaurant",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "restaurant"
+                  },
+                  {
+                    "text": "bridge",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "bridge"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a thoroughfare (usually including sidewalks) that is lined with buildings”?",
+                "options": [
+                  {
+                    "text": "bridge",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "bridge"
+                  },
+                  {
+                    "text": "village",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "village"
+                  },
+                  {
+                    "text": "street",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "street"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a structure carrying a path or road over an obstacle”?",
+                "options": [
+                  {
+                    "text": "bridge",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "bridge"
+                  },
+                  {
+                    "text": "village",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "village"
+                  },
+                  {
+                    "text": "journey",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "journey"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “a community of people smaller than a town”?",
+                "options": [
+                  {
+                    "text": "journey",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "journey"
+                  },
+                  {
+                    "text": "village",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "village"
+                  },
+                  {
+                    "text": "ticket",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "ticket"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “the act of traveling from one place to another”?",
+                "options": [
+                  {
+                    "text": "ticket",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "ticket"
+                  },
+                  {
+                    "text": "hospital",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "hospital"
+                  },
+                  {
+                    "text": "journey",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "journey"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a commercial document showing that the holder is entitled to something (as to ride on public transportation or to enter a public entertainment)”?",
+                "options": [
+                  {
+                    "text": "ticket",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "ticket"
+                  },
+                  {
+                    "text": "hospital",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "hospital"
+                  },
+                  {
+                    "text": "market",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "market"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "code": "MRLC-ENGLISH-WORDS-ACADEMIC-V1",
+    "title": "Academic English Word Quest",
+    "description": "Practise high-value words used in research, writing, science, mathematics, and society.",
+    "language": "English",
+    "imageEmoji": "🎓",
+    "accentColor": "#7c3aed",
+    "published": true,
+    "units": [
+      {
+        "title": "Study and Research",
+        "description": "Words for thinking, evidence, reading, and writing.",
+        "lessons": [
+          {
+            "title": "Thinking Skills",
+            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which word means “consider in detail and subject to an analysis in order to discover essential features or meaning”?",
+                "options": [
+                  {
+                    "text": "analyze",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "analyze"
+                  },
+                  {
+                    "text": "compare",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "compare"
+                  },
+                  {
+                    "text": "contrast",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "contrast"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “examine and note the similarities or differences of”?",
+                "options": [
+                  {
+                    "text": "contrast",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "contrast"
+                  },
+                  {
+                    "text": "compare",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "compare"
+                  },
+                  {
+                    "text": "evaluate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "evaluate"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “put in opposition to show or emphasize differences”?",
+                "options": [
+                  {
+                    "text": "evaluate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "evaluate"
+                  },
+                  {
+                    "text": "explain",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "explain"
+                  },
+                  {
+                    "text": "contrast",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "contrast"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “form a critical opinion of”?",
+                "options": [
+                  {
+                    "text": "evaluate",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "evaluate"
+                  },
+                  {
+                    "text": "explain",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "explain"
+                  },
+                  {
+                    "text": "infer",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "infer"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “make plain and comprehensible”?",
+                "options": [
+                  {
+                    "text": "infer",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "infer"
+                  },
+                  {
+                    "text": "explain",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "explain"
+                  },
+                  {
+                    "text": "interpret",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "interpret"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “to reach a conclusion from evidence and reasoning”?",
+                "options": [
+                  {
+                    "text": "interpret",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "interpret"
+                  },
+                  {
+                    "text": "observe",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "observe"
+                  },
+                  {
+                    "text": "infer",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "infer"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “to explain or understand the meaning of something”?",
+                "options": [
+                  {
+                    "text": "interpret",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "interpret"
+                  },
+                  {
+                    "text": "observe",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "observe"
+                  },
+                  {
+                    "text": "predict",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "predict"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “to notice or watch something carefully”?",
+                "options": [
+                  {
+                    "text": "predict",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "predict"
+                  },
+                  {
+                    "text": "observe",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "observe"
+                  },
+                  {
+                    "text": "summarize",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "summarize"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “to say what is likely to happen in the future”?",
+                "options": [
+                  {
+                    "text": "summarize",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "summarize"
+                  },
+                  {
+                    "text": "analyze",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "analyze"
+                  },
+                  {
+                    "text": "predict",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "predict"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “to give the main points in a shorter form”?",
+                "options": [
+                  {
+                    "text": "summarize",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "summarize"
+                  },
+                  {
+                    "text": "analyze",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "analyze"
+                  },
+                  {
+                    "text": "compare",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "compare"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Evidence and Research",
+            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which word means “your basis for belief or disbelief”?",
+                "options": [
+                  {
+                    "text": "evidence",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "evidence"
+                  },
+                  {
+                    "text": "research",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "research"
+                  },
+                  {
+                    "text": "source",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "source"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “systematic investigation to establish facts”?",
+                "options": [
+                  {
+                    "text": "source",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "source"
+                  },
+                  {
+                    "text": "research",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "research"
+                  },
+                  {
+                    "text": "data",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "data"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “the place, person, or thing from which information comes”?",
+                "options": [
+                  {
+                    "text": "data",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "data"
+                  },
+                  {
+                    "text": "method",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "method"
+                  },
+                  {
+                    "text": "source",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "source"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “a collection of facts from which conclusions may be drawn”?",
+                "options": [
+                  {
+                    "text": "data",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "data"
+                  },
+                  {
+                    "text": "method",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "method"
+                  },
+                  {
+                    "text": "result",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "result"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a way of doing something, especially a systematic way”?",
+                "options": [
+                  {
+                    "text": "result",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "result"
+                  },
+                  {
+                    "text": "method",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "method"
+                  },
+                  {
+                    "text": "theory",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "theory"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “the outcome produced by an action or event”?",
+                "options": [
+                  {
+                    "text": "theory",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "theory"
+                  },
+                  {
+                    "text": "survey",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "survey"
+                  },
+                  {
+                    "text": "result",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "result"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a well-substantiated explanation of some aspect of the natural world”?",
+                "options": [
+                  {
+                    "text": "theory",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "theory"
+                  },
+                  {
+                    "text": "survey",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "survey"
+                  },
+                  {
+                    "text": "sample",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "sample"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “a detailed critical inspection”?",
+                "options": [
+                  {
+                    "text": "sample",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "sample"
+                  },
+                  {
+                    "text": "survey",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "survey"
+                  },
+                  {
+                    "text": "conclusion",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "conclusion"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a small part chosen to represent a larger whole”?",
+                "options": [
+                  {
+                    "text": "conclusion",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "conclusion"
+                  },
+                  {
+                    "text": "evidence",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "evidence"
+                  },
+                  {
+                    "text": "sample",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "sample"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a judgment or decision reached after reasoning”?",
+                "options": [
+                  {
+                    "text": "conclusion",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "conclusion"
+                  },
+                  {
+                    "text": "evidence",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "evidence"
+                  },
+                  {
+                    "text": "research",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "research"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Reading and Writing",
+            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which word means “a fact or assertion offered as evidence that something is true”?",
+                "options": [
+                  {
+                    "text": "argument",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "argument"
+                  },
+                  {
+                    "text": "paragraph",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "paragraph"
+                  },
+                  {
+                    "text": "sentence",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "sentence"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “one of several distinct subdivisions of a text intended to separate ideas”?",
+                "options": [
+                  {
+                    "text": "sentence",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "sentence"
+                  },
+                  {
+                    "text": "paragraph",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "paragraph"
+                  },
+                  {
+                    "text": "context",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "context"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a string of words satisfying the grammatical rules of a language”?",
+                "options": [
+                  {
+                    "text": "context",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "context"
+                  },
+                  {
+                    "text": "quotation",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "quotation"
+                  },
+                  {
+                    "text": "sentence",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "sentence"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “discourse that surrounds a language unit and helps to determine its interpretation”?",
+                "options": [
+                  {
+                    "text": "context",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "context"
+                  },
+                  {
+                    "text": "quotation",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "quotation"
+                  },
+                  {
+                    "text": "reference",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "reference"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a passage or expression that is quoted or cited”?",
+                "options": [
+                  {
+                    "text": "reference",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "reference"
+                  },
+                  {
+                    "text": "quotation",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "quotation"
+                  },
+                  {
+                    "text": "revise",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "revise"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a source used to find or support information”?",
+                "options": [
+                  {
+                    "text": "revise",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "revise"
+                  },
+                  {
+                    "text": "draft",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "draft"
+                  },
+                  {
+                    "text": "reference",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "reference"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “make revisions in”?",
+                "options": [
+                  {
+                    "text": "revise",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "revise"
+                  },
+                  {
+                    "text": "draft",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "draft"
+                  },
+                  {
+                    "text": "grammar",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "grammar"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “an early version of a piece of writing”?",
+                "options": [
+                  {
+                    "text": "grammar",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "grammar"
+                  },
+                  {
+                    "text": "draft",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "draft"
+                  },
+                  {
+                    "text": "vocabulary",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "vocabulary"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “the branch of linguistics that deals with syntax and morphology (and sometimes also deals with semantics)”?",
+                "options": [
+                  {
+                    "text": "vocabulary",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "vocabulary"
+                  },
+                  {
+                    "text": "argument",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "argument"
+                  },
+                  {
+                    "text": "grammar",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "grammar"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a listing of the words used in some enterprise”?",
+                "options": [
+                  {
+                    "text": "vocabulary",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "vocabulary"
+                  },
+                  {
+                    "text": "argument",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "argument"
+                  },
+                  {
+                    "text": "paragraph",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "paragraph"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "STEM and Society",
+        "description": "Academic vocabulary across technical and social subjects.",
+        "lessons": [
+          {
+            "title": "Science",
+            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which word means “the ability to do work or cause change”?",
+                "options": [
+                  {
+                    "text": "energy",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "energy"
+                  },
+                  {
+                    "text": "matter",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "matter"
+                  },
+                  {
+                    "text": "element",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "element"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “physical substance from which things are made”?",
+                "options": [
+                  {
+                    "text": "element",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "element"
+                  },
+                  {
+                    "text": "matter",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "matter"
+                  },
+                  {
+                    "text": "organism",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "organism"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a pure substance made from one kind of atom”?",
+                "options": [
+                  {
+                    "text": "organism",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "organism"
+                  },
+                  {
+                    "text": "climate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "climate"
+                  },
+                  {
+                    "text": "element",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "element"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “a living thing that has (or can develop) the ability to act or function independently”?",
+                "options": [
+                  {
+                    "text": "organism",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "organism"
+                  },
+                  {
+                    "text": "climate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "climate"
+                  },
+                  {
+                    "text": "environment",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "environment"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “the weather in some location averaged over some long period of time”?",
+                "options": [
+                  {
+                    "text": "environment",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "environment"
+                  },
+                  {
+                    "text": "climate",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "climate"
+                  },
+                  {
+                    "text": "experiment",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "experiment"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “the totality of surrounding conditions”?",
+                "options": [
+                  {
+                    "text": "experiment",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "experiment"
+                  },
+                  {
+                    "text": "variable",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "variable"
+                  },
+                  {
+                    "text": "environment",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "environment"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a scientific test used to discover or demonstrate something”?",
+                "options": [
+                  {
+                    "text": "experiment",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "experiment"
+                  },
+                  {
+                    "text": "variable",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "variable"
+                  },
+                  {
+                    "text": "measure",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "measure"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “a factor that can change or be changed”?",
+                "options": [
+                  {
+                    "text": "measure",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "measure"
+                  },
+                  {
+                    "text": "variable",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "variable"
+                  },
+                  {
+                    "text": "process",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "process"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “to find the size, amount, or degree of something”?",
+                "options": [
+                  {
+                    "text": "process",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "process"
+                  },
+                  {
+                    "text": "energy",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "energy"
+                  },
+                  {
+                    "text": "measure",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "measure"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a series of actions that produces a result”?",
+                "options": [
+                  {
+                    "text": "process",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "process"
+                  },
+                  {
+                    "text": "energy",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "energy"
+                  },
+                  {
+                    "text": "matter",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "matter"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Mathematics",
+            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which word means “a mathematical statement that two expressions are equal”?",
+                "options": [
+                  {
+                    "text": "equation",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "equation"
+                  },
+                  {
+                    "text": "fraction",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "fraction"
+                  },
+                  {
+                    "text": "decimal",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "decimal"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a number representing part of a whole”?",
+                "options": [
+                  {
+                    "text": "decimal",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "decimal"
+                  },
+                  {
+                    "text": "fraction",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "fraction"
+                  },
+                  {
+                    "text": "ratio",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "ratio"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a number written with a point to show a fraction of ten”?",
+                "options": [
+                  {
+                    "text": "ratio",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "ratio"
+                  },
+                  {
+                    "text": "average",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "average"
+                  },
+                  {
+                    "text": "decimal",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "decimal"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “the relative magnitudes of two quantities (usually expressed as a quotient)”?",
+                "options": [
+                  {
+                    "text": "ratio",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "ratio"
+                  },
+                  {
+                    "text": "average",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "average"
+                  },
+                  {
+                    "text": "geometry",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "geometry"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a value found by adding numbers and dividing by how many there are”?",
+                "options": [
+                  {
+                    "text": "geometry",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "geometry"
+                  },
+                  {
+                    "text": "average",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "average"
+                  },
+                  {
+                    "text": "calculate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "calculate"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “the pure mathematics of points and lines and curves and surfaces”?",
+                "options": [
+                  {
+                    "text": "calculate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "calculate"
+                  },
+                  {
+                    "text": "estimate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "estimate"
+                  },
+                  {
+                    "text": "geometry",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "geometry"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “make a mathematical calculation or computation”?",
+                "options": [
+                  {
+                    "text": "calculate",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "calculate"
+                  },
+                  {
+                    "text": "estimate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "estimate"
+                  },
+                  {
+                    "text": "sequence",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "sequence"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “an approximate calculation of quantity or degree or worth”?",
+                "options": [
+                  {
+                    "text": "sequence",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "sequence"
+                  },
+                  {
+                    "text": "estimate",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "estimate"
+                  },
+                  {
+                    "text": "pattern",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "pattern"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a set of things arranged in a particular order”?",
+                "options": [
+                  {
+                    "text": "pattern",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "pattern"
+                  },
+                  {
+                    "text": "equation",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "equation"
+                  },
+                  {
+                    "text": "sequence",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "sequence"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a repeated or regular arrangement”?",
+                "options": [
+                  {
+                    "text": "pattern",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "pattern"
+                  },
+                  {
+                    "text": "equation",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "equation"
+                  },
+                  {
+                    "text": "fraction",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "fraction"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Society",
+            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which word means “the shared ideas, customs, and arts of a group”?",
+                "options": [
+                  {
+                    "text": "culture",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "culture"
+                  },
+                  {
+                    "text": "community",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "community"
+                  },
+                  {
+                    "text": "economy",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "economy"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a group of people living in a particular local area”?",
+                "options": [
+                  {
+                    "text": "economy",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "economy"
+                  },
+                  {
+                    "text": "community",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "community"
+                  },
+                  {
+                    "text": "government",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "government"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “the system of production and distribution and consumption”?",
+                "options": [
+                  {
+                    "text": "government",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "government"
+                  },
+                  {
+                    "text": "justice",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "justice"
+                  },
+                  {
+                    "text": "economy",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "economy"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “the organization that is the governing authority of a political unit”?",
+                "options": [
+                  {
+                    "text": "government",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "government"
+                  },
+                  {
+                    "text": "justice",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "justice"
+                  },
+                  {
+                    "text": "migration",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "migration"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “the quality of being just or fair”?",
+                "options": [
+                  {
+                    "text": "migration",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "migration"
+                  },
+                  {
+                    "text": "justice",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "justice"
+                  },
+                  {
+                    "text": "population",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "population"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “the movement of persons from one country or locality to another”?",
+                "options": [
+                  {
+                    "text": "population",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "population"
+                  },
+                  {
+                    "text": "tradition",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "tradition"
+                  },
+                  {
+                    "text": "migration",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "migration"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “the people who inhabit a territory or state”?",
+                "options": [
+                  {
+                    "text": "population",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "population"
+                  },
+                  {
+                    "text": "tradition",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "tradition"
+                  },
+                  {
+                    "text": "citizen",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "citizen"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “an inherited pattern of thought or action”?",
+                "options": [
+                  {
+                    "text": "citizen",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "citizen"
+                  },
+                  {
+                    "text": "tradition",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "tradition"
+                  },
+                  {
+                    "text": "history",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "history"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a native or naturalized member of a state or other political community”?",
+                "options": [
+                  {
+                    "text": "history",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "history"
+                  },
+                  {
+                    "text": "culture",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "culture"
+                  },
+                  {
+                    "text": "citizen",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "citizen"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “the study or record of past events”?",
+                "options": [
+                  {
+                    "text": "history",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "history"
+                  },
+                  {
+                    "text": "culture",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "culture"
+                  },
+                  {
+                    "text": "community",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "community"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "code": "MRLC-ENGLISH-WORDS-POWER-V1",
+    "title": "English Word Power",
+    "description": "Strengthen advanced vocabulary for communication, problem-solving, change, and the wider world.",
+    "language": "English",
+    "imageEmoji": "⚡",
+    "accentColor": "#059669",
+    "published": true,
+    "units": [
+      {
+        "title": "Expression and Growth",
+        "description": "Words for character, communication, and positive change.",
+        "lessons": [
+          {
+            "title": "Character",
+            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which word means “capable of adapting (of becoming or being made suitable) to a particular situation or use”?",
+                "options": [
+                  {
+                    "text": "adaptable",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "adaptable"
+                  },
+                  {
+                    "text": "ambitious",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "ambitious"
+                  },
+                  {
+                    "text": "confident",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "confident"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “having a strong desire for success or achievement”?",
+                "options": [
+                  {
+                    "text": "confident",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "confident"
+                  },
+                  {
+                    "text": "ambitious",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "ambitious"
+                  },
+                  {
+                    "text": "curious",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "curious"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “having or marked by confidence or assurance”?",
+                "options": [
+                  {
+                    "text": "curious",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "curious"
+                  },
+                  {
+                    "text": "diligent",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "diligent"
+                  },
+                  {
+                    "text": "confident",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "confident"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “eager to know or learn something”?",
+                "options": [
+                  {
+                    "text": "curious",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "curious"
+                  },
+                  {
+                    "text": "diligent",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "diligent"
+                  },
+                  {
+                    "text": "generous",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "generous"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “quietly and steadily persevering especially in detail or exactness”?",
+                "options": [
+                  {
+                    "text": "generous",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "generous"
+                  },
+                  {
+                    "text": "diligent",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "diligent"
+                  },
+                  {
+                    "text": "honest",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "honest"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “willing to give and share unstintingly”?",
+                "options": [
+                  {
+                    "text": "honest",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "honest"
+                  },
+                  {
+                    "text": "patient",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "patient"
+                  },
+                  {
+                    "text": "generous",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "generous"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “not disposed to cheat or defraud”?",
+                "options": [
+                  {
+                    "text": "honest",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "honest"
+                  },
+                  {
+                    "text": "patient",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "patient"
+                  },
+                  {
+                    "text": "reliable",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "reliable"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “enduring trying circumstances with even temper or characterized by such endurance”?",
+                "options": [
+                  {
+                    "text": "reliable",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "reliable"
+                  },
+                  {
+                    "text": "patient",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "patient"
+                  },
+                  {
+                    "text": "resilient",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "resilient"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “worthy of reliance or trust”?",
+                "options": [
+                  {
+                    "text": "resilient",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "resilient"
+                  },
+                  {
+                    "text": "adaptable",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "adaptable"
+                  },
+                  {
+                    "text": "reliable",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "reliable"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “recovering readily from adversity, depression, or the like”?",
+                "options": [
+                  {
+                    "text": "resilient",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "resilient"
+                  },
+                  {
+                    "text": "adaptable",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "adaptable"
+                  },
+                  {
+                    "text": "ambitious",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "ambitious"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Communication",
+            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which word means “expressing yourself easily or characterized by clear expressive language”?",
+                "options": [
+                  {
+                    "text": "articulate",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "articulate"
+                  },
+                  {
+                    "text": "clarify",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "clarify"
+                  },
+                  {
+                    "text": "collaborate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "collaborate"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “make clear and (more) comprehensible”?",
+                "options": [
+                  {
+                    "text": "collaborate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "collaborate"
+                  },
+                  {
+                    "text": "clarify",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "clarify"
+                  },
+                  {
+                    "text": "concise",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "concise"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “to work together toward a shared goal”?",
+                "options": [
+                  {
+                    "text": "concise",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "concise"
+                  },
+                  {
+                    "text": "debate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "debate"
+                  },
+                  {
+                    "text": "collaborate",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "collaborate"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “expressing much in few words”?",
+                "options": [
+                  {
+                    "text": "concise",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "concise"
+                  },
+                  {
+                    "text": "debate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "debate"
+                  },
+                  {
+                    "text": "describe",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "describe"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “the formal presentation of a stated proposition and the opposition to it (usually followed by a vote)”?",
+                "options": [
+                  {
+                    "text": "describe",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "describe"
+                  },
+                  {
+                    "text": "debate",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "debate"
+                  },
+                  {
+                    "text": "discuss",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "discuss"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “give a description of”?",
+                "options": [
+                  {
+                    "text": "discuss",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "discuss"
+                  },
+                  {
+                    "text": "persuade",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "persuade"
+                  },
+                  {
+                    "text": "describe",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "describe"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “to consider or examine in speech or writing”?",
+                "options": [
+                  {
+                    "text": "discuss",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "discuss"
+                  },
+                  {
+                    "text": "persuade",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "persuade"
+                  },
+                  {
+                    "text": "respond",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "respond"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “cause somebody to adopt a certain position, belief, or course of action”?",
+                "options": [
+                  {
+                    "text": "respond",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "respond"
+                  },
+                  {
+                    "text": "persuade",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "persuade"
+                  },
+                  {
+                    "text": "translate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "translate"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “to reply or react to something”?",
+                "options": [
+                  {
+                    "text": "translate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "translate"
+                  },
+                  {
+                    "text": "articulate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "articulate"
+                  },
+                  {
+                    "text": "respond",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "respond"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “restate (words) from one language into another language”?",
+                "options": [
+                  {
+                    "text": "translate",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "translate"
+                  },
+                  {
+                    "text": "articulate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "articulate"
+                  },
+                  {
+                    "text": "clarify",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "clarify"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Change",
+            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which word means “cause to move faster”?",
+                "options": [
+                  {
+                    "text": "accelerate",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "accelerate"
+                  },
+                  {
+                    "text": "adapt",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "adapt"
+                  },
+                  {
+                    "text": "develop",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "develop"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “make fit for, or change to suit a new purpose”?",
+                "options": [
+                  {
+                    "text": "develop",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "develop"
+                  },
+                  {
+                    "text": "adapt",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "adapt"
+                  },
+                  {
+                    "text": "emerge",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "emerge"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “to grow or change into a more advanced form”?",
+                "options": [
+                  {
+                    "text": "emerge",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "emerge"
+                  },
+                  {
+                    "text": "expand",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "expand"
+                  },
+                  {
+                    "text": "develop",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "develop"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “come out into view, as from concealment”?",
+                "options": [
+                  {
+                    "text": "emerge",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "emerge"
+                  },
+                  {
+                    "text": "expand",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "expand"
+                  },
+                  {
+                    "text": "improve",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "improve"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “extend in one or more directions”?",
+                "options": [
+                  {
+                    "text": "improve",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "improve"
+                  },
+                  {
+                    "text": "expand",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "expand"
+                  },
+                  {
+                    "text": "innovate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "innovate"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “to make or become better”?",
+                "options": [
+                  {
+                    "text": "innovate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "innovate"
+                  },
+                  {
+                    "text": "reduce",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "reduce"
+                  },
+                  {
+                    "text": "improve",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "improve"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “to introduce new ideas or methods”?",
+                "options": [
+                  {
+                    "text": "innovate",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "innovate"
+                  },
+                  {
+                    "text": "reduce",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "reduce"
+                  },
+                  {
+                    "text": "transform",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "transform"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “to make something smaller or less”?",
+                "options": [
+                  {
+                    "text": "transform",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "transform"
+                  },
+                  {
+                    "text": "reduce",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "reduce"
+                  },
+                  {
+                    "text": "transition",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "transition"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “to change greatly in form, appearance, or character”?",
+                "options": [
+                  {
+                    "text": "transition",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "transition"
+                  },
+                  {
+                    "text": "accelerate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "accelerate"
+                  },
+                  {
+                    "text": "transform",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "transform"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a change from one place or state or subject or stage to another”?",
+                "options": [
+                  {
+                    "text": "transition",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "transition"
+                  },
+                  {
+                    "text": "accelerate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "accelerate"
+                  },
+                  {
+                    "text": "adapt",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "adapt"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Solutions and the World",
+        "description": "Precise words for challenges, decisions, and global topics.",
+        "lessons": [
+          {
+            "title": "Challenges and Solutions",
+            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which word means “complicated in structure”?",
+                "options": [
+                  {
+                    "text": "complex",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "complex"
+                  },
+                  {
+                    "text": "conflict",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "conflict"
+                  },
+                  {
+                    "text": "consequence",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "consequence"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a serious disagreement or struggle”?",
+                "options": [
+                  {
+                    "text": "consequence",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "consequence"
+                  },
+                  {
+                    "text": "conflict",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "conflict"
+                  },
+                  {
+                    "text": "obstacle",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "obstacle"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a result or effect of an action”?",
+                "options": [
+                  {
+                    "text": "obstacle",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "obstacle"
+                  },
+                  {
+                    "text": "pressure",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "pressure"
+                  },
+                  {
+                    "text": "consequence",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "consequence"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “something immaterial that stands in the way and must be circumvented or surmounted”?",
+                "options": [
+                  {
+                    "text": "obstacle",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "obstacle"
+                  },
+                  {
+                    "text": "pressure",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "pressure"
+                  },
+                  {
+                    "text": "priority",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "priority"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “a difficult demand or feeling of urgency”?",
+                "options": [
+                  {
+                    "text": "priority",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "priority"
+                  },
+                  {
+                    "text": "pressure",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "pressure"
+                  },
+                  {
+                    "text": "solution",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "solution"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “something considered more important than other things”?",
+                "options": [
+                  {
+                    "text": "solution",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "solution"
+                  },
+                  {
+                    "text": "strategy",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "strategy"
+                  },
+                  {
+                    "text": "priority",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "priority"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “an answer to a problem or difficult situation”?",
+                "options": [
+                  {
+                    "text": "solution",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "solution"
+                  },
+                  {
+                    "text": "strategy",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "strategy"
+                  },
+                  {
+                    "text": "succeed",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "succeed"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “a carefully planned method for achieving a goal”?",
+                "options": [
+                  {
+                    "text": "succeed",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "succeed"
+                  },
+                  {
+                    "text": "strategy",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "strategy"
+                  },
+                  {
+                    "text": "urgent",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "urgent"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “attain success or reach a desired goal”?",
+                "options": [
+                  {
+                    "text": "urgent",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "urgent"
+                  },
+                  {
+                    "text": "complex",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "complex"
+                  },
+                  {
+                    "text": "succeed",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "succeed"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “compelling immediate action”?",
+                "options": [
+                  {
+                    "text": "urgent",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "urgent"
+                  },
+                  {
+                    "text": "complex",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "complex"
+                  },
+                  {
+                    "text": "conflict",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "conflict"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Precision",
+            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which word means “conforming exactly or almost exactly to fact or to a standard or performing with total accuracy”?",
+                "options": [
+                  {
+                    "text": "accurate",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "accurate"
+                  },
+                  {
+                    "text": "approximate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "approximate"
+                  },
+                  {
+                    "text": "consistent",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "consistent"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “not quite exact or correct”?",
+                "options": [
+                  {
+                    "text": "consistent",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "consistent"
+                  },
+                  {
+                    "text": "approximate",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "approximate"
+                  },
+                  {
+                    "text": "distinct",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "distinct"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “the same throughout in structure or composition”?",
+                "options": [
+                  {
+                    "text": "distinct",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "distinct"
+                  },
+                  {
+                    "text": "efficient",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "efficient"
+                  },
+                  {
+                    "text": "consistent",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "consistent"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “(often followed by `from') not alike”?",
+                "options": [
+                  {
+                    "text": "distinct",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "distinct"
+                  },
+                  {
+                    "text": "efficient",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "efficient"
+                  },
+                  {
+                    "text": "essential",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "essential"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “being effective without wasting time or effort or expense”?",
+                "options": [
+                  {
+                    "text": "essential",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "essential"
+                  },
+                  {
+                    "text": "efficient",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "efficient"
+                  },
+                  {
+                    "text": "flexible",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "flexible"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “absolutely necessary”?",
+                "options": [
+                  {
+                    "text": "flexible",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "flexible"
+                  },
+                  {
+                    "text": "significant",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "significant"
+                  },
+                  {
+                    "text": "essential",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "essential"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “capable of being changed”?",
+                "options": [
+                  {
+                    "text": "flexible",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "flexible"
+                  },
+                  {
+                    "text": "significant",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "significant"
+                  },
+                  {
+                    "text": "specific",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "specific"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “important in effect or meaning”?",
+                "options": [
+                  {
+                    "text": "specific",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "specific"
+                  },
+                  {
+                    "text": "significant",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "significant"
+                  },
+                  {
+                    "text": "valid",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "valid"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “stated explicitly or in detail”?",
+                "options": [
+                  {
+                    "text": "valid",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "valid"
+                  },
+                  {
+                    "text": "accurate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "accurate"
+                  },
+                  {
+                    "text": "specific",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "specific"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “based on sound reasoning or officially acceptable”?",
+                "options": [
+                  {
+                    "text": "valid",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "valid"
+                  },
+                  {
+                    "text": "accurate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "accurate"
+                  },
+                  {
+                    "text": "approximate",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "approximate"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Our World",
+            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "challenges": [
+              {
+                "type": "SELECT",
+                "question": "Which word means “a system formed by the interaction of a community of organisms with their physical environment”?",
+                "options": [
+                  {
+                    "text": "ecosystem",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "ecosystem"
+                  },
+                  {
+                    "text": "conservation",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "conservation"
+                  },
+                  {
+                    "text": "democracy",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "democracy"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “the protection of nature and careful use of resources”?",
+                "options": [
+                  {
+                    "text": "democracy",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "democracy"
+                  },
+                  {
+                    "text": "conservation",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "conservation"
+                  },
+                  {
+                    "text": "equality",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "equality"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “the political orientation of those who favor government by the people or by their elected representatives”?",
+                "options": [
+                  {
+                    "text": "equality",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "equality"
+                  },
+                  {
+                    "text": "global",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "global"
+                  },
+                  {
+                    "text": "democracy",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "democracy"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “the quality of being the same in quantity or measure or value or status”?",
+                "options": [
+                  {
+                    "text": "equality",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "equality"
+                  },
+                  {
+                    "text": "global",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "global"
+                  },
+                  {
+                    "text": "infrastructure",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "infrastructure"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “relating to the whole world”?",
+                "options": [
+                  {
+                    "text": "infrastructure",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "infrastructure"
+                  },
+                  {
+                    "text": "global",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "global"
+                  },
+                  {
+                    "text": "sustainable",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "sustainable"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “the basic systems and structures a society or organization needs”?",
+                "options": [
+                  {
+                    "text": "sustainable",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "sustainable"
+                  },
+                  {
+                    "text": "technology",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "technology"
+                  },
+                  {
+                    "text": "infrastructure",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "infrastructure"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “able to continue without using up resources or harming the environment”?",
+                "options": [
+                  {
+                    "text": "sustainable",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "sustainable"
+                  },
+                  {
+                    "text": "technology",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "technology"
+                  },
+                  {
+                    "text": "urban",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "urban"
+                  }
+                ]
+              },
+              {
+                "type": "ASSIST",
+                "question": "Which word means “scientific knowledge and tools used to solve practical problems”?",
+                "options": [
+                  {
+                    "text": "urban",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "urban"
+                  },
+                  {
+                    "text": "technology",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "technology"
+                  },
+                  {
+                    "text": "welfare",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "welfare"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “relating to or concerned with a city or densely populated area”?",
+                "options": [
+                  {
+                    "text": "welfare",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "welfare"
+                  },
+                  {
+                    "text": "ecosystem",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "ecosystem"
+                  },
+                  {
+                    "text": "urban",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "urban"
+                  }
+                ]
+              },
+              {
+                "type": "SELECT",
+                "question": "Which word means “the health, happiness, and safety of a person or group”?",
+                "options": [
+                  {
+                    "text": "welfare",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "welfare"
+                  },
+                  {
+                    "text": "ecosystem",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "ecosystem"
+                  },
+                  {
+                    "text": "conservation",
+                    "correct": false,
+                    "emoji": null,
+                    "audioText": "conservation"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

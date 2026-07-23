@@ -1,0 +1,907 @@
+{
+  "source": "https://github.com/Isomorpheuss/advanced-english-vocabulary",
+  "commit": "7d1bfdb",
+  "sourceFile": "output/9ormore-withfreqandlistcount-413.csv",
+  "words": [
+    {
+      "word": "solicitation",
+      "zipf": 3.83,
+      "sourceCount": 9
+    },
+    {
+      "word": "catalyst",
+      "zipf": 3.81,
+      "sourceCount": 10
+    },
+    {
+      "word": "disparity",
+      "zipf": 3.78,
+      "sourceCount": 12
+    },
+    {
+      "word": "paradox",
+      "zipf": 3.78,
+      "sourceCount": 10
+    },
+    {
+      "word": "alloy",
+      "zipf": 3.76,
+      "sourceCount": 9
+    },
+    {
+      "word": "volatile",
+      "zipf": 3.76,
+      "sourceCount": 11
+    },
+    {
+      "word": "emulate",
+      "zipf": 3.75,
+      "sourceCount": 11
+    },
+    {
+      "word": "proliferation",
+      "zipf": 3.75,
+      "sourceCount": 10
+    },
+    {
+      "word": "efficacy",
+      "zipf": 3.75,
+      "sourceCount": 9
+    },
+    {
+      "word": "dissemination",
+      "zipf": 3.73,
+      "sourceCount": 11
+    },
+    {
+      "word": "augmented",
+      "zipf": 3.71,
+      "sourceCount": 9
+    },
+    {
+      "word": "pedestrian",
+      "zipf": 3.7,
+      "sourceCount": 9
+    },
+    {
+      "word": "austerity",
+      "zipf": 3.69,
+      "sourceCount": 13
+    },
+    {
+      "word": "paradigm",
+      "zipf": 3.69,
+      "sourceCount": 9
+    },
+    {
+      "word": "eccentric",
+      "zipf": 3.68,
+      "sourceCount": 10
+    },
+    {
+      "word": "refute",
+      "zipf": 3.68,
+      "sourceCount": 10
+    },
+    {
+      "word": "consecrated",
+      "zipf": 3.68,
+      "sourceCount": 9
+    },
+    {
+      "word": "precursor",
+      "zipf": 3.67,
+      "sourceCount": 10
+    },
+    {
+      "word": "pragmatic",
+      "zipf": 3.65,
+      "sourceCount": 12
+    },
+    {
+      "word": "duplicate",
+      "zipf": 3.6,
+      "sourceCount": 10
+    },
+    {
+      "word": "pertinent",
+      "zipf": 3.6,
+      "sourceCount": 9
+    },
+    {
+      "word": "venerable",
+      "zipf": 3.58,
+      "sourceCount": 11
+    },
+    {
+      "word": "affinity",
+      "zipf": 3.57,
+      "sourceCount": 11
+    },
+    {
+      "word": "ether",
+      "zipf": 3.57,
+      "sourceCount": 10
+    },
+    {
+      "word": "amalgamation",
+      "zipf": 3.56,
+      "sourceCount": 10
+    },
+    {
+      "word": "dissipated",
+      "zipf": 3.56,
+      "sourceCount": 9
+    },
+    {
+      "word": "preclude",
+      "zipf": 3.56,
+      "sourceCount": 9
+    },
+    {
+      "word": "blatant",
+      "zipf": 3.54,
+      "sourceCount": 10
+    },
+    {
+      "word": "futile",
+      "zipf": 3.54,
+      "sourceCount": 9
+    },
+    {
+      "word": "maverick",
+      "zipf": 3.54,
+      "sourceCount": 11
+    },
+    {
+      "word": "endemic",
+      "zipf": 3.53,
+      "sourceCount": 9
+    },
+    {
+      "word": "concise",
+      "zipf": 3.52,
+      "sourceCount": 9
+    },
+    {
+      "word": "sporadic",
+      "zipf": 3.51,
+      "sourceCount": 11
+    },
+    {
+      "word": "bolster",
+      "zipf": 3.5,
+      "sourceCount": 9
+    },
+    {
+      "word": "myriad",
+      "zipf": 3.5,
+      "sourceCount": 10
+    },
+    {
+      "word": "benign",
+      "zipf": 3.49,
+      "sourceCount": 10
+    },
+    {
+      "word": "coveted",
+      "zipf": 3.49,
+      "sourceCount": 9
+    },
+    {
+      "word": "meticulous",
+      "zipf": 3.47,
+      "sourceCount": 12
+    },
+    {
+      "word": "precarious",
+      "zipf": 3.47,
+      "sourceCount": 9
+    },
+    {
+      "word": "anomaly",
+      "zipf": 3.46,
+      "sourceCount": 10
+    },
+    {
+      "word": "fallacy",
+      "zipf": 3.45,
+      "sourceCount": 10
+    },
+    {
+      "word": "prodigy",
+      "zipf": 3.45,
+      "sourceCount": 10
+    },
+    {
+      "word": "apprehension",
+      "zipf": 3.44,
+      "sourceCount": 10
+    },
+    {
+      "word": "elicit",
+      "zipf": 3.44,
+      "sourceCount": 9
+    },
+    {
+      "word": "equivocal",
+      "zipf": 3.44,
+      "sourceCount": 12
+    },
+    {
+      "word": "ingenuity",
+      "zipf": 3.43,
+      "sourceCount": 11
+    },
+    {
+      "word": "transient",
+      "zipf": 3.42,
+      "sourceCount": 9
+    },
+    {
+      "word": "rustic",
+      "zipf": 3.42,
+      "sourceCount": 9
+    },
+    {
+      "word": "daunting",
+      "zipf": 3.41,
+      "sourceCount": 10
+    },
+    {
+      "word": "dormant",
+      "zipf": 3.4,
+      "sourceCount": 11
+    },
+    {
+      "word": "mundane",
+      "zipf": 3.4,
+      "sourceCount": 11
+    },
+    {
+      "word": "complacent",
+      "zipf": 3.39,
+      "sourceCount": 10
+    },
+    {
+      "word": "abatement",
+      "zipf": 3.37,
+      "sourceCount": 10
+    },
+    {
+      "word": "clandestine",
+      "zipf": 3.36,
+      "sourceCount": 10
+    },
+    {
+      "word": "delineated",
+      "zipf": 3.36,
+      "sourceCount": 10
+    },
+    {
+      "word": "steadfast",
+      "zipf": 3.36,
+      "sourceCount": 9
+    },
+    {
+      "word": "lucid",
+      "zipf": 3.35,
+      "sourceCount": 12
+    },
+    {
+      "word": "promulgated",
+      "zipf": 3.35,
+      "sourceCount": 9
+    },
+    {
+      "word": "revere",
+      "zipf": 3.34,
+      "sourceCount": 10
+    },
+    {
+      "word": "capitulation",
+      "zipf": 3.34,
+      "sourceCount": 9
+    },
+    {
+      "word": "oblique",
+      "zipf": 3.33,
+      "sourceCount": 9
+    },
+    {
+      "word": "opaque",
+      "zipf": 3.33,
+      "sourceCount": 10
+    },
+    {
+      "word": "contentious",
+      "zipf": 3.32,
+      "sourceCount": 11
+    },
+    {
+      "word": "eclectic",
+      "zipf": 3.32,
+      "sourceCount": 12
+    },
+    {
+      "word": "extrapolation",
+      "zipf": 3.32,
+      "sourceCount": 9
+    },
+    {
+      "word": "apathy",
+      "zipf": 3.3,
+      "sourceCount": 10
+    },
+    {
+      "word": "pristine",
+      "zipf": 3.3,
+      "sourceCount": 10
+    },
+    {
+      "word": "latent",
+      "zipf": 3.29,
+      "sourceCount": 11
+    },
+    {
+      "word": "reproach",
+      "zipf": 3.28,
+      "sourceCount": 9
+    },
+    {
+      "word": "consummate",
+      "zipf": 3.28,
+      "sourceCount": 9
+    },
+    {
+      "word": "abdication",
+      "zipf": 3.27,
+      "sourceCount": 10
+    },
+    {
+      "word": "abstinence",
+      "zipf": 3.26,
+      "sourceCount": 9
+    },
+    {
+      "word": "hyperbolic",
+      "zipf": 3.24,
+      "sourceCount": 12
+    },
+    {
+      "word": "jargon",
+      "zipf": 3.24,
+      "sourceCount": 10
+    },
+    {
+      "word": "aberration",
+      "zipf": 3.23,
+      "sourceCount": 14
+    },
+    {
+      "word": "discord",
+      "zipf": 3.23,
+      "sourceCount": 10
+    },
+    {
+      "word": "animosity",
+      "zipf": 3.22,
+      "sourceCount": 9
+    },
+    {
+      "word": "tractable",
+      "zipf": 3.22,
+      "sourceCount": 9
+    },
+    {
+      "word": "abridged",
+      "zipf": 3.22,
+      "sourceCount": 9
+    },
+    {
+      "word": "ambivalent",
+      "zipf": 3.21,
+      "sourceCount": 13
+    },
+    {
+      "word": "censure",
+      "zipf": 3.21,
+      "sourceCount": 10
+    },
+    {
+      "word": "cryptic",
+      "zipf": 3.21,
+      "sourceCount": 10
+    },
+    {
+      "word": "esoteric",
+      "zipf": 3.21,
+      "sourceCount": 13
+    },
+    {
+      "word": "hegemony",
+      "zipf": 3.2,
+      "sourceCount": 9
+    },
+    {
+      "word": "respite",
+      "zipf": 3.2,
+      "sourceCount": 9
+    },
+    {
+      "word": "belligerent",
+      "zipf": 3.19,
+      "sourceCount": 9
+    },
+    {
+      "word": "attenuation",
+      "zipf": 3.18,
+      "sourceCount": 9
+    },
+    {
+      "word": "collusion",
+      "zipf": 3.17,
+      "sourceCount": 9
+    },
+    {
+      "word": "contiguous",
+      "zipf": 3.17,
+      "sourceCount": 9
+    },
+    {
+      "word": "astute",
+      "zipf": 3.16,
+      "sourceCount": 9
+    },
+    {
+      "word": "antagonism",
+      "zipf": 3.15,
+      "sourceCount": 9
+    },
+    {
+      "word": "arduous",
+      "zipf": 3.15,
+      "sourceCount": 11
+    },
+    {
+      "word": "auspicious",
+      "zipf": 3.15,
+      "sourceCount": 11
+    },
+    {
+      "word": "absolve",
+      "zipf": 3.14,
+      "sourceCount": 9
+    },
+    {
+      "word": "dichotomy",
+      "zipf": 3.14,
+      "sourceCount": 9
+    },
+    {
+      "word": "credulity",
+      "zipf": 3.13,
+      "sourceCount": 9
+    },
+    {
+      "word": "hackney",
+      "zipf": 3.13,
+      "sourceCount": 9
+    },
+    {
+      "word": "zenith",
+      "zipf": 3.13,
+      "sourceCount": 9
+    },
+    {
+      "word": "dogmatic",
+      "zipf": 3.12,
+      "sourceCount": 11
+    },
+    {
+      "word": "dissonance",
+      "zipf": 3.12,
+      "sourceCount": 9
+    },
+    {
+      "word": "palliative",
+      "zipf": 3.11,
+      "sourceCount": 9
+    },
+    {
+      "word": "salient",
+      "zipf": 3.11,
+      "sourceCount": 9
+    },
+    {
+      "word": "banal",
+      "zipf": 3.1,
+      "sourceCount": 13
+    },
+    {
+      "word": "connoisseur",
+      "zipf": 3.1,
+      "sourceCount": 9
+    },
+    {
+      "word": "forbearance",
+      "zipf": 3.09,
+      "sourceCount": 9
+    },
+    {
+      "word": "copious",
+      "zipf": 3.08,
+      "sourceCount": 10
+    },
+    {
+      "word": "gratuitous",
+      "zipf": 3.07,
+      "sourceCount": 9
+    },
+    {
+      "word": "polemic",
+      "zipf": 3.07,
+      "sourceCount": 10
+    },
+    {
+      "word": "autocratic",
+      "zipf": 3.07,
+      "sourceCount": 9
+    },
+    {
+      "word": "stoic",
+      "zipf": 3.06,
+      "sourceCount": 9
+    },
+    {
+      "word": "commensurate",
+      "zipf": 3.06,
+      "sourceCount": 9
+    },
+    {
+      "word": "tenuous",
+      "zipf": 3.05,
+      "sourceCount": 10
+    },
+    {
+      "word": "euphemism",
+      "zipf": 3.04,
+      "sourceCount": 10
+    },
+    {
+      "word": "buttress",
+      "zipf": 3.03,
+      "sourceCount": 9
+    },
+    {
+      "word": "disinterested",
+      "zipf": 3.03,
+      "sourceCount": 11
+    },
+    {
+      "word": "peruse",
+      "zipf": 3.03,
+      "sourceCount": 10
+    },
+    {
+      "word": "propriety",
+      "zipf": 3.03,
+      "sourceCount": 10
+    },
+    {
+      "word": "ephemeral",
+      "zipf": 3.02,
+      "sourceCount": 12
+    },
+    {
+      "word": "innocuous",
+      "zipf": 3.02,
+      "sourceCount": 11
+    },
+    {
+      "word": "placid",
+      "zipf": 3.02,
+      "sourceCount": 9
+    },
+    {
+      "word": "vicariously",
+      "zipf": 3.01,
+      "sourceCount": 9
+    },
+    {
+      "word": "atrophy",
+      "zipf": 3,
+      "sourceCount": 9
+    },
+    {
+      "word": "abject",
+      "zipf": 2.98,
+      "sourceCount": 11
+    },
+    {
+      "word": "docile",
+      "zipf": 2.98,
+      "sourceCount": 9
+    },
+    {
+      "word": "paragon",
+      "zipf": 2.98,
+      "sourceCount": 12
+    },
+    {
+      "word": "sedition",
+      "zipf": 2.98,
+      "sourceCount": 9
+    },
+    {
+      "word": "aloof",
+      "zipf": 2.97,
+      "sourceCount": 10
+    },
+    {
+      "word": "coalesce",
+      "zipf": 2.97,
+      "sourceCount": 10
+    },
+    {
+      "word": "acquiescence",
+      "zipf": 2.97,
+      "sourceCount": 10
+    },
+    {
+      "word": "caustic",
+      "zipf": 2.96,
+      "sourceCount": 9
+    },
+    {
+      "word": "didactic",
+      "zipf": 2.96,
+      "sourceCount": 11
+    },
+    {
+      "word": "sordid",
+      "zipf": 2.96,
+      "sourceCount": 9
+    },
+    {
+      "word": "spurious",
+      "zipf": 2.96,
+      "sourceCount": 11
+    },
+    {
+      "word": "countenance",
+      "zipf": 2.95,
+      "sourceCount": 9
+    },
+    {
+      "word": "refractory",
+      "zipf": 2.95,
+      "sourceCount": 9
+    },
+    {
+      "word": "ascetic",
+      "zipf": 2.94,
+      "sourceCount": 14
+    },
+    {
+      "word": "juxtaposed",
+      "zipf": 2.94,
+      "sourceCount": 9
+    },
+    {
+      "word": "reticent",
+      "zipf": 2.94,
+      "sourceCount": 11
+    },
+    {
+      "word": "incongruous",
+      "zipf": 2.93,
+      "sourceCount": 10
+    },
+    {
+      "word": "prodigal",
+      "zipf": 2.93,
+      "sourceCount": 12
+    },
+    {
+      "word": "inexorably",
+      "zipf": 2.93,
+      "sourceCount": 10
+    },
+    {
+      "word": "altruism",
+      "zipf": 2.93,
+      "sourceCount": 9
+    },
+    {
+      "word": "deleterious",
+      "zipf": 2.92,
+      "sourceCount": 11
+    },
+    {
+      "word": "dearth",
+      "zipf": 2.91,
+      "sourceCount": 12
+    },
+    {
+      "word": "itinerant",
+      "zipf": 2.91,
+      "sourceCount": 11
+    },
+    {
+      "word": "antithesis",
+      "zipf": 2.9,
+      "sourceCount": 9
+    },
+    {
+      "word": "abysmal",
+      "zipf": 2.9,
+      "sourceCount": 10
+    },
+    {
+      "word": "anomalous",
+      "zipf": 2.9,
+      "sourceCount": 9
+    },
+    {
+      "word": "amorphous",
+      "zipf": 2.89,
+      "sourceCount": 10
+    },
+    {
+      "word": "immutable",
+      "zipf": 2.89,
+      "sourceCount": 9
+    },
+    {
+      "word": "arcane",
+      "zipf": 2.89,
+      "sourceCount": 11
+    },
+    {
+      "word": "amiable",
+      "zipf": 2.88,
+      "sourceCount": 10
+    },
+    {
+      "word": "nadir",
+      "zipf": 2.88,
+      "sourceCount": 10
+    },
+    {
+      "word": "erudite",
+      "zipf": 2.88,
+      "sourceCount": 12
+    },
+    {
+      "word": "obtuse",
+      "zipf": 2.88,
+      "sourceCount": 10
+    },
+    {
+      "word": "digress",
+      "zipf": 2.87,
+      "sourceCount": 11
+    },
+    {
+      "word": "chagrin",
+      "zipf": 2.86,
+      "sourceCount": 9
+    },
+    {
+      "word": "tirade",
+      "zipf": 2.86,
+      "sourceCount": 12
+    },
+    {
+      "word": "impervious",
+      "zipf": 2.86,
+      "sourceCount": 11
+    },
+    {
+      "word": "intractable",
+      "zipf": 2.86,
+      "sourceCount": 9
+    },
+    {
+      "word": "acumen",
+      "zipf": 2.85,
+      "sourceCount": 9
+    },
+    {
+      "word": "penitent",
+      "zipf": 2.85,
+      "sourceCount": 9
+    },
+    {
+      "word": "extraneous",
+      "zipf": 2.84,
+      "sourceCount": 9
+    },
+    {
+      "word": "tangential",
+      "zipf": 2.84,
+      "sourceCount": 10
+    },
+    {
+      "word": "wanton",
+      "zipf": 2.84,
+      "sourceCount": 9
+    },
+    {
+      "word": "obstinate",
+      "zipf": 2.84,
+      "sourceCount": 9
+    },
+    {
+      "word": "acrimonious",
+      "zipf": 2.83,
+      "sourceCount": 12
+    },
+    {
+      "word": "nebulous",
+      "zipf": 2.83,
+      "sourceCount": 9
+    },
+    {
+      "word": "foment",
+      "zipf": 2.83,
+      "sourceCount": 10
+    },
+    {
+      "word": "mercurial",
+      "zipf": 2.82,
+      "sourceCount": 11
+    },
+    {
+      "word": "pungent",
+      "zipf": 2.81,
+      "sourceCount": 10
+    },
+    {
+      "word": "fortuitous",
+      "zipf": 2.8,
+      "sourceCount": 10
+    },
+    {
+      "word": "panacea",
+      "zipf": 2.8,
+      "sourceCount": 10
+    },
+    {
+      "word": "capricious",
+      "zipf": 2.79,
+      "sourceCount": 11
+    },
+    {
+      "word": "ostentatious",
+      "zipf": 2.79,
+      "sourceCount": 10
+    },
+    {
+      "word": "surreptitiously",
+      "zipf": 2.79,
+      "sourceCount": 10
+    },
+    {
+      "word": "hermetic",
+      "zipf": 2.76,
+      "sourceCount": 10
+    },
+    {
+      "word": "blithe",
+      "zipf": 2.75,
+      "sourceCount": 9
+    },
+    {
+      "word": "candor",
+      "zipf": 2.75,
+      "sourceCount": 9
+    },
+    {
+      "word": "congenial",
+      "zipf": 2.74,
+      "sourceCount": 9
+    }
+  ]
+}

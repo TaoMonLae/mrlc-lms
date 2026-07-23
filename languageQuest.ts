@@ -10,6 +10,8 @@ import {
 import { importedSpanishCourse, type OfficialLanguageQuestCourse } from "./languageQuestImportedCourses";
 import { mandarinFoundationsCourse } from "./languageQuestMandarinCourse";
 import { completeMandarinCourse } from "./languageQuestCompleteMandarinCourse";
+import { englishWordCourses } from "./languageQuestEnglishWordCourses";
+import { advancedEnglishCourses } from "./languageQuestAdvancedEnglishCourses";
 
 interface JwtPayload { userId: string; role: string; email: string; }
 
@@ -328,7 +330,15 @@ const starterCourse: OfficialLanguageQuestCourse = {
 };
 
 async function ensureOfficialCourses(prisma: any): Promise<void> {
-  for (const course of [starterCourse, importedSpanishCourse, mandarinFoundationsCourse, completeMandarinCourse]) {
+  const courses = [
+    starterCourse,
+    importedSpanishCourse,
+    mandarinFoundationsCourse,
+    completeMandarinCourse,
+    ...englishWordCourses,
+    ...advancedEnglishCourses,
+  ];
+  for (const course of courses) {
     await ensureOfficialCourse(prisma, course);
   }
 }
