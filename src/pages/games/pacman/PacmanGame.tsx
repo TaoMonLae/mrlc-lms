@@ -168,6 +168,18 @@ export default function PacmanGame() {
   const lastTimeRef = useRef<number>(0);
   const requestRef = useRef<number | null>(null);
 
+  // Mirror score/level into refs so the game-over handler (fired from a
+  // setTimeout captured by the updateGame callback) always reads the latest
+  // values instead of a stale closure.
+  const scoreRef = useRef<number>(0);
+  const levelRef = useRef<number>(1);
+  useEffect(() => {
+    scoreRef.current = score;
+  }, [score]);
+  useEffect(() => {
+    levelRef.current = level;
+  }, [level]);
+
   // Detect Mobile device to auto-enable touch controls
   useEffect(() => {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
@@ -306,6 +318,23 @@ export default function PacmanGame() {
     },
     [difficulty]
   );
+
+  // Record a completed run to the local leaderboard/high-score history.
+  const recordScore = useCallback(() => {
+    const entry: ScoreEntry = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      name: 'You',
+      score: scoreRef.current,
+      level: levelRef.current,
+      mode: gameMode,
+      date: new Date().toLocaleDateString()
+    };
+    setScores((prev) => {
+      const updated = [...prev, entry].sort((a, b) => b.score - a.score).slice(0, 10);
+      localStorage.setItem('pacman_scores', JSON.stringify(updated));
+      return updated;
+    });
+  }, [gameMode]);
 
   // Start new game
   const handleStartGame = () => {
@@ -599,15 +628,7 @@ export default function PacmanGame() {
           return rem;
         });
 
-        setScore((s) => {
-          const newScore = s + 10;
-          if (newScore > highScore) {
-            setHighScore(newScore);
-            setIsNewHighScore(true);
-            localStorage.setItem('pacman_high_score', newScore.toString());
-          }
-          return newScore;
-        });
+        setScore((s) => s + 10);
 
         soundEngine.playWaka();
         ps.spawnDotParticles(pacTileX * TILE_SIZE + TILE_SIZE / 2, pacTileY * TILE_SIZE + TILE_SIZE / 2);
@@ -686,6 +707,13 @@ export default function PacmanGame() {
       // 5. UPDATE GHOST AI & MOVEMENT
       const blinkyPos = { x: ghosts[0].x, y: ghosts[0].y };
       const ghostHouseGate = { x: 13.5, y: 11 };
+
+      // Guards against multiple ghosts overlapping Pac-Man in the same frame
+      // from triggering the death sequence (and decrementing lives) more
+      // than once — `status` is only re-checked at the top of updateGame,
+      // so without this flag every ghost within collision range this tick
+      // would independently run the "Pac-Man dies" branch below.
+      let pacmanDiedThisFrame = false;
 
       ghosts.forEach((ghost) => {
         // Frightened Timer Countdown
@@ -801,14 +829,18 @@ export default function PacmanGame() {
             if (pac.isShieldActive || pac.powerUp === 'SHIELD') {
               // Shield breaks, ghost vaporized!
               pac.powerUp = null;
+              pac.powerUpTimeLeft = 0;
+              setActivePowerUp(null);
+              setPowerUpTimeLeft(0);
               ghost.state = 'EATEN';
               ps.spawnGhostExplosion(
                 ghost.x * TILE_SIZE + TILE_SIZE / 2,
                 ghost.y * TILE_SIZE + TILE_SIZE / 2,
                 '#a855f7'
               );
-            } else {
+            } else if (!pacmanDiedThisFrame) {
               // PAC-MAN DIES
+              pacmanDiedThisFrame = true;
               setStatus('DYING');
               soundEngine.playDeath();
               ps.spawnDeathBurst(pac.x * TILE_SIZE + TILE_SIZE / 2, pac.y * TILE_SIZE + TILE_SIZE / 2);
@@ -818,6 +850,7 @@ export default function PacmanGame() {
                   const remaining = prevLives - 1;
                   if (remaining <= 0) {
                     setStatus('GAME_OVER');
+                    recordScore();
                   } else {
                     // Respawn positions
                     const spawns = getMazeSpawns(maze);
@@ -847,8 +880,22 @@ export default function PacmanGame() {
           .filter((ft) => ft.life < 0.8)
       );
     },
-    [status, maze, spawnFruit, spawnPowerUpItem, highScore]
+    [status, maze, spawnFruit, spawnPowerUpItem, recordScore]
   );
+
+  // Track high score across every scoring event (dots, energizers, fruit,
+  // ghosts) rather than only when eating dots, so a bonus that pushes the
+  // score past the previous best is always recognized and persisted.
+  useEffect(() => {
+    setHighScore((prev) => {
+      if (score > prev) {
+        setIsNewHighScore(true);
+        localStorage.setItem('pacman_high_score', score.toString());
+        return score;
+      }
+      return prev;
+    });
+  }, [score]);
 
   // Animation Frame Loop Loop
   useEffect(() => {
