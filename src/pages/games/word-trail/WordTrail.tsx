@@ -27,6 +27,7 @@ import { apiGet, apiSend } from "@/src/lib/api";
 import {
   WORD_TRAIL_LAST_POSITION,
   WORD_TRAIL_SPECIAL_TILES,
+  WORD_TRAIL_STARTING_HEARTS,
 } from "@/shared/wordTrail";
 import type {
   WordTrailAnswerPayload,
@@ -464,7 +465,7 @@ export default function WordTrailPage() {
           <div className="mt-4 grid grid-cols-3 gap-2 text-center">
             <div className="rounded-2xl bg-white p-3 shadow-sm dark:bg-surface-indigo">
               <div className="flex justify-center gap-0.5 text-rose-500" aria-label={`${game.hearts} hearts remaining`}>
-                {Array.from({ length: 4 }, (_, index) => (
+                {Array.from({ length: WORD_TRAIL_STARTING_HEARTS }, (_, index) => (
                   <Heart key={index} className={`h-5 w-5 ${index < game.hearts ? "fill-current" : "opacity-20"}`} />
                 ))}
               </div>

@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import {
   Info,
   Crown,
@@ -9,8 +10,82 @@ import {
   Palette,
   Heart,
   Languages,
+  Github,
+  BookMarked,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
+
+const THIRD_PARTY_NOTICES: { title: string; description: ReactNode }[] = [
+  {
+    title: "Language Quest",
+    description: (
+      <>
+        Informed by the concepts and interface patterns in{" "}
+        <a href="https://github.com/sanidhyy/duolingo-clone" target="_blank" rel="noopener noreferrer" className="font-medium text-aubergine-600 hover:underline">
+          sanidhyy/duolingo-clone
+        </a>{" "}
+        (MIT License). Its Spanish seed curriculum was adapted from{" "}
+        <a href="https://github.com/TaoMonLae/duolingo-clone" target="_blank" rel="noopener noreferrer" className="font-medium text-aubergine-600 hover:underline">
+          TaoMonLae/duolingo-clone
+        </a>
+        .
+      </>
+    ),
+  },
+  {
+    title: "Sudoku",
+    description: (
+      <>
+        Adapted from{" "}
+        <a href="https://github.com/TN1ck/super-sudoku" target="_blank" rel="noopener noreferrer" className="font-medium text-aubergine-600 hover:underline">
+          super-sudoku
+        </a>{" "}
+        by Tom Nick (MIT License).
+      </>
+    ),
+  },
+  {
+    title: "English definitions",
+    description: (
+      <>
+        Powered by{" "}
+        <a href="https://github.com/moos/wordpos" target="_blank" rel="noopener noreferrer" className="font-medium text-aubergine-600 hover:underline">
+          WordPOS
+        </a>{" "}
+        and Princeton WordNet 3.1.
+      </>
+    ),
+  },
+  {
+    title: "English–Myanmar dictionary",
+    description:
+      "Translations originate from the ornagai/MZ dictionary dataset. Its data license isn't independently verifiable, so it's retained for internal, non-commercial school use only, with full provenance documented in the codebase.",
+  },
+  {
+    title: "Mon dictionary",
+    description: (
+      <>
+        Entries come from{" "}
+        <a href="https://github.com/Barnista/MonDictDB" target="_blank" rel="noopener noreferrer" className="font-medium text-aubergine-600 hover:underline">
+          MonDictDB
+        </a>{" "}
+        (MIT License).
+      </>
+    ),
+  },
+  {
+    title: "E-Library",
+    description: (
+      <>
+        Project Gutenberg search and import uses the public{" "}
+        <a href="https://github.com/garethbjohnson/gutendex" target="_blank" rel="noopener noreferrer" className="font-medium text-aubergine-600 hover:underline">
+          Gutendex
+        </a>{" "}
+        service and downloads selected public-domain books on demand.
+      </>
+    ),
+  },
+];
 
 const CREDITS: { title: string; description: string; icon: any }[] = [
   {
@@ -106,6 +181,25 @@ export default function AboutPage() {
         </div>
       </Card>
 
+      <Card className="border-slate-200 bg-white p-6 dark:border-surface-raised dark:bg-surface-indigo">
+        <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
+          <BookMarked className="h-5 w-5 text-aubergine-600" />
+          Notable third-party data and acknowledgments
+        </h2>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+          Some content and datasets in this platform come from outside projects. Their sources and
+          licenses are documented here and reviewed before any redistribution.
+        </p>
+        <ul className="mt-4 space-y-3">
+          {THIRD_PARTY_NOTICES.map(({ title, description }) => (
+            <li key={title} className="rounded-xl border border-slate-200 p-4 text-sm dark:border-surface-raised">
+              <p className="font-semibold text-slate-900 dark:text-white">{title}</p>
+              <p className="mt-0.5 leading-relaxed text-slate-500 dark:text-slate-300">{description}</p>
+            </li>
+          ))}
+        </ul>
+      </Card>
+
       <Card className="border-slate-200 bg-white p-6 text-center dark:border-surface-raised dark:bg-surface-indigo">
         <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-aubergine-600/10 text-aubergine-600">
           <Heart className="size-5" />
@@ -115,6 +209,15 @@ export default function AboutPage() {
         <p className="mt-2 text-sm text-slate-500 dark:text-slate-300">
           Designed and built for the students, teachers, and staff of the Mon Refugee Learning Centre.
         </p>
+        <a
+          href="https://github.com/TaoMonLae/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-4 inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-aubergine-600 hover:text-aubergine-600 dark:border-surface-raised dark:text-slate-200"
+        >
+          <Github className="h-4 w-4" />
+          github.com/TaoMonLae
+        </a>
       </Card>
     </div>
   );
