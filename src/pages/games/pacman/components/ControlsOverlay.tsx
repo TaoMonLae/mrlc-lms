@@ -1,5 +1,17 @@
 import React from 'react';
-import { Play, RotateCcw, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Zap, Trophy, ShieldAlert, Sparkles } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  Pause,
+  Play,
+  RotateCcw,
+  ShieldAlert,
+  Sparkles,
+  Trophy,
+  Zap
+} from 'lucide-react';
 import { Direction, GameStatus } from '../types';
 
 interface ControlsOverlayProps {
@@ -11,6 +23,7 @@ interface ControlsOverlayProps {
   onTriggerPower: () => void;
   onStartGame: () => void;
   onResumeGame: () => void;
+  onPauseGame: () => void;
   onRestartGame: () => void;
   onNextLevel: () => void;
   showTouchControls: boolean;
@@ -25,6 +38,7 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = React.memo(({
   onTriggerPower,
   onStartGame,
   onResumeGame,
+  onPauseGame,
   onRestartGame,
   onNextLevel,
   showTouchControls
@@ -33,22 +47,22 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = React.memo(({
     <div className="w-full flex flex-col items-center">
       {/* 1. Modal Overlays for States */}
       {status === 'READY' && (
-        <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-30">
-          <div className="inline-flex p-3 rounded-2xl bg-yellow-400/10 border border-yellow-400/30 mb-4 animate-bounce">
-            <div className="w-12 h-12 rounded-full bg-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.8)] flex items-center justify-center text-slate-950 font-black text-xl">
+        <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md flex flex-col items-center justify-center p-3 sm:p-6 text-center z-30">
+          <div className="inline-flex p-2 sm:p-3 rounded-2xl bg-yellow-400/10 border border-yellow-400/30 mb-2 sm:mb-4 animate-bounce">
+            <div className="size-10 sm:size-12 rounded-full bg-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.8)] flex items-center justify-center text-slate-950 font-black text-lg sm:text-xl">
               C:
             </div>
           </div>
-          <h1 className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-pink-400 to-cyan-400 tracking-wider mb-2 drop-shadow-lg">
+          <h1 className="text-2xl min-[380px]:text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-pink-400 to-cyan-400 tracking-wider mb-2 drop-shadow-lg">
             PAC-MAN MODERN
           </h1>
-          <p className="text-sm text-slate-300 max-w-sm mb-6">
+          <p className="text-xs sm:text-sm text-slate-300 max-w-sm mb-3 sm:mb-6">
             Eat dots, dodge ghosts, trigger neon power-ups & unleash high score combos!
           </p>
 
           <button
             onClick={onStartGame}
-            className="group relative px-8 py-3.5 rounded-xl bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-950 font-black text-lg shadow-lg shadow-yellow-500/30 hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-2"
+            className="group relative px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-950 font-black text-base sm:text-lg shadow-lg shadow-yellow-500/30 hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-2"
           >
             <Play className="w-5 h-5 fill-slate-950" />
             START GAME
@@ -131,44 +145,91 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = React.memo(({
 
       {/* 2. On-screen Touch Controls / Mobile Virtual D-Pad */}
       {showTouchControls && status === 'PLAYING' && (
-        <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-6 w-full max-w-sm select-none">
-          {/* Touch D-Pad */}
-          <div className="relative w-36 h-36 bg-slate-900/80 border border-slate-800 rounded-full flex items-center justify-center shadow-lg">
+        <div className="mt-2 w-full max-w-md select-none rounded-2xl border border-cyan-400/15 bg-slate-900/90 px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-xl backdrop-blur-md">
+          <p className="mb-2 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-100/60">
+            Swipe the maze or use the direction pad
+          </p>
+          <div className="flex items-center justify-center gap-4">
+            {/* Thumb-friendly cross D-Pad */}
+            <div className="grid grid-cols-3 grid-rows-3 gap-1">
+              <span />
             <button
+              type="button"
+              aria-label="Move up"
+              onPointerDown={(event) => {
+                event.preventDefault();
+                onDirectionChange('UP');
+              }}
               onClick={() => onDirectionChange('UP')}
-              className="absolute top-1 p-3 rounded-xl bg-slate-800 active:bg-cyan-500 active:text-slate-950 text-slate-300 transition shadow cursor-pointer"
+              className="flex size-12 touch-manipulation items-center justify-center rounded-xl border border-slate-700 bg-slate-800 text-slate-200 shadow transition active:scale-95 active:border-cyan-300 active:bg-cyan-500 active:text-slate-950"
             >
-              <ChevronUp className="w-6 h-6" />
+              <ChevronUp className="size-7" />
             </button>
+              <span />
             <button
-              onClick={() => onDirectionChange('DOWN')}
-              className="absolute bottom-1 p-3 rounded-xl bg-slate-800 active:bg-cyan-500 active:text-slate-950 text-slate-300 transition shadow cursor-pointer"
-            >
-              <ChevronDown className="w-6 h-6" />
-            </button>
-            <button
+              type="button"
+              aria-label="Move left"
+              onPointerDown={(event) => {
+                event.preventDefault();
+                onDirectionChange('LEFT');
+              }}
               onClick={() => onDirectionChange('LEFT')}
-              className="absolute left-1 p-3 rounded-xl bg-slate-800 active:bg-cyan-500 active:text-slate-950 text-slate-300 transition shadow cursor-pointer"
+              className="flex size-12 touch-manipulation items-center justify-center rounded-xl border border-slate-700 bg-slate-800 text-slate-200 shadow transition active:scale-95 active:border-cyan-300 active:bg-cyan-500 active:text-slate-950"
             >
-              <ChevronLeft className="w-6 h-6" />
+              <ChevronLeft className="size-7" />
             </button>
+              <div className="size-12 rounded-xl border border-slate-800 bg-slate-950/80" />
             <button
+              type="button"
+              aria-label="Move right"
+              onPointerDown={(event) => {
+                event.preventDefault();
+                onDirectionChange('RIGHT');
+              }}
               onClick={() => onDirectionChange('RIGHT')}
-              className="absolute right-1 p-3 rounded-xl bg-slate-800 active:bg-cyan-500 active:text-slate-950 text-slate-300 transition shadow cursor-pointer"
+              className="flex size-12 touch-manipulation items-center justify-center rounded-xl border border-slate-700 bg-slate-800 text-slate-200 shadow transition active:scale-95 active:border-cyan-300 active:bg-cyan-500 active:text-slate-950"
             >
-              <ChevronRight className="w-6 h-6" />
+              <ChevronRight className="size-7" />
             </button>
-            <div className="w-8 h-8 rounded-full bg-slate-950 border border-slate-700" />
-          </div>
+              <span />
+            <button
+              type="button"
+              aria-label="Move down"
+              onPointerDown={(event) => {
+                event.preventDefault();
+                onDirectionChange('DOWN');
+              }}
+              onClick={() => onDirectionChange('DOWN')}
+              className="flex size-12 touch-manipulation items-center justify-center rounded-xl border border-slate-700 bg-slate-800 text-slate-200 shadow transition active:scale-95 active:border-cyan-300 active:bg-cyan-500 active:text-slate-950"
+            >
+              <ChevronDown className="size-7" />
+            </button>
+              <span />
+            </div>
 
-          {/* Super Power Trigger Button */}
-          <button
-            onClick={onTriggerPower}
-            className="w-20 h-20 rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 text-slate-950 font-black shadow-lg shadow-orange-500/30 active:scale-90 transition flex flex-col items-center justify-center cursor-pointer"
-          >
-            <Zap className="w-6 h-6 fill-slate-950 mb-0.5" />
-            <span className="text-[10px] uppercase">BOOST</span>
-          </button>
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onPointerDown={(event) => {
+                  event.preventDefault();
+                  onTriggerPower();
+                }}
+                onClick={onTriggerPower}
+                className="flex h-[4.5rem] w-20 touch-manipulation flex-col items-center justify-center rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 font-black text-slate-950 shadow-lg shadow-orange-500/30 transition active:scale-95"
+              >
+                <Zap className="mb-0.5 size-6 fill-slate-950" />
+                <span className="text-[10px] uppercase">Boost</span>
+              </button>
+              <button
+                type="button"
+                onClick={onPauseGame}
+                className="flex min-h-12 w-20 touch-manipulation items-center justify-center gap-1 rounded-xl border border-white/15 bg-slate-800 text-xs font-bold text-slate-200 transition active:scale-95 active:bg-slate-700"
+              >
+                <Pause className="size-4 fill-current" />
+                Pause
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

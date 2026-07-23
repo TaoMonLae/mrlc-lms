@@ -18,8 +18,16 @@ import {
 } from './types';
 import { soundEngine } from './utils/audio';
 import { calculateGhostTarget, getNextGhostDirection } from './utils/ghostAI';
+import {
+  canGhostAdvance,
+  getGhostExitPosition,
+  getGhostStepPosition,
+  getPacmanStepPosition,
+  isWithinPickupRadius
+} from './utils/gamePhysics';
 import { countDotsAndEnergizers, getMazeSpawns, isWalkableForPacman, MAZES, TILE_SIZE } from './utils/mazes';
 import { ParticleSystem } from './utils/particles';
+import { pacmanDirectionForSwipe } from './utils/touchControls';
 
 import { ArcadeCanvas } from './components/ArcadeCanvas';
 import { ControlsOverlay } from './components/ControlsOverlay';
@@ -37,8 +45,48 @@ const DEFAULT_STATS: GameStats = {
   highestCombo: 0
 };
 
+const MAX_PACMAN_SPEED = 9.5;
+const MAX_GHOST_SPEED = 10.5;
+const GHOST_HOUSE_DELAYS = {
+  PINKY: 1.5,
+  INKY: 3.5,
+  CLYDE: 6
+} as const;
+
+function resetRoundPositions(
+  pacman: PacManState,
+  ghosts: GhostEntity[],
+  currentMaze: number[][]
+) {
+  const spawns = getMazeSpawns(currentMaze);
+  const ghostExit = getGhostExitPosition(currentMaze);
+
+  pacman.x = spawns.pacmanSpawn.x;
+  pacman.y = spawns.pacmanSpawn.y;
+  pacman.dir = 'NONE';
+  pacman.nextDir = 'LEFT';
+  pacman.powerUp = null;
+  pacman.powerUpTimeLeft = 0;
+  pacman.isShieldActive = false;
+
+  ghosts.forEach((ghost) => {
+    const spawn = ghost.name === 'BLINKY'
+      ? ghostExit
+      : spawns.ghostSpawns[ghost.name];
+    ghost.x = spawn.x;
+    ghost.y = spawn.y;
+    ghost.dir = ghost.name === 'BLINKY' ? 'LEFT' : 'UP';
+    ghost.nextDir = ghost.dir;
+    ghost.state = ghost.name === 'BLINKY' ? 'CHASE' : 'HOUSE';
+    ghost.frightenedTimer = 0;
+    ghost.houseTimer = ghost.name === 'BLINKY' ? 0 : GHOST_HOUSE_DELAYS[ghost.name];
+  });
+}
+
 export default function PacmanGame() {
   const navigate = useNavigate();
+  const gameContainerRef = useRef<HTMLDivElement>(null);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
   // Game Configuration State
   const [theme, setTheme] = useState<VisualTheme>('NEON');
@@ -48,6 +96,9 @@ export default function PacmanGame() {
   const [showTouchControls, setShowTouchControls] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [volume, setVolume] = useState<number>(0.3);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [fullscreenSupported, setFullscreenSupported] = useState(false);
+  const [fullscreenError, setFullscreenError] = useState<string | null>(null);
 
   // Modals
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState<boolean>(false);
@@ -76,6 +127,8 @@ export default function PacmanGame() {
   const [powerUpTimeLeft, setPowerUpTimeLeft] = useState<number>(0);
   const [fruit, setFruit] = useState<FruitItem | null>(null);
   const [powerUpItem, setPowerUpItem] = useState<PowerUpItem | null>(null);
+  const fruitRef = useRef<FruitItem | null>(null);
+  const powerUpItemRef = useRef<PowerUpItem | null>(null);
 
   // Particle System & Floating Text
   const particleSystemRef = useRef<ParticleSystem>(new ParticleSystem());
@@ -189,12 +242,17 @@ export default function PacmanGame() {
 
   // Detect Mobile device to auto-enable touch controls
   useEffect(() => {
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-      navigator.userAgent
-    );
-    if (isMobile) {
-      setShowTouchControls(true);
-    }
+    const coarsePointer = window.matchMedia('(pointer: coarse)');
+    const updateTouchControls = () => {
+      if (coarsePointer.matches || navigator.maxTouchPoints > 0) {
+        setShowTouchControls(true);
+      }
+    };
+    updateTouchControls();
+    coarsePointer.addEventListener?.('change', updateTouchControls);
+    return () => {
+      coarsePointer.removeEventListener?.('change', updateTouchControls);
+    };
   }, []);
 
   // Load High Score & Stats from LocalStorage
@@ -219,17 +277,68 @@ export default function PacmanGame() {
     soundEngine.setVolume(volume);
   }, [isMuted, volume]);
 
+  useEffect(() => {
+    const fullscreenDocument = document as Document & {
+      webkitFullscreenElement?: Element | null;
+    };
+    const fullscreenContainer = gameContainerRef.current as (HTMLDivElement & {
+      webkitRequestFullscreen?: () => Promise<void> | void;
+    }) | null;
+    setFullscreenSupported(
+      Boolean(document.fullscreenEnabled || fullscreenContainer?.webkitRequestFullscreen)
+    );
+
+    const updateFullscreenState = () => {
+      const activeElement =
+        document.fullscreenElement ?? fullscreenDocument.webkitFullscreenElement;
+      setIsFullscreen(activeElement === gameContainerRef.current);
+    };
+
+    document.addEventListener('fullscreenchange', updateFullscreenState);
+    document.addEventListener('webkitfullscreenchange', updateFullscreenState);
+    return () => {
+      document.removeEventListener('fullscreenchange', updateFullscreenState);
+      document.removeEventListener('webkitfullscreenchange', updateFullscreenState);
+    };
+  }, []);
+
+  const toggleFullscreen = async () => {
+    const fullscreenDocument = document as Document & {
+      webkitExitFullscreen?: () => Promise<void> | void;
+      webkitFullscreenElement?: Element | null;
+    };
+    const container = gameContainerRef.current as (HTMLDivElement & {
+      webkitRequestFullscreen?: () => Promise<void> | void;
+    }) | null;
+    if (!container) return;
+
+    setFullscreenError(null);
+    try {
+      if (document.fullscreenElement || fullscreenDocument.webkitFullscreenElement) {
+        if (document.exitFullscreen) await document.exitFullscreen();
+        else await fullscreenDocument.webkitExitFullscreen?.();
+      } else if (container.requestFullscreen) {
+        await container.requestFullscreen();
+      } else {
+        await container.webkitRequestFullscreen?.();
+      }
+    } catch {
+      setFullscreenError('Full Screen could not start. Check your browser permissions.');
+    }
+  };
+
   // Initialize Maze and Dots for Level
   const initLevel = useCallback(
     (lvl: number, currentMazeIdx: number) => {
       const rawMaze = MAZES[currentMazeIdx % MAZES.length];
       const mazeCopy = rawMaze.map((row) => [...row]);
-      const { dots } = countDotsAndEnergizers(mazeCopy);
+      const { dots, energizers } = countDotsAndEnergizers(mazeCopy);
 
       setMaze(mazeCopy);
-      setDotsRemaining(dots);
+      setDotsRemaining(dots + energizers);
 
       const spawns = getMazeSpawns(mazeCopy);
+      const ghostExit = getGhostExitPosition(mazeCopy);
 
       // Reset Pac-Man
       pacmanRef.current = {
@@ -237,7 +346,7 @@ export default function PacmanGame() {
         y: spawns.pacmanSpawn.y,
         dir: 'NONE',
         nextDir: 'LEFT',
-        speed: 7.5 + (lvl - 1) * 0.3,
+        speed: Math.min(MAX_PACMAN_SPEED, 7.5 + (lvl - 1) * 0.3),
         mouthAngle: 0.2,
         mouthSpeed: 1.5,
         powerUp: null,
@@ -252,11 +361,11 @@ export default function PacmanGame() {
       ghostsRef.current = [
         {
           name: 'BLINKY',
-          x: spawns.ghostSpawns.BLINKY.x,
-          y: spawns.ghostSpawns.BLINKY.y,
+          x: ghostExit.x,
+          y: ghostExit.y,
           dir: 'LEFT',
           nextDir: 'LEFT',
-          speed: (6.5 + (lvl - 1) * 0.25) * diffMult,
+          speed: Math.min(MAX_GHOST_SPEED, (6.5 + (lvl - 1) * 0.25) * diffMult),
           color: '#ef4444',
           frightenedColor: '#1e3a8a',
           scatterTarget: { x: mazeCopy[0].length - 2, y: 0 },
@@ -272,7 +381,7 @@ export default function PacmanGame() {
           y: spawns.ghostSpawns.PINKY.y,
           dir: 'UP',
           nextDir: 'UP',
-          speed: (6.2 + (lvl - 1) * 0.25) * diffMult,
+          speed: Math.min(MAX_GHOST_SPEED, (6.2 + (lvl - 1) * 0.25) * diffMult),
           color: '#f472b6',
           frightenedColor: '#1e3a8a',
           scatterTarget: { x: 1, y: 0 },
@@ -288,7 +397,7 @@ export default function PacmanGame() {
           y: spawns.ghostSpawns.INKY.y,
           dir: 'UP',
           nextDir: 'UP',
-          speed: (6.0 + (lvl - 1) * 0.25) * diffMult,
+          speed: Math.min(MAX_GHOST_SPEED, (6.0 + (lvl - 1) * 0.25) * diffMult),
           color: '#22d3ee',
           frightenedColor: '#1e3a8a',
           scatterTarget: { x: mazeCopy[0].length - 2, y: mazeCopy.length - 1 },
@@ -304,7 +413,7 @@ export default function PacmanGame() {
           y: spawns.ghostSpawns.CLYDE.y,
           dir: 'UP',
           nextDir: 'UP',
-          speed: (5.8 + (lvl - 1) * 0.25) * diffMult,
+          speed: Math.min(MAX_GHOST_SPEED, (5.8 + (lvl - 1) * 0.25) * diffMult),
           color: '#fb923c',
           frightenedColor: '#1e3a8a',
           scatterTarget: { x: 1, y: mazeCopy.length - 1 },
@@ -318,6 +427,8 @@ export default function PacmanGame() {
 
       particleSystemRef.current.clear();
       setFloatingTexts([]);
+      fruitRef.current = null;
+      powerUpItemRef.current = null;
       setFruit(null);
       setPowerUpItem(null);
       setActivePowerUp(null);
@@ -412,16 +523,19 @@ export default function PacmanGame() {
       KEY: '#c084fc'
     };
 
-    setFruit({
+    const { fruitSpawn } = getMazeSpawns(maze);
+    const nextFruit: FruitItem = {
       type: fruitType,
       points: pointsMap[fruitType],
-      x: 13.5,
-      y: 17,
+      x: fruitSpawn.x,
+      y: fruitSpawn.y,
       duration: 10, // active for 10 seconds
       active: true,
       color: colorMap[fruitType]
-    });
-  }, [level]);
+    };
+    fruitRef.current = nextFruit;
+    setFruit(nextFruit);
+  }, [level, maze]);
 
   // Spawn Power-Up Item dynamically
   const spawnPowerUpItem = useCallback(() => {
@@ -442,16 +556,21 @@ export default function PacmanGame() {
       BOMB: '#ef4444'
     };
 
-    setPowerUpItem({
+    const { powerUpSpawns, fruitSpawn } = getMazeSpawns(maze);
+    const spawn =
+      powerUpSpawns[Math.floor(Math.random() * powerUpSpawns.length)] ?? fruitSpawn;
+    const nextPowerUp: PowerUpItem = {
       type: pType,
-      x: 13.5,
-      y: 17,
+      x: spawn.x,
+      y: spawn.y,
       duration: 8,
       active: true,
       color: colorMap[pType],
       icon: iconMap[pType]
-    });
-  }, []);
+    };
+    powerUpItemRef.current = nextPowerUp;
+    setPowerUpItem(nextPowerUp);
+  }, [maze]);
 
   // Keyboard Movement Listener
   useEffect(() => {
@@ -631,36 +750,21 @@ export default function PacmanGame() {
 
       // Move Pac-Man in current direction
       if (pac.dir !== 'NONE') {
-        let dx = 0;
-        let dy = 0;
-        if (pac.dir === 'UP') dy = -moveDistance;
-        else if (pac.dir === 'DOWN') dy = moveDistance;
-        else if (pac.dir === 'LEFT') dx = -moveDistance;
-        else if (pac.dir === 'RIGHT') dx = moveDistance;
+        const movement = getPacmanStepPosition(maze, pac, pac.dir, moveDistance);
+        const moved = movement.position.x !== pac.x || movement.position.y !== pac.y;
+        pac.x = movement.position.x;
+        pac.y = movement.position.y;
 
-        let nextX = pac.x + dx;
-        let nextY = pac.y + dy;
-
-        // Wrap side tunnel
-        const cols = maze[0].length;
-        if (nextX < 0) nextX = cols - 1;
-        if (nextX >= cols) nextX = 0;
-
-        // Check tile collision
-        const gridX = pac.dir === 'RIGHT' ? Math.ceil(nextX) : Math.floor(nextX);
-        const gridY = pac.dir === 'DOWN' ? Math.ceil(nextY) : Math.floor(nextY);
-
-        const checkTile = maze[gridY]?.[gridX];
-        if (checkTile !== undefined && isWalkableForPacman(checkTile)) {
-          pac.x = nextX;
-          pac.y = nextY;
+        if (moved) {
 
           // Mouth Animation
           pac.mouthAngle += pac.mouthSpeed * dt;
           if (pac.mouthAngle > 0.45 || pac.mouthAngle < 0.05) {
             pac.mouthSpeed = -pac.mouthSpeed;
           }
-        } else {
+        }
+
+        if (movement.blocked) {
           // Snap to exact center when hitting wall
           pac.x = Math.round(pac.x);
           pac.y = Math.round(pac.y);
@@ -699,20 +803,21 @@ export default function PacmanGame() {
       }
 
       // 3. PAC-MAN EATING BONUS FRUIT
-      if (fruit && fruit.active) {
-        const fDistSq = (pac.x - fruit.x) ** 2 + (pac.y - fruit.y) ** 2;
-        if (fDistSq < 0.6) {
-          setScore((s) => s + fruit.points);
+      const activeFruit = fruitRef.current;
+      if (activeFruit?.active) {
+        if (isWithinPickupRadius(pac, activeFruit)) {
+          setScore((s) => s + activeFruit.points);
           soundEngine.playEatFruit();
+          fruitRef.current = null;
           setFruit(null);
 
           // Add Floating Text
           const newFt: FloatingText = {
             id: Math.random().toString(),
-            x: fruit.x,
-            y: fruit.y,
-            text: `+${fruit.points}`,
-            color: fruit.color,
+            x: activeFruit.x,
+            y: activeFruit.y,
+            text: `+${activeFruit.points}`,
+            color: activeFruit.color,
             opacity: 1,
             life: 0
           };
@@ -723,20 +828,21 @@ export default function PacmanGame() {
       }
 
       // 4. PAC-MAN EATING POWER-UP ITEM
-      if (powerUpItem && powerUpItem.active) {
-        const pDistSq = (pac.x - powerUpItem.x) ** 2 + (pac.y - powerUpItem.y) ** 2;
-        if (pDistSq < 0.6) {
-          pac.powerUp = powerUpItem.type;
+      const activePowerUpItem = powerUpItemRef.current;
+      if (activePowerUpItem?.active) {
+        if (isWithinPickupRadius(pac, activePowerUpItem)) {
+          pac.powerUp = activePowerUpItem.type;
           pac.powerUpTimeLeft = 6;
-          setActivePowerUp(powerUpItem.type);
+          setActivePowerUp(activePowerUpItem.type);
           setPowerUpTimeLeft(6);
           soundEngine.playPowerUp();
+          powerUpItemRef.current = null;
           setPowerUpItem(null);
 
           ps.spawnPowerUpSparkles(
-            powerUpItem.x * TILE_SIZE + TILE_SIZE / 2,
-            powerUpItem.y * TILE_SIZE + TILE_SIZE / 2,
-            powerUpItem.color
+            activePowerUpItem.x * TILE_SIZE + TILE_SIZE / 2,
+            activePowerUpItem.y * TILE_SIZE + TILE_SIZE / 2,
+            activePowerUpItem.color
           );
 
           setStats((prev) => ({ ...prev, powerUpsCollected: prev.powerUpsCollected + 1 }));
@@ -745,7 +851,7 @@ export default function PacmanGame() {
 
       // 5. UPDATE GHOST AI & MOVEMENT
       const blinkyPos = { x: ghosts[0].x, y: ghosts[0].y };
-      const ghostHouseGate = { x: 13.5, y: 11 };
+      const ghostExit = getGhostExitPosition(maze);
 
       // Guards against multiple ghosts overlapping Pac-Man in the same frame
       // from triggering the death sequence (and decrementing lives) more
@@ -768,21 +874,18 @@ export default function PacmanGame() {
           ghost.houseTimer -= dt;
           if (ghost.houseTimer <= 0) {
             ghost.state = 'CHASE';
-            ghost.x = ghostHouseGate.x;
-            ghost.y = ghostHouseGate.y;
-          } else {
-            // Bounce up and down inside house
-            ghost.y += Math.sin(Date.now() / 150) * 0.02;
-            return;
+            ghost.x = ghostExit.x;
+            ghost.y = ghostExit.y;
           }
+          if (ghost.state === 'HOUSE') return;
         }
 
         // Calculate Target Cell
-        ghost.target = calculateGhostTarget(ghost, blinkyPos, pac, maze, ghostHouseGate);
+        ghost.target = calculateGhostTarget(ghost, blinkyPos, pac, maze, ghostExit);
 
         // Check if Ghost reached House after being eaten
         if (ghost.state === 'EATEN') {
-          const gateDistSq = (ghost.x - ghostHouseGate.x) ** 2 + (ghost.y - ghostHouseGate.y) ** 2;
+          const gateDistSq = (ghost.x - ghostExit.x) ** 2 + (ghost.y - ghostExit.y) ** 2;
           if (gateDistSq < 0.5) {
             ghost.state = 'CHASE';
           }
@@ -798,35 +901,48 @@ export default function PacmanGame() {
 
         const gMoveDist = ghostSpeed * dt;
 
-        // Move Ghost towards current direction
-        let gdx = 0;
-        let gdy = 0;
-        if (ghost.dir === 'UP') gdy = -gMoveDist;
-        else if (ghost.dir === 'DOWN') gdy = gMoveDist;
-        else if (ghost.dir === 'LEFT') gdx = -gMoveDist;
-        else if (ghost.dir === 'RIGHT') gdx = gMoveDist;
+        // Pick a valid direction only when exactly on a tile center. The old
+        // 0.25-tile threshold repeatedly snapped a ghost back to the center
+        // during its first few movement frames, which made it appear frozen.
+        const isAtTileCenter =
+          Math.abs(ghost.x - Math.round(ghost.x)) < 0.001 &&
+          Math.abs(ghost.y - Math.round(ghost.y)) < 0.001;
 
-        ghost.x += gdx;
-        ghost.y += gdy;
-
-        // Wrap side tunnel for ghosts
-        if (ghost.x < 0) ghost.x = maze[0].length - 1;
-        if (ghost.x >= maze[0].length) ghost.x = 0;
-
-        // Check if ghost reached intersection center to decide next turn
-        const isNearTileCenter =
-          Math.abs(ghost.x - Math.round(ghost.x)) < 0.25 && Math.abs(ghost.y - Math.round(ghost.y)) < 0.25;
-
-        if (isNearTileCenter) {
+        if (isAtTileCenter) {
           ghost.x = Math.round(ghost.x);
           ghost.y = Math.round(ghost.y);
           const nextDir = getNextGhostDirection(ghost, maze, ghost.target);
           ghost.dir = nextDir;
         }
 
+        const moveGhost = () => {
+          const nextPosition = getGhostStepPosition(
+            ghost,
+            ghost.dir,
+            gMoveDist,
+            maze[0].length
+          );
+
+          if (!canGhostAdvance(maze, nextPosition, ghost.dir, ghost.state)) {
+            return false;
+          }
+
+          ghost.x = nextPosition.x;
+          ghost.y = nextPosition.y;
+          return true;
+        };
+
+        // Recalculate if a malformed spawn or maze revision ever points a
+        // ghost at a wall.
+        if (!moveGhost()) {
+          ghost.x = Math.round(ghost.x);
+          ghost.y = Math.round(ghost.y);
+          ghost.dir = getNextGhostDirection(ghost, maze, ghost.target);
+          moveGhost();
+        }
+
         // 6. GHOST vs PAC-MAN COLLISION DETECTION
-        const distSq = (pac.x - ghost.x) ** 2 + (pac.y - ghost.y) ** 2;
-        if (distSq < 0.6) {
+        if (isWithinPickupRadius(pac, ghost, 0.8)) {
           if (ghost.state === 'FRIGHTENED') {
             // EAT GHOST!
             ghost.state = 'EATEN';
@@ -891,12 +1007,11 @@ export default function PacmanGame() {
                     setStatus('GAME_OVER');
                     recordScore();
                   } else {
-                    // Respawn positions
-                    const spawns = getMazeSpawns(maze);
-                    pac.x = spawns.pacmanSpawn.x;
-                    pac.y = spawns.pacmanSpawn.y;
-                    pac.dir = 'NONE';
-                    pac.nextDir = 'NONE';
+                    // Reset the full round so Pac-Man cannot respawn on top of
+                    // the ghost that just hit him.
+                    resetRoundPositions(pac, ghosts, maze);
+                    setActivePowerUp(null);
+                    setPowerUpTimeLeft(0);
                     setStatus('PLAYING');
                   }
                   return remaining;
@@ -944,7 +1059,9 @@ export default function PacmanGame() {
   useEffect(() => {
     const loop = (time: number) => {
       if (lastTimeRef.current === 0) lastTimeRef.current = time;
-      const dt = Math.min((time - lastTimeRef.current) / 1000, 0.1); // cap delta time to prevent physics step jumps
+      // Keep a slow browser frame from crossing an entire junction before a
+      // buffered turn can be applied, especially at higher-level speeds.
+      const dt = Math.min((time - lastTimeRef.current) / 1000, 0.05);
       lastTimeRef.current = time;
 
       updateGame(dt);
@@ -981,16 +1098,23 @@ export default function PacmanGame() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-between font-sans selection:bg-yellow-400 selection:text-slate-950">
+    <div
+      ref={gameContainerRef}
+      className={`bg-slate-950 text-white flex flex-col items-center justify-between overflow-x-hidden font-sans selection:bg-yellow-400 selection:text-slate-950 ${
+        isFullscreen ? 'h-screen min-h-0 overflow-y-auto' : 'min-h-screen'
+      }`}
+    >
       {/* Back to Games bar */}
-      <div className="w-full flex items-center justify-start px-3 py-1.5 bg-slate-950 border-b border-slate-900">
-        <button
-          onClick={() => navigate('/games/pacman')}
-          className="px-3 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700/60 text-slate-200 text-xs font-bold transition cursor-pointer"
-        >
-          {'◀ Back to Games'}
-        </button>
-      </div>
+      {!isFullscreen && (
+        <div className="w-full flex items-center justify-start px-3 py-1.5 bg-slate-950 border-b border-slate-900">
+          <button
+            onClick={() => navigate('/games/pacman')}
+            className="px-3 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700/60 text-slate-200 text-xs font-bold transition cursor-pointer"
+          >
+            {'◀ Back to Games'}
+          </button>
+        </div>
+      )}
 
       {/* Top Arcade Scoreboard Header */}
       <HeaderBar
@@ -1008,11 +1132,39 @@ export default function PacmanGame() {
         gameMode={gameMode}
         activePowerUp={activePowerUp}
         powerUpTimeLeft={powerUpTimeLeft}
+        fullscreenSupported={fullscreenSupported}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={toggleFullscreen}
       />
 
+      {fullscreenError && (
+        <p className="fixed left-1/2 top-20 z-50 -translate-x-1/2 rounded-xl border border-rose-300/20 bg-rose-950/95 px-4 py-2 text-center text-xs font-semibold text-rose-100 shadow-lg">
+          {fullscreenError}
+        </p>
+      )}
+
       {/* Main Game Arena */}
-      <main className="flex-1 w-full flex flex-col items-center justify-center p-2 md:p-4 relative my-auto">
-        <div className="relative">
+      <main className="relative my-auto flex w-full flex-1 flex-col items-center justify-center p-1 sm:p-2 md:p-4">
+        <div
+          className="relative flex w-full flex-col items-center"
+          style={{ maxWidth: `${maze[0].length * TILE_SIZE}px` }}
+          onTouchStart={(event) => {
+            if (status !== 'PLAYING' || (event.target as HTMLElement).closest('button')) return;
+            const touch = event.touches[0];
+            if (touch) touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+          }}
+          onTouchEnd={(event) => {
+            const start = touchStartRef.current;
+            const touch = event.changedTouches[0];
+            touchStartRef.current = null;
+            if (status !== 'PLAYING' || !start || !touch) return;
+            const direction = pacmanDirectionForSwipe(
+              touch.clientX - start.x,
+              touch.clientY - start.y
+            );
+            if (direction) handleDirectionChange(direction);
+          }}
+        >
           <ArcadeCanvas
             maze={maze}
             pacman={pacmanRef.current}
@@ -1037,6 +1189,7 @@ export default function PacmanGame() {
             onTriggerPower={handleTriggerPower}
             onStartGame={handleStartGame}
             onResumeGame={() => setStatus('PLAYING')}
+            onPauseGame={() => setStatus('PAUSED')}
             onRestartGame={handleRestartGame}
             onNextLevel={handleNextLevel}
             showTouchControls={showTouchControls}

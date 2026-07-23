@@ -43,6 +43,8 @@ export const ArcadeCanvas: React.FC<ArcadeCanvasProps> = ({
     height: 0,
     dpr: 0
   });
+  const logicalWidth = maze[0].length * tileSize;
+  const logicalHeight = maze.length * tileSize;
 
   useEffect(() => {
     const rows = maze.length;
@@ -161,8 +163,6 @@ export const ArcadeCanvas: React.FC<ArcadeCanvasProps> = ({
     if (last.width !== width || last.height !== height || last.dpr !== dpr) {
       canvas.width = width * dpr;
       canvas.height = height * dpr;
-      canvas.style.width = `${width}px`;
-      canvas.style.height = `${height}px`;
       lastCanvasSizeRef.current = { width, height, dpr };
     }
 
@@ -397,8 +397,15 @@ export const ArcadeCanvas: React.FC<ArcadeCanvasProps> = ({
   }, [frameTick, maze, fruit, powerUpItem, theme, tileSize]);
 
   return (
-    <div className="relative inline-block border-2 border-slate-800 rounded-lg overflow-hidden shadow-2xl bg-black">
-      <canvas ref={canvasRef} className="block" />
+    <div
+      className="relative block w-full overflow-hidden rounded-lg border-2 border-slate-800 bg-black shadow-2xl"
+      style={{ maxWidth: `${logicalWidth}px` }}
+    >
+      <canvas
+        ref={canvasRef}
+        className="block h-auto w-full touch-none"
+        style={{ aspectRatio: `${logicalWidth} / ${logicalHeight}` }}
+      />
 
       {/* CRT Screen Scanlines & Curvature Overlay effect */}
       {enableCRT && (

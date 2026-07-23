@@ -57,8 +57,8 @@ test('games and community links live in their own focused groups', () => {
     assert.ok(games && isNavGroup(games), `${role} is missing Games`);
     assert.ok(community && isNavGroup(community), `${role} is missing Community`);
     const expectedGames = role === 'ADMIN'
-      ? ['Snake Game', 'Sudoku', 'Checkers', 'Chess']
-      : ['Word Trail', 'Snake Game', 'Sudoku', 'Checkers', 'Chess'];
+      ? ['Snake Game', 'Sudoku', 'Checkers', 'Chess', 'Pac-Man']
+      : ['Word Trail', 'Snake Game', 'Sudoku', 'Checkers', 'Chess', 'Pac-Man'];
     assert.deepEqual(games.items.map((item) => item.title), expectedGames);
     assert.equal(new Set(games.items.map((item) => item.icon)).size, games.items.length);
     assert.deepEqual(

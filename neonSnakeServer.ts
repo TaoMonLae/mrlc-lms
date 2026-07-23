@@ -18,6 +18,12 @@ import {
   type NeonSnakeGameState,
   type NeonSnakePoint,
 } from "./shared/neonSnake";
+import {
+  createNeonSnakeBot,
+  NEON_SNAKE_BOT_ID,
+  shouldUseNeonSnakeBot,
+  stepNeonSnakeBot,
+} from "./shared/neonSnakeBot";
 
 export type NeonSnakeIdentity = {
   userId: string;
@@ -85,6 +91,16 @@ export function registerNeonSnakeServer({
 
   for (let index = 0; index < 150; index += 1) spawnOrb();
 
+  const syncAiObstacle = () => {
+    if (shouldUseNeonSnakeBot(state.players)) {
+      if (!state.players[NEON_SNAKE_BOT_ID]) {
+        state.players[NEON_SNAKE_BOT_ID] = createNeonSnakeBot(state.players);
+      }
+    } else {
+      delete state.players[NEON_SNAKE_BOT_ID];
+    }
+  };
+
   io.use(async (socket, next) => {
     try {
       const token = String(socket.handshake.auth?.token || "");
@@ -120,6 +136,7 @@ export function registerNeonSnakeServer({
         state: "alive",
         currentAngle: angle,
       };
+      syncAiObstacle();
       socket.emit("init", socket.id);
     });
 
@@ -164,6 +181,7 @@ export function registerNeonSnakeServer({
           .filter((_, index) => index % 2 === 0)
           .slice(0, 60)
           .forEach((segment) => spawnOrb(segment.x, segment.y, 1, player.color));
+        syncAiObstacle();
       }
     });
 
@@ -191,14 +209,24 @@ export function registerNeonSnakeServer({
           .forEach((segment) => spawnOrb(segment.x, segment.y, 1, player.color));
       }
       delete state.players[socket.id];
+      syncAiObstacle();
       logger.info(`Neon Snake player disconnected: ${identity.userId}`);
     });
   });
 
   const gameLoop = setInterval(() => {
     if (Math.random() < 0.2) spawnOrb();
+    syncAiObstacle();
+    const aiObstacle = state.players[NEON_SNAKE_BOT_ID];
+    if (aiObstacle) {
+      state.players[NEON_SNAKE_BOT_ID] = stepNeonSnakeBot(
+        aiObstacle,
+        state.players,
+        1 / BROADCAST_RATE,
+      );
+    }
     state.leaderboard = Object.values(state.players)
-      .filter((player) => player.state === "alive")
+      .filter((player) => player.state === "alive" && !player.isBot)
       .sort((left, right) => right.score - left.score)
       .slice(0, 10)
       .map((player) => ({

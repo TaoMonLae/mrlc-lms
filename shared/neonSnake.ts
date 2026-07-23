@@ -16,6 +16,7 @@ export type NeonSnakePlayer = {
   id: string;
   name: string;
   color: string;
+  isBot?: boolean;
   segments: NeonSnakePoint[];
   score: number;
   isBoosting: boolean;

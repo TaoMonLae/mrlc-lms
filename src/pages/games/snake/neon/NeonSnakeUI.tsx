@@ -64,6 +64,9 @@ export function NeonSnakeUI({
     joinGame,
   } = useNeonSnakeStore();
   const player = playerId && gameState ? gameState.players[playerId] : null;
+  const hasAiObstacle = gameState
+    ? Object.values(gameState.players).some((candidate) => candidate.isBot)
+    : false;
   const isAlive = player?.state === "alive";
   const isDead = player?.state === "dead";
   const wasAlive = useRef(false);
@@ -110,6 +113,7 @@ export function NeonSnakeUI({
             {connectionStatus === "connected" ? (
               <>
                 <Radio className="size-3 text-emerald-400" /> Live multiplayer
+                {hasAiObstacle ? <span className="text-rose-300">· AI obstacle active</span> : null}
               </>
             ) : (
               <>
