@@ -1,5 +1,6 @@
-import { lazy, Suspense } from "react";
+import { Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { lazyWithRetry as lazy } from "./lib/lazyWithRetry";
 const AppLayout = lazy(() => import("./components/layout/AppLayout").then((module) => ({ default: module.AppLayout })));
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { GameAccessGate } from "./components/games/GameAccessGate";
