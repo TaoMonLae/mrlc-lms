@@ -13,6 +13,8 @@ interface ArcadeCanvasProps {
   theme: VisualTheme;
   enableCRT: boolean;
   tileSize: number;
+  /** Increments every animation frame to drive the redraw even when no other prop changed. */
+  frameTick: number;
 }
 
 export const ArcadeCanvas: React.FC<ArcadeCanvasProps> = ({
@@ -25,9 +27,118 @@ export const ArcadeCanvas: React.FC<ArcadeCanvasProps> = ({
   particleSystem,
   theme,
   enableCRT,
-  tileSize
+  tileSize,
+  frameTick
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // Offscreen cache of the maze walls & ghost-house gate. These tiles never
+  // change once a level starts, so redrawing them (with shadowBlur glow
+  // effects) 60 times a second was by far the most expensive part of every
+  // frame. We render them once here and just blit the cached bitmap each
+  // frame instead.
+  const wallLayerRef = useRef<HTMLCanvasElement | null>(null);
+  const lastCanvasSizeRef = useRef<{ width: number; height: number; dpr: number }>({
+    width: 0,
+    height: 0,
+    dpr: 0
+  });
+
+  useEffect(() => {
+    const rows = maze.length;
+    const cols = maze[0].length;
+    const width = cols * tileSize;
+    const height = rows * tileSize;
+
+    let layer = wallLayerRef.current;
+    if (!layer) {
+      layer = document.createElement('canvas');
+      wallLayerRef.current = layer;
+    }
+    layer.width = width;
+    layer.height = height;
+
+    const lctx = layer.getContext('2d');
+    if (!lctx) return;
+
+    // Background fill based on theme
+    if (theme === 'NEON') {
+      lctx.fillStyle = '#030712';
+    } else if (theme === 'SYNTHWAVE') {
+      lctx.fillStyle = '#0f051d';
+    } else if (theme === 'VECTOR') {
+      lctx.fillStyle = '#000800';
+    } else {
+      lctx.fillStyle = '#000000';
+    }
+    lctx.fillRect(0, 0, width, height);
+
+    // Optional subtle grid lines for Synthwave/Neon
+    if (theme === 'SYNTHWAVE' || theme === 'NEON') {
+      lctx.strokeStyle = theme === 'SYNTHWAVE' ? 'rgba(219, 39, 119, 0.08)' : 'rgba(6, 182, 212, 0.06)';
+      lctx.lineWidth = 1;
+      for (let x = 0; x <= width; x += tileSize) {
+        lctx.beginPath();
+        lctx.moveTo(x, 0);
+        lctx.lineTo(x, height);
+        lctx.stroke();
+      }
+      for (let y = 0; y <= height; y += tileSize) {
+        lctx.beginPath();
+        lctx.moveTo(0, y);
+        lctx.lineTo(width, y);
+        lctx.stroke();
+      }
+    }
+
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const tile = maze[r][c];
+        const x = c * tileSize;
+        const y = r * tileSize;
+
+        if (tile === 1) {
+          // WALL
+          lctx.save();
+          if (theme === 'NEON') {
+            lctx.fillStyle = '#082f49';
+            lctx.fillRect(x, y, tileSize, tileSize);
+            lctx.strokeStyle = '#38bdf8';
+            lctx.lineWidth = 1.5;
+            lctx.shadowColor = '#38bdf8';
+            lctx.shadowBlur = 6;
+            lctx.strokeRect(x + 1, y + 1, tileSize - 2, tileSize - 2);
+          } else if (theme === 'SYNTHWAVE') {
+            lctx.fillStyle = '#4c1d95';
+            lctx.fillRect(x, y, tileSize, tileSize);
+            lctx.strokeStyle = '#f43f5e';
+            lctx.lineWidth = 1.5;
+            lctx.shadowColor = '#f43f5e';
+            lctx.shadowBlur = 8;
+            lctx.strokeRect(x + 1, y + 1, tileSize - 2, tileSize - 2);
+          } else if (theme === 'VECTOR') {
+            lctx.strokeStyle = '#22c55e';
+            lctx.lineWidth = 2;
+            lctx.shadowColor = '#22c55e';
+            lctx.shadowBlur = 4;
+            lctx.strokeRect(x + 2, y + 2, tileSize - 4, tileSize - 4);
+          } else {
+            // CLASSIC
+            lctx.fillStyle = '#0000ff';
+            lctx.fillRect(x, y, tileSize, tileSize);
+            lctx.strokeStyle = '#2563eb';
+            lctx.lineWidth = 1;
+            lctx.strokeRect(x + 1, y + 1, tileSize - 2, tileSize - 2);
+          }
+          lctx.restore();
+        } else if (tile === 4) {
+          // GHOST HOUSE GATE
+          lctx.fillStyle = '#f43f5e';
+          lctx.fillRect(x, y + tileSize / 2 - 2, tileSize, 4);
+        }
+      }
+    }
+  }, [maze, theme, tileSize]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -42,47 +153,30 @@ export const ArcadeCanvas: React.FC<ArcadeCanvasProps> = ({
     const width = cols * tileSize;
     const height = rows * tileSize;
 
-    // Handle high DPI display
+    // Handle high DPI display — only touch canvas.width/height (which resets
+    // the whole backing store and context state) when the size actually
+    // changes, instead of on every animation frame.
     const dpr = window.devicePixelRatio || 1;
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
+    const last = lastCanvasSizeRef.current;
+    if (last.width !== width || last.height !== height || last.dpr !== dpr) {
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      lastCanvasSizeRef.current = { width, height, dpr };
+    }
 
     ctx.save();
     ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, width, height);
 
-    // 1. Clear background based on theme
-    if (theme === 'NEON') {
-      ctx.fillStyle = '#030712'; // deep dark navy
-    } else if (theme === 'SYNTHWAVE') {
-      ctx.fillStyle = '#0f051d'; // deep purple
-    } else if (theme === 'VECTOR') {
-      ctx.fillStyle = '#000800'; // dark green
-    } else {
-      ctx.fillStyle = '#000000'; // classic black
-    }
-    ctx.fillRect(0, 0, width, height);
-
-    // Optional subtle grid lines for Synthwave/Neon
-    if (theme === 'SYNTHWAVE' || theme === 'NEON') {
-      ctx.strokeStyle = theme === 'SYNTHWAVE' ? 'rgba(219, 39, 119, 0.08)' : 'rgba(6, 182, 212, 0.06)';
-      ctx.lineWidth = 1;
-      for (let x = 0; x <= width; x += tileSize) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, height);
-        ctx.stroke();
-      }
-      for (let y = 0; y <= height; y += tileSize) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(width, y);
-        ctx.stroke();
-      }
+    // 1. Blit the cached static wall/gate layer
+    if (wallLayerRef.current) {
+      ctx.drawImage(wallLayerRef.current, 0, 0);
     }
 
-    // 2. Render Maze Walls, Dots, and Energizers
+    // 2. Render Dots and Energizers (these change as Pac-Man eats them, so
+    // they can't be baked into the static layer above)
     const now = Date.now();
     const energizerPulse = (Math.sin(now / 150) + 1) / 2; // 0 to 1
 
@@ -94,45 +188,7 @@ export const ArcadeCanvas: React.FC<ArcadeCanvasProps> = ({
         const cx = x + tileSize / 2;
         const cy = y + tileSize / 2;
 
-        if (tile === 1) {
-          // WALL
-          ctx.save();
-          if (theme === 'NEON') {
-            ctx.fillStyle = '#082f49';
-            ctx.fillRect(x, y, tileSize, tileSize);
-            ctx.strokeStyle = '#38bdf8';
-            ctx.lineWidth = 1.5;
-            ctx.shadowColor = '#38bdf8';
-            ctx.shadowBlur = 6;
-            ctx.strokeRect(x + 1, y + 1, tileSize - 2, tileSize - 2);
-          } else if (theme === 'SYNTHWAVE') {
-            ctx.fillStyle = '#4c1d95';
-            ctx.fillRect(x, y, tileSize, tileSize);
-            ctx.strokeStyle = '#f43f5e';
-            ctx.lineWidth = 1.5;
-            ctx.shadowColor = '#f43f5e';
-            ctx.shadowBlur = 8;
-            ctx.strokeRect(x + 1, y + 1, tileSize - 2, tileSize - 2);
-          } else if (theme === 'VECTOR') {
-            ctx.strokeStyle = '#22c55e';
-            ctx.lineWidth = 2;
-            ctx.shadowColor = '#22c55e';
-            ctx.shadowBlur = 4;
-            ctx.strokeRect(x + 2, y + 2, tileSize - 4, tileSize - 4);
-          } else {
-            // CLASSIC
-            ctx.fillStyle = '#0000ff';
-            ctx.fillRect(x, y, tileSize, tileSize);
-            ctx.strokeStyle = '#2563eb';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(x + 1, y + 1, tileSize - 2, tileSize - 2);
-          }
-          ctx.restore();
-        } else if (tile === 4) {
-          // GHOST HOUSE GATE
-          ctx.fillStyle = '#f43f5e';
-          ctx.fillRect(x, y + tileSize / 2 - 2, tileSize, 4);
-        } else if (tile === 2) {
+        if (tile === 2) {
           // SMALL DOT
           ctx.fillStyle = theme === 'SYNTHWAVE' ? '#fde047' : theme === 'NEON' ? '#67e8f9' : '#ffb8ae';
           ctx.beginPath();
@@ -334,7 +390,11 @@ export const ArcadeCanvas: React.FC<ArcadeCanvasProps> = ({
     });
 
     ctx.restore(); // Restore high DPI scale
-  }, [maze, pacman, ghosts, floatingTexts, fruit, powerUpItem, particleSystem, theme, tileSize]);
+    // frameTick is intentionally the primary trigger for this effect — it
+    // increments every animation frame so Pac-Man/ghost motion (which lives
+    // in mutable refs, not React state) keeps animating smoothly.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [frameTick, maze, fruit, powerUpItem, theme, tileSize]);
 
   return (
     <div className="relative inline-block border-2 border-slate-800 rounded-lg overflow-hidden shadow-2xl bg-black">

@@ -19,7 +19,7 @@ interface SettingsModalProps {
   onChangeVolume: (v: number) => void;
 }
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({
+export const SettingsModal: React.FC<SettingsModalProps> = React.memo(({
   isOpen,
   onClose,
   theme,
@@ -168,4 +168,4 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       </div>
     </div>
   );
-};
+});

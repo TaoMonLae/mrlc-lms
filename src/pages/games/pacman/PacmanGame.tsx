@@ -81,6 +81,13 @@ export default function PacmanGame() {
   const particleSystemRef = useRef<ParticleSystem>(new ParticleSystem());
   const [floatingTexts, setFloatingTexts] = useState<FloatingText[]>([]);
 
+  // Cheap counter bumped every animation frame purely to tell ArcadeCanvas
+  // when to redraw. Pac-Man/ghost motion lives in refs (not React state) for
+  // performance, so something still needs to signal "a new frame happened"
+  // without allocating a new array/object each time the way the old
+  // floating-texts-churn trick did.
+  const [frameTick, setFrameTick] = useState(0);
+
   // Pac-Man Mutable Ref State for fast 60fps loop
   const pacmanRef = useRef<PacManState>({
     x: 13.5,
@@ -496,6 +503,60 @@ export default function PacmanGame() {
       // Update Particle System
       ps.update(dt);
 
+      // Guards LEVEL_CLEAR from firing more than once if several dots are
+      // consumed in the same frame (e.g. a burst collected at once via the
+      // Magnet power-up) — dotsRemaining would otherwise dip below zero
+      // multiple times and re-trigger the level-clear transition each time.
+      let levelClearTriggered = false;
+
+      // Shared dot/energizer pickup handler used both for the tile Pac-Man
+      // is standing on and for the Magnet power-up's nearby auto-collect.
+      const collectDot = (rx: number, ry: number, tileValue: number) => {
+        maze[ry][rx] = 0;
+        const px = rx * TILE_SIZE + TILE_SIZE / 2;
+        const py = ry * TILE_SIZE + TILE_SIZE / 2;
+
+        if (tileValue === 2) {
+          ps.spawnDotParticles(px, py);
+          setDotsRemaining((prev) => {
+            const rem = prev - 1;
+            if (rem === 100 || rem === 50) spawnFruit();
+            if (rem === 120 || rem === 30) spawnPowerUpItem();
+            if (rem <= 0 && !levelClearTriggered) {
+              levelClearTriggered = true;
+              setStatus('LEVEL_CLEAR');
+              soundEngine.playLevelClear();
+              confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            }
+            return rem;
+          });
+          setScore((s) => s + 10);
+          soundEngine.playWaka();
+          setStats((prev) => ({ ...prev, dotsEaten: prev.dotsEaten + 1 }));
+        } else {
+          ps.spawnPowerUpSparkles(px, py, '#a855f7');
+          setDotsRemaining((prev) => {
+            const rem = prev - 1;
+            if (rem <= 0 && !levelClearTriggered) {
+              levelClearTriggered = true;
+              setStatus('LEVEL_CLEAR');
+              soundEngine.playLevelClear();
+              confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            }
+            return rem;
+          });
+          setScore((s) => s + 50);
+          ghostComboRef.current = 1; // Reset ghost combo multiplier
+          soundEngine.playEnergizer();
+          ghosts.forEach((g) => {
+            if (g.state !== 'EATEN') {
+              g.state = 'FRIGHTENED';
+              g.frightenedTimer = 8; // 8 seconds frightened
+            }
+          });
+        }
+      };
+
       // Update Power-Up Time Left
       if (pac.powerUpTimeLeft > 0) {
         pac.powerUpTimeLeft -= dt;
@@ -612,51 +673,29 @@ export default function PacmanGame() {
       const pacTileY = Math.round(pac.y);
       const currentTile = maze[pacTileY]?.[pacTileX];
 
-      if (currentTile === 2) {
-        // Eat Small Dot
-        maze[pacTileY][pacTileX] = 0;
-        setDotsRemaining((prev) => {
-          const rem = prev - 1;
-          if (rem === 100 || rem === 50) spawnFruit();
-          if (rem === 120 || rem === 30) spawnPowerUpItem();
-          if (rem <= 0) {
-            // LEVEL CLEAR!
-            setStatus('LEVEL_CLEAR');
-            soundEngine.playLevelClear();
-            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+      if (currentTile === 2 || currentTile === 3) {
+        collectDot(pacTileX, pacTileY, currentTile);
+      }
+
+      // MAGNET power-up: automatically vacuum up nearby dots/energizers
+      // instead of requiring Pac-Man to walk directly over each one.
+      if (pac.powerUp === 'MAGNET') {
+        const magnetRadius = 2.5;
+        const cols = maze[0].length;
+        const minX = Math.max(0, Math.floor(pac.x - magnetRadius));
+        const maxX = Math.min(cols - 1, Math.ceil(pac.x + magnetRadius));
+        const minY = Math.max(0, Math.floor(pac.y - magnetRadius));
+        const maxY = Math.min(maze.length - 1, Math.ceil(pac.y + magnetRadius));
+
+        for (let ry = minY; ry <= maxY; ry++) {
+          for (let rx = minX; rx <= maxX; rx++) {
+            const t = maze[ry][rx];
+            if (t !== 2 && t !== 3) continue;
+            const dSq = (rx - pac.x) ** 2 + (ry - pac.y) ** 2;
+            if (dSq > magnetRadius * magnetRadius) continue;
+            collectDot(rx, ry, t);
           }
-          return rem;
-        });
-
-        setScore((s) => s + 10);
-
-        soundEngine.playWaka();
-        ps.spawnDotParticles(pacTileX * TILE_SIZE + TILE_SIZE / 2, pacTileY * TILE_SIZE + TILE_SIZE / 2);
-
-        // Update stats
-        setStats((prev) => ({ ...prev, dotsEaten: prev.dotsEaten + 1 }));
-      } else if (currentTile === 3) {
-        // Eat Energizer (Power Pellet)
-        maze[pacTileY][pacTileX] = 0;
-        setDotsRemaining((prev) => prev - 1);
-
-        setScore((s) => s + 50);
-        ghostComboRef.current = 1; // Reset ghost combo multiplier
-        soundEngine.playEnergizer();
-
-        // Turn Ghosts Frightened
-        ghosts.forEach((g) => {
-          if (g.state !== 'EATEN') {
-            g.state = 'FRIGHTENED';
-            g.frightenedTimer = 8; // 8 seconds frightened
-          }
-        });
-
-        ps.spawnPowerUpSparkles(
-          pacTileX * TILE_SIZE + TILE_SIZE / 2,
-          pacTileY * TILE_SIZE + TILE_SIZE / 2,
-          '#a855f7'
-        );
+        }
       }
 
       // 3. PAC-MAN EATING BONUS FRUIT
@@ -868,17 +907,21 @@ export default function PacmanGame() {
         }
       });
 
-      // 7. Update Floating Texts
-      setFloatingTexts((prev) =>
-        prev
+      // 7. Update Floating Texts (bail out without a state update when
+      // there's nothing to animate — this used to run unconditionally
+      // every frame, allocating a new array 60 times a second even when
+      // idle, which was a meaningful chunk of the "laggy" feel).
+      setFloatingTexts((prev) => {
+        if (prev.length === 0) return prev;
+        return prev
           .map((ft) => ({
             ...ft,
             y: ft.y - dt * 1.2,
             life: ft.life + dt,
             opacity: Math.max(0, 1 - ft.life / 0.8)
           }))
-          .filter((ft) => ft.life < 0.8)
-      );
+          .filter((ft) => ft.life < 0.8);
+      });
     },
     [status, maze, spawnFruit, spawnPowerUpItem, recordScore]
   );
@@ -905,6 +948,7 @@ export default function PacmanGame() {
       lastTimeRef.current = time;
 
       updateGame(dt);
+      setFrameTick((t) => (t + 1) % 1_000_000);
       requestRef.current = requestAnimationFrame(loop);
     };
 
@@ -976,6 +1020,7 @@ export default function PacmanGame() {
             floatingTexts={floatingTexts}
             fruit={fruit}
             powerUpItem={powerUpItem}
+            frameTick={frameTick}
             particleSystem={particleSystemRef.current}
             theme={theme}
             enableCRT={enableCRT}

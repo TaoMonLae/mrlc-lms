@@ -11,7 +11,7 @@ interface LeaderboardModalProps {
   onClearScores: () => void;
 }
 
-export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
+export const LeaderboardModal: React.FC<LeaderboardModalProps> = React.memo(({
   isOpen,
   onClose,
   scores,
@@ -194,4 +194,4 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
       </div>
     </div>
   );
-};
+});

@@ -16,7 +16,7 @@ interface ControlsOverlayProps {
   showTouchControls: boolean;
 }
 
-export const ControlsOverlay: React.FC<ControlsOverlayProps> = ({
+export const ControlsOverlay: React.FC<ControlsOverlayProps> = React.memo(({
   status,
   score,
   level,
@@ -184,4 +184,4 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = ({
       )}
     </div>
   );
-};
+});

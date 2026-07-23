@@ -6,7 +6,7 @@ interface HowToPlayModalProps {
   onClose: () => void;
 }
 
-export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({ isOpen, onClose }) => {
+export const HowToPlayModal: React.FC<HowToPlayModalProps> = React.memo(({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
@@ -125,4 +125,4 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({ isOpen, onClose 
       </div>
     </div>
   );
-};
+});

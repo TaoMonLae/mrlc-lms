@@ -19,7 +19,7 @@ interface HeaderBarProps {
   powerUpTimeLeft: number;
 }
 
-export const HeaderBar: React.FC<HeaderBarProps> = ({
+export const HeaderBar: React.FC<HeaderBarProps> = React.memo(({
   score,
   highScore,
   level,
@@ -127,4 +127,4 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
       </div>
     </div>
   );
-};
+});
