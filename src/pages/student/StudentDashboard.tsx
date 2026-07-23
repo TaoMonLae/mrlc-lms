@@ -25,6 +25,7 @@ import { formatMoney } from '../../lib/locale';
 import { apiGet } from '../../lib/api';
 import GedStageTracker, { type GedReadinessItem } from '@/components/ged/GedStageTracker';
 import BadgeShelf from '@/components/badges/BadgeShelf';
+import { DailyQuestCard } from '@/src/components/daily-quest/DailyQuestCard';
 
 function sanitizeText(text: string): string {
   if (!text) return text;
@@ -130,6 +131,8 @@ export default function StudentDashboard() {
           </Button>
         </div>
       </div>
+
+      <DailyQuestCard />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

@@ -38,6 +38,7 @@ import {
   Crown,
   Languages,
   Info,
+  Target,
 } from "lucide-react";
 import { UserRole } from "./permissions";
 
@@ -75,6 +76,11 @@ const LANGUAGE_LEARNING_ITEMS: NavGroupItem[] = [
   { title: "Language Quest", url: "/games/language-quest", icon: Languages },
   { title: "Mon Language", url: "/mon-language", icon: BookOpenText },
   { title: "Dictionary", url: "/dictionary", icon: BookA },
+];
+
+const LEARNER_LANGUAGE_ITEMS: NavGroupItem[] = [
+  { title: "Daily Quest", url: "/daily-quest", icon: Target },
+  ...LANGUAGE_LEARNING_ITEMS,
 ];
 
 const GAME_ITEMS: NavGroupItem[] = [
@@ -209,7 +215,7 @@ export const TEACHER_NAV: AdminNavEntry[] = [
       { title: "Analytics", url: "/analytics/attendance", icon: BarChart3 },
     ],
   },
-  { label: "Language Learning", icon: Languages, items: LANGUAGE_LEARNING_ITEMS },
+  { label: "Language Learning", icon: Languages, items: LEARNER_LANGUAGE_ITEMS },
   {
     label: "Resources",
     icon: Library,
@@ -254,7 +260,7 @@ export const STUDENT_NAV: AdminNavEntry[] = [
       { title: "Flashcards", url: "/student/flashcards", icon: Layers },
     ],
   },
-  { label: "Language Learning", icon: Languages, items: LANGUAGE_LEARNING_ITEMS },
+  { label: "Language Learning", icon: Languages, items: LEARNER_LANGUAGE_ITEMS },
   {
     label: "Resources",
     icon: Library,
@@ -321,6 +327,12 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     url: "/news",
     icon: Newspaper,
     roles: ["ADMIN", "TEACHER", "STUDENT", "STAFF", "ACCOUNTANT", "CASE_WORKER", "LIBRARIAN"],
+  },
+  {
+    title: "Daily Quest",
+    url: "/daily-quest",
+    icon: Target,
+    roles: ["TEACHER", "STUDENT"],
   },
   {
     title: "Language Quest",

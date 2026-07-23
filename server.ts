@@ -36,6 +36,7 @@ import { registerAiAssistantRoutes } from "./aiAssistant";
 import { registerCheckersGameRoutes } from "./checkersGame";
 import { registerChessGameRoutes } from "./chessGame";
 import { registerLanguageQuestRoutes } from "./languageQuest";
+import { registerDailyQuestRoutes } from "./dailyQuest";
 import cookieParser from "cookie-parser";
 import { BADGE_CATALOG, getBadgeLevel } from "./lib/badges";
 import { roleHasPermission, type Permission, type UserRole } from "./shared/permissions";
@@ -19465,6 +19466,7 @@ async function startServer() {
   // ── Flashcards (teacher-authored study decks assigned to classes) ──────────
   registerFlashcardRoutes({ app, prisma, authMiddleware, createAuditLog, logger });
   registerLanguageQuestRoutes({ app, prisma, authMiddleware, createAuditLog, logger });
+  registerDailyQuestRoutes({ app, prisma, authMiddleware, createAuditLog, logger });
   // ── Conduct (rule catalog + violation logging + counts) ─────────────────────
   registerConductRoutes({ app, prisma, authMiddleware, createAuditLog, logger });
   // ── Conduct: Disciplinary Notice PDF export ─────────────────────────────────

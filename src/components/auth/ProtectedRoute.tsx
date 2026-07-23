@@ -6,9 +6,10 @@ import { hasPermission, Permission, UserRole } from '../../lib/permissions';
 interface ProtectedRouteProps {
   requiredPermission?: Permission;
   allowedRoles?: UserRole[];
+  strictRoles?: UserRole[];
 }
 
-export function ProtectedRoute({ requiredPermission, allowedRoles }: ProtectedRouteProps) {
+export function ProtectedRoute({ requiredPermission, allowedRoles, strictRoles }: ProtectedRouteProps) {
   const { user, isLoading } = useAuth();
 
   // Auth is still being validated (checking existing token on mount)
@@ -36,6 +37,10 @@ export function ProtectedRoute({ requiredPermission, allowedRoles }: ProtectedRo
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role) && !hasPermission(user, 'manage_all')) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  if (strictRoles && !strictRoles.includes(user.role)) {
     return <Navigate to="/unauthorized" replace />;
   }
 

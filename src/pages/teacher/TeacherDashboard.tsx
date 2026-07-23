@@ -7,6 +7,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { apiGet } from "../../lib/api";
+import { DailyQuestCard } from "@/src/components/daily-quest/DailyQuestCard";
 
 function sanitizeText(text: string): string {
   if (!text) return text;
@@ -113,6 +114,8 @@ export default function TeacherDashboard() {
           </Button>
         </div>
       </div>
+
+      <DailyQuestCard />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {teacherStats.map((stat) => (

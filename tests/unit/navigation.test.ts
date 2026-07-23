@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   ADMIN_NAV,
+  NAVIGATION_ITEMS,
   STUDENT_NAV,
   TEACHER_NAV,
   isNavGroup,
@@ -26,23 +27,26 @@ test('grouped navigation keeps labels and destinations unique for each role', ()
   }
 });
 
-test('language tools are grouped together with distinct icons', () => {
+test('language tools are grouped together and Daily Quest is learner-only', () => {
   for (const [role, entries] of Object.entries(ROLE_NAVS)) {
     const languageGroup = entries.find(
       (entry) => isNavGroup(entry) && entry.label === 'Language Learning',
     );
 
     assert.ok(languageGroup && isNavGroup(languageGroup), `${role} is missing Language Learning`);
-    assert.deepEqual(
-      languageGroup.items.map((item) => item.title),
-      ['Language Quest', 'Mon Language', 'Dictionary'],
-    );
+    const expectedTitles = role === 'ADMIN'
+      ? ['Language Quest', 'Mon Language', 'Dictionary']
+      : ['Daily Quest', 'Language Quest', 'Mon Language', 'Dictionary'];
+    assert.deepEqual(languageGroup.items.map((item) => item.title), expectedTitles);
     assert.equal(
       new Set(languageGroup.items.map((item) => item.icon)).size,
       languageGroup.items.length,
       `${role} language tools should use distinct icons`,
     );
   }
+
+  const flatDailyQuest = NAVIGATION_ITEMS.find((item) => item.url === '/daily-quest');
+  assert.deepEqual(flatDailyQuest?.roles, ['TEACHER', 'STUDENT']);
 });
 
 test('games and community links live in their own focused groups', () => {

@@ -10,6 +10,14 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 
 ## Latest updates — July 2026
 
+### Daily Learning Quest
+
+- A short English vocabulary quest available only to Student and Teacher accounts, linked from their navigation and dashboards.
+- Three daily modes: Relaxed (3 questions), Standard (5 questions), and Challenge (7 questions).
+- Uses only the curated Everyday, Academic, Word Power, and Advanced English word courses, plus a review word from recent mistakes when available.
+- Server-verified answers, one saved quest per Kuala Lumpur calendar day, completion XP, accuracy feedback, and current/best streak tracking.
+- Responsive learner flow with progress, passages, question images, explanations, and an end-of-quest summary.
+
 ### Language Quest
 
 - A native, game-like language learning area for every authenticated student, teacher, and staff account.
@@ -86,6 +94,7 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 | Homework | Assignment creation, student submissions, tracking, scoring, and gradebook integration |
 | Exams | Guided authoring, question bank, scheduling, attempts, proctoring, accommodations, grading, analytics, and printable output |
 | Gradebook | Marks, class reports, individual progress, and GED readiness tracking |
+| Daily Learning Quest | Student/teacher English Word practice with review questions, XP, and streaks |
 | Language Quest | Native language courses, lesson paths, speech-assisted challenges, hearts, points, streaks, progress, leaderboard, and teacher/admin Course Studio |
 | Flashcards | Deck creation, sharing, class assignment, mastery, quiz, match, spelling, and progress reporting |
 | Lesson planner | Teacher planning and classroom resource organization |
@@ -118,7 +127,7 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 - Announcements with rich content and audience visibility.
 - Curated RSS news and an in-app article reader.
 - AI assistant for lesson planning, quiz generation, announcements, and translation using Gemini or a local Ollama model.
-- Language Quest, Sudoku, Snake vocabulary mode, and Checkers with account-backed progress, scores, or learning activity where applicable.
+- Daily Learning Quest, Language Quest, Sudoku, Snake vocabulary mode, and Checkers with account-backed progress, scores, or learning activity where applicable.
 - Global search across major school records.
 
 ### Languages
@@ -128,6 +137,8 @@ The interface supports English, Burmese, and Mon through locale files under `src
 The **Mon Language** tab at `/mon-language` embeds `https://the-mon-language.web.app/` for all authenticated users. It requires browser access to that external origin; if embedding is unavailable, users can open the learning app in a separate tab from the page header.
 
 **Language Quest** at `/games/language-quest` uses the existing LMS account for progress, streaks, points, and leaderboard placement. All authenticated roles can learn and practise; teachers and administrators can publish and maintain course content from `/games/language-quest/manage`.
+
+**Daily Learning Quest** at `/daily-quest` is restricted to Student and Teacher accounts and creates one English Word practice session per Kuala Lumpur calendar day. Learners choose a 3-, 5-, or 7-question mode; answers, completion XP, review words, and streaks are stored against their existing LMS account.
 
 ## Architecture
 
@@ -399,7 +410,7 @@ mrlc-lms/
 │   │   ├── elibrary/           # PDF/EPUB list, upload, reader, analytics
 │   │   ├── exam2/              # Advanced exam workflow
 │   │   ├── flashcards/         # Deck, study, game, and progress UI
-│   │   └── games/              # Language Quest, Sudoku, Snake, Checkers, and Chess
+│   │   └── games/              # Daily Quest, Language Quest, Sudoku, Snake, Checkers, and Chess
 │   ├── components/             # App-specific components
 │   ├── lib/                    # API and feature utilities
 │   ├── providers/              # React providers
@@ -417,6 +428,7 @@ mrlc-lms/
 ├── examPhase2.ts               # Attempts, scheduling, accommodations, grading
 ├── flashcards.ts               # Flashcard API and image lifecycle
 ├── languageQuest.ts            # Language Quest courses, progress, rewards, and authoring API
+├── dailyQuest.ts               # Daily English Word practice, review, XP, and streak API
 ├── aiAssistant.ts              # Gemini/Ollama assistant integration
 ├── dictionary.ts               # Offline dictionary services
 ├── gutenberg.ts                # Gutendex/Project Gutenberg import

@@ -282,6 +282,7 @@ model User {
   chessMatchesBlack          ChessMatch[]              @relation("ChessBlack")
   languageQuestProgress      LanguageQuestUserProgress?
   languageQuestChallenges    LanguageQuestChallengeProgress[]
+  dailyQuestSessions         DailyQuestSession[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -3994,4 +3995,30 @@ model LanguageQuestChallengeProgress {
   @@index([userId])
   @@index([challengeId])
   @@index([completed])
+}
+
+// -----------------------------------------------------------------------------
+// DAILY LEARNING QUEST — one English vocabulary session per student/teacher/day
+// -----------------------------------------------------------------------------
+
+model DailyQuestSession {
+  id           String    @id @default(uuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dayKey       String
+  mode         String    @default("STANDARD") // RELAXED | STANDARD | CHALLENGE
+  status       String    @default("IN_PROGRESS") // IN_PROGRESS | COMPLETED
+  items        Json
+  answers      Json?
+  currentIndex Int       @default(0)
+  correctCount Int       @default(0)
+  pointsEarned Int       @default(0)
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([userId, dayKey])
+  @@index([userId, status])
+  @@index([dayKey, status])
+  @@index([pointsEarned])
 }

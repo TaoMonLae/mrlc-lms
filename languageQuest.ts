@@ -329,7 +329,7 @@ const starterCourse: OfficialLanguageQuestCourse = {
   })),
 };
 
-async function ensureOfficialCourses(prisma: any): Promise<void> {
+export async function ensureOfficialCourses(prisma: any): Promise<void> {
   const courses = [
     starterCourse,
     importedSpanishCourse,
