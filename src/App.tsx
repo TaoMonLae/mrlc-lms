@@ -372,8 +372,9 @@ export default function App() {
 
                 <Route path="/games/chess" element={<GameAccessGate gameKey="CHESS"><ChessSelectPage /></GameAccessGate>} />
                 <Route path="/games/chess/play" element={<GameAccessGate gameKey="CHESS" consumeTime><ChessPlayPage /></GameAccessGate>} />
-                <Route path="/games/chess/lobby" element={<GameAccessGate gameKey="CHESS" consumeTime><ChessLobbyPage /></GameAccessGate>} />
-                <Route path="/games/chess/leaderboard" element={<GameAccessGate gameKey="CHESS" consumeTime><ChessLeaderboardPage /></GameAccessGate>} />
+                {/* Lobby / leaderboard are setup screens — do not burn play-session time. */}
+                <Route path="/games/chess/lobby" element={<GameAccessGate gameKey="CHESS"><ChessLobbyPage /></GameAccessGate>} />
+                <Route path="/games/chess/leaderboard" element={<GameAccessGate gameKey="CHESS"><ChessLeaderboardPage /></GameAccessGate>} />
 
                 <Route path="/games/pacman" element={<GameAccessGate gameKey="PACMAN"><PacmanSelectPage /></GameAccessGate>} />
                 <Route path="/games/pacman/play" element={<GameAccessGate gameKey="PACMAN" consumeTime><PacmanPlayPage /></GameAccessGate>} />

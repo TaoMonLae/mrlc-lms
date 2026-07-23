@@ -22141,22 +22141,34 @@ async function startServer() {
         },
       });
       if (!user?.isActive) throw new Error("Account is unavailable");
+      // Only students under an active game-time policy need a tracked play
+      // session. Unmanaged students (no policy) and staff must still be able
+      // to join Neon Snake — requiring a session for every student blanked
+      // the multiplayer arena for everyone after Game Time Controls shipped.
       if (user.role === "STUDENT") {
-        const controlledSession = await prisma.gamePlaySession.findFirst({
-          where: {
-            userId: user.id,
-            gameKey: "SNAKE",
-            status: "ACTIVE",
-            lastHeartbeatAt: { gte: new Date(Date.now() - 60_000) },
-          },
-          orderBy: { startedAt: "desc" },
-          select: { id: true },
-        });
-        if (!controlledSession) throw new Error("A controlled game session is required");
-        const access = await evaluateStudentGameAccess(prisma, user.id, "SNAKE", {
-          sessionId: controlledSession.id,
-        });
+        const access = await evaluateStudentGameAccess(prisma, user.id, "SNAKE");
         if (!access.allowed) throw new Error(access.reason || "Game access is restricted");
+        if (access.managed) {
+          const controlledSession = await prisma.gamePlaySession.findFirst({
+            where: {
+              userId: user.id,
+              gameKey: "SNAKE",
+              status: "ACTIVE",
+              lastHeartbeatAt: { gte: new Date(Date.now() - 60_000) },
+            },
+            orderBy: { startedAt: "desc" },
+            select: { id: true },
+          });
+          if (!controlledSession) {
+            throw new Error("Open Neon Snake from the LMS to start a controlled play session.");
+          }
+          const sessionAccess = await evaluateStudentGameAccess(prisma, user.id, "SNAKE", {
+            sessionId: controlledSession.id,
+          });
+          if (!sessionAccess.allowed) {
+            throw new Error(sessionAccess.reason || "Game access is restricted");
+          }
+        }
       }
       const fullName = `${user.firstName} ${user.lastName}`.trim();
       return {

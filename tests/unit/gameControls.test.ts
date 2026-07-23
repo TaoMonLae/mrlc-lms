@@ -239,3 +239,66 @@ test("server-backed games do not require a tracking session for unmanaged studen
   );
   assert.equal(nextCalled, true);
 });
+
+test("unmanaged students are allowed to play without an active GamePlaySession", async () => {
+  // Neon Snake's socket auth previously required an ACTIVE GamePlaySession for
+  // every student, even when no parental-control policy applied. Unmanaged
+  // access must stay allowed so multiplayer games keep working.
+  let sessionQueried = false;
+  const prisma = {
+    user: {
+      findUnique: async () => ({
+        id: "user-1",
+        role: "STUDENT",
+        isActive: true,
+        studentProfile: { id: "student-1", classId: "class-1" },
+      }),
+    },
+    gameControlPolicy: {
+      findMany: async () => [],
+    },
+    gamePlaySession: {
+      findFirst: async () => {
+        sessionQueried = true;
+        return null;
+      },
+    },
+  };
+
+  const access = await evaluateStudentGameAccess(prisma, "user-1", "SNAKE");
+  assert.equal(access.allowed, true);
+  assert.equal(access.managed, false);
+  assert.equal(sessionQueried, false);
+});
+
+test("managed students are still blocked when their allowance is exhausted", async () => {
+  const prisma = {
+    user: {
+      findUnique: async () => ({
+        id: "user-1",
+        role: "STUDENT",
+        isActive: true,
+        studentProfile: { id: "student-1", classId: "class-1" },
+      }),
+    },
+    gameControlPolicy: {
+      findMany: async () => [
+        policy({ gameKey: "SNAKE", dailyLimitMinutes: 10 }),
+      ],
+    },
+    schoolProfile: {
+      findFirst: async () => ({ timezone: "UTC" }),
+    },
+    gameDailyUsage: {
+      findMany: async () => [{ gameKey: "SNAKE", seconds: 10 * 60 }],
+    },
+    gamePlaySession: {
+      findFirst: async () => null,
+    },
+  };
+
+  const access = await evaluateStudentGameAccess(prisma, "user-1", "SNAKE");
+  assert.equal(access.allowed, false);
+  assert.equal(access.managed, true);
+  assert.equal(access.code, "DAILY_LIMIT");
+});

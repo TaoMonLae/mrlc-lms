@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { Clock3, GraduationCap, RefreshCw, ShieldAlert, WifiOff } from "lucide-react";
@@ -14,6 +14,7 @@ type AccessPayload = GameAccessDecision & {
 
 interface GameAccessGateProps {
   gameKey: GameKey;
+  /** When true, start a tracked play session and show the countdown timer. */
   consumeTime?: boolean;
   children: ReactNode;
 }
@@ -85,6 +86,15 @@ function formatRemaining(seconds: number | null): string {
   return hours > 0
     ? `${hours}:${String(minutes).padStart(2, "0")}:${String(remainder).padStart(2, "0")}`
     : `${minutes}:${String(remainder).padStart(2, "0")}`;
+}
+
+function LoadingState({ message }: { message: string }) {
+  return (
+    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
+      <div className="size-10 animate-spin rounded-full border-4 border-violet-600 border-t-transparent" />
+      <p className="font-semibold text-slate-500">{message}</p>
+    </div>
+  );
 }
 
 function GameControlUnavailable({
@@ -165,11 +175,11 @@ function RestrictedGame({ gameKey, access }: { gameKey: GameKey; access: AccessP
             Use this break to stretch, rest your eyes, or continue with a learning activity.
           </p>
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-            <Button render={<Link to="/student/dashboard" />} className="font-bold">
+            <Button render={<Link to="/student/dashboard" />} nativeButton={false} className="font-bold">
               <GraduationCap className="mr-2 size-4" />
               Back to learning
             </Button>
-            <Button variant="outline" render={<Link to="/games/language-quest" />}>
+            <Button variant="outline" render={<Link to="/games/language-quest" />} nativeButton={false}>
               Open Language Quest
             </Button>
           </div>
@@ -179,12 +189,22 @@ function RestrictedGame({ gameKey, access }: { gameKey: GameKey; access: AccessP
   );
 }
 
+/**
+ * Keep the gate mounted while a lazy game page chunk loads. Without a nested
+ * Suspense, the route-level Suspense unmounts this gate, ends any play session
+ * mid-load, and remounts the whole access check — which is a common source of
+ * blank screens / stuck loading after Game Time Controls were added.
+ */
+function GameChunkFallback() {
+  return <LoadingState message="Loading game…" />;
+}
+
 export function GameAccessGate({
   gameKey,
   consumeTime = false,
   children,
 }: GameAccessGateProps) {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const [access, setAccess] = useState<AccessPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
@@ -193,6 +213,9 @@ export function GameAccessGate({
   const [retryKey, setRetryKey] = useState(0);
   const sessionIdRef = useRef<string | null>(null);
   const mountedRef = useRef(true);
+
+  // Staff never depend on the controls API to open a game.
+  const isStaff = Boolean(user && user.role !== "STUDENT");
 
   useEffect(() => {
     mountedRef.current = true;
@@ -210,6 +233,16 @@ export function GameAccessGate({
   }, []);
 
   useEffect(() => {
+    // Staff bypass is handled at render time; skip the network round-trip.
+    if (authLoading || isStaff) {
+      setLoading(false);
+      setAccess(isStaff ? allowedAccess(true, false) : null);
+      setTechnicalError(null);
+      setRemainingSeconds(null);
+      sessionIdRef.current = null;
+      return;
+    }
+
     let cancelled = false;
     setLoading(true);
     setAccess(null);
@@ -218,15 +251,6 @@ export function GameAccessGate({
     sessionIdRef.current = null;
 
     const open = async () => {
-      // Screen-time restrictions apply only to students. Staff should never
-      // depend on the controls API merely to render a game.
-      if (user && user.role !== "STUDENT") {
-        if (!cancelled) {
-          setAccess(allowedAccess(true, false));
-          setLoading(false);
-        }
-        return;
-      }
       try {
         const checked = await controlledRequest(
           (signal) => apiGet<AccessPayload>(
@@ -235,6 +259,7 @@ export function GameAccessGate({
           ),
         );
         if (cancelled) return;
+        // Select pages and unmanaged / exempt students never start a timer session.
         if (!checked.allowed || !consumeTime || checked.exempt || !checked.managed) {
           setAccess(checked);
           setRemainingSeconds(checked.remainingSeconds);
@@ -292,7 +317,7 @@ export function GameAccessGate({
         });
       }
     };
-  }, [consumeTime, gameKey, retryKey, user?.id, user?.role]);
+  }, [authLoading, consumeTime, gameKey, isStaff, retryKey, user?.id, user?.role]);
 
   useEffect(() => {
     const sessionId = sessionIdRef.current;
@@ -327,34 +352,44 @@ export function GameAccessGate({
     return () => window.clearInterval(interval);
   }, [access?.allowed, gameKey, technicalError]);
 
+  // Tick only while a real countdown is active. Do not put remainingSeconds
+  // itself in the dependency list or the interval is torn down every second.
+  const shouldTickCountdown = Boolean(
+    consumeTime && access?.allowed && !access.exempt && remainingSeconds != null,
+  );
   useEffect(() => {
-    if (!consumeTime || !access?.allowed || access.exempt || remainingSeconds == null) return;
+    if (!shouldTickCountdown) return;
     const interval = window.setInterval(() => {
       setRemainingSeconds((current) => {
         if (current == null) return null;
         if (current <= 1) {
-          setAccess((value) => value
-            ? {
-                ...value,
-                allowed: false,
-                code: value.remainingDailySeconds != null
-                  && value.remainingDailySeconds <= (value.remainingSessionSeconds ?? Number.POSITIVE_INFINITY)
-                  ? "DAILY_LIMIT"
-                  : "SESSION_LIMIT",
-                reason: value.remainingDailySeconds != null
-                  && value.remainingDailySeconds <= (value.remainingSessionSeconds ?? Number.POSITIVE_INFINITY)
-                  ? "Your game time for today has been used."
-                  : "This play session has reached its time limit.",
-                remainingSeconds: 0,
-              }
-            : value);
+          // Schedule the access update outside the remaining-seconds updater
+          // so React never nests state updates from two different stores.
+          void Promise.resolve().then(() => {
+            if (!mountedRef.current) return;
+            setAccess((value) => value
+              ? {
+                  ...value,
+                  allowed: false,
+                  code: value.remainingDailySeconds != null
+                    && value.remainingDailySeconds <= (value.remainingSessionSeconds ?? Number.POSITIVE_INFINITY)
+                    ? "DAILY_LIMIT"
+                    : "SESSION_LIMIT",
+                  reason: value.remainingDailySeconds != null
+                    && value.remainingDailySeconds <= (value.remainingSessionSeconds ?? Number.POSITIVE_INFINITY)
+                    ? "Your game time for today has been used."
+                    : "This play session has reached its time limit.",
+                  remainingSeconds: 0,
+                }
+              : value);
+          });
           return 0;
         }
         return current - 1;
       });
     }, 1_000);
     return () => window.clearInterval(interval);
-  }, [access?.allowed, access?.exempt, consumeTime]);
+  }, [shouldTickCountdown]);
 
   const timerLabel = useMemo(() => formatRemaining(remainingSeconds), [remainingSeconds]);
   const timer = consumeTime && !access?.exempt && access?.managed
@@ -366,13 +401,17 @@ export function GameAccessGate({
       )
     : null;
 
-  if (loading) {
+  // Staff: skip the gate UI entirely so games paint immediately.
+  if (isStaff) {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
-        <div className="size-10 animate-spin rounded-full border-4 border-violet-600 border-t-transparent" />
-        <p className="font-semibold text-slate-500">Checking game-time controls…</p>
-      </div>
+      <Suspense fallback={<GameChunkFallback />}>
+        {children}
+      </Suspense>
     );
+  }
+
+  if (authLoading || loading) {
+    return <LoadingState message="Checking game-time controls…" />;
   }
   if (technicalError) {
     return (
@@ -382,12 +421,27 @@ export function GameAccessGate({
       />
     );
   }
-  if (!access?.allowed) return <RestrictedGame gameKey={gameKey} access={access!} />;
+  // Never render RestrictedGame with a null access payload — that previously
+  // threw during render (access.code) and blanked the whole page because the
+  // app has no top-level error boundary around routes.
+  if (!access) {
+    return (
+      <GameControlUnavailable
+        message="Game access could not be verified."
+        onRetry={() => setRetryKey((value) => value + 1)}
+      />
+    );
+  }
+  if (!access.allowed) {
+    return <RestrictedGame gameKey={gameKey} access={access} />;
+  }
 
   return (
     <div className="relative min-w-0">
       {fullscreenTarget && timer ? createPortal(timer, fullscreenTarget) : timer}
-      {children}
+      <Suspense fallback={<GameChunkFallback />}>
+        {children}
+      </Suspense>
     </div>
   );
 }
