@@ -2,6 +2,7 @@ import type express from "express";
 import { z } from "zod";
 import {
   GAME_KEYS,
+  applicableGamePolicies,
   gameDayKey,
   isGameKey,
   resolveGameAccess,
@@ -116,18 +117,43 @@ export async function evaluateStudentGameAccess(
       managed: true,
     };
   }
-  if (user.role !== "STUDENT" || !user.studentProfile) {
+  if (user.role !== "STUDENT") {
     return {
       ...resolveGameAccess({ policies: [], gameKey, now }),
       exempt: true,
       managed: false,
     };
   }
+  if (!user.studentProfile) {
+    return {
+      ...resolveGameAccess({ policies: [], gameKey, now }),
+      allowed: false,
+      code: "BLOCKED",
+      reason: "This student account is not linked to a student profile.",
+      exempt: false,
+      managed: true,
+    };
+  }
+
+  const policies = applicableGamePolicies(
+    await policiesForStudent(prisma, user.studentProfile),
+    gameKey,
+  );
+  // Most students have no game policy. Avoid creating play sessions and
+  // querying usage history until a teacher/admin actually enables controls.
+  // Besides reducing five database reads per page load, this keeps unmanaged
+  // games independent from the session-tracking tables.
+  if (policies.length === 0) {
+    return {
+      ...resolveGameAccess({ policies: [], gameKey, now }),
+      exempt: false,
+      managed: false,
+    };
+  }
 
   const timezone = await schoolTimezone(prisma);
   const dayKey = gameDayKey(now, timezone);
-  const [policies, dailyRows, session, lastEndedForGame, lastEndedForAllGames] = await Promise.all([
-    policiesForStudent(prisma, user.studentProfile),
+  const [dailyRows, session, lastEndedForGame, lastEndedForAllGames] = await Promise.all([
     prisma.gameDailyUsage.findMany({
       where: { userId, dayKey },
       select: { gameKey: true, seconds: true },
@@ -189,7 +215,7 @@ export function createGameAccessMiddleware(
     }
     try {
       const initialAccess = await evaluateStudentGameAccess(prisma, jwtUser.userId, gameKey);
-      if (initialAccess.exempt) {
+      if (initialAccess.exempt || !initialAccess.managed) {
         next();
         return;
       }
@@ -332,7 +358,7 @@ export function registerGameControlRoutes(deps: GameControlDeps) {
     if (!body) return;
     try {
       const initialAccess = await evaluateStudentGameAccess(prisma, jwtUser.userId, body.gameKey);
-      if (initialAccess.exempt) {
+      if (initialAccess.exempt || !initialAccess.managed) {
         res.json({
           sessionId: null,
           access: initialAccess,

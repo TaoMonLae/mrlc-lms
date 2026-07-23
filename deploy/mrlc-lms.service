@@ -10,6 +10,9 @@ User=www-data
 WorkingDirectory=/opt/mrlc-lms
 Environment=NODE_ENV=production
 EnvironmentFile=/opt/mrlc-lms/.env
+# Apply committed schema changes before accepting traffic. This makes a normal
+# systemd restart safe after deployments that add tables used by shared routes.
+ExecStartPre=/opt/mrlc-lms/node_modules/.bin/prisma migrate deploy
 ExecStart=/usr/bin/node dist/server.cjs
 Restart=on-failure
 RestartSec=10

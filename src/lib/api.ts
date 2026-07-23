@@ -6,17 +6,47 @@ export function authHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-export async function apiGet<T = any>(path: string): Promise<T> {
-  const res = await fetch(path, { headers: authHeaders() });
+export class ApiError extends Error {
+  status: number;
+  code: string | null;
+  data: Record<string, any> | null;
+
+  constructor(
+    message: string,
+    status: number,
+    code: string | null = null,
+    data: Record<string, any> | null = null,
+  ) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.code = code;
+    this.data = data;
+  }
+}
+
+async function responseError(res: Response): Promise<ApiError> {
+  let data: Record<string, any> | null = null;
+  try {
+    data = await res.json();
+  } catch {
+    /* non-JSON error body */
+  }
+  return new ApiError(
+    typeof data?.error === 'string' ? data.error : `Request failed (${res.status})`,
+    res.status,
+    typeof data?.code === 'string' ? data.code : null,
+    data,
+  );
+}
+
+export async function apiGet<T = any>(
+  path: string,
+  options: { signal?: AbortSignal } = {},
+): Promise<T> {
+  const res = await fetch(path, { headers: authHeaders(), signal: options.signal });
   if (!res.ok) {
-    let msg = `Request failed (${res.status})`;
-    try {
-      const body = await res.json();
-      if (body?.error) msg = body.error;
-    } catch {
-      /* non-JSON error body */
-    }
-    throw new Error(msg);
+    throw await responseError(res);
   }
   return res.json() as Promise<T>;
 }
@@ -26,21 +56,16 @@ export async function apiSend<T = any>(
   path: string,
   method: 'POST' | 'PUT' | 'PATCH' | 'DELETE',
   body?: unknown,
+  options: { signal?: AbortSignal } = {},
 ): Promise<T> {
   const res = await fetch(path, {
     method,
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: body !== undefined ? JSON.stringify(body) : undefined,
+    signal: options.signal,
   });
   if (!res.ok) {
-    let msg = `Request failed (${res.status})`;
-    try {
-      const b = await res.json();
-      if (b?.error) msg = b.error;
-    } catch {
-      /* non-JSON error body */
-    }
-    throw new Error(msg);
+    throw await responseError(res);
   }
   // Some endpoints may return no body
   const text = await res.text();

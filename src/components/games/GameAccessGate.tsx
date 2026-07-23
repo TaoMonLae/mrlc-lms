@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
-import { Clock3, GraduationCap, ShieldAlert } from "lucide-react";
+import { Clock3, GraduationCap, RefreshCw, ShieldAlert, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { apiGet, apiSend, authHeaders } from "../../lib/api";
+import { ApiError, apiGet, apiSend, authHeaders } from "../../lib/api";
 import { useAuth } from "../../providers/AuthProvider";
 import { GAME_LABELS, type GameAccessDecision, type GameKey } from "../../../shared/gameControls";
 
@@ -18,6 +18,64 @@ interface GameAccessGateProps {
   children: ReactNode;
 }
 
+const REQUEST_TIMEOUT_MS = 8_000;
+
+function allowedAccess(exempt: boolean, managed: boolean): AccessPayload {
+  return {
+    allowed: true,
+    code: "ALLOWED",
+    reason: null,
+    dailyLimitMinutes: null,
+    sessionLimitMinutes: null,
+    cooldownMinutes: 0,
+    dailyUsedSeconds: 0,
+    sessionUsedSeconds: 0,
+    remainingDailySeconds: null,
+    remainingSessionSeconds: null,
+    remainingSeconds: null,
+    nextAllowedAt: null,
+    exempt,
+    managed,
+  };
+}
+
+function accessFromApiError(error: unknown): AccessPayload | null {
+  if (!(error instanceof ApiError)) return null;
+  const candidate = error.data?.access;
+  return candidate && typeof candidate === "object" && typeof candidate.allowed === "boolean"
+    ? candidate as AccessPayload
+    : null;
+}
+
+function retryable(error: unknown): boolean {
+  if (!(error instanceof ApiError)) return true;
+  return error.status === 408 || error.status === 429 || error.status >= 500;
+}
+
+async function controlledRequest<T>(
+  request: (signal: AbortSignal) => Promise<T>,
+  attempts = 2,
+): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    try {
+      return await request(controller.signal);
+    } catch (error) {
+      lastError = error;
+      if (!retryable(error) || attempt === attempts - 1) break;
+      await new Promise((resolve) => window.setTimeout(resolve, 300 * (attempt + 1)));
+    } finally {
+      window.clearTimeout(timeout);
+    }
+  }
+  if (lastError instanceof DOMException && lastError.name === "AbortError") {
+    throw new Error("The game-control check timed out.");
+  }
+  throw lastError;
+}
+
 function formatRemaining(seconds: number | null): string {
   if (seconds == null) return "No time limit";
   const safe = Math.max(0, seconds);
@@ -27,6 +85,37 @@ function formatRemaining(seconds: number | null): string {
   return hours > 0
     ? `${hours}:${String(minutes).padStart(2, "0")}:${String(remainder).padStart(2, "0")}`
     : `${minutes}:${String(remainder).padStart(2, "0")}`;
+}
+
+function GameControlUnavailable({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry: () => void;
+}) {
+  return (
+    <main className="flex min-h-[70vh] items-center justify-center px-4 py-10">
+      <section className="w-full max-w-lg rounded-3xl border border-amber-200 bg-white p-7 text-center shadow-xl dark:border-amber-900/60 dark:bg-slate-950 sm:p-9">
+        <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+          <WifiOff className="size-8" aria-hidden="true" />
+        </div>
+        <h1 className="mt-5 text-2xl font-black text-slate-950 dark:text-white">
+          Game access could not be checked
+        </h1>
+        <p className="mx-auto mt-3 max-w-md text-sm text-slate-600 dark:text-slate-300">
+          {message}
+        </p>
+        <p className="mt-2 text-xs text-slate-500">
+          The game is paused until the student screen-time rules can be verified.
+        </p>
+        <Button className="mt-6 font-bold" onClick={onRetry}>
+          <RefreshCw className="mr-2 size-4" />
+          Try again
+        </Button>
+      </section>
+    </main>
+  );
 }
 
 function RestrictedGame({ gameKey, access }: { gameKey: GameKey; access: AccessPayload }) {
@@ -100,6 +189,8 @@ export function GameAccessGate({
   const [loading, setLoading] = useState(true);
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
   const [fullscreenTarget, setFullscreenTarget] = useState<HTMLElement | null>(null);
+  const [technicalError, setTechnicalError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
   const sessionIdRef = useRef<string | null>(null);
   const mountedRef = useRef(true);
 
@@ -123,22 +214,40 @@ export function GameAccessGate({
     setLoading(true);
     setAccess(null);
     setRemainingSeconds(null);
+    setTechnicalError(null);
     sessionIdRef.current = null;
 
     const open = async () => {
+      // Screen-time restrictions apply only to students. Staff should never
+      // depend on the controls API merely to render a game.
+      if (user && user.role !== "STUDENT") {
+        if (!cancelled) {
+          setAccess(allowedAccess(true, false));
+          setLoading(false);
+        }
+        return;
+      }
       try {
-        const checked = await apiGet<AccessPayload>(`/api/game-controls/access?gameKey=${gameKey}`);
+        const checked = await controlledRequest(
+          (signal) => apiGet<AccessPayload>(
+            `/api/game-controls/access?gameKey=${gameKey}`,
+            { signal },
+          ),
+        );
         if (cancelled) return;
-        if (!checked.allowed || !consumeTime || checked.exempt) {
+        if (!checked.allowed || !consumeTime || checked.exempt || !checked.managed) {
           setAccess(checked);
           setRemainingSeconds(checked.remainingSeconds);
           setLoading(false);
           return;
         }
-        const started = await apiSend<{ sessionId: string | null; access: AccessPayload }>(
-          "/api/game-controls/sessions/start",
-          "POST",
-          { gameKey },
+        const started = await controlledRequest(
+          (signal) => apiSend<{ sessionId: string | null; access: AccessPayload }>(
+            "/api/game-controls/sessions/start",
+            "POST",
+            { gameKey },
+            { signal },
+          ),
         );
         if (cancelled) {
           if (started.sessionId) {
@@ -153,24 +262,17 @@ export function GameAccessGate({
         sessionIdRef.current = started.sessionId;
         setAccess(started.access);
         setRemainingSeconds(started.access.remainingSeconds);
-      } catch (error: any) {
+      } catch (error: unknown) {
         if (!cancelled) {
-          setAccess({
-            allowed: false,
-            code: "BLOCKED",
-            reason: error?.message || "Game access could not be verified.",
-            dailyLimitMinutes: null,
-            sessionLimitMinutes: null,
-            cooldownMinutes: 0,
-            dailyUsedSeconds: 0,
-            sessionUsedSeconds: 0,
-            remainingDailySeconds: null,
-            remainingSessionSeconds: null,
-            remainingSeconds: null,
-            nextAllowedAt: null,
-            exempt: false,
-            managed: true,
-          });
+          const denied = accessFromApiError(error);
+          if (denied) {
+            setAccess(denied);
+            setRemainingSeconds(denied.remainingSeconds);
+          } else {
+            setTechnicalError(
+              error instanceof Error ? error.message : "Game access could not be verified.",
+            );
+          }
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -190,36 +292,40 @@ export function GameAccessGate({
         });
       }
     };
-  }, [consumeTime, gameKey, user?.id]);
+  }, [consumeTime, gameKey, retryKey, user?.id, user?.role]);
 
   useEffect(() => {
     const sessionId = sessionIdRef.current;
-    if (!sessionId || !access?.allowed) return;
+    if (!sessionId || !access?.allowed || technicalError) return;
     const interval = window.setInterval(async () => {
       try {
-        const result = await apiSend<{ access: AccessPayload }>(
-          `/api/game-controls/sessions/${sessionId}/heartbeat`,
-          "POST",
-          {},
+        const result = await controlledRequest(
+          (signal) => apiSend<{ access: AccessPayload }>(
+            `/api/game-controls/sessions/${sessionId}/heartbeat`,
+            "POST",
+            {},
+            { signal },
+          ),
         );
         if (!mountedRef.current) return;
         setAccess(result.access);
         setRemainingSeconds(result.access.remainingSeconds);
-      } catch (error: any) {
+      } catch (error: unknown) {
         if (!mountedRef.current) return;
-        sessionIdRef.current = null;
-        setAccess((current) => current
-          ? {
-              ...current,
-              allowed: false,
-              code: current.code === "ALLOWED" ? "SESSION_LIMIT" : current.code,
-              reason: error?.message || "The controlled game session has ended.",
-            }
-          : current);
+        const denied = accessFromApiError(error);
+        if (denied) {
+          sessionIdRef.current = null;
+          setAccess(denied);
+          setRemainingSeconds(denied.remainingSeconds);
+          return;
+        }
+        setTechnicalError(
+          error instanceof Error ? error.message : "The controlled game session could not be verified.",
+        );
       }
     }, 15_000);
     return () => window.clearInterval(interval);
-  }, [access?.allowed, gameKey]);
+  }, [access?.allowed, gameKey, technicalError]);
 
   useEffect(() => {
     if (!consumeTime || !access?.allowed || access.exempt || remainingSeconds == null) return;
@@ -266,6 +372,14 @@ export function GameAccessGate({
         <div className="size-10 animate-spin rounded-full border-4 border-violet-600 border-t-transparent" />
         <p className="font-semibold text-slate-500">Checking game-time controls…</p>
       </div>
+    );
+  }
+  if (technicalError) {
+    return (
+      <GameControlUnavailable
+        message={technicalError}
+        onRetry={() => setRetryKey((value) => value + 1)}
+      />
     );
   }
   if (!access?.allowed) return <RestrictedGame gameKey={gameKey} access={access!} />;

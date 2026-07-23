@@ -6,6 +6,7 @@ import {
   resolveGameAccess,
   type GameControlPolicyLike,
 } from "../../shared/gameControls";
+import { createGameAccessMiddleware, evaluateStudentGameAccess } from "../../gameControls";
 
 function policy(overrides: Partial<GameControlPolicyLike> = {}): GameControlPolicyLike {
   return {
@@ -105,4 +106,105 @@ test("an all-games cooldown cannot be evaded by switching games", () => {
   });
   assert.equal(access.allowed, false);
   assert.equal(access.code, "COOLDOWN");
+});
+
+test("students without a policy are allowed without querying usage/session tables", async () => {
+  const prisma = {
+    user: {
+      findUnique: async () => ({
+        id: "user-1",
+        role: "STUDENT",
+        isActive: true,
+        studentProfile: { id: "student-1", classId: "class-1" },
+      }),
+    },
+    gameControlPolicy: {
+      findMany: async () => [],
+    },
+    schoolProfile: {
+      findFirst: async () => {
+        throw new Error("unmanaged access must not query the school or usage tables");
+      },
+    },
+  };
+
+  const access = await evaluateStudentGameAccess(prisma, "user-1", "PACMAN");
+  assert.equal(access.allowed, true);
+  assert.equal(access.exempt, false);
+  assert.equal(access.managed, false);
+});
+
+test("a policy for another game does not force tracking on every game", async () => {
+  const prisma = {
+    user: {
+      findUnique: async () => ({
+        id: "user-1",
+        role: "STUDENT",
+        isActive: true,
+        studentProfile: { id: "student-1", classId: "class-1" },
+      }),
+    },
+    gameControlPolicy: {
+      findMany: async () => [policy({ gameKey: "SUDOKU", sessionLimitMinutes: 10 })],
+    },
+  };
+
+  const access = await evaluateStudentGameAccess(prisma, "user-1", "PACMAN");
+  assert.equal(access.allowed, true);
+  assert.equal(access.managed, false);
+});
+
+test("a student login without a student profile is not exempted from controls", async () => {
+  const prisma = {
+    user: {
+      findUnique: async () => ({
+        id: "user-1",
+        role: "STUDENT",
+        isActive: true,
+        studentProfile: null,
+      }),
+    },
+  };
+
+  const access = await evaluateStudentGameAccess(prisma, "user-1", "SNAKE");
+  assert.equal(access.allowed, false);
+  assert.equal(access.exempt, false);
+  assert.equal(access.code, "BLOCKED");
+});
+
+test("server-backed games do not require a tracking session for unmanaged students", async () => {
+  const prisma = {
+    user: {
+      findUnique: async () => ({
+        id: "user-1",
+        role: "STUDENT",
+        isActive: true,
+        studentProfile: { id: "student-1", classId: "class-1" },
+      }),
+    },
+    gameControlPolicy: {
+      findMany: async () => [],
+    },
+  };
+  const middleware = createGameAccessMiddleware(prisma, "WORD_TRAIL", {
+    requireActiveSession: true,
+  });
+  let nextCalled = false;
+  const response = {
+    status: () => {
+      throw new Error("unmanaged access must not be rejected");
+    },
+    json: () => {
+      throw new Error("unmanaged access must not send an error");
+    },
+  };
+
+  await (middleware as any)(
+    { user: { userId: "user-1", role: "STUDENT", email: "student@example.test" } },
+    response,
+    () => {
+      nextCalled = true;
+    },
+  );
+  assert.equal(nextCalled, true);
 });
