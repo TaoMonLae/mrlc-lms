@@ -280,6 +280,8 @@ model User {
   reportedRuleViolations     RuleViolation[]           @relation("ReportedRuleViolations")
   chessMatchesWhite          ChessMatch[]              @relation("ChessWhite")
   chessMatchesBlack          ChessMatch[]              @relation("ChessBlack")
+  languageQuestProgress      LanguageQuestUserProgress?
+  languageQuestChallenges    LanguageQuestChallengeProgress[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -3854,4 +3856,142 @@ model ChessMatch {
   @@index([scope])
   @@index([classId])
   @@index([updatedAt])
+}
+
+// -----------------------------------------------------------------------------
+// LANGUAGE QUEST — game-like language courses for every authenticated role
+// -----------------------------------------------------------------------------
+
+model LanguageQuestCourse {
+  id          String  @id @default(uuid())
+  code        String  @unique
+  title       String
+  description String?
+  language    String
+  imageEmoji  String  @default("🌍")
+  accentColor String  @default("#7c3aed")
+  published   Boolean @default(false)
+
+  // Kept as a scalar rather than a relation so courses survive account cleanup.
+  // Null identifies an official/system-provided course.
+  createdById String?
+
+  units        LanguageQuestUnit[]
+  userProgress LanguageQuestUserProgress[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([published])
+  @@index([createdById])
+}
+
+model LanguageQuestUnit {
+  id          String              @id @default(uuid())
+  courseId    String
+  course      LanguageQuestCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  order       Int
+
+  lessons LanguageQuestLesson[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([courseId, order])
+  @@index([courseId])
+}
+
+model LanguageQuestLesson {
+  id          String            @id @default(uuid())
+  unitId      String
+  unit        LanguageQuestUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  order       Int
+
+  challenges LanguageQuestChallenge[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([unitId, order])
+  @@index([unitId])
+}
+
+model LanguageQuestChallenge {
+  id       String              @id @default(uuid())
+  lessonId String
+  lesson   LanguageQuestLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  type     String              @default("SELECT") // SELECT | ASSIST
+  question String
+  order    Int
+
+  options  LanguageQuestOption[]
+  progress LanguageQuestChallengeProgress[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([lessonId, order])
+  @@index([lessonId])
+}
+
+model LanguageQuestOption {
+  id          String                 @id @default(uuid())
+  challengeId String
+  challenge   LanguageQuestChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  text        String
+  correct     Boolean                @default(false)
+  emoji       String?
+  audioText   String?
+  order       Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([challengeId, order])
+  @@index([challengeId])
+}
+
+model LanguageQuestUserProgress {
+  id             String               @id @default(uuid())
+  userId         String               @unique
+  user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activeCourseId String?
+  activeCourse   LanguageQuestCourse? @relation(fields: [activeCourseId], references: [id], onDelete: SetNull)
+  hearts         Int                  @default(5)
+  points         Int                  @default(0)
+  currentStreak  Int                  @default(0)
+  bestStreak     Int                  @default(0)
+  lastPlayedDate DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([points])
+  @@index([activeCourseId])
+}
+
+model LanguageQuestChallengeProgress {
+  id              String                 @id @default(uuid())
+  userId          String
+  user            User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challengeId     String
+  challenge       LanguageQuestChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  completed       Boolean                @default(false)
+  attempts        Int                    @default(0)
+  correctAttempts Int                    @default(0)
+  wrongAttempts   Int                    @default(0)
+  completedAt     DateTime?
+  lastAttemptAt   DateTime               @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, challengeId])
+  @@index([userId])
+  @@index([challengeId])
+  @@index([completed])
 }

@@ -8,10 +8,17 @@ import {
   Layers,
   Palette,
   Heart,
+  Languages,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
 const CREDITS: { title: string; description: string; icon: any }[] = [
+  {
+    title: "Language Quest",
+    description:
+      "An original LMS-native learning experience inspired by Sanidhya Kumar Verma's MIT-licensed Lingo project, rebuilt for MRLC accounts, courses, and reporting.",
+    icon: Languages,
+  },
   {
     title: "Chess",
     description:

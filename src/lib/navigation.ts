@@ -70,6 +70,7 @@ export const ADMIN_NAV: AdminNavEntry[] = [
     label: "Games",
     icon: Gamepad2,
     items: [
+      { title: "Language Quest", url: "/games/language-quest", icon: Languages },
       { title: "Snake Game", url: "/games/snake", icon: Turtle },
       { title: "Sudoku", url: "/games/sudoku", icon: Grid3x3 },
       { title: "Checkers", url: "/games/checkers", icon: Dice5 },
@@ -177,6 +178,7 @@ export const TEACHER_NAV: AdminNavEntry[] = [
     label: "Games",
     icon: Gamepad2,
     items: [
+      { title: "Language Quest", url: "/games/language-quest", icon: Languages },
       { title: "Snake Game", url: "/games/snake", icon: Turtle },
       { title: "Sudoku", url: "/games/sudoku", icon: Grid3x3 },
       { title: "Checkers", url: "/games/checkers", icon: Dice5 },
@@ -241,6 +243,7 @@ export const STUDENT_NAV: AdminNavEntry[] = [
     label: "Games",
     icon: Gamepad2,
     items: [
+      { title: "Language Quest", url: "/games/language-quest", icon: Languages },
       { title: "Snake Game", url: "/games/snake", icon: Turtle },
       { title: "Sudoku", url: "/games/sudoku", icon: Grid3x3 },
       { title: "Checkers", url: "/games/checkers", icon: Dice5 },
@@ -324,6 +327,11 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     url: "/news",
     icon: Newspaper,
     roles: ["ADMIN", "TEACHER", "STUDENT", "STAFF", "ACCOUNTANT", "CASE_WORKER", "LIBRARIAN"],
+  },
+  {
+    title: "Language Quest",
+    url: "/games/language-quest",
+    icon: Languages,
   },
   {
     title: "Sudoku",

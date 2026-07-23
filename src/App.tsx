@@ -188,6 +188,12 @@ const ChessSelectPage = lazy(() => import("./pages/games/chess/index"));
 const ChessPlayPage = lazy(() => import("./pages/games/chess/PlayPage"));
 const ChessLobbyPage = lazy(() => import("./pages/games/chess/Lobby"));
 const ChessLeaderboardPage = lazy(() => import("./pages/games/chess/Leaderboard"));
+const LanguageQuestHome = lazy(() => import("./pages/games/language-quest/LanguageQuestHome"));
+const LanguageQuestCourse = lazy(() => import("./pages/games/language-quest/LanguageQuestCourse"));
+const LanguageQuestLesson = lazy(() => import("./pages/games/language-quest/LanguageQuestLesson"));
+const LanguageQuestLeaderboard = lazy(() => import("./pages/games/language-quest/LanguageQuestLeaderboard"));
+const LanguageQuestManage = lazy(() => import("./pages/games/language-quest/LanguageQuestManage"));
+const LanguageQuestEditor = lazy(() => import("./pages/games/language-quest/LanguageQuestEditor"));
 
 const Dictionary = lazy(() => import("./pages/dictionary/Dictionary"));
 const MonLanguage = lazy(() => import("./pages/MonLanguage"));
@@ -360,6 +366,17 @@ export default function App() {
                 <Route path="/games/chess/play" element={<ChessPlayPage />} />
                 <Route path="/games/chess/lobby" element={<ChessLobbyPage />} />
                 <Route path="/games/chess/leaderboard" element={<ChessLeaderboardPage />} />
+
+                <Route path="/games/language-quest" element={<LanguageQuestHome />} />
+                <Route path="/games/language-quest/courses/:courseId" element={<LanguageQuestCourse />} />
+                <Route path="/games/language-quest/lessons/:lessonId" element={<LanguageQuestLesson />} />
+                <Route path="/games/language-quest/leaderboard" element={<LanguageQuestLeaderboard />} />
+
+                <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'TEACHER']} />}>
+                  <Route path="/games/language-quest/manage" element={<LanguageQuestManage />} />
+                  <Route path="/games/language-quest/manage/new" element={<LanguageQuestEditor />} />
+                  <Route path="/games/language-quest/manage/:id" element={<LanguageQuestEditor />} />
+                </Route>
 
                 <Route path="/timetable" element={<TimetablePage />} />
 

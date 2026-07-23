@@ -10,6 +10,14 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 
 ## Latest updates — July 2026
 
+### Language Quest
+
+- A native, game-like language learning area for every authenticated student, teacher, and staff account.
+- Guided course paths, lesson locking, hearts, points, streaks, saved progress, replay practice, speech-assisted pronunciation, and a school leaderboard.
+- Teacher and administrator Course Studio for creating courses, units, lessons, and multiple challenge types, with draft and published states.
+- Server-verified answers and rewards prevent clients from awarding their own points or lesson completion.
+- Includes an original Everyday English starter course with two units, four lessons, and twelve challenges, provisioned when Language Quest is first opened.
+
 ### Flashcards
 
 - Teacher-created decks with class assignment, Community sharing, cloning, images, LaTeX, and CSV import/export.
@@ -70,6 +78,7 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 | Homework | Assignment creation, student submissions, tracking, scoring, and gradebook integration |
 | Exams | Guided authoring, question bank, scheduling, attempts, proctoring, accommodations, grading, analytics, and printable output |
 | Gradebook | Marks, class reports, individual progress, and GED readiness tracking |
+| Language Quest | Native language courses, lesson paths, speech-assisted challenges, hearts, points, streaks, progress, leaderboard, and teacher/admin Course Studio |
 | Flashcards | Deck creation, sharing, class assignment, mastery, quiz, match, spelling, and progress reporting |
 | Lesson planner | Teacher planning and classroom resource organization |
 | Video lessons | Upload/conversion, custom thumbnails, captions, required viewing, progress, and watch analytics |
@@ -101,7 +110,7 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 - Announcements with rich content and audience visibility.
 - Curated RSS news and an in-app article reader.
 - AI assistant for lesson planning, quiz generation, announcements, and translation using Gemini or a local Ollama model.
-- Sudoku, Snake vocabulary mode, and Checkers with account-backed scores or learning activity where applicable.
+- Language Quest, Sudoku, Snake vocabulary mode, and Checkers with account-backed progress, scores, or learning activity where applicable.
 - Global search across major school records.
 
 ### Languages
@@ -109,6 +118,8 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 The interface supports English, Burmese, and Mon through locale files under `src/i18n/locales/`. The school-wide default is configurable in Settings, and users can select their own preference where supported.
 
 The **Mon Language** tab at `/mon-language` embeds `https://the-mon-language.web.app/` for all authenticated users. It requires browser access to that external origin; if embedding is unavailable, users can open the learning app in a separate tab from the page header.
+
+**Language Quest** at `/games/language-quest` uses the existing LMS account for progress, streaks, points, and leaderboard placement. All authenticated roles can learn and practise; teachers and administrators can publish and maintain course content from `/games/language-quest/manage`.
 
 ## Architecture
 
@@ -380,7 +391,7 @@ mrlc-lms/
 │   │   ├── elibrary/           # PDF/EPUB list, upload, reader, analytics
 │   │   ├── exam2/              # Advanced exam workflow
 │   │   ├── flashcards/         # Deck, study, game, and progress UI
-│   │   └── games/              # Sudoku, Snake, and Checkers
+│   │   └── games/              # Language Quest, Sudoku, Snake, Checkers, and Chess
 │   ├── components/             # App-specific components
 │   ├── lib/                    # API and feature utilities
 │   ├── providers/              # React providers
@@ -397,6 +408,7 @@ mrlc-lms/
 ├── examBank.ts                 # Question bank and exam composition
 ├── examPhase2.ts               # Attempts, scheduling, accommodations, grading
 ├── flashcards.ts               # Flashcard API and image lifecycle
+├── languageQuest.ts            # Language Quest courses, progress, rewards, and authoring API
 ├── aiAssistant.ts              # Gemini/Ollama assistant integration
 ├── dictionary.ts               # Offline dictionary services
 ├── gutenberg.ts                # Gutendex/Project Gutenberg import
@@ -452,6 +464,7 @@ Confirm `DATABASE_URL`, `SESSION_SECRET`, `APP_URL`, port availability, and writ
 
 ## Notable third-party data and acknowledgments
 
+- Language Quest was informed by the concepts and interface patterns in [sanidhyy/duolingo-clone](https://github.com/sanidhyy/duolingo-clone), licensed under MIT. The complete attribution and license text are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 - Sudoku is adapted from [super-sudoku](https://github.com/TN1ck/super-sudoku) by Tom Nick under the MIT License.
 - English definitions use [WordPOS](https://github.com/moos/wordpos) and Princeton WordNet 3.1.
 - English-to-Myanmar translations originate from the ornagai/MZ dictionary dataset; its data license is not independently verifiable, so it is retained for internal, non-commercial school use with provenance documented in `prisma/seedEnMyDictionary.ts`.
