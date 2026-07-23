@@ -4,8 +4,8 @@ import * as React from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { SnakeProvider } from "./context/SnakeContext";
-import SnakeGame from "./SnakeGame";
 import VocabularySnakeGame from "./components/VocabularySnakeGame";
+import NeonSnakeGame from "./neon/NeonSnakeGame";
 import PixelBlast from "@/components/PixelBlast";
 
 function PlayInner({ gameMode }: { gameMode: string }) {
@@ -38,13 +38,13 @@ function PlayInner({ gameMode }: { gameMode: string }) {
       <div className="relative z-10 p-4 sm:p-6 text-white">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-white drop-shadow-lg">
-            {gameMode === "vocabulary" ? "Vocabulary Snake" : "Classic Snake"}
+            {gameMode === "vocabulary" ? "Vocabulary Snake" : "Multiplayer Neon Snake"}
           </h2>
           <Button variant="outline" onClick={() => navigate(-1)} className="bg-gray-800/50 text-white border-gray-600 hover:bg-gray-700/50">
             {"◀ Back"}
           </Button>
         </div>
-        {gameMode === "vocabulary" ? <VocabularySnakeGame /> : <SnakeGame />}
+        {gameMode === "vocabulary" ? <VocabularySnakeGame /> : <NeonSnakeGame />}
       </div>
     </div>
   );
@@ -54,8 +54,10 @@ export default function SnakePlayPage() {
   const [searchParams] = useSearchParams();
   const gameMode = searchParams.get("mode") === "vocabulary" ? "vocabulary" : "classic";
 
+  if (gameMode === "classic") return <PlayInner gameMode={gameMode} />;
+
   return (
-    <SnakeProvider storageKey={`snakeHighScore:${gameMode}`}>
+    <SnakeProvider storageKey="snakeHighScore:vocabulary">
       <PlayInner gameMode={gameMode} />
     </SnakeProvider>
   );

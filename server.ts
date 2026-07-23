@@ -32,6 +32,7 @@ import { registerConductPdfRoutes } from "./conductPdf";
 import { registerDictionaryRoutes } from "./dictionary";
 import { registerGutenbergRoutes } from "./gutenberg";
 import { registerSnakeGameRoutes } from "./snakeGame";
+import { registerNeonSnakeServer } from "./neonSnakeServer";
 import { registerAiAssistantRoutes } from "./aiAssistant";
 import { registerCheckersGameRoutes } from "./checkersGame";
 import { registerChessGameRoutes } from "./chessGame";
@@ -22097,6 +22098,34 @@ async function startServer() {
     logger.info(`Server running on port ${PORT}`);
     logger.info(`Mode: ${process.env.NODE_ENV || "development"}`);
   });
+  const neonSnakeServer = registerNeonSnakeServer({
+    server,
+    logger,
+    authenticate: async (token) => {
+      const payload = verifyToken(token);
+      if (payload.sessionId) {
+        const session = await prisma.authSession.findUnique({ where: { id: payload.sessionId } });
+        if (
+          !session ||
+          session.userId !== payload.userId ||
+          session.revokedAt ||
+          session.expiresAt <= new Date()
+        ) {
+          throw new Error("Session expired or revoked");
+        }
+      }
+      const user = await prisma.user.findUnique({
+        where: { id: payload.userId },
+        select: { id: true, email: true, firstName: true, lastName: true, isActive: true },
+      });
+      if (!user?.isActive) throw new Error("Account is unavailable");
+      const fullName = `${user.firstName} ${user.lastName}`.trim();
+      return {
+        userId: user.id,
+        name: (fullName || user.email.split("@")[0] || "Player").slice(0, 40),
+      };
+    },
+  });
 
   if (smtpTransport) {
     // Recover jobs left in-flight by an interrupted process, then poll the
@@ -22118,6 +22147,7 @@ async function startServer() {
     shuttingDown = true;
     logger.info("Shutting down server...");
     clearInterval(emailWorker);
+    neonSnakeServer.close();
     // End long-lived SSE chat streams; otherwise they keep the server open.
     for (const set of chatStreams.values()) for (const r of set) { try { r.end(); } catch { /* ignore */ } }
     // Force-close lingering keep-alive sockets so server.close() can complete.

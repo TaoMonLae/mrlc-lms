@@ -26,6 +26,14 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 - Four hearts, answer streaks, saved in-progress games, completion results, personal statistics, and a learner leaderboard encourage repeat practice.
 - Dice rolls, answers, movement, special-space effects, and scoring are validated by the server so clients cannot award their own progress.
 
+### Multiplayer Neon Snake
+
+- Replaces the old Classic Snake mode with an authenticated, real-time 3D neon arena at `/games/snake/play?mode=classic`.
+- LMS display names appear in the live leaderboard while Socket.IO synchronizes players and collectible energy orbs.
+- Keyboard and large touch controls support desktop, tablet, and phone play; boost consumes length for a tactical speed advantage.
+- Completed Student runs continue to feed the existing Classic Snake score history and class leaderboard.
+- Vocabulary Snake remains available as the learning-focused alternative.
+
 ### Language Quest
 
 - A native, game-like language learning area for every authenticated student, teacher, and staff account.
@@ -104,6 +112,7 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 | Gradebook | Marks, class reports, individual progress, and GED readiness tracking |
 | Daily Learning Quest | Student/teacher English Word practice with review questions, XP, and streaks |
 | Word Trail | Student/teacher English vocabulary board game with dice, special spaces, saved progress, scores, and leaderboard |
+| Multiplayer Neon Snake | Authenticated real-time 3D arena with LMS player names, live ranking, keyboard/touch controls, and saved Student scores |
 | Language Quest | Native language courses, lesson paths, speech-assisted challenges, hearts, points, streaks, progress, leaderboard, and teacher/admin Course Studio |
 | Flashcards | Deck creation, sharing, class assignment, mastery, quiz, match, spelling, and progress reporting |
 | Lesson planner | Teacher planning and classroom resource organization |
@@ -136,7 +145,7 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 - Announcements with rich content and audience visibility.
 - Curated RSS news and an in-app article reader.
 - AI assistant for lesson planning, quiz generation, announcements, and translation using Gemini or a local Ollama model.
-- Daily Learning Quest, Word Trail, Language Quest, Sudoku, Snake vocabulary mode, and Checkers with account-backed progress, scores, or learning activity where applicable.
+- Daily Learning Quest, Word Trail, Language Quest, Sudoku, Multiplayer Neon Snake, Snake vocabulary mode, and Checkers with account-backed progress, scores, or learning activity where applicable.
 - Global search across major school records.
 
 ### Languages
@@ -151,12 +160,14 @@ The **Mon Language** tab at `/mon-language` embeds `https://the-mon-language.web
 
 **Word Trail** at `/games/word-trail` is restricted to Student and Teacher accounts. It uses only the curated English Word Language Quest courses, saves the active board after every turn, and keeps personal results and a learner leaderboard.
 
+**Multiplayer Neon Snake** at `/games/snake/play?mode=classic` uses authenticated LMS Socket.IO sessions for the live arena. The original Vocabulary Snake mode remains at `/games/snake/play?mode=vocabulary`.
+
 ## Architecture
 
 ```text
 Browser
   └─ React 19 + TypeScript + Vite + Tailwind CSS
-       └─ JSON/file APIs over Express 4
+       └─ JSON/file APIs and Socket.IO over Express 4
             ├─ Prisma 7 → PostgreSQL
             ├─ Persistent uploads in data/ or configured volumes
             ├─ ffmpeg/ffprobe for video conversion
@@ -421,7 +432,7 @@ mrlc-lms/
 │   │   ├── elibrary/           # PDF/EPUB list, upload, reader, analytics
 │   │   ├── exam2/              # Advanced exam workflow
 │   │   ├── flashcards/         # Deck, study, game, and progress UI
-│   │   └── games/              # Daily Quest, Language Quest, Sudoku, Snake, Checkers, and Chess
+│   │   └── games/              # Daily Quest, Language Quest, Sudoku, Neon Snake, Checkers, and Chess
 │   ├── components/             # App-specific components
 │   ├── lib/                    # API and feature utilities
 │   ├── providers/              # React providers
@@ -448,6 +459,7 @@ mrlc-lms/
 ├── news.ts                     # RSS aggregation
 ├── conduct.ts                  # Rules and conduct records
 ├── snakeGame.ts                # Vocabulary game persistence
+├── neonSnakeServer.ts          # Authenticated multiplayer Neon Snake arena
 ├── checkersGame.ts             # Checkers game services
 ├── Dockerfile
 ├── docker-compose.yml

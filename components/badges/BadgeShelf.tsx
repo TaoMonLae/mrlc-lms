@@ -8,6 +8,7 @@ import {
   GraduationCap,
   Footprints,
   Award,
+  type LucideIcon,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -30,7 +31,7 @@ interface BadgesResponse {
   currentStreak: number;
 }
 
-const ICON_MAP: Record<string, React.ElementType> = {
+const ICON_MAP: Record<string, LucideIcon> = {
   Flame,
   Trophy,
   CalendarCheck,

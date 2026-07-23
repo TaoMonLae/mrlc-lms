@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { CalendarClock, FileCheck2, Filter, Loader2, Search, UserPlus } from 'lucide-react';
+import { CalendarClock, FileCheck2, Filter, Loader2, Search, UserPlus, type LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -262,7 +262,7 @@ function SelectField({ label, name, value, onChange, options }: { label: string;
   );
 }
 
-function Metric({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
+function Metric({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string }) {
   return (
     <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 dark:border-white/10 dark:bg-white/5">
       <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">

@@ -85,11 +85,11 @@ export default function GameSelect() {
   const gameModes = [
     {
       id: "classic",
-      title: "Classic Snake",
-      description: "Traditional snake game - eat food, grow longer, avoid walls and yourself!",
+      title: "Multiplayer Neon Snake",
+      description: "Enter a live 3D neon arena, collect energy, grow longer, and outmaneuver other players.",
       icon: <Zap className="size-8 text-yellow-500" />,
-      color: "from-yellow-500/10 to-orange-500/10",
-      difficulty: "Easy",
+      color: "from-cyan-500/10 to-fuchsia-500/10",
+      difficulty: "Multiplayer",
     },
     {
       id: "vocabulary",
@@ -215,7 +215,7 @@ export default function GameSelect() {
                 size="sm"
                 onClick={() => setBoardMode("CLASSIC")}
               >
-                <Zap className="size-4 mr-1" /> Classic
+                <Zap className="size-4 mr-1" /> Neon
               </Button>
               <Button
                 variant={boardMode === "VOCABULARY" ? "default" : "outline"}

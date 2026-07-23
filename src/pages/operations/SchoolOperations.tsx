@@ -12,6 +12,7 @@ import {
   Plus,
   Trash2,
   UserPlus,
+  type LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -32,7 +33,7 @@ interface OperationModule {
   endpoint: string;
   title: string;
   description: string;
-  icon: React.ElementType;
+  icon: LucideIcon;
   fields: Field[];
   titleField: string;
   metaFields: string[];
