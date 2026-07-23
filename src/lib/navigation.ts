@@ -41,6 +41,7 @@ import {
   Target,
   Map,
   Ghost,
+  ShieldCheck,
 } from "lucide-react";
 import { UserRole } from "./permissions";
 
@@ -98,6 +99,12 @@ const LEARNER_GAME_ITEMS: NavGroupItem[] = [
   ...GAME_ITEMS,
 ];
 
+const GAME_CONTROL_ITEM: NavGroupItem = {
+  title: "Game Time Controls",
+  url: "/games/controls",
+  icon: ShieldCheck,
+};
+
 /** Grouped sidebar structure for the ADMIN role. */
 export const ADMIN_NAV: AdminNavEntry[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
@@ -149,7 +156,7 @@ export const ADMIN_NAV: AdminNavEntry[] = [
       { title: "Book Catalog", url: "/books", icon: BookMarked },
     ],
   },
-  { label: "Games", icon: Gamepad2, items: GAME_ITEMS },
+  { label: "Games", icon: Gamepad2, items: [GAME_CONTROL_ITEM, ...GAME_ITEMS] },
   { label: "Community", icon: MessageSquare, items: COMMUNITY_ITEMS },
   {
     label: "Finance & HR",
@@ -234,7 +241,7 @@ export const TEACHER_NAV: AdminNavEntry[] = [
       { title: "Video Lessons", url: "/teacher/videos", icon: Video },
     ],
   },
-  { label: "Games", icon: Gamepad2, items: LEARNER_GAME_ITEMS },
+  { label: "Games", icon: Gamepad2, items: [GAME_CONTROL_ITEM, ...LEARNER_GAME_ITEMS] },
   { label: "Community", icon: MessageSquare, items: COMMUNITY_ITEMS },
   {
     label: "My Account",
@@ -346,6 +353,12 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     title: "Language Quest",
     url: "/games/language-quest",
     icon: Languages,
+  },
+  {
+    title: "Game Time Controls",
+    url: "/games/controls",
+    icon: ShieldCheck,
+    roles: ["ADMIN", "TEACHER"],
   },
   {
     title: "Sudoku",

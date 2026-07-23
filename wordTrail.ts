@@ -25,6 +25,7 @@ interface Deps {
   app: express.Express;
   prisma: any;
   authMiddleware: express.RequestHandler;
+  gameAccessMiddleware?: express.RequestHandler;
   createAuditLog: (
     userId: string | null,
     userName: string | null,
@@ -190,6 +191,7 @@ async function leaderboardFor(prisma: any) {
 
 export function registerWordTrailRoutes(deps: Deps): void {
   const { app, prisma, authMiddleware, createAuditLog, logger } = deps;
+  const gameAccessMiddleware = deps.gameAccessMiddleware ?? ((_req, _res, next) => next());
   const learnerOnly: express.RequestHandler = (req, res, next) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (!canUseWordTrail(jwtUser.role)) {
@@ -199,7 +201,7 @@ export function registerWordTrailRoutes(deps: Deps): void {
     next();
   };
 
-  app.get("/api/games/word-trail", authMiddleware, learnerOnly, async (req, res) => {
+  app.get("/api/games/word-trail", authMiddleware, learnerOnly, gameAccessMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
       const [activeGame, recentGame, stats, leaderboard] = await Promise.all([
@@ -229,7 +231,7 @@ export function registerWordTrailRoutes(deps: Deps): void {
     }
   });
 
-  app.post("/api/games/word-trail/start", authMiddleware, learnerOnly, async (req, res) => {
+  app.post("/api/games/word-trail/start", authMiddleware, learnerOnly, gameAccessMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
       const existing = await prisma.wordTrailGame.findUnique({
@@ -283,7 +285,7 @@ export function registerWordTrailRoutes(deps: Deps): void {
     }
   });
 
-  app.post("/api/games/word-trail/:id/roll", authMiddleware, learnerOnly, async (req, res) => {
+  app.post("/api/games/word-trail/:id/roll", authMiddleware, learnerOnly, gameAccessMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
       const game = await prisma.wordTrailGame.findFirst({
@@ -333,7 +335,7 @@ export function registerWordTrailRoutes(deps: Deps): void {
     }
   });
 
-  app.post("/api/games/word-trail/:id/answer", authMiddleware, learnerOnly, async (req, res) => {
+  app.post("/api/games/word-trail/:id/answer", authMiddleware, learnerOnly, gameAccessMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const parsed = answerSchema.safeParse(req.body);
     if (!parsed.success) {

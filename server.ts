@@ -39,6 +39,7 @@ import { registerChessGameRoutes } from "./chessGame";
 import { registerLanguageQuestRoutes } from "./languageQuest";
 import { registerDailyQuestRoutes } from "./dailyQuest";
 import { registerWordTrailRoutes } from "./wordTrail";
+import { evaluateStudentGameAccess, registerGameControlRoutes } from "./gameControls";
 import cookieParser from "cookie-parser";
 import { BADGE_CATALOG, getBadgeLevel } from "./lib/badges";
 import { roleHasPermission, type Permission, type UserRole } from "./shared/permissions";
@@ -19469,7 +19470,15 @@ async function startServer() {
   registerFlashcardRoutes({ app, prisma, authMiddleware, createAuditLog, logger });
   registerLanguageQuestRoutes({ app, prisma, authMiddleware, createAuditLog, logger });
   registerDailyQuestRoutes({ app, prisma, authMiddleware, createAuditLog, logger });
-  registerWordTrailRoutes({ app, prisma, authMiddleware, createAuditLog, logger });
+  const gameControls = registerGameControlRoutes({ app, prisma, authMiddleware, createAuditLog, logger });
+  registerWordTrailRoutes({
+    app,
+    prisma,
+    authMiddleware,
+    createAuditLog,
+    logger,
+    gameAccessMiddleware: gameControls.accessMiddleware("WORD_TRAIL", true),
+  });
   // ── Conduct (rule catalog + violation logging + counts) ─────────────────────
   registerConductRoutes({ app, prisma, authMiddleware, createAuditLog, logger });
   // ── Conduct: Disciplinary Notice PDF export ─────────────────────────────────
@@ -19488,7 +19497,13 @@ async function startServer() {
   // chatNotify is defined further down (real-time push section) but function
   // declarations are hoisted within this scope, so the reference below is safe
   // — it's only ever invoked later, once a real HTTP request comes in.
-  registerChessGameRoutes({ app, prisma, authMiddleware, chatNotify });
+  registerChessGameRoutes({
+    app,
+    prisma,
+    authMiddleware,
+    chatNotify,
+    gameAccessMiddleware: gameControls.accessMiddleware("CHESS", true),
+  });
 
   // NOTE: the SPA catch-all (Vite middleware in dev / static dist in prod) is
   // registered at the very end of startServer, AFTER every /api route, so it can
@@ -22116,9 +22131,33 @@ async function startServer() {
       }
       const user = await prisma.user.findUnique({
         where: { id: payload.userId },
-        select: { id: true, email: true, firstName: true, lastName: true, isActive: true },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          role: true,
+          isActive: true,
+        },
       });
       if (!user?.isActive) throw new Error("Account is unavailable");
+      if (user.role === "STUDENT") {
+        const controlledSession = await prisma.gamePlaySession.findFirst({
+          where: {
+            userId: user.id,
+            gameKey: "SNAKE",
+            status: "ACTIVE",
+            lastHeartbeatAt: { gte: new Date(Date.now() - 60_000) },
+          },
+          orderBy: { startedAt: "desc" },
+          select: { id: true },
+        });
+        if (!controlledSession) throw new Error("A controlled game session is required");
+        const access = await evaluateStudentGameAccess(prisma, user.id, "SNAKE", {
+          sessionId: controlledSession.id,
+        });
+        if (!access.allowed) throw new Error(access.reason || "Game access is restricted");
+      }
       const fullName = `${user.firstName} ${user.lastName}`.trim();
       return {
         userId: user.id,

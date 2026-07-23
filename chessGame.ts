@@ -30,10 +30,12 @@ export function registerChessGameRoutes({
   prisma,
   authMiddleware,
   chatNotify,
+  gameAccessMiddleware,
 }: {
   app: any;
   prisma: PrismaClient;
   authMiddleware: (req: Request, res: Response, next: (err?: unknown) => void) => void;
+  gameAccessMiddleware?: (req: Request, res: Response, next: (err?: unknown) => void) => void;
   // Pushes a Server-Sent Event to every open tab of the given user(s), reusing
   // the same real-time channel the chat feature already streams over. If not
   // supplied (e.g. during isolated testing) notifications are just skipped —
@@ -42,6 +44,7 @@ export function registerChessGameRoutes({
 }) {
   const router = Router();
   const notify: ChatNotify = chatNotify ?? (() => {});
+  const gameGuard = gameAccessMiddleware ?? ((_req: Request, _res: Response, next: (err?: unknown) => void) => next());
 
   interface Identity {
     id: string; // User.id — this is what's stored in ChessMatch.whiteId/blackId
@@ -137,7 +140,7 @@ export function registerChessGameRoutes({
 
   // ── Opponents you can challenge ─────────────────────────────────────────────
   // Students see classmates; staff/teachers see every other staff member.
-  router.get("/opponents", authMiddleware, async (req: Request, res: Response) => {
+  router.get("/opponents", authMiddleware, gameGuard, async (req: Request, res: Response) => {
     try {
       const me = await requireIdentity(req, res);
       if (!me) return;
@@ -195,7 +198,7 @@ export function registerChessGameRoutes({
   });
 
   // ── Challenges (pending invites) ────────────────────────────────────────────
-  router.get("/challenges", authMiddleware, async (req: Request, res: Response) => {
+  router.get("/challenges", authMiddleware, gameGuard, async (req: Request, res: Response) => {
     try {
       const me = await requireIdentity(req, res);
       if (!me) return;
@@ -218,7 +221,7 @@ export function registerChessGameRoutes({
 
   const challengeSchema = z.object({ opponentId: z.string().min(1) });
 
-  router.post("/challenges", authMiddleware, async (req: Request, res: Response) => {
+  router.post("/challenges", authMiddleware, gameGuard, async (req: Request, res: Response) => {
     try {
       const me = await requireIdentity(req, res);
       if (!me) return;
@@ -283,7 +286,7 @@ export function registerChessGameRoutes({
     }
   });
 
-  router.post("/matches/:id/accept", authMiddleware, async (req: Request, res: Response) => {
+  router.post("/matches/:id/accept", authMiddleware, gameGuard, async (req: Request, res: Response) => {
     try {
       const me = await requireIdentity(req, res);
       if (!me) return;
@@ -307,7 +310,7 @@ export function registerChessGameRoutes({
     }
   });
 
-  router.post("/matches/:id/decline", authMiddleware, async (req: Request, res: Response) => {
+  router.post("/matches/:id/decline", authMiddleware, gameGuard, async (req: Request, res: Response) => {
     try {
       const me = await requireIdentity(req, res);
       if (!me) return;
@@ -328,7 +331,7 @@ export function registerChessGameRoutes({
     }
   });
 
-  router.post("/matches/:id/cancel", authMiddleware, async (req: Request, res: Response) => {
+  router.post("/matches/:id/cancel", authMiddleware, gameGuard, async (req: Request, res: Response) => {
     try {
       const me = await requireIdentity(req, res);
       if (!me) return;
@@ -346,7 +349,7 @@ export function registerChessGameRoutes({
   });
 
   // ── Match state & list ──────────────────────────────────────────────────────
-  router.get("/matches", authMiddleware, async (req: Request, res: Response) => {
+  router.get("/matches", authMiddleware, gameGuard, async (req: Request, res: Response) => {
     try {
       const me = await requireIdentity(req, res);
       if (!me) return;
@@ -367,7 +370,7 @@ export function registerChessGameRoutes({
     }
   });
 
-  router.get("/matches/:id", authMiddleware, async (req: Request, res: Response) => {
+  router.get("/matches/:id", authMiddleware, gameGuard, async (req: Request, res: Response) => {
     try {
       const me = await requireIdentity(req, res);
       if (!me) return;
@@ -387,7 +390,7 @@ export function registerChessGameRoutes({
     promotion: z.enum(["q", "r", "b", "n"]).optional(),
   });
 
-  router.post("/matches/:id/move", authMiddleware, async (req: Request, res: Response) => {
+  router.post("/matches/:id/move", authMiddleware, gameGuard, async (req: Request, res: Response) => {
     try {
       const me = await requireIdentity(req, res);
       if (!me) return;
@@ -452,7 +455,7 @@ export function registerChessGameRoutes({
     }
   });
 
-  router.post("/matches/:id/resign", authMiddleware, async (req: Request, res: Response) => {
+  router.post("/matches/:id/resign", authMiddleware, gameGuard, async (req: Request, res: Response) => {
     try {
       const me = await requireIdentity(req, res);
       if (!me) return;
@@ -484,7 +487,7 @@ export function registerChessGameRoutes({
   });
 
   // ── Leaderboard ──────────────────────────────────────────────────────────────
-  router.get("/leaderboard", authMiddleware, async (req: Request, res: Response) => {
+  router.get("/leaderboard", authMiddleware, gameGuard, async (req: Request, res: Response) => {
     try {
       const me = await requireIdentity(req, res);
       if (!me) return;

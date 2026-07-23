@@ -10,6 +10,15 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 
 ## Latest updates — July 2026
 
+### Game-time parental controls
+
+- Administrators and teachers can manage student game access from `/games/controls`.
+- Policies can apply school-wide, to a teacher's assigned class, or to one student, and can target all recreational games or one specific game.
+- Supports complete blocking, daily allowances, per-session timers, mandatory screen breaks, weekday selection, and allowed-time windows.
+- The most restrictive matching rule wins. Teachers cannot weaken or remove administrator-managed policies, and teachers can manage only their assigned classes and students.
+- Student play sessions use authenticated server heartbeats, persisted daily usage, automatic lock screens, and visible countdowns. Word Trail, multiplayer Chess, and Neon Snake also enforce access through their server APIs or socket authentication.
+- Language Quest and Daily Quest remain learning activities and are not counted as recreational game time.
+
 ### Daily Learning Quest
 
 - A short English vocabulary quest available only to Student and Teacher accounts, linked from their navigation and dashboards.
@@ -113,6 +122,7 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 | Daily Learning Quest | Student/teacher English Word practice with review questions, XP, and streaks |
 | Word Trail | Student/teacher English vocabulary board game with dice, special spaces, saved progress, scores, and leaderboard |
 | Multiplayer Neon Snake | Authenticated real-time 3D arena with LMS player names, live ranking, keyboard/touch controls, and saved Student scores |
+| Game-time controls | Admin/teacher blocking, schedules, daily/session limits, breaks, server heartbeats, and student lock screens |
 | Language Quest | Native language courses, lesson paths, speech-assisted challenges, hearts, points, streaks, progress, leaderboard, and teacher/admin Course Studio |
 | Flashcards | Deck creation, sharing, class assignment, mastery, quiz, match, spelling, and progress reporting |
 | Lesson planner | Teacher planning and classroom resource organization |

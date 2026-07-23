@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 const AppLayout = lazy(() => import("./components/layout/AppLayout").then((module) => ({ default: module.AppLayout })));
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { GameAccessGate } from "./components/games/GameAccessGate";
 const LoginPage = lazy(() => import("./pages/Login"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
@@ -198,6 +199,7 @@ const LanguageQuestManage = lazy(() => import("./pages/games/language-quest/Lang
 const LanguageQuestEditor = lazy(() => import("./pages/games/language-quest/LanguageQuestEditor"));
 const DailyQuestPage = lazy(() => import("./pages/games/daily-quest/DailyQuest"));
 const WordTrailPage = lazy(() => import("./pages/games/word-trail/WordTrail"));
+const GameControlsPage = lazy(() => import("./pages/games/GameControls"));
 
 const Dictionary = lazy(() => import("./pages/dictionary/Dictionary"));
 const MonLanguage = lazy(() => import("./pages/MonLanguage"));
@@ -358,22 +360,22 @@ export default function App() {
                 {/* About / credits — available to every authenticated role */}
                 <Route path="/about" element={<AboutPage />} />
 
-                <Route path="/games/sudoku" element={<SudokuSelectPage />} />
-                <Route path="/games/sudoku/play" element={<SudokuPlayPage />} />
+                <Route path="/games/sudoku" element={<GameAccessGate gameKey="SUDOKU"><SudokuSelectPage /></GameAccessGate>} />
+                <Route path="/games/sudoku/play" element={<GameAccessGate gameKey="SUDOKU" consumeTime><SudokuPlayPage /></GameAccessGate>} />
 
-                <Route path="/games/snake" element={<SnakeSelectPage />} />
-                <Route path="/games/snake/play" element={<SnakePlayPage />} />
+                <Route path="/games/snake" element={<GameAccessGate gameKey="SNAKE"><SnakeSelectPage /></GameAccessGate>} />
+                <Route path="/games/snake/play" element={<GameAccessGate gameKey="SNAKE" consumeTime><SnakePlayPage /></GameAccessGate>} />
 
-                <Route path="/games/checkers" element={<CheckersSelectPage />} />
-                <Route path="/games/checkers/play" element={<CheckersPlayPage />} />
+                <Route path="/games/checkers" element={<GameAccessGate gameKey="CHECKERS"><CheckersSelectPage /></GameAccessGate>} />
+                <Route path="/games/checkers/play" element={<GameAccessGate gameKey="CHECKERS" consumeTime><CheckersPlayPage /></GameAccessGate>} />
 
-                <Route path="/games/chess" element={<ChessSelectPage />} />
-                <Route path="/games/chess/play" element={<ChessPlayPage />} />
-                <Route path="/games/chess/lobby" element={<ChessLobbyPage />} />
-                <Route path="/games/chess/leaderboard" element={<ChessLeaderboardPage />} />
+                <Route path="/games/chess" element={<GameAccessGate gameKey="CHESS"><ChessSelectPage /></GameAccessGate>} />
+                <Route path="/games/chess/play" element={<GameAccessGate gameKey="CHESS" consumeTime><ChessPlayPage /></GameAccessGate>} />
+                <Route path="/games/chess/lobby" element={<GameAccessGate gameKey="CHESS" consumeTime><ChessLobbyPage /></GameAccessGate>} />
+                <Route path="/games/chess/leaderboard" element={<GameAccessGate gameKey="CHESS" consumeTime><ChessLeaderboardPage /></GameAccessGate>} />
 
-                <Route path="/games/pacman" element={<PacmanSelectPage />} />
-                <Route path="/games/pacman/play" element={<PacmanPlayPage />} />
+                <Route path="/games/pacman" element={<GameAccessGate gameKey="PACMAN"><PacmanSelectPage /></GameAccessGate>} />
+                <Route path="/games/pacman/play" element={<GameAccessGate gameKey="PACMAN" consumeTime><PacmanPlayPage /></GameAccessGate>} />
 
                 <Route path="/games/language-quest" element={<LanguageQuestHome />} />
                 <Route path="/games/language-quest/courses/:courseId" element={<LanguageQuestCourse />} />
@@ -381,10 +383,11 @@ export default function App() {
                 <Route path="/games/language-quest/leaderboard" element={<LanguageQuestLeaderboard />} />
                 <Route element={<ProtectedRoute strictRoles={['STUDENT', 'TEACHER']} />}>
                   <Route path="/daily-quest" element={<DailyQuestPage />} />
-                  <Route path="/games/word-trail" element={<WordTrailPage />} />
+                  <Route path="/games/word-trail" element={<GameAccessGate gameKey="WORD_TRAIL" consumeTime><WordTrailPage /></GameAccessGate>} />
                 </Route>
 
                 <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'TEACHER']} />}>
+                  <Route path="/games/controls" element={<GameControlsPage />} />
                   <Route path="/games/language-quest/manage" element={<LanguageQuestManage />} />
                   <Route path="/games/language-quest/manage/new" element={<LanguageQuestEditor />} />
                   <Route path="/games/language-quest/manage/:id" element={<LanguageQuestEditor />} />

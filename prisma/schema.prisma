@@ -284,6 +284,10 @@ model User {
   languageQuestChallenges    LanguageQuestChallengeProgress[]
   dailyQuestSessions         DailyQuestSession[]
   wordTrailGames             WordTrailGame[]
+  gameControlPoliciesCreated GameControlPolicy[]              @relation("GameControlCreatedBy")
+  gameControlPoliciesUpdated GameControlPolicy[]              @relation("GameControlUpdatedBy")
+  gamePlaySessions           GamePlaySession[]
+  gameDailyUsage             GameDailyUsage[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -393,6 +397,7 @@ model Student {
   interventions       InterventionPlan[]
   snakeGameScores     SnakeGameScore[]
   checkerGameScores   CheckerGameScore[]
+  gameControlPolicies GameControlPolicy[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -451,6 +456,7 @@ model Class {
   homework           Homework[]
   flashcardDeckLinks FlashcardDeckClass[]
   socialPosts        SocialPost[]
+  gameControlPolicies GameControlPolicy[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -4053,4 +4059,75 @@ model WordTrailGame {
   @@index([userId, status])
   @@index([status, score])
   @@index([completedAt])
+}
+
+// -----------------------------------------------------------------------------
+// GAME PARENTAL CONTROLS — server-enforced limits for student recreation
+// -----------------------------------------------------------------------------
+
+model GameControlPolicy {
+  id                  String  @id @default(uuid())
+  scope               String // GLOBAL | CLASS | STUDENT
+  scopeKey            String // GLOBAL | CLASS:<id> | STUDENT:<id>
+  gameKey             String // ALL | SNAKE | SUDOKU | CHECKERS | CHESS | PACMAN | WORD_TRAIL
+  enabled             Boolean @default(true)
+  blocked             Boolean @default(false)
+  dailyLimitMinutes   Int?
+  sessionLimitMinutes Int?
+  cooldownMinutes     Int     @default(0)
+  allowedDays         Int[]   @default([])
+  allowedStartMinute  Int?
+  allowedEndMinute    Int?
+  note                String?
+  managedByRole       Role
+
+  classId     String?
+  class       Class?   @relation(fields: [classId], references: [id], onDelete: Cascade)
+  studentId   String?
+  student     Student? @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  createdById String
+  createdBy   User     @relation("GameControlCreatedBy", fields: [createdById], references: [id])
+  updatedById String
+  updatedBy   User     @relation("GameControlUpdatedBy", fields: [updatedById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([scopeKey, gameKey])
+  @@index([classId])
+  @@index([studentId])
+  @@index([gameKey, enabled])
+}
+
+model GamePlaySession {
+  id              String    @id @default(uuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameKey         String
+  status          String    @default("ACTIVE") // ACTIVE | ENDED | LIMIT_REACHED | REVOKED
+  startedAt       DateTime  @default(now())
+  lastHeartbeatAt DateTime  @default(now())
+  endedAt         DateTime?
+  consumedSeconds Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, status])
+  @@index([userId, gameKey, startedAt])
+}
+
+model GameDailyUsage {
+  id      String @id @default(uuid())
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameKey String
+  dayKey  String
+  seconds Int    @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, gameKey, dayKey])
+  @@index([userId, dayKey])
 }
