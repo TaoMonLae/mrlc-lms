@@ -50,3 +50,19 @@ export interface LanguageQuestLessonPayload {
   profile: LanguageQuestProfile;
   challenges: LanguageQuestChallenge[];
 }
+
+export interface LanguageQuestFlashcard {
+  id: string;
+  prompt: string;
+  text: string;
+  emoji: string | null;
+  audioText: string | null;
+}
+
+export interface LanguageQuestLessonPreview {
+  id: string;
+  title: string;
+  description: string | null;
+  course: { id: string; title: string; language: string; accentColor: string };
+  cards: LanguageQuestFlashcard[];
+}

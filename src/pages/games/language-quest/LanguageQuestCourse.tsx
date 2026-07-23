@@ -59,7 +59,6 @@ export default function LanguageQuestCourse() {
   }
 
   const percent = course.totalLessons ? Math.round((course.completedLessons / course.totalLessons) * 100) : 0;
-  let pathIndex = 0;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 pb-12">
@@ -99,7 +98,6 @@ export default function LanguageQuestCourse() {
             ) : (
               <div className="relative space-y-3 before:absolute before:bottom-6 before:left-6 before:top-6 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-700">
                 {unit.lessons.map((lesson) => {
-                  pathIndex += 1;
                   const content = (
                     <>
                       <div

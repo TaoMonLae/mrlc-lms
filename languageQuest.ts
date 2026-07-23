@@ -383,6 +383,28 @@ function databaseError(res: express.Response, error: any): boolean {
   return true;
 }
 
+// Learners must clear every challenge in a lesson before the next one unlocks.
+// Managers previewing/editing course content bypass this check.
+async function lessonLockMessage(prisma: any, jwtUser: JwtPayload, lesson: any): Promise<string | null> {
+  if (isManager(jwtUser.role)) return null;
+  const orderedUnits = await prisma.languageQuestUnit.findMany({
+    where: { courseId: lesson.unit.courseId },
+    orderBy: { order: "asc" },
+    include: { lessons: { orderBy: { order: "asc" }, include: { challenges: { select: { id: true } } } } },
+  });
+  const lessons = orderedUnits.flatMap((unit: any) => unit.lessons);
+  const index = lessons.findIndex((candidate: any) => candidate.id === lesson.id);
+  const previous = index > 0 ? lessons[index - 1] : null;
+  if (!previous) return null;
+  const completed = await prisma.languageQuestChallengeProgress.count({
+    where: { userId: jwtUser.userId, completed: true, challengeId: { in: previous.challenges.map((challenge: any) => challenge.id) } },
+  });
+  if (previous.challenges.length === 0 || completed !== previous.challenges.length) {
+    return "Complete the previous lesson first";
+  }
+  return null;
+}
+
 export function registerLanguageQuestRoutes(deps: Deps): void {
   const { app, prisma, authMiddleware, createAuditLog, logger } = deps;
 
@@ -503,24 +525,8 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       if (!lesson || (!lesson.unit.course.published && !isManager(jwtUser.role))) { res.status(404).json({ error: "Lesson not found" }); return; }
       if (lesson.challenges.length === 0) { res.status(409).json({ error: "This lesson does not have any challenges yet" }); return; }
 
-      if (!isManager(jwtUser.role)) {
-        const orderedUnits = await prisma.languageQuestUnit.findMany({
-          where: { courseId: lesson.unit.courseId },
-          orderBy: { order: "asc" },
-          include: { lessons: { orderBy: { order: "asc" }, include: { challenges: { select: { id: true } } } } },
-        });
-        const lessons = orderedUnits.flatMap((unit: any) => unit.lessons);
-        const index = lessons.findIndex((candidate: any) => candidate.id === lesson.id);
-        const previous = index > 0 ? lessons[index - 1] : null;
-        if (previous) {
-          const completed = await prisma.languageQuestChallengeProgress.count({
-            where: { userId: jwtUser.userId, completed: true, challengeId: { in: previous.challenges.map((challenge: any) => challenge.id) } },
-          });
-          if (previous.challenges.length === 0 || completed !== previous.challenges.length) {
-            res.status(403).json({ error: "Complete the previous lesson first" }); return;
-          }
-        }
-      }
+      const lockMessage = await lessonLockMessage(prisma, jwtUser, lesson);
+      if (lockMessage) { res.status(403).json({ error: lockMessage }); return; }
 
       const progress = await getProgress(prisma, jwtUser.userId);
       res.json({
@@ -542,6 +548,51 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
     } catch (error) {
       logger.error("Error loading Language Quest lesson:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load the lesson" });
+    }
+  });
+
+  // Learning mode: a scoring-free flashcard walkthrough of a lesson's content,
+  // shown before the graded challenges. Reuses the same access/lock rules as
+  // the quiz endpoint above but exposes each challenge's correct answer since
+  // nothing here is graded.
+  app.get("/api/language-quest/lessons/:id/preview", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const lesson = await prisma.languageQuestLesson.findUnique({
+        where: { id: req.params.id },
+        include: {
+          unit: { include: { course: true } },
+          challenges: { orderBy: { order: "asc" }, include: { options: { orderBy: { order: "asc" } } } },
+        },
+      });
+      if (!lesson || (!lesson.unit.course.published && !isManager(jwtUser.role))) { res.status(404).json({ error: "Lesson not found" }); return; }
+      if (lesson.challenges.length === 0) { res.status(409).json({ error: "This lesson does not have any challenges yet" }); return; }
+
+      const lockMessage = await lessonLockMessage(prisma, jwtUser, lesson);
+      if (lockMessage) { res.status(403).json({ error: lockMessage }); return; }
+
+      res.json({
+        id: lesson.id, title: lesson.title, description: lesson.description,
+        course: {
+          id: lesson.unit.course.id,
+          title: lesson.unit.course.title,
+          language: lesson.unit.course.language,
+          accentColor: lesson.unit.course.accentColor,
+        },
+        cards: lesson.challenges.map((challenge: any) => {
+          const correct = challenge.options.find((option: any) => option.correct);
+          return {
+            id: challenge.id,
+            prompt: challenge.question,
+            text: correct?.text ?? "",
+            emoji: correct?.emoji ?? null,
+            audioText: correct?.audioText ?? correct?.text ?? null,
+          };
+        }),
+      });
+    } catch (error) {
+      logger.error("Error loading Language Quest lesson preview:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load the lesson preview" });
     }
   });
 

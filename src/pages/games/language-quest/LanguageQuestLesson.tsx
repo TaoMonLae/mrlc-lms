@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { apiGet, apiSend } from '@/src/lib/api';
-import type { LanguageQuestLessonPayload, LanguageQuestProfile } from '@/src/types/languageQuest';
+import type { LanguageQuestLessonPayload, LanguageQuestLessonPreview, LanguageQuestProfile } from '@/src/types/languageQuest';
 
 interface AnswerResult {
   correct: boolean;
@@ -54,18 +54,43 @@ export default function LanguageQuestLesson() {
   const [answer, setAnswer] = useState<AnswerResult | null>(null);
   const [checking, setChecking] = useState(false);
   const [sessionPoints, setSessionPoints] = useState(0);
+  const [profile, setProfile] = useState<LanguageQuestProfile | null>(null);
+  const [phase, setPhase] = useState<'learn' | 'quiz'>('learn');
+  const [preview, setPreview] = useState<LanguageQuestLessonPreview | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(true);
+  const [previewIndex, setPreviewIndex] = useState(0);
 
   useEffect(() => {
     if (!lessonId) return;
+    setPhase('learn');
+    setPreviewIndex(0);
+    setIndex(0);
+    setSelectedId(null);
+    setAnswer(null);
+    setSessionPoints(0);
+
     apiGet<LanguageQuestLessonPayload>(`/api/language-quest/lessons/${lessonId}`)
-      .then(setLesson)
+      .then((payload) => { setLesson(payload); setProfile(payload.profile); })
       .catch((error: any) => toast.error(error?.message || 'Could not load the lesson'))
       .finally(() => setLoading(false));
+
+    setPreviewLoading(true);
+    apiGet<LanguageQuestLessonPreview>(`/api/language-quest/lessons/${lessonId}/preview`)
+      .then(setPreview)
+      .catch(() => setPreview(null))
+      .finally(() => setPreviewLoading(false));
+
     return () => { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); };
   }, [lessonId]);
 
+  // Nothing to teach (or the preview failed to load) — go straight to the quiz.
+  useEffect(() => {
+    if (phase === 'learn' && !previewLoading && (!preview || preview.cards.length === 0)) {
+      setPhase('quiz');
+    }
+  }, [phase, previewLoading, preview]);
+
   const challenge = lesson?.challenges[index];
-  const profile = answer?.profile ?? lesson?.profile;
   const progressPercent = lesson ? Math.round((Math.min(index, lesson.challenges.length) / lesson.challenges.length) * 100) : 0;
   const finished = Boolean(lesson && index >= lesson.challenges.length);
 
@@ -77,6 +102,7 @@ export default function LanguageQuestLesson() {
     try {
       const result = await apiSend<AnswerResult>(`/api/language-quest/challenges/${challenge.id}/answer`, 'POST', { optionId: selectedId });
       setAnswer(result);
+      setProfile(result.profile);
       if (result.correct) setSessionPoints((current) => current + result.pointsAwarded);
     } catch (error: any) {
       toast.error(error?.message || 'Could not check that answer');
@@ -101,6 +127,60 @@ export default function LanguageQuestLesson() {
       <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center dark:border-surface-raised dark:bg-surface-indigo">
         <p className="font-semibold text-slate-900 dark:text-white">This lesson is unavailable.</p>
         <Button className="mt-4" variant="outline" render={<Link to="/games/language-quest" />} nativeButton={false}>Back to Language Quest</Button>
+      </div>
+    );
+  }
+
+  if (phase === 'learn') {
+    const cards = preview?.cards ?? [];
+    const card = cards[previewIndex];
+    const learnProgress = cards.length ? Math.round((previewIndex / cards.length) * 100) : 0;
+    return (
+      <div className="mx-auto flex min-h-[calc(100dvh-8rem)] max-w-3xl flex-col pb-6">
+        <header className="flex items-center gap-3 py-2 sm:gap-5">
+          <Button variant="ghost" size="icon" aria-label="Exit lesson" render={<Link to={`/games/language-quest/courses/${lesson.course.id}`} />} nativeButton={false}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <Progress value={learnProgress} className="flex-1 [&_[data-slot=progress-track]]:h-3 [&_[data-slot=progress-indicator]]:bg-sky-500" />
+          <Button variant="ghost" size="sm" className="text-slate-400 hover:text-slate-600" onClick={() => setPhase('quiz')}>Skip to practice</Button>
+        </header>
+
+        <main className="flex flex-1 flex-col items-center justify-center py-8 text-center">
+          {previewLoading || !card ? (
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-sky-200 border-t-sky-500" />
+          ) : (
+            <>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-600">Learn • {previewIndex + 1} of {cards.length}</p>
+              <button
+                type="button"
+                onClick={() => speak(card.audioText || card.text, lesson.course.language)}
+                className="mt-8 flex w-full max-w-sm flex-col items-center gap-4 rounded-3xl border-2 border-slate-200 bg-white px-10 py-12 shadow-sm transition hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-md dark:border-surface-raised dark:bg-surface-indigo"
+              >
+                {card.emoji && <span className="text-6xl" aria-hidden="true">{card.emoji}</span>}
+                <span className="text-3xl font-black text-slate-900 dark:text-white">{card.text}</span>
+                <span className="flex items-center gap-1.5 text-xs font-semibold text-sky-600"><Volume2 className="h-3.5 w-3.5" /> Tap to listen</span>
+              </button>
+              <p className="mt-6 max-w-md text-sm text-slate-500 dark:text-slate-300">{card.prompt}</p>
+            </>
+          )}
+        </main>
+
+        <footer className="-mx-4 mt-auto border-t border-slate-200 px-4 py-4 sm:-mx-6 sm:px-6 dark:border-surface-raised">
+          <div className="mx-auto flex max-w-3xl items-center justify-between gap-4">
+            <Button variant="outline" onClick={() => setPreviewIndex((current) => Math.max(0, current - 1))} disabled={previewIndex === 0}>
+              Back
+            </Button>
+            {previewIndex + 1 < cards.length ? (
+              <Button style={{ backgroundColor: lesson.course.accentColor }} onClick={() => setPreviewIndex((current) => current + 1)} disabled={!card}>
+                Next
+              </Button>
+            ) : (
+              <Button style={{ backgroundColor: lesson.course.accentColor }} onClick={() => setPhase('quiz')} disabled={!card}>
+                Start practice
+              </Button>
+            )}
+          </div>
+        </footer>
       </div>
     );
   }
@@ -156,7 +236,7 @@ export default function LanguageQuestLesson() {
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-violet-600">{lesson.title} • {index + 1} of {lesson.challenges.length}</p>
         <div className="mt-3 flex items-start justify-between gap-4">
           <h1 className="max-w-2xl text-2xl font-black leading-tight text-slate-900 dark:text-white sm:text-3xl">{challenge.question}</h1>
-          <Button variant="outline" size="icon" className="shrink-0 rounded-full" onClick={() => speak(challenge.question, 'English')} aria-label="Read question aloud">
+          <Button variant="outline" size="icon" className="shrink-0 rounded-full" onClick={() => speak(challenge.question, lesson.course.language)} aria-label="Read question aloud">
             <Volume2 className="h-4 w-4" />
           </Button>
         </div>

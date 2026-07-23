@@ -116,7 +116,16 @@ function ChallengeEditor({ challenge, index, onChange, onRemove }: {
   const [open, setOpen] = useState(!challenge.id);
   const updateOption = (optionKey: string, next: EditorOption) => onChange({ ...challenge, options: challenge.options.map((option) => option._key === optionKey ? next : option) });
   const markCorrect = (optionKey: string) => onChange({ ...challenge, options: challenge.options.map((option) => ({ ...option, correct: option._key === optionKey })) });
-  const removeOption = (optionKey: string) => onChange({ ...challenge, options: challenge.options.filter((option) => option._key !== optionKey) });
+  const removeOption = (optionKey: string) => {
+    const removedWasCorrect = challenge.options.find((option) => option._key === optionKey)?.correct;
+    const remaining = challenge.options.filter((option) => option._key !== optionKey);
+    onChange({
+      ...challenge,
+      options: removedWasCorrect && remaining.length && !remaining.some((option) => option.correct)
+        ? remaining.map((option, i) => (i === 0 ? { ...option, correct: true } : option))
+        : remaining,
+    });
+  };
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-slate-50/70 dark:border-surface-raised dark:bg-surface-raised/20">
