@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { apiGet } from "../../lib/api";
 import { DailyQuestCard } from "@/src/components/daily-quest/DailyQuestCard";
+import { WordTrailCard } from "@/src/components/word-trail/WordTrailCard";
 
 function sanitizeText(text: string): string {
   if (!text) return text;
@@ -116,6 +117,7 @@ export default function TeacherDashboard() {
       </div>
 
       <DailyQuestCard />
+      <WordTrailCard />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {teacherStats.map((stat) => (

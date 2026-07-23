@@ -18,6 +18,14 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 - Server-verified answers, one saved quest per Kuala Lumpur calendar day, completion XP, accuracy feedback, and current/best streak tracking.
 - Responsive learner flow with progress, passages, question images, explanations, and an end-of-quest summary.
 
+### Word Trail board game
+
+- A server-authoritative English vocabulary board game for Student and Teacher accounts at `/games/word-trail`.
+- Learners roll a six-sided die, answer a question from the six curated English Word courses, and move across a responsive 25-space board.
+- Book bridges and rockets move players forward, word stars award bonus points, and slip spaces add classic board-game surprises.
+- Four hearts, answer streaks, saved in-progress games, completion results, personal statistics, and a learner leaderboard encourage repeat practice.
+- Dice rolls, answers, movement, special-space effects, and scoring are validated by the server so clients cannot award their own progress.
+
 ### Language Quest
 
 - A native, game-like language learning area for every authenticated student, teacher, and staff account.
@@ -95,6 +103,7 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 | Exams | Guided authoring, question bank, scheduling, attempts, proctoring, accommodations, grading, analytics, and printable output |
 | Gradebook | Marks, class reports, individual progress, and GED readiness tracking |
 | Daily Learning Quest | Student/teacher English Word practice with review questions, XP, and streaks |
+| Word Trail | Student/teacher English vocabulary board game with dice, special spaces, saved progress, scores, and leaderboard |
 | Language Quest | Native language courses, lesson paths, speech-assisted challenges, hearts, points, streaks, progress, leaderboard, and teacher/admin Course Studio |
 | Flashcards | Deck creation, sharing, class assignment, mastery, quiz, match, spelling, and progress reporting |
 | Lesson planner | Teacher planning and classroom resource organization |
@@ -127,7 +136,7 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 - Announcements with rich content and audience visibility.
 - Curated RSS news and an in-app article reader.
 - AI assistant for lesson planning, quiz generation, announcements, and translation using Gemini or a local Ollama model.
-- Daily Learning Quest, Language Quest, Sudoku, Snake vocabulary mode, and Checkers with account-backed progress, scores, or learning activity where applicable.
+- Daily Learning Quest, Word Trail, Language Quest, Sudoku, Snake vocabulary mode, and Checkers with account-backed progress, scores, or learning activity where applicable.
 - Global search across major school records.
 
 ### Languages
@@ -139,6 +148,8 @@ The **Mon Language** tab at `/mon-language` embeds `https://the-mon-language.web
 **Language Quest** at `/games/language-quest` uses the existing LMS account for progress, streaks, points, and leaderboard placement. All authenticated roles can learn and practise; teachers and administrators can publish and maintain course content from `/games/language-quest/manage`.
 
 **Daily Learning Quest** at `/daily-quest` is restricted to Student and Teacher accounts and creates one English Word practice session per Kuala Lumpur calendar day. Learners choose a 3-, 5-, or 7-question mode; answers, completion XP, review words, and streaks are stored against their existing LMS account.
+
+**Word Trail** at `/games/word-trail` is restricted to Student and Teacher accounts. It uses only the curated English Word Language Quest courses, saves the active board after every turn, and keeps personal results and a learner leaderboard.
 
 ## Architecture
 
@@ -429,6 +440,8 @@ mrlc-lms/
 ├── flashcards.ts               # Flashcard API and image lifecycle
 ├── languageQuest.ts            # Language Quest courses, progress, rewards, and authoring API
 ├── dailyQuest.ts               # Daily English Word practice, review, XP, and streak API
+├── englishWordPractice.ts       # Shared curated English Word question provider
+├── wordTrail.ts                 # Word Trail board state, rolls, answers, scores, and leaderboard API
 ├── aiAssistant.ts              # Gemini/Ollama assistant integration
 ├── dictionary.ts               # Offline dictionary services
 ├── gutenberg.ts                # Gutendex/Project Gutenberg import

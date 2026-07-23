@@ -283,6 +283,7 @@ model User {
   languageQuestProgress      LanguageQuestUserProgress?
   languageQuestChallenges    LanguageQuestChallengeProgress[]
   dailyQuestSessions         DailyQuestSession[]
+  wordTrailGames             WordTrailGame[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -4021,4 +4022,35 @@ model DailyQuestSession {
   @@index([userId, status])
   @@index([dayKey, status])
   @@index([pointsEarned])
+}
+
+// -----------------------------------------------------------------------------
+// WORD TRAIL — server-authoritative English vocabulary board game
+// -----------------------------------------------------------------------------
+
+model WordTrailGame {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activeKey     String?   @unique
+  status        String    @default("ACTIVE") // ACTIVE | WON | LOST
+  position      Int       @default(0)
+  hearts        Int       @default(4)
+  score         Int       @default(0)
+  turnCount     Int       @default(0)
+  correctCount  Int       @default(0)
+  wrongCount    Int       @default(0)
+  currentStreak Int       @default(0)
+  bestStreak    Int       @default(0)
+  lastRoll      Int?
+  questionDeck  Json
+  pendingTurn   Json?
+  answerHistory Json?
+  completedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId, status])
+  @@index([status, score])
+  @@index([completedAt])
 }

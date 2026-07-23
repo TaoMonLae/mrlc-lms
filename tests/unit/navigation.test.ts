@@ -56,13 +56,17 @@ test('games and community links live in their own focused groups', () => {
 
     assert.ok(games && isNavGroup(games), `${role} is missing Games`);
     assert.ok(community && isNavGroup(community), `${role} is missing Community`);
-    assert.deepEqual(
-      games.items.map((item) => item.title),
-      ['Snake Game', 'Sudoku', 'Checkers', 'Chess'],
-    );
+    const expectedGames = role === 'ADMIN'
+      ? ['Snake Game', 'Sudoku', 'Checkers', 'Chess']
+      : ['Word Trail', 'Snake Game', 'Sudoku', 'Checkers', 'Chess'];
+    assert.deepEqual(games.items.map((item) => item.title), expectedGames);
+    assert.equal(new Set(games.items.map((item) => item.icon)).size, games.items.length);
     assert.deepEqual(
       community.items.map((item) => item.title),
       ['Announcements', 'Chat', 'Social Space', 'News'],
     );
   }
+
+  const flatWordTrail = NAVIGATION_ITEMS.find((item) => item.url === '/games/word-trail');
+  assert.deepEqual(flatWordTrail?.roles, ['TEACHER', 'STUDENT']);
 });

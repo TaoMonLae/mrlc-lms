@@ -9,9 +9,11 @@ import {
   seededDailyQuestShuffle,
   type DailyQuestMode,
 } from "./shared/dailyQuest";
-import { ensureOfficialCourses } from "./languageQuest";
-import { englishWordCourses } from "./languageQuestEnglishWordCourses";
-import { advancedEnglishCourses } from "./languageQuestAdvancedEnglishCourses";
+import {
+  isEnglishWordPracticeQuestion,
+  loadEnglishWordPracticeQuestions,
+  type EnglishWordPracticeQuestion,
+} from "./englishWordPractice";
 
 interface JwtPayload {
   userId: string;
@@ -37,28 +39,7 @@ interface Deps {
   logger: { error: (...args: any[]) => void };
 }
 
-interface StoredOption {
-  id: string;
-  text: string;
-  emoji?: string | null;
-}
-
-interface StoredItem {
-  id: string;
-  sourceType: "LANGUAGE_QUEST";
-  sourceId: string;
-  courseCode: string;
-  sourceLabel: string;
-  subject: string;
-  difficulty: string;
-  prompt: string;
-  passageText?: string | null;
-  imageUrl?: string | null;
-  options: StoredOption[];
-  correctOptionId: string;
-  explanation: string | null;
-  isReview?: boolean;
-}
+type StoredItem = EnglishWordPracticeQuestion;
 
 interface StoredAnswer {
   itemId: string;
@@ -68,9 +49,6 @@ interface StoredAnswer {
 }
 
 const MODES = new Set<DailyQuestMode>(["RELAXED", "STANDARD", "CHALLENGE"]);
-const ENGLISH_WORD_COURSES = [...englishWordCourses, ...advancedEnglishCourses];
-const ENGLISH_WORD_COURSE_CODES = ENGLISH_WORD_COURSES.map((course) => course.code);
-const ENGLISH_WORD_COURSE_TITLES = new Set(ENGLISH_WORD_COURSES.map((course) => course.title));
 
 function asItems(value: unknown): StoredItem[] {
   return Array.isArray(value) ? value as StoredItem[] : [];
@@ -82,16 +60,6 @@ function asAnswers(value: unknown): StoredAnswer[] {
 
 function databaseUnavailable(error: any): boolean {
   return error?.code === "P2021" || error?.code === "P2022";
-}
-
-function decodeEntities(value: unknown): string {
-  return String(value ?? "")
-    .replace(/&#x27;/g, "'")
-    .replace(/&quot;/g, "\"")
-    .replace(/&gt;/g, ">")
-    .replace(/&lt;/g, "<")
-    .replace(/&amp;/g, "&")
-    .trim();
 }
 
 function publicItem(item: StoredItem | undefined) {
@@ -109,33 +77,6 @@ function publicItem(item: StoredItem | undefined) {
   };
 }
 
-function normalizeLanguageChallenge(challenge: any, seed: string): StoredItem | null {
-  const correct = challenge.options?.filter((option: any) => option.correct) ?? [];
-  if (correct.length !== 1 || challenge.options.length < 2) return null;
-  const course = challenge.lesson.unit.course;
-  const options = seededDailyQuestShuffle<StoredOption>(
-    challenge.options.map((option: any) => ({
-      id: option.id,
-      text: decodeEntities(option.text),
-      emoji: option.emoji ?? null,
-    })),
-    `${seed}:options:${challenge.id}`,
-  );
-  return {
-    id: `language:${challenge.id}`,
-    sourceType: "LANGUAGE_QUEST",
-    sourceId: challenge.id,
-    courseCode: course.code,
-    sourceLabel: `Language Quest · ${course.title}`,
-    subject: course.language,
-    difficulty: "Practice",
-    prompt: decodeEntities(challenge.question),
-    options,
-    correctOptionId: correct[0].id,
-    explanation: `The correct answer is “${decodeEntities(correct[0].text)}”.`,
-  };
-}
-
 async function recentReviewItems(prisma: any, userId: string): Promise<StoredItem[]> {
   const sessions = await prisma.dailyQuestSession.findMany({
     where: { userId },
@@ -150,10 +91,7 @@ async function recentReviewItems(prisma: any, userId: string): Promise<StoredIte
     const answers = asAnswers(session.answers);
     const wrongIds = new Set(answers.filter((answer) => !answer.correct).map((answer) => answer.itemId));
     for (const item of items) {
-      const legacyCourseTitle = item.sourceLabel.replace(/^Language Quest · /, "");
-      const isEnglishWordCourse = ENGLISH_WORD_COURSE_CODES.includes(item.courseCode)
-        || ENGLISH_WORD_COURSE_TITLES.has(legacyCourseTitle);
-      if (item.sourceType !== "LANGUAGE_QUEST" || !isEnglishWordCourse) continue;
+      if (!isEnglishWordPracticeQuestion(item)) continue;
       if (!wrongIds.has(item.id) || seen.has(item.id)) continue;
       seen.add(item.id);
       reviews.push({
@@ -173,36 +111,11 @@ async function buildQuestItems(
   dayKey: string,
   mode: DailyQuestMode,
 ): Promise<StoredItem[]> {
-  await ensureOfficialCourses(prisma);
   const seed = `${userId}:${dayKey}:${mode}`;
-  const [languageRows, reviewRows] = await Promise.all([
-    prisma.languageQuestChallenge.findMany({
-      where: {
-        lesson: {
-          unit: {
-            course: {
-              published: true,
-              code: { in: ENGLISH_WORD_COURSE_CODES },
-            },
-          },
-        },
-      },
-      include: {
-        options: { orderBy: { order: "asc" } },
-        lesson: { include: { unit: { include: { course: true } } } },
-      },
-      take: 250,
-      orderBy: { createdAt: "asc" },
-    }),
+  const [language, reviewRows] = await Promise.all([
+    loadEnglishWordPracticeQuestions(prisma, seed, 250),
     recentReviewItems(prisma, userId),
   ]);
-
-  const language = seededDailyQuestShuffle<StoredItem>(
-    (languageRows as any[])
-      .map((row: any) => normalizeLanguageChallenge(row, seed))
-      .filter((item: StoredItem | null): item is StoredItem => item !== null),
-    `${seed}:language`,
-  );
   const reviews = seededDailyQuestShuffle<StoredItem>(reviewRows, `${seed}:reviews`);
 
   const total = DAILY_QUEST_MODE_COUNTS[mode];

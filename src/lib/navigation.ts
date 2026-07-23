@@ -39,6 +39,7 @@ import {
   Languages,
   Info,
   Target,
+  Map,
 } from "lucide-react";
 import { UserRole } from "./permissions";
 
@@ -88,6 +89,11 @@ const GAME_ITEMS: NavGroupItem[] = [
   { title: "Sudoku", url: "/games/sudoku", icon: Grid3x3 },
   { title: "Checkers", url: "/games/checkers", icon: Dice5 },
   { title: "Chess", url: "/games/chess", icon: Crown },
+];
+
+const LEARNER_GAME_ITEMS: NavGroupItem[] = [
+  { title: "Word Trail", url: "/games/word-trail", icon: Map },
+  ...GAME_ITEMS,
 ];
 
 /** Grouped sidebar structure for the ADMIN role. */
@@ -226,7 +232,7 @@ export const TEACHER_NAV: AdminNavEntry[] = [
       { title: "Video Lessons", url: "/teacher/videos", icon: Video },
     ],
   },
-  { label: "Games", icon: Gamepad2, items: GAME_ITEMS },
+  { label: "Games", icon: Gamepad2, items: LEARNER_GAME_ITEMS },
   { label: "Community", icon: MessageSquare, items: COMMUNITY_ITEMS },
   {
     label: "My Account",
@@ -270,7 +276,7 @@ export const STUDENT_NAV: AdminNavEntry[] = [
       { title: "Video Lessons", url: "/student/videos", icon: Video },
     ],
   },
-  { label: "Games", icon: Gamepad2, items: GAME_ITEMS },
+  { label: "Games", icon: Gamepad2, items: LEARNER_GAME_ITEMS },
   { label: "Community", icon: MessageSquare, items: COMMUNITY_ITEMS },
   {
     label: "My Account",
@@ -343,6 +349,12 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     title: "Sudoku",
     url: "/games/sudoku",
     icon: Grid3x3,
+  },
+  {
+    title: "Word Trail",
+    url: "/games/word-trail",
+    icon: Map,
+    roles: ["TEACHER", "STUDENT"],
   },
   {
     title: "Snake Game",
