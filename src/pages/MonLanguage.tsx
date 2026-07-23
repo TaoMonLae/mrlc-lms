@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ExternalLink, Languages, Loader2 } from 'lucide-react';
+import { BookOpenText, ExternalLink, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const MON_LANGUAGE_URL = 'https://the-mon-language.web.app/';
@@ -12,7 +12,7 @@ export default function MonLanguage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-            <Languages className="h-6 w-6 text-aubergine-600" />
+            <BookOpenText className="h-6 w-6 text-aubergine-600" />
             The Mon Language
           </h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">

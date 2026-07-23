@@ -30,6 +30,7 @@ import {
   ShieldAlert,
   Grid3x3,
   BookA,
+  BookOpenText,
   Turtle,
   Gamepad2,
   Dice5,
@@ -50,52 +51,47 @@ export interface NavItem {
 export interface NavGroup {
   label: string;
   icon: any;
-  items: { title: string; url: string; icon: any }[];
+  items: NavGroupItem[];
+}
+
+export interface NavGroupItem {
+  title: string;
+  url: string;
+  icon: any;
 }
 
 export type AdminNavEntry = { title: string; url: string; icon: any } | NavGroup;
 
 export const isNavGroup = (e: AdminNavEntry): e is NavGroup => 'items' in e;
 
-/**
- * Grouped sidebar structure for the ADMIN role only — the flat admin list had
- * grown to ~28 entries. Teachers/students keep the flat NAVIGATION_ITEMS list.
- */
-export const ADMIN_NAV: AdminNavEntry[] = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+const COMMUNITY_ITEMS: NavGroupItem[] = [
+  { title: "Announcements", url: "/announcements", icon: Megaphone },
   { title: "Chat", url: "/chat", icon: MessageSquare },
   { title: "Social Space", url: "/social", icon: Sparkles },
   { title: "News", url: "/news", icon: Newspaper },
-  {
-    label: "Games",
-    icon: Gamepad2,
-    items: [
-      { title: "Language Quest", url: "/games/language-quest", icon: Languages },
-      { title: "Snake Game", url: "/games/snake", icon: Turtle },
-      { title: "Sudoku", url: "/games/sudoku", icon: Grid3x3 },
-      { title: "Checkers", url: "/games/checkers", icon: Dice5 },
-      { title: "Chess", url: "/games/chess", icon: Crown },
-    ],
-  },
+];
+
+const LANGUAGE_LEARNING_ITEMS: NavGroupItem[] = [
+  { title: "Language Quest", url: "/games/language-quest", icon: Languages },
+  { title: "Mon Language", url: "/mon-language", icon: BookOpenText },
   { title: "Dictionary", url: "/dictionary", icon: BookA },
-  { title: "Mon Language", url: "/mon-language", icon: Languages },
-  { title: "Announcements", url: "/announcements", icon: Megaphone },
-  { title: "Timetable", url: "/timetable", icon: CalendarDays },
-  {
-    label: "People",
-    icon: Users,
-    items: [
-      { title: "Students", url: "/students", icon: Users },
-      { title: "Admissions", url: "/admissions", icon: UserPlus },
-      { title: "Teachers", url: "/teachers", icon: UserSquare2 },
-      { title: "Staff", url: "/staff", icon: UserSquare2 },
-      { title: "Users & Roles", url: "/users", icon: Briefcase },
-    ],
-  },
+];
+
+const GAME_ITEMS: NavGroupItem[] = [
+  { title: "Snake Game", url: "/games/snake", icon: Turtle },
+  { title: "Sudoku", url: "/games/sudoku", icon: Grid3x3 },
+  { title: "Checkers", url: "/games/checkers", icon: Dice5 },
+  { title: "Chess", url: "/games/chess", icon: Crown },
+];
+
+/** Grouped sidebar structure for the ADMIN role. */
+export const ADMIN_NAV: AdminNavEntry[] = [
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   {
     label: "Academics",
     icon: BookOpen,
     items: [
+      { title: "Timetable", url: "/timetable", icon: CalendarDays },
       { title: "Classes", url: "/classes", icon: BookOpen },
       { title: "Subjects", url: "/subjects", icon: BookOpen },
       { title: "Homework", url: "/teacher/homework", icon: FileText },
@@ -108,6 +104,17 @@ export const ADMIN_NAV: AdminNavEntry[] = [
     ],
   },
   {
+    label: "People",
+    icon: Users,
+    items: [
+      { title: "Students", url: "/students", icon: Users },
+      { title: "Admissions", url: "/admissions", icon: UserPlus },
+      { title: "Teachers", url: "/teachers", icon: UserSquare2 },
+      { title: "Staff", url: "/staff", icon: UserSquare2 },
+      { title: "Users & Roles", url: "/users", icon: Briefcase },
+    ],
+  },
+  {
     label: "Attendance",
     icon: CalendarCheck,
     items: [
@@ -116,6 +123,7 @@ export const ADMIN_NAV: AdminNavEntry[] = [
       { title: "Analytics", url: "/analytics/attendance", icon: BarChart3 },
     ],
   },
+  { label: "Language Learning", icon: Languages, items: LANGUAGE_LEARNING_ITEMS },
   {
     label: "Resources",
     icon: Library,
@@ -127,6 +135,8 @@ export const ADMIN_NAV: AdminNavEntry[] = [
       { title: "Book Catalog", url: "/books", icon: BookMarked },
     ],
   },
+  { label: "Games", icon: Gamepad2, items: GAME_ITEMS },
+  { label: "Community", icon: MessageSquare, items: COMMUNITY_ITEMS },
   {
     label: "Finance & HR",
     icon: Wallet,
@@ -163,36 +173,19 @@ export const ADMIN_NAV: AdminNavEntry[] = [
       { title: "Account & Security", url: "/profile", icon: ShieldAlert },
       { title: "Audit Log", url: "/settings/audit-log", icon: FileText },
       { title: "Export Data", url: "/settings/export", icon: Download },
+      { title: "About", url: "/about", icon: Info },
     ],
   },
-  { title: "About", url: "/about", icon: Info },
 ];
 
 /** Grouped sidebar for the TEACHER role. */
 export const TEACHER_NAV: AdminNavEntry[] = [
   { title: "Dashboard", url: "/teacher/dashboard", icon: LayoutDashboard },
-  { title: "Chat", url: "/chat", icon: MessageSquare },
-  { title: "Social Space", url: "/social", icon: Sparkles },
-  { title: "News", url: "/news", icon: Newspaper },
-  {
-    label: "Games",
-    icon: Gamepad2,
-    items: [
-      { title: "Language Quest", url: "/games/language-quest", icon: Languages },
-      { title: "Snake Game", url: "/games/snake", icon: Turtle },
-      { title: "Sudoku", url: "/games/sudoku", icon: Grid3x3 },
-      { title: "Checkers", url: "/games/checkers", icon: Dice5 },
-      { title: "Chess", url: "/games/chess", icon: Crown },
-    ],
-  },
-  { title: "Dictionary", url: "/dictionary", icon: BookA },
-  { title: "Mon Language", url: "/mon-language", icon: Languages },
-  { title: "Announcements", url: "/announcements", icon: Megaphone },
-  { title: "My Timetable", url: "/teacher/timetable", icon: CalendarDays },
   {
     label: "My Teaching",
     icon: BookOpen,
     items: [
+      { title: "My Timetable", url: "/teacher/timetable", icon: CalendarDays },
       { title: "My Classes", url: "/teacher/classes", icon: BookOpen },
       { title: "Homework", url: "/teacher/homework", icon: FileText },
       { title: "Lesson Planner", url: "/teacher/planner", icon: ClipboardList },
@@ -216,6 +209,7 @@ export const TEACHER_NAV: AdminNavEntry[] = [
       { title: "Analytics", url: "/analytics/attendance", icon: BarChart3 },
     ],
   },
+  { label: "Language Learning", icon: Languages, items: LANGUAGE_LEARNING_ITEMS },
   {
     label: "Resources",
     icon: Library,
@@ -226,38 +220,29 @@ export const TEACHER_NAV: AdminNavEntry[] = [
       { title: "Video Lessons", url: "/teacher/videos", icon: Video },
     ],
   },
-  { title: "Reports", url: "/teacher/reports", icon: BarChart3 },
-  { title: "My Payroll", url: "/my-payroll", icon: Wallet },
-  { title: "My Profile", url: "/teacher/profile", icon: UserSquare2 },
-  { title: "Account & Security", url: "/profile", icon: ShieldAlert },
-  { title: "About", url: "/about", icon: Info },
+  { label: "Games", icon: Gamepad2, items: GAME_ITEMS },
+  { label: "Community", icon: MessageSquare, items: COMMUNITY_ITEMS },
+  {
+    label: "My Account",
+    icon: UserSquare2,
+    items: [
+      { title: "Reports", url: "/teacher/reports", icon: BarChart3 },
+      { title: "My Payroll", url: "/my-payroll", icon: Wallet },
+      { title: "My Profile", url: "/teacher/profile", icon: UserSquare2 },
+      { title: "Account & Security", url: "/profile", icon: ShieldAlert },
+      { title: "About", url: "/about", icon: Info },
+    ],
+  },
 ];
 
 /** Grouped sidebar for the STUDENT role. */
 export const STUDENT_NAV: AdminNavEntry[] = [
   { title: "Dashboard", url: "/student/dashboard", icon: LayoutDashboard },
-  { title: "Chat", url: "/chat", icon: MessageSquare },
-  { title: "Social Space", url: "/social", icon: Sparkles },
-  { title: "News", url: "/news", icon: Newspaper },
-  {
-    label: "Games",
-    icon: Gamepad2,
-    items: [
-      { title: "Language Quest", url: "/games/language-quest", icon: Languages },
-      { title: "Snake Game", url: "/games/snake", icon: Turtle },
-      { title: "Sudoku", url: "/games/sudoku", icon: Grid3x3 },
-      { title: "Checkers", url: "/games/checkers", icon: Dice5 },
-      { title: "Chess", url: "/games/chess", icon: Crown },
-    ],
-  },
-  { title: "Dictionary", url: "/dictionary", icon: BookA },
-  { title: "Mon Language", url: "/mon-language", icon: Languages },
-  { title: "Announcements", url: "/announcements", icon: Megaphone },
-  { title: "My Timetable", url: "/timetable", icon: CalendarDays },
   {
     label: "My Learning",
     icon: GraduationCap,
     items: [
+      { title: "My Timetable", url: "/timetable", icon: CalendarDays },
       { title: "Homework", url: "/student/homework", icon: FileText },
       { title: "Exams", url: "/student/exams", icon: FileCheck },
       { title: "My Results", url: "/student/results", icon: GraduationCap },
@@ -269,6 +254,7 @@ export const STUDENT_NAV: AdminNavEntry[] = [
       { title: "Flashcards", url: "/student/flashcards", icon: Layers },
     ],
   },
+  { label: "Language Learning", icon: Languages, items: LANGUAGE_LEARNING_ITEMS },
   {
     label: "Resources",
     icon: Library,
@@ -278,9 +264,17 @@ export const STUDENT_NAV: AdminNavEntry[] = [
       { title: "Video Lessons", url: "/student/videos", icon: Video },
     ],
   },
-  { title: "My Profile", url: "/student/profile", icon: UserSquare2 },
-  { title: "Account & Security", url: "/profile", icon: ShieldAlert },
-  { title: "About", url: "/about", icon: Info },
+  { label: "Games", icon: Gamepad2, items: GAME_ITEMS },
+  { label: "Community", icon: MessageSquare, items: COMMUNITY_ITEMS },
+  {
+    label: "My Account",
+    icon: UserSquare2,
+    items: [
+      { title: "My Profile", url: "/student/profile", icon: UserSquare2 },
+      { title: "Account & Security", url: "/profile", icon: ShieldAlert },
+      { title: "About", url: "/about", icon: Info },
+    ],
+  },
 ];
 
 /** Roles with a grouped sidebar; everyone else gets the flat list. */
@@ -361,7 +355,7 @@ export const NAVIGATION_ITEMS: NavItem[] = [
   {
     title: "Mon Language",
     url: "/mon-language",
-    icon: Languages,
+    icon: BookOpenText,
   },
   {
     title: "Students",

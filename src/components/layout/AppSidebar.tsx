@@ -183,6 +183,11 @@ export function AppSidebar() {
                               >
                                 <item.icon className="h-3.5 w-3.5" />
                                 <span className="text-sm font-medium">{item.title}</span>
+                                {navBadgeCount(item.url) > 0 && (
+                                  <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
+                                    {navBadgeCount(item.url) > 99 ? '99+' : navBadgeCount(item.url)}
+                                  </span>
+                                )}
                               </SidebarMenuSubButton>
                             </SidebarMenuSubItem>
                           ))}
