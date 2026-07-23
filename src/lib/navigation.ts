@@ -40,6 +40,7 @@ import {
   Info,
   Target,
   Map,
+  Ghost,
 } from "lucide-react";
 import { UserRole } from "./permissions";
 
@@ -89,6 +90,7 @@ const GAME_ITEMS: NavGroupItem[] = [
   { title: "Sudoku", url: "/games/sudoku", icon: Grid3x3 },
   { title: "Checkers", url: "/games/checkers", icon: Dice5 },
   { title: "Chess", url: "/games/chess", icon: Crown },
+  { title: "Pac-Man", url: "/games/pacman", icon: Ghost },
 ];
 
 const LEARNER_GAME_ITEMS: NavGroupItem[] = [
@@ -370,6 +372,11 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     title: "Chess",
     url: "/games/chess",
     icon: Crown,
+  },
+  {
+    title: "Pac-Man",
+    url: "/games/pacman",
+    icon: Ghost,
   },
   {
     title: "Dictionary",

@@ -188,6 +188,8 @@ const ChessSelectPage = lazy(() => import("./pages/games/chess/index"));
 const ChessPlayPage = lazy(() => import("./pages/games/chess/PlayPage"));
 const ChessLobbyPage = lazy(() => import("./pages/games/chess/Lobby"));
 const ChessLeaderboardPage = lazy(() => import("./pages/games/chess/Leaderboard"));
+const PacmanSelectPage = lazy(() => import("./pages/games/pacman/index"));
+const PacmanPlayPage = lazy(() => import("./pages/games/pacman/PlayPage"));
 const LanguageQuestHome = lazy(() => import("./pages/games/language-quest/LanguageQuestHome"));
 const LanguageQuestCourse = lazy(() => import("./pages/games/language-quest/LanguageQuestCourse"));
 const LanguageQuestLesson = lazy(() => import("./pages/games/language-quest/LanguageQuestLesson"));
@@ -369,6 +371,9 @@ export default function App() {
                 <Route path="/games/chess/play" element={<ChessPlayPage />} />
                 <Route path="/games/chess/lobby" element={<ChessLobbyPage />} />
                 <Route path="/games/chess/leaderboard" element={<ChessLeaderboardPage />} />
+
+                <Route path="/games/pacman" element={<PacmanSelectPage />} />
+                <Route path="/games/pacman/play" element={<PacmanPlayPage />} />
 
                 <Route path="/games/language-quest" element={<LanguageQuestHome />} />
                 <Route path="/games/language-quest/courses/:courseId" element={<LanguageQuestCourse />} />
