@@ -4,8 +4,18 @@
 
 MRLC Language Quest was informed by the concepts and interface patterns in
 [`sanidhyy/duolingo-clone`](https://github.com/sanidhyy/duolingo-clone).
-The LMS implementation uses its own Express/Prisma backend, authentication,
-course editor, learner UI, and original starter content.
+The Spanish Foundations course adapts the Spanish seed curriculum from
+[`TaoMonLae/duolingo-clone`](https://github.com/TaoMonLae/duolingo-clone),
+including its two-unit lesson structure and vocabulary challenges. The LMS
+implementation uses its own Express/Prisma backend, authentication, course
+editor, learner UI, progress model, emoji visuals, and browser speech support.
+
+## School-provided Mandarin curriculum
+
+The Mandarin Complete Course is generated from `duolingo-chinese.md`, supplied
+to the project by its owner. The source file does not include a license notice.
+Confirm the curriculum's redistribution rights before distributing it outside
+the school's authorized use.
 
 MIT License
 

@@ -15,13 +15,31 @@ interface AnswerResult {
   profile: LanguageQuestProfile;
 }
 
-function speak(value: string) {
+function speechLocale(language: string): string {
+  const locales: Record<string, string> = {
+    english: 'en-US',
+    spanish: 'es-ES',
+    chinese: 'zh-CN',
+    mandarin: 'zh-CN',
+    'mandarin chinese': 'zh-CN',
+    burmese: 'my-MM',
+    myanmar: 'my-MM',
+    mon: 'mnw-MM',
+    french: 'fr-FR',
+    italian: 'it-IT',
+    japanese: 'ja-JP',
+  };
+  return locales[language.trim().toLowerCase()] || language;
+}
+
+function speak(value: string, language: string) {
   if (!('speechSynthesis' in window)) {
     toast.info('Speech is not supported by this browser');
     return;
   }
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(value);
+  utterance.lang = speechLocale(language);
   utterance.rate = 0.88;
   utterance.pitch = 1;
   window.speechSynthesis.speak(utterance);
@@ -138,7 +156,7 @@ export default function LanguageQuestLesson() {
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-violet-600">{lesson.title} • {index + 1} of {lesson.challenges.length}</p>
         <div className="mt-3 flex items-start justify-between gap-4">
           <h1 className="max-w-2xl text-2xl font-black leading-tight text-slate-900 dark:text-white sm:text-3xl">{challenge.question}</h1>
-          <Button variant="outline" size="icon" className="shrink-0 rounded-full" onClick={() => speak(challenge.question)} aria-label="Read question aloud">
+          <Button variant="outline" size="icon" className="shrink-0 rounded-full" onClick={() => speak(challenge.question, 'English')} aria-label="Read question aloud">
             <Volume2 className="h-4 w-4" />
           </Button>
         </div>
@@ -172,7 +190,7 @@ export default function LanguageQuestLesson() {
                   <button
                     type="button"
                     className="absolute right-3 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-violet-600 dark:hover:bg-surface-raised"
-                    onClick={() => speak(option.audioText || option.text)}
+                    onClick={() => speak(option.audioText || option.text, lesson.course.language)}
                     aria-label={`Listen to ${option.text}`}
                   >
                     <Volume2 className="h-4 w-4" />

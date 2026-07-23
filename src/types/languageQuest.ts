@@ -46,7 +46,7 @@ export interface LanguageQuestLessonPayload {
   id: string;
   title: string;
   description: string | null;
-  course: { id: string; title: string; accentColor: string };
+  course: { id: string; title: string; language: string; accentColor: string };
   profile: LanguageQuestProfile;
   challenges: LanguageQuestChallenge[];
 }

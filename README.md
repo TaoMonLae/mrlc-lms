@@ -17,6 +17,10 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 - Teacher and administrator Course Studio for creating courses, units, lessons, and multiple challenge types, with draft and published states.
 - Server-verified answers and rewards prevent clients from awarding their own points or lesson completion.
 - Includes an original Everyday English starter course with two units, four lessons, and twelve challenges, provisioned when Language Quest is first opened.
+- Includes the linked source repository's Spanish course as **Spanish Foundations**, with two units, ten lessons, and eighty visual or speech-assisted challenges.
+- Includes an original **Mandarin Foundations** course with three units, nine lessons, and thirty-six speech-assisted challenges covering beginner conversations and daily life.
+- Converts the school-provided `duolingo-chinese.md` curriculum into **Mandarin Complete Course**, preserving all seventy topics and 1,870 translation pairs across seven units and seventy-one LMS-safe lessons.
+- Run `npm run generate:language-quest-chinese` after editing the Markdown source to rebuild the generated course data.
 
 ### Flashcards
 
@@ -464,7 +468,7 @@ Confirm `DATABASE_URL`, `SESSION_SECRET`, `APP_URL`, port availability, and writ
 
 ## Notable third-party data and acknowledgments
 
-- Language Quest was informed by the concepts and interface patterns in [sanidhyy/duolingo-clone](https://github.com/sanidhyy/duolingo-clone), licensed under MIT. The complete attribution and license text are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+- Language Quest was informed by the concepts and interface patterns in [sanidhyy/duolingo-clone](https://github.com/sanidhyy/duolingo-clone), licensed under MIT. Its Spanish seed curriculum was adapted from [TaoMonLae/duolingo-clone](https://github.com/TaoMonLae/duolingo-clone). The complete attribution and license text are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 - Sudoku is adapted from [super-sudoku](https://github.com/TN1ck/super-sudoku) by Tom Nick under the MIT License.
 - English definitions use [WordPOS](https://github.com/moos/wordpos) and Princeton WordNet 3.1.
 - English-to-Myanmar translations originate from the ornagai/MZ dictionary dataset; its data license is not independently verifiable, so it is retained for internal, non-commercial school use with provenance documented in `prisma/seedEnMyDictionary.ts`.

@@ -9,6 +9,7 @@
     "seed": "tsx prisma/seed.ts",
     "seed:en-my-dictionary": "tsx prisma/seedEnMyDictionary.ts",
     "seed:mon-dictionary": "tsx prisma/seedMonDictionary.ts",
+    "generate:language-quest-chinese": "node scripts/generate-language-quest-chinese-course.mjs",
     "smoke": "node scripts/smoke-test.mjs",
     "test": "npm run test:unit",
     "test:unit": "node --import tsx --test tests/unit/*.test.ts",

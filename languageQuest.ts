@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import express from "express";
 import {
   LANGUAGE_QUEST_FIRST_CLEAR_POINTS,
@@ -6,6 +7,9 @@ import {
   languageQuestDayKey,
   nextLanguageQuestStreak,
 } from "./shared/languageQuest";
+import { importedSpanishCourse, type OfficialLanguageQuestCourse } from "./languageQuestImportedCourses";
+import { mandarinFoundationsCourse } from "./languageQuestMandarinCourse";
+import { completeMandarinCourse } from "./languageQuestCompleteMandarinCourse";
 
 interface JwtPayload { userId: string; role: string; email: string; }
 
@@ -257,48 +261,75 @@ function normalizeCourseDraft(raw: any): { value?: CourseDraft; error?: string }
   return { value: { title, description, language, imageEmoji, accentColor, published, units } };
 }
 
-async function ensureStarterCourse(prisma: any): Promise<any> {
-  const existing = await prisma.languageQuestCourse.findUnique({ where: { code: STARTER_COURSE_CODE } });
+async function ensureOfficialCourse(prisma: any, course: OfficialLanguageQuestCourse): Promise<any> {
+  const existing = await prisma.languageQuestCourse.findUnique({ where: { code: course.code } });
   if (existing) return existing;
   try {
-    return await prisma.languageQuestCourse.create({
-      data: {
-        code: STARTER_COURSE_CODE,
-        title: "Everyday English",
-        description: "Short, practical lessons for friendly conversations and school life.",
-        language: "English",
-        imageEmoji: "🗣️",
-        accentColor: "#7c3aed",
-        published: true,
-        units: {
-          create: starterUnits.map((unit, unitOrder) => ({
-            title: unit.title,
-            description: unit.description,
-            order: unitOrder,
-            lessons: {
-              create: unit.lessons.map((lesson, lessonOrder) => ({
-                title: lesson.title,
-                description: lesson.description,
-                order: lessonOrder,
-                challenges: {
-                  create: lesson.challenges.map((challenge, challengeOrder) => ({
-                    type: "SELECT",
-                    question: challenge.question,
-                    order: challengeOrder,
-                    options: {
-                      create: challenge.options.map((option, optionOrder) => ({ ...option, order: optionOrder })),
-                    },
-                  })),
-                },
-              })),
-            },
-          })),
+    return await prisma.$transaction(async (tx: any) => {
+      const created = await tx.languageQuestCourse.create({
+        data: {
+          code: course.code,
+          title: course.title,
+          description: course.description,
+          language: course.language,
+          imageEmoji: course.imageEmoji,
+          accentColor: course.accentColor,
+          published: course.published,
         },
-      },
-    });
+      });
+      const units: any[] = [];
+      const lessons: any[] = [];
+      const challenges: any[] = [];
+      const options: any[] = [];
+
+      course.units.forEach((unit, unitOrder) => {
+        const unitId = randomUUID();
+        units.push({ id: unitId, courseId: created.id, title: unit.title, description: unit.description, order: unitOrder });
+        unit.lessons.forEach((lesson, lessonOrder) => {
+          const lessonId = randomUUID();
+          lessons.push({ id: lessonId, unitId, title: lesson.title, description: lesson.description, order: lessonOrder });
+          lesson.challenges.forEach((challenge, challengeOrder) => {
+            const challengeId = randomUUID();
+            challenges.push({ id: challengeId, lessonId, type: challenge.type, question: challenge.question, order: challengeOrder });
+            challenge.options.forEach((option, optionOrder) => {
+              options.push({ id: randomUUID(), challengeId, ...option, order: optionOrder });
+            });
+          });
+        });
+      });
+
+      if (units.length) await tx.languageQuestUnit.createMany({ data: units });
+      if (lessons.length) await tx.languageQuestLesson.createMany({ data: lessons });
+      if (challenges.length) await tx.languageQuestChallenge.createMany({ data: challenges });
+      if (options.length) await tx.languageQuestOption.createMany({ data: options });
+      return created;
+    }, { maxWait: 10_000, timeout: 120_000 });
   } catch (error: any) {
-    if (error?.code === "P2002") return prisma.languageQuestCourse.findUnique({ where: { code: STARTER_COURSE_CODE } });
+    if (error?.code === "P2002") return prisma.languageQuestCourse.findUnique({ where: { code: course.code } });
     throw error;
+  }
+}
+
+const starterCourse: OfficialLanguageQuestCourse = {
+  code: STARTER_COURSE_CODE,
+  title: "Everyday English",
+  description: "Short, practical lessons for friendly conversations and school life.",
+  language: "English",
+  imageEmoji: "🗣️",
+  accentColor: "#7c3aed",
+  published: true,
+  units: starterUnits.map((unit) => ({
+    ...unit,
+    lessons: unit.lessons.map((lesson) => ({
+      ...lesson,
+      challenges: lesson.challenges.map((challenge) => ({ type: "SELECT" as const, ...challenge })),
+    })),
+  })),
+};
+
+async function ensureOfficialCourses(prisma: any): Promise<void> {
+  for (const course of [starterCourse, importedSpanishCourse, mandarinFoundationsCourse, completeMandarinCourse]) {
+    await ensureOfficialCourse(prisma, course);
   }
 }
 
@@ -348,7 +379,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
   app.get("/api/language-quest/overview", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
-      await ensureStarterCourse(prisma);
+      await ensureOfficialCourses(prisma);
       const [progress, courses, completedRows] = await Promise.all([
         getProgress(prisma, jwtUser.userId),
         prisma.languageQuestCourse.findMany({
@@ -484,7 +515,12 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       const progress = await getProgress(prisma, jwtUser.userId);
       res.json({
         id: lesson.id, title: lesson.title, description: lesson.description,
-        course: { id: lesson.unit.course.id, title: lesson.unit.course.title, accentColor: lesson.unit.course.accentColor },
+        course: {
+          id: lesson.unit.course.id,
+          title: lesson.unit.course.title,
+          language: lesson.unit.course.language,
+          accentColor: lesson.unit.course.accentColor,
+        },
         profile: profileJson(progress),
         challenges: lesson.challenges.map((challenge: any) => ({
           id: challenge.id, type: challenge.type, question: challenge.question,
@@ -602,7 +638,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
     const jwtUser = (req as any).user as JwtPayload;
     if (!isManager(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
     try {
-      await ensureStarterCourse(prisma);
+      await ensureOfficialCourses(prisma);
       const courses = await prisma.languageQuestCourse.findMany({
         where: jwtUser.role === "ADMIN" ? {} : { createdById: jwtUser.userId },
         orderBy: { updatedAt: "desc" },
@@ -778,7 +814,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
     try {
       const course = await prisma.languageQuestCourse.findUnique({ where: { id: req.params.id } });
       if (!course) { res.status(404).json({ error: "Course not found" }); return; }
-      if (course.createdById === null) { res.status(400).json({ error: "The official starter course cannot be deleted" }); return; }
+      if (course.createdById === null) { res.status(400).json({ error: "Official courses cannot be deleted" }); return; }
       if (jwtUser.role !== "ADMIN" && course.createdById !== jwtUser.userId) { res.status(403).json({ error: "You can only delete courses you created" }); return; }
       await prisma.languageQuestCourse.delete({ where: { id: course.id } });
       await createAuditLog(jwtUser.userId, jwtUser.email, "DELETE", "LANGUAGE_QUEST_COURSE", course.id, `Deleted Language Quest course “${course.title}”`, req.ip || null, req.headers["user-agent"] || null, "WARNING");

@@ -16,7 +16,7 @@ const CREDITS: { title: string; description: string; icon: any }[] = [
   {
     title: "Language Quest",
     description:
-      "An original LMS-native learning experience inspired by Sanidhya Kumar Verma's MIT-licensed Lingo project, rebuilt for MRLC accounts, courses, and reporting.",
+      "An LMS-native learning experience inspired by Sanidhya Kumar Verma's MIT-licensed Lingo project, with its Spanish seed course adapted for MRLC accounts, progress, and reporting.",
     icon: Languages,
   },
   {
