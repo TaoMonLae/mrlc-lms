@@ -249,6 +249,7 @@ const BookDetail = lazy(() => import("./pages/books/BookDetail"));
 const BookEdit = lazy(() => import("./pages/books/BookEdit"));
 
 const UnauthorizedPage = lazy(() => import("./pages/Unauthorized"));
+const NotFoundPage = lazy(() => import("./pages/NotFound"));
 
 import { ThemeProvider } from "./components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -637,7 +638,7 @@ export default function App() {
               </Route>
             </Route>
             
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
           </Suspense>
           <Toaster position="top-right" closeButton richColors />
