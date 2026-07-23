@@ -172,6 +172,37 @@ test("a student login without a student profile is not exempted from controls", 
   assert.equal(access.code, "BLOCKED");
 });
 
+test("a missing game-control migration does not block gameplay", async () => {
+  const missingTableError = Object.assign(new Error("The table `public.GameControlPolicy` does not exist"), {
+    code: "P2021",
+  });
+  const prisma = {
+    user: {
+      findUnique: async () => ({
+        id: "user-1",
+        role: "STUDENT",
+        isActive: true,
+        studentProfile: { id: "student-1", classId: "class-1" },
+      }),
+    },
+    gameControlPolicy: {
+      findMany: async () => {
+        throw missingTableError;
+      },
+    },
+    schoolProfile: {
+      findFirst: async () => {
+        throw new Error("must not query usage tables when the feature is unprovisioned");
+      },
+    },
+  };
+
+  const access = await evaluateStudentGameAccess(prisma, "user-1", "PACMAN");
+  assert.equal(access.allowed, true);
+  assert.equal(access.exempt, false);
+  assert.equal(access.managed, false);
+});
+
 test("server-backed games do not require a tracking session for unmanaged students", async () => {
   const prisma = {
     user: {

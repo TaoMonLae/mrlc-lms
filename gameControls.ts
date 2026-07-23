@@ -135,10 +135,26 @@ export async function evaluateStudentGameAccess(
     };
   }
 
-  const policies = applicableGamePolicies(
-    await policiesForStudent(prisma, user.studentProfile),
-    gameKey,
-  );
+  let rawPolicies;
+  try {
+    rawPolicies = await policiesForStudent(prisma, user.studentProfile);
+  } catch (error) {
+    // The game-control tables (GameControlPolicy/GamePlaySession/GameDailyUsage)
+    // ship in their own migration. If a deployment installs this feature's
+    // code before running `prisma migrate deploy`, every game would
+    // otherwise become unplayable for every student the moment this query
+    // runs. Treat "the feature isn't provisioned yet" the same as "no
+    // policy has been configured" instead of hard-blocking gameplay.
+    if (databaseUnavailable(error)) {
+      return {
+        ...resolveGameAccess({ policies: [], gameKey, now }),
+        exempt: false,
+        managed: false,
+      };
+    }
+    throw error;
+  }
+  const policies = applicableGamePolicies(rawPolicies, gameKey);
   // Most students have no game policy. Avoid creating play sessions and
   // querying usage history until a teacher/admin actually enables controls.
   // Besides reducing five database reads per page load, this keeps unmanaged
