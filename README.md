@@ -30,7 +30,7 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 
 - Replaces the old Classic Snake mode with an authenticated, real-time 3D neon arena at `/games/snake/play?mode=classic`.
 - LMS display names appear in the live leaderboard while Socket.IO synchronizes players and collectible energy orbs.
-- Keyboard and large touch controls support desktop, tablet, and phone play; boost consumes length for a tactical speed advantage.
+- Keyboard, swipe gestures, large on-screen touch controls, and an in-arena Full Screen mode support desktop, tablet, and phone play; boost consumes length for a tactical speed advantage.
 - Completed Student runs continue to feed the existing Classic Snake score history and class leaderboard.
 - Vocabulary Snake remains available as the learning-focused alternative.
 

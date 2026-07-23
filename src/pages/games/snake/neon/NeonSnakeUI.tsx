@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Radio, Trophy, WifiOff, Zap } from "lucide-react";
+import { Maximize2, Minimize2, Radio, Trophy, WifiOff, Zap } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { apiSend } from "@/src/lib/api";
 import {
@@ -43,7 +43,19 @@ function ControlButton({
   );
 }
 
-export function NeonSnakeUI() {
+type NeonSnakeUIProps = {
+  fullscreenSupported: boolean;
+  isFullscreen: boolean;
+  fullscreenError: string | null;
+  onToggleFullscreen: () => void;
+};
+
+export function NeonSnakeUI({
+  fullscreenSupported,
+  isFullscreen,
+  fullscreenError,
+  onToggleFullscreen,
+}: NeonSnakeUIProps) {
   const {
     gameState,
     playerId,
@@ -106,9 +118,14 @@ export function NeonSnakeUI() {
             )}
           </div>
           {isAlive ? (
-            <div className="mt-2 font-mono text-lg font-bold text-white/90">
-              Length {Math.floor(player.score)}
-            </div>
+            <>
+              <div className="mt-2 font-mono text-lg font-bold text-white/90">
+                Length {Math.floor(player.score)}
+              </div>
+              <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-cyan-100/65 md:hidden">
+                Swipe left/right to steer · Swipe up to boost
+              </p>
+            </>
           ) : null}
         </div>
 
@@ -120,7 +137,28 @@ export function NeonSnakeUI() {
             Space to boost
           </div>
         </div>
+
+        {fullscreenSupported ? (
+          <button
+            type="button"
+            onClick={onToggleFullscreen}
+            aria-label={isFullscreen ? "Exit Full Screen" : "Enter Full Screen"}
+            title={isFullscreen ? "Exit Full Screen (Esc)" : "Enter Full Screen"}
+            className="pointer-events-auto relative z-30 ml-auto flex min-h-11 items-center gap-2 rounded-xl border border-white/15 bg-black/50 px-3 text-xs font-bold text-white shadow-lg backdrop-blur-md transition hover:border-cyan-300/50 hover:bg-cyan-400/15 active:scale-95"
+          >
+            {isFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+            <span className="hidden sm:inline">
+              {isFullscreen ? "Exit Full Screen" : "Full Screen"}
+            </span>
+          </button>
+        ) : null}
       </div>
+
+      {fullscreenError ? (
+        <p className="pointer-events-none absolute left-1/2 top-20 z-40 -translate-x-1/2 rounded-xl border border-rose-300/20 bg-rose-950/90 px-4 py-2 text-center text-xs font-semibold text-rose-100 shadow-lg">
+          {fullscreenError}
+        </p>
+      ) : null}
 
       {gameState?.leaderboard.length ? (
         <section
@@ -145,7 +183,7 @@ export function NeonSnakeUI() {
       ) : null}
 
       {!player || isDead ? (
-        <div className="pointer-events-auto absolute inset-0 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div className="pointer-events-auto absolute inset-0 z-20 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-3xl border border-white/10 bg-zinc-950/90 p-6 text-center shadow-2xl sm:p-8">
             {isDead ? (
               <>
