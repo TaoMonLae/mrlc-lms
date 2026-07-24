@@ -57,17 +57,24 @@ export function registerCheckersGameRoutes({
 
       // Fill the remainder from the dictionary, skipping any words already
       // supplied by staff (case-insensitive) so definitions don't collide.
+      // Sample from a random window so students don't always see the same A-words.
       const remaining = Math.max(0, take - customWords.length);
       let dictWords: Array<Record<string, unknown>> = [];
       if (remaining > 0) {
+        const totalDict = await prisma.enMyDictionaryEntry.count();
+        const sampleSize = Math.min(totalDict, Math.max(remaining * 8, 80));
+        const maxSkip = Math.max(0, totalDict - sampleSize);
+        const skip = maxSkip > 0 ? Math.floor(Math.random() * (maxSkip + 1)) : 0;
         const dict = await prisma.enMyDictionaryEntry.findMany({
-          take: remaining + customWords.length + 20,
+          skip,
+          take: sampleSize,
           orderBy: { wordLower: "asc" },
           select: { id: true, word: true, pos: true, definition: true },
         });
         const customLower = new Set(customWords.map((w) => w.word.toLowerCase()));
-        dictWords = dict
-          .filter((d) => !customLower.has(d.word.toLowerCase()))
+        dictWords = shuffle(
+          dict.filter((d) => !customLower.has(d.word.toLowerCase()) && d.definition?.trim()),
+        )
           .slice(0, remaining)
           .map((d) => ({
             id: d.id,
@@ -297,11 +304,13 @@ export function registerCheckersGameRoutes({
         });
       }
 
-      // Check if this is a high score (for the same game mode)
+      // Check if this is a high score (for the same game mode). Forfeits never
+      // count as a personal best even if the student has no other games yet.
       const existingHighScore = await prisma.checkerGameScore.findFirst({
         where: {
           studentId: student.id,
           gameMode: validatedData.gameMode,
+          result: { notIn: ["ABANDONED", "PLAYING"] },
         },
         orderBy: {
           score: "desc",
@@ -309,33 +318,51 @@ export function registerCheckersGameRoutes({
         take: 1,
       });
 
+      const isFinished =
+        validatedData.result === "WIN" ||
+        validatedData.result === "LOSE" ||
+        validatedData.result === "DRAW";
       const isNewHighScore =
-        !existingHighScore || validatedData.score > existingHighScore.score;
+        isFinished &&
+        (!existingHighScore || validatedData.score > existingHighScore.score);
 
-      // Save the score
-      const gameScore = await prisma.checkerGameScore.create({
-        data: {
-          studentId: student.id,
-          classId: student.classId,
-          className: student.class?.name || "Unknown",
-          result: validatedData.result,
-          score: validatedData.score,
-          highScore: isNewHighScore,
-          gameMode: validatedData.gameMode,
-          opponentType: validatedData.opponentType,
-          difficulty: validatedData.difficulty,
-          gameDuration: validatedData.gameDuration,
-          movesCount: validatedData.movesCount,
-          playerPiecesCaptured: validatedData.playerPiecesCaptured,
-          opponentPiecesCaptured: validatedData.opponentPiecesCaptured,
-          playerKingsEarned: validatedData.playerKingsEarned,
-          opponentKingsEarned: validatedData.opponentKingsEarned,
-          vocabularyWords: validatedData.vocabularyWords,
-          wordsList: validatedData.wordsList,
-          deviceInfo: validatedData.deviceInfo as any,
-          ipAddress: req.ip,
-          playedAt: new Date(),
-        },
+      // Keep a single current high-score flag per student + mode.
+      const gameScore = await prisma.$transaction(async (tx) => {
+        if (isNewHighScore) {
+          await tx.checkerGameScore.updateMany({
+            where: {
+              studentId: student.id,
+              gameMode: validatedData.gameMode,
+              highScore: true,
+            },
+            data: { highScore: false },
+          });
+        }
+
+        return tx.checkerGameScore.create({
+          data: {
+            studentId: student.id,
+            classId: student.classId,
+            className: student.class?.name || "Unknown",
+            result: validatedData.result,
+            score: validatedData.score,
+            highScore: isNewHighScore,
+            gameMode: validatedData.gameMode,
+            opponentType: validatedData.opponentType,
+            difficulty: validatedData.difficulty,
+            gameDuration: validatedData.gameDuration,
+            movesCount: validatedData.movesCount,
+            playerPiecesCaptured: validatedData.playerPiecesCaptured,
+            opponentPiecesCaptured: validatedData.opponentPiecesCaptured,
+            playerKingsEarned: validatedData.playerKingsEarned,
+            opponentKingsEarned: validatedData.opponentKingsEarned,
+            vocabularyWords: validatedData.vocabularyWords,
+            wordsList: validatedData.wordsList,
+            deviceInfo: validatedData.deviceInfo as any,
+            ipAddress: req.ip,
+            playedAt: new Date(),
+          },
+        });
       });
 
       res.json({
@@ -365,48 +392,68 @@ export function registerCheckersGameRoutes({
     }
   });
 
-  // Get leaderboard
-  router.get("/leaderboard", async (req: Request, res: Response) => {
+  // Get leaderboard — best score per student in the selected window.
+  // Auth required so we can mark the caller's row and optionally scope to their class.
+  router.get("/leaderboard", authMiddleware, async (req: Request, res: Response) => {
     try {
       const {
         timeRange = "WEEK",
         classId,
         gameMode = "CLASSIC",
+        scope = "all", // "all" | "class"
         limit = "20",
       } = req.query;
 
-      // Calculate date filter based on time range
+      const take = Math.min(Math.max(parseInt(limit as string, 10) || 20, 1), 50);
+
+      // Calculate date filter without mutating a shared Date (setHours/setDate would).
       const now = new Date();
       let startDate: Date;
-
       switch (timeRange) {
-        case "TODAY":
-          startDate = new Date(now.setHours(0, 0, 0, 0));
+        case "TODAY": {
+          startDate = new Date(now);
+          startDate.setHours(0, 0, 0, 0);
           break;
+        }
         case "WEEK":
-          startDate = new Date(now.setDate(now.getDate() - 7));
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
           break;
         case "MONTH":
-          startDate = new Date(now.setMonth(now.getMonth() - 1));
+          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
           break;
         case "ALL_TIME":
           startDate = new Date(0);
           break;
         default:
-          startDate = new Date(now.setDate(now.getDate() - 7));
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       }
 
-      // Get top scores (filtering out abandoned games)
+      // Resolve the current student when a Bearer token is present (route is public).
+      let currentStudentId: string | null = null;
+      let currentClassId: string | null = null;
+      const userId = (req as any).user?.userId as string | undefined;
+      if (userId) {
+        const student = await prisma.student.findUnique({
+          where: { userId },
+          select: { id: true, classId: true },
+        });
+        if (student) {
+          currentStudentId = student.id;
+          currentClassId = student.classId;
+        }
+      }
+
+      const scopedClassId =
+        (classId as string | undefined) ||
+        (scope === "class" && currentClassId ? currentClassId : undefined);
+
+      // Pull a larger window so we can collapse to one best row per student.
       const scores = await prisma.checkerGameScore.findMany({
         where: {
           gameMode: gameMode as string,
-          playedAt: {
-            gte: startDate,
-          },
-          result: {
-            not: "ABANDONED",
-          },
-          ...(classId && { classId: classId as string }),
+          playedAt: { gte: startDate },
+          result: { notIn: ["ABANDONED", "PLAYING"] },
+          ...(scopedClassId ? { classId: scopedClassId } : {}),
         },
         include: {
           student: {
@@ -425,32 +472,75 @@ export function registerCheckersGameRoutes({
         },
         orderBy: [
           { score: "desc" },
-          { gameDuration: "asc" }, // Tie-breaker: faster games rank higher
+          { gameDuration: "asc" },
         ],
-        take: parseInt(limit as string) || 20,
+        take: 300,
       });
 
-      // Format leaderboard entries
-      const leaderboard = scores.map((score, index) => ({
-        id: score.id,
-        rank: index + 1,
-        studentName:
-          score.student.preferredName ||
-          `${score.student.user.firstName} ${score.student.user.lastName}`,
-        studentCode: score.student.studentCode,
-        className: score.className,
-        score: score.score,
-        result: score.result,
-        gameDuration: score.gameDuration,
-        movesCount: score.movesCount,
-        playedAt: score.playedAt.toISOString(),
-        isCurrentUser: false,
-      }));
+      // One entry per student: highest score, then faster game as tie-break.
+      type ScoreRow = (typeof scores)[number];
+      const bestByStudent = new Map<string, ScoreRow>();
+      for (const score of scores) {
+        const existing = bestByStudent.get(score.studentId);
+        if (
+          !existing ||
+          score.score > existing.score ||
+          (score.score === existing.score && score.gameDuration < existing.gameDuration)
+        ) {
+          bestByStudent.set(score.studentId, score);
+        }
+      }
+
+      // Aggregate W/L/D for the same window so the board shows more than a single score.
+      const recordByStudent = new Map<string, { wins: number; losses: number; draws: number; games: number }>();
+      for (const score of scores) {
+        const rec = recordByStudent.get(score.studentId) ?? { wins: 0, losses: 0, draws: 0, games: 0 };
+        rec.games += 1;
+        if (score.result === "WIN") rec.wins += 1;
+        else if (score.result === "LOSE") rec.losses += 1;
+        else if (score.result === "DRAW") rec.draws += 1;
+        recordByStudent.set(score.studentId, rec);
+      }
+
+      const leaderboard = [...bestByStudent.values()]
+        .sort((a, b) => b.score - a.score || a.gameDuration - b.gameDuration)
+        .slice(0, take)
+        .map((score, index) => {
+          const record = recordByStudent.get(score.studentId) ?? {
+            wins: 0,
+            losses: 0,
+            draws: 0,
+            games: 0,
+          };
+          return {
+            id: score.id,
+            rank: index + 1,
+            studentName:
+              score.student.preferredName ||
+              `${score.student.user.firstName} ${score.student.user.lastName}`.trim(),
+            studentCode: score.student.studentCode,
+            className: score.className,
+            score: score.score,
+            result: score.result,
+            gameDuration: score.gameDuration,
+            movesCount: score.movesCount,
+            vocabularyWords: score.vocabularyWords,
+            difficulty: score.difficulty,
+            wins: record.wins,
+            losses: record.losses,
+            draws: record.draws,
+            games: record.games,
+            playedAt: score.playedAt.toISOString(),
+            isCurrentUser: currentStudentId !== null && score.studentId === currentStudentId,
+          };
+        });
 
       res.json({
         success: true,
         leaderboard,
         timeRange,
+        gameMode,
+        scope: scopedClassId ? "class" : "all",
         total: leaderboard.length,
       });
     } catch (error) {

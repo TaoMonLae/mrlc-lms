@@ -50,13 +50,22 @@ function PlayInner({ gameMode, opponentType, difficulty }: {
               {opponentType === "AI" ? `vs AI (${difficulty})` : "vs Human (Local)"}
             </p>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => navigate(-1)}
-            className="bg-gray-800/50 text-white border-gray-600 hover:bg-gray-700/50"
-          >
-            {"◀ Back"}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => navigate("/games/checkers?tab=leaderboard")}
+              className="bg-gray-800/50 text-white border-gray-600 hover:bg-gray-700/50"
+            >
+              Leaderboard
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => navigate("/games/checkers")}
+              className="bg-gray-800/50 text-white border-gray-600 hover:bg-gray-700/50"
+            >
+              {"◀ Back"}
+            </Button>
+          </div>
         </div>
         <CheckerGame
           gameMode={gameMode}

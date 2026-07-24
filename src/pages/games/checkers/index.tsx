@@ -7,17 +7,44 @@ import { Card } from "@/components/ui/card";
 import PixelBlast from "@/components/PixelBlast";
 import { useAuth } from "../../../providers/AuthProvider";
 import CheckerVocabularyManager from "./CheckerVocabularyManager";
-import { Dices, BookOpen, Bot, Users, Gamepad2, Check, type LucideIcon } from "lucide-react";
+import CheckersLeaderboard from "./Leaderboard";
+import {
+  Dices,
+  BookOpen,
+  Bot,
+  Users,
+  Gamepad2,
+  Check,
+  Trophy,
+  type LucideIcon,
+} from "lucide-react";
+
+type TabType = "play" | "leaderboard";
 
 function GameSelect() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const mode = searchParams.get("mode") || "classic";
+  const tabParam = searchParams.get("tab");
+  const activeTab: TabType = tabParam === "leaderboard" ? "leaderboard" : "play";
   const { user } = useAuth();
   const canManageVocab = user?.role === "ADMIN" || user?.role === "TEACHER";
   const [showVocabManager, setShowVocabManager] = React.useState(false);
 
-  const gameModes: { id: string; title: string; description: string; icon: LucideIcon; color: string }[] = [
+  const setTab = (tab: TabType) => {
+    const next = new URLSearchParams(searchParams);
+    if (tab === "play") next.delete("tab");
+    else next.set("tab", tab);
+    setSearchParams(next, { replace: true });
+  };
+
+  const gameModes: {
+    id: string;
+    title: string;
+    description: string;
+    icon: LucideIcon;
+    color: string;
+  }[] = [
     {
       id: "classic",
       title: "Classic Mode",
@@ -28,7 +55,7 @@ function GameSelect() {
     {
       id: "vocabulary",
       title: "Vocabulary Mode",
-      description: "Learn new words while you play! Each turn reveals a vocabulary word.",
+      description: "Answer definition quizzes to complete each move and learn new words.",
       icon: BookOpen,
       color: "from-emerald-500 to-teal-500",
     },
@@ -55,127 +82,171 @@ function GameSelect() {
 
   return (
     <div className="grid grid-cols-1 gap-6 max-w-4xl">
-      {/* Game Mode Selection */}
-      <div>
-        <h2 className="text-lg font-semibold mb-3 text-white/80">Select Game Mode</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {gameModes.map((gameMode) => (
-            <Card
-              key={gameMode.id}
-              className={`p-6 bg-gradient-to-br ${gameMode.color} border-2 cursor-pointer transition-all ${
-                mode === gameMode.id
-                  ? "border-white scale-105"
-                  : "border-white/20 hover:scale-105"
-              }`}
-              onClick={() => navigate(`/games/checkers?mode=${gameMode.id}`)}
-            >
-              <div className="flex flex-col gap-3">
-                <gameMode.icon className="h-9 w-9 text-white" />
-                <div>
-                  <h3 className="text-xl font-bold text-white">{gameMode.title}</h3>
-                  <p className="text-sm text-white/80 mt-1">{gameMode.description}</p>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
+      {/* Tabs */}
+      <div className="flex flex-wrap gap-2 border-b border-white/15 pb-1">
+        <Button
+          variant={activeTab === "play" ? "default" : "ghost"}
+          onClick={() => setTab("play")}
+          className={
+            activeTab === "play"
+              ? "rounded-b-none bg-red-600 hover:bg-red-500 text-white"
+              : "rounded-b-none text-white/80 hover:bg-white/10 hover:text-white"
+          }
+        >
+          <Gamepad2 className="size-4 mr-2" />
+          Play
+        </Button>
+        <Button
+          variant={activeTab === "leaderboard" ? "default" : "ghost"}
+          onClick={() => setTab("leaderboard")}
+          className={
+            activeTab === "leaderboard"
+              ? "rounded-b-none bg-amber-600 hover:bg-amber-500 text-white"
+              : "rounded-b-none text-white/80 hover:bg-white/10 hover:text-white"
+          }
+        >
+          <Trophy className="size-4 mr-2" />
+          Leaderboard
+        </Button>
       </div>
 
-      {/* Opponent & Difficulty Selection */}
-      <div className="bg-white/10 rounded-lg p-4 border border-white/20">
-        <h2 className="text-lg font-semibold mb-3 text-white">Game Settings</h2>
+      {activeTab === "leaderboard" && <CheckersLeaderboard />}
 
-        {/* Opponent Type */}
-        <div className="mb-4">
-          <label className="text-sm text-white/80 mb-2 block">Opponent</label>
-          <div className="flex gap-3">
-            <Button
-              variant={opponentType === "AI" ? "default" : "outline"}
-              onClick={() => setOpponentType("AI")}
-              className={opponentType === "AI" ? "bg-purple-500" : "bg-white/10 text-white border-white/30"}
-            >
-              <Bot className="h-4 w-4 mr-2" /> AI Opponent
-            </Button>
-            <Button
-              variant={opponentType === "HUMAN" ? "default" : "outline"}
-              onClick={() => setOpponentType("HUMAN")}
-              className={opponentType === "HUMAN" ? "bg-purple-500" : "bg-white/10 text-white border-white/30"}
-            >
-              <Users className="h-4 w-4 mr-2" /> Human (Local)
-            </Button>
-          </div>
-        </div>
-
-        {/* Difficulty (AI only) */}
-        {opponentType === "AI" && (
+      {activeTab === "play" && (
+        <>
+          {/* Game Mode Selection */}
           <div>
-            <label className="text-sm text-white/80 mb-2 block">AI Difficulty</label>
-            <div className="grid grid-cols-3 gap-2">
-              {difficulties.map((diff) => (
-                <Button
-                  key={diff.id}
-                  variant={difficulty === diff.id ? "default" : "outline"}
-                  onClick={() => setDifficulty(diff.id as any)}
-                  className={
-                    difficulty === diff.id
-                      ? "bg-orange-500"
-                      : "bg-white/10 text-white border-white/30 text-sm"
-                  }
+            <h2 className="text-lg font-semibold mb-3 text-white/80">Select Game Mode</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {gameModes.map((gameMode) => (
+                <Card
+                  key={gameMode.id}
+                  className={`p-6 bg-gradient-to-br ${gameMode.color} border-2 cursor-pointer transition-all ${
+                    mode === gameMode.id
+                      ? "border-white scale-105"
+                      : "border-white/20 hover:scale-105"
+                  }`}
+                  onClick={() => navigate(`/games/checkers?mode=${gameMode.id}`)}
                 >
-                  {diff.label}
-                </Button>
+                  <div className="flex flex-col gap-3">
+                    <gameMode.icon className="h-9 w-9 text-white" />
+                    <div>
+                      <h3 className="text-xl font-bold text-white">{gameMode.title}</h3>
+                      <p className="text-sm text-white/80 mt-1">{gameMode.description}</p>
+                    </div>
+                  </div>
+                </Card>
               ))}
             </div>
-            <p className="text-xs text-white/60 mt-2">
-              {difficulties.find((d) => d.id === difficulty)?.description}
-            </p>
           </div>
-        )}
-      </div>
 
-      {/* Start Button */}
-      <Button
-        onClick={startGame}
-        size="lg"
-        className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold text-lg py-6"
-      >
-        <Gamepad2 className="h-5 w-5 mr-2" /> Start Game
-      </Button>
+          {/* Opponent & Difficulty Selection */}
+          <div className="bg-white/10 rounded-lg p-4 border border-white/20">
+            <h2 className="text-lg font-semibold mb-3 text-white">Game Settings</h2>
 
-      {/* Features Info */}
-      <div className="bg-white/5 rounded-lg p-4 border border-white/10">
-        <h3 className="text-sm font-semibold text-white mb-2">Game Features</h3>
-        <ul className="text-xs text-white/70 space-y-1.5">
-          {[
-            "Undo moves to fix mistakes",
-            "Sound effects (can be muted)",
-            "AI opponent with 3 difficulty levels",
-            "Full checkers rules (forced jumps, multi-jumps, kings)",
-            "Vocabulary mode - learn words while playing!",
-          ].map((feature) => (
-            <li key={feature} className="flex items-center gap-2">
-              <Check className="h-3.5 w-3.5 shrink-0 text-emerald-400" /> {feature}
-            </li>
-          ))}
-        </ul>
-      </div>
+            {/* Opponent Type */}
+            <div className="mb-4">
+              <label className="text-sm text-white/80 mb-2 block">Opponent</label>
+              <div className="flex gap-3 flex-wrap">
+                <Button
+                  variant={opponentType === "AI" ? "default" : "outline"}
+                  onClick={() => setOpponentType("AI")}
+                  className={
+                    opponentType === "AI"
+                      ? "bg-purple-500"
+                      : "bg-white/10 text-white border-white/30"
+                  }
+                >
+                  <Bot className="h-4 w-4 mr-2" /> AI Opponent
+                </Button>
+                <Button
+                  variant={opponentType === "HUMAN" ? "default" : "outline"}
+                  onClick={() => setOpponentType("HUMAN")}
+                  className={
+                    opponentType === "HUMAN"
+                      ? "bg-purple-500"
+                      : "bg-white/10 text-white border-white/30"
+                  }
+                >
+                  <Users className="h-4 w-4 mr-2" /> Human (Local)
+                </Button>
+              </div>
+            </div>
 
-      {/* Vocabulary management (teachers/admins only) */}
-      {canManageVocab && (
-        <div>
+            {/* Difficulty (AI only) */}
+            {opponentType === "AI" && (
+              <div>
+                <label className="text-sm text-white/80 mb-2 block">AI Difficulty</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {difficulties.map((diff) => (
+                    <Button
+                      key={diff.id}
+                      variant={difficulty === diff.id ? "default" : "outline"}
+                      onClick={() => setDifficulty(diff.id as "EASY" | "MEDIUM" | "HARD")}
+                      className={
+                        difficulty === diff.id
+                          ? "bg-orange-500"
+                          : "bg-white/10 text-white border-white/30 text-sm"
+                      }
+                    >
+                      {diff.label}
+                    </Button>
+                  ))}
+                </div>
+                <p className="text-xs text-white/60 mt-2">
+                  {difficulties.find((d) => d.id === difficulty)?.description}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Start Button */}
           <Button
-            variant="outline"
-            onClick={() => setShowVocabManager((s) => !s)}
-            className="bg-white/10 text-white border-white/30 hover:bg-white/20"
+            onClick={startGame}
+            size="lg"
+            className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold text-lg py-6"
           >
-            <BookOpen className="h-4 w-4 mr-2" /> {showVocabManager ? "Hide" : "Manage"} Vocabulary
+            <Gamepad2 className="h-5 w-5 mr-2" /> Start Game
           </Button>
-          {showVocabManager && (
-            <div className="mt-3">
-              <CheckerVocabularyManager />
+
+          {/* Features Info */}
+          <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+            <h3 className="text-sm font-semibold text-white mb-2">Game Features</h3>
+            <ul className="text-xs text-white/70 space-y-1.5">
+              {[
+                "Undo moves to fix mistakes",
+                "Sound effects (can be muted)",
+                "AI opponent with 3 difficulty levels",
+                "Full checkers rules (forced jumps, multi-jumps, kings)",
+                "Vocabulary mode — answer quizzes to complete moves",
+                "Class & school leaderboards for wins and high scores",
+              ].map((feature) => (
+                <li key={feature} className="flex items-center gap-2">
+                  <Check className="h-3.5 w-3.5 shrink-0 text-emerald-400" /> {feature}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Vocabulary management (teachers/admins only) */}
+          {canManageVocab && (
+            <div>
+              <Button
+                variant="outline"
+                onClick={() => setShowVocabManager((s) => !s)}
+                className="bg-white/10 text-white border-white/30 hover:bg-white/20"
+              >
+                <BookOpen className="h-4 w-4 mr-2" />{" "}
+                {showVocabManager ? "Hide" : "Manage"} Vocabulary
+              </Button>
+              {showVocabManager && (
+                <div className="mt-3">
+                  <CheckerVocabularyManager />
+                </div>
+              )}
             </div>
           )}
-        </div>
+        </>
       )}
     </div>
   );
@@ -224,7 +295,7 @@ function CheckersSelectInner() {
             </Button>
           </div>
           <p className="text-gray-300">
-            Classic board game with AI opponent and vocabulary learning!
+            Classic board game with AI, vocabulary learning, and class leaderboards!
           </p>
         </div>
         <GameSelect />

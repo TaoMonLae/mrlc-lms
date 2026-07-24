@@ -206,7 +206,8 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
   const [redKings, setRedKings] = React.useState(0);
   const [blackKings, setBlackKings] = React.useState(0);
   const [movesCount, setMovesCount] = React.useState(0);
-  const [gameStartTime] = React.useState(Date.now());
+  const [lastSavedScore, setLastSavedScore] = React.useState<number | null>(null);
+  const [isNewHighScore, setIsNewHighScore] = React.useState(false);
 
   // Game settings
   const [opponentType, setOpponentType] = React.useState<OpponentType>(initialOpponentType);
@@ -246,6 +247,16 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
   // A capture chain is one turn. This keeps Undo/history and the move counter
   // at turn granularity even when a king makes several jumps.
   const jumpInProgressRef = React.useRef(false);
+  // Prevent double-posting the same finished game (win effect + forfeit, or remount).
+  const scoreSavedRef = React.useRef(false);
+  // Live counters for scoring without waiting on React state flush.
+  const redPiecesRef = React.useRef(12);
+  const blackPiecesRef = React.useRef(12);
+  const redKingsRef = React.useRef(0);
+  const blackKingsRef = React.useRef(0);
+  const movesCountRef = React.useRef(0);
+  const wordsLearnedRef = React.useRef<string[]>([]);
+  const gameStartTimeRef = React.useRef(Date.now());
 
   // Initialize sound manager
   React.useEffect(() => {
@@ -297,7 +308,6 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
   // Initialize game - only run once on mount
   const hasInitialized = React.useRef(false);
   React.useEffect(() => {
-    console.log('[Init] useEffect running, hasInitialized:', hasInitialized.current);
     if (!hasInitialized.current) {
       hasInitialized.current = true;
       handleRestart();
@@ -425,27 +435,12 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
   );
 
   // Handle piece selection
-  const handlePieceClick = ( row: number, col: number) => {
-    const now = Date.now();
-    const timeSinceAITurnStarted = aiTurnStartRef.current > 0 ? now - aiTurnStartRef.current : Infinity;
-    console.log('[Click] handlePieceClick called - row:', row, 'col:', col, 'clicksEnabled:', clicksEnabledRef.current, 'timeSinceAITurnStarted:', timeSinceAITurnStarted);
-
+  const handlePieceClick = (row: number, col: number) => {
     // Block clicks if clicks are disabled (during AI turn and briefly after)
-    if (!clicksEnabledRef.current) {
-      console.log('[Click] BLOCKED - Clicks disabled during AI turn!');
-      return;
-    }
+    if (!clicksEnabledRef.current) return;
 
-    console.log('[Click] handlePieceClick called - row:', row, 'col:', col, 'winner:', winnerRef.current, 'isAIThinking:', isAIThinkingRef.current);
-
-    if (winnerRef.current || isAIThinkingRef.current) {
-      console.log('[Click] Blocked - game ended or AI thinking');
-      return;
-    }
-    if (opponentTypeRef.current === "AI" && currentPlayerRef.current === PLAYER_BLACK) {
-      console.log('[Click] Blocked - AI turn');
-      return;
-    }
+    if (winnerRef.current || isAIThinkingRef.current) return;
+    if (opponentTypeRef.current === "AI" && currentPlayerRef.current === PLAYER_BLACK) return;
 
     const currentBoard = boardRef.current;
     const piece = currentBoard[row][col].piece;
@@ -484,8 +479,6 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
     const opponentTypeValue = opponentTypeRef.current;
     const continuingJump = jumpInProgressRef.current;
 
-    console.log('[Move] executeMove called - isAI:', isAI, 'currentPlayer:', currentPlayerValue, 'opponentType:', opponentTypeValue);
-
     // Re-enable clicks when player makes a move
     if (!isAI) {
       aiTurnStartRef.current = 0;
@@ -516,7 +509,8 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
         move,
       };
       setHistory((prev) => [...prev, historyEntry]);
-      setMovesCount((prev) => prev + 1);
+      movesCountRef.current += 1;
+      setMovesCount(movesCountRef.current);
     }
 
     if (moveResult.captured) {
@@ -533,6 +527,10 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
     boardRef.current = newBoard;
     // Update piece counts (recalculate from new board)
     const newCounts = countPieces(newBoard);
+    redPiecesRef.current = newCounts.red;
+    blackPiecesRef.current = newCounts.black;
+    redKingsRef.current = newCounts.redKingsCount;
+    blackKingsRef.current = newCounts.blackKingsCount;
     setRedPieces(newCounts.red);
     setBlackPieces(newCounts.black);
     setRedKings(newCounts.redKingsCount);
@@ -607,12 +605,8 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
         setCurrentPlayer(opponent);
         currentPlayerRef.current = opponent;
 
-        console.log('[Move] Turn ended - switching to:', opponent, 'opponentType:', opponentTypeValue);
-        console.log('[AI] AI Trigger check - opponentType:', opponentTypeValue, '=== AI:', opponentTypeValue === "AI", 'opponent:', opponent, '=== BLACK:', opponent === PLAYER_BLACK);
-
         // Trigger AI if needed
         if (opponentTypeValue === "AI" && opponent === PLAYER_BLACK) {
-          console.log('[AI] Triggering AI for BLACK');
           // Disable clicks immediately when AI turn starts
           clicksEnabledRef.current = false;
           aiTurnStartRef.current = Date.now();
@@ -627,20 +621,16 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
           aiTimeoutRef.current = setTimeout(() => {
             // Double-check it's still Black's turn and no winner
             if (winnerRef.current || currentPlayerRef.current !== PLAYER_BLACK) {
-              console.log('[AI] Skipping - winner:', winnerRef.current, 'currentPlayer:', currentPlayerRef.current);
               setIsAIThinking(false);
               isAIThinkingRef.current = false;
               return;
             }
 
-            console.log('[AI] Getting move for BLACK, board has pieces:', boardRef.current.flat().filter(sq => sq.piece).length);
             const aiAction = getAIMove(PLAYER_BLACK, boardRef.current);
-            console.log('[AI] AI move:', aiAction);
             if (aiAction) {
               aiMoveCompletedRef.current = Date.now();
               executeMove(aiAction.moves[0], true, aiAction.moves.slice(1));
             } else {
-              console.log('[AI] No valid moves for AI');
               setIsAIThinking(false);
               isAIThinkingRef.current = false;
               setWinner(PLAYER_RED);
@@ -654,7 +644,6 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
           // a short guard against a click queued while the AI was moving.
           setTimeout(() => {
             clicksEnabledRef.current = true;
-            console.log('[AI] Clicks re-enabled after AI move');
           }, 300);
         }
       }
@@ -663,14 +652,8 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
 
   // Handle square click (for moving to empty squares)
   const handleSquareClick = (row: number, col: number) => {
-    const now = Date.now();
-    console.log('[Click] handleSquareClick called - row:', row, 'col:', col, 'selectedPiece:', selectedPiece, 'clicksEnabled:', clicksEnabledRef.current);
-
     // Block clicks if clicks are disabled (during AI turn and briefly after)
-    if (!clicksEnabledRef.current) {
-      console.log('[Click] BLOCKED - Clicks disabled during AI turn!');
-      return;
-    }
+    if (!clicksEnabledRef.current) return;
 
     if (!selectedPiece || winnerRef.current || isAIThinkingRef.current) return;
 
@@ -702,7 +685,10 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
 
     if (correct) {
       soundManagerRef.current?.playKing();
-      setWordsLearned((prev) => (prev.includes(quiz.word) ? prev : [...prev, quiz.word]));
+      if (!wordsLearnedRef.current.includes(quiz.word)) {
+        wordsLearnedRef.current = [...wordsLearnedRef.current, quiz.word];
+        setWordsLearned(wordsLearnedRef.current);
+      }
       window.setTimeout(() => {
         const move = pendingMoveRef.current;
         pendingMoveRef.current = null;
@@ -749,6 +735,10 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
       boardRef.current = lastState.board;
       setCurrentPlayer(lastState.currentPlayer);
       currentPlayerRef.current = lastState.currentPlayer;
+      redPiecesRef.current = lastState.redPieces;
+      blackPiecesRef.current = lastState.blackPieces;
+      redKingsRef.current = lastState.redKings;
+      blackKingsRef.current = lastState.blackKings;
       setRedPieces(lastState.redPieces);
       setBlackPieces(lastState.blackPieces);
       setRedKings(lastState.redKings);
@@ -760,56 +750,133 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
       clicksEnabledRef.current = true;
       aiTurnStartRef.current = 0;
 
-      // Adjust moves count
-      setMovesCount((prev) => Math.max(0, prev - movesToUndo));
+      movesCountRef.current = Math.max(0, movesCountRef.current - movesToUndo);
+      setMovesCount(movesCountRef.current);
 
       // Note: words already answered correctly stay "learned" — undoing a board
       // move shouldn't un-teach a word the student got right.
     }
   };
 
-  // Save score
-  const saveScore = async (result: "WIN" | "LOSE" | "DRAW" | "ABANDONED") => {
-    const gameDuration = Math.floor((Date.now() - gameStartTime) / 1000);
-    const score = result === "WIN" ? 100 : result === "DRAW" ? 50 : 0;
+  // Score: win/draw base + captures + kings + difficulty + vocab words + quick-win bonus.
+  // Moves are NOT added raw (that rewarded dragging games out).
+  const computeScore = React.useCallback(
+    (
+      result: "WIN" | "LOSE" | "DRAW" | "ABANDONED",
+      piecesCaptured: number,
+      kingsEarned: number,
+      words: number,
+      moves: number,
+      durationSec: number,
+    ) => {
+      if (result === "ABANDONED") return 0;
 
-    try {
-      // Use the shared api helper so the Bearer token is attached. A raw fetch
-      // sent no auth header, so this authed route returned 401 — which the
-      // global auth interceptor treats as an expired session and bounces the
-      // user to /login. That's why losing/forfeiting kicked players out.
-      await apiSend("/api/checkers-game/scores", "POST", {
+      const base = result === "WIN" ? 100 : result === "DRAW" ? 40 : 15;
+      const capturePts = piecesCaptured * 8;
+      const kingPts = kingsEarned * 12;
+      const vocabPts = gameMode === "VOCABULARY" ? words * 25 : 0;
+      const difficultyBonus =
+        result === "WIN" && opponentType === "AI"
+          ? difficulty === "HARD"
+            ? 50
+            : difficulty === "MEDIUM"
+              ? 25
+              : 10
+          : 0;
+      // Reward decisive wins: fewer turns and shorter games earn a small bonus.
+      const efficiencyBonus =
+        result === "WIN" ? Math.max(0, 40 - Math.floor(moves / 2)) + Math.max(0, 30 - Math.floor(durationSec / 20)) : 0;
+
+      return base + capturePts + kingPts + vocabPts + difficultyBonus + efficiencyBonus;
+    },
+    [difficulty, gameMode, opponentType],
+  );
+
+  // Save score — uses refs so end-of-game values are accurate even if state lags.
+  const saveScore = React.useCallback(
+    async (result: "WIN" | "LOSE" | "DRAW" | "ABANDONED") => {
+      if (scoreSavedRef.current) return;
+      scoreSavedRef.current = true;
+
+      const gameDuration = Math.floor((Date.now() - gameStartTimeRef.current) / 1000);
+      const playerPiecesCaptured = Math.max(0, 12 - blackPiecesRef.current);
+      const opponentPiecesCaptured = Math.max(0, 12 - redPiecesRef.current);
+      const playerKingsEarned = redKingsRef.current;
+      const opponentKingsEarned = blackKingsRef.current;
+      const moves = movesCountRef.current;
+      const learned = wordsLearnedRef.current;
+      const score = computeScore(
         result,
-        score: score + movesCount * 2,
-        gameMode,
-        opponentType,
-        difficulty: opponentType === "AI" ? difficulty : undefined,
+        playerPiecesCaptured,
+        playerKingsEarned,
+        learned.length,
+        moves,
         gameDuration,
-        movesCount,
-        playerPiecesCaptured: 12 - blackPieces,
-        opponentPiecesCaptured: 12 - redPieces,
-        playerKingsEarned: redKings,
-        opponentKingsEarned: blackKings,
-        vocabularyWords: wordsLearned.length,
-        wordsList: wordsLearned,
-      });
-    } catch (error) {
-      // Not signed in as a student (e.g. admin has no Student record → 404) or
-      // offline — don't interrupt play or trigger a logout.
-      console.info("Checkers score not saved:", error);
+      );
+
+      setLastSavedScore(score);
+
+      try {
+        // Use the shared api helper so the Bearer token is attached. A raw fetch
+        // sent no auth header, so this authed route returned 401 — which the
+        // global auth interceptor treats as an expired session and bounces the
+        // user to /login. That's why losing/forfeiting kicked players out.
+        const response = await apiSend<{
+          success: boolean;
+          score?: { isNewHighScore?: boolean; score?: number };
+        }>("/api/checkers-game/scores", "POST", {
+          result,
+          score,
+          gameMode,
+          opponentType,
+          difficulty: opponentType === "AI" ? difficulty : undefined,
+          gameDuration,
+          movesCount: moves,
+          playerPiecesCaptured,
+          opponentPiecesCaptured,
+          playerKingsEarned,
+          opponentKingsEarned,
+          vocabularyWords: learned.length,
+          wordsList: learned,
+        });
+        if (response?.score?.isNewHighScore) {
+          setIsNewHighScore(true);
+        }
+      } catch (error) {
+        // Not signed in as a student (e.g. admin has no Student record → 404) or
+        // offline — don't interrupt play or trigger a logout.
+        console.info("Checkers score not saved:", error);
+      }
+    },
+    [computeScore, difficulty, gameMode, opponentType],
+  );
+
+  // Persist finished games (was previously only saving on forfeit).
+  React.useEffect(() => {
+    if (!winner || scoreSavedRef.current) return;
+
+    let result: "WIN" | "LOSE" | "DRAW";
+    if (winner === "draw") {
+      result = "DRAW";
+    } else if (opponentType === "HUMAN") {
+      // Local two-player: red win counts as a win for the account.
+      result = winner === PLAYER_RED ? "WIN" : "LOSE";
+    } else {
+      // AI: student always plays red.
+      result = winner === PLAYER_RED ? "WIN" : "LOSE";
     }
-  };
+    void saveScore(result);
+  }, [winner, opponentType, saveScore]);
 
   // Restart game
   const handleRestart = React.useCallback(() => {
-    console.log('[Restart] Game restarting!');
-
     // Clear any pending AI timeout
     if (aiTimeoutRef.current) {
       clearTimeout(aiTimeoutRef.current);
       aiTimeoutRef.current = null;
     }
 
+    const now = Date.now();
     const newBoard = initializeBoard();
     setBoard(newBoard);
     setCurrentPlayer(PLAYER_RED);
@@ -827,6 +894,8 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
     pendingMoveRef.current = null;
     setWordsLearned([]);
     setIsAIThinking(false);
+    setLastSavedScore(null);
+    setIsNewHighScore(false);
 
     // Update refs immediately to avoid stale closures
     boardRef.current = newBoard;
@@ -835,7 +904,15 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
     isAIThinkingRef.current = false;
     jumpInProgressRef.current = false;
     aiTurnStartRef.current = 0;
-    clicksEnabledRef.current = true; // Re-enable clicks on restart
+    clicksEnabledRef.current = true;
+    scoreSavedRef.current = false;
+    redPiecesRef.current = 12;
+    blackPiecesRef.current = 12;
+    redKingsRef.current = 0;
+    blackKingsRef.current = 0;
+    movesCountRef.current = 0;
+    wordsLearnedRef.current = [];
+    gameStartTimeRef.current = now;
 
     if (gameMode === "VOCABULARY") {
       fetchVocabularyPool();
@@ -844,7 +921,7 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
 
   // Handle abandon game
   const handleAbandon = () => {
-    saveScore("ABANDONED");
+    void saveScore("ABANDONED");
     setWinner(PLAYER_BLACK);
     winnerRef.current = PLAYER_BLACK;
     soundManagerRef.current?.playLose();
@@ -899,8 +976,8 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
           <div className="flex items-center gap-2">
             <div
               className={cn(
-                "w-4 h-4 rounded-full",
-                currentPlayer === PLAYER_RED ? "bg-red-500" : "bg-gray-800"
+                "w-4 h-4 rounded-full bg-red-500",
+                !winner && currentPlayer === PLAYER_RED && "ring-2 ring-yellow-300 ring-offset-1 ring-offset-transparent"
               )}
             />
             <span className="font-semibold">Red: {redPieces}</span>
@@ -912,8 +989,8 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
             <span className="text-xs text-white/60">({blackKings} kings)</span>
             <div
               className={cn(
-                "w-4 h-4 rounded-full",
-                currentPlayer === PLAYER_BLACK ? "bg-gray-800" : "bg-red-500"
+                "w-4 h-4 rounded-full bg-gray-900 border border-white/30",
+                !winner && currentPlayer === PLAYER_BLACK && "ring-2 ring-yellow-300 ring-offset-1 ring-offset-transparent"
               )}
             />
           </div>
@@ -931,6 +1008,14 @@ export default function CheckerGame({ gameMode, initialOpponentType = "AI", init
             </span>
           )}
         </div>
+        {winner && lastSavedScore !== null && (
+          <div className="mt-2 text-center">
+            <span className="text-base font-semibold text-amber-300">
+              Score: {lastSavedScore}
+              {isNewHighScore ? " · New personal best!" : ""}
+            </span>
+          </div>
+        )}
         {gameMode === "VOCABULARY" && (
           <div className="text-center text-xs text-white/60 mt-1">
             Words Learned: {wordsLearned.length}
