@@ -3,14 +3,20 @@
  */
 
 /**
- * Maximum file size for video uploads (500MB in bytes)
+ * Maximum file size for video uploads (2GB in bytes)
  */
-export const MAX_VIDEO_FILE_SIZE = 500 * 1024 * 1024;
+export const MAX_VIDEO_FILE_SIZE = 2 * 1024 * 1024 * 1024;
 
 /**
  * Maximum file size formatted for display
  */
-export const MAX_VIDEO_FILE_SIZE_DISPLAY = '500MB';
+export const MAX_VIDEO_FILE_SIZE_DISPLAY = '2GB';
+
+/**
+ * Videos larger than this are automatically compressed (re-encoded smaller)
+ * in the background after upload, regardless of the 2GB ceiling above.
+ */
+export const AUTO_COMPRESS_VIDEO_FILE_SIZE = 250 * 1024 * 1024;
 
 /**
  * Allowed MIME types for video uploads

@@ -267,7 +267,7 @@ export default function VideoNew() {
                     </Button>
                     <p className="text-xs text-slate-500">
                       Supports {ALLOWED_VIDEO_EXTENSIONS.map((e) => e.replace('.', '').toUpperCase()).join(', ')} files up to {MAX_VIDEO_FILE_SIZE_DISPLAY}.
-                      Non-MP4 files (e.g. MTS, AVI, MKV) are automatically converted to MP4 for web playback — large files may take a few minutes.
+                      Non-MP4 files (e.g. MTS, AVI, MKV) are automatically converted to MP4 for web playback, and files over 250MB are automatically compressed — large files may take a few minutes.
                     </p>
                   </>
                 ) : (

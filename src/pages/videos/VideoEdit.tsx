@@ -312,7 +312,8 @@ export default function VideoEdit() {
                       {uploadingVideo ? `Uploading ${videoUploadProgress}%…` : 'Choose Video File'}
                     </Button>
                     <p className="text-xs text-slate-500">
-                      Supports {ALLOWED_VIDEO_EXTENSIONS.map((e) => e.replace('.', '').toUpperCase()).join(', ')} files up to {MAX_VIDEO_FILE_SIZE_DISPLAY}
+                      Supports {ALLOWED_VIDEO_EXTENSIONS.map((e) => e.replace('.', '').toUpperCase()).join(', ')} files up to {MAX_VIDEO_FILE_SIZE_DISPLAY}.
+                      Files over 250MB are automatically compressed — large files may take a few minutes.
                     </p>
                   </>
                 ) : (

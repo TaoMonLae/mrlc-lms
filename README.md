@@ -78,9 +78,10 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 
 ### Video lessons
 
-- Chunked uploads for lesson videos up to 500 MB.
+- Chunked uploads for lesson videos up to 2 GB.
 - Teachers and administrators can upload custom JPG, PNG, or WEBP lesson thumbnails up to 5 MB. Uploaded images are validated, resized, converted to WEBP, previewed in the lesson form, and cleaned up when replaced or deleted.
 - Native MP4/WebM playback; MOV, AVI, MKV, WMV, FLV, MTS/M2TS, TS, M4V, MPG/MPEG, and 3GP sources are converted in the background to browser-compatible MP4.
+- Videos over 250 MB — including MP4/WebM that needed no format conversion — are automatically re-encoded smaller in the background.
 - Conversion uses H.264 video, AAC audio, `yuv420p`, even dimensions, and fast-start metadata.
 - Converted files are validated with `ffprobe` before they are published, preventing broken `0:00 / --:--` players.
 - Processing, failure, retry/re-upload, cancellation, restart recovery, captions, required viewing, and teacher watch analytics are supported.

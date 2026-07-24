@@ -83,6 +83,7 @@ export interface VideoUploadResponse {
   size: number;
   mimeType: string;
   converted?: boolean;
+  compressed?: boolean;
   processing?: boolean;
   originalFormat?: string;
 }

@@ -356,7 +356,7 @@ const videoFileUpload = multer({
       cb(null, `${crypto.randomUUID()}${ext}`);
     },
   }),
-  limits: { fileSize: 500 * 1024 * 1024 }, // 500MB for video files
+  limits: { fileSize: 2 * 1024 * 1024 * 1024 }, // 2GB for video files (uploads over 250MB are auto-compressed, see finishStoredVideoUpload)
   fileFilter: (_req, file, cb) => {
     // .mts/.m2ts (AVCHD) and the other non-web formats are accepted, then
     // transcoded to browser-playable MP4 on upload (see /api/videos/files).
@@ -5201,7 +5201,7 @@ async function startServer() {
       if (!err) return next();
       const message =
         err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE"
-          ? "Video files must be 500 MB or smaller"
+          ? "Video files must be 2 GB or smaller"
           : err.message || "Upload failed";
       res.status(400).json({ error: message });
     });
@@ -6099,8 +6099,12 @@ async function startServer() {
   // (AVCHD camera files), .avi, .mkv, .wmv, .flv, .mov, etc. — is transcoded to
   // MP4 with ffmpeg so students can play it directly on the site.
   const WEB_NATIVE_VIDEO = new Set([".mp4", ".webm"]);
-  const MAX_VIDEO_BYTES = 500 * 1024 * 1024;
-  const MAX_VIDEO_CHUNKS = 30;
+  const MAX_VIDEO_BYTES = 2 * 1024 * 1024 * 1024; // 2GB hard ceiling
+  const MAX_VIDEO_CHUNKS = 110; // 2GB / 20MB chunks, with headroom
+  // Videos over this size are automatically re-encoded at a smaller size in
+  // the background, regardless of the 2GB ceiling above — this keeps storage
+  // in check even though we now accept much bigger raw uploads.
+  const AUTO_COMPRESS_VIDEO_BYTES = 250 * 1024 * 1024;
   const cancelledTranscodes = new Set<string>();
   const transcodeInputs = new Map<string, string>();
 
@@ -6131,7 +6135,11 @@ async function startServer() {
       logger.warn(`Could not recover interrupted video conversion ${jobName}: ${String(err)}`);
     }
   }
-  const transcodeToMp4 = (inputPath: string, outputPath: string): Promise<void> =>
+  // crf 23 is a quality-preserving "make it playable everywhere" setting used
+  // for pure format conversion. crf 28 trades noticeably more quality for a
+  // meaningfully smaller file, used when a video needs to shrink rather than
+  // just change container/codec.
+  const transcodeVideo = (inputPath: string, outputPath: string, crf: number): Promise<void> =>
     new Promise((resolve, reject) => {
       const ff = spawn("ffmpeg", [
         "-y",
@@ -6140,7 +6148,7 @@ async function startServer() {
         "-map", "0:a:0?",
         "-c:v", "libx264",
         "-preset", "veryfast",
-        "-crf", "23",
+        "-crf", String(crf),
         // H.264/yuv420p requires even dimensions. Phone and screen-recording
         // sources can be odd-sized, which otherwise makes ffmpeg fail.
         "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2",
@@ -6161,6 +6169,10 @@ async function startServer() {
         code === 0 ? resolve() : reject(new Error(`ffmpeg exited ${code}: ${stderrTail.slice(-400)}`))
       );
     });
+  const transcodeToMp4 = (inputPath: string, outputPath: string): Promise<void> =>
+    transcodeVideo(inputPath, outputPath, 23);
+  const compressToMp4 = (inputPath: string, outputPath: string): Promise<void> =>
+    transcodeVideo(inputPath, outputPath, 28);
 
   // ffmpeg can occasionally exit successfully after producing an empty or
   // zero-duration container (for example from a truncated camera recording).
@@ -6202,7 +6214,10 @@ async function startServer() {
 
   const finishStoredVideoUpload = async (file: Express.Multer.File, res: express.Response) => {
     const ext = path.extname(file.originalname).toLowerCase();
-    if (WEB_NATIVE_VIDEO.has(ext)) {
+    const needsFormatConversion = !WEB_NATIVE_VIDEO.has(ext);
+    const needsCompression = file.size > AUTO_COMPRESS_VIDEO_BYTES;
+
+    if (!needsFormatConversion && !needsCompression) {
       res.json({
         url: `/uploads/videos/${file.filename}`,
         originalName: file.originalname,
@@ -6212,7 +6227,8 @@ async function startServer() {
       return;
     }
 
-    // Non-web format → transcode to MP4 in the background. ffmpeg writes to a
+    // Needs background processing — either the format isn't browser-playable,
+    // it's over the auto-compress threshold, or both. ffmpeg writes to a
     // temporary path and atomically renames it only when playback is ready.
     const outName = `${crypto.randomUUID()}.mp4`;
     const outPath = path.join(VIDEO_FILES_DIR, outName);
@@ -6235,12 +6251,14 @@ async function startServer() {
       originalName: file.originalname,
       size: file.size,
       mimeType: "video/mp4",
-      converted: true,
+      converted: needsFormatConversion,
+      compressed: needsCompression,
       processing: true,
       originalFormat: ext.replace(".", "").toUpperCase(),
     });
 
-    transcodeToMp4(file.path, tmpPath)
+    const encode = needsCompression ? compressToMp4 : transcodeToMp4;
+    encode(file.path, tmpPath)
       .then(async () => {
         await validateConvertedVideo(tmpPath);
         await fs.promises.rename(tmpPath, outPath);
@@ -6367,7 +6385,7 @@ async function startServer() {
       const totalSize = stats.reduce((sum, stat) => sum + stat.size, 0);
       if (totalSize <= 0 || totalSize > MAX_VIDEO_BYTES) {
         await removeChunkSession(uploadId, manifest.totalChunks);
-        res.status(400).json({ error: "Video files must be 500 MB or smaller" });
+        res.status(400).json({ error: "Video files must be 2 GB or smaller" });
         return;
       }
 

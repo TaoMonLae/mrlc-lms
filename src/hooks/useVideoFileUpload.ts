@@ -78,7 +78,7 @@ export function useVideoFileUpload({ onUploadComplete, onUploadRemoved }: UseVid
 
   /**
    * Validates a video file against size and type constraints.
-   * Checks file size (max 500MB) and valid video file extensions.
+   * Checks file size (max 2GB) and valid video file extensions.
    * @param file - The file to validate
    * @returns Object with valid flag and optional error message
    */
@@ -185,9 +185,19 @@ export function useVideoFileUpload({ onUploadComplete, onUploadRemoved }: UseVid
 
       onUploadComplete?.(data.url, data.originalName);
 
+      let processingLabel: string | null = null;
+      if (data.processing) {
+        processingLabel = data.converted
+          ? `converting ${data.originalFormat || 'video'} to MP4`
+          : 'compressing this large video';
+        if (data.converted && data.compressed) {
+          processingLabel = `converting and compressing ${data.originalFormat || 'video'}`;
+        }
+      }
+
       toast.success(
-        (data as any).processing
-          ? `Uploaded — converting ${(data as any).originalFormat || 'video'} to MP4 in the background. It'll be playable shortly.`
+        processingLabel
+          ? `Uploaded — ${processingLabel} in the background. It'll be playable shortly.`
           : 'Video file uploaded successfully'
       );
       return data;
