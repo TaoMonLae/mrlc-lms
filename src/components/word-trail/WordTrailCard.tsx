@@ -23,7 +23,9 @@ export function WordTrailCard() {
   const active = data?.activeGame;
   const title = active ? "Your Word Trail is waiting" : "Play the English Word board game";
   const description = active
-    ? `Resume on space ${active.position + 1} with ${active.hearts} hearts and ${active.score} points.`
+    ? `Resume on space ${active.position + 1} with ${active.hearts} hearts and ${active.score} points${
+      active.pendingTurn ? " — a word is waiting for your answer." : "."
+    }`
     : "Roll, answer vocabulary questions, and race across a board of boosts and surprises.";
 
   return (

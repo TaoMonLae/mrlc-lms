@@ -11,6 +11,7 @@ import {
   WORD_TRAIL_QUESTION_COUNT,
   WORD_TRAIL_STARTING_HEARTS,
   canUseWordTrail,
+  pickWordTrailQuestion,
   resolveWordTrailMovement,
   wordTrailCorrectAnswerPoints,
 } from "./shared/wordTrail";
@@ -305,7 +306,12 @@ export function registerWordTrailRoutes(deps: Deps): void {
       }
 
       const deck = asDeck(game.questionDeck);
-      const question = deck[game.turnCount % deck.length];
+      const history = asAnswerHistory(game.answerHistory);
+      const question = pickWordTrailQuestion(
+        deck,
+        history.map((entry) => entry.questionId),
+        game.turnCount,
+      );
       if (!question) {
         res.status(409).json({ error: "This game has no vocabulary questions remaining" });
         return;
@@ -449,6 +455,7 @@ export function registerWordTrailRoutes(deps: Deps): void {
         explanation: pending.question.explanation,
         pointsEarned,
         heartLost: !correct,
+        heartsRemaining: nextHearts,
         movement,
         completed: status !== "ACTIVE",
         game: publicGame(updated),
@@ -456,6 +463,47 @@ export function registerWordTrailRoutes(deps: Deps): void {
     } catch (error) {
       logger.error("Error answering in Word Trail:", error);
       res.status(500).json({ error: "Unable to check that word" });
+    }
+  });
+
+  app.post("/api/games/word-trail/:id/abandon", authMiddleware, learnerOnly, gameAccessMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const game = await prisma.wordTrailGame.findFirst({
+        where: { id: req.params.id, userId: jwtUser.userId },
+      });
+      if (!game) {
+        res.status(404).json({ error: "Word Trail game not found" });
+        return;
+      }
+      if (game.status !== "ACTIVE") {
+        res.json({ game: publicGame(game) });
+        return;
+      }
+
+      const changed = await prisma.wordTrailGame.updateMany({
+        where: {
+          id: game.id,
+          userId: jwtUser.userId,
+          status: "ACTIVE",
+          updatedAt: game.updatedAt,
+        },
+        data: {
+          activeKey: null,
+          status: "ABANDONED",
+          pendingTurn: Prisma.DbNull,
+          completedAt: new Date(),
+        },
+      });
+      if (changed.count !== 1) {
+        res.status(409).json({ error: "The game changed in another tab; refresh to continue" });
+        return;
+      }
+      const updated = await prisma.wordTrailGame.findUnique({ where: { id: game.id } });
+      res.json({ game: publicGame(updated) });
+    } catch (error) {
+      logger.error("Error abandoning Word Trail:", error);
+      res.status(500).json({ error: "Unable to leave this trail" });
     }
   });
 }

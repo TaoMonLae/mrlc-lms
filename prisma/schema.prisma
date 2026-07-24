@@ -4039,7 +4039,7 @@ model WordTrailGame {
   userId        String
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   activeKey     String?   @unique
-  status        String    @default("ACTIVE") // ACTIVE | WON | LOST
+  status        String    @default("ACTIVE") // ACTIVE | WON | LOST | ABANDONED
   position      Int       @default(0)
   hearts        Int       @default(4)
   score         Int       @default(0)

@@ -3,6 +3,7 @@ export const WORD_TRAIL_STARTING_HEARTS = 4;
 export const WORD_TRAIL_QUESTION_COUNT = 24;
 
 export type WordTrailEffectKind = "BOOST" | "SLIDE" | "BONUS";
+export type WordTrailGameStatus = "ACTIVE" | "WON" | "LOST" | "ABANDONED";
 
 export interface WordTrailTileEffect {
   kind: WordTrailEffectKind;
@@ -46,6 +47,48 @@ export function resolveWordTrailMovement(position: number, roll: number): WordTr
     ? Math.max(0, Math.min(WORD_TRAIL_LAST_POSITION, rolledTo + effect.moveBy))
     : rolledTo;
   return { from: safePosition, rolledTo, to, effect };
+}
+
+/**
+ * Prefer questions the player has not answered yet so previously revealed
+ * answers are not immediately recycled. Falls back to the full deck when every
+ * card has been seen, but still avoids the most recent question when possible.
+ */
+export function pickWordTrailQuestion<T extends { id: string }>(
+  deck: T[],
+  answeredQuestionIds: Iterable<string>,
+  turnCount: number,
+): T | null {
+  if (!Array.isArray(deck) || deck.length === 0) return null;
+  const answered = new Set(
+    [...answeredQuestionIds].filter((id) => typeof id === "string" && id.length > 0),
+  );
+  const unanswered = deck.filter((question) => !answered.has(question.id));
+  let pool = unanswered.length > 0 ? unanswered : deck;
+
+  if (pool.length > 1 && answered.size > 0) {
+    const answeredList = [...answered];
+    const lastAnsweredId = answeredList[answeredList.length - 1];
+    const withoutLast = pool.filter((question) => question.id !== lastAnsweredId);
+    if (withoutLast.length > 0) pool = withoutLast;
+  }
+
+  const index = Math.abs(Math.floor(turnCount)) % pool.length;
+  return pool[index] ?? null;
+}
+
+export function describeWordTrailMovement(movement: WordTrailMovement): string {
+  const fromSpace = movement.from + 1;
+  const rolledSpace = movement.rolledTo + 1;
+  const toSpace = movement.to + 1;
+  if (!movement.effect || movement.effect.moveBy === 0) {
+    if (movement.from === movement.to) {
+      return `Stayed on space ${toSpace}.`;
+    }
+    return `Moved from space ${fromSpace} to space ${toSpace}.`;
+  }
+  const effectVerb = movement.effect.moveBy > 0 ? "boosted" : "slid";
+  return `Rolled to space ${rolledSpace}, then ${effectVerb} to space ${toSpace}.`;
 }
 
 export function wordTrailCorrectAnswerPoints(input: {

@@ -20,7 +20,7 @@ export interface WordTrailPendingTurn {
 
 export interface WordTrailGame {
   id: string;
-  status: "ACTIVE" | "WON" | "LOST";
+  status: "ACTIVE" | "WON" | "LOST" | "ABANDONED";
   position: number;
   hearts: number;
   score: number;
@@ -80,6 +80,7 @@ export interface WordTrailAnswerPayload {
   explanation: string | null;
   pointsEarned: number;
   heartLost: boolean;
+  heartsRemaining?: number;
   movement: WordTrailMovement | null;
   completed: boolean;
   game: WordTrailGame;
