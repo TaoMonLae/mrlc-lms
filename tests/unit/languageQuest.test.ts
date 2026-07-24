@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { nextLanguageQuestStreak } from "../../shared/languageQuest";
+import { canAttemptNewChallenge, shuffle } from "../../languageQuest";
 import { importedSpanishCourse } from "../../languageQuestImportedCourses";
 import { mandarinFoundationsCourse } from "../../languageQuestMandarinCourse";
 import { completeMandarinCourse } from "../../languageQuestCompleteMandarinCourse";
@@ -100,6 +101,40 @@ test("the generated English word courses are focused and classroom-ready", () =>
   assert.ok(challenges.every((challenge) => challenge.options.length === 3));
   assert.ok(challenges.every((challenge) => challenge.options.filter((option) => option.correct).length === 1));
   assert.ok(challenges.every((challenge) => challenge.options.every((option) => option.audioText === option.text)));
+});
+
+test("shuffle returns every option exactly once, in some order", () => {
+  const options = ["a", "b", "c", "d"];
+  const result = shuffle(options);
+  assert.deepEqual([...result].sort(), [...options].sort());
+  assert.equal(result.length, options.length);
+  // The input array must not be mutated in place.
+  assert.deepEqual(options, ["a", "b", "c", "d"]);
+});
+
+test("shuffle does not always return the same order (regression for the fixed-position answer bug)", () => {
+  const options = ["a", "b", "c", "d", "e", "f"];
+  const orders = new Set<string>();
+  for (let i = 0; i < 50; i++) {
+    orders.add(shuffle(options).join(","));
+  }
+  // With 6 items and 50 draws it is astronomically unlikely to see only one
+  // ordering unless shuffling isn't actually happening.
+  assert.ok(orders.size > 1, "expected more than one distinct ordering across 50 shuffles");
+});
+
+test("a learner out of hearts cannot attempt a challenge they have not cleared", () => {
+  assert.equal(canAttemptNewChallenge(0, false), false);
+  assert.equal(canAttemptNewChallenge(-1, false), false);
+});
+
+test("a learner out of hearts can still replay a challenge they already completed", () => {
+  assert.equal(canAttemptNewChallenge(0, true), true);
+});
+
+test("a learner with hearts remaining can attempt any challenge", () => {
+  assert.equal(canAttemptNewChallenge(3, false), true);
+  assert.equal(canAttemptNewChallenge(3, true), true);
 });
 
 test("the ranked advanced English courses have a valid progression", () => {

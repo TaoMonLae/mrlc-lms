@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import confetti from 'canvas-confetti';
 import { ArrowLeft, Check, Flame, Heart, PartyPopper, Star, Volume2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { apiGet, apiSend } from '@/src/lib/api';
+import { ApiError, apiGet, apiSend } from '@/src/lib/api';
 import type { LanguageQuestLessonPayload, LanguageQuestLessonPreview, LanguageQuestProfile } from '@/src/types/languageQuest';
 
 interface AnswerResult {
@@ -59,6 +60,7 @@ export default function LanguageQuestLesson() {
   const [preview, setPreview] = useState<LanguageQuestLessonPreview | null>(null);
   const [previewLoading, setPreviewLoading] = useState(true);
   const [previewIndex, setPreviewIndex] = useState(0);
+  const [combo, setCombo] = useState(0);
 
   useEffect(() => {
     if (!lessonId) return;
@@ -68,6 +70,7 @@ export default function LanguageQuestLesson() {
     setSelectedId(null);
     setAnswer(null);
     setSessionPoints(0);
+    setCombo(0);
 
     apiGet<LanguageQuestLessonPayload>(`/api/language-quest/lessons/${lessonId}`)
       .then((payload) => { setLesson(payload); setProfile(payload.profile); })
@@ -93,8 +96,19 @@ export default function LanguageQuestLesson() {
   const challenge = lesson?.challenges[index];
   const progressPercent = lesson ? Math.round((Math.min(index, lesson.challenges.length) / lesson.challenges.length) * 100) : 0;
   const finished = Boolean(lesson && index >= lesson.challenges.length);
+  const cards = preview?.cards ?? [];
+  const card = cards[previewIndex];
+  // Practising an already-completed challenge is how hearts get refilled, so
+  // only gate challenges the learner hasn't cleared yet (matches the server
+  // check in the answer endpoint).
+  const outOfHearts = Boolean(challenge && !challenge.completed && (profile?.hearts ?? 1) <= 0);
 
   const optionLetters = useMemo(() => ['A', 'B', 'C', 'D', 'E', 'F'], []);
+
+  const startPractice = () => {
+    confetti({ particleCount: 60, spread: 65, origin: { y: 0.7 }, colors: [lesson?.course.accentColor || '#7c3aed', '#ffffff'] });
+    setPhase('quiz');
+  };
 
   const checkAnswer = async () => {
     if (!challenge || !selectedId || checking || answer) return;
@@ -103,9 +117,20 @@ export default function LanguageQuestLesson() {
       const result = await apiSend<AnswerResult>(`/api/language-quest/challenges/${challenge.id}/answer`, 'POST', { optionId: selectedId });
       setAnswer(result);
       setProfile(result.profile);
-      if (result.correct) setSessionPoints((current) => current + result.pointsAwarded);
+      if (result.correct) {
+        setSessionPoints((current) => current + result.pointsAwarded);
+        setCombo((current) => current + 1);
+        confetti({ particleCount: 40, spread: 55, origin: { y: 0.65 }, scalar: 0.8, colors: [lesson?.course.accentColor || '#7c3aed'] });
+      } else {
+        setCombo(0);
+      }
     } catch (error: any) {
-      toast.error(error?.message || 'Could not check that answer');
+      if (error instanceof ApiError && error.code === 'OUT_OF_HEARTS') {
+        if (error.data?.profile) setProfile(error.data.profile);
+        toast.error(error.message);
+      } else {
+        toast.error(error?.message || 'Could not check that answer');
+      }
     } finally {
       setChecking(false);
     }
@@ -117,6 +142,59 @@ export default function LanguageQuestLesson() {
     setSelectedId(null);
     setAnswer(null);
   };
+
+  // Celebrate finishing the lesson with a bigger burst.
+  useEffect(() => {
+    if (!finished) return;
+    confetti({ particleCount: 140, spread: 90, origin: { y: 0.6 }, colors: [lesson?.course.accentColor || '#7c3aed', '#f59e0b', '#10b981'] });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [finished]);
+
+  // Keyboard shortcuts: arrows/space to browse flashcards in learn mode,
+  // number or letter keys to pick an answer and Enter to confirm/continue
+  // in quiz mode. Keeps the pace up for learners who'd rather not reach for
+  // the mouse every time.
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      const target = event.target as HTMLElement | null;
+      if (target && ['INPUT', 'TEXTAREA'].includes(target.tagName)) return;
+      if (loading || !lesson) return;
+
+      if (phase === 'learn') {
+        if (event.key === 'ArrowRight' || event.key === 'Enter') {
+          event.preventDefault();
+          if (previewIndex + 1 < cards.length) setPreviewIndex((current) => current + 1);
+          else if (cards.length) startPractice();
+        } else if (event.key === 'ArrowLeft') {
+          event.preventDefault();
+          setPreviewIndex((current) => Math.max(0, current - 1));
+        } else if (event.key === ' ' && card) {
+          event.preventDefault();
+          speak(card.audioText || card.text, lesson.course.language);
+        }
+        return;
+      }
+
+      if (phase === 'quiz' && challenge && !finished && !outOfHearts) {
+        const letterIndex = optionLetters.indexOf(event.key.toUpperCase());
+        const numberIndex = Number(event.key) - 1;
+        const optionIndex = letterIndex >= 0 ? letterIndex : numberIndex;
+        if (!answer && optionIndex >= 0 && optionIndex < challenge.options.length) {
+          event.preventDefault();
+          setSelectedId(challenge.options[optionIndex].id);
+          return;
+        }
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          if (answer) continueLesson();
+          else if (selectedId && !checking) checkAnswer();
+        }
+      }
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, loading, lesson, previewIndex, cards.length, card, challenge, answer, selectedId, finished, outOfHearts, optionLetters, checking]);
 
   if (loading) {
     return <div className="grid min-h-[520px] place-items-center"><div className="h-11 w-11 animate-spin rounded-full border-4 border-violet-200 border-t-violet-600" /></div>;
@@ -132,8 +210,6 @@ export default function LanguageQuestLesson() {
   }
 
   if (phase === 'learn') {
-    const cards = preview?.cards ?? [];
-    const card = cards[previewIndex];
     const learnProgress = cards.length ? Math.round((previewIndex / cards.length) * 100) : 0;
     return (
       <div className="mx-auto flex min-h-[calc(100dvh-8rem)] max-w-3xl flex-col pb-6">
@@ -175,7 +251,7 @@ export default function LanguageQuestLesson() {
                 Next
               </Button>
             ) : (
-              <Button style={{ backgroundColor: lesson.course.accentColor }} onClick={() => setPhase('quiz')} disabled={!card}>
+              <Button style={{ backgroundColor: lesson.course.accentColor }} onClick={startPractice} disabled={!card}>
                 Start practice
               </Button>
             )}
@@ -221,6 +297,25 @@ export default function LanguageQuestLesson() {
 
   if (!challenge) return null;
 
+  if (outOfHearts) {
+    return (
+      <div className="mx-auto flex min-h-[560px] max-w-2xl flex-col items-center justify-center text-center">
+        <div className="grid h-24 w-24 place-items-center rounded-full bg-rose-100 text-rose-500 dark:bg-rose-500/10">
+          <Heart className="h-10 w-10" />
+        </div>
+        <h1 className="mt-6 text-2xl font-black text-slate-900 dark:text-white">Out of hearts for now</h1>
+        <p className="mt-2 max-w-sm text-slate-500 dark:text-slate-300">
+          No worries — hearts refill every day. In the meantime, replay a lesson you've already finished to earn some back.
+        </p>
+        <div className="mt-7 w-full">
+          <Button className="w-full" style={{ backgroundColor: lesson.course.accentColor }} render={<Link to={`/games/language-quest/courses/${lesson.course.id}`} />} nativeButton={false}>
+            Back to course
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto flex min-h-[calc(100dvh-8rem)] max-w-3xl flex-col pb-6">
       <header className="flex items-center gap-3 py-2 sm:gap-5">
@@ -228,6 +323,11 @@ export default function LanguageQuestLesson() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <Progress value={progressPercent} className="flex-1 [&_[data-slot=progress-track]]:h-3 [&_[data-slot=progress-indicator]]:bg-violet-600" />
+        {combo >= 2 && (
+          <div className="hidden items-center gap-1 text-sm font-black text-orange-500 sm:flex" title={`${combo} in a row`}>
+            <Flame className="h-5 w-5 fill-current" /> {combo}
+          </div>
+        )}
         <div className="flex items-center gap-1 text-sm font-black text-rose-500"><Heart className="h-5 w-5 fill-current" /> {profile?.hearts ?? 0}</div>
         <div className="hidden items-center gap-1 text-sm font-black text-amber-500 sm:flex"><Star className="h-5 w-5 fill-current" /> {profile?.points ?? 0}</div>
       </header>

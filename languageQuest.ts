@@ -405,6 +405,27 @@ async function lessonLockMessage(prisma: any, jwtUser: JwtPayload, lesson: any):
   return null;
 }
 
+// Fisher-Yates shuffle. Used so a challenge's correct answer isn't always in
+// the same position — otherwise learners just memorise "the second one" and
+// the practice becomes meaningless.
+export function shuffle<T>(items: T[]): T[] {
+  const array = [...items];
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
+// Hearts only gate challenges a learner hasn't cleared yet. Replaying an
+// already-completed challenge is how hearts get refilled (see the "Replay
+// lessons to practise and refill hearts" copy on the course page), so it
+// must stay allowed even at zero hearts — otherwise nobody could ever earn
+// their way back in.
+export function canAttemptNewChallenge(hearts: number, alreadyCompleted: boolean): boolean {
+  return hearts > 0 || alreadyCompleted;
+}
+
 export function registerLanguageQuestRoutes(deps: Deps): void {
   const { app, prisma, authMiddleware, createAuditLog, logger } = deps;
 
@@ -529,6 +550,12 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       if (lockMessage) { res.status(403).json({ error: lockMessage }); return; }
 
       const progress = await getProgress(prisma, jwtUser.userId);
+      const completions = await prisma.languageQuestChallengeProgress.findMany({
+        where: { userId: jwtUser.userId, challengeId: { in: lesson.challenges.map((challenge: any) => challenge.id) } },
+        select: { challengeId: true, completed: true },
+      });
+      const completedIds = new Set(completions.filter((row: any) => row.completed).map((row: any) => row.challengeId));
+
       res.json({
         id: lesson.id, title: lesson.title, description: lesson.description,
         course: {
@@ -540,7 +567,10 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         profile: profileJson(progress),
         challenges: lesson.challenges.map((challenge: any) => ({
           id: challenge.id, type: challenge.type, question: challenge.question,
-          options: challenge.options.map((option: any) => ({
+          completed: completedIds.has(challenge.id),
+          // Shuffled per fetch so the correct answer isn't always in the same
+          // spot (see `shuffle` above).
+          options: shuffle(challenge.options).map((option: any) => ({
             id: option.id, text: option.text, emoji: option.emoji, audioText: option.audioText,
           })),
         })),
@@ -611,7 +641,18 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       const correctOption = challenge.options.find((option: any) => option.correct);
       if (!correctOption) { res.status(409).json({ error: "This challenge has no correct answer configured" }); return; }
       const now = new Date();
-      await getProgress(prisma, jwtUser.userId);
+      const progressBeforeAnswer = await getProgress(prisma, jwtUser.userId);
+      const existingBeforeAnswer = await prisma.languageQuestChallengeProgress.findUnique({
+        where: { userId_challengeId: { userId: jwtUser.userId, challengeId: challenge.id } },
+      });
+      if (!canAttemptNewChallenge(progressBeforeAnswer.hearts, Boolean(existingBeforeAnswer?.completed))) {
+        res.status(403).json({
+          error: "You're out of hearts for new challenges. Replay a lesson you've already finished to earn hearts back, or come back after your daily refill.",
+          code: "OUT_OF_HEARTS",
+          profile: profileJson(progressBeforeAnswer),
+        });
+        return;
+      }
       const result = await prisma.$transaction(async (tx: any) => {
         const progress = await tx.languageQuestUserProgress.upsert({
           where: { userId: jwtUser.userId }, update: {}, create: { userId: jwtUser.userId },
