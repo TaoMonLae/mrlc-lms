@@ -1,9 +1,8 @@
 import express from "express";
 import PDFDocument from "pdfkit";
 import QRCode from "qrcode";
-import fs from "fs";
-import path from "path";
 import { format as formatDate } from "date-fns";
+import { drawPdfLogo, loadPdfLogo } from "./pdfBranding";
 
 interface JwtPayload { userId: string; role: string; email: string; }
 
@@ -22,10 +21,6 @@ interface Deps {
 const PAGE_LEFT = 50;
 const PAGE_WIDTH = 495; // A4 usable width at 50pt margins
 
-// Same directory the branding logo upload route (POST /api/settings/assets)
-// writes into and /uploads/branding serves from — see server.ts.
-const BRANDING_ASSET_DIR = process.env.BRANDING_ASSET_DIR || path.join(process.cwd(), "data", "branding");
-
 // Mirrors the client's formatMoney() (src/lib/locale.ts), which uses
 // narrowSymbol so MYR renders as "RM 300.00" instead of "MYR 300.00". This
 // previously omitted currencyDisplay, so the PDF and the on-screen receipt
@@ -37,26 +32,6 @@ function money(amount: number, currency?: string | null): string {
     return new Intl.NumberFormat("en", { style: "currency", currency: code, currencyDisplay: "narrowSymbol" }).format(value);
   } catch {
     return `${code} ${value.toFixed(2)}`;
-  }
-}
-
-// pdfkit's doc.image() only understands JPEG and PNG. Branding logos can also
-// be uploaded as WEBP/GIF/SVG (see brandingAssetUpload's fileFilter), which
-// would throw if handed to pdfkit directly — read the bytes but only pass
-// them through for a format pdfkit can actually decode; everything else (and
-// any read failure, e.g. an external logoUrl instead of an uploaded file)
-// falls back to null so the caller can draw the same initial-letter avatar
-// the web UI shows when there's no usable logo.
-function readEmbeddableLogo(logoUrl: string | null | undefined): Buffer | null {
-  if (!logoUrl || !logoUrl.startsWith("/uploads/branding/")) return null;
-  const ext = path.extname(logoUrl).toLowerCase();
-  if (![".png", ".jpg", ".jpeg"].includes(ext)) return null;
-  try {
-    const filename = path.basename(logoUrl);
-    if (filename !== path.basename(filename)) return null; // reject path traversal
-    return fs.readFileSync(path.join(BRANDING_ASSET_DIR, filename));
-  } catch {
-    return null;
   }
 }
 
@@ -105,7 +80,7 @@ export function registerFeesPdfRoutes(deps: Deps): void {
 
       let qrBuffer: Buffer | null = null;
       try { qrBuffer = await QRCode.toBuffer(verifyUrl, { margin: 1, width: 200 }); } catch { qrBuffer = null; }
-      const logoBuffer = readEmbeddableLogo(school?.logoUrl);
+      const logoBuffer = await loadPdfLogo(school?.logoUrl);
 
       const filename = `Receipt-${fee.receiptNumber || fee.id}.pdf`;
       res.setHeader("Content-Type", "application/pdf");
@@ -121,16 +96,7 @@ export function registerFeesPdfRoutes(deps: Deps): void {
       const textLeft = PAGE_LEFT + LOGO_SIZE + LOGO_GAP;
       const textWidth = 300 - LOGO_SIZE - LOGO_GAP;
 
-      if (logoBuffer) {
-        doc.image(logoBuffer, PAGE_LEFT, headerTop, { width: LOGO_SIZE, height: LOGO_SIZE, fit: [LOGO_SIZE, LOGO_SIZE] });
-      } else {
-        // Same fallback as the web receipt when there's no (usable) logo: a
-        // light gray square with the school's initial letter.
-        doc.roundedRect(PAGE_LEFT, headerTop, LOGO_SIZE, LOGO_SIZE, 6).fill("#f1f5f9");
-        doc.font("Helvetica-Bold").fontSize(20).fillColor("#94a3b8")
-          .text((school?.name || "S").charAt(0).toUpperCase(), PAGE_LEFT, headerTop + 11, { width: LOGO_SIZE, align: "center" });
-        doc.fillColor("#000000");
-      }
+      drawPdfLogo(doc, logoBuffer, school?.name, PAGE_LEFT, headerTop, LOGO_SIZE);
 
       doc.font("Helvetica-Bold").fontSize(16).fillColor("#000000").text(school?.name || "School", textLeft, headerTop, { width: textWidth });
       if (school?.address) doc.font("Helvetica").fontSize(9).fillColor("#64748b").text(school.address, textLeft, doc.y + 2, { width: textWidth });

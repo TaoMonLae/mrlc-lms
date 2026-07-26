@@ -1,5 +1,6 @@
 import express from "express";
 import PDFDocument from "pdfkit";
+import { drawPdfLogo, loadPdfLogo } from "./pdfBranding";
 
 interface JwtPayload { userId: string; role: string; email: string; }
 
@@ -77,6 +78,7 @@ export function registerPayrollPdfRoutes(deps: Deps): void {
 
       const school = await prisma.schoolProfile.findFirst().catch(() => null);
       const slips = run.payslips ?? [];
+      const logoBuffer = await loadPdfLogo(school?.logoUrl);
       const currency = slips[0]?.currency || "USD";
       const totals = slips.reduce(
         (acc: any, p: any) => ({
@@ -96,13 +98,25 @@ export function registerPayrollPdfRoutes(deps: Deps): void {
       doc.pipe(res);
 
       // ── Header ──────────────────────────────────────────────────────────
-      doc.font("Helvetica-Bold").fontSize(16).text(school?.name || "School", { align: "center" });
-      doc.moveDown(0.2);
-      doc.font("Helvetica-Bold").fontSize(10).text("PAYROLL REGISTER", { align: "center", characterSpacing: 1 });
+      const headerTop = doc.y;
+      const logoSize = 44;
+      const sideSpace = logoSize + 12;
+      const headerTextLeft = TABLE_LEFT + sideSpace;
+      const headerTextWidth = TABLE_WIDTH - sideSpace * 2;
+      drawPdfLogo(doc, logoBuffer, school?.name, TABLE_LEFT, headerTop, logoSize);
+      doc.font("Helvetica-Bold").fontSize(16)
+        .text(school?.name || "School", headerTextLeft, headerTop, { width: headerTextWidth, align: "center" });
+      doc.font("Helvetica-Bold").fontSize(10)
+        .text("PAYROLL REGISTER", headerTextLeft, doc.y + 2, { width: headerTextWidth, align: "center", characterSpacing: 1 });
       doc.font("Helvetica").fontSize(9).fillColor("#555555")
-        .text(`${MONTHS[run.periodMonth - 1]} ${run.periodYear}  ·  ${run.status}  ·  ${slips.length} payslip${slips.length === 1 ? "" : "s"}`, { align: "center" });
+        .text(
+          `${MONTHS[run.periodMonth - 1]} ${run.periodYear}  ·  ${run.status}  ·  ${slips.length} payslip${slips.length === 1 ? "" : "s"}`,
+          headerTextLeft,
+          doc.y + 2,
+          { width: headerTextWidth, align: "center" },
+        );
       doc.fillColor("#000000");
-      doc.moveDown(0.6);
+      doc.y = Math.max(doc.y, headerTop + logoSize) + 10;
       doc.moveTo(TABLE_LEFT, doc.y).lineTo(TABLE_LEFT + TABLE_WIDTH, doc.y).lineWidth(1.5).strokeColor("#1e293b").stroke();
       doc.moveDown(0.8);
 

@@ -12,6 +12,7 @@
     "generate:language-quest-chinese": "node scripts/generate-language-quest-chinese-course.mjs",
     "generate:language-quest-english-words": "node scripts/generate-language-quest-english-word-courses.mjs",
     "generate:language-quest-advanced-english": "node scripts/generate-language-quest-advanced-english-courses.mjs",
+    "generate:language-quest-linguify": "node scripts/generate-language-quest-linguify-courses.mjs",
     "smoke": "node scripts/smoke-test.mjs",
     "test": "npm run test:unit",
     "test:unit": "node --import tsx --test tests/unit/*.test.ts",

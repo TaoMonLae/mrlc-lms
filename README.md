@@ -58,6 +58,8 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 - Run `npm run generate:language-quest-english-words` to rebuild the English word courses; set `ENGLISH_WORDS_ALPHA_PATH` to an upstream `words_alpha.txt` checkout to revalidate every selected word.
 - Adds three ranked courses from [Isomorpheuss/advanced-english-vocabulary](https://github.com/Isomorpheuss/advanced-english-vocabulary): **Advanced English: Core**, **Advanced English: Mastery**, and **Advanced English: Expert**, with 180 WordNet-backed challenges selected from words appearing across at least nine vocabulary lists.
 - Run `npm run generate:language-quest-advanced-english` to rebuild the ranked courses; set `ADVANCED_ENGLISH_VOCAB_PATH` to the upstream `9ormore-withfreqandlistcount-413.csv` file to refresh the validated selection.
+- Adds six CEFR courses from [AyeNyeinSan22/linguify](https://github.com/AyeNyeinSan22/linguify), progressing from **A1 Foundations** to **C2 Mastery**, with 18 topic units and 360 definition, example, part-of-speech, listening, and source-supplied IPA challenges.
+- Run `npm run generate:language-quest-linguify` to rebuild the six CEFR courses from the licensed source snapshot.
 
 ### Flashcards
 
@@ -521,6 +523,7 @@ Confirm `DATABASE_URL`, `SESSION_SECRET`, `APP_URL`, port availability, and writ
 ## Notable third-party data and acknowledgments
 
 - Language Quest was informed by the concepts and interface patterns in [sanidhyy/duolingo-clone](https://github.com/sanidhyy/duolingo-clone), licensed under MIT. Its Spanish seed curriculum was adapted from [TaoMonLae/duolingo-clone](https://github.com/TaoMonLae/duolingo-clone). The complete attribution and license text are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+- The six CEFR vocabulary courses adapt the MIT-licensed vocabulary sets from [AyeNyeinSan22/linguify](https://github.com/AyeNyeinSan22/linguify); attribution and license text are retained in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 - Sudoku is adapted from [super-sudoku](https://github.com/TN1ck/super-sudoku) by Tom Nick under the MIT License.
 - English definitions use [WordPOS](https://github.com/moos/wordpos) and Princeton WordNet 3.1.
 - English-to-Myanmar translations originate from the ornagai/MZ dictionary dataset; its data license is not independently verifiable, so it is retained for internal, non-commercial school use with provenance documented in `prisma/seedEnMyDictionary.ts`.

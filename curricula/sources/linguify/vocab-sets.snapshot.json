@@ -1,0 +1,2746 @@
+{
+  "source": "https://github.com/AyeNyeinSan22/linguify",
+  "sourceRef": "main",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2026 AyeNyeinSan22",
+  "sourceManifestBlobSha": "86aabedce716a1036054e69340abf0290147c3eb",
+  "importedAt": "2026-07-26",
+  "sets": [
+    {
+      "id": "a1-daily-life",
+      "name": "A1 Daily Life Essentials",
+      "level": "A1",
+      "topic": "daily-life",
+      "description": "Everyday words for beginners — home, family, routines",
+      "wordCount": 20,
+      "icon": "🏠",
+      "sourceBlobSha": "99ae63016dee1601b8cb0e58ee21de6b3269f23d",
+      "words": [
+        {
+          "word": "house",
+          "definition": "A building where people live",
+          "example": "My house has three bedrooms.",
+          "partOfSpeech": "noun",
+          "phonetic": "/haʊs/"
+        },
+        {
+          "word": "family",
+          "definition": "A group of people related to each other",
+          "example": "My family is small — just my parents and me.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈfæm.ə.li/"
+        },
+        {
+          "word": "breakfast",
+          "definition": "The first meal of the day",
+          "example": "I eat breakfast at 7 a.m.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈbrek.fəst/"
+        },
+        {
+          "word": "sleep",
+          "definition": "To rest with your eyes closed at night",
+          "example": "I usually sleep for eight hours.",
+          "partOfSpeech": "verb",
+          "phonetic": "/sliːp/"
+        },
+        {
+          "word": "work",
+          "definition": "To do a job or activity for money",
+          "example": "She works in a hospital.",
+          "partOfSpeech": "verb",
+          "phonetic": "/wɜːrk/"
+        },
+        {
+          "word": "friend",
+          "definition": "A person you like and enjoy spending time with",
+          "example": "My best friend lives next door.",
+          "partOfSpeech": "noun",
+          "phonetic": "/frend/"
+        },
+        {
+          "word": "clean",
+          "definition": "To remove dirt from something",
+          "example": "I clean the kitchen every Saturday.",
+          "partOfSpeech": "verb",
+          "phonetic": "/kliːn/"
+        },
+        {
+          "word": "cook",
+          "definition": "To prepare food using heat",
+          "example": "My mother cooks dinner for us.",
+          "partOfSpeech": "verb",
+          "phonetic": "/kʊk/"
+        },
+        {
+          "word": "watch",
+          "definition": "To look at something for a period of time",
+          "example": "We watch TV in the evening.",
+          "partOfSpeech": "verb",
+          "phonetic": "/wɒtʃ/"
+        },
+        {
+          "word": "morning",
+          "definition": "The early part of the day",
+          "example": "I go for a walk every morning.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈmɔːr.nɪŋ/"
+        },
+        {
+          "word": "evening",
+          "definition": "The part of the day between afternoon and night",
+          "example": "Good evening! How are you?",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈiːv.nɪŋ/"
+        },
+        {
+          "word": "kitchen",
+          "definition": "The room where you prepare and cook food",
+          "example": "The kitchen is very modern.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈkɪtʃ.ɪn/"
+        },
+        {
+          "word": "garden",
+          "definition": "An area of land near a house with plants and flowers",
+          "example": "She grows tomatoes in her garden.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈɡɑːr.dən/"
+        },
+        {
+          "word": "neighbor",
+          "definition": "A person who lives near you",
+          "example": "Our neighbors are very friendly.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈneɪ.bər/"
+        },
+        {
+          "word": "busy",
+          "definition": "Having a lot to do",
+          "example": "I'm busy today — I have many meetings.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ˈbɪz.i/"
+        },
+        {
+          "word": "tired",
+          "definition": "Needing to rest or sleep",
+          "example": "I'm tired after work.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/taɪərd/"
+        },
+        {
+          "word": "happy",
+          "definition": "Feeling pleasure and enjoyment",
+          "example": "She looks happy today.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ˈhæp.i/"
+        },
+        {
+          "word": "always",
+          "definition": "Every time; all the time",
+          "example": "He always arrives on time.",
+          "partOfSpeech": "adverb",
+          "phonetic": "/ˈɔːl.weɪz/"
+        },
+        {
+          "word": "sometimes",
+          "definition": "On some occasions but not always",
+          "example": "Sometimes I walk to work.",
+          "partOfSpeech": "adverb",
+          "phonetic": "/ˈsʌm.taɪmz/"
+        },
+        {
+          "word": "never",
+          "definition": "Not at any time",
+          "example": "I never eat meat.",
+          "partOfSpeech": "adverb",
+          "phonetic": "/ˈnev.ər/"
+        }
+      ]
+    },
+    {
+      "id": "a1-greetings",
+      "name": "A1 Greetings & Basics",
+      "level": "A1",
+      "topic": "greetings",
+      "description": "Hello, goodbye, please, thank you — your first English words",
+      "wordCount": 20,
+      "icon": "👋",
+      "sourceBlobSha": "50ca0372624046cc7800c473f40a568c2a35a163",
+      "words": [
+        {
+          "word": "hello",
+          "definition": "A common greeting",
+          "example": "Hello! Nice to meet you.",
+          "partOfSpeech": "interjection",
+          "phonetic": "/həˈloʊ/"
+        },
+        {
+          "word": "goodbye",
+          "definition": "A farewell expression",
+          "example": "Goodbye! See you tomorrow.",
+          "partOfSpeech": "interjection",
+          "phonetic": "/ɡʊdˈbaɪ/"
+        },
+        {
+          "word": "please",
+          "definition": "A polite word used when asking for something",
+          "example": "Can I have some water, please?",
+          "partOfSpeech": "adverb",
+          "phonetic": "/pliːz/"
+        },
+        {
+          "word": "thank",
+          "definition": "To express gratitude",
+          "example": "Thank you for your help.",
+          "partOfSpeech": "verb",
+          "phonetic": "/θæŋk/"
+        },
+        {
+          "word": "sorry",
+          "definition": "Used to express apology or regret",
+          "example": "Sorry, I'm late.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ˈsɒr.i/"
+        },
+        {
+          "word": "name",
+          "definition": "What someone or something is called",
+          "example": "My name is Anna.",
+          "partOfSpeech": "noun",
+          "phonetic": "/neɪm/"
+        },
+        {
+          "word": "meet",
+          "definition": "To see someone for the first time",
+          "example": "Nice to meet you!",
+          "partOfSpeech": "verb",
+          "phonetic": "/miːt/"
+        },
+        {
+          "word": "help",
+          "definition": "To do something for someone",
+          "example": "Can you help me, please?",
+          "partOfSpeech": "verb",
+          "phonetic": "/help/"
+        },
+        {
+          "word": "yes",
+          "definition": "Used to agree or say something is correct",
+          "example": "Yes, I understand.",
+          "partOfSpeech": "interjection",
+          "phonetic": "/jes/"
+        },
+        {
+          "word": "no",
+          "definition": "Used to refuse or disagree",
+          "example": "No, thank you.",
+          "partOfSpeech": "interjection",
+          "phonetic": "/noʊ/"
+        },
+        {
+          "word": "good",
+          "definition": "Of a high quality or standard",
+          "example": "This is a good book.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ɡʊd/"
+        },
+        {
+          "word": "bad",
+          "definition": "Of poor quality or not acceptable",
+          "example": "The weather is bad today.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/bæd/"
+        },
+        {
+          "word": "welcome",
+          "definition": "Used to greet someone warmly",
+          "example": "Welcome to our home!",
+          "partOfSpeech": "interjection",
+          "phonetic": "/ˈwel.kəm/"
+        },
+        {
+          "word": "excuse",
+          "definition": "A polite way to get someone's attention",
+          "example": "Excuse me, where is the station?",
+          "partOfSpeech": "verb",
+          "phonetic": "/ɪkˈskjuːz/"
+        },
+        {
+          "word": "how",
+          "definition": "In what way or manner",
+          "example": "How are you today?",
+          "partOfSpeech": "adverb",
+          "phonetic": "/haʊ/"
+        },
+        {
+          "word": "fine",
+          "definition": "Healthy and well",
+          "example": "I'm fine, thanks.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/faɪn/"
+        },
+        {
+          "word": "nice",
+          "definition": "Pleasant and agreeable",
+          "example": "It's nice to see you again.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/naɪs/"
+        },
+        {
+          "word": "morning",
+          "definition": "The early part of the day until noon",
+          "example": "Good morning!",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈmɔːr.nɪŋ/"
+        },
+        {
+          "word": "night",
+          "definition": "The time when it is dark",
+          "example": "Good night! Sweet dreams.",
+          "partOfSpeech": "noun",
+          "phonetic": "/naɪt/"
+        },
+        {
+          "word": "again",
+          "definition": "One more time; another time",
+          "example": "Let's meet again soon.",
+          "partOfSpeech": "adverb",
+          "phonetic": "/əˈɡen/"
+        }
+      ]
+    },
+    {
+      "id": "a1-food",
+      "name": "A1 Food & Drink",
+      "level": "A1",
+      "topic": "food",
+      "description": "Common foods, drinks, and restaurant vocabulary",
+      "wordCount": 20,
+      "icon": "🍕",
+      "sourceBlobSha": "8ebd124c62e7b216d400ad3478bb85443a4ecc64",
+      "words": [
+        {
+          "word": "water",
+          "definition": "A clear liquid for drinking",
+          "example": "Can I have a glass of water?",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈwɔː.tər/"
+        },
+        {
+          "word": "bread",
+          "definition": "A common food made from flour and baked",
+          "example": "I eat bread with butter for breakfast.",
+          "partOfSpeech": "noun",
+          "phonetic": "/bred/"
+        },
+        {
+          "word": "rice",
+          "definition": "A white or brown grain eaten as food",
+          "example": "We have rice with every meal.",
+          "partOfSpeech": "noun",
+          "phonetic": "/raɪs/"
+        },
+        {
+          "word": "chicken",
+          "definition": "A type of poultry often eaten as food",
+          "example": "I had grilled chicken for dinner.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈtʃɪk.ɪn/"
+        },
+        {
+          "word": "apple",
+          "definition": "A round fruit that is usually red or green",
+          "example": "She eats an apple every day.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈæp.əl/"
+        },
+        {
+          "word": "milk",
+          "definition": "A white drink from cows",
+          "example": "Children should drink milk.",
+          "partOfSpeech": "noun",
+          "phonetic": "/mɪlk/"
+        },
+        {
+          "word": "egg",
+          "definition": "An oval object from a hen, used as food",
+          "example": "I had two eggs for breakfast.",
+          "partOfSpeech": "noun",
+          "phonetic": "/eɡ/"
+        },
+        {
+          "word": "sugar",
+          "definition": "A sweet substance used in food and drinks",
+          "example": "Do you take sugar in your tea?",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈʃʊɡ.ər/"
+        },
+        {
+          "word": "salt",
+          "definition": "A white mineral used to flavor food",
+          "example": "This soup needs more salt.",
+          "partOfSpeech": "noun",
+          "phonetic": "/sɒlt/"
+        },
+        {
+          "word": "hungry",
+          "definition": "Needing food",
+          "example": "I'm hungry — let's eat.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ˈhʌŋ.ɡri/"
+        },
+        {
+          "word": "thirsty",
+          "definition": "Needing something to drink",
+          "example": "I'm thirsty after running.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ˈθɜːr.sti/"
+        },
+        {
+          "word": "eat",
+          "definition": "To put food in your mouth and swallow it",
+          "example": "We eat lunch at noon.",
+          "partOfSpeech": "verb",
+          "phonetic": "/iːt/"
+        },
+        {
+          "word": "drink",
+          "definition": "To take liquid into your mouth and swallow",
+          "example": "I drink coffee every morning.",
+          "partOfSpeech": "verb",
+          "phonetic": "/drɪŋk/"
+        },
+        {
+          "word": "order",
+          "definition": "To ask for food at a restaurant",
+          "example": "I'd like to order a pizza.",
+          "partOfSpeech": "verb",
+          "phonetic": "/ˈɔːr.dər/"
+        },
+        {
+          "word": "menu",
+          "definition": "A list of food you can order at a restaurant",
+          "example": "Can I see the menu, please?",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈmen.juː/"
+        },
+        {
+          "word": "delicious",
+          "definition": "Very pleasant to taste",
+          "example": "This cake is delicious!",
+          "partOfSpeech": "adjective",
+          "phonetic": "/dɪˈlɪʃ.əs/"
+        },
+        {
+          "word": "breakfast",
+          "definition": "The first meal of the day",
+          "example": "What do you want for breakfast?",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈbrek.fəst/"
+        },
+        {
+          "word": "dinner",
+          "definition": "The main meal of the day, usually in the evening",
+          "example": "Dinner is ready!",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈdɪn.ər/"
+        },
+        {
+          "word": "tea",
+          "definition": "A hot drink made from dried leaves",
+          "example": "Would you like some tea?",
+          "partOfSpeech": "noun",
+          "phonetic": "/tiː/"
+        },
+        {
+          "word": "fruit",
+          "definition": "Food like apples, bananas, and oranges",
+          "example": "Eat more fruit and vegetables.",
+          "partOfSpeech": "noun",
+          "phonetic": "/fruːt/"
+        }
+      ]
+    },
+    {
+      "id": "a2-travel",
+      "name": "A2 Travel & Transport",
+      "level": "A2",
+      "topic": "travel",
+      "description": "Getting around — airports, hotels, directions",
+      "wordCount": 20,
+      "icon": "✈️",
+      "sourceBlobSha": "74a9a78074a9d11cabe600c34df8edb9db9033be",
+      "words": [
+        {
+          "word": "airport",
+          "definition": "A place where planes take off and land",
+          "example": "We arrived at the airport two hours early.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈer.pɔːrt/"
+        },
+        {
+          "word": "ticket",
+          "definition": "A piece of paper that lets you travel or enter",
+          "example": "I bought a train ticket online.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈtɪk.ɪt/"
+        },
+        {
+          "word": "passport",
+          "definition": "An official document for international travel",
+          "example": "Don't forget your passport!",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈpæs.pɔːrt/"
+        },
+        {
+          "word": "hotel",
+          "definition": "A building where you pay to sleep and stay",
+          "example": "The hotel has a swimming pool.",
+          "partOfSpeech": "noun",
+          "phonetic": "/hoʊˈtel/"
+        },
+        {
+          "word": "luggage",
+          "definition": "Bags and suitcases you carry when traveling",
+          "example": "My luggage is very heavy.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈlʌɡ.ɪdʒ/"
+        },
+        {
+          "word": "direction",
+          "definition": "The way to go to reach a place",
+          "example": "Can you give me directions to the museum?",
+          "partOfSpeech": "noun",
+          "phonetic": "/dɪˈrek.ʃən/"
+        },
+        {
+          "word": "map",
+          "definition": "A drawing of an area showing roads and places",
+          "example": "I need a map of the city.",
+          "partOfSpeech": "noun",
+          "phonetic": "/mæp/"
+        },
+        {
+          "word": "train",
+          "definition": "A long vehicle that travels on rails",
+          "example": "The train leaves at 9 a.m.",
+          "partOfSpeech": "noun",
+          "phonetic": "/treɪn/"
+        },
+        {
+          "word": "bus",
+          "definition": "A large vehicle that carries many passengers",
+          "example": "I take the bus to work.",
+          "partOfSpeech": "noun",
+          "phonetic": "/bʌs/"
+        },
+        {
+          "word": "station",
+          "definition": "A place where trains or buses stop",
+          "example": "The station is near the city center.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈsteɪ.ʃən/"
+        },
+        {
+          "word": "arrive",
+          "definition": "To reach a place",
+          "example": "We arrive in Paris tomorrow.",
+          "partOfSpeech": "verb",
+          "phonetic": "/əˈraɪv/"
+        },
+        {
+          "word": "depart",
+          "definition": "To leave a place",
+          "example": "The flight departs at 6 p.m.",
+          "partOfSpeech": "verb",
+          "phonetic": "/dɪˈpɑːrt/"
+        },
+        {
+          "word": "book",
+          "definition": "To reserve a seat, room, or ticket",
+          "example": "I need to book a hotel room.",
+          "partOfSpeech": "verb",
+          "phonetic": "/bʊk/"
+        },
+        {
+          "word": "miss",
+          "definition": "To fail to catch a train, bus, or plane",
+          "example": "I missed the bus this morning.",
+          "partOfSpeech": "verb",
+          "phonetic": "/mɪs/"
+        },
+        {
+          "word": "expensive",
+          "definition": "Costing a lot of money",
+          "example": "London hotels are expensive.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ɪkˈspen.sɪv/"
+        },
+        {
+          "word": "cheap",
+          "definition": "Costing little money",
+          "example": "This is a cheap flight.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/tʃiːp/"
+        },
+        {
+          "word": "far",
+          "definition": "A long distance away",
+          "example": "The beach is not far from here.",
+          "partOfSpeech": "adverb",
+          "phonetic": "/fɑːr/"
+        },
+        {
+          "word": "near",
+          "definition": "Close to something",
+          "example": "The hotel is near the airport.",
+          "partOfSpeech": "adverb",
+          "phonetic": "/nɪr/"
+        },
+        {
+          "word": "trip",
+          "definition": "A journey to a place and back",
+          "example": "We took a trip to the mountains.",
+          "partOfSpeech": "noun",
+          "phonetic": "/trɪp/"
+        },
+        {
+          "word": "tourist",
+          "definition": "A person visiting a place for pleasure",
+          "example": "Many tourists visit this city.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈtʊr.ɪst/"
+        }
+      ]
+    },
+    {
+      "id": "a2-shopping",
+      "name": "A2 Shopping & Money",
+      "level": "A2",
+      "topic": "shopping",
+      "description": "Stores, prices, sizes, and paying",
+      "wordCount": 20,
+      "icon": "🛍️",
+      "sourceBlobSha": "0be7d994dd48297b87737c04abc068ca69dca13f",
+      "words": [
+        {
+          "word": "shop",
+          "definition": "A place where you buy things",
+          "example": "There's a new shop on the corner.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ʃɒp/"
+        },
+        {
+          "word": "price",
+          "definition": "The amount of money something costs",
+          "example": "What's the price of this shirt?",
+          "partOfSpeech": "noun",
+          "phonetic": "/praɪs/"
+        },
+        {
+          "word": "size",
+          "definition": "How big or small something is",
+          "example": "Do you have this in a larger size?",
+          "partOfSpeech": "noun",
+          "phonetic": "/saɪz/"
+        },
+        {
+          "word": "sale",
+          "definition": "A time when items are sold at lower prices",
+          "example": "The shoes were on sale for 50% off.",
+          "partOfSpeech": "noun",
+          "phonetic": "/seɪl/"
+        },
+        {
+          "word": "cash",
+          "definition": "Money in the form of coins and notes",
+          "example": "Do you have cash or a card?",
+          "partOfSpeech": "noun",
+          "phonetic": "/kæʃ/"
+        },
+        {
+          "word": "card",
+          "definition": "A plastic card used to pay for things",
+          "example": "I'll pay by card, please.",
+          "partOfSpeech": "noun",
+          "phonetic": "/kɑːrd/"
+        },
+        {
+          "word": "receipt",
+          "definition": "A paper showing what you bought and paid",
+          "example": "Can I have a receipt, please?",
+          "partOfSpeech": "noun",
+          "phonetic": "/rɪˈsiːt/"
+        },
+        {
+          "word": "try",
+          "definition": "To put on clothes to see if they fit",
+          "example": "Can I try this jacket on?",
+          "partOfSpeech": "verb",
+          "phonetic": "/traɪ/"
+        },
+        {
+          "word": "buy",
+          "definition": "To get something by paying money",
+          "example": "I want to buy a new phone.",
+          "partOfSpeech": "verb",
+          "phonetic": "/baɪ/"
+        },
+        {
+          "word": "sell",
+          "definition": "To give something to someone for money",
+          "example": "They sell fresh bread here.",
+          "partOfSpeech": "verb",
+          "phonetic": "/sel/"
+        },
+        {
+          "word": "pay",
+          "definition": "To give money for something",
+          "example": "I need to pay for these groceries.",
+          "partOfSpeech": "verb",
+          "phonetic": "/peɪ/"
+        },
+        {
+          "word": "cheap",
+          "definition": "Not costing much money",
+          "example": "This bag was very cheap.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/tʃiːp/"
+        },
+        {
+          "word": "expensive",
+          "definition": "Costing a lot of money",
+          "example": "That restaurant is too expensive.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ɪkˈspen.sɪv/"
+        },
+        {
+          "word": "size",
+          "definition": "The measurement of how big something is",
+          "example": "I need a medium size.",
+          "partOfSpeech": "noun",
+          "phonetic": "/saɪz/"
+        },
+        {
+          "word": "customer",
+          "definition": "A person who buys something",
+          "example": "The customer is always right.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈkʌs.tə.mər/"
+        },
+        {
+          "word": "market",
+          "definition": "A place where people buy and sell goods",
+          "example": "We buy vegetables at the market.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈmɑːr.kɪt/"
+        },
+        {
+          "word": "try on",
+          "definition": "To put on clothing to check the fit",
+          "example": "I'd like to try on these shoes.",
+          "partOfSpeech": "phrasal verb",
+          "phonetic": "/traɪ ɒn/"
+        },
+        {
+          "word": "exchange",
+          "definition": "To return something and get a different one",
+          "example": "Can I exchange this for a bigger size?",
+          "partOfSpeech": "verb",
+          "phonetic": "/ɪksˈtʃeɪndʒ/"
+        },
+        {
+          "word": "discount",
+          "definition": "A reduction in the usual price",
+          "example": "Students get a 10% discount.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈdɪs.kaʊnt/"
+        },
+        {
+          "word": "total",
+          "definition": "The full amount of money for everything",
+          "example": "The total is $45.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈtoʊ.təl/"
+        }
+      ]
+    },
+    {
+      "id": "a2-weather",
+      "name": "A2 Weather & Nature",
+      "level": "A2",
+      "topic": "weather",
+      "description": "Seasons, weather conditions, and the natural world",
+      "wordCount": 20,
+      "icon": "🌤️",
+      "sourceBlobSha": "3888136f74d033c49813fc03be1c681163bf9200",
+      "words": [
+        {
+          "word": "weather",
+          "definition": "The condition of the atmosphere (hot, cold, rainy, etc.)",
+          "example": "What's the weather like today?",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈweð.ər/"
+        },
+        {
+          "word": "rain",
+          "definition": "Water falling from clouds",
+          "example": "Take an umbrella — it might rain.",
+          "partOfSpeech": "noun",
+          "phonetic": "/reɪn/"
+        },
+        {
+          "word": "snow",
+          "definition": "Frozen water falling as white flakes",
+          "example": "We had heavy snow last winter.",
+          "partOfSpeech": "noun",
+          "phonetic": "/snoʊ/"
+        },
+        {
+          "word": "wind",
+          "definition": "Air moving across the earth's surface",
+          "example": "The wind is very strong today.",
+          "partOfSpeech": "noun",
+          "phonetic": "/wɪnd/"
+        },
+        {
+          "word": "sun",
+          "definition": "The star that gives us light and warmth",
+          "example": "The sun is shining brightly.",
+          "partOfSpeech": "noun",
+          "phonetic": "/sʌn/"
+        },
+        {
+          "word": "cloud",
+          "definition": "A white or grey mass in the sky",
+          "example": "There are dark clouds — it might rain.",
+          "partOfSpeech": "noun",
+          "phonetic": "/klaʊd/"
+        },
+        {
+          "word": "storm",
+          "definition": "Very bad weather with strong wind and rain",
+          "example": "A big storm is coming tonight.",
+          "partOfSpeech": "noun",
+          "phonetic": "/stɔːrm/"
+        },
+        {
+          "word": "temperature",
+          "definition": "How hot or cold something is",
+          "example": "The temperature is 25 degrees today.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈtem.prə.tʃər/"
+        },
+        {
+          "word": "season",
+          "definition": "One of the four parts of the year",
+          "example": "Autumn is my favorite season.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈsiː.zən/"
+        },
+        {
+          "word": "spring",
+          "definition": "The season between winter and summer",
+          "example": "Flowers bloom in spring.",
+          "partOfSpeech": "noun",
+          "phonetic": "/sprɪŋ/"
+        },
+        {
+          "word": "summer",
+          "definition": "The hottest season of the year",
+          "example": "We go to the beach in summer.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈsʌm.ər/"
+        },
+        {
+          "word": "autumn",
+          "definition": "The season between summer and winter",
+          "example": "The leaves change color in autumn.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈɔː.təm/"
+        },
+        {
+          "word": "winter",
+          "definition": "The coldest season of the year",
+          "example": "Winter days are short and cold.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈwɪn.tər/"
+        },
+        {
+          "word": "hot",
+          "definition": "Having a high temperature",
+          "example": "It's very hot in July.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/hɒt/"
+        },
+        {
+          "word": "cold",
+          "definition": "Having a low temperature",
+          "example": "It's cold outside — wear a coat.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/koʊld/"
+        },
+        {
+          "word": "warm",
+          "definition": "A little hot, pleasantly heated",
+          "example": "It's warm enough to sit outside.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/wɔːrm/"
+        },
+        {
+          "word": "cool",
+          "definition": "Slightly cold",
+          "example": "The evening air is cool.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/kuːl/"
+        },
+        {
+          "word": "sunny",
+          "definition": "Having a lot of sunshine",
+          "example": "It's a beautiful sunny day.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ˈsʌn.i/"
+        },
+        {
+          "word": "rainy",
+          "definition": "Having a lot of rain",
+          "example": "It's a rainy afternoon.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ˈreɪ.ni/"
+        },
+        {
+          "word": "cloudy",
+          "definition": "Covered with clouds",
+          "example": "The sky is cloudy today.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ˈklaʊ.di/"
+        }
+      ]
+    },
+    {
+      "id": "b1-work",
+      "name": "B1 Work & Careers",
+      "level": "B1",
+      "topic": "work",
+      "description": "Office life, job hunting, and professional communication",
+      "wordCount": 20,
+      "icon": "💼",
+      "sourceBlobSha": "9ff9f0d92f00a2735f0024d1891dbef3a38fc494",
+      "words": [
+        {
+          "word": "interview",
+          "definition": "A meeting to decide if someone gets a job",
+          "example": "I have a job interview tomorrow.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈɪn.tər.vjuː/"
+        },
+        {
+          "word": "salary",
+          "definition": "Money you earn from your job each month",
+          "example": "The salary for this position is competitive.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈsæl.ər.i/"
+        },
+        {
+          "word": "colleague",
+          "definition": "A person you work with",
+          "example": "My colleagues are very supportive.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈkɒl.iːɡ/"
+        },
+        {
+          "word": "deadline",
+          "definition": "The latest time something must be finished",
+          "example": "The deadline for the report is Friday.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈded.laɪn/"
+        },
+        {
+          "word": "meeting",
+          "definition": "A planned event where people discuss things",
+          "example": "We have a meeting at 10 a.m.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈmiː.tɪŋ/"
+        },
+        {
+          "word": "experience",
+          "definition": "Knowledge gained from doing a job over time",
+          "example": "This job requires three years of experience.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ɪkˈspɪr.i.əns/"
+        },
+        {
+          "word": "skill",
+          "definition": "An ability to do something well",
+          "example": "Communication skills are important.",
+          "partOfSpeech": "noun",
+          "phonetic": "/skɪl/"
+        },
+        {
+          "word": "apply",
+          "definition": "To formally ask for a job",
+          "example": "I want to apply for this position.",
+          "partOfSpeech": "verb",
+          "phonetic": "/əˈplaɪ/"
+        },
+        {
+          "word": "hire",
+          "definition": "To give someone a job",
+          "example": "They want to hire a new designer.",
+          "partOfSpeech": "verb",
+          "phonetic": "/haɪər/"
+        },
+        {
+          "word": "resign",
+          "definition": "To officially leave your job",
+          "example": "She resigned from her position last month.",
+          "partOfSpeech": "verb",
+          "phonetic": "/rɪˈzaɪn/"
+        },
+        {
+          "word": "promote",
+          "definition": "To give someone a better job with more responsibility",
+          "example": "He was promoted to manager.",
+          "partOfSpeech": "verb",
+          "phonetic": "/prəˈmoʊt/"
+        },
+        {
+          "word": "commute",
+          "definition": "To travel to and from work",
+          "example": "I commute for an hour each day.",
+          "partOfSpeech": "verb",
+          "phonetic": "/kəˈmjuːt/"
+        },
+        {
+          "word": "full-time",
+          "definition": "Working the whole working week",
+          "example": "She has a full-time job.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ˌfʊlˈtaɪm/"
+        },
+        {
+          "word": "part-time",
+          "definition": "Working only part of the week",
+          "example": "He has a part-time job at the cafe.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ˌpɑːrtˈtaɪm/"
+        },
+        {
+          "word": "professional",
+          "definition": "Related to a job that needs special training",
+          "example": "She is very professional in her work.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/prəˈfeʃ.ən.əl/"
+        },
+        {
+          "word": "overtime",
+          "definition": "Working hours beyond your normal schedule",
+          "example": "I had to work overtime last week.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈoʊ.vər.taɪm/"
+        },
+        {
+          "word": "benefit",
+          "definition": "Something extra you get from your job (health insurance, etc.)",
+          "example": "This job has great benefits.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈben.ɪ.fɪt/"
+        },
+        {
+          "word": "team",
+          "definition": "A group of people working together",
+          "example": "Our team finished the project early.",
+          "partOfSpeech": "noun",
+          "phonetic": "/tiːm/"
+        },
+        {
+          "word": "task",
+          "definition": "A piece of work that needs to be done",
+          "example": "I have several tasks to complete today.",
+          "partOfSpeech": "noun",
+          "phonetic": "/tæsk/"
+        },
+        {
+          "word": "resume",
+          "definition": "A document listing your education and work experience",
+          "example": "Please send your resume by email.",
+          "partOfSpeech": "noun",
+          "phonetic": "/rɪˈzuːm/"
+        }
+      ]
+    },
+    {
+      "id": "b1-health",
+      "name": "B1 Health & Body",
+      "level": "B1",
+      "topic": "health",
+      "description": "Doctor visits, symptoms, fitness, and wellbeing",
+      "wordCount": 20,
+      "icon": "🏥",
+      "sourceBlobSha": "9a8c671d1c8af4ca32b5b1d5ad7fedbfd90b66e4",
+      "words": [
+        {
+          "word": "doctor",
+          "definition": "A person who treats sick people",
+          "example": "I need to see a doctor.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈdɒk.tər/"
+        },
+        {
+          "word": "medicine",
+          "definition": "A substance used to treat illness",
+          "example": "Take this medicine twice a day.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈmed.ɪ.sən/"
+        },
+        {
+          "word": "symptom",
+          "definition": "A sign that you have a particular illness",
+          "example": "Fever is a common symptom of the flu.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈsɪmp.təm/"
+        },
+        {
+          "word": "headache",
+          "definition": "A pain in your head",
+          "example": "I have a terrible headache.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈhed.eɪk/"
+        },
+        {
+          "word": "exercise",
+          "definition": "Physical activity to stay healthy",
+          "example": "Regular exercise is good for your heart.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈek.sər.saɪz/"
+        },
+        {
+          "word": "diet",
+          "definition": "The food you eat regularly",
+          "example": "A balanced diet includes vegetables and fruit.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈdaɪ.ət/"
+        },
+        {
+          "word": "weight",
+          "definition": "How heavy someone or something is",
+          "example": "I've gained some weight this year.",
+          "partOfSpeech": "noun",
+          "phonetic": "/weɪt/"
+        },
+        {
+          "word": "appointment",
+          "definition": "A planned meeting with a doctor",
+          "example": "I have a dental appointment at 3 p.m.",
+          "partOfSpeech": "noun",
+          "phonetic": "/əˈpɔɪnt.mənt/"
+        },
+        {
+          "word": "prescription",
+          "definition": "A doctor's written order for medicine",
+          "example": "The doctor gave me a prescription.",
+          "partOfSpeech": "noun",
+          "phonetic": "/prɪˈskrɪp.ʃən/"
+        },
+        {
+          "word": "allergy",
+          "definition": "A bad reaction to something (food, pollen, etc.)",
+          "example": "I have an allergy to peanuts.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈæl.ər.dʒi/"
+        },
+        {
+          "word": "recover",
+          "definition": "To get well after an illness",
+          "example": "She recovered from the flu in a week.",
+          "partOfSpeech": "verb",
+          "phonetic": "/rɪˈkʌv.ər/"
+        },
+        {
+          "word": "injure",
+          "definition": "To hurt part of your body",
+          "example": "He injured his knee playing football.",
+          "partOfSpeech": "verb",
+          "phonetic": "/ˈɪn.dʒər/"
+        },
+        {
+          "word": "treat",
+          "definition": "To give medical care for an illness",
+          "example": "The doctor treated the wound.",
+          "partOfSpeech": "verb",
+          "phonetic": "/triːt/"
+        },
+        {
+          "word": "healthy",
+          "definition": "In good physical condition",
+          "example": "She looks very healthy.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ˈhel.θi/"
+        },
+        {
+          "word": "sick",
+          "definition": "Not well; ill",
+          "example": "I feel sick today.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/sɪk/"
+        },
+        {
+          "word": "fit",
+          "definition": "In good physical condition from exercise",
+          "example": "He goes to the gym to stay fit.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/fɪt/"
+        },
+        {
+          "word": "pain",
+          "definition": "A bad physical feeling in your body",
+          "example": "I have pain in my back.",
+          "partOfSpeech": "noun",
+          "phonetic": "/peɪn/"
+        },
+        {
+          "word": "ambulance",
+          "definition": "A vehicle that takes sick people to hospital",
+          "example": "Call an ambulance — he's hurt!",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈæm.bjə.ləns/"
+        },
+        {
+          "word": "surgery",
+          "definition": "A medical operation",
+          "example": "She had surgery on her knee.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈsɜːr.dʒər.i/"
+        },
+        {
+          "word": "stress",
+          "definition": "Worry and pressure that affects your health",
+          "example": "Work can cause a lot of stress.",
+          "partOfSpeech": "noun",
+          "phonetic": "/stres/"
+        }
+      ]
+    },
+    {
+      "id": "b1-education",
+      "name": "B1 Education & Learning",
+      "level": "B1",
+      "topic": "education",
+      "description": "School, university, studying, and academic life",
+      "wordCount": 20,
+      "icon": "🎓",
+      "sourceBlobSha": "b9f72aef8b74221eca50219383d61c2f21790cf2",
+      "words": [
+        {
+          "word": "university",
+          "definition": "A place where people study for a degree",
+          "example": "She studies at the university.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˌjuː.nɪˈvɜːr.sə.ti/"
+        },
+        {
+          "word": "degree",
+          "definition": "A qualification from a university",
+          "example": "He has a degree in computer science.",
+          "partOfSpeech": "noun",
+          "phonetic": "/dɪˈɡriː/"
+        },
+        {
+          "word": "exam",
+          "definition": "A test of knowledge or ability",
+          "example": "I have a math exam next week.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ɪɡˈzæm/"
+        },
+        {
+          "word": "homework",
+          "definition": "Work you do at home for school",
+          "example": "I have a lot of homework tonight.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈhoʊm.wɜːrk/"
+        },
+        {
+          "word": "lesson",
+          "definition": "A period of learning in school",
+          "example": "The lesson starts at 9 a.m.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈles.ən/"
+        },
+        {
+          "word": "subject",
+          "definition": "An area of knowledge studied in school",
+          "example": "My favorite subject is history.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈsʌb.dʒekt/"
+        },
+        {
+          "word": "teacher",
+          "definition": "A person who teaches in a school",
+          "example": "Our teacher is very patient.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈtiː.tʃər/"
+        },
+        {
+          "word": "student",
+          "definition": "A person who is studying at a school or university",
+          "example": "She is a hard-working student.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈstjuː.dənt/"
+        },
+        {
+          "word": "course",
+          "definition": "A series of lessons about a subject",
+          "example": "I'm taking an English course.",
+          "partOfSpeech": "noun",
+          "phonetic": "/kɔːrs/"
+        },
+        {
+          "word": "library",
+          "definition": "A building with books you can borrow",
+          "example": "I study in the library.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈlaɪ.brər.i/"
+        },
+        {
+          "word": "research",
+          "definition": "Careful study to discover new facts",
+          "example": "She did research for her thesis.",
+          "partOfSpeech": "noun",
+          "phonetic": "/rɪˈsɜːrtʃ/"
+        },
+        {
+          "word": "essay",
+          "definition": "A short piece of writing on a subject",
+          "example": "I need to write an essay about climate change.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈes.eɪ/"
+        },
+        {
+          "word": "graduate",
+          "definition": "To complete a course of study",
+          "example": "She graduated from university last year.",
+          "partOfSpeech": "verb",
+          "phonetic": "/ˈɡrædʒ.u.eɪt/"
+        },
+        {
+          "word": "study",
+          "definition": "To learn about a subject",
+          "example": "I study English every day.",
+          "partOfSpeech": "verb",
+          "phonetic": "/ˈstʌd.i/"
+        },
+        {
+          "word": "pass",
+          "definition": "To succeed in an exam",
+          "example": "I passed the driving test!",
+          "partOfSpeech": "verb",
+          "phonetic": "/pæs/"
+        },
+        {
+          "word": "fail",
+          "definition": "To not succeed in an exam",
+          "example": "He failed the math exam.",
+          "partOfSpeech": "verb",
+          "phonetic": "/feɪl/"
+        },
+        {
+          "word": "scholarship",
+          "definition": "Money given to a student to help pay for study",
+          "example": "She won a scholarship to Oxford.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈskɒl.ər.ʃɪp/"
+        },
+        {
+          "word": "semester",
+          "definition": "A half-year period in a school or university",
+          "example": "Fall semester starts in September.",
+          "partOfSpeech": "noun",
+          "phonetic": "/sɪˈmes.tər/"
+        },
+        {
+          "word": "lecture",
+          "definition": "A talk given to a group of students",
+          "example": "The professor gave an interesting lecture.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈlek.tʃər/"
+        },
+        {
+          "word": "campus",
+          "definition": "The grounds of a university",
+          "example": "The campus is beautiful in spring.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈkæm.pəs/"
+        }
+      ]
+    },
+    {
+      "id": "b2-technology",
+      "name": "B2 Technology & Internet",
+      "level": "B2",
+      "topic": "technology",
+      "description": "Computers, apps, social media, and digital life",
+      "wordCount": 20,
+      "icon": "💻",
+      "sourceBlobSha": "b41ffb01cac8bc987b50ac72baab4f6c0deca518",
+      "words": [
+        {
+          "word": "software",
+          "definition": "Programs that run on a computer",
+          "example": "We need to update the software.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈsɒft.wer/"
+        },
+        {
+          "word": "hardware",
+          "definition": "The physical parts of a computer",
+          "example": "The hardware needs to be replaced.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈhɑːrd.wer/"
+        },
+        {
+          "word": "algorithm",
+          "definition": "A set of steps a computer follows to solve a problem",
+          "example": "The search algorithm shows relevant results.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈæl.ɡə.rɪ.ðəm/"
+        },
+        {
+          "word": "database",
+          "definition": "An organized collection of data stored electronically",
+          "example": "Customer information is kept in a database.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈdeɪ.tə.beɪs/"
+        },
+        {
+          "word": "artificial",
+          "definition": "Made by humans, not natural",
+          "example": "Artificial intelligence is transforming many industries.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ˌɑːr.tɪˈfɪʃ.əl/"
+        },
+        {
+          "word": "network",
+          "definition": "A system of connected computers",
+          "example": "The office network is very fast.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈnet.wɜːrk/"
+        },
+        {
+          "word": "password",
+          "definition": "A secret word used to access a system",
+          "example": "Choose a strong password.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈpæs.wɜːrd/"
+        },
+        {
+          "word": "download",
+          "definition": "To copy a file from the internet to your device",
+          "example": "I downloaded the app yesterday.",
+          "partOfSpeech": "verb",
+          "phonetic": "/ˈdaʊn.loʊd/"
+        },
+        {
+          "word": "upload",
+          "definition": "To send a file from your device to the internet",
+          "example": "Please upload your photo.",
+          "partOfSpeech": "verb",
+          "phonetic": "/ˈʌp.loʊd/"
+        },
+        {
+          "word": "browse",
+          "definition": "To look through websites on the internet",
+          "example": "I browse social media in the evening.",
+          "partOfSpeech": "verb",
+          "phonetic": "/braʊz/"
+        },
+        {
+          "word": "stream",
+          "definition": "To watch or listen to content online without downloading",
+          "example": "We stream movies on Netflix.",
+          "partOfSpeech": "verb",
+          "phonetic": "/striːm/"
+        },
+        {
+          "word": "device",
+          "definition": "A piece of equipment made for a purpose",
+          "example": "This device can track your steps.",
+          "partOfSpeech": "noun",
+          "phonetic": "/dɪˈvaɪs/"
+        },
+        {
+          "word": "cloud",
+          "definition": "Remote servers accessed via the internet for storage",
+          "example": "I save my files to the cloud.",
+          "partOfSpeech": "noun",
+          "phonetic": "/klaʊd/"
+        },
+        {
+          "word": "cybersecurity",
+          "definition": "The practice of protecting systems from digital attacks",
+          "example": "Cybersecurity is a growing concern.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˌsaɪ.bər.sɪˈkjʊr.ə.ti/"
+        },
+        {
+          "word": "innovation",
+          "definition": "A new idea or method",
+          "example": "This technology is a major innovation.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˌɪn.əˈveɪ.ʃən/"
+        },
+        {
+          "word": "automation",
+          "definition": "Using machines to do work without human help",
+          "example": "Automation has changed manufacturing.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˌɔː.təˈmeɪ.ʃən/"
+        },
+        {
+          "word": "digital",
+          "definition": "Relating to computer technology",
+          "example": "We live in a digital age.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ˈdɪdʒ.ɪ.təl/"
+        },
+        {
+          "word": "virtual",
+          "definition": "Existing in a computer, not in the physical world",
+          "example": "We had a virtual meeting on Zoom.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ˈvɜːr.tʃu.əl/"
+        },
+        {
+          "word": "compatible",
+          "definition": "Able to work together without problems",
+          "example": "This app is compatible with Android.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/kəmˈpæt.ə.bəl/"
+        },
+        {
+          "word": "obsolete",
+          "definition": "No longer used because something newer exists",
+          "example": "Floppy disks are now obsolete.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ˌɒb.səlˈiːt/"
+        }
+      ]
+    },
+    {
+      "id": "b2-environment",
+      "name": "B2 Environment & Climate",
+      "level": "B2",
+      "topic": "environment",
+      "description": "Ecology, sustainability, and environmental issues",
+      "wordCount": 20,
+      "icon": "🌍",
+      "sourceBlobSha": "855ba4bc0b63f2021afc8e22243a87bb0b072aae",
+      "words": [
+        {
+          "word": "climate",
+          "definition": "The usual weather conditions in an area",
+          "example": "Climate change is a global issue.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈklaɪ.mət/"
+        },
+        {
+          "word": "pollution",
+          "definition": "Harmful substances released into the environment",
+          "example": "Air pollution is a problem in big cities.",
+          "partOfSpeech": "noun",
+          "phonetic": "/pəˈluː.ʃən/"
+        },
+        {
+          "word": "recycle",
+          "definition": "To convert waste into reusable material",
+          "example": "We should recycle plastic and paper.",
+          "partOfSpeech": "verb",
+          "phonetic": "/riːˈsaɪ.kəl/"
+        },
+        {
+          "word": "renewable",
+          "definition": "A resource that can be replaced naturally",
+          "example": "Solar power is a renewable energy source.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/rɪˈnjuː.ə.bəl/"
+        },
+        {
+          "word": "ecosystem",
+          "definition": "All living things in an area and how they interact",
+          "example": "The rainforest has a complex ecosystem.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈiː.koʊˌsɪs.təm/"
+        },
+        {
+          "word": "emission",
+          "definition": "The release of gas or radiation into the air",
+          "example": "Carbon emissions must be reduced.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ɪˈmɪʃ.ən/"
+        },
+        {
+          "word": "sustainable",
+          "definition": "Able to continue without harming the environment",
+          "example": "We need sustainable farming practices.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/səˈsteɪ.nə.bəl/"
+        },
+        {
+          "word": "biodiversity",
+          "definition": "The variety of plant and animal life in an area",
+          "example": "Biodiversity is threatened by deforestation.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˌbaɪ.oʊ.daɪˈvɜːr.sə.ti/"
+        },
+        {
+          "word": "fossil",
+          "definition": "Remains of ancient animals or plants in rock",
+          "example": "Fossil fuels take millions of years to form.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈfɒs.əl/"
+        },
+        {
+          "word": "conservation",
+          "definition": "The protection of natural resources",
+          "example": "Conservation efforts have saved many species.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˌkɒn.sərˈveɪ.ʃən/"
+        },
+        {
+          "word": "deforestation",
+          "definition": "The clearing of trees in a large area",
+          "example": "Deforestation destroys animal habitats.",
+          "partOfSpeech": "noun",
+          "phonetic": "/diːˌfɒr.ɪˈsteɪ.ʃən/"
+        },
+        {
+          "word": "drought",
+          "definition": "A long period without rain",
+          "example": "The drought killed many crops.",
+          "partOfSpeech": "noun",
+          "phonetic": "/draʊt/"
+        },
+        {
+          "word": "waste",
+          "definition": "Unwanted materials thrown away",
+          "example": "We should reduce food waste.",
+          "partOfSpeech": "noun",
+          "phonetic": "/weɪst/"
+        },
+        {
+          "word": "carbon",
+          "definition": "A chemical element found in all living things",
+          "example": "We need to reduce our carbon footprint.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈkɑːr.bən/"
+        },
+        {
+          "word": "endangered",
+          "definition": "At risk of extinction",
+          "example": "Pandas are an endangered species.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ɪnˈdeɪn.dʒərd/"
+        },
+        {
+          "word": "global",
+          "definition": "Relating to the whole world",
+          "example": "Global warming affects everyone.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ˈɡloʊ.bəl/"
+        },
+        {
+          "word": "organic",
+          "definition": "Grown without artificial chemicals",
+          "example": "I prefer organic vegetables.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ɔːrˈɡæn.ɪk/"
+        },
+        {
+          "word": "habitat",
+          "definition": "The natural home of an animal or plant",
+          "example": "Wetlands are an important habitat for birds.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈhæb.ɪ.tæt/"
+        },
+        {
+          "word": "greenhouse",
+          "definition": "A glass building for growing plants; also relates to warming gases",
+          "example": "Greenhouse gases trap heat in the atmosphere.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈɡriːn.haʊs/"
+        },
+        {
+          "word": "extinction",
+          "definition": "The dying out of a species",
+          "example": "Many animals face extinction.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ɪkˈstɪŋk.ʃən/"
+        }
+      ]
+    },
+    {
+      "id": "b2-media",
+      "name": "B2 Media & Entertainment",
+      "level": "B2",
+      "topic": "media",
+      "description": "News, film, music, and cultural topics",
+      "wordCount": 20,
+      "icon": "📰",
+      "sourceBlobSha": "9d7ea1adbb2ce124dd87bebe5335b31b622481c0",
+      "words": [
+        {
+          "word": "journalist",
+          "definition": "A person who writes news stories",
+          "example": "She works as a journalist for a newspaper.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈdʒɜːr.nəl.ɪst/"
+        },
+        {
+          "word": "article",
+          "definition": "A piece of writing in a newspaper or magazine",
+          "example": "I read an interesting article about AI.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈɑːr.tɪ.kəl/"
+        },
+        {
+          "word": "headline",
+          "definition": "The title of a news story in large letters",
+          "example": "The headline was shocking.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈhed.laɪn/"
+        },
+        {
+          "word": "documentary",
+          "definition": "A film presenting facts about a real subject",
+          "example": "We watched a documentary about ocean life.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˌdɒk.jəˈmen.tər.i/"
+        },
+        {
+          "word": "broadcast",
+          "definition": "To send out a program on TV or radio",
+          "example": "The game will be broadcast live tonight.",
+          "partOfSpeech": "verb",
+          "phonetic": "/ˈbrɒd.kæst/"
+        },
+        {
+          "word": "audience",
+          "definition": "The people who watch or listen to something",
+          "example": "The audience loved the show.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈɔː.di.əns/"
+        },
+        {
+          "word": "fiction",
+          "definition": "Stories that are not real, invented by writers",
+          "example": "I prefer fiction to non-fiction.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈfɪk.ʃən/"
+        },
+        {
+          "word": "review",
+          "definition": "An article giving an opinion about a book, film, etc.",
+          "example": "The film got a five-star review.",
+          "partOfSpeech": "noun",
+          "phonetic": "/rɪˈvjuː/"
+        },
+        {
+          "word": "publish",
+          "definition": "To make a book or article available to the public",
+          "example": "Her first novel was published last year.",
+          "partOfSpeech": "verb",
+          "phonetic": "/ˈpʌb.lɪʃ/"
+        },
+        {
+          "word": "edit",
+          "definition": "To prepare text or film by correcting and changing it",
+          "example": "She edited the video before posting it.",
+          "partOfSpeech": "verb",
+          "phonetic": "/ˈed.ɪt/"
+        },
+        {
+          "word": "subscribe",
+          "definition": "To sign up to receive something regularly",
+          "example": "I subscribe to a monthly magazine.",
+          "partOfSpeech": "verb",
+          "phonetic": "/səbˈskraɪb/"
+        },
+        {
+          "word": "influencer",
+          "definition": "A person who affects others' opinions on social media",
+          "example": "She's a popular fashion influencer.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈɪn.flu.en.sər/"
+        },
+        {
+          "word": "viral",
+          "definition": "Spreading quickly on the internet",
+          "example": "The video went viral overnight.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ˈvaɪ.rəl/"
+        },
+        {
+          "word": "biased",
+          "definition": "Unfairly favoring one side",
+          "example": "That news channel is very biased.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ˈbaɪ.əst/"
+        },
+        {
+          "word": "credible",
+          "definition": "Able to be believed; trustworthy",
+          "example": "Always check if a source is credible.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ˈkred.ə.bəl/"
+        },
+        {
+          "word": "misleading",
+          "definition": "Giving the wrong idea or impression",
+          "example": "The headline was misleading.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ˌmɪsˈliː.dɪŋ/"
+        },
+        {
+          "word": "coverage",
+          "definition": "The reporting of news events",
+          "example": "The election received worldwide coverage.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈkʌv.ər.ɪdʒ/"
+        },
+        {
+          "word": "column",
+          "definition": "A regular article by the same writer in a newspaper",
+          "example": "She writes a weekly column about food.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈkɒl.əm/"
+        },
+        {
+          "word": "tabloid",
+          "definition": "A newspaper with short, sensational stories",
+          "example": "Tabloids often exaggerate the truth.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈtæb.lɔɪd/"
+        },
+        {
+          "word": "press",
+          "definition": "Newspapers, magazines, and journalists collectively",
+          "example": "The press covered the event extensively.",
+          "partOfSpeech": "noun",
+          "phonetic": "/pres/"
+        }
+      ]
+    },
+    {
+      "id": "c1-politics",
+      "name": "C1 Politics & Society",
+      "level": "C1",
+      "topic": "politics",
+      "description": "Government, elections, policy, and civic life",
+      "wordCount": 20,
+      "icon": "🏛️",
+      "sourceBlobSha": "fa916ebeaf9bcd1cd93e0dc4d2756792f86b4338",
+      "words": [
+        {
+          "word": "democracy",
+          "definition": "A system of government where people vote for leaders",
+          "example": "Democracy requires free and fair elections.",
+          "partOfSpeech": "noun",
+          "phonetic": "/dɪˈmɒk.rə.si/"
+        },
+        {
+          "word": "legislation",
+          "definition": "Laws considered collectively",
+          "example": "New legislation was passed to protect workers.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˌledʒ.ɪsˈleɪ.ʃən/"
+        },
+        {
+          "word": "campaign",
+          "definition": "An organized effort to achieve a political goal",
+          "example": "The election campaign lasted six months.",
+          "partOfSpeech": "noun",
+          "phonetic": "/kæmˈpeɪn/"
+        },
+        {
+          "word": "referendum",
+          "definition": "A vote in which people decide a specific question",
+          "example": "The country held a referendum on EU membership.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˌref.əˈren.dəm/"
+        },
+        {
+          "word": "diplomacy",
+          "definition": "Managing relations between countries",
+          "example": "Diplomacy is preferred over military action.",
+          "partOfSpeech": "noun",
+          "phonetic": "/dɪˈploʊ.mə.si/"
+        },
+        {
+          "word": "bureaucracy",
+          "definition": "A system of government with many complex rules",
+          "example": "The bureaucracy makes it hard to get things done.",
+          "partOfSpeech": "noun",
+          "phonetic": "/bjʊˈrɒk.rə.si/"
+        },
+        {
+          "word": "opposition",
+          "definition": "The political parties not in government",
+          "example": "The opposition criticized the new policy.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˌɒp.əˈzɪʃ.ən/"
+        },
+        {
+          "word": "constitute",
+          "definition": "To form or make up something",
+          "example": "These groups constitute the majority.",
+          "partOfSpeech": "verb",
+          "phonetic": "/ˈkɒn.stɪ.tjuːt/"
+        },
+        {
+          "word": "enforce",
+          "definition": "To make people obey a law or rule",
+          "example": "The police enforce traffic laws.",
+          "partOfSpeech": "verb",
+          "phonetic": "/ɪnˈfɔːrs/"
+        },
+        {
+          "word": "advocate",
+          "definition": "To publicly support a cause or policy",
+          "example": "She advocates for equal rights.",
+          "partOfSpeech": "verb",
+          "phonetic": "/ˈæd.və.keɪt/"
+        },
+        {
+          "word": "ratify",
+          "definition": "To make an agreement official by voting",
+          "example": "Parliament ratified the treaty.",
+          "partOfSpeech": "verb",
+          "phonetic": "/ˈræt.ɪ.faɪ/"
+        },
+        {
+          "word": "sanction",
+          "definition": "An official punishment or restriction against a country",
+          "example": "Economic sanctions were imposed on the regime.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈsæŋk.ʃən/"
+        },
+        {
+          "word": "sovereignty",
+          "definition": "The power of a country to govern itself",
+          "example": "National sovereignty must be respected.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈsɒv.rɪn.ti/"
+        },
+        {
+          "word": "bipartisan",
+          "definition": "Supported by two political parties",
+          "example": "The bill had bipartisan support.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ˌbaɪˈpɑːr.tɪ.zən/"
+        },
+        {
+          "word": "authoritarian",
+          "definition": "Demanding obedience to authority, not allowing freedom",
+          "example": "The country has an authoritarian government.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/əˌθɒr.ɪˈteə.ri.ən/"
+        },
+        {
+          "word": "corruption",
+          "definition": "Dishonest or illegal behavior by people in power",
+          "example": "The report exposed government corruption.",
+          "partOfSpeech": "noun",
+          "phonetic": "/kəˈrʌp.ʃən/"
+        },
+        {
+          "word": "fiscal",
+          "definition": "Relating to government money and spending",
+          "example": "The fiscal policy aims to reduce debt.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ˈfɪs.kəl/"
+        },
+        {
+          "word": "coalition",
+          "definition": "A group of parties joining together to govern",
+          "example": "The two parties formed a coalition government.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˌkoʊ.əˈlɪʃ.ən/"
+        },
+        {
+          "word": "amendment",
+          "definition": "A change or addition to a law or document",
+          "example": "The First Amendment protects free speech.",
+          "partOfSpeech": "noun",
+          "phonetic": "/əˈmend.mənt/"
+        },
+        {
+          "word": "policy",
+          "definition": "A plan of action adopted by a government or organization",
+          "example": "The government announced a new health policy.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈpɒl.ə.si/"
+        }
+      ]
+    },
+    {
+      "id": "c1-science",
+      "name": "C1 Science & Research",
+      "level": "C1",
+      "topic": "science",
+      "description": "Scientific method, discoveries, and academic discourse",
+      "wordCount": 20,
+      "icon": "🔬",
+      "sourceBlobSha": "af7cbcdd775d2eb714bffe3cd934f8eb398ea7c8",
+      "words": [
+        {
+          "word": "hypothesis",
+          "definition": "A proposed explanation to be tested",
+          "example": "The scientist tested her hypothesis.",
+          "partOfSpeech": "noun",
+          "phonetic": "/haɪˈpɒθ.ə.sɪs/"
+        },
+        {
+          "word": "experiment",
+          "definition": "A test to discover something",
+          "example": "We conducted an experiment in the lab.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ɪkˈsper.ɪ.mənt/"
+        },
+        {
+          "word": "phenomenon",
+          "definition": "A fact or event in nature that can be observed",
+          "example": "Climate change is a global phenomenon.",
+          "partOfSpeech": "noun",
+          "phonetic": "/fɪˈnɒm.ɪ.nən/"
+        },
+        {
+          "word": "methodology",
+          "definition": "A system of methods used in a particular area",
+          "example": "The research methodology was carefully designed.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˌmeθ.əˈdɒl.ə.dʒi/"
+        },
+        {
+          "word": "analysis",
+          "definition": "A detailed examination of something",
+          "example": "The data analysis revealed surprising results.",
+          "partOfSpeech": "noun",
+          "phonetic": "/əˈnæl.ə.sɪs/"
+        },
+        {
+          "word": "molecule",
+          "definition": "The smallest unit of a chemical substance",
+          "example": "A water molecule has two hydrogen atoms.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈmɒl.ɪ.kjuːl/"
+        },
+        {
+          "word": "gravity",
+          "definition": "The force that pulls objects toward the earth",
+          "example": "Gravity keeps us on the ground.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈɡræv.ə.ti/"
+        },
+        {
+          "word": "evolution",
+          "definition": "The gradual change in living things over time",
+          "example": "Darwin's theory of evolution changed science.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˌiː.vəˈluː.ʃən/"
+        },
+        {
+          "word": "quantum",
+          "definition": "Relating to the smallest units of energy",
+          "example": "Quantum physics is difficult to understand.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ˈkwɒn.təm/"
+        },
+        {
+          "word": "cellular",
+          "definition": "Relating to cells in living organisms",
+          "example": "Cellular biology studies how cells work.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ˈsel.jə.lər/"
+        },
+        {
+          "word": "synthesize",
+          "definition": "To combine different things to create something new",
+          "example": "The lab synthesized a new compound.",
+          "partOfSpeech": "verb",
+          "phonetic": "/ˈsɪn.θə.saɪz/"
+        },
+        {
+          "word": "correlate",
+          "definition": "To have a mutual relationship",
+          "example": "Exercise correlates with better health.",
+          "partOfSpeech": "verb",
+          "phonetic": "/ˈkɒr.ə.leɪt/"
+        },
+        {
+          "word": "replicate",
+          "definition": "To repeat an experiment to verify results",
+          "example": "Other scientists replicated the study.",
+          "partOfSpeech": "verb",
+          "phonetic": "/ˈrep.lɪ.keɪt/"
+        },
+        {
+          "word": "variable",
+          "definition": "A factor that can change in an experiment",
+          "example": "Temperature is the key variable in this test.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈveə.ri.ə.bəl/"
+        },
+        {
+          "word": "peer-reviewed",
+          "definition": "Evaluated by other experts before publication",
+          "example": "The study was published in a peer-reviewed journal.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ˌpɪr.rɪˈvjuːd/"
+        },
+        {
+          "word": "empirical",
+          "definition": "Based on observation and experiment",
+          "example": "The theory needs empirical evidence.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ɪmˈpɪr.ɪ.kəl/"
+        },
+        {
+          "word": "genetic",
+          "definition": "Relating to genes and heredity",
+          "example": "Genetic testing can reveal health risks.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/dʒəˈnet.ɪk/"
+        },
+        {
+          "word": "isotope",
+          "definition": "Atoms of the same element with different masses",
+          "example": "Carbon-14 is a radioactive isotope.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈaɪ.sə.toʊp/"
+        },
+        {
+          "word": "neuroscience",
+          "definition": "The study of the nervous system and brain",
+          "example": "Neuroscience is advancing rapidly.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈnjʊə.roʊ.saɪ.əns/"
+        },
+        {
+          "word": "paradigm",
+          "definition": "A typical example or model of something",
+          "example": "The discovery created a paradigm shift in physics.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈpær.ə.daɪm/"
+        }
+      ]
+    },
+    {
+      "id": "c1-arts",
+      "name": "C1 Arts & Culture",
+      "level": "C1",
+      "topic": "arts",
+      "description": "Visual arts, literature, performance, and aesthetics",
+      "wordCount": 20,
+      "icon": "🎨",
+      "sourceBlobSha": "7a9ac6a75c0359372579e59c7631c66d99ec2067",
+      "words": [
+        {
+          "word": "aesthetic",
+          "definition": "Concerned with beauty or art appreciation",
+          "example": "The building has great aesthetic appeal.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/esˈθet.ɪk/"
+        },
+        {
+          "word": "exhibition",
+          "definition": "A public display of works of art",
+          "example": "The museum has a new photography exhibition.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˌek.sɪˈbɪʃ.ən/"
+        },
+        {
+          "word": "masterpiece",
+          "definition": "A work of outstanding quality",
+          "example": "The Mona Lisa is a masterpiece.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈmæs.tər.piːs/"
+        },
+        {
+          "word": "sculpture",
+          "definition": "A three-dimensional work of art",
+          "example": "The sculpture is made of marble.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈskʌlp.tʃər/"
+        },
+        {
+          "word": "portrait",
+          "definition": "A painting or photograph of a person",
+          "example": "She painted a portrait of her mother.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈpɔːr.trɪt/"
+        },
+        {
+          "word": "curator",
+          "definition": "A person who manages a museum's collection",
+          "example": "The curator organized the exhibition.",
+          "partOfSpeech": "noun",
+          "phonetic": "/kjʊˈreɪ.tər/"
+        },
+        {
+          "word": "gallery",
+          "definition": "A room or building for displaying art",
+          "example": "We visited an art gallery downtown.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈɡæl.ər.i/"
+        },
+        {
+          "word": "abstract",
+          "definition": "Art that does not represent real objects",
+          "example": "She paints abstract art.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ˈæb.strækt/"
+        },
+        {
+          "word": "contemporary",
+          "definition": "Belonging to the present time",
+          "example": "The gallery shows contemporary art.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/kənˈtem.pər.er.i/"
+        },
+        {
+          "word": "novel",
+          "definition": "A long fictional story in book form",
+          "example": "She wrote her first novel at age 25.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈnɒv.əl/"
+        },
+        {
+          "word": "poetry",
+          "definition": "Literary work in metrical form",
+          "example": "He published a collection of poetry.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈpoʊ.ə.tri/"
+        },
+        {
+          "word": "compose",
+          "definition": "To create a piece of music or writing",
+          "example": "Beethoven composed nine symphonies.",
+          "partOfSpeech": "verb",
+          "phonetic": "/kəmˈpoʊz/"
+        },
+        {
+          "word": "perform",
+          "definition": "To act, sing, or play for an audience",
+          "example": "The actors performed beautifully.",
+          "partOfSpeech": "verb",
+          "phonetic": "/pərˈfɔːrm/"
+        },
+        {
+          "word": "inspire",
+          "definition": "To give someone a creative idea",
+          "example": "The landscape inspired her painting.",
+          "partOfSpeech": "verb",
+          "phonetic": "/ɪnˈspaɪər/"
+        },
+        {
+          "word": "interpret",
+          "definition": "To explain the meaning of a work of art",
+          "example": "Everyone interprets this poem differently.",
+          "partOfSpeech": "verb",
+          "phonetic": "/ɪnˈtɜːr.prɪt/"
+        },
+        {
+          "word": "avant-garde",
+          "definition": "New and experimental art",
+          "example": "Her avant-garde style shocked the audience.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ˌæ.vɒ̃ˈɡɑːrd/"
+        },
+        {
+          "word": "patron",
+          "definition": "A person who supports the arts financially",
+          "example": "The patron donated millions to the museum.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈpeɪ.trən/"
+        },
+        {
+          "word": "symphony",
+          "definition": "A long piece of music for an orchestra",
+          "example": "The symphony was three movements.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈsɪm.fə.ni/"
+        },
+        {
+          "word": "improvise",
+          "definition": "To create or perform without preparation",
+          "example": "Jazz musicians often improvise.",
+          "partOfSpeech": "verb",
+          "phonetic": "/ˈɪm.prə.vaɪz/"
+        },
+        {
+          "word": "renaissance",
+          "definition": "A revival of art and learning",
+          "example": "The Renaissance transformed European culture.",
+          "partOfSpeech": "noun",
+          "phonetic": "/rɪˈneɪ.səns/"
+        }
+      ]
+    },
+    {
+      "id": "c2-philosophy",
+      "name": "C2 Philosophy & Ethics",
+      "level": "C2",
+      "topic": "philosophy",
+      "description": "Abstract thought, morality, and philosophical concepts",
+      "wordCount": 20,
+      "icon": "🤔",
+      "sourceBlobSha": "e1f758e7ccfb6841b9493dd60e3d90fa02eea4ed",
+      "words": [
+        {
+          "word": "epistemology",
+          "definition": "The branch of philosophy studying knowledge",
+          "example": "Epistemology asks: what can we know?",
+          "partOfSpeech": "noun",
+          "phonetic": "/ɪˌpɪs.tɪˈmɒl.ə.dʒi/"
+        },
+        {
+          "word": "metaphysics",
+          "definition": "The study of reality and existence",
+          "example": "Metaphysics explores the nature of being.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˌmet.əˈfɪz.ɪks/"
+        },
+        {
+          "word": "ontology",
+          "definition": "The study of what exists",
+          "example": "Ontology examines the categories of being.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ɒnˈtɒl.ə.dʒi/"
+        },
+        {
+          "word": "altruism",
+          "definition": "The belief in selfless concern for others",
+          "example": "His altruism led him to volunteer.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈæl.tru.ɪ.zəm/"
+        },
+        {
+          "word": "nihilism",
+          "definition": "The belief that life has no meaning",
+          "example": "Nihilism rejects all moral principles.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈnaɪ.ɪ.lɪ.zəm/"
+        },
+        {
+          "word": "empiricism",
+          "definition": "The theory that knowledge comes from experience",
+          "example": "Empiricism relies on observation and experiment.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ɪmˈpɪr.ɪ.sɪ.zəm/"
+        },
+        {
+          "word": "determinism",
+          "definition": "The belief that all events are caused by prior events",
+          "example": "Determinism leaves no room for free will.",
+          "partOfSpeech": "noun",
+          "phonetic": "/dɪˈtɜːr.mɪ.nɪ.zəm/"
+        },
+        {
+          "word": "pragmatism",
+          "definition": "A practical approach to problems and ideas",
+          "example": "Pragmatism values what works in practice.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈpræɡ.mə.tɪ.zəm/"
+        },
+        {
+          "word": "contemplate",
+          "definition": "To think deeply and at length about something",
+          "example": "She contemplated the meaning of existence.",
+          "partOfSpeech": "verb",
+          "phonetic": "/ˈkɒn.təm.pleɪt/"
+        },
+        {
+          "word": "postulate",
+          "definition": "To assume the existence or truth of something",
+          "example": "The theory postulates a parallel universe.",
+          "partOfSpeech": "verb",
+          "phonetic": "/ˈpɒs.tʃə.leɪt/"
+        },
+        {
+          "word": "inherent",
+          "definition": "Existing as a natural part of something",
+          "example": "There are inherent contradictions in the argument.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ɪnˈher.ənt/"
+        },
+        {
+          "word": "intrinsic",
+          "definition": "Belonging naturally; essential",
+          "example": "Happiness has intrinsic value.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ɪnˈtrɪn.zɪk/"
+        },
+        {
+          "word": "autonomy",
+          "definition": "The right to govern yourself or make your own decisions",
+          "example": "Individual autonomy is a key human right.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ɔːˈtɒn.ə.mi/"
+        },
+        {
+          "word": "dialectic",
+          "definition": "The art of investigating truths through discussion",
+          "example": "Plato's dialogues use the dialectic method.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˌdaɪ.əˈlek.tɪk/"
+        },
+        {
+          "word": "utilitarian",
+          "definition": "Designed to be useful rather than attractive",
+          "example": "Mill's utilitarian ethics maximize happiness.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/juːˌtɪl.ɪˈteə.ri.ən/"
+        },
+        {
+          "word": "existential",
+          "definition": "Relating to existence and individual experience",
+          "example": "Climate change poses an existential threat.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ˌeɡ.zɪˈsten.ʃəl/"
+        },
+        {
+          "word": "paradox",
+          "definition": "A statement that seems contradictory but may be true",
+          "example": "It's a paradox that more choice can mean less happiness.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈpær.ə.dɒks/"
+        },
+        {
+          "word": "subjective",
+          "definition": "Based on personal feelings rather than facts",
+          "example": "Beauty is subjective.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/səbˈdʒek.tɪv/"
+        },
+        {
+          "word": "objective",
+          "definition": "Based on facts, not personal feelings",
+          "example": "We need an objective assessment.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/əbˈdʒek.tɪv/"
+        },
+        {
+          "word": "consequentialism",
+          "definition": "The theory that the morality of an action depends on its outcome",
+          "example": "Consequentialism judges actions by their results.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˌkɒn.sɪˈkwen.ʃəl.ɪ.zəm/"
+        }
+      ]
+    },
+    {
+      "id": "c2-law",
+      "name": "C2 Law & Justice",
+      "level": "C2",
+      "topic": "law",
+      "description": "Legal systems, court proceedings, and justice",
+      "wordCount": 20,
+      "icon": "⚖️",
+      "sourceBlobSha": "332c151a09a3966f2051602cc80c7437b04c1b4e",
+      "words": [
+        {
+          "word": "jurisdiction",
+          "definition": "The official power to make legal decisions",
+          "example": "This case falls under federal jurisdiction.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˌdʒʊə.rɪsˈdɪk.ʃən/"
+        },
+        {
+          "word": "legislation",
+          "definition": "Laws enacted by a governing body",
+          "example": "The new legislation takes effect next month.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˌledʒ.ɪsˈleɪ.ʃən/"
+        },
+        {
+          "word": "litigation",
+          "definition": "The process of taking legal action",
+          "example": "The company faces litigation over patent infringement.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˌlɪt.ɪˈɡeɪ.ʃən/"
+        },
+        {
+          "word": "testimony",
+          "definition": "A formal statement given in court",
+          "example": "The witness gave testimony under oath.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈtes.tɪ.mə.ni/"
+        },
+        {
+          "word": "verdict",
+          "definition": "The decision of a jury or judge",
+          "example": "The jury returned a guilty verdict.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈvɜːr.dɪkt/"
+        },
+        {
+          "word": "statute",
+          "definition": "A written law passed by a legislative body",
+          "example": "The statute was enacted in 1990.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈstætʃ.uːt/"
+        },
+        {
+          "word": "precedent",
+          "definition": "A previous case that guides future legal decisions",
+          "example": "This ruling sets a legal precedent.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈpres.ɪ.dənt/"
+        },
+        {
+          "word": "plaintiff",
+          "definition": "The person who brings a case against another in court",
+          "example": "The plaintiff filed a lawsuit.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈpleɪn.tɪf/"
+        },
+        {
+          "word": "defendant",
+          "definition": "A person accused or sued in court",
+          "example": "The defendant pleaded not guilty.",
+          "partOfSpeech": "noun",
+          "phonetic": "/dɪˈfen.dənt/"
+        },
+        {
+          "word": "acquit",
+          "definition": "To declare someone not guilty",
+          "example": "The jury acquitted the accused.",
+          "partOfSpeech": "verb",
+          "phonetic": "/əˈkwɪt/"
+        },
+        {
+          "word": "convict",
+          "definition": "To find someone guilty of a crime",
+          "example": "He was convicted of fraud.",
+          "partOfSpeech": "verb",
+          "phonetic": "/kənˈvɪkt/"
+        },
+        {
+          "word": "adjudicate",
+          "definition": "To make a formal judgment about a dispute",
+          "example": "The court adjudicated the claim.",
+          "partOfSpeech": "verb",
+          "phonetic": "/əˈdʒuː.dɪ.keɪt/"
+        },
+        {
+          "word": "probation",
+          "definition": "A period of supervised behavior instead of prison",
+          "example": "He was sentenced to two years of probation.",
+          "partOfSpeech": "noun",
+          "phonetic": "/prəˈbeɪ.ʃən/"
+        },
+        {
+          "word": "indictment",
+          "definition": "A formal charge of a serious crime",
+          "example": "The grand jury issued an indictment.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ɪnˈdaɪt.mənt/"
+        },
+        {
+          "word": "tort",
+          "definition": "A wrongful act leading to civil legal liability",
+          "example": "Defamation is a common tort.",
+          "partOfSpeech": "noun",
+          "phonetic": "/tɔːrt/"
+        },
+        {
+          "word": "statutory",
+          "definition": "Required or allowed by law",
+          "example": "The company has statutory obligations.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/ˈstætʃ.ə.tɔːr.i/"
+        },
+        {
+          "word": "judicial",
+          "definition": "Relating to courts of law",
+          "example": "The judicial system must be independent.",
+          "partOfSpeech": "adjective",
+          "phonetic": "/dʒuːˈdɪʃ.əl/"
+        },
+        {
+          "word": "arbitration",
+          "definition": "Using a neutral person to settle a dispute outside court",
+          "example": "They resolved the conflict through arbitration.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˌɑːr.bɪˈtreɪ.ʃən/"
+        },
+        {
+          "word": "liability",
+          "definition": "The state of being legally responsible",
+          "example": "The company admitted liability for the accident.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˌlaɪ.əˈbɪl.ə.ti/"
+        },
+        {
+          "word": "amnesty",
+          "definition": "An official pardon for political offenses",
+          "example": "The government granted amnesty to political prisoners.",
+          "partOfSpeech": "noun",
+          "phonetic": "/ˈæm.nə.sti/"
+        }
+      ]
+    },
+    {
+      "id": "c2-idioms",
+      "name": "C2 Idioms & Expressions",
+      "level": "C2",
+      "topic": "idioms",
+      "description": "Advanced idiomatic expressions and figurative language",
+      "wordCount": 20,
+      "icon": "💬",
+      "sourceBlobSha": "7b1b2512e748d08e0d9eeda66c4df2390459f405",
+      "words": [
+        {
+          "word": "break the ice",
+          "definition": "To initiate conversation in a social situation",
+          "example": "A joke can help break the ice at parties.",
+          "partOfSpeech": "idiom",
+          "phonetic": null
+        },
+        {
+          "word": "hit the nail on the head",
+          "definition": "To describe exactly what is causing a situation",
+          "example": "You hit the nail on the head with that analysis.",
+          "partOfSpeech": "idiom",
+          "phonetic": null
+        },
+        {
+          "word": "bite the bullet",
+          "definition": "To endure a painful situation with courage",
+          "example": "I had to bite the bullet and tell the truth.",
+          "partOfSpeech": "idiom",
+          "phonetic": null
+        },
+        {
+          "word": "burn the midnight oil",
+          "definition": "To work late into the night",
+          "example": "She burned the midnight oil to finish her thesis.",
+          "partOfSpeech": "idiom",
+          "phonetic": null
+        },
+        {
+          "word": "under the weather",
+          "definition": "Feeling ill or unwell",
+          "example": "I'm feeling a bit under the weather today.",
+          "partOfSpeech": "idiom",
+          "phonetic": null
+        },
+        {
+          "word": "the ball is in your court",
+          "definition": "It's your turn to make a decision",
+          "example": "I've made my offer — the ball is in your court.",
+          "partOfSpeech": "idiom",
+          "phonetic": null
+        },
+        {
+          "word": "cost an arm and a leg",
+          "definition": "To be very expensive",
+          "example": "That designer bag costs an arm and a leg.",
+          "partOfSpeech": "idiom",
+          "phonetic": null
+        },
+        {
+          "word": "once in a blue moon",
+          "definition": "Very rarely",
+          "example": "I only see her once in a blue moon.",
+          "partOfSpeech": "idiom",
+          "phonetic": null
+        },
+        {
+          "word": "spill the beans",
+          "definition": "To reveal a secret",
+          "example": "Come on, spill the beans — what happened?",
+          "partOfSpeech": "idiom",
+          "phonetic": null
+        },
+        {
+          "word": "a blessing in disguise",
+          "definition": "Something that seems bad but turns out to be good",
+          "example": "Losing that job was a blessing in disguise.",
+          "partOfSpeech": "idiom",
+          "phonetic": null
+        },
+        {
+          "word": "beat around the bush",
+          "definition": "To avoid talking about the main topic",
+          "example": "Stop beating around the bush and tell me.",
+          "partOfSpeech": "idiom",
+          "phonetic": null
+        },
+        {
+          "word": "let the cat out of the bag",
+          "definition": "To accidentally reveal a secret",
+          "example": "He let the cat out of the bag about the surprise party.",
+          "partOfSpeech": "idiom",
+          "phonetic": null
+        },
+        {
+          "word": "on thin ice",
+          "definition": "In a risky or dangerous situation",
+          "example": "He's on thin ice after being late three times.",
+          "partOfSpeech": "idiom",
+          "phonetic": null
+        },
+        {
+          "word": "the tip of the iceberg",
+          "definition": "A small part of a much bigger problem",
+          "example": "These complaints are just the tip of the iceberg.",
+          "partOfSpeech": "idiom",
+          "phonetic": null
+        },
+        {
+          "word": "barking up the wrong tree",
+          "definition": "Making a wrong assumption about something",
+          "example": "If you think I did it, you're barking up the wrong tree.",
+          "partOfSpeech": "idiom",
+          "phonetic": null
+        },
+        {
+          "word": "a piece of cake",
+          "definition": "Something very easy to do",
+          "example": "The exam was a piece of cake.",
+          "partOfSpeech": "idiom",
+          "phonetic": null
+        },
+        {
+          "word": "burn bridges",
+          "definition": "To destroy a relationship or possibility of return",
+          "example": "Don't burn bridges — you might need that contact later.",
+          "partOfSpeech": "idiom",
+          "phonetic": null
+        },
+        {
+          "word": "cut corners",
+          "definition": "To do something in the easiest or cheapest way",
+          "example": "They cut corners on safety to save money.",
+          "partOfSpeech": "idiom",
+          "phonetic": null
+        },
+        {
+          "word": "get out of hand",
+          "definition": "To become difficult to control",
+          "example": "The situation got out of hand quickly.",
+          "partOfSpeech": "idiom",
+          "phonetic": null
+        },
+        {
+          "word": "go the extra mile",
+          "definition": "To make more effort than expected",
+          "example": "She always goes the extra mile for her clients.",
+          "partOfSpeech": "idiom",
+          "phonetic": null
+        }
+      ]
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 import { ensureOfficialCourses } from "./languageQuest";
 import { englishWordCourses } from "./languageQuestEnglishWordCourses";
 import { advancedEnglishCourses } from "./languageQuestAdvancedEnglishCourses";
+import { linguifyCefrCourses } from "./languageQuestLinguifyCourses";
 import { seededDailyQuestShuffle } from "./shared/dailyQuest";
 
 export interface EnglishWordPracticeOption {
@@ -26,7 +27,11 @@ export interface EnglishWordPracticeQuestion {
   isReview?: boolean;
 }
 
-const ENGLISH_WORD_COURSES = [...englishWordCourses, ...advancedEnglishCourses];
+const ENGLISH_WORD_COURSES = [
+  ...englishWordCourses,
+  ...advancedEnglishCourses,
+  ...linguifyCefrCourses,
+];
 
 export const ENGLISH_WORD_COURSE_CODES = ENGLISH_WORD_COURSES.map((course) => course.code);
 export const ENGLISH_WORD_COURSE_TITLES = new Set(
@@ -102,7 +107,7 @@ export async function loadEnglishWordPracticeQuestions(
       options: { orderBy: { order: "asc" } },
       lesson: { include: { unit: { include: { course: true } } } },
     },
-    take: 500,
+    take: 1_000,
     orderBy: { createdAt: "asc" },
   });
 

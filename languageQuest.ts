@@ -12,6 +12,7 @@ import { mandarinFoundationsCourse } from "./languageQuestMandarinCourse";
 import { completeMandarinCourse } from "./languageQuestCompleteMandarinCourse";
 import { englishWordCourses } from "./languageQuestEnglishWordCourses";
 import { advancedEnglishCourses } from "./languageQuestAdvancedEnglishCourses";
+import { linguifyCefrCourses } from "./languageQuestLinguifyCourses";
 
 interface JwtPayload { userId: string; role: string; email: string; }
 
@@ -337,6 +338,7 @@ export async function ensureOfficialCourses(prisma: any): Promise<void> {
     completeMandarinCourse,
     ...englishWordCourses,
     ...advancedEnglishCourses,
+    ...linguifyCefrCourses,
   ];
   for (const course of courses) {
     await ensureOfficialCourse(prisma, course);

@@ -7,6 +7,7 @@ import { mandarinFoundationsCourse } from "../../languageQuestMandarinCourse";
 import { completeMandarinCourse } from "../../languageQuestCompleteMandarinCourse";
 import { englishWordCourses } from "../../languageQuestEnglishWordCourses";
 import { advancedEnglishCourses } from "../../languageQuestAdvancedEnglishCourses";
+import { linguifyCefrCourses } from "../../languageQuestLinguifyCourses";
 
 test("Language Quest starts a new streak on the first active day", () => {
   assert.deepEqual(
@@ -156,4 +157,37 @@ test("the ranked advanced English courses have a valid progression", () => {
   assert.ok(advancedEnglishCourses.every((course) => course.units.flatMap((unit) => unit.lessons).flatMap((lesson) => lesson.challenges).length === 60));
   assert.ok(challenges.every((challenge) => challenge.options.length === 3));
   assert.ok(challenges.every((challenge) => challenge.options.filter((option) => option.correct).length === 1));
+});
+
+test("the Linguify import creates a complete A1-C2 vocabulary path", () => {
+  const units = linguifyCefrCourses.flatMap((course) => course.units);
+  const lessons = units.flatMap((unit) => unit.lessons);
+  const challenges = lessons.flatMap((lesson) => lesson.challenges);
+
+  assert.deepEqual(
+    linguifyCefrCourses.map((course) => course.code),
+    ["A1", "A2", "B1", "B2", "C1", "C2"].map(
+      (level) => `MRLC-LINGUIFY-CEFR-${level}-V1`,
+    ),
+  );
+  assert.equal(linguifyCefrCourses.length, 6);
+  assert.equal(units.length, 18);
+  assert.equal(lessons.length, 36);
+  assert.equal(challenges.length, 360);
+  assert.ok(linguifyCefrCourses.every((course) => course.language === "English"));
+  assert.ok(linguifyCefrCourses.every((course) => course.units.length === 3));
+  assert.ok(units.every((unit) => unit.lessons.length === 2));
+  assert.ok(lessons.every((lesson) => lesson.challenges.length === 10));
+  assert.ok(challenges.every((challenge) => challenge.options.length === 3));
+  assert.ok(challenges.every(
+    (challenge) => challenge.options.filter((option) => option.correct).length === 1,
+  ));
+  assert.ok(challenges.every(
+    (challenge) => challenge.options.every((option) => option.audioText === option.text),
+  ));
+  assert.ok(challenges.every((challenge) => challenge.question.includes("Example:")));
+  assert.equal(
+    challenges.filter((challenge) => challenge.question.includes("Pronunciation:")).length,
+    340,
+  );
 });

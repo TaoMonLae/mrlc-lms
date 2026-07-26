@@ -1,5 +1,6 @@
 import express from "express";
 import PDFDocument from "pdfkit";
+import { drawPdfLogo, loadPdfLogo } from "./pdfBranding";
 
 interface JwtPayload { userId: string; role: string; email: string; }
 
@@ -43,6 +44,47 @@ function splitNote(note: string | null): { context: string | null; action: strin
 function line(doc: PDFKit.PDFDocument, y: number, color = "#e2e8f0", width = 0.75) {
   doc.moveTo(PAGE_LEFT, y).lineTo(PAGE_LEFT + PAGE_WIDTH, y).lineWidth(width).strokeColor(color).stroke();
   doc.strokeColor("#000000");
+}
+
+export function drawConductLetterhead(
+  doc: PDFKit.PDFDocument,
+  school: {
+    name?: string | null;
+    address?: string | null;
+    contactEmail?: string | null;
+    contactPhone?: string | null;
+  } | null,
+  logo: Buffer | null,
+): void {
+  const headerTop = doc.y;
+  const logoSize = 50;
+  const sideSpace = logoSize + 14;
+  const textLeft = PAGE_LEFT + sideSpace;
+  const textWidth = PAGE_WIDTH - sideSpace * 2;
+
+  drawPdfLogo(doc, logo, school?.name, PAGE_LEFT, headerTop, logoSize);
+  doc.font("Helvetica-Bold").fontSize(16).fillColor("#000000")
+    .text(school?.name || "School", textLeft, headerTop, { width: textWidth, align: "center" });
+  if (school?.address) {
+    doc.font("Helvetica").fontSize(8).fillColor("#64748b")
+      .text(school.address, textLeft, doc.y + 2, { width: textWidth, align: "center" });
+  }
+  const contactBits = [school?.contactEmail, school?.contactPhone].filter(Boolean).join("  ·  ");
+  if (contactBits) {
+    doc.font("Helvetica").fontSize(8).fillColor("#64748b")
+      .text(contactBits, textLeft, doc.y + 2, { width: textWidth, align: "center" });
+  }
+
+  doc.y = Math.max(doc.y, headerTop + logoSize) + 8;
+  doc.font("Helvetica-Bold").fontSize(12).fillColor("#000000")
+    .text("STUDENT DISCIPLINARY NOTICE", PAGE_LEFT, doc.y, {
+      width: PAGE_WIDTH,
+      align: "center",
+      characterSpacing: 1,
+    });
+  doc.moveDown(0.4);
+  line(doc, doc.y, "#1e293b", 1.5);
+  doc.moveDown(0.8);
 }
 
 export function registerConductPdfRoutes(deps: Deps): void {
@@ -92,6 +134,7 @@ export function registerConductPdfRoutes(deps: Deps): void {
       const { context: noteContext, action: recommendedAction } = splitNote(violations[0].note);
       const occurredAt = new Date(violations[0].occurredAt);
       const studentName = fullName(student.user);
+      const logoBuffer = await loadPdfLogo(school?.logoUrl);
 
       const filename = `Disciplinary-Notice-${(student.studentCode || studentName).replace(/[^a-zA-Z0-9-]+/g, "-")}-${occurredAt.toISOString().slice(0, 10)}.pdf`;
       res.setHeader("Content-Type", "application/pdf");
@@ -101,17 +144,7 @@ export function registerConductPdfRoutes(deps: Deps): void {
       doc.pipe(res);
 
       // ── Letterhead ──────────────────────────────────────────────────────
-      doc.font("Helvetica-Bold").fontSize(16).fillColor("#000000").text(school?.name || "School", { align: "center" });
-      if (school?.address) {
-        doc.font("Helvetica").fontSize(8).fillColor("#64748b").text(school.address, { align: "center" });
-      }
-      const contactBits = [school?.contactEmail, school?.contactPhone].filter(Boolean).join("  ·  ");
-      if (contactBits) doc.font("Helvetica").fontSize(8).fillColor("#64748b").text(contactBits, { align: "center" });
-      doc.fillColor("#000000").moveDown(0.5);
-      doc.font("Helvetica-Bold").fontSize(12).text("STUDENT DISCIPLINARY NOTICE", { align: "center", characterSpacing: 1 });
-      doc.moveDown(0.4);
-      line(doc, doc.y, "#1e293b", 1.5);
-      doc.moveDown(0.8);
+      drawConductLetterhead(doc, school, logoBuffer);
 
       // ── Student info ────────────────────────────────────────────────────
       const infoTop = doc.y;

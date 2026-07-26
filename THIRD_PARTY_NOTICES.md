@@ -39,6 +39,37 @@ to the project by its owner. The source file does not include a license notice.
 Confirm the curriculum's redistribution rights before distributing it outside
 the school's authorized use.
 
+## Linguify CEFR vocabulary courses
+
+English Vocabulary A1: Foundations through English Vocabulary C2: Mastery
+adapt the 18 CEFR vocabulary sets from
+[`AyeNyeinSan22/linguify`](https://github.com/AyeNyeinSan22/linguify).
+MRLC groups the source sets into six level-based courses and converts each
+word, definition, example sentence, part of speech, and IPA transcription into
+native Language Quest lessons and challenges.
+
+MIT License
+
+Copyright (c) 2026 AyeNyeinSan22
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
 MIT License
 
 Copyright (c) 2024 Sanidhya Kumar Verma
