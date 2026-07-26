@@ -19,12 +19,8 @@ interface Deps {
 }
 
 const PAGE_LEFT = 50;
-const PAGE_WIDTH = 495; // A4 usable width at 50pt margins
+const PAGE_WIDTH = 495;
 
-// Mirrors the client's formatMoney() (src/lib/locale.ts), which uses
-// narrowSymbol so MYR renders as "RM 300.00" instead of "MYR 300.00". This
-// previously omitted currencyDisplay, so the PDF and the on-screen receipt
-// disagreed on every amount.
 function money(amount: number, currency?: string | null): string {
   const code = (currency || "MYR").toUpperCase();
   const value = Number.isFinite(amount) ? amount : 0;
@@ -43,12 +39,6 @@ function line(doc: PDFKit.PDFDocument, y: number, color = "#e2e8f0", width = 0.7
 export function registerFeesPdfRoutes(deps: Deps): void {
   const { app, prisma, authMiddleware, createAuditLog, logger } = deps;
 
-  // Real, downloadable PDF for a single fee receipt. Mirrors the on-screen
-  // /fees/:id/receipt page (PaymentReceipt.tsx) — that page's "Download PDF"
-  // button previously just called window.print() (identical to its own Print
-  // button), so nothing was ever actually saved as a file; this gives it a
-  // real file to fetch and download, same pattern as the payroll register
-  // and the conduct disciplinary notice.
   app.get("/api/fees/:id/receipt.pdf", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { id } = req.params;
@@ -89,7 +79,6 @@ export function registerFeesPdfRoutes(deps: Deps): void {
       const doc = new PDFDocument({ size: "A4", margin: 50 });
       doc.pipe(res);
 
-      // ── Letterhead ──────────────────────────────────────────────────────
       const headerTop = doc.y;
       const LOGO_SIZE = 44;
       const LOGO_GAP = 12;
@@ -106,13 +95,8 @@ export function registerFeesPdfRoutes(deps: Deps): void {
 
       doc.font("Helvetica-Bold").fontSize(26).fillColor("#cbd5e1").text("RECEIPT", PAGE_LEFT, headerTop, { width: PAGE_WIDTH, align: "right", characterSpacing: 1.5 });
       doc.font("Helvetica").fontSize(9).fillColor("#475569")
-        // Match the web receipt's date-fns 'dd MMM yyyy' format exactly (e.g.
-        // "22 Jul 2026") -- toLocaleDateString('en-US', ...) ignores the
-        // requested field order and always renders "Jul 22, 2026" instead.
         .text(`No: ${fee.receiptNumber || "—"}`, PAGE_LEFT, headerTop + 34, { width: PAGE_WIDTH, align: "right" })
         .text(`Date: ${formatDate(paymentDate, "dd MMM yyyy")}`, PAGE_LEFT, doc.y, { width: PAGE_WIDTH, align: "right" });
-      // Status pill — matches the web receipt's Badge colors per status
-      // (statusColor map in PaymentReceipt.tsx) instead of plain text.
       const STATUS_COLORS: Record<string, { bg: string; fg: string }> = {
         PAID: { bg: "#d1fae5", fg: "#065f46" },
         PARTIAL: { bg: "#fef3c7", fg: "#92400e" },
@@ -143,9 +127,6 @@ export function registerFeesPdfRoutes(deps: Deps): void {
         doc.fillColor("#000000").moveDown(1);
       }
 
-      // ── Student info ────────────────────────────────────────────────────
-      // Filled light-gray card (bg-slate-50 on the web) rather than just an
-      // outline — drawn first so the text below renders on top of it.
       const infoTop = doc.y;
       const infoBoxHeight = 62;
       doc.roundedRect(PAGE_LEFT, infoTop, PAGE_WIDTH, infoBoxHeight, 6).fill("#f8fafc");
@@ -165,7 +146,6 @@ export function registerFeesPdfRoutes(deps: Deps): void {
       doc.y = infoTop + infoBoxHeight;
       doc.moveDown(1.4);
 
-      // ── Payment details table ─────────────────────────────────────────
       const rowH = 20;
       let y = doc.y;
       const descX = PAGE_LEFT + 8;
@@ -203,7 +183,6 @@ export function registerFeesPdfRoutes(deps: Deps): void {
       doc.y = y;
       doc.moveDown(1.6);
 
-      // ── Payment info + QR + signature ──────────────────────────────────
       const ensureSpace = (needed: number) => { if (doc.y + needed > doc.page.height - 90) doc.addPage(); };
       ensureSpace(120);
       const footTop = doc.y;
@@ -221,16 +200,11 @@ export function registerFeesPdfRoutes(deps: Deps): void {
         doc.image(qrBuffer, qrX, footTop, { width: 70, height: 70 });
         doc.font("Helvetica").fontSize(6.5).fillColor("#94a3b8")
           .text("Scan to verify", qrX, footTop + 72, { width: 70, align: "center" });
-        // The web receipt also prints the raw verify URL under the QR (small,
-        // monospace, wraps) — omitted here before, so the PDF had strictly
-        // less information on it than the page it's meant to mirror.
         doc.font("Courier").fontSize(5.5).fillColor("#cbd5e1")
           .text(verifyUrl, qrX, footTop + 82, { width: 70, align: "center" });
       }
       doc.moveTo(sigX, footTop + 58).lineTo(sigX + 180, footTop + 58).lineWidth(0.75).strokeColor("#94a3b8").stroke();
       doc.font("Helvetica").fontSize(8.5).fillColor("#000000").text("Authorized Signature", sigX, footTop + 62, { width: 180, align: "center" });
-      // recordedBy has no dedicated column on FeePayment — the on-screen
-      // receipt (feeReceiptPayload) always shows the same literal label.
       doc.font("Helvetica").fontSize(7.5).fillColor("#64748b").text("Processed by: Finance Office", sigX, doc.y, { width: 180, align: "center" });
       doc.fillColor("#000000");
 

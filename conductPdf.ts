@@ -19,7 +19,7 @@ interface Deps {
 const CONDUCT_ROLES = ["ADMIN", "TEACHER", "CASE_WORKER", "STAFF"];
 
 const PAGE_LEFT = 50;
-const PAGE_WIDTH = 495; // A4 usable width at 50pt margins
+const PAGE_WIDTH = 495;
 
 const severityLabel = (s: string) => (s === "SERIOUS" ? "Serious" : s === "MODERATE" ? "Moderate" : "Minor");
 const severityColor = (s: string) => (s === "SERIOUS" ? "#dc2626" : s === "MODERATE" ? "#d97706" : "#475569");
@@ -28,9 +28,6 @@ function fullName(u?: { firstName?: string | null; lastName?: string | null } | 
   return `${u?.firstName ?? ""} ${u?.lastName ?? ""}`.trim() || "Unknown";
 }
 
-// A violation's stored `note` may have a "Recommended action:" section folded
-// into it (see POST /api/conduct/violations/batch) — split it back out so the
-// notice can render them as two distinct labelled sections.
 function splitNote(note: string | null): { context: string | null; action: string | null } {
   if (!note) return { context: null, action: null };
   const marker = "\n\nRecommended action: ";
@@ -91,9 +88,6 @@ export function registerConductPdfRoutes(deps: Deps): void {
   const { app, prisma, authMiddleware, createAuditLog, logger } = deps;
   const canManageConduct = (role: string) => CONDUCT_ROLES.includes(role);
 
-  // Generates a printable Disciplinary Notice PDF covering one or more
-  // RuleViolation records for a single student (typically all the rules
-  // logged from one "Report Violation" submission). Query: ?ids=id1,id2,...
   app.get("/api/conduct/violations/notice", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (!canManageConduct(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -143,10 +137,8 @@ export function registerConductPdfRoutes(deps: Deps): void {
       const doc = new PDFDocument({ size: "A4", margin: 50 });
       doc.pipe(res);
 
-      // ── Letterhead ──────────────────────────────────────────────────────
       drawConductLetterhead(doc, school, logoBuffer);
 
-      // ── Student info ────────────────────────────────────────────────────
       const infoTop = doc.y;
       const colWidth = PAGE_WIDTH / 2;
       doc.font("Helvetica-Bold").fontSize(8).fillColor("#64748b").text("STUDENT", PAGE_LEFT, infoTop);
@@ -168,7 +160,6 @@ export function registerConductPdfRoutes(deps: Deps): void {
       line(doc, doc.y);
       doc.moveDown(0.8);
 
-      // ── Escalation context ──────────────────────────────────────────────
       doc.font("Helvetica-Bold").fontSize(9).fillColor(severityColor(worstSeverity))
         .text(`Severity tier: ${severityLabel(worstSeverity)}`, PAGE_LEFT, doc.y);
       doc.font("Helvetica").fontSize(9).fillColor("#475569").text(
@@ -180,7 +171,6 @@ export function registerConductPdfRoutes(deps: Deps): void {
       doc.fillColor("#000000");
       doc.moveDown(1.2);
 
-      // ── Rule(s) broken ────────────────────────────────────────────────
       doc.font("Helvetica-Bold").fontSize(10).text(`Rule${violations.length === 1 ? "" : "s"} Broken (${violations.length})`, PAGE_LEFT, doc.y);
       doc.moveDown(0.4);
       for (const v of violations) {
@@ -201,7 +191,6 @@ export function registerConductPdfRoutes(deps: Deps): void {
       line(doc, doc.y);
       doc.moveDown(0.8);
 
-      // ── Notes / recommended action ───────────────────────────────────────
       doc.font("Helvetica-Bold").fontSize(9).text("Incident Notes", PAGE_LEFT, doc.y);
       doc.font("Helvetica").fontSize(9).fillColor("#475569")
         .text(noteContext || "No additional notes recorded.", PAGE_LEFT, doc.y + 4, { width: PAGE_WIDTH });
@@ -212,7 +201,6 @@ export function registerConductPdfRoutes(deps: Deps): void {
         .text(recommendedAction || "No action recorded yet.", PAGE_LEFT, doc.y + 4, { width: PAGE_WIDTH });
       doc.fillColor("#000000").moveDown(1.4);
 
-      // ── Signatures ────────────────────────────────────────────────────
       const ensureSignatureSpace = () => {
         if (doc.y > doc.page.height - 170) doc.addPage();
       };
@@ -235,7 +223,6 @@ export function registerConductPdfRoutes(deps: Deps): void {
         doc.y = y + 40;
       }
 
-      // ── Footer ───────────────────────────────────────────────────────────
       doc.font("Helvetica").fontSize(7).fillColor("#94a3b8").text(
         `This is an official disciplinary record generated on ${new Date().toLocaleString("en-US")}.`,
         PAGE_LEFT, doc.page.height - 60, { width: PAGE_WIDTH, align: "center" },

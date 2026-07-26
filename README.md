@@ -4,6 +4,10 @@ Learning management and school operations platform for the Mon Refugee Learning 
 
 MRLC LMS combines teaching, assessment, student services, communication, finance, digital resources, and school administration in one role-based web application. A single Express server exposes the API and serves the Vite/React frontend, with PostgreSQL managed through Prisma.
 
+## Webapp preview
+
+![MRLC LMS webapp login portal](docs/images/mrlc-lms-webapp-preview.jpg)
+
 - Default local URL: `http://localhost:8000`
 - Primary runtime: Node.js 20, Express, React 19, PostgreSQL 16
 - Developed by Tao Mon Lae

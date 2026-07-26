@@ -38,7 +38,6 @@ function payeeName(p: any): string {
   return "—";
 }
 
-// Column layout for the payslip table (widths in points, A4 usable width ≈ 495pt).
 const COLS = [
   { key: "n", label: "#", width: 24, align: "left" as const },
   { key: "name", label: "Payee", width: 150, align: "left" as const },
@@ -97,7 +96,6 @@ export function registerPayrollPdfRoutes(deps: Deps): void {
       const doc = new PDFDocument({ size: "A4", margin: 50 });
       doc.pipe(res);
 
-      // ── Header ──────────────────────────────────────────────────────────
       const headerTop = doc.y;
       const logoSize = 44;
       const sideSpace = logoSize + 12;
@@ -120,7 +118,6 @@ export function registerPayrollPdfRoutes(deps: Deps): void {
       doc.moveTo(TABLE_LEFT, doc.y).lineTo(TABLE_LEFT + TABLE_WIDTH, doc.y).lineWidth(1.5).strokeColor("#1e293b").stroke();
       doc.moveDown(0.8);
 
-      // ── Table ────────────────────────────────────────────────────────────
       const rowHeight = 20;
       const headerHeight = 18;
       let y = doc.y;
@@ -164,7 +161,6 @@ export function registerPayrollPdfRoutes(deps: Deps): void {
         doc.moveTo(TABLE_LEFT, y - 4).lineTo(TABLE_LEFT + TABLE_WIDTH, y - 4).lineWidth(0.5).strokeColor("#f1f5f9").stroke();
       });
 
-      // ── Totals row ───────────────────────────────────────────────────────
       ensureSpace(rowHeight + 10);
       doc.moveTo(TABLE_LEFT, y).lineTo(TABLE_LEFT + TABLE_WIDTH, y).lineWidth(1.5).strokeColor("#1e293b").stroke();
       y += 6;
@@ -175,7 +171,6 @@ export function registerPayrollPdfRoutes(deps: Deps): void {
       doc.text(money(totals.deduct, currency), colX(5), y, { width: COLS[5].width, align: "right" });
       doc.text(money(totals.net, currency), colX(6), y, { width: COLS[6].width, align: "right" });
 
-      // ── Footer ───────────────────────────────────────────────────────────
       doc.font("Helvetica").fontSize(7).fillColor("#94a3b8")
         .text("This is a computer-generated payroll register.", TABLE_LEFT, doc.page.height - 60, { width: TABLE_WIDTH, align: "center" });
 

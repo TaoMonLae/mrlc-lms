@@ -109,7 +109,6 @@ test("shuffle returns every option exactly once, in some order", () => {
   const result = shuffle(options);
   assert.deepEqual([...result].sort(), [...options].sort());
   assert.equal(result.length, options.length);
-  // The input array must not be mutated in place.
   assert.deepEqual(options, ["a", "b", "c", "d"]);
 });
 
@@ -119,8 +118,6 @@ test("shuffle does not always return the same order (regression for the fixed-po
   for (let i = 0; i < 50; i++) {
     orders.add(shuffle(options).join(","));
   }
-  // With 6 items and 50 draws it is astronomically unlikely to see only one
-  // ordering unless shuffling isn't actually happening.
   assert.ok(orders.size > 1, "expected more than one distinct ordering across 50 shuffles");
 });
 

@@ -385,8 +385,6 @@ function databaseError(res: express.Response, error: any): boolean {
   return true;
 }
 
-// Learners must clear every challenge in a lesson before the next one unlocks.
-// Managers previewing/editing course content bypass this check.
 async function lessonLockMessage(prisma: any, jwtUser: JwtPayload, lesson: any): Promise<string | null> {
   if (isManager(jwtUser.role)) return null;
   const orderedUnits = await prisma.languageQuestUnit.findMany({
@@ -407,9 +405,6 @@ async function lessonLockMessage(prisma: any, jwtUser: JwtPayload, lesson: any):
   return null;
 }
 
-// Fisher-Yates shuffle. Used so a challenge's correct answer isn't always in
-// the same position — otherwise learners just memorise "the second one" and
-// the practice becomes meaningless.
 export function shuffle<T>(items: T[]): T[] {
   const array = [...items];
   for (let i = array.length - 1; i > 0; i--) {
@@ -419,11 +414,6 @@ export function shuffle<T>(items: T[]): T[] {
   return array;
 }
 
-// Hearts only gate challenges a learner hasn't cleared yet. Replaying an
-// already-completed challenge is how hearts get refilled (see the "Replay
-// lessons to practise and refill hearts" copy on the course page), so it
-// must stay allowed even at zero hearts — otherwise nobody could ever earn
-// their way back in.
 export function canAttemptNewChallenge(hearts: number, alreadyCompleted: boolean): boolean {
   return hearts > 0 || alreadyCompleted;
 }
@@ -516,8 +506,6 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           };
         }),
       }));
-      // Refill yesterday's spent hearts before touching updatedAt by selecting
-      // this course; otherwise a direct course visit could suppress the refill.
       await getProgress(prisma, jwtUser.userId);
       await prisma.languageQuestUserProgress.upsert({
         where: { userId: jwtUser.userId },
@@ -570,8 +558,6 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         challenges: lesson.challenges.map((challenge: any) => ({
           id: challenge.id, type: challenge.type, question: challenge.question,
           completed: completedIds.has(challenge.id),
-          // Shuffled per fetch so the correct answer isn't always in the same
-          // spot (see `shuffle` above).
           options: shuffle(challenge.options).map((option: any) => ({
             id: option.id, text: option.text, emoji: option.emoji, audioText: option.audioText,
           })),
@@ -583,10 +569,6 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
     }
   });
 
-  // Learning mode: a scoring-free flashcard walkthrough of a lesson's content,
-  // shown before the graded challenges. Reuses the same access/lock rules as
-  // the quiz endpoint above but exposes each challenge's correct answer since
-  // nothing here is graded.
   app.get("/api/language-quest/lessons/:id/preview", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {

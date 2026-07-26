@@ -6,13 +6,6 @@ const BRANDING_ASSET_DIR = process.env.BRANDING_ASSET_DIR
   || path.join(process.cwd(), "data", "branding");
 const BRANDING_URL_PREFIX = "/uploads/branding/";
 
-/**
- * Load an uploaded school logo and normalize it to PNG for PDFKit.
- *
- * The branding uploader accepts PNG, JPEG, WEBP, GIF, and SVG, while PDFKit
- * only embeds PNG/JPEG reliably. Sharp gives every supported upload format the
- * same PDF behavior and bounds the decoded image before it reaches PDFKit.
- */
 export async function loadPdfLogo(
   logoUrl: string | null | undefined,
   assetDir = BRANDING_ASSET_DIR,
@@ -33,9 +26,6 @@ export async function loadPdfLogo(
   }
 }
 
-/**
- * Draw the configured logo or a neutral school-initial fallback.
- */
 export function drawPdfLogo(
   doc: PDFKit.PDFDocument,
   logo: Buffer | null,

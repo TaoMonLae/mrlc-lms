@@ -58,11 +58,14 @@ const courseMetadata = {
 
 function challengeFor(words, entry, index) {
   const distractors = [];
-  for (let step = 1; distractors.length < 2; step += 1) {
+  for (let step = 1; step < words.length && distractors.length < 2; step += 1) {
     const candidate = words[(index + step) % words.length].word;
     if (candidate !== entry.word && !distractors.includes(candidate)) {
       distractors.push(candidate);
     }
+  }
+  if (distractors.length !== 2) {
+    throw new Error(`Cannot create two distinct distractors for "${entry.word}"`);
   }
   const options = distractors.map((text) => ({
     text,
