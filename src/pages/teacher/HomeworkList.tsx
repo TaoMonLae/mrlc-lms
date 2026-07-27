@@ -84,11 +84,11 @@ export default function HomeworkList() {
   const uploadAttachment = async (file: File) => {
     setUploading(true);
     try {
-      const url = await uploadHomeworkFile(file);
+      const uploaded = await uploadHomeworkFile(file);
       const previous = stagedUpload.current;
-      stagedUpload.current = url;
-      setForm((f) => ({ ...f, attachmentUrl: url }));
-      if (previous && previous !== url) await removeUnusedHomeworkMedia(previous).catch(() => {});
+      stagedUpload.current = uploaded.url;
+      setForm((f) => ({ ...f, attachmentUrl: uploaded.url }));
+      if (previous && previous !== uploaded.url) await removeUnusedHomeworkMedia(previous).catch(() => {});
       toast.success('Attachment uploaded');
     } catch (e: any) {
       toast.error(e.message || 'Upload failed');

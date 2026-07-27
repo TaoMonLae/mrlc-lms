@@ -6,7 +6,16 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { apiGet, apiSend } from '../../lib/api';
 import { formatDateOnly, localToday } from '../../lib/dates';
-import { HOMEWORK_FILE_ACCEPT, removeUnusedHomeworkMedia, uploadHomeworkFile } from '../../lib/homeworkMedia';
+import {
+  HOMEWORK_FILE_ACCEPT,
+  HOMEWORK_SUBMISSION_FILE_LIMIT,
+  formatHomeworkFileSize,
+  removeUnusedHomeworkMedia,
+  uploadHomeworkFile,
+  type HomeworkUploadedFile,
+} from '../../lib/homeworkMedia';
+
+type SubmissionFile = HomeworkUploadedFile & { legacy?: boolean };
 
 interface MySubmission {
   id: string;
@@ -16,6 +25,7 @@ interface MySubmission {
   status: 'SUBMITTED' | 'MARKED' | 'REDO';
   score?: number | null;
   feedback?: string | null;
+  attachments?: HomeworkUploadedFile[];
 }
 
 interface HomeworkItem {
@@ -37,10 +47,10 @@ export default function StudentHomework() {
   const [loadError, setLoadError] = useState('');
   const [openId, setOpenId] = useState<string | null>(null);
   const [text, setText] = useState('');
-  const [attachmentUrl, setAttachmentUrl] = useState('');
+  const [attachments, setAttachments] = useState<SubmissionFile[]>([]);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const stagedUpload = useRef('');
+  const stagedUploads = useRef<string[]>([]);
 
   const load = () => {
     setLoading(true);
@@ -58,55 +68,94 @@ export default function StudentHomework() {
   useEffect(() => {
     load();
     return () => {
-      if (stagedUpload.current) void removeUnusedHomeworkMedia(stagedUpload.current).catch(() => {});
+      for (const url of stagedUploads.current) {
+        void removeUnusedHomeworkMedia(url).catch(() => {});
+      }
     };
   }, []);
 
-  const startSubmit = (item: HomeworkItem) => {
-    if (stagedUpload.current) void removeUnusedHomeworkMedia(stagedUpload.current).catch(() => {});
-    stagedUpload.current = '';
-    setOpenId(item.id);
-    setText(item.mySubmission?.text ?? '');
-    setAttachmentUrl(item.mySubmission?.attachmentUrl ?? '');
+  const filesForSubmission = (submission: MySubmission | null): SubmissionFile[] => {
+    if (!submission) return [];
+    const files: SubmissionFile[] = [...(submission.attachments ?? [])];
+    if (submission.attachmentUrl && !files.some((file) => file.url === submission.attachmentUrl)) {
+      files.unshift({
+        url: submission.attachmentUrl,
+        originalName: submission.attachmentUrl.split('/').pop() || 'Submitted attachment',
+        mimeType: '',
+        size: 0,
+        legacy: true,
+      });
+    }
+    return files;
   };
 
-  const upload = async (file: File) => {
+  const startSubmit = (item: HomeworkItem) => {
+    for (const url of stagedUploads.current) {
+      void removeUnusedHomeworkMedia(url).catch(() => {});
+    }
+    stagedUploads.current = [];
+    setOpenId(item.id);
+    setText(item.mySubmission?.text ?? '');
+    setAttachments(filesForSubmission(item.mySubmission));
+  };
+
+  const upload = async (files: File[]) => {
+    if (attachments.length + files.length > HOMEWORK_SUBMISSION_FILE_LIMIT) {
+      toast.error(`Attach up to ${HOMEWORK_SUBMISSION_FILE_LIMIT} files`);
+      return;
+    }
     setUploading(true);
+    let uploadedCount = 0;
     try {
-      const url = await uploadHomeworkFile(file);
-      const previous = stagedUpload.current;
-      stagedUpload.current = url;
-      setAttachmentUrl(url);
-      if (previous && previous !== url) await removeUnusedHomeworkMedia(previous).catch(() => {});
-      toast.success('File attached');
+      for (const file of files) {
+        const result = await uploadHomeworkFile(file);
+        stagedUploads.current.push(result.url);
+        setAttachments((current) => [...current, result]);
+        uploadedCount += 1;
+      }
+      toast.success(`${uploadedCount} ${uploadedCount === 1 ? 'file' : 'files'} attached`);
     } catch (e: any) {
+      if (uploadedCount > 0) toast.info(`${uploadedCount} file${uploadedCount === 1 ? '' : 's'} attached before the upload stopped`);
       toast.error(e.message || 'Upload failed');
     } finally {
       setUploading(false);
     }
   };
 
-  const removeAttachment = async () => {
-    const uploaded = stagedUpload.current;
-    stagedUpload.current = '';
-    setAttachmentUrl('');
-    if (uploaded) await removeUnusedHomeworkMedia(uploaded).catch(() => {});
+  const removeAttachment = async (file: SubmissionFile) => {
+    setAttachments((current) => current.filter((item) => item.url !== file.url));
+    if (stagedUploads.current.includes(file.url)) {
+      stagedUploads.current = stagedUploads.current.filter((url) => url !== file.url);
+      await removeUnusedHomeworkMedia(file.url).catch(() => {});
+    }
   };
 
   const cancelSubmit = () => {
-    void removeAttachment();
+    for (const url of stagedUploads.current) {
+      void removeUnusedHomeworkMedia(url).catch(() => {});
+    }
+    stagedUploads.current = [];
+    setAttachments([]);
     setOpenId(null);
     setText('');
   };
 
   const submit = async (id: string) => {
-    if (!text.trim() && !attachmentUrl) { toast.error('Write something or attach a photo of your work'); return; }
+    if (!text.trim() && attachments.length === 0) {
+      toast.error('Write something or attach your work');
+      return;
+    }
     setSubmitting(true);
     try {
-      await apiSend(`/api/homework/${id}/submit`, 'POST', { text: text.trim() || null, attachmentUrl: attachmentUrl || null });
-      stagedUpload.current = '';
+      await apiSend(`/api/homework/${id}/submit`, 'POST', {
+        text: text.trim() || null,
+        attachmentUrl: attachments[0]?.url ?? null,
+        attachments: attachments.filter((file) => !file.legacy),
+      });
+      stagedUploads.current = [];
       toast.success('Homework submitted!');
       setOpenId(null);
+      setAttachments([]);
       load();
     } catch (e: any) {
       toast.error(e.message || 'Failed to submit');
@@ -166,6 +215,22 @@ export default function StudentHomework() {
                 <span className="font-semibold">Teacher feedback:</span> {item.mySubmission.feedback}
               </p>
             )}
+            {!isOpen && filesForSubmission(item.mySubmission).length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {filesForSubmission(item.mySubmission).map((file) => (
+                  <a
+                    key={file.url}
+                    href={file.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex max-w-full items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-xs text-aubergine-700 hover:underline dark:bg-surface-raised dark:text-aubergine-300"
+                  >
+                    <Paperclip className="h-3 w-3 shrink-0" />
+                    <span className="truncate">{file.originalName}</span>
+                  </a>
+                ))}
+              </div>
+            )}
             {item.mySubmission && (
               <p className="mt-2 text-[11px] text-slate-400">Submitted {new Date(item.mySubmission.submittedAt).toLocaleString()}</p>
             )}
@@ -180,29 +245,58 @@ export default function StudentHomework() {
         {isOpen && (
           <div className="mt-4 space-y-3 border-t border-slate-100 pt-4 dark:border-surface-raised">
             <Textarea rows={3} maxLength={20000} value={text} onChange={(e) => setText(e.target.value)} placeholder="Type your answer, or add a note about your attached work…" />
-            <div className="flex flex-wrap items-center gap-3">
-              <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 dark:border-surface-raised dark:text-slate-300 dark:hover:bg-surface-raised">
+            <div className="space-y-2">
+              <label className={`inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 dark:border-surface-raised dark:text-slate-300 ${
+                uploading || attachments.length >= HOMEWORK_SUBMISSION_FILE_LIMIT
+                  ? 'cursor-not-allowed opacity-60'
+                  : 'cursor-pointer hover:bg-slate-50 dark:hover:bg-surface-raised'
+              }`}>
                 <Camera className="h-4 w-4" />
-                {uploading ? 'Uploading…' : 'Photo / file of your work'}
-                <input type="file" accept={HOMEWORK_FILE_ACCEPT} className="hidden" disabled={uploading}
-                  onChange={(e) => { const f = e.target.files?.[0]; e.currentTarget.value = ''; if (f) upload(f); }} />
+                {uploading ? 'Uploading…' : `Add documents (${attachments.length}/${HOMEWORK_SUBMISSION_FILE_LIMIT})`}
+                <input
+                  type="file"
+                  multiple
+                  accept={HOMEWORK_FILE_ACCEPT}
+                  className="hidden"
+                  disabled={uploading || attachments.length >= HOMEWORK_SUBMISSION_FILE_LIMIT}
+                  onChange={(e) => {
+                    const selected = Array.from(e.target.files ?? []);
+                    e.currentTarget.value = '';
+                    if (selected.length) void upload(selected);
+                  }}
+                />
               </label>
-              {attachmentUrl && (
-                <div className="flex items-center gap-1">
-                  <a href={attachmentUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-aubergine-600 underline">
-                    <Paperclip className="h-3 w-3" /> attached
-                  </a>
-                  <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={removeAttachment} disabled={uploading} aria-label="Remove attachment">
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
+              <p className="text-[11px] text-slate-400">Up to 5 files, 10 MB each. Images, PDF, Word, PowerPoint, Excel, text and OpenDocument are accepted.</p>
+              {attachments.length > 0 && (
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {attachments.map((file) => (
+                    <div key={file.url} className="flex min-w-0 items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 dark:border-surface-raised">
+                      <Paperclip className="h-4 w-4 shrink-0 text-aubergine-600" />
+                      <a href={file.url} target="_blank" rel="noreferrer" className="min-w-0 flex-1 text-xs text-slate-700 hover:underline dark:text-slate-200">
+                        <span className="block truncate font-medium">{file.originalName}</span>
+                        {file.size > 0 && <span className="text-[10px] text-slate-400">{formatHomeworkFileSize(file.size)}</span>}
+                      </a>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 shrink-0 p-0"
+                        onClick={() => void removeAttachment(file)}
+                        disabled={uploading}
+                        aria-label={`Remove ${file.originalName}`}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               )}
-              <div className="ml-auto flex gap-2">
-                <Button variant="outline" size="sm" onClick={cancelSubmit} disabled={submitting}>Cancel</Button>
-                <Button size="sm" onClick={() => submit(item.id)} disabled={submitting || uploading}>
-                  {submitting ? 'Submitting…' : 'Turn in'}
-                </Button>
-              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={cancelSubmit} disabled={submitting}>Cancel</Button>
+              <Button size="sm" onClick={() => submit(item.id)} disabled={submitting || uploading}>
+                {submitting ? 'Submitting…' : 'Turn in'}
+              </Button>
             </div>
           </div>
         )}
@@ -216,7 +310,7 @@ export default function StudentHomework() {
         <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
           <BookOpenCheck className="h-6 w-6 text-aubergine-600" /> My Homework
         </h1>
-        <p className="mt-1 text-sm text-slate-500">Submit your work by typing an answer or photographing your paper work.</p>
+        <p className="mt-1 text-sm text-slate-500">Type an answer or upload photos and documents for your teacher to review.</p>
       </div>
 
       {loading ? (

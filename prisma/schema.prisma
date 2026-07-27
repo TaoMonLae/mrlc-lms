@@ -2120,10 +2120,24 @@ model HomeworkSubmission {
   markedAt   DateTime?
   markedById String?
 
-  updatedAt DateTime @updatedAt
+  attachments HomeworkSubmissionAttachment[]
+  updatedAt   DateTime                       @updatedAt
 
   @@unique([homeworkId, studentId])
   @@index([studentId])
+}
+
+model HomeworkSubmissionAttachment {
+  id           String             @id @default(uuid())
+  submissionId String
+  submission   HomeworkSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  url          String             @unique
+  originalName String
+  mimeType     String
+  size         Int
+  uploadedAt   DateTime           @default(now())
+
+  @@index([submissionId])
 }
 
 // -----------------------------------------------------------------------------

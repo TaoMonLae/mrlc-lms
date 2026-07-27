@@ -50,6 +50,14 @@ import {
   videoWatchPercent,
 } from "./shared/videoProgress";
 import {
+  HOMEWORK_FILE_MAX_BYTES,
+  HOMEWORK_MEDIA_URL,
+  homeworkMediaOwnerId,
+  isAllowedHomeworkFile,
+  parseHomeworkMediaUrl,
+  parseHomeworkSubmissionAttachments,
+} from "./shared/homeworkAttachments";
+import {
   copyArtifactOffsite,
   createZipArtifact,
   isSafeBackupName,
@@ -237,23 +245,10 @@ const homeworkMediaUpload = multer({
       cb(null, `${ownerPrefix}${crypto.randomUUID()}${ext}`);
     },
   }),
-  limits: { fileSize: 10 * 1024 * 1024 },
+  limits: { fileSize: HOMEWORK_FILE_MAX_BYTES },
   fileFilter: (_req, file, cb) => {
-    // Photos of paper work plus PDFs/docs.
-    const ext = path.extname(file.originalname).toLowerCase();
-    const allowedTypes: Record<string, string> = {
-      ".png": "image/png",
-      ".jpg": "image/jpeg",
-      ".jpeg": "image/jpeg",
-      ".webp": "image/webp",
-      ".gif": "image/gif",
-      ".pdf": "application/pdf",
-      ".doc": "application/msword",
-      ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    };
-    const ok = allowedTypes[ext] === file.mimetype;
-    if (ok) cb(null, true);
-    else cb(new Error("Only PNG, JPG, WEBP, GIF, PDF or Word files are allowed"));
+    if (isAllowedHomeworkFile(file.originalname, file.mimetype)) cb(null, true);
+    else cb(new Error("Upload an image, PDF, Word, PowerPoint, Excel, text or OpenDocument file"));
   },
 });
 
@@ -21354,18 +21349,12 @@ async function startServer() {
   // ── Homework ─────────────────────────────────────────────────────────────────
   const hw = () => (prisma as any).homework;
   const hwSub = () => (prisma as any).homeworkSubmission;
+  const hwAttachment = () => (prisma as any).homeworkSubmissionAttachment;
   const HOMEWORK_TITLE_MAX = 200;
   const HOMEWORK_INSTRUCTIONS_MAX = 20_000;
   const HOMEWORK_SUBMISSION_MAX = 20_000;
   const HOMEWORK_FEEDBACK_MAX = 5_000;
-  const HOMEWORK_MEDIA_URL = /^\/uploads\/homework-media\/((?:([0-9a-f-]{36})-)?[0-9a-f-]{36}\.(?:png|jpe?g|webp|gif|pdf|docx?))$/i;
   const HOMEWORK_RESOURCE_URL = /^\/(?:news\/[0-9a-f-]{36}|elibrary\/[0-9a-f-]{36}\/read)$/i;
-
-  const parseHomeworkMediaUrl = (value: unknown): string | null => {
-    if (typeof value !== "string") return null;
-    const trimmed = value.trim();
-    return HOMEWORK_MEDIA_URL.test(trimmed) ? trimmed : null;
-  };
 
   const parseHomeworkAttachmentUrl = (value: unknown, allowResourceLink: boolean): string | null => {
     if (value === null || value === undefined || value === "") return null;
@@ -21386,11 +21375,14 @@ async function startServer() {
   const deleteHomeworkMediaIfUnreferenced = async (url: unknown) => {
     const parsed = parseHomeworkMediaUrl(url);
     if (!parsed) return;
-    const [assignmentCount, submissionCount] = await Promise.all([
+    const [assignmentCount, submissionCount, attachmentCount] = await Promise.all([
       hw().count({ where: { attachmentUrl: parsed } }),
       hwSub().count({ where: { attachmentUrl: parsed } }),
+      hwAttachment().count({ where: { url: parsed } }),
     ]);
-    if (!assignmentCount && !submissionCount) await deleteHomeworkMedia(parsed);
+    if (!assignmentCount && !submissionCount && !attachmentCount) {
+      await deleteHomeworkMedia(parsed);
+    }
   };
 
   const parseHomeworkDueDate = (value: unknown): Date | null => {
@@ -21424,7 +21416,12 @@ async function startServer() {
   }, (req, res) => {
     const file = (req as any).file as Express.Multer.File | undefined;
     if (!file) { res.status(400).json({ error: "File is required" }); return; }
-    res.status(201).json({ url: `/uploads/homework-media/${file.filename}` });
+    res.status(201).json({
+      url: `/uploads/homework-media/${file.filename}`,
+      originalName: file.originalname,
+      mimeType: file.mimetype,
+      size: file.size,
+    });
   });
 
   // Remove a cancelled/replaced upload, but never a file currently referenced
@@ -21438,17 +21435,18 @@ async function startServer() {
     }
     const url = parseHomeworkMediaUrl(req.body?.url);
     if (!url) { res.status(400).json({ error: "Invalid homework media URL" }); return; }
-    const ownerId = url.match(HOMEWORK_MEDIA_URL)?.[2] ?? null;
+    const ownerId = homeworkMediaOwnerId(url);
     if (role !== "ADMIN" && ownerId !== jwtUser.userId) {
       res.status(403).json({ error: "You can only remove files you uploaded" });
       return;
     }
     try {
-      const [assignmentCount, submissionCount] = await Promise.all([
+      const [assignmentCount, submissionCount, attachmentCount] = await Promise.all([
         hw().count({ where: { attachmentUrl: url } }),
         hwSub().count({ where: { attachmentUrl: url } }),
+        hwAttachment().count({ where: { url } }),
       ]);
-      if (assignmentCount || submissionCount) {
+      if (assignmentCount || submissionCount || attachmentCount) {
         res.status(409).json({ error: "This file is attached to homework and cannot be removed" });
         return;
       }
@@ -21557,7 +21555,11 @@ async function startServer() {
         include: {
           class: { include: { students: { include: { user: { select: { firstName: true, lastName: true } } }, orderBy: { studentCode: "asc" } } } },
           subject: { select: { id: true, name: true } },
-          submissions: true,
+          submissions: {
+            include: {
+              attachments: { orderBy: { uploadedAt: "asc" } },
+            },
+          },
         },
       });
       if (!row) { res.status(404).json({ error: "Homework not found" }); return; }
@@ -21665,7 +21667,17 @@ async function startServer() {
     const jwtUser = (req as any).user as JwtPayload;
     if (jwtUser.role !== "ADMIN" && jwtUser.role !== "TEACHER") { res.status(403).json({ error: "Forbidden" }); return; }
     try {
-      const existing = await hw().findUnique({ where: { id: req.params.id }, include: { submissions: { select: { attachmentUrl: true } } } });
+      const existing = await hw().findUnique({
+        where: { id: req.params.id },
+        include: {
+          submissions: {
+            select: {
+              attachmentUrl: true,
+              attachments: { select: { url: true } },
+            },
+          },
+        },
+      });
       if (!existing) { res.status(404).json({ error: "Homework not found" }); return; }
       if (!(await canManageExamClass(jwtUser, existing.classId))) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
       await prisma.$transaction(async (tx) => {
@@ -21675,6 +21687,11 @@ async function startServer() {
       await Promise.all([
         deleteHomeworkMediaIfUnreferenced(existing.attachmentUrl),
         ...existing.submissions.map((submission: any) => deleteHomeworkMediaIfUnreferenced(submission.attachmentUrl)),
+        ...existing.submissions.flatMap((submission: any) =>
+          submission.attachments.map((attachment: any) =>
+            deleteHomeworkMediaIfUnreferenced(attachment.url),
+          ),
+        ),
       ]);
       await createAuditLog(jwtUser.userId, jwtUser.email, "DELETE", "HOMEWORK", req.params.id,
         `Homework '${existing.title}' deleted.`, req.ip, req.headers["user-agent"] || null, "WARNING");
@@ -21697,7 +21714,12 @@ async function startServer() {
         include: {
           subject: { select: { name: true } },
           teacher: { include: { user: { select: { firstName: true, lastName: true } } } },
-          submissions: { where: { studentId: student.id } },
+          submissions: {
+            where: { studentId: student.id },
+            include: {
+              attachments: { orderBy: { uploadedAt: "asc" } },
+            },
+          },
         },
         orderBy: { dueDate: "desc" },
       });
@@ -21719,10 +21741,18 @@ async function startServer() {
   app.post("/api/homework/:id/submit", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (jwtUser.role !== "STUDENT") { res.status(403).json({ error: "Only students can submit homework" }); return; }
-    const { text, attachmentUrl } = req.body || {};
+    const { text, attachmentUrl, attachments } = req.body || {};
     const cleanText = String(text ?? "").trim();
     const parsedAttachment = parseHomeworkAttachmentUrl(attachmentUrl, false);
-    if (!cleanText && !parsedAttachment) {
+    const parsedAttachments = attachments === undefined
+      ? []
+      : parseHomeworkSubmissionAttachments(attachments, jwtUser.userId);
+    if (parsedAttachments === null) {
+      res.status(400).json({ error: "Invalid homework documents" });
+      return;
+    }
+    const primaryAttachment = parsedAttachment ?? parsedAttachments[0]?.url ?? null;
+    if (!cleanText && !primaryAttachment) {
       res.status(400).json({ error: "Add some text or attach a photo/file" });
       return;
     }
@@ -21735,12 +21765,23 @@ async function startServer() {
       if (!homework || homework.classId !== student.classId) { res.status(404).json({ error: "Homework not found" }); return; }
       if (homework.status === "CLOSED") { res.status(403).json({ error: "This homework is closed for submissions" }); return; }
 
-      const existing = await hwSub().findUnique({ where: { homeworkId_studentId: { homeworkId: homework.id, studentId: student.id } } });
+      const existing = await hwSub().findUnique({
+        where: { homeworkId_studentId: { homeworkId: homework.id, studentId: student.id } },
+        include: { attachments: true },
+      });
       if (existing?.status === "MARKED") { res.status(409).json({ error: "Already marked — ask your teacher to reopen it if you need to resubmit" }); return; }
+      if (
+        parsedAttachment
+        && homeworkMediaOwnerId(parsedAttachment) !== jwtUser.userId
+        && existing?.attachmentUrl !== parsedAttachment
+      ) {
+        res.status(403).json({ error: "You can only submit files you uploaded" });
+        return;
+      }
 
       const data = {
         text: cleanText || null,
-        attachmentUrl: parsedAttachment,
+        attachmentUrl: primaryAttachment,
         submittedAt: new Date(),
         status: "SUBMITTED",
         score: null,
@@ -21751,14 +21792,34 @@ async function startServer() {
         const saved = existing
           ? await (tx as any).homeworkSubmission.update({ where: { id: existing.id }, data })
           : await (tx as any).homeworkSubmission.create({ data: { ...data, homeworkId: homework.id, studentId: student.id } });
+        await (tx as any).homeworkSubmissionAttachment.deleteMany({
+          where: { submissionId: saved.id },
+        });
+        if (parsedAttachments.length > 0) {
+          await (tx as any).homeworkSubmissionAttachment.createMany({
+            data: parsedAttachments.map((attachment) => ({
+              submissionId: saved.id,
+              ...attachment,
+            })),
+          });
+        }
         if (homework.gradeItemId) {
           await tx.grade.deleteMany({ where: { gradeItemId: homework.gradeItemId, studentId: student.id } });
         }
-        return saved;
+        return (tx as any).homeworkSubmission.findUnique({
+          where: { id: saved.id },
+          include: { attachments: { orderBy: { uploadedAt: "asc" } } },
+        });
       });
-      if (existing?.attachmentUrl && existing.attachmentUrl !== parsedAttachment) {
-        await deleteHomeworkMediaIfUnreferenced(existing.attachmentUrl);
-      }
+      const keptUrls = new Set(parsedAttachments.map((attachment) => attachment.url));
+      if (primaryAttachment) keptUrls.add(primaryAttachment);
+      const removedUrls = [
+        existing?.attachmentUrl,
+        ...(existing?.attachments ?? []).map((attachment: any) => attachment.url),
+      ].filter((url): url is string => Boolean(url) && !keptUrls.has(String(url)));
+      await Promise.all(
+        [...new Set(removedUrls)].map((url) => deleteHomeworkMediaIfUnreferenced(url)),
+      );
 
       // Check badges for homework submission
       checkAndAwardBadges(student.id, 'HOMEWORK').catch(err =>
@@ -21798,6 +21859,10 @@ async function startServer() {
 
       const cleanFeedback = String(feedback ?? "").trim();
       if (cleanFeedback.length > HOMEWORK_FEEDBACK_MAX) { res.status(400).json({ error: "Feedback is too long" }); return; }
+      if (newStatus === "REDO" && !cleanFeedback) {
+        res.status(400).json({ error: "Feedback is required when requesting changes" });
+        return;
+      }
       const markData = {
         status: newStatus,
         score: newStatus === "MARKED" ? parsedScore : null,
