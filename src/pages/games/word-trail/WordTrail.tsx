@@ -58,6 +58,10 @@ const PATH_NEXT: Record<number, number | null> = Object.fromEntries(
   ]),
 );
 
+function prefersReducedMotion(): boolean {
+  return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+}
+
 function gameAccuracy(game: WordTrailGame): number {
   const total = game.correctCount + game.wrongCount;
   return total ? Math.round((game.correctCount / total) * 100) : 0;
@@ -429,12 +433,21 @@ export default function WordTrailPage() {
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState(false);
   const [rolling, setRolling] = useState(false);
+  const [animatedFace, setAnimatedFace] = useState(1);
+  const [diceLanded, setDiceLanded] = useState(false);
   const [answering, setAnswering] = useState(false);
   const [abandoning, setAbandoning] = useState(false);
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<WordTrailAnswerPayload | null>(null);
   const questionPanelRef = useRef<HTMLDivElement>(null);
   const celebratedWinId = useRef<string | null>(null);
+  const rollIntervalRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (rollIntervalRef.current != null) window.clearInterval(rollIntervalRef.current);
+    };
+  }, []);
 
   const loadHome = async (opts?: { syncActiveGame?: boolean }) => {
     const data = await apiGet<WordTrailHomePayload>("/api/games/word-trail");
@@ -495,19 +508,48 @@ export default function WordTrailPage() {
   const roll = async () => {
     if (!game) return;
     setRolling(true);
+    setDiceLanded(false);
+    const reducedMotion = prefersReducedMotion();
+    const minAnimationMs = reducedMotion ? 0 : 650;
+    const startedAt = Date.now();
+
+    if (!reducedMotion) {
+      rollIntervalRef.current = window.setInterval(() => {
+        setAnimatedFace((previous) => {
+          let next = Math.floor(Math.random() * 6) + 1;
+          while (next === previous) next = Math.floor(Math.random() * 6) + 1;
+          return next;
+        });
+      }, 90);
+    }
+
     try {
       const result = await apiSend<{ game: WordTrailGame }>(
         `/api/games/word-trail/${game.id}/roll`,
         "POST",
         {},
       );
+      const elapsed = Date.now() - startedAt;
+      if (elapsed < minAnimationMs) {
+        await new Promise((resolve) => window.setTimeout(resolve, minAnimationMs - elapsed));
+      }
+      if (rollIntervalRef.current != null) {
+        window.clearInterval(rollIntervalRef.current);
+        rollIntervalRef.current = null;
+      }
       setGame(result.game);
       setSelectedOptionId(null);
       setFeedback(null);
+      setDiceLanded(true);
+      window.setTimeout(() => setDiceLanded(false), 500);
       window.setTimeout(() => {
         questionPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
       }, 50);
     } catch (error: any) {
+      if (rollIntervalRef.current != null) {
+        window.clearInterval(rollIntervalRef.current);
+        rollIntervalRef.current = null;
+      }
       toast.error(error?.message || "Could not roll the die");
     } finally {
       setRolling(false);
@@ -815,7 +857,7 @@ export default function WordTrailPage() {
                     <p className="mt-2 text-xs font-bold uppercase tracking-wider text-slate-400">{pending.question.sourceLabel}</p>
                   </div>
                   <div
-                    className="grid h-16 w-16 place-items-center rounded-2xl bg-white text-5xl text-emerald-700 shadow-md dark:bg-slate-800 dark:text-emerald-300"
+                    className={`grid h-16 w-16 place-items-center rounded-2xl bg-white text-5xl text-emerald-700 shadow-md dark:bg-slate-800 dark:text-emerald-300 ${diceLanded ? "dice-landed" : ""}`}
                     aria-label={`Rolled ${pending.roll}`}
                   >
                     {DICE_FACES[pending.roll]}
@@ -902,13 +944,20 @@ export default function WordTrailPage() {
           ) : (
             <div className="grid min-h-80 place-items-center p-6 text-center sm:min-h-96 sm:p-8">
               <div>
-                <div className="mx-auto grid h-28 w-28 place-items-center rounded-3xl bg-gradient-to-br from-emerald-500 to-sky-600 text-7xl text-white shadow-xl shadow-emerald-950/20">
-                  🎲
+                <div
+                  className={`mx-auto grid h-28 w-28 place-items-center rounded-3xl bg-gradient-to-br from-emerald-500 to-sky-600 shadow-xl shadow-emerald-950/20 ${
+                    rolling ? "text-6xl text-white dice-rolling" : "text-7xl text-white"
+                  }`}
+                  aria-hidden="true"
+                >
+                  {rolling ? DICE_FACES[animatedFace] : "🎲"}
                 </div>
                 <Badge className="mt-6 bg-violet-100 text-violet-800 dark:bg-violet-950 dark:text-violet-200">
                   Turn {game.turnCount + 1}
                 </Badge>
-                <h2 className="mt-3 text-2xl font-black text-slate-900 dark:text-white">Ready for your next word?</h2>
+                <h2 className="mt-3 text-2xl font-black text-slate-900 dark:text-white">
+                  {rolling ? "Rolling…" : "Ready for your next word?"}
+                </h2>
                 <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-500 dark:text-slate-300">
                   Roll first. Answer correctly to move the number shown on the die.
                   {game.lastRoll ? ` Last roll was ${game.lastRoll}.` : ""}

@@ -231,6 +231,51 @@
       opacity: 1;
     }
   }
+
+  /* Dice roll: tumbling wobble while a die face is being decided */
+  .dice-rolling {
+    animation: dice-tumble 0.5s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  }
+
+  @keyframes dice-tumble {
+    0% {
+      transform: rotate(0deg) scale(1);
+    }
+    20% {
+      transform: rotate(-22deg) scale(1.08);
+    }
+    40% {
+      transform: rotate(18deg) scale(0.94);
+    }
+    60% {
+      transform: rotate(-14deg) scale(1.06);
+    }
+    80% {
+      transform: rotate(10deg) scale(0.97);
+    }
+    100% {
+      transform: rotate(0deg) scale(1);
+    }
+  }
+
+  /* Dice landing: quick settle bounce once the final face is revealed */
+  .dice-landed {
+    animation: dice-settle 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes dice-settle {
+    0% {
+      transform: scale(1.35) rotate(12deg);
+      opacity: 0.6;
+    }
+    60% {
+      transform: scale(0.9) rotate(-6deg);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1) rotate(0deg);
+    }
+  }
 }
 
 @import "tw-animate-css";
