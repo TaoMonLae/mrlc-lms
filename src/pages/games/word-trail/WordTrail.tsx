@@ -825,9 +825,15 @@ export default function WordTrailPage() {
                   <p className="mt-3 rounded-xl bg-white/70 px-3 py-2 text-sm font-semibold text-slate-600 dark:bg-slate-900/40 dark:text-slate-300">
                     Correct answer moves you{" "}
                     <span className="font-black text-emerald-700 dark:text-emerald-300">
-                      {pending.roll} {pending.roll === 1 ? "space" : "spaces"}
+                      {movementPreview.rolledTo - movementPreview.from}{" "}
+                      {movementPreview.rolledTo - movementPreview.from === 1 ? "space" : "spaces"}
                     </span>
                     {" "}→ space {movementPreview.to + 1}
+                    {movementPreview.rolledTo - movementPreview.from < pending.roll && (
+                      <span className="text-slate-500">
+                        {" "}(roll {pending.roll} stops at the finish)
+                      </span>
+                    )}
                     {movementPreview.effect && movementPreview.effect.moveBy !== 0 && (
                       <span className="text-slate-500">
                         {" "}({movementPreview.effect.emoji} via {movementPreview.rolledTo + 1})

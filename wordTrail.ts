@@ -155,28 +155,40 @@ async function statsFor(prisma: any, userId: string) {
   };
 }
 
-async function leaderboardFor(prisma: any) {
-  const rows = await prisma.wordTrailGame.findMany({
-    where: { status: "WON" },
-    include: {
-      user: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          role: true,
-          profilePhotoUrl: true,
+export async function leaderboardFor(prisma: any) {
+  const bestByUser = new Map<string, any>();
+  let cursor: { id: string } | undefined;
+
+  while (bestByUser.size < 10) {
+    const rows = await prisma.wordTrailGame.findMany({
+      where: {
+        status: "WON",
+        user: { role: { in: ["STUDENT", "TEACHER"] } },
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            role: true,
+            profilePhotoUrl: true,
+          },
         },
       },
-    },
-    orderBy: [{ score: "desc" }, { completedAt: "asc" }],
-    take: 100,
-  });
-  const bestByUser = new Map<string, any>();
-  for (const row of rows) {
-    if (!canUseWordTrail(row.user.role) || bestByUser.has(row.userId)) continue;
-    bestByUser.set(row.userId, row);
+      orderBy: [{ score: "desc" }, { completedAt: "asc" }, { id: "asc" }],
+      take: 100,
+      ...(cursor ? { cursor, skip: 1 } : {}),
+    });
+    for (const row of rows) {
+      if (!canUseWordTrail(row.user.role) || bestByUser.has(row.userId)) continue;
+      bestByUser.set(row.userId, row);
+      if (bestByUser.size === 10) break;
+    }
+    if (rows.length < 100) break;
+    cursor = { id: rows[rows.length - 1].id };
   }
+
   return [...bestByUser.values()].slice(0, 10).map((row, index) => ({
     rank: index + 1,
     userId: row.userId,
@@ -383,7 +395,9 @@ export function registerWordTrailRoutes(deps: Deps): void {
       const status = won ? "WON" : lost ? "LOST" : "ACTIVE";
       const pointsEarned = correct
         ? wordTrailCorrectAnswerPoints({
-            roll: pending.roll,
+            spacesMoved: movement
+              ? movement.rolledTo - movement.from
+              : 0,
             streak: nextStreak,
             effect: movement?.effect,
             won,

@@ -41,15 +41,26 @@ test("Word Trail stops on the finish tile without applying another effect", () =
 });
 
 test("Word Trail scoring rewards rolls, streaks, special tiles, and wins", () => {
-  const normal = wordTrailCorrectAnswerPoints({ roll: 4, streak: 2 });
+  const normal = wordTrailCorrectAnswerPoints({ spacesMoved: 4, streak: 2 });
   const bonus = wordTrailCorrectAnswerPoints({
-    roll: 4,
+    spacesMoved: 4,
     streak: 2,
     effect: { kind: "BONUS", label: "Word Star", emoji: "⭐", moveBy: 0, bonusPoints: 15 },
   });
   assert.equal(normal, 22);
   assert.equal(bonus, 37);
-  assert.equal(wordTrailCorrectAnswerPoints({ roll: 6, streak: 99, won: true }), 82);
+  assert.equal(
+    wordTrailCorrectAnswerPoints({ spacesMoved: 6, streak: 99, won: true }),
+    82,
+  );
+  assert.equal(
+    wordTrailCorrectAnswerPoints({ spacesMoved: 1, streak: 1, won: true }),
+    64,
+  );
+  assert.equal(
+    wordTrailCorrectAnswerPoints({ spacesMoved: Number.NaN, streak: Number.NaN }),
+    10,
+  );
 });
 
 test("Word Trail prefers unanswered questions and avoids the last answered card", () => {
@@ -65,7 +76,21 @@ test("Word Trail prefers unanswered questions and avoids the last answered card"
   const recycled = pickWordTrailQuestion(deck, ["a", "b", "c", "d"], 0);
   assert.ok(recycled);
   assert.notEqual(recycled.id, "d");
+  const repeatedHistory = ["a", "b", "c", "d", "a", "b", "c", "d", "a"];
+  assert.notEqual(
+    pickWordTrailQuestion(deck, repeatedHistory, repeatedHistory.length)?.id,
+    "a",
+  );
   assert.equal(pickWordTrailQuestion([], [], 0), null);
+});
+
+test("Word Trail safely normalizes invalid movement values", () => {
+  assert.deepEqual(resolveWordTrailMovement(Number.NaN, Number.POSITIVE_INFINITY), {
+    from: 0,
+    rolledTo: 1,
+    to: 1,
+    effect: null,
+  });
 });
 
 test("Word Trail movement descriptions explain boosts and slides", () => {

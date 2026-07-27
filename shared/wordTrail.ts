@@ -36,9 +36,16 @@ export function canUseWordTrail(role: string): boolean {
   return role === "STUDENT" || role === "TEACHER";
 }
 
+function finiteInteger(value: number, fallback: number): number {
+  return Number.isFinite(value) ? Math.floor(value) : fallback;
+}
+
 export function resolveWordTrailMovement(position: number, roll: number): WordTrailMovement {
-  const safePosition = Math.max(0, Math.min(WORD_TRAIL_LAST_POSITION, Math.floor(position)));
-  const safeRoll = Math.max(1, Math.min(6, Math.floor(roll)));
+  const safePosition = Math.max(
+    0,
+    Math.min(WORD_TRAIL_LAST_POSITION, finiteInteger(position, 0)),
+  );
+  const safeRoll = Math.max(1, Math.min(6, finiteInteger(roll, 1)));
   const rolledTo = Math.min(WORD_TRAIL_LAST_POSITION, safePosition + safeRoll);
   const effect = rolledTo === WORD_TRAIL_LAST_POSITION
     ? null
@@ -60,20 +67,20 @@ export function pickWordTrailQuestion<T extends { id: string }>(
   turnCount: number,
 ): T | null {
   if (!Array.isArray(deck) || deck.length === 0) return null;
-  const answered = new Set(
-    [...answeredQuestionIds].filter((id) => typeof id === "string" && id.length > 0),
+  const answeredList = [...answeredQuestionIds].filter(
+    (id) => typeof id === "string" && id.length > 0,
   );
+  const answered = new Set(answeredList);
   const unanswered = deck.filter((question) => !answered.has(question.id));
   let pool = unanswered.length > 0 ? unanswered : deck;
 
-  if (pool.length > 1 && answered.size > 0) {
-    const answeredList = [...answered];
+  if (pool.length > 1 && answeredList.length > 0) {
     const lastAnsweredId = answeredList[answeredList.length - 1];
     const withoutLast = pool.filter((question) => question.id !== lastAnsweredId);
     if (withoutLast.length > 0) pool = withoutLast;
   }
 
-  const index = Math.abs(Math.floor(turnCount)) % pool.length;
+  const index = Math.abs(finiteInteger(turnCount, 0)) % pool.length;
   return pool[index] ?? null;
 }
 
@@ -92,16 +99,26 @@ export function describeWordTrailMovement(movement: WordTrailMovement): string {
 }
 
 export function wordTrailCorrectAnswerPoints(input: {
-  roll: number;
+  spacesMoved: number;
   streak: number;
   effect?: WordTrailTileEffect | null;
   won?: boolean;
 }): number {
-  const rollPoints = Math.max(1, Math.min(6, Math.floor(input.roll))) * 2;
-  const streakPoints = Math.max(0, Math.min(5, Math.floor(input.streak))) * 2;
+  const movementPoints = Math.max(
+    0,
+    Math.min(6, finiteInteger(input.spacesMoved, 0)),
+  ) * 2;
+  const streakPoints = Math.max(
+    0,
+    Math.min(5, finiteInteger(input.streak, 0)),
+  ) * 2;
+  const tileBonus = Math.max(
+    0,
+    finiteInteger(input.effect?.bonusPoints ?? 0, 0),
+  );
   return 10
-    + rollPoints
+    + movementPoints
     + streakPoints
-    + (input.effect?.bonusPoints ?? 0)
+    + tileBonus
     + (input.won ? 50 : 0);
 }
