@@ -45,6 +45,11 @@ import { BADGE_CATALOG, getBadgeLevel } from "./lib/badges";
 import { roleHasPermission, type Permission, type UserRole } from "./shared/permissions";
 import { canCurateSocialContent, canViewSocialAudience, normaliseSocialRetentionDays } from "./shared/socialPolicy";
 import {
+  normalizeVideoDuration,
+  resolveVideoProgressUpdate,
+  videoWatchPercent,
+} from "./shared/videoProgress";
+import {
   copyArtifactOffsite,
   createZipArtifact,
   isSafeBackupName,
@@ -6894,10 +6899,13 @@ async function startServer() {
   app.post("/api/videos/:id/progress", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const { id } = req.params;
-    const { currentPosition, isCompleted } = req.body;
+    const { currentPosition, isCompleted, duration } = req.body;
 
-    // Validate input
-    if (typeof currentPosition !== "number" || currentPosition < 0) {
+    if (
+      typeof currentPosition !== "number"
+      || !Number.isFinite(currentPosition)
+      || currentPosition < 0
+    ) {
       res.status(400).json({ error: "currentPosition must be a non-negative number" });
       return;
     }
@@ -6905,30 +6913,78 @@ async function startServer() {
       res.status(400).json({ error: "isCompleted must be a boolean" });
       return;
     }
+    if (duration !== undefined && normalizeVideoDuration(duration) === null) {
+      res.status(400).json({ error: "duration must be a positive number" });
+      return;
+    }
 
     try {
-      // Check if video exists
-      const video = await prisma.videoLesson.findUnique({ where: { id } });
+      const [video, existingProgress] = await Promise.all([
+        prisma.videoLesson.findUnique({ where: { id } }),
+        prisma.videoProgress.findUnique({
+          where: { userId_videoId: { userId: jwtUser.userId, videoId: id } },
+        }),
+      ]);
       if (!video) {
         res.status(404).json({ error: "Video not found" });
         return;
       }
 
-      // Upsert progress
-      const progress = await prisma.videoProgress.upsert({
+      const nextProgress = resolveVideoProgressUpdate({
+        currentPosition,
+        reportedDuration: duration,
+        storedDuration: video.duration,
+        isCompleted,
+        previousPosition: existingProgress?.currentPosition,
+        wasCompleted: existingProgress?.isCompleted,
+      });
+      if (nextProgress.duration && nextProgress.duration !== video.duration) {
+        await prisma.videoLesson.update({
+          where: { id },
+          data: { duration: nextProgress.duration },
+        });
+      }
+
+      const now = new Date();
+      await prisma.videoProgress.upsert({
         where: { userId_videoId: { userId: jwtUser.userId, videoId: id } },
         create: {
           userId: jwtUser.userId,
           videoId: id,
-          currentPosition,
-          isCompleted,
-          lastWatchedAt: new Date(),
+          currentPosition: nextProgress.currentPosition,
+          isCompleted: nextProgress.isCompleted,
+          lastWatchedAt: now,
         },
         update: {
-          currentPosition,
-          isCompleted,
-          lastWatchedAt: new Date(),
+          lastWatchedAt: now,
         },
+      });
+      await prisma.videoProgress.updateMany({
+        where: {
+          userId: jwtUser.userId,
+          videoId: id,
+          currentPosition: { lt: nextProgress.currentPosition },
+        },
+        data: {
+          currentPosition: nextProgress.currentPosition,
+          lastWatchedAt: now,
+        },
+      });
+      if (nextProgress.isCompleted) {
+        await prisma.videoProgress.updateMany({
+          where: {
+            userId: jwtUser.userId,
+            videoId: id,
+            isCompleted: false,
+          },
+          data: {
+            isCompleted: true,
+            lastWatchedAt: now,
+          },
+        });
+      }
+      const progress = await prisma.videoProgress.findUnique({
+        where: { userId_videoId: { userId: jwtUser.userId, videoId: id } },
       });
 
       res.json(progress);
@@ -6965,7 +7021,9 @@ async function startServer() {
 
       const roster = students.map((s) => {
         const p = s.userId ? byUser.get(s.userId) : undefined;
-        const pct = p && video.duration ? Math.min(100, Math.round((p.currentPosition / video.duration) * 100)) : 0;
+        const pct = p
+          ? videoWatchPercent(p.currentPosition, video.duration, p.isCompleted)
+          : 0;
         const status = p?.isCompleted ? "completed" : p ? "in_progress" : "not_started";
         return {
           studentId: s.id,

@@ -63,7 +63,7 @@ export const VIDEO_PROGRESS_SAVE_DELAY = 2000;
 /**
  * Progress threshold (percentage) to mark video as completed
  */
-export const VIDEO_COMPLETION_THRESHOLD = 90;
+export { VIDEO_COMPLETION_THRESHOLD } from '../../../shared/videoProgress';
 
 /**
  * Minimum watch time (seconds) before showing "resume from" indicator

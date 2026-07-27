@@ -23,6 +23,7 @@ export default function VideoDetail() {
   const [loading, setLoading] = useState(true);
   const [analytics, setAnalytics] = useState<VideoAnalytics | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const restoredVideoRef = useRef<string | null>(null);
 
   // Enable progress tracking for students and teachers (not admins)
   const shouldTrackProgress = !isAdmin;
@@ -32,7 +33,12 @@ export default function VideoDetail() {
     saveProgressImmediate,
     startPosition,
     isCompleted,
-  } = useVideoProgress({ videoId: id || '', enabled: shouldTrackProgress && !!id });
+    loading: progressLoading,
+  } = useVideoProgress({
+    videoId: id || '',
+    enabled: shouldTrackProgress && !!id,
+    duration: video?.duration,
+  });
 
   useEffect(() => {
     if (!id) return;
@@ -61,7 +67,20 @@ export default function VideoDetail() {
   // Teachers/admins: load watch analytics for the intended audience.
   useEffect(() => {
     if (!id || !(isAdmin || isTeacher)) return;
-    apiGet<VideoAnalytics>(`/api/videos/${id}/analytics`).then(setAnalytics).catch(() => {});
+    let active = true;
+    const loadAnalytics = () => {
+      apiGet<VideoAnalytics>(`/api/videos/${id}/analytics`)
+        .then((data) => {
+          if (active) setAnalytics(data);
+        })
+        .catch(() => {});
+    };
+    loadAnalytics();
+    const interval = window.setInterval(loadAnalytics, 15_000);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
   }, [id, isAdmin, isTeacher]);
 
   // Uploaded videos in a non-web format are transcoded to MP4 in the background;
@@ -117,18 +136,18 @@ export default function VideoDetail() {
 
     const handleTimeUpdate = () => {
       if (videoEl.duration && videoEl.currentTime > 0) {
-        saveProgress(videoEl.currentTime);
+        saveProgress(videoEl.currentTime, false, videoEl.duration);
       }
     };
 
     const handlePause = () => {
       if (videoEl.currentTime > 0) {
-        saveProgressImmediate(videoEl.currentTime, isCompleted);
+        saveProgressImmediate(videoEl.currentTime, isCompleted, videoEl.duration);
       }
     };
 
     const handleEnded = () => {
-      saveProgressImmediate(videoEl.duration || 0, true);
+      saveProgressImmediate(videoEl.duration || 0, true, videoEl.duration);
       toast.success('Video completed! 🎉');
     };
 
@@ -143,30 +162,38 @@ export default function VideoDetail() {
     };
   }, [shouldTrackProgress, saveProgress, saveProgressImmediate, isCompleted]);
 
-  // Set initial video time from saved progress
   useEffect(() => {
     const videoEl = videoRef.current;
-    if (!videoEl || startPosition === 0) return;
+    if (
+      !id
+      || !videoEl
+      || progressLoading
+      || restoredVideoRef.current === id
+    ) {
+      return;
+    }
 
-    // Wait for video metadata to load before seeking
-    const handleLoadedMetadata = () => {
+    const restorePosition = () => {
       if (startPosition > 0) {
-        videoEl.currentTime = startPosition;
+        const latestPlayablePosition = Number.isFinite(videoEl.duration)
+          ? Math.max(0, videoEl.duration - 0.25)
+          : startPosition;
+        videoEl.currentTime = Math.min(startPosition, latestPlayablePosition);
       }
-      videoEl.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      restoredVideoRef.current = id;
+      videoEl.removeEventListener('loadedmetadata', restorePosition);
     };
 
     if (videoEl.readyState >= 1) {
-      // Metadata already loaded
-      videoEl.currentTime = startPosition;
+      restorePosition();
     } else {
-      videoEl.addEventListener('loadedmetadata', handleLoadedMetadata);
+      videoEl.addEventListener('loadedmetadata', restorePosition);
     }
 
     return () => {
-      videoEl.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      videoEl.removeEventListener('loadedmetadata', restorePosition);
     };
-  }, [startPosition]);
+  }, [id, progressLoading, startPosition, transcode, playbackRevision]);
 
   if (loading) {
     return (
@@ -291,7 +318,9 @@ export default function VideoDetail() {
             <VideoPlayerControls
               videoRef={videoRef}
               duration={video.duration || undefined}
-              onProgress={saveProgress}
+              onProgress={(currentTime) => {
+                saveProgress(currentTime, false, videoRef.current?.duration);
+              }}
             />
             {/* Resume indicator */}
             {startPosition > VIDEO_RESUME_MIN_SECONDS && !isCompleted && (

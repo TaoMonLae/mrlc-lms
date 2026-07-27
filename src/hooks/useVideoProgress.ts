@@ -18,6 +18,14 @@ interface UseVideoProgressOptions {
   videoId: string;
   /** Whether progress tracking is enabled (default: true) */
   enabled?: boolean;
+  /** Saved duration, used until browser media metadata is available */
+  duration?: number | null;
+}
+
+interface PendingVideoProgress {
+  currentPosition: number;
+  isCompleted: boolean;
+  duration?: number;
 }
 
 /**
@@ -51,10 +59,16 @@ interface UseVideoProgressOptions {
  *   };
  * ```
  */
-export function useVideoProgress({ videoId, enabled = true }: UseVideoProgressOptions) {
+export function useVideoProgress({
+  videoId,
+  enabled = true,
+  duration,
+}: UseVideoProgressOptions) {
   const [progress, setProgress] = useState<VideoProgress | null>(null);
   const [loading, setLoading] = useState(true);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingSaveRef = useRef<PendingVideoProgress | null>(null);
+  const mountedRef = useRef(true);
 
   // Fetch progress on mount
   useEffect(() => {
@@ -75,63 +89,91 @@ export function useVideoProgress({ videoId, enabled = true }: UseVideoProgressOp
       .finally(() => setLoading(false));
   }, [videoId, enabled]);
 
-  // Save progress with debouncing
-  const saveProgress = useCallback(
-    (position: number, completed = false) => {
-      if (!enabled || !videoId) return;
-
-      // Clear any pending save
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-
-      // Debounce save to avoid too many API calls
-      saveTimeoutRef.current = setTimeout(async () => {
-        try {
-          const updated = await apiSend<VideoProgress>(`/api/videos/${videoId}/progress`, 'POST', {
-            currentPosition: Math.round(position),
-            isCompleted: completed,
-          });
-          setProgress(updated);
-        } catch (error) {
-          // Don't interrupt user experience for progress save failures
-          console.warn('Failed to save video progress:', error);
-        }
-      }, VIDEO_PROGRESS_SAVE_DELAY);
-    },
-    [videoId, enabled]
-  );
-
-  // Force immediate save (for when video is paused or completed)
-  const saveProgressImmediate = useCallback(
-    (position: number, completed = false) => {
-      if (!enabled || !videoId) return;
-
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-
-      apiSend<VideoProgress>(`/api/videos/${videoId}/progress`, 'POST', {
-        currentPosition: Math.round(position),
+  const buildPayload = useCallback(
+    (
+      position: number,
+      completed: boolean,
+      mediaDuration?: number,
+    ): PendingVideoProgress => {
+      const resolvedDuration = Number.isFinite(mediaDuration) && Number(mediaDuration) > 0
+        ? Math.round(Number(mediaDuration))
+        : Number.isFinite(duration) && Number(duration) > 0
+          ? Math.round(Number(duration))
+          : undefined;
+      return {
+        currentPosition: Number.isFinite(position)
+          ? Math.max(0, Math.round(position))
+          : 0,
         isCompleted: completed,
-      })
-        .then((updated) => setProgress(updated))
-        .catch((error) => {
-          // Log but don't interrupt the user
-          console.warn('Failed to save video progress immediately:', error);
-        });
+        ...(resolvedDuration ? { duration: resolvedDuration } : {}),
+      };
     },
-    [videoId, enabled]
+    [duration],
   );
 
-  // Clear timeout on unmount
-  useEffect(() => {
-    return () => {
+  const sendProgress = useCallback(
+    async (payload: PendingVideoProgress, updateState = true) => {
+      try {
+        const updated = await apiSend<VideoProgress>(
+          `/api/videos/${videoId}/progress`,
+          'POST',
+          payload,
+        );
+        if (updateState && mountedRef.current) setProgress(updated);
+      } catch (error) {
+        console.warn('Failed to save video progress:', error);
+      }
+    },
+    [videoId],
+  );
+
+  const flushPending = useCallback(() => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+    const pending = pendingSaveRef.current;
+    pendingSaveRef.current = null;
+    if (pending) void sendProgress(pending);
+  }, [sendProgress]);
+
+  const saveProgress = useCallback(
+    (position: number, completed = false, mediaDuration?: number) => {
+      if (!enabled || !videoId) return;
+      pendingSaveRef.current = buildPayload(position, completed, mediaDuration);
+      if (!saveTimeoutRef.current) {
+        saveTimeoutRef.current = setTimeout(flushPending, VIDEO_PROGRESS_SAVE_DELAY);
+      }
+    },
+    [videoId, enabled, buildPayload, flushPending],
+  );
+
+  const saveProgressImmediate = useCallback(
+    (position: number, completed = false, mediaDuration?: number) => {
+      if (!enabled || !videoId) return;
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
       }
+      pendingSaveRef.current = null;
+      void sendProgress(buildPayload(position, completed, mediaDuration));
+    },
+    [videoId, enabled, buildPayload, sendProgress],
+  );
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
+      }
+      const pending = pendingSaveRef.current;
+      pendingSaveRef.current = null;
+      if (pending) void sendProgress(pending, false);
     };
-  }, []);
+  }, [sendProgress]);
 
   return {
     progress,
