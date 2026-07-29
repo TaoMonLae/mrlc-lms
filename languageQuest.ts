@@ -14,7 +14,7 @@ import {
 } from "./shared/languageQuestAvatars";
 import { languageQuestCategoryForLanguage } from "./shared/languageQuestCourseCategories";
 import { languageQuestPinyin } from "./shared/languageQuestPinyin";
-import { languageQuestLeaderboardAudienceWhere } from "./shared/externalLearnerAccess";
+import { languageQuestGlobalLeaderboardWhere } from "./shared/externalLearnerAccess";
 import {
   languageQuestRewardProgress,
   newlyUnlockedLanguageQuestRewardIds,
@@ -1298,11 +1298,9 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
     const jwtUser = (req as any).user as JwtPayload;
     try {
       const periods = languageQuestPeriodBounds();
-      // Public learner accounts and private LMS accounts use separate boards.
-      // This keeps school identities out of the outsider-facing experience
-      // while preserving a school-wide leaderboard for enrolled users.
-      const externalAudience = Boolean(jwtUser.externalLearner);
-      const audienceWhere = languageQuestLeaderboardAudienceWhere(externalAudience);
+      // Language Quest uses one global board for every active learner. Access
+      // to private LMS routes and APIs remains independently restricted.
+      const audienceWhere = languageQuestGlobalLeaderboardWhere();
       const [leaders, mine, monthlyXp] = await Promise.all([
         prisma.languageQuestUserProgress.findMany({
           where: { user: audienceWhere },

@@ -72,13 +72,12 @@ export function isExternalLearnerApiRequestAllowed(method: string, value: string
 }
 
 /**
- * Keeps public learners and private-school members on separate leaderboards.
+ * The Language Quest leaderboard is global across public learner accounts and
+ * LMS members. Only active accounts are eligible; this does not grant public
+ * learners access to any private LMS route or API.
  */
-export function languageQuestLeaderboardAudienceWhere(
-  externalLearner: boolean | null | undefined,
-) {
+export function languageQuestGlobalLeaderboardWhere() {
   return {
     isActive: true,
-    isExternalLearner: Boolean(externalLearner),
   };
 }
