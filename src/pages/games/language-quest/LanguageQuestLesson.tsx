@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import confetti from 'canvas-confetti';
-import { ArrowLeft, Check, Flame, Heart, Lightbulb, PartyPopper, PencilLine, Star, Volume2, X } from 'lucide-react';
+import { ArrowLeft, BookA, Check, Flame, Heart, Lightbulb, PartyPopper, PencilLine, Star, Volume2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -46,6 +46,42 @@ function speak(value: string, language: string) {
   utterance.rate = 0.88;
   utterance.pitch = 1;
   window.speechSynthesis.speak(utterance);
+}
+
+let sentenceSuccessAudioContext: AudioContext | null = null;
+
+function playSentenceSuccessSound() {
+  try {
+    const AudioContextClass = window.AudioContext
+      || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const context = sentenceSuccessAudioContext ?? new AudioContextClass();
+    sentenceSuccessAudioContext = context;
+    if (context.state === 'suspended') void context.resume();
+
+    const start = context.currentTime;
+    const notes = [
+      { frequency: 523.25, delay: 0 },
+      { frequency: 659.25, delay: 0.09 },
+      { frequency: 783.99, delay: 0.18 },
+    ];
+    notes.forEach(({ frequency, delay }) => {
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      const noteStart = start + delay;
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(frequency, noteStart);
+      gain.gain.setValueAtTime(0.0001, noteStart);
+      gain.gain.exponentialRampToValueAtTime(0.12, noteStart + 0.025);
+      gain.gain.exponentialRampToValueAtTime(0.0001, noteStart + 0.24);
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+      oscillator.start(noteStart);
+      oscillator.stop(noteStart + 0.25);
+    });
+  } catch {
+    // Correct-answer feedback still works when Web Audio is unavailable.
+  }
 }
 
 export default function LanguageQuestLesson() {
@@ -128,7 +164,10 @@ export default function LanguageQuestLesson() {
     if (!sentenceCard || !sentenceInput.trim()) return;
     const correct = sentenceAnswerMatches(sentenceInput, sentenceCard.text);
     setSentenceFeedback(correct ? 'correct' : 'incorrect');
-    if (correct) confetti({ particleCount: 28, spread: 45, origin: { y: 0.72 }, scalar: 0.7, colors: [lesson?.course.accentColor || '#7c3aed'] });
+    if (correct) {
+      playSentenceSuccessSound();
+      confetti({ particleCount: 28, spread: 45, origin: { y: 0.72 }, scalar: 0.7, colors: [lesson?.course.accentColor || '#7c3aed'] });
+    }
   };
 
   const continueSentence = () => {
@@ -468,6 +507,10 @@ export default function LanguageQuestLesson() {
             <Volume2 className="h-4 w-4" />
           </Button>
         </div>
+        <p className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-sky-600 dark:text-sky-300">
+          <BookA className="h-3.5 w-3.5" />
+          Highlight an unfamiliar word to check the dictionary.
+        </p>
 
         <div className="mt-8 grid gap-3 sm:grid-cols-2">
           {challenge.options.map((option, optionIndex) => {
@@ -479,7 +522,10 @@ export default function LanguageQuestLesson() {
                 <button
                   type="button"
                   disabled={Boolean(answer)}
-                  onClick={() => setSelectedId(option.id)}
+                  onClick={() => {
+                    if (window.getSelection()?.toString().trim()) return;
+                    setSelectedId(option.id);
+                  }}
                   className={`group flex min-h-24 w-full items-center gap-4 rounded-2xl border-2 p-4 text-left transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet-200 disabled:cursor-default ${option.audioText ? 'pr-14' : ''} ${
                     isCorrect
                       ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10'
@@ -492,7 +538,7 @@ export default function LanguageQuestLesson() {
                 >
                   <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-black ${selected ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-500 dark:bg-surface-raised dark:text-slate-300'}`}>{optionLetters[optionIndex]}</span>
                   {option.emoji && <span className="text-3xl" aria-hidden="true">{option.emoji}</span>}
-                  <span className="flex-1 font-semibold text-slate-800 dark:text-white">{option.text}</span>
+                  <span className="flex-1 select-text font-semibold text-slate-800 dark:text-white">{option.text}</span>
                 </button>
                 {option.audioText && (
                   <button

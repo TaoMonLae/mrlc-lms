@@ -49,6 +49,20 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 
 ### Language Quest
 
+#### Preview
+
+The learner dashboard brings courses, hearts, points, streaks, sentence practice, and progress together in a colorful light/dark experience.
+
+![Language Quest learner dashboard with course cards, progress, hearts, points, and streaks](docs/images/language-quest-dashboard.png)
+
+Course pages include guided lesson steps and optional Burmese explanations to help learners understand how to learn, build sentences, and check their answers.
+
+![Language Quest Spanish course with Burmese lesson guidance](docs/images/language-quest-burmese-guide.png)
+
+Learners can save and share personalized completion certificates after finishing a course.
+
+![Language Quest completion certificate for Everyday English](docs/images/language-quest-completion-certificate.png)
+
 - A native, game-like language learning area for every authenticated student, teacher, and staff account.
 - Guided course paths, lesson locking, hearts, points, streaks, saved progress, replay practice, speech-assisted pronunciation, and a school leaderboard.
 - Teacher and administrator Course Studio for creating courses, units, lessons, and multiple challenge types, with draft and published states.

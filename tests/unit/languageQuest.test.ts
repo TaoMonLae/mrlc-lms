@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { nextLanguageQuestStreak, normalizeSentenceAnswer, sentenceAnswerMatches } from "../../shared/languageQuest";
+import {
+  languageQuestLookupWord,
+  nextLanguageQuestStreak,
+  normalizeSentenceAnswer,
+  sentenceAnswerMatches,
+} from "../../shared/languageQuest";
 import { canAttemptNewChallenge, shuffle } from "../../languageQuest";
 import { importedSpanishCourse } from "../../languageQuestImportedCourses";
 import { mandarinFoundationsCourse } from "../../languageQuestMandarinCourse";
@@ -25,6 +30,13 @@ test("sentence practice ignores case, spacing, and light punctuation", () => {
   assert.equal(normalizeSentenceAnswer("  Good   MORNING! "), "good morning");
   assert.equal(sentenceAnswerMatches("You're welcome.", "You’re welcome"), true);
   assert.equal(sentenceAnswerMatches("Good night", "Good morning"), false);
+});
+
+test("Language Quest dictionary extracts a useful highlighted term", () => {
+  assert.equal(languageQuestLookupWord(" borrow and read books? "), "borrow");
+  assert.equal(languageQuestLookupWord("“You're”"), "You're");
+  assert.equal(languageQuestLookupWord("စာကြည့်တိုက်"), "စာကြည့်တိုက်");
+  assert.equal(languageQuestLookupWord("123 …"), null);
 });
 
 test("Language Quest only increments once per Kuala Lumpur calendar day", () => {

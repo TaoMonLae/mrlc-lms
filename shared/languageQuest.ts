@@ -62,3 +62,13 @@ export function normalizeSentenceAnswer(value: string): string {
 export function sentenceAnswerMatches(answer: string, modelSentence: string): boolean {
   return normalizeSentenceAnswer(answer) === normalizeSentenceAnswer(modelSentence);
 }
+
+const LANGUAGE_QUEST_MYANMAR_SCRIPT_RE = /[က-႟]/;
+
+/** Extract one dictionary-friendly term from highlighted lesson text. */
+export function languageQuestLookupWord(selected: string): string | null {
+  const text = selected.normalize('NFC').trim();
+  if (!text) return null;
+  if (LANGUAGE_QUEST_MYANMAR_SCRIPT_RE.test(text)) return text.slice(0, 60);
+  return text.match(/[A-Za-z][A-Za-z'-]*/)?.[0] ?? null;
+}

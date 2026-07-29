@@ -9,6 +9,7 @@ import {
   LanguageQuestExplanationToggle,
   LanguageQuestSupportProvider,
 } from './LanguageQuestSupport';
+import { LanguageQuestDictionary } from './LanguageQuestDictionary';
 
 export function LanguageQuestShell() {
   return (
@@ -57,6 +58,7 @@ function LanguageQuestShellContent() {
               </Button>
             )}
             <span className="hidden max-w-40 truncate px-2 text-sm font-semibold text-slate-600 md:block dark:text-slate-300">{user?.name}</span>
+            <LanguageQuestDictionary />
             <LanguageQuestExplanationToggle />
             <Button
               variant="outline"
@@ -72,7 +74,7 @@ function LanguageQuestShellContent() {
           </nav>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6">
+      <main data-lq-dictionary-scope className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6">
         <Outlet />
       </main>
       <footer className="border-t border-white/70 bg-white/65 px-4 py-6 backdrop-blur dark:border-slate-800 dark:bg-slate-950/75">
