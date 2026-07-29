@@ -17,7 +17,7 @@ interface LeaderboardPayload {
     name: string;
     avatarId: string;
     monthXp: number;
-    currentCardId: string;
+    currentCardId: string | null;
     monthKey: string;
   }[];
   leaders: {

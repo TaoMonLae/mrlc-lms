@@ -29,6 +29,14 @@ const RARITY_STYLES: Record<LanguageQuestRewardCard['rarity'], string> = {
   Legend: 'border-amber-300 bg-amber-50 text-amber-900',
 };
 
+const QUEST_CARD_CHAPTERS = [
+  { id: 'trailhead', name: 'Trailhead', subtitle: 'Build the habit', startLevel: 1, endLevel: 4, tone: 'from-emerald-500 to-cyan-500' },
+  { id: 'skillforge', name: 'Skillforge', subtitle: 'Strengthen the basics', startLevel: 5, endLevel: 8, tone: 'from-cyan-500 to-violet-500' },
+  { id: 'explorers-rise', name: 'Explorer’s Rise', subtitle: 'Connect languages', startLevel: 9, endLevel: 12, tone: 'from-violet-500 to-fuchsia-500' },
+  { id: 'scholars-ascent', name: 'Scholar’s Ascent', subtitle: 'Master deeper meaning', startLevel: 13, endLevel: 16, tone: 'from-fuchsia-500 to-rose-500' },
+  { id: 'vaultbound', name: 'Vaultbound', subtitle: 'Prove legendary focus', startLevel: 17, endLevel: 20, tone: 'from-rose-500 to-amber-400' },
+] as const;
+
 export function LanguageQuestRewardCardView({
   card,
   unlocked,
@@ -117,6 +125,7 @@ export function LanguageQuestRewardTrack({
 }) {
   const current = languageQuestRewardCardById(rewards.currentCardId);
   const next = languageQuestRewardCardById(rewards.nextCardId);
+  const featuredCard = current ?? next;
   const remaining = rewards.nextLevelXp === null ? 0 : rewards.nextLevelXp - rewards.xp;
   const frame = languageQuestStreakFrame(bestStreak);
 
@@ -127,15 +136,15 @@ export function LanguageQuestRewardTrack({
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <Badge className="border-amber-300/25 bg-amber-300/15 text-amber-200 hover:bg-amber-300/15">
-              <Trophy className="h-3 w-3" /> Level {rewards.level}
+              <Trophy className="h-3 w-3" /> {rewards.level === 0 ? 'Level 0' : `Level ${rewards.level}`}
             </Badge>
             <span className="text-xs font-black uppercase tracking-[0.18em] text-violet-200">{rewards.title}</span>
           </div>
           <h2 className="mt-4 text-2xl font-black sm:text-3xl">
-            {current ? `${current.name} joined your quest!` : 'Your Quest Card collection'}
+            {current ? `${current.name} joined your quest!` : 'Earn your first Quest Card'}
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-violet-100/80">
-            Every correct first answer earns XP. Level up to reveal original Quest Cards, each with its own name, achievement, and learning power.
+            Every correct first answer earns XP. Your first companion unlocks at 100 XP, and every later card demands a bigger learning milestone.
           </p>
 
           <div className="mt-5">
@@ -144,6 +153,21 @@ export function LanguageQuestRewardTrack({
               <span>{next ? `${remaining} XP to ${next.name}` : 'All current cards unlocked'}</span>
             </div>
             <Progress value={rewards.progressPercent} className="mt-2 [&_[data-slot=progress-track]]:h-3 [&_[data-slot=progress-track]]:bg-white/15 [&_[data-slot=progress-indicator]]:bg-gradient-to-r [&_[data-slot=progress-indicator]]:from-amber-300 [&_[data-slot=progress-indicator]]:to-fuchsia-400" />
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
+            {QUEST_CARD_CHAPTERS.map((chapter) => {
+              const complete = rewards.level >= chapter.endLevel;
+              const active = rewards.level < chapter.startLevel
+                ? chapter.startLevel === Math.max(1, rewards.level + 1)
+                : rewards.level <= chapter.endLevel;
+              return (
+                <div key={chapter.id} className={`rounded-xl border px-2.5 py-2 ${complete ? 'border-emerald-300/40 bg-emerald-300/15' : active ? 'border-amber-300/50 bg-white/10' : 'border-white/10 bg-black/10 opacity-60'}`}>
+                  <p className="truncate text-[10px] font-black uppercase tracking-wider">{chapter.name}</p>
+                  <p className="mt-0.5 text-[9px] font-bold text-white/60">LV {chapter.startLevel}–{chapter.endLevel}{complete ? ' • ✓' : ''}</p>
+                </div>
+              );
+            })}
           </div>
 
           <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -160,7 +184,14 @@ export function LanguageQuestRewardTrack({
         </div>
 
         <div className="mx-auto w-full max-w-[230px]">
-          {current && <LanguageQuestRewardCardView card={current} unlocked featured frame={frame} />}
+          {featuredCard && (
+            <LanguageQuestRewardCardView
+              card={featuredCard}
+              unlocked={Boolean(current)}
+              featured={Boolean(current)}
+              frame={current ? frame : undefined}
+            />
+          )}
         </div>
       </div>
     </section>
@@ -189,7 +220,7 @@ export function LanguageQuestRewardCollection({
             </div>
           </div>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-            These are original MRLC learning companions. Cards unlock automatically from your saved XP—no purchases, random packs, or uploads.
+            These original MRLC learning companions must be earned through study. The milestones become harder as you climb toward Level {LANGUAGE_QUEST_REWARD_CARDS.length} and the Legendary Vault.
           </p>
         </div>
         <Badge className="w-fit border-violet-200 bg-white text-violet-800 hover:bg-white dark:border-violet-500/25 dark:bg-slate-900 dark:text-violet-200">
@@ -197,16 +228,37 @@ export function LanguageQuestRewardCollection({
         </Badge>
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
-        {LANGUAGE_QUEST_REWARD_CARDS.map((card) => (
-          <LanguageQuestRewardCardView
-            key={card.id}
-            card={card}
-            unlocked={unlocked.has(card.id)}
-            featured={card.id === rewards.currentCardId}
-            frame={unlocked.has(card.id) ? frame : undefined}
-          />
-        ))}
+      <div className="mt-7 space-y-8">
+        {QUEST_CARD_CHAPTERS.map((chapter, chapterIndex) => {
+          const chapterCards = LANGUAGE_QUEST_REWARD_CARDS.filter((card) =>
+            card.level >= chapter.startLevel && card.level <= chapter.endLevel);
+          const chapterUnlocked = chapterCards.filter((card) => unlocked.has(card.id)).length;
+          return (
+            <section key={chapter.id} aria-labelledby={`quest-chapter-${chapter.id}`}>
+              <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <span className={`grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br ${chapter.tone} text-sm font-black text-white shadow-lg`}>{chapterIndex + 1}</span>
+                  <div>
+                    <h3 id={`quest-chapter-${chapter.id}`} className="font-black text-slate-950 dark:text-white">{chapter.name}</h3>
+                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">{chapter.subtitle} • Levels {chapter.startLevel}–{chapter.endLevel}</p>
+                  </div>
+                </div>
+                <span className="text-xs font-black text-violet-700 dark:text-violet-300">{chapterUnlocked}/{chapterCards.length} earned</span>
+              </div>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+                {chapterCards.map((card) => (
+                  <LanguageQuestRewardCardView
+                    key={card.id}
+                    card={card}
+                    unlocked={unlocked.has(card.id)}
+                    featured={card.id === rewards.currentCardId}
+                    frame={unlocked.has(card.id) ? frame : undefined}
+                  />
+                ))}
+              </div>
+            </section>
+          );
+        })}
       </div>
     </section>
   );

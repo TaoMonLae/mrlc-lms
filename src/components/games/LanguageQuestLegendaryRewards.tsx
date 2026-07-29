@@ -11,6 +11,7 @@ import {
 import { Progress } from '@/components/ui/progress';
 import {
   LANGUAGE_QUEST_LEGENDARY_AWARDS,
+  LANGUAGE_QUEST_REWARD_CARDS,
   languageQuestLegendaryAwardById,
   type LanguageQuestLegendaryAward,
   type LanguageQuestRewardProgress,
@@ -113,10 +114,11 @@ export function LanguageQuestLegendaryVault({
   const unlocked = new Set(rewards.unlockedLegendaryIds);
   const current = languageQuestLegendaryAwardById(rewards.currentLegendaryId);
   const next = languageQuestLegendaryAwardById(rewards.nextLegendaryId);
-  const previousThreshold = current?.unlockXp ?? 2_500;
+  const questCardGateXp = LANGUAGE_QUEST_REWARD_CARDS.at(-1)!.unlockXp;
+  const previousThreshold = current?.unlockXp ?? questCardGateXp;
   const nextThreshold = next?.unlockXp ?? LANGUAGE_QUEST_LEGENDARY_AWARDS.at(-1)!.unlockXp;
   const progress = next
-    ? Math.min(100, Math.round(((rewards.xp - previousThreshold) / (nextThreshold - previousThreshold)) * 100))
+    ? Math.max(0, Math.min(100, Math.round(((rewards.xp - previousThreshold) / (nextThreshold - previousThreshold)) * 100)))
     : 100;
 
   return (
@@ -133,10 +135,10 @@ export function LanguageQuestLegendaryVault({
             </span>
           </div>
           <h2 className="mt-4 text-2xl font-black text-amber-50 sm:text-3xl">
-            {current ? `${current.name} has entered your legend.` : 'A golden mystery waits beyond Level 12.'}
+            {current ? `${current.name} has entered your legend.` : `A golden mystery waits beyond Level ${LANGUAGE_QUEST_REWARD_CARDS.length}.`}
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-amber-100/70">
-            Continue earning learning XP to open sealed golden chests and reveal MRLC’s Mon history collection. The portrait remains hidden until its milestone is reached.
+            Complete the full Quest Card path, then continue earning learning XP to open sealed golden chests and reveal MRLC’s Mon history collection. Every portrait stays hidden until its milestone is reached.
           </p>
           <div className="mt-5 max-w-xl">
             <div className="flex justify-between gap-3 text-xs font-bold text-amber-100/75">

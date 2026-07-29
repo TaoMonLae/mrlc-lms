@@ -182,16 +182,18 @@ export function LanguageQuestLanguageAlbums({ courses }: { courses: LanguageQues
       <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {albums.map((album) => {
           const progress = languageQuestRewardProgress(album.completed * 10);
-          const card = LANGUAGE_QUEST_REWARD_CARDS.find((item) => item.id === progress.currentCardId)!;
+          const card = LANGUAGE_QUEST_REWARD_CARDS.find((item) => item.id === progress.currentCardId)
+            ?? LANGUAGE_QUEST_REWARD_CARDS[0];
+          const hasCompanion = progress.currentCardId !== null;
           const percent = album.total ? Math.round((album.completed / album.total) * 100) : 0;
           return (
             <article key={album.language} className="relative overflow-hidden rounded-2xl border border-white/70 bg-slate-950 p-4 text-white shadow-lg">
               <div className="absolute inset-0 opacity-50" style={{ background: `radial-gradient(circle at 100% 0%, ${card.colors[1]}, transparent 55%)` }} />
               <div className="relative flex items-center gap-4">
-                <span className="grid h-16 w-16 place-items-center rounded-2xl bg-white/10 text-4xl">{card.emoji}</span>
+                <span className="grid h-16 w-16 place-items-center rounded-2xl bg-white/10 text-4xl">{hasCompanion ? card.emoji : '❔'}</span>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-black uppercase tracking-wider text-white/65">{album.emoji} {album.language}</p>
-                  <h3 className="truncate text-lg font-black">{card.name}</h3>
+                  <h3 className="truncate text-lg font-black">{hasCompanion ? card.name : 'First card awaits'}</h3>
                   <p className="text-xs text-white/70">{progress.unlockedCardIds.length}/{LANGUAGE_QUEST_REWARD_CARDS.length} album cards</p>
                 </div>
               </div>

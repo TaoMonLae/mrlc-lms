@@ -45,25 +45,35 @@ import {
 
 test("Language Quest turns saved XP into stable levels and collectible cards", () => {
   const beginner = languageQuestRewardProgress(0);
-  assert.equal(beginner.level, 1);
-  assert.deepEqual(beginner.unlockedCardIds, ["lexibloom"]);
-  assert.equal(beginner.nextLevelXp, 30);
+  assert.equal(beginner.level, 0);
+  assert.equal(beginner.title, "Quest Initiate");
+  assert.deepEqual(beginner.unlockedCardIds, []);
+  assert.equal(beginner.currentCardId, null);
+  assert.equal(beginner.nextCardId, "lexibloom");
+  assert.equal(beginner.nextLevelXp, 100);
   assert.equal(beginner.progressPercent, 0);
 
   const learner = languageQuestRewardProgress(160);
-  assert.equal(learner.level, 4);
-  assert.equal(learner.title, "Pattern Finder");
-  assert.deepEqual(learner.unlockedCardIds, [
+  assert.equal(learner.level, 1);
+  assert.equal(learner.title, "First Step");
+  assert.deepEqual(learner.unlockedCardIds, ["lexibloom"]);
+  assert.equal(learner.progressPercent, 40);
+
+  const committedLearner = languageQuestRewardProgress(760);
+  assert.equal(committedLearner.level, 4);
+  assert.equal(committedLearner.title, "Pattern Finder");
+  assert.deepEqual(committedLearner.unlockedCardIds, [
     "lexibloom",
     "echoquill",
     "phraseflare",
     "grammashell",
   ]);
-  assert.equal(learner.progressPercent, 10);
+  assert.equal(committedLearner.progressPercent, 20);
 });
 
 test("Language Quest reward thresholds are ordered, unique, and announce only new unlocks", () => {
-  assert.equal(LANGUAGE_QUEST_REWARD_CARDS[0].unlockXp, 0);
+  assert.equal(LANGUAGE_QUEST_REWARD_CARDS.length, 20);
+  assert.equal(LANGUAGE_QUEST_REWARD_CARDS[0].unlockXp, 100);
   assert.deepEqual(
     LANGUAGE_QUEST_REWARD_CARDS.map((card) => card.level),
     LANGUAGE_QUEST_REWARD_CARDS.map((_, index) => index + 1),
@@ -75,7 +85,9 @@ test("Language Quest reward thresholds are ordered, unique, and announce only ne
   assert.ok(LANGUAGE_QUEST_REWARD_CARDS.every((card, index, cards) =>
     index === 0 || card.unlockXp > cards[index - 1].unlockXp,
   ));
-  assert.deepEqual(newlyUnlockedLanguageQuestRewardIds(70, 160), ["phraseflare", "grammashell"]);
+  assert.deepEqual(newlyUnlockedLanguageQuestRewardIds(0, 99), []);
+  assert.deepEqual(newlyUnlockedLanguageQuestRewardIds(99, 100), ["lexibloom"]);
+  assert.deepEqual(newlyUnlockedLanguageQuestRewardIds(70, 260), ["lexibloom", "echoquill"]);
   assert.deepEqual(newlyUnlockedLanguageQuestRewardIds(160, 160), []);
 });
 
@@ -86,13 +98,13 @@ test("legendary Mon history cards unlock only after the main Quest Card path", (
     new Set(LANGUAGE_QUEST_LEGENDARY_AWARDS.map((award) => award.id)).size,
     LANGUAGE_QUEST_LEGENDARY_AWARDS.length,
   );
-  const sealed = languageQuestRewardProgress(2_999);
+  const sealed = languageQuestRewardProgress(14_999);
   assert.deepEqual(sealed.unlockedLegendaryIds, []);
   assert.equal(sealed.nextLegendaryId, "king-ukkalapa");
-  const revealed = languageQuestRewardProgress(3_500);
+  const revealed = languageQuestRewardProgress(17_000);
   assert.deepEqual(revealed.unlockedLegendaryIds, ["king-ukkalapa", "king-siha-sudhamma"]);
   assert.equal(revealed.currentLegendaryId, "king-siha-sudhamma");
-  assert.deepEqual(newlyUnlockedLanguageQuestRewardIds(2_990, 3_010), ["king-ukkalapa"]);
+  assert.deepEqual(newlyUnlockedLanguageQuestRewardIds(14_990, 15_010), ["king-ukkalapa"]);
   assert.equal(languageQuestLegendaryAwardById("queen-banya-htau")?.achievement, "Golden Counsel");
 });
 

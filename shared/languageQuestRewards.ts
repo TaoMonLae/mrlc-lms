@@ -23,7 +23,7 @@ export interface LanguageQuestRewardProgress {
   xpForNextLevel: number;
   progressPercent: number;
   unlockedCardIds: string[];
-  currentCardId: string;
+  currentCardId: string | null;
   nextCardId: string | null;
   unlockedLegendaryIds: string[];
   currentLegendaryId: string | null;
@@ -72,7 +72,7 @@ export const LANGUAGE_QUEST_REWARD_CARDS: readonly LanguageQuestRewardCard[] = [
   {
     id: "lexibloom",
     level: 1,
-    unlockXp: 0,
+    unlockXp: 100,
     name: "Lexibloom",
     epithet: "The Curious Sprout",
     achievement: "First Step",
@@ -84,7 +84,7 @@ export const LANGUAGE_QUEST_REWARD_CARDS: readonly LanguageQuestRewardCard[] = [
   {
     id: "echoquill",
     level: 2,
-    unlockXp: 30,
+    unlockXp: 250,
     name: "Echoquill",
     epithet: "The Sound Seeker",
     achievement: "Careful Listener",
@@ -96,7 +96,7 @@ export const LANGUAGE_QUEST_REWARD_CARDS: readonly LanguageQuestRewardCard[] = [
   {
     id: "phraseflare",
     level: 3,
-    unlockXp: 80,
+    unlockXp: 450,
     name: "Phraseflare",
     epithet: "The Sentence Spark",
     achievement: "Phrase Builder",
@@ -108,7 +108,7 @@ export const LANGUAGE_QUEST_REWARD_CARDS: readonly LanguageQuestRewardCard[] = [
   {
     id: "grammashell",
     level: 4,
-    unlockXp: 150,
+    unlockXp: 700,
     name: "Grammashell",
     epithet: "The Pattern Keeper",
     achievement: "Pattern Finder",
@@ -120,7 +120,7 @@ export const LANGUAGE_QUEST_REWARD_CARDS: readonly LanguageQuestRewardCard[] = [
   {
     id: "verblume",
     level: 5,
-    unlockXp: 250,
+    unlockXp: 1_000,
     name: "Verblume",
     epithet: "The Action Gardener",
     achievement: "Action Speaker",
@@ -132,7 +132,7 @@ export const LANGUAGE_QUEST_REWARD_CARDS: readonly LanguageQuestRewardCard[] = [
   {
     id: "tonetail",
     level: 6,
-    unlockXp: 400,
+    unlockXp: 1_350,
     name: "Tonetail",
     epithet: "The Melody Guide",
     achievement: "Pronunciation Star",
@@ -144,7 +144,7 @@ export const LANGUAGE_QUEST_REWARD_CARDS: readonly LanguageQuestRewardCard[] = [
   {
     id: "scriptora",
     level: 7,
-    unlockXp: 600,
+    unlockXp: 1_750,
     name: "Scriptora",
     epithet: "The Ink Dancer",
     achievement: "Writing Wizard",
@@ -156,7 +156,7 @@ export const LANGUAGE_QUEST_REWARD_CARDS: readonly LanguageQuestRewardCard[] = [
   {
     id: "chatacrest",
     level: 8,
-    unlockXp: 850,
+    unlockXp: 2_200,
     name: "Chatacrest",
     epithet: "The Friendly Voice",
     achievement: "Conversation Climber",
@@ -168,7 +168,7 @@ export const LANGUAGE_QUEST_REWARD_CARDS: readonly LanguageQuestRewardCard[] = [
   {
     id: "polyglow",
     level: 9,
-    unlockXp: 1_150,
+    unlockXp: 2_700,
     name: "Polyglow",
     epithet: "The Many-Coloured Mind",
     achievement: "Language Explorer",
@@ -180,7 +180,7 @@ export const LANGUAGE_QUEST_REWARD_CARDS: readonly LanguageQuestRewardCard[] = [
   {
     id: "fluencyra",
     level: 10,
-    unlockXp: 1_500,
+    unlockXp: 3_250,
     name: "Fluencyra",
     epithet: "The Flow Keeper",
     achievement: "Confident Communicator",
@@ -192,7 +192,7 @@ export const LANGUAGE_QUEST_REWARD_CARDS: readonly LanguageQuestRewardCard[] = [
   {
     id: "wisdomane",
     level: 11,
-    unlockXp: 1_950,
+    unlockXp: 3_850,
     name: "Wisdomane",
     epithet: "The Meaning Guardian",
     achievement: "Meaning Master",
@@ -204,7 +204,7 @@ export const LANGUAGE_QUEST_REWARD_CARDS: readonly LanguageQuestRewardCard[] = [
   {
     id: "luminova",
     level: 12,
-    unlockXp: 2_500,
+    unlockXp: 4_500,
     name: "Luminova",
     epithet: "The Quest Light",
     achievement: "Language Quest Legend",
@@ -212,6 +212,102 @@ export const LANGUAGE_QUEST_REWARD_CARDS: readonly LanguageQuestRewardCard[] = [
     emoji: "🌟",
     rarity: "Legend",
     colors: ["#1e1b4b", "#8b5cf6", "#f472b6"],
+  },
+  {
+    id: "riddlewing",
+    level: 13,
+    unlockXp: 5_200,
+    name: "Riddlewing",
+    epithet: "The Clue Chaser",
+    achievement: "Meaning Detective",
+    powerMove: "Insight Flight",
+    emoji: "🦉",
+    rarity: "Epic",
+    colors: ["#1e3a8a", "#0ea5e9", "#a5f3fc"],
+  },
+  {
+    id: "syntaxion",
+    level: 14,
+    unlockXp: 6_000,
+    name: "Syntaxion",
+    epithet: "The Order Architect",
+    achievement: "Sentence Engineer",
+    powerMove: "Syntax Forge",
+    emoji: "⚙️",
+    rarity: "Epic",
+    colors: ["#3f3f46", "#8b5cf6", "#ddd6fe"],
+  },
+  {
+    id: "dialectra",
+    level: 15,
+    unlockXp: 6_900,
+    name: "Dialectra",
+    epithet: "The Voice Voyager",
+    achievement: "Accent Adventurer",
+    powerMove: "Voice Compass",
+    emoji: "🧭",
+    rarity: "Epic",
+    colors: ["#134e4a", "#14b8a6", "#99f6e4"],
+  },
+  {
+    id: "vocabryn",
+    level: 16,
+    unlockXp: 7_900,
+    name: "Vocabryn",
+    epithet: "The Word Hoarder",
+    achievement: "Vocabulary Champion",
+    powerMove: "Wordstorm",
+    emoji: "🐉",
+    rarity: "Legend",
+    colors: ["#7c2d12", "#ea580c", "#fde68a"],
+  },
+  {
+    id: "contextara",
+    level: 17,
+    unlockXp: 9_000,
+    name: "Contextara",
+    epithet: "The Story Weaver",
+    achievement: "Context Navigator",
+    powerMove: "Story Thread",
+    emoji: "🕸️",
+    rarity: "Legend",
+    colors: ["#701a75", "#d946ef", "#f5d0fe"],
+  },
+  {
+    id: "oratoria",
+    level: 18,
+    unlockXp: 10_200,
+    name: "Oratoria",
+    epithet: "The Courageous Speaker",
+    achievement: "Speech Pathfinder",
+    powerMove: "Brave Voice",
+    emoji: "🎙️",
+    rarity: "Legend",
+    colors: ["#881337", "#f43f5e", "#fecdd3"],
+  },
+  {
+    id: "scholarix",
+    level: 19,
+    unlockXp: 11_500,
+    name: "Scholarix",
+    epithet: "The Tireless Sage",
+    achievement: "Knowledge Keeper",
+    powerMove: "Scholar's Focus",
+    emoji: "📚",
+    rarity: "Legend",
+    colors: ["#1e3a8a", "#4f46e5", "#c7d2fe"],
+  },
+  {
+    id: "aetherling",
+    level: 20,
+    unlockXp: 13_000,
+    name: "Aetherling",
+    epithet: "The Vault Sentinel",
+    achievement: "Quest Card Grandmaster",
+    powerMove: "Vault Ascension",
+    emoji: "🐦‍🔥",
+    rarity: "Legend",
+    colors: ["#78350f", "#f59e0b", "#fef3c7"],
   },
 ] as const;
 
@@ -222,7 +318,7 @@ export const LANGUAGE_QUEST_REWARD_CARDS: readonly LanguageQuestRewardCard[] = [
 export const LANGUAGE_QUEST_LEGENDARY_AWARDS: readonly LanguageQuestLegendaryAward[] = [
   {
     id: "king-ukkalapa",
-    unlockXp: 3_000,
+    unlockXp: 15_000,
     name: "King Ukkalapa",
     reign: "BC 6th century",
     achievement: "Sacred Promise",
@@ -231,7 +327,7 @@ export const LANGUAGE_QUEST_LEGENDARY_AWARDS: readonly LanguageQuestLegendaryAwa
   },
   {
     id: "king-siha-sudhamma",
-    unlockXp: 3_500,
+    unlockXp: 17_000,
     name: "King Siha Sudhamma",
     reign: "BC 6th century",
     achievement: "Golden Resolve",
@@ -240,7 +336,7 @@ export const LANGUAGE_QUEST_LEGENDARY_AWARDS: readonly LanguageQuestLegendaryAwa
   },
   {
     id: "king-samala",
-    unlockXp: 4_000,
+    unlockXp: 19_000,
     name: "King Samala",
     reign: "AD 593–605",
     achievement: "Dawn of Hongsawatoi",
@@ -249,7 +345,7 @@ export const LANGUAGE_QUEST_LEGENDARY_AWARDS: readonly LanguageQuestLegendaryAwa
   },
   {
     id: "king-wimala",
-    unlockXp: 4_500,
+    unlockXp: 21_500,
     name: "King Wimala",
     reign: "AD 605–612",
     achievement: "Steadfast Crown",
@@ -258,7 +354,7 @@ export const LANGUAGE_QUEST_LEGENDARY_AWARDS: readonly LanguageQuestLegendaryAwa
   },
   {
     id: "king-asah",
-    unlockXp: 5_000,
+    unlockXp: 24_000,
     name: "King Asah",
     reign: "AD 612–619",
     achievement: "Strength of the Land",
@@ -267,7 +363,7 @@ export const LANGUAGE_QUEST_LEGENDARY_AWARDS: readonly LanguageQuestLegendaryAwa
   },
   {
     id: "king-wareru",
-    unlockXp: 5_600,
+    unlockXp: 27_000,
     name: "King Wareru",
     reign: "AD 1281–1306",
     achievement: "Lawgiver's Wisdom",
@@ -276,7 +372,7 @@ export const LANGUAGE_QUEST_LEGENDARY_AWARDS: readonly LanguageQuestLegendaryAwa
   },
   {
     id: "king-rajadhirat",
-    unlockXp: 6_200,
+    unlockXp: 30_000,
     name: "King Rajadhirat",
     reign: "AD 1385–1423",
     achievement: "Unbroken Courage",
@@ -285,7 +381,7 @@ export const LANGUAGE_QUEST_LEGENDARY_AWARDS: readonly LanguageQuestLegendaryAwa
   },
   {
     id: "queen-banya-htau",
-    unlockXp: 6_900,
+    unlockXp: 34_000,
     name: "Queen Banya Htau",
     reign: "AD 1454–1472",
     achievement: "Golden Counsel",
@@ -294,7 +390,7 @@ export const LANGUAGE_QUEST_LEGENDARY_AWARDS: readonly LanguageQuestLegendaryAwa
   },
   {
     id: "king-dhammachedi",
-    unlockXp: 7_700,
+    unlockXp: 40_000,
     name: "King Dhammachedi",
     reign: "AD 1526–1538",
     achievement: "Pagoda Light",
@@ -305,22 +401,21 @@ export const LANGUAGE_QUEST_LEGENDARY_AWARDS: readonly LanguageQuestLegendaryAwa
 
 export function languageQuestRewardProgress(points: number): LanguageQuestRewardProgress {
   const xp = Math.max(0, Math.floor(Number.isFinite(points) ? points : 0));
-  let currentIndex = 0;
-  for (let index = 1; index < LANGUAGE_QUEST_REWARD_CARDS.length; index += 1) {
-    if (xp < LANGUAGE_QUEST_REWARD_CARDS[index].unlockXp) break;
-    currentIndex = index;
-  }
-
-  const current = LANGUAGE_QUEST_REWARD_CARDS[currentIndex];
+  const currentIndex = [...LANGUAGE_QUEST_REWARD_CARDS]
+    .map((card, index) => ({ card, index }))
+    .reverse()
+    .find(({ card }) => card.unlockXp <= xp)?.index ?? -1;
+  const current = currentIndex >= 0 ? LANGUAGE_QUEST_REWARD_CARDS[currentIndex] : null;
   const next = LANGUAGE_QUEST_REWARD_CARDS[currentIndex + 1] ?? null;
-  const xpForNextLevel = next ? next.unlockXp - current.unlockXp : 0;
-  const xpIntoLevel = next ? Math.min(xp - current.unlockXp, xpForNextLevel) : 0;
+  const levelStartXp = current?.unlockXp ?? 0;
+  const xpForNextLevel = next ? next.unlockXp - levelStartXp : 0;
+  const xpIntoLevel = next ? Math.min(xp - levelStartXp, xpForNextLevel) : 0;
 
   return {
-    level: current.level,
-    title: current.achievement,
+    level: current?.level ?? 0,
+    title: current?.achievement ?? "Quest Initiate",
     xp,
-    levelStartXp: current.unlockXp,
+    levelStartXp,
     nextLevelXp: next?.unlockXp ?? null,
     xpIntoLevel,
     xpForNextLevel,
@@ -330,7 +425,7 @@ export function languageQuestRewardProgress(points: number): LanguageQuestReward
     unlockedCardIds: LANGUAGE_QUEST_REWARD_CARDS
       .filter((card) => card.unlockXp <= xp)
       .map((card) => card.id),
-    currentCardId: current.id,
+    currentCardId: current?.id ?? null,
     nextCardId: next?.id ?? null,
     unlockedLegendaryIds: LANGUAGE_QUEST_LEGENDARY_AWARDS
       .filter((award) => award.unlockXp <= xp)
