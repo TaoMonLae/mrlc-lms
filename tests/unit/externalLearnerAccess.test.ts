@@ -8,6 +8,7 @@ import {
 test("external learners stay within the Language Quest browser routes", () => {
   const allowed = [
     "/language-quest",
+    "/language-quest/about",
     "/games/language-quest",
     "/games/language-quest/",
     "/games/language-quest/profile",

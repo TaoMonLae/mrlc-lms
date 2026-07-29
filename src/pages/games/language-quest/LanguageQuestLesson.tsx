@@ -9,6 +9,7 @@ import { ApiError, apiGet, apiSend } from '@/src/lib/api';
 import type { LanguageQuestLessonPayload, LanguageQuestLessonPreview, LanguageQuestProfile } from '@/src/types/languageQuest';
 import { sentenceAnswerMatches } from '@/shared/languageQuest';
 import { useLanguageQuestSupport } from '@/src/components/games/LanguageQuestSupport';
+import { LanguageQuestPinyinText } from '@/src/components/games/LanguageQuestPinyinText';
 
 interface AnswerResult {
   correct: boolean;
@@ -311,7 +312,9 @@ export default function LanguageQuestLesson() {
                 className="mt-8 flex w-full max-w-sm flex-col items-center gap-4 rounded-3xl border-2 border-slate-200 bg-white px-10 py-12 shadow-sm transition hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-md dark:border-surface-raised dark:bg-surface-indigo"
               >
                 {card.emoji && <span className="text-6xl" aria-hidden="true">{card.emoji}</span>}
-                <span className="text-3xl font-black text-slate-900 dark:text-white">{card.text}</span>
+                <span className="font-black text-slate-900 dark:text-white">
+                  <LanguageQuestPinyinText text={card.text} pinyin={card.pinyin} size="lg" />
+                </span>
                 <span className="flex items-center gap-1.5 text-xs font-semibold text-sky-600"><Volume2 className="h-3.5 w-3.5" /> Tap to listen</span>
               </button>
               <div className="mt-6 max-w-lg rounded-2xl border border-sky-100 bg-sky-50 px-5 py-4 text-left dark:border-sky-500/20 dark:bg-sky-500/10">
@@ -400,7 +403,10 @@ export default function LanguageQuestLesson() {
           {sentenceFeedback === 'incorrect' && (
             <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-rose-800 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300">
               <p lang={explanationLanguage} className="font-black">{lq('incorrectTitle')}</p>
-              <p className="mt-2 text-sm">Model sentence: <strong>{sentenceCard.text}</strong></p>
+              <div className="mt-2 flex items-end gap-2 text-sm">
+                <span>Model sentence:</span>
+                <strong><LanguageQuestPinyinText text={sentenceCard.text} pinyin={sentenceCard.pinyin} /></strong>
+              </div>
               <p lang={explanationLanguage} className="mt-1 text-xs leading-6 opacity-80">{lq('incorrectHelp')}</p>
             </div>
           )}
@@ -538,7 +544,9 @@ export default function LanguageQuestLesson() {
                 >
                   <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-black ${selected ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-500 dark:bg-surface-raised dark:text-slate-300'}`}>{optionLetters[optionIndex]}</span>
                   {option.emoji && <span className="text-3xl" aria-hidden="true">{option.emoji}</span>}
-                  <span className="flex-1 select-text font-semibold text-slate-800 dark:text-white">{option.text}</span>
+                  <span className="min-w-0 flex-1 font-semibold text-slate-800 dark:text-white">
+                    <LanguageQuestPinyinText text={option.text} pinyin={option.pinyin} />
+                  </span>
                 </button>
                 {option.audioText && (
                   <button
@@ -562,13 +570,32 @@ export default function LanguageQuestLesson() {
             {answer?.correct && (
               <div className="flex items-center gap-3 text-emerald-700 dark:text-emerald-400">
                 <div className="grid h-10 w-10 place-items-center rounded-full bg-emerald-500 text-white"><Check className="h-6 w-6" /></div>
-                <div><p className="font-black">Excellent — that meaning fits.</p><p className="text-xs">“{answer.correctAnswer}” is the best response here. +{answer.pointsAwarded} points</p></div>
+                <div>
+                  <p className="font-black">Excellent — that meaning fits.</p>
+                  <div className="mt-1 flex flex-wrap items-end gap-1 text-xs">
+                    <LanguageQuestPinyinText
+                      text={answer.correctAnswer}
+                      pinyin={challenge.options.find((option) => option.id === answer.correctOptionId)?.pinyin ?? null}
+                    />
+                    <span>is the best response here. +{answer.pointsAwarded} points</span>
+                  </div>
+                </div>
               </div>
             )}
             {answer && !answer.correct && (
               <div className="flex items-center gap-3 text-rose-700 dark:text-rose-400">
                 <div className="grid h-10 w-10 place-items-center rounded-full bg-rose-500 text-white"><X className="h-6 w-6" /></div>
-                <div><p className="font-black">Not quite — compare the meaning and retry.</p><p className="text-xs">Best answer: {answer.correctAnswer}. Look for the option that responds directly to the situation.</p></div>
+                <div>
+                  <p className="font-black">Not quite — compare the meaning and retry.</p>
+                  <div className="mt-1 flex flex-wrap items-end gap-1 text-xs">
+                    <span>Best answer:</span>
+                    <LanguageQuestPinyinText
+                      text={answer.correctAnswer}
+                      pinyin={challenge.options.find((option) => option.id === answer.correctOptionId)?.pinyin ?? null}
+                    />
+                    <span>Look for the option that responds directly to the situation.</span>
+                  </div>
+                </div>
               </div>
             )}
           </div>

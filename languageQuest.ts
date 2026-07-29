@@ -12,6 +12,7 @@ import {
   isLanguageQuestAvatarId,
 } from "./shared/languageQuestAvatars";
 import { languageQuestCategoryForLanguage } from "./shared/languageQuestCourseCategories";
+import { languageQuestPinyin } from "./shared/languageQuestPinyin";
 import { importedSpanishCourse, type OfficialLanguageQuestCourse } from "./languageQuestImportedCourses";
 import { mandarinFoundationsCourse } from "./languageQuestMandarinCourse";
 import { completeMandarinCourse } from "./languageQuestCompleteMandarinCourse";
@@ -731,6 +732,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           completed: completedIds.has(challenge.id),
           options: shuffle(challenge.options).map((option: any) => ({
             id: option.id, text: option.text, emoji: option.emoji, audioText: option.audioText,
+            pinyin: languageQuestPinyin(option.text, lesson.unit.course.language),
           })),
         })),
       });
@@ -772,6 +774,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
             text: correct?.text ?? "",
             emoji: correct?.emoji ?? null,
             audioText: correct?.audioText ?? correct?.text ?? null,
+            pinyin: languageQuestPinyin(correct?.text ?? "", lesson.unit.course.language),
           };
         }),
       });

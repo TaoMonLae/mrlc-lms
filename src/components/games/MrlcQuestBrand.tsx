@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Sparkles } from 'lucide-react';
+import { Github, Sparkles } from 'lucide-react';
 
 interface MrlcQuestBrandProps {
   to?: string;
@@ -31,7 +31,18 @@ export function MrlcQuestBrand({ to = '/language-quest', compact = false, invers
 export function TaoMonLaeCredit({ inverse = false }: { inverse?: boolean }) {
   return (
     <p className={`text-center text-xs font-semibold tracking-wide ${inverse ? 'text-white/60' : 'text-slate-500 dark:text-slate-400'}`}>
-      Developed by <span className={inverse ? 'font-black text-white' : 'font-black text-violet-700 dark:text-violet-300'}>Tao Mon Lae</span>
+      Developed by{' '}
+      <a
+        href="https://github.com/TaoMonLae"
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`inline-flex items-center gap-1 font-black underline-offset-4 transition hover:underline ${
+          inverse ? 'text-white' : 'text-violet-700 dark:text-violet-300'
+        }`}
+        aria-label="Tao Mon Lae on GitHub"
+      >
+        Tao Mon Lae <Github className="h-3.5 w-3.5" aria-hidden="true" />
+      </a>
     </p>
   );
 }

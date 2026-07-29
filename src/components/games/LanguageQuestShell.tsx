@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
-import { GraduationCap, Languages, LogOut, Moon, Settings2, Sun, Trophy, Users } from 'lucide-react';
+import { GraduationCap, Info, Languages, LogOut, Moon, Settings2, Sun, Trophy, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useTheme } from '@/src/components/theme-provider';
@@ -110,7 +110,12 @@ function LanguageQuestShellContent() {
       <footer className="border-t border-white/70 bg-white/65 px-4 py-6 backdrop-blur dark:border-slate-800 dark:bg-slate-950/75">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 sm:flex-row">
           <div className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400"><Languages className="h-4 w-4 text-violet-600" /> Learn • Practise • Grow</div>
-          <TaoMonLaeCredit />
+          <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-4">
+            <Link to="/language-quest/about" className="inline-flex items-center gap-1.5 text-xs font-black text-violet-700 underline-offset-4 hover:underline dark:text-violet-300">
+              <Info className="h-3.5 w-3.5" /> About &amp; course sources
+            </Link>
+            <TaoMonLaeCredit />
+          </div>
         </div>
       </footer>
     </div>

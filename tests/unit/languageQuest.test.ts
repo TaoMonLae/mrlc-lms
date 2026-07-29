@@ -22,6 +22,10 @@ import {
   languageQuestCategoryForLanguage,
   orderedLanguageQuestCategories,
 } from "../../shared/languageQuestCourseCategories";
+import {
+  isChineseLanguage,
+  languageQuestPinyin,
+} from "../../shared/languageQuestPinyin";
 
 test("Language Quest starts a new streak on the first active day", () => {
   assert.deepEqual(
@@ -46,6 +50,39 @@ test("Language Quest dictionary extracts a useful highlighted term", () => {
   assert.equal(languageQuestLookupWord("“You're”"), "You're");
   assert.equal(languageQuestLookupWord("စာကြည့်တိုက်"), "စာကြည့်တိုက်");
   assert.equal(languageQuestLookupWord("123 …"), null);
+});
+
+test("Language Quest adds tone-marked Pinyin to Chinese course text", () => {
+  assert.equal(isChineseLanguage("Mandarin Chinese"), true);
+  assert.deepEqual(languageQuestPinyin("你好", "Mandarin Chinese"), ["nǐ", "hǎo"]);
+  assert.deepEqual(
+    languageQuestPinyin("早上好！", "Chinese"),
+    ["zǎo", "shàng", "hǎo", "！"],
+  );
+  assert.equal(languageQuestPinyin("Hello", "Mandarin Chinese"), null);
+  assert.equal(languageQuestPinyin("你好", "English"), null);
+});
+
+test("every Hanzi answer in every built-in Chinese course receives Pinyin", () => {
+  const chineseCourses = [
+    mandarinFoundationsCourse,
+    completeMandarinCourse,
+    chineseConversationStarterCourse,
+  ];
+  const hanziOptions = chineseCourses.flatMap((course) =>
+    course.units.flatMap((unit) =>
+      unit.lessons.flatMap((lesson) =>
+        lesson.challenges.flatMap((challenge) =>
+          challenge.options.filter((option) => /\p{Script=Han}/u.test(option.text)),
+        ),
+      ),
+    ),
+  );
+
+  assert.ok(hanziOptions.length > 5_000);
+  assert.ok(hanziOptions.every((option) =>
+    languageQuestPinyin(option.text, "Mandarin Chinese")?.length === Array.from(option.text).length,
+  ));
 });
 
 test("Language Quest accepts only the curated built-in learner avatars", () => {

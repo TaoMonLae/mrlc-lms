@@ -34,6 +34,7 @@ export interface LanguageQuestOption {
   text: string;
   emoji: string | null;
   audioText: string | null;
+  pinyin: string[] | null;
 }
 
 export interface LanguageQuestChallenge {
@@ -59,6 +60,7 @@ export interface LanguageQuestFlashcard {
   text: string;
   emoji: string | null;
   audioText: string | null;
+  pinyin: string[] | null;
 }
 
 export interface LanguageQuestLessonPreview {

@@ -195,6 +195,7 @@ const PacmanSelectPage = lazy(() => import("./pages/games/pacman/index"));
 const PacmanPlayPage = lazy(() => import("./pages/games/pacman/PlayPage"));
 const LanguageQuestHome = lazy(() => import("./pages/games/language-quest/LanguageQuestHome"));
 const LanguageQuestPublic = lazy(() => import("./pages/games/language-quest/LanguageQuestPublic"));
+const LanguageQuestAbout = lazy(() => import("./pages/games/language-quest/LanguageQuestAbout"));
 const LanguageQuestCourse = lazy(() => import("./pages/games/language-quest/LanguageQuestCourse"));
 const LanguageQuestLesson = lazy(() => import("./pages/games/language-quest/LanguageQuestLesson"));
 const LanguageQuestLeaderboard = lazy(() => import("./pages/games/language-quest/LanguageQuestLeaderboard"));
@@ -291,6 +292,7 @@ export default function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/language-quest" element={<LanguageQuestPublic />} />
+            <Route path="/language-quest/about" element={<LanguageQuestAbout />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/unauthorized" element={<UnauthorizedPage />} />

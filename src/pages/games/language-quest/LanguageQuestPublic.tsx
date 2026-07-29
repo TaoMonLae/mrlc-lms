@@ -8,6 +8,7 @@ import {
   Globe2,
   Headphones,
   Heart,
+  Info,
   Keyboard,
   Languages,
   Moon,
@@ -22,6 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/src/components/theme-provider';
 import { MrlcQuestBrand, TaoMonLaeCredit } from '@/src/components/games/MrlcQuestBrand';
+import { LanguageQuestCourseFolder } from '@/src/components/games/LanguageQuestCourseFolder';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { orderedLanguageQuestCategories } from '@/shared/languageQuestCourseCategories';
 
@@ -69,6 +71,9 @@ export default function LanguageQuestPublic() {
         <div className="mx-auto flex min-h-18 max-w-7xl items-center justify-between gap-3 px-4 py-2 sm:px-6">
           <MrlcQuestBrand compact />
           <div className="flex items-center gap-2">
+            <Button variant="ghost" className="hidden font-bold text-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 md:inline-flex" render={<Link to="/language-quest/about" />} nativeButton={false}>
+              <Info className="mr-2 h-4 w-4" /> About
+            </Button>
             {!user && (
               <Button variant="ghost" className="hidden font-bold text-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 sm:inline-flex" render={<Link to="/login" />} nativeButton={false}>
                 Sign in
@@ -197,16 +202,15 @@ export default function LanguageQuestPublic() {
             </div>
 
             {courses.length ? (
-              <div className="mt-10 space-y-12">
-                {courseGroups.map((group) => (
-                  <section key={group.category} aria-labelledby={`public-category-${group.category.replace(/\W+/g, '-').toLowerCase()}`}>
-                    <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-                      <div>
-                        <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-700 dark:text-violet-300">Category</p>
-                        <h3 id={`public-category-${group.category.replace(/\W+/g, '-').toLowerCase()}`} className="mt-1 text-2xl font-black sm:text-3xl">{group.category}</h3>
-                      </div>
-                      <Badge variant="secondary">{group.courses.length} {group.courses.length === 1 ? 'course' : 'courses'}</Badge>
-                    </div>
+              <div className="mt-10 space-y-5">
+                {courseGroups.map((group, index) => (
+                  <LanguageQuestCourseFolder
+                    key={group.category}
+                    category={group.category}
+                    count={group.courses.length}
+                    defaultOpen={index === 0}
+                    idPrefix="public-course-folder"
+                  >
                     <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                       {group.courses.map((course) => (
                         <article key={course.id} className="group overflow-hidden rounded-3xl border border-white bg-white shadow-lg shadow-violet-900/5 transition duration-300 hover:-translate-y-2 hover:rotate-[0.4deg] hover:shadow-2xl dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-black/20">
@@ -232,7 +236,7 @@ export default function LanguageQuestPublic() {
                         </article>
                       ))}
                     </div>
-                  </section>
+                  </LanguageQuestCourseFolder>
                 ))}
               </div>
             ) : (
@@ -263,7 +267,12 @@ export default function LanguageQuestPublic() {
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
             <BookMarked className="h-4 w-4 text-violet-600 dark:text-violet-400" /> Learning made with care for every learner.
           </div>
-          <TaoMonLaeCredit />
+          <div className="flex flex-col items-center gap-2 sm:items-end">
+            <Link to="/language-quest/about" className="inline-flex items-center gap-1.5 text-xs font-black text-violet-700 underline-offset-4 hover:underline dark:text-violet-300">
+              <Info className="h-3.5 w-3.5" /> About &amp; course sources
+            </Link>
+            <TaoMonLaeCredit />
+          </div>
         </div>
       </footer>
     </div>

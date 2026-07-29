@@ -9,6 +9,7 @@ import { apiGet } from '@/src/lib/api';
 import type { LanguageQuestOverview } from '@/src/types/languageQuest';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { LanguageQuestAchievements } from '@/src/components/games/LanguageQuestAchievements';
+import { LanguageQuestCourseFolder } from '@/src/components/games/LanguageQuestCourseFolder';
 import { useLanguageQuestSupport } from '@/src/components/games/LanguageQuestSupport';
 import { orderedLanguageQuestCategories } from '@/shared/languageQuestCourseCategories';
 
@@ -142,16 +143,15 @@ export default function LanguageQuestHome() {
             <p className="mt-1 text-sm text-slate-500">A teacher or administrator can create the first course.</p>
           </div>
         ) : (
-          <div className="space-y-9">
-            {courseGroups.map((group) => (
-              <section key={group.category} aria-labelledby={`course-category-${group.category.replace(/\W+/g, '-').toLowerCase()}`}>
-                <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-600 dark:text-violet-300">Course category</p>
-                    <h3 id={`course-category-${group.category.replace(/\W+/g, '-').toLowerCase()}`} className="mt-1 text-2xl font-black text-slate-950 dark:text-white">{group.category}</h3>
-                  </div>
-                  <Badge variant="secondary">{group.courses.length} {group.courses.length === 1 ? 'course' : 'courses'}</Badge>
-                </div>
+          <div className="space-y-5">
+            {courseGroups.map((group, index) => (
+              <LanguageQuestCourseFolder
+                key={group.category}
+                category={group.category}
+                count={group.courses.length}
+                defaultOpen={index === 0}
+                idPrefix="learner-course-folder"
+              >
                 <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                   {group.courses.map((course) => (
                     <article key={course.id} className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-surface-raised dark:bg-surface-indigo">
@@ -179,7 +179,7 @@ export default function LanguageQuestHome() {
                     </article>
                   ))}
                 </div>
-              </section>
+              </LanguageQuestCourseFolder>
             ))}
           </div>
         )}

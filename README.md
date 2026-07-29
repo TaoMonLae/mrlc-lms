@@ -10,8 +10,10 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 
 - Default local URL: `http://localhost:8000`
 - Public Language Quest preview: `http://localhost:8000/language-quest`
+- Public Language Quest credits and course sources: `http://localhost:8000/language-quest/about`
 - Primary runtime: Node.js 20, Express, React 19, PostgreSQL 16
 - Developed by Tao Mon Lae
+- Developer: [github.com/TaoMonLae](https://github.com/TaoMonLae)
 
 ## Latest updates — July 2026
 
@@ -106,7 +108,7 @@ Completed courses unlock personalized certificates. Active learners can also cre
 
 - Teacher and administrator Course Studio supports courses, units, lessons, multiple challenge types, accent colors, images, ordering, and draft/published states.
 - Answers, progress, hearts, streaks, points, rewards, and completion are verified by the server rather than trusted to the browser.
-- The public catalog and signed-in learner dashboard organize published content into **Chinese Courses**, **English Courses**, **Spanish Courses**, and **Other Courses** so learners can find the language path they want quickly.
+- The public catalog and signed-in learner dashboard organize published content into collapsible, folder-style **Chinese Courses**, **English Courses**, **Spanish Courses**, and **Other Courses** so learners can find the language path they want quickly.
 - Includes an original **Everyday English** starter course with two units, four lessons, and twelve challenges, provisioned when Language Quest is first opened.
 - Includes the linked source repository's Spanish course as **Spanish Foundations**, with two units, ten lessons, and eighty visual or speech-assisted challenges.
 - Includes an original **Chinese Conversation Starter** course with two units, eight lessons, and thirty-two speech-assisted practices for greetings, names, countries, introductions, friends, and simple identity questions. Pinyin appears in every question as pronunciation guidance.
