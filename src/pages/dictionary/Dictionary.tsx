@@ -32,15 +32,24 @@ interface MonWordResult {
   definitions: MonDefinitionOut[];
 }
 
+interface ChineseWordResult {
+  simplified: string;
+  traditional: string;
+  pinyin: string;
+  definitions: string[];
+}
+
 interface LookupResult {
   word: string;
   entries: DictionaryEntry[];
   translations: Translation[];
   monMatches: MonWordResult[];
+  chineseMatches: ChineseWordResult[];
 }
 
 const MON_LANG_LABEL: Record<string, string> = { eng: 'English', mya: 'Myanmar', tha: 'Thai' };
 const MYANMAR_SCRIPT_RE = /[က-႟]/;
+const HAN_SCRIPT_RE = /\p{Script=Han}/u;
 
 const RECENTS_KEY = 'dictionary_recent_searches';
 const MAX_RECENTS = 10;
@@ -230,6 +239,29 @@ export default function Dictionary() {
             </div>
           </div>
         )}
+        {data.chineseMatches.length > 0 && (
+          <div className="space-y-3 rounded-lg bg-sky-500/5 border border-sky-500/10 p-3">
+            <p className="text-xs font-semibold uppercase tracking-widest text-sky-600 dark:text-sky-400">Chinese Dictionary (CC-CEDICT)</p>
+            <div className="space-y-4">
+              {data.chineseMatches.map((c, i) => (
+                <div key={i} className={i > 0 ? 'pt-3 border-t border-sky-500/10' : ''}>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-base font-semibold text-slate-900 dark:text-white">{c.simplified}</span>
+                    {c.traditional !== c.simplified && (
+                      <span className="text-sm text-slate-400">({c.traditional})</span>
+                    )}
+                    <span className="text-xs text-slate-400">{c.pinyin}</span>
+                  </div>
+                  <ul className="mt-1 space-y-1">
+                    {c.definitions.map((d, j) => (
+                      <li key={j} className="text-sm text-slate-700 dark:text-slate-200">{d}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         {Array.from(groups.entries()).map(([posLabel, entries]) => (
           <div key={posLabel} className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">{posLabel}</p>
@@ -290,7 +322,7 @@ export default function Dictionary() {
 
       <div className="max-w-2xl mx-auto px-4 space-y-6 py-6 pb-10">
       <div>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Look up any English word — definitions, examples, synonyms, and Myanmar/Mon translations — or paste a Mon word directly. Free to use, no sign-in required.</p>
+        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Look up any English word — definitions, examples, synonyms, and Myanmar/Mon/Chinese translations — or paste a Mon or Chinese word directly. Free to use, no sign-in required.</p>
       </div>
 
       <form onSubmit={onSubmit} className="flex gap-2">
@@ -299,7 +331,7 @@ export default function Dictionary() {
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Type an English word, or paste a Mon word…"
+            placeholder="Type an English word, or paste a Mon or Chinese word…"
             className="pl-9"
             aria-label="Dictionary search"
             spellCheck={false}
@@ -341,7 +373,9 @@ export default function Dictionary() {
             <p className="text-xs text-slate-500 mt-1">
               {MYANMAR_SCRIPT_RE.test(lookupWord)
                 ? 'Check the spelling of the Mon word, or try a shorter part of it.'
-                : 'Check the spelling, or try a simpler form of the word (e.g. "run" instead of "running").'}
+                : HAN_SCRIPT_RE.test(lookupWord)
+                  ? 'Check the characters, or try a shorter part of the word.'
+                  : 'Check the spelling, or try a simpler form of the word (e.g. "run" instead of "running").'}
             </p>
           </div>
         ) : result ? (

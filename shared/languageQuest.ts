@@ -64,11 +64,19 @@ export function sentenceAnswerMatches(answer: string, modelSentence: string): bo
 }
 
 const LANGUAGE_QUEST_MYANMAR_SCRIPT_RE = /[က-႟]/;
+const LANGUAGE_QUEST_HAN_SCRIPT_RE = /\p{Script=Han}/u;
 
 /** Extract one dictionary-friendly term from highlighted lesson text. */
 export function languageQuestLookupWord(selected: string): string | null {
   const text = selected.normalize('NFC').trim();
   if (!text) return null;
   if (LANGUAGE_QUEST_MYANMAR_SCRIPT_RE.test(text)) return text.slice(0, 60);
+  if (LANGUAGE_QUEST_HAN_SCRIPT_RE.test(text)) {
+    // Highlighting Hanzi can pick up interspersed Latin punctuation/pinyin
+    // from the lesson text; keep only the Han characters themselves so the
+    // dictionary is queried with a clean headword.
+    const hanOnly = Array.from(text).filter((ch) => LANGUAGE_QUEST_HAN_SCRIPT_RE.test(ch)).join('');
+    return hanOnly.slice(0, 20) || null;
+  }
   return text.match(/[A-Za-z][A-Za-z'-]*/)?.[0] ?? null;
 }

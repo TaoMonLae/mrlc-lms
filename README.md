@@ -195,7 +195,7 @@ Completed courses unlock personalized certificates. Active learners can also cre
 | Mon Language | Embedded Mon language learning and play activities for every authenticated role |
 | Resource library | Class/subject resources and external links |
 | Physical library | Book catalog, borrowing, returns, and due-date management |
-| Dictionary | Offline English definitions and English/Myanmar/Thai/Mon lookup data |
+| Dictionary | Offline English definitions and English/Myanmar/Thai/Mon/Chinese lookup data |
 
 ### School operations
 
@@ -419,6 +419,7 @@ Docker Compose already uses named volumes for the database, e-books, videos, and
 | `npm run seed` | Create/update starter school records and accounts |
 | `npm run seed:en-my-dictionary` | Import the English–Myanmar dataset |
 | `npm run seed:mon-dictionary` | Import the Mon dictionary dataset |
+| `npm run seed:chinese-dictionary` | Import the Chinese (CC-CEDICT) dictionary dataset |
 | `npm run generate:language-quest-chinese` | Rebuild the generated Mandarin Complete curriculum |
 | `npm run generate:language-quest-english-words` | Rebuild the three curated English Word courses |
 | `npm run generate:language-quest-advanced-english` | Rebuild the three ranked advanced-English courses |
@@ -601,6 +602,7 @@ Confirm `DATABASE_URL`, `SESSION_SECRET`, `APP_URL`, port availability, and writ
 - English definitions use [WordPOS](https://github.com/moos/wordpos) and Princeton WordNet 3.1.
 - English-to-Myanmar translations originate from the ornagai/MZ dictionary dataset; its data license is not independently verifiable, so it is retained for internal, non-commercial school use with provenance documented in `prisma/seedEnMyDictionary.ts`.
 - Mon dictionary entries come from [MonDictDB](https://github.com/Barnista/MonDictDB) under the MIT License.
+- Chinese dictionary entries come from [CC-CEDICT](https://cc-cedict.org) under a Creative Commons Attribution-ShareAlike license; attribution and provenance notes are retained in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and `prisma/seedChineseDictionary.ts`.
 - Project Gutenberg search/import uses the public [Gutendex](https://github.com/garethbjohnson/gutendex) service and downloads selected public-domain books on demand.
 
 Review the upstream licenses and the source notes before redistributing third-party data.

@@ -25,11 +25,19 @@ interface MonWord {
   definitions: MonDefinition[];
 }
 
+interface ChineseWord {
+  simplified: string;
+  traditional: string;
+  pinyin: string;
+  definitions: string[];
+}
+
 interface LookupResult {
   word: string;
   entries: DictionaryEntry[];
   translations: Translation[];
   monMatches: MonWord[];
+  chineseMatches: ChineseWord[];
 }
 
 interface SelectionPrompt {
@@ -201,7 +209,7 @@ export function LanguageQuestDictionary() {
               <Input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Type or highlight an English word…"
+                placeholder="Type or highlight a word…"
                 aria-label="Dictionary word"
                 className="pl-9"
                 autoFocus
@@ -214,7 +222,7 @@ export function LanguageQuestDictionary() {
 
           <p className="text-xs leading-5 text-slate-500 dark:text-slate-400">
             Highlight a word anywhere in the lesson, then choose <strong>Look up</strong>.
-            Definitions and available Myanmar or Mon translations appear here.
+            Definitions and available Myanmar, Mon, or Chinese translations appear here.
           </p>
 
           <div className="min-h-36" aria-live="polite">
@@ -276,6 +284,30 @@ export function LanguageQuestDictionary() {
                       </li>
                     ))}
                   </ol>
+                )}
+
+                {result.chineseMatches.length > 0 && (
+                  <section className="rounded-2xl border border-sky-200 bg-sky-50 p-4 dark:border-sky-500/20 dark:bg-sky-500/10">
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-700 dark:text-sky-300">
+                      Chinese dictionary
+                    </p>
+                    {result.chineseMatches.slice(0, 3).map((match, index) => (
+                      <div key={`${match.simplified}-${index}`} className="mt-2">
+                        <p className="flex items-baseline gap-2 font-bold text-slate-900 dark:text-white">
+                          <span lang="zh">{match.simplified}</span>
+                          {match.traditional !== match.simplified && (
+                            <span lang="zh-Hant" className="font-normal text-slate-400">({match.traditional})</span>
+                          )}
+                          <span className="text-xs font-normal text-slate-500 dark:text-slate-400">{match.pinyin}</span>
+                        </p>
+                        {match.definitions.slice(0, 3).map((definition, definitionIndex) => (
+                          <p key={definitionIndex} className="text-xs leading-5 text-slate-600 dark:text-slate-300">
+                            {definition}
+                          </p>
+                        ))}
+                      </div>
+                    ))}
+                  </section>
                 )}
 
                 {result.monMatches.length > 0 && (

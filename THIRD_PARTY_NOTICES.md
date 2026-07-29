@@ -32,6 +32,26 @@ it does not copy definitions or other expressive content from those lists.
 Course definitions come from the separately acknowledged Princeton WordNet
 database and MRLC-authored clarifications for ambiguous senses.
 
+## Chinese dictionary
+
+The Chinese-English dictionary feature (in the standalone Dictionary page and
+the Language Quest in-lesson lookup tool) is built on
+[CC-CEDICT](https://cc-cedict.org), the community-maintained Chinese-English
+dictionary published by MDBG and referenced by
+[`sotch-pr35mac/syng`](https://github.com/sotch-pr35mac/syng) and most other
+open Chinese dictionary software. CC-CEDICT is licensed under a
+[Creative Commons Attribution-ShareAlike license](https://creativecommons.org/licenses/by-sa/4.0/):
+reuse (including commercial reuse) is permitted with attribution, and any
+redistributed/modified copy of the data must carry the same license.
+
+MDBG's own download page for the current CC-CEDICT release prohibits
+automated/scripted access, so the snapshot bundled in
+`prisma/seed-data/chinese-dictionary.json` was instead pulled via `git clone`
+from a public GitHub mirror of the CC-CEDICT text file. That mirror carried a
+2013-08-28 snapshot (107,619 entries) rather than the current ~124,700-entry
+release — see `prisma/seedChineseDictionary.ts` for details and for how to
+reload a fresher export.
+
 ## School-provided Mandarin curriculum
 
 The Mandarin Complete Course is generated from `duolingo-chinese.md`, supplied

@@ -23,6 +23,8 @@ import {
   orderedLanguageQuestCategories,
 } from "../../shared/languageQuestCourseCategories";
 import {
+  containsHanCharacters,
+  formatCedictPinyin,
   isChineseLanguage,
   languageQuestPinyin,
 } from "../../shared/languageQuestPinyin";
@@ -50,6 +52,10 @@ test("Language Quest dictionary extracts a useful highlighted term", () => {
   assert.equal(languageQuestLookupWord("“You're”"), "You're");
   assert.equal(languageQuestLookupWord("စာကြည့်တိုက်"), "စာကြည့်တိုက်");
   assert.equal(languageQuestLookupWord("123 …"), null);
+  assert.equal(languageQuestLookupWord("你好"), "你好");
+  // Strips interspersed Latin punctuation/pinyin picked up in a selection,
+  // keeping only the Han characters as the dictionary headword.
+  assert.equal(languageQuestLookupWord("你好 (nǐ hǎo)!"), "你好");
 });
 
 test("Language Quest adds tone-marked Pinyin to Chinese course text", () => {
@@ -61,6 +67,21 @@ test("Language Quest adds tone-marked Pinyin to Chinese course text", () => {
   );
   assert.equal(languageQuestPinyin("Hello", "Mandarin Chinese"), null);
   assert.equal(languageQuestPinyin("你好", "English"), null);
+});
+
+test("formatCedictPinyin converts CC-CEDICT numbered pinyin to tone marks", () => {
+  assert.equal(formatCedictPinyin("ni3 hao3"), "nǐ hǎo");
+  // Tone 5 is neutral tone (no diacritic) in CC-CEDICT's numbering.
+  assert.equal(formatCedictPinyin("ma5"), "ma");
+  // CC-CEDICT spells u-umlaut as "u:" rather than "ü".
+  assert.equal(formatCedictPinyin("lu:4 se4"), "lǜ sè");
+});
+
+test("containsHanCharacters detects Chinese-script input", () => {
+  assert.equal(containsHanCharacters("你好"), true);
+  assert.equal(containsHanCharacters("hello 你"), true);
+  assert.equal(containsHanCharacters("hello"), false);
+  assert.equal(containsHanCharacters(""), false);
 });
 
 test("every Hanzi answer in every built-in Chinese course receives Pinyin", () => {

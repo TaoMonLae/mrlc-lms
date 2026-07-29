@@ -1904,6 +1904,23 @@ model MonDefinition {
   @@index([lang])
 }
 
+// Chinese (Mandarin) dictionary, sourced from CC-CEDICT -- see
+// prisma/seedChineseDictionary.ts for provenance and license notes
+// (Creative Commons Attribution-ShareAlike). One row per CEDICT entry: a
+// given simplified/traditional pair can have more than one row when CEDICT
+// lists more than one pronunciation or sense for it, matching the source
+// format. Populated separately by `npm run seed:chinese-dictionary`.
+model ChineseDictionaryEntry {
+  id          String   @id @default(uuid())
+  simplified  String
+  traditional String
+  pinyin      String // numbered-tone pinyin exactly as published, e.g. "ni3 hao3"
+  definitions String[] // one gloss per CEDICT "/"-separated slot
+
+  @@index([simplified])
+  @@index([traditional])
+}
+
 // Per-reader "resume where you left off" position. userId is a plain field
 // rather than a User relation (Ebook itself follows the same loose-coupling
 // convention already), so it's cleaned up manually on account deletion --

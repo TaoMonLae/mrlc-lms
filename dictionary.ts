@@ -2,6 +2,7 @@ import express from "express";
 // @ts-ignore -- wordpos (and its wordnet-db data dependency) ship without
 // TypeScript types; every exported member is used loosely as `any` below.
 import WordPOS from "wordpos";
+import { containsHanCharacters, formatCedictPinyin } from "./shared/languageQuestPinyin";
 
 interface Deps {
   app: express.Express;
@@ -75,6 +76,24 @@ interface MonWordResult {
 // containing any character in that range is treated as Mon-script input
 // rather than an English word to look up in WordNet.
 const MYANMAR_SCRIPT_RE = /[က-႟]/;
+
+interface ChineseWordResult {
+  simplified: string;
+  traditional: string;
+  pinyin: string;
+  definitions: string[];
+}
+
+const chineseWordSelect = { simplified: true, traditional: true, pinyin: true, definitions: true };
+
+function toChineseWordResult(row: any): ChineseWordResult {
+  return {
+    simplified: row.simplified,
+    traditional: row.traditional,
+    pinyin: formatCedictPinyin(row.pinyin),
+    definitions: row.definitions,
+  };
+}
 
 const monWordSelect = {
   word: true,
@@ -154,6 +173,66 @@ export function registerDictionaryRoutes(deps: Deps): void {
     }
   }
 
+  // Chinese-script query: look up the Hanzi headword directly, in either
+  // script variant CC-CEDICT tracks. Exact matches on either simplified or
+  // traditional form come first, then prefix, then substring matches --
+  // mirrors the Mon-by-word ranking above.
+  async function lookupChineseByHanzi(word: string): Promise<ChineseWordResult[]> {
+    try {
+      const exact = await (prisma as any).chineseDictionaryEntry.findMany({
+        where: { OR: [{ simplified: word }, { traditional: word }] },
+        select: chineseWordSelect,
+        take: 20,
+      });
+      if (exact.length > 0) return exact.map(toChineseWordResult);
+      const prefix = await (prisma as any).chineseDictionaryEntry.findMany({
+        where: { OR: [{ simplified: { startsWith: word } }, { traditional: { startsWith: word } }] },
+        select: chineseWordSelect,
+        take: 20,
+      });
+      if (prefix.length >= 20) return prefix.map(toChineseWordResult);
+      const contains = await (prisma as any).chineseDictionaryEntry.findMany({
+        where: {
+          AND: [
+            { OR: [{ simplified: { contains: word } }, { traditional: { contains: word } }] },
+            { NOT: { OR: [{ simplified: { startsWith: word } }, { traditional: { startsWith: word } }] } },
+          ],
+        },
+        select: chineseWordSelect,
+        take: 20 - prefix.length,
+      });
+      return [...prefix, ...contains].map(toChineseWordResult);
+    } catch (err) {
+      logger.error("Error looking up Chinese word:", err);
+      return [];
+    }
+  }
+
+  // English query: find Chinese entries with a matching English gloss.
+  // Definitions are stored as a Postgres text[] per CC-CEDICT entry (one
+  // array per headword+pronunciation, not a joined table like Mon's), so
+  // this needs a raw query to search inside each entry's array of glosses.
+  async function lookupChineseByEnglish(word: string): Promise<ChineseWordResult[]> {
+    try {
+      const escaped = word.replace(/[\\%_]/g, (c) => `\\${c}`);
+      const rows: any[] = await prisma.$queryRaw`
+        SELECT "simplified", "traditional", "pinyin", "definitions"
+        FROM "ChineseDictionaryEntry"
+        WHERE EXISTS (
+          SELECT 1 FROM unnest("definitions") AS gloss WHERE gloss ILIKE ${"%" + escaped + "%"} ESCAPE '\'
+        )
+        LIMIT 30
+      `;
+      const isExact = (row: any) =>
+        row.definitions.some((d: string) => d.replace(/\.$/, "").trim().toLowerCase() === word.toLowerCase());
+      rows.sort((a, b) => Number(isExact(b)) - Number(isExact(a)));
+      return rows.slice(0, 12).map(toChineseWordResult);
+    } catch (err) {
+      logger.error("Error looking up Chinese-by-English:", err);
+      return [];
+    }
+  }
+
   // Public endpoints -- the Dictionary page is usable without signing in, so
   // these intentionally do NOT use authMiddleware. They're still covered by
   // the app-wide per-IP rate limiter registered in server.ts.
@@ -168,7 +247,22 @@ export function registerDictionaryRoutes(deps: Deps): void {
           res.status(404).json({ error: `No Mon dictionary entry found for "${rawWord}".` });
           return;
         }
-        res.json({ word: rawWord, entries: [], translations: [], monMatches });
+        res.json({ word: rawWord, entries: [], translations: [], monMatches, chineseMatches: [] });
+      } catch (err) {
+        logger.error("Error looking up dictionary word:", err);
+        res.status(500).json({ error: "Internal Server Error" });
+      }
+      return;
+    }
+
+    if (containsHanCharacters(rawWord)) {
+      try {
+        const chineseMatches = await lookupChineseByHanzi(rawWord.slice(0, 20));
+        if (chineseMatches.length === 0) {
+          res.status(404).json({ error: `No Chinese dictionary entry found for "${rawWord}".` });
+          return;
+        }
+        res.json({ word: rawWord, entries: [], translations: [], monMatches: [], chineseMatches });
       } catch (err) {
         logger.error("Error looking up dictionary word:", err);
         res.status(500).json({ error: "Internal Server Error" });
@@ -177,19 +271,20 @@ export function registerDictionaryRoutes(deps: Deps): void {
     }
 
     const word = rawWord.toLowerCase();
-    if (!/^[a-z][a-z '-]*$/.test(word)) { res.status(400).json({ error: "Enter a single English word, or paste a Mon word" }); return; }
+    if (!/^[a-z][a-z '-]*$/.test(word)) { res.status(400).json({ error: "Enter a single English word, or paste a Mon or Chinese word" }); return; }
     try {
-      const [raw, translations, monMatches]: [any[], Translation[], MonWordResult[]] = await Promise.all([
+      const [raw, translations, monMatches, chineseMatches]: [any[], Translation[], MonWordResult[], ChineseWordResult[]] = await Promise.all([
         new Promise<any[]>((resolve) => wordpos.lookup(word, resolve)),
         lookupTranslations(word),
         lookupMonByEnglish(word),
+        lookupChineseByEnglish(word),
       ]);
       const entries = normalizeResults(raw, word);
-      if (entries.length === 0 && translations.length === 0 && monMatches.length === 0) {
+      if (entries.length === 0 && translations.length === 0 && monMatches.length === 0 && chineseMatches.length === 0) {
         res.status(404).json({ error: `No definition found for "${word}".` });
         return;
       }
-      res.json({ word, entries, translations, monMatches });
+      res.json({ word, entries, translations, monMatches, chineseMatches });
     } catch (err) {
       logger.error("Error looking up dictionary word:", err);
       res.status(500).json({ error: "Internal Server Error" });
@@ -205,14 +300,15 @@ export function registerDictionaryRoutes(deps: Deps): void {
           else reject(new Error("No word returned"));
         });
       });
-      const [raw, translations, monMatches]: [any[], Translation[], MonWordResult[]] = await Promise.all([
+      const [raw, translations, monMatches, chineseMatches]: [any[], Translation[], MonWordResult[], ChineseWordResult[]] = await Promise.all([
         new Promise<any[]>((resolve) => wordpos.lookup(word, resolve)),
         lookupTranslations(word),
         lookupMonByEnglish(word),
+        lookupChineseByEnglish(word),
       ]);
       const entries = normalizeResults(raw, word);
       if (entries.length === 0) { res.status(404).json({ error: "Try again" }); return; }
-      res.json({ word, entries, translations, monMatches });
+      res.json({ word, entries, translations, monMatches, chineseMatches });
     } catch (err) {
       logger.error("Error fetching random dictionary word:", err);
       res.status(500).json({ error: "Internal Server Error" });
