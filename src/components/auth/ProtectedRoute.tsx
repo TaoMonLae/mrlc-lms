@@ -3,6 +3,7 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../providers/AuthProvider';
 import { hasPermission, Permission, UserRole } from '../../lib/permissions';
 import { isExternalLearnerAppPathAllowed } from '@/shared/externalLearnerAccess';
+import { shouldForcePasswordChange } from '@/shared/accountAccess';
 
 interface ProtectedRouteProps {
   requiredPermission?: Permission;
@@ -32,6 +33,13 @@ export function ProtectedRoute({ requiredPermission, allowedRoles, strictRoles }
 
   if (user.status !== 'ACTIVE') {
     return <Navigate to="/unauthorized" replace />;
+  }
+
+  // Enforce temporary-password replacement for every protected experience,
+  // including the standalone Language Quest shell. AppLayout also keeps this
+  // guard as defense in depth for the wider LMS.
+  if (shouldForcePasswordChange(user.mustChangePassword, location.pathname)) {
+    return <Navigate to="/change-password" replace />;
   }
 
   // Public self-signups are intentionally scoped to Language Quest. This UI

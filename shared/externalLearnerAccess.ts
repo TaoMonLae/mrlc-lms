@@ -70,3 +70,15 @@ export function isExternalLearnerApiRequestAllowed(method: string, value: string
 
   return false;
 }
+
+/**
+ * Keeps public learners and private-school members on separate leaderboards.
+ */
+export function languageQuestLeaderboardAudienceWhere(
+  externalLearner: boolean | null | undefined,
+) {
+  return {
+    isActive: true,
+    isExternalLearner: Boolean(externalLearner),
+  };
+}

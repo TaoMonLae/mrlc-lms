@@ -5,6 +5,7 @@ import {
   LANGUAGE_QUEST_MAX_HEARTS,
   LANGUAGE_QUEST_PRACTICE_POINTS,
   languageQuestDayKey,
+  languageQuestPracticePrompt,
   nextLanguageQuestStreak,
 } from "./shared/languageQuest";
 import {
@@ -13,6 +14,7 @@ import {
 } from "./shared/languageQuestAvatars";
 import { languageQuestCategoryForLanguage } from "./shared/languageQuestCourseCategories";
 import { languageQuestPinyin } from "./shared/languageQuestPinyin";
+import { languageQuestLeaderboardAudienceWhere } from "./shared/externalLearnerAccess";
 import {
   languageQuestRewardProgress,
   newlyUnlockedLanguageQuestRewardIds,
@@ -32,7 +34,7 @@ import { englishWordCourses } from "./languageQuestEnglishWordCourses";
 import { advancedEnglishCourses } from "./languageQuestAdvancedEnglishCourses";
 import { linguifyCefrCourses } from "./languageQuestLinguifyCourses";
 
-interface JwtPayload { userId: string; role: string; email: string; }
+interface JwtPayload { userId: string; role: string; email: string; externalLearner?: boolean; }
 
 interface Deps {
   app: express.Express;
@@ -804,7 +806,9 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         },
         profile: profileJson(progress),
         challenges: lesson.challenges.map((challenge: any) => ({
-          id: challenge.id, type: challenge.type, question: challenge.question,
+          id: challenge.id,
+          type: challenge.type,
+          question: languageQuestPracticePrompt(challenge.question),
           completed: completedIds.has(challenge.id),
           options: shuffle(challenge.options).map((option: any) => ({
             id: option.id, text: option.text, emoji: option.emoji, audioText: option.audioText,
@@ -847,6 +851,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           return {
             id: challenge.id,
             prompt: challenge.question,
+            practicePrompt: languageQuestPracticePrompt(challenge.question),
             text: correct?.text ?? "",
             emoji: correct?.emoji ?? null,
             audioText: correct?.audioText ?? correct?.text ?? null,
@@ -1163,7 +1168,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         cards: cards.map((row: any) => ({
           challengeId: row.challengeId,
           stage: row.stage,
-          question: row.challenge.question,
+          question: languageQuestPracticePrompt(row.challenge.question),
           course: {
             id: row.challenge.lesson.unit.course.id,
             title: row.challenge.lesson.unit.course.title,
@@ -1293,9 +1298,14 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
     const jwtUser = (req as any).user as JwtPayload;
     try {
       const periods = languageQuestPeriodBounds();
+      // Public learner accounts and private LMS accounts use separate boards.
+      // This keeps school identities out of the outsider-facing experience
+      // while preserving a school-wide leaderboard for enrolled users.
+      const externalAudience = Boolean(jwtUser.externalLearner);
+      const audienceWhere = languageQuestLeaderboardAudienceWhere(externalAudience);
       const [leaders, mine, monthlyXp] = await Promise.all([
         prisma.languageQuestUserProgress.findMany({
-          where: { user: { isActive: true } },
+          where: { user: audienceWhere },
           take: 50,
           orderBy: [{ points: "desc" }, { currentStreak: "desc" }, { updatedAt: "asc" }],
           include: { user: { select: { id: true, firstName: true, lastName: true, role: true, languageQuestAvatar: true } } },
@@ -1306,7 +1316,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           where: {
             occurredAt: { gte: periods.monthStart, lt: periods.monthEnd },
             source: { not: "MISSION_REWARD" },
-            user: { isActive: true },
+            user: audienceWhere,
           },
           _sum: { points: true },
           orderBy: { _sum: { points: "desc" } },
@@ -1323,7 +1333,12 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         })
         : [];
       const showcaseById = new Map(showcaseUsers.map((user: any) => [user.id, user]));
-      const rank = await prisma.languageQuestUserProgress.count({ where: { points: { gt: mine.points } } });
+      const rank = await prisma.languageQuestUserProgress.count({
+        where: {
+          points: { gt: mine.points },
+          user: audienceWhere,
+        },
+      });
       res.json({
         currentUserId: jwtUser.userId,
         currentUserRank: rank + 1,

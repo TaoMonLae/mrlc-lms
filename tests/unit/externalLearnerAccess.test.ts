@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   isExternalLearnerApiRequestAllowed,
   isExternalLearnerAppPathAllowed,
+  languageQuestLeaderboardAudienceWhere,
 } from "../../shared/externalLearnerAccess";
 
 test("external learners stay within the Language Quest browser routes", () => {
@@ -74,4 +75,15 @@ test("external learner API access uses an explicit method and route allowlist", 
   for (const [method, pathname] of denied) {
     assert.equal(isExternalLearnerApiRequestAllowed(method, pathname), false, `${method} ${pathname}`);
   }
+});
+
+test("Language Quest leaderboards keep public learners separate from LMS members", () => {
+  assert.deepEqual(
+    languageQuestLeaderboardAudienceWhere(true),
+    { isActive: true, isExternalLearner: true },
+  );
+  assert.deepEqual(
+    languageQuestLeaderboardAudienceWhere(false),
+    { isActive: true, isExternalLearner: false },
+  );
 });

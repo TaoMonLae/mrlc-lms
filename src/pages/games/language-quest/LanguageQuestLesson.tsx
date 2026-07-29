@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import confetti from 'canvas-confetti';
-import { ArrowLeft, BookA, Check, Flame, Heart, Lightbulb, PartyPopper, PencilLine, Star, Volume2, X } from 'lucide-react';
+import { ArrowLeft, BookA, Check, Flame, Heart, Lightbulb, PartyPopper, PencilLine, SpellCheck2, Star, Volume2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -11,10 +11,8 @@ import { sentenceAnswerMatches } from '@/shared/languageQuest';
 import { useLanguageQuestSupport } from '@/src/components/games/LanguageQuestSupport';
 import { LanguageQuestPinyinText } from '@/src/components/games/LanguageQuestPinyinText';
 import { LanguageQuestRewardReveal } from '@/src/components/games/LanguageQuestRewards';
-import {
-  playLanguageQuestSuccessSound,
-  useLanguageQuestPreferences,
-} from '@/src/components/games/LanguageQuestPreferences';
+import { useLanguageQuestPreferences } from '@/src/components/games/LanguageQuestPreferences';
+import { playLanguageQuestSuccessSound } from '@/src/lib/languageQuestAudio';
 
 interface AnswerResult {
   correct: boolean;
@@ -67,7 +65,7 @@ export default function LanguageQuestLesson() {
   const [checking, setChecking] = useState(false);
   const [sessionPoints, setSessionPoints] = useState(0);
   const [profile, setProfile] = useState<LanguageQuestProfile | null>(null);
-  const [phase, setPhase] = useState<'learn' | 'sentence' | 'quiz'>('learn');
+  const [phase, setPhase] = useState<'learn' | 'spelling' | 'sentence' | 'quiz'>('learn');
   const [preview, setPreview] = useState<LanguageQuestLessonPreview | null>(null);
   const [previewLoading, setPreviewLoading] = useState(true);
   const [previewIndex, setPreviewIndex] = useState(0);
@@ -75,6 +73,9 @@ export default function LanguageQuestLesson() {
   const [sentenceIndex, setSentenceIndex] = useState(0);
   const [sentenceInput, setSentenceInput] = useState('');
   const [sentenceFeedback, setSentenceFeedback] = useState<'correct' | 'incorrect' | null>(null);
+  const [spellingIndex, setSpellingIndex] = useState(0);
+  const [spellingInput, setSpellingInput] = useState('');
+  const [spellingFeedback, setSpellingFeedback] = useState<'correct' | 'incorrect' | null>(null);
   const [unlockedRewardId, setUnlockedRewardId] = useState<string | null>(null);
   const [rewardRevealOpen, setRewardRevealOpen] = useState(false);
 
@@ -90,6 +91,9 @@ export default function LanguageQuestLesson() {
     setSentenceIndex(0);
     setSentenceInput('');
     setSentenceFeedback(null);
+    setSpellingIndex(0);
+    setSpellingInput('');
+    setSpellingFeedback(null);
     setUnlockedRewardId(null);
     setRewardRevealOpen(false);
 
@@ -123,7 +127,12 @@ export default function LanguageQuestLesson() {
     () => cards.filter((candidate) => candidate.text.trim().split(/\s+/).length >= 2),
     [cards],
   );
+  const spellingCards = useMemo(
+    () => cards.filter((candidate) => candidate.text.trim().length > 0),
+    [cards],
+  );
   const sentenceCard = sentenceCards[sentenceIndex];
+  const spellingCard = spellingCards[spellingIndex];
   // Practising an already-completed challenge is how hearts get refilled, so
   // only gate challenges the learner hasn't cleared yet (matches the server
   // check in the answer endpoint).
@@ -136,7 +145,39 @@ export default function LanguageQuestLesson() {
 
   const startPractice = () => {
     celebrate({ particleCount: 60, spread: 65, origin: { y: 0.7 }, colors: [lesson?.course.accentColor || '#7c3aed', '#ffffff'] });
+    setPhase(spellingCards.length ? 'spelling' : sentenceCards.length ? 'sentence' : 'quiz');
+    const firstSpellingCard = spellingCards[0];
+    if (firstSpellingCard && lesson) {
+      speak(firstSpellingCard.audioText || firstSpellingCard.text, lesson.course.language);
+    }
+  };
+
+  const continueAfterSpelling = () => {
     setPhase(sentenceCards.length ? 'sentence' : 'quiz');
+  };
+
+  const checkSpelling = () => {
+    if (!spellingCard || !spellingInput.trim()) return;
+    const correct = sentenceAnswerMatches(spellingInput, spellingCard.text);
+    setSpellingFeedback(correct ? 'correct' : 'incorrect');
+    if (correct) {
+      if (soundEnabled) playLanguageQuestSuccessSound();
+      celebrate({ particleCount: 30, spread: 48, origin: { y: 0.72 }, scalar: 0.72, colors: [lesson?.course.accentColor || '#7c3aed', '#f59e0b'] });
+    }
+  };
+
+  const continueSpelling = () => {
+    if (spellingFeedback !== 'correct') return;
+    if (spellingIndex + 1 < spellingCards.length) {
+      const nextIndex = spellingIndex + 1;
+      setSpellingIndex(nextIndex);
+      setSpellingInput('');
+      setSpellingFeedback(null);
+      const nextCard = spellingCards[nextIndex];
+      if (nextCard && lesson) speak(nextCard.audioText || nextCard.text, lesson.course.language);
+      return;
+    }
+    continueAfterSpelling();
   };
 
   const checkSentence = () => {
@@ -268,6 +309,12 @@ export default function LanguageQuestLesson() {
         return;
       }
 
+      if (phase === 'spelling' && event.key === ' ' && spellingCard) {
+        event.preventDefault();
+        speak(spellingCard.audioText || spellingCard.text, lesson.course.language);
+        return;
+      }
+
       if (phase === 'quiz' && challenge && !finished && !outOfHearts) {
         const letterIndex = optionLetters.indexOf(event.key.toUpperCase());
         const numberIndex = Number(event.key) - 1;
@@ -287,7 +334,7 @@ export default function LanguageQuestLesson() {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, loading, lesson, previewIndex, cards.length, card, challenge, answer, selectedId, finished, outOfHearts, optionLetters, checking, sentenceFeedback, sentenceInput, sentenceCard, sentenceCards.length, sentenceIndex]);
+  }, [phase, loading, lesson, previewIndex, cards.length, card, challenge, answer, selectedId, finished, outOfHearts, optionLetters, checking, sentenceFeedback, sentenceInput, sentenceCard, sentenceCards.length, sentenceIndex, spellingCard]);
 
   if (loading) {
     return <div className="grid min-h-[520px] place-items-center"><div className="h-11 w-11 animate-spin rounded-full border-4 border-violet-200 border-t-violet-600" /></div>;
@@ -311,7 +358,7 @@ export default function LanguageQuestLesson() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <Progress value={learnProgress} className="flex-1 [&_[data-slot=progress-track]]:h-3 [&_[data-slot=progress-indicator]]:bg-sky-500" />
-          <Button variant="ghost" size="sm" className="text-slate-400 hover:text-slate-600" onClick={() => setPhase('quiz')}>Skip to practice</Button>
+          <Button variant="ghost" size="sm" className="text-slate-400 hover:text-slate-600" onClick={startPractice}>Skip learning</Button>
         </header>
 
         <main className="flex flex-1 flex-col items-center justify-center py-8 text-center">
@@ -363,6 +410,106 @@ export default function LanguageQuestLesson() {
     );
   }
 
+  if (phase === 'spelling' && spellingCard) {
+    const spellingProgress = Math.round((spellingIndex / spellingCards.length) * 100);
+    return (
+      <div className="mx-auto flex min-h-[calc(100dvh-8rem)] max-w-3xl flex-col pb-6">
+        <header className="flex items-center gap-3 py-2 sm:gap-5">
+          <Button variant="ghost" size="icon" aria-label="Exit lesson" render={<Link to={`/games/language-quest/courses/${lesson.course.id}`} />} nativeButton={false}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <Progress value={spellingProgress} className="flex-1 [&_[data-slot=progress-track]]:h-3 [&_[data-slot=progress-indicator]]:bg-amber-500" />
+          <span className="text-xs font-bold text-slate-500">{spellingIndex + 1}/{spellingCards.length}</span>
+        </header>
+
+        <main className="flex flex-1 flex-col justify-center py-8">
+          <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-amber-600 dark:text-amber-300">
+            <SpellCheck2 className="h-4 w-4" /> {lq('spellTitle')}
+          </p>
+          <h1 lang={explanationLanguage} className="mt-4 text-2xl font-black leading-tight text-slate-900 dark:text-white sm:text-3xl">{lq('spellingHeading')}</h1>
+          <p lang={explanationLanguage} className="mt-2 max-w-2xl text-sm leading-6 text-slate-500 dark:text-slate-300">{lq('spellingInstruction')}</p>
+
+          <div className="mt-6 rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-6 dark:border-amber-500/20 dark:from-amber-950/20 dark:to-orange-950/15">
+            <p lang={explanationLanguage} className="text-xs font-black uppercase tracking-wider text-amber-700 dark:text-amber-300">{lq('situation')}</p>
+            <p className="mt-2 text-base leading-7 text-slate-700 dark:text-slate-200">{spellingCard.practicePrompt}</p>
+            <Button
+              type="button"
+              className="mt-5 rounded-2xl bg-amber-500 text-amber-950 shadow-lg shadow-amber-500/20 hover:bg-amber-400"
+              onClick={() => speak(spellingCard.audioText || spellingCard.text, lesson.course.language)}
+            >
+              <Volume2 className="mr-2 h-5 w-5" /> Listen again
+            </Button>
+          </div>
+
+          <label htmlFor="spelling-answer" lang={explanationLanguage} className="mt-6 text-sm font-bold text-slate-700 dark:text-slate-200">{lq('spellingLabel')}</label>
+          <input
+            id="spelling-answer"
+            autoFocus
+            autoComplete="off"
+            autoCapitalize="none"
+            spellCheck={false}
+            value={spellingInput}
+            onChange={(event) => {
+              setSpellingInput(event.target.value);
+              if (spellingFeedback) setSpellingFeedback(null);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                if (spellingFeedback === 'correct') continueSpelling();
+                else checkSpelling();
+              }
+            }}
+            placeholder={lq('spellingPlaceholder')}
+            className={`mt-2 h-16 w-full rounded-2xl border-2 bg-white px-5 text-xl font-semibold text-slate-900 outline-none transition focus:ring-4 dark:bg-surface-indigo dark:text-white ${
+              spellingFeedback === 'correct'
+                ? 'border-emerald-500 focus:ring-emerald-100'
+                : spellingFeedback === 'incorrect'
+                  ? 'border-rose-400 focus:ring-rose-100'
+                  : 'border-slate-200 focus:border-amber-500 focus:ring-amber-100 dark:border-surface-raised'
+            }`}
+          />
+          <p lang={explanationLanguage} className="mt-2 text-xs leading-6 text-slate-500 dark:text-slate-300">{lq('spellingHelp')}</p>
+
+          {spellingFeedback === 'incorrect' && (
+            <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-rose-800 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300">
+              <p lang={explanationLanguage} className="font-black">{lq('spellingIncorrectTitle')}</p>
+              <p lang={explanationLanguage} className="mt-1 text-sm leading-6 opacity-80">{lq('spellingIncorrectHelp')}</p>
+            </div>
+          )}
+          {spellingFeedback === 'correct' && (
+            <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">
+              <p lang={explanationLanguage} className="font-black">{lq('spellingCorrectTitle')}</p>
+              <p lang={explanationLanguage} className="mt-1 text-sm leading-6">{lq('spellingCorrectHelp')}</p>
+              <div className="mt-2 font-black">
+                <LanguageQuestPinyinText text={spellingCard.text} pinyin={spellingCard.pinyin} />
+              </div>
+            </div>
+          )}
+        </main>
+
+        <footer className="-mx-4 mt-auto border-t border-slate-200 px-4 py-4 sm:-mx-6 sm:px-6 dark:border-surface-raised">
+          <div className="mx-auto flex max-w-3xl items-center justify-between gap-4">
+            <Button variant="ghost" onClick={continueAfterSpelling}>{lq('skipSpelling')}</Button>
+            {spellingFeedback === 'correct' ? (
+              <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={continueSpelling}>
+                {spellingIndex + 1 < spellingCards.length
+                  ? lq('nextSpelling')
+                  : sentenceCards.length
+                    ? lq('startSentencePractice')
+                    : lq('startQuiz')}
+              </Button>
+            ) : (
+              <Button onClick={checkSpelling} disabled={!spellingInput.trim()} style={spellingInput.trim() ? { backgroundColor: lesson.course.accentColor } : undefined}>
+                {lq('checkSpelling')}
+              </Button>
+            )}
+          </div>
+        </footer>
+      </div>
+    );
+  }
+
   if (phase === 'sentence' && sentenceCard) {
     const sentenceProgress = Math.round((sentenceIndex / sentenceCards.length) * 100);
     return (
@@ -382,7 +529,7 @@ export default function LanguageQuestLesson() {
           <h1 lang={explanationLanguage} className="mt-4 text-2xl font-black leading-tight text-slate-900 dark:text-white sm:text-3xl">{lq('sentenceHeading')}</h1>
           <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 dark:border-surface-raised dark:bg-surface-indigo">
             <p lang={explanationLanguage} className="text-xs font-black uppercase tracking-wider text-slate-400">{lq('situation')}</p>
-            <p className="mt-2 text-base leading-7 text-slate-700 dark:text-slate-200">{sentenceCard.prompt}</p>
+            <p className="mt-2 text-base leading-7 text-slate-700 dark:text-slate-200">{sentenceCard.practicePrompt}</p>
             <Button variant="ghost" size="sm" className="-ml-2 mt-2 text-violet-700" onClick={() => speak(sentenceCard.audioText || sentenceCard.text, lesson.course.language)}>
               <Volume2 className="mr-2 h-4 w-4" /> Listen again
             </Button>

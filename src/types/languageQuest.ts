@@ -61,6 +61,7 @@ export interface LanguageQuestLessonPayload {
 export interface LanguageQuestFlashcard {
   id: string;
   prompt: string;
+  practicePrompt: string;
   text: string;
   emoji: string | null;
   audioText: string | null;

@@ -14,6 +14,7 @@ import {
   Moon,
   ShieldCheck,
   Sparkles,
+  SpellCheck2,
   Star,
   Sun,
   Target,
@@ -111,7 +112,7 @@ export default function LanguageQuestPublic() {
                 <span className="block">Speak with confidence.</span>
               </h1>
               <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-300 sm:text-lg sm:leading-8 lg:mx-0">
-                Short guided lessons combine listening, sentence writing, and friendly quizzes. Learn at your own pace and keep every achievement in one free account.
+                Short guided lessons combine listening, spelling, sentence writing, and friendly clue-safe quizzes. Learn at your own pace and keep every achievement in one free account.
               </p>
               <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
                 <Button size="lg" className="h-13 rounded-xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-7 font-black text-white shadow-xl shadow-violet-600/25 transition hover:-translate-y-0.5 hover:from-violet-800 hover:to-fuchsia-700" render={<Link to={startHref} />} nativeButton={false}>
@@ -126,6 +127,7 @@ export default function LanguageQuestPublic() {
               </p>
               <div className="mt-7 flex flex-wrap justify-center gap-2 text-xs font-bold lg:justify-start">
                 <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-sky-700 dark:border-sky-500/30 dark:bg-sky-950/60 dark:text-sky-300">🎧 Listen</span>
+                <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/60 dark:text-amber-300">🔤 Spell</span>
                 <span className="rounded-full border border-fuchsia-200 bg-fuchsia-50 px-3 py-1.5 text-fuchsia-700 dark:border-fuchsia-500/30 dark:bg-fuchsia-950/60 dark:text-fuchsia-300">✍️ Write</span>
                 <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/60 dark:text-emerald-300">💬 Speak</span>
               </div>
@@ -172,11 +174,12 @@ export default function LanguageQuestPublic() {
               <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">A clear routine in every lesson</h2>
               <p className="mt-3 leading-7 text-slate-600 dark:text-slate-300">You always know what to do next, why it matters, and how to recover from a mistake.</p>
             </div>
-            <div className="mt-10 grid gap-5 md:grid-cols-3">
+            <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
               {[
                 { icon: Headphones, step: '01', title: 'Learn and listen', copy: 'Meet the key phrase, hear its pronunciation, and connect it to a real situation.', tone: 'from-sky-500 to-blue-600', shadow: 'shadow-sky-500/15' },
-                { icon: Keyboard, step: '02', title: 'Build the sentence', copy: 'Type the complete phrase from memory. Punctuation and capital letters will not block you.', tone: 'from-fuchsia-500 to-violet-700', shadow: 'shadow-fuchsia-500/15' },
-                { icon: Target, step: '03', title: 'Check understanding', copy: 'Choose the best answer, read a clear correction, and retry immediately when needed.', tone: 'from-emerald-400 to-teal-600', shadow: 'shadow-emerald-500/15' },
+                { icon: SpellCheck2, step: '02', title: 'Listen and spell', copy: 'Hear the word without seeing its letters, then type it from memory.', tone: 'from-amber-400 to-orange-600', shadow: 'shadow-amber-500/15' },
+                { icon: Keyboard, step: '03', title: 'Build the sentence', copy: 'Type the complete phrase from memory. Punctuation and capital letters will not block you.', tone: 'from-fuchsia-500 to-violet-700', shadow: 'shadow-fuchsia-500/15' },
+                { icon: Target, step: '04', title: 'Check understanding', copy: 'Choose from a clue-safe prompt, read a clear correction, and retry immediately when needed.', tone: 'from-emerald-400 to-teal-600', shadow: 'shadow-emerald-500/15' },
               ].map(({ icon: Icon, step, title, copy, tone, shadow }) => (
                 <article key={step} className={`group rounded-3xl border border-white bg-white p-6 shadow-xl ${shadow} transition duration-300 hover:-translate-y-2 dark:border-slate-800 dark:bg-slate-900/90`}>
                   <div className="flex items-center justify-between">

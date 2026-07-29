@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  languageQuestPracticePrompt,
   languageQuestLookupWord,
   nextLanguageQuestStreak,
   normalizeSentenceAnswer,
@@ -147,6 +148,20 @@ test("sentence practice ignores case, spacing, and light punctuation", () => {
   assert.equal(normalizeSentenceAnswer("  Good   MORNING! "), "good morning");
   assert.equal(sentenceAnswerMatches("You're welcome.", "You’re welcome"), true);
   assert.equal(sentenceAnswerMatches("Good night", "Good morning"), false);
+});
+
+test("practice prompts hide pronunciation and example clues without losing the question", () => {
+  assert.equal(
+    languageQuestPracticePrompt(
+      'Which noun means “A building where people live”? Pronunciation: /haʊs/. Example: “My house has three bedrooms.”',
+    ),
+    'Which noun means “A building where people live”?',
+  );
+  assert.equal(
+    languageQuestPracticePrompt('Choose the Mandarin for “Hello”. Pronunciation: nǐ hǎo.'),
+    'Choose the Mandarin for “Hello”.',
+  );
+  assert.equal(languageQuestPracticePrompt('Which one means “the man”?'), 'Which one means “the man”?');
 });
 
 test("Language Quest dictionary extracts a useful highlighted term", () => {
@@ -433,4 +448,26 @@ test("the Linguify import creates a complete A1-C2 vocabulary path", () => {
     challenges.filter((challenge) => challenge.question.includes("Pronunciation:")).length,
     340,
   );
+});
+
+test("every built-in course produces clue-safe assessment prompts", () => {
+  const courses = [
+    importedSpanishCourse,
+    mandarinFoundationsCourse,
+    completeMandarinCourse,
+    chineseConversationStarterCourse,
+    ...englishWordCourses,
+    ...advancedEnglishCourses,
+    ...linguifyCefrCourses,
+  ];
+  const challenges = courses
+    .flatMap((course) => course.units)
+    .flatMap((unit) => unit.lessons)
+    .flatMap((lesson) => lesson.challenges);
+
+  assert.ok(challenges.length > 2_000);
+  assert.ok(challenges.every((challenge) => languageQuestPracticePrompt(challenge.question).length > 0));
+  assert.ok(challenges.every((challenge) =>
+    !/(?:Pronunciation|Example)\s*:/iu.test(languageQuestPracticePrompt(challenge.question)),
+  ));
 });

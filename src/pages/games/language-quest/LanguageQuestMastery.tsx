@@ -8,10 +8,8 @@ import { Progress } from '@/components/ui/progress';
 import { apiGet, apiSend } from '@/src/lib/api';
 import type { LanguageQuestOption, LanguageQuestProfile } from '@/src/types/languageQuest';
 import { LanguageQuestPinyinText } from '@/src/components/games/LanguageQuestPinyinText';
-import {
-  playLanguageQuestSuccessSound,
-  useLanguageQuestPreferences,
-} from '@/src/components/games/LanguageQuestPreferences';
+import { useLanguageQuestPreferences } from '@/src/components/games/LanguageQuestPreferences';
+import { playLanguageQuestSuccessSound } from '@/src/lib/languageQuestAudio';
 import { LanguageQuestRewardReveal } from '@/src/components/games/LanguageQuestRewards';
 
 interface MasteryCard {

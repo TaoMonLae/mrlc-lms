@@ -63,6 +63,20 @@ export function sentenceAnswerMatches(answer: string, modelSentence: string): bo
   return normalizeSentenceAnswer(answer) === normalizeSentenceAnswer(modelSentence);
 }
 
+/**
+ * Removes study-only clues before a challenge reaches quiz or spelling mode.
+ * Imported vocabulary courses may keep pronunciation and example sentences in
+ * their source prompt for the learn phase, but those clues can spell out or
+ * strongly reveal the correct option during assessment.
+ */
+export function languageQuestPracticePrompt(value: string): string {
+  const prompt = value
+    .split(/\s*\b(?:Pronunciation|Example)\s*:/iu, 1)[0]
+    .replace(/\s+/g, " ")
+    .trim();
+  return prompt || "Choose the best answer.";
+}
+
 const LANGUAGE_QUEST_MYANMAR_SCRIPT_RE = /[က-႟]/;
 const LANGUAGE_QUEST_HAN_SCRIPT_RE = /\p{Script=Han}/u;
 
