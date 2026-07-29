@@ -421,6 +421,47 @@ export function canAttemptNewChallenge(hearts: number, alreadyCompleted: boolean
 export function registerLanguageQuestRoutes(deps: Deps): void {
   const { app, prisma, authMiddleware, createAuditLog, logger } = deps;
 
+  // Public catalog intentionally exposes only published course marketing
+  // details and counts. Lessons, answers, progress, and learner identities
+  // remain behind signup and authentication.
+  app.get("/api/language-quest/public/catalog", async (_req, res) => {
+    try {
+      await ensureOfficialCourses(prisma);
+      const courses = await prisma.languageQuestCourse.findMany({
+        where: { published: true },
+        orderBy: [{ createdAt: "asc" }, { title: "asc" }],
+        include: {
+          units: {
+            include: {
+              lessons: { include: { challenges: { select: { id: true } } } },
+            },
+          },
+        },
+      });
+      res.json({
+        courses: courses.map((course: any) => ({
+          id: course.id,
+          code: course.code,
+          title: course.title,
+          description: course.description,
+          language: course.language,
+          imageEmoji: course.imageEmoji,
+          accentColor: course.accentColor,
+          unitCount: course.units.length,
+          lessonCount: course.units.reduce((sum: number, unit: any) => sum + unit.lessons.length, 0),
+          challengeCount: course.units.reduce(
+            (sum: number, unit: any) =>
+              sum + unit.lessons.reduce((inner: number, lesson: any) => inner + lesson.challenges.length, 0),
+            0,
+          ),
+        })),
+      });
+    } catch (error) {
+      logger.error("Error loading the public Language Quest catalog:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load the course catalog" });
+    }
+  });
+
   app.get("/api/language-quest/overview", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {

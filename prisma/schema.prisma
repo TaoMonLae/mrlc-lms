@@ -247,6 +247,9 @@ model User {
   cursorEffect          String?
   role                  Role      @default(STUDENT)
   isActive              Boolean   @default(true)
+  // Public self-signups are learning-only accounts. They use the STUDENT role
+  // for Language Quest progress, but are isolated from private school modules.
+  isExternalLearner     Boolean   @default(false)
   mustChangePassword    Boolean   @default(false)
   lastLoginAt           DateTime?
   mfaEnabled            Boolean   @default(false)
@@ -294,6 +297,7 @@ model User {
 
   @@index([email])
   @@index([username])
+  @@index([isExternalLearner])
 }
 
 model SchoolProfile {

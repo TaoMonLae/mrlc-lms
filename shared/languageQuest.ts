@@ -46,3 +46,19 @@ export function nextLanguageQuestStreak(input: {
     countsAsNewDay: true,
   };
 }
+
+/** Normalise learner-entered sentences without making punctuation a barrier. */
+export function normalizeSentenceAnswer(value: string): string {
+  return value
+    .normalize('NFKC')
+    .toLocaleLowerCase()
+    .replace(/[‘’]/g, "'")
+    .replace(/[“”]/g, '"')
+    .replace(/[.,!?;:()[\]{}"…]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+export function sentenceAnswerMatches(answer: string, modelSentence: string): boolean {
+  return normalizeSentenceAnswer(answer) === normalizeSentenceAnswer(modelSentence);
+}

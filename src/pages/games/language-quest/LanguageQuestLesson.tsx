@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import confetti from 'canvas-confetti';
-import { ArrowLeft, Check, Flame, Heart, PartyPopper, Star, Volume2, X } from 'lucide-react';
+import { ArrowLeft, Check, Flame, Heart, Lightbulb, PartyPopper, PencilLine, Star, Volume2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ApiError, apiGet, apiSend } from '@/src/lib/api';
 import type { LanguageQuestLessonPayload, LanguageQuestLessonPreview, LanguageQuestProfile } from '@/src/types/languageQuest';
+import { sentenceAnswerMatches } from '@/shared/languageQuest';
 
 interface AnswerResult {
   correct: boolean;
@@ -56,11 +57,14 @@ export default function LanguageQuestLesson() {
   const [checking, setChecking] = useState(false);
   const [sessionPoints, setSessionPoints] = useState(0);
   const [profile, setProfile] = useState<LanguageQuestProfile | null>(null);
-  const [phase, setPhase] = useState<'learn' | 'quiz'>('learn');
+  const [phase, setPhase] = useState<'learn' | 'sentence' | 'quiz'>('learn');
   const [preview, setPreview] = useState<LanguageQuestLessonPreview | null>(null);
   const [previewLoading, setPreviewLoading] = useState(true);
   const [previewIndex, setPreviewIndex] = useState(0);
   const [combo, setCombo] = useState(0);
+  const [sentenceIndex, setSentenceIndex] = useState(0);
+  const [sentenceInput, setSentenceInput] = useState('');
+  const [sentenceFeedback, setSentenceFeedback] = useState<'correct' | 'incorrect' | null>(null);
 
   useEffect(() => {
     if (!lessonId) return;
@@ -71,6 +75,9 @@ export default function LanguageQuestLesson() {
     setAnswer(null);
     setSessionPoints(0);
     setCombo(0);
+    setSentenceIndex(0);
+    setSentenceInput('');
+    setSentenceFeedback(null);
 
     apiGet<LanguageQuestLessonPayload>(`/api/language-quest/lessons/${lessonId}`)
       .then((payload) => { setLesson(payload); setProfile(payload.profile); })
@@ -98,6 +105,11 @@ export default function LanguageQuestLesson() {
   const finished = Boolean(lesson && index >= lesson.challenges.length);
   const cards = preview?.cards ?? [];
   const card = cards[previewIndex];
+  const sentenceCards = useMemo(
+    () => cards.filter((candidate) => candidate.text.trim().split(/\s+/).length >= 2),
+    [cards],
+  );
+  const sentenceCard = sentenceCards[sentenceIndex];
   // Practising an already-completed challenge is how hearts get refilled, so
   // only gate challenges the learner hasn't cleared yet (matches the server
   // check in the answer endpoint).
@@ -107,6 +119,24 @@ export default function LanguageQuestLesson() {
 
   const startPractice = () => {
     confetti({ particleCount: 60, spread: 65, origin: { y: 0.7 }, colors: [lesson?.course.accentColor || '#7c3aed', '#ffffff'] });
+    setPhase(sentenceCards.length ? 'sentence' : 'quiz');
+  };
+
+  const checkSentence = () => {
+    if (!sentenceCard || !sentenceInput.trim()) return;
+    const correct = sentenceAnswerMatches(sentenceInput, sentenceCard.text);
+    setSentenceFeedback(correct ? 'correct' : 'incorrect');
+    if (correct) confetti({ particleCount: 28, spread: 45, origin: { y: 0.72 }, scalar: 0.7, colors: [lesson?.course.accentColor || '#7c3aed'] });
+  };
+
+  const continueSentence = () => {
+    if (sentenceFeedback !== 'correct') return;
+    if (sentenceIndex + 1 < sentenceCards.length) {
+      setSentenceIndex((current) => current + 1);
+      setSentenceInput('');
+      setSentenceFeedback(null);
+      return;
+    }
     setPhase('quiz');
   };
 
@@ -175,6 +205,13 @@ export default function LanguageQuestLesson() {
         return;
       }
 
+      if (phase === 'sentence' && event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        if (sentenceFeedback === 'correct') continueSentence();
+        else checkSentence();
+        return;
+      }
+
       if (phase === 'quiz' && challenge && !finished && !outOfHearts) {
         const letterIndex = optionLetters.indexOf(event.key.toUpperCase());
         const numberIndex = Number(event.key) - 1;
@@ -194,7 +231,7 @@ export default function LanguageQuestLesson() {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, loading, lesson, previewIndex, cards.length, card, challenge, answer, selectedId, finished, outOfHearts, optionLetters, checking]);
+  }, [phase, loading, lesson, previewIndex, cards.length, card, challenge, answer, selectedId, finished, outOfHearts, optionLetters, checking, sentenceFeedback, sentenceInput, sentenceCard, sentenceCards.length, sentenceIndex]);
 
   if (loading) {
     return <div className="grid min-h-[520px] place-items-center"><div className="h-11 w-11 animate-spin rounded-full border-4 border-violet-200 border-t-violet-600" /></div>;
@@ -236,7 +273,11 @@ export default function LanguageQuestLesson() {
                 <span className="text-3xl font-black text-slate-900 dark:text-white">{card.text}</span>
                 <span className="flex items-center gap-1.5 text-xs font-semibold text-sky-600"><Volume2 className="h-3.5 w-3.5" /> Tap to listen</span>
               </button>
-              <p className="mt-6 max-w-md text-sm text-slate-500 dark:text-slate-300">{card.prompt}</p>
+              <div className="mt-6 max-w-lg rounded-2xl border border-sky-100 bg-sky-50 px-5 py-4 text-left dark:border-sky-500/20 dark:bg-sky-500/10">
+                <p className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-sky-700 dark:text-sky-300"><Lightbulb className="h-4 w-4" /> When to use it</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{card.prompt}</p>
+                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Listen, say it aloud, then move on when the meaning feels clear.</p>
+              </div>
             </>
           )}
         </main>
@@ -254,6 +295,88 @@ export default function LanguageQuestLesson() {
               <Button style={{ backgroundColor: lesson.course.accentColor }} onClick={startPractice} disabled={!card}>
                 Start practice
               </Button>
+            )}
+          </div>
+        </footer>
+      </div>
+    );
+  }
+
+  if (phase === 'sentence' && sentenceCard) {
+    const sentenceProgress = Math.round((sentenceIndex / sentenceCards.length) * 100);
+    return (
+      <div className="mx-auto flex min-h-[calc(100dvh-8rem)] max-w-3xl flex-col pb-6">
+        <header className="flex items-center gap-3 py-2 sm:gap-5">
+          <Button variant="ghost" size="icon" aria-label="Exit lesson" render={<Link to={`/games/language-quest/courses/${lesson.course.id}`} />} nativeButton={false}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <Progress value={sentenceProgress} className="flex-1 [&_[data-slot=progress-track]]:h-3 [&_[data-slot=progress-indicator]]:bg-fuchsia-600" />
+          <span className="text-xs font-bold text-slate-500">{sentenceIndex + 1}/{sentenceCards.length}</span>
+        </header>
+
+        <main className="flex flex-1 flex-col justify-center py-8">
+          <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-fuchsia-700">
+            <PencilLine className="h-4 w-4" /> Build the sentence
+          </p>
+          <h1 className="mt-4 text-2xl font-black leading-tight text-slate-900 dark:text-white sm:text-3xl">Type the complete phrase from memory.</h1>
+          <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 dark:border-surface-raised dark:bg-surface-indigo">
+            <p className="text-xs font-black uppercase tracking-wider text-slate-400">Situation</p>
+            <p className="mt-2 text-base leading-7 text-slate-700 dark:text-slate-200">{sentenceCard.prompt}</p>
+            <Button variant="ghost" size="sm" className="-ml-2 mt-2 text-violet-700" onClick={() => speak(sentenceCard.audioText || sentenceCard.text, lesson.course.language)}>
+              <Volume2 className="mr-2 h-4 w-4" /> Listen again
+            </Button>
+          </div>
+          <label htmlFor="sentence-answer" className="mt-6 text-sm font-bold text-slate-700 dark:text-slate-200">Your sentence</label>
+          <textarea
+            id="sentence-answer"
+            autoFocus
+            value={sentenceInput}
+            onChange={(event) => {
+              setSentenceInput(event.target.value);
+              if (sentenceFeedback) setSentenceFeedback(null);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                if (sentenceFeedback === 'correct') continueSentence();
+                else checkSentence();
+              }
+            }}
+            placeholder="Write the phrase here…"
+            className={`mt-2 min-h-28 w-full resize-none rounded-2xl border-2 bg-white p-4 text-lg font-semibold text-slate-900 outline-none transition focus:ring-4 dark:bg-surface-indigo dark:text-white ${
+              sentenceFeedback === 'correct'
+                ? 'border-emerald-500 focus:ring-emerald-100'
+                : sentenceFeedback === 'incorrect'
+                  ? 'border-rose-400 focus:ring-rose-100'
+                  : 'border-slate-200 focus:border-fuchsia-500 focus:ring-fuchsia-100 dark:border-surface-raised'
+            }`}
+          />
+          <p className="mt-2 text-xs text-slate-500">Capital letters and punctuation do not affect the check. Press Enter when ready.</p>
+
+          {sentenceFeedback === 'incorrect' && (
+            <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-rose-800 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300">
+              <p className="font-black">Almost there — compare and try once more.</p>
+              <p className="mt-2 text-sm">Model sentence: <strong>{sentenceCard.text}</strong></p>
+              <p className="mt-1 text-xs opacity-80">Focus on the missing or changed word; spelling matters, punctuation does not.</p>
+            </div>
+          )}
+          {sentenceFeedback === 'correct' && (
+            <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">
+              <p className="font-black">That sentence works!</p>
+              <p className="mt-1 text-sm">You recalled the complete phrase. Say it once aloud before continuing.</p>
+            </div>
+          )}
+        </main>
+
+        <footer className="-mx-4 mt-auto border-t border-slate-200 px-4 py-4 sm:-mx-6 sm:px-6 dark:border-surface-raised">
+          <div className="mx-auto flex max-w-3xl items-center justify-between gap-4">
+            <Button variant="ghost" onClick={() => setPhase('quiz')}>Skip sentence practice</Button>
+            {sentenceFeedback === 'correct' ? (
+              <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={continueSentence}>
+                {sentenceIndex + 1 < sentenceCards.length ? 'Next sentence' : 'Start quiz'}
+              </Button>
+            ) : (
+              <Button onClick={checkSentence} disabled={!sentenceInput.trim()} style={sentenceInput.trim() ? { backgroundColor: lesson.course.accentColor } : undefined}>Check sentence</Button>
             )}
           </div>
         </footer>
@@ -388,13 +511,13 @@ export default function LanguageQuestLesson() {
             {answer?.correct && (
               <div className="flex items-center gap-3 text-emerald-700 dark:text-emerald-400">
                 <div className="grid h-10 w-10 place-items-center rounded-full bg-emerald-500 text-white"><Check className="h-6 w-6" /></div>
-                <div><p className="font-black">Excellent!</p><p className="text-xs">+{answer.pointsAwarded} points</p></div>
+                <div><p className="font-black">Excellent — that meaning fits.</p><p className="text-xs">“{answer.correctAnswer}” is the best response here. +{answer.pointsAwarded} points</p></div>
               </div>
             )}
             {answer && !answer.correct && (
               <div className="flex items-center gap-3 text-rose-700 dark:text-rose-400">
                 <div className="grid h-10 w-10 place-items-center rounded-full bg-rose-500 text-white"><X className="h-6 w-6" /></div>
-                <div><p className="font-black">Not quite — try again</p><p className="text-xs">Correct answer: {answer.correctAnswer}</p></div>
+                <div><p className="font-black">Not quite — compare the meaning and retry.</p><p className="text-xs">Best answer: {answer.correctAnswer}. Look for the option that responds directly to the situation.</p></div>
               </div>
             )}
           </div>

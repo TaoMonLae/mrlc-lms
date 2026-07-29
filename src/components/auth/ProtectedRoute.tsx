@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../providers/AuthProvider';
 import { hasPermission, Permission, UserRole } from '../../lib/permissions';
 
@@ -11,6 +11,7 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ requiredPermission, allowedRoles, strictRoles }: ProtectedRouteProps) {
   const { user, isLoading } = useAuth();
+  const location = useLocation();
 
   // Auth is still being validated (checking existing token on mount)
   if (isLoading) {
@@ -30,6 +31,17 @@ export function ProtectedRoute({ requiredPermission, allowedRoles, strictRoles }
 
   if (user.status !== 'ACTIVE') {
     return <Navigate to="/unauthorized" replace />;
+  }
+
+  // Public self-signups are intentionally scoped to Language Quest. This UI
+  // guard complements the server-side API allowlist, so an outside learner
+  // cannot wander into private school modules.
+  if (
+    user.isExternalLearner
+    && !location.pathname.startsWith('/games/language-quest')
+    && location.pathname !== '/change-password'
+  ) {
+    return <Navigate to="/games/language-quest" replace />;
   }
 
   if (requiredPermission && !hasPermission(user, requiredPermission)) {

@@ -5,6 +5,7 @@ const AppLayout = lazy(() => import("./components/layout/AppLayout").then((modul
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { GameAccessGate } from "./components/games/GameAccessGate";
 const LoginPage = lazy(() => import("./pages/Login"));
+const SignupPage = lazy(() => import("./pages/Signup"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const ChangePassword = lazy(() => import("./pages/ChangePassword"));
@@ -193,11 +194,13 @@ const ChessLeaderboardPage = lazy(() => import("./pages/games/chess/Leaderboard"
 const PacmanSelectPage = lazy(() => import("./pages/games/pacman/index"));
 const PacmanPlayPage = lazy(() => import("./pages/games/pacman/PlayPage"));
 const LanguageQuestHome = lazy(() => import("./pages/games/language-quest/LanguageQuestHome"));
+const LanguageQuestPublic = lazy(() => import("./pages/games/language-quest/LanguageQuestPublic"));
 const LanguageQuestCourse = lazy(() => import("./pages/games/language-quest/LanguageQuestCourse"));
 const LanguageQuestLesson = lazy(() => import("./pages/games/language-quest/LanguageQuestLesson"));
 const LanguageQuestLeaderboard = lazy(() => import("./pages/games/language-quest/LanguageQuestLeaderboard"));
 const LanguageQuestManage = lazy(() => import("./pages/games/language-quest/LanguageQuestManage"));
 const LanguageQuestEditor = lazy(() => import("./pages/games/language-quest/LanguageQuestEditor"));
+const LanguageQuestShell = lazy(() => import("./components/games/LanguageQuestShell").then((module) => ({ default: module.LanguageQuestShell })));
 const DailyQuestPage = lazy(() => import("./pages/games/daily-quest/DailyQuest"));
 const WordTrailPage = lazy(() => import("./pages/games/word-trail/WordTrail"));
 const GameControlsPage = lazy(() => import("./pages/games/GameControls"));
@@ -282,6 +285,8 @@ export default function App() {
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
+            <Route path="/language-quest" element={<LanguageQuestPublic />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
@@ -296,6 +301,12 @@ export default function App() {
               <Route path="/documents/:id/print" element={<DocumentPrint />} />
               <Route path="/payroll/payslips/:id/print" element={<PayslipPrint />} />
               <Route path="/payroll/runs/:id/print" element={<PayrollRunPrint />} />
+              <Route element={<LanguageQuestShell />}>
+                <Route path="/games/language-quest" element={<LanguageQuestHome />} />
+                <Route path="/games/language-quest/courses/:courseId" element={<LanguageQuestCourse />} />
+                <Route path="/games/language-quest/lessons/:lessonId" element={<LanguageQuestLesson />} />
+                <Route path="/games/language-quest/leaderboard" element={<LanguageQuestLeaderboard />} />
+              </Route>
               <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/profile" element={<MyProfile />} />
@@ -379,10 +390,6 @@ export default function App() {
                 <Route path="/games/pacman" element={<GameAccessGate gameKey="PACMAN"><PacmanSelectPage /></GameAccessGate>} />
                 <Route path="/games/pacman/play" element={<GameAccessGate gameKey="PACMAN" consumeTime><PacmanPlayPage /></GameAccessGate>} />
 
-                <Route path="/games/language-quest" element={<LanguageQuestHome />} />
-                <Route path="/games/language-quest/courses/:courseId" element={<LanguageQuestCourse />} />
-                <Route path="/games/language-quest/lessons/:lessonId" element={<LanguageQuestLesson />} />
-                <Route path="/games/language-quest/leaderboard" element={<LanguageQuestLeaderboard />} />
                 <Route element={<ProtectedRoute strictRoles={['STUDENT', 'TEACHER']} />}>
                   <Route path="/daily-quest" element={<DailyQuestPage />} />
                   <Route path="/games/word-trail" element={<GameAccessGate gameKey="WORD_TRAIL" consumeTime><WordTrailPage /></GameAccessGate>} />

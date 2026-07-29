@@ -752,6 +752,7 @@ export interface JwtPayload {
   role: UserRole;
   email: string;
   sessionId?: string;
+  externalLearner?: boolean;
 }
 
 function signToken(payload: JwtPayload, rememberMe = false): string {
@@ -861,6 +862,18 @@ async function authMiddleware(
       }
       if (Date.now() - session.lastSeenAt.getTime() > 5 * 60 * 1000) {
         prisma.authSession.update({ where: { id: session.id }, data: { lastSeenAt: new Date() } }).catch(() => {});
+      }
+    }
+    if (payload.externalLearner) {
+      const pathname = req.originalUrl.split("?")[0];
+      const allowed =
+        pathname.startsWith("/api/language-quest/") ||
+        pathname === "/api/auth/me" ||
+        pathname === "/api/auth/logout" ||
+        pathname === "/api/auth/change-password";
+      if (!allowed) {
+        res.status(403).json({ error: "This learner account can only access Language Quest" });
+        return;
       }
     }
     (req as any).user = payload;
@@ -988,6 +1001,12 @@ const schemas = {
     password: z.string().min(1, "is required"),
     rememberMe: z.boolean().optional(),
     mfaCode: z.string().trim().min(6).max(32).optional(),
+  }),
+  publicLearnerSignup: z.object({
+    firstName: z.string().trim().min(1, "is required").max(80, "is too long"),
+    lastName: z.string().trim().min(1, "is required").max(80, "is too long"),
+    email,
+    password: z.string().min(8, "must be at least 8 characters").max(128, "is too long"),
   }),
   forgotPassword: z.object({ identifier: reqStr }),
   resetPassword: z.object({
@@ -1884,6 +1903,7 @@ async function startServer() {
     let jwtUser: JwtPayload;
     try {
       jwtUser = verifyToken(String(req.cookies?.social_media_token || ""));
+      if (jwtUser.externalLearner) throw new Error("Learning-only account");
     } catch {
       res.status(401).json({ error: "Unauthorized" });
       return;
@@ -1947,6 +1967,7 @@ async function startServer() {
     let jwtUser: JwtPayload;
     try {
       jwtUser = verifyToken(String(req.cookies?.library_media_token || ""));
+      if (jwtUser.externalLearner) throw new Error("Learning-only account");
     } catch {
       res.status(401).json({ error: "Unauthorized" });
       return;
@@ -1992,6 +2013,7 @@ async function startServer() {
     let jwtUser: JwtPayload;
     try {
       jwtUser = verifyToken(String(req.cookies?.video_media_token || ""));
+      if (jwtUser.externalLearner) throw new Error("Learning-only account");
     } catch {
       res.status(401).json({ error: "Unauthorized" });
       return;
@@ -2108,6 +2130,17 @@ async function startServer() {
     keyGenerator: (req) => {
       const acct = String(req.body?.identifier || req.body?.email || "").trim().toLowerCase();
       return (acct ? "acct:" + acct + "|" : "") + "ip:" + ipKeyGenerator(req.ip || "");
+    },
+  });
+  const publicSignupLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    max: 8,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Too many signup attempts. Please wait before trying again." },
+    keyGenerator: (req) => {
+      const account = String(req.body?.email || "").trim().toLowerCase();
+      return `${account ? `acct:${account}|` : ""}ip:${ipKeyGenerator(req.ip || "")}`;
     },
   });
   const passwordResetLimiter = rateLimit({
@@ -2233,6 +2266,66 @@ async function startServer() {
   });
 
   /**
+   * POST /api/auth/public-learner-signup
+   * Creates a learning-only account for the public Language Quest experience.
+   * These users intentionally have no Student profile and are API-restricted
+   * by authMiddleware even though progress uses the STUDENT role.
+   */
+  app.post(
+    "/api/auth/public-learner-signup",
+    publicSignupLimiter,
+    validate(schemas.publicLearnerSignup),
+    async (req, res) => {
+      const firstName = String(req.body.firstName).trim();
+      const lastName = String(req.body.lastName).trim();
+      const learnerEmail = String(req.body.email).trim().toLowerCase();
+      const password = String(req.body.password);
+      try {
+        const existing = await prisma.user.findFirst({
+          where: { email: { equals: learnerEmail, mode: "insensitive" } },
+          select: { id: true },
+        });
+        if (existing) {
+          res.status(409).json({ error: "An account already exists for this email. Try signing in instead." });
+          return;
+        }
+        const passwordHash = await bcrypt.hash(password, 12);
+        const learner = await prisma.user.create({
+          data: {
+            email: learnerEmail,
+            firstName,
+            lastName,
+            passwordHash,
+            role: "STUDENT",
+            isActive: true,
+            isExternalLearner: true,
+            mustChangePassword: false,
+          } as any,
+          select: { id: true, email: true },
+        });
+        await createAuditLog(
+          learner.id,
+          learner.email,
+          "CREATE",
+          "PUBLIC_LEARNER_ACCOUNT",
+          learner.id,
+          "Created a self-service Language Quest learner account",
+          req.ip || null,
+          req.headers["user-agent"] || null,
+        );
+        res.status(201).json({ success: true });
+      } catch (error: any) {
+        if (error?.code === "P2002") {
+          res.status(409).json({ error: "An account already exists for this email. Try signing in instead." });
+          return;
+        }
+        logger.error("Public learner signup failed:", error);
+        res.status(500).json({ error: "We could not create your learner account. Please try again." });
+      }
+    },
+  );
+
+  /**
    * POST /api/auth/login
    * Body: { identifier: string, password: string }
    * "identifier" may be either the account's email address or its username.
@@ -2309,6 +2402,7 @@ async function startServer() {
         userId: user.id,
         role: user.role,
         email: user.email,
+        externalLearner: Boolean((user as any).isExternalLearner),
         sessionId: (await prisma.authSession.create({ data: {
           userId: user.id,
           expiresAt: new Date(Date.now() + (rememberMe ? 30 * 24 * 60 * 60 * 1000 : 8 * 60 * 60 * 1000)),
@@ -2361,6 +2455,7 @@ async function startServer() {
           profilePhotoUrl: (user as any).profilePhotoUrl || null,
           role: user.role,
           isActive: user.isActive,
+          isExternalLearner: Boolean((user as any).isExternalLearner),
           mustChangePassword: user.mustChangePassword,
           cursorEffect: (user as any).cursorEffect || null,
           mfaEnabled: user.mfaEnabled,
@@ -2410,6 +2505,7 @@ async function startServer() {
           profilePhotoUrl: true,
           role: true,
           isActive: true,
+          isExternalLearner: true,
           mustChangePassword: true,
           cursorEffect: true,
           mfaEnabled: true,

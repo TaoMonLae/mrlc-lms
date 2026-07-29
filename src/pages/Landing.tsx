@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { 
   Menu, X, ChevronRight, LayoutDashboard, Users, BookOpen, 
   Calendar, FileCheck, Wallet, Shield, AlertCircle, Database, 
-  Moon, Sun, CheckCircle2, ArrowRight
+  Moon, Sun, CheckCircle2, ArrowRight, Languages
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,6 +23,7 @@ export default function LandingPage() {
   };
 
   const navLinks = [
+    { name: 'Language Quest', href: '/language-quest' },
     { name: 'Features', href: '#features' },
     { name: 'Roles', href: '#roles' },
     { name: 'Workflow', href: '#workflow' },
@@ -136,6 +137,9 @@ export default function LandingPage() {
                 )}
                 <Button render={<a href="#features" />} variant="outline" size="lg" className="w-full sm:w-auto border-slate-200 dark:border-surface-raised bg-white/50 dark:bg-canvas/50 hover:bg-slate-100 dark:hover:bg-surface-indigo font-bold text-xs uppercase tracking-widest h-12 px-8 backdrop-blur-sm" nativeButton={false}>
                   View Features
+                </Button>
+                <Button render={<Link to="/language-quest" />} variant="ghost" size="lg" className="w-full sm:w-auto text-violet-700 dark:text-violet-300 font-bold text-xs uppercase tracking-widest h-12 px-6" nativeButton={false}>
+                  <Languages className="mr-2 h-4 w-4" /> Try Language Quest
                 </Button>
               </div>
             </div>

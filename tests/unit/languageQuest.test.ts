@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { nextLanguageQuestStreak } from "../../shared/languageQuest";
+import { nextLanguageQuestStreak, normalizeSentenceAnswer, sentenceAnswerMatches } from "../../shared/languageQuest";
 import { canAttemptNewChallenge, shuffle } from "../../languageQuest";
 import { importedSpanishCourse } from "../../languageQuestImportedCourses";
 import { mandarinFoundationsCourse } from "../../languageQuestMandarinCourse";
@@ -19,6 +19,12 @@ test("Language Quest starts a new streak on the first active day", () => {
     }),
     { currentStreak: 1, bestStreak: 1, countsAsNewDay: true },
   );
+});
+
+test("sentence practice ignores case, spacing, and light punctuation", () => {
+  assert.equal(normalizeSentenceAnswer("  Good   MORNING! "), "good morning");
+  assert.equal(sentenceAnswerMatches("You're welcome.", "You’re welcome"), true);
+  assert.equal(sentenceAnswerMatches("Good night", "Good morning"), false);
 });
 
 test("Language Quest only increments once per Kuala Lumpur calendar day", () => {

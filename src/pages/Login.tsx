@@ -106,7 +106,8 @@ export default function LoginPage() {
       let destination = "/dashboard";
       try {
         const stored = JSON.parse(sessionStorage.getItem("auth_user") || "{}");
-        if (stored.role === "LIBRARIAN") destination = "/books";
+        if (stored.isExternalLearner) destination = "/games/language-quest";
+        else if (stored.role === "LIBRARIAN") destination = "/books";
       } catch {
         /* fall back to the default destination */
       }
@@ -349,6 +350,13 @@ export default function LoginPage() {
                   )}
                 </Button>
 
+                <p className="text-center text-sm text-slate-600">
+                  New to Language Quest?{" "}
+                  <Link to="/signup" className="font-bold text-violet-700 hover:underline">
+                    Create a free learner account
+                  </Link>
+                </p>
+
                 {/* Divider */}
                 <div className="flex items-center gap-3 py-0.5 text-xs font-medium text-slate-600">
                   <span className="h-px flex-1 bg-slate-200" />
@@ -373,7 +381,7 @@ export default function LoginPage() {
         <footer className="px-6 pb-6 sm:px-10">
           <div className="text-center sm:text-right">
             <p className="flex items-center justify-center gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-600 sm:justify-end">
-              <ShieldCheck className="h-4 w-4" /> Protected area for authorized personnel only
+              <ShieldCheck className="h-4 w-4" /> Secure access for school members and Language Quest learners
             </p>
             {(contactEmail || contactPhone) && (
               <p className="mt-1 text-sm text-slate-600">

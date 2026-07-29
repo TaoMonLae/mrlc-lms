@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, Flame, Heart, Languages, Settings2, Sparkles, Star, Trophy } from 'lucide-react';
+import { BookOpen, Flame, Heart, Languages, Settings2, Sparkles, Star, Trophy, WholeWord } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -94,6 +94,16 @@ export default function LanguageQuestHome() {
         <StatCard icon={<Star className="h-5 w-5 fill-current" />} label="Total points" value={data.profile.points} tone="bg-amber-100 text-amber-600 dark:bg-amber-500/15" />
         <StatCard icon={<Flame className="h-5 w-5 fill-current" />} label="Day streak" value={data.profile.currentStreak} tone="bg-orange-100 text-orange-600 dark:bg-orange-500/15" />
         <StatCard icon={<Trophy className="h-5 w-5" />} label="Best streak" value={data.profile.bestStreak} tone="bg-violet-100 text-violet-600 dark:bg-violet-500/15" />
+      </section>
+
+      <section className="flex flex-col justify-between gap-4 rounded-2xl border border-sky-100 bg-sky-50 p-5 sm:flex-row sm:items-center dark:border-sky-500/20 dark:bg-sky-500/10">
+        <div className="flex items-start gap-3">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-white text-sky-700 shadow-sm dark:bg-surface-indigo dark:text-sky-300"><WholeWord className="h-5 w-5" /></span>
+          <div>
+            <h2 className="font-black text-slate-900 dark:text-white">New: practise complete sentences</h2>
+            <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">Lessons now guide you from listening to writing before the quiz. Capital letters and punctuation are flexible, so you can focus on choosing the right words.</p>
+          </div>
+        </div>
       </section>
 
       <section>

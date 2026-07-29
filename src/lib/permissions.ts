@@ -29,6 +29,7 @@ export interface User {
   profilePhotoUrl?: string | null;
   role: UserRole;
   status: UserStatus;
+  isExternalLearner?: boolean;
   mustChangePassword?: boolean;
   cursorEffect?: string | null;
   mfaEnabled?: boolean;

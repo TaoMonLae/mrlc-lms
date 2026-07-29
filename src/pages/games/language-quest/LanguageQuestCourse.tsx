@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Check, ChevronRight, Lock, Map, Play, RotateCcw, Trophy } from 'lucide-react';
+import { ArrowLeft, Check, ChevronRight, Headphones, Keyboard, Lightbulb, Lock, Map, Play, RotateCcw, Trophy } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -76,6 +76,21 @@ export default function LanguageQuestCourse() {
             <div className="mt-4 flex items-center gap-3">
               <Progress value={percent} className="flex-1 [&_[data-slot=progress-track]]:h-2 [&_[data-slot=progress-track]]:bg-white/20 [&_[data-slot=progress-indicator]]:bg-white" />
               <span className="text-sm font-bold">{percent}%</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-violet-100 bg-violet-50/70 p-5 dark:border-violet-500/20 dark:bg-violet-500/10">
+        <div className="flex items-start gap-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300"><Lightbulb className="h-5 w-5" /></span>
+          <div>
+            <h2 className="font-black text-slate-900 dark:text-white">How each lesson works</h2>
+            <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">Take your time. The same three-step routine helps you understand a phrase before you are asked to remember it.</p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <div className="flex gap-2 rounded-xl bg-white/80 p-3 dark:bg-surface-indigo/60"><Headphones className="mt-0.5 h-4 w-4 shrink-0 text-sky-600" /><p className="text-xs leading-5"><strong className="block text-slate-800 dark:text-white">1. Learn</strong>Listen and connect the phrase to its situation.</p></div>
+              <div className="flex gap-2 rounded-xl bg-white/80 p-3 dark:bg-surface-indigo/60"><Keyboard className="mt-0.5 h-4 w-4 shrink-0 text-fuchsia-600" /><p className="text-xs leading-5"><strong className="block text-slate-800 dark:text-white">2. Build</strong>Type complete sentences from memory.</p></div>
+              <div className="flex gap-2 rounded-xl bg-white/80 p-3 dark:bg-surface-indigo/60"><Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" /><p className="text-xs leading-5"><strong className="block text-slate-800 dark:text-white">3. Check</strong>Answer the quiz and use corrections to retry.</p></div>
             </div>
           </div>
         </div>

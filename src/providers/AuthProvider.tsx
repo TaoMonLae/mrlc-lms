@@ -49,6 +49,7 @@ function mapApiUser(apiUser: Record<string, any>): User {
     profilePhotoUrl: apiUser.profilePhotoUrl ?? null,
     role: apiUser.role,
     status: apiUser.isActive ? 'ACTIVE' : 'DISABLED',
+    isExternalLearner: Boolean(apiUser.isExternalLearner),
     mustChangePassword: Boolean(apiUser.mustChangePassword),
     cursorEffect: apiUser.cursorEffect ?? null,
     mfaEnabled: Boolean(apiUser.mfaEnabled),
