@@ -10,6 +10,7 @@ import {
   GraduationCap,
   ShieldCheck,
   Star,
+  Trophy,
   UserRound,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -22,6 +23,7 @@ import { LanguageQuestAvatar } from '@/src/components/games/LanguageQuestAvatar'
 import { apiGet, apiSend } from '@/src/lib/api';
 import { useAuth } from '@/src/providers/AuthProvider';
 import type { LanguageQuestProfile as ProgressProfile } from '@/src/types/languageQuest';
+import { LanguageQuestRewardCollection } from '@/src/components/games/LanguageQuestRewards';
 
 interface LearnerClassroom {
   id: string;
@@ -69,6 +71,13 @@ export default function LanguageQuestProfile() {
   };
 
   useEffect(load, []);
+
+  useEffect(() => {
+    if (!profile || window.location.hash !== '#quest-cards') return;
+    window.requestAnimationFrame(() => {
+      document.getElementById('quest-cards')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }, [profile]);
 
   const save = async () => {
     setSaving(true);
@@ -154,13 +163,16 @@ export default function LanguageQuestProfile() {
             <h1 className="mt-2 truncate text-3xl font-black sm:text-4xl">{profile.name}</h1>
             <p className="mt-1 truncate text-sm text-white/75">{profile.email}</p>
             <div className="mt-4 flex flex-wrap gap-2">
-              <Badge className="border-white/20 bg-white/15 text-white hover:bg-white/15"><Star className="h-3 w-3" /> {profile.profile.points} points</Badge>
+              <Badge className="border-amber-200/25 bg-amber-300/20 text-white hover:bg-amber-300/20"><Trophy className="h-3 w-3" /> Level {profile.profile.rewards.level} • {profile.profile.rewards.title}</Badge>
+              <Badge className="border-white/20 bg-white/15 text-white hover:bg-white/15"><Star className="h-3 w-3" /> {profile.profile.points} XP</Badge>
               <Badge className="border-white/20 bg-white/15 text-white hover:bg-white/15"><Flame className="h-3 w-3" /> {profile.profile.currentStreak}-day streak</Badge>
               {profile.isExternalLearner && <Badge className="border-emerald-200/25 bg-emerald-300/20 text-white hover:bg-emerald-300/20"><ShieldCheck className="h-3 w-3" /> Learning-only account</Badge>}
             </div>
           </div>
         </div>
       </section>
+
+      <LanguageQuestRewardCollection rewards={profile.profile.rewards} />
 
       <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/85 sm:p-7">
         <div className="flex items-start gap-3">

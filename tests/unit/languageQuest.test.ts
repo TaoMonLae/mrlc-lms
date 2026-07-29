@@ -28,6 +28,47 @@ import {
   isChineseLanguage,
   languageQuestPinyin,
 } from "../../shared/languageQuestPinyin";
+import {
+  LANGUAGE_QUEST_REWARD_CARDS,
+  languageQuestRewardProgress,
+  newlyUnlockedLanguageQuestRewardIds,
+} from "../../shared/languageQuestRewards";
+
+test("Language Quest turns saved XP into stable levels and collectible cards", () => {
+  const beginner = languageQuestRewardProgress(0);
+  assert.equal(beginner.level, 1);
+  assert.deepEqual(beginner.unlockedCardIds, ["lexibloom"]);
+  assert.equal(beginner.nextLevelXp, 30);
+  assert.equal(beginner.progressPercent, 0);
+
+  const learner = languageQuestRewardProgress(160);
+  assert.equal(learner.level, 4);
+  assert.equal(learner.title, "Pattern Finder");
+  assert.deepEqual(learner.unlockedCardIds, [
+    "lexibloom",
+    "echoquill",
+    "phraseflare",
+    "grammashell",
+  ]);
+  assert.equal(learner.progressPercent, 10);
+});
+
+test("Language Quest reward thresholds are ordered, unique, and announce only new unlocks", () => {
+  assert.equal(LANGUAGE_QUEST_REWARD_CARDS[0].unlockXp, 0);
+  assert.deepEqual(
+    LANGUAGE_QUEST_REWARD_CARDS.map((card) => card.level),
+    LANGUAGE_QUEST_REWARD_CARDS.map((_, index) => index + 1),
+  );
+  assert.equal(
+    new Set(LANGUAGE_QUEST_REWARD_CARDS.map((card) => card.id)).size,
+    LANGUAGE_QUEST_REWARD_CARDS.length,
+  );
+  assert.ok(LANGUAGE_QUEST_REWARD_CARDS.every((card, index, cards) =>
+    index === 0 || card.unlockXp > cards[index - 1].unlockXp,
+  ));
+  assert.deepEqual(newlyUnlockedLanguageQuestRewardIds(70, 160), ["phraseflare", "grammashell"]);
+  assert.deepEqual(newlyUnlockedLanguageQuestRewardIds(160, 160), []);
+});
 
 test("Language Quest starts a new streak on the first active day", () => {
   assert.deepEqual(

@@ -10,6 +10,7 @@ import type { LanguageQuestLessonPayload, LanguageQuestLessonPreview, LanguageQu
 import { sentenceAnswerMatches } from '@/shared/languageQuest';
 import { useLanguageQuestSupport } from '@/src/components/games/LanguageQuestSupport';
 import { LanguageQuestPinyinText } from '@/src/components/games/LanguageQuestPinyinText';
+import { LanguageQuestRewardReveal } from '@/src/components/games/LanguageQuestRewards';
 
 interface AnswerResult {
   correct: boolean;
@@ -17,6 +18,7 @@ interface AnswerResult {
   correctAnswer: string;
   pointsAwarded: number;
   profile: LanguageQuestProfile;
+  unlockedRewardIds: string[];
 }
 
 function speechLocale(language: string): string {
@@ -104,6 +106,8 @@ export default function LanguageQuestLesson() {
   const [sentenceIndex, setSentenceIndex] = useState(0);
   const [sentenceInput, setSentenceInput] = useState('');
   const [sentenceFeedback, setSentenceFeedback] = useState<'correct' | 'incorrect' | null>(null);
+  const [unlockedRewardId, setUnlockedRewardId] = useState<string | null>(null);
+  const [rewardRevealOpen, setRewardRevealOpen] = useState(false);
 
   useEffect(() => {
     if (!lessonId) return;
@@ -117,6 +121,8 @@ export default function LanguageQuestLesson() {
     setSentenceIndex(0);
     setSentenceInput('');
     setSentenceFeedback(null);
+    setUnlockedRewardId(null);
+    setRewardRevealOpen(false);
 
     apiGet<LanguageQuestLessonPayload>(`/api/language-quest/lessons/${lessonId}`)
       .then((payload) => { setLesson(payload); setProfile(payload.profile); })
@@ -193,6 +199,17 @@ export default function LanguageQuestLesson() {
         setSessionPoints((current) => current + result.pointsAwarded);
         setCombo((current) => current + 1);
         confetti({ particleCount: 40, spread: 55, origin: { y: 0.65 }, scalar: 0.8, colors: [lesson?.course.accentColor || '#7c3aed'] });
+        const newestRewardId = result.unlockedRewardIds.at(-1);
+        if (newestRewardId) {
+          setUnlockedRewardId(newestRewardId);
+          setRewardRevealOpen(true);
+          confetti({
+            particleCount: 150,
+            spread: 95,
+            origin: { y: 0.58 },
+            colors: ['#fbbf24', '#a855f7', '#22d3ee', '#f472b6'],
+          });
+        }
       } else {
         setCombo(0);
       }
@@ -235,6 +252,8 @@ export default function LanguageQuestLesson() {
     setSelectedId(null);
     setAnswer(null);
     setCombo(0);
+    setUnlockedRewardId(null);
+    setRewardRevealOpen(false);
   };
 
   // Celebrate finishing the lesson with a bigger burst.
@@ -470,7 +489,7 @@ export default function LanguageQuestLesson() {
           <div className="rounded-2xl border-2 border-amber-200 bg-amber-50 p-4 dark:border-amber-500/20 dark:bg-amber-500/10">
             <Star className="mx-auto h-6 w-6 fill-amber-500 text-amber-500" />
             <p className="mt-2 text-2xl font-black text-amber-700 dark:text-amber-400">+{sessionPoints}</p>
-            <p className="text-xs font-semibold uppercase tracking-wide text-amber-600/70">Points earned</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-amber-600/70">XP earned</p>
           </div>
           <div className="rounded-2xl border-2 border-orange-200 bg-orange-50 p-4 dark:border-orange-500/20 dark:bg-orange-500/10">
             <Flame className="mx-auto h-6 w-6 fill-orange-500 text-orange-500" />
@@ -478,6 +497,17 @@ export default function LanguageQuestLesson() {
             <p className="text-xs font-semibold uppercase tracking-wide text-orange-600/70">Day streak</p>
           </div>
         </div>
+        {profile?.rewards && (
+          <div className="mt-4 w-full rounded-2xl border border-violet-200 bg-violet-50 p-4 text-left dark:border-violet-500/20 dark:bg-violet-500/10">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-black uppercase tracking-wider text-violet-600 dark:text-violet-300">Quest level</p>
+                <p className="mt-1 font-black text-slate-900 dark:text-white">Level {profile.rewards.level} • {profile.rewards.title}</p>
+              </div>
+              <span className="rounded-xl bg-white px-3 py-2 text-sm font-black text-violet-700 shadow-sm dark:bg-slate-950 dark:text-violet-300">{profile.rewards.xp} XP</span>
+            </div>
+          </div>
+        )}
         <div className="mt-7 flex w-full flex-col gap-2 sm:flex-row">
           <Button variant="outline" className="flex-1" onClick={practiseAgain}>
             Practise again
@@ -512,6 +542,7 @@ export default function LanguageQuestLesson() {
   }
 
   return (
+    <>
     <div className="mx-auto flex min-h-[calc(100dvh-8rem)] max-w-3xl flex-col pb-6">
       <header className="flex items-center gap-3 py-2 sm:gap-5">
         <Button variant="ghost" size="icon" aria-label="Exit lesson" render={<Link to={`/games/language-quest/courses/${lesson.course.id}`} />} nativeButton={false}>
@@ -524,7 +555,7 @@ export default function LanguageQuestLesson() {
           </div>
         )}
         <div className="flex items-center gap-1 text-sm font-black text-rose-500"><Heart className="h-5 w-5 fill-current" /> {profile?.hearts ?? 0}</div>
-        <div className="hidden items-center gap-1 text-sm font-black text-amber-500 sm:flex"><Star className="h-5 w-5 fill-current" /> {profile?.points ?? 0}</div>
+        <div className="hidden items-center gap-1 text-sm font-black text-amber-500 sm:flex" title={`Level ${profile?.rewards.level ?? 1}`}><Star className="h-5 w-5 fill-current" /> {profile?.points ?? 0} XP</div>
       </header>
 
       <main className="flex flex-1 flex-col justify-center py-8">
@@ -599,7 +630,7 @@ export default function LanguageQuestLesson() {
                       text={answer.correctAnswer}
                       pinyin={challenge.options.find((option) => option.id === answer.correctOptionId)?.pinyin ?? null}
                     />
-                    <span>is the best response here. +{answer.pointsAwarded} points</span>
+                    <span>is the best response here. +{answer.pointsAwarded} XP</span>
                   </div>
                 </div>
               </div>
@@ -633,5 +664,11 @@ export default function LanguageQuestLesson() {
         </div>
       </footer>
     </div>
+    <LanguageQuestRewardReveal
+      cardId={unlockedRewardId}
+      open={rewardRevealOpen}
+      onOpenChange={setRewardRevealOpen}
+    />
+    </>
   );
 }

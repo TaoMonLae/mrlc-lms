@@ -13,6 +13,10 @@ import {
 } from "./shared/languageQuestAvatars";
 import { languageQuestCategoryForLanguage } from "./shared/languageQuestCourseCategories";
 import { languageQuestPinyin } from "./shared/languageQuestPinyin";
+import {
+  languageQuestRewardProgress,
+  newlyUnlockedLanguageQuestRewardIds,
+} from "./shared/languageQuestRewards";
 import { importedSpanishCourse, type OfficialLanguageQuestCourse } from "./languageQuestImportedCourses";
 import { mandarinFoundationsCourse } from "./languageQuestMandarinCourse";
 import { completeMandarinCourse } from "./languageQuestCompleteMandarinCourse";
@@ -386,6 +390,7 @@ function profileJson(progress: any) {
     currentStreak: progress.currentStreak,
     bestStreak: progress.bestStreak,
     activeCourseId: progress.activeCourseId,
+    rewards: languageQuestRewardProgress(progress.points),
   };
 }
 
@@ -875,7 +880,12 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
               currentStreak: streak.currentStreak, bestStreak: streak.bestStreak, lastPlayedDate: now,
             },
           });
-          return { correct: true, pointsAwarded, profile: profileJson(updated) };
+          return {
+            correct: true,
+            pointsAwarded,
+            profile: profileJson(updated),
+            unlockedRewardIds: newlyUnlockedLanguageQuestRewardIds(progress.points, updated.points),
+          };
         }
         await tx.languageQuestChallengeProgress.upsert({
           where: { userId_challengeId: { userId: jwtUser.userId, challengeId: challenge.id } },
@@ -886,7 +896,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           where: { userId: jwtUser.userId },
           data: { activeCourseId: challenge.lesson.unit.courseId, hearts: Math.max(0, progress.hearts - 1) },
         });
-        return { correct: false, pointsAwarded: 0, profile: profileJson(updated) };
+        return { correct: false, pointsAwarded: 0, profile: profileJson(updated), unlockedRewardIds: [] };
       });
       if (result.outOfHearts) {
         res.status(403).json({

@@ -1,3 +1,5 @@
+import type { LanguageQuestRewardProgress } from '@/shared/languageQuestRewards';
+
 export interface LanguageQuestProfile {
   hearts: number;
   maxHearts: number;
@@ -5,6 +7,7 @@ export interface LanguageQuestProfile {
   currentStreak: number;
   bestStreak: number;
   activeCourseId: string | null;
+  rewards: LanguageQuestRewardProgress;
 }
 
 export interface LanguageQuestCourseSummary {
