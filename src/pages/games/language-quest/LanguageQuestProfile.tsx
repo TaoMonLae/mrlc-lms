@@ -9,21 +9,31 @@ import {
   Flame,
   GraduationCap,
   ShieldCheck,
+  Sparkles,
   Star,
   Trophy,
   UserRound,
+  Volume2,
+  Wind,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { LANGUAGE_QUEST_AVATARS } from '@/shared/languageQuestAvatars';
 import { LanguageQuestAvatar } from '@/src/components/games/LanguageQuestAvatar';
 import { apiGet, apiSend } from '@/src/lib/api';
 import { useAuth } from '@/src/providers/AuthProvider';
 import type { LanguageQuestProfile as ProgressProfile } from '@/src/types/languageQuest';
 import { LanguageQuestRewardCollection } from '@/src/components/games/LanguageQuestRewards';
+import {
+  LANGUAGE_QUEST_STREAK_FRAMES,
+  languageQuestStreakFrame,
+} from '@/shared/languageQuestRewards';
+import { useLanguageQuestPreferences } from '@/src/components/games/LanguageQuestPreferences';
+import { LanguageQuestLegendaryVault } from '@/src/components/games/LanguageQuestLegendaryRewards';
 
 interface LearnerClassroom {
   id: string;
@@ -47,6 +57,7 @@ interface LearnerProfilePayload {
 
 export default function LanguageQuestProfile() {
   const { updateUser } = useAuth();
+  const { soundEnabled, reducedMotion, setSoundEnabled, setReducedMotion } = useLanguageQuestPreferences();
   const [profile, setProfile] = useState<LearnerProfilePayload | null>(null);
   const [avatarId, setAvatarId] = useState('owl');
   const [bio, setBio] = useState('');
@@ -147,6 +158,7 @@ export default function LanguageQuestProfile() {
   }
 
   const changed = avatarId !== profile.avatarId || bio !== profile.bio;
+  const activeFrame = languageQuestStreakFrame(profile.profile.bestStreak);
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 pb-10">
@@ -172,7 +184,58 @@ export default function LanguageQuestProfile() {
         </div>
       </section>
 
-      <LanguageQuestRewardCollection rewards={profile.profile.rewards} />
+      <LanguageQuestRewardCollection rewards={profile.profile.rewards} bestStreak={profile.profile.bestStreak} />
+
+      <LanguageQuestLegendaryVault rewards={profile.profile.rewards} expanded />
+
+      <section className="rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 to-fuchsia-50 p-5 shadow-sm dark:border-amber-500/20 dark:from-amber-950/20 dark:to-fuchsia-950/20 sm:p-7">
+        <div className="flex items-start gap-3">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-amber-400 to-fuchsia-500 text-white"><Sparkles className="h-5 w-5" /></span>
+          <div>
+            <h2 className="text-xl font-black text-slate-950 dark:text-white">Streak card frames</h2>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Your best streak automatically decorates every unlocked Quest Card. Current frame: {activeFrame.emoji} {activeFrame.name}.</p>
+          </div>
+        </div>
+        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
+          {LANGUAGE_QUEST_STREAK_FRAMES.map((frame) => {
+            const unlocked = profile.profile.bestStreak >= frame.unlockStreak;
+            return (
+              <div
+                key={frame.id}
+                className={`rounded-2xl border-2 p-3 text-center ${unlocked ? 'bg-white dark:bg-slate-900' : 'border-slate-200 bg-slate-100 opacity-55 dark:border-slate-700 dark:bg-slate-950'}`}
+                style={unlocked ? { borderColor: frame.colors[0], boxShadow: `0 0 0 2px ${frame.colors[1]}44` } : undefined}
+              >
+                <span className="text-2xl">{unlocked ? frame.emoji : '🔒'}</span>
+                <p className="mt-1 text-xs font-black text-slate-900 dark:text-white">{frame.name}</p>
+                <p className="mt-1 text-[10px] font-bold text-slate-500">{frame.unlockStreak}-day best</p>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/85 sm:p-7">
+        <h2 className="text-xl font-black text-slate-950 dark:text-white">Learning comfort</h2>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">These settings stay on this device.</p>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <label className="flex cursor-pointer items-center gap-4 rounded-2xl border border-slate-200 p-4 dark:border-slate-700">
+            <Volume2 className="h-5 w-5 text-violet-600" />
+            <span className="min-w-0 flex-1">
+              <span className="block font-black text-slate-900 dark:text-white">Success sounds</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">Play a short sound for correct answers.</span>
+            </span>
+            <Switch checked={soundEnabled} onCheckedChange={setSoundEnabled} aria-label="Success sounds" />
+          </label>
+          <label className="flex cursor-pointer items-center gap-4 rounded-2xl border border-slate-200 p-4 dark:border-slate-700">
+            <Wind className="h-5 w-5 text-sky-600" />
+            <span className="min-w-0 flex-1">
+              <span className="block font-black text-slate-900 dark:text-white">Reduce motion</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">Limit confetti, card tilts, and movement.</span>
+            </span>
+            <Switch checked={reducedMotion} onCheckedChange={setReducedMotion} aria-label="Reduce motion" />
+          </label>
+        </div>
+      </section>
 
       <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/85 sm:p-7">
         <div className="flex items-start gap-3">

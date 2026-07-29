@@ -12,6 +12,8 @@ import {
   RefreshCw,
   ShieldCheck,
   Star,
+  Target,
+  Trophy,
   UserMinus,
   Users,
 } from 'lucide-react';
@@ -63,6 +65,19 @@ interface ClassroomDetail {
   active: boolean;
   teacherName: string;
   focusCourse: (FocusCourse & { challengeCount: number }) | null;
+  challenges: {
+    id: string;
+    title: string;
+    description: string | null;
+    targetXp: number;
+    rewardLabel: string | null;
+    startsAt: string;
+    endsAt: string;
+    active: boolean;
+    progressXp: number;
+    progressPercent: number;
+    complete: boolean;
+  }[];
   members: ClassroomMember[];
 }
 
@@ -86,6 +101,11 @@ export default function LanguageQuestClassrooms() {
   const [focusCourseId, setFocusCourseId] = useState('');
   const [creating, setCreating] = useState(false);
   const [loadingRoster, setLoadingRoster] = useState(false);
+  const [challengeTitle, setChallengeTitle] = useState('');
+  const [challengeTarget, setChallengeTarget] = useState('300');
+  const [challengeDays, setChallengeDays] = useState('7');
+  const [challengeReward, setChallengeReward] = useState('');
+  const [creatingChallenge, setCreatingChallenge] = useState(false);
 
   const selectedSummary = useMemo(
     () => payload?.classrooms.find((classroom) => classroom.id === selectedId) || null,
@@ -200,6 +220,43 @@ export default function LanguageQuestClassrooms() {
       toast.success(`${member.name} removed from the classroom`);
     } catch (error: any) {
       toast.error(error?.message || 'Could not remove learner');
+    }
+  };
+
+  const createChallenge = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!detail || !challengeTitle.trim()) return;
+    setCreatingChallenge(true);
+    try {
+      await apiSend(`/api/language-quest/classrooms/${detail.id}/challenges`, 'POST', {
+        title: challengeTitle,
+        targetXp: Number(challengeTarget),
+        durationDays: Number(challengeDays),
+        rewardLabel: challengeReward,
+      });
+      setChallengeTitle('');
+      setChallengeReward('');
+      toast.success('Team challenge started');
+      loadRoster(detail.id);
+    } catch (error: any) {
+      toast.error(error?.message || 'Could not create the team challenge');
+    } finally {
+      setCreatingChallenge(false);
+    }
+  };
+
+  const closeChallenge = async (challengeId: string) => {
+    if (!detail) return;
+    try {
+      await apiSend(
+        `/api/language-quest/classrooms/${detail.id}/challenges/${challengeId}`,
+        'PATCH',
+        { active: false },
+      );
+      toast.success('Team challenge closed');
+      loadRoster(detail.id);
+    } catch (error: any) {
+      toast.error(error?.message || 'Could not close the team challenge');
     }
   };
 
@@ -334,6 +391,71 @@ export default function LanguageQuestClassrooms() {
                       {payload.courses.map((course) => <option key={course.id} value={course.id}>{course.imageEmoji} {course.title}</option>)}
                     </select>
                   </label>
+                </div>
+              </section>
+
+              <section className="rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-5 shadow-sm dark:border-amber-500/20 dark:from-amber-950/20 dark:to-orange-950/15 sm:p-6">
+                <div className="flex items-start gap-3">
+                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-amber-500 text-white"><Target className="h-5 w-5" /></span>
+                  <div>
+                    <h2 className="text-xl font-black text-slate-950 dark:text-white">Classroom XP challenges</h2>
+                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Set a cooperative goal. Every learner’s eligible XP contributes—there is no public messaging or individual pressure.</p>
+                  </div>
+                </div>
+
+                {selectedSummary.canEdit && (
+                  <form onSubmit={createChallenge} className="mt-5 grid gap-3 rounded-2xl bg-white p-4 dark:bg-slate-900 md:grid-cols-2">
+                    <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                      Challenge title
+                      <Input value={challengeTitle} onChange={(event) => setChallengeTitle(event.target.value.slice(0, 120))} className="mt-1.5" placeholder="Finish strong this week" />
+                    </label>
+                    <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                      Team reward (optional)
+                      <Input value={challengeReward} onChange={(event) => setChallengeReward(event.target.value.slice(0, 80))} className="mt-1.5" placeholder="Homework pass or class cheer" />
+                    </label>
+                    <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                      Target XP
+                      <Input type="number" min={30} max={10000} value={challengeTarget} onChange={(event) => setChallengeTarget(event.target.value)} className="mt-1.5" />
+                    </label>
+                    <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                      Duration
+                      <select value={challengeDays} onChange={(event) => setChallengeDays(event.target.value)} className="mt-1.5 h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm dark:border-slate-700 dark:bg-slate-950">
+                        <option value="3">3 days</option>
+                        <option value="7">1 week</option>
+                        <option value="14">2 weeks</option>
+                        <option value="30">1 month</option>
+                      </select>
+                    </label>
+                    <Button type="submit" disabled={creatingChallenge || !challengeTitle.trim() || !selectedSummary.active} className="md:col-span-2">
+                      <Trophy className="mr-2 h-4 w-4" /> {creatingChallenge ? 'Starting…' : 'Start team challenge'}
+                    </Button>
+                  </form>
+                )}
+
+                <div className="mt-4 grid gap-3">
+                  {!detail?.challenges.length ? (
+                    <p className="rounded-2xl border border-dashed border-amber-300 p-5 text-center text-sm text-slate-500 dark:border-amber-500/25 dark:text-slate-300">No classroom challenges yet.</p>
+                  ) : detail.challenges.map((challenge) => (
+                    <article key={challenge.id} className="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="font-black text-slate-950 dark:text-white">{challenge.title}</h3>
+                            <Badge variant={challenge.complete ? 'default' : challenge.active ? 'outline' : 'secondary'}>
+                              {challenge.complete ? 'Completed' : challenge.active ? 'Active' : 'Closed'}
+                            </Badge>
+                          </div>
+                          <p className="mt-1 text-xs text-slate-500">Ends {new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(challenge.endsAt))}</p>
+                        </div>
+                        {challenge.active && selectedSummary.canEdit && <Button size="sm" variant="ghost" onClick={() => closeChallenge(challenge.id)}>Close</Button>}
+                      </div>
+                      <Progress value={challenge.progressPercent} className="mt-3" />
+                      <div className="mt-2 flex justify-between gap-3 text-xs font-bold text-slate-500">
+                        <span>{challenge.progressXp}/{challenge.targetXp} XP</span>
+                        {challenge.rewardLabel && <span className="text-amber-700 dark:text-amber-300">Reward: {challenge.rewardLabel}</span>}
+                      </div>
+                    </article>
+                  ))}
                 </div>
               </section>
 

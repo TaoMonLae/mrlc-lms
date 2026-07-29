@@ -521,3 +521,190 @@ html[lang='mnw'] :is(input, button, select) {
     transform: none;
   }
 }
+
+/* ── Language Quest legendary golden chests ─────────────────────────────── */
+.lq-legendary-chest {
+  width: 128px;
+  height: 104px;
+  margin-inline: auto;
+  filter: drop-shadow(0 18px 24px rgba(245, 158, 11, 0.2));
+  animation: lq-chest-hover 3.2s ease-in-out infinite;
+}
+
+.lq-legendary-chest-glow {
+  position: absolute;
+  inset: 20% -18% -20%;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(250, 204, 21, 0.45), transparent 68%);
+  filter: blur(12px);
+}
+
+.lq-legendary-chest-lid,
+.lq-legendary-chest-base,
+.lq-reveal-chest-lid,
+.lq-reveal-chest-base {
+  position: absolute;
+  left: 8%;
+  width: 84%;
+  border: 3px solid #fde68a;
+  background:
+    linear-gradient(90deg, transparent 45%, #fef3c7 45%, #fef3c7 55%, transparent 55%),
+    linear-gradient(145deg, #fbbf24, #92400e 58%, #451a03);
+  box-shadow:
+    inset 0 0 0 3px rgba(120, 53, 15, 0.55),
+    0 8px 18px rgba(0, 0, 0, 0.42);
+}
+
+.lq-legendary-chest-lid {
+  top: 13px;
+  height: 40px;
+  border-radius: 52px 52px 8px 8px;
+}
+
+.lq-legendary-chest-band {
+  position: absolute;
+  inset: -3px 44% -3px;
+  border-inline: 2px solid #78350f;
+  background: linear-gradient(#fef3c7, #f59e0b);
+}
+
+.lq-legendary-chest-base {
+  bottom: 5px;
+  height: 58px;
+  border-radius: 7px 7px 16px 16px;
+}
+
+.lq-legendary-chest-lock {
+  position: absolute;
+  left: 50%;
+  top: -4px;
+  display: grid;
+  width: 34px;
+  height: 36px;
+  translate: -50% 0;
+  place-items: center;
+  border: 2px solid #78350f;
+  border-radius: 6px 6px 10px 10px;
+  color: #78350f;
+  background: linear-gradient(#fef9c3, #f59e0b);
+}
+
+.lq-legendary-rays {
+  opacity: 0;
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(250, 204, 21, 0.62) 0deg 7deg,
+    transparent 7deg 20deg
+  );
+  mask-image: radial-gradient(circle, black 0 28%, transparent 68%);
+  animation: lq-rays-awaken 2s ease-out 0.45s both, lq-rays-turn 16s linear 2.4s infinite;
+}
+
+.lq-reveal-chest {
+  perspective: 800px;
+  filter: drop-shadow(0 25px 32px rgba(245, 158, 11, 0.34));
+  animation: lq-reveal-chest-bounce 0.8s cubic-bezier(0.2, 0.85, 0.3, 1.2) both;
+}
+
+.lq-reveal-chest-lid {
+  z-index: 3;
+  top: 6px;
+  height: 62px;
+  border-radius: 70px 70px 10px 10px;
+  transform-origin: 50% 100%;
+  animation: lq-reveal-lid-open 1.05s cubic-bezier(0.18, 0.9, 0.25, 1) 0.72s both;
+}
+
+.lq-reveal-chest-base {
+  z-index: 4;
+  bottom: 0;
+  height: 92px;
+  border-radius: 10px 10px 22px 22px;
+}
+
+.lq-reveal-chest-base span {
+  position: absolute;
+  left: 50%;
+  top: -9px;
+  display: grid;
+  width: 52px;
+  height: 54px;
+  translate: -50% 0;
+  place-items: center;
+  border: 3px solid #92400e;
+  border-radius: 9px 9px 15px 15px;
+  color: #78350f;
+  background: linear-gradient(145deg, #fff7ae, #f59e0b);
+  box-shadow: 0 6px 15px rgba(69, 26, 3, 0.42);
+}
+
+.lq-legendary-card-rise {
+  opacity: 0;
+  transform-origin: 50% 100%;
+  animation: lq-card-rise 1.35s cubic-bezier(0.16, 0.92, 0.25, 1.08) 1.05s both;
+}
+
+.lq-legendary-spark {
+  position: absolute;
+  z-index: 15;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  background: #fef08a;
+  box-shadow: 0 0 18px #facc15;
+  opacity: 0;
+  rotate: 45deg;
+  animation: lq-spark-flight 1.6s ease-out 1s both;
+}
+
+.lq-legendary-spark-a { left: 16%; top: 43%; --lq-spark-x: -46px; --lq-spark-y: -125px; }
+.lq-legendary-spark-b { right: 14%; top: 48%; --lq-spark-x: 54px; --lq-spark-y: -145px; animation-delay: 1.15s; }
+.lq-legendary-spark-c { left: 48%; top: 55%; --lq-spark-x: 8px; --lq-spark-y: -190px; animation-delay: 1.3s; }
+
+@keyframes lq-chest-hover {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-7px) rotate(1deg); }
+}
+
+@keyframes lq-reveal-chest-bounce {
+  from { opacity: 0; transform: translateY(110px) scale(0.5); }
+  70% { opacity: 1; transform: translateY(-8px) scale(1.04); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes lq-reveal-lid-open {
+  0% { transform: rotateX(0deg) translateY(0); }
+  45% { transform: rotateX(-22deg) translateY(-10px); }
+  100% { transform: rotateX(-118deg) translateY(-34px); }
+}
+
+@keyframes lq-card-rise {
+  0% { opacity: 0; transform: translateY(280px) rotateY(90deg) scale(0.25); }
+  55% { opacity: 1; transform: translateY(48px) rotateY(-8deg) scale(0.86); }
+  78% { transform: translateY(-10px) rotateY(5deg) scale(1.04); }
+  100% { opacity: 1; transform: translateY(0) rotateY(0deg) scale(1); }
+}
+
+@keyframes lq-rays-awaken {
+  from { opacity: 0; transform: rotate(-20deg) scale(0.25); }
+  to { opacity: 0.72; transform: rotate(0deg) scale(1); }
+}
+
+@keyframes lq-rays-turn {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes lq-spark-flight {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.3) rotate(0deg); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--lq-spark-x), var(--lq-spark-y)) scale(1.4) rotate(220deg); }
+}
+
+.lq-reduced-motion *,
+.lq-reduced-motion *::before,
+.lq-reduced-motion *::after {
+  scroll-behavior: auto !important;
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}

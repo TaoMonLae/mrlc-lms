@@ -11,6 +11,10 @@ import { sentenceAnswerMatches } from '@/shared/languageQuest';
 import { useLanguageQuestSupport } from '@/src/components/games/LanguageQuestSupport';
 import { LanguageQuestPinyinText } from '@/src/components/games/LanguageQuestPinyinText';
 import { LanguageQuestRewardReveal } from '@/src/components/games/LanguageQuestRewards';
+import {
+  playLanguageQuestSuccessSound,
+  useLanguageQuestPreferences,
+} from '@/src/components/games/LanguageQuestPreferences';
 
 interface AnswerResult {
   correct: boolean;
@@ -51,44 +55,9 @@ function speak(value: string, language: string) {
   window.speechSynthesis.speak(utterance);
 }
 
-let sentenceSuccessAudioContext: AudioContext | null = null;
-
-function playSentenceSuccessSound() {
-  try {
-    const AudioContextClass = window.AudioContext
-      || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!AudioContextClass) return;
-    const context = sentenceSuccessAudioContext ?? new AudioContextClass();
-    sentenceSuccessAudioContext = context;
-    if (context.state === 'suspended') void context.resume();
-
-    const start = context.currentTime;
-    const notes = [
-      { frequency: 523.25, delay: 0 },
-      { frequency: 659.25, delay: 0.09 },
-      { frequency: 783.99, delay: 0.18 },
-    ];
-    notes.forEach(({ frequency, delay }) => {
-      const oscillator = context.createOscillator();
-      const gain = context.createGain();
-      const noteStart = start + delay;
-      oscillator.type = 'sine';
-      oscillator.frequency.setValueAtTime(frequency, noteStart);
-      gain.gain.setValueAtTime(0.0001, noteStart);
-      gain.gain.exponentialRampToValueAtTime(0.12, noteStart + 0.025);
-      gain.gain.exponentialRampToValueAtTime(0.0001, noteStart + 0.24);
-      oscillator.connect(gain);
-      gain.connect(context.destination);
-      oscillator.start(noteStart);
-      oscillator.stop(noteStart + 0.25);
-    });
-  } catch {
-    // Correct-answer feedback still works when Web Audio is unavailable.
-  }
-}
-
 export default function LanguageQuestLesson() {
   const { explanationLanguage, lq } = useLanguageQuestSupport();
+  const { soundEnabled, reducedMotion } = useLanguageQuestPreferences();
   const { lessonId } = useParams<{ lessonId: string }>();
   const [lesson, setLesson] = useState<LanguageQuestLessonPayload | null>(null);
   const [loading, setLoading] = useState(true);
@@ -161,9 +130,12 @@ export default function LanguageQuestLesson() {
   const outOfHearts = Boolean(challenge && !challenge.completed && (profile?.hearts ?? 1) <= 0);
 
   const optionLetters = useMemo(() => ['A', 'B', 'C', 'D', 'E', 'F'], []);
+  const celebrate = (options: Parameters<typeof confetti>[0]) => {
+    if (!reducedMotion) void confetti(options);
+  };
 
   const startPractice = () => {
-    confetti({ particleCount: 60, spread: 65, origin: { y: 0.7 }, colors: [lesson?.course.accentColor || '#7c3aed', '#ffffff'] });
+    celebrate({ particleCount: 60, spread: 65, origin: { y: 0.7 }, colors: [lesson?.course.accentColor || '#7c3aed', '#ffffff'] });
     setPhase(sentenceCards.length ? 'sentence' : 'quiz');
   };
 
@@ -172,8 +144,8 @@ export default function LanguageQuestLesson() {
     const correct = sentenceAnswerMatches(sentenceInput, sentenceCard.text);
     setSentenceFeedback(correct ? 'correct' : 'incorrect');
     if (correct) {
-      playSentenceSuccessSound();
-      confetti({ particleCount: 28, spread: 45, origin: { y: 0.72 }, scalar: 0.7, colors: [lesson?.course.accentColor || '#7c3aed'] });
+      if (soundEnabled) playLanguageQuestSuccessSound();
+      celebrate({ particleCount: 28, spread: 45, origin: { y: 0.72 }, scalar: 0.7, colors: [lesson?.course.accentColor || '#7c3aed'] });
     }
   };
 
@@ -196,14 +168,15 @@ export default function LanguageQuestLesson() {
       setAnswer(result);
       setProfile(result.profile);
       if (result.correct) {
+        if (soundEnabled) playLanguageQuestSuccessSound();
         setSessionPoints((current) => current + result.pointsAwarded);
         setCombo((current) => current + 1);
-        confetti({ particleCount: 40, spread: 55, origin: { y: 0.65 }, scalar: 0.8, colors: [lesson?.course.accentColor || '#7c3aed'] });
+        celebrate({ particleCount: 40, spread: 55, origin: { y: 0.65 }, scalar: 0.8, colors: [lesson?.course.accentColor || '#7c3aed'] });
         const newestRewardId = result.unlockedRewardIds.at(-1);
         if (newestRewardId) {
           setUnlockedRewardId(newestRewardId);
           setRewardRevealOpen(true);
-          confetti({
+          celebrate({
             particleCount: 150,
             spread: 95,
             origin: { y: 0.58 },
@@ -259,7 +232,7 @@ export default function LanguageQuestLesson() {
   // Celebrate finishing the lesson with a bigger burst.
   useEffect(() => {
     if (!finished) return;
-    confetti({ particleCount: 140, spread: 90, origin: { y: 0.6 }, colors: [lesson?.course.accentColor || '#7c3aed', '#f59e0b', '#10b981'] });
+    celebrate({ particleCount: 140, spread: 90, origin: { y: 0.6 }, colors: [lesson?.course.accentColor || '#7c3aed', '#f59e0b', '#10b981'] });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [finished]);
 

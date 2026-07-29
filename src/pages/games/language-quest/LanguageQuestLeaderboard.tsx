@@ -1,15 +1,25 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Flame, Medal, Star, Trophy } from 'lucide-react';
+import { ArrowLeft, Flame, Medal, Sparkles, Star, Trophy } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { LanguageQuestAvatar } from '@/src/components/games/LanguageQuestAvatar';
 import { apiGet } from '@/src/lib/api';
+import { languageQuestRewardCardById } from '@/shared/languageQuestRewards';
 
 interface LeaderboardPayload {
   currentUserId: string;
   currentUserRank: number;
+  monthlyShowcase: {
+    rank: number;
+    userId: string;
+    name: string;
+    avatarId: string;
+    monthXp: number;
+    currentCardId: string;
+    monthKey: string;
+  }[];
   leaders: {
     rank: number;
     userId: string;
@@ -53,6 +63,34 @@ export default function LanguageQuestLeaderboard() {
             <p className="mt-1 text-sm text-white/80">Your current rank is #{data.currentUserRank}. Keep practising!</p>
           </div>
         </div>
+      </section>
+
+      <section className="rounded-3xl border border-fuchsia-200 bg-gradient-to-br from-violet-950 via-fuchsia-950 to-slate-950 p-5 text-white shadow-lg dark:border-fuchsia-500/20 sm:p-6">
+        <div className="flex items-center gap-3">
+          <Sparkles className="h-5 w-5 text-amber-300" />
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-fuchsia-200">Monthly learner showcase</p>
+            <h2 className="text-xl font-black">Celebrating consistent learning</h2>
+          </div>
+        </div>
+        <p className="mt-2 text-xs leading-5 text-white/65">Top learning XP this month. This showcase has no comments, direct messages, or public profile links.</p>
+        {data.monthlyShowcase.length === 0 ? (
+          <p className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-5 text-center text-sm text-white/60">The month’s first learner can still take this spot.</p>
+        ) : (
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            {data.monthlyShowcase.map((learner) => {
+              const card = languageQuestRewardCardById(learner.currentCardId);
+              return (
+                <article key={learner.userId} className="rounded-2xl border border-white/10 bg-white/10 p-4 text-center backdrop-blur">
+                  <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-white/10 text-3xl">{card?.emoji || '🌟'}</span>
+                  <LanguageQuestAvatar avatarId={learner.avatarId} name={learner.name} className="mx-auto -mt-3 h-10 w-10 text-xl ring-2 ring-fuchsia-300" />
+                  <p className="mt-2 truncate font-black">{learner.name}</p>
+                  <p className="mt-1 text-xs font-bold text-amber-200">#{learner.rank} • {learner.monthXp} XP</p>
+                </article>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-surface-raised dark:bg-surface-indigo">

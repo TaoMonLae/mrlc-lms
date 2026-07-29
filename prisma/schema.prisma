@@ -285,6 +285,9 @@ model User {
   chessMatchesBlack          ChessMatch[]                     @relation("ChessBlack")
   languageQuestProgress      LanguageQuestUserProgress?
   languageQuestChallenges    LanguageQuestChallengeProgress[]
+  languageQuestXpEvents      LanguageQuestXpEvent[]
+  languageQuestMastery       LanguageQuestMasteryProgress[]
+  languageQuestMissionClaims LanguageQuestMissionClaim[]
   languageQuestAvatar        String                           @default("owl")
   languageQuestBio           String?
   languageQuestClassrooms    LanguageQuestClassroom[]         @relation("LanguageQuestClassroomTeacher")
@@ -3927,6 +3930,7 @@ model LanguageQuestCourse {
   units        LanguageQuestUnit[]
   userProgress LanguageQuestUserProgress[]
   classrooms   LanguageQuestClassroom[]
+  xpEvents     LanguageQuestXpEvent[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -3980,6 +3984,7 @@ model LanguageQuestChallenge {
 
   options  LanguageQuestOption[]
   progress LanguageQuestChallengeProgress[]
+  mastery  LanguageQuestMasteryProgress[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -4046,22 +4051,90 @@ model LanguageQuestChallengeProgress {
   @@index([completed])
 }
 
+model LanguageQuestXpEvent {
+  id         String               @id @default(uuid())
+  userId     String
+  user       User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId   String?
+  course     LanguageQuestCourse? @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  source     String
+  sourceId   String?
+  points     Int
+  occurredAt DateTime             @default(now())
+
+  @@index([userId, occurredAt])
+  @@index([courseId, occurredAt])
+  @@index([source, occurredAt])
+}
+
+model LanguageQuestMasteryProgress {
+  id             String                 @id @default(uuid())
+  userId         String
+  user           User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challengeId    String
+  challenge      LanguageQuestChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  stage          Int                    @default(0)
+  dueAt          DateTime
+  lastReviewedAt DateTime?
+  correctReviews Int                    @default(0)
+  wrongReviews   Int                    @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, challengeId])
+  @@index([userId, dueAt])
+  @@index([challengeId])
+}
+
+model LanguageQuestMissionClaim {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  missionKey String
+  periodKey  String
+  rewardXp   Int
+  claimedAt  DateTime @default(now())
+
+  @@unique([userId, missionKey, periodKey])
+  @@index([userId, claimedAt])
+}
+
 model LanguageQuestClassroom {
-  id            String                         @id @default(uuid())
+  id            String                            @id @default(uuid())
   name          String
   teacherId     String
-  teacher       User                           @relation("LanguageQuestClassroomTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
-  joinCode      String                         @unique
+  teacher       User                              @relation("LanguageQuestClassroomTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+  joinCode      String                            @unique
   focusCourseId String?
-  focusCourse   LanguageQuestCourse?           @relation(fields: [focusCourseId], references: [id], onDelete: SetNull)
-  active        Boolean                        @default(true)
+  focusCourse   LanguageQuestCourse?              @relation(fields: [focusCourseId], references: [id], onDelete: SetNull)
+  active        Boolean                           @default(true)
   members       LanguageQuestClassroomMember[]
+  challenges    LanguageQuestClassroomChallenge[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([teacherId, active])
   @@index([focusCourseId])
+}
+
+model LanguageQuestClassroomChallenge {
+  id          String                 @id @default(uuid())
+  classroomId String
+  classroom   LanguageQuestClassroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  targetXp    Int
+  rewardLabel String?
+  startsAt    DateTime
+  endsAt      DateTime
+  active      Boolean                @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([classroomId, active, endsAt])
 }
 
 model LanguageQuestClassroomMember {

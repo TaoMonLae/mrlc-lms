@@ -17,6 +17,13 @@ import {
   languageQuestRewardProgress,
   newlyUnlockedLanguageQuestRewardIds,
 } from "./shared/languageQuestRewards";
+import {
+  LANGUAGE_QUEST_MASTERY_POINTS,
+  LANGUAGE_QUEST_MISSIONS,
+  languageQuestMissionProgress,
+  languageQuestPeriodBounds,
+  nextLanguageQuestMasteryReview,
+} from "./shared/languageQuestEngagement";
 import { importedSpanishCourse, type OfficialLanguageQuestCourse } from "./languageQuestImportedCourses";
 import { mandarinFoundationsCourse } from "./languageQuestMandarinCourse";
 import { completeMandarinCourse } from "./languageQuestCompleteMandarinCourse";
@@ -392,6 +399,63 @@ function profileJson(progress: any) {
     activeCourseId: progress.activeCourseId,
     rewards: languageQuestRewardProgress(progress.points),
   };
+}
+
+async function missionSnapshot(prisma: any, userId: string, now = new Date()) {
+  const periods = languageQuestPeriodBounds(now);
+  const [events, claims] = await Promise.all([
+    prisma.languageQuestXpEvent.findMany({
+      where: {
+        userId,
+        occurredAt: { gte: periods.weekStart, lt: periods.weekEnd },
+        source: { not: "MISSION_REWARD" },
+      },
+      select: { courseId: true, points: true, source: true, occurredAt: true },
+    }),
+    prisma.languageQuestMissionClaim.findMany({
+      where: {
+        userId,
+        OR: [
+          { periodKey: periods.dayKey },
+          { periodKey: periods.weekKey },
+        ],
+      },
+      select: { missionKey: true, periodKey: true },
+    }),
+  ]);
+  const daily = events.filter((event: any) => event.occurredAt >= periods.dayStart);
+  const claimedKeys = new Set<string>(
+    claims.map((claim: any) => `${claim.missionKey}:${claim.periodKey}`),
+  );
+  return {
+    periods,
+    missions: languageQuestMissionProgress({
+      dailyXp: daily.reduce((sum: number, event: any) => sum + event.points, 0),
+      weeklyXp: events.reduce((sum: number, event: any) => sum + event.points, 0),
+      weeklyCourseCount: new Set(events.map((event: any) => event.courseId).filter(Boolean)).size,
+      dailyMasteryWins: daily.filter((event: any) => event.source === "MASTERY").length,
+      claimedKeys,
+      now,
+    }),
+  };
+}
+
+async function classroomChallengeProgress(prisma: any, challenge: any): Promise<number> {
+  const members = await prisma.languageQuestClassroomMember.findMany({
+    where: { classroomId: challenge.classroomId },
+    select: { userId: true },
+  });
+  if (members.length === 0) return 0;
+  const aggregate = await prisma.languageQuestXpEvent.aggregate({
+    where: {
+      userId: { in: members.map((member: any) => member.userId) },
+      occurredAt: { gte: challenge.startsAt, lte: challenge.endsAt },
+      source: { not: "MISSION_REWARD" },
+      ...(challenge.classroom?.focusCourseId ? { courseId: challenge.classroom.focusCourseId } : {}),
+    },
+    _sum: { points: true },
+  });
+  return aggregate._sum.points || 0;
 }
 
 function databaseUnavailable(error: any): boolean {
@@ -871,6 +935,21 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
               attempts: 1, correctAttempts: 1, completedAt: now, lastAttemptAt: now,
             },
           });
+          if (firstClear) {
+            const firstReview = nextLanguageQuestMasteryReview(0, true, now);
+            await tx.languageQuestMasteryProgress.upsert({
+              where: {
+                userId_challengeId: { userId: jwtUser.userId, challengeId: challenge.id },
+              },
+              update: {},
+              create: {
+                userId: jwtUser.userId,
+                challengeId: challenge.id,
+                stage: 1,
+                dueAt: firstReview.dueAt,
+              },
+            });
+          }
           const updated = await tx.languageQuestUserProgress.update({
             where: { userId: jwtUser.userId },
             data: {
@@ -880,6 +959,18 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
               currentStreak: streak.currentStreak, bestStreak: streak.bestStreak, lastPlayedDate: now,
             },
           });
+          if (pointsAwarded > 0) {
+            await tx.languageQuestXpEvent.create({
+              data: {
+                userId: jwtUser.userId,
+                courseId: challenge.lesson.unit.courseId,
+                source: firstClear ? "CHALLENGE_FIRST_CLEAR" : "CHALLENGE_PRACTICE",
+                sourceId: challenge.id,
+                points: pointsAwarded,
+                occurredAt: now,
+              },
+            });
+          }
           return {
             correct: true,
             pointsAwarded,
@@ -913,10 +1004,296 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
     }
   });
 
+  app.get("/api/language-quest/engagement", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const now = new Date();
+    try {
+      const [{ missions }, classroomChallenges, masteryDueCount] = await Promise.all([
+        missionSnapshot(prisma, jwtUser.userId, now),
+        prisma.languageQuestClassroomChallenge.findMany({
+          where: {
+            active: true,
+            startsAt: { lte: now },
+            endsAt: { gte: now },
+            classroom: {
+              active: true,
+              members: { some: { userId: jwtUser.userId } },
+            },
+          },
+          orderBy: { endsAt: "asc" },
+          include: {
+            classroom: {
+              select: { id: true, name: true, focusCourseId: true },
+            },
+          },
+        }),
+        prisma.languageQuestMasteryProgress.count({
+          where: { userId: jwtUser.userId, dueAt: { lte: now } },
+        }),
+      ]);
+      const teamChallenges = await Promise.all(classroomChallenges.map(async (challenge: any) => {
+        const progressXp = await classroomChallengeProgress(prisma, challenge);
+        return {
+          id: challenge.id,
+          classroomName: challenge.classroom.name,
+          title: challenge.title,
+          description: challenge.description,
+          targetXp: challenge.targetXp,
+          progressXp,
+          progressPercent: Math.min(100, Math.round((progressXp / challenge.targetXp) * 100)),
+          rewardLabel: challenge.rewardLabel,
+          endsAt: challenge.endsAt,
+          complete: progressXp >= challenge.targetXp,
+        };
+      }));
+      res.json({ missions, classroomChallenges: teamChallenges, masteryDueCount });
+    } catch (error) {
+      logger.error("Error loading Language Quest engagement:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load missions and challenges" });
+    }
+  });
+
+  app.post("/api/language-quest/missions/:key/claim", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const key = text(req.params.key, 40);
+    if (!LANGUAGE_QUEST_MISSIONS.some((mission) => mission.key === key)) {
+      res.status(404).json({ error: "Mission not found" });
+      return;
+    }
+    try {
+      const snapshot = await missionSnapshot(prisma, jwtUser.userId);
+      const mission = snapshot.missions.find((candidate) => candidate.key === key);
+      if (!mission || !mission.claimable) {
+        res.status(409).json({
+          error: mission?.claimed ? "This mission reward was already claimed" : "Complete the mission before claiming its reward",
+        });
+        return;
+      }
+      await prisma.languageQuestUserProgress.upsert({
+        where: { userId: jwtUser.userId },
+        update: {},
+        create: { userId: jwtUser.userId },
+      });
+      const result = await prisma.$transaction(async (tx: any) => {
+        const rows: any[] = await tx.$queryRaw`
+          SELECT * FROM "LanguageQuestUserProgress" WHERE "userId" = ${jwtUser.userId} FOR UPDATE
+        `;
+        const progress = rows[0];
+        await tx.languageQuestMissionClaim.create({
+          data: {
+            userId: jwtUser.userId,
+            missionKey: mission.key,
+            periodKey: mission.periodKey,
+            rewardXp: mission.rewardXp,
+          },
+        });
+        const updated = await tx.languageQuestUserProgress.update({
+          where: { userId: jwtUser.userId },
+          data: { points: { increment: mission.rewardXp } },
+        });
+        await tx.languageQuestXpEvent.create({
+          data: {
+            userId: jwtUser.userId,
+            source: "MISSION_REWARD",
+            sourceId: `${mission.key}:${mission.periodKey}`,
+            points: mission.rewardXp,
+          },
+        });
+        return {
+          pointsAwarded: mission.rewardXp,
+          profile: profileJson(updated),
+          unlockedRewardIds: newlyUnlockedLanguageQuestRewardIds(progress.points, updated.points),
+        };
+      });
+      res.json(result);
+    } catch (error: any) {
+      if (error?.code === "P2002") {
+        res.status(409).json({ error: "This mission reward was already claimed" });
+        return;
+      }
+      logger.error("Error claiming Language Quest mission:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to claim this mission" });
+    }
+  });
+
+  app.get("/api/language-quest/mastery", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const now = new Date();
+    try {
+      const completed = await prisma.languageQuestChallengeProgress.findMany({
+        where: { userId: jwtUser.userId, completed: true },
+        select: { challengeId: true },
+      });
+      const existing = await prisma.languageQuestMasteryProgress.findMany({
+        where: { userId: jwtUser.userId },
+        select: { challengeId: true },
+      });
+      const existingIds = new Set(existing.map((row: any) => row.challengeId));
+      const missing = completed
+        .filter((row: any) => !existingIds.has(row.challengeId))
+        .map((row: any) => ({
+          userId: jwtUser.userId,
+          challengeId: row.challengeId,
+          stage: 0,
+          dueAt: now,
+        }));
+      if (missing.length > 0) {
+        await prisma.languageQuestMasteryProgress.createMany({ data: missing, skipDuplicates: true });
+      }
+      const [dueCount, cards] = await Promise.all([
+        prisma.languageQuestMasteryProgress.count({
+          where: { userId: jwtUser.userId, dueAt: { lte: now } },
+        }),
+        prisma.languageQuestMasteryProgress.findMany({
+          where: { userId: jwtUser.userId, dueAt: { lte: now } },
+          take: 10,
+          orderBy: [{ dueAt: "asc" }, { stage: "asc" }],
+          include: {
+            challenge: {
+              include: {
+                options: { orderBy: { order: "asc" } },
+                lesson: { include: { unit: { include: { course: true } } } },
+              },
+            },
+          },
+        }),
+      ]);
+      res.json({
+        dueCount,
+        cards: cards.map((row: any) => ({
+          challengeId: row.challengeId,
+          stage: row.stage,
+          question: row.challenge.question,
+          course: {
+            id: row.challenge.lesson.unit.course.id,
+            title: row.challenge.lesson.unit.course.title,
+            language: row.challenge.lesson.unit.course.language,
+            accentColor: row.challenge.lesson.unit.course.accentColor,
+          },
+          options: shuffle(row.challenge.options).map((option: any) => ({
+            id: option.id,
+            text: option.text,
+            emoji: option.emoji,
+            audioText: option.audioText,
+            pinyin: languageQuestPinyin(option.text, row.challenge.lesson.unit.course.language),
+          })),
+        })),
+      });
+    } catch (error) {
+      logger.error("Error loading Language Quest mastery reviews:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load mastery reviews" });
+    }
+  });
+
+  app.post("/api/language-quest/mastery/:id/answer", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const optionId = text(req.body?.optionId, 100);
+    if (!optionId) { res.status(400).json({ error: "Choose an answer" }); return; }
+    const now = new Date();
+    try {
+      const challenge = await prisma.languageQuestChallenge.findUnique({
+        where: { id: req.params.id },
+        include: {
+          options: true,
+          lesson: { include: { unit: { include: { course: true } } } },
+        },
+      });
+      const selected = challenge?.options.find((option: any) => option.id === optionId);
+      const correctOption = challenge?.options.find((option: any) => option.correct);
+      if (!challenge || !selected || !correctOption) {
+        res.status(400).json({ error: "That mastery answer is not available" });
+        return;
+      }
+      await prisma.languageQuestUserProgress.upsert({
+        where: { userId: jwtUser.userId },
+        update: {},
+        create: { userId: jwtUser.userId },
+      });
+      const result = await prisma.$transaction(async (tx: any) => {
+        const reviewRows: any[] = await tx.$queryRaw`
+          SELECT * FROM "LanguageQuestMasteryProgress"
+          WHERE "userId" = ${jwtUser.userId} AND "challengeId" = ${challenge.id}
+          FOR UPDATE
+        `;
+        const review = reviewRows[0];
+        if (!review || review.dueAt > now) return { unavailable: true as const };
+        const next = nextLanguageQuestMasteryReview(review.stage, Boolean(selected.correct), now);
+        await tx.languageQuestMasteryProgress.update({
+          where: { userId_challengeId: { userId: jwtUser.userId, challengeId: challenge.id } },
+          data: {
+            stage: next.stage,
+            dueAt: next.dueAt,
+            lastReviewedAt: now,
+            ...(selected.correct
+              ? { correctReviews: { increment: 1 } }
+              : { wrongReviews: { increment: 1 } }),
+          },
+        });
+        if (!selected.correct) {
+          return {
+            correct: false,
+            pointsAwarded: 0,
+            nextDueAt: next.dueAt,
+            correctOptionId: correctOption.id,
+            correctAnswer: correctOption.text,
+          };
+        }
+        const progressRows: any[] = await tx.$queryRaw`
+          SELECT * FROM "LanguageQuestUserProgress" WHERE "userId" = ${jwtUser.userId} FOR UPDATE
+        `;
+        const progress = progressRows[0];
+        const streak = nextLanguageQuestStreak({
+          currentStreak: progress.currentStreak,
+          bestStreak: progress.bestStreak,
+          lastPlayedDate: progress.lastPlayedDate,
+          now,
+        });
+        const updated = await tx.languageQuestUserProgress.update({
+          where: { userId: jwtUser.userId },
+          data: {
+            points: { increment: LANGUAGE_QUEST_MASTERY_POINTS },
+            activeCourseId: challenge.lesson.unit.courseId,
+            currentStreak: streak.currentStreak,
+            bestStreak: streak.bestStreak,
+            lastPlayedDate: now,
+          },
+        });
+        await tx.languageQuestXpEvent.create({
+          data: {
+            userId: jwtUser.userId,
+            courseId: challenge.lesson.unit.courseId,
+            source: "MASTERY",
+            sourceId: challenge.id,
+            points: LANGUAGE_QUEST_MASTERY_POINTS,
+            occurredAt: now,
+          },
+        });
+        return {
+          correct: true,
+          pointsAwarded: LANGUAGE_QUEST_MASTERY_POINTS,
+          nextDueAt: next.dueAt,
+          correctOptionId: correctOption.id,
+          correctAnswer: correctOption.text,
+          profile: profileJson(updated),
+          unlockedRewardIds: newlyUnlockedLanguageQuestRewardIds(progress.points, updated.points),
+        };
+      });
+      if (result.unavailable) {
+        res.status(409).json({ error: "This review is no longer due" });
+        return;
+      }
+      res.json(result);
+    } catch (error) {
+      logger.error("Error checking Language Quest mastery answer:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to check this mastery answer" });
+    }
+  });
+
   app.get("/api/language-quest/leaderboard", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
-      const [leaders, mine] = await Promise.all([
+      const periods = languageQuestPeriodBounds();
+      const [leaders, mine, monthlyXp] = await Promise.all([
         prisma.languageQuestUserProgress.findMany({
           where: { user: { isActive: true } },
           take: 50,
@@ -924,11 +1301,45 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           include: { user: { select: { id: true, firstName: true, lastName: true, role: true, languageQuestAvatar: true } } },
         }),
         getProgress(prisma, jwtUser.userId),
+        prisma.languageQuestXpEvent.groupBy({
+          by: ["userId"],
+          where: {
+            occurredAt: { gte: periods.monthStart, lt: periods.monthEnd },
+            source: { not: "MISSION_REWARD" },
+            user: { isActive: true },
+          },
+          _sum: { points: true },
+          orderBy: { _sum: { points: "desc" } },
+          take: 3,
+        }),
       ]);
+      const showcaseUsers = monthlyXp.length
+        ? await prisma.user.findMany({
+          where: { id: { in: monthlyXp.map((row: any) => row.userId) } },
+          select: {
+            id: true, firstName: true, lastName: true, languageQuestAvatar: true,
+            languageQuestProgress: { select: { points: true } },
+          },
+        })
+        : [];
+      const showcaseById = new Map(showcaseUsers.map((user: any) => [user.id, user]));
       const rank = await prisma.languageQuestUserProgress.count({ where: { points: { gt: mine.points } } });
       res.json({
         currentUserId: jwtUser.userId,
         currentUserRank: rank + 1,
+        monthlyShowcase: monthlyXp.map((row: any, index: number) => {
+          const user: any = showcaseById.get(row.userId);
+          const rewards = languageQuestRewardProgress(user?.languageQuestProgress?.points || 0);
+          return {
+            rank: index + 1,
+            userId: row.userId,
+            name: user ? `${user.firstName} ${user.lastName}`.trim() : "Learner",
+            avatarId: user?.languageQuestAvatar || DEFAULT_LANGUAGE_QUEST_AVATAR,
+            monthXp: row._sum.points || 0,
+            currentCardId: rewards.currentCardId,
+            monthKey: periods.monthKey,
+          };
+        }),
         leaders: leaders.map((row: any, index: number) => ({
           rank: index + 1, userId: row.userId,
           name: `${row.user.firstName} ${row.user.lastName}`.trim(), role: row.user.role,
@@ -1074,6 +1485,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
               },
             },
           },
+          challenges: { orderBy: { createdAt: "desc" } },
         },
       });
       if (!classroom) { res.status(404).json({ error: "Classroom not found" }); return; }
@@ -1086,6 +1498,25 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           unit.lessons.flatMap((lesson: any) => lesson.challenges.map((challenge: any) => challenge.id)),
         ) || [],
       );
+      const challenges = await Promise.all(classroom.challenges.map(async (challenge: any) => {
+        const progressXp = await classroomChallengeProgress(prisma, {
+          ...challenge,
+          classroom: { focusCourseId: classroom.focusCourseId },
+        });
+        return {
+          id: challenge.id,
+          title: challenge.title,
+          description: challenge.description,
+          targetXp: challenge.targetXp,
+          rewardLabel: challenge.rewardLabel,
+          startsAt: challenge.startsAt,
+          endsAt: challenge.endsAt,
+          active: challenge.active,
+          progressXp,
+          progressPercent: Math.min(100, Math.round((progressXp / challenge.targetXp) * 100)),
+          complete: progressXp >= challenge.targetXp,
+        };
+      }));
       res.json({
         id: classroom.id,
         name: classroom.name,
@@ -1098,6 +1529,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           imageEmoji: classroom.focusCourse.imageEmoji,
           challengeCount: focusChallengeIds.size,
         } : null,
+        challenges,
         members: classroom.members.map((membership: any) => {
           const completedIds = membership.user.languageQuestChallenges.map((row: any) => row.challengeId);
           const focusCompleted = focusChallengeIds.size
@@ -1123,6 +1555,87 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
     } catch (error) {
       logger.error("Error loading Language Quest classroom roster:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load classroom roster" });
+    }
+  });
+
+  app.post("/api/language-quest/classrooms/:id/challenges", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!isManager(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    const title = text(req.body?.title, 120);
+    const description = nullableText(req.body?.description, 300);
+    const rewardLabel = nullableText(req.body?.rewardLabel, 80);
+    const targetXp = Number(req.body?.targetXp);
+    const durationDays = Number(req.body?.durationDays);
+    if (!title) { res.status(400).json({ error: "Challenge title is required" }); return; }
+    if (!Number.isInteger(targetXp) || targetXp < 30 || targetXp > 10_000) {
+      res.status(400).json({ error: "Target XP must be between 30 and 10,000" });
+      return;
+    }
+    if (!Number.isInteger(durationDays) || durationDays < 1 || durationDays > 30) {
+      res.status(400).json({ error: "Challenge duration must be between 1 and 30 days" });
+      return;
+    }
+    try {
+      const classroom = await prisma.languageQuestClassroom.findUnique({
+        where: { id: req.params.id },
+        select: { id: true, name: true, teacherId: true, active: true },
+      });
+      if (!classroom) { res.status(404).json({ error: "Classroom not found" }); return; }
+      if (jwtUser.role !== "ADMIN" && classroom.teacherId !== jwtUser.userId) {
+        res.status(403).json({ error: "You can only manage your own classroom" });
+        return;
+      }
+      if (!classroom.active) { res.status(409).json({ error: "Activate the classroom before starting a challenge" }); return; }
+      const startsAt = new Date();
+      const challenge = await prisma.languageQuestClassroomChallenge.create({
+        data: {
+          classroomId: classroom.id,
+          title,
+          description,
+          rewardLabel,
+          targetXp,
+          startsAt,
+          endsAt: new Date(startsAt.getTime() + durationDays * 24 * 60 * 60 * 1000),
+        },
+      });
+      await createAuditLog(
+        jwtUser.userId, jwtUser.email, "CREATE", "LANGUAGE_QUEST_CLASSROOM_CHALLENGE",
+        challenge.id, `Started team challenge '${title}' for ${classroom.name}.`,
+        req.ip || null, req.headers["user-agent"] || null,
+      );
+      res.status(201).json(challenge);
+    } catch (error) {
+      logger.error("Error creating Language Quest classroom challenge:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to create classroom challenge" });
+    }
+  });
+
+  app.patch("/api/language-quest/classrooms/:id/challenges/:challengeId", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!isManager(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    if (typeof req.body?.active !== "boolean") {
+      res.status(400).json({ error: "Challenge active status is required" });
+      return;
+    }
+    try {
+      const classroom = await prisma.languageQuestClassroom.findUnique({
+        where: { id: req.params.id },
+        select: { teacherId: true },
+      });
+      if (!classroom) { res.status(404).json({ error: "Classroom not found" }); return; }
+      if (jwtUser.role !== "ADMIN" && classroom.teacherId !== jwtUser.userId) {
+        res.status(403).json({ error: "You can only manage your own classroom" });
+        return;
+      }
+      const updated = await prisma.languageQuestClassroomChallenge.updateMany({
+        where: { id: req.params.challengeId, classroomId: req.params.id },
+        data: { active: req.body.active },
+      });
+      if (!updated.count) { res.status(404).json({ error: "Classroom challenge not found" }); return; }
+      res.json({ success: true });
+    } catch (error) {
+      logger.error("Error updating Language Quest classroom challenge:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to update classroom challenge" });
     }
   });
 

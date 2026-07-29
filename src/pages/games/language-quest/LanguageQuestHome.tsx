@@ -13,6 +13,11 @@ import { LanguageQuestCourseFolder } from '@/src/components/games/LanguageQuestC
 import { useLanguageQuestSupport } from '@/src/components/games/LanguageQuestSupport';
 import { orderedLanguageQuestCategories } from '@/shared/languageQuestCourseCategories';
 import { LanguageQuestRewardTrack } from '@/src/components/games/LanguageQuestRewards';
+import {
+  LanguageQuestEngagement,
+  LanguageQuestLanguageAlbums,
+} from '@/src/components/games/LanguageQuestEngagement';
+import { LanguageQuestLegendaryVault } from '@/src/components/games/LanguageQuestLegendaryRewards';
 
 function StatCard({ icon, label, value, tone }: { icon: React.ReactNode; label: string; value: string | number; tone: string }) {
   return (
@@ -119,7 +124,13 @@ export default function LanguageQuestHome() {
         <StatCard icon={<Trophy className="h-5 w-5" />} label="Best streak" value={data.profile.bestStreak} tone="bg-violet-100 text-violet-600 dark:bg-violet-500/15" />
       </section>
 
-      <LanguageQuestRewardTrack rewards={data.profile.rewards} />
+      <LanguageQuestEngagement onXpChanged={load} />
+
+      <LanguageQuestRewardTrack rewards={data.profile.rewards} bestStreak={data.profile.bestStreak} />
+
+      <LanguageQuestLegendaryVault rewards={data.profile.rewards} />
+
+      <LanguageQuestLanguageAlbums courses={data.courses} />
 
       <section className="flex flex-col justify-between gap-4 rounded-2xl border border-sky-100 bg-sky-50 p-5 sm:flex-row sm:items-center dark:border-sky-500/20 dark:bg-sky-500/10">
         <div className="flex items-start gap-3">

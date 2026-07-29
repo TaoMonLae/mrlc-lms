@@ -30,9 +30,17 @@ import {
 } from "../../shared/languageQuestPinyin";
 import {
   LANGUAGE_QUEST_REWARD_CARDS,
+  LANGUAGE_QUEST_LEGENDARY_AWARDS,
+  languageQuestLegendaryAwardById,
   languageQuestRewardProgress,
+  languageQuestStreakFrame,
   newlyUnlockedLanguageQuestRewardIds,
 } from "../../shared/languageQuestRewards";
+import {
+  languageQuestMissionProgress,
+  languageQuestPeriodBounds,
+  nextLanguageQuestMasteryReview,
+} from "../../shared/languageQuestEngagement";
 
 test("Language Quest turns saved XP into stable levels and collectible cards", () => {
   const beginner = languageQuestRewardProgress(0);
@@ -68,6 +76,59 @@ test("Language Quest reward thresholds are ordered, unique, and announce only ne
   ));
   assert.deepEqual(newlyUnlockedLanguageQuestRewardIds(70, 160), ["phraseflare", "grammashell"]);
   assert.deepEqual(newlyUnlockedLanguageQuestRewardIds(160, 160), []);
+});
+
+test("legendary Mon history cards unlock only after the main Quest Card path", () => {
+  assert.equal(LANGUAGE_QUEST_LEGENDARY_AWARDS.length, 9);
+  assert.ok(LANGUAGE_QUEST_LEGENDARY_AWARDS[0].unlockXp > LANGUAGE_QUEST_REWARD_CARDS.at(-1)!.unlockXp);
+  assert.equal(
+    new Set(LANGUAGE_QUEST_LEGENDARY_AWARDS.map((award) => award.id)).size,
+    LANGUAGE_QUEST_LEGENDARY_AWARDS.length,
+  );
+  const sealed = languageQuestRewardProgress(2_999);
+  assert.deepEqual(sealed.unlockedLegendaryIds, []);
+  assert.equal(sealed.nextLegendaryId, "king-ukkalapa");
+  const revealed = languageQuestRewardProgress(3_500);
+  assert.deepEqual(revealed.unlockedLegendaryIds, ["king-ukkalapa", "king-siha-sudhamma"]);
+  assert.equal(revealed.currentLegendaryId, "king-siha-sudhamma");
+  assert.deepEqual(newlyUnlockedLanguageQuestRewardIds(2_990, 3_010), ["king-ukkalapa"]);
+  assert.equal(languageQuestLegendaryAwardById("queen-banya-htau")?.achievement, "Golden Counsel");
+});
+
+test("streak card frames unlock deterministically from the learner's best streak", () => {
+  assert.equal(languageQuestStreakFrame(0).id, "classic");
+  assert.equal(languageQuestStreakFrame(6).id, "ember");
+  assert.equal(languageQuestStreakFrame(7).id, "aurora");
+  assert.equal(languageQuestStreakFrame(30).id, "legend");
+});
+
+test("Language Quest missions use Kuala Lumpur daily and weekly periods", () => {
+  const now = new Date("2026-07-29T04:00:00.000Z");
+  const periods = languageQuestPeriodBounds(now);
+  assert.equal(periods.dayKey, "2026-07-29");
+  assert.equal(periods.weekKey, "2026-07-26");
+  const missions = languageQuestMissionProgress({
+    dailyXp: 35,
+    weeklyXp: 160,
+    weeklyCourseCount: 2,
+    dailyMasteryWins: 0,
+    claimedKeys: new Set(["daily-xp:2026-07-29"]),
+    now,
+  });
+  assert.equal(missions.find((mission) => mission.key === "daily-xp")?.claimed, true);
+  assert.equal(missions.find((mission) => mission.key === "weekly-xp")?.claimable, true);
+  assert.equal(missions.find((mission) => mission.key === "course-explorer")?.claimable, true);
+  assert.equal(missions.find((mission) => mission.key === "mastery-one")?.claimable, false);
+});
+
+test("mastery reviews expand after success and return sooner after a miss", () => {
+  const now = new Date("2026-07-29T00:00:00.000Z");
+  const success = nextLanguageQuestMasteryReview(1, true, now);
+  assert.equal(success.stage, 2);
+  assert.equal(success.dueAt.toISOString(), "2026-08-01T00:00:00.000Z");
+  const retry = nextLanguageQuestMasteryReview(4, false, now);
+  assert.equal(retry.stage, 0);
+  assert.equal(retry.dueAt.toISOString(), "2026-07-29T04:00:00.000Z");
 });
 
 test("Language Quest starts a new streak on the first active day", () => {

@@ -79,6 +79,9 @@ Completed courses unlock personalized certificates. Active learners can also cre
 #### Learner experience
 
 - Guided course paths with unit and lesson progression, lesson locking, five daily hearts, points, current/best streaks, saved progress, replay practice, and a learner leaderboard.
+- Daily and weekly missions reward consistent learning, mastery reviews, and exploring more than one language course. Mission rewards are server-verified and cannot count toward their own goals.
+- The spaced-repetition **Mastery Arena** schedules completed challenges at expanding review intervals, awards XP for correct recall, and returns missed cards sooner without consuming hearts.
+- Twelve original Quest Card companions unlock at fixed XP levels. After Level 12, nine mystery **Legendary Vault** rewards reveal MRLC’s supplied Mon history portrait cards from animated golden chests. Separate language albums fill from completed challenges, while best-streak milestones unlock cosmetic card frames.
 - A dedicated learner profile lets each person choose from twelve safe built-in avatars, write a short learning bio, and see their Language Quest identity without uploading a personal photo.
 - Each lesson follows three stages: learn and listen, build complete sentences from memory, then check understanding with a quiz.
 - Sentence checks ignore capitalization, repeated spaces, and light punctuation while still requiring the correct words and spelling.
@@ -91,6 +94,7 @@ Completed courses unlock personalized certificates. Active learners can also cre
 
 - The Language Quest header includes an English/Burmese explanation switch. The choice updates lesson guides, sentence instructions, recovery messages, and other learning support copy.
 - Light and dark themes are available throughout the public landing page and signed-in experience, with readable text, cards, controls, and course content in both modes.
+- Device-local controls let learners turn success sounds off or reduce confetti, tilting, animation, and transition motion. The reduced-motion default respects the browser or operating-system preference.
 - Learners can generate a personalized streak card after completing a lesson that day.
 - Completing a course unlocks a personalized certificate containing the learner's name, course title, points, date, MRLC logo, and developer credit.
 - Achievement cards and certificates can be downloaded as 1200×630 PNG images or shared using the browser/device share menu. If file sharing is unavailable, Language Quest saves the image locally.
@@ -98,11 +102,13 @@ Completed courses unlock personalized certificates. Active learners can also cre
 #### Classroom use and learner administration
 
 - Teachers can create opt-in Language Quest classrooms, choose a focus course, and share an automatically generated eight-character join code.
+- Teachers can start time-bounded cooperative classroom XP challenges with a goal and optional classroom reward. Eligible XP from all enrolled learners contributes to one shared progress bar.
 - Learners join or leave classrooms from their profile. Joining does not create or modify a private school Student record.
 - Teacher rosters show the learner's display name, built-in avatar, points, streak, last Language Quest activity, and focus-course completion. Learner email addresses and private LMS data are not exposed.
 - Teachers can close a classroom to new joins, change its focus course, refresh the roster, and remove a learner while preserving that learner's independent progress.
 - Administrators can search and filter public learner accounts, review learning activity and classroom membership, deactivate or reactivate access, and permanently terminate an inactive account.
 - Deactivation immediately blocks sign-in and revokes active sessions while preserving progress. Permanent termination is deliberately a second step and is available only after deactivation.
+- A read-only monthly learner showcase celebrates the top three learning-XP earners with avatars and Quest Cards. It intentionally has no comments, public profile links, or direct messaging.
 
 #### Course content and authoring
 
@@ -187,7 +193,7 @@ Completed courses unlock personalized certificates. Active learners can also cre
 | Word Trail | Student/teacher English vocabulary board game with dice, special spaces, saved progress, scores, and leaderboard |
 | Multiplayer Neon Snake | Authenticated real-time 3D arena with LMS player names, live ranking, keyboard/touch controls, and saved Student scores |
 | Game-time controls | Admin/teacher blocking, schedules, daily/session limits, breaks, server heartbeats, and student lock screens |
-| Language Quest | Public course browsing, isolated learner signup, built-in avatar profiles, opt-in teacher classrooms, admin learner lifecycle controls, bilingual guidance, sentence practice, dictionary lookup, sound feedback, achievements, speech-assisted challenges, hearts, points, streaks, leaderboard, and Course Studio |
+| Language Quest | Public course browsing, isolated learner signup, built-in avatar profiles, opt-in teacher classrooms, cooperative class goals, admin learner lifecycle controls, bilingual guidance, sentence practice, spaced-repetition mastery, missions, Quest Card levels, language albums, streak frames, accessibility controls, monthly showcases, achievements, speech-assisted challenges, hearts, XP, streaks, leaderboard, and Course Studio |
 | Flashcards | Deck creation, sharing, class assignment, mastery, quiz, match, spelling, and progress reporting |
 | Lesson planner | Teacher planning and classroom resource organization |
 | Video lessons | Upload/conversion, custom thumbnails, captions, required viewing, progress, and watch analytics |

@@ -12,10 +12,14 @@ import {
 import { Progress } from '@/components/ui/progress';
 import {
   LANGUAGE_QUEST_REWARD_CARDS,
+  languageQuestLegendaryAwardById,
   languageQuestRewardCardById,
+  languageQuestStreakFrame,
   type LanguageQuestRewardCard,
   type LanguageQuestRewardProgress,
+  type LanguageQuestStreakFrame,
 } from '@/shared/languageQuestRewards';
+import { LanguageQuestLegendaryReveal } from './LanguageQuestLegendaryRewards';
 
 const RARITY_STYLES: Record<LanguageQuestRewardCard['rarity'], string> = {
   Starter: 'border-emerald-300 bg-emerald-50 text-emerald-800',
@@ -29,10 +33,12 @@ export function LanguageQuestRewardCardView({
   card,
   unlocked,
   featured = false,
+  frame,
 }: {
   card: LanguageQuestRewardCard;
   unlocked: boolean;
   featured?: boolean;
+  frame?: LanguageQuestStreakFrame;
 }) {
   return (
     <article
@@ -44,7 +50,10 @@ export function LanguageQuestRewardCardView({
       } ${featured ? 'ring-4 ring-amber-300/55' : ''}`}
       style={unlocked ? {
         background: `linear-gradient(145deg, ${card.colors[0]}, ${card.colors[1]} 58%, ${card.colors[2]})`,
-        boxShadow: `0 22px 45px -24px ${card.colors[1]}`,
+        borderColor: frame?.colors[0],
+        boxShadow: frame
+          ? `0 0 0 3px ${frame.colors[1]}66, 0 22px 45px -24px ${card.colors[1]}`
+          : `0 22px 45px -24px ${card.colors[1]}`,
       } : undefined}
     >
       {unlocked && (
@@ -101,12 +110,15 @@ export function LanguageQuestRewardCardView({
 
 export function LanguageQuestRewardTrack({
   rewards,
+  bestStreak = 0,
 }: {
   rewards: LanguageQuestRewardProgress;
+  bestStreak?: number;
 }) {
   const current = languageQuestRewardCardById(rewards.currentCardId);
   const next = languageQuestRewardCardById(rewards.nextCardId);
   const remaining = rewards.nextLevelXp === null ? 0 : rewards.nextLevelXp - rewards.xp;
+  const frame = languageQuestStreakFrame(bestStreak);
 
   return (
     <section className="relative overflow-hidden rounded-3xl border border-violet-200 bg-gradient-to-br from-slate-950 via-violet-950 to-fuchsia-950 p-5 text-white shadow-xl sm:p-6 dark:border-violet-500/25">
@@ -141,11 +153,14 @@ export function LanguageQuestRewardTrack({
             <span className="text-xs font-semibold text-violet-200">
               {rewards.unlockedCardIds.length}/{LANGUAGE_QUEST_REWARD_CARDS.length} cards unlocked
             </span>
+            <span className="text-xs font-semibold text-amber-200">
+              {frame.emoji} {frame.name} frame
+            </span>
           </div>
         </div>
 
         <div className="mx-auto w-full max-w-[230px]">
-          {current && <LanguageQuestRewardCardView card={current} unlocked featured />}
+          {current && <LanguageQuestRewardCardView card={current} unlocked featured frame={frame} />}
         </div>
       </div>
     </section>
@@ -154,10 +169,13 @@ export function LanguageQuestRewardTrack({
 
 export function LanguageQuestRewardCollection({
   rewards,
+  bestStreak = 0,
 }: {
   rewards: LanguageQuestRewardProgress;
+  bestStreak?: number;
 }) {
   const unlocked = new Set(rewards.unlockedCardIds);
+  const frame = languageQuestStreakFrame(bestStreak);
 
   return (
     <section id="quest-cards" className="scroll-mt-28 rounded-3xl border border-violet-200 bg-gradient-to-b from-violet-50 to-white p-5 shadow-sm dark:border-violet-500/20 dark:from-violet-950/30 dark:to-slate-950/70 sm:p-7">
@@ -175,7 +193,7 @@ export function LanguageQuestRewardCollection({
           </p>
         </div>
         <Badge className="w-fit border-violet-200 bg-white text-violet-800 hover:bg-white dark:border-violet-500/25 dark:bg-slate-900 dark:text-violet-200">
-          <Star className="h-3 w-3 fill-current" /> {rewards.xp.toLocaleString()} XP
+          <Star className="h-3 w-3 fill-current" /> {rewards.xp.toLocaleString()} XP • {frame.emoji} {frame.name}
         </Badge>
       </div>
 
@@ -186,6 +204,7 @@ export function LanguageQuestRewardCollection({
             card={card}
             unlocked={unlocked.has(card.id)}
             featured={card.id === rewards.currentCardId}
+            frame={unlocked.has(card.id) ? frame : undefined}
           />
         ))}
       </div>
@@ -202,6 +221,16 @@ export function LanguageQuestRewardReveal({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const legendary = languageQuestLegendaryAwardById(cardId);
+  if (legendary) {
+    return (
+      <LanguageQuestLegendaryReveal
+        awardId={legendary.id}
+        open={open}
+        onOpenChange={onOpenChange}
+      />
+    );
+  }
   const card = languageQuestRewardCardById(cardId);
   if (!card) return null;
 
