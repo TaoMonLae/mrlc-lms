@@ -20,7 +20,7 @@ export function MrlcQuestBrand({ to = '/language-quest', compact = false, invers
           <Sparkles className="h-2.5 w-2.5" aria-hidden="true" />
         </span>
       </span>
-      <span className="min-w-0 leading-tight">
+      <span className={`min-w-0 leading-tight ${compact ? 'max-[430px]:hidden' : ''}`}>
         <span className={`block text-[10px] font-black uppercase tracking-[0.2em] ${inverse ? 'text-white/65' : 'text-violet-600'}`}>MRLC</span>
         <span className={`block truncate font-black tracking-[-0.025em] ${compact ? 'text-base' : 'text-lg'} ${inverse ? 'text-white' : 'text-slate-950 dark:text-white'}`}>Language Quest</span>
       </span>

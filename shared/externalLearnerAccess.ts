@@ -16,6 +16,7 @@ export function isExternalLearnerAppPathAllowed(value: string): boolean {
     pathname === "/language-quest"
     || pathname === "/change-password"
     || pathname === "/games/language-quest"
+    || pathname === "/games/language-quest/profile"
     || pathname === "/games/language-quest/leaderboard"
     || /^\/games\/language-quest\/courses\/[^/]+$/.test(pathname)
     || /^\/games\/language-quest\/lessons\/[^/]+$/.test(pathname)
@@ -36,6 +37,7 @@ export function isExternalLearnerApiRequestAllowed(method: string, value: string
   if (verb === "GET") {
     return (
       pathname === "/api/auth/me"
+      || pathname === "/api/language-quest/profile"
       || pathname === "/api/language-quest/overview"
       || pathname === "/api/language-quest/leaderboard"
       || /^\/api\/language-quest\/courses\/[^/]+$/.test(pathname)
@@ -47,8 +49,17 @@ export function isExternalLearnerApiRequestAllowed(method: string, value: string
     return (
       pathname === "/api/auth/logout"
       || pathname === "/api/auth/change-password"
+      || pathname === "/api/language-quest/profile/classrooms"
       || /^\/api\/language-quest\/challenges\/[^/]+\/answer$/.test(pathname)
     );
+  }
+
+  if (verb === "PATCH") {
+    return pathname === "/api/language-quest/profile";
+  }
+
+  if (verb === "DELETE") {
+    return /^\/api\/language-quest\/profile\/classrooms\/[^/]+$/.test(pathname);
   }
 
   return false;

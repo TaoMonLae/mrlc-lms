@@ -7,6 +7,10 @@ import {
   sentenceAnswerMatches,
 } from "../../shared/languageQuest";
 import { canAttemptNewChallenge, shuffle } from "../../languageQuest";
+import {
+  LANGUAGE_QUEST_AVATARS,
+  isLanguageQuestAvatarId,
+} from "../../shared/languageQuestAvatars";
 import { importedSpanishCourse } from "../../languageQuestImportedCourses";
 import { mandarinFoundationsCourse } from "../../languageQuestMandarinCourse";
 import { completeMandarinCourse } from "../../languageQuestCompleteMandarinCourse";
@@ -37,6 +41,14 @@ test("Language Quest dictionary extracts a useful highlighted term", () => {
   assert.equal(languageQuestLookupWord("“You're”"), "You're");
   assert.equal(languageQuestLookupWord("စာကြည့်တိုက်"), "စာကြည့်တိုက်");
   assert.equal(languageQuestLookupWord("123 …"), null);
+});
+
+test("Language Quest accepts only the curated built-in learner avatars", () => {
+  assert.ok(LANGUAGE_QUEST_AVATARS.length >= 8);
+  assert.equal(new Set(LANGUAGE_QUEST_AVATARS.map((avatar) => avatar.id)).size, LANGUAGE_QUEST_AVATARS.length);
+  assert.equal(isLanguageQuestAvatarId("owl"), true);
+  assert.equal(isLanguageQuestAvatarId("https://example.com/photo.jpg"), false);
+  assert.equal(isLanguageQuestAvatarId("../uploads/avatar.png"), false);
 });
 
 test("Language Quest only increments once per Kuala Lumpur calendar day", () => {

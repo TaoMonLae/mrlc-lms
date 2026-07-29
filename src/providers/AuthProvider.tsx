@@ -47,6 +47,7 @@ function mapApiUser(apiUser: Record<string, any>): User {
     username: apiUser.username || apiUser.email,
     email: apiUser.email,
     profilePhotoUrl: apiUser.profilePhotoUrl ?? null,
+    languageQuestAvatar: apiUser.languageQuestAvatar ?? null,
     role: apiUser.role,
     status: apiUser.isActive ? 'ACTIVE' : 'DISABLED',
     isExternalLearner: Boolean(apiUser.isExternalLearner),

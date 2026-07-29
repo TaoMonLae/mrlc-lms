@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
-import { Languages, LogOut, Moon, Settings2, Sun, Trophy } from 'lucide-react';
+import { GraduationCap, Languages, LogOut, Moon, Settings2, Sun, Trophy, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useTheme } from '@/src/components/theme-provider';
@@ -10,6 +10,7 @@ import {
   LanguageQuestSupportProvider,
 } from './LanguageQuestSupport';
 import { LanguageQuestDictionary } from './LanguageQuestDictionary';
+import { LanguageQuestAvatar } from './LanguageQuestAvatar';
 
 export function LanguageQuestShell() {
   return (
@@ -25,6 +26,7 @@ function LanguageQuestShellContent() {
   const navigate = useNavigate();
   const [systemDark, setSystemDark] = useState(false);
   const canManage = user?.role === 'ADMIN' || user?.role === 'TEACHER';
+  const isAdmin = user?.role === 'ADMIN';
   const darkMode = theme === 'dark' || (theme === 'system' && systemDark);
 
   useEffect(() => {
@@ -53,11 +55,39 @@ function LanguageQuestShellContent() {
               <Trophy className="h-4 w-4" />
             </Button>
             {canManage && (
-              <Button variant="ghost" size="sm" className="hidden sm:flex" render={<Link to="/games/language-quest/manage" />} nativeButton={false}>
+              <Button variant="ghost" size="sm" className="hidden xl:flex" render={<Link to="/games/language-quest/manage" />} nativeButton={false}>
                 <Settings2 className="mr-2 h-4 w-4" /> Manage
               </Button>
             )}
+            {canManage && (
+              <>
+                <Button variant="ghost" size="sm" className="hidden xl:flex" render={<Link to="/games/language-quest/classrooms" />} nativeButton={false}>
+                  <GraduationCap className="mr-2 h-4 w-4" /> Classrooms
+                </Button>
+                <Button variant="ghost" size="icon" className="hidden text-sky-600 min-[560px]:inline-flex xl:hidden" aria-label="Classrooms" render={<Link to="/games/language-quest/classrooms" />} nativeButton={false}>
+                  <GraduationCap className="h-4 w-4" />
+                </Button>
+              </>
+            )}
+            {isAdmin && (
+              <>
+                <Button variant="ghost" size="sm" className="hidden xl:flex" render={<Link to="/games/language-quest/learners" />} nativeButton={false}>
+                  <Users className="mr-2 h-4 w-4" /> Learners
+                </Button>
+                <Button variant="ghost" size="icon" className="hidden text-emerald-600 min-[620px]:inline-flex xl:hidden" aria-label="Manage learners" render={<Link to="/games/language-quest/learners" />} nativeButton={false}>
+                  <Users className="h-4 w-4" />
+                </Button>
+              </>
+            )}
             <span className="hidden max-w-40 truncate px-2 text-sm font-semibold text-slate-600 md:block dark:text-slate-300">{user?.name}</span>
+            <Link
+              to="/games/language-quest/profile"
+              className="rounded-2xl outline-none ring-offset-2 transition hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-violet-500"
+              aria-label="Learner profile"
+              title="Learner profile"
+            >
+              <LanguageQuestAvatar avatarId={user?.languageQuestAvatar} name={user?.name} className="h-9 w-9 text-lg shadow-sm" />
+            </Link>
             <LanguageQuestDictionary />
             <LanguageQuestExplanationToggle />
             <Button

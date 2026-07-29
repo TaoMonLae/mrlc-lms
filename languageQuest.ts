@@ -7,6 +7,10 @@ import {
   languageQuestDayKey,
   nextLanguageQuestStreak,
 } from "./shared/languageQuest";
+import {
+  DEFAULT_LANGUAGE_QUEST_AVATAR,
+  isLanguageQuestAvatarId,
+} from "./shared/languageQuestAvatars";
 import { importedSpanishCourse, type OfficialLanguageQuestCourse } from "./languageQuestImportedCourses";
 import { mandarinFoundationsCourse } from "./languageQuestMandarinCourse";
 import { completeMandarinCourse } from "./languageQuestCompleteMandarinCourse";
@@ -176,6 +180,10 @@ const starterUnits = [
 
 function isManager(role: string): boolean {
   return role === "ADMIN" || role === "TEACHER";
+}
+
+function languageQuestJoinCode(): string {
+  return randomUUID().replace(/-/g, "").slice(0, 8).toUpperCase();
 }
 
 function text(value: unknown, max: number): string {
@@ -462,6 +470,120 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
     }
   });
 
+  app.get("/api/language-quest/profile", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: jwtUser.userId },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          isExternalLearner: true,
+          languageQuestAvatar: true,
+          languageQuestBio: true,
+          languageQuestProgress: true,
+          languageQuestMemberships: {
+            orderBy: { joinedAt: "desc" },
+            include: {
+              classroom: {
+                include: {
+                  teacher: { select: { firstName: true, lastName: true } },
+                  focusCourse: { select: { id: true, title: true, imageEmoji: true } },
+                },
+              },
+            },
+          },
+        },
+      } as any);
+      if (!user) { res.status(404).json({ error: "Learner profile not found" }); return; }
+      res.json({
+        id: user.id,
+        name: `${user.firstName} ${user.lastName}`.trim(),
+        email: user.email,
+        isExternalLearner: Boolean(user.isExternalLearner),
+        avatarId: user.languageQuestAvatar || DEFAULT_LANGUAGE_QUEST_AVATAR,
+        bio: user.languageQuestBio || "",
+        profile: profileJson(user.languageQuestProgress || await getProgress(prisma, jwtUser.userId)),
+        classrooms: user.languageQuestMemberships.map((membership: any) => ({
+          id: membership.classroom.id,
+          name: membership.classroom.name,
+          active: membership.classroom.active,
+          joinedAt: membership.joinedAt,
+          teacherName: `${membership.classroom.teacher.firstName} ${membership.classroom.teacher.lastName}`.trim(),
+          focusCourse: membership.classroom.focusCourse,
+        })),
+      });
+    } catch (error) {
+      logger.error("Error loading Language Quest learner profile:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load your learner profile" });
+    }
+  });
+
+  app.patch("/api/language-quest/profile", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const avatarId = req.body?.avatarId;
+    const bio = text(req.body?.bio, 240);
+    if (!isLanguageQuestAvatarId(avatarId)) {
+      res.status(400).json({ error: "Choose one of the available Language Quest avatars" });
+      return;
+    }
+    try {
+      const user = await prisma.user.update({
+        where: { id: jwtUser.userId },
+        data: { languageQuestAvatar: avatarId, languageQuestBio: bio || null },
+        select: { languageQuestAvatar: true, languageQuestBio: true },
+      } as any);
+      res.json({ avatarId: user.languageQuestAvatar, bio: user.languageQuestBio || "" });
+    } catch (error) {
+      logger.error("Error updating Language Quest learner profile:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to save your learner profile" });
+    }
+  });
+
+  app.post("/api/language-quest/profile/classrooms", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const joinCode = text(req.body?.joinCode, 20).replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+    if (!joinCode) { res.status(400).json({ error: "Enter the classroom join code" }); return; }
+    try {
+      const classroom = await prisma.languageQuestClassroom.findUnique({
+        where: { joinCode },
+        include: { teacher: { select: { firstName: true, lastName: true } } },
+      });
+      if (!classroom || !classroom.active) {
+        res.status(404).json({ error: "That classroom code is not active" });
+        return;
+      }
+      await prisma.languageQuestClassroomMember.upsert({
+        where: { classroomId_userId: { classroomId: classroom.id, userId: jwtUser.userId } },
+        update: {},
+        create: { classroomId: classroom.id, userId: jwtUser.userId },
+      });
+      res.status(201).json({
+        id: classroom.id,
+        name: classroom.name,
+        teacherName: `${classroom.teacher.firstName} ${classroom.teacher.lastName}`.trim(),
+      });
+    } catch (error) {
+      logger.error("Error joining Language Quest classroom:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to join that classroom" });
+    }
+  });
+
+  app.delete("/api/language-quest/profile/classrooms/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      await prisma.languageQuestClassroomMember.deleteMany({
+        where: { classroomId: req.params.id, userId: jwtUser.userId },
+      });
+      res.json({ success: true });
+    } catch (error) {
+      logger.error("Error leaving Language Quest classroom:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to leave that classroom" });
+    }
+  });
+
   app.get("/api/language-quest/overview", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
@@ -739,9 +861,10 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
     try {
       const [leaders, mine] = await Promise.all([
         prisma.languageQuestUserProgress.findMany({
+          where: { user: { isActive: true } },
           take: 50,
           orderBy: [{ points: "desc" }, { currentStreak: "desc" }, { updatedAt: "asc" }],
-          include: { user: { select: { id: true, firstName: true, lastName: true, role: true, profilePhotoUrl: true } } },
+          include: { user: { select: { id: true, firstName: true, lastName: true, role: true, languageQuestAvatar: true } } },
         }),
         getProgress(prisma, jwtUser.userId),
       ]);
@@ -752,12 +875,327 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         leaders: leaders.map((row: any, index: number) => ({
           rank: index + 1, userId: row.userId,
           name: `${row.user.firstName} ${row.user.lastName}`.trim(), role: row.user.role,
-          profilePhotoUrl: row.user.profilePhotoUrl, points: row.points, currentStreak: row.currentStreak,
+          avatarId: row.user.languageQuestAvatar || DEFAULT_LANGUAGE_QUEST_AVATAR,
+          points: row.points, currentStreak: row.currentStreak,
         })),
       });
     } catch (error) {
       logger.error("Error loading Language Quest leaderboard:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load the leaderboard" });
+    }
+  });
+
+  app.get("/api/language-quest/classrooms", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!isManager(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    try {
+      const classrooms = await prisma.languageQuestClassroom.findMany({
+        where: jwtUser.role === "ADMIN" ? {} : { teacherId: jwtUser.userId },
+        orderBy: [{ active: "desc" }, { updatedAt: "desc" }],
+        include: {
+          teacher: { select: { firstName: true, lastName: true } },
+          focusCourse: { select: { id: true, title: true, imageEmoji: true } },
+          _count: { select: { members: true } },
+        },
+      });
+      const courses = await prisma.languageQuestCourse.findMany({
+        where: { published: true },
+        orderBy: { title: "asc" },
+        select: { id: true, title: true, imageEmoji: true },
+      });
+      res.json({
+        courses,
+        classrooms: classrooms.map((classroom: any) => ({
+          id: classroom.id,
+          name: classroom.name,
+          joinCode: classroom.joinCode,
+          active: classroom.active,
+          memberCount: classroom._count.members,
+          teacherName: `${classroom.teacher.firstName} ${classroom.teacher.lastName}`.trim(),
+          focusCourse: classroom.focusCourse,
+          updatedAt: classroom.updatedAt,
+          canEdit: jwtUser.role === "ADMIN" || classroom.teacherId === jwtUser.userId,
+        })),
+      });
+    } catch (error) {
+      logger.error("Error loading Language Quest classrooms:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load classrooms" });
+    }
+  });
+
+  app.post("/api/language-quest/classrooms", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!isManager(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    const name = text(req.body?.name, 100);
+    const focusCourseId = text(req.body?.focusCourseId, 100) || null;
+    if (!name) { res.status(400).json({ error: "Classroom name is required" }); return; }
+    try {
+      if (focusCourseId) {
+        const course = await prisma.languageQuestCourse.findFirst({ where: { id: focusCourseId, published: true }, select: { id: true } });
+        if (!course) { res.status(400).json({ error: "Choose a published focus course" }); return; }
+      }
+      let classroom: any;
+      for (let attempt = 0; attempt < 4; attempt += 1) {
+        try {
+          classroom = await prisma.languageQuestClassroom.create({
+            data: { name, teacherId: jwtUser.userId, focusCourseId, joinCode: languageQuestJoinCode() },
+          });
+          break;
+        } catch (error: any) {
+          if (error?.code !== "P2002" || attempt === 3) throw error;
+        }
+      }
+      await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "LANGUAGE_QUEST_CLASSROOM", classroom.id,
+        `Created Language Quest classroom '${name}'.`, req.ip || null, req.headers["user-agent"] || null);
+      res.status(201).json(classroom);
+    } catch (error) {
+      logger.error("Error creating Language Quest classroom:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to create classroom" });
+    }
+  });
+
+  app.patch("/api/language-quest/classrooms/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!isManager(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    const name = req.body?.name === undefined ? undefined : text(req.body.name, 100);
+    const focusCourseId = req.body?.focusCourseId === undefined ? undefined : (text(req.body.focusCourseId, 100) || null);
+    const active = typeof req.body?.active === "boolean" ? req.body.active : undefined;
+    if (name !== undefined && !name) { res.status(400).json({ error: "Classroom name cannot be empty" }); return; }
+    try {
+      const existing = await prisma.languageQuestClassroom.findUnique({ where: { id: req.params.id } });
+      if (!existing) { res.status(404).json({ error: "Classroom not found" }); return; }
+      if (jwtUser.role !== "ADMIN" && existing.teacherId !== jwtUser.userId) {
+        res.status(403).json({ error: "You can only manage your own classrooms" });
+        return;
+      }
+      if (focusCourseId) {
+        const course = await prisma.languageQuestCourse.findFirst({ where: { id: focusCourseId, published: true }, select: { id: true } });
+        if (!course) { res.status(400).json({ error: "Choose a published focus course" }); return; }
+      }
+      const classroom = await prisma.languageQuestClassroom.update({
+        where: { id: existing.id },
+        data: {
+          ...(name !== undefined ? { name } : {}),
+          ...(focusCourseId !== undefined ? { focusCourseId } : {}),
+          ...(active !== undefined ? { active } : {}),
+        },
+      });
+      res.json(classroom);
+    } catch (error) {
+      logger.error("Error updating Language Quest classroom:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to update classroom" });
+    }
+  });
+
+  app.get("/api/language-quest/classrooms/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!isManager(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    try {
+      const classroom = await prisma.languageQuestClassroom.findUnique({
+        where: { id: req.params.id },
+        include: {
+          teacher: { select: { firstName: true, lastName: true } },
+          focusCourse: {
+            include: { units: { include: { lessons: { include: { challenges: { select: { id: true } } } } } } },
+          },
+          members: {
+            orderBy: { joinedAt: "asc" },
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  isActive: true,
+                  languageQuestAvatar: true,
+                  languageQuestProgress: true,
+                  languageQuestChallenges: {
+                    where: { completed: true },
+                    select: { challengeId: true },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+      if (!classroom) { res.status(404).json({ error: "Classroom not found" }); return; }
+      if (jwtUser.role !== "ADMIN" && classroom.teacherId !== jwtUser.userId) {
+        res.status(403).json({ error: "You can only view your own classroom roster" });
+        return;
+      }
+      const focusChallengeIds = new Set<string>(
+        classroom.focusCourse?.units.flatMap((unit: any) =>
+          unit.lessons.flatMap((lesson: any) => lesson.challenges.map((challenge: any) => challenge.id)),
+        ) || [],
+      );
+      res.json({
+        id: classroom.id,
+        name: classroom.name,
+        joinCode: classroom.joinCode,
+        active: classroom.active,
+        teacherName: `${classroom.teacher.firstName} ${classroom.teacher.lastName}`.trim(),
+        focusCourse: classroom.focusCourse ? {
+          id: classroom.focusCourse.id,
+          title: classroom.focusCourse.title,
+          imageEmoji: classroom.focusCourse.imageEmoji,
+          challengeCount: focusChallengeIds.size,
+        } : null,
+        members: classroom.members.map((membership: any) => {
+          const completedIds = membership.user.languageQuestChallenges.map((row: any) => row.challengeId);
+          const focusCompleted = focusChallengeIds.size
+            ? completedIds.filter((id: string) => focusChallengeIds.has(id)).length
+            : completedIds.length;
+          const denominator = focusChallengeIds.size || completedIds.length;
+          return {
+            userId: membership.user.id,
+            name: `${membership.user.firstName} ${membership.user.lastName}`.trim(),
+            avatarId: membership.user.languageQuestAvatar || DEFAULT_LANGUAGE_QUEST_AVATAR,
+            active: membership.user.isActive,
+            joinedAt: membership.joinedAt,
+            points: membership.user.languageQuestProgress?.points || 0,
+            currentStreak: membership.user.languageQuestProgress?.currentStreak || 0,
+            bestStreak: membership.user.languageQuestProgress?.bestStreak || 0,
+            lastPlayedDate: membership.user.languageQuestProgress?.lastPlayedDate || null,
+            completedChallenges: completedIds.length,
+            focusCompleted,
+            focusProgressPercent: denominator ? Math.round((focusCompleted / denominator) * 100) : 0,
+          };
+        }),
+      });
+    } catch (error) {
+      logger.error("Error loading Language Quest classroom roster:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load classroom roster" });
+    }
+  });
+
+  app.delete("/api/language-quest/classrooms/:id/members/:userId", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!isManager(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    try {
+      const classroom = await prisma.languageQuestClassroom.findUnique({ where: { id: req.params.id }, select: { teacherId: true } });
+      if (!classroom) { res.status(404).json({ error: "Classroom not found" }); return; }
+      if (jwtUser.role !== "ADMIN" && classroom.teacherId !== jwtUser.userId) {
+        res.status(403).json({ error: "You can only manage your own classroom roster" });
+        return;
+      }
+      await prisma.languageQuestClassroomMember.deleteMany({
+        where: { classroomId: req.params.id, userId: req.params.userId },
+      });
+      res.json({ success: true });
+    } catch (error) {
+      logger.error("Error removing Language Quest classroom member:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to remove learner" });
+    }
+  });
+
+  app.get("/api/language-quest/admin/learners", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN") { res.status(403).json({ error: "Administrator access required" }); return; }
+    const query = text(req.query.q, 100);
+    const status = text(req.query.status, 20).toUpperCase();
+    try {
+      const learners = await prisma.user.findMany({
+        where: {
+          isExternalLearner: true,
+          ...(status === "ACTIVE" ? { isActive: true } : status === "INACTIVE" ? { isActive: false } : {}),
+          ...(query ? {
+            OR: [
+              { firstName: { contains: query, mode: "insensitive" } },
+              { lastName: { contains: query, mode: "insensitive" } },
+              { email: { contains: query, mode: "insensitive" } },
+            ],
+          } : {}),
+        },
+        orderBy: [{ isActive: "desc" }, { createdAt: "desc" }],
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          isActive: true,
+          languageQuestAvatar: true,
+          languageQuestBio: true,
+          lastLoginAt: true,
+          createdAt: true,
+          languageQuestProgress: true,
+          languageQuestChallenges: { where: { completed: true }, select: { id: true } },
+          languageQuestMemberships: {
+            select: { classroom: { select: { id: true, name: true } } },
+          },
+        },
+      } as any);
+      res.json({
+        learners: learners.map((learner: any) => ({
+          id: learner.id,
+          name: `${learner.firstName} ${learner.lastName}`.trim(),
+          email: learner.email,
+          active: learner.isActive,
+          avatarId: learner.languageQuestAvatar || DEFAULT_LANGUAGE_QUEST_AVATAR,
+          bio: learner.languageQuestBio || "",
+          points: learner.languageQuestProgress?.points || 0,
+          currentStreak: learner.languageQuestProgress?.currentStreak || 0,
+          lastPlayedDate: learner.languageQuestProgress?.lastPlayedDate || null,
+          completedChallenges: learner.languageQuestChallenges.length,
+          lastLoginAt: learner.lastLoginAt,
+          createdAt: learner.createdAt,
+          classrooms: learner.languageQuestMemberships.map((membership: any) => membership.classroom),
+        })),
+      });
+    } catch (error) {
+      logger.error("Error loading Language Quest public learners:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load learner accounts" });
+    }
+  });
+
+  app.patch("/api/language-quest/admin/learners/:id/status", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN") { res.status(403).json({ error: "Administrator access required" }); return; }
+    if (typeof req.body?.active !== "boolean") { res.status(400).json({ error: "Active status is required" }); return; }
+    try {
+      const learner = await prisma.user.findFirst({
+        where: { id: req.params.id, isExternalLearner: true },
+        select: { id: true, email: true, firstName: true, lastName: true },
+      });
+      if (!learner) { res.status(404).json({ error: "Language Quest learner not found" }); return; }
+      await prisma.$transaction([
+        prisma.user.update({ where: { id: learner.id }, data: { isActive: req.body.active } }),
+        ...(req.body.active ? [] : [
+          prisma.authSession.updateMany({ where: { userId: learner.id, revokedAt: null }, data: { revokedAt: new Date() } }),
+        ]),
+      ]);
+      await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "PUBLIC_LEARNER_ACCOUNT", learner.id,
+        `${req.body.active ? "Reactivated" : "Deactivated"} Language Quest learner '${learner.firstName} ${learner.lastName}' (${learner.email}).`,
+        req.ip || null, req.headers["user-agent"] || null, req.body.active ? "SUCCESS" : "WARNING");
+      res.json({ success: true, active: req.body.active });
+    } catch (error) {
+      logger.error("Error updating Language Quest learner status:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to update learner status" });
+    }
+  });
+
+  app.delete("/api/language-quest/admin/learners/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN") { res.status(403).json({ error: "Administrator access required" }); return; }
+    try {
+      const learner = await prisma.user.findFirst({
+        where: { id: req.params.id, isExternalLearner: true },
+        select: { id: true, email: true, firstName: true, lastName: true, isActive: true },
+      });
+      if (!learner) { res.status(404).json({ error: "Language Quest learner not found" }); return; }
+      if (learner.isActive) {
+        res.status(409).json({ error: "Deactivate this learner before permanently terminating the account" });
+        return;
+      }
+      const label = `${learner.firstName} ${learner.lastName}`.trim();
+      await prisma.user.delete({ where: { id: learner.id } });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "DELETE", "PUBLIC_LEARNER_ACCOUNT", learner.id,
+        `Permanently terminated inactive Language Quest learner '${label}' (${learner.email}).`,
+        req.ip || null, req.headers["user-agent"] || null, "WARNING");
+      res.json({ success: true });
+    } catch (error) {
+      logger.error("Error terminating Language Quest learner:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to terminate learner account" });
     }
   });
 

@@ -9,6 +9,7 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 ![MRLC LMS webapp login portal](docs/images/mrlc-lms-webapp-preview.jpg)
 
 - Default local URL: `http://localhost:8000`
+- Public Language Quest preview: `http://localhost:8000/language-quest`
 - Primary runtime: Node.js 20, Express, React 19, PostgreSQL 16
 - Developed by Tao Mon Lae
 
@@ -49,25 +50,63 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 
 ### Language Quest
 
+Language Quest is MRLC's public-facing, game-like language learning experience. Visitors can browse the published course catalog at `/language-quest`; beginning a lesson and saving progress requires a free account. Public learner accounts are deliberately isolated from private LMS records and school administration.
+
 #### Preview
 
-The learner dashboard brings courses, hearts, points, streaks, sentence practice, and progress together in a colorful light/dark experience.
+The responsive learner dashboard brings courses, hearts, points, streaks, sentence practice, and progress together in a colorful light/dark experience.
 
 ![Language Quest learner dashboard with course cards, progress, hearts, points, and streaks](docs/images/language-quest-dashboard.png)
 
-Course pages include guided lesson steps and optional Burmese explanations to help learners understand how to learn, build sentences, and check their answers.
+Course pages provide a consistent Learn → Build → Check routine and an English/Burmese explanation switch. Learners can listen first, type complete sentences from memory, and then continue to the quiz with clear correction and retry guidance.
 
 ![Language Quest Spanish course with Burmese lesson guidance](docs/images/language-quest-burmese-guide.png)
 
-Learners can save and share personalized completion certificates after finishing a course.
+Completed courses unlock personalized certificates. Active learners can also create streak cards containing their name, points, and current achievement; both formats can be saved as PNG files or shared through the device share menu.
 
 ![Language Quest completion certificate for Everyday English](docs/images/language-quest-completion-certificate.png)
 
-- A native, game-like language learning area for every authenticated student, teacher, and staff account.
-- Guided course paths, lesson locking, hearts, points, streaks, saved progress, replay practice, speech-assisted pronunciation, and a school leaderboard.
-- Teacher and administrator Course Studio for creating courses, units, lessons, and multiple challenge types, with draft and published states.
-- Server-verified answers and rewards prevent clients from awarding their own points or lesson completion.
-- Includes an original Everyday English starter course with two units, four lessons, and twelve challenges, provisioned when Language Quest is first opened.
+#### Public access and account isolation
+
+- `/language-quest` is a public, responsive course showcase with an accessible light/dark switch and complete contrast styling in both themes.
+- Visitors may browse the published catalog without signing in. Starting lessons, earning points, and saving progress require an account.
+- `/signup` creates a free Language Quest learner account that remains separate from school records and private LMS modules. A learner chooses one of the built-in character avatars during signup; profile-photo uploads are intentionally unavailable.
+- External learners are restricted to an explicit browser-route and API allowlist covering Language Quest and its in-lesson learning tools. Both client and server checks prevent access to administration, finance, student records, Course Studio, and other private LMS content.
+- Existing students, teachers, administrators, and staff continue to use their normal LMS accounts.
+
+#### Learner experience
+
+- Guided course paths with unit and lesson progression, lesson locking, five daily hearts, points, current/best streaks, saved progress, replay practice, and a learner leaderboard.
+- A dedicated learner profile lets each person choose from twelve safe built-in avatars, write a short learning bio, and see their Language Quest identity without uploading a personal photo.
+- Each lesson follows three stages: learn and listen, build complete sentences from memory, then check understanding with a quiz.
+- Sentence checks ignore capitalization, repeated spaces, and light punctuation while still requiring the correct words and spelling.
+- Correct sentence practice triggers immediate visual celebration and a short success sound.
+- Incorrect answers show the model sentence and focused retry guidance instead of ending the practice.
+- Speech synthesis supports pronunciation prompts, while keyboard shortcuts and responsive controls support desktop, tablet, and phone learners.
+- Learners can highlight an unfamiliar word anywhere in the lesson area to open the built-in dictionary. Available English definitions, Myanmar translations, and Mon entries appear without leaving Language Quest.
+
+#### Guidance, accessibility, and achievements
+
+- The Language Quest header includes an English/Burmese explanation switch. The choice updates lesson guides, sentence instructions, recovery messages, and other learning support copy.
+- Light and dark themes are available throughout the public landing page and signed-in experience, with readable text, cards, controls, and course content in both modes.
+- Learners can generate a personalized streak card after completing a lesson that day.
+- Completing a course unlocks a personalized certificate containing the learner's name, course title, points, date, MRLC logo, and developer credit.
+- Achievement cards and certificates can be downloaded as 1200×630 PNG images or shared using the browser/device share menu. If file sharing is unavailable, Language Quest saves the image locally.
+
+#### Classroom use and learner administration
+
+- Teachers can create opt-in Language Quest classrooms, choose a focus course, and share an automatically generated eight-character join code.
+- Learners join or leave classrooms from their profile. Joining does not create or modify a private school Student record.
+- Teacher rosters show the learner's display name, built-in avatar, points, streak, last Language Quest activity, and focus-course completion. Learner email addresses and private LMS data are not exposed.
+- Teachers can close a classroom to new joins, change its focus course, refresh the roster, and remove a learner while preserving that learner's independent progress.
+- Administrators can search and filter public learner accounts, review learning activity and classroom membership, deactivate or reactivate access, and permanently terminate an inactive account.
+- Deactivation immediately blocks sign-in and revokes active sessions while preserving progress. Permanent termination is deliberately a second step and is available only after deactivation.
+
+#### Course content and authoring
+
+- Teacher and administrator Course Studio supports courses, units, lessons, multiple challenge types, accent colors, images, ordering, and draft/published states.
+- Answers, progress, hearts, streaks, points, rewards, and completion are verified by the server rather than trusted to the browser.
+- Includes an original **Everyday English** starter course with two units, four lessons, and twelve challenges, provisioned when Language Quest is first opened.
 - Includes the linked source repository's Spanish course as **Spanish Foundations**, with two units, ten lessons, and eighty visual or speech-assisted challenges.
 - Includes an original **Mandarin Foundations** course with three units, nine lessons, and thirty-six speech-assisted challenges covering beginner conversations and daily life.
 - Converts the school-provided `duolingo-chinese.md` curriculum into **Mandarin Complete Course**, preserving all seventy topics and 1,870 translation pairs across seven units and seventy-one LMS-safe lessons.
@@ -144,7 +183,7 @@ Learners can save and share personalized completion certificates after finishing
 | Word Trail | Student/teacher English vocabulary board game with dice, special spaces, saved progress, scores, and leaderboard |
 | Multiplayer Neon Snake | Authenticated real-time 3D arena with LMS player names, live ranking, keyboard/touch controls, and saved Student scores |
 | Game-time controls | Admin/teacher blocking, schedules, daily/session limits, breaks, server heartbeats, and student lock screens |
-| Language Quest | Native language courses, lesson paths, speech-assisted challenges, hearts, points, streaks, progress, leaderboard, and teacher/admin Course Studio |
+| Language Quest | Public course browsing, isolated learner signup, built-in avatar profiles, opt-in teacher classrooms, admin learner lifecycle controls, bilingual guidance, sentence practice, dictionary lookup, sound feedback, achievements, speech-assisted challenges, hearts, points, streaks, leaderboard, and Course Studio |
 | Flashcards | Deck creation, sharing, class assignment, mastery, quiz, match, spelling, and progress reporting |
 | Lesson planner | Teacher planning and classroom resource organization |
 | Video lessons | Upload/conversion, custom thumbnails, captions, required viewing, progress, and watch analytics |
@@ -185,7 +224,11 @@ The interface supports English, Burmese, and Mon through locale files under `src
 
 The **Mon Language** tab at `/mon-language` embeds `https://the-mon-language.web.app/` for all authenticated users. It requires browser access to that external origin; if embedding is unavailable, users can open the learning app in a separate tab from the page header.
 
-**Language Quest** at `/games/language-quest` uses the existing LMS account for progress, streaks, points, and leaderboard placement. All authenticated roles can learn and practise; teachers and administrators can publish and maintain course content from `/games/language-quest/manage`.
+**Language Quest** has a public course showcase at `/language-quest`. Visitors can browse published courses, while `/signup` creates a learning-only account for starting lessons and saving progress. These external accounts are restricted to Language Quest routes and in-lesson learning tools and cannot access private school modules or records. Existing LMS users enter the learning experience at `/games/language-quest`; teachers and administrators can publish and maintain course content from `/games/language-quest/manage`.
+
+Signed-in learners manage their built-in avatar, learning bio, and classroom codes at `/games/language-quest/profile`. Teachers and administrators use `/games/language-quest/classrooms` for opt-in rosters and focus-course progress. Administrators use `/games/language-quest/learners` to manage public learner access without mixing those accounts into school Student records.
+
+Language Quest explanations can be switched between English and Burmese independently from the language being studied. The selected explanation language is remembered in the browser. The shared light/dark preference also applies to the public landing page, which includes its own theme switch.
 
 **Daily Learning Quest** at `/daily-quest` is restricted to Student and Teacher accounts and creates one English Word practice session per Kuala Lumpur calendar day. Learners choose a 3-, 5-, or 7-question mode; answers, completion XP, review words, and streaks are stored against their existing LMS account.
 
@@ -366,11 +409,16 @@ Docker Compose already uses named volumes for the database, e-books, videos, and
 | `npm run dev` | Start Express and Vite development mode |
 | `npm run lint` | Run the TypeScript type checker (`tsc --noEmit`) |
 | `npm run build` | Build the Vite client and bundled Express server |
+| `npm run test:unit` | Run the Node unit test suite |
 | `npm run start` | Run `dist/server.cjs` in production mode |
 | `npm run smoke` | Run the configured API smoke suite |
 | `npm run seed` | Create/update starter school records and accounts |
 | `npm run seed:en-my-dictionary` | Import the English–Myanmar dataset |
 | `npm run seed:mon-dictionary` | Import the Mon dictionary dataset |
+| `npm run generate:language-quest-chinese` | Rebuild the generated Mandarin Complete curriculum |
+| `npm run generate:language-quest-english-words` | Rebuild the three curated English Word courses |
+| `npm run generate:language-quest-advanced-english` | Rebuild the three ranked advanced-English courses |
+| `npm run generate:language-quest-linguify` | Rebuild the six CEFR vocabulary courses |
 | `npx prisma migrate deploy` | Apply committed database migrations |
 | `npx prisma validate` | Validate the Prisma schema |
 
@@ -378,6 +426,7 @@ Before committing or deploying application changes:
 
 ```bash
 npm run lint
+npm run test:unit
 npm run build
 npx prisma validate
 ```
@@ -444,6 +493,7 @@ Use a PostgreSQL client matching the server major version. Set `OFFSITE_BACKUP_D
 
 - JWT authentication with bcrypt password hashing.
 - Server-enforced roles and granular permission checks.
+- Public Language Quest accounts are confined by client route guards and a server-side method/path allowlist.
 - Ownership and class-scope checks on student, exam, accommodation, media, flashcard, and analytics APIs.
 - Helmet security headers, restricted CORS, and rate limiting.
 - DOMPurify sanitization for rendered user content.
@@ -463,8 +513,8 @@ mrlc-lms/
 │   │   ├── elibrary/           # PDF/EPUB list, upload, reader, analytics
 │   │   ├── exam2/              # Advanced exam workflow
 │   │   ├── flashcards/         # Deck, study, game, and progress UI
-│   │   └── games/              # Daily Quest, Language Quest, Sudoku, Neon Snake, Checkers, and Chess
-│   ├── components/             # App-specific components
+│   │   └── games/              # Daily Quest, Language Quest, Word Trail, Sudoku, Neon Snake, Checkers, and Chess
+│   ├── components/             # App-specific components, including Language Quest shell, dictionary, and achievements
 │   ├── lib/                    # API and feature utilities
 │   ├── providers/              # React providers
 │   └── i18n/                   # Locale setup and translations
@@ -481,6 +531,7 @@ mrlc-lms/
 ├── examPhase2.ts               # Attempts, scheduling, accommodations, grading
 ├── flashcards.ts               # Flashcard API and image lifecycle
 ├── languageQuest.ts            # Language Quest courses, progress, rewards, and authoring API
+├── shared/externalLearnerAccess.ts # External learner browser/API allowlists
 ├── dailyQuest.ts               # Daily English Word practice, review, XP, and streak API
 ├── englishWordPractice.ts       # Shared curated English Word question provider
 ├── wordTrail.ts                 # Word Trail board state, rolls, answers, scores, and leaderboard API

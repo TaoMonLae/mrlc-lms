@@ -27,6 +27,7 @@ export interface User {
   username: string;
   email?: string;
   profilePhotoUrl?: string | null;
+  languageQuestAvatar?: string | null;
   role: UserRole;
   status: UserStatus;
   isExternalLearner?: boolean;

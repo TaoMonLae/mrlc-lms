@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Flame, Medal, Star, Trophy } from 'lucide-react';
 import { toast } from 'sonner';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { LanguageQuestAvatar } from '@/src/components/games/LanguageQuestAvatar';
 import { apiGet } from '@/src/lib/api';
 
 interface LeaderboardPayload {
@@ -15,7 +15,7 @@ interface LeaderboardPayload {
     userId: string;
     name: string;
     role: string;
-    profilePhotoUrl: string | null;
+    avatarId: string;
     points: number;
     currentStreak: number;
   }[];
@@ -66,16 +66,12 @@ export default function LanguageQuestLeaderboard() {
           <div className="divide-y divide-slate-100 dark:divide-surface-raised">
             {data.leaders.map((leader) => {
               const mine = leader.userId === data.currentUserId;
-              const initials = leader.name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase();
               return (
                 <div key={leader.userId} className={`flex items-center gap-3 px-4 py-4 sm:px-6 ${mine ? 'bg-violet-50 dark:bg-violet-500/10' : ''}`}>
                   <div className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-black ${rankTone[leader.rank] || 'bg-slate-100 text-slate-500 dark:bg-surface-raised dark:text-slate-300'}`}>
                     {leader.rank <= 3 ? <Medal className="h-5 w-5" /> : leader.rank}
                   </div>
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={leader.profilePhotoUrl || undefined} />
-                    <AvatarFallback>{initials || '?'}</AvatarFallback>
-                  </Avatar>
+                  <LanguageQuestAvatar avatarId={leader.avatarId} name={leader.name} className="h-10 w-10 text-xl shadow-sm" />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <p className="truncate font-semibold text-slate-900 dark:text-white">{leader.name}</p>

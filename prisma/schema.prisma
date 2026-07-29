@@ -272,19 +272,23 @@ model User {
   passwordResetTokens    PasswordResetToken[]
   queuedEmails           EmailOutbox[]
 
-  conversationsCreated       Conversation[]            @relation("ConversationCreatedBy")
+  conversationsCreated       Conversation[]                   @relation("ConversationCreatedBy")
   conversationParticipations ConversationParticipant[]
   chatMessages               ChatMessage[]
-  socialPosts                SocialPost[]              @relation("SocialAuthor")
-  socialLikes                SocialLike[]              @relation("SocialLiker")
-  socialComments             SocialComment[]           @relation("SocialCommenter")
-  socialSeen                 SocialSeen?               @relation("SocialSeenBy")
-  socialReportsFiled         SocialReport[]            @relation("SocialReporter")
-  reportedRuleViolations     RuleViolation[]           @relation("ReportedRuleViolations")
-  chessMatchesWhite          ChessMatch[]              @relation("ChessWhite")
-  chessMatchesBlack          ChessMatch[]              @relation("ChessBlack")
+  socialPosts                SocialPost[]                     @relation("SocialAuthor")
+  socialLikes                SocialLike[]                     @relation("SocialLiker")
+  socialComments             SocialComment[]                  @relation("SocialCommenter")
+  socialSeen                 SocialSeen?                      @relation("SocialSeenBy")
+  socialReportsFiled         SocialReport[]                   @relation("SocialReporter")
+  reportedRuleViolations     RuleViolation[]                  @relation("ReportedRuleViolations")
+  chessMatchesWhite          ChessMatch[]                     @relation("ChessWhite")
+  chessMatchesBlack          ChessMatch[]                     @relation("ChessBlack")
   languageQuestProgress      LanguageQuestUserProgress?
   languageQuestChallenges    LanguageQuestChallengeProgress[]
+  languageQuestAvatar        String                           @default("owl")
+  languageQuestBio           String?
+  languageQuestClassrooms    LanguageQuestClassroom[]         @relation("LanguageQuestClassroomTeacher")
+  languageQuestMemberships   LanguageQuestClassroomMember[]
   dailyQuestSessions         DailyQuestSession[]
   wordTrailGames             WordTrailGame[]
   gameControlPoliciesCreated GameControlPolicy[]              @relation("GameControlCreatedBy")
@@ -449,17 +453,17 @@ model Class {
   description  String?
   status       String  @default("ACTIVE")
 
-  students           Student[]
-  teachers           ClassTeacher[]
-  subjects           ClassSubject[]
-  exams              Exam[]
-  attendances        Attendance[]
-  gradeItems         GradeItem[]
-  categoryWeights    CategoryWeight[]
-  lessonPlans        LessonPlan[]
-  homework           Homework[]
-  flashcardDeckLinks FlashcardDeckClass[]
-  socialPosts        SocialPost[]
+  students            Student[]
+  teachers            ClassTeacher[]
+  subjects            ClassSubject[]
+  exams               Exam[]
+  attendances         Attendance[]
+  gradeItems          GradeItem[]
+  categoryWeights     CategoryWeight[]
+  lessonPlans         LessonPlan[]
+  homework            Homework[]
+  flashcardDeckLinks  FlashcardDeckClass[]
+  socialPosts         SocialPost[]
   gameControlPolicies GameControlPolicy[]
 
   createdAt DateTime @default(now())
@@ -1813,21 +1817,21 @@ model InventoryItem {
 }
 
 model Ebook {
-  id           String  @id @default(uuid())
-  title        String
+  id              String  @id @default(uuid())
+  title           String
   // Normalized title (NFKC + trimmed + whitespace-collapsed + lowercased) used
   // for duplicate detection. Indexed so findDuplicateEbookTitle is a lookup,
   // not a full-table scan. Backfilled by migration; kept in sync on write.
-  titleLower   String?
-  author       String?
-  description  String?
-  category     String?
-  seriesName   String?
+  titleLower      String?
+  author          String?
+  description     String?
+  category        String?
+  seriesName      String?
   // Normalized series name, for the same reason as titleLower.
   seriesNameLower String?
-  seriesNumber Int?
-  language     String?
-  coverUrl     String?
+  seriesNumber    Int?
+  language        String?
+  coverUrl        String?
 
   format       String // "PDF" | "EPUB" | "CBR" | "CBZ"
   fileName     String // stored file name on disk (uuid + ext)
@@ -3445,16 +3449,16 @@ model SocialPost {
 }
 
 model SocialLike {
-  id        String          @id @default(uuid())
+  id        String         @id @default(uuid())
   postId    String
-  post      SocialPost      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  post      SocialPost     @relation(fields: [postId], references: [id], onDelete: Cascade)
   userId    String
-  user      User            @relation("SocialLiker", fields: [userId], references: [id], onDelete: Cascade)
+  user      User           @relation("SocialLiker", fields: [userId], references: [id], onDelete: Cascade)
   // FB/IG-style reaction. Defaults to LIKE so existing rows keep working
   // after the column is added; a user's single row per post flips between
   // reaction types (or is removed entirely) as they tap the picker.
-  reaction  SocialReaction  @default(LIKE)
-  createdAt DateTime        @default(now())
+  reaction  SocialReaction @default(LIKE)
+  createdAt DateTime       @default(now())
 
   @@unique([postId, userId])
   @@index([postId])
@@ -3845,9 +3849,9 @@ model ChessMatch {
   id String @id @default(uuid())
 
   whiteId String
-  white   User @relation("ChessWhite", fields: [whiteId], references: [id], onDelete: Cascade)
+  white   User   @relation("ChessWhite", fields: [whiteId], references: [id], onDelete: Cascade)
   blackId String
-  black   User @relation("ChessBlack", fields: [blackId], references: [id], onDelete: Cascade)
+  black   User   @relation("ChessBlack", fields: [blackId], references: [id], onDelete: Cascade)
 
   // User.id of whichever side sent the invite — lets the UI show "X
   // challenged you" vs. "waiting for X to accept" without extra lookups.
@@ -3904,6 +3908,7 @@ model LanguageQuestCourse {
 
   units        LanguageQuestUnit[]
   userProgress LanguageQuestUserProgress[]
+  classrooms   LanguageQuestClassroom[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -4020,6 +4025,36 @@ model LanguageQuestChallengeProgress {
   @@index([userId])
   @@index([challengeId])
   @@index([completed])
+}
+
+model LanguageQuestClassroom {
+  id            String                         @id @default(uuid())
+  name          String
+  teacherId     String
+  teacher       User                           @relation("LanguageQuestClassroomTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+  joinCode      String                         @unique
+  focusCourseId String?
+  focusCourse   LanguageQuestCourse?           @relation(fields: [focusCourseId], references: [id], onDelete: SetNull)
+  active        Boolean                        @default(true)
+  members       LanguageQuestClassroomMember[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([teacherId, active])
+  @@index([focusCourseId])
+}
+
+model LanguageQuestClassroomMember {
+  id          String                 @id @default(uuid())
+  classroomId String
+  classroom   LanguageQuestClassroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt    DateTime               @default(now())
+
+  @@unique([classroomId, userId])
+  @@index([userId])
 }
 
 // -----------------------------------------------------------------------------

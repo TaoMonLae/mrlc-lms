@@ -198,6 +198,9 @@ const LanguageQuestPublic = lazy(() => import("./pages/games/language-quest/Lang
 const LanguageQuestCourse = lazy(() => import("./pages/games/language-quest/LanguageQuestCourse"));
 const LanguageQuestLesson = lazy(() => import("./pages/games/language-quest/LanguageQuestLesson"));
 const LanguageQuestLeaderboard = lazy(() => import("./pages/games/language-quest/LanguageQuestLeaderboard"));
+const LanguageQuestProfile = lazy(() => import("./pages/games/language-quest/LanguageQuestProfile"));
+const LanguageQuestClassrooms = lazy(() => import("./pages/games/language-quest/LanguageQuestClassrooms"));
+const LanguageQuestLearners = lazy(() => import("./pages/games/language-quest/LanguageQuestLearners"));
 const LanguageQuestManage = lazy(() => import("./pages/games/language-quest/LanguageQuestManage"));
 const LanguageQuestEditor = lazy(() => import("./pages/games/language-quest/LanguageQuestEditor"));
 const LanguageQuestShell = lazy(() => import("./components/games/LanguageQuestShell").then((module) => ({ default: module.LanguageQuestShell })));
@@ -307,6 +310,13 @@ export default function App() {
                 <Route path="/games/language-quest/courses/:courseId" element={<LanguageQuestCourse />} />
                 <Route path="/games/language-quest/lessons/:lessonId" element={<LanguageQuestLesson />} />
                 <Route path="/games/language-quest/leaderboard" element={<LanguageQuestLeaderboard />} />
+                <Route path="/games/language-quest/profile" element={<LanguageQuestProfile />} />
+                <Route element={<ProtectedRoute allowedRoles={['TEACHER', 'ADMIN']} />}>
+                  <Route path="/games/language-quest/classrooms" element={<LanguageQuestClassrooms />} />
+                </Route>
+                <Route element={<ProtectedRoute strictRoles={['ADMIN']} />}>
+                  <Route path="/games/language-quest/learners" element={<LanguageQuestLearners />} />
+                </Route>
               </Route>
               <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<DashboardPage />} />

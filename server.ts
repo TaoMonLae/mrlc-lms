@@ -44,6 +44,7 @@ import cookieParser from "cookie-parser";
 import { BADGE_CATALOG, getBadgeLevel } from "./lib/badges";
 import { roleHasPermission, type Permission, type UserRole } from "./shared/permissions";
 import { isExternalLearnerApiRequestAllowed } from "./shared/externalLearnerAccess";
+import { isLanguageQuestAvatarId } from "./shared/languageQuestAvatars";
 import { canCurateSocialContent, canViewSocialAudience, normaliseSocialRetentionDays } from "./shared/socialPolicy";
 import {
   normalizeVideoDuration,
@@ -1002,6 +1003,7 @@ const schemas = {
     lastName: z.string().trim().min(1, "is required").max(80, "is too long"),
     email,
     password: z.string().min(8, "must be at least 8 characters").max(128, "is too long"),
+    avatarId: z.string().refine(isLanguageQuestAvatarId, "must be an available learner avatar").optional(),
   }),
   forgotPassword: z.object({ identifier: reqStr }),
   resetPassword: z.object({
@@ -2275,6 +2277,7 @@ async function startServer() {
       const lastName = String(req.body.lastName).trim();
       const learnerEmail = String(req.body.email).trim().toLowerCase();
       const password = String(req.body.password);
+      const avatarId = isLanguageQuestAvatarId(req.body.avatarId) ? req.body.avatarId : "owl";
       try {
         const existing = await prisma.user.findFirst({
           where: { email: { equals: learnerEmail, mode: "insensitive" } },
@@ -2294,6 +2297,7 @@ async function startServer() {
             role: "STUDENT",
             isActive: true,
             isExternalLearner: true,
+            languageQuestAvatar: avatarId,
             mustChangePassword: false,
           } as any,
           select: { id: true, email: true },
@@ -2448,6 +2452,7 @@ async function startServer() {
           firstName: user.firstName,
           lastName: user.lastName,
           profilePhotoUrl: (user as any).profilePhotoUrl || null,
+          languageQuestAvatar: (user as any).languageQuestAvatar || "owl",
           role: user.role,
           isActive: user.isActive,
           isExternalLearner: Boolean((user as any).isExternalLearner),
@@ -2498,6 +2503,7 @@ async function startServer() {
           firstName: true,
           lastName: true,
           profilePhotoUrl: true,
+          languageQuestAvatar: true,
           role: true,
           isActive: true,
           isExternalLearner: true,

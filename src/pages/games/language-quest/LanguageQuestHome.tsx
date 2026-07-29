@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, Flame, Heart, Languages, Settings2, Sparkles, Star, Trophy, WholeWord } from 'lucide-react';
+import { BookOpen, Flame, GraduationCap, Heart, Languages, Settings2, Sparkles, Star, Trophy, UserRound, Users, WholeWord } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -82,12 +82,25 @@ export default function LanguageQuestHome() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Button variant="outline" className="border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white" render={<Link to="/games/language-quest/profile" />} nativeButton={false}>
+              <UserRound className="mr-2 h-4 w-4" /> My Profile
+            </Button>
             <Button variant="outline" className="border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white" render={<Link to="/games/language-quest/leaderboard" />} nativeButton={false}>
               <Trophy className="mr-2 h-4 w-4" /> Leaderboard
             </Button>
             {data.canManage && (
-              <Button className="bg-white text-violet-700 hover:bg-white/90" render={<Link to="/games/language-quest/manage" />} nativeButton={false}>
-                <Settings2 className="mr-2 h-4 w-4" /> Manage Courses
+              <>
+                <Button className="bg-white text-violet-700 hover:bg-white/90" render={<Link to="/games/language-quest/classrooms" />} nativeButton={false}>
+                  <GraduationCap className="mr-2 h-4 w-4" /> Classrooms
+                </Button>
+                <Button className="bg-white text-violet-700 hover:bg-white/90" render={<Link to="/games/language-quest/manage" />} nativeButton={false}>
+                  <Settings2 className="mr-2 h-4 w-4" /> Manage Courses
+                </Button>
+              </>
+            )}
+            {user?.role === 'ADMIN' && (
+              <Button className="bg-slate-950/80 text-white hover:bg-slate-950" render={<Link to="/games/language-quest/learners" />} nativeButton={false}>
+                <Users className="mr-2 h-4 w-4" /> Manage Learners
               </Button>
             )}
           </div>

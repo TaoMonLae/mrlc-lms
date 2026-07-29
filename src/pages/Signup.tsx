@@ -4,7 +4,9 @@ import { ArrowLeft, CheckCircle2, Eye, EyeOff, Headphones, Keyboard, LockKeyhole
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { MrlcQuestBrand, TaoMonLaeCredit } from '@/src/components/games/MrlcQuestBrand';
+import { LanguageQuestAvatar } from '@/src/components/games/LanguageQuestAvatar';
 import { useAuth } from '@/src/providers/AuthProvider';
+import { LANGUAGE_QUEST_AVATARS } from '@/shared/languageQuestAvatars';
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -12,7 +14,7 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '' });
+  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '', avatarId: 'owl' });
 
   const update = (field: keyof typeof form, value: string) => setForm((current) => ({ ...current, [field]: value }));
 
@@ -104,6 +106,24 @@ export default function SignupPage() {
                   </span>
                 </label>
               </div>
+              <fieldset>
+                <legend className="text-sm font-bold text-slate-700">Choose a learner avatar</legend>
+                <p className="mt-1 text-xs text-slate-500">Built-in characters only—profile-photo uploads are not used in Language Quest.</p>
+                <div className="mt-3 grid grid-cols-6 gap-2">
+                  {LANGUAGE_QUEST_AVATARS.map((avatar) => (
+                    <button
+                      key={avatar.id}
+                      type="button"
+                      onClick={() => update('avatarId', avatar.id)}
+                      aria-label={avatar.label}
+                      aria-pressed={form.avatarId === avatar.id}
+                      className={`rounded-xl p-1.5 transition hover:-translate-y-0.5 ${form.avatarId === avatar.id ? 'bg-violet-100 ring-2 ring-violet-500' : 'bg-slate-50 ring-1 ring-slate-200'}`}
+                    >
+                      <LanguageQuestAvatar avatarId={avatar.id} className="mx-auto h-9 w-9 rounded-xl text-lg shadow-sm" />
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
               <label htmlFor="learner-email" className="block space-y-2 text-sm font-bold text-slate-700">
                 <span>Email address</span>
                 <span className="relative block">
