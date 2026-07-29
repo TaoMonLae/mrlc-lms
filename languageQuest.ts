@@ -627,6 +627,13 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
             unitCount: course.units.length, lessonCount, challengeCount: challengeIds.length,
             completedChallenges,
             progressPercent: challengeIds.length ? Math.round((completedChallenges / challengeIds.length) * 100) : 0,
+            // Exact match, not the rounded progressPercent: on a large course
+            // (e.g. the Mandarin Complete Course has 1,870 challenges),
+            // Math.round((completedChallenges / challengeIds.length) * 100)
+            // can already read 100 with up to ~9 challenges still unfinished.
+            // Certificate eligibility and any other "is this course done"
+            // check should use this, not progressPercent === 100.
+            completed: challengeIds.length > 0 && completedChallenges === challengeIds.length,
           };
         }),
       });

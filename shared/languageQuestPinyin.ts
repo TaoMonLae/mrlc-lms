@@ -39,8 +39,20 @@ export function formatCedictPinyin(rawPinyin: string): string {
     .split(" ")
     .map((syllable) => {
       const withUmlaut = syllable.replace(/u:/gi, (match) => (match[0] === "U" ? "V" : "v"));
-      if (/5$/.test(withUmlaut)) return withUmlaut.replace(/5$/, "");
-      return convert(withUmlaut, { format: "numToSymbol" });
+      const neutralTone = /^(.*)5$/.exec(withUmlaut);
+      if (neutralTone) {
+        // Neutral tone carries no diacritic, but a "v" placeholder for
+        // u-umlaut still needs to become "ü" even without a tone mark --
+        // convert() is never called on this branch, so it can't do that swap.
+        return neutralTone[1].replace(/V/g, "Ü").replace(/v/g, "ü");
+      }
+      // pinyin-pro's numbered-tone parser doesn't recognise fully upper-case
+      // syllables (e.g. "LV4" is returned unconverted instead of "Lǜ") --
+      // convert in title case and restore the original casing afterward.
+      const isUpperCase = withUmlaut === withUmlaut.toUpperCase() && withUmlaut !== withUmlaut.toLowerCase();
+      const toConvert = isUpperCase ? withUmlaut[0] + withUmlaut.slice(1).toLowerCase() : withUmlaut;
+      const converted = convert(toConvert, { format: "numToSymbol" });
+      return isUpperCase ? converted.toUpperCase() : converted;
     })
     .join(" ");
 }

@@ -75,6 +75,12 @@ test("formatCedictPinyin converts CC-CEDICT numbered pinyin to tone marks", () =
   assert.equal(formatCedictPinyin("ma5"), "ma");
   // CC-CEDICT spells u-umlaut as "u:" rather than "ü".
   assert.equal(formatCedictPinyin("lu:4 se4"), "lǜ sè");
+  // Neutral tone (5) combined with u-umlaut still needs the "u:" -> "ü" swap
+  // even though no diacritic is added (regression: this used to return "nv").
+  assert.equal(formatCedictPinyin("nu:5"), "nü");
+  // pinyin-pro's numbered-tone parser doesn't recognise fully upper-case
+  // syllables on its own (regression: this used to return "LV4" unconverted).
+  assert.equal(formatCedictPinyin("LU:4"), "LǛ");
 });
 
 test("containsHanCharacters detects Chinese-script input", () => {

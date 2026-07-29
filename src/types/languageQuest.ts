@@ -21,6 +21,7 @@ export interface LanguageQuestCourseSummary {
   challengeCount: number;
   completedChallenges: number;
   progressPercent: number;
+  completed: boolean;
 }
 
 export interface LanguageQuestOverview {

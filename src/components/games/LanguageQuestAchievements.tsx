@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Award, Download, Flame, Lock, Share2, Sparkles } from 'lucide-react';
+import { Award, Download, Flame, Loader2, Lock, Share2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import type { LanguageQuestCourseSummary, LanguageQuestProfile } from '@/src/types/languageQuest';
@@ -158,20 +158,30 @@ function downloadBlob(blob: Blob, filename: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1_000);
 }
 
+// Certificate busy-state is keyed per course (not just per kind+action) so
+// downloading one course's certificate doesn't visually tie up another
+// course's card -- with two or three completed courses now each getting
+// their own card, a shared key would have been misleading.
+function busyKey(kind: AchievementKind, action: 'download' | 'share', courseId?: string): string {
+  return courseId ? `${kind}-${action}-${courseId}` : `${kind}-${action}`;
+}
+
 export function LanguageQuestAchievements({ learnerName, profile, courses }: AchievementStudioProps) {
-  const completedCourses = useMemo(() => courses.filter((course) => course.progressPercent === 100), [courses]);
-  const [courseId, setCourseId] = useState(completedCourses[0]?.id || '');
+  // `completed` is an exact all-challenges-done flag from the server, not a
+  // rounded percentage -- see languageQuest.ts's /overview route for why
+  // progressPercent === 100 isn't safe to use as the completion gate.
+  const completedCourses = useMemo(() => courses.filter((course) => course.completed), [courses]);
   const [busy, setBusy] = useState<string | null>(null);
-  const selectedCourse = completedCourses.find((course) => course.id === courseId) || completedCourses[0];
   const canCreateStreak = profile.currentStreak > 0;
 
-  const create = async (kind: AchievementKind, action: 'download' | 'share') => {
+  const create = async (kind: AchievementKind, action: 'download' | 'share', course?: LanguageQuestCourseSummary) => {
     if (kind === 'streak' && !canCreateStreak) return;
-    if (kind === 'certificate' && !selectedCourse) return;
-    setBusy(`${kind}-${action}`);
+    if (kind === 'certificate' && !course) return;
+    const key = busyKey(kind, action, course?.id);
+    setBusy(key);
     try {
-      const blob = await createLanguageQuestAchievementBlob({ kind, learnerName, profile, course: selectedCourse });
-      const label = kind === 'certificate' ? `certificate-${selectedCourse?.title}` : `${profile.currentStreak}-day-streak`;
+      const blob = await createLanguageQuestAchievementBlob({ kind, learnerName, profile, course });
+      const label = kind === 'certificate' ? `certificate-${course?.title}` : `${profile.currentStreak}-day-streak`;
       const filename = `MRLC-${safeFilename(learnerName)}-${safeFilename(label)}.png`;
 
       if (action === 'share') {
@@ -187,7 +197,7 @@ export function LanguageQuestAchievements({ learnerName, profile, courses }: Ach
             await navigator.share({
               title: kind === 'certificate' ? 'My Language Quest certificate' : 'My Language Quest streak',
               text: kind === 'certificate'
-                ? `${learnerName} completed ${selectedCourse?.title} on MRLC Language Quest.`
+                ? `${learnerName} completed ${course?.title} on MRLC Language Quest.`
                 : `${learnerName} reached a ${profile.currentStreak}-day streak on MRLC Language Quest.`,
               files: [file],
             });
@@ -213,63 +223,80 @@ export function LanguageQuestAchievements({ learnerName, profile, courses }: Ach
       <div className="flex items-start gap-3">
         <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-amber-300 to-orange-500 text-white shadow-lg"><Sparkles className="h-5 w-5" /></span>
         <div>
-          <h2 className="text-xl font-black text-slate-950 dark:text-white">Share your achievement</h2>
-          <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">Save a personalized PNG or open your device’s share menu for social media. Only your name and Language Quest achievement appear.</p>
+          <h2 className="text-xl font-black text-slate-950 dark:text-white">Achievements</h2>
+          <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
+            {completedCourses.length > 0
+              ? `${completedCourses.length} certificate${completedCourses.length === 1 ? '' : 's'} earned so far. Save a personalized PNG or open your device's share menu -- only your name and achievement appear.`
+              : 'Save a personalized PNG or open your device’s share menu for social media. Only your name and Language Quest achievement appear.'}
+          </p>
         </div>
       </div>
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-2">
-        <article className={`overflow-hidden rounded-2xl border ${canCreateStreak ? 'border-orange-200 dark:border-orange-500/25' : 'border-slate-200 opacity-70 dark:border-slate-700'}`}>
-          <div className="bg-gradient-to-br from-violet-800 via-fuchsia-700 to-orange-500 p-5 text-white">
-            <div className="flex items-center justify-between">
+      <article className={`mt-5 overflow-hidden rounded-2xl border ${canCreateStreak ? 'border-orange-200 dark:border-orange-500/25' : 'border-slate-200 opacity-70 dark:border-slate-700'}`}>
+        <div className="flex flex-col gap-4 bg-gradient-to-br from-violet-800 via-fuchsia-700 to-orange-500 p-5 text-white sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <Flame className="h-5 w-5 shrink-0 fill-amber-300 text-amber-300" />
               <p className="text-xs font-black uppercase tracking-[0.2em] text-white/75">Learning streak</p>
-              <Flame className="h-7 w-7 fill-amber-300 text-amber-300" />
             </div>
-            <p className="mt-4 text-4xl font-black">{profile.currentStreak} {profile.currentStreak === 1 ? 'day' : 'days'}</p>
-            <p className="mt-1 truncate text-lg font-bold">{learnerName}</p>
-            <p className="mt-3 text-xs font-semibold text-white/70">Best: {profile.bestStreak} days • {profile.points} points</p>
+            <p className="mt-2 text-3xl font-black">{profile.currentStreak} {profile.currentStreak === 1 ? 'day' : 'days'}</p>
+            <p className="mt-1 truncate text-sm font-bold text-white/85">{learnerName} • Best: {profile.bestStreak} days • {profile.points} points</p>
           </div>
-          <div className="flex flex-wrap gap-2 bg-white p-4 dark:bg-slate-900">
-            {!canCreateStreak ? (
-              <p className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-slate-300"><Lock className="h-4 w-4" /> Complete a lesson today to unlock.</p>
-            ) : (
-              <>
-                <Button size="sm" variant="outline" onClick={() => create('streak', 'download')} disabled={busy !== null}><Download className="mr-2 h-4 w-4" /> Save PNG</Button>
-                <Button size="sm" onClick={() => create('streak', 'share')} disabled={busy !== null}><Share2 className="mr-2 h-4 w-4" /> Share</Button>
-              </>
-            )}
-          </div>
-        </article>
+          {!canCreateStreak ? (
+            <p className="flex shrink-0 items-center gap-2 text-sm font-semibold text-white/85"><Lock className="h-4 w-4" /> Complete a lesson today to unlock.</p>
+          ) : (
+            <div className="flex shrink-0 flex-wrap gap-2">
+              <Button size="sm" variant="secondary" onClick={() => create('streak', 'download')} disabled={busy !== null && busy !== busyKey('streak', 'download')}>
+                {busy === busyKey('streak', 'download') ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />} Save PNG
+              </Button>
+              <Button size="sm" className="bg-white text-violet-900 hover:bg-white/90" onClick={() => create('streak', 'share')} disabled={busy !== null && busy !== busyKey('streak', 'share')}>
+                {busy === busyKey('streak', 'share') ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Share2 className="mr-2 h-4 w-4" />} Share
+              </Button>
+            </div>
+          )}
+        </div>
+      </article>
 
-        <article className={`overflow-hidden rounded-2xl border ${selectedCourse ? 'border-sky-200 dark:border-sky-500/25' : 'border-slate-200 opacity-70 dark:border-slate-700'}`}>
-          <div className="bg-gradient-to-br from-indigo-900 via-violet-700 to-sky-500 p-5 text-white">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-white/75">Completion certificate</p>
-              <Award className="h-8 w-8 text-amber-300" />
-            </div>
-            <p className="mt-4 truncate text-2xl font-black">{learnerName}</p>
-            <p className="mt-1 truncate text-sm font-bold text-white/80">{selectedCourse?.title || 'Finish a course to unlock'}</p>
-            <p className="mt-3 text-xs font-semibold text-white/70">MRLC Language Quest</p>
+      <div className="mt-6">
+        <h3 className="flex items-center gap-2 text-sm font-black uppercase tracking-wide text-slate-600 dark:text-slate-300">
+          <Award className="h-4 w-4 text-sky-600 dark:text-sky-300" /> Course certificates
+          {completedCourses.length > 0 && (
+            <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-black text-sky-700 dark:bg-sky-500/15 dark:text-sky-300">{completedCourses.length}</span>
+          )}
+        </h3>
+
+        {completedCourses.length === 0 ? (
+          <div className="mt-3 flex items-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-5 text-sm font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
+            <Lock className="h-4 w-4 shrink-0" /> Finish every lesson in a course to unlock its certificate -- every course you complete earns its own.
           </div>
-          <div className="space-y-3 bg-white p-4 dark:bg-slate-900">
-            {completedCourses.length > 1 && (
-              <label className="block text-xs font-bold text-slate-600 dark:text-slate-300">
-                Completed course
-                <select value={selectedCourse?.id || ''} onChange={(event) => setCourseId(event.target.value)} className="mt-1 h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white">
-                  {completedCourses.map((course) => <option key={course.id} value={course.id}>{course.title}</option>)}
-                </select>
-              </label>
-            )}
-            {!selectedCourse ? (
-              <p className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-slate-300"><Lock className="h-4 w-4" /> Complete any course to unlock.</p>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                <Button size="sm" variant="outline" onClick={() => create('certificate', 'download')} disabled={busy !== null}><Download className="mr-2 h-4 w-4" /> Save PNG</Button>
-                <Button size="sm" onClick={() => create('certificate', 'share')} disabled={busy !== null}><Share2 className="mr-2 h-4 w-4" /> Share</Button>
-              </div>
-            )}
+        ) : (
+          <div className="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {completedCourses.map((course) => {
+              const downloadKey = busyKey('certificate', 'download', course.id);
+              const shareKey = busyKey('certificate', 'share', course.id);
+              return (
+                <article key={course.id} className="overflow-hidden rounded-2xl border border-sky-200 dark:border-sky-500/25">
+                  <div className="p-4 text-white" style={{ background: `linear-gradient(135deg, #1e1b4b, ${course.accentColor}, #0ea5e9)` }}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xl" aria-hidden="true">{course.imageEmoji}</span>
+                      <Award className="h-6 w-6 text-amber-300" />
+                    </div>
+                    <p className="mt-3 truncate text-lg font-black">{learnerName}</p>
+                    <p className="mt-0.5 truncate text-xs font-bold text-white/80">{course.title}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 bg-white p-3 dark:bg-slate-900">
+                    <Button size="sm" variant="outline" onClick={() => create('certificate', 'download', course)} disabled={busy !== null && busy !== downloadKey}>
+                      {busy === downloadKey ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />} Save
+                    </Button>
+                    <Button size="sm" onClick={() => create('certificate', 'share', course)} disabled={busy !== null && busy !== shareKey}>
+                      {busy === shareKey ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Share2 className="mr-2 h-4 w-4" />} Share
+                    </Button>
+                  </div>
+                </article>
+              );
+            })}
           </div>
-        </article>
+        )}
       </div>
     </section>
   );
