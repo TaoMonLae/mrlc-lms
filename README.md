@@ -609,7 +609,14 @@ Review the upstream licenses and the source notes before redistributing third-pa
 
 ## License and support
 
-All rights reserved except for separately licensed third-party components and data noted above.
+MRLC LMS is open-source software released under the [MIT License](LICENSE).
+You may use, copy, modify, and distribute the project's original code subject
+to the license terms.
+
+Third-party components, course material, and datasets remain under their
+respective licenses and are not relicensed under MIT. Review
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) before redistributing the
+repository or its bundled data.
 
 For deployment details, see [deploy/DEPLOYMENT.md](deploy/DEPLOYMENT.md). For project-specific issues, use the repository issue tracker or contact the MRLC development team.
 
