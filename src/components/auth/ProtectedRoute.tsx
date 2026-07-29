@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../providers/AuthProvider';
 import { hasPermission, Permission, UserRole } from '../../lib/permissions';
+import { isExternalLearnerAppPathAllowed } from '@/shared/externalLearnerAccess';
 
 interface ProtectedRouteProps {
   requiredPermission?: Permission;
@@ -38,8 +39,7 @@ export function ProtectedRoute({ requiredPermission, allowedRoles, strictRoles }
   // cannot wander into private school modules.
   if (
     user.isExternalLearner
-    && !location.pathname.startsWith('/games/language-quest')
-    && location.pathname !== '/change-password'
+    && !isExternalLearnerAppPathAllowed(location.pathname)
   ) {
     return <Navigate to="/games/language-quest" replace />;
   }
@@ -57,4 +57,24 @@ export function ProtectedRoute({ requiredPermission, allowedRoles, strictRoles }
   }
 
   return <Outlet />;
+}
+
+/**
+ * Covers public and protected routes alike. Anonymous visitors may still use
+ * genuinely public pages, but once a public learner is signed in their browser
+ * is kept inside the learning-only experience.
+ */
+export function ExternalLearnerBoundary({ children }: { children: React.ReactNode }) {
+  const { user, isLoading } = useAuth();
+  const location = useLocation();
+
+  if (
+    !isLoading
+    && user?.isExternalLearner
+    && !isExternalLearnerAppPathAllowed(location.pathname)
+  ) {
+    return <Navigate to="/games/language-quest" replace />;
+  }
+
+  return <>{children}</>;
 }

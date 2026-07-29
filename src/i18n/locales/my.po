@@ -14337,3 +14337,238 @@ msgstr "လက်ရှိ လုပ်ဆောင်နေသော ရော�
 msgid "Expense Count"
 msgstr "အသုံးစရိတ် အရေအတွက်"
 
+# ── Language Quest Course Metadata ───────────────────────────
+msgid "Everyday English"
+msgstr "နေ့စဉ်သုံး အင်္ဂလိပ်စာ"
+
+msgid "Short, practical lessons for friendly conversations and school life."
+msgstr "မိတ်ဆွေဖြစ် ပြောဆိုဆက်ဆံမှုနှင့် ကျောင်းဘဝအတွက် တိုတောင်းပြီး လက်တွေ့ကျသော သင်ခန်းစာများ။"
+
+msgid "Spanish Foundations"
+msgstr "စပိန်ဘာသာစကား အခြေခံ"
+
+msgid "A Spanish vocabulary path adapted from the linked Lingo course, with visual choices and speech-assisted practice."
+msgstr "ရုပ်ပုံရွေးချယ်မှုများနှင့် အသံအကူအညီဖြင့် လေ့ကျင့်မှုများ ပါဝင်သော၊ ချိတ်ဆက်ထားသည့် Lingo သင်ခန်းစာမှ ပြုပြင်ဆီလျော်အောင် ဖန်တီးထားသည့် စပိန်ဝေါဟာရ လေ့လာမှုလမ်းကြောင်း။"
+
+msgid "Mandarin Foundations"
+msgstr "မန်ဒရင် တရုတ်ဘာသာစကား အခြေခံ"
+
+msgid "Original beginner Mandarin lessons for greetings, people, numbers, food, daily activities, places, questions, and directions."
+msgstr "နှုတ်ခွန်းဆက်ခြင်း၊ လူပုဂ္ဂိုလ်များ၊ ကိန်းဂဏန်းများ၊ အစားအစာ၊ နေ့စဉ်လှုပ်ရှားမှုများ၊ နေရာများ၊ မေးခွန်းများနှင့် လမ်းညွှန်ချက်များအတွက် မူလအခြေခံ မန်ဒရင်သင်ခန်းစာများ။"
+
+msgid "Mandarin Complete Course"
+msgstr "မန်ဒရင် တရုတ်ဘာသာစကား သင်တန်းအပြည့်အစုံ"
+
+msgid "A comprehensive Mandarin path with 70 progressive topics and 1,870 translation challenges generated from the school-provided curriculum file."
+msgstr "ကျောင်းမှ ပံ့ပိုးပေးထားသော သင်ရိုးညွှန်းတမ်း ဖိုင်မှ ထုတ်လုပ်ထားသည့် တိုးတက်မှုအဆင့်ဆင့်ပြောင်းလဲသော အကြောင်းအရာ ၇၀ နှင့် ဘာသာပြန်စိန်ခေါ်မှု ၁,၈၇၀ ခု ပါဝင်သော ပြည့်စုံသော မန်ဒရင်လေ့လာမှုလမ်းကြောင်း။"
+
+msgid "Everyday English Word Quest"
+msgstr "နေ့စဉ်သုံး အင်္ဂလိပ်စကားလုံး ရှာဖွေစူးစမ်းမှု"
+
+msgid "Build practical vocabulary for school, home, food, feelings, actions, and places."
+msgstr "ကျောင်း၊ အိမ်၊ အစားအစာ၊ ခံစားချက်များ၊ လုပ်ဆောင်ချက်များနှင့် နေရာများအတွက် လက်တွေ့ကျသော ဝေါဟာရများကို တည်ဆောက်ပါ။"
+
+msgid "Academic English Word Quest"
+msgstr "ပညာရပ်ဆိုင်ရာ အင်္ဂလိပ်စကားလုံး ရှာဖွေစူးစမ်းမှု"
+
+msgid "Practise high-value words used in research, writing, science, mathematics, and society."
+msgstr "သုတေသန၊ စာရေးသားခြင်း၊ သိပ္ပံ၊ သင်္ချာနှင့် လူ့အဖွဲ့အစည်းတို့တွင် အသုံးပြုသော တန်ဖိုးရှိစကားလုံးများကို လေ့ကျင့်ပါ။"
+
+msgid "English Word Power"
+msgstr "အင်္ဂလိပ်စကားလုံး စွမ်းအား"
+
+msgid "Strengthen advanced vocabulary for communication, problem-solving, change, and the wider world."
+msgstr "ပြောဆိုဆက်ဆံရေး၊ ပြဿနာဖြေရှင်းခြင်း၊ ပြောင်းလဲမှုနှင့် ပိုမိုကျယ်ပြန့်သော ကမ္ဘာကြီးအတွက် အဆင့်မြင့်ဝေါဟာရများကို အားဖြည့်ပါ။"
+
+msgid "Advanced English: Core"
+msgstr "အဆင့်မြင့်အင်္ဂလိပ်စာ - အဓိက"
+
+msgid "High-value advanced words that appear across many respected vocabulary lists."
+msgstr "လေးစားဖွယ်ကောင်းသော ဝေါဟာရစာရင်းများစွာတွင် ပါဝင်လေ့ရှိသည့် အဆင့်မြင့် တန်ဖိုးရှိ စကားလုံးများ။"
+
+msgid "Advanced English: Mastery"
+msgstr "အဆင့်မြင့်အင်္ဂလိပ်စာ - ကျွမ်းကျင်မှု"
+
+msgid "A deeper ranked vocabulary path for precise reading, writing, and discussion."
+msgstr "တိကျသော ဖတ်ရှုခြင်း၊ ရေးသားခြင်းနှင့် ဆွေးနွေးခြင်းတို့အတွက် ပိုမိုနက်ရှိုင်းသောအဆင့်သတ်မှတ်ထားသည့် ဝေါဟာရလမ်းကြောင်း။"
+
+msgid "Advanced English: Expert"
+msgstr "အဆင့်မြင့်အင်္ဂလိပ်စာ - ပါရဂူ"
+
+msgid "Challenging, lower-frequency words for ambitious readers and exam preparation."
+msgstr "ရည်မှန်းချက်ကြီးမားသော စာဖတ်သူများနှင့် စာမေးပွဲပြင်ဆင်မှုတို့အတွက် စိန်ခေါ်မှုရှိပြီး အသုံးနည်းသော စကားလုံးများ။"
+
+msgid "English Vocabulary A1: Foundations"
+msgstr "အင်္ဂလိပ်ဝေါဟာရ A1 - အခြေခံများ"
+
+msgid "Begin with practical words for daily life, greetings, food, and drink."
+msgstr "နေ့စဉ်ဘဝ၊ နှုတ်ခွန်းဆက်ခြင်း၊ အစားအစာနှင့် သောက်စရာများအတွက် လက်တွေ့ကျသောစကားလုံးများဖြင့် စတင်ပါ။"
+
+msgid "English Vocabulary A2: Everyday Independence"
+msgstr "အင်္ဂလိပ်ဝေါဟာရ A2 - နေ့စဉ် အမှီအခိုကင်းမှု"
+
+msgid "Build confidence with travel, shopping, money, weather, and nature."
+msgstr "ခရီးသွားခြင်း၊ ဈေးဝယ်ခြင်း၊ ငွေကြေး၊ ရာသီဥတုနှင့် သဘာဝတရားတို့ဖြင့် ကိုယ့်ကိုယ်ကိုယ်ယုံကြည်မှု တည်ဆောက်ပါ။"
+
+msgid "English Vocabulary B1: Life and Learning"
+msgstr "အင်္ဂလိပ်ဝေါဟာရ B1 - လူနေမှုဘဝနှင့် လေ့လာသင်ယူမှု"
+
+msgid "Strengthen intermediate vocabulary for work, health, and education."
+msgstr "အလုပ်အကိုင်၊ ကျန်းမာရေးနှင့် ပညာရေးတို့အတွက် အလယ်အလတ်အဆင့် ဝေါဟာရများကို အားဖြည့်ပါ။"
+
+msgid "English Vocabulary B2: The Wider World"
+msgstr "အင်္ဂလိပ်ဝေါဟာရ B2 - ပိုမိုကျယ်ပြန့်သော ကမ္ဘာကြီး"
+
+msgid "Explore upper-intermediate language for technology, climate, and media."
+msgstr "နည်းပညာ၊ ရာသီဥတုနှင့် မီဒီယာတို့အတွက် အထက်အလယ်အလတ်တန်းစား ဘာသာစကားကို လေ့လာစူးစမ်းပါ။"
+
+msgid "English Vocabulary C1: Advanced Ideas"
+msgstr "အင်္ဂလိပ်ဝေါဟာရ C1 - အဆင့်မြင့် အတွေးအမြင်များ"
+
+msgid "Develop precise language for politics, science, research, arts, and culture."
+msgstr "နိုင်ငံရေး၊ သိပ္ပံ၊ သုတေသန၊ အနုပညာနှင့် ယဉ်ကျေးမှုတို့အတွက် တိကျသောဘာသာစကားကို တိုးတက်အောင်လုပ်ဆောင်ပါ။"
+
+msgid "English Vocabulary C2: Mastery"
+msgstr "အင်္ဂလိပ်ဝေါဟာရ C2 - ကျွမ်းကျင်မှုအဆင့်"
+
+msgid "Master nuanced language for philosophy, ethics, law, justice, and idioms."
+msgstr "ဒဿနိကဗေဒ၊ ကျင့်ဝတ်သိက္ခာ၊ ဥပဒေ၊ တရားမျှတမှုနှင့် အသုံးအနှုန်းများအတွက် နက်နဲသိမ်မွေ့သော ဘာသာစကားကို ကျွမ်းကျင်စွာ တတ်မြောက်ပါ။"
+
+# ── Units & Lessons of Main Courses ──────────────────────────
+msgid "Everyday Basics"
+msgstr "နေ့စဉ်သုံး အခြေခံများ"
+
+msgid "Friendly English for common conversations."
+msgstr "နေ့စဉ်ပြောဆိုဆက်ဆံမှုများအတွက် ရင်းနှီးဖော်ရွေသော အင်္ဂလိပ်စာ။"
+
+msgid "Greetings"
+msgstr "နှုတ်ခွန်းဆက်စကားများ"
+
+msgid "Say hello and respond politely."
+msgstr "နှုတ်ခွန်းဆက်ခြင်းနှင့် ယဉ်ကျေးစွာ တုံ့ပြန်ပြောဆိုခြင်း။"
+
+msgid "Helpful Words"
+msgstr "အသုံးဝင်သော စကားလုံးများ"
+
+msgid "Use please, sorry, and excuse me."
+msgstr "ကျေးဇူးပြု၍၊ စိတ်မရှိပါနဲ့ နှင့် ခွင့်လွှတ်ပါ စသည့်စကားလုံးများကို အသုံးပြုခြင်း။"
+
+msgid "Around School"
+msgstr "ကျောင်းပတ်ဝန်းကျင်"
+
+msgid "Recognise useful people, places, and classroom phrases."
+msgstr "အသုံးဝင်သော လူပုဂ္ဂိုလ်များ၊ နေရာများနှင့် စာသင်ခန်းသုံး စကားစုများကို မှတ်မိသိရှိခြင်း။"
+
+msgid "People and Places"
+msgstr "လူပုဂ္ဂိုလ်များနှင့် နေရာများ"
+
+msgid "Learn common school words."
+msgstr "အသုံးများသော ကျောင်းသုံးစကားလုံးများကို လေ့လာခြင်း။"
+
+msgid "Classroom English"
+msgstr "စာသင်ခန်းသုံး အင်္ဂလိပ်စာ"
+
+msgid "Ask for help and follow simple instructions."
+msgstr "အကူအညီတောင်းခံခြင်းနှင့် ရိုးရှင်းသော ညွှန်ကြားချက်များကို လိုက်နာခြင်း။"
+
+msgid "Unit 1"
+msgstr "ယူနစ် ၁"
+
+msgid "Learn the basics of Spanish."
+msgstr "စပိန်ဘာသာစကား၏ အခြေခံများကို လေ့လာပါ။"
+
+msgid "Nouns"
+msgstr "နာမ်များ"
+
+msgid "Basic Spanish vocabulary practice adapted from the source course."
+msgstr "မူရင်းသင်တန်းမှ ပြုပြင်ဆီလျော်အောင် ဖန်တီးထားသည့် အခြေခံစပိန်ဝေါဟာရ လေ့ကျင့်မှု။"
+
+msgid "Verbs"
+msgstr "ကြိယာများ"
+
+msgid "Adjectives"
+msgstr "နာမဝိသေသနများ"
+
+msgid "Phrases"
+msgstr "စကားစုများ"
+
+msgid "Sentences"
+msgstr "ဝါကျများ"
+
+msgid "Unit 2"
+msgstr "ယူနစ် ၂"
+
+msgid "Continue with intermediate Spanish practice."
+msgstr "အလယ်အလတ်တန်းစား စပိန်ဘာသာစကား လေ့ကျင့်မှုဖြင့် ဆက်လက်လေ့လာပါ။"
+
+msgid "Intermediate Spanish vocabulary practice adapted from the source course."
+msgstr "မူရင်းသင်တန်းမှ ပြုပြင်ဆီလျော်အောင် ဖန်တီးထားသည့် အလယ်အလတ်တန်းစား စပိန်ဝေါဟာရ လေ့ကျင့်မှု။"
+
+msgid "First Conversations"
+msgstr "ပထမဆုံး စကားပြောဆိုမှုများ"
+
+msgid "Start with greetings, polite expressions, and introductions."
+msgstr "နှုတ်ခွန်းဆက်စကားများ၊ ယဉ်ကျေးစွာ ပြောဆိုမှုများနှင့် မိတ်ဆက်ခြင်းများဖြင့် စတင်ပါ။"
+
+msgid "Say hello, goodbye, and greet people at different times."
+msgstr "မင်္ဂလာပါ၊ နှုတ်ဆက်ပါ ပြောခြင်းနှင့် မတူညီသောအချိန်များတွင် နှုတ်ခွန်းဆက်ခြင်း။"
+
+msgid "Courtesy"
+msgstr "ယဉ်ကျေးပျူငှာမှု"
+
+msgid "Use friendly words for thanks, apologies, and requests."
+msgstr "ကျေးဇူးတင်ခြင်း၊ တောင်းပန်ခြင်းနှင့် တောင်းဆိုခြင်းတို့အတွက် ရင်းနှီးဖော်ရွေသော စကားလုံးများကို အသုံးပြုခြင်း။"
+
+msgid "People and Introductions"
+msgstr "လူပုဂ္ဂိုလ်များနှင့် မိတ်ဆက်ခြင်း"
+
+msgid "Introduce yourself and talk about familiar people."
+msgstr "မိမိကိုယ်ကိုယ် မိတ်ဆက်ပြီး ရင်းနှီးကျွမ်းဝင်သူများအကြောင်း ပြောဆိုခြင်း။"
+
+msgid "Everyday Essentials"
+msgstr "နေ့စဉ်သုံး မရှိမဖြစ်အရာများ"
+
+msgid "Build confidence with numbers, food, time, and daily actions."
+msgstr "ကိန်းဂဏန်းများ၊ အစားအစာ၊ အချိန်နှင့် နေ့စဉ်လုပ်ဆောင်ချက်များဖြင့် ကိုယ့်ကိုယ်ကိုယ်ယုံကြည်မှု တည်ဆောက်ပါ။"
+
+msgid "Numbers"
+msgstr "ကိန်းဂဏန်းများ"
+
+msgid "Recognise useful Mandarin numbers."
+msgstr "အသုံးဝင်သော မန်ဒရင် ကိန်းဂဏန်းများကို မှတ်မိသိရှိခြင်း။"
+
+msgid "Food and Drink"
+msgstr "အစားအစာနှင့် သောက်စရာ"
+
+msgid "Order and recognise common food and drinks."
+msgstr "အသုံးများသော အစားအစာနှင့် သောက်စရာများကို မှာယူခြင်းနှင့် မှတ်မိသိရှိခြင်း။"
+
+msgid "Time and Actions"
+msgstr "အချိန်နှင့် လုပ်ဆောင်ချက်များ"
+
+msgid "Talk about today, tomorrow, study, and simple actions."
+msgstr "ယနေ့၊ မနက်ဖြန်၊ လေ့လာသင်ယူမှုနှင့် ရိုးရှင်းသောလုပ်ဆောင်ချက်များအကြောင်း ပြောဆိုခြင်း။"
+
+msgid "Getting Around"
+msgstr "သွားလာလှုပ်ရှားခြင်း"
+
+msgid "Recognise places, ask useful questions, and follow directions."
+msgstr "နေရာများကို မှတ်မိသိရှိခြင်း၊ အသုံးဝင်သော မေးခွန်းများ မေးမြန်းခြင်းနှင့် လမ်းညွှန်ချက်များကို လိုက်နာခြင်း။"
+
+msgid "Places"
+msgstr "နေရာများ"
+
+msgid "Learn common places around school and town."
+msgstr "ကျောင်းနှင့် မြို့ပတ်ဝန်းကျင်ရှိ အသုံးများသော နေရာများကို လေ့လာခြင်း။"
+
+msgid "Useful Questions"
+msgstr "အသုံးဝင်သော မေးခွန်းများ"
+
+msgid "Ask for locations, prices, language help, and clarification."
+msgstr "တည်နေရာ၊ ဈေးနှုန်း၊ ဘာသာစကားအကူအညီနှင့် ရှင်းလင်းချက်များကို မေးမြန်းခြင်း။"
+
+msgid "Directions"
+msgstr "လမ်းညွှန်ချက်များ"
+
+msgid "Understand simple instructions for moving around."
+msgstr "သွားလာလှုပ်ရှားမှုအတွက် ရိုးရှင်းသော ညွှန်ကြားချက်များကို နားလည်သဘောပေါက်ခြင်း။"

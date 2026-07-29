@@ -451,6 +451,22 @@ html[lang='mnw'] :is(input, button, select) {
     #f8f6ff;
 }
 
+.dark .lq-mesh {
+  background:
+    radial-gradient(circle at 8% 12%, rgba(245, 158, 11, 0.12), transparent 25rem),
+    radial-gradient(circle at 88% 18%, rgba(59, 130, 246, 0.16), transparent 29rem),
+    radial-gradient(circle at 52% 80%, rgba(217, 70, 239, 0.12), transparent 33rem),
+    #090d1a;
+  color-scheme: dark;
+}
+
+.lq-mesh [lang='my'] {
+  font-family: 'Padauk', 'Noto Sans Myanmar', 'Myanmar Text', 'Myanmar Sangam MN',
+    'Inter', 'Geist Variable', system-ui, sans-serif;
+  line-height: 1.75;
+  letter-spacing: normal;
+}
+
 .lq-hero-scene {
   perspective: 1100px;
 }

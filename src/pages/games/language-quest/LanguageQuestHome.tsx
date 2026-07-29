@@ -7,6 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { apiGet } from '@/src/lib/api';
 import type { LanguageQuestOverview } from '@/src/types/languageQuest';
+import { useAuth } from '@/src/providers/AuthProvider';
+import { LanguageQuestAchievements } from '@/src/components/games/LanguageQuestAchievements';
+import { useLanguageQuestSupport } from '@/src/components/games/LanguageQuestSupport';
 
 function StatCard({ icon, label, value, tone }: { icon: React.ReactNode; label: string; value: string | number; tone: string }) {
   return (
@@ -21,6 +24,8 @@ function StatCard({ icon, label, value, tone }: { icon: React.ReactNode; label: 
 }
 
 export default function LanguageQuestHome() {
+  const { user } = useAuth();
+  const { explanationLanguage, lq } = useLanguageQuestSupport();
   const [data, setData] = useState<LanguageQuestOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
@@ -72,8 +77,8 @@ export default function LanguageQuestHome() {
               <Sparkles className="h-3 w-3" /> Learn • Play • Grow
             </Badge>
             <h1 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl">MRLC Language Quest</h1>
-            <p className="mt-2 max-w-xl text-sm leading-6 text-white/80 sm:text-base">
-              Build useful language skills through quick lessons, friendly challenges, streaks, and school-wide competition.
+            <p lang={explanationLanguage} className="mt-2 max-w-xl text-sm leading-6 text-white/85 sm:text-base">
+              {lq('journeySummary')}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -100,8 +105,8 @@ export default function LanguageQuestHome() {
         <div className="flex items-start gap-3">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-white text-sky-700 shadow-sm dark:bg-surface-indigo dark:text-sky-300"><WholeWord className="h-5 w-5" /></span>
           <div>
-            <h2 className="font-black text-slate-900 dark:text-white">New: practise complete sentences</h2>
-            <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">Lessons now guide you from listening to writing before the quiz. Capital letters and punctuation are flexible, so you can focus on choosing the right words.</p>
+            <h2 lang={explanationLanguage} className="font-black text-slate-900 dark:text-white">{lq('sentenceFeatureTitle')}</h2>
+            <p lang={explanationLanguage} className="mt-1 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">{lq('sentenceFeatureBody')}</p>
           </div>
         </div>
       </section>
@@ -110,7 +115,7 @@ export default function LanguageQuestHome() {
         <div className="mb-4 flex items-end justify-between gap-3">
           <div>
             <h2 className="text-xl font-bold text-slate-900 dark:text-white">Choose a course</h2>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Your progress is saved automatically.</p>
+            <p lang={explanationLanguage} className="mt-1 text-sm text-slate-500 dark:text-slate-300">{lq('progressSaved')}</p>
           </div>
         </div>
 
@@ -150,6 +155,12 @@ export default function LanguageQuestHome() {
           </div>
         )}
       </section>
+
+      <LanguageQuestAchievements
+        learnerName={user?.name || 'Language Quest Learner'}
+        profile={data.profile}
+        courses={data.courses}
+      />
     </div>
   );
 }

@@ -43,6 +43,7 @@ import { evaluateStudentGameAccess, registerGameControlRoutes } from "./gameCont
 import cookieParser from "cookie-parser";
 import { BADGE_CATALOG, getBadgeLevel } from "./lib/badges";
 import { roleHasPermission, type Permission, type UserRole } from "./shared/permissions";
+import { isExternalLearnerApiRequestAllowed } from "./shared/externalLearnerAccess";
 import { canCurateSocialContent, canViewSocialAudience, normaliseSocialRetentionDays } from "./shared/socialPolicy";
 import {
   normalizeVideoDuration,
@@ -865,13 +866,7 @@ async function authMiddleware(
       }
     }
     if (payload.externalLearner) {
-      const pathname = req.originalUrl.split("?")[0];
-      const allowed =
-        pathname.startsWith("/api/language-quest/") ||
-        pathname === "/api/auth/me" ||
-        pathname === "/api/auth/logout" ||
-        pathname === "/api/auth/change-password";
-      if (!allowed) {
+      if (!isExternalLearnerApiRequestAllowed(req.method, req.originalUrl)) {
         res.status(403).json({ error: "This learner account can only access Language Quest" });
         return;
       }

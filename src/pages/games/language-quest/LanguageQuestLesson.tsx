@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { ApiError, apiGet, apiSend } from '@/src/lib/api';
 import type { LanguageQuestLessonPayload, LanguageQuestLessonPreview, LanguageQuestProfile } from '@/src/types/languageQuest';
 import { sentenceAnswerMatches } from '@/shared/languageQuest';
+import { useLanguageQuestSupport } from '@/src/components/games/LanguageQuestSupport';
 
 interface AnswerResult {
   correct: boolean;
@@ -48,6 +49,7 @@ function speak(value: string, language: string) {
 }
 
 export default function LanguageQuestLesson() {
+  const { explanationLanguage, lq } = useLanguageQuestSupport();
   const { lessonId } = useParams<{ lessonId: string }>();
   const [lesson, setLesson] = useState<LanguageQuestLessonPayload | null>(null);
   const [loading, setLoading] = useState(true);
@@ -274,9 +276,12 @@ export default function LanguageQuestLesson() {
                 <span className="flex items-center gap-1.5 text-xs font-semibold text-sky-600"><Volume2 className="h-3.5 w-3.5" /> Tap to listen</span>
               </button>
               <div className="mt-6 max-w-lg rounded-2xl border border-sky-100 bg-sky-50 px-5 py-4 text-left dark:border-sky-500/20 dark:bg-sky-500/10">
-                <p className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-sky-700 dark:text-sky-300"><Lightbulb className="h-4 w-4" /> When to use it</p>
+                <p lang={explanationLanguage} className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-sky-700 dark:text-sky-300"><Lightbulb className="h-4 w-4" /> {lq('whenToUse')}</p>
                 <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{card.prompt}</p>
-                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Listen, say it aloud, then move on when the meaning feels clear.</p>
+                {explanationLanguage === 'my' && (
+                  <p lang="my" className="mt-2 rounded-xl bg-white/70 px-3 py-2 text-sm leading-7 text-slate-700 dark:bg-slate-950/35 dark:text-slate-200">{lq('burmesePromptFallback')}</p>
+                )}
+                <p lang={explanationLanguage} className="mt-2 text-xs text-slate-500 dark:text-slate-400">{lq('listenSay')}</p>
               </div>
             </>
           )}
@@ -318,9 +323,9 @@ export default function LanguageQuestLesson() {
           <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-fuchsia-700">
             <PencilLine className="h-4 w-4" /> Build the sentence
           </p>
-          <h1 className="mt-4 text-2xl font-black leading-tight text-slate-900 dark:text-white sm:text-3xl">Type the complete phrase from memory.</h1>
+          <h1 lang={explanationLanguage} className="mt-4 text-2xl font-black leading-tight text-slate-900 dark:text-white sm:text-3xl">{lq('sentenceHeading')}</h1>
           <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 dark:border-surface-raised dark:bg-surface-indigo">
-            <p className="text-xs font-black uppercase tracking-wider text-slate-400">Situation</p>
+            <p lang={explanationLanguage} className="text-xs font-black uppercase tracking-wider text-slate-400">{lq('situation')}</p>
             <p className="mt-2 text-base leading-7 text-slate-700 dark:text-slate-200">{sentenceCard.prompt}</p>
             <Button variant="ghost" size="sm" className="-ml-2 mt-2 text-violet-700" onClick={() => speak(sentenceCard.audioText || sentenceCard.text, lesson.course.language)}>
               <Volume2 className="mr-2 h-4 w-4" /> Listen again
@@ -351,19 +356,19 @@ export default function LanguageQuestLesson() {
                   : 'border-slate-200 focus:border-fuchsia-500 focus:ring-fuchsia-100 dark:border-surface-raised'
             }`}
           />
-          <p className="mt-2 text-xs text-slate-500">Capital letters and punctuation do not affect the check. Press Enter when ready.</p>
+          <p lang={explanationLanguage} className="mt-2 text-xs leading-6 text-slate-500 dark:text-slate-300">{lq('sentenceHelp')}</p>
 
           {sentenceFeedback === 'incorrect' && (
             <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-rose-800 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300">
-              <p className="font-black">Almost there — compare and try once more.</p>
+              <p lang={explanationLanguage} className="font-black">{lq('incorrectTitle')}</p>
               <p className="mt-2 text-sm">Model sentence: <strong>{sentenceCard.text}</strong></p>
-              <p className="mt-1 text-xs opacity-80">Focus on the missing or changed word; spelling matters, punctuation does not.</p>
+              <p lang={explanationLanguage} className="mt-1 text-xs leading-6 opacity-80">{lq('incorrectHelp')}</p>
             </div>
           )}
           {sentenceFeedback === 'correct' && (
             <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">
-              <p className="font-black">That sentence works!</p>
-              <p className="mt-1 text-sm">You recalled the complete phrase. Say it once aloud before continuing.</p>
+              <p lang={explanationLanguage} className="font-black">{lq('correctTitle')}</p>
+              <p lang={explanationLanguage} className="mt-1 text-sm leading-6">{lq('correctHelp')}</p>
             </div>
           )}
         </main>
@@ -427,8 +432,8 @@ export default function LanguageQuestLesson() {
           <Heart className="h-10 w-10" />
         </div>
         <h1 className="mt-6 text-2xl font-black text-slate-900 dark:text-white">Out of hearts for now</h1>
-        <p className="mt-2 max-w-sm text-slate-500 dark:text-slate-300">
-          No worries — hearts refill every day. In the meantime, replay a lesson you've already finished to earn some back.
+        <p lang={explanationLanguage} className="mt-2 max-w-sm leading-7 text-slate-500 dark:text-slate-300">
+          {lq('outOfHeartsHelp')}
         </p>
         <div className="mt-7 w-full">
           <Button className="w-full" style={{ backgroundColor: lesson.course.accentColor }} render={<Link to={`/games/language-quest/courses/${lesson.course.id}`} />} nativeButton={false}>

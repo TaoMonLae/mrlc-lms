@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { lazyWithRetry as lazy } from "./lib/lazyWithRetry";
 const AppLayout = lazy(() => import("./components/layout/AppLayout").then((module) => ({ default: module.AppLayout })));
-import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { ExternalLearnerBoundary, ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { GameAccessGate } from "./components/games/GameAccessGate";
 const LoginPage = lazy(() => import("./pages/Login"));
 const SignupPage = lazy(() => import("./pages/Signup"));
@@ -282,6 +282,7 @@ export default function App() {
         <TooltipProvider>
           <BrowserRouter>
           <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-sm text-slate-500">Loading page…</div>}>
+          <ExternalLearnerBoundary>
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
@@ -663,6 +664,7 @@ export default function App() {
             
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
+          </ExternalLearnerBoundary>
           </Suspense>
           <Toaster position="top-right" closeButton richColors />
           <CursorEffect />

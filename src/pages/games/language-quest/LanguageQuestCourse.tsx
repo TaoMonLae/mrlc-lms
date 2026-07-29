@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { apiGet } from '@/src/lib/api';
+import { useLanguageQuestSupport } from '@/src/components/games/LanguageQuestSupport';
 
 interface CoursePayload {
   id: string;
@@ -32,6 +33,7 @@ interface CoursePayload {
 }
 
 export default function LanguageQuestCourse() {
+  const { explanationLanguage, lq } = useLanguageQuestSupport();
   const { courseId } = useParams<{ courseId: string }>();
   const [course, setCourse] = useState<CoursePayload | null>(null);
   const [loading, setLoading] = useState(true);
@@ -85,12 +87,12 @@ export default function LanguageQuestCourse() {
         <div className="flex items-start gap-3">
           <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300"><Lightbulb className="h-5 w-5" /></span>
           <div>
-            <h2 className="font-black text-slate-900 dark:text-white">How each lesson works</h2>
-            <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">Take your time. The same three-step routine helps you understand a phrase before you are asked to remember it.</p>
+            <h2 lang={explanationLanguage} className="font-black text-slate-900 dark:text-white">{lq('lessonGuideTitle')}</h2>
+            <p lang={explanationLanguage} className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">{lq('lessonGuideBody')}</p>
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
-              <div className="flex gap-2 rounded-xl bg-white/80 p-3 dark:bg-surface-indigo/60"><Headphones className="mt-0.5 h-4 w-4 shrink-0 text-sky-600" /><p className="text-xs leading-5"><strong className="block text-slate-800 dark:text-white">1. Learn</strong>Listen and connect the phrase to its situation.</p></div>
-              <div className="flex gap-2 rounded-xl bg-white/80 p-3 dark:bg-surface-indigo/60"><Keyboard className="mt-0.5 h-4 w-4 shrink-0 text-fuchsia-600" /><p className="text-xs leading-5"><strong className="block text-slate-800 dark:text-white">2. Build</strong>Type complete sentences from memory.</p></div>
-              <div className="flex gap-2 rounded-xl bg-white/80 p-3 dark:bg-surface-indigo/60"><Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" /><p className="text-xs leading-5"><strong className="block text-slate-800 dark:text-white">3. Check</strong>Answer the quiz and use corrections to retry.</p></div>
+              <div className="flex gap-2 rounded-xl bg-white/80 p-3 dark:bg-surface-indigo/60"><Headphones className="mt-0.5 h-4 w-4 shrink-0 text-sky-600" /><p lang={explanationLanguage} className="text-xs leading-5 text-slate-600 dark:text-slate-200"><strong className="block text-slate-800 dark:text-white">{lq('learnTitle')}</strong>{lq('learnBody')}</p></div>
+              <div className="flex gap-2 rounded-xl bg-white/80 p-3 dark:bg-surface-indigo/60"><Keyboard className="mt-0.5 h-4 w-4 shrink-0 text-fuchsia-600" /><p lang={explanationLanguage} className="text-xs leading-5 text-slate-600 dark:text-slate-200"><strong className="block text-slate-800 dark:text-white">{lq('buildTitle')}</strong>{lq('buildBody')}</p></div>
+              <div className="flex gap-2 rounded-xl bg-white/80 p-3 dark:bg-surface-indigo/60"><Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" /><p lang={explanationLanguage} className="text-xs leading-5 text-slate-600 dark:text-slate-200"><strong className="block text-slate-800 dark:text-white">{lq('checkTitle')}</strong>{lq('checkBody')}</p></div>
             </div>
           </div>
         </div>
@@ -148,7 +150,7 @@ export default function LanguageQuestCourse() {
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center dark:border-amber-500/20 dark:bg-amber-500/10">
           <Trophy className="mx-auto h-10 w-10 text-amber-500" />
           <h2 className="mt-2 text-xl font-black text-slate-900 dark:text-white">Course complete!</h2>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Replay lessons to practise and refill hearts.</p>
+          <p lang={explanationLanguage} className="mt-1 text-sm text-slate-500 dark:text-slate-300">{lq('completeHelp')}</p>
         </div>
       )}
     </div>
