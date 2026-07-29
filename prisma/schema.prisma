@@ -3898,6 +3898,7 @@ model LanguageQuestCourse {
   title       String
   description String?
   language    String
+  category    String  @default("Other Courses")
   imageEmoji  String  @default("🌍")
   accentColor String  @default("#7c3aed")
   published   Boolean @default(false)
@@ -3914,6 +3915,7 @@ model LanguageQuestCourse {
   updatedAt DateTime @updatedAt
 
   @@index([published])
+  @@index([category])
   @@index([createdById])
 }
 

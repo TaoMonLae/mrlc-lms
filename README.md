@@ -106,8 +106,10 @@ Completed courses unlock personalized certificates. Active learners can also cre
 
 - Teacher and administrator Course Studio supports courses, units, lessons, multiple challenge types, accent colors, images, ordering, and draft/published states.
 - Answers, progress, hearts, streaks, points, rewards, and completion are verified by the server rather than trusted to the browser.
+- The public catalog and signed-in learner dashboard organize published content into **Chinese Courses**, **English Courses**, **Spanish Courses**, and **Other Courses** so learners can find the language path they want quickly.
 - Includes an original **Everyday English** starter course with two units, four lessons, and twelve challenges, provisioned when Language Quest is first opened.
 - Includes the linked source repository's Spanish course as **Spanish Foundations**, with two units, ten lessons, and eighty visual or speech-assisted challenges.
+- Includes an original **Chinese Conversation Starter** course with two units, eight lessons, and thirty-two speech-assisted practices for greetings, names, countries, introductions, friends, and simple identity questions. Pinyin appears in every question as pronunciation guidance.
 - Includes an original **Mandarin Foundations** course with three units, nine lessons, and thirty-six speech-assisted challenges covering beginner conversations and daily life.
 - Converts the school-provided `duolingo-chinese.md` curriculum into **Mandarin Complete Course**, preserving all seventy topics and 1,870 translation pairs across seven units and seventy-one LMS-safe lessons.
 - Run `npm run generate:language-quest-chinese` after editing the Markdown source to rebuild the generated course data.

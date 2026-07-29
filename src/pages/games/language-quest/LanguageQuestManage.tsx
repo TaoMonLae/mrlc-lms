@@ -12,6 +12,7 @@ interface ManagedCourse {
   title: string;
   description: string | null;
   language: string;
+  category: string;
   imageEmoji: string;
   accentColor: string;
   published: boolean;
@@ -88,6 +89,7 @@ export default function LanguageQuestManage() {
                         {course.published ? 'Published' : 'Draft'}
                       </Badge>
                       {course.official && <Badge variant="secondary">Official</Badge>}
+                      <Badge variant="outline">{course.category}</Badge>
                     </div>
                     <h2 className="mt-2 truncate text-lg font-bold text-slate-900 dark:text-white">{course.title}</h2>
                     <p className="text-xs text-slate-400">{course.language}</p>

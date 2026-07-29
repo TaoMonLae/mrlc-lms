@@ -46,6 +46,7 @@ interface EditorCourse {
   title: string;
   description: string;
   language: string;
+  category: string;
   imageEmoji: string;
   accentColor: string;
   published: boolean;
@@ -61,12 +62,14 @@ const newChallenge = (): EditorChallenge => ({
 const newLesson = (): EditorLesson => ({ _key: key(), title: '', description: '', challenges: [newChallenge()] });
 const newUnit = (): EditorUnit => ({ _key: key(), title: '', description: '', lessons: [newLesson()] });
 const emptyCourse = (): EditorCourse => ({
-  title: '', description: '', language: 'English', imageEmoji: '🌍', accentColor: '#7c3aed', published: false, units: [newUnit()],
+  title: '', description: '', language: 'English', category: 'English Courses',
+  imageEmoji: '🌍', accentColor: '#7c3aed', published: false, units: [newUnit()],
 });
 
 function hydrateCourse(raw: any): EditorCourse {
   return {
     title: raw?.title || '', description: raw?.description || '', language: raw?.language || '',
+    category: raw?.category || 'Other Courses',
     imageEmoji: raw?.imageEmoji || '🌍', accentColor: raw?.accentColor || '#7c3aed', published: Boolean(raw?.published),
     units: (raw?.units || []).map((unit: any) => ({
       _key: key(), id: unit.id, title: unit.title || '', description: unit.description || '',
@@ -278,9 +281,10 @@ export default function LanguageQuestEditor() {
       </div>
 
       <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 dark:border-surface-raised dark:bg-surface-indigo">
-        <div className="grid gap-4 sm:grid-cols-[1fr_1fr_90px_90px]">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_90px_90px]">
           <div className="space-y-1.5"><Label htmlFor="course-title">Course title</Label><Input id="course-title" value={course.title} maxLength={120} placeholder="Everyday English" onChange={(event) => setCourse({ ...course, title: event.target.value })} /></div>
           <div className="space-y-1.5"><Label htmlFor="course-language">Language</Label><Input id="course-language" value={course.language} maxLength={80} placeholder="English" onChange={(event) => setCourse({ ...course, language: event.target.value })} /></div>
+          <div className="space-y-1.5"><Label htmlFor="course-category">Category</Label><Input id="course-category" value={course.category} maxLength={80} placeholder="English Courses" onChange={(event) => setCourse({ ...course, category: event.target.value })} /></div>
           <div className="space-y-1.5"><Label htmlFor="course-emoji">Icon</Label><Input id="course-emoji" className="text-center text-xl" value={course.imageEmoji} maxLength={16} onChange={(event) => setCourse({ ...course, imageEmoji: event.target.value })} /></div>
           <div className="space-y-1.5"><Label htmlFor="course-color">Colour</Label><Input id="course-color" type="color" className="h-8 p-1" value={course.accentColor} onChange={(event) => setCourse({ ...course, accentColor: event.target.value })} /></div>
         </div>

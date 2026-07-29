@@ -23,12 +23,14 @@ import { Button } from '@/components/ui/button';
 import { useTheme } from '@/src/components/theme-provider';
 import { MrlcQuestBrand, TaoMonLaeCredit } from '@/src/components/games/MrlcQuestBrand';
 import { useAuth } from '@/src/providers/AuthProvider';
+import { orderedLanguageQuestCategories } from '@/shared/languageQuestCourseCategories';
 
 interface PublicCourse {
   id: string;
   title: string;
   description: string | null;
   language: string;
+  category: string;
   imageEmoji: string;
   accentColor: string;
   unitCount: number;
@@ -59,6 +61,7 @@ export default function LanguageQuestPublic() {
 
   const startHref = user ? '/games/language-quest' : '/signup';
   const darkMode = theme === 'dark' || (theme === 'system' && systemDark);
+  const courseGroups = orderedLanguageQuestCategories(courses);
 
   return (
     <div className="lq-mesh min-h-screen overflow-x-hidden text-slate-950 transition-colors duration-300 dark:text-slate-100">
@@ -194,29 +197,42 @@ export default function LanguageQuestPublic() {
             </div>
 
             {courses.length ? (
-              <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                {courses.map((course) => (
-                  <article key={course.id} className="group overflow-hidden rounded-3xl border border-white bg-white shadow-lg shadow-violet-900/5 transition duration-300 hover:-translate-y-2 hover:rotate-[0.4deg] hover:shadow-2xl dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-black/20">
-                    <div className="h-2" style={{ backgroundColor: course.accentColor }} />
-                    <div className="p-6">
-                      <div className="flex items-start gap-4">
-                        <span className="grid h-14 w-14 place-items-center rounded-2xl text-3xl shadow-inner transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110" style={{ backgroundColor: `${course.accentColor}20` }}>{course.imageEmoji}</span>
-                        <div>
-                          <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{course.language}</p>
-                          <h3 className="mt-1 text-xl font-black">{course.title}</h3>
-                        </div>
+              <div className="mt-10 space-y-12">
+                {courseGroups.map((group) => (
+                  <section key={group.category} aria-labelledby={`public-category-${group.category.replace(/\W+/g, '-').toLowerCase()}`}>
+                    <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-700 dark:text-violet-300">Category</p>
+                        <h3 id={`public-category-${group.category.replace(/\W+/g, '-').toLowerCase()}`} className="mt-1 text-2xl font-black sm:text-3xl">{group.category}</h3>
                       </div>
-                      <p className="mt-4 min-h-12 text-sm leading-6 text-slate-600 dark:text-slate-300">{course.description || 'A practical language course for everyday learning.'}</p>
-                      <div className="mt-5 flex flex-wrap gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                        <span className="rounded-full bg-slate-100 px-3 py-1.5 dark:bg-slate-800">{course.unitCount} units</span>
-                        <span className="rounded-full bg-slate-100 px-3 py-1.5 dark:bg-slate-800">{course.lessonCount} lessons</span>
-                        <span className="rounded-full bg-slate-100 px-3 py-1.5 dark:bg-slate-800">{course.challengeCount} practices</span>
-                      </div>
-                      <Button className="mt-6 w-full rounded-xl font-black text-white shadow-lg transition-transform group-hover:scale-[1.02]" style={{ backgroundColor: course.accentColor }} render={<Link to={startHref} />} nativeButton={false}>
-                        {user ? 'Open course library' : 'Sign up to learn'} <ArrowRight className="ml-2 h-4 w-4" />
-                      </Button>
+                      <Badge variant="secondary">{group.courses.length} {group.courses.length === 1 ? 'course' : 'courses'}</Badge>
                     </div>
-                  </article>
+                    <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                      {group.courses.map((course) => (
+                        <article key={course.id} className="group overflow-hidden rounded-3xl border border-white bg-white shadow-lg shadow-violet-900/5 transition duration-300 hover:-translate-y-2 hover:rotate-[0.4deg] hover:shadow-2xl dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-black/20">
+                          <div className="h-2" style={{ backgroundColor: course.accentColor }} />
+                          <div className="p-6">
+                            <div className="flex items-start gap-4">
+                              <span className="grid h-14 w-14 place-items-center rounded-2xl text-3xl shadow-inner transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110" style={{ backgroundColor: `${course.accentColor}20` }}>{course.imageEmoji}</span>
+                              <div>
+                                <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{course.language}</p>
+                                <h4 className="mt-1 text-xl font-black">{course.title}</h4>
+                              </div>
+                            </div>
+                            <p className="mt-4 min-h-12 text-sm leading-6 text-slate-600 dark:text-slate-300">{course.description || 'A practical language course for everyday learning.'}</p>
+                            <div className="mt-5 flex flex-wrap gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                              <span className="rounded-full bg-slate-100 px-3 py-1.5 dark:bg-slate-800">{course.unitCount} units</span>
+                              <span className="rounded-full bg-slate-100 px-3 py-1.5 dark:bg-slate-800">{course.lessonCount} lessons</span>
+                              <span className="rounded-full bg-slate-100 px-3 py-1.5 dark:bg-slate-800">{course.challengeCount} practices</span>
+                            </div>
+                            <Button className="mt-6 w-full rounded-xl font-black text-white shadow-lg transition-transform group-hover:scale-[1.02]" style={{ backgroundColor: course.accentColor }} render={<Link to={startHref} />} nativeButton={false}>
+                              {user ? 'Open course library' : 'Sign up to learn'} <ArrowRight className="ml-2 h-4 w-4" />
+                            </Button>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  </section>
                 ))}
               </div>
             ) : (

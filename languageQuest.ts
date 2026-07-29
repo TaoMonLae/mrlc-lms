@@ -11,9 +11,11 @@ import {
   DEFAULT_LANGUAGE_QUEST_AVATAR,
   isLanguageQuestAvatarId,
 } from "./shared/languageQuestAvatars";
+import { languageQuestCategoryForLanguage } from "./shared/languageQuestCourseCategories";
 import { importedSpanishCourse, type OfficialLanguageQuestCourse } from "./languageQuestImportedCourses";
 import { mandarinFoundationsCourse } from "./languageQuestMandarinCourse";
 import { completeMandarinCourse } from "./languageQuestCompleteMandarinCourse";
+import { chineseConversationStarterCourse } from "./languageQuestChineseConversationCourse";
 import { englishWordCourses } from "./languageQuestEnglishWordCourses";
 import { advancedEnglishCourses } from "./languageQuestAdvancedEnglishCourses";
 import { linguifyCefrCourses } from "./languageQuestLinguifyCourses";
@@ -37,7 +39,7 @@ type DraftChallenge = { id?: string; type: "SELECT" | "ASSIST"; question: string
 type DraftLesson = { id?: string; title: string; description: string | null; challenges: DraftChallenge[] };
 type DraftUnit = { id?: string; title: string; description: string | null; lessons: DraftLesson[] };
 type CourseDraft = {
-  title: string; description: string | null; language: string; imageEmoji: string;
+  title: string; description: string | null; language: string; category: string; imageEmoji: string;
   accentColor: string; published: boolean; units: DraftUnit[];
 };
 
@@ -201,6 +203,7 @@ function isHexColor(value: string): boolean {
 function normalizeCourseDraft(raw: any): { value?: CourseDraft; error?: string } {
   const title = text(raw?.title, 120);
   const language = text(raw?.language, 80);
+  const category = text(raw?.category, 80) || languageQuestCategoryForLanguage(language);
   const description = nullableText(raw?.description, 1000);
   const imageEmoji = text(raw?.imageEmoji, 16) || "🌍";
   const accentCandidate = text(raw?.accentColor, 7);
@@ -269,7 +272,7 @@ function normalizeCourseDraft(raw: any): { value?: CourseDraft; error?: string }
   }
   const challengeCount = units.reduce((sum, unit) => sum + unit.lessons.reduce((lessonSum, lesson) => lessonSum + lesson.challenges.length, 0), 0);
   if (published && challengeCount === 0) return { error: "Add at least one challenge before publishing the course" };
-  return { value: { title, description, language, imageEmoji, accentColor, published, units } };
+  return { value: { title, description, language, category, imageEmoji, accentColor, published, units } };
 }
 
 async function ensureOfficialCourse(prisma: any, course: OfficialLanguageQuestCourse): Promise<any> {
@@ -283,6 +286,7 @@ async function ensureOfficialCourse(prisma: any, course: OfficialLanguageQuestCo
           title: course.title,
           description: course.description,
           language: course.language,
+          category: course.category || languageQuestCategoryForLanguage(course.language),
           imageEmoji: course.imageEmoji,
           accentColor: course.accentColor,
           published: course.published,
@@ -344,6 +348,7 @@ export async function ensureOfficialCourses(prisma: any): Promise<void> {
     importedSpanishCourse,
     mandarinFoundationsCourse,
     completeMandarinCourse,
+    chineseConversationStarterCourse,
     ...englishWordCourses,
     ...advancedEnglishCourses,
     ...linguifyCefrCourses,
@@ -453,6 +458,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           title: course.title,
           description: course.description,
           language: course.language,
+          category: course.category,
           imageEmoji: course.imageEmoji,
           accentColor: course.accentColor,
           unitCount: course.units.length,
@@ -615,7 +621,8 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           const lessonCount = course.units.reduce((sum: number, unit: any) => sum + unit.lessons.length, 0);
           return {
             id: course.id, code: course.code, title: course.title, description: course.description,
-            language: course.language, imageEmoji: course.imageEmoji, accentColor: course.accentColor,
+            language: course.language, category: course.category,
+            imageEmoji: course.imageEmoji, accentColor: course.accentColor,
             unitCount: course.units.length, lessonCount, challengeCount: challengeIds.length,
             completedChallenges,
             progressPercent: challengeIds.length ? Math.round((completedChallenges / challengeIds.length) * 100) : 0,
@@ -676,7 +683,8 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         create: { userId: jwtUser.userId, activeCourseId: course.id },
       });
       res.json({
-        id: course.id, title: course.title, description: course.description, language: course.language,
+        id: course.id, title: course.title, description: course.description,
+        language: course.language, category: course.category,
         imageEmoji: course.imageEmoji, accentColor: course.accentColor, units,
         completedLessons, totalLessons: units.reduce((sum: number, unit: any) => sum + unit.lessons.length, 0),
       });
@@ -1211,7 +1219,8 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       });
       res.json(courses.map((course: any) => ({
         id: course.id, code: course.code, title: course.title, description: course.description,
-        language: course.language, imageEmoji: course.imageEmoji, accentColor: course.accentColor,
+        language: course.language, category: course.category,
+        imageEmoji: course.imageEmoji, accentColor: course.accentColor,
         published: course.published, official: course.createdById === null, updatedAt: course.updatedAt,
         unitCount: course.units.length,
         lessonCount: course.units.reduce((sum: number, unit: any) => sum + unit.lessons.length, 0),
@@ -1316,6 +1325,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         where: { id: courseId },
         data: {
           title: draft.title, description: draft.description, language: draft.language,
+          category: draft.category,
           imageEmoji: draft.imageEmoji, accentColor: draft.accentColor, published: draft.published,
         },
       });
@@ -1336,7 +1346,8 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
             data: {
               code: `${slug}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
               title: normalized.value.title, description: normalized.value.description,
-              language: normalized.value.language, imageEmoji: normalized.value.imageEmoji,
+              language: normalized.value.language, category: normalized.value.category,
+              imageEmoji: normalized.value.imageEmoji,
               accentColor: normalized.value.accentColor, published: false, createdById: jwtUser.userId,
             },
           });

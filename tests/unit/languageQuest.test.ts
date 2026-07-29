@@ -14,9 +14,14 @@ import {
 import { importedSpanishCourse } from "../../languageQuestImportedCourses";
 import { mandarinFoundationsCourse } from "../../languageQuestMandarinCourse";
 import { completeMandarinCourse } from "../../languageQuestCompleteMandarinCourse";
+import { chineseConversationStarterCourse } from "../../languageQuestChineseConversationCourse";
 import { englishWordCourses } from "../../languageQuestEnglishWordCourses";
 import { advancedEnglishCourses } from "../../languageQuestAdvancedEnglishCourses";
 import { linguifyCefrCourses } from "../../languageQuestLinguifyCourses";
+import {
+  languageQuestCategoryForLanguage,
+  orderedLanguageQuestCategories,
+} from "../../shared/languageQuestCourseCategories";
 
 test("Language Quest starts a new streak on the first active day", () => {
   assert.deepEqual(
@@ -103,6 +108,51 @@ test("the original Mandarin course has a complete and valid curriculum", () => {
   assert.equal(challenges.length, 36);
   assert.ok(challenges.every((challenge) => challenge.options.filter((option) => option.correct).length === 1));
   assert.ok(challenges.every((challenge) => challenge.options.every((option) => option.audioText)));
+});
+
+test("the Chinese Conversation Starter course is complete and classroom-ready", () => {
+  const lessons = chineseConversationStarterCourse.units.flatMap((unit) => unit.lessons);
+  const challenges = lessons.flatMap((lesson) => lesson.challenges);
+
+  assert.equal(chineseConversationStarterCourse.code, "MRLC-CHINESE-CONVERSATION-STARTER-V1");
+  assert.equal(chineseConversationStarterCourse.category, "Chinese Courses");
+  assert.equal(chineseConversationStarterCourse.language, "Mandarin Chinese");
+  assert.equal(chineseConversationStarterCourse.units.length, 2);
+  assert.equal(lessons.length, 8);
+  assert.equal(challenges.length, 32);
+  assert.ok(challenges.every((challenge) => challenge.options.length === 3));
+  assert.ok(challenges.every(
+    (challenge) => challenge.options.filter((option) => option.correct).length === 1,
+  ));
+  assert.ok(challenges.every(
+    (challenge) => challenge.options.every((option) => option.audioText),
+  ));
+});
+
+test("Language Quest groups language courses into a predictable category order", () => {
+  assert.equal(languageQuestCategoryForLanguage("Mandarin Chinese"), "Chinese Courses");
+  assert.equal(languageQuestCategoryForLanguage("English"), "English Courses");
+  assert.equal(languageQuestCategoryForLanguage("Spanish"), "Spanish Courses");
+  assert.equal(languageQuestCategoryForLanguage("Mon"), "Other Courses");
+
+  const groups = orderedLanguageQuestCategories([
+    { category: "Spanish Courses", title: "Spanish" },
+    { category: "Other Courses", title: "Mon" },
+    { category: "English Courses", title: "English" },
+    { category: "Chinese Courses", title: "Chinese" },
+    { category: "Chinese Courses", title: "Mandarin" },
+    { language: "Mandarin Chinese", title: "Legacy Chinese" },
+  ]);
+
+  assert.deepEqual(
+    groups.map((group) => [group.category, group.courses.length]),
+    [
+      ["Chinese Courses", 3],
+      ["English Courses", 1],
+      ["Spanish Courses", 1],
+      ["Other Courses", 1],
+    ],
+  );
 });
 
 test("the generated Mandarin Complete course contains every supplied translation", () => {

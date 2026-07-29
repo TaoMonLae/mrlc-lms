@@ -19,6 +19,7 @@ export interface OfficialLanguageQuestCourse {
   title: string;
   description: string;
   language: string;
+  category?: string;
   imageEmoji: string;
   accentColor: string;
   published: true;

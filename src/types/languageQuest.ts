@@ -13,6 +13,7 @@ export interface LanguageQuestCourseSummary {
   title: string;
   description: string | null;
   language: string;
+  category: string;
   imageEmoji: string;
   accentColor: string;
   unitCount: number;

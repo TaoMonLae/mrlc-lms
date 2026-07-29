@@ -10,6 +10,7 @@ import type { LanguageQuestOverview } from '@/src/types/languageQuest';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { LanguageQuestAchievements } from '@/src/components/games/LanguageQuestAchievements';
 import { useLanguageQuestSupport } from '@/src/components/games/LanguageQuestSupport';
+import { orderedLanguageQuestCategories } from '@/shared/languageQuestCourseCategories';
 
 function StatCard({ icon, label, value, tone }: { icon: React.ReactNode; label: string; value: string | number; tone: string }) {
   return (
@@ -65,6 +66,8 @@ export default function LanguageQuestHome() {
       </div>
     );
   }
+
+  const courseGroups = orderedLanguageQuestCategories(data.courses);
 
   return (
     <div className="space-y-7 pb-10">
@@ -139,31 +142,44 @@ export default function LanguageQuestHome() {
             <p className="mt-1 text-sm text-slate-500">A teacher or administrator can create the first course.</p>
           </div>
         ) : (
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {data.courses.map((course) => (
-              <article key={course.id} className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-surface-raised dark:bg-surface-indigo">
-                <div className="h-2" style={{ backgroundColor: course.accentColor }} />
-                <div className="p-5">
-                  <div className="flex items-start gap-4">
-                    <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl text-3xl" style={{ backgroundColor: `${course.accentColor}18` }}>
-                      {course.imageEmoji}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <Badge variant="outline">{course.language}</Badge>
-                      <h3 className="mt-2 text-lg font-bold text-slate-900 dark:text-white">{course.title}</h3>
-                    </div>
+          <div className="space-y-9">
+            {courseGroups.map((group) => (
+              <section key={group.category} aria-labelledby={`course-category-${group.category.replace(/\W+/g, '-').toLowerCase()}`}>
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-600 dark:text-violet-300">Course category</p>
+                    <h3 id={`course-category-${group.category.replace(/\W+/g, '-').toLowerCase()}`} className="mt-1 text-2xl font-black text-slate-950 dark:text-white">{group.category}</h3>
                   </div>
-                  <p className="mt-3 min-h-10 text-sm leading-5 text-slate-500 dark:text-slate-300">{course.description || 'A new language adventure.'}</p>
-                  <div className="mt-4 flex items-center justify-between text-xs font-medium text-slate-500">
-                    <span>{course.lessonCount} lessons</span>
-                    <span>{course.progressPercent}% complete</span>
-                  </div>
-                  <Progress value={course.progressPercent} className="mt-2 [&_[data-slot=progress-track]]:h-2 [&_[data-slot=progress-indicator]]:bg-violet-600" />
-                  <Button className="mt-5 w-full" style={{ backgroundColor: course.accentColor }} render={<Link to={`/games/language-quest/courses/${course.id}`} />} nativeButton={false}>
-                    {course.progressPercent > 0 ? 'Continue course' : 'Start course'}
-                  </Button>
+                  <Badge variant="secondary">{group.courses.length} {group.courses.length === 1 ? 'course' : 'courses'}</Badge>
                 </div>
-              </article>
+                <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                  {group.courses.map((course) => (
+                    <article key={course.id} className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-surface-raised dark:bg-surface-indigo">
+                      <div className="h-2" style={{ backgroundColor: course.accentColor }} />
+                      <div className="p-5">
+                        <div className="flex items-start gap-4">
+                          <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl text-3xl" style={{ backgroundColor: `${course.accentColor}18` }}>
+                            {course.imageEmoji}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <Badge variant="outline">{course.language}</Badge>
+                            <h4 className="mt-2 text-lg font-bold text-slate-900 dark:text-white">{course.title}</h4>
+                          </div>
+                        </div>
+                        <p className="mt-3 min-h-10 text-sm leading-5 text-slate-500 dark:text-slate-300">{course.description || 'A new language adventure.'}</p>
+                        <div className="mt-4 flex items-center justify-between text-xs font-medium text-slate-500">
+                          <span>{course.lessonCount} lessons</span>
+                          <span>{course.progressPercent}% complete</span>
+                        </div>
+                        <Progress value={course.progressPercent} className="mt-2 [&_[data-slot=progress-track]]:h-2 [&_[data-slot=progress-indicator]]:bg-violet-600" />
+                        <Button className="mt-5 w-full" style={{ backgroundColor: course.accentColor }} render={<Link to={`/games/language-quest/courses/${course.id}`} />} nativeButton={false}>
+                          {course.progressPercent > 0 ? 'Continue course' : 'Start course'}
+                        </Button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
             ))}
           </div>
         )}
