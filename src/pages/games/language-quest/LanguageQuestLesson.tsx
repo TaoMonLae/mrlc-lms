@@ -215,6 +215,28 @@ export default function LanguageQuestLesson() {
     setAnswer(null);
   };
 
+  // Re-fetch the lesson before replaying it: the local `lesson.challenges[].completed`
+  // flags and `profile.hearts` were only ever set on the initial page load and never
+  // updated as challenges were answered in this session, so without a refetch they'd
+  // stay stale (e.g. still reporting `completed: false` for challenges just cleared).
+  // That stale state feeds `outOfHearts` below and can misjudge whether a replay
+  // should be allowed, diverging from the server's authoritative state.
+  const practiseAgain = async () => {
+    if (!lessonId) return;
+    try {
+      const payload = await apiGet<LanguageQuestLessonPayload>(`/api/language-quest/lessons/${lessonId}`);
+      setLesson(payload);
+      setProfile(payload.profile);
+    } catch (error: any) {
+      toast.error(error?.message || 'Could not refresh the lesson');
+    }
+    setIndex(0);
+    setSessionPoints(0);
+    setSelectedId(null);
+    setAnswer(null);
+    setCombo(0);
+  };
+
   // Celebrate finishing the lesson with a bigger burst.
   useEffect(() => {
     if (!finished) return;
@@ -457,7 +479,7 @@ export default function LanguageQuestLesson() {
           </div>
         </div>
         <div className="mt-7 flex w-full flex-col gap-2 sm:flex-row">
-          <Button variant="outline" className="flex-1" onClick={() => { setIndex(0); setSessionPoints(0); }}>
+          <Button variant="outline" className="flex-1" onClick={practiseAgain}>
             Practise again
           </Button>
           <Button className="flex-1" style={{ backgroundColor: lesson.course.accentColor }} render={<Link to={`/games/language-quest/courses/${lesson.course.id}`} />} nativeButton={false}>

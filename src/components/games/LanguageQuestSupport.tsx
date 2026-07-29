@@ -1,6 +1,5 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useMemo, useState } from 'react';
 import { Languages } from 'lucide-react';
-import { useI18n } from '../../i18n/I18nProvider';
 
 export type ExplanationLanguage = 'en' | 'my';
 
@@ -74,23 +73,24 @@ interface SupportContextValue {
 const SupportContext = createContext<SupportContextValue | null>(null);
 
 export function LanguageQuestSupportProvider({ children }: { children: React.ReactNode }) {
-  const { lang, setLang } = useI18n();
-  const [explanationLanguage, setLanguage] = useState<ExplanationLanguage>(
-    lang === 'my' ? 'my' : 'en'
-  );
-
-  // Sync to global lang changes (e.g. from System Settings)
-  useEffect(() => {
-    if (lang === 'my' || lang === 'en') {
-      if (explanationLanguage !== lang) {
-        setLanguage(lang as ExplanationLanguage);
+  const [explanationLanguage, setLanguage] = useState<ExplanationLanguage>(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored === 'en' || stored === 'my') {
+        return stored;
       }
+    } catch {
+      // Browsers with restricted storage fall back to the default below.
     }
-  }, [lang, explanationLanguage]);
+    return 'en';
+  });
 
+  // This preference is intentionally scoped to Language Quest only and must
+  // never drive the app-wide language (useI18n's setLang). See bug report:
+  // toggling this used to relocalize the entire LMS (admin, finance, etc.)
+  // for the user's whole session.
   const setExplanationLanguage = (language: ExplanationLanguage) => {
     setLanguage(language);
-    setLang(language);
     try {
       localStorage.setItem(STORAGE_KEY, language);
     } catch {

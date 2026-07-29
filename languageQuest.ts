@@ -799,28 +799,49 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       const correctOption = challenge.options.find((option: any) => option.correct);
       if (!correctOption) { res.status(409).json({ error: "This challenge has no correct answer configured" }); return; }
       const now = new Date();
-      const progressBeforeAnswer = await getProgress(prisma, jwtUser.userId);
-      const existingBeforeAnswer = await prisma.languageQuestChallengeProgress.findUnique({
-        where: { userId_challengeId: { userId: jwtUser.userId, challengeId: challenge.id } },
+      // Make sure a progress row exists before we try to lock it below (upsert
+      // outside the transaction is fine — it's idempotent and only needs to run once).
+      await prisma.languageQuestUserProgress.upsert({
+        where: { userId: jwtUser.userId }, update: {}, create: { userId: jwtUser.userId },
       });
-      if (!canAttemptNewChallenge(progressBeforeAnswer.hearts, Boolean(existingBeforeAnswer?.completed))) {
-        res.status(403).json({
-          error: "You're out of hearts for new challenges. Replay a lesson you've already finished to earn hearts back, or come back after your daily refill.",
-          code: "OUT_OF_HEARTS",
-          profile: profileJson(progressBeforeAnswer),
-        });
-        return;
-      }
       const result = await prisma.$transaction(async (tx: any) => {
-        const progress = await tx.languageQuestUserProgress.upsert({
-          where: { userId: jwtUser.userId }, update: {}, create: { userId: jwtUser.userId },
-        });
+        // Lock the learner's progress row for the whole transaction so concurrent
+        // answer submissions (double-click, retry, multiple tabs) are serialized
+        // instead of racing on a stale JS-side read of `hearts`. Previously the
+        // hearts check happened before the transaction and the decrement was a
+        // read-then-write, so two simultaneous requests at hearts === 1 could both
+        // pass the gate and both be processed (a partial regression of 5178e5f).
+        const rows: any[] = await tx.$queryRaw`
+          SELECT * FROM "LanguageQuestUserProgress" WHERE "userId" = ${jwtUser.userId} FOR UPDATE
+        `;
+        let progress = rows[0];
+        if (
+          progress?.updatedAt
+          && languageQuestDayKey(progress.updatedAt) !== languageQuestDayKey(now)
+          && progress.hearts < LANGUAGE_QUEST_MAX_HEARTS
+        ) {
+          progress = await tx.languageQuestUserProgress.update({
+            where: { userId: jwtUser.userId },
+            data: { hearts: LANGUAGE_QUEST_MAX_HEARTS },
+          });
+        }
         const existing = await tx.languageQuestChallengeProgress.findUnique({
           where: { userId_challengeId: { userId: jwtUser.userId, challengeId: challenge.id } },
         });
+        if (!canAttemptNewChallenge(progress.hearts, Boolean(existing?.completed))) {
+          return { outOfHearts: true as const, profile: profileJson(progress) };
+        }
         if (selected.correct) {
           const firstClear = !existing?.completed;
-          const pointsAwarded = firstClear ? LANGUAGE_QUEST_FIRST_CLEAR_POINTS : LANGUAGE_QUEST_PRACTICE_POINTS;
+          // Practising an already-cleared challenge only earns points while it is
+          // actually refilling a heart (hearts below max). Once hearts are full,
+          // replaying the same cleared challenge pays out nothing, which closes off
+          // unlimited point farming from scripted replays while preserving the
+          // "replay a finished lesson to earn hearts back" design.
+          const refillsHeart = !firstClear && progress.hearts < LANGUAGE_QUEST_MAX_HEARTS;
+          const pointsAwarded = firstClear
+            ? LANGUAGE_QUEST_FIRST_CLEAR_POINTS
+            : (refillsHeart ? LANGUAGE_QUEST_PRACTICE_POINTS : 0);
           const streak = nextLanguageQuestStreak({
             currentStreak: progress.currentStreak,
             bestStreak: progress.bestStreak,
@@ -843,7 +864,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
             data: {
               activeCourseId: challenge.lesson.unit.courseId,
               points: { increment: pointsAwarded },
-              hearts: existing?.completed ? Math.min(LANGUAGE_QUEST_MAX_HEARTS, progress.hearts + 1) : progress.hearts,
+              hearts: refillsHeart ? progress.hearts + 1 : progress.hearts,
               currentStreak: streak.currentStreak, bestStreak: streak.bestStreak, lastPlayedDate: now,
             },
           });
@@ -860,6 +881,14 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         });
         return { correct: false, pointsAwarded: 0, profile: profileJson(updated) };
       });
+      if (result.outOfHearts) {
+        res.status(403).json({
+          error: "You're out of hearts for new challenges. Replay a lesson you've already finished to earn hearts back, or come back after your daily refill.",
+          code: "OUT_OF_HEARTS",
+          profile: result.profile,
+        });
+        return;
+      }
       res.json({ ...result, correctOptionId: correctOption.id, correctAnswer: correctOption.text });
     } catch (error) {
       logger.error("Error saving Language Quest answer:", error);
