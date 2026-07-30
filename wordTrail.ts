@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import {
   loadEnglishWordPracticeQuestions,
+  loadLanguageQuestCourseDeck,
   type EnglishWordPracticeQuestion,
 } from "./englishWordPractice";
 import {
@@ -246,6 +247,11 @@ export function registerWordTrailRoutes(deps: Deps): void {
 
   app.post("/api/games/word-trail/start", authMiddleware, learnerOnly, gameAccessMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
+    // Optional crossover: build the board from one specific Language Quest
+    // course's own challenges instead of the default English-word pool, so
+    // a learner can practise a Mandarin, Spanish, or any other course they're
+    // taking through the Word Trail board game.
+    const courseId = typeof req.body?.courseId === "string" ? req.body.courseId.trim().slice(0, 100) : "";
     try {
       const existing = await prisma.wordTrailGame.findUnique({
         where: { activeKey: jwtUser.userId },
@@ -256,16 +262,31 @@ export function registerWordTrailRoutes(deps: Deps): void {
       }
 
       const seed = `${jwtUser.userId}:word-trail:${randomUUID()}`;
-      const deck = await loadEnglishWordPracticeQuestions(
-        prisma,
-        seed,
-        WORD_TRAIL_QUESTION_COUNT,
-      );
-      if (deck.length < 12) {
-        res.status(409).json({
-          error: "There are not enough published English Word questions to start Word Trail.",
+      let deck: EnglishWordPracticeQuestion[];
+      if (courseId) {
+        const course = await prisma.languageQuestCourse.findUnique({
+          where: { id: courseId },
+          select: { id: true, title: true, published: true },
         });
-        return;
+        if (!course || !course.published) {
+          res.status(404).json({ error: "That Language Quest course is not available" });
+          return;
+        }
+        deck = await loadLanguageQuestCourseDeck(prisma, courseId, seed, WORD_TRAIL_QUESTION_COUNT);
+        if (deck.length < 6) {
+          res.status(409).json({
+            error: `${course.title} doesn't have enough challenges yet to fill a Word Trail board.`,
+          });
+          return;
+        }
+      } else {
+        deck = await loadEnglishWordPracticeQuestions(prisma, seed, WORD_TRAIL_QUESTION_COUNT);
+        if (deck.length < 12) {
+          res.status(409).json({
+            error: "There are not enough published English Word questions to start Word Trail.",
+          });
+          return;
+        }
       }
 
       let game;

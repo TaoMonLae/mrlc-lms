@@ -1,6 +1,14 @@
 export const LANGUAGE_QUEST_MAX_HEARTS = 5;
 export const LANGUAGE_QUEST_FIRST_CLEAR_POINTS = 10;
 export const LANGUAGE_QUEST_PRACTICE_POINTS = 2;
+// One-time bonus for beating a completed course's Boss Battle (a timed
+// gauntlet of the learner's own toughest questions from that course).
+export const LANGUAGE_QUEST_BOSS_BATTLE_POINTS = 40;
+// A Boss Battle is "won" once a learner clears this share of the gauntlet,
+// and only counts as an attempt once enough questions were actually answered.
+export const LANGUAGE_QUEST_BOSS_BATTLE_PASS_RATIO = 0.7;
+export const LANGUAGE_QUEST_BOSS_BATTLE_MIN_QUESTIONS = 4;
+export const LANGUAGE_QUEST_BOSS_BATTLE_MAX_QUESTIONS = 8;
 export const LANGUAGE_QUEST_TIME_ZONE = "Asia/Kuala_Lumpur";
 
 export function languageQuestDayKey(
@@ -93,4 +101,62 @@ export function languageQuestLookupWord(selected: string): string | null {
     return hanOnly.slice(0, 20) || null;
   }
   return text.match(/[A-Za-z][A-Za-z'-]*/)?.[0] ?? null;
+}
+
+export interface BossBattleAnswer {
+  challengeId: string;
+  optionId: string | null;
+}
+
+export interface BossBattleAnswerKeyEntry {
+  challengeId: string;
+  correctOptionId: string;
+  correctAnswer: string;
+}
+
+export interface BossBattleQuestionResult {
+  challengeId: string;
+  correct: boolean;
+  correctOptionId: string;
+  correctAnswer: string;
+}
+
+export interface BossBattleOutcome {
+  results: BossBattleQuestionResult[];
+  correctCount: number;
+  total: number;
+  won: boolean;
+}
+
+// Server-side scoring for a Boss Battle submission. Takes the learner's
+// submitted answers plus the *real* answer key for the course (fetched fresh
+// from the database by the caller, never trusted from the client) and grades
+// them independently. Only answers whose challengeId is actually present in
+// the answer key count toward the total, which is what stops a crafted
+// request from padding the pass ratio with challenge ids from other courses;
+// duplicate challengeIds in the submission are also collapsed to one attempt
+// each so repeating an easy question can't inflate the ratio either.
+export function bossBattleResult(
+  answers: readonly BossBattleAnswer[],
+  answerKey: readonly BossBattleAnswerKeyEntry[],
+  options: { minQuestions: number; passRatio: number },
+): BossBattleOutcome {
+  const keyById = new Map(answerKey.map((entry) => [entry.challengeId, entry]));
+  const seen = new Set<string>();
+  const results: BossBattleQuestionResult[] = [];
+  for (const answer of answers) {
+    const key = keyById.get(answer.challengeId);
+    if (!key || seen.has(answer.challengeId)) continue;
+    seen.add(answer.challengeId);
+    results.push({
+      challengeId: answer.challengeId,
+      correct: answer.optionId != null && answer.optionId === key.correctOptionId,
+      correctOptionId: key.correctOptionId,
+      correctAnswer: key.correctAnswer,
+    });
+  }
+  const correctCount = results.filter((entry) => entry.correct).length;
+  const total = results.length;
+  const won = total >= options.minQuestions && correctCount / total >= options.passRatio;
+  return { results, correctCount, total, won };
 }

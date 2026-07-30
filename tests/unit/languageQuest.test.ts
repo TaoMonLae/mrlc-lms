@@ -1,13 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  bossBattleResult,
   languageQuestPracticePrompt,
   languageQuestLookupWord,
   nextLanguageQuestStreak,
   normalizeSentenceAnswer,
   sentenceAnswerMatches,
 } from "../../shared/languageQuest";
-import { canAttemptNewChallenge, shuffle } from "../../languageQuest";
+import { canAttemptNewChallenge, nextIncompleteLessonId, shuffle } from "../../languageQuest";
 import {
   LANGUAGE_QUEST_AVATARS,
   isLanguageQuestAvatarId,
@@ -27,6 +28,7 @@ import {
   containsHanCharacters,
   formatCedictPinyin,
   isChineseLanguage,
+  languageQuestAnswerMatches,
   languageQuestPinyin,
 } from "../../shared/languageQuestPinyin";
 import {
@@ -219,6 +221,30 @@ test("containsHanCharacters detects Chinese-script input", () => {
   assert.equal(containsHanCharacters(""), false);
 });
 
+test("languageQuestAnswerMatches accepts pinyin or Hanzi for Chinese model text", () => {
+  // Correct Hanzi still matches directly.
+  assert.equal(languageQuestAnswerMatches("你好", "你好"), true);
+  // Toneless pinyin, typeable on any keyboard, is accepted.
+  assert.equal(languageQuestAnswerMatches("ni hao", "你好"), true);
+  // Tone-marked pinyin is accepted.
+  assert.equal(languageQuestAnswerMatches("nǐ hǎo", "你好"), true);
+  // CC-CEDICT-style numbered-tone pinyin is accepted.
+  assert.equal(languageQuestAnswerMatches("ni3 hao3", "你好"), true);
+  // Capitalization and light punctuation still don't affect the check.
+  assert.equal(languageQuestAnswerMatches("Ni Hao!", "你好"), true);
+  // Wrong pinyin/text is still rejected.
+  assert.equal(languageQuestAnswerMatches("zai jian", "你好"), false);
+  assert.equal(languageQuestAnswerMatches("", "你好"), false);
+});
+
+test("languageQuestAnswerMatches falls back to plain text matching for non-Chinese model text", () => {
+  assert.equal(languageQuestAnswerMatches("Good morning", "Good morning"), true);
+  assert.equal(languageQuestAnswerMatches("good morning!", "Good morning"), true);
+  // Non-Chinese model text never matches a pinyin-shaped guess unless it's
+  // literally the same text.
+  assert.equal(languageQuestAnswerMatches("ni hao", "Good morning"), false);
+});
+
 test("every Hanzi answer in every built-in Chinese course receives Pinyin", () => {
   const chineseCourses = [
     mandarinFoundationsCourse,
@@ -406,6 +432,105 @@ test("a learner out of hearts can still replay a challenge they already complete
 test("a learner with hearts remaining can attempt any challenge", () => {
   assert.equal(canAttemptNewChallenge(3, false), true);
   assert.equal(canAttemptNewChallenge(3, true), true);
+});
+
+test("nextIncompleteLessonId finds the first unlocked, unfinished lesson", () => {
+  const units = [
+    {
+      lessons: [
+        { id: "lesson-1", challenges: [{ id: "c1" }, { id: "c2" }] },
+        { id: "lesson-2", challenges: [{ id: "c3" }] },
+      ],
+    },
+    {
+      lessons: [
+        { id: "lesson-3", challenges: [{ id: "c4" }, { id: "c5" }] },
+      ],
+    },
+  ];
+
+  // Nothing completed yet: the very first lesson is the resume target.
+  assert.equal(nextIncompleteLessonId(units, new Set()), "lesson-1");
+
+  // First lesson done, second is unlocked but unfinished.
+  assert.equal(nextIncompleteLessonId(units, new Set(["c1", "c2"])), "lesson-2");
+
+  // First two lessons done: the third (in the second unit) is next.
+  assert.equal(nextIncompleteLessonId(units, new Set(["c1", "c2", "c3"])), "lesson-3");
+
+  // Every challenge across every unit is done: nothing left to resume.
+  assert.equal(nextIncompleteLessonId(units, new Set(["c1", "c2", "c3", "c4", "c5"])), null);
+});
+
+test("bossBattleResult grades a battle against the server-side answer key", () => {
+  const answerKey = [
+    { challengeId: "c1", correctOptionId: "c1-right", correctAnswer: "Right 1" },
+    { challengeId: "c2", correctOptionId: "c2-right", correctAnswer: "Right 2" },
+    { challengeId: "c3", correctOptionId: "c3-right", correctAnswer: "Right 3" },
+    { challengeId: "c4", correctOptionId: "c4-right", correctAnswer: "Right 4" },
+  ];
+  const options = { minQuestions: 4, passRatio: 0.7 };
+
+  // 4/4 correct clears a 70% bar easily.
+  const perfect = bossBattleResult(
+    [
+      { challengeId: "c1", optionId: "c1-right" },
+      { challengeId: "c2", optionId: "c2-right" },
+      { challengeId: "c3", optionId: "c3-right" },
+      { challengeId: "c4", optionId: "c4-right" },
+    ],
+    answerKey,
+    options,
+  );
+  assert.equal(perfect.correctCount, 4);
+  assert.equal(perfect.total, 4);
+  assert.equal(perfect.won, true);
+
+  // 2/4 (50%) falls short of the 70% pass ratio.
+  const short = bossBattleResult(
+    [
+      { challengeId: "c1", optionId: "c1-right" },
+      { challengeId: "c2", optionId: "c2-right" },
+      { challengeId: "c3", optionId: "wrong" },
+      { challengeId: "c4", optionId: null },
+    ],
+    answerKey,
+    options,
+  );
+  assert.equal(short.correctCount, 2);
+  assert.equal(short.won, false);
+
+  // Fewer than minQuestions valid answers never counts as a win, even at 100%.
+  const tooFew = bossBattleResult(
+    [{ challengeId: "c1", optionId: "c1-right" }],
+    answerKey,
+    options,
+  );
+  assert.equal(tooFew.won, false);
+
+  // Challenge ids outside the answer key (e.g. from another course) are
+  // ignored rather than counted, so they can't pad the ratio.
+  const spoofed = bossBattleResult(
+    [
+      { challengeId: "c1", optionId: "c1-right" },
+      { challengeId: "not-in-this-course", optionId: "anything" },
+    ],
+    answerKey,
+    options,
+  );
+  assert.equal(spoofed.total, 1);
+  assert.equal(spoofed.results.some((entry) => entry.challengeId === "not-in-this-course"), false);
+
+  // Duplicate submissions for the same challenge only count once.
+  const duped = bossBattleResult(
+    [
+      { challengeId: "c1", optionId: "c1-right" },
+      { challengeId: "c1", optionId: "c1-right" },
+    ],
+    answerKey,
+    options,
+  );
+  assert.equal(duped.total, 1);
 });
 
 test("the ranked advanced English courses have a valid progression", () => {

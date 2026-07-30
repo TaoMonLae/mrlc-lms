@@ -1,15 +1,17 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import confetti from 'canvas-confetti';
-import { ArrowLeft, BookA, Check, Flame, Heart, Lightbulb, PartyPopper, PencilLine, SpellCheck2, Star, Volume2, X } from 'lucide-react';
+import { ArrowLeft, BookA, Flame, Heart, Lightbulb, Mic, PartyPopper, PencilLine, SpellCheck2, Square, Star, Volume2, VolumeX } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ApiError, apiGet, apiSend } from '@/src/lib/api';
 import type { LanguageQuestLessonPayload, LanguageQuestLessonPreview, LanguageQuestProfile } from '@/src/types/languageQuest';
-import { sentenceAnswerMatches } from '@/shared/languageQuest';
+import { isChineseLanguage, languageQuestAnswerMatches } from '@/shared/languageQuestPinyin';
 import { useLanguageQuestSupport } from '@/src/components/games/LanguageQuestSupport';
 import { LanguageQuestPinyinText } from '@/src/components/games/LanguageQuestPinyinText';
+import { LanguageQuestPhaseStepper } from '@/src/components/games/LanguageQuestPhaseStepper';
+import { LanguageQuestCompanion } from '@/src/components/games/LanguageQuestCompanion';
 import { LanguageQuestRewardReveal } from '@/src/components/games/LanguageQuestRewards';
 import { useLanguageQuestPreferences } from '@/src/components/games/LanguageQuestPreferences';
 import { playLanguageQuestSuccessSound } from '@/src/lib/languageQuestAudio';
@@ -17,6 +19,30 @@ import {
   cancelLanguageQuestVoice,
   speakLanguageQuestVoice,
 } from '@/src/lib/languageQuestVoice';
+import {
+  languageQuestSpeechInputSupported,
+  languageQuestSpeechLocale,
+  listenForLanguageQuestSpeech,
+  type LanguageQuestSpeechSession,
+} from '@/src/lib/languageQuestSpeechInput';
+
+// A quick-access mute toggle repeated in every lesson-phase header, right
+// next to the exit button, so sound can be turned off mid-lesson without a
+// trip to the Profile preferences page.
+function SoundToggleButton({ soundEnabled, onToggle }: { soundEnabled: boolean; onToggle: () => void }) {
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={onToggle}
+      aria-label={soundEnabled ? 'Mute lesson sounds' : 'Unmute lesson sounds'}
+      title={soundEnabled ? 'Mute sounds' : 'Unmute sounds'}
+      className="text-slate-400 hover:text-slate-600"
+    >
+      {soundEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+    </Button>
+  );
+}
 
 interface AnswerResult {
   correct: boolean;
@@ -29,7 +55,7 @@ interface AnswerResult {
 
 export default function LanguageQuestLesson() {
   const { explanationLanguage, lq } = useLanguageQuestSupport();
-  const { soundEnabled, reducedMotion, voiceProvider } = useLanguageQuestPreferences();
+  const { soundEnabled, setSoundEnabled, reducedMotion, voiceProvider } = useLanguageQuestPreferences();
   const { lessonId } = useParams<{ lessonId: string }>();
   const [lesson, setLesson] = useState<LanguageQuestLessonPayload | null>(null);
   const [loading, setLoading] = useState(true);
@@ -50,6 +76,8 @@ export default function LanguageQuestLesson() {
   const [spellingIndex, setSpellingIndex] = useState(0);
   const [spellingInput, setSpellingInput] = useState('');
   const [spellingFeedback, setSpellingFeedback] = useState<'correct' | 'incorrect' | null>(null);
+  const [listening, setListening] = useState(false);
+  const speechSessionRef = useRef<LanguageQuestSpeechSession | null>(null);
   const [unlockedRewardId, setUnlockedRewardId] = useState<string | null>(null);
   const [rewardRevealOpen, setRewardRevealOpen] = useState(false);
   const speak = (value: string, language: string) => {
@@ -75,6 +103,8 @@ export default function LanguageQuestLesson() {
     setSpellingFeedback(null);
     setUnlockedRewardId(null);
     setRewardRevealOpen(false);
+    speechSessionRef.current?.stop();
+    setListening(false);
 
     apiGet<LanguageQuestLessonPayload>(`/api/language-quest/lessons/${lessonId}`)
       .then((payload) => { setLesson(payload); setProfile(payload.profile); })
@@ -87,7 +117,10 @@ export default function LanguageQuestLesson() {
       .catch(() => setPreview(null))
       .finally(() => setPreviewLoading(false));
 
-    return cancelLanguageQuestVoice;
+    return () => {
+      cancelLanguageQuestVoice();
+      speechSessionRef.current?.stop();
+    };
   }, [lessonId]);
 
   // Nothing to teach (or the preview failed to load) — go straight to the quiz.
@@ -118,6 +151,7 @@ export default function LanguageQuestLesson() {
   const outOfHearts = Boolean(challenge && !challenge.completed && (profile?.hearts ?? 1) <= 0);
 
   const optionLetters = useMemo(() => ['A', 'B', 'C', 'D', 'E', 'F'], []);
+  const speechSupported = useMemo(() => languageQuestSpeechInputSupported(), []);
   const celebrate = (options: Parameters<typeof confetti>[0]) => {
     if (!reducedMotion) void confetti(options);
   };
@@ -135,9 +169,40 @@ export default function LanguageQuestLesson() {
     setPhase(sentenceCards.length ? 'sentence' : 'quiz');
   };
 
+  // Optional spoken-answer input: the recognized transcript just gets typed
+  // into the same spelling input, so it's graded by the exact same
+  // pinyin/Hanzi-aware matching -- no separate speech-scoring path to keep
+  // in sync with checkSpelling().
+  const toggleSpellingListening = () => {
+    if (listening) {
+      speechSessionRef.current?.stop();
+      return;
+    }
+    if (!lesson) return;
+    const session = listenForLanguageQuestSpeech(languageQuestSpeechLocale(lesson.course.language), {
+      onResult: (transcript) => {
+        if (transcript.trim()) {
+          setSpellingInput(transcript.trim());
+          setSpellingFeedback(null);
+        }
+      },
+      onEnd: () => setListening(false),
+      onError: (message) => {
+        toast.error(message);
+        setListening(false);
+      },
+    });
+    if (!session) {
+      toast.info('Voice input is not supported by this browser');
+      return;
+    }
+    speechSessionRef.current = session;
+    setListening(true);
+  };
+
   const checkSpelling = () => {
     if (!spellingCard || !spellingInput.trim()) return;
-    const correct = sentenceAnswerMatches(spellingInput, spellingCard.text);
+    const correct = languageQuestAnswerMatches(spellingInput, spellingCard.text);
     setSpellingFeedback(correct ? 'correct' : 'incorrect');
     if (correct) {
       if (soundEnabled) playLanguageQuestSuccessSound();
@@ -161,7 +226,7 @@ export default function LanguageQuestLesson() {
 
   const checkSentence = () => {
     if (!sentenceCard || !sentenceInput.trim()) return;
-    const correct = sentenceAnswerMatches(sentenceInput, sentenceCard.text);
+    const correct = languageQuestAnswerMatches(sentenceInput, sentenceCard.text);
     setSentenceFeedback(correct ? 'correct' : 'incorrect');
     if (correct) {
       if (soundEnabled) playLanguageQuestSuccessSound();
@@ -336,9 +401,11 @@ export default function LanguageQuestLesson() {
           <Button variant="ghost" size="icon" aria-label="Exit lesson" render={<Link to={`/games/language-quest/courses/${lesson.course.id}`} />} nativeButton={false}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
+          <SoundToggleButton soundEnabled={soundEnabled} onToggle={() => setSoundEnabled(!soundEnabled)} />
           <Progress value={learnProgress} className="flex-1 [&_[data-slot=progress-track]]:h-3 [&_[data-slot=progress-indicator]]:bg-sky-500" />
           <Button variant="ghost" size="sm" className="text-slate-400 hover:text-slate-600" onClick={startPractice}>Skip learning</Button>
         </header>
+        <LanguageQuestPhaseStepper phase="learn" hasSpelling={spellingCards.length > 0} hasSentence={sentenceCards.length > 0} accentColor={lesson.course.accentColor} />
 
         <main className="flex flex-1 flex-col items-center justify-center py-8 text-center">
           {previewLoading || !card ? (
@@ -397,9 +464,11 @@ export default function LanguageQuestLesson() {
           <Button variant="ghost" size="icon" aria-label="Exit lesson" render={<Link to={`/games/language-quest/courses/${lesson.course.id}`} />} nativeButton={false}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
+          <SoundToggleButton soundEnabled={soundEnabled} onToggle={() => setSoundEnabled(!soundEnabled)} />
           <Progress value={spellingProgress} className="flex-1 [&_[data-slot=progress-track]]:h-3 [&_[data-slot=progress-indicator]]:bg-amber-500" />
           <span className="text-xs font-bold text-slate-500">{spellingIndex + 1}/{spellingCards.length}</span>
         </header>
+        <LanguageQuestPhaseStepper phase="spelling" hasSpelling={spellingCards.length > 0} hasSentence={sentenceCards.length > 0} accentColor={lesson.course.accentColor} />
 
         <main className="flex flex-1 flex-col justify-center py-8">
           <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-amber-600 dark:text-amber-300">
@@ -421,43 +490,66 @@ export default function LanguageQuestLesson() {
           </div>
 
           <label htmlFor="spelling-answer" lang={explanationLanguage} className="mt-6 text-sm font-bold text-slate-700 dark:text-slate-200">{lq('spellingLabel')}</label>
-          <input
-            id="spelling-answer"
-            autoFocus
-            autoComplete="off"
-            autoCapitalize="none"
-            spellCheck={false}
-            value={spellingInput}
-            onChange={(event) => {
-              setSpellingInput(event.target.value);
-              if (spellingFeedback) setSpellingFeedback(null);
-            }}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                event.preventDefault();
-                if (spellingFeedback === 'correct') continueSpelling();
-                else checkSpelling();
-              }
-            }}
-            placeholder={lq('spellingPlaceholder')}
-            className={`mt-2 h-16 w-full rounded-2xl border-2 bg-white px-5 text-xl font-semibold text-slate-900 outline-none transition focus:ring-4 dark:bg-surface-indigo dark:text-white ${
-              spellingFeedback === 'correct'
-                ? 'border-emerald-500 focus:ring-emerald-100'
-                : spellingFeedback === 'incorrect'
-                  ? 'border-rose-400 focus:ring-rose-100'
-                  : 'border-slate-200 focus:border-amber-500 focus:ring-amber-100 dark:border-surface-raised'
-            }`}
-          />
+          <div className="relative">
+            <input
+              id="spelling-answer"
+              autoFocus
+              autoComplete="off"
+              autoCapitalize="none"
+              spellCheck={false}
+              value={spellingInput}
+              onChange={(event) => {
+                setSpellingInput(event.target.value);
+                if (spellingFeedback) setSpellingFeedback(null);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  if (spellingFeedback === 'correct') continueSpelling();
+                  else checkSpelling();
+                }
+              }}
+              placeholder={lq('spellingPlaceholder')}
+              className={`mt-2 h-16 w-full rounded-2xl border-2 bg-white px-5 text-xl font-semibold text-slate-900 outline-none transition focus:ring-4 dark:bg-surface-indigo dark:text-white ${
+                isChineseLanguage(lesson.course.language) && speechSupported ? 'pr-14' : ''
+              } ${
+                spellingFeedback === 'correct'
+                  ? 'border-emerald-500 focus:ring-emerald-100'
+                  : spellingFeedback === 'incorrect'
+                    ? `border-rose-400 focus:ring-rose-100 ${reducedMotion ? '' : 'lq-shake'}`
+                    : 'border-slate-200 focus:border-amber-500 focus:ring-amber-100 dark:border-surface-raised'
+              }`}
+            />
+            {isChineseLanguage(lesson.course.language) && speechSupported && (
+              <button
+                type="button"
+                onClick={toggleSpellingListening}
+                aria-label={listening ? 'Stop voice input' : 'Answer by speaking'}
+                title={listening ? 'Stop voice input' : 'Answer by speaking'}
+                className={`absolute right-3 top-1/2 mt-1 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full transition ${
+                  listening ? 'animate-pulse bg-rose-500 text-white' : 'text-slate-400 hover:bg-slate-100 hover:text-amber-600 dark:hover:bg-surface-raised'
+                }`}
+              >
+                {listening ? <Square className="h-4 w-4 fill-current" /> : <Mic className="h-4 w-4" />}
+              </button>
+            )}
+          </div>
           <p lang={explanationLanguage} className="mt-2 text-xs leading-6 text-slate-500 dark:text-slate-300">{lq('spellingHelp')}</p>
+          {isChineseLanguage(lesson.course.language) && (
+            <p lang={explanationLanguage} className="mt-1 text-xs leading-6 text-amber-600 dark:text-amber-300">
+              {lq('spellingHelpChinese')}
+              {speechSupported && ' You can also tap the microphone and say your answer.'}
+            </p>
+          )}
 
           {spellingFeedback === 'incorrect' && (
-            <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-rose-800 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300">
+            <div className={`mt-5 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-rose-800 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300 ${reducedMotion ? '' : 'lq-shake'}`}>
               <p lang={explanationLanguage} className="font-black">{lq('spellingIncorrectTitle')}</p>
               <p lang={explanationLanguage} className="mt-1 text-sm leading-6 opacity-80">{lq('spellingIncorrectHelp')}</p>
             </div>
           )}
           {spellingFeedback === 'correct' && (
-            <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">
+            <div className={`mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300 ${reducedMotion ? '' : 'lq-cheer'}`}>
               <p lang={explanationLanguage} className="font-black">{lq('spellingCorrectTitle')}</p>
               <p lang={explanationLanguage} className="mt-1 text-sm leading-6">{lq('spellingCorrectHelp')}</p>
               <div className="mt-2 font-black">
@@ -497,9 +589,11 @@ export default function LanguageQuestLesson() {
           <Button variant="ghost" size="icon" aria-label="Exit lesson" render={<Link to={`/games/language-quest/courses/${lesson.course.id}`} />} nativeButton={false}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
+          <SoundToggleButton soundEnabled={soundEnabled} onToggle={() => setSoundEnabled(!soundEnabled)} />
           <Progress value={sentenceProgress} className="flex-1 [&_[data-slot=progress-track]]:h-3 [&_[data-slot=progress-indicator]]:bg-fuchsia-600" />
           <span className="text-xs font-bold text-slate-500">{sentenceIndex + 1}/{sentenceCards.length}</span>
         </header>
+        <LanguageQuestPhaseStepper phase="sentence" hasSpelling={spellingCards.length > 0} hasSentence={sentenceCards.length > 0} accentColor={lesson.course.accentColor} />
 
         <main className="flex flex-1 flex-col justify-center py-8">
           <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-fuchsia-700">
@@ -534,14 +628,17 @@ export default function LanguageQuestLesson() {
               sentenceFeedback === 'correct'
                 ? 'border-emerald-500 focus:ring-emerald-100'
                 : sentenceFeedback === 'incorrect'
-                  ? 'border-rose-400 focus:ring-rose-100'
+                  ? `border-rose-400 focus:ring-rose-100 ${reducedMotion ? '' : 'lq-shake'}`
                   : 'border-slate-200 focus:border-fuchsia-500 focus:ring-fuchsia-100 dark:border-surface-raised'
             }`}
           />
           <p lang={explanationLanguage} className="mt-2 text-xs leading-6 text-slate-500 dark:text-slate-300">{lq('sentenceHelp')}</p>
+          {isChineseLanguage(lesson.course.language) && (
+            <p lang={explanationLanguage} className="mt-1 text-xs leading-6 text-fuchsia-600 dark:text-fuchsia-300">{lq('sentenceHelpChinese')}</p>
+          )}
 
           {sentenceFeedback === 'incorrect' && (
-            <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-rose-800 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300">
+            <div className={`mt-5 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-rose-800 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300 ${reducedMotion ? '' : 'lq-shake'}`}>
               <p lang={explanationLanguage} className="font-black">{lq('incorrectTitle')}</p>
               <div className="mt-2 flex items-end gap-2 text-sm">
                 <span>Model sentence:</span>
@@ -551,7 +648,7 @@ export default function LanguageQuestLesson() {
             </div>
           )}
           {sentenceFeedback === 'correct' && (
-            <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">
+            <div className={`mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300 ${reducedMotion ? '' : 'lq-cheer'}`}>
               <p lang={explanationLanguage} className="font-black">{lq('correctTitle')}</p>
               <p lang={explanationLanguage} className="mt-1 text-sm leading-6">{lq('correctHelp')}</p>
             </div>
@@ -581,19 +678,27 @@ export default function LanguageQuestLesson() {
           <PartyPopper className="h-12 w-12" />
           <span className="absolute -right-2 top-2 text-3xl">✨</span>
           <span className="absolute -left-3 bottom-3 text-2xl">⭐</span>
+          <div className="absolute -bottom-2 -right-2">
+            <LanguageQuestCompanion rewards={profile?.rewards} reaction="correct" reducedMotion={reducedMotion} size="sm" />
+          </div>
         </div>
         <h1 className="mt-7 text-3xl font-black text-slate-900 dark:text-white">Lesson complete!</h1>
         <p className="mt-2 text-slate-500 dark:text-slate-300">You finished <strong>{lesson.title}</strong>. Great work!</p>
-        <div className="mt-7 grid w-full grid-cols-2 gap-3">
-          <div className="rounded-2xl border-2 border-amber-200 bg-amber-50 p-4 dark:border-amber-500/20 dark:bg-amber-500/10">
+        <div className="mt-7 grid w-full grid-cols-3 gap-2 sm:gap-3">
+          <div className="rounded-2xl border-2 border-amber-200 bg-amber-50 p-3 sm:p-4 dark:border-amber-500/20 dark:bg-amber-500/10">
             <Star className="mx-auto h-6 w-6 fill-amber-500 text-amber-500" />
-            <p className="mt-2 text-2xl font-black text-amber-700 dark:text-amber-400">+{sessionPoints}</p>
-            <p className="text-xs font-semibold uppercase tracking-wide text-amber-600/70">XP earned</p>
+            <p className="mt-2 text-xl font-black text-amber-700 sm:text-2xl dark:text-amber-400">+{sessionPoints}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-600/70 sm:text-xs">XP earned</p>
           </div>
-          <div className="rounded-2xl border-2 border-orange-200 bg-orange-50 p-4 dark:border-orange-500/20 dark:bg-orange-500/10">
-            <Flame className="mx-auto h-6 w-6 fill-orange-500 text-orange-500" />
-            <p className="mt-2 text-2xl font-black text-orange-700 dark:text-orange-400">{profile?.currentStreak ?? 0}</p>
-            <p className="text-xs font-semibold uppercase tracking-wide text-orange-600/70">Day streak</p>
+          <div className="rounded-2xl border-2 border-sky-200 bg-sky-50 p-3 sm:p-4 dark:border-sky-500/20 dark:bg-sky-500/10">
+            <BookA className="mx-auto h-6 w-6 text-sky-600" />
+            <p className="mt-2 text-xl font-black text-sky-700 sm:text-2xl dark:text-sky-400">{cards.length}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-600/70 sm:text-xs">Words learned</p>
+          </div>
+          <div className="rounded-2xl border-2 border-orange-200 bg-orange-50 p-3 sm:p-4 dark:border-orange-500/20 dark:bg-orange-500/10">
+            <Flame className={`mx-auto h-6 w-6 fill-orange-500 text-orange-500 ${reducedMotion ? '' : 'animate-pulse'}`} />
+            <p className="mt-2 text-xl font-black text-orange-700 sm:text-2xl dark:text-orange-400">{profile?.currentStreak ?? 0}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-orange-600/70 sm:text-xs">Day streak</p>
           </div>
         </div>
         {profile?.rewards && (
@@ -647,6 +752,7 @@ export default function LanguageQuestLesson() {
         <Button variant="ghost" size="icon" aria-label="Exit lesson" render={<Link to={`/games/language-quest/courses/${lesson.course.id}`} />} nativeButton={false}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
+        <SoundToggleButton soundEnabled={soundEnabled} onToggle={() => setSoundEnabled(!soundEnabled)} />
         <Progress value={progressPercent} className="flex-1 [&_[data-slot=progress-track]]:h-3 [&_[data-slot=progress-indicator]]:bg-violet-600" />
         {combo >= 2 && (
           <div className="hidden items-center gap-1 text-sm font-black text-orange-500 sm:flex" title={`${combo} in a row`}>
@@ -656,6 +762,7 @@ export default function LanguageQuestLesson() {
         <div className="flex items-center gap-1 text-sm font-black text-rose-500"><Heart className="h-5 w-5 fill-current" /> {profile?.hearts ?? 0}</div>
         <div className="hidden items-center gap-1 text-sm font-black text-amber-500 sm:flex" title={`Level ${profile?.rewards.level ?? 1}`}><Star className="h-5 w-5 fill-current" /> {profile?.points ?? 0} XP</div>
       </header>
+      <LanguageQuestPhaseStepper phase="quiz" hasSpelling={spellingCards.length > 0} hasSentence={sentenceCards.length > 0} accentColor={lesson.course.accentColor} />
 
       <main className="flex flex-1 flex-col justify-center py-8">
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-violet-600">{lesson.title} • {index + 1} of {lesson.challenges.length}</p>
@@ -688,7 +795,7 @@ export default function LanguageQuestLesson() {
                     isCorrect
                       ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10'
                       : isWrongSelection
-                        ? 'border-rose-500 bg-rose-50 dark:bg-rose-500/10'
+                        ? `border-rose-500 bg-rose-50 dark:bg-rose-500/10 ${reducedMotion ? '' : 'lq-shake'}`
                         : selected
                           ? 'border-violet-500 bg-violet-50 shadow-sm dark:bg-violet-500/10'
                           : 'border-slate-200 bg-white hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-md dark:border-surface-raised dark:bg-surface-indigo'
@@ -721,7 +828,7 @@ export default function LanguageQuestLesson() {
           <div className="min-h-12">
             {answer?.correct && (
               <div className="flex items-center gap-3 text-emerald-700 dark:text-emerald-400">
-                <div className="grid h-10 w-10 place-items-center rounded-full bg-emerald-500 text-white"><Check className="h-6 w-6" /></div>
+                <LanguageQuestCompanion rewards={profile?.rewards} reaction="correct" reducedMotion={reducedMotion} size="sm" />
                 <div>
                   <p className="font-black">Excellent — that meaning fits.</p>
                   <div className="mt-1 flex flex-wrap items-end gap-1 text-xs">
@@ -736,7 +843,7 @@ export default function LanguageQuestLesson() {
             )}
             {answer && !answer.correct && (
               <div className="flex items-center gap-3 text-rose-700 dark:text-rose-400">
-                <div className="grid h-10 w-10 place-items-center rounded-full bg-rose-500 text-white"><X className="h-6 w-6" /></div>
+                <LanguageQuestCompanion rewards={profile?.rewards} reaction="incorrect" reducedMotion={reducedMotion} size="sm" />
                 <div>
                   <p className="font-black">Not quite — compare the meaning and retry.</p>
                   <div className="mt-1 flex flex-wrap items-end gap-1 text-xs">

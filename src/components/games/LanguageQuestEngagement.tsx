@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Brain, CheckCircle2, Clock3, Gift, Sparkles, Users } from 'lucide-react';
+import { Brain, CheckCircle2, Clock3, Gift, Link2, Sparkles, Users, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -80,9 +80,21 @@ export function LanguageQuestEngagement({ onXpChanged }: { onXpChanged?: () => v
             <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-600 dark:text-violet-300">Daily &amp; weekly missions</p>
             <h2 className="mt-1 text-xl font-black text-slate-950 dark:text-white">Small goals, extra XP</h2>
           </div>
-          <Button variant="outline" className="rounded-xl" render={<Link to="/games/language-quest/mastery" />} nativeButton={false}>
-            <Brain className="mr-2 h-4 w-4" /> Mastery {data.masteryDueCount > 0 ? `(${data.masteryDueCount})` : ''}
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" className="rounded-xl" render={<Link to="/games/language-quest/mastery" />} nativeButton={false}>
+              <Brain className="mr-2 h-4 w-4" /> Mastery {data.masteryDueCount > 0 ? `(${data.masteryDueCount})` : ''}
+            </Button>
+            {data.masteryDueCount > 0 && (
+              <>
+                <Button className="rounded-xl bg-emerald-600 text-white hover:bg-emerald-700" render={<Link to="/games/language-quest/mastery?mode=chain" />} nativeButton={false}>
+                  <Link2 className="mr-2 h-4 w-4" /> Daily Chain
+                </Button>
+                <Button className="rounded-xl bg-orange-600 text-white hover:bg-orange-700" render={<Link to="/games/language-quest/mastery?mode=lightning" />} nativeButton={false}>
+                  <Zap className="mr-2 h-4 w-4" /> Lightning Round
+                </Button>
+              </>
+            )}
+          </div>
         </div>
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           {data.missions.map((mission) => (

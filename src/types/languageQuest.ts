@@ -25,6 +25,8 @@ export interface LanguageQuestCourseSummary {
   completedChallenges: number;
   progressPercent: number;
   completed: boolean;
+  /** First unlocked, unfinished lesson -- null once the course is complete. */
+  nextLessonId: string | null;
 }
 
 export interface LanguageQuestOverview {

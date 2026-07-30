@@ -19,7 +19,7 @@ import {
   Trophy,
   X,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -428,6 +428,12 @@ function celebrateWin() {
 
 export default function WordTrailPage() {
   const navigate = useNavigate();
+  // Present when arriving from a Language Quest course's "Practice in Word
+  // Trail" button -- builds the board from that course's own challenges
+  // instead of the default English-word pool. Only consulted when starting a
+  // brand new game; an already-active game keeps whatever deck it started with.
+  const [searchParams] = useSearchParams();
+  const crossoverCourseId = searchParams.get('courseId');
   const [home, setHome] = useState<WordTrailHomePayload | null>(null);
   const [game, setGame] = useState<WordTrailGame | null>(null);
   const [loading, setLoading] = useState(true);
@@ -472,7 +478,11 @@ export default function WordTrailPage() {
   const startGame = async () => {
     setStarting(true);
     try {
-      const result = await apiSend<{ game: WordTrailGame }>("/api/games/word-trail/start", "POST", {});
+      const result = await apiSend<{ game: WordTrailGame }>(
+        "/api/games/word-trail/start",
+        "POST",
+        crossoverCourseId ? { courseId: crossoverCourseId } : {},
+      );
       setGame(result.game);
       setFeedback(null);
       setSelectedOptionId(null);

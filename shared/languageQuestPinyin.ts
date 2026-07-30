@@ -1,4 +1,5 @@
 import { convert, pinyin } from "pinyin-pro";
+import { normalizeSentenceAnswer } from "./languageQuest";
 
 const HAN_CHARACTER_RE = /\p{Script=Han}/u;
 
@@ -55,4 +56,26 @@ export function formatCedictPinyin(rawPinyin: string): string {
       return isUpperCase ? converted.toUpperCase() : converted;
     })
     .join(" ");
+}
+
+/**
+ * True if a learner's typed answer matches the model text. For Chinese
+ * (Han-script) text this also accepts a pinyin romanization typed on a
+ * plain English keyboard -- toneless ("ni hao"), tone-marked ("nǐ hǎo"), or
+ * CC-CEDICT-style numbered ("ni3 hao3") -- since most learners have no
+ * Chinese IME and no easy way to enter Hanzi or diacritics. Every other
+ * language falls back to a plain normalized text comparison.
+ */
+export function languageQuestAnswerMatches(answer: string, modelText: string): boolean {
+  const normalizedAnswer = normalizeSentenceAnswer(answer);
+  if (!normalizedAnswer) return false;
+  if (normalizedAnswer === normalizeSentenceAnswer(modelText)) return true;
+  if (!HAN_CHARACTER_RE.test(modelText)) return false;
+
+  const pinyinVariants = [
+    pinyin(modelText, { toneType: "none", type: "string", separator: " " }),
+    pinyin(modelText, { toneType: "symbol", type: "string", separator: " " }),
+    pinyin(modelText, { toneType: "num", type: "string", separator: " " }),
+  ];
+  return pinyinVariants.some((variant) => normalizeSentenceAnswer(variant) === normalizedAnswer);
 }

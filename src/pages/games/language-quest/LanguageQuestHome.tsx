@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, Flame, GraduationCap, Heart, Languages, Settings2, Sparkles, Star, Trophy, UserRound, Users, WholeWord } from 'lucide-react';
+import { BookOpen, Flame, GraduationCap, Heart, Languages, Map, Settings2, Sparkles, Star, Trophy, UserRound, Users, WholeWord } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
 import { apiGet } from '@/src/lib/api';
 import type { LanguageQuestOverview } from '@/src/types/languageQuest';
 import { useAuth } from '@/src/providers/AuthProvider';
@@ -54,10 +55,43 @@ export default function LanguageQuestHome() {
 
   if (loading) {
     return (
-      <div className="grid min-h-[420px] place-items-center">
-        <div className="text-center">
-          <div className="mx-auto h-11 w-11 animate-spin rounded-full border-4 border-violet-200 border-t-violet-600" />
-          <p className="mt-4 text-sm font-medium text-slate-500">Preparing your next quest…</p>
+      <div className="space-y-7 pb-10" aria-busy="true" aria-label="Loading Language Quest">
+        <div className="rounded-3xl bg-violet-100/70 p-6 dark:bg-violet-500/10 sm:p-8">
+          <Skeleton className="h-5 w-32 rounded-full bg-violet-200/70 dark:bg-violet-900/40" />
+          <Skeleton className="mt-4 h-9 w-72 max-w-full bg-violet-200/70 dark:bg-violet-900/40" />
+          <Skeleton className="mt-3 h-4 w-full max-w-md bg-violet-200/50 dark:bg-violet-900/30" />
+          <Skeleton className="mt-2 h-4 w-2/3 max-w-sm bg-violet-200/50 dark:bg-violet-900/30" />
+        </div>
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, statIndex) => (
+            <div key={statIndex} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-surface-raised dark:bg-surface-indigo">
+              <Skeleton className="h-10 w-10 shrink-0 rounded-xl" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-5 w-10" />
+                <Skeleton className="h-3 w-16" />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div>
+          <Skeleton className="h-6 w-44" />
+          <div className="mt-4 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, cardIndex) => (
+              <div key={cardIndex} className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-surface-raised dark:bg-surface-indigo">
+                <Skeleton className="h-2 w-full rounded-none" />
+                <div className="space-y-3 p-5">
+                  <div className="flex items-start gap-4">
+                    <Skeleton className="h-14 w-14 shrink-0 rounded-2xl" />
+                    <div className="flex-1 space-y-2 pt-1">
+                      <Skeleton className="h-4 w-16" />
+                      <Skeleton className="h-5 w-32" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-9 w-full rounded-xl" />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -186,9 +220,28 @@ export default function LanguageQuestHome() {
                           <span>{course.progressPercent}% complete</span>
                         </div>
                         <Progress value={course.progressPercent} className="mt-2 [&_[data-slot=progress-track]]:h-2 [&_[data-slot=progress-indicator]]:bg-violet-600" />
-                        <Button className="mt-5 w-full" style={{ backgroundColor: course.accentColor }} render={<Link to={`/games/language-quest/courses/${course.id}`} />} nativeButton={false}>
-                          {course.progressPercent > 0 ? 'Continue course' : 'Start course'}
-                        </Button>
+                        <div className="mt-5 flex items-center gap-2">
+                          <Button
+                            className="flex-1"
+                            style={{ backgroundColor: course.accentColor }}
+                            render={<Link to={course.nextLessonId ? `/games/language-quest/lessons/${course.nextLessonId}` : `/games/language-quest/courses/${course.id}`} />}
+                            nativeButton={false}
+                          >
+                            {course.completed ? 'Review course' : course.nextLessonId ? (course.progressPercent > 0 ? 'Resume lesson' : 'Start course') : 'View course'}
+                          </Button>
+                          {course.progressPercent > 0 && (
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              aria-label="View course path"
+                              title="View course path"
+                              render={<Link to={`/games/language-quest/courses/${course.id}`} />}
+                              nativeButton={false}
+                            >
+                              <Map className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </article>
                   ))}

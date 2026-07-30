@@ -106,7 +106,7 @@ function LanguageQuestShellContent() {
             >
               {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
-            <Button variant="ghost" size="icon" className="rounded-xl text-slate-500 hover:bg-rose-50 hover:text-rose-600" onClick={signOut} aria-label="Sign out"><LogOut className="h-4 w-4" /></Button>
+            <Button variant="ghost" size="icon" className="rounded-xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 dark:text-slate-400 dark:hover:bg-rose-500/10 dark:hover:text-rose-400" onClick={signOut} aria-label="Sign out"><LogOut className="h-4 w-4" /></Button>
           </nav>
         </div>
       </header>

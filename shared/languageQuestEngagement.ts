@@ -1,4 +1,7 @@
 export const LANGUAGE_QUEST_MASTERY_POINTS = 5;
+// Daily Quest Chain: a fast, guided round of this many mastery reviews that
+// counts as "done for today" regardless of which review mode they came from.
+export const LANGUAGE_QUEST_DAILY_CHAIN_TARGET = 3;
 
 export type LanguageQuestMissionKey =
   | "daily-xp"

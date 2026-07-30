@@ -86,6 +86,37 @@ export function isEnglishWordPracticeQuestion(
     );
 }
 
+// Word Trail's board game engine only cares that a deck is an array of
+// EnglishWordPracticeQuestion-shaped objects with unique ids -- it has no
+// idea whether they came from the fixed English-word course pool above or
+// from an arbitrary Language Quest course. This lets a learner start a Word
+// Trail game built from any single published course's own challenges (e.g.
+// a Mandarin or Spanish course), reusing every bit of Word Trail's existing
+// board, dice, and scoring logic untouched.
+export async function loadLanguageQuestCourseDeck(
+  prisma: any,
+  courseId: string,
+  seed: string,
+  limit = 60,
+): Promise<EnglishWordPracticeQuestion[]> {
+  const rows = await prisma.languageQuestChallenge.findMany({
+    where: { lesson: { unit: { courseId, course: { published: true } } } },
+    include: {
+      options: { orderBy: { order: "asc" } },
+      lesson: { include: { unit: { include: { course: true } } } },
+    },
+    take: 1_000,
+    orderBy: { createdAt: "asc" },
+  });
+  const questions = (rows as any[])
+    .map((row) => normalizeChallenge(row, seed))
+    .filter(
+      (item: EnglishWordPracticeQuestion | null): item is EnglishWordPracticeQuestion =>
+        item !== null,
+    );
+  return seededDailyQuestShuffle(questions, `${seed}:questions`).slice(0, limit);
+}
+
 export async function loadEnglishWordPracticeQuestions(
   prisma: any,
   seed: string,

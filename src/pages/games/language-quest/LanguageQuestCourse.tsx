@@ -1,21 +1,26 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Check, ChevronRight, Headphones, Keyboard, Lightbulb, Lock, Map, Play, RotateCcw, SpellCheck2, Trophy } from 'lucide-react';
+import { ArrowLeft, BookOpenText, Check, ChevronRight, Dices, Globe2, Headphones, Keyboard, Lightbulb, Lock, Map, Play, RotateCcw, Skull, SpellCheck2, Trophy } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
 import { apiGet } from '@/src/lib/api';
 import { useLanguageQuestSupport } from '@/src/components/games/LanguageQuestSupport';
+import { languageQuestCategoryForLanguage } from '@/shared/languageQuestCourseCategories';
+import { languageQuestStoriesForCategory } from '@/shared/languageQuestStory';
 
 interface CoursePayload {
   id: string;
   title: string;
   description: string | null;
   language: string;
+  category?: string;
   imageEmoji: string;
   accentColor: string;
   completedLessons: number;
   totalLessons: number;
+  nextLessonId: string | null;
   units: {
     id: string;
     title: string;
@@ -47,7 +52,43 @@ export default function LanguageQuestCourse() {
   }, [courseId]);
 
   if (loading) {
-    return <div className="grid min-h-[420px] place-items-center"><div className="h-10 w-10 animate-spin rounded-full border-4 border-violet-200 border-t-violet-600" /></div>;
+    return (
+      <div className="mx-auto max-w-4xl space-y-6 pb-12" aria-busy="true" aria-label="Loading course">
+        <Skeleton className="h-8 w-32" />
+        <div className="overflow-hidden rounded-3xl bg-violet-100/70 p-6 dark:bg-violet-500/10 sm:p-8">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+            <Skeleton className="h-20 w-20 shrink-0 rounded-3xl bg-violet-200/70 dark:bg-violet-900/40" />
+            <div className="flex-1 space-y-3">
+              <Skeleton className="h-3 w-20 bg-violet-200/60 dark:bg-violet-900/40" />
+              <Skeleton className="h-8 w-56 max-w-full bg-violet-200/70 dark:bg-violet-900/40" />
+              <Skeleton className="h-4 w-full max-w-md bg-violet-200/50 dark:bg-violet-900/30" />
+              <Skeleton className="h-2 w-full bg-violet-200/50 dark:bg-violet-900/30" />
+            </div>
+          </div>
+        </div>
+        {Array.from({ length: 2 }).map((_, unitIndex) => (
+          <div key={unitIndex} className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-surface-raised dark:bg-surface-indigo">
+            <div className="border-b border-slate-100 bg-slate-50 px-5 py-4 dark:border-surface-raised dark:bg-surface-raised/30">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-9 w-9 shrink-0 rounded-xl" />
+                <Skeleton className="h-5 w-40" />
+              </div>
+            </div>
+            <div className="space-y-3 p-4 sm:p-6">
+              {Array.from({ length: 3 }).map((__, lessonIndex) => (
+                <div key={lessonIndex} className="flex items-center gap-4 rounded-2xl border border-slate-100 p-3 dark:border-surface-raised">
+                  <Skeleton className="h-12 w-12 shrink-0 rounded-2xl" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-40" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
   }
 
   if (!course) {
@@ -61,6 +102,10 @@ export default function LanguageQuestCourse() {
   }
 
   const percent = course.totalLessons ? Math.round((course.completedLessons / course.totalLessons) * 100) : 0;
+  const nextLesson = course.nextLessonId
+    ? course.units.flatMap((unit) => unit.lessons).find((lesson) => lesson.id === course.nextLessonId)
+    : null;
+  const courseStories = languageQuestStoriesForCategory(course.category?.trim() || languageQuestCategoryForLanguage(course.language));
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 pb-12">
@@ -82,6 +127,23 @@ export default function LanguageQuestCourse() {
           </div>
         </div>
       </section>
+
+      {nextLesson && (
+        <section className="flex flex-col items-start justify-between gap-4 rounded-2xl border-2 p-5 sm:flex-row sm:items-center" style={{ borderColor: `${course.accentColor}55`, backgroundColor: `${course.accentColor}0f` }}>
+          <div className="flex items-center gap-3">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white" style={{ backgroundColor: course.accentColor }}>
+              <Play className="h-5 w-5 fill-current" />
+            </span>
+            <div>
+              <p className="text-xs font-black uppercase tracking-wider" style={{ color: course.accentColor }}>Pick up where you left off</p>
+              <p className="mt-0.5 font-bold text-slate-900 dark:text-white">{nextLesson.title}</p>
+            </div>
+          </div>
+          <Button style={{ backgroundColor: course.accentColor }} render={<Link to={`/games/language-quest/lessons/${nextLesson.id}`} />} nativeButton={false}>
+            Resume lesson <ChevronRight className="ml-1 h-4 w-4" />
+          </Button>
+        </section>
+      )}
 
       <section className="rounded-2xl border border-violet-100 bg-violet-50/70 p-5 dark:border-violet-500/20 dark:bg-violet-500/10">
         <div className="flex items-start gap-3">
@@ -152,6 +214,27 @@ export default function LanguageQuestCourse() {
           <Trophy className="mx-auto h-10 w-10 text-amber-500" />
           <h2 className="mt-2 text-xl font-black text-slate-900 dark:text-white">Course complete!</h2>
           <p lang={explanationLanguage} className="mt-1 text-sm text-slate-500 dark:text-slate-300">{lq('completeHelp')}</p>
+          <div className="mt-4 flex flex-col justify-center gap-2 sm:flex-row">
+            <Button className="bg-rose-700 text-white hover:bg-rose-800" render={<Link to={`/games/language-quest/courses/${course.id}/boss-battle`} />} nativeButton={false}>
+              <Skull className="mr-2 h-4 w-4" /> Challenge the Boss
+            </Button>
+            <Button variant="outline" render={<Link to={`/games/language-quest/courses/${course.id}/culture`} />} nativeButton={false}>
+              <Globe2 className="mr-2 h-4 w-4" /> Culture Quest
+            </Button>
+            {courseStories.length > 0 && (
+              <Button variant="outline" render={<Link to={`/games/language-quest/courses/${course.id}/story/${courseStories[0].id}`} />} nativeButton={false}>
+                <BookOpenText className="mr-2 h-4 w-4" /> Story Mode
+              </Button>
+            )}
+          </div>
+          <Button
+            variant="outline"
+            className="mt-2 border-sky-300 text-sky-700 hover:bg-sky-50 dark:border-sky-500/40 dark:text-sky-300"
+            render={<Link to={`/games/word-trail?courseId=${course.id}`} />}
+            nativeButton={false}
+          >
+            <Dices className="mr-2 h-4 w-4" /> Practice this course in Word Trail
+          </Button>
         </div>
       )}
     </div>

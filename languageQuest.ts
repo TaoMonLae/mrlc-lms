@@ -2,9 +2,14 @@ import { randomUUID } from "node:crypto";
 import express from "express";
 import rateLimit from "express-rate-limit";
 import {
+  LANGUAGE_QUEST_BOSS_BATTLE_MAX_QUESTIONS,
+  LANGUAGE_QUEST_BOSS_BATTLE_MIN_QUESTIONS,
+  LANGUAGE_QUEST_BOSS_BATTLE_PASS_RATIO,
+  LANGUAGE_QUEST_BOSS_BATTLE_POINTS,
   LANGUAGE_QUEST_FIRST_CLEAR_POINTS,
   LANGUAGE_QUEST_MAX_HEARTS,
   LANGUAGE_QUEST_PRACTICE_POINTS,
+  bossBattleResult,
   languageQuestDayKey,
   languageQuestPracticePrompt,
   nextLanguageQuestStreak,
@@ -21,6 +26,7 @@ import {
   newlyUnlockedLanguageQuestRewardIds,
 } from "./shared/languageQuestRewards";
 import {
+  LANGUAGE_QUEST_DAILY_CHAIN_TARGET,
   LANGUAGE_QUEST_MASTERY_POINTS,
   LANGUAGE_QUEST_MISSIONS,
   languageQuestMissionProgress,
@@ -410,6 +416,26 @@ function profileJson(progress: any) {
   };
 }
 
+// Walks a course's units/lessons in path order (mirroring the lock logic in
+// GET /api/language-quest/courses/:id) to find the first lesson that's both
+// unlocked and not yet fully completed. Powers the "resume where you left
+// off" shortcut on the home page and course page, so learners with progress
+// don't have to re-open the course path and hunt for where they stopped.
+// Returns null once every lesson is complete (or the course has none).
+export function nextIncompleteLessonId(units: any[], completed: Set<string>): string | null {
+  let previousLessonComplete = true;
+  for (const unit of units) {
+    for (const lesson of unit.lessons) {
+      const challengeIds = lesson.challenges.map((challenge: any) => challenge.id);
+      const isComplete = challengeIds.length > 0 && challengeIds.every((id: string) => completed.has(id));
+      const locked = !previousLessonComplete;
+      previousLessonComplete = isComplete;
+      if (!locked && !isComplete && challengeIds.length > 0) return lesson.id;
+    }
+  }
+  return null;
+}
+
 async function missionSnapshot(prisma: any, userId: string, now = new Date()) {
   const periods = languageQuestPeriodBounds(now);
   const [events, claims] = await Promise.all([
@@ -749,7 +775,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           select: { challengeId: true },
         }),
       ]);
-      const completed = new Set(completedRows.map((row: any) => row.challengeId));
+      const completed = new Set<string>(completedRows.map((row: any) => row.challengeId));
       res.json({
         profile: profileJson(progress),
         canManage: isManager(jwtUser.role),
@@ -771,6 +797,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
             // Certificate eligibility and any other "is this course done"
             // check should use this, not progressPercent === 100.
             completed: challengeIds.length > 0 && completedChallenges === challengeIds.length,
+            nextLessonId: nextIncompleteLessonId(course.units, completed),
           };
         }),
       });
@@ -805,6 +832,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       const completed = new Set(completedRows.map((row: any) => row.challengeId));
       let previousLessonComplete = true;
       let completedLessons = 0;
+      let nextLessonId: string | null = null;
       const units = course.units.map((unit: any) => ({
         id: unit.id,
         title: unit.title,
@@ -815,6 +843,9 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           const locked = !previousLessonComplete;
           previousLessonComplete = isComplete;
           if (isComplete) completedLessons += 1;
+          // First unlocked, unfinished lesson with content -- the "resume
+          // where you left off" target shown at the top of the course page.
+          if (!nextLessonId && !locked && !isComplete && lesson.challenges.length > 0) nextLessonId = lesson.id;
           return {
             id: lesson.id, title: lesson.title, description: lesson.description,
             challengeCount: lesson.challenges.length, completedChallenges, completed: isComplete, locked,
@@ -832,10 +863,187 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         language: course.language, category: course.category,
         imageEmoji: course.imageEmoji, accentColor: course.accentColor, units,
         completedLessons, totalLessons: units.reduce((sum: number, unit: any) => sum + unit.lessons.length, 0),
+        nextLessonId,
       });
     } catch (error) {
       logger.error("Error loading Language Quest course:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load the course" });
+    }
+  });
+
+  // Boss Battle: a timed gauntlet built from the learner's own toughest
+  // questions in a course they've already fully completed. Unlike the
+  // mastery review endpoints, per-question correctness is never revealed
+  // mid-battle -- the whole set of answers is graded together in the finish
+  // endpoint below, both so the answer key can't be probed one request at a
+  // time and so the "boss battle report" at the end has real drama to it.
+  app.get("/api/language-quest/courses/:id/boss-battle", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const course = await prisma.languageQuestCourse.findUnique({
+        where: { id: req.params.id },
+        include: {
+          units: {
+            orderBy: { order: "asc" },
+            include: {
+              lessons: {
+                orderBy: { order: "asc" },
+                include: { challenges: { orderBy: { order: "asc" }, include: { options: { orderBy: { order: "asc" } } } } },
+              },
+            },
+          },
+        },
+      });
+      if (!course || (!course.published && !isManager(jwtUser.role))) { res.status(404).json({ error: "Course not found" }); return; }
+
+      const challenges = course.units.flatMap((unit: any) => unit.lessons.flatMap((lesson: any) => lesson.challenges));
+      if (challenges.length === 0) { res.status(409).json({ error: "This course does not have any challenges yet" }); return; }
+
+      const progressRows = await prisma.languageQuestChallengeProgress.findMany({
+        where: { userId: jwtUser.userId, challengeId: { in: challenges.map((challenge: any) => challenge.id) } },
+        select: { challengeId: true, completed: true, wrongAttempts: true },
+      });
+      const progressByChallenge = new Map<string, any>(progressRows.map((row: any) => [row.challengeId, row]));
+      const courseCompleted = challenges.every((challenge: any) => progressByChallenge.get(challenge.id)?.completed);
+      if (!courseCompleted) {
+        res.status(403).json({ error: "Finish every lesson in this course to challenge its Boss Battle." });
+        return;
+      }
+
+      const clearedEvent = await prisma.languageQuestXpEvent.findFirst({
+        where: { userId: jwtUser.userId, courseId: course.id, source: "BOSS_BATTLE" },
+        select: { id: true },
+      });
+
+      // Rank by how often the learner has gotten each one wrong before, so
+      // the battle is built from *their* weak spots. Most challenges will
+      // tie at zero wrong attempts, so shuffle first to keep the deck fresh
+      // across attempts instead of always picking course order.
+      const ranked = shuffle(challenges)
+        .map((challenge: any) => ({ challenge, wrongAttempts: progressByChallenge.get(challenge.id)?.wrongAttempts ?? 0 }))
+        .sort((a: any, b: any) => b.wrongAttempts - a.wrongAttempts)
+        .slice(0, LANGUAGE_QUEST_BOSS_BATTLE_MAX_QUESTIONS)
+        .map((entry: any) => entry.challenge);
+
+      res.json({
+        course: { id: course.id, title: course.title, language: course.language, accentColor: course.accentColor },
+        cleared: Boolean(clearedEvent),
+        minQuestions: LANGUAGE_QUEST_BOSS_BATTLE_MIN_QUESTIONS,
+        passRatio: LANGUAGE_QUEST_BOSS_BATTLE_PASS_RATIO,
+        cards: shuffle(ranked).map((challenge: any) => ({
+          challengeId: challenge.id,
+          question: languageQuestPracticePrompt(challenge.question),
+          options: shuffle(challenge.options).map((option: any) => ({
+            id: option.id, text: option.text, emoji: option.emoji, audioText: option.audioText,
+            pinyin: languageQuestPinyin(option.text, course.language),
+          })),
+        })),
+      });
+    } catch (error) {
+      logger.error("Error loading Language Quest boss battle:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load the boss battle" });
+    }
+  });
+
+  app.post("/api/language-quest/courses/:id/boss-battle/finish", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const submitted = Array.isArray(req.body?.answers) ? req.body.answers : [];
+    if (submitted.length === 0 || submitted.length > LANGUAGE_QUEST_BOSS_BATTLE_MAX_QUESTIONS * 2) {
+      res.status(400).json({ error: "Submit your boss battle answers" });
+      return;
+    }
+    const answers = submitted
+      .filter((entry: any) => entry && typeof entry.challengeId === "string")
+      .map((entry: any) => ({
+        challengeId: entry.challengeId,
+        optionId: typeof entry.optionId === "string" ? entry.optionId : null,
+      }));
+    const now = new Date();
+    try {
+      const course = await prisma.languageQuestCourse.findUnique({
+        where: { id: req.params.id },
+        include: {
+          units: { include: { lessons: { include: { challenges: { include: { options: true } } } } } },
+        },
+      });
+      if (!course || (!course.published && !isManager(jwtUser.role))) { res.status(404).json({ error: "Course not found" }); return; }
+
+      const challenges = course.units.flatMap((unit: any) => unit.lessons.flatMap((lesson: any) => lesson.challenges));
+      const progressRows = await prisma.languageQuestChallengeProgress.findMany({
+        where: { userId: jwtUser.userId, challengeId: { in: challenges.map((challenge: any) => challenge.id) } },
+        select: { challengeId: true, completed: true },
+      });
+      const completedIds = new Set(progressRows.filter((row: any) => row.completed).map((row: any) => row.challengeId));
+      const courseCompleted = challenges.length > 0 && challenges.every((challenge: any) => completedIds.has(challenge.id));
+      if (!courseCompleted) {
+        res.status(403).json({ error: "Finish every lesson in this course to challenge its Boss Battle." });
+        return;
+      }
+
+      // The answer key is built fresh from the database here -- never from
+      // anything the client sent -- so grading can't be spoofed by a crafted
+      // request claiming a made-up option id was correct.
+      const answerKey = challenges.map((challenge: any) => {
+        const correctOption = challenge.options.find((option: any) => option.correct);
+        return { challengeId: challenge.id, correctOptionId: correctOption?.id ?? "", correctAnswer: correctOption?.text ?? "" };
+      });
+      const outcome = bossBattleResult(answers, answerKey, {
+        minQuestions: LANGUAGE_QUEST_BOSS_BATTLE_MIN_QUESTIONS,
+        passRatio: LANGUAGE_QUEST_BOSS_BATTLE_PASS_RATIO,
+      });
+
+      const existingClear = await prisma.languageQuestXpEvent.findFirst({
+        where: { userId: jwtUser.userId, courseId: course.id, source: "BOSS_BATTLE" },
+        select: { id: true },
+      });
+      if (!outcome.won || existingClear) {
+        const progress = await getProgress(prisma, jwtUser.userId);
+        res.json({ ...outcome, pointsAwarded: 0, alreadyCleared: Boolean(existingClear), profile: profileJson(progress), unlockedRewardIds: [] });
+        return;
+      }
+
+      await prisma.languageQuestUserProgress.upsert({
+        where: { userId: jwtUser.userId },
+        update: {},
+        create: { userId: jwtUser.userId },
+      });
+      const award = await prisma.$transaction(async (tx: any) => {
+        const rows: any[] = await tx.$queryRaw`
+          SELECT * FROM "LanguageQuestUserProgress" WHERE "userId" = ${jwtUser.userId} FOR UPDATE
+        `;
+        const before = rows[0];
+        // Re-check for an existing clear *after* taking the row lock, so two
+        // finish requests racing each other can't both slip past the outer
+        // check above and both award the one-time bonus.
+        const raceCheck = await tx.languageQuestXpEvent.findFirst({
+          where: { userId: jwtUser.userId, courseId: course.id, source: "BOSS_BATTLE" },
+          select: { id: true },
+        });
+        if (raceCheck) {
+          return { pointsAwarded: 0, alreadyCleared: true, profile: profileJson(before), unlockedRewardIds: [] as string[] };
+        }
+        const updated = await tx.languageQuestUserProgress.update({
+          where: { userId: jwtUser.userId },
+          data: { points: { increment: LANGUAGE_QUEST_BOSS_BATTLE_POINTS } },
+        });
+        await tx.languageQuestXpEvent.create({
+          data: {
+            userId: jwtUser.userId, courseId: course.id, source: "BOSS_BATTLE", sourceId: course.id,
+            points: LANGUAGE_QUEST_BOSS_BATTLE_POINTS, occurredAt: now,
+          },
+        });
+        return {
+          pointsAwarded: LANGUAGE_QUEST_BOSS_BATTLE_POINTS,
+          alreadyCleared: false,
+          profile: profileJson(updated),
+          unlockedRewardIds: newlyUnlockedLanguageQuestRewardIds(before.points, updated.points),
+        };
+      });
+
+      res.json({ ...outcome, ...award });
+    } catch (error) {
+      logger.error("Error finishing Language Quest boss battle:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to finish the boss battle" });
     }
   });
 
@@ -1211,9 +1419,17 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       if (missing.length > 0) {
         await prisma.languageQuestMasteryProgress.createMany({ data: missing, skipDuplicates: true });
       }
-      const [dueCount, cards] = await Promise.all([
+      const { dayStart, dayEnd } = languageQuestPeriodBounds(now);
+      const [dueCount, reviewsToday, cards] = await Promise.all([
         prisma.languageQuestMasteryProgress.count({
           where: { userId: jwtUser.userId, dueAt: { lte: now } },
+        }),
+        // Counts any review touched today, correct or not, and from either
+        // Mastery Arena or Lightning Round -- both write to the same
+        // lastReviewedAt column, so Daily Quest Chain progress reflects
+        // real review activity everywhere, not a separate counter.
+        prisma.languageQuestMasteryProgress.count({
+          where: { userId: jwtUser.userId, lastReviewedAt: { gte: dayStart, lt: dayEnd } },
         }),
         prisma.languageQuestMasteryProgress.findMany({
           where: { userId: jwtUser.userId, dueAt: { lte: now } },
@@ -1231,6 +1447,8 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       ]);
       res.json({
         dueCount,
+        reviewsToday,
+        chainTarget: LANGUAGE_QUEST_DAILY_CHAIN_TARGET,
         cards: cards.map((row: any) => ({
           challengeId: row.challengeId,
           stage: row.stage,
