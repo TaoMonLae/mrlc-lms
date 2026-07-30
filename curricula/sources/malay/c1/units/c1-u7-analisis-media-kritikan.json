@@ -1,0 +1,289 @@
+{
+  "id": "c1-u7-analisis-media-kritikan",
+  "level": "C1",
+  "order": 7,
+  "title": "Analisis Media & Kritikan",
+  "englishTitle": "Media Analysis & Critique",
+  "canDo": [
+    "Critically analyse a news article or opinion piece",
+    "Identify bias, tone, and rhetorical strategies",
+    "Write/speak a balanced critique",
+    "Discuss media literacy at an advanced level"
+  ],
+  "lifeBenefit": "Think and speak critically about media — a key academic and civic skill at this level.",
+  "estMinutes": 80,
+  "vocab": [
+    {
+      "id": "c1-bias-berat-sebelah",
+      "type": "vocab",
+      "ms": "bias / berat sebelah",
+      "en": "bias / one-sided",
+      "mon": null,
+      "register": "standard",
+      "example": "Artikel ini agak berat sebelah pada satu pihak.",
+      "exampleEn": "This article is somewhat one-sided.",
+      "phonetic": "bai-yas / buh-rat suh-buh-lah",
+      "audioUrl": "/audio/ms/c1-bias-berat-sebelah.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-nada-penulisan",
+      "type": "vocab",
+      "ms": "nada penulisan",
+      "en": "tone of writing",
+      "mon": null,
+      "register": "standard",
+      "example": "Nada penulisan ini agak emosional.",
+      "exampleEn": "The tone of this writing is quite emotional.",
+      "phonetic": "na-da puh-nu-li-san",
+      "audioUrl": "/audio/ms/c1-nada-penulisan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-strategi-retorik",
+      "type": "vocab",
+      "ms": "strategi retorik",
+      "en": "rhetorical strategy",
+      "mon": null,
+      "register": "standard",
+      "example": "Penulis guna strategi retorik untuk pujuk pembaca.",
+      "exampleEn": "The writer uses rhetorical strategy to persuade readers.",
+      "phonetic": "stra-teh-gi reh-to-rik",
+      "audioUrl": "/audio/ms/c1-strategi-retorik.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-kredibiliti-sumber",
+      "type": "vocab",
+      "ms": "kredibiliti sumber",
+      "en": "source credibility",
+      "mon": null,
+      "register": "standard",
+      "example": "Kita perlu nilai kredibiliti sumber ini.",
+      "exampleEn": "We need to assess this source's credibility.",
+      "phonetic": "kreh-di-bi-li-ti sum-buhr",
+      "audioUrl": "/audio/ms/c1-kredibiliti-sumber.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-perspektif-berimbang",
+      "type": "vocab",
+      "ms": "perspektif berimbang",
+      "en": "balanced perspective",
+      "mon": null,
+      "register": "standard",
+      "example": "Laporan yang baik ada perspektif berimbang.",
+      "exampleEn": "A good report has a balanced perspective.",
+      "phonetic": "puhrs-pehk-tif buh-rim-bang",
+      "audioUrl": "/audio/ms/c1-perspektif-berimbang.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-mengkritik-secara-membina",
+      "type": "phrase",
+      "ms": "mengkritik secara membina",
+      "en": "to critique constructively",
+      "mon": null,
+      "register": "standard",
+      "example": "Saya cuba mengkritik secara membina, bukan menyerang.",
+      "exampleEn": "I try to critique constructively, not attack.",
+      "phonetic": "muhng-kri-tik suh-cha-ra muhm-bi-na",
+      "audioUrl": "/audio/ms/c1-mengkritik-secara-membina.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "c1-u7-l1",
+      "order": 1,
+      "title": "Kenal Pasti Bias & Nada",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "c1-bias-berat-sebelah",
+        "c1-nada-penulisan"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'This article's tone is one-sided and emotional.'",
+          "answer": "Nada penulisan artikel ini berat sebelah dan emosional."
+        }
+      ]
+    },
+    {
+      "id": "c1-u7-l2",
+      "order": 2,
+      "title": "Strategi Retorik & Kredibiliti",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "c1-strategi-retorik",
+        "c1-kredibiliti-sumber"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'What rhetorical strategy does the writer use, and is the source credible?'",
+          "answer": "Apa strategi retorik yang penulis guna, dan adakah sumber ini kredibel?"
+        }
+      ]
+    },
+    {
+      "id": "c1-u7-l3",
+      "order": 3,
+      "title": "Kritik Membina & Perspektif Berimbang",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "c1-perspektif-berimbang",
+        "c1-mengkritik-secara-membina"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'Saya cuba ___, bukan menyerang.' (critique constructively)",
+          "itemIds": [
+            "c1-mengkritik-secara-membina"
+          ],
+          "answer": "mengkritik secara membina"
+        }
+      ]
+    },
+    {
+      "id": "c1-u7-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "c1-bias-berat-sebelah",
+        "c1-strategi-retorik",
+        "c1-perspektif-berimbang"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "c1-u7-media-critique-discussion",
+    "setting": "Critiquing a news opinion piece in a media literacy discussion group",
+    "roles": [
+      "learner",
+      "discussion facilitator"
+    ],
+    "script": [
+      {
+        "role": "facilitator",
+        "ms": "Apa pandangan awak tentang nada penulisan artikel ni?",
+        "en": "What's your view on the tone of this article?"
+      },
+      {
+        "role": "learner",
+        "ms": "Saya rasa ia agak berat sebelah dan guna strategi retorik yang emosional.",
+        "en": "I think it's quite one-sided and uses emotional rhetorical strategy."
+      },
+      {
+        "role": "facilitator",
+        "ms": "Bagaimana dengan kredibiliti sumber yang dipetik?",
+        "en": "What about the credibility of the sources cited?"
+      },
+      {
+        "role": "learner",
+        "ms": "Sumbernya kurang jelas. Saya rasa perspektif berimbang tiada di sini.",
+        "en": "The sources aren't very clear. I feel there's no balanced perspective here."
+      },
+      {
+        "role": "facilitator",
+        "ms": "Bagus. Cuba mengkritik secara membina — apa cadangan penambahbaikan?",
+        "en": "Good. Try to critique constructively — what improvement would you suggest?"
+      }
+    ],
+    "aiPrompt": "You are a media literacy discussion facilitator guiding critical analysis of a news article. Ask probing questions about bias, rhetoric, and source credibility, and push the learner toward constructive, not just negative, critique."
+  },
+  "speakingPrompts": [
+    {
+      "id": "c1-u7-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the media-critique discussion, focusing on analytical, precise register.",
+      "targetAudioUrl": "/audio/ms/c1-u7-scenario.mp3",
+      "rubric": [
+        "analytical precision",
+        "constructive critique tone"
+      ]
+    },
+    {
+      "id": "c1-u7-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Critique a news article or opinion piece (real or invented) with the AI facilitator persona, addressing bias and credibility.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "identifies bias/tone specifically",
+        "offers a constructive suggestion, not just criticism"
+      ]
+    },
+    {
+      "id": "c1-u7-presentation-1",
+      "type": "presentation",
+      "instructions": "Deliver a 3-minute critical analysis of a media piece of your choosing, covering tone, bias, and credibility.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "covers all three elements: tone, bias, credibility",
+        "constructive, balanced conclusion"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "c1-u7-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Berat sebelah' means:",
+        "options": [
+          "balanced",
+          "one-sided/biased",
+          "credible",
+          "constructive"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate: 'We need to assess this source's credibility.'",
+        "answer": "Kita perlu nilai kredibiliti sumber ini."
+      },
+      {
+        "type": "mcq",
+        "prompt": "'Mengkritik secara membina' means:",
+        "options": [
+          "to attack harshly",
+          "to critique constructively",
+          "to praise excessively",
+          "to ignore the issue"
+        ],
+        "answerIndex": 1
+      }
+    ]
+  }
+}

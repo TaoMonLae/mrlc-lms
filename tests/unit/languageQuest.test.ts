@@ -2,10 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   bossBattleResult,
+  isValidReorderSubmission,
   languageQuestPracticePrompt,
   languageQuestLookupWord,
   nextLanguageQuestStreak,
   normalizeSentenceAnswer,
+  reorderChallengeIsCorrect,
   sentenceAnswerMatches,
 } from "../../shared/languageQuest";
 import { canAttemptNewChallenge, nextIncompleteLessonId, shuffle } from "../../languageQuest";
@@ -21,6 +23,9 @@ import { englishWordCourses } from "../../languageQuestEnglishWordCourses";
 import { normalizeChallenge } from "../../englishWordPractice";
 import { advancedEnglishCourses } from "../../languageQuestAdvancedEnglishCourses";
 import { linguifyCefrCourses } from "../../languageQuestLinguifyCourses";
+import { malayCefrCourses } from "../../languageQuestMalayCourses";
+import { malaySpeakingCourse } from "../../languageQuestMalayCourse";
+import { malayGuideModernCourse } from "../../languageQuestMalayGuideCourse";
 import {
   languageQuestCategoryForLanguage,
   orderedLanguageQuestCategories,
@@ -534,6 +539,37 @@ test("bossBattleResult grades a battle against the server-side answer key", () =
   assert.equal(duped.total, 1);
 });
 
+test("reorderChallengeIsCorrect only accepts the exact canonical sequence", () => {
+  const canonical = ["a", "b", "c"];
+
+  assert.equal(reorderChallengeIsCorrect(canonical, ["a", "b", "c"]), true);
+  assert.equal(reorderChallengeIsCorrect(canonical, ["b", "a", "c"]), false);
+  assert.equal(reorderChallengeIsCorrect(canonical, ["a", "b"]), false);
+  assert.equal(reorderChallengeIsCorrect(canonical, null), false);
+  assert.equal(reorderChallengeIsCorrect(canonical, undefined), false);
+  assert.equal(reorderChallengeIsCorrect(canonical, []), false);
+});
+
+test("isValidReorderSubmission rejects anything that isn't a genuine permutation", () => {
+  const canonical = ["a", "b", "c"];
+
+  // A well-formed submission: every id present exactly once, any order.
+  assert.equal(isValidReorderSubmission(canonical, ["c", "a", "b"]), true);
+  // Still "valid" (well-formed) even though it would grade as wrong.
+  assert.equal(isValidReorderSubmission(canonical, ["a", "c", "b"]), true);
+
+  // Wrong length.
+  assert.equal(isValidReorderSubmission(canonical, ["a", "b"]), false);
+  assert.equal(isValidReorderSubmission(canonical, ["a", "b", "c", "a"]), false);
+  // Duplicate id standing in for a missing one.
+  assert.equal(isValidReorderSubmission(canonical, ["a", "a", "c"]), false);
+  // Id that doesn't belong to this challenge at all.
+  assert.equal(isValidReorderSubmission(canonical, ["a", "b", "z"]), false);
+  // Missing / malformed submissions.
+  assert.equal(isValidReorderSubmission(canonical, null), false);
+  assert.equal(isValidReorderSubmission(canonical, undefined), false);
+});
+
 test("the ranked advanced English courses have a valid progression", () => {
   const lessons = advancedEnglishCourses.flatMap((course) => course.units.flatMap((unit) => unit.lessons));
   const challenges = lessons.flatMap((lesson) => lesson.challenges);
@@ -588,6 +624,74 @@ test("the Linguify import creates a complete A1-C2 vocabulary path", () => {
   );
 });
 
+test("the Malay CEFR import produces five complete, unpublished A1-C1 courses", () => {
+  const units = malayCefrCourses.flatMap((course) => course.units);
+  const lessons = units.flatMap((unit) => unit.lessons);
+  const challenges = lessons.flatMap((lesson) => lesson.challenges);
+
+  assert.deepEqual(
+    malayCefrCourses.map((course) => course.code),
+    ["A1", "A2", "B1", "B2", "C1"].map((level) => `MRLC-MALAY-${level}-V1`),
+  );
+  assert.equal(malayCefrCourses.length, 5);
+  assert.equal(units.length, 46);
+  assert.ok(lessons.length > 0);
+  assert.ok(challenges.length > 0);
+  assert.ok(malayCefrCourses.every((course) => course.language === "Malay"));
+  // The source package's own README says this content needs native-speaker
+  // review before going live -- these courses must stay unpublished drafts
+  // until a teacher/admin reviews and publishes them from the editor.
+  assert.ok(malayCefrCourses.every((course) => !course.published));
+  assert.ok(lessons.every((lesson) => lesson.challenges.length > 0));
+  // REORDER challenges are built from a sentence's own word tokens, so they
+  // can run longer than the 2-6 option bank used for multiple choice; every
+  // other challenge type must stay within that bank size.
+  assert.ok(challenges.every((challenge) => {
+    if (challenge.type === "REORDER") return challenge.options.length >= 2;
+    return challenge.options.length >= 2 && challenge.options.length <= 6;
+  }));
+  // REORDER challenges have no single "correct option" -- the whole option
+  // list is the canonical answer sequence, so every option is marked correct.
+  // Every other challenge type still needs exactly one correct option.
+  assert.ok(challenges.every((challenge) => {
+    if (challenge.type === "REORDER") {
+      return challenge.options.every((option) => option.correct);
+    }
+    return challenge.options.filter((option) => option.correct).length === 1;
+  }));
+  assert.ok(challenges.some((challenge) => challenge.type === "REORDER"));
+  assert.ok(challenges.some((challenge) => challenge.type === "CLOZE"));
+  assert.ok(challenges.every(
+    (challenge) => challenge.options.every((option) => option.audioText === option.text),
+  ));
+  assert.ok(challenges.every((challenge) => challenge.question.trim().length > 0));
+  // No fill-in-the-blank template text should ever surface as an answer option.
+  assert.ok(challenges.every((challenge) => challenge.options.every((option) => !option.text.includes("___"))));
+});
+
+test("the Malay speaking and source-guided courses are complete and unpublished", () => {
+  for (const course of [malaySpeakingCourse, malayGuideModernCourse]) {
+    const lessons = course.units.flatMap((unit) => unit.lessons);
+    const challenges = lessons.flatMap((lesson) => lesson.challenges);
+
+    assert.equal(course.language, "Malay");
+    assert.equal(course.units.length, 12);
+    assert.equal(lessons.length, 48);
+    assert.equal(challenges.length, 384);
+    // Same review-before-publish policy as every other Malay course.
+    assert.ok(!course.published);
+    assert.ok(challenges.every((challenge) => challenge.options.length === 3));
+    assert.ok(challenges.every(
+      (challenge) => challenge.options.filter((option) => option.correct).length === 1,
+    ));
+    assert.ok(challenges.every(
+      (challenge) => challenge.options.every((option) => option.audioText === option.text && option.emoji === null),
+    ));
+  }
+  assert.equal(malaySpeakingCourse.code, "MRLC-MALAY-SPEAKING-A1-C1-V1");
+  assert.equal(malayGuideModernCourse.code, "MRLC-MALAY-GOVINFO-GUIDE-V1");
+});
+
 test("every built-in course produces clue-safe assessment prompts", () => {
   const courses = [
     importedSpanishCourse,
@@ -597,6 +701,9 @@ test("every built-in course produces clue-safe assessment prompts", () => {
     ...englishWordCourses,
     ...advancedEnglishCourses,
     ...linguifyCefrCourses,
+    ...malayCefrCourses,
+    malaySpeakingCourse,
+    malayGuideModernCourse,
   ];
   const challenges = courses
     .flatMap((course) => course.units)

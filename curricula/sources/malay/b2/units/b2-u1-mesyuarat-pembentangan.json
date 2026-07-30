@@ -1,0 +1,303 @@
+{
+  "id": "b2-u1-mesyuarat-pembentangan",
+  "level": "B2",
+  "order": 1,
+  "title": "Mesyuarat & Pembentangan",
+  "englishTitle": "Meetings & Presentations",
+  "canDo": [
+    "Chair or contribute to a work meeting fluently",
+    "Disagree politely and propose alternatives",
+    "Summarise action items and next steps",
+    "Deliver a short structured presentation"
+  ],
+  "lifeBenefit": "Participate in and lead professional meetings with confidence and nuance.",
+  "estMinutes": 80,
+  "vocab": [
+    {
+      "id": "b2-agenda",
+      "type": "vocab",
+      "ms": "agenda mesyuarat",
+      "en": "meeting agenda",
+      "mon": null,
+      "register": "standard",
+      "example": "Mari kita mula dengan agenda pertama.",
+      "exampleEn": "Let's start with the first agenda item.",
+      "phonetic": "a-gen-da muh-shwa-rat",
+      "audioUrl": "/audio/ms/b2-agenda.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-pandangan",
+      "type": "vocab",
+      "ms": "pandangan",
+      "en": "viewpoint/opinion",
+      "mon": null,
+      "register": "standard",
+      "example": "Saya faham pandangan awak, tapi...",
+      "exampleEn": "I understand your viewpoint, but...",
+      "phonetic": "pan-da-ngan",
+      "audioUrl": "/audio/ms/b2-pandangan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-sebaliknya",
+      "type": "vocab",
+      "ms": "sebaliknya",
+      "en": "on the contrary/conversely",
+      "mon": null,
+      "register": "standard",
+      "example": "Sebaliknya, saya rasa kita patut...",
+      "exampleEn": "On the contrary, I think we should...",
+      "phonetic": "suh-ba-lik-nya",
+      "audioUrl": "/audio/ms/b2-sebaliknya.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-cadangan-alternatif",
+      "type": "vocab",
+      "ms": "cadangan alternatif",
+      "en": "alternative proposal",
+      "mon": null,
+      "register": "standard",
+      "example": "Boleh saya kemukakan cadangan alternatif?",
+      "exampleEn": "May I put forward an alternative proposal?",
+      "phonetic": "cha-da-ngan al-tuhr-na-tif",
+      "audioUrl": "/audio/ms/b2-cadangan-alternatif.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-tindakan-susulan",
+      "type": "vocab",
+      "ms": "tindakan susulan",
+      "en": "follow-up action",
+      "mon": null,
+      "register": "standard",
+      "example": "Apa tindakan susulan selepas ni?",
+      "exampleEn": "What are the follow-up actions after this?",
+      "phonetic": "tin-da-kan su-su-lan",
+      "audioUrl": "/audio/ms/b2-tindakan-susulan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-merumuskan",
+      "type": "vocab",
+      "ms": "merumuskan",
+      "en": "to summarise",
+      "mon": null,
+      "register": "standard",
+      "example": "Boleh saya merumuskan perbincangan tadi?",
+      "exampleEn": "May I summarise our discussion?",
+      "phonetic": "muh-ru-mus-kan",
+      "audioUrl": "/audio/ms/b2-merumuskan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-oleh-itu",
+      "type": "vocab",
+      "ms": "oleh itu / justeru",
+      "en": "therefore / hence",
+      "mon": null,
+      "register": "standard",
+      "example": "Oleh itu, kita perlu bertindak segera.",
+      "exampleEn": "Therefore, we need to act quickly.",
+      "phonetic": "o-leh i-tu / jus-tuh-ru",
+      "audioUrl": "/audio/ms/b2-oleh-itu.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "b2-u1-l1",
+      "order": 1,
+      "title": "Agenda & Pandangan",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "b2-agenda",
+        "b2-pandangan"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'Let's start with the first agenda item and hear everyone's viewpoint.'",
+          "answer": "Mari kita mula dengan agenda pertama dan dengar pandangan semua orang."
+        }
+      ]
+    },
+    {
+      "id": "b2-u1-l2",
+      "order": 2,
+      "title": "Tidak Setuju Secara Sopan",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b2-sebaliknya",
+        "b2-cadangan-alternatif"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'On the contrary, may I propose an alternative?'",
+          "answer": "Sebaliknya, boleh saya kemukakan cadangan alternatif?"
+        }
+      ]
+    },
+    {
+      "id": "b2-u1-l3",
+      "order": 3,
+      "title": "Merumus & Tindakan Susulan",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b2-merumuskan",
+        "b2-tindakan-susulan",
+        "b2-oleh-itu"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'Boleh saya ___ perbincangan tadi?' (summarise)",
+          "itemIds": [
+            "b2-merumuskan"
+          ],
+          "answer": "merumuskan"
+        }
+      ]
+    },
+    {
+      "id": "b2-u1-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b2-pandangan",
+        "b2-cadangan-alternatif",
+        "b2-tindakan-susulan"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "b2-u1-team-meeting-disagreement",
+    "setting": "Chairing a team meeting where you disagree with a colleague's proposal",
+    "roles": [
+      "learner (chair)",
+      "colleague"
+    ],
+    "script": [
+      {
+        "role": "learner",
+        "ms": "Baik, mari kita mula dengan agenda pertama — jadual projek.",
+        "en": "Alright, let's start with the first agenda item — the project schedule."
+      },
+      {
+        "role": "colleague",
+        "ms": "Pada pandangan saya, kita patut lambatkan pelancaran dua minggu.",
+        "en": "In my view, we should delay the launch by two weeks."
+      },
+      {
+        "role": "learner",
+        "ms": "Saya faham pandangan awak, tapi sebaliknya, saya rasa kita boleh capai tarikh asal.",
+        "en": "I understand your view, but on the contrary, I think we can meet the original date."
+      },
+      {
+        "role": "colleague",
+        "ms": "Boleh saya kemukakan cadangan alternatif — kita tambah satu lagi ahli pasukan?",
+        "en": "May I propose an alternative — we add one more team member?"
+      },
+      {
+        "role": "learner",
+        "ms": "Idea yang baik. Oleh itu, mari kita rumuskan: tambah ahli pasukan, kekalkan tarikh asal.",
+        "en": "Good idea. Therefore, let's summarise: add a team member, keep the original date."
+      }
+    ],
+    "aiPrompt": "You are a colleague proposing a schedule delay in a work meeting, then offering a constructive alternative when challenged. Use polite disagreement markers (pada pandangan saya, sebaliknya) and standard-register workplace Malay."
+  },
+  "speakingPrompts": [
+    {
+      "id": "b2-u1-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the meeting dialogue, matching the professional, standard-register delivery.",
+      "targetAudioUrl": "/audio/ms/b2-u1-scenario.mp3",
+      "rubric": [
+        "professional register",
+        "clear disagreement markers"
+      ]
+    },
+    {
+      "id": "b2-u1-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Chair a meeting with the AI colleague persona: disagree politely with a proposal and reach a summary.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "disagrees politely using appropriate markers",
+        "summarises agreed action items"
+      ]
+    },
+    {
+      "id": "b2-u1-presentation-1",
+      "type": "presentation",
+      "instructions": "Deliver a 2-minute presentation proposing a work idea, with a clear structure: problem, proposal, benefit.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "clear problem-solution structure",
+        "confident, fluent delivery"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "b2-u1-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Sebaliknya' means:",
+        "options": [
+          "therefore",
+          "on the contrary",
+          "for example",
+          "in addition"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate: 'Therefore, we need to summarise the follow-up actions.'",
+        "answer": "Oleh itu, kita perlu merumuskan tindakan susulan."
+      },
+      {
+        "type": "mcq",
+        "prompt": "'Cadangan alternatif' means:",
+        "options": [
+          "final decision",
+          "alternative proposal",
+          "meeting agenda",
+          "follow-up action"
+        ],
+        "answerIndex": 1
+      }
+    ]
+  }
+}

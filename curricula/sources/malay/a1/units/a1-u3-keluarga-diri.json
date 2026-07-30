@@ -1,0 +1,83 @@
+{
+  "id": "a1-u3-keluarga-diri",
+  "level": "A1",
+  "order": 3,
+  "title": "Keluarga & Diri",
+  "englishTitle": "Family & Self",
+  "canDo": [
+    "Name immediate family members",
+    "Say your age and ask someone else's age",
+    "Describe your job/status simply",
+    "Talk about marital status and children at a basic level"
+  ],
+  "lifeBenefit": "Answer common personal questions at clinics, schools, and government counters.",
+  "estMinutes": 60,
+  "vocab": [
+    { "id": "v-keluarga", "type": "vocab", "ms": "keluarga", "en": "family", "mon": null, "register": "colloquial", "example": "Keluarga saya ada lima orang.", "exampleEn": "My family has five people.", "phonetic": "kuh-lu-ar-ga", "audioUrl": "/audio/ms/v-keluarga.mp3", "minimalPairWith": null },
+    { "id": "v-suami", "type": "vocab", "ms": "suami", "en": "husband", "mon": null, "register": "colloquial", "example": "Ini suami saya.", "exampleEn": "This is my husband.", "phonetic": "su-a-mi", "audioUrl": "/audio/ms/v-suami.mp3", "minimalPairWith": null },
+    { "id": "v-isteri", "type": "vocab", "ms": "isteri", "en": "wife", "mon": null, "register": "colloquial", "example": "Isteri saya kerja kat kilang.", "exampleEn": "My wife works at a factory.", "phonetic": "is-tuh-ri", "audioUrl": "/audio/ms/v-isteri.mp3", "minimalPairWith": null },
+    { "id": "v-anak", "type": "vocab", "ms": "anak", "en": "child/children", "mon": null, "register": "colloquial", "example": "Saya ada tiga orang anak.", "exampleEn": "I have three children.", "phonetic": "a-nak", "audioUrl": "/audio/ms/v-anak.mp3", "minimalPairWith": null },
+    { "id": "v-ibu-bapa", "type": "vocab", "ms": "ibu / bapa", "en": "mother / father", "mon": null, "register": "colloquial", "example": "Ibu bapa saya tinggal jauh.", "exampleEn": "My parents live far away.", "phonetic": "i-bu / ba-pa", "audioUrl": "/audio/ms/v-ibu-bapa.mp3", "minimalPairWith": null },
+    { "id": "v-adik-abang-kakak", "type": "vocab", "ms": "adik / abang / kakak", "en": "younger sibling / older brother / older sister", "mon": null, "register": "colloquial", "example": "Saya ada seorang adik.", "exampleEn": "I have one younger sibling.", "phonetic": "a-dik / a-bang / ka-kak", "audioUrl": "/audio/ms/v-adik-abang-kakak.mp3", "minimalPairWith": null },
+    { "id": "v-berapa-umur", "type": "phrase", "ms": "umur berapa?", "en": "how old (are you)?", "mon": null, "register": "colloquial", "example": "Anak awak umur berapa?", "exampleEn": "How old is your child?", "phonetic": "u-mur buh-ra-pa", "audioUrl": "/audio/ms/v-berapa-umur.mp3", "minimalPairWith": null },
+    { "id": "v-umur-saya", "type": "phrase", "ms": "umur saya... tahun", "en": "I am ... years old", "mon": null, "register": "colloquial", "example": "Umur saya dua puluh lapan tahun.", "exampleEn": "I am twenty-eight years old.", "phonetic": "u-mur sa-ya ... ta-hun", "audioUrl": "/audio/ms/v-umur-saya.mp3", "minimalPairWith": null },
+    { "id": "v-kerja-apa", "type": "phrase", "ms": "kerja apa?", "en": "what work (do you do)?", "mon": null, "register": "colloquial", "example": "Awak kerja apa sekarang?", "exampleEn": "What do you do for work now?", "phonetic": "kuh-rja a-pa", "audioUrl": "/audio/ms/v-kerja-apa.mp3", "minimalPairWith": null },
+    { "id": "v-sudah-berkahwin", "type": "phrase", "ms": "sudah berkahwin", "en": "already married", "mon": null, "register": "standard", "example": "Saya sudah berkahwin.", "exampleEn": "I am already married.", "phonetic": "su-dah buhr-kah-win", "audioUrl": "/audio/ms/v-sudah-berkahwin.mp3", "minimalPairWith": "v-belum-berkahwin" },
+    { "id": "v-belum-berkahwin", "type": "phrase", "ms": "belum berkahwin", "en": "not yet married / single", "mon": null, "register": "standard", "example": "Dia belum berkahwin lagi.", "exampleEn": "He/she isn't married yet.", "phonetic": "buh-lum buhr-kah-win", "audioUrl": "/audio/ms/v-belum-berkahwin.mp3", "minimalPairWith": "v-sudah-berkahwin" },
+    { "id": "v-tinggal-di", "type": "phrase", "ms": "tinggal di...", "en": "live at/in...", "mon": null, "register": "colloquial", "example": "Kami tinggal di Cheras.", "exampleEn": "We live in Cheras.", "phonetic": "ting-gal di", "audioUrl": "/audio/ms/v-tinggal-di.mp3", "minimalPairWith": null }
+  ],
+  "lessons": [
+    { "id": "a1-u3-l1", "order": 1, "title": "Ahli Keluarga (Family members)", "estMinutes": 12, "sections": ["review", "input", "practice", "quiz"], "itemIds": ["v-keluarga", "v-suami", "v-isteri", "v-anak", "v-ibu-bapa", "v-adik-abang-kakak"],
+      "practiceExercises": [
+        { "type": "matching", "prompt": "Match each family word to a picture of the family member.", "itemIds": ["v-suami", "v-isteri", "v-anak", "v-ibu-bapa"], "answer": null },
+        { "type": "clozeGap", "prompt": "'Saya ada dua orang ___.' (children)", "itemIds": ["v-anak"], "answer": "anak" }
+      ]
+    },
+    { "id": "a1-u3-l2", "order": 2, "title": "Umur (Age)", "estMinutes": 10, "sections": ["review", "input", "practice", "quiz", "speaking"], "itemIds": ["v-berapa-umur", "v-umur-saya"],
+      "practiceExercises": [
+        { "type": "translate", "prompt": "Translate: 'How old is your husband?'", "itemIds": ["v-berapa-umur"], "answer": "Suami awak umur berapa?" }
+      ]
+    },
+    { "id": "a1-u3-l3", "order": 3, "title": "Kerja & Status (Work & status)", "estMinutes": 12, "sections": ["review", "input", "practice", "quiz", "speaking"], "itemIds": ["v-kerja-apa", "v-sudah-berkahwin", "v-belum-berkahwin"],
+      "practiceExercises": [
+        { "type": "minimalPairChoice", "prompt": "Which did you hear: 'sudah berkahwin' or 'belum berkahwin'?", "itemIds": ["v-sudah-berkahwin", "v-belum-berkahwin"], "answer": null },
+        { "type": "translate", "prompt": "Translate: 'I work at a restaurant.'", "itemIds": ["v-kerja-apa"], "answer": "Saya kerja kat restoran." }
+      ]
+    },
+    { "id": "a1-u3-l4", "order": 4, "title": "Tempat Tinggal (Where you live)", "estMinutes": 10, "sections": ["review", "input", "practice", "quiz"], "itemIds": ["v-tinggal-di"],
+      "practiceExercises": [
+        { "type": "clozeGap", "prompt": "'Saya ___ di Ampang.' (live)", "itemIds": ["v-tinggal-di"], "answer": "tinggal" }
+      ]
+    },
+    { "id": "a1-u3-l5", "order": 5, "title": "Latihan & Ulangkaji", "estMinutes": 16, "sections": ["review", "quiz", "speaking"], "itemIds": ["v-keluarga", "v-anak", "v-berapa-umur", "v-kerja-apa", "v-tinggal-di"], "practiceExercises": [] }
+  ],
+  "scenario": {
+    "id": "a1-u3-school-registration",
+    "setting": "A parent registering their child at a community/refugee learning centre reception desk",
+    "roles": ["learner (parent)", "receptionist"],
+    "script": [
+      { "role": "receptionist", "ms": "Selamat pagi. Nak daftarkan anak, ya?", "en": "Good morning. Registering a child, right?" },
+      { "role": "learner", "ms": "Ya, betul. Ini anak saya.", "en": "Yes, correct. This is my child." },
+      { "role": "receptionist", "ms": "Anak awak umur berapa?", "en": "How old is your child?" },
+      { "role": "learner", "ms": "Umur dia sepuluh tahun.", "en": "He/she is ten years old." },
+      { "role": "receptionist", "ms": "Okay. Awak kerja apa sekarang?", "en": "Okay. What do you do for work now?" },
+      { "role": "learner", "ms": "Saya kerja kat kedai makan.", "en": "I work at a food stall." },
+      { "role": "receptionist", "ms": "Baik, terima kasih. Kami hubungi awak nanti.", "en": "Alright, thank you. We'll contact you later." }
+    ],
+    "aiPrompt": "You are a receptionist at a community learning centre registering a refugee parent's child. Ask the child's age, the parent's occupation, and where they live. Be warm, patient, and speak in short, simple colloquial KL Malay sentences."
+  },
+  "speakingPrompts": [
+    { "id": "a1-u3-shadow-1", "type": "shadowing", "instructions": "Shadow the registration dialogue, focusing on natural rhythm of question-answer exchanges.", "targetAudioUrl": "/audio/ms/a1-u3-scenario.mp3", "rubric": ["question intonation on 'umur berapa?'", "clear numbers"] },
+    { "id": "a1-u3-roleplay-1", "type": "roleplay", "instructions": "Play the parent registering your own (real or imagined) child with the AI receptionist.", "targetAudioUrl": null, "rubric": ["states child's age correctly", "states own occupation", "states where they live"] }
+  ],
+  "unitQuiz": {
+    "id": "a1-u3-quiz",
+    "passMark": 0.7,
+    "questions": [
+      { "type": "mcq", "prompt": "'Anak' means:", "options": ["parent", "child", "spouse", "sibling"], "answerIndex": 1 },
+      { "type": "translate", "prompt": "Translate: 'I am thirty years old.'", "answer": "Umur saya tiga puluh tahun." },
+      { "type": "mcq", "prompt": "'Belum berkahwin' means:", "options": ["already married", "divorced", "not yet married", "widowed"], "answerIndex": 2 },
+      { "type": "translate", "prompt": "Translate: 'I live in Ampang.'", "answer": "Saya tinggal di Ampang." }
+    ]
+  }
+}

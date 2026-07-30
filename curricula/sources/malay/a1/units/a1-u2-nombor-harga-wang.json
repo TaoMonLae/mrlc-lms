@@ -1,0 +1,117 @@
+{
+  "id": "a1-u2-nombor-harga-wang",
+  "level": "A1",
+  "order": 2,
+  "title": "Nombor, Harga & Wang",
+  "englishTitle": "Numbers, Prices & Money",
+  "canDo": [
+    "Count from 1 to 100 in Malay",
+    "Ask and understand a price",
+    "Say amounts of money in ringgit and sen",
+    "Ask for a discount politely",
+    "Understand change given back"
+  ],
+  "lifeBenefit": "Shop, pay, and handle money confidently anywhere in Malaysia.",
+  "estMinutes": 60,
+  "vocab": [
+    { "id": "v-satu", "type": "vocab", "ms": "satu", "en": "one", "mon": null, "register": "colloquial", "example": "Saya nak satu je.", "exampleEn": "I just want one.", "phonetic": "sa-tu", "audioUrl": "/audio/ms/v-satu.mp3", "minimalPairWith": null },
+    { "id": "v-dua", "type": "vocab", "ms": "dua", "en": "two", "mon": null, "register": "colloquial", "example": "Belikan saya dua.", "exampleEn": "Buy me two.", "phonetic": "du-a", "audioUrl": "/audio/ms/v-dua.mp3", "minimalPairWith": null },
+    { "id": "v-tiga", "type": "vocab", "ms": "tiga", "en": "three", "mon": null, "register": "colloquial", "example": "Ada tiga orang.", "exampleEn": "There are three people.", "phonetic": "ti-ga", "audioUrl": "/audio/ms/v-tiga.mp3", "minimalPairWith": null },
+    { "id": "v-empat", "type": "vocab", "ms": "empat", "en": "four", "mon": null, "register": "colloquial", "example": "Pukul empat petang.", "exampleEn": "Four o'clock in the afternoon.", "phonetic": "uhm-pat", "audioUrl": "/audio/ms/v-empat.mp3", "minimalPairWith": null },
+    { "id": "v-lima", "type": "vocab", "ms": "lima", "en": "five", "mon": null, "register": "colloquial", "example": "Lima ringgit sahaja.", "exampleEn": "Only five ringgit.", "phonetic": "li-ma", "audioUrl": "/audio/ms/v-lima.mp3", "minimalPairWith": null },
+    { "id": "v-sepuluh", "type": "vocab", "ms": "sepuluh", "en": "ten", "mon": null, "register": "colloquial", "example": "Sepuluh ringgit sekilo.", "exampleEn": "Ten ringgit per kilo.", "phonetic": "suh-pu-luh", "audioUrl": "/audio/ms/v-sepuluh.mp3", "minimalPairWith": null },
+    { "id": "v-dua-puluh", "type": "vocab", "ms": "dua puluh", "en": "twenty", "mon": null, "register": "colloquial", "example": "Dua puluh ringgit je.", "exampleEn": "Just twenty ringgit.", "phonetic": "du-a pu-luh", "audioUrl": "/audio/ms/v-dua-puluh.mp3", "minimalPairWith": null },
+    { "id": "v-seratus", "type": "vocab", "ms": "seratus", "en": "one hundred", "mon": null, "register": "colloquial", "example": "Ada baki seratus ringgit.", "exampleEn": "There's a hundred ringgit balance.", "phonetic": "suh-ra-tus", "audioUrl": "/audio/ms/v-seratus.mp3", "minimalPairWith": null },
+    { "id": "v-ringgit", "type": "vocab", "ms": "ringgit", "en": "ringgit (currency, RM)", "mon": null, "register": "colloquial", "example": "Semua sekali lima belas ringgit.", "exampleEn": "Altogether it's fifteen ringgit.", "phonetic": "ring-git", "audioUrl": "/audio/ms/v-ringgit.mp3", "minimalPairWith": null },
+    { "id": "v-sen", "type": "vocab", "ms": "sen", "en": "cent (1/100 ringgit)", "mon": null, "register": "colloquial", "example": "Lapan puluh sen je.", "exampleEn": "Just eighty cents.", "phonetic": "sen", "audioUrl": "/audio/ms/v-sen.mp3", "minimalPairWith": null },
+    { "id": "v-berapa-harga", "type": "phrase", "ms": "berapa harga ni?", "en": "how much is this?", "mon": null, "register": "colloquial", "example": "Encik, berapa harga ni?", "exampleEn": "Sir, how much is this?", "phonetic": "buh-ra-pa har-ga ni", "audioUrl": "/audio/ms/v-berapa-harga.mp3", "minimalPairWith": null },
+    { "id": "v-mahal", "type": "vocab", "ms": "mahal", "en": "expensive", "mon": null, "register": "colloquial", "example": "Alamak, mahal sangat!", "exampleEn": "Wow, that's too expensive!", "phonetic": "ma-hal", "audioUrl": "/audio/ms/v-mahal.mp3", "minimalPairWith": "v-murah" },
+    { "id": "v-murah", "type": "vocab", "ms": "murah", "en": "cheap", "mon": null, "register": "colloquial", "example": "Kat sini lagi murah.", "exampleEn": "It's cheaper here.", "phonetic": "mu-rah", "audioUrl": "/audio/ms/v-murah.mp3", "minimalPairWith": "v-mahal" },
+    { "id": "v-boleh-kurang", "type": "phrase", "ms": "boleh kurang sikit?", "en": "can you lower it a bit?", "mon": null, "register": "colloquial", "example": "Boleh kurang sikit tak, kak?", "exampleEn": "Can you lower it a bit, sis?", "phonetic": "bo-leh ku-rang si-kit", "audioUrl": "/audio/ms/v-boleh-kurang.mp3", "minimalPairWith": null },
+    { "id": "v-bayar", "type": "vocab", "ms": "bayar", "en": "to pay", "mon": null, "register": "colloquial", "example": "Nak bayar cash ke kad?", "exampleEn": "Pay by cash or card?", "phonetic": "ba-yar", "audioUrl": "/audio/ms/v-bayar.mp3", "minimalPairWith": null },
+    { "id": "v-baki", "type": "vocab", "ms": "baki", "en": "change (money returned)", "mon": null, "register": "colloquial", "example": "Ini baki awak, dua ringgit.", "exampleEn": "Here's your change, two ringgit.", "phonetic": "ba-ki", "audioUrl": "/audio/ms/v-baki.mp3", "minimalPairWith": null }
+  ],
+  "lessons": [
+    {
+      "id": "a1-u2-l1", "order": 1, "title": "Nombor 1–10", "estMinutes": 10,
+      "sections": ["review", "input", "practice", "quiz"],
+      "itemIds": ["v-satu", "v-dua", "v-tiga", "v-empat", "v-lima", "v-sepuluh"],
+      "practiceExercises": [
+        { "type": "listenToPicture", "prompt": "Listen and tap the correct number.", "itemIds": ["v-satu", "v-dua", "v-tiga", "v-empat", "v-lima"], "answer": null },
+        { "type": "clozeGap", "prompt": "Count: satu, dua, ___, empat, ___", "itemIds": ["v-tiga", "v-lima"], "answer": "tiga / lima" }
+      ]
+    },
+    {
+      "id": "a1-u2-l2", "order": 2, "title": "Nombor Besar & Wang (Bigger numbers & currency)", "estMinutes": 10,
+      "sections": ["review", "input", "practice", "quiz"],
+      "itemIds": ["v-dua-puluh", "v-seratus", "v-ringgit", "v-sen"],
+      "practiceExercises": [
+        { "type": "translate", "prompt": "Translate: 'twenty ringgit and fifty cents'", "itemIds": ["v-dua-puluh", "v-ringgit", "v-sen"], "answer": "dua puluh ringgit lima puluh sen" },
+        { "type": "matching", "prompt": "Match the number word to its digit.", "itemIds": ["v-dua-puluh", "v-seratus"], "answer": null }
+      ]
+    },
+    {
+      "id": "a1-u2-l3", "order": 3, "title": "Tanya Harga (Asking prices)", "estMinutes": 10,
+      "sections": ["review", "input", "practice", "quiz", "speaking"],
+      "itemIds": ["v-berapa-harga", "v-mahal", "v-murah"],
+      "practiceExercises": [
+        { "type": "minimalPairChoice", "prompt": "Which word did you hear: 'mahal' or 'murah'?", "itemIds": ["v-mahal", "v-murah"], "answer": null },
+        { "type": "reorder", "prompt": "Reorder: ni / berapa / harga", "itemIds": ["v-berapa-harga"], "answer": "Berapa harga ni?" }
+      ]
+    },
+    {
+      "id": "a1-u2-l4", "order": 4, "title": "Tawar-Menawar (Bargaining)", "estMinutes": 10,
+      "sections": ["review", "input", "practice", "speaking"],
+      "itemIds": ["v-boleh-kurang", "v-mahal"],
+      "practiceExercises": [
+        { "type": "translate", "prompt": "Translate: 'That's too expensive, can you lower it a bit?'", "itemIds": ["v-mahal", "v-boleh-kurang"], "answer": "Mahal sangat, boleh kurang sikit?" }
+      ]
+    },
+    {
+      "id": "a1-u2-l5", "order": 5, "title": "Bayar & Baki (Paying & change)", "estMinutes": 10,
+      "sections": ["review", "input", "practice", "quiz", "speaking"],
+      "itemIds": ["v-bayar", "v-baki"],
+      "practiceExercises": [
+        { "type": "clozeGap", "prompt": "Kasihier: 'Ini ___ awak, dua ringgit.'", "itemIds": ["v-baki"], "answer": "baki" },
+        { "type": "matching", "prompt": "Match: cash/card question to correct reply.", "itemIds": ["v-bayar"], "answer": null }
+      ]
+    },
+    {
+      "id": "a1-u2-l6", "order": 6, "title": "Latihan & Ulangkaji", "estMinutes": 10,
+      "sections": ["review", "quiz", "speaking"],
+      "itemIds": ["v-berapa-harga", "v-mahal", "v-boleh-kurang", "v-bayar", "v-baki"],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "a1-u2-buying-phone-credit",
+    "setting": "Buying prepaid phone credit (top-up) at a small shop",
+    "roles": ["learner", "shopkeeper"],
+    "script": [
+      { "role": "learner", "ms": "Encik, ada topup Digi tak?", "en": "Sir, do you have Digi top-up?" },
+      { "role": "shopkeeper", "ms": "Ada. Nak berapa ringgit?", "en": "We have it. How many ringgit do you want?" },
+      { "role": "learner", "ms": "Tiga puluh ringgit.", "en": "Thirty ringgit." },
+      { "role": "shopkeeper", "ms": "Okay, tiga puluh ringgit. Nombor telefon awak?", "en": "Okay, thirty ringgit. Your phone number?" },
+      { "role": "learner", "ms": "Ini nombor saya.", "en": "This is my number." },
+      { "role": "shopkeeper", "ms": "Siap. Bayar cash ke kad?", "en": "Done. Pay cash or card?" },
+      { "role": "learner", "ms": "Cash. Ini lima puluh ringgit.", "en": "Cash. Here's fifty ringgit." },
+      { "role": "shopkeeper", "ms": "Baik. Ini baki awak, dua puluh ringgit.", "en": "Alright. Here's your change, twenty ringgit." }
+    ],
+    "aiPrompt": "You are a Malaysian mobile phone shop clerk. The learner wants to top up prepaid credit. Ask which telco and how much, ask for their phone number, confirm the amount, ask cash or card, and give change correctly if they overpay. Keep sentences short and speak at a natural but unhurried pace."
+  },
+  "speakingPrompts": [
+    { "id": "a1-u2-shadow-1", "type": "shadowing", "instructions": "Shadow the phone top-up dialogue, paying attention to how numbers are said quickly in natural speech.", "targetAudioUrl": "/audio/ms/a1-u2-scenario.mp3", "rubric": ["correct stress on multi-digit numbers", "natural speed on 'tiga puluh ringgit'"] },
+    { "id": "a1-u2-roleplay-1", "type": "roleplay", "instructions": "Play the customer buying phone credit with the AI shopkeeper. Ask the price, try to bargain once, then pay.", "targetAudioUrl": null, "rubric": ["asks price correctly", "attempts a bargaining phrase", "understands the change given back"] },
+    { "id": "a1-u2-pron-1", "type": "pronunciation", "instructions": "Record 'mahal' and 'murah' back to back and check the vowel and 'h' placement are distinct.", "targetAudioUrl": "/audio/ms/v-mahal.mp3", "rubric": ["distinguishes 'mahal' from 'murah'"] }
+  ],
+  "unitQuiz": {
+    "id": "a1-u2-quiz",
+    "passMark": 0.7,
+    "questions": [
+      { "type": "mcq", "prompt": "'Berapa harga ni?' means:", "options": ["Where is this?", "How much is this?", "What is this?", "Who made this?"], "answerIndex": 1 },
+      { "type": "translate", "prompt": "Translate: 'That's expensive, can you lower it a bit?'", "answer": "Mahal sangat, boleh kurang sikit?" },
+      { "type": "listening", "audioUrl": "/audio/ms/v-seratus.mp3", "prompt": "What number did you hear?", "options": ["sepuluh", "seratus", "dua puluh", "lima"], "answerIndex": 1 },
+      { "type": "mcq", "prompt": "The cashier hands you money after you overpaid. This is the:", "options": ["harga", "baki", "bayar", "sen"], "answerIndex": 1 }
+    ]
+  }
+}

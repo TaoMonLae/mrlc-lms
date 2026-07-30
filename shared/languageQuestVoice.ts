@@ -12,6 +12,8 @@ const SPEECH_LOCALES: Record<string, string> = {
   french: "fr-FR",
   italian: "it-IT",
   japanese: "ja-JP",
+  malay: "ms-MY",
+  "bahasa melayu": "ms-MY",
 };
 
 export interface LanguageQuestKokoroVoice {

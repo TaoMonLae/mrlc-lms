@@ -1,0 +1,302 @@
+{
+  "id": "b2-u8-menulis-formal",
+  "level": "B2",
+  "order": 8,
+  "title": "Menulis Formal",
+  "englishTitle": "Formal Writing",
+  "canDo": [
+    "Write a structured formal report",
+    "Write a persuasive/complaint email",
+    "Use appropriate formal openings and closings",
+    "Structure a CV/resume summary in Malay"
+  ],
+  "lifeBenefit": "Produce clear, professional written Malay for work and official purposes.",
+  "estMinutes": 80,
+  "vocab": [
+    {
+      "id": "b2-tuan-puan",
+      "type": "vocab",
+      "ms": "Tuan/Puan",
+      "en": "Sir/Madam (formal letter opening)",
+      "mon": null,
+      "register": "standard",
+      "example": "Tuan/Puan, dengan segala hormatnya...",
+      "exampleEn": "Sir/Madam, with all due respect...",
+      "phonetic": "tu-an / pu-an",
+      "audioUrl": "/audio/ms/b2-tuan-puan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-merujuk-kepada",
+      "type": "vocab",
+      "ms": "merujuk kepada",
+      "en": "with reference to",
+      "mon": null,
+      "register": "standard",
+      "example": "Merujuk kepada surat bertarikh 5 Julai...",
+      "exampleEn": "With reference to the letter dated 5 July...",
+      "phonetic": "muh-ru-juk kuh-pa-da",
+      "audioUrl": "/audio/ms/b2-merujuk-kepada.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-sukacita",
+      "type": "phrase",
+      "ms": "sukacita dimaklumkan",
+      "en": "pleased to inform",
+      "mon": null,
+      "register": "standard",
+      "example": "Saya sukacita dimaklumkan bahawa...",
+      "exampleEn": "I am pleased to inform that...",
+      "phonetic": "su-ka-chi-ta di-mak-lum-kan",
+      "audioUrl": "/audio/ms/b2-sukacita.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-yang-benar",
+      "type": "vocab",
+      "ms": "yang benar",
+      "en": "yours faithfully (letter closing)",
+      "mon": null,
+      "register": "standard",
+      "example": "Sekian, terima kasih. Yang benar,",
+      "exampleEn": "That is all, thank you. Yours faithfully,",
+      "phonetic": "yang buh-nar",
+      "audioUrl": "/audio/ms/b2-yang-benar.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-laporan",
+      "type": "vocab",
+      "ms": "laporan",
+      "en": "report",
+      "mon": null,
+      "register": "standard",
+      "example": "Berikut adalah laporan mengenai isu tersebut.",
+      "exampleEn": "Below is the report regarding the issue.",
+      "phonetic": "la-po-ran",
+      "audioUrl": "/audio/ms/b2-laporan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-kesimpulannya",
+      "type": "vocab",
+      "ms": "kesimpulannya",
+      "en": "in conclusion",
+      "mon": null,
+      "register": "standard",
+      "example": "Kesimpulannya, syarikat perlu bertindak segera.",
+      "exampleEn": "In conclusion, the company needs to act quickly.",
+      "phonetic": "kuh-sim-pu-lan-nya",
+      "audioUrl": "/audio/ms/b2-kesimpulannya.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-ringkasan-diri",
+      "type": "vocab",
+      "ms": "ringkasan diri",
+      "en": "personal summary (CV section)",
+      "mon": null,
+      "register": "standard",
+      "example": "Ringkasan diri saya termasuk lima tahun pengalaman.",
+      "exampleEn": "My personal summary includes five years of experience.",
+      "phonetic": "ring-ka-san di-ri",
+      "audioUrl": "/audio/ms/b2-ringkasan-diri.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "b2-u8-l1",
+      "order": 1,
+      "title": "Pembukaan & Penutup Surat Rasmi",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "b2-tuan-puan",
+        "b2-merujuk-kepada",
+        "b2-yang-benar"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate the opening of a formal letter: 'Sir/Madam, with reference to your letter dated...'",
+          "answer": "Tuan/Puan, merujuk kepada surat tuan/puan bertarikh..."
+        }
+      ]
+    },
+    {
+      "id": "b2-u8-l2",
+      "order": 2,
+      "title": "Tulis Laporan Ringkas",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b2-sukacita",
+        "b2-laporan",
+        "b2-kesimpulannya"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'In conclusion, I am pleased to inform that the project is complete.'",
+          "answer": "Kesimpulannya, saya sukacita dimaklumkan bahawa projek ini telah selesai."
+        }
+      ]
+    },
+    {
+      "id": "b2-u8-l3",
+      "order": 3,
+      "title": "Ringkasan Diri (CV)",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "b2-ringkasan-diri"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'___ saya termasuk lima tahun pengalaman.' (personal summary)",
+          "itemIds": [
+            "b2-ringkasan-diri"
+          ],
+          "answer": "Ringkasan diri"
+        }
+      ]
+    },
+    {
+      "id": "b2-u8-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b2-tuan-puan",
+        "b2-laporan",
+        "b2-kesimpulannya"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "b2-u8-drafting-complaint-letter",
+    "setting": "Drafting a formal written complaint letter with AI writing-coach feedback",
+    "roles": [
+      "learner",
+      "AI writing coach"
+    ],
+    "script": [
+      {
+        "role": "learner",
+        "ms": "Boleh bantu saya tulis surat aduan rasmi?",
+        "en": "Can you help me write a formal complaint letter?"
+      },
+      {
+        "role": "coach",
+        "ms": "Boleh. Mula dengan 'Tuan/Puan,' dan nyatakan tujuan surat.",
+        "en": "Sure. Start with 'Sir/Madam,' and state the letter's purpose."
+      },
+      {
+        "role": "learner",
+        "ms": "Macam mana nak rujuk kepada aduan yang saya buat sebelum ni?",
+        "en": "How do I refer to a complaint I made before?"
+      },
+      {
+        "role": "coach",
+        "ms": "Guna 'merujuk kepada aduan bertarikh...' dan nyatakan tarikh.",
+        "en": "Use 'with reference to the complaint dated...' and state the date."
+      },
+      {
+        "role": "coach",
+        "ms": "Akhiri dengan kesimpulan jelas dan 'Yang benar,'.",
+        "en": "End with a clear conclusion and 'Yours faithfully,'."
+      }
+    ],
+    "aiPrompt": "You are an AI writing coach helping the learner draft a formal Malay letter. Give clear, structured guidance on openings, reference phrases, and closings. Be encouraging and specific."
+  },
+  "speakingPrompts": [
+    {
+      "id": "b2-u8-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the writing-coach dialogue, focusing on precise formal letter vocabulary.",
+      "targetAudioUrl": "/audio/ms/b2-u8-scenario.mp3",
+      "rubric": [
+        "precise formal vocabulary",
+        "clear structural guidance"
+      ]
+    },
+    {
+      "id": "b2-u8-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Work with the AI writing coach persona to outline a formal letter for a purpose of your choice.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "states a clear purpose",
+        "follows the suggested formal structure"
+      ]
+    },
+    {
+      "id": "b2-u8-presentation-1",
+      "type": "presentation",
+      "instructions": "(Written task, spoken read-aloud) Draft and read aloud a short formal email of your choice using at least three items from this unit.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "uses at least three unit items correctly",
+        "follows correct formal letter structure"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "b2-u8-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Yang benar,' is used to:",
+        "options": [
+          "open a formal letter",
+          "close a formal letter",
+          "ask a question",
+          "make a complaint"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate: 'With reference to your letter dated 5 July.'",
+        "answer": "Merujuk kepada surat tuan/puan bertarikh 5 Julai."
+      },
+      {
+        "type": "mcq",
+        "prompt": "'Kesimpulannya' means:",
+        "options": [
+          "for example",
+          "in conclusion",
+          "however",
+          "with reference to"
+        ],
+        "answerIndex": 1
+      }
+    ]
+  }
+}

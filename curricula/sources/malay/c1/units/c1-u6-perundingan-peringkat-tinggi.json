@@ -1,0 +1,289 @@
+{
+  "id": "c1-u6-perundingan-peringkat-tinggi",
+  "level": "C1",
+  "order": 6,
+  "title": "Perundingan Peringkat Tinggi",
+  "englishTitle": "High-Level Negotiation & Advocacy",
+  "canDo": [
+    "Negotiate a high-stakes multi-party situation",
+    "Advocate for a community or cause persuasively",
+    "Use diplomatic hedging and face-saving language",
+    "Close a negotiation with a formal agreement"
+  ],
+  "lifeBenefit": "Advocate effectively for yourself or your community in high-stakes settings.",
+  "estMinutes": 85,
+  "vocab": [
+    {
+      "id": "c1-advokasi",
+      "type": "vocab",
+      "ms": "advokasi",
+      "en": "advocacy",
+      "mon": null,
+      "register": "standard",
+      "example": "Kerja advokasi ini penting untuk hak pelarian.",
+      "exampleEn": "This advocacy work is important for refugee rights.",
+      "phonetic": "ad-vo-ka-si",
+      "audioUrl": "/audio/ms/c1-advokasi.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-kepentingan-bersama",
+      "type": "vocab",
+      "ms": "kepentingan bersama",
+      "en": "mutual/shared interest",
+      "mon": null,
+      "register": "standard",
+      "example": "Mari cari kepentingan bersama dalam isu ini.",
+      "exampleEn": "Let's find the mutual interest in this issue.",
+      "phonetic": "kuh-puhn-ti-ngan buhr-sa-ma",
+      "audioUrl": "/audio/ms/c1-kepentingan-bersama.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-menjaga-air-muka",
+      "type": "phrase",
+      "ms": "menjaga air muka",
+      "en": "to save face/preserve dignity",
+      "mon": null,
+      "register": "standard",
+      "example": "Penting untuk menjaga air muka kedua-dua pihak.",
+      "exampleEn": "It's important to preserve both parties' dignity.",
+      "phonetic": "muhn-ja-ga a-ir mu-ka",
+      "audioUrl": "/audio/ms/c1-menjaga-air-muka.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-perjanjian-formal",
+      "type": "vocab",
+      "ms": "perjanjian formal",
+      "en": "formal agreement",
+      "mon": null,
+      "register": "standard",
+      "example": "Kita perlu perjanjian formal untuk sahkan ini.",
+      "exampleEn": "We need a formal agreement to confirm this.",
+      "phonetic": "puhr-jan-ji-an for-mal",
+      "audioUrl": "/audio/ms/c1-perjanjian-formal.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-diplomasi",
+      "type": "vocab",
+      "ms": "diplomasi",
+      "en": "diplomacy",
+      "mon": null,
+      "register": "standard",
+      "example": "Isu sensitif ni perlukan diplomasi.",
+      "exampleEn": "This sensitive issue requires diplomacy.",
+      "phonetic": "di-plo-ma-si",
+      "audioUrl": "/audio/ms/c1-diplomasi.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-titik-persetujuan",
+      "type": "phrase",
+      "ms": "titik persetujuan",
+      "en": "point of agreement",
+      "mon": null,
+      "register": "standard",
+      "example": "Mari kita cari titik persetujuan dahulu.",
+      "exampleEn": "Let's find the point of agreement first.",
+      "phonetic": "ti-tik puhr-suh-tu-ju-an",
+      "audioUrl": "/audio/ms/c1-titik-persetujuan.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "c1-u6-l1",
+      "order": 1,
+      "title": "Advokasi & Kepentingan Bersama",
+      "estMinutes": 22,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "c1-advokasi",
+        "c1-kepentingan-bersama"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'This advocacy work should focus on mutual interests.'",
+          "answer": "Kerja advokasi ini patut fokus pada kepentingan bersama."
+        }
+      ]
+    },
+    {
+      "id": "c1-u6-l2",
+      "order": 2,
+      "title": "Diplomasi & Air Muka",
+      "estMinutes": 22,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "c1-menjaga-air-muka",
+        "c1-diplomasi"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'This requires diplomacy to preserve everyone's dignity.'",
+          "answer": "Ini memerlukan diplomasi untuk menjaga air muka semua pihak."
+        }
+      ]
+    },
+    {
+      "id": "c1-u6-l3",
+      "order": 3,
+      "title": "Cari Titik Persetujuan & Perjanjian",
+      "estMinutes": 22,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "c1-titik-persetujuan",
+        "c1-perjanjian-formal"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'Mari kita cari ___ dahulu.' (point of agreement)",
+          "itemIds": [
+            "c1-titik-persetujuan"
+          ],
+          "answer": "titik persetujuan"
+        }
+      ]
+    },
+    {
+      "id": "c1-u6-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 19,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "c1-advokasi",
+        "c1-diplomasi",
+        "c1-perjanjian-formal"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "c1-u6-community-advocacy-meeting",
+    "setting": "Advocating for community resources in a multi-stakeholder meeting",
+    "roles": [
+      "learner (community advocate)",
+      "official"
+    ],
+    "script": [
+      {
+        "role": "learner",
+        "ms": "Kami di sini untuk advokasi hak akses pendidikan bagi kanak-kanak pelarian.",
+        "en": "We're here to advocate for refugee children's access to education."
+      },
+      {
+        "role": "official",
+        "ms": "Kami faham keprihatinan awak, tapi ada kekangan sumber.",
+        "en": "We understand your concern, but there are resource constraints."
+      },
+      {
+        "role": "learner",
+        "ms": "Mungkin kita boleh cari kepentingan bersama — pendidikan menyumbang kepada masyarakat yang stabil.",
+        "en": "Perhaps we can find a mutual interest — education contributes to a stable society."
+      },
+      {
+        "role": "official",
+        "ms": "Hujah yang baik. Mari kita cari titik persetujuan untuk fasa pertama.",
+        "en": "Good argument. Let's find a point of agreement for phase one."
+      },
+      {
+        "role": "learner",
+        "ms": "Baik, kita boleh rumuskan dalam satu perjanjian formal.",
+        "en": "Alright, we can put this in a formal agreement."
+      }
+    ],
+    "aiPrompt": "You are a government/NGO official responding to a community advocate. Initially cite constraints, then engage genuinely with a well-reasoned mutual-interest argument, working toward a formal, diplomatic agreement. High-register, respectful."
+  },
+  "speakingPrompts": [
+    {
+      "id": "c1-u6-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the advocacy-meeting dialogue, focusing on diplomatic, high-register delivery.",
+      "targetAudioUrl": "/audio/ms/c1-u6-scenario.mp3",
+      "rubric": [
+        "diplomatic tone",
+        "high-register vocabulary precision"
+      ]
+    },
+    {
+      "id": "c1-u6-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Advocate for a cause of your choice with the AI official persona, finding a mutual interest and a point of agreement.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "frames a mutual-interest argument",
+        "reaches or proposes a point of agreement"
+      ]
+    },
+    {
+      "id": "c1-u6-presentation-1",
+      "type": "presentation",
+      "instructions": "Deliver a 3-minute advocacy speech for a cause you care about, aimed at a decision-maker audience.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "persuasive, respectful tone",
+        "clear ask and rationale"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "c1-u6-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Menjaga air muka' means:",
+        "options": [
+          "to argue forcefully",
+          "to save face/preserve dignity",
+          "to end a meeting",
+          "to sign a contract"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate: 'Let's find the point of agreement first.'",
+        "answer": "Mari kita cari titik persetujuan dahulu."
+      },
+      {
+        "type": "mcq",
+        "prompt": "'Advokasi' means:",
+        "options": [
+          "negotiation",
+          "advocacy",
+          "diplomacy",
+          "agreement"
+        ],
+        "answerIndex": 1
+      }
+    ]
+  }
+}

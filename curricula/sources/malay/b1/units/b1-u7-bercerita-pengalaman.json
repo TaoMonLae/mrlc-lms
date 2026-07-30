@@ -1,0 +1,322 @@
+{
+  "id": "b1-u7-bercerita-pengalaman",
+  "level": "B1",
+  "order": 7,
+  "title": "Bercerita & Pengalaman",
+  "englishTitle": "Extended Storytelling & Experience",
+  "canDo": [
+    "Narrate a longer personal experience with clear structure",
+    "Express feelings/opinions about a past event",
+    "Use a wider range of connectors (walaupun, kerana, akhirnya)",
+    "Compare past and present situations"
+  ],
+  "lifeBenefit": "Share your story fluently — useful for interviews, counselling, community talks, and friendships.",
+  "estMinutes": 75,
+  "vocab": [
+    {
+      "id": "b1-pengalaman",
+      "type": "vocab",
+      "ms": "pengalaman",
+      "en": "experience",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Saya nak kongsi satu pengalaman.",
+      "exampleEn": "I want to share one experience.",
+      "phonetic": "puh-nga-la-man",
+      "audioUrl": "/audio/ms/b1-pengalaman.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-walaupun",
+      "type": "vocab",
+      "ms": "walaupun",
+      "en": "although/even though",
+      "mon": null,
+      "register": "standard",
+      "example": "Walaupun susah, saya tak putus asa.",
+      "exampleEn": "Although it was hard, I didn't give up.",
+      "phonetic": "wa-lau-pun",
+      "audioUrl": "/audio/ms/b1-walaupun.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-kerana",
+      "type": "vocab",
+      "ms": "kerana / sebab",
+      "en": "because",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Saya berhijrah kerana keselamatan.",
+      "exampleEn": "I migrated because of safety.",
+      "phonetic": "kuh-ra-na / suh-bab",
+      "audioUrl": "/audio/ms/b1-kerana.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-berbeza",
+      "type": "vocab",
+      "ms": "berbeza",
+      "en": "different",
+      "mon": null,
+      "register": "standard",
+      "example": "Hidup di sini sangat berbeza.",
+      "exampleEn": "Life here is very different.",
+      "phonetic": "buhr-beh-za",
+      "audioUrl": "/audio/ms/b1-berbeza.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-dahulu-sekarang",
+      "type": "vocab",
+      "ms": "dahulu / sekarang",
+      "en": "before/in the past / now",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Dahulu susah, sekarang lebih senang.",
+      "exampleEn": "In the past it was hard, now it's easier.",
+      "phonetic": "da-hu-lu / suh-ka-rang",
+      "audioUrl": "/audio/ms/b1-dahulu-sekarang.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-berjaya",
+      "type": "vocab",
+      "ms": "berjaya",
+      "en": "to succeed",
+      "mon": null,
+      "register": "standard",
+      "example": "Akhirnya saya berjaya dapat kerja.",
+      "exampleEn": "In the end I succeeded in getting a job.",
+      "phonetic": "buhr-ja-ya",
+      "audioUrl": "/audio/ms/b1-berjaya.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-perasaan",
+      "type": "vocab",
+      "ms": "perasaan",
+      "en": "feelings",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Perasaan saya campur-aduk waktu tu.",
+      "exampleEn": "My feelings were mixed at that time.",
+      "phonetic": "puh-ra-sa-an",
+      "audioUrl": "/audio/ms/b1-perasaan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-mengubah-hidup",
+      "type": "phrase",
+      "ms": "mengubah hidup",
+      "en": "to change one's life",
+      "mon": null,
+      "register": "standard",
+      "example": "Kejadian tu mengubah hidup saya.",
+      "exampleEn": "That event changed my life.",
+      "phonetic": "muh-ngu-bah hi-dup",
+      "audioUrl": "/audio/ms/b1-mengubah-hidup.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "b1-u7-l1",
+      "order": 1,
+      "title": "Sambungkan Idea (Connecting ideas)",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "b1-walaupun",
+        "b1-kerana",
+        "b1-berbeza"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'Although it was difficult, I didn't give up because my family needed me.'",
+          "answer": "Walaupun susah, saya tak putus asa kerana keluarga saya perlukan saya."
+        }
+      ]
+    },
+    {
+      "id": "b1-u7-l2",
+      "order": 2,
+      "title": "Dahulu vs Sekarang",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b1-dahulu-sekarang",
+        "b1-berjaya"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'In the past it was hard, now it's easier and I finally succeeded.'",
+          "answer": "Dahulu susah, sekarang lebih senang dan akhirnya saya berjaya."
+        }
+      ]
+    },
+    {
+      "id": "b1-u7-l3",
+      "order": 3,
+      "title": "Kongsi Perasaan",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b1-pengalaman",
+        "b1-perasaan",
+        "b1-mengubah-hidup"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'Kejadian tu ___ hidup saya.' (changed)",
+          "itemIds": [
+            "b1-mengubah-hidup"
+          ],
+          "answer": "mengubah"
+        }
+      ]
+    },
+    {
+      "id": "b1-u7-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 21,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b1-walaupun",
+        "b1-berjaya",
+        "b1-perasaan"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "b1-u7-sharing-migration-story",
+    "setting": "Sharing your migration story with a supportive new friend",
+    "roles": [
+      "learner",
+      "friend"
+    ],
+    "script": [
+      {
+        "role": "friend",
+        "ms": "Kalau tak kisah saya tanya, kenapa awak berhijrah ke Malaysia?",
+        "en": "If you don't mind me asking, why did you migrate to Malaysia?"
+      },
+      {
+        "role": "learner",
+        "ms": "Saya berhijrah kerana keselamatan keluarga saya.",
+        "en": "I migrated because of my family's safety."
+      },
+      {
+        "role": "friend",
+        "ms": "Mesti susah kan, waktu tu?",
+        "en": "It must have been hard, at that time?"
+      },
+      {
+        "role": "learner",
+        "ms": "Ya, walaupun susah, akhirnya kami berjaya settle di sini.",
+        "en": "Yes, although it was hard, we finally managed to settle here."
+      },
+      {
+        "role": "friend",
+        "ms": "Sekarang macam mana rasanya?",
+        "en": "How does it feel now?"
+      },
+      {
+        "role": "learner",
+        "ms": "Sekarang lebih senang. Perasaan saya lebih tenang.",
+        "en": "Now it's easier. I feel calmer."
+      }
+    ],
+    "aiPrompt": "You are a warm, curious friend asking sensitively about the learner's migration experience. Ask open, respectful questions, react with empathy, and never pry into details they don't offer. Encourage them to share as much or as little as they want."
+  },
+  "speakingPrompts": [
+    {
+      "id": "b1-u7-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the migration-story dialogue, focusing on emotional tone and connector words.",
+      "targetAudioUrl": "/audio/ms/b1-u7-scenario.mp3",
+      "rubric": [
+        "appropriate emotional tone",
+        "correct use of walaupun/kerana/akhirnya"
+      ]
+    },
+    {
+      "id": "b1-u7-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Share a real or comfortable-to-discuss personal experience with the AI friend persona, using at least two connector words.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "uses at least two connectors (walaupun/kerana/akhirnya/dahulu-sekarang)",
+        "shares a coherent short narrative"
+      ]
+    },
+    {
+      "id": "b1-u7-presentation-1",
+      "type": "presentation",
+      "instructions": "Give a 2-minute talk: 'A challenge I overcame,' with a clear beginning, middle, and end.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "clear structure (before/during/after)",
+        "at least one connector word used naturally"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "b1-u7-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Walaupun' means:",
+        "options": [
+          "because",
+          "although",
+          "finally",
+          "now"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate: 'In the end, I succeeded.'",
+        "answer": "Akhirnya, saya berjaya."
+      },
+      {
+        "type": "mcq",
+        "prompt": "'Mengubah hidup' means:",
+        "options": [
+          "to change jobs",
+          "to change one's life",
+          "to change money",
+          "to change house"
+        ],
+        "answerIndex": 1
+      }
+    ]
+  }
+}

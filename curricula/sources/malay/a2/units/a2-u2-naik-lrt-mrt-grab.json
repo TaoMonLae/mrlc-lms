@@ -1,0 +1,320 @@
+{
+  "id": "a2-u2-naik-lrt-mrt-grab",
+  "level": "A2",
+  "order": 2,
+  "title": "Naik LRT, MRT & Grab",
+  "englishTitle": "Taking LRT, MRT & Grab (in depth)",
+  "canDo": [
+    "Buy a Touch 'n Go / token and pass through a fare gate",
+    "Understand transfer/interchange announcements",
+    "Book and communicate with a Grab driver",
+    "Handle a wrong-direction or delay situation"
+  ],
+  "lifeBenefit": "Navigate KL's full public transport system independently, including transfers and ride-hailing.",
+  "estMinutes": 70,
+  "vocab": [
+    {
+      "id": "v2-tukar-laluan",
+      "type": "phrase",
+      "ms": "tukar laluan",
+      "en": "change/transfer line",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Kena tukar laluan kat stesen ni.",
+      "exampleEn": "You need to transfer lines at this station.",
+      "phonetic": "tu-kar la-lu-an",
+      "audioUrl": "/audio/ms/v2-tukar-laluan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-token-tng",
+      "type": "vocab",
+      "ms": "token / kad Touch 'n Go",
+      "en": "token / Touch 'n Go card",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Beli token kat mesin tu.",
+      "exampleEn": "Buy a token at that machine.",
+      "phonetic": "toh-ken / tach en go",
+      "audioUrl": "/audio/ms/v2-token-tng.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-pintu-pagar",
+      "type": "vocab",
+      "ms": "pintu pagar",
+      "en": "fare gate",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Tap kad kat pintu pagar.",
+      "exampleEn": "Tap your card at the fare gate.",
+      "phonetic": "pin-tu pa-gar",
+      "audioUrl": "/audio/ms/v2-pintu-pagar.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-tempat-duduk-khas",
+      "type": "vocab",
+      "ms": "tempat duduk khas",
+      "en": "priority/reserved seat",
+      "mon": null,
+      "register": "standard",
+      "example": "Tu tempat duduk khas untuk OKU.",
+      "exampleEn": "That's a reserved seat for disabled persons.",
+      "phonetic": "tuhm-pat du-duk khas",
+      "audioUrl": "/audio/ms/v2-tempat-duduk-khas.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-lewat-tertunda",
+      "type": "vocab",
+      "ms": "lewat / tertunda",
+      "en": "late / delayed",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Kereta api lewat sepuluh minit.",
+      "exampleEn": "The train is ten minutes late.",
+      "phonetic": "leh-wat / tuhr-tun-da",
+      "audioUrl": "/audio/ms/v2-lewat-tertunda.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-tempahan-grab",
+      "type": "phrase",
+      "ms": "tempahan Grab",
+      "en": "Grab booking",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Saya dah buat tempahan Grab.",
+      "exampleEn": "I've already made a Grab booking.",
+      "phonetic": "tuhm-pah-an grab",
+      "audioUrl": "/audio/ms/v2-tempahan-grab.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-lokasi-pickup",
+      "type": "vocab",
+      "ms": "lokasi ambil",
+      "en": "pickup location",
+      "mon": null,
+      "register": "standard",
+      "example": "Lokasi ambil kat depan mall.",
+      "exampleEn": "Pickup location is in front of the mall.",
+      "phonetic": "lo-ka-si am-bil",
+      "audioUrl": "/audio/ms/v2-lokasi-pickup.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-plat-nombor",
+      "type": "vocab",
+      "ms": "plat nombor",
+      "en": "license plate number",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Plat nombor kereta tu apa?",
+      "exampleEn": "What's the license plate number of that car?",
+      "phonetic": "plat nom-bor",
+      "audioUrl": "/audio/ms/v2-plat-nombor.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-salah-jalan",
+      "type": "vocab",
+      "ms": "salah jalan",
+      "en": "wrong way / took a wrong turn",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Alamak, kita salah jalan.",
+      "exampleEn": "Oh no, we went the wrong way.",
+      "phonetic": "sa-lah ja-lan",
+      "audioUrl": "/audio/ms/v2-salah-jalan.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "a2-u2-l1",
+      "order": 1,
+      "title": "Beli Tiket & Masuk Stesen",
+      "estMinutes": 16,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "v2-token-tng",
+        "v2-pintu-pagar"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'Buy a token and tap at the fare gate.'",
+          "answer": "Beli token dan tap kat pintu pagar."
+        }
+      ]
+    },
+    {
+      "id": "a2-u2-l2",
+      "order": 2,
+      "title": "Tukar Laluan & Kelewatan",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "v2-tukar-laluan",
+        "v2-lewat-tertunda"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'Kereta api ___ sepuluh minit.' (delayed)",
+          "itemIds": [
+            "v2-lewat-tertunda"
+          ],
+          "answer": "tertunda"
+        }
+      ]
+    },
+    {
+      "id": "a2-u2-l3",
+      "order": 3,
+      "title": "Guna Grab",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "v2-tempahan-grab",
+        "v2-lokasi-pickup",
+        "v2-plat-nombor"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'My pickup location is in front of the mall.'",
+          "answer": "Lokasi ambil saya kat depan mall."
+        }
+      ]
+    },
+    {
+      "id": "a2-u2-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "v2-salah-jalan",
+        "v2-tukar-laluan",
+        "v2-tempahan-grab"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "a2-u2-grab-pickup-confusion",
+    "setting": "Coordinating with a Grab driver who can't find the pickup point",
+    "roles": [
+      "learner",
+      "Grab driver (via call)"
+    ],
+    "script": [
+      {
+        "role": "driver",
+        "ms": "Hello, saya dah sampai, tapi tak nampak awak.",
+        "en": "Hello, I've arrived, but I don't see you."
+      },
+      {
+        "role": "learner",
+        "ms": "Saya kat depan pintu utama mall.",
+        "en": "I'm in front of the mall's main entrance."
+      },
+      {
+        "role": "driver",
+        "ms": "Oh, saya kat belakang. Tunggu sekejap, saya pusing.",
+        "en": "Oh, I'm at the back. Wait a moment, I'll turn around."
+      },
+      {
+        "role": "learner",
+        "ms": "Okay, plat nombor apa kereta awak?",
+        "en": "Okay, what's your car's license plate number?"
+      },
+      {
+        "role": "driver",
+        "ms": "WXY 1234, kereta warna putih.",
+        "en": "WXY 1234, white car."
+      }
+    ],
+    "aiPrompt": "You are a Grab driver on a phone call, having trouble locating the passenger. Clarify your location, ask theirs, and give your car's plate number and colour. Speak naturally but clearly, KL colloquial style."
+  },
+  "speakingPrompts": [
+    {
+      "id": "a2-u2-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the Grab pickup call, focusing on natural phone-call rhythm.",
+      "targetAudioUrl": "/audio/ms/a2-u2-scenario.mp3",
+      "rubric": [
+        "natural phone register",
+        "clear plate number pronunciation"
+      ]
+    },
+    {
+      "id": "a2-u2-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Coordinate a pickup with the AI Grab driver: state your location and ask for the plate number.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "clearly states own location",
+        "asks for plate number"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "a2-u2-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Tukar laluan' means:",
+        "options": [
+          "buy a ticket",
+          "transfer/change line",
+          "get off",
+          "wait"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate: 'The train is delayed.'",
+        "answer": "Kereta api tertunda / lewat."
+      },
+      {
+        "type": "listening",
+        "audioUrl": "/audio/ms/v2-plat-nombor.mp3",
+        "prompt": "What was asked?",
+        "options": [
+          "pickup location",
+          "license plate number",
+          "fare price",
+          "train schedule"
+        ],
+        "answerIndex": 1
+      }
+    ]
+  }
+}

@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { apiGet, apiSend } from '@/src/lib/api';
 import type { LanguageQuestOption, LanguageQuestProfile } from '@/src/types/languageQuest';
 import { LanguageQuestPinyinText } from '@/src/components/games/LanguageQuestPinyinText';
+import { LanguageQuestReorderTiles } from '@/src/components/games/LanguageQuestReorderTiles';
 import { useLanguageQuestPreferences } from '@/src/components/games/LanguageQuestPreferences';
 import { playLanguageQuestSuccessSound } from '@/src/lib/languageQuestAudio';
 import { LanguageQuestRewardReveal } from '@/src/components/games/LanguageQuestRewards';
@@ -16,6 +17,7 @@ import { LanguageQuestRewardReveal } from '@/src/components/games/LanguageQuestR
 interface MasteryCard {
   challengeId: string;
   stage: number;
+  type: 'SELECT' | 'ASSIST' | 'CLOZE' | 'ODD_ONE_OUT' | 'REORDER';
   question: string;
   course: { id: string; title: string; language: string; accentColor: string };
   options: LanguageQuestOption[];
@@ -52,6 +54,7 @@ export default function LanguageQuestMastery() {
   const [payload, setPayload] = useState<MasteryPayload | null>(null);
   const [index, setIndex] = useState(0);
   const [selectedId, setSelectedId] = useState('');
+  const [orderedIds, setOrderedIds] = useState<string[]>([]);
   const [result, setResult] = useState<MasteryResult | null>(null);
   const [checking, setChecking] = useState(false);
   const [sessionXp, setSessionXp] = useState(0);
@@ -75,6 +78,7 @@ export default function LanguageQuestMastery() {
         setReviewsToday(data.reviewsToday);
         setIndex(0);
         setSelectedId('');
+        setOrderedIds([]);
         setResult(null);
         setTimedOut(false);
       })
@@ -124,14 +128,17 @@ export default function LanguageQuestMastery() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timedOut]);
 
+  const isReorder = card?.type === 'REORDER';
+  const canCheck = isReorder ? orderedIds.length === (card?.options.length ?? -1) : Boolean(selectedId);
+
   const check = async () => {
-    if (!card || !selectedId || checking || timedOut) return;
+    if (!card || !canCheck || checking || timedOut) return;
     setChecking(true);
     try {
       const answer = await apiSend<MasteryResult>(
         `/api/language-quest/mastery/${card.challengeId}/answer`,
         'POST',
-        { optionId: selectedId },
+        isReorder ? { orderedOptionIds: orderedIds } : { optionId: selectedId },
       );
       setResult(answer);
       setReviewsToday((current) => current + 1);
@@ -166,6 +173,7 @@ export default function LanguageQuestMastery() {
   const next = () => {
     setIndex((current) => current + 1);
     setSelectedId('');
+    setOrderedIds([]);
     setResult(null);
     setTimedOut(false);
   };
@@ -271,6 +279,14 @@ export default function LanguageQuestMastery() {
           )}
 
           <h2 className="mt-7 text-2xl font-black leading-tight text-slate-950 dark:text-white sm:text-3xl">{card.question}</h2>
+          {isReorder ? (
+            <LanguageQuestReorderTiles
+              options={card.options}
+              value={orderedIds}
+              onChange={setOrderedIds}
+              disabled={Boolean(result) || timedOut}
+            />
+          ) : (
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
             {card.options.map((option) => {
               const selected = selectedId === option.id;
@@ -297,6 +313,7 @@ export default function LanguageQuestMastery() {
               );
             })}
           </div>
+          )}
 
           {timedOut && (
             <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-rose-900 dark:border-rose-500/25 dark:bg-rose-950/25 dark:text-rose-100">
@@ -312,7 +329,7 @@ export default function LanguageQuestMastery() {
 
           <div className="mt-6 flex justify-end">
             {timedOut ? null : !result ? (
-              <Button onClick={check} disabled={!selectedId || checking} className="rounded-xl bg-violet-700 text-white hover:bg-violet-800">
+              <Button onClick={check} disabled={!canCheck || checking} className="rounded-xl bg-violet-700 text-white hover:bg-violet-800">
                 <Sparkles className="mr-2 h-4 w-4" /> {checking ? 'Checking…' : 'Check memory'}
               </Button>
             ) : (

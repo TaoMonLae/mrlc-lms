@@ -1,0 +1,294 @@
+{
+  "id": "c1-u10-projek-akhir-skbmw",
+  "level": "C1",
+  "order": 10,
+  "title": "Projek Akhir / Persediaan SKBMW",
+  "englishTitle": "Capstone Project & SKBMW Exam Preparation",
+  "canDo": [
+    "Produce an extended piece of writing across a topic of choice",
+    "Deliver an extended, structured oral presentation with Q&A",
+    "Complete a full mock assessment across listening, reading, writing, and speaking",
+    "Reflect on overall progress from A1 to C1"
+  ],
+  "lifeBenefit": "Consolidate everything learned and prepare directly for the SKBMW's four-skill assessment format.",
+  "estMinutes": 90,
+  "vocab": [
+    {
+      "id": "c1-portfolio",
+      "type": "vocab",
+      "ms": "portfolio pembelajaran",
+      "en": "learning portfolio",
+      "mon": null,
+      "register": "standard",
+      "example": "Saya sediakan portfolio pembelajaran sepanjang kursus ini.",
+      "exampleEn": "I've prepared a learning portfolio throughout this course.",
+      "phonetic": "port-fo-li-o puhm-buh-la-ja-ran",
+      "audioUrl": "/audio/ms/c1-portfolio.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-penilaian-kendiri",
+      "type": "vocab",
+      "ms": "penilaian kendiri",
+      "en": "self-assessment",
+      "mon": null,
+      "register": "standard",
+      "example": "Penilaian kendiri membantu saya kenal pasti kelemahan.",
+      "exampleEn": "Self-assessment helps me identify weaknesses.",
+      "phonetic": "puh-ni-lai-an kuhn-di-ri",
+      "audioUrl": "/audio/ms/c1-penilaian-kendiri.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-sesi-soal-jawab",
+      "type": "vocab",
+      "ms": "sesi soal jawab",
+      "en": "Q&A session",
+      "mon": null,
+      "register": "standard",
+      "example": "Selepas pembentangan, ada sesi soal jawab.",
+      "exampleEn": "After the presentation, there's a Q&A session.",
+      "phonetic": "seh-si so-al ja-wab",
+      "audioUrl": "/audio/ms/c1-sesi-soal-jawab.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-mencapai-kecekapan",
+      "type": "phrase",
+      "ms": "mencapai kecekapan",
+      "en": "to achieve proficiency",
+      "mon": null,
+      "register": "standard",
+      "example": "Matlamat saya mencapai kecekapan tahap C1.",
+      "exampleEn": "My goal is to achieve C1-level proficiency.",
+      "phonetic": "muhn-cha-pai kuh-cheh-ka-pan",
+      "audioUrl": "/audio/ms/c1-mencapai-kecekapan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-sijil",
+      "type": "vocab",
+      "ms": "sijil kecekapan",
+      "en": "competency certificate",
+      "mon": null,
+      "register": "standard",
+      "example": "Saya akan duduk peperiksaan untuk dapatkan sijil kecekapan.",
+      "exampleEn": "I will sit the exam to get the competency certificate.",
+      "phonetic": "si-jil kuh-cheh-ka-pan",
+      "audioUrl": "/audio/ms/c1-sijil.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-persediaan-peperiksaan",
+      "type": "vocab",
+      "ms": "persediaan peperiksaan",
+      "en": "exam preparation",
+      "mon": null,
+      "register": "standard",
+      "example": "Persediaan peperiksaan perlu bermula lebih awal.",
+      "exampleEn": "Exam preparation should start earlier.",
+      "phonetic": "puhr-suh-di-a-an puh-puh-rik-sa-an",
+      "audioUrl": "/audio/ms/c1-persediaan-peperiksaan.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "c1-u10-l1",
+      "order": 1,
+      "title": "Sediakan Portfolio & Refleksi",
+      "estMinutes": 22,
+      "sections": [
+        "review",
+        "input",
+        "practice"
+      ],
+      "itemIds": [
+        "c1-portfolio",
+        "c1-penilaian-kendiri"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'This portfolio includes a self-assessment of my progress from A1 to C1.'",
+          "answer": "Portfolio ini termasuk penilaian kendiri kemajuan saya dari A1 ke C1."
+        }
+      ]
+    },
+    {
+      "id": "c1-u10-l2",
+      "order": 2,
+      "title": "Latihan Pembentangan & Soal Jawab",
+      "estMinutes": 22,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "speaking"
+      ],
+      "itemIds": [
+        "c1-sesi-soal-jawab",
+        "c1-mencapai-kecekapan"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'My goal is to achieve C1 proficiency and handle the Q&A session confidently.'",
+          "answer": "Matlamat saya mencapai kecekapan C1 dan mengendalikan sesi soal jawab dengan yakin."
+        }
+      ]
+    },
+    {
+      "id": "c1-u10-l3",
+      "order": 3,
+      "title": "Persediaan SKBMW",
+      "estMinutes": 22,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "c1-sijil",
+        "c1-persediaan-peperiksaan"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'Saya akan duduk peperiksaan untuk dapatkan ___.' (competency certificate)",
+          "itemIds": [
+            "c1-sijil"
+          ],
+          "answer": "sijil kecekapan"
+        }
+      ]
+    },
+    {
+      "id": "c1-u10-l4",
+      "order": 4,
+      "title": "Mock Assessment (Full 4 Skills)",
+      "estMinutes": 24,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "c1-portfolio",
+        "c1-mencapai-kecekapan",
+        "c1-sijil"
+      ],
+      "practiceExercises": [
+        {
+          "type": "mcq",
+          "prompt": "This lesson runs a full mock assessment covering listening, reading, writing, and speaking, structured to mirror the SKBMW format (Writing 600/1, Reading 600/2, Listening 600/3, Speaking 600/4).",
+          "itemIds": [],
+          "answer": null
+        }
+      ]
+    }
+  ],
+  "scenario": {
+    "id": "c1-u10-mock-oral-exam",
+    "setting": "A mock SKBMW-style oral examination with an examiner",
+    "roles": [
+      "learner (candidate)",
+      "examiner"
+    ],
+    "script": [
+      {
+        "role": "examiner",
+        "ms": "Selamat datang. Sila perkenalkan diri dan bincangkan satu isu semasa pilihan awak.",
+        "en": "Welcome. Please introduce yourself and discuss a current issue of your choice."
+      },
+      {
+        "role": "learner",
+        "ms": "Terima kasih. Nama saya... dan saya ingin bincangkan isu kos sara hidup.",
+        "en": "Thank you. My name is... and I would like to discuss the cost of living issue."
+      },
+      {
+        "role": "examiner",
+        "ms": "Menarik. Apa pandangan awak tentang langkah kerajaan setakat ini?",
+        "en": "Interesting. What's your view on the government's measures so far?"
+      },
+      {
+        "role": "learner",
+        "ms": "Pada hemat saya, langkah ini membantu, tapi walau bagaimanapun, kesannya jangka pendek sahaja.",
+        "en": "In my opinion, these measures help, but however, the effect is only short-term."
+      },
+      {
+        "role": "examiner",
+        "ms": "Terima kasih atas pandangan yang seimbang. Ada sesi soal jawab sekarang.",
+        "en": "Thank you for the balanced view. There's a Q&A session now."
+      }
+    ],
+    "aiPrompt": "You are an SKBMW-style oral examiner. Ask the candidate to introduce themselves and discuss a current issue, probe their opinion with a follow-up question, and acknowledge strong, balanced responses. Formal, standard assessment register, encouraging but rigorous."
+  },
+  "speakingPrompts": [
+    {
+      "id": "c1-u10-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the full mock oral exam dialogue, matching formal assessment register and pacing.",
+      "targetAudioUrl": "/audio/ms/c1-u10-scenario.mp3",
+      "rubric": [
+        "formal assessment register",
+        "confident, unhurried pacing"
+      ]
+    },
+    {
+      "id": "c1-u10-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Sit a full mock oral exam with the AI examiner persona: introduce yourself, discuss a current issue, and handle a follow-up question.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "gives a structured self-introduction",
+        "discusses an issue with a clear, balanced opinion",
+        "handles the follow-up question coherently"
+      ]
+    },
+    {
+      "id": "c1-u10-presentation-1",
+      "type": "presentation",
+      "instructions": "Deliver a 5-minute capstone presentation: your Bahasa Malaysia learning journey from A1 to C1, a topic of personal interest discussed in depth, and your goals going forward.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "covers learning journey, topic discussion, and future goals",
+        "demonstrates C1-level range: connectors, register-shifting, nuanced argument, proverbs or idioms if natural"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "c1-u10-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "SKBMW assesses which four skills?",
+        "options": [
+          "Grammar, vocabulary, culture, history",
+          "Writing, Reading, Listening, Speaking",
+          "Typing, reading, drawing, singing",
+          "Math, science, Malay, English"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate: 'My goal is to achieve C1-level proficiency.'",
+        "answer": "Matlamat saya mencapai kecekapan tahap C1."
+      },
+      {
+        "type": "mcq",
+        "prompt": "'Penilaian kendiri' means:",
+        "options": [
+          "peer review",
+          "self-assessment",
+          "final exam",
+          "certificate"
+        ],
+        "answerIndex": 1
+      }
+    ]
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "id": "a1-u4-di-pasar",
+  "level": "A1",
+  "order": 4,
+  "title": "Di Pasar",
+  "englishTitle": "At the Market",
+  "canDo": [
+    "Ask for and understand prices at a wet market",
+    "Name common fruits, vegetables, fish/meat",
+    "Bargain politely",
+    "Ask for a specific quantity"
+  ],
+  "lifeBenefit": "Shop confidently and get fair prices at the pasar/pasar malam.",
+  "estMinutes": 60,
+  "vocab": [
+    { "id": "v-pasar", "type": "vocab", "ms": "pasar", "en": "market", "mon": null, "register": "colloquial", "example": "Saya pergi pasar pagi-pagi.", "exampleEn": "I go to the market early in the morning.", "phonetic": "pa-sa (final r silent in KL speech)", "audioUrl": "/audio/ms/v-pasar.mp3", "minimalPairWith": null },
+    { "id": "v-ikan", "type": "vocab", "ms": "ikan", "en": "fish", "mon": null, "register": "colloquial", "example": "Ikan ni segar tak?", "exampleEn": "Is this fish fresh?", "phonetic": "i-kan", "audioUrl": "/audio/ms/v-ikan.mp3", "minimalPairWith": null },
+    { "id": "v-sayur", "type": "vocab", "ms": "sayur", "en": "vegetable", "mon": null, "register": "colloquial", "example": "Sayur ni murah.", "exampleEn": "This vegetable is cheap.", "phonetic": "sa-yur", "audioUrl": "/audio/ms/v-sayur.mp3", "minimalPairWith": null },
+    { "id": "v-buah", "type": "vocab", "ms": "buah", "en": "fruit", "mon": null, "register": "colloquial", "example": "Buah apa yang manis?", "exampleEn": "Which fruit is sweet?", "phonetic": "bu-ah", "audioUrl": "/audio/ms/v-buah.mp3", "minimalPairWith": null },
+    { "id": "v-ayam", "type": "vocab", "ms": "ayam", "en": "chicken", "mon": null, "register": "colloquial", "example": "Ayam ni berapa sekilo?", "exampleEn": "How much is this chicken per kilo?", "phonetic": "a-yam", "audioUrl": "/audio/ms/v-ayam.mp3", "minimalPairWith": null },
+    { "id": "v-berapa-sekilo", "type": "phrase", "ms": "berapa sekilo?", "en": "how much per kilo?", "mon": null, "register": "colloquial", "example": "Ikan ni berapa sekilo?", "exampleEn": "How much is this fish per kilo?", "phonetic": "buh-ra-pa suh-ki-lo", "audioUrl": "/audio/ms/v-berapa-sekilo.mp3", "minimalPairWith": null },
+    { "id": "v-segar", "type": "vocab", "ms": "segar", "en": "fresh", "mon": null, "register": "colloquial", "example": "Sayur ni masih segar.", "exampleEn": "This vegetable is still fresh.", "phonetic": "suh-gar", "audioUrl": "/audio/ms/v-segar.mp3", "minimalPairWith": null },
+    { "id": "v-timbang", "type": "vocab", "ms": "timbang", "en": "to weigh", "mon": null, "register": "colloquial", "example": "Tolong timbang dua kilo.", "exampleEn": "Please weigh two kilos.", "phonetic": "tim-bang", "audioUrl": "/audio/ms/v-timbang.mp3", "minimalPairWith": null },
+    { "id": "v-boleh-kurang-2", "type": "phrase", "ms": "boleh kurang sikit?", "en": "can you lower it a bit?", "mon": null, "register": "colloquial", "example": "Boleh kurang sikit? Mahal sangat.", "exampleEn": "Can you lower it a bit? It's too expensive.", "phonetic": "bo-leh ku-rang si-kit", "audioUrl": "/audio/ms/v-boleh-kurang-2.mp3", "minimalPairWith": null },
+    { "id": "v-nak-beli", "type": "phrase", "ms": "saya nak beli...", "en": "I want to buy...", "mon": null, "register": "colloquial", "example": "Saya nak beli sayur dan ikan.", "exampleEn": "I want to buy vegetables and fish.", "phonetic": "sa-ya nak buh-li", "audioUrl": "/audio/ms/v-nak-beli.mp3", "minimalPairWith": null },
+    { "id": "v-cukup", "type": "vocab", "ms": "cukup", "en": "enough", "mon": null, "register": "colloquial", "example": "Cukuplah tu, terima kasih.", "exampleEn": "That's enough, thank you.", "phonetic": "chu-kup", "audioUrl": "/audio/ms/v-cukup.mp3", "minimalPairWith": null },
+    { "id": "v-perang-war", "type": "minimalPair", "ms": "perang", "en": "war", "mon": null, "register": "standard", "example": "Perang itu sangat teruk.", "exampleEn": "That war was very bad.", "phonetic": "puh-rang (schwa 'e')", "audioUrl": "/audio/ms/v-perang-war.mp3", "minimalPairWith": "v-perang-brown" },
+    { "id": "v-perang-brown", "type": "minimalPair", "ms": "perang", "en": "blond/brown (hair colour)", "mon": null, "register": "colloquial", "example": "Rambut dia warna perang.", "exampleEn": "His/her hair is brown/blond.", "phonetic": "pe-rang ('e' as in 'bed')", "audioUrl": "/audio/ms/v-perang-brown.mp3", "minimalPairWith": "v-perang-war" }
+  ],
+  "lessons": [
+    { "id": "a1-u4-l1", "order": 1, "title": "Barang di Pasar (Market items)", "estMinutes": 12, "sections": ["review", "input", "practice", "quiz"], "itemIds": ["v-pasar", "v-ikan", "v-sayur", "v-buah", "v-ayam"],
+      "practiceExercises": [
+        { "type": "listenToPicture", "prompt": "Listen and tap the matching market item picture.", "itemIds": ["v-ikan", "v-sayur", "v-buah", "v-ayam"], "answer": null }
+      ]
+    },
+    { "id": "a1-u4-l2", "order": 2, "title": "Tanya Harga & Berat (Asking price & weight)", "estMinutes": 12, "sections": ["review", "input", "practice", "quiz", "speaking"], "itemIds": ["v-berapa-sekilo", "v-timbang", "v-segar"],
+      "practiceExercises": [
+        { "type": "translate", "prompt": "Translate: 'Please weigh two kilos of fish.'", "itemIds": ["v-timbang", "v-ikan"], "answer": "Tolong timbang dua kilo ikan." }
+      ]
+    },
+    { "id": "a1-u4-l3", "order": 3, "title": "Tawar-Menawar (Bargaining)", "estMinutes": 12, "sections": ["review", "input", "practice", "speaking"], "itemIds": ["v-boleh-kurang-2", "v-nak-beli", "v-cukup"],
+      "practiceExercises": [
+        { "type": "reorder", "prompt": "Reorder: sikit / boleh / kurang", "itemIds": ["v-boleh-kurang-2"], "answer": "Boleh kurang sikit?" }
+      ]
+    },
+    { "id": "a1-u4-l4", "order": 4, "title": "Sebutan: perang vs perang (Pronunciation drill)", "estMinutes": 8, "sections": ["input", "practice"], "itemIds": ["v-perang-war", "v-perang-brown"],
+      "practiceExercises": [
+        { "type": "minimalPairChoice", "prompt": "Which meaning did you hear: 'war' or 'blond/brown'?", "itemIds": ["v-perang-war", "v-perang-brown"], "answer": null }
+      ]
+    },
+    { "id": "a1-u4-l5", "order": 5, "title": "Latihan & Ulangkaji", "estMinutes": 16, "sections": ["review", "quiz", "speaking"], "itemIds": ["v-berapa-sekilo", "v-boleh-kurang-2", "v-segar", "v-cukup"], "practiceExercises": [] }
+  ],
+  "scenario": {
+    "id": "a1-u4-pasar-buy-fish",
+    "setting": "Wet market, fish stall",
+    "roles": ["learner (customer)", "vendor (makcik)"],
+    "script": [
+      { "role": "learner", "ms": "Kak, ikan ni berapa sekilo?", "en": "Sis, how much is this fish per kilo?" },
+      { "role": "vendor", "ms": "Sepuluh ringgit, segar punya.", "en": "Ten ringgit, it's the fresh kind." },
+      { "role": "learner", "ms": "Boleh kurang sikit? Mahal sangat.", "en": "Can you lower it a bit? It's too expensive." },
+      { "role": "vendor", "ms": "Okaylah, lapan ringgit untuk awak.", "en": "Okay, eight ringgit for you." },
+      { "role": "learner", "ms": "Baik, saya nak dua kilo.", "en": "Alright, I want two kilos." },
+      { "role": "vendor", "ms": "Tolong timbang... siap. Enam belas ringgit.", "en": "Let me weigh it... done. Sixteen ringgit." }
+    ],
+    "aiPrompt": "You are a friendly pasar fish vendor (makcik). Greet the customer, give prices when asked, allow exactly one round of bargaining and then agree to a lower price, confirm the quantity, and state the total. Keep sentences under 8 words and speak at a slow, clear pace."
+  },
+  "speakingPrompts": [
+    { "id": "a1-u4-shadow-1", "type": "shadowing", "instructions": "Shadow the fish-stall dialogue, matching the KL habit of dropping the final 'r' in 'pasar' and 'besar'.", "targetAudioUrl": "/audio/ms/a1-u4-scenario.mp3", "rubric": ["final -r dropped in 'pasar'", "natural bargaining tone, not aggressive"] },
+    { "id": "a1-u4-roleplay-1", "type": "roleplay", "instructions": "Play the customer with the AI vendor persona: ask a price, bargain once, then ask for a quantity.", "targetAudioUrl": null, "rubric": ["asks price with correct phrase", "bargains politely", "specifies quantity"] },
+    { "id": "a1-u4-pron-1", "type": "pronunciation", "instructions": "Record 'perang' meaning 'war' and 'perang' meaning 'brown/blond' and compare the vowel quality.", "targetAudioUrl": "/audio/ms/v-perang-war.mp3", "rubric": ["distinguishes schwa vs full 'e' vowel"] }
+  ],
+  "unitQuiz": {
+    "id": "a1-u4-quiz",
+    "passMark": 0.7,
+    "questions": [
+      { "type": "mcq", "prompt": "'Segar' means:", "options": ["expensive", "fresh", "heavy", "cheap"], "answerIndex": 1 },
+      { "type": "translate", "prompt": "Translate: 'How much is this fish per kilo?'", "answer": "Ikan ni berapa sekilo?" },
+      { "type": "listening", "audioUrl": "/audio/ms/v-perang-brown.mp3", "prompt": "Which meaning did you hear?", "options": ["war", "blond/brown hair", "market", "fresh"], "answerIndex": 1 },
+      { "type": "mcq", "prompt": "You think the price is too high. You say:", "options": ["Cukup", "Boleh kurang sikit?", "Terima kasih", "Selamat pagi"], "answerIndex": 1 }
+    ]
+  }
+}

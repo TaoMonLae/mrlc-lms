@@ -1,0 +1,327 @@
+{
+  "id": "b1-u2-cari-kerja",
+  "level": "B1",
+  "order": 2,
+  "title": "Cari Kerja",
+  "englishTitle": "Job Hunting",
+  "canDo": [
+    "Read and understand a job advertisement",
+    "Describe your skills and experience",
+    "Ask about salary, hours, and benefits",
+    "Prepare for a basic phone screening"
+  ],
+  "lifeBenefit": "Search and apply for jobs, and handle an initial phone screening in Malay.",
+  "estMinutes": 75,
+  "vocab": [
+    {
+      "id": "b1-iklan-kerja",
+      "type": "vocab",
+      "ms": "iklan kerja / kekosongan jawatan",
+      "en": "job ad / vacancy",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Saya nampak iklan kerja kat Facebook.",
+      "exampleEn": "I saw a job ad on Facebook.",
+      "phonetic": "i-klan kuh-rja",
+      "audioUrl": "/audio/ms/b1-iklan-kerja.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-pengalaman-kerja",
+      "type": "vocab",
+      "ms": "pengalaman kerja",
+      "en": "work experience",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Saya ada pengalaman kerja tiga tahun.",
+      "exampleEn": "I have three years of work experience.",
+      "phonetic": "puh-nga-la-man kuh-rja",
+      "audioUrl": "/audio/ms/b1-pengalaman-kerja.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-kemahiran",
+      "type": "vocab",
+      "ms": "kemahiran",
+      "en": "skills",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Kemahiran saya termasuk masakan dan servis.",
+      "exampleEn": "My skills include cooking and service.",
+      "phonetic": "kuh-ma-hi-ran",
+      "audioUrl": "/audio/ms/b1-kemahiran.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-gaji-pokok",
+      "type": "vocab",
+      "ms": "gaji pokok",
+      "en": "basic salary",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Berapa gaji pokok untuk jawatan ni?",
+      "exampleEn": "What's the basic salary for this position?",
+      "phonetic": "ga-ji po-kok",
+      "audioUrl": "/audio/ms/b1-gaji-pokok.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-waktu-bekerja",
+      "type": "vocab",
+      "ms": "waktu bekerja",
+      "en": "working hours",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Waktu bekerja lapan jam sehari.",
+      "exampleEn": "Working hours are eight hours a day.",
+      "phonetic": "wak-tu buh-kuh-rja",
+      "audioUrl": "/audio/ms/b1-waktu-bekerja.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-faedah",
+      "type": "vocab",
+      "ms": "faedah / elaun",
+      "en": "benefits / allowance",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Ada faedah insurans tak?",
+      "exampleEn": "Is there insurance as a benefit?",
+      "phonetic": "fa-eh-dah / uh-lown",
+      "audioUrl": "/audio/ms/b1-faedah.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-temuduga",
+      "type": "vocab",
+      "ms": "temuduga",
+      "en": "job interview",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Bila temuduga saya?",
+      "exampleEn": "When is my job interview?",
+      "phonetic": "tuh-mu-du-ga",
+      "audioUrl": "/audio/ms/b1-temuduga.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-mula-kerja",
+      "type": "phrase",
+      "ms": "bila boleh mula kerja?",
+      "en": "when can you start?",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Awak boleh mula kerja bila?",
+      "exampleEn": "When can you start work?",
+      "phonetic": "bi-la bo-leh mu-la kuh-rja",
+      "audioUrl": "/audio/ms/b1-mula-kerja.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "b1-u2-l1",
+      "order": 1,
+      "title": "Baca Iklan Kerja",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "b1-iklan-kerja",
+        "b1-gaji-pokok",
+        "b1-waktu-bekerja"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'What's the basic salary and working hours for this job?'",
+          "answer": "Berapa gaji pokok dan waktu bekerja untuk kerja ni?"
+        }
+      ]
+    },
+    {
+      "id": "b1-u2-l2",
+      "order": 2,
+      "title": "Kemahiran & Pengalaman",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b1-pengalaman-kerja",
+        "b1-kemahiran"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'I have two years of experience and skills in customer service.'",
+          "answer": "Saya ada dua tahun pengalaman dan kemahiran dalam servis pelanggan."
+        }
+      ]
+    },
+    {
+      "id": "b1-u2-l3",
+      "order": 3,
+      "title": "Faedah & Temuduga",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b1-faedah",
+        "b1-temuduga",
+        "b1-mula-kerja"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'Ada ___ insurans tak?' (benefits)",
+          "itemIds": [
+            "b1-faedah"
+          ],
+          "answer": "faedah"
+        }
+      ]
+    },
+    {
+      "id": "b1-u2-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 21,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b1-iklan-kerja",
+        "b1-temuduga",
+        "b1-mula-kerja"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "b1-u2-phone-screening",
+    "setting": "A short phone screening call from a hiring manager",
+    "roles": [
+      "learner",
+      "hiring manager"
+    ],
+    "script": [
+      {
+        "role": "manager",
+        "ms": "Hai, saya call pasal iklan kerja yang awak apply.",
+        "en": "Hi, I'm calling about the job ad you applied for."
+      },
+      {
+        "role": "learner",
+        "ms": "Oh ya, terima kasih sebab call.",
+        "en": "Oh yes, thank you for calling."
+      },
+      {
+        "role": "manager",
+        "ms": "Boleh cerita sikit pasal pengalaman kerja awak?",
+        "en": "Can you tell me a bit about your work experience?"
+      },
+      {
+        "role": "learner",
+        "ms": "Saya ada dua tahun pengalaman kerja kat restoran.",
+        "en": "I have two years of work experience at a restaurant."
+      },
+      {
+        "role": "manager",
+        "ms": "Bagus. Awak boleh mula kerja bila?",
+        "en": "Good. When can you start work?"
+      },
+      {
+        "role": "learner",
+        "ms": "Saya boleh mula minggu depan.",
+        "en": "I can start next week."
+      },
+      {
+        "role": "manager",
+        "ms": "Okay, kami akan hubungi awak untuk temuduga.",
+        "en": "Okay, we'll contact you for an interview."
+      }
+    ],
+    "aiPrompt": "You are a hiring manager doing a brief phone screening. Ask about the candidate's experience, then ask when they can start, and close by saying you'll follow up for a formal interview. Keep it friendly, semi-formal, and encouraging."
+  },
+  "speakingPrompts": [
+    {
+      "id": "b1-u2-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the phone-screening call, matching the semi-formal but warm tone.",
+      "targetAudioUrl": "/audio/ms/b1-u2-scenario.mp3",
+      "rubric": [
+        "semi-formal phone register",
+        "confident delivery of experience summary"
+      ]
+    },
+    {
+      "id": "b1-u2-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Do a phone screening with the AI hiring manager: describe your experience and answer the start-date question.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "gives a clear, concise experience summary",
+        "answers the start-date question"
+      ]
+    },
+    {
+      "id": "b1-u2-presentation-1",
+      "type": "presentation",
+      "instructions": "Give a 90-second self-introduction as if starting a job interview: name, experience, skills, and why you want the job.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "covers name, experience, skills, motivation",
+        "flows logically"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "b1-u2-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Temuduga' means:",
+        "options": [
+          "salary",
+          "job interview",
+          "working hours",
+          "resume"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate: 'I have three years of work experience.'",
+        "answer": "Saya ada pengalaman kerja tiga tahun."
+      },
+      {
+        "type": "mcq",
+        "prompt": "'Bila boleh mula kerja?' is asking about:",
+        "options": [
+          "your salary expectation",
+          "your start date",
+          "your skills",
+          "your address"
+        ],
+        "answerIndex": 1
+      }
+    ]
+  }
+}

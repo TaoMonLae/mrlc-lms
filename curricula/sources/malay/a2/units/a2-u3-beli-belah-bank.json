@@ -1,0 +1,311 @@
+{
+  "id": "a2-u3-beli-belah-bank",
+  "level": "A2",
+  "order": 3,
+  "title": "Beli-belah & Bank",
+  "englishTitle": "Shopping & Opening a Bank Account",
+  "canDo": [
+    "Shop for clothes/groceries and ask about sizes/exchange",
+    "Open a basic savings account",
+    "Understand ATM instructions",
+    "Ask about fees and required documents"
+  ],
+  "lifeBenefit": "Shop at malls/supermarkets and manage a Malaysian bank account.",
+  "estMinutes": 70,
+  "vocab": [
+    {
+      "id": "v2-saiz",
+      "type": "vocab",
+      "ms": "saiz",
+      "en": "size",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Ada saiz lain tak?",
+      "exampleEn": "Do you have another size?",
+      "phonetic": "sais",
+      "audioUrl": "/audio/ms/v2-saiz.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-tukar-barang",
+      "type": "phrase",
+      "ms": "tukar barang",
+      "en": "exchange goods",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Boleh tukar barang tak, kalau tak sesuai?",
+      "exampleEn": "Can I exchange this if it doesn't fit?",
+      "phonetic": "tu-kar ba-rang",
+      "audioUrl": "/audio/ms/v2-tukar-barang.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-resit",
+      "type": "vocab",
+      "ms": "resit",
+      "en": "receipt",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Simpan resit untuk tukar barang.",
+      "exampleEn": "Keep the receipt to exchange goods.",
+      "phonetic": "reh-sit",
+      "audioUrl": "/audio/ms/v2-resit.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-buka-akaun",
+      "type": "phrase",
+      "ms": "buka akaun bank",
+      "en": "open a bank account",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Saya nak buka akaun bank.",
+      "exampleEn": "I want to open a bank account.",
+      "phonetic": "bu-ka a-kown bank",
+      "audioUrl": "/audio/ms/v2-buka-akaun.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-dokumen-diperlukan",
+      "type": "vocab",
+      "ms": "dokumen diperlukan",
+      "en": "required documents",
+      "mon": null,
+      "register": "standard",
+      "example": "Dokumen apa yang diperlukan?",
+      "exampleEn": "What documents are required?",
+      "phonetic": "do-ku-men di-puhr-lu-kan",
+      "audioUrl": "/audio/ms/v2-dokumen-diperlukan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-buku-akaun",
+      "type": "vocab",
+      "ms": "buku akaun / kad ATM",
+      "en": "passbook / ATM card",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Bila saya boleh dapat kad ATM?",
+      "exampleEn": "When can I get the ATM card?",
+      "phonetic": "bu-ku a-kown / kad ay-tee-em",
+      "audioUrl": "/audio/ms/v2-buku-akaun.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-masukkan-pin",
+      "type": "vocab",
+      "ms": "masukkan PIN",
+      "en": "enter your PIN",
+      "mon": null,
+      "register": "standard",
+      "example": "Sila masukkan PIN awak.",
+      "exampleEn": "Please enter your PIN.",
+      "phonetic": "ma-suk-kan pin",
+      "audioUrl": "/audio/ms/v2-masukkan-pin.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-caj-bulanan",
+      "type": "vocab",
+      "ms": "caj bulanan",
+      "en": "monthly fee/charge",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Ada caj bulanan tak untuk akaun ni?",
+      "exampleEn": "Is there a monthly fee for this account?",
+      "phonetic": "chaj bu-la-nan",
+      "audioUrl": "/audio/ms/v2-caj-bulanan.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "a2-u3-l1",
+      "order": 1,
+      "title": "Beli-belah & Tukar Barang",
+      "estMinutes": 16,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "v2-saiz",
+        "v2-tukar-barang",
+        "v2-resit"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'Do you have another size? I want to try it.'",
+          "answer": "Ada saiz lain tak? Saya nak cuba."
+        }
+      ]
+    },
+    {
+      "id": "a2-u3-l2",
+      "order": 2,
+      "title": "Buka Akaun Bank",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "v2-buka-akaun",
+        "v2-dokumen-diperlukan"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'I want to open a bank account. What documents are required?'",
+          "answer": "Saya nak buka akaun bank. Dokumen apa yang diperlukan?"
+        }
+      ]
+    },
+    {
+      "id": "a2-u3-l3",
+      "order": 3,
+      "title": "ATM & Caj",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "v2-buku-akaun",
+        "v2-masukkan-pin",
+        "v2-caj-bulanan"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'Sila ___ PIN awak.' (enter)",
+          "itemIds": [
+            "v2-masukkan-pin"
+          ],
+          "answer": "masukkan"
+        }
+      ]
+    },
+    {
+      "id": "a2-u3-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "v2-buka-akaun",
+        "v2-caj-bulanan",
+        "v2-tukar-barang"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "a2-u3-bank-account-opening",
+    "setting": "Opening a savings account at a bank branch",
+    "roles": [
+      "learner",
+      "bank officer"
+    ],
+    "script": [
+      {
+        "role": "learner",
+        "ms": "Selamat pagi, saya nak buka akaun bank.",
+        "en": "Good morning, I want to open a bank account."
+      },
+      {
+        "role": "officer",
+        "ms": "Baik. Ada bawa pasport dan kad UNHCR?",
+        "en": "Alright. Did you bring your passport and UNHCR card?"
+      },
+      {
+        "role": "learner",
+        "ms": "Ada, ini semua dokumen saya.",
+        "en": "Yes, here are all my documents."
+      },
+      {
+        "role": "officer",
+        "ms": "Okay, ada caj bulanan lima ringgit untuk akaun ni.",
+        "en": "Okay, there's a five-ringgit monthly fee for this account."
+      },
+      {
+        "role": "learner",
+        "ms": "Baik, tak masalah. Bila saya boleh dapat kad ATM?",
+        "en": "Alright, no problem. When can I get the ATM card?"
+      },
+      {
+        "role": "officer",
+        "ms": "Dalam tujuh hari bekerja.",
+        "en": "Within seven working days."
+      }
+    ],
+    "aiPrompt": "You are a Malaysian bank officer helping a customer open a savings account. Ask for required documents, mention any monthly fee, and give a timeline for the ATM card. Speak in clear, semi-formal Malay (a mix of standard and colloquial, as used at bank counters)."
+  },
+  "speakingPrompts": [
+    {
+      "id": "a2-u3-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the bank account dialogue, noting the more formal register than a market scenario.",
+      "targetAudioUrl": "/audio/ms/a2-u3-scenario.mp3",
+      "rubric": [
+        "semi-formal register",
+        "clear document/fee vocabulary"
+      ]
+    },
+    {
+      "id": "a2-u3-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Open an account with the AI bank officer: state your purpose, present documents, and ask about the ATM card timeline.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "states purpose clearly",
+        "asks about fees and ATM card"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "a2-u3-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Buka akaun bank' means:",
+        "options": [
+          "close an account",
+          "open a bank account",
+          "withdraw money",
+          "transfer money"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate: 'Keep the receipt in case you need to exchange it.'",
+        "answer": "Simpan resit untuk tukar barang."
+      },
+      {
+        "type": "mcq",
+        "prompt": "'Caj bulanan' refers to:",
+        "options": [
+          "a one-time fee",
+          "a monthly fee",
+          "an annual fee",
+          "no fee"
+        ],
+        "answerIndex": 1
+      }
+    ]
+  }
+}

@@ -1,0 +1,308 @@
+{
+  "id": "b1-u9-berunding-masalah",
+  "level": "B1",
+  "order": 9,
+  "title": "Berunding & Selesaikan Masalah",
+  "englishTitle": "Negotiating & Problem-Solving",
+  "canDo": [
+    "Negotiate a price, deadline, or condition assertively but politely",
+    "Propose a compromise",
+    "Push back on an unfair situation respectfully",
+    "Reach and confirm an agreement"
+  ],
+  "lifeBenefit": "Stand up for yourself fairly in disputes over rent, work, purchases, or services.",
+  "estMinutes": 75,
+  "vocab": [
+    {
+      "id": "b1-cadangan",
+      "type": "vocab",
+      "ms": "cadangan",
+      "en": "suggestion/proposal",
+      "mon": null,
+      "register": "standard",
+      "example": "Saya ada satu cadangan.",
+      "exampleEn": "I have a suggestion.",
+      "phonetic": "cha-da-ngan",
+      "audioUrl": "/audio/ms/b1-cadangan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-persetujuan",
+      "type": "vocab",
+      "ms": "persetujuan",
+      "en": "agreement",
+      "mon": null,
+      "register": "standard",
+      "example": "Kita dah capai persetujuan.",
+      "exampleEn": "We've reached an agreement.",
+      "phonetic": "puhr-suh-tu-ju-an",
+      "audioUrl": "/audio/ms/b1-persetujuan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-adil",
+      "type": "vocab",
+      "ms": "adil / tak adil",
+      "en": "fair / unfair",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Saya rasa ni tak adil.",
+      "exampleEn": "I think this is unfair.",
+      "phonetic": "a-dil",
+      "audioUrl": "/audio/ms/b1-adil.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-jalan-tengah",
+      "type": "phrase",
+      "ms": "jalan tengah",
+      "en": "middle ground/compromise",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Jom kita cari jalan tengah.",
+      "exampleEn": "Let's find a middle ground.",
+      "phonetic": "ja-lan tuh-ngah",
+      "audioUrl": "/audio/ms/b1-jalan-tengah.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-keberatan",
+      "type": "vocab",
+      "ms": "keberatan",
+      "en": "objection/reluctance",
+      "mon": null,
+      "register": "standard",
+      "example": "Saya ada sedikit keberatan pasal ni.",
+      "exampleEn": "I have a small objection about this.",
+      "phonetic": "kuh-buh-ra-tan",
+      "audioUrl": "/audio/ms/b1-keberatan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-fikir-dulu",
+      "type": "phrase",
+      "ms": "biar saya fikir dulu",
+      "en": "let me think about it first",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Biar saya fikir dulu sebelum jawab.",
+      "exampleEn": "Let me think about it before answering.",
+      "phonetic": "bi-ar sa-ya fi-kir du-lu",
+      "audioUrl": "/audio/ms/b1-fikir-dulu.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-setuju-tidak",
+      "type": "vocab",
+      "ms": "setuju / tidak setuju",
+      "en": "agree / disagree",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Saya tak setuju dengan syarat tu.",
+      "exampleEn": "I don't agree with that condition.",
+      "phonetic": "suh-tu-ju / ti-dak suh-tu-ju",
+      "audioUrl": "/audio/ms/b1-setuju-tidak.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "b1-u9-l1",
+      "order": 1,
+      "title": "Cadangan & Persetujuan",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "b1-cadangan",
+        "b1-persetujuan"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'I have a suggestion, let's discuss it.'",
+          "answer": "Saya ada satu cadangan, jom kita berbincang."
+        }
+      ]
+    },
+    {
+      "id": "b1-u9-l2",
+      "order": 2,
+      "title": "Adil & Jalan Tengah",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b1-adil",
+        "b1-jalan-tengah"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'I think this is unfair, let's find a middle ground.'",
+          "answer": "Saya rasa ni tak adil, jom cari jalan tengah."
+        }
+      ]
+    },
+    {
+      "id": "b1-u9-l3",
+      "order": 3,
+      "title": "Setuju atau Tidak",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b1-keberatan",
+        "b1-fikir-dulu",
+        "b1-setuju-tidak"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'Biar saya ___ dulu.' (think)",
+          "itemIds": [
+            "b1-fikir-dulu"
+          ],
+          "answer": "fikir"
+        }
+      ]
+    },
+    {
+      "id": "b1-u9-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 21,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b1-adil",
+        "b1-jalan-tengah",
+        "b1-persetujuan"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "b1-u9-negotiating-repair-cost",
+    "setting": "Negotiating who pays for a repair cost with a landlord",
+    "roles": [
+      "learner",
+      "landlord"
+    ],
+    "script": [
+      {
+        "role": "landlord",
+        "ms": "Kerosakan tu awak yang kena bayar.",
+        "en": "You're the one who needs to pay for that damage."
+      },
+      {
+        "role": "learner",
+        "ms": "Saya rasa ni tak adil, sebab kerosakan tu bukan salah saya.",
+        "en": "I think this is unfair, because the damage wasn't my fault."
+      },
+      {
+        "role": "landlord",
+        "ms": "Habis tu, siapa nak bayar?",
+        "en": "So then, who's going to pay?"
+      },
+      {
+        "role": "learner",
+        "ms": "Mungkin kita boleh cari jalan tengah, bahagi kos.",
+        "en": "Maybe we can find a middle ground, split the cost."
+      },
+      {
+        "role": "landlord",
+        "ms": "Biar saya fikir dulu... okay, boleh, kita bahagi separuh-separuh.",
+        "en": "Let me think about it... okay, alright, we'll split it fifty-fifty."
+      },
+      {
+        "role": "learner",
+        "ms": "Baik, saya setuju dengan tu.",
+        "en": "Alright, I agree with that."
+      }
+    ],
+    "aiPrompt": "You are a landlord who initially insists the tenant pays for a repair. Push back once, then be open to a compromise (splitting the cost) when the tenant proposes it reasonably. Stay firm but fair, not hostile."
+  },
+  "speakingPrompts": [
+    {
+      "id": "b1-u9-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the negotiation dialogue, focusing on assertive but respectful delivery.",
+      "targetAudioUrl": "/audio/ms/b1-u9-scenario.mp3",
+      "rubric": [
+        "assertive, non-aggressive tone",
+        "clear compromise proposal"
+      ]
+    },
+    {
+      "id": "b1-u9-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Negotiate a disputed cost or condition with the AI landlord/counterpart persona and propose a compromise.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "states disagreement respectfully",
+        "proposes a specific compromise"
+      ]
+    },
+    {
+      "id": "b1-u9-presentation-1",
+      "type": "presentation",
+      "instructions": "Give a 90-second argument for a position of your choice, then state a possible compromise.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "clear position stated",
+        "reasonable compromise offered"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "b1-u9-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Jalan tengah' means:",
+        "options": [
+          "a shortcut",
+          "a compromise/middle ground",
+          "an argument",
+          "a mistake"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate: 'I don't agree with that condition.'",
+        "answer": "Saya tak setuju dengan syarat tu."
+      },
+      {
+        "type": "mcq",
+        "prompt": "'Adil' means:",
+        "options": [
+          "unfair",
+          "fair",
+          "expensive",
+          "urgent"
+        ],
+        "answerIndex": 1
+      }
+    ]
+  }
+}

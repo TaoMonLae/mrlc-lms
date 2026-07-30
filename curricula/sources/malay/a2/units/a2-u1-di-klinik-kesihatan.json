@@ -1,0 +1,75 @@
+{
+  "id": "a2-u1-di-klinik-kesihatan",
+  "level": "A2",
+  "order": 1,
+  "title": "Di Klinik Kesihatan",
+  "englishTitle": "At the Government Health Clinic",
+  "canDo": [
+    "Register at a government clinic and take a queue number",
+    "Describe symptoms in more detail than A1",
+    "Understand basic instructions from clinic staff",
+    "Ask about fees and medicine collection"
+  ],
+  "lifeBenefit": "Handle a full clinic visit independently, from registration to collecting medicine.",
+  "estMinutes": 70,
+  "vocab": [
+    { "id": "v2-daftar-kaunter", "type": "phrase", "ms": "daftar kat kaunter", "en": "register at the counter", "mon": null, "register": "colloquial", "example": "Sila daftar kat kaunter dulu.", "exampleEn": "Please register at the counter first.", "phonetic": "daf-tar kat kown-tuhr", "audioUrl": "/audio/ms/v2-daftar-kaunter.mp3", "minimalPairWith": null },
+    { "id": "v2-nombor-giliran", "type": "phrase", "ms": "nombor giliran", "en": "queue number", "mon": null, "register": "colloquial", "example": "Ambil nombor giliran kat mesin tu.", "exampleEn": "Take a queue number from that machine.", "phonetic": "nom-bor gi-li-ran", "audioUrl": "/audio/ms/v2-nombor-giliran.mp3", "minimalPairWith": null },
+    { "id": "v2-kad-pesakit", "type": "vocab", "ms": "kad pesakit", "en": "patient card", "mon": null, "register": "standard", "example": "Ada kad pesakit lama tak?", "exampleEn": "Do you have an old patient card?", "phonetic": "kad puh-sa-kit", "audioUrl": "/audio/ms/v2-kad-pesakit.mp3", "minimalPairWith": null },
+    { "id": "v2-sakit-kepala", "type": "vocab", "ms": "sakit kepala", "en": "headache", "mon": null, "register": "colloquial", "example": "Saya sakit kepala teruk.", "exampleEn": "I have a bad headache.", "phonetic": "sa-kit kuh-pa-la", "audioUrl": "/audio/ms/v2-sakit-kepala.mp3", "minimalPairWith": null },
+    { "id": "v2-sakit-perut", "type": "vocab", "ms": "sakit perut", "en": "stomach ache", "mon": null, "register": "colloquial", "example": "Anak saya sakit perut sejak semalam.", "exampleEn": "My child has had a stomach ache since yesterday.", "phonetic": "sa-kit puh-rut", "audioUrl": "/audio/ms/v2-sakit-perut.mp3", "minimalPairWith": null },
+    { "id": "v2-cirit-birit", "type": "vocab", "ms": "cirit-birit", "en": "diarrhoea", "mon": null, "register": "colloquial", "example": "Dia cirit-birit dan muntah.", "exampleEn": "He/she has diarrhoea and is vomiting.", "phonetic": "chi-rit bi-rit", "audioUrl": "/audio/ms/v2-cirit-birit.mp3", "minimalPairWith": null },
+    { "id": "v2-sejak-bila", "type": "phrase", "ms": "sejak bila?", "en": "since when?", "mon": null, "register": "colloquial", "example": "Sakit ni sejak bila?", "exampleEn": "Since when has this pain been there?", "phonetic": "suh-jak bi-la", "audioUrl": "/audio/ms/v2-sejak-bila.mp3", "minimalPairWith": null },
+    { "id": "v2-percuma-bayar", "type": "vocab", "ms": "percuma / bayar", "en": "free of charge / pay", "mon": null, "register": "standard", "example": "Rawatan ni percuma untuk warga asing?", "exampleEn": "Is this treatment free for foreigners?", "phonetic": "puhr-chu-ma / ba-yar", "audioUrl": "/audio/ms/v2-percuma-bayar.mp3", "minimalPairWith": null },
+    { "id": "v2-ambil-ubat", "type": "phrase", "ms": "ambil ubat kat kaunter farmasi", "en": "collect medicine at the pharmacy counter", "mon": null, "register": "colloquial", "example": "Lepas jumpa doktor, ambil ubat kat kaunter farmasi.", "exampleEn": "After seeing the doctor, collect medicine at the pharmacy counter.", "phonetic": "am-bil u-bat kat kown-tuhr far-ma-si", "audioUrl": "/audio/ms/v2-ambil-ubat.mp3", "minimalPairWith": null },
+    { "id": "v2-rehat", "type": "vocab", "ms": "surat rehat", "en": "medical leave note (MC)", "mon": null, "register": "standard", "example": "Doktor bagi surat rehat dua hari.", "exampleEn": "The doctor gave a two-day medical leave note.", "phonetic": "su-rat reh-hat", "audioUrl": "/audio/ms/v2-rehat.mp3", "minimalPairWith": null }
+  ],
+  "lessons": [
+    { "id": "a2-u1-l1", "order": 1, "title": "Daftar & Nombor Giliran", "estMinutes": 15, "sections": ["review", "input", "practice", "quiz"], "itemIds": ["v2-daftar-kaunter", "v2-nombor-giliran", "v2-kad-pesakit"],
+      "practiceExercises": [
+        { "type": "translate", "prompt": "Translate: 'Please take a queue number and register at the counter.'", "itemIds": ["v2-nombor-giliran", "v2-daftar-kaunter"], "answer": "Sila ambil nombor giliran dan daftar kat kaunter." }
+      ]
+    },
+    { "id": "a2-u1-l2", "order": 2, "title": "Terangkan Gejala (Describing symptoms)", "estMinutes": 18, "sections": ["review", "input", "practice", "quiz", "speaking"], "itemIds": ["v2-sakit-kepala", "v2-sakit-perut", "v2-cirit-birit", "v2-sejak-bila"],
+      "practiceExercises": [
+        { "type": "clozeGap", "prompt": "'Sakit ni ___ bila?' (since)", "itemIds": ["v2-sejak-bila"], "answer": "sejak" },
+        { "type": "translate", "prompt": "Translate: 'I've had a stomach ache and diarrhoea since this morning.'", "itemIds": ["v2-sakit-perut", "v2-cirit-birit"], "answer": "Saya sakit perut dan cirit-birit sejak pagi tadi." }
+      ]
+    },
+    { "id": "a2-u1-l3", "order": 3, "title": "Bayaran & Ubat (Fees & medicine)", "estMinutes": 17, "sections": ["review", "input", "practice", "quiz", "speaking"], "itemIds": ["v2-percuma-bayar", "v2-ambil-ubat", "v2-rehat"],
+      "practiceExercises": [
+        { "type": "matching", "prompt": "Match: where do you collect medicine, and what does the doctor give if you need rest?", "itemIds": ["v2-ambil-ubat", "v2-rehat"], "answer": null }
+      ]
+    },
+    { "id": "a2-u1-l4", "order": 4, "title": "Latihan & Ulangkaji", "estMinutes": 20, "sections": ["review", "quiz", "speaking"], "itemIds": ["v2-sejak-bila", "v2-sakit-kepala", "v2-ambil-ubat", "v2-rehat"], "practiceExercises": [] }
+  ],
+  "scenario": {
+    "id": "a2-u1-full-clinic-visit",
+    "setting": "A full visit: registration, seeing the doctor, and collecting medicine at a klinik kesihatan",
+    "roles": ["learner (patient)", "nurse", "doctor"],
+    "script": [
+      { "role": "nurse", "ms": "Ada kad pesakit lama tak?", "en": "Do you have an old patient card?" },
+      { "role": "learner", "ms": "Tak ada, ini kali pertama saya datang.", "en": "No, this is my first time coming here." },
+      { "role": "nurse", "ms": "Okay, isi borang ni. Sakit apa?", "en": "Okay, fill in this form. What's wrong?" },
+      { "role": "learner", "ms": "Sakit kepala dan demam, sejak dua hari.", "en": "Headache and fever, for two days." },
+      { "role": "doctor", "ms": "Ada muntah atau cirit-birit tak?", "en": "Any vomiting or diarrhoea?" },
+      { "role": "learner", "ms": "Tak ada, sakit kepala je.", "en": "No, just a headache." },
+      { "role": "doctor", "ms": "Baik, saya bagi ubat. Ambil kat kaunter farmasi.", "en": "Alright, I'll give you medicine. Collect it at the pharmacy counter." }
+    ],
+    "aiPrompt": "You are alternating between a nurse (registration/intake) and a doctor (diagnosis) at a Malaysian government health clinic. Ask about patient history, symptoms and their duration, and any related symptoms, then direct the patient to collect medicine at the pharmacy. Use clear, simple, colloquial KL Malay and stay patient and professional."
+  },
+  "speakingPrompts": [
+    { "id": "a2-u1-shadow-1", "type": "shadowing", "instructions": "Shadow the full clinic-visit dialogue across all three roles, keeping a calm, clear tone.", "targetAudioUrl": "/audio/ms/a2-u1-scenario.mp3", "rubric": ["clear symptom description", "correct use of 'sejak' for duration"] },
+    { "id": "a2-u1-roleplay-1", "type": "roleplay", "instructions": "Play the patient through registration and diagnosis with the AI nurse/doctor personas, describing two symptoms and their duration.", "targetAudioUrl": null, "rubric": ["describes at least two symptoms", "states duration with 'sejak'", "understands the pharmacy instruction"] }
+  ],
+  "unitQuiz": {
+    "id": "a2-u1-quiz",
+    "passMark": 0.7,
+    "questions": [
+      { "type": "mcq", "prompt": "'Sejak bila?' asks about:", "options": ["cost", "location", "duration/since when", "cause"], "answerIndex": 2 },
+      { "type": "translate", "prompt": "Translate: 'I have a headache and a stomach ache.'", "answer": "Saya sakit kepala dan sakit perut." },
+      { "type": "mcq", "prompt": "Where do you collect prescribed medicine?", "options": ["kaunter daftar", "kaunter farmasi", "bilik doktor", "kaunter bayaran"], "answerIndex": 1 },
+      { "type": "translate", "prompt": "Translate: 'This is my first time here, I don't have an old patient card.'", "answer": "Ini kali pertama saya datang, saya tak ada kad pesakit lama." }
+    ]
+  }
+}

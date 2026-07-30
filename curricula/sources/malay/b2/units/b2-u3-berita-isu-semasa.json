@@ -1,0 +1,303 @@
+{
+  "id": "b2-u3-berita-isu-semasa",
+  "level": "B2",
+  "order": 3,
+  "title": "Berita & Isu Semasa",
+  "englishTitle": "News & Current Affairs",
+  "canDo": [
+    "Follow the main points of a Malay news broadcast or article",
+    "Discuss a current issue with an opinion",
+    "Use reporting/hedging language (dikatakan, menurut, mungkin)",
+    "Summarise a news story in your own words"
+  ],
+  "lifeBenefit": "Follow Malaysian news and participate in everyday discussions of current events.",
+  "estMinutes": 80,
+  "vocab": [
+    {
+      "id": "b2-menurut",
+      "type": "vocab",
+      "ms": "menurut",
+      "en": "according to",
+      "mon": null,
+      "register": "standard",
+      "example": "Menurut laporan, harga barangan naik.",
+      "exampleEn": "According to the report, prices are rising.",
+      "phonetic": "muh-nu-rut",
+      "audioUrl": "/audio/ms/b2-menurut.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-dikatakan",
+      "type": "vocab",
+      "ms": "dikatakan",
+      "en": "it is said (that)",
+      "mon": null,
+      "register": "standard",
+      "example": "Kerajaan dikatakan akan umumkan bantuan baru.",
+      "exampleEn": "The government is said to announce new aid.",
+      "phonetic": "di-ka-ta-kan",
+      "audioUrl": "/audio/ms/b2-dikatakan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-isu-semasa",
+      "type": "vocab",
+      "ms": "isu semasa",
+      "en": "current issue",
+      "mon": null,
+      "register": "standard",
+      "example": "Apa isu semasa yang penting minggu ni?",
+      "exampleEn": "What's the important current issue this week?",
+      "phonetic": "i-su suh-ma-sa",
+      "audioUrl": "/audio/ms/b2-isu-semasa.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-kenaikan-harga",
+      "type": "vocab",
+      "ms": "kenaikan harga",
+      "en": "price increase",
+      "mon": null,
+      "register": "standard",
+      "example": "Kenaikan harga minyak menjejaskan semua orang.",
+      "exampleEn": "The fuel price increase affects everyone.",
+      "phonetic": "kuh-na-i-kan har-ga",
+      "audioUrl": "/audio/ms/b2-kenaikan-harga.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-pendapat-umum",
+      "type": "vocab",
+      "ms": "pendapat umum",
+      "en": "public opinion",
+      "mon": null,
+      "register": "standard",
+      "example": "Pendapat umum berbeza-beza pasal isu ni.",
+      "exampleEn": "Public opinion differs on this issue.",
+      "phonetic": "puhn-da-pat u-mum",
+      "audioUrl": "/audio/ms/b2-pendapat-umum.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-mempengaruhi",
+      "type": "vocab",
+      "ms": "mempengaruhi",
+      "en": "to influence/affect",
+      "mon": null,
+      "register": "standard",
+      "example": "Ini akan mempengaruhi ramai keluarga.",
+      "exampleEn": "This will affect many families.",
+      "phonetic": "muhm-puh-nga-ru-hi",
+      "audioUrl": "/audio/ms/b2-mempengaruhi.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-secara-keseluruhan",
+      "type": "vocab",
+      "ms": "secara keseluruhan",
+      "en": "overall/on the whole",
+      "mon": null,
+      "register": "standard",
+      "example": "Secara keseluruhan, situasi semakin baik.",
+      "exampleEn": "Overall, the situation is improving.",
+      "phonetic": "suh-cha-ra kuh-suh-lu-ru-han",
+      "audioUrl": "/audio/ms/b2-secara-keseluruhan.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "b2-u3-l1",
+      "order": 1,
+      "title": "Bahasa Melaporkan (Reporting language)",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "b2-menurut",
+        "b2-dikatakan"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'According to the report, it is said that prices will rise next month.'",
+          "answer": "Menurut laporan, dikatakan harga akan naik bulan depan."
+        }
+      ]
+    },
+    {
+      "id": "b2-u3-l2",
+      "order": 2,
+      "title": "Bincang Isu Semasa",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b2-isu-semasa",
+        "b2-kenaikan-harga",
+        "b2-pendapat-umum"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'Public opinion is divided on this price increase.'",
+          "answer": "Pendapat umum berbeza-beza pasal kenaikan harga ni."
+        }
+      ]
+    },
+    {
+      "id": "b2-u3-l3",
+      "order": 3,
+      "title": "Kesan & Rumusan",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b2-mempengaruhi",
+        "b2-secara-keseluruhan"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'___, situasi semakin baik.' (overall)",
+          "itemIds": [
+            "b2-secara-keseluruhan"
+          ],
+          "answer": "Secara keseluruhan"
+        }
+      ]
+    },
+    {
+      "id": "b2-u3-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b2-isu-semasa",
+        "b2-pendapat-umum",
+        "b2-mempengaruhi"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "b2-u3-discussing-news",
+    "setting": "Discussing a news story about rising living costs with a colleague",
+    "roles": [
+      "learner",
+      "colleague"
+    ],
+    "script": [
+      {
+        "role": "colleague",
+        "ms": "Awak dengar berita pasal kenaikan harga tak?",
+        "en": "Did you hear the news about the price increase?"
+      },
+      {
+        "role": "learner",
+        "ms": "Ya, menurut laporan, ia akan mempengaruhi ramai keluarga.",
+        "en": "Yes, according to the report, it will affect many families."
+      },
+      {
+        "role": "colleague",
+        "ms": "Pendapat umum nampak berbeza-beza kan?",
+        "en": "Public opinion seems divided, right?"
+      },
+      {
+        "role": "learner",
+        "ms": "Betul. Tapi secara keseluruhan, ramai risau pasal kos sara hidup.",
+        "en": "Right. But overall, many are worried about the cost of living."
+      },
+      {
+        "role": "colleague",
+        "ms": "Dikatakan kerajaan akan umumkan bantuan baru minggu depan.",
+        "en": "It's said the government will announce new aid next week."
+      }
+    ],
+    "aiPrompt": "You are a colleague discussing a current news topic (rising cost of living) at a natural, informed but non-partisan level. Use reporting language (menurut, dikatakan) and share a balanced view. Avoid taking one-sided political positions."
+  },
+  "speakingPrompts": [
+    {
+      "id": "b2-u3-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the news-discussion dialogue, focusing on the more formal reporting register.",
+      "targetAudioUrl": "/audio/ms/b2-u3-scenario.mp3",
+      "rubric": [
+        "standard-register reporting language",
+        "balanced, non-partisan tone"
+      ]
+    },
+    {
+      "id": "b2-u3-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Discuss a real or invented current issue with the AI colleague persona using at least one reporting phrase (menurut/dikatakan).",
+      "targetAudioUrl": null,
+      "rubric": [
+        "uses a reporting phrase correctly",
+        "gives a balanced viewpoint"
+      ]
+    },
+    {
+      "id": "b2-u3-presentation-1",
+      "type": "presentation",
+      "instructions": "Summarise a news article (real or invented) in a 2-minute spoken summary in your own words.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "accurate, own-words summary",
+        "uses at least one hedging/reporting phrase"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "b2-u3-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Menurut' means:",
+        "options": [
+          "therefore",
+          "according to",
+          "however",
+          "in addition"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate: 'Overall, the situation is improving.'",
+        "answer": "Secara keseluruhan, situasi semakin baik."
+      },
+      {
+        "type": "mcq",
+        "prompt": "'Dikatakan' signals that:",
+        "options": [
+          "something is a proven fact",
+          "something is reportedly true/alleged",
+          "something is false",
+          "something is a personal opinion only"
+        ],
+        "answerIndex": 1
+      }
+    ]
+  }
+}

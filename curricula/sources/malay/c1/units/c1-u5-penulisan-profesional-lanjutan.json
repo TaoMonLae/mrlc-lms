@@ -1,0 +1,288 @@
+{
+  "id": "c1-u5-penulisan-profesional-lanjutan",
+  "level": "C1",
+  "order": 5,
+  "title": "Penulisan Profesional Lanjutan",
+  "englishTitle": "Advanced Professional Writing",
+  "canDo": [
+    "Write a persuasive proposal or business case",
+    "Structure a nuanced argument in writing with counterpoints",
+    "Use advanced academic/professional connectors",
+    "Edit and refine writing for tone and precision"
+  ],
+  "lifeBenefit": "Produce polished, persuasive professional documents in Malay.",
+  "estMinutes": 85,
+  "vocab": [
+    {
+      "id": "c1-cadangan-perniagaan",
+      "type": "vocab",
+      "ms": "cadangan perniagaan",
+      "en": "business proposal",
+      "mon": null,
+      "register": "standard",
+      "example": "Saya sediakan cadangan perniagaan untuk projek baru.",
+      "exampleEn": "I've prepared a business proposal for the new project.",
+      "phonetic": "cha-da-ngan puhr-ni-a-ga-an",
+      "audioUrl": "/audio/ms/c1-cadangan-perniagaan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-justifikasi",
+      "type": "vocab",
+      "ms": "justifikasi",
+      "en": "justification/rationale",
+      "mon": null,
+      "register": "standard",
+      "example": "Apa justifikasi untuk perbelanjaan ini?",
+      "exampleEn": "What is the justification for this expense?",
+      "phonetic": "jus-ti-fi-ka-si",
+      "audioUrl": "/audio/ms/c1-justifikasi.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-mengukuhkan-hujah",
+      "type": "phrase",
+      "ms": "mengukuhkan hujah",
+      "en": "to strengthen an argument",
+      "mon": null,
+      "register": "standard",
+      "example": "Data ini mengukuhkan hujah kami.",
+      "exampleEn": "This data strengthens our argument.",
+      "phonetic": "muh-ngu-kuh-kan hu-jah",
+      "audioUrl": "/audio/ms/c1-mengukuhkan-hujah.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-selanjutnya",
+      "type": "vocab",
+      "ms": "selanjutnya / tambahan pula",
+      "en": "furthermore / moreover",
+      "mon": null,
+      "register": "standard",
+      "example": "Selanjutnya, kos operasi akan menurun.",
+      "exampleEn": "Furthermore, operating costs will decrease.",
+      "phonetic": "suh-lan-jut-nya / tam-ba-han pu-la",
+      "audioUrl": "/audio/ms/c1-selanjutnya.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-meminimumkan-risiko",
+      "type": "phrase",
+      "ms": "meminimumkan risiko",
+      "en": "to minimise risk",
+      "mon": null,
+      "register": "standard",
+      "example": "Langkah ini akan meminimumkan risiko kewangan.",
+      "exampleEn": "This step will minimise financial risk.",
+      "phonetic": "muh-mi-ni-mum-kan ri-si-ko",
+      "audioUrl": "/audio/ms/c1-meminimumkan-risiko.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-menyunting",
+      "type": "vocab",
+      "ms": "menyunting",
+      "en": "to edit/revise (writing)",
+      "mon": null,
+      "register": "standard",
+      "example": "Saya perlu menyunting draf ini sekali lagi.",
+      "exampleEn": "I need to edit this draft once more.",
+      "phonetic": "muh-nyun-ting",
+      "audioUrl": "/audio/ms/c1-menyunting.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "c1-u5-l1",
+      "order": 1,
+      "title": "Cadangan & Justifikasi",
+      "estMinutes": 22,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "c1-cadangan-perniagaan",
+        "c1-justifikasi"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'This proposal requires clear justification.'",
+          "answer": "Cadangan ini memerlukan justifikasi yang jelas."
+        }
+      ]
+    },
+    {
+      "id": "c1-u5-l2",
+      "order": 2,
+      "title": "Kukuhkan Hujah Bertulis",
+      "estMinutes": 22,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "c1-mengukuhkan-hujah",
+        "c1-selanjutnya"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'This data strengthens our argument; furthermore, it reduces risk.'",
+          "answer": "Data ini mengukuhkan hujah kami; selanjutnya, ia mengurangkan risiko."
+        }
+      ]
+    },
+    {
+      "id": "c1-u5-l3",
+      "order": 3,
+      "title": "Risiko & Suntingan",
+      "estMinutes": 22,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "c1-meminimumkan-risiko",
+        "c1-menyunting"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'Saya perlu ___ draf ini sekali lagi.' (edit)",
+          "itemIds": [
+            "c1-menyunting"
+          ],
+          "answer": "menyunting"
+        }
+      ]
+    },
+    {
+      "id": "c1-u5-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 19,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "c1-cadangan-perniagaan",
+        "c1-mengukuhkan-hujah",
+        "c1-menyunting"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "c1-u5-pitching-a-proposal",
+    "setting": "Pitching a business proposal to a senior manager and receiving pushback",
+    "roles": [
+      "learner",
+      "senior manager"
+    ],
+    "script": [
+      {
+        "role": "learner",
+        "ms": "Ini cadangan perniagaan saya untuk memperluas perkhidmatan.",
+        "en": "This is my business proposal to expand the service."
+      },
+      {
+        "role": "manager",
+        "ms": "Apa justifikasi untuk kos tambahan ini?",
+        "en": "What's the justification for this additional cost?"
+      },
+      {
+        "role": "learner",
+        "ms": "Data pasaran mengukuhkan hujah bahawa permintaan akan meningkat.",
+        "en": "Market data strengthens the argument that demand will increase."
+      },
+      {
+        "role": "manager",
+        "ms": "Selanjutnya, macam mana kita meminimumkan risiko kewangan?",
+        "en": "Furthermore, how do we minimise financial risk?"
+      },
+      {
+        "role": "learner",
+        "ms": "Kami cadangkan fasa percubaan kecil dulu sebelum pelaburan penuh.",
+        "en": "We propose a small pilot phase first before full investment."
+      }
+    ],
+    "aiPrompt": "You are a senior manager reviewing a business proposal, asking probing questions about justification and risk. Push back constructively, then respond positively to a well-reasoned answer. Formal, high-register business Malay."
+  },
+  "speakingPrompts": [
+    {
+      "id": "c1-u5-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the business-pitch dialogue, focusing on formal business register and confident delivery.",
+      "targetAudioUrl": "/audio/ms/c1-u5-scenario.mp3",
+      "rubric": [
+        "formal business register",
+        "confident, persuasive delivery"
+      ]
+    },
+    {
+      "id": "c1-u5-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Pitch a proposal of your choice to the AI senior-manager persona and respond to at least one probing question.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "presents a clear proposal",
+        "responds to pushback with a reasoned justification"
+      ]
+    },
+    {
+      "id": "c1-u5-presentation-1",
+      "type": "presentation",
+      "instructions": "Deliver a 3-minute business pitch with a proposal, justification, and risk-mitigation plan.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "clear three-part structure",
+        "persuasive, professional tone"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "c1-u5-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Justifikasi' means:",
+        "options": [
+          "conclusion",
+          "justification/rationale",
+          "risk",
+          "proposal"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate: 'This step will minimise financial risk.'",
+        "answer": "Langkah ini akan meminimumkan risiko kewangan."
+      },
+      {
+        "type": "mcq",
+        "prompt": "'Menyunting' means:",
+        "options": [
+          "to present",
+          "to edit/revise",
+          "to reject",
+          "to approve"
+        ],
+        "answerIndex": 1
+      }
+    ]
+  }
+}

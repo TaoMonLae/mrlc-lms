@@ -1,0 +1,293 @@
+{
+  "id": "a2-u6-cuaca-lepak",
+  "level": "A2",
+  "order": 6,
+  "title": "Cuaca, Masa Lapang & Lepak",
+  "englishTitle": "Weather, Leisure & Hanging Out",
+  "canDo": [
+    "Talk about the weather",
+    "Describe free-time activities",
+    "Make casual plans to meet up ('lepak')",
+    "Use basic weekend/leisure vocabulary"
+  ],
+  "lifeBenefit": "Make small talk and social plans naturally with Malaysian friends and neighbours.",
+  "estMinutes": 60,
+  "vocab": [
+    {
+      "id": "v2-panas-hujan",
+      "type": "vocab",
+      "ms": "panas / hujan",
+      "en": "hot / raining",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Hari ni panas sangat.",
+      "exampleEn": "It's very hot today.",
+      "phonetic": "pa-nas / hu-jan",
+      "audioUrl": "/audio/ms/v2-panas-hujan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-cuaca",
+      "type": "vocab",
+      "ms": "cuaca",
+      "en": "weather",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Cuaca macam mana esok?",
+      "exampleEn": "How's the weather tomorrow?",
+      "phonetic": "chu-a-cha",
+      "audioUrl": "/audio/ms/v2-cuaca.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-masa-lapang",
+      "type": "phrase",
+      "ms": "masa lapang",
+      "en": "free time",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Apa awak buat waktu masa lapang?",
+      "exampleEn": "What do you do in your free time?",
+      "phonetic": "ma-sa la-pang",
+      "audioUrl": "/audio/ms/v2-masa-lapang.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-lepak",
+      "type": "vocab",
+      "ms": "lepak",
+      "en": "to hang out / chill",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Jom lepak kat mamak petang ni.",
+      "exampleEn": "Let's hang out at the mamak this evening.",
+      "phonetic": "leh-pak",
+      "audioUrl": "/audio/ms/v2-lepak.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-jom",
+      "type": "vocab",
+      "ms": "jom",
+      "en": "let's (go)",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Jom makan!",
+      "exampleEn": "Let's eat!",
+      "phonetic": "jom",
+      "audioUrl": "/audio/ms/v2-jom.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-hujung-minggu",
+      "type": "vocab",
+      "ms": "hujung minggu",
+      "en": "weekend",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Hujung minggu ni awak buat apa?",
+      "exampleEn": "What are you doing this weekend?",
+      "phonetic": "hu-jung ming-gu",
+      "audioUrl": "/audio/ms/v2-hujung-minggu.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-tengok-wayang",
+      "type": "phrase",
+      "ms": "tengok wayang",
+      "en": "watch a movie",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Nak tengok wayang tak malam ni?",
+      "exampleEn": "Want to watch a movie tonight?",
+      "phonetic": "tuh-ngok wa-yang",
+      "audioUrl": "/audio/ms/v2-tengok-wayang.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "a2-u6-l1",
+      "order": 1,
+      "title": "Cuaca",
+      "estMinutes": 14,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "v2-panas-hujan",
+        "v2-cuaca"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'How's the weather today?'",
+          "answer": "Cuaca hari ni macam mana?"
+        }
+      ]
+    },
+    {
+      "id": "a2-u6-l2",
+      "order": 2,
+      "title": "Lepak & Jom",
+      "estMinutes": 16,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "v2-lepak",
+        "v2-jom",
+        "v2-masa-lapang"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'Let's hang out at the mamak this evening.'",
+          "answer": "Jom lepak kat mamak petang ni."
+        }
+      ]
+    },
+    {
+      "id": "a2-u6-l3",
+      "order": 3,
+      "title": "Rancangan Hujung Minggu",
+      "estMinutes": 15,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "v2-hujung-minggu",
+        "v2-tengok-wayang"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'Nak ___ wayang tak malam ni?' (watch)",
+          "itemIds": [
+            "v2-tengok-wayang"
+          ],
+          "answer": "tengok"
+        }
+      ]
+    },
+    {
+      "id": "a2-u6-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 15,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "v2-lepak",
+        "v2-jom",
+        "v2-hujung-minggu"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "a2-u6-making-weekend-plans",
+    "setting": "Making casual weekend plans with a friend",
+    "roles": [
+      "learner",
+      "friend"
+    ],
+    "script": [
+      {
+        "role": "friend",
+        "ms": "Hujung minggu ni awak free tak?",
+        "en": "Are you free this weekend?"
+      },
+      {
+        "role": "learner",
+        "ms": "Free lah. Kenapa?",
+        "en": "Yeah, free. Why?"
+      },
+      {
+        "role": "friend",
+        "ms": "Jom lepak, tengok wayang ke?",
+        "en": "Let's hang out, maybe watch a movie?"
+      },
+      {
+        "role": "learner",
+        "ms": "Boleh! Tapi kalau hujan macam mana?",
+        "en": "Sure! But what if it rains?"
+      },
+      {
+        "role": "friend",
+        "ms": "Takpe, kita pergi mall je, ada aircond.",
+        "en": "It's fine, we'll just go to the mall, it has air-con."
+      }
+    ],
+    "aiPrompt": "You are a casual Malaysian friend making weekend plans. Suggest an activity, respond to weather concerns, and keep the tone light and informal, using 'lah', 'jom', 'takpe'."
+  },
+  "speakingPrompts": [
+    {
+      "id": "a2-u6-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the weekend-plans dialogue, capturing the relaxed 'lah'/'jom' tone.",
+      "targetAudioUrl": "/audio/ms/a2-u6-scenario.mp3",
+      "rubric": [
+        "casual particle usage (lah, jom)",
+        "natural conversational pace"
+      ]
+    },
+    {
+      "id": "a2-u6-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Make weekend plans with the AI friend persona and respond to a weather concern.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "suggests or responds to an activity",
+        "handles the weather concern naturally"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "a2-u6-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Lepak' means:",
+        "options": [
+          "to work",
+          "to hang out/chill",
+          "to study",
+          "to shop"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate: 'It's raining today.'",
+        "answer": "Hari ni hujan."
+      },
+      {
+        "type": "mcq",
+        "prompt": "'Jom' is used to:",
+        "options": [
+          "apologise",
+          "ask a question",
+          "suggest doing something together",
+          "say goodbye"
+        ],
+        "answerIndex": 2
+      }
+    ]
+  }
+}

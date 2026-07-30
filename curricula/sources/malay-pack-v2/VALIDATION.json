@@ -1,0 +1,42 @@
+{
+  "packVersion": "2",
+  "sources": [
+    "https://www.govinfo.gov/content/pkg/GOVPUB-W-96478719d96146672c586f0d55523121/pdf/GOVPUB-W-96478719d96146672c586f0d55523121.pdf",
+    "https://dbp.gov.my/pedoman-lembar-bahasa/",
+    "https://dbp.gov.my/3d-flip-book/pedoman-umum-ejaan-bahasa-melayu/",
+    "https://www.malaysia.gov.my/en/government/kenali-malaysia/official-language"
+  ],
+  "courses": [
+    {
+      "courseCode": "MRLC-MALAY-SPEAKING-A1-C1-V1",
+      "units": 12,
+      "lessons": 48,
+      "challenges": 384,
+      "options": 1152,
+      "correctAnswers": 384,
+      "allOptionsHaveAudioText": true,
+      "challengeTypes": [
+        "ASSIST",
+        "SELECT"
+      ],
+      "allOptionEmojisNull": true,
+      "courseImageEmoji": ""
+    },
+    {
+      "courseCode": "MRLC-MALAY-GOVINFO-GUIDE-V1",
+      "units": 12,
+      "lessons": 48,
+      "challenges": 384,
+      "options": 1152,
+      "correctAnswers": 384,
+      "allOptionsHaveAudioText": true,
+      "challengeTypes": [
+        "ASSIST",
+        "SELECT"
+      ],
+      "allOptionEmojisNull": true,
+      "courseImageEmoji": ""
+    }
+  ],
+  "emojiFree": true
+}

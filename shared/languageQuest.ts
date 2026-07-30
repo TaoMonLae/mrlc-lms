@@ -160,3 +160,35 @@ export function bossBattleResult(
   const won = total >= options.minQuestions && correctCount / total >= options.passRatio;
   return { results, correctCount, total, won };
 }
+
+// REORDER challenges store their tokens/words in canonical (correct) order as
+// the option array itself -- there's no single "correct option" the way
+// SELECT/ASSIST/CLOZE/ODD_ONE_OUT have one. The learner instead submits the
+// sequence of option ids they built, and this checks it against the
+// canonical order (already sorted by the caller, e.g. by each option's
+// stored `order` column).
+export function reorderChallengeIsCorrect(
+  canonicalOptionIds: readonly string[],
+  submittedOptionIds: readonly string[] | null | undefined,
+): boolean {
+  if (!submittedOptionIds || submittedOptionIds.length !== canonicalOptionIds.length) return false;
+  return canonicalOptionIds.every((id, index) => id === submittedOptionIds[index]);
+}
+
+// A REORDER submission is well-formed only if it's a genuine permutation of
+// every option belonging to the challenge -- same ids, same count, no
+// duplicates -- regardless of whether the order itself turns out correct.
+export function isValidReorderSubmission(
+  canonicalOptionIds: readonly string[],
+  submittedOptionIds: readonly string[] | null | undefined,
+): boolean {
+  if (!Array.isArray(submittedOptionIds) || submittedOptionIds.length !== canonicalOptionIds.length) return false;
+  const canonicalSet = new Set(canonicalOptionIds);
+  const submittedSet = new Set(submittedOptionIds);
+  if (submittedSet.size !== submittedOptionIds.length) return false;
+  if (submittedSet.size !== canonicalSet.size) return false;
+  for (const id of submittedSet) {
+    if (!canonicalSet.has(id)) return false;
+  }
+  return true;
+}

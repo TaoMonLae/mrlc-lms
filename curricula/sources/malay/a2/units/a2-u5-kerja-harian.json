@@ -1,0 +1,290 @@
+{
+  "id": "a2-u5-kerja-harian",
+  "level": "A2",
+  "order": 5,
+  "title": "Kerja Harian",
+  "englishTitle": "Everyday Work Vocabulary",
+  "canDo": [
+    "Talk about your job and daily tasks",
+    "Ask for and take simple leave",
+    "Understand basic workplace instructions",
+    "Talk about shifts and working hours"
+  ],
+  "lifeBenefit": "Communicate simply and professionally with employers and co-workers.",
+  "estMinutes": 65,
+  "vocab": [
+    {
+      "id": "v2-shift-pagi-malam",
+      "type": "phrase",
+      "ms": "shif pagi / shif malam",
+      "en": "morning shift / night shift",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Saya kerja shif malam minggu ni.",
+      "exampleEn": "I'm working the night shift this week.",
+      "phonetic": "shift pa-gi / shift ma-lam",
+      "audioUrl": "/audio/ms/v2-shift-pagi-malam.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-cuti",
+      "type": "vocab",
+      "ms": "cuti",
+      "en": "leave/day off",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Boleh saya ambil cuti esok?",
+      "exampleEn": "May I take leave tomorrow?",
+      "phonetic": "chu-ti",
+      "audioUrl": "/audio/ms/v2-cuti.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-bos-penyelia",
+      "type": "vocab",
+      "ms": "bos / penyelia",
+      "en": "boss / supervisor",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Tanya bos dulu.",
+      "exampleEn": "Ask the boss first.",
+      "phonetic": "bos / puh-nyuh-li-a",
+      "audioUrl": "/audio/ms/v2-bos-penyelia.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-tugas",
+      "type": "vocab",
+      "ms": "tugas",
+      "en": "task/duty",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Apa tugas saya hari ni?",
+      "exampleEn": "What are my tasks today?",
+      "phonetic": "tu-gas",
+      "audioUrl": "/audio/ms/v2-tugas.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-lewat-kerja",
+      "type": "vocab",
+      "ms": "lewat / lambat kerja",
+      "en": "late for work",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Maaf, saya lewat sikit hari ni.",
+      "exampleEn": "Sorry, I'm a bit late today.",
+      "phonetic": "leh-wat / lam-bat kuh-rja",
+      "audioUrl": "/audio/ms/v2-lewat-kerja.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-gaji",
+      "type": "vocab",
+      "ms": "gaji",
+      "en": "salary/wage",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Gaji dibayar akhir bulan.",
+      "exampleEn": "Salary is paid at the end of the month.",
+      "phonetic": "ga-ji",
+      "audioUrl": "/audio/ms/v2-gaji.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-rehat-kerja",
+      "type": "phrase",
+      "ms": "waktu rehat",
+      "en": "break time",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Waktu rehat pukul satu.",
+      "exampleEn": "Break time is at one o'clock.",
+      "phonetic": "wak-tu reh-hat",
+      "audioUrl": "/audio/ms/v2-rehat-kerja.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "a2-u5-l1",
+      "order": 1,
+      "title": "Shif & Tugas",
+      "estMinutes": 16,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "v2-shift-pagi-malam",
+        "v2-tugas"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'What are my tasks for the night shift?'",
+          "answer": "Apa tugas saya untuk shif malam?"
+        }
+      ]
+    },
+    {
+      "id": "a2-u5-l2",
+      "order": 2,
+      "title": "Minta Cuti",
+      "estMinutes": 16,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "v2-cuti",
+        "v2-bos-penyelia"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'May I take leave next week? I need to ask my supervisor.'",
+          "answer": "Boleh saya ambil cuti minggu depan? Saya perlu tanya penyelia."
+        }
+      ]
+    },
+    {
+      "id": "a2-u5-l3",
+      "order": 3,
+      "title": "Gaji & Waktu Rehat",
+      "estMinutes": 16,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "v2-gaji",
+        "v2-rehat-kerja"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'___ dibayar akhir bulan.' (salary)",
+          "itemIds": [
+            "v2-gaji"
+          ],
+          "answer": "Gaji"
+        }
+      ]
+    },
+    {
+      "id": "a2-u5-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 17,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "v2-cuti",
+        "v2-lewat-kerja",
+        "v2-bos-penyelia"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "a2-u5-asking-for-leave",
+    "setting": "Asking a supervisor for a day off",
+    "roles": [
+      "learner",
+      "supervisor"
+    ],
+    "script": [
+      {
+        "role": "learner",
+        "ms": "Bos, boleh saya ambil cuti hari Jumaat?",
+        "en": "Boss, may I take leave on Friday?"
+      },
+      {
+        "role": "supervisor",
+        "ms": "Kenapa? Ada hal penting ke?",
+        "en": "Why? Is it something important?"
+      },
+      {
+        "role": "learner",
+        "ms": "Ya, saya ada temujanji klinik untuk anak saya.",
+        "en": "Yes, I have a clinic appointment for my child."
+      },
+      {
+        "role": "supervisor",
+        "ms": "Okay, boleh. Tapi bagitahu penyelia shif awal.",
+        "en": "Okay, that's fine. But let your shift supervisor know early."
+      },
+      {
+        "role": "learner",
+        "ms": "Baik, terima kasih, bos.",
+        "en": "Alright, thank you, boss."
+      }
+    ],
+    "aiPrompt": "You are a workplace supervisor. The employee asks for a day off; ask the reason, then approve with a simple condition (informing the shift supervisor). Speak naturally, informally, as a Malaysian boss would to staff."
+  },
+  "speakingPrompts": [
+    {
+      "id": "a2-u5-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the leave-request dialogue, noting the informal 'bos' address term.",
+      "targetAudioUrl": "/audio/ms/a2-u5-scenario.mp3",
+      "rubric": [
+        "polite but informal request tone"
+      ]
+    },
+    {
+      "id": "a2-u5-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Ask the AI supervisor for a day off with a real or invented reason.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "makes the request politely",
+        "gives a reason when asked"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "a2-u5-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Cuti' means:",
+        "options": [
+          "salary",
+          "leave/day off",
+          "shift",
+          "task"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate: 'Sorry, I'm a bit late today.'",
+        "answer": "Maaf, saya lewat sikit hari ni."
+      },
+      {
+        "type": "mcq",
+        "prompt": "'Gaji' means:",
+        "options": [
+          "boss",
+          "break time",
+          "salary",
+          "task"
+        ],
+        "answerIndex": 2
+      }
+    ]
+  }
+}

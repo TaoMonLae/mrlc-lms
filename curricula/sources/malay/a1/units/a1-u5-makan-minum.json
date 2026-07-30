@@ -1,0 +1,80 @@
+{
+  "id": "a1-u5-makan-minum",
+  "level": "A1",
+  "order": 5,
+  "title": "Makan & Minum",
+  "englishTitle": "Food & Drink (mamak / kopitiam basics)",
+  "canDo": [
+    "Order food and drinks at a mamak or kopitiam",
+    "Say basic taste preferences (spicy, sweet, no ice)",
+    "Ask for the bill",
+    "Name common Malaysian dishes and drinks"
+  ],
+  "lifeBenefit": "Order food confidently at any mamak, kopitiam, or food court.",
+  "estMinutes": 60,
+  "vocab": [
+    { "id": "v-nak-makan-apa", "type": "phrase", "ms": "nak makan apa?", "en": "what do you want to eat?", "mon": null, "register": "colloquial", "example": "Awak nak makan apa hari ni?", "exampleEn": "What do you want to eat today?", "phonetic": "nak ma-kan a-pa", "audioUrl": "/audio/ms/v-nak-makan-apa.mp3", "minimalPairWith": null },
+    { "id": "v-nasi-lemak", "type": "vocab", "ms": "nasi lemak", "en": "nasi lemak (coconut rice dish)", "mon": null, "register": "colloquial", "example": "Satu nasi lemak, tak nak telur.", "exampleEn": "One nasi lemak, no egg.", "phonetic": "na-si luh-mak", "audioUrl": "/audio/ms/v-nasi-lemak.mp3", "minimalPairWith": null },
+    { "id": "v-teh-tarik", "type": "vocab", "ms": "teh tarik", "en": "'pulled' milk tea", "mon": null, "register": "colloquial", "example": "Satu teh tarik kurang manis.", "exampleEn": "One teh tarik, less sweet.", "phonetic": "teh ta-rik", "audioUrl": "/audio/ms/v-teh-tarik.mp3", "minimalPairWith": null },
+    { "id": "v-kopi-o", "type": "vocab", "ms": "kopi-o", "en": "black coffee with sugar", "mon": null, "register": "colloquial", "example": "Satu kopi-o, panas.", "exampleEn": "One kopi-o, hot.", "phonetic": "ko-pi oh", "audioUrl": "/audio/ms/v-kopi-o.mp3", "minimalPairWith": null },
+    { "id": "v-kurang-manis", "type": "phrase", "ms": "kurang manis", "en": "less sweet", "mon": null, "register": "colloquial", "example": "Boleh kurang manis tak?", "exampleEn": "Can it be less sweet?", "phonetic": "ku-rang ma-nis", "audioUrl": "/audio/ms/v-kurang-manis.mp3", "minimalPairWith": null },
+    { "id": "v-tak-nak-ais", "type": "phrase", "ms": "tak nak ais", "en": "no ice", "mon": null, "register": "colloquial", "example": "Air kosong, tak nak ais.", "exampleEn": "Plain water, no ice.", "phonetic": "tak nak a-is", "audioUrl": "/audio/ms/v-tak-nak-ais.mp3", "minimalPairWith": null },
+    { "id": "v-pedas", "type": "vocab", "ms": "pedas", "en": "spicy", "mon": null, "register": "colloquial", "example": "Saya tak boleh makan pedas.", "exampleEn": "I can't eat spicy food.", "phonetic": "puh-das", "audioUrl": "/audio/ms/v-pedas.mp3", "minimalPairWith": null },
+    { "id": "v-tapau", "type": "vocab", "ms": "tapau", "en": "to pack/takeaway", "mon": null, "register": "colloquial", "example": "Boleh tapau tak?", "exampleEn": "Can I take this away?", "phonetic": "ta-pau", "audioUrl": "/audio/ms/v-tapau.mp3", "minimalPairWith": null },
+    { "id": "v-makan-sini-ke-bawa-balik", "type": "phrase", "ms": "makan sini ke bawa balik?", "en": "eat here or take away?", "mon": null, "register": "colloquial", "example": "Makan sini ke bawa balik, kak?", "exampleEn": "Eat here or take away?", "phonetic": "ma-kan si-ni keh ba-wa ba-lik", "audioUrl": "/audio/ms/v-makan-sini-ke-bawa-balik.mp3", "minimalPairWith": null },
+    { "id": "v-bill-please", "type": "phrase", "ms": "boleh minta bil?", "en": "may I have the bill?", "mon": null, "register": "colloquial", "example": "Abang, boleh minta bil?", "exampleEn": "Bro, may I have the bill?", "phonetic": "bo-leh min-ta bil", "audioUrl": "/audio/ms/v-bill-please.mp3", "minimalPairWith": null },
+    { "id": "v-sedap", "type": "vocab", "ms": "sedap", "en": "delicious/tasty", "mon": null, "register": "colloquial", "example": "Wah, sedapnya!", "exampleEn": "Wow, this is delicious!", "phonetic": "suh-dap", "audioUrl": "/audio/ms/v-sedap.mp3", "minimalPairWith": null }
+  ],
+  "lessons": [
+    { "id": "a1-u5-l1", "order": 1, "title": "Makanan & Minuman Biasa (Common food & drinks)", "estMinutes": 12, "sections": ["review", "input", "practice", "quiz"], "itemIds": ["v-nasi-lemak", "v-teh-tarik", "v-kopi-o", "v-sedap"],
+      "practiceExercises": [
+        { "type": "listenToPicture", "prompt": "Listen and match the food/drink name to its picture.", "itemIds": ["v-nasi-lemak", "v-teh-tarik", "v-kopi-o"], "answer": null }
+      ]
+    },
+    { "id": "a1-u5-l2", "order": 2, "title": "Buat Pesanan (Placing an order)", "estMinutes": 12, "sections": ["review", "input", "practice", "quiz", "speaking"], "itemIds": ["v-nak-makan-apa", "v-kurang-manis", "v-tak-nak-ais", "v-pedas"],
+      "practiceExercises": [
+        { "type": "translate", "prompt": "Translate: 'One teh tarik, less sweet, no ice.'", "itemIds": ["v-teh-tarik", "v-kurang-manis", "v-tak-nak-ais"], "answer": "Satu teh tarik, kurang manis, tak nak ais." }
+      ]
+    },
+    { "id": "a1-u5-l3", "order": 3, "title": "Tapau atau Makan Sini (Takeaway or dine-in)", "estMinutes": 10, "sections": ["review", "input", "practice", "speaking"], "itemIds": ["v-tapau", "v-makan-sini-ke-bawa-balik"],
+      "practiceExercises": [
+        { "type": "clozeGap", "prompt": "'Boleh ___ tak?' (takeaway)", "itemIds": ["v-tapau"], "answer": "tapau" }
+      ]
+    },
+    { "id": "a1-u5-l4", "order": 4, "title": "Minta Bil (Asking for the bill)", "estMinutes": 10, "sections": ["review", "input", "practice", "quiz", "speaking"], "itemIds": ["v-bill-please"],
+      "practiceExercises": [
+        { "type": "reorder", "prompt": "Reorder: bil / boleh / minta", "itemIds": ["v-bill-please"], "answer": "Boleh minta bil?" }
+      ]
+    },
+    { "id": "a1-u5-l5", "order": 5, "title": "Latihan & Ulangkaji", "estMinutes": 16, "sections": ["review", "quiz", "speaking"], "itemIds": ["v-nak-makan-apa", "v-kurang-manis", "v-tapau", "v-bill-please"], "practiceExercises": [] }
+  ],
+  "scenario": {
+    "id": "a1-u5-mamak-order",
+    "setting": "Ordering breakfast at a mamak restaurant",
+    "roles": ["learner (customer)", "waiter"],
+    "script": [
+      { "role": "waiter", "ms": "Nak makan apa, boss?", "en": "What would you like to eat, boss?" },
+      { "role": "learner", "ms": "Satu nasi lemak, tak nak pedas sangat.", "en": "One nasi lemak, not too spicy." },
+      { "role": "waiter", "ms": "Okay. Minum apa?", "en": "Okay. What to drink?" },
+      { "role": "learner", "ms": "Satu teh tarik, kurang manis.", "en": "One teh tarik, less sweet." },
+      { "role": "waiter", "ms": "Makan sini ke bawa balik?", "en": "Eat here or take away?" },
+      { "role": "learner", "ms": "Makan sini. Terima kasih.", "en": "Eat here. Thank you." },
+      { "role": "learner", "ms": "(later) Abang, boleh minta bil?", "en": "(later) Bro, may I have the bill?" }
+    ],
+    "aiPrompt": "You are a friendly mamak restaurant waiter, addressed as 'boss' by customers. Take a food order, ask about spice level, take a drink order, ask dine-in or takeaway, and later bring the bill when asked. Use short, casual KL Malay ('boss', 'lah', 'okay')."
+  },
+  "speakingPrompts": [
+    { "id": "a1-u5-shadow-1", "type": "shadowing", "instructions": "Shadow the mamak ordering dialogue, matching the casual, quick rhythm of a busy restaurant.", "targetAudioUrl": "/audio/ms/a1-u5-scenario.mp3", "rubric": ["casual tone, not overly formal", "clear food/drink names"] },
+    { "id": "a1-u5-roleplay-1", "type": "roleplay", "instructions": "Order a full meal (food + drink) from the AI waiter, specify your preferences, and ask for the bill at the end.", "targetAudioUrl": null, "rubric": ["orders food and drink clearly", "states at least one preference (spice/sweetness/ice)", "asks for the bill correctly"] }
+  ],
+  "unitQuiz": {
+    "id": "a1-u5-quiz",
+    "passMark": 0.7,
+    "questions": [
+      { "type": "mcq", "prompt": "'Kurang manis' means:", "options": ["extra sweet", "less sweet", "no sugar at all", "cold"], "answerIndex": 1 },
+      { "type": "translate", "prompt": "Translate: 'May I have the bill?'", "answer": "Boleh minta bil?" },
+      { "type": "mcq", "prompt": "You want your food to go, not eat there. You say:", "options": ["Makan sini", "Tapau", "Sedap", "Kurang manis"], "answerIndex": 1 },
+      { "type": "listening", "audioUrl": "/audio/ms/v-teh-tarik.mp3", "prompt": "What drink did you hear?", "options": ["kopi-o", "teh tarik", "air kosong", "nasi lemak"], "answerIndex": 1 }
+    ]
+  }
+}

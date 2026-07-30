@@ -1,0 +1,303 @@
+{
+  "id": "b2-u5-kesihatan-mental-sokongan",
+  "level": "B2",
+  "order": 5,
+  "title": "Kesihatan Mental & Sokongan",
+  "englishTitle": "Mental Health & Support Services",
+  "canDo": [
+    "Talk about stress and wellbeing in general terms",
+    "Understand how to access counselling/support services",
+    "Support a friend who is struggling, appropriately",
+    "Use respectful, non-stigmatising language about mental health"
+  ],
+  "lifeBenefit": "Discuss wellbeing comfortably and know how to seek or offer support without stigma.",
+  "estMinutes": 80,
+  "vocab": [
+    {
+      "id": "b2-tekanan",
+      "type": "vocab",
+      "ms": "tekanan / stres",
+      "en": "stress/pressure",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Saya rasa tekanan sejak kebelakangan ini.",
+      "exampleEn": "I've been feeling stressed lately.",
+      "phonetic": "tuh-ka-nan / stres",
+      "audioUrl": "/audio/ms/b2-tekanan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-kaunseling",
+      "type": "vocab",
+      "ms": "kaunseling",
+      "en": "counselling",
+      "mon": null,
+      "register": "standard",
+      "example": "Awak pernah cuba kaunseling?",
+      "exampleEn": "Have you ever tried counselling?",
+      "phonetic": "kown-suh-ling",
+      "audioUrl": "/audio/ms/b2-kaunseling.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-sokongan-emosi",
+      "type": "vocab",
+      "ms": "sokongan emosi",
+      "en": "emotional support",
+      "mon": null,
+      "register": "standard",
+      "example": "Semua orang perlukan sokongan emosi kadang-kadang.",
+      "exampleEn": "Everyone needs emotional support sometimes.",
+      "phonetic": "so-ko-ngan e-mo-si",
+      "audioUrl": "/audio/ms/b2-sokongan-emosi.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-berjaga-jaga",
+      "type": "phrase",
+      "ms": "jaga kesihatan mental",
+      "en": "look after mental health",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Penting untuk jaga kesihatan mental kita.",
+      "exampleEn": "It's important to look after our mental health.",
+      "phonetic": "ja-ga kuh-si-ha-tan men-tal",
+      "audioUrl": "/audio/ms/b2-berjaga-jaga.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-talian-bantuan",
+      "type": "vocab",
+      "ms": "talian bantuan / hotline",
+      "en": "helpline/hotline",
+      "mon": null,
+      "register": "standard",
+      "example": "Ada talian bantuan yang boleh dihubungi 24 jam.",
+      "exampleEn": "There's a helpline that can be contacted 24 hours.",
+      "phonetic": "ta-li-an ban-tu-an",
+      "audioUrl": "/audio/ms/b2-talian-bantuan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-mendengar-tanpa-menghakimi",
+      "type": "phrase",
+      "ms": "mendengar tanpa menghakimi",
+      "en": "to listen without judging",
+      "mon": null,
+      "register": "standard",
+      "example": "Saya di sini untuk dengar, tanpa menghakimi.",
+      "exampleEn": "I'm here to listen, without judging.",
+      "phonetic": "muhn-duh-ngar tan-pa muhng-ha-ki-mi",
+      "audioUrl": "/audio/ms/b2-mendengar-tanpa-menghakimi.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-kesejahteraan",
+      "type": "vocab",
+      "ms": "kesejahteraan",
+      "en": "wellbeing",
+      "mon": null,
+      "register": "standard",
+      "example": "Kesejahteraan pekerja perlu diberi perhatian.",
+      "exampleEn": "Worker wellbeing needs attention.",
+      "phonetic": "kuh-suh-jah-tuh-ra-an",
+      "audioUrl": "/audio/ms/b2-kesejahteraan.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "b2-u5-l1",
+      "order": 1,
+      "title": "Bercakap tentang Tekanan",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "b2-tekanan",
+        "b2-kesejahteraan"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'I've been feeling stressed, and my wellbeing has been affected.'",
+          "answer": "Saya rasa tekanan, dan kesejahteraan saya terjejas."
+        }
+      ]
+    },
+    {
+      "id": "b2-u5-l2",
+      "order": 2,
+      "title": "Cari Sokongan",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b2-kaunseling",
+        "b2-sokongan-emosi",
+        "b2-talian-bantuan"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'There's a helpline you can call if you need emotional support.'",
+          "answer": "Ada talian bantuan yang boleh awak hubungi kalau perlukan sokongan emosi."
+        }
+      ]
+    },
+    {
+      "id": "b2-u5-l3",
+      "order": 3,
+      "title": "Sokong Kawan dengan Baik",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b2-berjaga-jaga",
+        "b2-mendengar-tanpa-menghakimi"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'Saya di sini untuk dengar, tanpa ___.' (judging)",
+          "itemIds": [
+            "b2-mendengar-tanpa-menghakimi"
+          ],
+          "answer": "menghakimi"
+        }
+      ]
+    },
+    {
+      "id": "b2-u5-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b2-tekanan",
+        "b2-talian-bantuan",
+        "b2-sokongan-emosi"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "b2-u5-supporting-a-friend",
+    "setting": "Supporting a friend who shares that they've been struggling",
+    "roles": [
+      "learner",
+      "friend"
+    ],
+    "script": [
+      {
+        "role": "friend",
+        "ms": "Saya rasa tekanan sangat sejak kebelakangan ini.",
+        "en": "I've been feeling very stressed lately."
+      },
+      {
+        "role": "learner",
+        "ms": "Terima kasih sebab kongsi. Saya di sini untuk dengar, tanpa menghakimi.",
+        "en": "Thank you for sharing. I'm here to listen, without judging."
+      },
+      {
+        "role": "friend",
+        "ms": "Saya tak tahu nak buat apa dah.",
+        "en": "I don't know what to do anymore."
+      },
+      {
+        "role": "learner",
+        "ms": "Awak pernah fikir untuk cuba kaunseling? Ada talian bantuan juga kalau perlu.",
+        "en": "Have you thought about trying counselling? There's also a helpline if you need it."
+      },
+      {
+        "role": "friend",
+        "ms": "Mungkin saya patut cuba. Terima kasih sebab sokong saya.",
+        "en": "Maybe I should try. Thank you for supporting me."
+      }
+    ],
+    "aiPrompt": "You are a friend confiding that they've been struggling emotionally. Share vulnerably but appropriately (no crisis-level content), and respond warmly to the learner's supportive listening, considering counselling when suggested."
+  },
+  "speakingPrompts": [
+    {
+      "id": "b2-u5-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the supportive-conversation dialogue, focusing on warm, non-judgmental tone.",
+      "targetAudioUrl": "/audio/ms/b2-u5-scenario.mp3",
+      "rubric": [
+        "warm, calm tone",
+        "non-stigmatising vocabulary"
+      ]
+    },
+    {
+      "id": "b2-u5-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Support the AI friend persona who shares they're stressed: listen, validate, and suggest a resource.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "responds with empathy",
+        "mentions an appropriate resource (counselling/helpline) gently"
+      ]
+    },
+    {
+      "id": "b2-u5-presentation-1",
+      "type": "presentation",
+      "instructions": "Talk for 90 seconds about one healthy way you personally manage stress.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "personal, genuine example",
+        "positive, non-clinical framing"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "b2-u5-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Mendengar tanpa menghakimi' means:",
+        "options": [
+          "giving advice quickly",
+          "listening without judging",
+          "changing the subject",
+          "ignoring the problem"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate: 'It's important to look after our mental health.'",
+        "answer": "Penting untuk jaga kesihatan mental kita."
+      },
+      {
+        "type": "mcq",
+        "prompt": "'Talian bantuan' refers to:",
+        "options": [
+          "a phone bill",
+          "a helpline",
+          "a legal document",
+          "a bank loan"
+        ],
+        "answerIndex": 1
+      }
+    ]
+  }
+}

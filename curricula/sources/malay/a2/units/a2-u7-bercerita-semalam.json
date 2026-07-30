@@ -1,0 +1,254 @@
+{
+  "id": "a2-u7-bercerita-semalam",
+  "level": "A2",
+  "order": 7,
+  "title": "Bercerita tentang Semalam",
+  "englishTitle": "Narrating Past Events",
+  "canDo": [
+    "Use dah/tadi/semalam to talk about the past",
+    "Narrate a simple sequence of past events",
+    "Ask someone what they did",
+    "Describe a simple past experience with basic connectors"
+  ],
+  "lifeBenefit": "Tell friends, teachers, or colleagues what happened, in the right order.",
+  "estMinutes": 65,
+  "vocab": [
+    {
+      "id": "v2-semalam",
+      "type": "vocab",
+      "ms": "semalam",
+      "en": "yesterday",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Semalam saya pergi kerja macam biasa.",
+      "exampleEn": "Yesterday I went to work as usual.",
+      "phonetic": "suh-ma-lam",
+      "audioUrl": "/audio/ms/v2-semalam.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-lepas-tu",
+      "type": "phrase",
+      "ms": "lepas tu",
+      "en": "after that",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Saya makan, lepas tu saya tidur.",
+      "exampleEn": "I ate, after that I slept.",
+      "phonetic": "luh-pas tu",
+      "audioUrl": "/audio/ms/v2-lepas-tu.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-sebelum-tu",
+      "type": "phrase",
+      "ms": "sebelum tu",
+      "en": "before that",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Sebelum tu saya mandi dulu.",
+      "exampleEn": "Before that I showered first.",
+      "phonetic": "suh-buh-lum tu",
+      "audioUrl": "/audio/ms/v2-sebelum-tu.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-apa-jadi",
+      "type": "vocab",
+      "ms": "apa jadi?",
+      "en": "what happened?",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Apa jadi semalam? Awak nampak risau.",
+      "exampleEn": "What happened yesterday? You look worried.",
+      "phonetic": "a-pa ja-di",
+      "audioUrl": "/audio/ms/v2-apa-jadi.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-terjadi",
+      "type": "vocab",
+      "ms": "berlaku / terjadi",
+      "en": "happened/occurred",
+      "mon": null,
+      "register": "standard",
+      "example": "Kemalangan kecil berlaku dekat jalan tu.",
+      "exampleEn": "A small accident happened on that road.",
+      "phonetic": "buhr-la-ku / tuhr-ja-di",
+      "audioUrl": "/audio/ms/v2-terjadi.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-akhirnya",
+      "type": "vocab",
+      "ms": "akhirnya",
+      "en": "finally/in the end",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Akhirnya saya sampai juga.",
+      "exampleEn": "I finally arrived after all.",
+      "phonetic": "a-khir-nya",
+      "audioUrl": "/audio/ms/v2-akhirnya.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "a2-u7-l1",
+      "order": 1,
+      "title": "Semalam & Tadi",
+      "estMinutes": 15,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "v2-semalam",
+        "v2-lepas-tu",
+        "v2-sebelum-tu"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'I ate, and after that I went to sleep.'",
+          "answer": "Saya makan, lepas tu saya tidur."
+        }
+      ]
+    },
+    {
+      "id": "a2-u7-l2",
+      "order": 2,
+      "title": "Susun Cerita (Sequencing a story)",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "v2-apa-jadi",
+        "v2-terjadi",
+        "v2-akhirnya"
+      ],
+      "practiceExercises": [
+        {
+          "type": "reorder",
+          "prompt": "Reorder into a mini story: Sebelum tu saya bangun awal. / Lepas tu saya pergi kerja. / Akhirnya saya sampai lewat juga.",
+          "itemIds": [
+            "v2-sebelum-tu",
+            "v2-lepas-tu",
+            "v2-akhirnya"
+          ],
+          "answer": "Sebelum tu saya bangun awal. Lepas tu saya pergi kerja. Akhirnya saya sampai lewat juga."
+        }
+      ]
+    },
+    {
+      "id": "a2-u7-l3",
+      "order": 3,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 32,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "v2-semalam",
+        "v2-apa-jadi",
+        "v2-akhirnya"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "a2-u7-telling-friend-what-happened",
+    "setting": "Telling a friend about a mishap on the way to work yesterday",
+    "roles": [
+      "learner",
+      "friend"
+    ],
+    "script": [
+      {
+        "role": "friend",
+        "ms": "Apa jadi semalam? Awak nampak penat.",
+        "en": "What happened yesterday? You look tired."
+      },
+      {
+        "role": "learner",
+        "ms": "Semalam bas saya lewat, lepas tu saya lambat sampai kerja.",
+        "en": "Yesterday my bus was late, after that I arrived late for work."
+      },
+      {
+        "role": "friend",
+        "ms": "Alamak. Bos marah tak?",
+        "en": "Oh no. Was the boss angry?"
+      },
+      {
+        "role": "learner",
+        "ms": "Sikit je. Akhirnya semua okay.",
+        "en": "Just a little. In the end everything was okay."
+      }
+    ],
+    "aiPrompt": "You are a friend asking what happened yesterday. React naturally to the story with short interjections ('alamak', 'oh ye ke') and one follow-up question. Keep it casual and warm."
+  },
+  "speakingPrompts": [
+    {
+      "id": "a2-u7-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the story-telling dialogue, noting how 'lepas tu' and 'akhirnya' sequence events.",
+      "targetAudioUrl": "/audio/ms/a2-u7-scenario.mp3",
+      "rubric": [
+        "clear sequencing words",
+        "natural reactive interjections"
+      ]
+    },
+    {
+      "id": "a2-u7-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Tell the AI friend about something (real or invented) that happened to you yesterday, using at least two sequencing words.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "uses at least two of: semalam/lepas tu/sebelum tu/akhirnya",
+        "tells events in clear order"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "a2-u7-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Lepas tu' means:",
+        "options": [
+          "before that",
+          "after that",
+          "yesterday",
+          "finally"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate: 'Yesterday I woke up late.'",
+        "answer": "Semalam saya bangun lewat."
+      },
+      {
+        "type": "mcq",
+        "prompt": "'Apa jadi?' is used to ask:",
+        "options": [
+          "what happened?",
+          "what time is it?",
+          "where are you?",
+          "how much is it?"
+        ],
+        "answerIndex": 0
+      }
+    ]
+  }
+}

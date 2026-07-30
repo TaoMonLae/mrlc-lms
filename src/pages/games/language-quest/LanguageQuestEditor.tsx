@@ -18,10 +18,14 @@ interface EditorOption {
   audioText: string;
 }
 
+// Course Studio only offers authoring for SELECT/ASSIST today -- CLOZE,
+// ODD_ONE_OUT, and REORDER challenges (built by generator scripts) can still
+// be loaded here without corrupting them, but this editor has no UI to
+// create or change into those types yet.
 interface EditorChallenge {
   _key: string;
   id?: string;
-  type: 'SELECT' | 'ASSIST';
+  type: 'SELECT' | 'ASSIST' | 'CLOZE' | 'ODD_ONE_OUT' | 'REORDER';
   question: string;
   options: EditorOption[];
 }
@@ -76,7 +80,14 @@ function hydrateCourse(raw: any): EditorCourse {
       lessons: (unit.lessons || []).map((lesson: any) => ({
         _key: key(), id: lesson.id, title: lesson.title || '', description: lesson.description || '',
         challenges: (lesson.challenges || []).map((challenge: any) => ({
-          _key: key(), id: challenge.id, type: challenge.type === 'ASSIST' ? 'ASSIST' : 'SELECT', question: challenge.question || '',
+          // Preserve whatever type the challenge actually has -- collapsing
+          // anything that isn't 'ASSIST' down to 'SELECT' would silently
+          // corrupt CLOZE/ODD_ONE_OUT/REORDER challenges the moment this
+          // course is opened and saved here, even without touching them.
+          _key: key(),
+          id: challenge.id,
+          type: ['SELECT', 'ASSIST', 'CLOZE', 'ODD_ONE_OUT', 'REORDER'].includes(challenge.type) ? challenge.type : 'SELECT',
+          question: challenge.question || '',
           options: (challenge.options || []).map((option: any) => ({
             _key: key(), id: option.id, text: option.text || '', correct: Boolean(option.correct), emoji: option.emoji || '', audioText: option.audioText || '',
           })),

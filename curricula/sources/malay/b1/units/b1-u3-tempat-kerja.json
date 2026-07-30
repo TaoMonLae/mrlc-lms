@@ -1,0 +1,307 @@
+{
+  "id": "b1-u3-tempat-kerja",
+  "level": "B1",
+  "order": 3,
+  "title": "Di Tempat Kerja",
+  "englishTitle": "Workplace Communication",
+  "canDo": [
+    "Communicate with colleagues about tasks and deadlines",
+    "Report a workplace problem or safety issue",
+    "Understand and give simple instructions",
+    "Handle a disagreement with a colleague politely"
+  ],
+  "lifeBenefit": "Function smoothly day-to-day at a Malaysian workplace.",
+  "estMinutes": 75,
+  "vocab": [
+    {
+      "id": "b1-tugasan",
+      "type": "vocab",
+      "ms": "tugasan",
+      "en": "assignment/task",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Tugasan ni kena siap esok.",
+      "exampleEn": "This task needs to be done by tomorrow.",
+      "phonetic": "tu-ga-san",
+      "audioUrl": "/audio/ms/b1-tugasan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-tarikh-akhir",
+      "type": "vocab",
+      "ms": "tarikh akhir",
+      "en": "deadline",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Tarikh akhir untuk laporan ni bila?",
+      "exampleEn": "When is the deadline for this report?",
+      "phonetic": "ta-rikh a-khir",
+      "audioUrl": "/audio/ms/b1-tarikh-akhir.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-arahan",
+      "type": "vocab",
+      "ms": "arahan",
+      "en": "instruction",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Ikut arahan penyelia.",
+      "exampleEn": "Follow the supervisor's instructions.",
+      "phonetic": "a-ra-han",
+      "audioUrl": "/audio/ms/b1-arahan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-masalah-keselamatan",
+      "type": "vocab",
+      "ms": "masalah keselamatan",
+      "en": "safety issue",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Ada masalah keselamatan kat mesin tu.",
+      "exampleEn": "There's a safety issue with that machine.",
+      "phonetic": "ma-sa-lah kuh-suh-la-ma-tan",
+      "audioUrl": "/audio/ms/b1-masalah-keselamatan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-lapor",
+      "type": "vocab",
+      "ms": "lapor / laporkan",
+      "en": "to report",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Saya nak lapor kepada penyelia.",
+      "exampleEn": "I want to report this to the supervisor.",
+      "phonetic": "la-por",
+      "audioUrl": "/audio/ms/b1-lapor.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-salah-faham",
+      "type": "vocab",
+      "ms": "salah faham",
+      "en": "misunderstanding",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Saya rasa ada salah faham di sini.",
+      "exampleEn": "I think there's a misunderstanding here.",
+      "phonetic": "sa-lah fa-ham",
+      "audioUrl": "/audio/ms/b1-salah-faham.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-berbincang",
+      "type": "vocab",
+      "ms": "berbincang",
+      "en": "to discuss",
+      "mon": null,
+      "register": "standard",
+      "example": "Boleh kita berbincang sekejap?",
+      "exampleEn": "Can we discuss this for a moment?",
+      "phonetic": "buhr-bin-chang",
+      "audioUrl": "/audio/ms/b1-berbincang.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-kerjasama",
+      "type": "vocab",
+      "ms": "kerjasama",
+      "en": "cooperation/teamwork",
+      "mon": null,
+      "register": "standard",
+      "example": "Kita perlu kerjasama untuk siapkan ni.",
+      "exampleEn": "We need to cooperate to finish this.",
+      "phonetic": "kuh-rja-sa-ma",
+      "audioUrl": "/audio/ms/b1-kerjasama.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "b1-u3-l1",
+      "order": 1,
+      "title": "Tugasan & Tarikh Akhir",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "b1-tugasan",
+        "b1-tarikh-akhir",
+        "b1-arahan"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'What is the deadline for this task?'",
+          "answer": "Tarikh akhir untuk tugasan ni bila?"
+        }
+      ]
+    },
+    {
+      "id": "b1-u3-l2",
+      "order": 2,
+      "title": "Lapor Masalah",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b1-masalah-keselamatan",
+        "b1-lapor"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'I want to report a safety issue.'",
+          "answer": "Saya nak lapor masalah keselamatan."
+        }
+      ]
+    },
+    {
+      "id": "b1-u3-l3",
+      "order": 3,
+      "title": "Selesaikan Salah Faham",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b1-salah-faham",
+        "b1-berbincang",
+        "b1-kerjasama"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'Boleh kita ___ sekejap?' (discuss)",
+          "itemIds": [
+            "b1-berbincang"
+          ],
+          "answer": "berbincang"
+        }
+      ]
+    },
+    {
+      "id": "b1-u3-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 21,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b1-tarikh-akhir",
+        "b1-lapor",
+        "b1-salah-faham"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "b1-u3-workplace-disagreement",
+    "setting": "Resolving a misunderstanding with a colleague about a shared task",
+    "roles": [
+      "learner",
+      "colleague"
+    ],
+    "script": [
+      {
+        "role": "colleague",
+        "ms": "Eh, kenapa tugasan ni tak siap lagi?",
+        "en": "Hey, why isn't this task finished yet?"
+      },
+      {
+        "role": "learner",
+        "ms": "Saya ingat awak yang buat bahagian ni.",
+        "en": "I thought you were doing this part."
+      },
+      {
+        "role": "colleague",
+        "ms": "Oh, mungkin ada salah faham. Jom kita berbincang.",
+        "en": "Oh, maybe there's a misunderstanding. Let's discuss it."
+      },
+      {
+        "role": "learner",
+        "ms": "Baik, saya rasa kita perlu bahagikan tugas dengan jelas lain kali.",
+        "en": "Alright, I think we need to divide tasks clearly next time."
+      },
+      {
+        "role": "colleague",
+        "ms": "Setuju. Kerjasama penting.",
+        "en": "Agreed. Cooperation is important."
+      }
+    ],
+    "aiPrompt": "You are a colleague who discovers a shared task wasn't completed due to a misunderstanding. Express mild concern, then work collaboratively toward resolving it and agreeing on a clearer process next time. Keep tone calm and non-confrontational."
+  },
+  "speakingPrompts": [
+    {
+      "id": "b1-u3-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the workplace disagreement dialogue, focusing on a calm, non-confrontational tone.",
+      "targetAudioUrl": "/audio/ms/b1-u3-scenario.mp3",
+      "rubric": [
+        "calm tone despite disagreement",
+        "clear standard-register vocabulary"
+      ]
+    },
+    {
+      "id": "b1-u3-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Resolve a workplace misunderstanding with the AI colleague persona and propose a solution.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "stays calm and non-confrontational",
+        "proposes a concrete solution"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "b1-u3-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Tarikh akhir' means:",
+        "options": [
+          "start date",
+          "deadline",
+          "working hours",
+          "task"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate: 'There's a misunderstanding, let's discuss it.'",
+        "answer": "Ada salah faham, jom kita berbincang."
+      },
+      {
+        "type": "mcq",
+        "prompt": "'Kerjasama' means:",
+        "options": [
+          "conflict",
+          "teamwork/cooperation",
+          "deadline",
+          "safety"
+        ],
+        "answerIndex": 1
+      }
+    ]
+  }
+}

@@ -1,0 +1,305 @@
+{
+  "id": "b1-u10-kesihatan-lanjutan",
+  "level": "B1",
+  "order": 10,
+  "title": "Kesihatan Lanjutan",
+  "englishTitle": "Advanced Health & Hospital Matters",
+  "canDo": [
+    "Describe symptoms in detail over a longer period",
+    "Understand hospital referral and specialist processes",
+    "Discuss test results and treatment options at a basic level",
+    "Ask about medication instructions and side effects"
+  ],
+  "lifeBenefit": "Navigate hospital referrals, specialists, and more detailed medical conversations.",
+  "estMinutes": 75,
+  "vocab": [
+    {
+      "id": "b1-rujukan-hospital",
+      "type": "vocab",
+      "ms": "surat rujukan hospital",
+      "en": "hospital referral letter",
+      "mon": null,
+      "register": "standard",
+      "example": "Doktor bagi surat rujukan ke hospital.",
+      "exampleEn": "The doctor gave a referral letter to the hospital.",
+      "phonetic": "su-rat ru-ju-kan hos-pi-tal",
+      "audioUrl": "/audio/ms/b1-rujukan-hospital.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-pakar",
+      "type": "vocab",
+      "ms": "doktor pakar",
+      "en": "specialist doctor",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Saya kena jumpa doktor pakar jantung.",
+      "exampleEn": "I need to see a heart specialist.",
+      "phonetic": "dok-tor pa-kar",
+      "audioUrl": "/audio/ms/b1-pakar.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-keputusan-ujian",
+      "type": "vocab",
+      "ms": "keputusan ujian",
+      "en": "test results",
+      "mon": null,
+      "register": "standard",
+      "example": "Bila keputusan ujian darah saya?",
+      "exampleEn": "When will my blood test results be ready?",
+      "phonetic": "kuh-pu-tu-san u-ji-an",
+      "audioUrl": "/audio/ms/b1-keputusan-ujian.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-rawatan",
+      "type": "vocab",
+      "ms": "rawatan",
+      "en": "treatment",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Rawatan ni akan ambil masa berapa lama?",
+      "exampleEn": "How long will this treatment take?",
+      "phonetic": "ra-wa-tan",
+      "audioUrl": "/audio/ms/b1-rawatan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-kesan-sampingan",
+      "type": "vocab",
+      "ms": "kesan sampingan",
+      "en": "side effects",
+      "mon": null,
+      "register": "standard",
+      "example": "Ada kesan sampingan ubat ni tak?",
+      "exampleEn": "Are there side effects to this medicine?",
+      "phonetic": "kuh-san sam-pi-ngan",
+      "audioUrl": "/audio/ms/b1-kesan-sampingan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-dos",
+      "type": "vocab",
+      "ms": "dos",
+      "en": "dosage",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Berapa dos yang perlu saya ambil?",
+      "exampleEn": "What dosage do I need to take?",
+      "phonetic": "dos",
+      "audioUrl": "/audio/ms/b1-dos.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-pembedahan",
+      "type": "vocab",
+      "ms": "pembedahan",
+      "en": "surgery/operation",
+      "mon": null,
+      "register": "standard",
+      "example": "Dia perlukan pembedahan kecil.",
+      "exampleEn": "He/she needs minor surgery.",
+      "phonetic": "puhm-buh-da-han",
+      "audioUrl": "/audio/ms/b1-pembedahan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-kronik",
+      "type": "vocab",
+      "ms": "penyakit kronik",
+      "en": "chronic illness",
+      "mon": null,
+      "register": "standard",
+      "example": "Dia ada penyakit kronik, kena jumpa doktor kerap.",
+      "exampleEn": "He/she has a chronic illness, needs to see the doctor often.",
+      "phonetic": "puh-nya-kit kro-nik",
+      "audioUrl": "/audio/ms/b1-kronik.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "b1-u10-l1",
+      "order": 1,
+      "title": "Rujukan & Pakar",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "b1-rujukan-hospital",
+        "b1-pakar"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'The doctor gave me a referral letter to see a specialist.'",
+          "answer": "Doktor bagi saya surat rujukan untuk jumpa doktor pakar."
+        }
+      ]
+    },
+    {
+      "id": "b1-u10-l2",
+      "order": 2,
+      "title": "Keputusan Ujian & Rawatan",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b1-keputusan-ujian",
+        "b1-rawatan"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'When will my test results be ready, and what treatment do I need?'",
+          "answer": "Bila keputusan ujian saya, dan rawatan apa yang saya perlukan?"
+        }
+      ]
+    },
+    {
+      "id": "b1-u10-l3",
+      "order": 3,
+      "title": "Ubat, Dos & Kesan Sampingan",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b1-dos",
+        "b1-kesan-sampingan"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'Ada ___ ubat ni tak?' (side effects)",
+          "itemIds": [
+            "b1-kesan-sampingan"
+          ],
+          "answer": "kesan sampingan"
+        }
+      ]
+    },
+    {
+      "id": "b1-u10-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 21,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b1-pakar",
+        "b1-rawatan",
+        "b1-kesan-sampingan"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "b1-u10-specialist-consultation",
+    "setting": "A consultation with a specialist doctor after a hospital referral",
+    "roles": [
+      "learner (patient)",
+      "specialist doctor"
+    ],
+    "script": [
+      {
+        "role": "doctor",
+        "ms": "Saya dah tengok surat rujukan awak. Apa keluhan utama?",
+        "en": "I've looked at your referral letter. What's the main complaint?"
+      },
+      {
+        "role": "learner",
+        "ms": "Saya rasa sakit dada sekali-sekala sejak dua bulan.",
+        "en": "I feel occasional chest pain for the past two months."
+      },
+      {
+        "role": "doctor",
+        "ms": "Baik, kita perlu buat beberapa ujian dulu.",
+        "en": "Alright, we need to run a few tests first."
+      },
+      {
+        "role": "learner",
+        "ms": "Bila saya boleh tahu keputusan ujian?",
+        "en": "When can I know the test results?"
+      },
+      {
+        "role": "doctor",
+        "ms": "Dalam seminggu. Lepas tu kita bincang rawatan.",
+        "en": "Within a week. After that we'll discuss treatment."
+      }
+    ],
+    "aiPrompt": "You are a specialist doctor conducting a consultation based on a referral letter. Ask about the main complaint and its duration, explain that tests are needed, and give a timeline for results and next steps. Speak in a calm, professional, standard-leaning register."
+  },
+  "speakingPrompts": [
+    {
+      "id": "b1-u10-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the specialist consultation, focusing on calm, clear medical register.",
+      "targetAudioUrl": "/audio/ms/b1-u10-scenario.mp3",
+      "rubric": [
+        "clear medical vocabulary",
+        "calm, reassuring tone"
+      ]
+    },
+    {
+      "id": "b1-u10-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Describe a symptom and its duration to the AI specialist persona, and ask about test results and treatment.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "describes symptom and duration",
+        "asks about results/treatment timeline"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "b1-u10-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Kesan sampingan' means:",
+        "options": [
+          "dosage",
+          "side effects",
+          "surgery",
+          "referral"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate: 'When will my test results be ready?'",
+        "answer": "Bila keputusan ujian saya akan siap?"
+      },
+      {
+        "type": "mcq",
+        "prompt": "'Penyakit kronik' means:",
+        "options": [
+          "a minor cold",
+          "a chronic illness",
+          "an allergy",
+          "a fever"
+        ],
+        "answerIndex": 1
+      }
+    ]
+  }
+}

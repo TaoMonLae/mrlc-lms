@@ -1,0 +1,306 @@
+{
+  "id": "b1-u6-duit-bil",
+  "level": "B1",
+  "order": 6,
+  "title": "Duit & Bil",
+  "englishTitle": "Money Management & Bills",
+  "canDo": [
+    "Discuss budgeting and monthly expenses",
+    "Understand and query a utility/phone bill",
+    "Talk about sending remittance home",
+    "Ask about instalment/payment plans"
+  ],
+  "lifeBenefit": "Manage household money, bills, and remittances confidently.",
+  "estMinutes": 75,
+  "vocab": [
+    {
+      "id": "b1-belanjawan",
+      "type": "vocab",
+      "ms": "belanjawan / bajet",
+      "en": "budget",
+      "mon": null,
+      "register": "standard",
+      "example": "Saya perlu buat belanjawan bulanan.",
+      "exampleEn": "I need to make a monthly budget.",
+      "phonetic": "buh-lan-ja-wan / ba-jet",
+      "audioUrl": "/audio/ms/b1-belanjawan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-bil-tertunggak",
+      "type": "vocab",
+      "ms": "bil tertunggak",
+      "en": "overdue bill",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Ada bil tertunggak bulan lepas.",
+      "exampleEn": "There's an overdue bill from last month.",
+      "phonetic": "bil tuhr-tung-gak",
+      "audioUrl": "/audio/ms/b1-bil-tertunggak.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-hantar-wang",
+      "type": "phrase",
+      "ms": "hantar wang balik kampung",
+      "en": "send remittance home",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Saya hantar wang balik kampung setiap bulan.",
+      "exampleEn": "I send money home every month.",
+      "phonetic": "han-tar wang ba-lik kam-pung",
+      "audioUrl": "/audio/ms/b1-hantar-wang.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-bayaran-ansuran",
+      "type": "vocab",
+      "ms": "bayaran ansuran",
+      "en": "instalment payment",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Boleh bayar secara ansuran tak?",
+      "exampleEn": "Can I pay in instalments?",
+      "phonetic": "ba-ya-ran an-su-ran",
+      "audioUrl": "/audio/ms/b1-bayaran-ansuran.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-caj-lewat",
+      "type": "vocab",
+      "ms": "caj lewat bayar",
+      "en": "late payment charge",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Ada caj lewat bayar kalau tak bayar tepat masa.",
+      "exampleEn": "There's a late fee if you don't pay on time.",
+      "phonetic": "chaj leh-wat ba-yar",
+      "audioUrl": "/audio/ms/b1-caj-lewat.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-perbelanjaan",
+      "type": "vocab",
+      "ms": "perbelanjaan",
+      "en": "expenses/spending",
+      "mon": null,
+      "register": "standard",
+      "example": "Perbelanjaan bulan ni tinggi sikit.",
+      "exampleEn": "This month's expenses are a bit high.",
+      "phonetic": "puhr-buh-lan-ja-an",
+      "audioUrl": "/audio/ms/b1-perbelanjaan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-jimat",
+      "type": "vocab",
+      "ms": "jimat / berjimat",
+      "en": "to save/be frugal",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Kita kena jimat bulan ni.",
+      "exampleEn": "We need to save this month.",
+      "phonetic": "ji-mat",
+      "audioUrl": "/audio/ms/b1-jimat.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-baki-akaun",
+      "type": "vocab",
+      "ms": "baki akaun",
+      "en": "account balance",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Baki akaun saya tak cukup.",
+      "exampleEn": "My account balance isn't enough.",
+      "phonetic": "ba-ki a-kown",
+      "audioUrl": "/audio/ms/b1-baki-akaun.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "b1-u6-l1",
+      "order": 1,
+      "title": "Belanjawan & Perbelanjaan",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "b1-belanjawan",
+        "b1-perbelanjaan",
+        "b1-jimat"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'We need to save because expenses are high this month.'",
+          "answer": "Kita kena jimat sebab perbelanjaan tinggi bulan ni."
+        }
+      ]
+    },
+    {
+      "id": "b1-u6-l2",
+      "order": 2,
+      "title": "Bil & Ansuran",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b1-bil-tertunggak",
+        "b1-bayaran-ansuran",
+        "b1-caj-lewat"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'Can I pay this overdue bill in instalments?'",
+          "answer": "Boleh saya bayar bil tertunggak ni secara ansuran?"
+        }
+      ]
+    },
+    {
+      "id": "b1-u6-l3",
+      "order": 3,
+      "title": "Hantar Wang & Baki Akaun",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "b1-hantar-wang",
+        "b1-baki-akaun"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'___ akaun saya tak cukup.' (balance)",
+          "itemIds": [
+            "b1-baki-akaun"
+          ],
+          "answer": "Baki"
+        }
+      ]
+    },
+    {
+      "id": "b1-u6-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 21,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b1-belanjawan",
+        "b1-bayaran-ansuran",
+        "b1-hantar-wang"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "b1-u6-overdue-bill-call",
+    "setting": "Calling a utility company about an overdue bill and asking for an instalment plan",
+    "roles": [
+      "learner",
+      "customer service agent"
+    ],
+    "script": [
+      {
+        "role": "learner",
+        "ms": "Hai, saya nak tanya pasal bil tertunggak saya.",
+        "en": "Hi, I want to ask about my overdue bill."
+      },
+      {
+        "role": "agent",
+        "ms": "Baik, boleh bagi nombor akaun awak?",
+        "en": "Alright, may I have your account number?"
+      },
+      {
+        "role": "learner",
+        "ms": "Ini nombor akaun saya. Boleh bayar secara ansuran tak?",
+        "en": "Here's my account number. Can I pay in instalments?"
+      },
+      {
+        "role": "agent",
+        "ms": "Boleh. Kami boleh bahagikan kepada tiga bayaran bulanan.",
+        "en": "Yes. We can split it into three monthly payments."
+      },
+      {
+        "role": "learner",
+        "ms": "Baik, terima kasih banyak.",
+        "en": "Alright, thank you very much."
+      }
+    ],
+    "aiPrompt": "You are a utility company customer service agent handling a call about an overdue bill. Ask for the account number, then offer an instalment plan when asked. Be professional, patient, and clear."
+  },
+  "speakingPrompts": [
+    {
+      "id": "b1-u6-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the overdue bill call, focusing on clear numbers and formal customer-service register.",
+      "targetAudioUrl": "/audio/ms/b1-u6-scenario.mp3",
+      "rubric": [
+        "formal customer-service tone",
+        "clear account/payment numbers"
+      ]
+    },
+    {
+      "id": "b1-u6-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Call the AI customer service agent about an overdue bill and ask about an instalment plan.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "explains the issue clearly",
+        "asks about instalment options"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "b1-u6-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Bil tertunggak' means:",
+        "options": [
+          "paid bill",
+          "overdue bill",
+          "new bill",
+          "free bill"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate: 'Can I pay in instalments?'",
+        "answer": "Boleh saya bayar secara ansuran?"
+      },
+      {
+        "type": "mcq",
+        "prompt": "'Jimat' means:",
+        "options": [
+          "to spend",
+          "to save/be frugal",
+          "to borrow",
+          "to invest"
+        ],
+        "answerIndex": 1
+      }
+    ]
+  }
+}

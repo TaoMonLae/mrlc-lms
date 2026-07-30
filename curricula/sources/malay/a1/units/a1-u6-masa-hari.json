@@ -1,0 +1,78 @@
+{
+  "id": "a1-u6-masa-hari",
+  "level": "A1",
+  "order": 6,
+  "title": "Masa & Hari",
+  "englishTitle": "Time & Days",
+  "canDo": [
+    "Tell and ask the time",
+    "Name the days of the week",
+    "Talk about opening/closing hours",
+    "Use dah/tadi/nanti (already/earlier/later) for simple time reference"
+  ],
+  "lifeBenefit": "Make and understand appointments, schedules, and opening hours.",
+  "estMinutes": 60,
+  "vocab": [
+    { "id": "v-pukul-berapa", "type": "phrase", "ms": "pukul berapa?", "en": "what time is it? / what time?", "mon": null, "register": "colloquial", "example": "Sekarang pukul berapa?", "exampleEn": "What time is it now?", "phonetic": "pu-kul buh-ra-pa", "audioUrl": "/audio/ms/v-pukul-berapa.mp3", "minimalPairWith": null },
+    { "id": "v-pukul-sembilan", "type": "phrase", "ms": "pukul sembilan", "en": "nine o'clock", "mon": null, "register": "colloquial", "example": "Kelas mula pukul sembilan.", "exampleEn": "Class starts at nine o'clock.", "phonetic": "pu-kul suhm-bi-lan", "audioUrl": "/audio/ms/v-pukul-sembilan.mp3", "minimalPairWith": null },
+    { "id": "v-setengah", "type": "vocab", "ms": "setengah", "en": "half (past)", "mon": null, "register": "colloquial", "example": "Pukul sepuluh setengah.", "exampleEn": "Half past ten.", "phonetic": "suh-tuh-ngah", "audioUrl": "/audio/ms/v-setengah.mp3", "minimalPairWith": null },
+    { "id": "v-hari-isnin", "type": "vocab", "ms": "Isnin", "en": "Monday", "mon": null, "register": "standard", "example": "Kelas hari Isnin.", "exampleEn": "Class is on Monday.", "phonetic": "is-nin", "audioUrl": "/audio/ms/v-hari-isnin.mp3", "minimalPairWith": null },
+    { "id": "v-hari-jumaat", "type": "vocab", "ms": "Jumaat", "en": "Friday", "mon": null, "register": "standard", "example": "Hari Jumaat kedai tutup awal.", "exampleEn": "On Friday the shop closes early.", "phonetic": "ju-ma-at", "audioUrl": "/audio/ms/v-hari-jumaat.mp3", "minimalPairWith": null },
+    { "id": "v-hari-ahad", "type": "vocab", "ms": "Ahad", "en": "Sunday", "mon": null, "register": "standard", "example": "Ahad saya cuti.", "exampleEn": "Sunday I'm off.", "phonetic": "a-had", "audioUrl": "/audio/ms/v-hari-ahad.mp3", "minimalPairWith": null },
+    { "id": "v-buka-tutup", "type": "vocab", "ms": "buka / tutup", "en": "open / closed", "mon": null, "register": "colloquial", "example": "Kedai ni buka pukul lapan.", "exampleEn": "This shop opens at eight.", "phonetic": "bu-ka / tu-tup", "audioUrl": "/audio/ms/v-buka-tutup.mp3", "minimalPairWith": null },
+    { "id": "v-dah", "type": "vocab", "ms": "dah", "en": "already (colloquial short form of 'sudah')", "mon": null, "register": "colloquial", "example": "Saya dah makan.", "exampleEn": "I've already eaten.", "phonetic": "dah", "audioUrl": "/audio/ms/v-dah.mp3", "minimalPairWith": null },
+    { "id": "v-tadi", "type": "vocab", "ms": "tadi", "en": "earlier (today)", "mon": null, "register": "colloquial", "example": "Saya jumpa dia tadi pagi.", "exampleEn": "I met him/her earlier this morning.", "phonetic": "ta-di", "audioUrl": "/audio/ms/v-tadi.mp3", "minimalPairWith": null },
+    { "id": "v-nanti", "type": "vocab", "ms": "nanti", "en": "later", "mon": null, "register": "colloquial", "example": "Nanti saya telefon awak.", "exampleEn": "I'll call you later.", "phonetic": "nan-ti", "audioUrl": "/audio/ms/v-nanti.mp3", "minimalPairWith": null }
+  ],
+  "lessons": [
+    { "id": "a1-u6-l1", "order": 1, "title": "Pukul Berapa? (Telling time)", "estMinutes": 12, "sections": ["review", "input", "practice", "quiz"], "itemIds": ["v-pukul-berapa", "v-pukul-sembilan", "v-setengah"],
+      "practiceExercises": [
+        { "type": "listenToPicture", "prompt": "Listen and tap the clock showing the correct time.", "itemIds": ["v-pukul-sembilan", "v-setengah"], "answer": null }
+      ]
+    },
+    { "id": "a1-u6-l2", "order": 2, "title": "Hari dalam Seminggu (Days of the week)", "estMinutes": 12, "sections": ["review", "input", "practice", "quiz"], "itemIds": ["v-hari-isnin", "v-hari-jumaat", "v-hari-ahad"],
+      "practiceExercises": [
+        { "type": "matching", "prompt": "Match the day name to its position in the week.", "itemIds": ["v-hari-isnin", "v-hari-jumaat", "v-hari-ahad"], "answer": null }
+      ]
+    },
+    { "id": "a1-u6-l3", "order": 3, "title": "Waktu Operasi (Opening hours)", "estMinutes": 10, "sections": ["review", "input", "practice", "quiz", "speaking"], "itemIds": ["v-buka-tutup"],
+      "practiceExercises": [
+        { "type": "translate", "prompt": "Translate: 'What time does the clinic open?'", "itemIds": ["v-buka-tutup", "v-pukul-berapa"], "answer": "Klinik buka pukul berapa?" }
+      ]
+    },
+    { "id": "a1-u6-l4", "order": 4, "title": "Dah, Tadi, Nanti (Time markers)", "estMinutes": 12, "sections": ["review", "input", "practice", "quiz", "speaking"], "itemIds": ["v-dah", "v-tadi", "v-nanti"],
+      "practiceExercises": [
+        { "type": "clozeGap", "prompt": "'Saya jumpa dia ___ pagi.' (earlier)", "itemIds": ["v-tadi"], "answer": "tadi" },
+        { "type": "clozeGap", "prompt": "'___ saya telefon awak.' (later)", "itemIds": ["v-nanti"], "answer": "Nanti" }
+      ]
+    },
+    { "id": "a1-u6-l5", "order": 5, "title": "Latihan & Ulangkaji", "estMinutes": 14, "sections": ["review", "quiz", "speaking"], "itemIds": ["v-pukul-berapa", "v-buka-tutup", "v-dah", "v-nanti"], "practiceExercises": [] }
+  ],
+  "scenario": {
+    "id": "a1-u6-clinic-appointment-time",
+    "setting": "Calling a clinic to check opening hours and confirm an appointment time",
+    "roles": ["learner", "clinic receptionist"],
+    "script": [
+      { "role": "learner", "ms": "Maaf, klinik ni buka pukul berapa?", "en": "Excuse me, what time does this clinic open?" },
+      { "role": "receptionist", "ms": "Kami buka pukul lapan pagi, tutup pukul lima petang.", "en": "We open at eight in the morning, close at five in the evening." },
+      { "role": "learner", "ms": "Okay. Saya ada temujanji pukul sepuluh, betul tak?", "en": "Okay. I have an appointment at ten, is that right?" },
+      { "role": "receptionist", "ms": "Betul. Sila datang pukul sepuluh, jangan lambat.", "en": "Correct. Please come at ten, don't be late." },
+      { "role": "learner", "ms": "Baik, nanti saya datang. Terima kasih.", "en": "Alright, I'll come later. Thank you." }
+    ],
+    "aiPrompt": "You are a clinic receptionist answering a phone call about opening hours and confirming an appointment time. Give clear opening/closing times and confirm the appointment slot. Speak clearly and not too fast."
+  },
+  "speakingPrompts": [
+    { "id": "a1-u6-shadow-1", "type": "shadowing", "instructions": "Shadow the clinic-hours call, focusing on numbers combined with 'pukul' and 'pagi/petang'.", "targetAudioUrl": "/audio/ms/a1-u6-scenario.mp3", "rubric": ["clear time expressions", "distinguishes pagi/petang"] },
+    { "id": "a1-u6-roleplay-1", "type": "roleplay", "instructions": "Call the AI clinic receptionist, ask opening hours, and confirm your own appointment time.", "targetAudioUrl": null, "rubric": ["asks opening hours correctly", "states/confirms a specific time"] }
+  ],
+  "unitQuiz": {
+    "id": "a1-u6-quiz",
+    "passMark": 0.7,
+    "questions": [
+      { "type": "mcq", "prompt": "'Pukul berapa?' means:", "options": ["how much?", "what time?", "which day?", "how many?"], "answerIndex": 1 },
+      { "type": "translate", "prompt": "Translate: 'The shop opens at nine o'clock.'", "answer": "Kedai buka pukul sembilan." },
+      { "type": "mcq", "prompt": "'Tadi' refers to:", "options": ["the future", "right now", "earlier today", "every day"], "answerIndex": 2 },
+      { "type": "listening", "audioUrl": "/audio/ms/v-hari-jumaat.mp3", "prompt": "Which day did you hear?", "options": ["Isnin", "Jumaat", "Ahad", "Selasa"], "answerIndex": 1 }
+    ]
+  }
+}

@@ -1,0 +1,302 @@
+{
+  "id": "c1-u2-kepimpinan-pengurusan",
+  "level": "C1",
+  "order": 2,
+  "title": "Kepimpinan & Pengurusan",
+  "englishTitle": "Leadership & Management",
+  "canDo": [
+    "Give constructive feedback to a team member",
+    "Motivate and align a team around a goal",
+    "Handle a difficult personnel conversation",
+    "Discuss management style and delegation nuance"
+  ],
+  "lifeBenefit": "Lead and manage people in Malay with the nuance a real workplace requires.",
+  "estMinutes": 85,
+  "vocab": [
+    {
+      "id": "c1-maklum-balas-membina",
+      "type": "vocab",
+      "ms": "maklum balas membina",
+      "en": "constructive feedback",
+      "mon": null,
+      "register": "standard",
+      "example": "Saya nak beri maklum balas membina, bukan kritikan.",
+      "exampleEn": "I want to give constructive feedback, not criticism.",
+      "phonetic": "mak-lum ba-las muhm-bi-na",
+      "audioUrl": "/audio/ms/c1-maklum-balas-membina.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-mendelegasikan",
+      "type": "vocab",
+      "ms": "mendelegasikan",
+      "en": "to delegate",
+      "mon": null,
+      "register": "standard",
+      "example": "Saya perlu mendelegasikan tugas ini dengan lebih baik.",
+      "exampleEn": "I need to delegate this task better.",
+      "phonetic": "muhn-deh-leh-ga-si-kan",
+      "audioUrl": "/audio/ms/c1-mendelegasikan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-motivasi-pasukan",
+      "type": "phrase",
+      "ms": "memotivasikan pasukan",
+      "en": "to motivate the team",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Bagaimana saya boleh memotivasikan pasukan yang letih?",
+      "exampleEn": "How can I motivate a tired team?",
+      "phonetic": "muh-mo-ti-va-si-kan pa-su-kan",
+      "audioUrl": "/audio/ms/c1-motivasi-pasukan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-akauntabiliti",
+      "type": "vocab",
+      "ms": "akauntabiliti",
+      "en": "accountability",
+      "mon": null,
+      "register": "standard",
+      "example": "Setiap ahli pasukan perlu ada akauntabiliti.",
+      "exampleEn": "Every team member needs accountability.",
+      "phonetic": "a-kown-ta-bi-li-ti",
+      "audioUrl": "/audio/ms/c1-akauntabiliti.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-prestasi-tidak-memuaskan",
+      "type": "vocab",
+      "ms": "prestasi tidak memuaskan",
+      "en": "unsatisfactory performance",
+      "mon": null,
+      "register": "standard",
+      "example": "Kita perlu bincang pasal prestasi tidak memuaskan awak.",
+      "exampleEn": "We need to discuss your unsatisfactory performance.",
+      "phonetic": "prehs-ta-si ti-dak muh-mu-as-kan",
+      "audioUrl": "/audio/ms/c1-prestasi-tidak-memuaskan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-membina-keyakinan",
+      "type": "vocab",
+      "ms": "membina keyakinan",
+      "en": "to build confidence/trust",
+      "mon": null,
+      "register": "standard",
+      "example": "Sebagai pemimpin, saya cuba membina keyakinan pasukan.",
+      "exampleEn": "As a leader, I try to build the team's confidence.",
+      "phonetic": "muhm-bi-na kuh-ya-ki-nan",
+      "audioUrl": "/audio/ms/c1-membina-keyakinan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-visi-strategik",
+      "type": "vocab",
+      "ms": "visi strategik",
+      "en": "strategic vision",
+      "mon": null,
+      "register": "standard",
+      "example": "Kita perlukan visi strategik yang jelas.",
+      "exampleEn": "We need a clear strategic vision.",
+      "phonetic": "vi-si stra-teh-gik",
+      "audioUrl": "/audio/ms/c1-visi-strategik.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "c1-u2-l1",
+      "order": 1,
+      "title": "Maklum Balas & Delegasi",
+      "estMinutes": 22,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "c1-maklum-balas-membina",
+        "c1-mendelegasikan"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'I want to delegate this and give constructive feedback later.'",
+          "answer": "Saya nak mendelegasikan ini dan beri maklum balas membina kemudian."
+        }
+      ]
+    },
+    {
+      "id": "c1-u2-l2",
+      "order": 2,
+      "title": "Motivasi & Akauntabiliti",
+      "estMinutes": 22,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "c1-motivasi-pasukan",
+        "c1-akauntabiliti"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'Every team member needs accountability to stay motivated.'",
+          "answer": "Setiap ahli pasukan perlu ada akauntabiliti untuk kekal bermotivasi."
+        }
+      ]
+    },
+    {
+      "id": "c1-u2-l3",
+      "order": 3,
+      "title": "Perbualan Sukar (Difficult conversations)",
+      "estMinutes": 22,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "c1-prestasi-tidak-memuaskan",
+        "c1-membina-keyakinan"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'Kita perlu bincang pasal ___ awak.' (unsatisfactory performance)",
+          "itemIds": [
+            "c1-prestasi-tidak-memuaskan"
+          ],
+          "answer": "prestasi tidak memuaskan"
+        }
+      ]
+    },
+    {
+      "id": "c1-u2-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 19,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "c1-visi-strategik",
+        "c1-membina-keyakinan",
+        "c1-mendelegasikan"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "c1-u2-difficult-performance-conversation",
+    "setting": "A manager having a difficult performance conversation with an underperforming team member",
+    "roles": [
+      "learner (manager)",
+      "team member"
+    ],
+    "script": [
+      {
+        "role": "learner",
+        "ms": "Saya nak bincang pasal prestasi awak akhir-akhir ini.",
+        "en": "I want to discuss your performance recently."
+      },
+      {
+        "role": "member",
+        "ms": "Baik. Saya tahu ada beberapa kelewatan.",
+        "en": "Alright. I know there have been some delays."
+      },
+      {
+        "role": "learner",
+        "ms": "Saya bagi maklum balas membina — bukan untuk salahkan, tapi untuk bantu awak.",
+        "en": "I'm giving constructive feedback — not to blame, but to help you."
+      },
+      {
+        "role": "member",
+        "ms": "Terima kasih. Apa yang perlu saya perbaiki?",
+        "en": "Thank you. What do I need to improve?"
+      },
+      {
+        "role": "learner",
+        "ms": "Mari kita bina semula keyakinan dan bincang cara mendelegasikan tugas dengan lebih baik.",
+        "en": "Let's rebuild confidence and discuss how to delegate tasks better."
+      }
+    ],
+    "aiPrompt": "You are a manager giving difficult but constructive feedback to a team member about performance issues. Stay calm, empathetic, and solution-focused throughout. Standard, professional managerial register."
+  },
+  "speakingPrompts": [
+    {
+      "id": "c1-u2-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the difficult-conversation dialogue, focusing on calm, empathetic managerial tone.",
+      "targetAudioUrl": "/audio/ms/c1-u2-scenario.mp3",
+      "rubric": [
+        "calm managerial register",
+        "empathetic but clear delivery"
+      ]
+    },
+    {
+      "id": "c1-u2-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Have a difficult performance conversation with the AI team-member persona, giving constructive feedback and a next step.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "gives feedback constructively, not harshly",
+        "proposes a concrete next step"
+      ]
+    },
+    {
+      "id": "c1-u2-presentation-1",
+      "type": "presentation",
+      "instructions": "Give a 3-minute talk on your leadership philosophy or approach to managing a team.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "coherent philosophy/approach",
+        "uses at least three unit terms accurately"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "c1-u2-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Mendelegasikan' means:",
+        "options": [
+          "to criticise",
+          "to delegate",
+          "to resign",
+          "to promote"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate: 'I want to give constructive feedback, not criticism.'",
+        "answer": "Saya nak beri maklum balas membina, bukan kritikan."
+      },
+      {
+        "type": "mcq",
+        "prompt": "'Akauntabiliti' means:",
+        "options": [
+          "salary",
+          "accountability",
+          "leadership",
+          "vision"
+        ],
+        "answerIndex": 1
+      }
+    ]
+  }
+}

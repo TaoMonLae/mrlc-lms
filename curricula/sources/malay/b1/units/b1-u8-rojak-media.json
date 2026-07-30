@@ -1,0 +1,296 @@
+{
+  "id": "b1-u8-rojak-media",
+  "level": "B1",
+  "order": 8,
+  "title": "Bahasa Rojak & Media",
+  "englishTitle": "Colloquial Media & Bahasa Rojak Comprehension",
+  "canDo": [
+    "Understand casual WhatsApp/text message Malay",
+    "Follow short TikTok/social media style speech",
+    "Recognise heavier Bahasa Rojak (Malay-English code-switching)",
+    "Understand common abbreviations used in texting"
+  ],
+  "lifeBenefit": "Understand real, fast, informal Malay as used online and among friends — not just textbook Malay.",
+  "estMinutes": 70,
+  "vocab": [
+    {
+      "id": "b1-mcm",
+      "type": "vocab",
+      "ms": "mcm / cmni / cmtu",
+      "en": "like / like this / like that (texting shorthand for 'macam', 'macam ni', 'macam tu')",
+      "mon": null,
+      "register": "rojak",
+      "example": "Jangan buat mcm tu lah.",
+      "exampleEn": "Don't do it like that.",
+      "phonetic": "muh-cham",
+      "audioUrl": "/audio/ms/b1-mcm.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-xde",
+      "type": "vocab",
+      "ms": "xde / xleh / xpe",
+      "en": "texting shorthand for 'tak ada' (none), 'tak boleh' (can't), 'tak apa' (never mind)",
+      "mon": null,
+      "register": "rojak",
+      "example": "Xde masalah, xpe.",
+      "exampleEn": "No problem, never mind.",
+      "phonetic": "tak a-da / tak bo-leh / tak a-pa",
+      "audioUrl": "/audio/ms/b1-xde.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-confirm",
+      "type": "vocab",
+      "ms": "confirm",
+      "en": "for sure / definitely (English loanword used as Malay adverb)",
+      "mon": null,
+      "register": "rojak",
+      "example": "Confirm dia lambat lagi.",
+      "exampleEn": "He/she is definitely going to be late again.",
+      "phonetic": "kon-firm",
+      "audioUrl": "/audio/ms/b1-confirm.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-power",
+      "type": "vocab",
+      "ms": "power",
+      "en": "awesome/impressive",
+      "mon": null,
+      "register": "rojak",
+      "example": "Wah, power gila video tu!",
+      "exampleEn": "Wow, that video is so awesome!",
+      "phonetic": "pa-wuhr",
+      "audioUrl": "/audio/ms/b1-power.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-santai",
+      "type": "vocab",
+      "ms": "santai",
+      "en": "chill/relaxed (also used for 'no big deal')",
+      "mon": null,
+      "register": "rojak",
+      "example": "Santai je, jangan risau.",
+      "exampleEn": "Relax, don't worry.",
+      "phonetic": "san-tai",
+      "audioUrl": "/audio/ms/b1-santai.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-fyi-rojak",
+      "type": "vocab",
+      "ms": "btw / fyi / ok",
+      "en": "English texting abbreviations used directly in Malay chat",
+      "mon": null,
+      "register": "rojak",
+      "example": "Btw, meeting tukar pukul tiga.",
+      "exampleEn": "By the way, the meeting changed to three o'clock.",
+      "phonetic": "bee-tee-double-yu",
+      "audioUrl": "/audio/ms/b1-fyi-rojak.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-viral",
+      "type": "vocab",
+      "ms": "viral / trending",
+      "en": "viral / trending (media term)",
+      "mon": null,
+      "register": "rojak",
+      "example": "Video ni viral kat TikTok.",
+      "exampleEn": "This video is viral on TikTok.",
+      "phonetic": "vai-ral / trend-ing",
+      "audioUrl": "/audio/ms/b1-viral.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "b1-u8-l1",
+      "order": 1,
+      "title": "Singkatan WhatsApp (Texting shorthand)",
+      "estMinutes": 16,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "b1-mcm",
+        "b1-xde"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Decode this text message: 'xde masalah, cmtu je'",
+          "itemIds": [
+            "b1-xde",
+            "b1-mcm"
+          ],
+          "answer": "No problem, it's just like that / that's how it is."
+        }
+      ]
+    },
+    {
+      "id": "b1-u8-l2",
+      "order": 2,
+      "title": "Loanword Adverbs & Media",
+      "estMinutes": 16,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b1-confirm",
+        "b1-power",
+        "b1-viral"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'This is definitely going viral.'",
+          "answer": "Confirm ni akan viral."
+        }
+      ]
+    },
+    {
+      "id": "b1-u8-l3",
+      "order": 3,
+      "title": "Chat Santai (Casual chat register)",
+      "estMinutes": 16,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "speaking"
+      ],
+      "itemIds": [
+        "b1-santai",
+        "b1-fyi-rojak"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'___ je, jangan risau.' (relax)",
+          "itemIds": [
+            "b1-santai"
+          ],
+          "answer": "Santai"
+        }
+      ]
+    },
+    {
+      "id": "b1-u8-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 22,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b1-confirm",
+        "b1-viral",
+        "b1-santai"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "b1-u8-whatsapp-group-chat",
+    "setting": "Reading and replying to a fast-moving WhatsApp group chat among friends",
+    "roles": [
+      "learner",
+      "friend group (multiple voices)"
+    ],
+    "script": [
+      {
+        "role": "friend1",
+        "ms": "Weh, korang tengok video tu tak? Power gila!",
+        "en": "Hey, did you all see that video? So awesome!"
+      },
+      {
+        "role": "friend2",
+        "ms": "Confirm dah viral kat TikTok tu.",
+        "en": "It's definitely gone viral on TikTok."
+      },
+      {
+        "role": "learner",
+        "ms": "Belum tengok lagi, link mana?",
+        "en": "Haven't watched it yet, where's the link?"
+      },
+      {
+        "role": "friend1",
+        "ms": "Nanti saya share. Btw, korang free petang ni?",
+        "en": "I'll share it later. By the way, are you all free this evening?"
+      },
+      {
+        "role": "learner",
+        "ms": "Santai je, saya free.",
+        "en": "Sure, I'm free."
+      }
+    ],
+    "aiPrompt": "You are simulating a fast, casual Malaysian friend group chat with heavy Manglish/Bahasa Rojak (power, confirm, viral, btw, santai). Keep messages short like real texts. Occasionally ask the learner a direct question to keep them engaged."
+  },
+  "speakingPrompts": [
+    {
+      "id": "b1-u8-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the group chat dialogue read aloud, matching the fast, casual delivery.",
+      "targetAudioUrl": "/audio/ms/b1-u8-scenario.mp3",
+      "rubric": [
+        "fast casual delivery",
+        "natural loanword pronunciation (power, confirm, viral)"
+      ]
+    },
+    {
+      "id": "b1-u8-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Join the AI friend group chat persona and reply naturally, using at least one rojak/slang term.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "responds naturally in the group chat style",
+        "uses at least one rojak term correctly"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "b1-u8-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Confirm' in this Rojak usage means:",
+        "options": [
+          "to confirm a booking",
+          "for sure/definitely",
+          "to disagree",
+          "maybe"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "mcq",
+        "prompt": "'Xde masalah' means:",
+        "options": [
+          "big problem",
+          "no problem",
+          "many problems",
+          "old problem"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate (casual): 'This video is trending, so awesome!'",
+        "answer": "Video ni viral, power gila!"
+      }
+    ]
+  }
+}

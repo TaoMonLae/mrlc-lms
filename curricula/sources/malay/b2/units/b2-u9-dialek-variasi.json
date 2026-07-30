@@ -1,0 +1,291 @@
+{
+  "id": "b2-u9-dialek-variasi",
+  "level": "B2",
+  "order": 9,
+  "title": "Dialek & Variasi",
+  "englishTitle": "Regional Dialects & Variation",
+  "canDo": [
+    "Recognise features of major Malaysian dialects (Kelantanese, Kedah, Sarawak/Sabah Malay)",
+    "Adjust comprehension strategies for non-KL speakers",
+    "Understand common dialect-specific words",
+    "Distinguish Malaysian Malay from Indonesian Malay more systematically"
+  ],
+  "lifeBenefit": "Understand Malay speakers from across Malaysia, not just KL, and avoid Indonesian/Malaysian mix-ups.",
+  "estMinutes": 75,
+  "vocab": [
+    {
+      "id": "b2-loghat",
+      "type": "vocab",
+      "ms": "loghat",
+      "en": "dialect/accent",
+      "mon": null,
+      "register": "standard",
+      "example": "Loghat Kelantan agak susah nak faham kat mula-mula.",
+      "exampleEn": "The Kelantanese dialect is a bit hard to understand at first.",
+      "phonetic": "lo-ghat",
+      "audioUrl": "/audio/ms/b2-loghat.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-hok-ni-kelantan",
+      "type": "vocab",
+      "ms": "hok ni (Kelantan)",
+      "en": "'this' in Kelantanese dialect (standard: 'yang ini/ini')",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Hok ni berapa harga?",
+      "exampleEn": "How much is this? (Kelantanese)",
+      "phonetic": "hok ni",
+      "audioUrl": "/audio/ms/b2-hok-ni-kelantan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-gapo-kelantan",
+      "type": "vocab",
+      "ms": "gapo (Kelantan)",
+      "en": "'what' in Kelantanese dialect (standard: 'apa')",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Gapo nama ko?",
+      "exampleEn": "What's your name? (Kelantanese)",
+      "phonetic": "ga-po",
+      "audioUrl": "/audio/ms/b2-gapo-kelantan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-sabah-sarawak-bah",
+      "type": "vocab",
+      "ms": "bah (Sabah/Sarawak)",
+      "en": "casual sentence-final particle used in Sabah/Sarawak Malay",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Jom makan bah.",
+      "exampleEn": "Let's go eat.",
+      "phonetic": "bah",
+      "audioUrl": "/audio/ms/b2-sabah-sarawak-bah.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-nda-sabah",
+      "type": "vocab",
+      "ms": "nda (Sabah)",
+      "en": "'not/no' in Sabah dialect (standard: 'tidak/tak')",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Nda tahu saya.",
+      "exampleEn": "I don't know.",
+      "phonetic": "n-da",
+      "audioUrl": "/audio/ms/b2-nda-sabah.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-indonesia-vs-malaysia",
+      "type": "vocab",
+      "ms": "bisa vs boleh",
+      "en": "Indonesian 'bisa' (can) vs Malaysian 'boleh' (can/may)",
+      "mon": null,
+      "register": "standard",
+      "example": "Di Malaysia kita cakap 'boleh', bukan 'bisa'.",
+      "exampleEn": "In Malaysia we say 'boleh', not 'bisa'.",
+      "phonetic": "bo-leh vs bi-sa",
+      "audioUrl": "/audio/ms/b2-indonesia-vs-malaysia.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-standard-baku",
+      "type": "vocab",
+      "ms": "bahasa baku",
+      "en": "standard/formal Malay",
+      "mon": null,
+      "register": "standard",
+      "example": "Bahasa baku digunakan dalam surat rasmi.",
+      "exampleEn": "Standard Malay is used in formal letters.",
+      "phonetic": "ba-ha-sa ba-ku",
+      "audioUrl": "/audio/ms/b2-standard-baku.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "b2-u9-l1",
+      "order": 1,
+      "title": "Perkenalan Loghat",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "b2-loghat",
+        "b2-standard-baku"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'The Kelantanese dialect is different from standard Malay.'",
+          "answer": "Loghat Kelantan berbeza daripada bahasa baku."
+        }
+      ]
+    },
+    {
+      "id": "b2-u9-l2",
+      "order": 2,
+      "title": "Loghat Kelantan & Sabah/Sarawak",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b2-hok-ni-kelantan",
+        "b2-gapo-kelantan",
+        "b2-sabah-sarawak-bah",
+        "b2-nda-sabah"
+      ],
+      "practiceExercises": [
+        {
+          "type": "matching",
+          "prompt": "Match each dialect word to its standard Malay equivalent (hok ni→ini, gapo→apa, bah→particle, nda→tak).",
+          "itemIds": [
+            "b2-hok-ni-kelantan",
+            "b2-gapo-kelantan"
+          ],
+          "answer": null
+        }
+      ]
+    },
+    {
+      "id": "b2-u9-l3",
+      "order": 3,
+      "title": "Malaysia vs Indonesia",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "b2-indonesia-vs-malaysia"
+      ],
+      "practiceExercises": [
+        {
+          "type": "mcq",
+          "prompt": "Which word is used in Malaysia for 'can/may'?",
+          "itemIds": [
+            "b2-indonesia-vs-malaysia"
+          ],
+          "answer": "boleh"
+        }
+      ]
+    },
+    {
+      "id": "b2-u9-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 19,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b2-loghat",
+        "b2-hok-ni-kelantan",
+        "b2-indonesia-vs-malaysia"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "b2-u9-understanding-kelantanese-speaker",
+    "setting": "Trying to understand a Kelantanese-speaking vendor and asking them to switch to standard Malay",
+    "roles": [
+      "learner",
+      "Kelantanese vendor"
+    ],
+    "script": [
+      {
+        "role": "vendor",
+        "ms": "Hok ni berapa? Gapo nama ko nak beli?",
+        "en": "How much is this? What did you want to buy?"
+      },
+      {
+        "role": "learner",
+        "ms": "Maaf, saya tak berapa faham loghat Kelantan. Boleh cakap bahasa biasa?",
+        "en": "Sorry, I don't quite understand the Kelantanese dialect. Can you speak in standard Malay?"
+      },
+      {
+        "role": "vendor",
+        "ms": "Oh, boleh! Ini berapa harganya, awak nak beli apa?",
+        "en": "Oh, sure! How much is this, what do you want to buy?"
+      },
+      {
+        "role": "learner",
+        "ms": "Terima kasih. Saya nak beli ni, sepuluh ringgit boleh?",
+        "en": "Thank you. I want to buy this, can it be ten ringgit?"
+      }
+    ],
+    "aiPrompt": "You are a friendly vendor who naturally speaks Kelantanese dialect, then happily switch to standard/KL Malay when the learner politely asks for clarification. Show the contrast clearly between the two registers."
+  },
+  "speakingPrompts": [
+    {
+      "id": "b2-u9-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow both the Kelantanese and standard versions of the dialogue, noting the vocabulary differences.",
+      "targetAudioUrl": "/audio/ms/b2-u9-scenario.mp3",
+      "rubric": [
+        "recognises dialect vs standard forms",
+        "polite clarification request"
+      ]
+    },
+    {
+      "id": "b2-u9-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Politely ask the AI dialect-speaker persona to switch to standard Malay when you don't understand.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "politely requests clarification",
+        "understands the standard-register response"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "b2-u9-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "In Kelantanese dialect, 'gapo' corresponds to standard Malay:",
+        "options": [
+          "ini (this)",
+          "apa (what)",
+          "boleh (can)",
+          "tak (no)"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate to standard Malaysian Malay: 'Can you speak in standard Malay?'",
+        "answer": "Boleh cakap bahasa biasa/baku?"
+      },
+      {
+        "type": "mcq",
+        "prompt": "Malaysians say 'boleh' for 'can/may'; Indonesians typically say:",
+        "options": [
+          "bisa",
+          "boleh",
+          "dapat",
+          "mampu"
+        ],
+        "answerIndex": 0
+      }
+    ]
+  }
+}

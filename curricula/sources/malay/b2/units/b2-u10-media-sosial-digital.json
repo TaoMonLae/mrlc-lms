@@ -1,0 +1,303 @@
+{
+  "id": "b2-u10-media-sosial-digital",
+  "level": "B2",
+  "order": 10,
+  "title": "Media Sosial & Digital",
+  "englishTitle": "Social Media & Digital Literacy",
+  "canDo": [
+    "Recognise common online scams and phishing language",
+    "Use official government portals (e.g. MyIMMs, JPN) vocabulary",
+    "Discuss social media use critically",
+    "Verify information and spot misinformation"
+  ],
+  "lifeBenefit": "Navigate Malaysian digital life safely, including scam awareness and official e-services.",
+  "estMinutes": 75,
+  "vocab": [
+    {
+      "id": "b2-penipuan-dalam-talian",
+      "type": "vocab",
+      "ms": "penipuan dalam talian",
+      "en": "online scam",
+      "mon": null,
+      "register": "standard",
+      "example": "Hati-hati dengan penipuan dalam talian.",
+      "exampleEn": "Be careful of online scams.",
+      "phonetic": "puh-ni-pu-an da-lam ta-li-an",
+      "audioUrl": "/audio/ms/b2-penipuan-dalam-talian.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-pancingan-siber",
+      "type": "vocab",
+      "ms": "pancingan siber / phishing",
+      "en": "phishing",
+      "mon": null,
+      "register": "standard",
+      "example": "Jangan klik pautan pancingan siber.",
+      "exampleEn": "Don't click phishing links.",
+      "phonetic": "pan-chi-ngan si-buhr",
+      "audioUrl": "/audio/ms/b2-pancingan-siber.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-portal-rasmi",
+      "type": "vocab",
+      "ms": "portal rasmi kerajaan",
+      "en": "official government portal",
+      "mon": null,
+      "register": "standard",
+      "example": "Semak status permohonan di portal rasmi.",
+      "exampleEn": "Check application status on the official portal.",
+      "phonetic": "por-tal ras-mi kuh-ra-ja-an",
+      "audioUrl": "/audio/ms/b2-portal-rasmi.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-maklumat-peribadi",
+      "type": "vocab",
+      "ms": "maklumat peribadi",
+      "en": "personal information",
+      "mon": null,
+      "register": "standard",
+      "example": "Jangan kongsi maklumat peribadi dengan orang tak dikenali.",
+      "exampleEn": "Don't share personal information with strangers.",
+      "phonetic": "mak-lu-mat puh-ri-ba-di",
+      "audioUrl": "/audio/ms/b2-maklumat-peribadi.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-berita-palsu",
+      "type": "vocab",
+      "ms": "berita palsu / hoax",
+      "en": "fake news/hoax",
+      "mon": null,
+      "register": "standard",
+      "example": "Sahkan dulu sebelum share berita palsu.",
+      "exampleEn": "Verify first before sharing fake news.",
+      "phonetic": "buh-ri-ta pal-su",
+      "audioUrl": "/audio/ms/b2-berita-palsu.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-sahkan-fakta",
+      "type": "phrase",
+      "ms": "sahkan fakta",
+      "en": "verify facts/fact-check",
+      "mon": null,
+      "register": "standard",
+      "example": "Sentiasa sahkan fakta sebelum percaya.",
+      "exampleEn": "Always verify facts before believing.",
+      "phonetic": "sah-kan fak-ta",
+      "audioUrl": "/audio/ms/b2-sahkan-fakta.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-privasi",
+      "type": "vocab",
+      "ms": "privasi",
+      "en": "privacy",
+      "mon": null,
+      "register": "standard",
+      "example": "Tetapan privasi akaun saya dah ditukar.",
+      "exampleEn": "My account's privacy settings have been changed.",
+      "phonetic": "pri-va-si",
+      "audioUrl": "/audio/ms/b2-privasi.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "b2-u10-l1",
+      "order": 1,
+      "title": "Kenali Penipuan Dalam Talian",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "b2-penipuan-dalam-talian",
+        "b2-pancingan-siber"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'Be careful of online scams and phishing links.'",
+          "answer": "Hati-hati dengan penipuan dalam talian dan pautan pancingan siber."
+        }
+      ]
+    },
+    {
+      "id": "b2-u10-l2",
+      "order": 2,
+      "title": "Portal Rasmi & Maklumat Peribadi",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b2-portal-rasmi",
+        "b2-maklumat-peribadi",
+        "b2-privasi"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'Never share your personal information on an unofficial site.'",
+          "answer": "Jangan sesekali kongsi maklumat peribadi di laman yang tidak rasmi."
+        }
+      ]
+    },
+    {
+      "id": "b2-u10-l3",
+      "order": 3,
+      "title": "Berita Palsu & Sahkan Fakta",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b2-berita-palsu",
+        "b2-sahkan-fakta"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'Sentiasa ___ sebelum percaya.' (verify facts)",
+          "itemIds": [
+            "b2-sahkan-fakta"
+          ],
+          "answer": "sahkan fakta"
+        }
+      ]
+    },
+    {
+      "id": "b2-u10-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 15,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b2-penipuan-dalam-talian",
+        "b2-portal-rasmi",
+        "b2-sahkan-fakta"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "b2-u10-suspicious-message",
+    "setting": "Discussing a suspicious WhatsApp message claiming to be from a bank",
+    "roles": [
+      "learner",
+      "friend"
+    ],
+    "script": [
+      {
+        "role": "learner",
+        "ms": "Saya dapat mesej kata akaun bank saya bermasalah, kena klik link ni.",
+        "en": "I got a message saying my bank account has a problem, I need to click this link."
+      },
+      {
+        "role": "friend",
+        "ms": "Jangan klik! Tu mungkin penipuan dalam talian.",
+        "en": "Don't click it! That might be an online scam."
+      },
+      {
+        "role": "learner",
+        "ms": "Macam mana saya nak tahu ni tipu ke betul?",
+        "en": "How do I know if this is fake or real?"
+      },
+      {
+        "role": "friend",
+        "ms": "Bank sebenar takkan minta maklumat peribadi macam tu. Sahkan fakta terus dengan bank.",
+        "en": "A real bank wouldn't ask for personal information like that. Verify directly with the bank."
+      },
+      {
+        "role": "learner",
+        "ms": "Baik, saya akan telefon bank terus.",
+        "en": "Alright, I'll call the bank directly."
+      }
+    ],
+    "aiPrompt": "You are a savvy friend helping the learner recognise a phishing/scam message. Explain clearly why it's suspicious and what to do instead (verify directly with the official source). Standard, helpful, non-alarmist tone."
+  },
+  "speakingPrompts": [
+    {
+      "id": "b2-u10-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the scam-message dialogue, focusing on clear cautionary vocabulary.",
+      "targetAudioUrl": "/audio/ms/b2-u10-scenario.mp3",
+      "rubric": [
+        "clear cautionary tone",
+        "precise digital-safety vocabulary"
+      ]
+    },
+    {
+      "id": "b2-u10-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Discuss a suspicious message (real or invented) with the AI friend persona and decide on a safe next step.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "identifies the message as suspicious",
+        "proposes a safe verification step"
+      ]
+    },
+    {
+      "id": "b2-u10-presentation-1",
+      "type": "presentation",
+      "instructions": "Give a 90-second talk on three ways to protect yourself from online scams.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "three clear, distinct tips",
+        "confident delivery"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "b2-u10-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Pancingan siber' refers to:",
+        "options": [
+          "a legitimate bank call",
+          "phishing",
+          "a government portal",
+          "a social media post"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate: 'Never share your personal information with strangers.'",
+        "answer": "Jangan sesekali kongsi maklumat peribadi dengan orang tak dikenali."
+      },
+      {
+        "type": "mcq",
+        "prompt": "Before sharing news online, you should:",
+        "options": [
+          "share it immediately",
+          "verify/fact-check it first",
+          "ignore it",
+          "delete your account"
+        ],
+        "answerIndex": 1
+      }
+    ]
+  }
+}

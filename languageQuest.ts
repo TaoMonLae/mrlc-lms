@@ -10,9 +10,11 @@ import {
   LANGUAGE_QUEST_MAX_HEARTS,
   LANGUAGE_QUEST_PRACTICE_POINTS,
   bossBattleResult,
+  isValidReorderSubmission,
   languageQuestDayKey,
   languageQuestPracticePrompt,
   nextLanguageQuestStreak,
+  reorderChallengeIsCorrect,
 } from "./shared/languageQuest";
 import {
   DEFAULT_LANGUAGE_QUEST_AVATAR,
@@ -40,6 +42,9 @@ import { chineseConversationStarterCourse } from "./languageQuestChineseConversa
 import { englishWordCourses } from "./languageQuestEnglishWordCourses";
 import { advancedEnglishCourses } from "./languageQuestAdvancedEnglishCourses";
 import { linguifyCefrCourses } from "./languageQuestLinguifyCourses";
+import { malayCefrCourses } from "./languageQuestMalayCourses";
+import { malaySpeakingCourse } from "./languageQuestMalayCourse";
+import { malayGuideModernCourse } from "./languageQuestMalayGuideCourse";
 import { languageQuestVoiceServiceFromEnv } from "./languageQuestVoice";
 import {
   kokoroSupportsLanguage,
@@ -379,6 +384,9 @@ export async function ensureOfficialCourses(prisma: any): Promise<void> {
     ...englishWordCourses,
     ...advancedEnglishCourses,
     ...linguifyCefrCourses,
+    ...malayCefrCourses,
+    malaySpeakingCourse,
+    malayGuideModernCourse,
   ];
   for (const course of courses) {
     await ensureOfficialCourse(prisma, course);
@@ -915,11 +923,18 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         select: { id: true },
       });
 
+      // Boss Battle's UI only supports "click one option to answer," so
+      // REORDER challenges (which grade a submitted sequence, not a single
+      // chosen option) aren't eligible questions here -- finishing the
+      // course still requires clearing them in the normal lesson flow above,
+      // they're just never selected into a battle deck.
+      const battleEligibleChallenges = challenges.filter((challenge: any) => challenge.type !== "REORDER");
+
       // Rank by how often the learner has gotten each one wrong before, so
       // the battle is built from *their* weak spots. Most challenges will
       // tie at zero wrong attempts, so shuffle first to keep the deck fresh
       // across attempts instead of always picking course order.
-      const ranked = shuffle(challenges)
+      const ranked = shuffle(battleEligibleChallenges)
         .map((challenge: any) => ({ challenge, wrongAttempts: progressByChallenge.get(challenge.id)?.wrongAttempts ?? 0 }))
         .sort((a: any, b: any) => b.wrongAttempts - a.wrongAttempts)
         .slice(0, LANGUAGE_QUEST_BOSS_BATTLE_MAX_QUESTIONS)
@@ -1142,17 +1157,44 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
   app.post("/api/language-quest/challenges/:id/answer", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const optionId = text(req.body?.optionId, 100);
-    if (!optionId) { res.status(400).json({ error: "Choose an answer" }); return; }
+    // REORDER challenges submit the whole sequence the learner built instead
+    // of a single chosen option -- everything else (SELECT/ASSIST/CLOZE/
+    // ODD_ONE_OUT) still submits one optionId, checked the original way.
+    const orderedOptionIds = Array.isArray(req.body?.orderedOptionIds)
+      ? req.body.orderedOptionIds.filter((id: unknown): id is string => typeof id === "string")
+      : null;
     try {
       const challenge = await prisma.languageQuestChallenge.findUnique({
         where: { id: req.params.id },
-        include: { options: true, lesson: { include: { unit: { include: { course: true } } } } },
+        include: {
+          options: { orderBy: { order: "asc" } },
+          lesson: { include: { unit: { include: { course: true } } } },
+        },
       });
       if (!challenge || !challenge.lesson.unit.course.published) { res.status(404).json({ error: "Challenge not found" }); return; }
-      const selected = challenge.options.find((option: any) => option.id === optionId);
-      if (!selected) { res.status(400).json({ error: "That answer does not belong to this challenge" }); return; }
-      const correctOption = challenge.options.find((option: any) => option.correct);
-      if (!correctOption) { res.status(409).json({ error: "This challenge has no correct answer configured" }); return; }
+
+      let isCorrect: boolean;
+      let correctOptionId: string;
+      let correctAnswer: string;
+      if (challenge.type === "REORDER") {
+        const canonicalIds = challenge.options.map((option: any) => option.id);
+        if (!isValidReorderSubmission(canonicalIds, orderedOptionIds)) {
+          res.status(400).json({ error: "Place every tile before checking your answer" });
+          return;
+        }
+        isCorrect = reorderChallengeIsCorrect(canonicalIds, orderedOptionIds);
+        correctOptionId = canonicalIds[0];
+        correctAnswer = challenge.options.map((option: any) => option.text).join(" ");
+      } else {
+        if (!optionId) { res.status(400).json({ error: "Choose an answer" }); return; }
+        const selected = challenge.options.find((option: any) => option.id === optionId);
+        if (!selected) { res.status(400).json({ error: "That answer does not belong to this challenge" }); return; }
+        const correctOption = challenge.options.find((option: any) => option.correct);
+        if (!correctOption) { res.status(409).json({ error: "This challenge has no correct answer configured" }); return; }
+        isCorrect = Boolean(selected.correct);
+        correctOptionId = correctOption.id;
+        correctAnswer = correctOption.text;
+      }
       const now = new Date();
       // Make sure a progress row exists before we try to lock it below (upsert
       // outside the transaction is fine — it's idempotent and only needs to run once).
@@ -1186,7 +1228,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         if (!canAttemptNewChallenge(progress.hearts, Boolean(existing?.completed))) {
           return { outOfHearts: true as const, profile: profileJson(progress) };
         }
-        if (selected.correct) {
+        if (isCorrect) {
           const firstClear = !existing?.completed;
           // Practising an already-cleared challenge only earns points while it is
           // actually refilling a heart (hearts below max). Once hearts are full,
@@ -1276,7 +1318,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         });
         return;
       }
-      res.json({ ...result, correctOptionId: correctOption.id, correctAnswer: correctOption.text });
+      res.json({ ...result, correctOptionId, correctAnswer });
     } catch (error) {
       logger.error("Error saving Language Quest answer:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to check that answer" });
@@ -1452,6 +1494,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         cards: cards.map((row: any) => ({
           challengeId: row.challengeId,
           stage: row.stage,
+          type: row.challenge.type,
           question: languageQuestPracticePrompt(row.challenge.question),
           course: {
             id: row.challenge.lesson.unit.course.id,
@@ -1477,22 +1520,47 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
   app.post("/api/language-quest/mastery/:id/answer", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const optionId = text(req.body?.optionId, 100);
-    if (!optionId) { res.status(400).json({ error: "Choose an answer" }); return; }
+    const orderedOptionIds = Array.isArray(req.body?.orderedOptionIds)
+      ? req.body.orderedOptionIds.filter((id: unknown): id is string => typeof id === "string")
+      : null;
     const now = new Date();
     try {
       const challenge = await prisma.languageQuestChallenge.findUnique({
         where: { id: req.params.id },
         include: {
-          options: true,
+          options: { orderBy: { order: "asc" } },
           lesson: { include: { unit: { include: { course: true } } } },
         },
       });
-      const selected = challenge?.options.find((option: any) => option.id === optionId);
-      const correctOption = challenge?.options.find((option: any) => option.correct);
-      if (!challenge || !selected || !correctOption) {
+      if (!challenge) {
         res.status(400).json({ error: "That mastery answer is not available" });
         return;
       }
+
+      let isCorrect: boolean;
+      let correctOptionId: string;
+      let correctAnswer: string;
+      if (challenge.type === "REORDER") {
+        const canonicalIds = challenge.options.map((option: any) => option.id);
+        if (!isValidReorderSubmission(canonicalIds, orderedOptionIds)) {
+          res.status(400).json({ error: "That mastery answer is not available" });
+          return;
+        }
+        isCorrect = reorderChallengeIsCorrect(canonicalIds, orderedOptionIds);
+        correctOptionId = canonicalIds[0];
+        correctAnswer = challenge.options.map((option: any) => option.text).join(" ");
+      } else {
+        const selected = optionId ? challenge.options.find((option: any) => option.id === optionId) : null;
+        const correctOption = challenge.options.find((option: any) => option.correct);
+        if (!selected || !correctOption) {
+          res.status(400).json({ error: "That mastery answer is not available" });
+          return;
+        }
+        isCorrect = Boolean(selected.correct);
+        correctOptionId = correctOption.id;
+        correctAnswer = correctOption.text;
+      }
+
       await prisma.languageQuestUserProgress.upsert({
         where: { userId: jwtUser.userId },
         update: {},
@@ -1506,25 +1574,25 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         `;
         const review = reviewRows[0];
         if (!review || review.dueAt > now) return { unavailable: true as const };
-        const next = nextLanguageQuestMasteryReview(review.stage, Boolean(selected.correct), now);
+        const next = nextLanguageQuestMasteryReview(review.stage, isCorrect, now);
         await tx.languageQuestMasteryProgress.update({
           where: { userId_challengeId: { userId: jwtUser.userId, challengeId: challenge.id } },
           data: {
             stage: next.stage,
             dueAt: next.dueAt,
             lastReviewedAt: now,
-            ...(selected.correct
+            ...(isCorrect
               ? { correctReviews: { increment: 1 } }
               : { wrongReviews: { increment: 1 } }),
           },
         });
-        if (!selected.correct) {
+        if (!isCorrect) {
           return {
             correct: false,
             pointsAwarded: 0,
             nextDueAt: next.dueAt,
-            correctOptionId: correctOption.id,
-            correctAnswer: correctOption.text,
+            correctOptionId,
+            correctAnswer,
           };
         }
         const progressRows: any[] = await tx.$queryRaw`
@@ -1561,8 +1629,8 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           correct: true,
           pointsAwarded: LANGUAGE_QUEST_MASTERY_POINTS,
           nextDueAt: next.dueAt,
-          correctOptionId: correctOption.id,
-          correctAnswer: correctOption.text,
+          correctOptionId,
+          correctAnswer,
           profile: profileJson(updated),
           unlockedRewardIds: newlyUnlockedLanguageQuestRewardIds(progress.points, updated.points),
         };

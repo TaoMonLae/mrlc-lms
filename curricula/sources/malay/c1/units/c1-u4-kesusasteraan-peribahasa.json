@@ -1,0 +1,284 @@
+{
+  "id": "c1-u4-kesusasteraan-peribahasa",
+  "level": "C1",
+  "order": 4,
+  "title": "Kesusasteraan & Peribahasa",
+  "englishTitle": "Literature & Proverbs",
+  "canDo": [
+    "Understand and use common Malay proverbs (peribahasa) appropriately",
+    "Discuss a short literary excerpt",
+    "Recognise figurative/idiomatic language",
+    "Appreciate cultural nuance embedded in literature"
+  ],
+  "lifeBenefit": "Add colour and cultural depth to your Malay through proverbs and literary appreciation.",
+  "estMinutes": 80,
+  "vocab": [
+    {
+      "id": "c1-bagai-aur-tebing",
+      "type": "vocab",
+      "ms": "bagai aur dengan tebing",
+      "en": "like bamboo and the riverbank (mutual support/interdependence)",
+      "mon": null,
+      "register": "standard",
+      "example": "Hubungan mereka bagai aur dengan tebing.",
+      "exampleEn": "Their relationship is like bamboo and the riverbank — mutually supportive.",
+      "phonetic": "ba-gai a-ur duh-ngan tuh-bing",
+      "audioUrl": "/audio/ms/c1-bagai-aur-tebing.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-hangat-tahi-ayam",
+      "type": "vocab",
+      "ms": "hangat-hangat tahi ayam",
+      "en": "enthusiasm that fades quickly (lit. 'warm like chicken droppings')",
+      "mon": null,
+      "register": "standard",
+      "example": "Semangat dia hangat-hangat tahi ayam je.",
+      "exampleEn": "His/her enthusiasm fades quickly.",
+      "phonetic": "ha-ngat ha-ngat ta-hi a-yam",
+      "audioUrl": "/audio/ms/c1-hangat-tahi-ayam.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-air-dicincang-tak-putus",
+      "type": "vocab",
+      "ms": "air dicincang tidak akan putus",
+      "en": "family ties can't be truly broken (lit. 'water cannot be severed by chopping')",
+      "mon": null,
+      "register": "standard",
+      "example": "Walau bergaduh, air dicincang tidak akan putus.",
+      "exampleEn": "Even after fighting, family ties remain unbroken.",
+      "phonetic": "a-ir di-chin-chang ti-dak a-kan pu-tus",
+      "audioUrl": "/audio/ms/c1-air-dicincang-tak-putus.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-peribahasa",
+      "type": "vocab",
+      "ms": "peribahasa",
+      "en": "proverb",
+      "mon": null,
+      "register": "standard",
+      "example": "Peribahasa ini menggambarkan nilai masyarakat Melayu.",
+      "exampleEn": "This proverb reflects Malay societal values.",
+      "phonetic": "puh-ri-ba-ha-sa",
+      "audioUrl": "/audio/ms/c1-peribahasa.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-kiasan",
+      "type": "vocab",
+      "ms": "kiasan / bahasa kiasan",
+      "en": "figurative language/metaphor",
+      "mon": null,
+      "register": "standard",
+      "example": "Penulis banyak guna kiasan dalam puisi ini.",
+      "exampleEn": "The writer uses a lot of figurative language in this poem.",
+      "phonetic": "ki-a-san",
+      "audioUrl": "/audio/ms/c1-kiasan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-mesej-tersirat",
+      "type": "vocab",
+      "ms": "mesej tersirat",
+      "en": "implicit/hidden message",
+      "mon": null,
+      "register": "standard",
+      "example": "Apa mesej tersirat dalam cerpen ni?",
+      "exampleEn": "What's the implicit message in this short story?",
+      "phonetic": "meh-sej tuhr-si-rat",
+      "audioUrl": "/audio/ms/c1-mesej-tersirat.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "c1-u4-l1",
+      "order": 1,
+      "title": "Peribahasa Hubungan Manusia",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "c1-bagai-aur-tebing",
+        "c1-air-dicincang-tak-putus"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate, using a proverb: 'Even though we argued, our family ties remain unbroken.'",
+          "answer": "Walau kami bergaduh, air dicincang tidak akan putus."
+        }
+      ]
+    },
+    {
+      "id": "c1-u4-l2",
+      "order": 2,
+      "title": "Peribahasa Sikap & Semangat",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "c1-hangat-tahi-ayam",
+        "c1-peribahasa"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'This proverb describes someone whose enthusiasm fades quickly.'",
+          "answer": "Peribahasa ini menggambarkan seseorang yang semangatnya hangat-hangat tahi ayam."
+        }
+      ]
+    },
+    {
+      "id": "c1-u4-l3",
+      "order": 3,
+      "title": "Kiasan & Mesej Tersirat dalam Sastera",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "c1-kiasan",
+        "c1-mesej-tersirat"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'Apa ___ dalam cerpen ni?' (implicit message)",
+          "itemIds": [
+            "c1-mesej-tersirat"
+          ],
+          "answer": "mesej tersirat"
+        }
+      ]
+    },
+    {
+      "id": "c1-u4-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "c1-peribahasa",
+        "c1-kiasan",
+        "c1-bagai-aur-tebing"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "c1-u4-discussing-a-short-story",
+    "setting": "Discussing the hidden meaning of a short story excerpt in a book club",
+    "roles": [
+      "learner",
+      "book club member"
+    ],
+    "script": [
+      {
+        "role": "member",
+        "ms": "Apa pendapat awak tentang mesej tersirat dalam cerpen ni?",
+        "en": "What do you think about the implicit message in this short story?"
+      },
+      {
+        "role": "learner",
+        "ms": "Saya rasa penulis guna banyak kiasan untuk gambarkan kehilangan.",
+        "en": "I think the writer uses a lot of figurative language to depict loss."
+      },
+      {
+        "role": "member",
+        "ms": "Betul, dan ada peribahasa 'air dicincang tidak akan putus' yang sesuai dengan tema keluarga.",
+        "en": "Right, and the proverb 'water cannot be severed by chopping' fits the family theme well."
+      },
+      {
+        "role": "learner",
+        "ms": "Setuju. Ia menggambarkan hubungan yang bagai aur dengan tebing walaupun berjauhan.",
+        "en": "Agreed. It depicts a relationship like bamboo and the riverbank, even when apart."
+      }
+    ],
+    "aiPrompt": "You are a thoughtful book club member discussing the hidden meaning and use of proverbs in a short story. Engage with literary nuance and invite the learner's interpretation. High, reflective register."
+  },
+  "speakingPrompts": [
+    {
+      "id": "c1-u4-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the book-club dialogue, focusing on reflective, literary tone and correct proverb delivery.",
+      "targetAudioUrl": "/audio/ms/c1-u4-scenario.mp3",
+      "rubric": [
+        "correct proverb pronunciation/rhythm",
+        "reflective literary tone"
+      ]
+    },
+    {
+      "id": "c1-u4-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Discuss a short story or poem (real or invented) with the AI book-club persona, using at least one proverb appropriately.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "uses a proverb correctly in context",
+        "offers a genuine interpretation"
+      ]
+    },
+    {
+      "id": "c1-u4-presentation-1",
+      "type": "presentation",
+      "instructions": "Give a 2-minute talk explaining one proverb from your own culture, translated and compared to a Malay one from this unit.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "clear cross-cultural comparison",
+        "at least one Malay proverb used correctly"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "c1-u4-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Bagai aur dengan tebing' describes:",
+        "options": [
+          "a broken relationship",
+          "mutual support/interdependence",
+          "a quick temper",
+          "a rare event"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate the meaning (not literally) of: 'Semangat dia hangat-hangat tahi ayam.'",
+        "answer": "His/her enthusiasm/motivation fades quickly."
+      },
+      {
+        "type": "mcq",
+        "prompt": "'Kiasan' means:",
+        "options": [
+          "a proverb",
+          "figurative language/metaphor",
+          "a hidden message",
+          "a short story"
+        ],
+        "answerIndex": 1
+      }
+    ]
+  }
+}

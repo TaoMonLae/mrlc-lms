@@ -11,6 +11,7 @@ import { isChineseLanguage, languageQuestAnswerMatches } from '@/shared/language
 import { useLanguageQuestSupport } from '@/src/components/games/LanguageQuestSupport';
 import { LanguageQuestPinyinText } from '@/src/components/games/LanguageQuestPinyinText';
 import { LanguageQuestPhaseStepper } from '@/src/components/games/LanguageQuestPhaseStepper';
+import { LanguageQuestReorderTiles } from '@/src/components/games/LanguageQuestReorderTiles';
 import { LanguageQuestCompanion } from '@/src/components/games/LanguageQuestCompanion';
 import { LanguageQuestRewardReveal } from '@/src/components/games/LanguageQuestRewards';
 import { useLanguageQuestPreferences } from '@/src/components/games/LanguageQuestPreferences';
@@ -61,6 +62,7 @@ export default function LanguageQuestLesson() {
   const [loading, setLoading] = useState(true);
   const [index, setIndex] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [orderedIds, setOrderedIds] = useState<string[]>([]);
   const [answer, setAnswer] = useState<AnswerResult | null>(null);
   const [checking, setChecking] = useState(false);
   const [sessionPoints, setSessionPoints] = useState(0);
@@ -92,6 +94,7 @@ export default function LanguageQuestLesson() {
     setPreviewIndex(0);
     setIndex(0);
     setSelectedId(null);
+    setOrderedIds([]);
     setAnswer(null);
     setSessionPoints(0);
     setCombo(0);
@@ -245,11 +248,18 @@ export default function LanguageQuestLesson() {
     setPhase('quiz');
   };
 
+  const isReorder = challenge?.type === 'REORDER';
+  const canCheck = isReorder ? orderedIds.length === (challenge?.options.length ?? -1) : Boolean(selectedId);
+
   const checkAnswer = async () => {
-    if (!challenge || !selectedId || checking || answer) return;
+    if (!challenge || !canCheck || checking || answer) return;
     setChecking(true);
     try {
-      const result = await apiSend<AnswerResult>(`/api/language-quest/challenges/${challenge.id}/answer`, 'POST', { optionId: selectedId });
+      const result = await apiSend<AnswerResult>(
+        `/api/language-quest/challenges/${challenge.id}/answer`,
+        'POST',
+        isReorder ? { orderedOptionIds: orderedIds } : { optionId: selectedId },
+      );
       setAnswer(result);
       setProfile(result.profile);
       if (result.correct) {
@@ -287,6 +297,7 @@ export default function LanguageQuestLesson() {
     if (!answer) return;
     if (answer.correct) setIndex((current) => current + 1);
     setSelectedId(null);
+    setOrderedIds([]);
     setAnswer(null);
   };
 
@@ -308,6 +319,7 @@ export default function LanguageQuestLesson() {
     setIndex(0);
     setSessionPoints(0);
     setSelectedId(null);
+    setOrderedIds([]);
     setAnswer(null);
     setCombo(0);
     setUnlockedRewardId(null);
@@ -360,25 +372,30 @@ export default function LanguageQuestLesson() {
       }
 
       if (phase === 'quiz' && challenge && !finished && !outOfHearts) {
-        const letterIndex = optionLetters.indexOf(event.key.toUpperCase());
-        const numberIndex = Number(event.key) - 1;
-        const optionIndex = letterIndex >= 0 ? letterIndex : numberIndex;
-        if (!answer && optionIndex >= 0 && optionIndex < challenge.options.length) {
-          event.preventDefault();
-          setSelectedId(challenge.options[optionIndex].id);
-          return;
+        // REORDER has no single "option N" to jump to with a letter/number key
+        // -- it's built by tapping tiles in the board below -- but Enter to
+        // check/continue still makes sense once a sequence is complete.
+        if (challenge.type !== 'REORDER') {
+          const letterIndex = optionLetters.indexOf(event.key.toUpperCase());
+          const numberIndex = Number(event.key) - 1;
+          const optionIndex = letterIndex >= 0 ? letterIndex : numberIndex;
+          if (!answer && optionIndex >= 0 && optionIndex < challenge.options.length) {
+            event.preventDefault();
+            setSelectedId(challenge.options[optionIndex].id);
+            return;
+          }
         }
         if (event.key === 'Enter') {
           event.preventDefault();
           if (answer) continueLesson();
-          else if (selectedId && !checking) checkAnswer();
+          else if (canCheck && !checking) checkAnswer();
         }
       }
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, loading, lesson, previewIndex, cards.length, card, challenge, answer, selectedId, finished, outOfHearts, optionLetters, checking, sentenceFeedback, sentenceInput, sentenceCard, sentenceCards.length, sentenceIndex, spellingCard]);
+  }, [phase, loading, lesson, previewIndex, cards.length, card, challenge, answer, selectedId, orderedIds, canCheck, finished, outOfHearts, optionLetters, checking, sentenceFeedback, sentenceInput, sentenceCard, sentenceCards.length, sentenceIndex, spellingCard]);
 
   if (loading) {
     return <div className="grid min-h-[520px] place-items-center"><div className="h-11 w-11 animate-spin rounded-full border-4 border-violet-200 border-t-violet-600" /></div>;
@@ -777,6 +794,14 @@ export default function LanguageQuestLesson() {
           Highlight an unfamiliar word to check the dictionary.
         </p>
 
+        {isReorder ? (
+          <LanguageQuestReorderTiles
+            options={challenge.options}
+            value={orderedIds}
+            onChange={setOrderedIds}
+            disabled={Boolean(answer)}
+          />
+        ) : (
         <div className="mt-8 grid gap-3 sm:grid-cols-2">
           {challenge.options.map((option, optionIndex) => {
             const selected = selectedId === option.id;
@@ -821,6 +846,7 @@ export default function LanguageQuestLesson() {
             );
           })}
         </div>
+        )}
       </main>
 
       <footer className={`-mx-4 mt-auto border-t px-4 py-4 sm:-mx-6 sm:px-6 ${answer?.correct ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-500/20 dark:bg-emerald-500/10' : answer ? 'border-rose-200 bg-rose-50 dark:border-rose-500/20 dark:bg-rose-500/10' : 'border-slate-200 dark:border-surface-raised'}`}>
@@ -834,7 +860,7 @@ export default function LanguageQuestLesson() {
                   <div className="mt-1 flex flex-wrap items-end gap-1 text-xs">
                     <LanguageQuestPinyinText
                       text={answer.correctAnswer}
-                      pinyin={challenge.options.find((option) => option.id === answer.correctOptionId)?.pinyin ?? null}
+                      pinyin={isReorder ? null : challenge.options.find((option) => option.id === answer.correctOptionId)?.pinyin ?? null}
                     />
                     <span>is the best response here. +{answer.pointsAwarded} XP</span>
                   </div>
@@ -850,7 +876,7 @@ export default function LanguageQuestLesson() {
                     <span>Best answer:</span>
                     <LanguageQuestPinyinText
                       text={answer.correctAnswer}
-                      pinyin={challenge.options.find((option) => option.id === answer.correctOptionId)?.pinyin ?? null}
+                      pinyin={isReorder ? null : challenge.options.find((option) => option.id === answer.correctOptionId)?.pinyin ?? null}
                     />
                     <span>Look for the option that responds directly to the situation.</span>
                   </div>
@@ -863,7 +889,7 @@ export default function LanguageQuestLesson() {
               {answer.correct ? 'Continue' : 'Try again'}
             </Button>
           ) : (
-            <Button onClick={checkAnswer} disabled={!selectedId || checking} style={selectedId ? { backgroundColor: lesson.course.accentColor } : undefined}>
+            <Button onClick={checkAnswer} disabled={!canCheck || checking} style={canCheck ? { backgroundColor: lesson.course.accentColor } : undefined}>
               {checking ? 'Checking…' : 'Check answer'}
             </Button>
           )}

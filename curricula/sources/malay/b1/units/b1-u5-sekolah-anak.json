@@ -1,0 +1,321 @@
+{
+  "id": "b1-u5-sekolah-anak",
+  "level": "B1",
+  "order": 5,
+  "title": "Sekolah & Anak",
+  "englishTitle": "Children's Schooling",
+  "canDo": [
+    "Discuss a child's school progress with a teacher",
+    "Understand school notices and permission slips",
+    "Raise a concern about a child at school",
+    "Discuss homework and study habits"
+  ],
+  "lifeBenefit": "Engage confidently with your children's teachers and school system.",
+  "estMinutes": 75,
+  "vocab": [
+    {
+      "id": "b1-prestasi-sekolah",
+      "type": "vocab",
+      "ms": "prestasi sekolah",
+      "en": "school performance",
+      "mon": null,
+      "register": "standard",
+      "example": "Macam mana prestasi sekolah anak saya?",
+      "exampleEn": "How is my child's school performance?",
+      "phonetic": "prehs-ta-si suh-ko-lah",
+      "audioUrl": "/audio/ms/b1-prestasi-sekolah.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-guru-kelas",
+      "type": "vocab",
+      "ms": "guru kelas",
+      "en": "class teacher",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Saya nak jumpa guru kelas anak saya.",
+      "exampleEn": "I want to meet my child's class teacher.",
+      "phonetic": "gu-ru kuh-las",
+      "audioUrl": "/audio/ms/b1-guru-kelas.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-kerja-rumah",
+      "type": "vocab",
+      "ms": "kerja rumah",
+      "en": "homework",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Anak saya belum siapkan kerja rumah.",
+      "exampleEn": "My child hasn't finished their homework.",
+      "phonetic": "kuh-rja ru-mah",
+      "audioUrl": "/audio/ms/b1-kerja-rumah.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-surat-kebenaran",
+      "type": "vocab",
+      "ms": "surat kebenaran",
+      "en": "permission slip",
+      "mon": null,
+      "register": "standard",
+      "example": "Sila tandatangan surat kebenaran ni.",
+      "exampleEn": "Please sign this permission slip.",
+      "phonetic": "su-rat kuh-buh-na-ran",
+      "audioUrl": "/audio/ms/b1-surat-kebenaran.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-bergaduh",
+      "type": "vocab",
+      "ms": "bergaduh",
+      "en": "to fight/quarrel",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Anak saya bergaduh dengan kawan sekelas.",
+      "exampleEn": "My child had a fight with a classmate.",
+      "phonetic": "buhr-ga-duh",
+      "audioUrl": "/audio/ms/b1-bergaduh.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-tumpuan",
+      "type": "vocab",
+      "ms": "tumpuan / fokus",
+      "en": "focus/attention",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Dia susah nak bagi tumpuan dalam kelas.",
+      "exampleEn": "He/she finds it hard to focus in class.",
+      "phonetic": "tum-pu-an / fo-kus",
+      "audioUrl": "/audio/ms/b1-tumpuan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-perkembangan",
+      "type": "vocab",
+      "ms": "perkembangan",
+      "en": "development/progress",
+      "mon": null,
+      "register": "standard",
+      "example": "Perkembangan dia bagus tahun ni.",
+      "exampleEn": "His/her progress is good this year.",
+      "phonetic": "puhr-kuhm-ba-ngan",
+      "audioUrl": "/audio/ms/b1-perkembangan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-mesyuarat-ibu-bapa",
+      "type": "phrase",
+      "ms": "mesyuarat ibu bapa dan guru",
+      "en": "parent-teacher meeting",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Mesyuarat ibu bapa dan guru minggu depan.",
+      "exampleEn": "The parent-teacher meeting is next week.",
+      "phonetic": "muh-shwa-rat i-bu ba-pa dan gu-ru",
+      "audioUrl": "/audio/ms/b1-mesyuarat-ibu-bapa.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "b1-u5-l1",
+      "order": 1,
+      "title": "Prestasi & Perkembangan",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "b1-prestasi-sekolah",
+        "b1-perkembangan",
+        "b1-guru-kelas"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'How is my child's development this year?'",
+          "answer": "Macam mana perkembangan anak saya tahun ni?"
+        }
+      ]
+    },
+    {
+      "id": "b1-u5-l2",
+      "order": 2,
+      "title": "Kerja Rumah & Tumpuan",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b1-kerja-rumah",
+        "b1-tumpuan"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'My child finds it hard to focus on homework.'",
+          "answer": "Anak saya susah nak bagi tumpuan pada kerja rumah."
+        }
+      ]
+    },
+    {
+      "id": "b1-u5-l3",
+      "order": 3,
+      "title": "Isu di Sekolah",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b1-bergaduh",
+        "b1-surat-kebenaran"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'Anak saya ___ dengan kawan sekelas.' (fought)",
+          "itemIds": [
+            "b1-bergaduh"
+          ],
+          "answer": "bergaduh"
+        }
+      ]
+    },
+    {
+      "id": "b1-u5-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 21,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b1-prestasi-sekolah",
+        "b1-mesyuarat-ibu-bapa",
+        "b1-perkembangan"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "b1-u5-parent-teacher-meeting",
+    "setting": "A parent-teacher meeting discussing a child's progress and a classroom incident",
+    "roles": [
+      "learner (parent)",
+      "teacher"
+    ],
+    "script": [
+      {
+        "role": "teacher",
+        "ms": "Terima kasih sebab datang. Perkembangan anak awak bagus dalam Matematik.",
+        "en": "Thank you for coming. Your child's progress in Maths is good."
+      },
+      {
+        "role": "learner",
+        "ms": "Baguslah. Ada masalah lain tak?",
+        "en": "That's good. Any other issues?"
+      },
+      {
+        "role": "teacher",
+        "ms": "Ada sikit. Dia bergaduh dengan kawan sekelas semalam.",
+        "en": "A little. He/she had a fight with a classmate yesterday."
+      },
+      {
+        "role": "learner",
+        "ms": "Oh, saya akan cakap dengan dia di rumah.",
+        "en": "Oh, I'll talk to him/her at home."
+      },
+      {
+        "role": "teacher",
+        "ms": "Bagus. Kerja rumah dia pun kadang-kadang lewat.",
+        "en": "Good. His/her homework is also sometimes late."
+      },
+      {
+        "role": "learner",
+        "ms": "Baik, saya akan pantau lebih kerap.",
+        "en": "Alright, I'll monitor it more closely."
+      }
+    ],
+    "aiPrompt": "You are a class teacher meeting a parent. Give a balanced update: one positive point about academic progress, and one concern (a minor behavioural incident or late homework). Stay warm and constructive, standard-colloquial mix."
+  },
+  "speakingPrompts": [
+    {
+      "id": "b1-u5-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the parent-teacher meeting dialogue, noting the constructive, balanced tone.",
+      "targetAudioUrl": "/audio/ms/b1-u5-scenario.mp3",
+      "rubric": [
+        "balanced constructive tone",
+        "clear standard-register school vocabulary"
+      ]
+    },
+    {
+      "id": "b1-u5-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Attend a parent-teacher meeting with the AI teacher persona, respond to both positive and negative feedback about your child.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "responds appropriately to positive feedback",
+        "responds constructively to a concern"
+      ]
+    },
+    {
+      "id": "b1-u5-presentation-1",
+      "type": "presentation",
+      "instructions": "Give a 90-second talk about how you support your child's learning at home.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "clear structure",
+        "concrete examples"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "b1-u5-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Kerja rumah' means:",
+        "options": [
+          "housework",
+          "homework",
+          "school fees",
+          "report card"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate: 'My child's progress in Maths is good.'",
+        "answer": "Perkembangan anak saya dalam Matematik bagus."
+      },
+      {
+        "type": "mcq",
+        "prompt": "'Bergaduh' means:",
+        "options": [
+          "to study",
+          "to fight/quarrel",
+          "to focus",
+          "to graduate"
+        ],
+        "answerIndex": 1
+      }
+    ]
+  }
+}

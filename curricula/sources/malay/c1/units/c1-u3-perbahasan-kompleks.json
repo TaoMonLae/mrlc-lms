@@ -1,0 +1,289 @@
+{
+  "id": "c1-u3-perbahasan-kompleks",
+  "level": "C1",
+  "order": 3,
+  "title": "Perbahasan Kompleks",
+  "englishTitle": "Complex Debate on Abstract Issues",
+  "canDo": [
+    "Debate an abstract or ethical issue with nuance",
+    "Anticipate and pre-empt counterarguments",
+    "Use sophisticated discourse markers",
+    "Synthesise multiple viewpoints into a conclusion"
+  ],
+  "lifeBenefit": "Hold your own in complex, high-level discussions on social or ethical issues.",
+  "estMinutes": 85,
+  "vocab": [
+    {
+      "id": "c1-dilema-etika",
+      "type": "vocab",
+      "ms": "dilema etika",
+      "en": "ethical dilemma",
+      "mon": null,
+      "register": "standard",
+      "example": "Ini satu dilema etika yang rumit.",
+      "exampleEn": "This is a complicated ethical dilemma.",
+      "phonetic": "di-leh-ma eh-ti-ka",
+      "audioUrl": "/audio/ms/c1-dilema-etika.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-tidak-dinafikan",
+      "type": "vocab",
+      "ms": "tidak dapat dinafikan",
+      "en": "it cannot be denied that",
+      "mon": null,
+      "register": "standard",
+      "example": "Tidak dapat dinafikan bahawa isu ini kompleks.",
+      "exampleEn": "It cannot be denied that this issue is complex.",
+      "phonetic": "ti-dak da-pat di-na-fi-kan",
+      "audioUrl": "/audio/ms/c1-tidak-dinafikan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-di-satu-pihak",
+      "type": "vocab",
+      "ms": "di satu pihak... di pihak lain",
+      "en": "on one hand... on the other hand",
+      "mon": null,
+      "register": "standard",
+      "example": "Di satu pihak, ia membantu; di pihak lain, ada risiko.",
+      "exampleEn": "On one hand, it helps; on the other hand, there's risk.",
+      "phonetic": "di sa-tu pi-hak",
+      "audioUrl": "/audio/ms/c1-di-satu-pihak.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-mengetepikan",
+      "type": "vocab",
+      "ms": "mengetepikan",
+      "en": "to set aside/dismiss (an argument)",
+      "mon": null,
+      "register": "standard",
+      "example": "Kita tidak boleh mengetepikan pandangan ini.",
+      "exampleEn": "We cannot dismiss this viewpoint.",
+      "phonetic": "muh-ngeh-teh-pi-kan",
+      "audioUrl": "/audio/ms/c1-mengetepikan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-mensintesiskan",
+      "type": "phrase",
+      "ms": "mensintesiskan pandangan",
+      "en": "to synthesise viewpoints",
+      "mon": null,
+      "register": "standard",
+      "example": "Mari kita mensintesiskan kedua-dua pandangan ini.",
+      "exampleEn": "Let's synthesise both of these viewpoints.",
+      "phonetic": "men-sin-teh-sis-kan pan-da-ngan",
+      "audioUrl": "/audio/ms/c1-mensintesiskan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-secara-holistik",
+      "type": "vocab",
+      "ms": "secara holistik",
+      "en": "holistically",
+      "mon": null,
+      "register": "standard",
+      "example": "Kita perlu lihat isu ini secara holistik.",
+      "exampleEn": "We need to look at this issue holistically.",
+      "phonetic": "suh-cha-ra ho-lis-tik",
+      "audioUrl": "/audio/ms/c1-secara-holistik.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "c1-u3-l1",
+      "order": 1,
+      "title": "Dilema & Pengakuan Kerumitan",
+      "estMinutes": 22,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "c1-dilema-etika",
+        "c1-tidak-dinafikan"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'It cannot be denied that this is a complicated ethical dilemma.'",
+          "answer": "Tidak dapat dinafikan bahawa ini satu dilema etika yang rumit."
+        }
+      ]
+    },
+    {
+      "id": "c1-u3-l2",
+      "order": 2,
+      "title": "Dua Sisi Argumen",
+      "estMinutes": 22,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "c1-di-satu-pihak",
+        "c1-mengetepikan"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'On one hand it helps the economy; on the other hand, we cannot dismiss the environmental cost.'",
+          "answer": "Di satu pihak ia membantu ekonomi; di pihak lain, kita tidak boleh mengetepikan kos alam sekitar."
+        }
+      ]
+    },
+    {
+      "id": "c1-u3-l3",
+      "order": 3,
+      "title": "Sintesis & Kesimpulan Holistik",
+      "estMinutes": 22,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "c1-mensintesiskan",
+        "c1-secara-holistik"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'Kita perlu lihat isu ini ___.' (holistically)",
+          "itemIds": [
+            "c1-secara-holistik"
+          ],
+          "answer": "secara holistik"
+        }
+      ]
+    },
+    {
+      "id": "c1-u3-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 19,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "c1-dilema-etika",
+        "c1-di-satu-pihak",
+        "c1-mensintesiskan"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "c1-u3-ethics-debate",
+    "setting": "A nuanced debate on an ethical issue in technology (AI and jobs)",
+    "roles": [
+      "learner",
+      "debate partner (AI)"
+    ],
+    "script": [
+      {
+        "role": "partner",
+        "ms": "Tidak dapat dinafikan bahawa automasi mencipta dilema etika yang rumit.",
+        "en": "It cannot be denied that automation creates a complicated ethical dilemma."
+      },
+      {
+        "role": "learner",
+        "ms": "Setuju. Di satu pihak, ia meningkatkan produktiviti; di pihak lain, ramai kehilangan pekerjaan.",
+        "en": "Agreed. On one hand, it increases productivity; on the other hand, many lose jobs."
+      },
+      {
+        "role": "partner",
+        "ms": "Kita tidak boleh mengetepikan kesan sosial jangka panjang.",
+        "en": "We cannot dismiss the long-term social impact."
+      },
+      {
+        "role": "learner",
+        "ms": "Betul. Mari kita cuba mensintesiskan — mungkin latihan semula ialah jalan tengah.",
+        "en": "Right. Let's try to synthesise — perhaps retraining is the middle path."
+      },
+      {
+        "role": "partner",
+        "ms": "Secara holistik, itu penyelesaian yang lebih seimbang.",
+        "en": "Holistically, that's a more balanced solution."
+      }
+    ],
+    "aiPrompt": "You are an articulate debate partner discussing the ethics of automation and job loss. Use sophisticated discourse markers and be willing to synthesise a nuanced middle position with the learner. High-register, thoughtful tone."
+  },
+  "speakingPrompts": [
+    {
+      "id": "c1-u3-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the ethics-debate dialogue, focusing on sophisticated discourse markers and measured pacing.",
+      "targetAudioUrl": "/audio/ms/c1-u3-scenario.mp3",
+      "rubric": [
+        "sophisticated discourse markers",
+        "measured, thoughtful pacing"
+      ]
+    },
+    {
+      "id": "c1-u3-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Debate an abstract ethical issue of your choice with the AI partner persona, using 'di satu pihak... di pihak lain' at least once.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "presents both sides of an issue",
+        "attempts a synthesised conclusion"
+      ]
+    },
+    {
+      "id": "c1-u3-presentation-1",
+      "type": "presentation",
+      "instructions": "Deliver a 3-minute nuanced argument on a complex issue that acknowledges at least one strong counterpoint before concluding.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "acknowledges a counterpoint fairly",
+        "reaches a nuanced, holistic conclusion"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "c1-u3-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Tidak dapat dinafikan' means:",
+        "options": [
+          "it is doubtful that",
+          "it cannot be denied that",
+          "it is forbidden that",
+          "it is unlikely that"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate: 'We need to look at this holistically.'",
+        "answer": "Kita perlu lihat ini secara holistik."
+      },
+      {
+        "type": "mcq",
+        "prompt": "'Mengetepikan' means:",
+        "options": [
+          "to embrace",
+          "to dismiss/set aside",
+          "to synthesise",
+          "to celebrate"
+        ],
+        "answerIndex": 1
+      }
+    ]
+  }
+}

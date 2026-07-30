@@ -1,0 +1,78 @@
+{
+  "id": "a1-u8-kesihatan-kecemasan",
+  "level": "A1",
+  "order": 8,
+  "title": "Kesihatan Asas & Kecemasan",
+  "englishTitle": "Basic Health & Emergencies",
+  "canDo": [
+    "Say you are sick and name basic symptoms",
+    "Ask for help in an emergency",
+    "Understand basic clinic/pharmacy instructions",
+    "Know key emergency numbers and phrases"
+  ],
+  "lifeBenefit": "Get help quickly and safely in a health emergency.",
+  "estMinutes": 60,
+  "vocab": [
+    { "id": "v-sakit", "type": "vocab", "ms": "sakit", "en": "sick / in pain", "mon": null, "register": "colloquial", "example": "Perut saya sakit.", "exampleEn": "My stomach hurts.", "phonetic": "sa-kit", "audioUrl": "/audio/ms/v-sakit.mp3", "minimalPairWith": null },
+    { "id": "v-demam", "type": "vocab", "ms": "demam", "en": "fever", "mon": null, "register": "colloquial", "example": "Saya demam sejak semalam.", "exampleEn": "I've had a fever since yesterday.", "phonetic": "duh-mam", "audioUrl": "/audio/ms/v-demam.mp3", "minimalPairWith": null },
+    { "id": "v-batuk-selesema", "type": "vocab", "ms": "batuk / selesema", "en": "cough / cold (flu)", "mon": null, "register": "colloquial", "example": "Anak saya batuk dan selesema.", "exampleEn": "My child has a cough and a cold.", "phonetic": "ba-tuk / suh-luh-suh-ma", "audioUrl": "/audio/ms/v-batuk-selesema.mp3", "minimalPairWith": null },
+    { "id": "v-tolong", "type": "phrase", "ms": "tolong!", "en": "help!", "mon": null, "register": "colloquial", "example": "Tolong! Ada orang sakit!", "exampleEn": "Help! Someone is sick/hurt!", "phonetic": "to-long", "audioUrl": "/audio/ms/v-tolong.mp3", "minimalPairWith": null },
+    { "id": "v-panggil-ambulans", "type": "phrase", "ms": "tolong panggil ambulans", "en": "please call an ambulance", "mon": null, "register": "colloquial", "example": "Tolong panggil ambulans, cepat!", "exampleEn": "Please call an ambulance, quickly!", "phonetic": "to-long pang-gil am-bu-lans", "audioUrl": "/audio/ms/v-panggil-ambulans.mp3", "minimalPairWith": null },
+    { "id": "v-999", "type": "phrase", "ms": "sembilan-sembilan-sembilan", "en": "nine-nine-nine (Malaysia's emergency number)", "mon": null, "register": "standard", "example": "Kecemasan, hubungi sembilan-sembilan-sembilan.", "exampleEn": "For emergencies, call 999.", "phonetic": "suhm-bi-lan suhm-bi-lan suhm-bi-lan", "audioUrl": "/audio/ms/v-999.mp3", "minimalPairWith": null },
+    { "id": "v-ubat", "type": "vocab", "ms": "ubat", "en": "medicine", "mon": null, "register": "colloquial", "example": "Doktor bagi saya ubat.", "exampleEn": "The doctor gave me medicine.", "phonetic": "u-bat", "audioUrl": "/audio/ms/v-ubat.mp3", "minimalPairWith": null },
+    { "id": "v-farmasi", "type": "vocab", "ms": "farmasi", "en": "pharmacy", "mon": null, "register": "colloquial", "example": "Farmasi kat mana, ya?", "exampleEn": "Where is the pharmacy?", "phonetic": "far-ma-si", "audioUrl": "/audio/ms/v-farmasi.mp3", "minimalPairWith": null },
+    { "id": "v-jumpa-doktor", "type": "phrase", "ms": "saya nak jumpa doktor", "en": "I want to see a doctor", "mon": null, "register": "colloquial", "example": "Saya nak jumpa doktor, saya sakit.", "exampleEn": "I want to see a doctor, I'm sick.", "phonetic": "sa-ya nak jum-pa dok-tor", "audioUrl": "/audio/ms/v-jumpa-doktor.mp3", "minimalPairWith": null },
+    { "id": "v-alahan", "type": "vocab", "ms": "alahan", "en": "allergy", "mon": null, "register": "standard", "example": "Saya ada alahan ubat.", "exampleEn": "I have a medicine allergy.", "phonetic": "a-la-han", "audioUrl": "/audio/ms/v-alahan.mp3", "minimalPairWith": null }
+  ],
+  "lessons": [
+    { "id": "a1-u8-l1", "order": 1, "title": "Gejala Sakit (Symptoms)", "estMinutes": 12, "sections": ["review", "input", "practice", "quiz"], "itemIds": ["v-sakit", "v-demam", "v-batuk-selesema"],
+      "practiceExercises": [
+        { "type": "translate", "prompt": "Translate: 'I have a fever and a cough.'", "itemIds": ["v-demam", "v-batuk-selesema"], "answer": "Saya demam dan batuk." }
+      ]
+    },
+    { "id": "a1-u8-l2", "order": 2, "title": "Minta Tolong Kecemasan (Asking for emergency help)", "estMinutes": 12, "sections": ["review", "input", "practice", "quiz", "speaking"], "itemIds": ["v-tolong", "v-panggil-ambulans", "v-999"],
+      "practiceExercises": [
+        { "type": "reorder", "prompt": "Reorder: ambulans / tolong / panggil", "itemIds": ["v-panggil-ambulans"], "answer": "Tolong panggil ambulans." }
+      ]
+    },
+    { "id": "a1-u8-l3", "order": 3, "title": "Klinik & Farmasi (Clinic & pharmacy)", "estMinutes": 12, "sections": ["review", "input", "practice", "quiz", "speaking"], "itemIds": ["v-ubat", "v-farmasi", "v-jumpa-doktor"],
+      "practiceExercises": [
+        { "type": "clozeGap", "prompt": "'Saya nak jumpa ___.' (doctor)", "itemIds": ["v-jumpa-doktor"], "answer": "doktor" }
+      ]
+    },
+    { "id": "a1-u8-l4", "order": 4, "title": "Alahan & Maklumat Penting (Allergies & key info)", "estMinutes": 10, "sections": ["review", "input", "practice", "quiz"], "itemIds": ["v-alahan"],
+      "practiceExercises": [
+        { "type": "translate", "prompt": "Translate: 'I have an allergy to this medicine.'", "itemIds": ["v-alahan", "v-ubat"], "answer": "Saya ada alahan ubat ni." }
+      ]
+    },
+    { "id": "a1-u8-l5", "order": 5, "title": "Latihan & Ulangkaji", "estMinutes": 14, "sections": ["review", "quiz", "speaking"], "itemIds": ["v-sakit", "v-demam", "v-panggil-ambulans", "v-jumpa-doktor"], "practiceExercises": [] }
+  ],
+  "scenario": {
+    "id": "a1-u8-clinic-symptoms",
+    "setting": "Describing symptoms at a government health clinic counter",
+    "roles": ["learner (patient)", "clinic staff"],
+    "script": [
+      { "role": "staff", "ms": "Selamat pagi. Kenapa, ya?", "en": "Good morning. What's the matter?" },
+      { "role": "learner", "ms": "Saya demam dah tiga hari, dan batuk.", "en": "I've had a fever for three days, and a cough." },
+      { "role": "staff", "ms": "Ada alahan ubat tak?", "en": "Do you have any medicine allergies?" },
+      { "role": "learner", "ms": "Tak ada.", "en": "No, I don't." },
+      { "role": "staff", "ms": "Okay, ambil nombor giliran, tunggu sebentar. Nanti doktor panggil.", "en": "Okay, take a queue number, wait a moment. The doctor will call you." },
+      { "role": "learner", "ms": "Baik, terima kasih.", "en": "Alright, thank you." }
+    ],
+    "aiPrompt": "You are clinic reception/nursing staff at a Malaysian government health clinic (klinik kesihatan). Ask what's wrong, ask about symptoms and allergies, then direct the patient to take a queue number and wait. Speak clearly, patiently, and use simple colloquial KL Malay."
+  },
+  "speakingPrompts": [
+    { "id": "a1-u8-shadow-1", "type": "shadowing", "instructions": "Shadow the clinic symptoms dialogue, focusing on clearly saying 'demam' and 'batuk'.", "targetAudioUrl": "/audio/ms/a1-u8-scenario.mp3", "rubric": ["clear symptom words", "calm, clear tone appropriate for describing illness"] },
+    { "id": "a1-u8-roleplay-1", "type": "roleplay", "instructions": "Describe your own (real or imagined) symptoms to the AI clinic staff persona and answer the allergy question.", "targetAudioUrl": null, "rubric": ["states at least one symptom clearly", "answers the allergy question", "understands the queue-number instruction"] }
+  ],
+  "unitQuiz": {
+    "id": "a1-u8-quiz",
+    "passMark": 0.7,
+    "questions": [
+      { "type": "mcq", "prompt": "'Demam' means:", "options": ["cough", "fever", "headache", "allergy"], "answerIndex": 1 },
+      { "type": "translate", "prompt": "Translate: 'Please call an ambulance!'", "answer": "Tolong panggil ambulans!" },
+      { "type": "mcq", "prompt": "Malaysia's general emergency number is:", "options": ["911", "112", "999", "100"], "answerIndex": 2 },
+      { "type": "translate", "prompt": "Translate: 'I want to see a doctor.'", "answer": "Saya nak jumpa doktor." }
+    ]
+  }
+}

@@ -1,0 +1,308 @@
+{
+  "id": "b2-u4-undang-hak",
+  "level": "B2",
+  "order": 4,
+  "title": "Undang-undang & Hak",
+  "englishTitle": "Basic Legal Literacy & Rights",
+  "canDo": [
+    "Read and understand the gist of a basic contract",
+    "Discuss tenant/worker rights in general terms",
+    "Ask clarifying questions about legal terms",
+    "Understand where to seek legal help/advice"
+  ],
+  "lifeBenefit": "Understand your basic rights and contracts well enough to protect yourself and know when to seek help.",
+  "estMinutes": 80,
+  "vocab": [
+    {
+      "id": "b2-kontrak",
+      "type": "vocab",
+      "ms": "kontrak / perjanjian",
+      "en": "contract/agreement",
+      "mon": null,
+      "register": "standard",
+      "example": "Baca kontrak ni dengan teliti.",
+      "exampleEn": "Read this contract carefully.",
+      "phonetic": "kon-trak / puhr-jan-ji-an",
+      "audioUrl": "/audio/ms/b2-kontrak.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-hak",
+      "type": "vocab",
+      "ms": "hak",
+      "en": "right(s)",
+      "mon": null,
+      "register": "standard",
+      "example": "Setiap pekerja ada hak asas.",
+      "exampleEn": "Every worker has basic rights.",
+      "phonetic": "hak",
+      "audioUrl": "/audio/ms/b2-hak.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2b-tanggungjawab",
+      "type": "vocab",
+      "ms": "tanggungjawab",
+      "en": "responsibility",
+      "mon": null,
+      "register": "standard",
+      "example": "Apa tanggungjawab saya di bawah kontrak ni?",
+      "exampleEn": "What are my responsibilities under this contract?",
+      "phonetic": "tang-gung-ja-wab",
+      "audioUrl": "/audio/ms/v2b-tanggungjawab.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-syarat-terma",
+      "type": "vocab",
+      "ms": "syarat & terma",
+      "en": "terms and conditions",
+      "mon": null,
+      "register": "standard",
+      "example": "Sila baca syarat dan terma sebelum tandatangan.",
+      "exampleEn": "Please read the terms and conditions before signing.",
+      "phonetic": "shar-rat dan tuhr-ma",
+      "audioUrl": "/audio/ms/b2-syarat-terma.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-nasihat-guaman",
+      "type": "vocab",
+      "ms": "nasihat guaman",
+      "en": "legal advice",
+      "mon": null,
+      "register": "standard",
+      "example": "Saya cadangkan awak dapatkan nasihat guaman.",
+      "exampleEn": "I suggest you get legal advice.",
+      "phonetic": "na-si-hat gu-a-man",
+      "audioUrl": "/audio/ms/b2-nasihat-guaman.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-pelanggaran",
+      "type": "vocab",
+      "ms": "pelanggaran kontrak",
+      "en": "breach of contract",
+      "mon": null,
+      "register": "standard",
+      "example": "Ini boleh dianggap pelanggaran kontrak.",
+      "exampleEn": "This could be considered a breach of contract.",
+      "phonetic": "puh-lang-ga-ran kon-trak",
+      "audioUrl": "/audio/ms/b2-pelanggaran.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-bantuan-guaman",
+      "type": "vocab",
+      "ms": "biro bantuan guaman",
+      "en": "legal aid bureau",
+      "mon": null,
+      "register": "standard",
+      "example": "Biro Bantuan Guaman boleh bantu awak percuma.",
+      "exampleEn": "The Legal Aid Bureau can help you for free.",
+      "phonetic": "bi-ro ban-tu-an gu-a-man",
+      "audioUrl": "/audio/ms/b2-bantuan-guaman.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "b2-u4-l1",
+      "order": 1,
+      "title": "Kontrak & Hak",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "b2-kontrak",
+        "b2-hak",
+        "v2b-tanggungjawab"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'What are my rights and responsibilities under this contract?'",
+          "answer": "Apa hak dan tanggungjawab saya di bawah kontrak ni?"
+        }
+      ]
+    },
+    {
+      "id": "b2-u4-l2",
+      "order": 2,
+      "title": "Syarat & Terma",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b2-syarat-terma",
+        "b2-pelanggaran"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'This could be a breach of the terms and conditions.'",
+          "answer": "Ini boleh jadi pelanggaran syarat dan terma."
+        }
+      ]
+    },
+    {
+      "id": "b2-u4-l3",
+      "order": 3,
+      "title": "Dapatkan Bantuan Undang-Undang",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b2-nasihat-guaman",
+        "b2-bantuan-guaman"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'Saya cadangkan awak dapatkan ___.' (legal advice)",
+          "itemIds": [
+            "b2-nasihat-guaman"
+          ],
+          "answer": "nasihat guaman"
+        }
+      ]
+    },
+    {
+      "id": "b2-u4-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b2-hak",
+        "b2-syarat-terma",
+        "b2-bantuan-guaman"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "b2-u4-reviewing-employment-contract",
+    "setting": "Asking clarifying questions before signing an employment contract",
+    "roles": [
+      "learner",
+      "HR officer"
+    ],
+    "script": [
+      {
+        "role": "learner",
+        "ms": "Maaf, saya ada beberapa soalan pasal kontrak ni sebelum tandatangan.",
+        "en": "Excuse me, I have a few questions about this contract before signing."
+      },
+      {
+        "role": "hr",
+        "ms": "Sila, apa yang awak nak tahu?",
+        "en": "Please, what would you like to know?"
+      },
+      {
+        "role": "learner",
+        "ms": "Apa tanggungjawab saya kalau saya nak berhenti awal?",
+        "en": "What are my responsibilities if I want to resign early?"
+      },
+      {
+        "role": "hr",
+        "ms": "Awak perlu bagi notis sebulan, ikut syarat dan terma.",
+        "en": "You need to give one month's notice, per the terms and conditions."
+      },
+      {
+        "role": "learner",
+        "ms": "Baik, dan kalau ada pertikaian, saya boleh dapatkan nasihat guaman?",
+        "en": "Alright, and if there's a dispute, can I get legal advice?"
+      },
+      {
+        "role": "hr",
+        "ms": "Boleh, Biro Bantuan Guaman ada perkhidmatan percuma.",
+        "en": "Yes, the Legal Aid Bureau has a free service."
+      }
+    ],
+    "aiPrompt": "You are an HR officer explaining employment contract terms to a new hire who is asking clarifying questions. Explain clearly and point to legal aid resources when relevant. Standard, professional register."
+  },
+  "speakingPrompts": [
+    {
+      "id": "b2-u4-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the contract-review dialogue, focusing on precise legal/standard vocabulary.",
+      "targetAudioUrl": "/audio/ms/b2-u4-scenario.mp3",
+      "rubric": [
+        "precise legal vocabulary",
+        "clear formal questions"
+      ]
+    },
+    {
+      "id": "b2-u4-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Ask the AI HR officer persona clarifying questions about a contract term of your choice.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "asks a clear clarifying question",
+        "understands the response"
+      ]
+    },
+    {
+      "id": "b2-u4-presentation-1",
+      "type": "presentation",
+      "instructions": "Explain in 90 seconds, in your own words, three things you would check before signing any contract.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "three distinct, sensible points",
+        "clear standard-register delivery"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "b2-u4-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Pelanggaran kontrak' means:",
+        "options": [
+          "signing a contract",
+          "breach of contract",
+          "a legal right",
+          "a free service"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate: 'I suggest you get legal advice.'",
+        "answer": "Saya cadangkan awak dapatkan nasihat guaman."
+      },
+      {
+        "type": "mcq",
+        "prompt": "The 'Biro Bantuan Guaman' provides:",
+        "options": [
+          "free legal aid",
+          "job placement",
+          "health insurance",
+          "housing loans"
+        ],
+        "answerIndex": 0
+      }
+    ]
+  }
+}

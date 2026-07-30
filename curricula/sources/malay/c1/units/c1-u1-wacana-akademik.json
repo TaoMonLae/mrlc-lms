@@ -1,0 +1,303 @@
+{
+  "id": "c1-u1-wacana-akademik",
+  "level": "C1",
+  "order": 1,
+  "title": "Wacana Akademik",
+  "englishTitle": "Academic Discourse",
+  "canDo": [
+    "Follow a lecture or academic talk with implicit meaning",
+    "Discuss abstract/theoretical concepts",
+    "Use academic hedging and citation-style language",
+    "Write/speak a short academic-style argument"
+  ],
+  "lifeBenefit": "Engage with Malay-medium academic content — useful for further study or SKBMW's advanced band.",
+  "estMinutes": 85,
+  "vocab": [
+    {
+      "id": "c1-kajian-menunjukkan",
+      "type": "vocab",
+      "ms": "kajian menunjukkan",
+      "en": "research/studies show",
+      "mon": null,
+      "register": "standard",
+      "example": "Kajian menunjukkan bahawa faktor ini penting.",
+      "exampleEn": "Studies show that this factor is important.",
+      "phonetic": "ka-ji-an muh-nun-juk-kan",
+      "audioUrl": "/audio/ms/c1-kajian-menunjukkan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-hipotesis",
+      "type": "vocab",
+      "ms": "hipotesis",
+      "en": "hypothesis",
+      "mon": null,
+      "register": "standard",
+      "example": "Hipotesis kami adalah...",
+      "exampleEn": "Our hypothesis is...",
+      "phonetic": "hi-po-teh-sis",
+      "audioUrl": "/audio/ms/c1-hipotesis.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-implikasi",
+      "type": "vocab",
+      "ms": "implikasi",
+      "en": "implication",
+      "mon": null,
+      "register": "standard",
+      "example": "Ini membawa implikasi besar kepada dasar.",
+      "exampleEn": "This carries major implications for policy.",
+      "phonetic": "im-pli-ka-si",
+      "audioUrl": "/audio/ms/c1-implikasi.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-secara-tersirat",
+      "type": "vocab",
+      "ms": "secara tersirat",
+      "en": "implicitly",
+      "mon": null,
+      "register": "standard",
+      "example": "Penulis secara tersirat mencadangkan...",
+      "exampleEn": "The writer implicitly suggests...",
+      "phonetic": "suh-cha-ra tuhr-si-rat",
+      "audioUrl": "/audio/ms/c1-secara-tersirat.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-kerangka-konseptual",
+      "type": "vocab",
+      "ms": "kerangka konseptual",
+      "en": "conceptual framework",
+      "mon": null,
+      "register": "standard",
+      "example": "Kerangka konseptual kajian ini berdasarkan...",
+      "exampleEn": "This study's conceptual framework is based on...",
+      "phonetic": "kuh-rang-ka kon-sep-tu-al",
+      "audioUrl": "/audio/ms/c1-kerangka-konseptual.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-memetik",
+      "type": "vocab",
+      "ms": "memetik / merujuk",
+      "en": "to cite/reference",
+      "mon": null,
+      "register": "standard",
+      "example": "Beliau memetik kajian terdahulu.",
+      "exampleEn": "He/she cites a previous study.",
+      "phonetic": "muh-muh-tik / muh-ru-juk",
+      "audioUrl": "/audio/ms/c1-memetik.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-lanjutan-daripada",
+      "type": "vocab",
+      "ms": "lanjutan daripada",
+      "en": "building on / as an extension of",
+      "mon": null,
+      "register": "standard",
+      "example": "Lanjutan daripada kajian sebelum ini...",
+      "exampleEn": "Building on the previous study...",
+      "phonetic": "lan-ju-tan da-ri-pa-da",
+      "audioUrl": "/audio/ms/c1-lanjutan-daripada.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "c1-u1-l1",
+      "order": 1,
+      "title": "Bahasa Kajian & Hipotesis",
+      "estMinutes": 22,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "c1-kajian-menunjukkan",
+        "c1-hipotesis"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'Studies show that our hypothesis is correct.'",
+          "answer": "Kajian menunjukkan bahawa hipotesis kami adalah tepat."
+        }
+      ]
+    },
+    {
+      "id": "c1-u1-l2",
+      "order": 2,
+      "title": "Implikasi & Makna Tersirat",
+      "estMinutes": 22,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "c1-implikasi",
+        "c1-secara-tersirat"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'This implies, implicitly, a change in policy.'",
+          "answer": "Ini secara tersirat membawa implikasi perubahan dasar."
+        }
+      ]
+    },
+    {
+      "id": "c1-u1-l3",
+      "order": 3,
+      "title": "Kerangka & Rujukan",
+      "estMinutes": 22,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "c1-kerangka-konseptual",
+        "c1-memetik",
+        "c1-lanjutan-daripada"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'___ kajian sebelum ini, kami mendapati...' (building on)",
+          "itemIds": [
+            "c1-lanjutan-daripada"
+          ],
+          "answer": "Lanjutan daripada"
+        }
+      ]
+    },
+    {
+      "id": "c1-u1-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 19,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "c1-kajian-menunjukkan",
+        "c1-implikasi",
+        "c1-memetik"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "c1-u1-academic-seminar-discussion",
+    "setting": "Discussing a research topic at a university seminar",
+    "roles": [
+      "learner",
+      "academic peer"
+    ],
+    "script": [
+      {
+        "role": "peer",
+        "ms": "Kajian menunjukkan bahawa migrasi mempengaruhi struktur keluarga.",
+        "en": "Studies show that migration affects family structure."
+      },
+      {
+        "role": "learner",
+        "ms": "Menarik. Apa kerangka konseptual yang digunakan?",
+        "en": "Interesting. What conceptual framework was used?"
+      },
+      {
+        "role": "peer",
+        "ms": "Kami memetik teori integrasi sosial sebagai asas.",
+        "en": "We cite social integration theory as the basis."
+      },
+      {
+        "role": "learner",
+        "ms": "Lanjutan daripada itu, apa implikasi dasar yang dicadangkan?",
+        "en": "Building on that, what policy implications are proposed?"
+      },
+      {
+        "role": "peer",
+        "ms": "Secara tersirat, kajian ini mencadangkan sokongan komuniti diperkukuh.",
+        "en": "Implicitly, this study suggests community support should be strengthened."
+      }
+    ],
+    "aiPrompt": "You are an academic peer discussing a research finding on migration at a seminar. Use precise academic register (kajian, hipotesis, kerangka konseptual, implikasi) and engage thoughtfully with follow-up questions."
+  },
+  "speakingPrompts": [
+    {
+      "id": "c1-u1-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the academic seminar dialogue, focusing on precise, formal academic register.",
+      "targetAudioUrl": "/audio/ms/c1-u1-scenario.mp3",
+      "rubric": [
+        "precise academic vocabulary",
+        "formal, measured delivery"
+      ]
+    },
+    {
+      "id": "c1-u1-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Discuss a research topic of your choice with the AI academic-peer persona, asking about their framework and implications.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "asks a substantive academic question",
+        "engages with the response critically"
+      ]
+    },
+    {
+      "id": "c1-u1-presentation-1",
+      "type": "presentation",
+      "instructions": "Deliver a 3-minute academic-style talk summarising a topic you know well, including a hypothesis and implication.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "uses academic register accurately",
+        "clear structure: topic, hypothesis, implication"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "c1-u1-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Kajian menunjukkan' means:",
+        "options": [
+          "I believe that",
+          "studies/research show",
+          "it is said that",
+          "for example"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate: 'This carries major implications for policy.'",
+        "answer": "Ini membawa implikasi besar kepada dasar."
+      },
+      {
+        "type": "mcq",
+        "prompt": "'Secara tersirat' means:",
+        "options": [
+          "explicitly",
+          "implicitly",
+          "rarely",
+          "obviously"
+        ],
+        "answerIndex": 1
+      }
+    ]
+  }
+}

@@ -8,8 +8,19 @@ export interface OfficialLanguageQuestOption {
   audioText: string | null;
 }
 
+// SELECT / ASSIST / CLOZE / ODD_ONE_OUT are all "pick one option" challenges
+// under the hood -- CLOZE and ODD_ONE_OUT exist as distinct labels purely so
+// authored question text and future UI treatments can tell them apart from a
+// plain vocabulary SELECT, but they submit and grade identically (one chosen
+// optionId, exactly one option flagged `correct`).
+//
+// REORDER is the one genuinely different shape: `options` must be listed in
+// their correct final order (the array position becomes each option's
+// `order` column at creation time) and every option should be `correct:
+// true`, since there's no single "correct option" -- the learner submits a
+// sequence of option ids and the server checks it against that stored order.
 export interface OfficialLanguageQuestChallenge {
-  type: "SELECT" | "ASSIST";
+  type: "SELECT" | "ASSIST" | "CLOZE" | "ODD_ONE_OUT" | "REORDER";
   question: string;
   options: OfficialLanguageQuestOption[];
 }

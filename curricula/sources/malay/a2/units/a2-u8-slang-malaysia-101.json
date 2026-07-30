@@ -1,0 +1,309 @@
+{
+  "id": "a2-u8-slang-malaysia-101",
+  "level": "A2",
+  "order": 8,
+  "title": "Slang Malaysia 101",
+  "englishTitle": "Malaysian Slang & Bahasa Rojak Intro",
+  "canDo": [
+    "Recognise and use common KL slang particles (lah, kan, meh)",
+    "Understand common Manglish/Bahasa Rojak expressions",
+    "Distinguish when slang is appropriate vs. not",
+    "Build listening comfort with fast colloquial speech"
+  ],
+  "lifeBenefit": "Understand and casually use everyday KL slang so conversations feel natural, not textbook-stiff.",
+  "estMinutes": 60,
+  "vocab": [
+    {
+      "id": "v2-lah",
+      "type": "vocab",
+      "ms": "lah",
+      "en": "particle softening/emphasising a statement",
+      "mon": null,
+      "register": "rojak",
+      "example": "Okay lah, jom!",
+      "exampleEn": "Okay then, let's go!",
+      "phonetic": "lah",
+      "audioUrl": "/audio/ms/v2-lah.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-kan",
+      "type": "vocab",
+      "ms": "kan",
+      "en": "particle seeking agreement, like 'right?'",
+      "mon": null,
+      "register": "rojak",
+      "example": "Sedap kan makanan ni?",
+      "exampleEn": "This food is delicious, right?",
+      "phonetic": "kan",
+      "audioUrl": "/audio/ms/v2-kan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-meh",
+      "type": "vocab",
+      "ms": "meh",
+      "en": "particle expressing doubt/invitation",
+      "mon": null,
+      "register": "rojak",
+      "example": "Betul ke, meh?",
+      "exampleEn": "Is that really true, huh?",
+      "phonetic": "meh",
+      "audioUrl": "/audio/ms/v2-meh.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-alamak",
+      "type": "vocab",
+      "ms": "alamak",
+      "en": "oh no! / oh my!",
+      "mon": null,
+      "register": "rojak",
+      "example": "Alamak, saya lupa bawa dompet!",
+      "exampleEn": "Oh no, I forgot to bring my wallet!",
+      "phonetic": "a-la-mak",
+      "audioUrl": "/audio/ms/v2-alamak.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-cincai",
+      "type": "vocab",
+      "ms": "cincai",
+      "en": "however/whatever, no big deal",
+      "mon": null,
+      "register": "rojak",
+      "example": "Cincai je lah, apa-apa pun boleh.",
+      "exampleEn": "Whatever's fine, anything works.",
+      "phonetic": "chin-chai",
+      "audioUrl": "/audio/ms/v2-cincai.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-syok",
+      "type": "vocab",
+      "ms": "syok",
+      "en": "great/enjoyable/satisfying",
+      "mon": null,
+      "register": "rojak",
+      "example": "Wah, syoknya makanan ni!",
+      "exampleEn": "Wow, this food is so good!",
+      "phonetic": "shok",
+      "audioUrl": "/audio/ms/v2-syok.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-kantoi",
+      "type": "vocab",
+      "ms": "kantoi",
+      "en": "caught / found out",
+      "mon": null,
+      "register": "rojak",
+      "example": "Dia kantoi tidur waktu kerja.",
+      "exampleEn": "He got caught sleeping during work.",
+      "phonetic": "kan-toi",
+      "audioUrl": "/audio/ms/v2-kantoi.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-tapau-slang",
+      "type": "vocab",
+      "ms": "tapau",
+      "en": "takeaway (see also Unit 5)",
+      "mon": null,
+      "register": "rojak",
+      "example": "Tapau je, malas nak makan sini.",
+      "exampleEn": "Just takeaway, too lazy to eat here.",
+      "phonetic": "ta-pau",
+      "audioUrl": "/audio/ms/v2-tapau-slang.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "a2-u8-l1",
+      "order": 1,
+      "title": "Partikel Lah, Kan, Meh",
+      "estMinutes": 16,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "v2-lah",
+        "v2-kan",
+        "v2-meh"
+      ],
+      "practiceExercises": [
+        {
+          "type": "matching",
+          "prompt": "Match each particle to its function: softening a statement, seeking agreement, expressing doubt.",
+          "itemIds": [
+            "v2-lah",
+            "v2-kan",
+            "v2-meh"
+          ],
+          "answer": null
+        }
+      ]
+    },
+    {
+      "id": "a2-u8-l2",
+      "order": 2,
+      "title": "Ekspresi Harian (Everyday expressions)",
+      "estMinutes": 16,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "v2-alamak",
+        "v2-cincai",
+        "v2-syok"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'Oh no, this is so good!'",
+          "answer": "Alamak, syoknya ni!"
+        }
+      ]
+    },
+    {
+      "id": "a2-u8-l3",
+      "order": 3,
+      "title": "Bila Guna, Bila Tidak (When to use slang)",
+      "estMinutes": 14,
+      "sections": [
+        "review",
+        "input",
+        "practice"
+      ],
+      "itemIds": [
+        "v2-kantoi"
+      ],
+      "practiceExercises": [
+        {
+          "type": "mcq",
+          "prompt": "Which situation is slang appropriate: chatting with a friend, or writing a formal job application?",
+          "itemIds": [
+            "v2-kantoi"
+          ],
+          "answer": null
+        }
+      ]
+    },
+    {
+      "id": "a2-u8-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 14,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "v2-lah",
+        "v2-alamak",
+        "v2-syok"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "a2-u8-casual-friend-chat",
+    "setting": "A relaxed chat full of Malaysian slang between friends at a mamak",
+    "roles": [
+      "learner",
+      "friend"
+    ],
+    "script": [
+      {
+        "role": "friend",
+        "ms": "Weh, lapar tak? Jom makan sini lah.",
+        "en": "Hey, hungry? Let's eat here."
+      },
+      {
+        "role": "learner",
+        "ms": "Boleh je. Sedap ke makanan sini?",
+        "en": "Sure. Is the food here good?"
+      },
+      {
+        "role": "friend",
+        "ms": "Syok gila! Confirm awak suka punya.",
+        "en": "So good! I'm sure you'll like it."
+      },
+      {
+        "role": "learner",
+        "ms": "Okay lah, jom!",
+        "en": "Okay then, let's go!"
+      },
+      {
+        "role": "friend",
+        "ms": "Eh, jangan lupa bayar, jangan kantoi macam last time!",
+        "en": "Hey, don't forget to pay, don't get caught out like last time!"
+      }
+    ],
+    "aiPrompt": "You are a close Malaysian friend speaking very casually with heavy slang (lah, weh, gila, confirm, kantoi). Keep the banter light and friendly. If the learner uses a slang word correctly, react positively."
+  },
+  "speakingPrompts": [
+    {
+      "id": "a2-u8-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the casual friend chat, focusing on natural, fast delivery of slang particles.",
+      "targetAudioUrl": "/audio/ms/a2-u8-scenario.mp3",
+      "rubric": [
+        "natural fast pace",
+        "correct particle placement (lah at sentence end)"
+      ]
+    },
+    {
+      "id": "a2-u8-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Chat casually with the AI friend persona and use at least two slang words naturally.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "uses at least two slang words appropriately",
+        "keeps a casual, friendly tone"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "a2-u8-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Alamak' expresses:",
+        "options": [
+          "happiness",
+          "surprise/dismay ('oh no!')",
+          "agreement",
+          "a question"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "mcq",
+        "prompt": "'Kantoi' means:",
+        "options": [
+          "delicious",
+          "caught/found out",
+          "tired",
+          "expensive"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate (casual): 'Whatever, anything's fine.'",
+        "answer": "Cincai je lah, apa-apa pun boleh."
+      }
+    ]
+  }
+}

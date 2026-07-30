@@ -59,6 +59,34 @@ to the project by its owner. The source file does not include a license notice.
 Confirm the curriculum's redistribution rights before distributing it outside
 the school's authorized use.
 
+## School-provided Malay curriculum
+
+The five Bahasa Malaysia CEFR courses (A1-C1) are generated from a curriculum
+snapshot supplied to the project by its owner, retained in
+`curricula/sources/malay/` for reference. The source package does not include
+a license notice. Its own README explicitly flags that it needs
+native-speaker review (register accuracy, and checking for drift into
+Indonesian forms) and real audio recording before going live to students --
+these courses are imported as unpublished drafts for that reason. Confirm
+review has happened and confirm redistribution rights before publishing or
+distributing this curriculum outside the school's authorized use.
+
+## 1943 U.S. War Department Malay guide (source-guided course)
+
+The "Modern Spoken Malay: Source-Guided Course" (`MRLC-MALAY-GOVINFO-GUIDE-V1`)
+follows the practical sequence of *Malay: A Guide to the Spoken Language*
+(TM 30-339, War Department, 3 December 1943), a U.S. federal government work
+published via GovInfo and in the public domain in the United States (17
+U.S.C. § 105). The course text itself is newly written, not a transcription:
+old spellings are modernized, military-specific commands and wartime/colonial
+framing are removed, and all scenarios use present-day civilian Malaysian
+contexts. See `curricula/sources/malay-pack-v2/SOURCE_REFERENCE.md` for the
+full adaptation policy and an old-to-modern spelling comparison table, and
+`curricula/sources/malay-pack-v2/source-to-course-mapping.tsv` for how each
+unit maps back to the original source pages. This course, and its
+companion "Malay Speaking: Beginner to Advanced" course in the same pack,
+are also imported as unpublished drafts pending review.
+
 ## hexgrad Kokoro-82M
 
 Language Quest optionally integrates with

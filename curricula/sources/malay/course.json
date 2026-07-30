@@ -1,0 +1,97 @@
+{
+  "id": "lang-quest-ms",
+  "title": "Language Quest: Bahasa Malaysia",
+  "subtitle": "Practical Malaysian Malay for daily life, work, and integration in Malaysia",
+  "targetCert": "SKBMW",
+  "targetCertFullName": "Sijil Kecekapan Bahasa Melayu bagi Warganegara Asing (Malaysian Examinations Council / MPM)",
+  "primaryVariant": "KL colloquial Bahasa Malaysia (bahasa pasar)",
+  "secondaryVariant": "Standard Bahasa Malaysia (bahasa baku) for forms and official settings",
+  "levels": [
+    {
+      "code": "A1",
+      "name": "Baru Belajar",
+      "englishName": "Just Starting",
+      "targetCumulativeHours": 80,
+      "unitCount": 8,
+      "status": "content complete",
+      "vocabItemCount": 98,
+      "lessonCount": 41
+    },
+    {
+      "code": "A2",
+      "name": "Boleh Berbual Sikit",
+      "englishName": "Everyday Malay",
+      "targetCumulativeHours": 180,
+      "unitCount": 8,
+      "status": "content complete",
+      "vocabItemCount": 63,
+      "lessonCount": 31
+    },
+    {
+      "code": "B1",
+      "name": "Boleh Uruskan Sendiri",
+      "englishName": "Independent Malay",
+      "targetCumulativeHours": 380,
+      "unitCount": 10,
+      "status": "content complete",
+      "vocabItemCount": 80,
+      "lessonCount": 40
+    },
+    {
+      "code": "B2",
+      "name": "Fasih untuk Kerja",
+      "englishName": "Confident Malay",
+      "targetCumulativeHours": 580,
+      "unitCount": 10,
+      "status": "content complete",
+      "vocabItemCount": 70,
+      "lessonCount": 40
+    },
+    {
+      "code": "C1",
+      "name": "Mahir",
+      "englishName": "Advanced Malay",
+      "targetCumulativeHours": 780,
+      "unitCount": 10,
+      "status": "content complete",
+      "vocabItemCount": 62,
+      "lessonCount": 40
+    }
+  ],
+  "dailyGoalTiers": [
+    {
+      "id": "casual",
+      "label": "Casual",
+      "estMinutes": 5,
+      "xpTarget": 20
+    },
+    {
+      "id": "regular",
+      "label": "Regular",
+      "estMinutes": 12,
+      "xpTarget": 50
+    },
+    {
+      "id": "serious",
+      "label": "Serious",
+      "estMinutes": 25,
+      "xpTarget": 100
+    }
+  ],
+  "gamification": {
+    "xpPerVocabReview": 2,
+    "xpPerNewItemLearned": 5,
+    "xpPerLessonComplete": 15,
+    "xpPerSpeakingTaskComplete": 10,
+    "xpPerScenarioComplete": 20,
+    "xpPerUnitQuizPass": 40,
+    "streakFreezeCostXp": 100,
+    "streakFreezeEarnedEvery": 7
+  },
+  "notes": [
+    "This file is the top-level manifest. Each unit lives in units/<unit-id>.json with the shape documented in schema/language-quest-schema.md.",
+    "Register tags on every vocab item: 'colloquial' (bahasa pasar, everyday KL speech), 'standard' (bahasa baku, forms/official), or 'rojak' (Manglish code-switch, introduced from B1).",
+    "All Malay content in this batch should be reviewed by a Malaysian native speaker (ideally KL-based) before publishing, per the caveats in the research report.",
+    "Mon glosses ('mon' field) are left as null placeholders for MRLC's Mon-speaking staff to fill in using the existing MonDictDB dataset."
+  ]
+}

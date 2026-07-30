@@ -1,0 +1,306 @@
+{
+  "id": "a2-u4-rumah-kejiranan",
+  "level": "A2",
+  "order": 4,
+  "title": "Rumah & Kejiranan",
+  "englishTitle": "Home & Neighbourhood",
+  "canDo": [
+    "Describe your home and its rooms",
+    "Discuss renting and basic tenancy terms",
+    "Talk to neighbours about the building/area",
+    "Report a simple household problem"
+  ],
+  "lifeBenefit": "Talk about where you live and handle simple renting/neighbourhood conversations.",
+  "estMinutes": 65,
+  "vocab": [
+    {
+      "id": "v2-sewa-rumah",
+      "type": "phrase",
+      "ms": "sewa rumah",
+      "en": "rent a house/room",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Berapa sewa rumah ni sebulan?",
+      "exampleEn": "How much is the rent per month for this house?",
+      "phonetic": "seh-wa ru-mah",
+      "audioUrl": "/audio/ms/v2-sewa-rumah.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-deposit",
+      "type": "vocab",
+      "ms": "deposit",
+      "en": "deposit",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Deposit dua bulan sewa.",
+      "exampleEn": "Deposit is two months' rent.",
+      "phonetic": "deh-po-sit",
+      "audioUrl": "/audio/ms/v2-deposit.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-tuan-rumah",
+      "type": "vocab",
+      "ms": "tuan rumah",
+      "en": "landlord/landlady",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Tuan rumah saya baik orangnya.",
+      "exampleEn": "My landlord is a kind person.",
+      "phonetic": "tu-an ru-mah",
+      "audioUrl": "/audio/ms/v2-tuan-rumah.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-bilik-air",
+      "type": "vocab",
+      "ms": "bilik air",
+      "en": "bathroom",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Bilik air kat sebelah dapur.",
+      "exampleEn": "The bathroom is next to the kitchen.",
+      "phonetic": "bi-lik a-ir",
+      "audioUrl": "/audio/ms/v2-bilik-air.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-air-bocor",
+      "type": "phrase",
+      "ms": "air bocor",
+      "en": "water leak",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Air bocor dekat siling.",
+      "exampleEn": "There's a water leak near the ceiling.",
+      "phonetic": "a-ir bo-chor",
+      "audioUrl": "/audio/ms/v2-air-bocor.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-bil-elektrik",
+      "type": "vocab",
+      "ms": "bil elektrik / air",
+      "en": "electricity/water bill",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Bil elektrik bulan ni mahal.",
+      "exampleEn": "The electricity bill this month is expensive.",
+      "phonetic": "bil eh-lek-trik / a-ir",
+      "audioUrl": "/audio/ms/v2-bil-elektrik.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-jiran",
+      "type": "vocab",
+      "ms": "jiran",
+      "en": "neighbour",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Jiran saya ramah.",
+      "exampleEn": "My neighbour is friendly.",
+      "phonetic": "ji-ran",
+      "audioUrl": "/audio/ms/v2-jiran.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "v2-bising",
+      "type": "vocab",
+      "ms": "bising",
+      "en": "noisy",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Maaf, kami bising sikit malam tadi.",
+      "exampleEn": "Sorry, we were a bit noisy last night.",
+      "phonetic": "bi-sing",
+      "audioUrl": "/audio/ms/v2-bising.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "a2-u4-l1",
+      "order": 1,
+      "title": "Deskripsi Rumah",
+      "estMinutes": 15,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "v2-bilik-air",
+        "v2-jiran"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'My neighbour is friendly.'",
+          "answer": "Jiran saya ramah."
+        }
+      ]
+    },
+    {
+      "id": "a2-u4-l2",
+      "order": 2,
+      "title": "Sewa & Deposit",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "v2-sewa-rumah",
+        "v2-deposit",
+        "v2-tuan-rumah"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'How much is the deposit?'",
+          "answer": "Berapa deposit?"
+        }
+      ]
+    },
+    {
+      "id": "a2-u4-l3",
+      "order": 3,
+      "title": "Masalah Rumah (Household problems)",
+      "estMinutes": 16,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "v2-air-bocor",
+        "v2-bil-elektrik"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'Ada masalah, ___ dekat siling.' (water leak)",
+          "itemIds": [
+            "v2-air-bocor"
+          ],
+          "answer": "air bocor"
+        }
+      ]
+    },
+    {
+      "id": "a2-u4-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 16,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "v2-sewa-rumah",
+        "v2-air-bocor",
+        "v2-bising"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "a2-u4-report-leak-to-landlord",
+    "setting": "Reporting a water leak to the landlord by phone",
+    "roles": [
+      "learner",
+      "landlord"
+    ],
+    "script": [
+      {
+        "role": "learner",
+        "ms": "Encik, maaf ganggu. Ada air bocor dekat siling bilik saya.",
+        "en": "Sir, sorry to bother you. There's a water leak near my room's ceiling."
+      },
+      {
+        "role": "landlord",
+        "ms": "Oh, sejak bila?",
+        "en": "Oh, since when?"
+      },
+      {
+        "role": "learner",
+        "ms": "Sejak semalam petang.",
+        "en": "Since yesterday evening."
+      },
+      {
+        "role": "landlord",
+        "ms": "Baik, saya hantar tukang paip esok pagi.",
+        "en": "Alright, I'll send a plumber tomorrow morning."
+      },
+      {
+        "role": "learner",
+        "ms": "Terima kasih, encik.",
+        "en": "Thank you, sir."
+      }
+    ],
+    "aiPrompt": "You are a landlord receiving a phone call about a household problem (a leak). Ask when it started and reassure the tenant you'll send help. Keep it polite and matter-of-fact, colloquial KL Malay."
+  },
+  "speakingPrompts": [
+    {
+      "id": "a2-u4-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the leak-reporting call, focusing on polite phone-call openers ('maaf ganggu').",
+      "targetAudioUrl": "/audio/ms/a2-u4-scenario.mp3",
+      "rubric": [
+        "polite phone opener",
+        "clear duration statement"
+      ]
+    },
+    {
+      "id": "a2-u4-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Report a household problem of your choice to the AI landlord and state since when it's been happening.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "states the problem clearly",
+        "gives a duration"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "a2-u4-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Tuan rumah' means:",
+        "options": [
+          "tenant",
+          "landlord",
+          "neighbour",
+          "plumber"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate: 'There's a water leak in the bathroom.'",
+        "answer": "Ada air bocor kat bilik air."
+      },
+      {
+        "type": "mcq",
+        "prompt": "'Bising' means:",
+        "options": [
+          "quiet",
+          "clean",
+          "noisy",
+          "expensive"
+        ],
+        "answerIndex": 2
+      }
+    ]
+  }
+}

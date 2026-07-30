@@ -1,0 +1,289 @@
+{
+  "id": "c1-u9-mentor-latih",
+  "level": "C1",
+  "order": 9,
+  "title": "Mentor & Latih",
+  "englishTitle": "Mentoring & Teaching Others",
+  "canDo": [
+    "Explain a concept clearly to a lower-level learner",
+    "Give structured, encouraging feedback as a mentor",
+    "Adapt register when teaching (simplify without being condescending)",
+    "Reflect on and articulate your own learning journey"
+  ],
+  "lifeBenefit": "Use your advanced Malay to mentor newer refugees/learners — reinforcing your own mastery by teaching.",
+  "estMinutes": 80,
+  "vocab": [
+    {
+      "id": "c1-membimbing",
+      "type": "vocab",
+      "ms": "membimbing",
+      "en": "to mentor/guide",
+      "mon": null,
+      "register": "standard",
+      "example": "Saya suka membimbing pelajar baru.",
+      "exampleEn": "I enjoy mentoring new students.",
+      "phonetic": "muhm-bim-bing",
+      "audioUrl": "/audio/ms/c1-membimbing.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-memudahkan-faham",
+      "type": "phrase",
+      "ms": "memudahkan kefahaman",
+      "en": "to make understanding easier",
+      "mon": null,
+      "register": "standard",
+      "example": "Cuba memudahkan kefahaman dengan contoh mudah.",
+      "exampleEn": "Try to make it easier to understand with simple examples.",
+      "phonetic": "muh-mu-dah-kan kuh-fa-ha-man",
+      "audioUrl": "/audio/ms/c1-memudahkan-faham.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-perkembangan-diri",
+      "type": "vocab",
+      "ms": "perkembangan diri",
+      "en": "personal development/growth",
+      "mon": null,
+      "register": "standard",
+      "example": "Refleksi penting untuk perkembangan diri.",
+      "exampleEn": "Reflection is important for personal development.",
+      "phonetic": "puhr-kuhm-ba-ngan di-ri",
+      "audioUrl": "/audio/ms/c1-perkembangan-diri.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-galakan",
+      "type": "vocab",
+      "ms": "galakan",
+      "en": "encouragement",
+      "mon": null,
+      "register": "standard",
+      "example": "Beri galakan, bukan tekanan.",
+      "exampleEn": "Give encouragement, not pressure.",
+      "phonetic": "ga-la-kan",
+      "audioUrl": "/audio/ms/c1-galakan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-teladan",
+      "type": "phrase",
+      "ms": "menjadi teladan",
+      "en": "to be a role model",
+      "mon": null,
+      "register": "standard",
+      "example": "Saya nak menjadi teladan untuk komuniti saya.",
+      "exampleEn": "I want to be a role model for my community.",
+      "phonetic": "muhn-ja-di tuh-la-dan",
+      "audioUrl": "/audio/ms/c1-teladan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-perjalanan-pembelajaran",
+      "type": "vocab",
+      "ms": "perjalanan pembelajaran",
+      "en": "learning journey",
+      "mon": null,
+      "register": "standard",
+      "example": "Perjalanan pembelajaran saya penuh cabaran.",
+      "exampleEn": "My learning journey has been full of challenges.",
+      "phonetic": "puhr-ja-la-nan puhm-buh-la-ja-ran",
+      "audioUrl": "/audio/ms/c1-perjalanan-pembelajaran.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "c1-u9-l1",
+      "order": 1,
+      "title": "Membimbing dengan Berkesan",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "c1-membimbing",
+        "c1-memudahkan-faham"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'I try to mentor new students by making things easier to understand.'",
+          "answer": "Saya cuba membimbing pelajar baru dengan memudahkan kefahaman mereka."
+        }
+      ]
+    },
+    {
+      "id": "c1-u9-l2",
+      "order": 2,
+      "title": "Galakan & Menjadi Teladan",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "c1-galakan",
+        "c1-teladan"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'I want to be a role model by giving encouragement, not pressure.'",
+          "answer": "Saya nak menjadi teladan dengan memberi galakan, bukan tekanan."
+        }
+      ]
+    },
+    {
+      "id": "c1-u9-l3",
+      "order": 3,
+      "title": "Refleksi Perjalanan Pembelajaran",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "c1-perkembangan-diri",
+        "c1-perjalanan-pembelajaran"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'___ saya penuh cabaran.' (learning journey)",
+          "itemIds": [
+            "c1-perjalanan-pembelajaran"
+          ],
+          "answer": "Perjalanan pembelajaran"
+        }
+      ]
+    },
+    {
+      "id": "c1-u9-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "c1-membimbing",
+        "c1-galakan",
+        "c1-perjalanan-pembelajaran"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "c1-u9-mentoring-a-beginner",
+    "setting": "Mentoring a beginner-level Malay learner who feels discouraged",
+    "roles": [
+      "learner (mentor)",
+      "beginner student"
+    ],
+    "script": [
+      {
+        "role": "student",
+        "ms": "Saya rasa Bahasa Melayu terlalu susah, saya nak give up.",
+        "en": "I feel Malay is too difficult, I want to give up."
+      },
+      {
+        "role": "learner",
+        "ms": "Saya faham perasaan tu. Perjalanan pembelajaran saya pun penuh cabaran dulu.",
+        "en": "I understand that feeling. My own learning journey was also full of challenges."
+      },
+      {
+        "role": "student",
+        "ms": "Betul ke? Macam mana awak boleh maju?",
+        "en": "Really? How did you manage to improve?"
+      },
+      {
+        "role": "learner",
+        "ms": "Saya beri diri saya galakan, bukan tekanan, dan belajar sikit demi sikit.",
+        "en": "I gave myself encouragement, not pressure, and learned little by little."
+      },
+      {
+        "role": "student",
+        "ms": "Terima kasih, tu buat saya rasa lebih yakin.",
+        "en": "Thank you, that makes me feel more confident."
+      }
+    ],
+    "aiPrompt": "You are a beginner Malay learner feeling discouraged and considering giving up. Share your frustration honestly, and respond warmly and with renewed motivation to the learner's mentoring and encouragement."
+  },
+  "speakingPrompts": [
+    {
+      "id": "c1-u9-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the mentoring dialogue, focusing on warm, encouraging, articulate delivery.",
+      "targetAudioUrl": "/audio/ms/c1-u9-scenario.mp3",
+      "rubric": [
+        "warm, encouraging tone",
+        "clear articulation of abstract feelings"
+      ]
+    },
+    {
+      "id": "c1-u9-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Mentor the AI discouraged-beginner persona, sharing your own learning journey and giving genuine encouragement.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "shares a coherent reflection on learning",
+        "gives genuine, specific encouragement"
+      ]
+    },
+    {
+      "id": "c1-u9-presentation-1",
+      "type": "presentation",
+      "instructions": "Give a 3-minute reflective talk on your own Malay-learning journey from A1 to now, and one piece of advice for a beginner.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "coherent reflective narrative",
+        "one clear, genuine piece of advice"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "c1-u9-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Membimbing' means:",
+        "options": [
+          "to criticise",
+          "to mentor/guide",
+          "to test",
+          "to ignore"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate: 'Give encouragement, not pressure.'",
+        "answer": "Beri galakan, bukan tekanan."
+      },
+      {
+        "type": "mcq",
+        "prompt": "'Perjalanan pembelajaran' means:",
+        "options": [
+          "a test result",
+          "a learning journey",
+          "a teaching certificate",
+          "a classroom"
+        ],
+        "answerIndex": 1
+      }
+    ]
+  }
+}

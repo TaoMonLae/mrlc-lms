@@ -1,0 +1,288 @@
+{
+  "id": "c1-u8-bahasa-rasmi-protokol",
+  "level": "C1",
+  "order": 8,
+  "title": "Bahasa Rasmi & Protokol",
+  "englishTitle": "Official Register & Ceremonial Protocol",
+  "canDo": [
+    "Use highly formal/ceremonial Malay appropriately",
+    "Address officials and dignitaries with correct titles",
+    "Understand protocol at formal/official events",
+    "Give a brief formal welcome or vote-of-thanks speech"
+  ],
+  "lifeBenefit": "Handle the most formal register of Malay — official ceremonies, titles, and protocol.",
+  "estMinutes": 80,
+  "vocab": [
+    {
+      "id": "c1-yang-berhormat",
+      "type": "vocab",
+      "ms": "Yang Berhormat / Yang Berbahagia",
+      "en": "The Honourable (formal titles for officials/dignitaries)",
+      "mon": null,
+      "register": "standard",
+      "example": "Yang Berhormat Menteri akan berucap sebentar lagi.",
+      "exampleEn": "The Honourable Minister will speak shortly.",
+      "phonetic": "yang buhr-hor-mat",
+      "audioUrl": "/audio/ms/c1-yang-berhormat.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-alu-aluan",
+      "type": "vocab",
+      "ms": "kata alu-aluan",
+      "en": "welcome address",
+      "mon": null,
+      "register": "standard",
+      "example": "Saya dijemput untuk sampaikan kata alu-aluan.",
+      "exampleEn": "I've been invited to give the welcome address.",
+      "phonetic": "ka-ta a-lu a-lu-an",
+      "audioUrl": "/audio/ms/c1-alu-aluan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-ucapan-penghargaan",
+      "type": "vocab",
+      "ms": "ucapan penghargaan",
+      "en": "vote of thanks / speech of appreciation",
+      "mon": null,
+      "register": "standard",
+      "example": "Beliau akan sampaikan ucapan penghargaan.",
+      "exampleEn": "He/she will deliver the vote of thanks.",
+      "phonetic": "u-cha-pan puhng-har-ga-an",
+      "audioUrl": "/audio/ms/c1-ucapan-penghargaan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-majlis-rasmi",
+      "type": "vocab",
+      "ms": "majlis rasmi",
+      "en": "official/formal event",
+      "mon": null,
+      "register": "standard",
+      "example": "Majlis rasmi ini dihadiri ramai tetamu.",
+      "exampleEn": "This official event was attended by many guests.",
+      "phonetic": "maj-lis ras-mi",
+      "audioUrl": "/audio/ms/c1-majlis-rasmi.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-dengan-hormatnya",
+      "type": "vocab",
+      "ms": "dengan hormatnya",
+      "en": "respectfully / with due respect (formal letter/speech opener)",
+      "mon": null,
+      "register": "standard",
+      "example": "Dengan hormatnya, saya ingin memohon...",
+      "exampleEn": "Respectfully, I wish to request...",
+      "phonetic": "duh-ngan hor-mat-nya",
+      "audioUrl": "/audio/ms/c1-dengan-hormatnya.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "c1-tetamu-kehormat",
+      "type": "vocab",
+      "ms": "tetamu kehormat",
+      "en": "guest of honour",
+      "mon": null,
+      "register": "standard",
+      "example": "Sila alu-alukan tetamu kehormat kita.",
+      "exampleEn": "Please welcome our guest of honour.",
+      "phonetic": "tuh-ta-mu kuh-hor-mat",
+      "audioUrl": "/audio/ms/c1-tetamu-kehormat.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "c1-u8-l1",
+      "order": 1,
+      "title": "Gelaran Rasmi (Formal titles)",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "c1-yang-berhormat",
+        "c1-tetamu-kehormat"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'Please welcome the Honourable Minister, our guest of honour.'",
+          "answer": "Sila alu-alukan Yang Berhormat Menteri, tetamu kehormat kita."
+        }
+      ]
+    },
+    {
+      "id": "c1-u8-l2",
+      "order": 2,
+      "title": "Kata Alu-Aluan & Ucapan Penghargaan",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "c1-alu-aluan",
+        "c1-ucapan-penghargaan"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'I have been invited to deliver the welcome address at this official event.'",
+          "answer": "Saya dijemput untuk menyampaikan kata alu-aluan pada majlis rasmi ini."
+        }
+      ]
+    },
+    {
+      "id": "c1-u8-l3",
+      "order": 3,
+      "title": "Bahasa Surat & Ucapan Rasmi",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "c1-dengan-hormatnya",
+        "c1-majlis-rasmi"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'___, saya ingin memohon kebenaran.' (respectfully)",
+          "itemIds": [
+            "c1-dengan-hormatnya"
+          ],
+          "answer": "Dengan hormatnya"
+        }
+      ]
+    },
+    {
+      "id": "c1-u8-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "c1-yang-berhormat",
+        "c1-alu-aluan",
+        "c1-majlis-rasmi"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "c1-u8-giving-welcome-speech",
+    "setting": "Delivering a short formal welcome address at an official community event",
+    "roles": [
+      "learner (speaker)",
+      "AI event coach"
+    ],
+    "script": [
+      {
+        "role": "coach",
+        "ms": "Mari kita sediakan kata alu-aluan untuk majlis rasmi esok.",
+        "en": "Let's prepare the welcome address for tomorrow's official event."
+      },
+      {
+        "role": "learner",
+        "ms": "Baik. Macam mana saya patut mula ucapan?",
+        "en": "Alright. How should I start the speech?"
+      },
+      {
+        "role": "coach",
+        "ms": "Mula dengan 'Yang Berhormat, tetamu-tetamu kehormat, dan hadirin sekalian.'",
+        "en": "Start with 'The Honourable, guests of honour, and distinguished attendees.'"
+      },
+      {
+        "role": "learner",
+        "ms": "Selepas tu, saya sampaikan tujuan majlis?",
+        "en": "After that, do I state the event's purpose?"
+      },
+      {
+        "role": "coach",
+        "ms": "Ya, dan akhiri dengan ucapan penghargaan kepada semua yang hadir.",
+        "en": "Yes, and end with a vote of thanks to everyone present."
+      }
+    ],
+    "aiPrompt": "You are an AI coach helping the learner prepare a formal ceremonial welcome speech. Guide them through the correct formal openings, structure, and closing. Standard, highest-register Malay."
+  },
+  "speakingPrompts": [
+    {
+      "id": "c1-u8-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow a full ceremonial welcome address, focusing on the very formal register and measured, dignified pace.",
+      "targetAudioUrl": "/audio/ms/c1-u8-scenario.mp3",
+      "rubric": [
+        "highest-register vocabulary",
+        "dignified, measured delivery"
+      ]
+    },
+    {
+      "id": "c1-u8-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Work with the AI event-coach persona to prepare the opening lines of a formal speech for an occasion of your choice.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "uses correct formal opening",
+        "structures the speech logically"
+      ]
+    },
+    {
+      "id": "c1-u8-presentation-1",
+      "type": "presentation",
+      "instructions": "Deliver a 2-minute formal welcome address for an imagined official community event, using correct titles and closing with a vote of thanks.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "correct formal opening and closing",
+        "dignified, appropriate ceremonial tone"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "c1-u8-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Yang Berhormat' is used to address:",
+        "options": [
+          "a close friend",
+          "an honourable official/dignitary",
+          "a shopkeeper",
+          "a child"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate: 'Respectfully, I wish to request permission.'",
+        "answer": "Dengan hormatnya, saya ingin memohon kebenaran."
+      },
+      {
+        "type": "mcq",
+        "prompt": "'Ucapan penghargaan' means:",
+        "options": [
+          "welcome address",
+          "vote of thanks",
+          "meeting agenda",
+          "formal complaint"
+        ],
+        "answerIndex": 1
+      }
+    ]
+  }
+}

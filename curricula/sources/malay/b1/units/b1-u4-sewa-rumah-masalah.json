@@ -1,0 +1,312 @@
+{
+  "id": "b1-u4-sewa-rumah-masalah",
+  "level": "B1",
+  "order": 4,
+  "title": "Sewa Rumah & Masalah",
+  "englishTitle": "Renting Problems",
+  "canDo": [
+    "Discuss a tenancy agreement in more detail",
+    "File a complaint (aduan) about a rental issue",
+    "Negotiate with a landlord over a dispute",
+    "Understand notice periods and deposits"
+  ],
+  "lifeBenefit": "Handle rental disputes and paperwork independently and assertively but politely.",
+  "estMinutes": 75,
+  "vocab": [
+    {
+      "id": "b1-perjanjian-sewa",
+      "type": "vocab",
+      "ms": "perjanjian sewa",
+      "en": "tenancy agreement",
+      "mon": null,
+      "register": "standard",
+      "example": "Kita perlu tandatangan perjanjian sewa.",
+      "exampleEn": "We need to sign the tenancy agreement.",
+      "phonetic": "puhr-jan-ji-an seh-wa",
+      "audioUrl": "/audio/ms/b1-perjanjian-sewa.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-notis",
+      "type": "vocab",
+      "ms": "notis",
+      "en": "notice (period)",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Notis satu bulan sebelum keluar.",
+      "exampleEn": "One month's notice before moving out.",
+      "phonetic": "no-tis",
+      "audioUrl": "/audio/ms/b1-notis.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-aduan",
+      "type": "vocab",
+      "ms": "aduan",
+      "en": "complaint",
+      "mon": null,
+      "register": "standard",
+      "example": "Saya nak buat aduan pasal paip bocor.",
+      "exampleEn": "I want to file a complaint about a leaking pipe.",
+      "phonetic": "a-du-an",
+      "audioUrl": "/audio/ms/b1-aduan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-pulangkan-deposit",
+      "type": "phrase",
+      "ms": "pulangkan deposit",
+      "en": "return the deposit",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Bila deposit saya akan dipulangkan?",
+      "exampleEn": "When will my deposit be returned?",
+      "phonetic": "pu-lang-kan deh-po-sit",
+      "audioUrl": "/audio/ms/b1-pulangkan-deposit.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-kerosakan",
+      "type": "vocab",
+      "ms": "kerosakan",
+      "en": "damage",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Ada kerosakan sebelum saya masuk lagi.",
+      "exampleEn": "There was already damage before I moved in.",
+      "phonetic": "kuh-ro-sa-kan",
+      "audioUrl": "/audio/ms/b1-kerosakan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-baiki",
+      "type": "vocab",
+      "ms": "baiki / membaiki",
+      "en": "to repair/fix",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Bila tuan rumah akan baiki paip?",
+      "exampleEn": "When will the landlord fix the pipe?",
+      "phonetic": "ba-i-ki",
+      "audioUrl": "/audio/ms/b1-baiki.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-tuntutan",
+      "type": "vocab",
+      "ms": "tuntutan",
+      "en": "claim/demand",
+      "mon": null,
+      "register": "standard",
+      "example": "Ini tuntutan yang munasabah.",
+      "exampleEn": "This is a reasonable claim.",
+      "phonetic": "tun-tu-tan",
+      "audioUrl": "/audio/ms/b1-tuntutan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-munasabah",
+      "type": "vocab",
+      "ms": "munasabah",
+      "en": "reasonable",
+      "mon": null,
+      "register": "standard",
+      "example": "Harga sewa ni tak munasabah.",
+      "exampleEn": "This rental price isn't reasonable.",
+      "phonetic": "mu-na-sa-bah",
+      "audioUrl": "/audio/ms/b1-munasabah.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "b1-u4-l1",
+      "order": 1,
+      "title": "Perjanjian & Notis",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "b1-perjanjian-sewa",
+        "b1-notis"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'The agreement requires one month's notice.'",
+          "answer": "Perjanjian ni perlukan notis satu bulan."
+        }
+      ]
+    },
+    {
+      "id": "b1-u4-l2",
+      "order": 2,
+      "title": "Buat Aduan",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b1-aduan",
+        "b1-kerosakan",
+        "b1-baiki"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'I want to complain about the damage in the bathroom.'",
+          "answer": "Saya nak buat aduan pasal kerosakan kat bilik air."
+        }
+      ]
+    },
+    {
+      "id": "b1-u4-l3",
+      "order": 3,
+      "title": "Deposit & Tuntutan",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b1-pulangkan-deposit",
+        "b1-tuntutan",
+        "b1-munasabah"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'Bila deposit saya akan ___?' (returned)",
+          "itemIds": [
+            "b1-pulangkan-deposit"
+          ],
+          "answer": "dipulangkan"
+        }
+      ]
+    },
+    {
+      "id": "b1-u4-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 21,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b1-aduan",
+        "b1-pulangkan-deposit",
+        "b1-munasabah"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "b1-u4-deposit-dispute",
+    "setting": "Negotiating the return of a rental deposit after moving out",
+    "roles": [
+      "learner",
+      "landlord"
+    ],
+    "script": [
+      {
+        "role": "learner",
+        "ms": "Encik, saya dah keluar rumah. Bila deposit saya dipulangkan?",
+        "en": "Sir, I've moved out. When will my deposit be returned?"
+      },
+      {
+        "role": "landlord",
+        "ms": "Ada kerosakan kat dinding, jadi saya potong sikit.",
+        "en": "There's damage on the wall, so I'll deduct a bit."
+      },
+      {
+        "role": "learner",
+        "ms": "Kerosakan tu dah ada sebelum saya masuk, encik.",
+        "en": "That damage was already there before I moved in, sir."
+      },
+      {
+        "role": "landlord",
+        "ms": "Betul ke? Biar saya check gambar dulu.",
+        "en": "Really? Let me check the photos first."
+      },
+      {
+        "role": "learner",
+        "ms": "Baik, saya ada gambar juga sebagai bukti.",
+        "en": "Alright, I have photos too as proof."
+      },
+      {
+        "role": "landlord",
+        "ms": "Okay, kalau betul, saya pulangkan deposit penuh.",
+        "en": "Okay, if that's true, I'll return the full deposit."
+      }
+    ],
+    "aiPrompt": "You are a landlord disputing a damage deduction from a tenant's deposit. Initially push back, then soften when the tenant provides evidence (photos), and agree to a fair resolution. Stay reasonable, not hostile."
+  },
+  "speakingPrompts": [
+    {
+      "id": "b1-u4-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the deposit dispute dialogue, noting the assertive-but-polite tone used to push back.",
+      "targetAudioUrl": "/audio/ms/b1-u4-scenario.mp3",
+      "rubric": [
+        "assertive but polite tone",
+        "clear evidence-based argument"
+      ]
+    },
+    {
+      "id": "b1-u4-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Negotiate a deposit dispute with the AI landlord persona, using evidence to support your case.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "states the disagreement clearly",
+        "offers evidence or a reasonable argument"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "b1-u4-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Aduan' means:",
+        "options": [
+          "agreement",
+          "complaint",
+          "deposit",
+          "repair"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate: 'This damage was already there before I moved in.'",
+        "answer": "Kerosakan ni dah ada sebelum saya masuk."
+      },
+      {
+        "type": "mcq",
+        "prompt": "'Munasabah' means:",
+        "options": [
+          "expensive",
+          "reasonable",
+          "urgent",
+          "broken"
+        ],
+        "answerIndex": 1
+      }
+    ]
+  }
+}

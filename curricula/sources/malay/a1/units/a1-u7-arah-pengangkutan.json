@@ -1,0 +1,77 @@
+{
+  "id": "a1-u7-arah-pengangkutan",
+  "level": "A1",
+  "order": 7,
+  "title": "Arah & Pengangkutan",
+  "englishTitle": "Directions & Transport",
+  "canDo": [
+    "Ask for and give simple directions",
+    "Understand basic LRT/MRT/bus announcements and signage",
+    "Ask how to get somewhere",
+    "Use a ride-hailing app (Grab) with basic phrases"
+  ],
+  "lifeBenefit": "Navigate Kuala Lumpur's public transport and streets independently.",
+  "estMinutes": 60,
+  "vocab": [
+    { "id": "v-kat-mana", "type": "phrase", "ms": "kat mana?", "en": "where (is it)? (colloquial for 'di mana')", "mon": null, "register": "colloquial", "example": "Stesen LRT kat mana?", "exampleEn": "Where is the LRT station?", "phonetic": "kat ma-na", "audioUrl": "/audio/ms/v-kat-mana.mp3", "minimalPairWith": null },
+    { "id": "v-terus", "type": "vocab", "ms": "terus", "en": "straight (ahead)", "mon": null, "register": "colloquial", "example": "Jalan terus je.", "exampleEn": "Just go straight ahead.", "phonetic": "tuh-rus", "audioUrl": "/audio/ms/v-terus.mp3", "minimalPairWith": null },
+    { "id": "v-kiri-kanan", "type": "vocab", "ms": "kiri / kanan", "en": "left / right", "mon": null, "register": "colloquial", "example": "Pusing kanan lepas tu.", "exampleEn": "Turn right after that.", "phonetic": "ki-ri / ka-nan", "audioUrl": "/audio/ms/v-kiri-kanan.mp3", "minimalPairWith": null },
+    { "id": "v-stesen-lrt", "type": "vocab", "ms": "stesen LRT", "en": "LRT station", "mon": null, "register": "colloquial", "example": "Stesen LRT dekat sini.", "exampleEn": "The LRT station is near here.", "phonetic": "stay-shen el-ar-tee", "audioUrl": "/audio/ms/v-stesen-lrt.mp3", "minimalPairWith": null },
+    { "id": "v-stesen-berikutnya", "type": "phrase", "ms": "stesen berikutnya", "en": "the next station", "mon": null, "register": "standard", "example": "Stesen berikutnya, KLCC.", "exampleEn": "Next station, KLCC.", "phonetic": "stay-shen buh-ri-kut-nya", "audioUrl": "/audio/ms/v-stesen-berikutnya.mp3", "minimalPairWith": null },
+    { "id": "v-bas", "type": "vocab", "ms": "bas", "en": "bus", "mon": null, "register": "colloquial", "example": "Bas ni pergi mana?", "exampleEn": "Where does this bus go?", "phonetic": "bas", "audioUrl": "/audio/ms/v-bas.mp3", "minimalPairWith": null },
+    { "id": "v-dekat-jauh", "type": "vocab", "ms": "dekat / jauh", "en": "near / far", "mon": null, "register": "colloquial", "example": "Jauh tak dari sini?", "exampleEn": "Is it far from here?", "phonetic": "duh-kat / ja-uh", "audioUrl": "/audio/ms/v-dekat-jauh.mp3", "minimalPairWith": null },
+    { "id": "v-pergi-ke", "type": "phrase", "ms": "macam mana nak pergi ke...?", "en": "how do I get to...?", "mon": null, "register": "colloquial", "example": "Macam mana nak pergi ke KLCC?", "exampleEn": "How do I get to KLCC?", "phonetic": "ma-cham ma-na nak puhr-gi keh", "audioUrl": "/audio/ms/v-pergi-ke.mp3", "minimalPairWith": null },
+    { "id": "v-turun-sini", "type": "phrase", "ms": "saya nak turun sini", "en": "I want to get off here", "mon": null, "register": "colloquial", "example": "Bang, saya nak turun sini.", "exampleEn": "Bro, I want to get off here.", "phonetic": "sa-ya nak tu-run si-ni", "audioUrl": "/audio/ms/v-turun-sini.mp3", "minimalPairWith": null },
+    { "id": "v-tunggu", "type": "vocab", "ms": "tunggu", "en": "to wait", "mon": null, "register": "colloquial", "example": "Tunggu sekejap, ya.", "exampleEn": "Wait a moment, please.", "phonetic": "tung-gu", "audioUrl": "/audio/ms/v-tunggu.mp3", "minimalPairWith": null }
+  ],
+  "lessons": [
+    { "id": "a1-u7-l1", "order": 1, "title": "Tanya Arah (Asking for directions)", "estMinutes": 12, "sections": ["review", "input", "practice", "quiz"], "itemIds": ["v-kat-mana", "v-terus", "v-kiri-kanan", "v-pergi-ke"],
+      "practiceExercises": [
+        { "type": "translate", "prompt": "Translate: 'How do I get to the LRT station?'", "itemIds": ["v-pergi-ke", "v-stesen-lrt"], "answer": "Macam mana nak pergi ke stesen LRT?" }
+      ]
+    },
+    { "id": "a1-u7-l2", "order": 2, "title": "Dalam LRT/Bas (On the LRT/bus)", "estMinutes": 12, "sections": ["review", "input", "practice", "quiz", "speaking"], "itemIds": ["v-stesen-berikutnya", "v-bas", "v-turun-sini"],
+      "practiceExercises": [
+        { "type": "listenToPicture", "prompt": "Listen to an LRT announcement and pick the correct station name.", "itemIds": ["v-stesen-berikutnya"], "answer": null }
+      ]
+    },
+    { "id": "a1-u7-l3", "order": 3, "title": "Dekat, Jauh & Tunggu (Distance & waiting)", "estMinutes": 10, "sections": ["review", "input", "practice", "quiz"], "itemIds": ["v-dekat-jauh", "v-tunggu"],
+      "practiceExercises": [
+        { "type": "clozeGap", "prompt": "'___ sekejap, ya.' (wait)", "itemIds": ["v-tunggu"], "answer": "Tunggu" }
+      ]
+    },
+    { "id": "a1-u7-l4", "order": 4, "title": "Guna Grab (Using ride-hailing)", "estMinutes": 12, "sections": ["review", "input", "practice", "speaking"], "itemIds": ["v-kat-mana", "v-dekat-jauh", "v-turun-sini"],
+      "practiceExercises": [
+        { "type": "translate", "prompt": "Translate: 'I want to get off here, thank you.'", "itemIds": ["v-turun-sini"], "answer": "Saya nak turun sini, terima kasih." }
+      ]
+    },
+    { "id": "a1-u7-l5", "order": 5, "title": "Latihan & Ulangkaji", "estMinutes": 14, "sections": ["review", "quiz", "speaking"], "itemIds": ["v-pergi-ke", "v-kiri-kanan", "v-stesen-berikutnya", "v-turun-sini"], "practiceExercises": [] }
+  ],
+  "scenario": {
+    "id": "a1-u7-asking-lrt-directions",
+    "setting": "Asking a stranger for directions to the nearest LRT station",
+    "roles": ["learner", "passerby"],
+    "script": [
+      { "role": "learner", "ms": "Maaf, stesen LRT kat mana, ya?", "en": "Excuse me, where is the LRT station?" },
+      { "role": "passerby", "ms": "Oh, jalan terus, lepas tu pusing kanan.", "en": "Oh, go straight, then turn right after that." },
+      { "role": "learner", "ms": "Jauh tak dari sini?", "en": "Is it far from here?" },
+      { "role": "passerby", "ms": "Tak jauh, lima minit jalan kaki je.", "en": "Not far, just a five-minute walk." },
+      { "role": "learner", "ms": "Okay, terima kasih banyak-banyak!", "en": "Okay, thank you very much!" }
+    ],
+    "aiPrompt": "You are a helpful Malaysian passerby giving simple walking directions to the nearest LRT station. Use short direction phrases (jalan terus, pusing kiri/kanan) and give a rough walking time. Speak slowly and clearly."
+  },
+  "speakingPrompts": [
+    { "id": "a1-u7-shadow-1", "type": "shadowing", "instructions": "Shadow the directions dialogue, matching stress on 'terus' and 'kanan'.", "targetAudioUrl": "/audio/ms/a1-u7-scenario.mp3", "rubric": ["clear direction words", "natural question intonation"] },
+    { "id": "a1-u7-roleplay-1", "type": "roleplay", "instructions": "Ask the AI passerby for directions to a place of your choice and ask if it's far.", "targetAudioUrl": null, "rubric": ["asks location correctly", "asks about distance"] }
+  ],
+  "unitQuiz": {
+    "id": "a1-u7-quiz",
+    "passMark": 0.7,
+    "questions": [
+      { "type": "mcq", "prompt": "'Pusing kanan' means:", "options": ["go straight", "turn left", "turn right", "stop here"], "answerIndex": 2 },
+      { "type": "translate", "prompt": "Translate: 'How do I get to KLCC?'", "answer": "Macam mana nak pergi ke KLCC?" },
+      { "type": "listening", "audioUrl": "/audio/ms/v-stesen-berikutnya.mp3", "prompt": "What did the announcement say?", "options": ["next station", "the train is late", "please pay here", "exit on the left"], "answerIndex": 0 },
+      { "type": "mcq", "prompt": "You want the driver to stop. You say:", "options": ["Tunggu sekejap", "Saya nak turun sini", "Jauh tak?", "Kat mana?"], "answerIndex": 1 }
+    ]
+  }
+}

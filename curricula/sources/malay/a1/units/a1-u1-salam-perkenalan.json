@@ -1,0 +1,127 @@
+{
+  "id": "a1-u1-salam-perkenalan",
+  "level": "A1",
+  "order": 1,
+  "title": "Salam & Perkenalan",
+  "englishTitle": "Greetings & Introductions",
+  "canDo": [
+    "Greet someone appropriately at different times of day",
+    "Ask and answer 'how are you'",
+    "Introduce yourself and ask someone's name",
+    "Use basic polite forms of address (encik/puan/cik)",
+    "Say thank you, sorry, and goodbye"
+  ],
+  "lifeBenefit": "Make a good first impression with neighbours, shopkeepers, teachers, and officials.",
+  "estMinutes": 60,
+  "vocab": [
+    { "id": "v-selamat-pagi", "type": "phrase", "ms": "selamat pagi", "en": "good morning", "mon": null, "register": "colloquial", "example": "Selamat pagi, cikgu!", "exampleEn": "Good morning, teacher!", "phonetic": "sla-mat pa-gi", "audioUrl": "/audio/ms/v-selamat-pagi.mp3", "minimalPairWith": null },
+    { "id": "v-selamat-petang", "type": "phrase", "ms": "selamat petang", "en": "good afternoon/evening", "mon": null, "register": "colloquial", "example": "Selamat petang, semua.", "exampleEn": "Good afternoon, everyone.", "phonetic": "sla-mat puh-tang", "audioUrl": "/audio/ms/v-selamat-petang.mp3", "minimalPairWith": null },
+    { "id": "v-selamat-malam", "type": "phrase", "ms": "selamat malam", "en": "good night", "mon": null, "register": "colloquial", "example": "Selamat malam, jumpa esok.", "exampleEn": "Good night, see you tomorrow.", "phonetic": "sla-mat ma-lam", "audioUrl": "/audio/ms/v-selamat-malam.mp3", "minimalPairWith": null },
+    { "id": "v-apa-khabar", "type": "phrase", "ms": "apa khabar?", "en": "how are you?", "mon": null, "register": "colloquial", "example": "Apa khabar hari ni?", "exampleEn": "How are you today?", "phonetic": "a-pa kha-bar", "audioUrl": "/audio/ms/v-apa-khabar.mp3", "minimalPairWith": null },
+    { "id": "v-khabar-baik", "type": "phrase", "ms": "khabar baik", "en": "I'm fine (lit. 'news is good')", "mon": null, "register": "colloquial", "example": "Khabar baik, terima kasih.", "exampleEn": "I'm fine, thank you.", "phonetic": "kha-bar ba-ik", "audioUrl": "/audio/ms/v-khabar-baik.mp3", "minimalPairWith": "v-balik" },
+    { "id": "v-balik", "type": "vocab", "ms": "balik", "en": "to go home / go back", "mon": null, "register": "colloquial", "example": "Saya nak balik dulu.", "exampleEn": "I want to go home first.", "phonetic": "ba-lik", "audioUrl": "/audio/ms/v-balik.mp3", "minimalPairWith": "v-khabar-baik" },
+    { "id": "v-nama-saya", "type": "phrase", "ms": "nama saya...", "en": "my name is...", "mon": null, "register": "colloquial", "example": "Nama saya Tao.", "exampleEn": "My name is Tao.", "phonetic": "na-ma sa-ya", "audioUrl": "/audio/ms/v-nama-saya.mp3", "minimalPairWith": null },
+    { "id": "v-nama-awak-siapa", "type": "phrase", "ms": "nama awak siapa?", "en": "what is your name?", "mon": null, "register": "colloquial", "example": "Nama awak siapa, dik?", "exampleEn": "What's your name, kid/younger person?", "phonetic": "na-ma a-wak si-a-pa", "audioUrl": "/audio/ms/v-nama-awak-siapa.mp3", "minimalPairWith": null },
+    { "id": "v-saya-dari", "type": "phrase", "ms": "saya dari...", "en": "I am from...", "mon": null, "register": "colloquial", "example": "Saya dari Myanmar.", "exampleEn": "I am from Myanmar.", "phonetic": "sa-ya da-ri", "audioUrl": "/audio/ms/v-saya-dari.mp3", "minimalPairWith": null },
+    { "id": "v-terima-kasih", "type": "phrase", "ms": "terima kasih", "en": "thank you", "mon": null, "register": "colloquial", "example": "Terima kasih banyak-banyak.", "exampleEn": "Thank you very much.", "phonetic": "tuh-ri-ma ka-sih", "audioUrl": "/audio/ms/v-terima-kasih.mp3", "minimalPairWith": null },
+    { "id": "v-sama-sama", "type": "phrase", "ms": "sama-sama", "en": "you're welcome", "mon": null, "register": "colloquial", "example": "A: Terima kasih! B: Sama-sama.", "exampleEn": "A: Thank you! B: You're welcome.", "phonetic": "sa-ma sa-ma", "audioUrl": "/audio/ms/v-sama-sama.mp3", "minimalPairWith": null },
+    { "id": "v-maaf", "type": "vocab", "ms": "maaf", "en": "sorry / excuse me", "mon": null, "register": "colloquial", "example": "Maaf, boleh tanya sikit?", "exampleEn": "Excuse me, may I ask something?", "phonetic": "ma-af", "audioUrl": "/audio/ms/v-maaf.mp3", "minimalPairWith": null },
+    { "id": "v-jumpa-lagi", "type": "phrase", "ms": "jumpa lagi", "en": "see you again", "mon": null, "register": "colloquial", "example": "Okay, jumpa lagi esok!", "exampleEn": "Okay, see you again tomorrow!", "phonetic": "jum-pa la-gi", "audioUrl": "/audio/ms/v-jumpa-lagi.mp3", "minimalPairWith": null },
+    { "id": "v-encik", "type": "vocab", "ms": "encik", "en": "sir / Mr (formal, to a man)", "mon": null, "register": "standard", "example": "Encik nak minum apa?", "exampleEn": "Sir, what would you like to drink?", "phonetic": "en-chik", "audioUrl": "/audio/ms/v-encik.mp3", "minimalPairWith": null },
+    { "id": "v-puan", "type": "vocab", "ms": "puan", "en": "madam / Mrs (formal, to a woman)", "mon": null, "register": "standard", "example": "Selamat pagi, puan.", "exampleEn": "Good morning, madam.", "phonetic": "pu-an", "audioUrl": "/audio/ms/v-puan.mp3", "minimalPairWith": null },
+    { "id": "v-abang-kakak", "type": "vocab", "ms": "abang / kakak", "en": "'bro' / 'sis' — casual polite address to slightly older strangers", "mon": null, "register": "colloquial", "example": "Abang, ni berapa?", "exampleEn": "Bro, how much is this?", "phonetic": "a-bang / ka-kak", "audioUrl": "/audio/ms/v-abang-kakak.mp3", "minimalPairWith": null }
+  ],
+  "lessons": [
+    {
+      "id": "a1-u1-l1",
+      "order": 1,
+      "title": "Salam Ikut Waktu (Time-of-day greetings)",
+      "estMinutes": 10,
+      "sections": ["review", "input", "practice", "quiz", "speaking"],
+      "itemIds": ["v-selamat-pagi", "v-selamat-petang", "v-selamat-malam", "v-apa-khabar", "v-khabar-baik"],
+      "practiceExercises": [
+        { "type": "listenToPicture", "prompt": "Listen and choose the picture matching the greeting (sunrise / sunset / moon).", "itemIds": ["v-selamat-pagi", "v-selamat-petang", "v-selamat-malam"], "answer": null },
+        { "type": "clozeGap", "prompt": "A: ___ pagi! B: Pagi! Apa khabar? A: ___ baik.", "itemIds": ["v-selamat-pagi", "v-khabar-baik"], "answer": "Selamat / Khabar" },
+        { "type": "minimalPairChoice", "prompt": "Which did you hear: 'khabar baik' (I'm fine) or 'nak balik' (want to go home)?", "itemIds": ["v-khabar-baik", "v-balik"], "answer": "khabar baik" }
+      ]
+    },
+    {
+      "id": "a1-u1-l2",
+      "order": 2,
+      "title": "Kenalkan Diri (Introducing yourself)",
+      "estMinutes": 10,
+      "sections": ["review", "input", "practice", "quiz", "speaking"],
+      "itemIds": ["v-nama-saya", "v-nama-awak-siapa", "v-saya-dari"],
+      "practiceExercises": [
+        { "type": "matching", "prompt": "Match the Malay question to its correct answer.", "itemIds": ["v-nama-awak-siapa", "v-nama-saya"], "answer": null },
+        { "type": "translate", "prompt": "Translate: 'My name is ___ and I am from ___.'", "itemIds": ["v-nama-saya", "v-saya-dari"], "answer": "Nama saya ___, saya dari ___." },
+        { "type": "reorder", "prompt": "Reorder: dari / saya / Myanmar", "itemIds": ["v-saya-dari"], "answer": "Saya dari Myanmar." }
+      ]
+    },
+    {
+      "id": "a1-u1-l3",
+      "order": 3,
+      "title": "Sopan-Santun (Politeness words)",
+      "estMinutes": 10,
+      "sections": ["review", "input", "practice", "quiz", "speaking"],
+      "itemIds": ["v-terima-kasih", "v-sama-sama", "v-maaf", "v-jumpa-lagi"],
+      "practiceExercises": [
+        { "type": "matching", "prompt": "Match each phrase to its situation: leaving, thanking, apologising.", "itemIds": ["v-terima-kasih", "v-maaf", "v-jumpa-lagi"], "answer": null },
+        { "type": "clozeGap", "prompt": "A: Terima kasih! B: ___.", "itemIds": ["v-sama-sama"], "answer": "Sama-sama" }
+      ]
+    },
+    {
+      "id": "a1-u1-l4",
+      "order": 4,
+      "title": "Panggilan Hormat (Forms of address)",
+      "estMinutes": 10,
+      "sections": ["review", "input", "practice", "quiz", "speaking"],
+      "itemIds": ["v-encik", "v-puan", "v-abang-kakak"],
+      "practiceExercises": [
+        { "type": "matching", "prompt": "Match the form of address to the correct context (formal counter vs. market stall).", "itemIds": ["v-encik", "v-puan", "v-abang-kakak"], "answer": null },
+        { "type": "translate", "prompt": "Translate: 'Excuse me, sir, what time does it open?'", "itemIds": ["v-maaf", "v-encik"], "answer": "Maaf, encik, pukul berapa buka?" }
+      ]
+    },
+    {
+      "id": "a1-u1-l5",
+      "order": 5,
+      "title": "Latihan & Ulangkaji (Practice & review)",
+      "estMinutes": 15,
+      "sections": ["review", "practice", "quiz", "speaking"],
+      "itemIds": ["v-selamat-pagi", "v-apa-khabar", "v-khabar-baik", "v-nama-saya", "v-terima-kasih", "v-encik", "v-puan"],
+      "practiceExercises": [
+        { "type": "reorder", "prompt": "Build a full greeting exchange from scrambled lines.", "itemIds": ["v-selamat-pagi", "v-apa-khabar", "v-khabar-baik", "v-nama-saya"], "answer": "Selamat pagi. Apa khabar? Khabar baik, terima kasih. Nama saya..." }
+      ]
+    }
+  ],
+  "scenario": {
+    "id": "a1-u1-first-day-neighbour",
+    "setting": "Meeting a new neighbour outside your apartment block for the first time",
+    "roles": ["learner", "neighbour"],
+    "script": [
+      { "role": "neighbour", "ms": "Selamat pagi! Saya belum kenal awak. Nama saya Kak Zaidah.", "en": "Good morning! I haven't met you. My name is Kak Zaidah." },
+      { "role": "learner", "ms": "Selamat pagi, kak. Nama saya Tao. Saya dari Myanmar.", "en": "Good morning. My name is Tao. I'm from Myanmar." },
+      { "role": "neighbour", "ms": "Oh, baguslah! Awak tinggal blok mana?", "en": "Oh, nice! Which block do you live in?" },
+      { "role": "learner", "ms": "Saya tinggal blok B, tingkat tiga.", "en": "I live in block B, third floor." },
+      { "role": "neighbour", "ms": "Okay. Jumpa lagi, ya!", "en": "Okay. See you again!" },
+      { "role": "learner", "ms": "Jumpa lagi. Terima kasih, kak!", "en": "See you again. Thank you!" }
+    ],
+    "aiPrompt": "You are Kak Zaidah, a friendly middle-aged Malaysian neighbour meeting the learner for the first time outside an apartment block. Greet them warmly, ask their name and where they're from, ask a simple follow-up question (which block/floor they live in), and close warmly. Speak slowly, use short colloquial KL Malay sentences (max 8 words), and gently correct the learner only once if they make a greeting mistake."
+  },
+  "speakingPrompts": [
+    { "id": "a1-u1-shadow-1", "type": "shadowing", "instructions": "Listen to the full neighbour dialogue and shadow each line, matching the rhythm and the soft final schwa on 'saya' and 'nama'.", "targetAudioUrl": "/audio/ms/a1-u1-scenario.mp3", "rubric": ["schwa on final -a in 'saya'/'nama'", "rising intonation on 'apa khabar?'", "natural pace, no word-by-word reading"] },
+    { "id": "a1-u1-roleplay-1", "type": "roleplay", "instructions": "Play the learner role opposite the AI 'Kak Zaidah' persona. Introduce yourself, say where you're from, and answer her follow-up question.", "targetAudioUrl": null, "rubric": ["correct greeting for time of day", "clear self-introduction", "appropriate form of address"] },
+    { "id": "a1-u1-pron-1", "type": "pronunciation", "instructions": "Record yourself saying 'khabar baik' and 'nak balik'. Check that you can hear the difference between the two.", "targetAudioUrl": "/audio/ms/v-khabar-baik.mp3", "rubric": ["distinguishes 'baik' /ba-ik/ from 'balik' /ba-lik/"] }
+  ],
+  "unitQuiz": {
+    "id": "a1-u1-quiz",
+    "passMark": 0.7,
+    "questions": [
+      { "type": "mcq", "prompt": "It's 8pm. What do you say?", "options": ["Selamat pagi", "Selamat petang", "Selamat malam", "Selamat tinggal"], "answerIndex": 2 },
+      { "type": "mcq", "prompt": "Someone says 'Terima kasih' to you. You reply:", "options": ["Maaf", "Sama-sama", "Jumpa lagi", "Apa khabar?"], "answerIndex": 1 },
+      { "type": "listening", "audioUrl": "/audio/ms/v-khabar-baik.mp3", "prompt": "What did you hear?", "options": ["khabar baik", "nak balik", "selamat malam", "terima kasih"], "answerIndex": 0 },
+      { "type": "translate", "prompt": "Translate: 'My name is Aye and I am from Myanmar.'", "answer": "Nama saya Aye, saya dari Myanmar." },
+      { "type": "mcq", "prompt": "You want to politely address an older woman at a formal counter. You say:", "options": ["Abang", "Puan", "Awak", "Dik"], "answerIndex": 1 }
+    ]
+  }
+}

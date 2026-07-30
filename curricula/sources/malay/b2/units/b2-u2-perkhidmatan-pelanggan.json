@@ -1,0 +1,303 @@
+{
+  "id": "b2-u2-perkhidmatan-pelanggan",
+  "level": "B2",
+  "order": 2,
+  "title": "Perkhidmatan Pelanggan",
+  "englishTitle": "Customer Service (Both Sides)",
+  "canDo": [
+    "Handle a customer complaint professionally (as service provider)",
+    "Make a firm but polite complaint (as customer)",
+    "De-escalate a frustrated customer/situation",
+    "Offer and negotiate a resolution"
+  ],
+  "lifeBenefit": "Work confidently in customer-facing roles and advocate effectively as a customer.",
+  "estMinutes": 80,
+  "vocab": [
+    {
+      "id": "b2-aduan-rasmi",
+      "type": "vocab",
+      "ms": "aduan rasmi",
+      "en": "formal complaint",
+      "mon": null,
+      "register": "standard",
+      "example": "Saya nak buat aduan rasmi pasal perkhidmatan ni.",
+      "exampleEn": "I want to file a formal complaint about this service.",
+      "phonetic": "a-du-an ras-mi",
+      "audioUrl": "/audio/ms/b2-aduan-rasmi.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-memohon-maaf",
+      "type": "vocab",
+      "ms": "memohon maaf",
+      "en": "to apologise (formal)",
+      "mon": null,
+      "register": "standard",
+      "example": "Kami memohon maaf atas kesulitan ini.",
+      "exampleEn": "We apologise for this inconvenience.",
+      "phonetic": "muh-mo-hon ma-af",
+      "audioUrl": "/audio/ms/b2-memohon-maaf.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-pampasan",
+      "type": "vocab",
+      "ms": "pampasan / gantirugi",
+      "en": "compensation",
+      "mon": null,
+      "register": "standard",
+      "example": "Adakah pampasan untuk kelewatan ni?",
+      "exampleEn": "Is there compensation for this delay?",
+      "phonetic": "pam-pa-san / gan-ti-ru-gi",
+      "audioUrl": "/audio/ms/b2-pampasan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-menenangkan",
+      "type": "vocab",
+      "ms": "menenangkan",
+      "en": "to calm/de-escalate",
+      "mon": null,
+      "register": "standard",
+      "example": "Biar saya cuba menenangkan keadaan.",
+      "exampleEn": "Let me try to calm the situation.",
+      "phonetic": "muh-nuh-nang-kan",
+      "audioUrl": "/audio/ms/b2-menenangkan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-kepuasan-pelanggan",
+      "type": "vocab",
+      "ms": "kepuasan pelanggan",
+      "en": "customer satisfaction",
+      "mon": null,
+      "register": "standard",
+      "example": "Kepuasan pelanggan keutamaan kami.",
+      "exampleEn": "Customer satisfaction is our priority.",
+      "phonetic": "kuh-pu-a-san puh-lang-gan",
+      "audioUrl": "/audio/ms/b2-kepuasan-pelanggan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-eskalasi",
+      "type": "phrase",
+      "ms": "eskalasi kepada pengurus",
+      "en": "escalate to a manager",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Boleh eskalasi kepada pengurus?",
+      "exampleEn": "Can this be escalated to a manager?",
+      "phonetic": "es-ka-la-si kuh-pa-da puh-ngu-rus",
+      "audioUrl": "/audio/ms/b2-eskalasi.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-penyelesaian",
+      "type": "vocab",
+      "ms": "penyelesaian",
+      "en": "resolution/solution",
+      "mon": null,
+      "register": "standard",
+      "example": "Apa penyelesaian yang awak cadangkan?",
+      "exampleEn": "What resolution do you propose?",
+      "phonetic": "puh-nyuh-luh-sai-an",
+      "audioUrl": "/audio/ms/b2-penyelesaian.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "b2-u2-l1",
+      "order": 1,
+      "title": "Buat Aduan Rasmi",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "b2-aduan-rasmi",
+        "b2-pampasan"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'I want to file a formal complaint and ask about compensation.'",
+          "answer": "Saya nak buat aduan rasmi dan tanya pasal pampasan."
+        }
+      ]
+    },
+    {
+      "id": "b2-u2-l2",
+      "order": 2,
+      "title": "Sebagai Penyedia Perkhidmatan",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b2-memohon-maaf",
+        "b2-menenangkan",
+        "b2-kepuasan-pelanggan"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'We apologise for the inconvenience, customer satisfaction is our priority.'",
+          "answer": "Kami memohon maaf atas kesulitan ini, kepuasan pelanggan keutamaan kami."
+        }
+      ]
+    },
+    {
+      "id": "b2-u2-l3",
+      "order": 3,
+      "title": "Eskalasi & Penyelesaian",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b2-eskalasi",
+        "b2-penyelesaian"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'Apa ___ yang awak cadangkan?' (resolution)",
+          "itemIds": [
+            "b2-penyelesaian"
+          ],
+          "answer": "penyelesaian"
+        }
+      ]
+    },
+    {
+      "id": "b2-u2-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b2-aduan-rasmi",
+        "b2-penyelesaian",
+        "b2-eskalasi"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "b2-u2-frustrated-customer",
+    "setting": "De-escalating a frustrated customer over a delayed delivery",
+    "roles": [
+      "learner (service rep)",
+      "frustrated customer"
+    ],
+    "script": [
+      {
+        "role": "customer",
+        "ms": "Ini dah kali ketiga barang saya lewat! Saya nak buat aduan rasmi!",
+        "en": "This is the third time my item has been delayed! I want to file a formal complaint!"
+      },
+      {
+        "role": "learner",
+        "ms": "Saya faham kekecewaan awak. Kami memohon maaf atas kesulitan ini.",
+        "en": "I understand your frustration. We apologise for this inconvenience."
+      },
+      {
+        "role": "customer",
+        "ms": "Apa penyelesaian yang boleh awak bagi?",
+        "en": "What resolution can you offer?"
+      },
+      {
+        "role": "learner",
+        "ms": "Kami boleh tawarkan pampasan dan penghantaran percuma seterusnya.",
+        "en": "We can offer compensation and free delivery next time."
+      },
+      {
+        "role": "customer",
+        "ms": "Baik, saya terima. Tapi kalau lewat lagi, saya eskalasi kepada pengurus.",
+        "en": "Alright, I accept. But if it's late again, I'll escalate to a manager."
+      }
+    ],
+    "aiPrompt": "You are a frustrated customer whose delivery has been delayed multiple times. Start firm/upset, then calm down when offered a genuine resolution, while stating a clear boundary for the future. Standard-register but emotionally realistic."
+  },
+  "speakingPrompts": [
+    {
+      "id": "b2-u2-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the frustrated-customer dialogue, from both sides, tracking the de-escalation arc.",
+      "targetAudioUrl": "/audio/ms/b2-u2-scenario.mp3",
+      "rubric": [
+        "appropriate emotional register shift",
+        "clear resolution vocabulary"
+      ]
+    },
+    {
+      "id": "b2-u2-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Play the service representative de-escalating the AI frustrated-customer persona and offering a resolution.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "acknowledges frustration appropriately",
+        "offers a concrete resolution"
+      ]
+    },
+    {
+      "id": "b2-u2-presentation-1",
+      "type": "presentation",
+      "instructions": "Give a 90-second explanation of how you would handle a difficult customer complaint, as if training a new colleague.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "clear step-by-step approach",
+        "professional tone"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "b2-u2-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Memohon maaf' is a more formal way to say:",
+        "options": [
+          "thank you",
+          "sorry",
+          "please",
+          "goodbye"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate: 'Can this be escalated to a manager?'",
+        "answer": "Boleh ini dieskalasikan kepada pengurus?"
+      },
+      {
+        "type": "mcq",
+        "prompt": "'Pampasan' means:",
+        "options": [
+          "complaint",
+          "compensation",
+          "apology",
+          "satisfaction"
+        ],
+        "answerIndex": 1
+      }
+    ]
+  }
+}

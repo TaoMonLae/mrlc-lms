@@ -1,0 +1,303 @@
+{
+  "id": "b2-u6-budaya-adat",
+  "level": "B2",
+  "order": 6,
+  "title": "Budaya & Adat Malaysia",
+  "englishTitle": "Malaysian Culture & Etiquette",
+  "canDo": [
+    "Discuss Malaysian festivals and customs respectfully",
+    "Navigate multicultural etiquette (Malay, Chinese, Indian, indigenous)",
+    "Understand sensitivities around religion and race",
+    "Participate appropriately in open-house/festive conversations"
+  ],
+  "lifeBenefit": "Build genuine cultural fluency and avoid social missteps in Malaysia's multicultural context.",
+  "estMinutes": 80,
+  "vocab": [
+    {
+      "id": "b2-perayaan",
+      "type": "vocab",
+      "ms": "perayaan",
+      "en": "festival/celebration",
+      "mon": null,
+      "register": "standard",
+      "example": "Perayaan apa yang paling awak suka?",
+      "exampleEn": "Which festival do you like the most?",
+      "phonetic": "puh-ra-ya-an",
+      "audioUrl": "/audio/ms/b2-perayaan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-rumah-terbuka",
+      "type": "phrase",
+      "ms": "rumah terbuka",
+      "en": "open house (festive visiting custom)",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Kami buat rumah terbuka Hari Raya tahun ni.",
+      "exampleEn": "We're having an open house for Hari Raya this year.",
+      "phonetic": "ru-mah tuhr-bu-ka",
+      "audioUrl": "/audio/ms/b2-rumah-terbuka.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-halal",
+      "type": "vocab",
+      "ms": "halal",
+      "en": "permissible under Islamic law (esp. food)",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Ini makanan halal ke?",
+      "exampleEn": "Is this food halal?",
+      "phonetic": "ha-lal",
+      "audioUrl": "/audio/ms/b2-halal.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-hormat-adat",
+      "type": "phrase",
+      "ms": "hormat adat",
+      "en": "respect customs",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Penting untuk hormat adat orang lain.",
+      "exampleEn": "It's important to respect others' customs.",
+      "phonetic": "hor-mat a-dat",
+      "audioUrl": "/audio/ms/b2-hormat-adat.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-sensitif",
+      "type": "vocab",
+      "ms": "isu sensitif",
+      "en": "sensitive topic/issue",
+      "mon": null,
+      "register": "standard",
+      "example": "Isu agama dan kaum agak sensitif di sini.",
+      "exampleEn": "Religion and race are fairly sensitive topics here.",
+      "phonetic": "i-su sen-si-tif",
+      "audioUrl": "/audio/ms/b2-sensitif.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-kaum",
+      "type": "vocab",
+      "ms": "kaum / etnik",
+      "en": "ethnic group/race",
+      "mon": null,
+      "register": "standard",
+      "example": "Malaysia ada pelbagai kaum.",
+      "exampleEn": "Malaysia has diverse ethnic groups.",
+      "phonetic": "kaum / eht-nik",
+      "audioUrl": "/audio/ms/b2-kaum.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-toleransi",
+      "type": "vocab",
+      "ms": "toleransi",
+      "en": "tolerance",
+      "mon": null,
+      "register": "standard",
+      "example": "Toleransi antara kaum penting untuk perpaduan.",
+      "exampleEn": "Tolerance between ethnic groups is important for unity.",
+      "phonetic": "to-luh-ran-si",
+      "audioUrl": "/audio/ms/b2-toleransi.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "b2-u6-l1",
+      "order": 1,
+      "title": "Perayaan Malaysia",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "b2-perayaan",
+        "b2-rumah-terbuka"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'Are you going to any open house for Hari Raya?'",
+          "answer": "Awak nak pergi rumah terbuka Hari Raya tak?"
+        }
+      ]
+    },
+    {
+      "id": "b2-u6-l2",
+      "order": 2,
+      "title": "Makanan & Adat",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b2-halal",
+        "b2-hormat-adat"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'I always ask if the food is halal, out of respect for customs.'",
+          "answer": "Saya sentiasa tanya kalau makanan tu halal, sebagai tanda hormat adat."
+        }
+      ]
+    },
+    {
+      "id": "b2-u6-l3",
+      "order": 3,
+      "title": "Isu Sensitif & Toleransi",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b2-sensitif",
+        "b2-kaum",
+        "b2-toleransi"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'___ antara kaum penting untuk perpaduan.' (tolerance)",
+          "itemIds": [
+            "b2-toleransi"
+          ],
+          "answer": "Toleransi"
+        }
+      ]
+    },
+    {
+      "id": "b2-u6-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b2-rumah-terbuka",
+        "b2-hormat-adat",
+        "b2-toleransi"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "b2-u6-open-house-invitation",
+    "setting": "Being invited to a Hari Raya open house and asking respectful questions",
+    "roles": [
+      "learner",
+      "Malaysian friend"
+    ],
+    "script": [
+      {
+        "role": "friend",
+        "ms": "Jom datang rumah terbuka kami Hari Raya nanti!",
+        "en": "Come to our Hari Raya open house!"
+      },
+      {
+        "role": "learner",
+        "ms": "Wah, terima kasih jemput! Ada apa-apa adat yang saya patut tahu?",
+        "en": "Wow, thank you for the invitation! Is there any custom I should know?"
+      },
+      {
+        "role": "friend",
+        "ms": "Just datang je, pakai baju sopan, dan makanan semua halal.",
+        "en": "Just come, wear modest clothing, and all the food is halal."
+      },
+      {
+        "role": "learner",
+        "ms": "Baik, saya akan hormat adat tu. Boleh saya bawa sesuatu?",
+        "en": "Alright, I'll respect that custom. May I bring something?"
+      },
+      {
+        "role": "friend",
+        "ms": "Tak payah, datang je dah cukup!",
+        "en": "No need, just coming is enough!"
+      }
+    ],
+    "aiPrompt": "You are a Malaysian friend inviting the learner to a Hari Raya open house. Answer their respectful questions about etiquette warmly and simply, reflecting genuine Malaysian hospitality norms."
+  },
+  "speakingPrompts": [
+    {
+      "id": "b2-u6-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the open-house invitation dialogue, focusing on warm, hospitable tone.",
+      "targetAudioUrl": "/audio/ms/b2-u6-scenario.mp3",
+      "rubric": [
+        "warm hospitable tone",
+        "clear festival vocabulary"
+      ]
+    },
+    {
+      "id": "b2-u6-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Respond to an invitation from the AI friend persona and ask one respectful question about etiquette.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "asks a respectful, relevant question",
+        "responds appropriately to the answer"
+      ]
+    },
+    {
+      "id": "b2-u6-presentation-1",
+      "type": "presentation",
+      "instructions": "Give a 2-minute talk describing a festival or custom from your own culture, comparing it briefly to a Malaysian one.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "clear, respectful comparison",
+        "fluent description"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "b2-u6-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Rumah terbuka' refers to:",
+        "options": [
+          "a house for sale",
+          "an open-house festive visiting custom",
+          "a rented room",
+          "a government office"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate: 'It's important to respect other people's customs.'",
+        "answer": "Penting untuk hormat adat orang lain."
+      },
+      {
+        "type": "mcq",
+        "prompt": "'Toleransi' means:",
+        "options": [
+          "celebration",
+          "tolerance",
+          "sensitivity",
+          "religion"
+        ],
+        "answerIndex": 1
+      }
+    ]
+  }
+}

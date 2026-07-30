@@ -1,0 +1,303 @@
+{
+  "id": "b2-u7-berhujah-berunding",
+  "level": "B2",
+  "order": 7,
+  "title": "Berhujah & Berunding",
+  "englishTitle": "Debate & Advanced Negotiation",
+  "canDo": [
+    "Construct and defend a structured argument",
+    "Counter an opposing argument respectfully",
+    "Use advanced connectors and hedging for nuanced argument",
+    "Negotiate a complex, multi-issue situation"
+  ],
+  "lifeBenefit": "Argue a position persuasively and negotiate complex situations with confidence.",
+  "estMinutes": 80,
+  "vocab": [
+    {
+      "id": "b2-hujah",
+      "type": "vocab",
+      "ms": "hujah",
+      "en": "argument",
+      "mon": null,
+      "register": "standard",
+      "example": "Hujah awak kukuh, tapi...",
+      "exampleEn": "Your argument is strong, but...",
+      "phonetic": "hu-jah",
+      "audioUrl": "/audio/ms/b2-hujah.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-menyokong-membantah",
+      "type": "vocab",
+      "ms": "menyokong / membantah",
+      "en": "to support / to object to",
+      "mon": null,
+      "register": "standard",
+      "example": "Saya membantah cadangan tu sebab...",
+      "exampleEn": "I object to that proposal because...",
+      "phonetic": "muh-nyo-kong / muhm-ban-tah",
+      "audioUrl": "/audio/ms/b2-menyokong-membantah.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-walau-bagaimanapun",
+      "type": "vocab",
+      "ms": "walau bagaimanapun",
+      "en": "however/nevertheless",
+      "mon": null,
+      "register": "standard",
+      "example": "Walau bagaimanapun, kita perlu pertimbangkan kos.",
+      "exampleEn": "However, we need to consider the cost.",
+      "phonetic": "wa-lau ba-gai-ma-na-pun",
+      "audioUrl": "/audio/ms/b2-walau-bagaimanapun.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-andaian",
+      "type": "vocab",
+      "ms": "andaian",
+      "en": "assumption",
+      "mon": null,
+      "register": "standard",
+      "example": "Andaian awak tak semestinya betul.",
+      "exampleEn": "Your assumption isn't necessarily correct.",
+      "phonetic": "an-dai-an",
+      "audioUrl": "/audio/ms/b2-andaian.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-bukti",
+      "type": "vocab",
+      "ms": "bukti",
+      "en": "evidence/proof",
+      "mon": null,
+      "register": "standard",
+      "example": "Ada bukti untuk sokong dakwaan tu?",
+      "exampleEn": "Is there evidence to support that claim?",
+      "phonetic": "buk-ti",
+      "audioUrl": "/audio/ms/b2-bukti.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-kompromi",
+      "type": "vocab",
+      "ms": "kompromi",
+      "en": "compromise",
+      "mon": null,
+      "register": "standard",
+      "example": "Mungkin kita perlukan kompromi di sini.",
+      "exampleEn": "Perhaps we need a compromise here.",
+      "phonetic": "kom-pro-mi",
+      "audioUrl": "/audio/ms/b2-kompromi.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b2-pada-hemat-saya",
+      "type": "phrase",
+      "ms": "pada hemat saya",
+      "en": "in my (humble) opinion",
+      "mon": null,
+      "register": "standard",
+      "example": "Pada hemat saya, kita patut tunggu dulu.",
+      "exampleEn": "In my opinion, we should wait first.",
+      "phonetic": "pa-da heh-mat sa-ya",
+      "audioUrl": "/audio/ms/b2-pada-hemat-saya.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "b2-u7-l1",
+      "order": 1,
+      "title": "Bina Hujah",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "b2-hujah",
+        "b2-pada-hemat-saya"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'In my opinion, this argument is strong.'",
+          "answer": "Pada hemat saya, hujah ni kukuh."
+        }
+      ]
+    },
+    {
+      "id": "b2-u7-l2",
+      "order": 2,
+      "title": "Sokong & Bantah",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b2-menyokong-membantah",
+        "b2-walau-bagaimanapun"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'I support the idea; however, we need more evidence.'",
+          "answer": "Saya menyokong idea tu; walau bagaimanapun, kita perlukan lebih bukti."
+        }
+      ]
+    },
+    {
+      "id": "b2-u7-l3",
+      "order": 3,
+      "title": "Andaian, Bukti & Kompromi",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b2-andaian",
+        "b2-bukti",
+        "b2-kompromi"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'Mungkin kita perlukan ___ di sini.' (compromise)",
+          "itemIds": [
+            "b2-kompromi"
+          ],
+          "answer": "kompromi"
+        }
+      ]
+    },
+    {
+      "id": "b2-u7-l4",
+      "order": 4,
+      "title": "Latihan & Ulangkaji",
+      "estMinutes": 20,
+      "sections": [
+        "review",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b2-hujah",
+        "b2-bukti",
+        "b2-kompromi"
+      ],
+      "practiceExercises": []
+    }
+  ],
+  "scenario": {
+    "id": "b2-u7-structured-debate",
+    "setting": "A structured mini-debate on whether remote work should be permanent",
+    "roles": [
+      "learner",
+      "debate opponent (AI)"
+    ],
+    "script": [
+      {
+        "role": "opponent",
+        "ms": "Pada hemat saya, kerja dari rumah patut jadi kekal.",
+        "en": "In my opinion, working from home should become permanent."
+      },
+      {
+        "role": "learner",
+        "ms": "Saya faham hujah awak, walau bagaimanapun, ramai kehilangan semangat berpasukan.",
+        "en": "I understand your argument, however, many lose team spirit."
+      },
+      {
+        "role": "opponent",
+        "ms": "Itu andaian sahaja. Ada bukti produktiviti sebenarnya meningkat.",
+        "en": "That's just an assumption. There's evidence productivity actually increased."
+      },
+      {
+        "role": "learner",
+        "ms": "Mungkin kita perlukan kompromi — hibrid, tiga hari pejabat, dua hari rumah.",
+        "en": "Maybe we need a compromise — hybrid, three days office, two days home."
+      },
+      {
+        "role": "opponent",
+        "ms": "Itu cadangan yang munasabah. Saya boleh terima itu.",
+        "en": "That's a reasonable proposal. I can accept that."
+      }
+    ],
+    "aiPrompt": "You are an articulate debate opponent arguing for permanent remote work. Present a clear argument, respond to counterpoints with evidence, and be willing to accept a well-reasoned compromise. Standard, formal-debate register."
+  },
+  "speakingPrompts": [
+    {
+      "id": "b2-u7-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the debate dialogue, focusing on formal argumentative structure and connectors.",
+      "targetAudioUrl": "/audio/ms/b2-u7-scenario.mp3",
+      "rubric": [
+        "formal debate register",
+        "correct use of hedging/connector phrases"
+      ]
+    },
+    {
+      "id": "b2-u7-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Debate a topic of your choice with the AI opponent persona, using at least two argument connectors.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "uses at least two connectors (walau bagaimanapun/pada hemat saya/dsb.)",
+        "responds to a counterargument"
+      ]
+    },
+    {
+      "id": "b2-u7-presentation-1",
+      "type": "presentation",
+      "instructions": "Deliver a 2-minute structured argument for a position of your choice: claim, evidence, acknowledge counterpoint, conclusion.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "clear four-part structure",
+        "fluent, persuasive delivery"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "b2-u7-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Walau bagaimanapun' means:",
+        "options": [
+          "therefore",
+          "however/nevertheless",
+          "for example",
+          "in conclusion"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate: 'In my opinion, we need more evidence.'",
+        "answer": "Pada hemat saya, kita perlukan lebih bukti."
+      },
+      {
+        "type": "mcq",
+        "prompt": "'Andaian' means:",
+        "options": [
+          "evidence",
+          "assumption",
+          "compromise",
+          "conclusion"
+        ],
+        "answerIndex": 1
+      }
+    ]
+  }
+}

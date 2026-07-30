@@ -45,7 +45,7 @@ export interface LanguageQuestOption {
 
 export interface LanguageQuestChallenge {
   id: string;
-  type: 'SELECT' | 'ASSIST';
+  type: 'SELECT' | 'ASSIST' | 'CLOZE' | 'ODD_ONE_OUT' | 'REORDER';
   question: string;
   completed: boolean;
   options: LanguageQuestOption[];

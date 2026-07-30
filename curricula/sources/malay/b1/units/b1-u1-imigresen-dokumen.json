@@ -1,0 +1,354 @@
+{
+  "id": "b1-u1-imigresen-dokumen",
+  "level": "B1",
+  "order": 1,
+  "title": "Urusan Imigresen & Dokumen",
+  "englishTitle": "Immigration Affairs & Documents",
+  "canDo": [
+    "Explain your immigration/refugee status",
+    "Fill in and discuss an application form",
+    "Ask about renewal procedures and required documents",
+    "Handle a missing-document complication"
+  ],
+  "lifeBenefit": "Manage UNHCR/immigration paperwork and renewals with confidence.",
+  "estMinutes": 75,
+  "vocab": [
+    {
+      "id": "b1-permit-kerja",
+      "type": "vocab",
+      "ms": "permit kerja",
+      "en": "work permit",
+      "mon": null,
+      "register": "standard",
+      "example": "Saya perlu perbaharui permit kerja.",
+      "exampleEn": "I need to renew my work permit.",
+      "phonetic": "puhr-mit kuh-rja",
+      "audioUrl": "/audio/ms/b1-permit-kerja.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-borang-permohonan",
+      "type": "vocab",
+      "ms": "borang permohonan",
+      "en": "application form",
+      "mon": null,
+      "register": "standard",
+      "example": "Isi borang permohonan ni dulu.",
+      "exampleEn": "Fill in this application form first.",
+      "phonetic": "bo-rang puhr-mo-ho-nan",
+      "audioUrl": "/audio/ms/b1-borang-permohonan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-dokumen-sokongan",
+      "type": "vocab",
+      "ms": "dokumen sokongan",
+      "en": "supporting documents",
+      "mon": null,
+      "register": "standard",
+      "example": "Sila lampirkan dokumen sokongan.",
+      "exampleEn": "Please attach supporting documents.",
+      "phonetic": "do-ku-men so-kong-an",
+      "audioUrl": "/audio/ms/b1-dokumen-sokongan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-perbaharui",
+      "type": "vocab",
+      "ms": "perbaharui",
+      "en": "to renew",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Bila nak perbaharui pas?",
+      "exampleEn": "When do you need to renew the pass?",
+      "phonetic": "puhr-ba-ha-ru-i",
+      "audioUrl": "/audio/ms/b1-perbaharui.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-jabatan-imigresen",
+      "type": "vocab",
+      "ms": "Jabatan Imigresen",
+      "en": "Immigration Department",
+      "mon": null,
+      "register": "standard",
+      "example": "Pergi ke Jabatan Imigresen Malaysia.",
+      "exampleEn": "Go to the Immigration Department of Malaysia.",
+      "phonetic": "ja-ba-tan i-mi-gruh-sen",
+      "audioUrl": "/audio/ms/b1-jabatan-imigresen.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-cop-tandatangan",
+      "type": "vocab",
+      "ms": "cop & tandatangan",
+      "en": "stamp & signature",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Kena ada cop dan tandatangan.",
+      "exampleEn": "It needs a stamp and a signature.",
+      "phonetic": "chop dan tan-da-ta-ngan",
+      "audioUrl": "/audio/ms/b1-cop-tandatangan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-kad-unhcr",
+      "type": "vocab",
+      "ms": "kad UNHCR",
+      "en": "UNHCR card",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Saya pemegang kad UNHCR.",
+      "exampleEn": "I am a UNHCR cardholder.",
+      "phonetic": "kad yu-en-eych-see-ar",
+      "audioUrl": "/audio/ms/b1-kad-unhcr.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-tamat-tempoh",
+      "type": "vocab",
+      "ms": "tamat tempoh",
+      "en": "expired / expiry",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Kad saya dah tamat tempoh bulan depan.",
+      "exampleEn": "My card expires next month.",
+      "phonetic": "ta-mat tem-poh",
+      "audioUrl": "/audio/ms/b1-tamat-tempoh.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-salinan",
+      "type": "vocab",
+      "ms": "salinan / fotokopi",
+      "en": "copy / photocopy",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Bawa salinan pasport, asal dan fotokopi.",
+      "exampleEn": "Bring a copy of the passport, original and photocopy.",
+      "phonetic": "sa-li-nan / fo-to-ko-pi",
+      "audioUrl": "/audio/ms/b1-salinan.mp3",
+      "minimalPairWith": null
+    },
+    {
+      "id": "b1-tiada-dalam-simpanan",
+      "type": "phrase",
+      "ms": "dokumen tak lengkap",
+      "en": "incomplete documents",
+      "mon": null,
+      "register": "colloquial",
+      "example": "Maaf, dokumen awak tak lengkap.",
+      "exampleEn": "Sorry, your documents are incomplete.",
+      "phonetic": "do-ku-men tak leng-kap",
+      "audioUrl": "/audio/ms/b1-tiada-dalam-simpanan.mp3",
+      "minimalPairWith": null
+    }
+  ],
+  "lessons": [
+    {
+      "id": "b1-u1-l1",
+      "order": 1,
+      "title": "Permit & Borang",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "b1-permit-kerja",
+        "b1-borang-permohonan",
+        "b1-perbaharui"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'I need to renew my work permit, what form do I fill in?'",
+          "answer": "Saya perlu perbaharui permit kerja, borang apa perlu saya isi?"
+        }
+      ]
+    },
+    {
+      "id": "b1-u1-l2",
+      "order": 2,
+      "title": "Dokumen Sokongan",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b1-dokumen-sokongan",
+        "b1-salinan",
+        "b1-cop-tandatangan"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'Please attach a photocopy of your passport with a stamp and signature.'",
+          "answer": "Sila lampirkan fotokopi pasport dengan cop dan tandatangan."
+        }
+      ]
+    },
+    {
+      "id": "b1-u1-l3",
+      "order": 3,
+      "title": "Kad UNHCR & Tamat Tempoh",
+      "estMinutes": 18,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz"
+      ],
+      "itemIds": [
+        "b1-kad-unhcr",
+        "b1-tamat-tempoh",
+        "b1-jabatan-imigresen"
+      ],
+      "practiceExercises": [
+        {
+          "type": "clozeGap",
+          "prompt": "'Kad saya dah ___ bulan depan.' (expired)",
+          "itemIds": [
+            "b1-tamat-tempoh"
+          ],
+          "answer": "tamat tempoh"
+        }
+      ]
+    },
+    {
+      "id": "b1-u1-l4",
+      "order": 4,
+      "title": "Masalah Dokumen Tak Lengkap",
+      "estMinutes": 21,
+      "sections": [
+        "review",
+        "input",
+        "practice",
+        "quiz",
+        "speaking"
+      ],
+      "itemIds": [
+        "b1-tiada-dalam-simpanan"
+      ],
+      "practiceExercises": [
+        {
+          "type": "translate",
+          "prompt": "Translate: 'What should I do if my documents are incomplete?'",
+          "answer": "Apa saya patut buat kalau dokumen saya tak lengkap?"
+        }
+      ]
+    }
+  ],
+  "scenario": {
+    "id": "b1-u1-immigration-office-complication",
+    "setting": "At the immigration department, told a document is missing",
+    "roles": [
+      "learner",
+      "immigration officer"
+    ],
+    "script": [
+      {
+        "role": "learner",
+        "ms": "Encik, saya nak perbaharui permit kerja saya.",
+        "en": "Sir, I want to renew my work permit."
+      },
+      {
+        "role": "officer",
+        "ms": "Baik, mana dokumen sokongan awak?",
+        "en": "Alright, where are your supporting documents?"
+      },
+      {
+        "role": "learner",
+        "ms": "Ini semua, ada pasport dan kad UNHCR.",
+        "en": "Here they are, passport and UNHCR card."
+      },
+      {
+        "role": "officer",
+        "ms": "Maaf, dokumen awak tak lengkap. Kena ada salinan surat majikan.",
+        "en": "Sorry, your documents are incomplete. You need a copy of your employer's letter."
+      },
+      {
+        "role": "learner",
+        "ms": "Oh, macam mana saya nak dapatkan tu?",
+        "en": "Oh, how do I get that?"
+      },
+      {
+        "role": "officer",
+        "ms": "Minta majikan awak keluarkan surat sahkan pekerjaan.",
+        "en": "Ask your employer to issue a letter confirming employment."
+      }
+    ],
+    "aiPrompt": "You are a Malaysian immigration officer processing a work permit renewal. State that a required document is missing, name it, and explain what the applicant needs to do to obtain it. Use a formal but not unkind tone, standard Malay mixed with counter-level colloquial phrasing."
+  },
+  "speakingPrompts": [
+    {
+      "id": "b1-u1-shadow-1",
+      "type": "shadowing",
+      "instructions": "Shadow the immigration-office dialogue, focusing on the standard-register vocabulary (borang, dokumen, sokongan).",
+      "targetAudioUrl": "/audio/ms/b1-u1-scenario.mp3",
+      "rubric": [
+        "formal register accuracy",
+        "clear multi-syllable words"
+      ]
+    },
+    {
+      "id": "b1-u1-roleplay-1",
+      "type": "roleplay",
+      "instructions": "Handle a missing-document complication with the AI immigration officer and ask what to do next.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "responds calmly to the complication",
+        "asks a clear follow-up question about next steps"
+      ]
+    },
+    {
+      "id": "b1-u1-presentation-1",
+      "type": "presentation",
+      "instructions": "Give a 60-second spoken summary of what documents are needed to renew a work permit, as if explaining to a friend.",
+      "targetAudioUrl": null,
+      "rubric": [
+        "covers at least 3 required items",
+        "logical order"
+      ]
+    }
+  ],
+  "unitQuiz": {
+    "id": "b1-u1-quiz",
+    "passMark": 0.7,
+    "questions": [
+      {
+        "type": "mcq",
+        "prompt": "'Dokumen sokongan' means:",
+        "options": [
+          "expired document",
+          "supporting documents",
+          "application form",
+          "stamp"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "type": "translate",
+        "prompt": "Translate: 'My permit expires next month.'",
+        "answer": "Permit saya tamat tempoh bulan depan."
+      },
+      {
+        "type": "mcq",
+        "prompt": "If told 'dokumen tak lengkap', you should:",
+        "options": [
+          "leave immediately",
+          "ask what's missing and how to get it",
+          "argue with the officer",
+          "ignore it"
+        ],
+        "answerIndex": 1
+      }
+    ]
+  }
+}
