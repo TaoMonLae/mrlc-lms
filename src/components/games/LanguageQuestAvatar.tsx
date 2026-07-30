@@ -34,7 +34,16 @@ export function LanguageQuestAvatar({
       )}
       style={{ background: `linear-gradient(135deg, ${avatar.colors[0]}, ${avatar.colors[1]})` }}
     >
-      <span aria-hidden="true">{avatar.emoji}</span>
+      {'image' in avatar ? (
+        <img
+          src={avatar.image}
+          alt=""
+          aria-hidden="true"
+          className="h-full w-full object-contain p-1 drop-shadow-md"
+        />
+      ) : (
+        <span aria-hidden="true">{avatar.emoji}</span>
+      )}
     </span>
   );
 }

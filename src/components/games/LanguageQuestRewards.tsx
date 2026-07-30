@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Crown, Lock, Sparkles, Star, Trophy } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -207,6 +208,16 @@ export function LanguageQuestRewardCollection({
 }) {
   const unlocked = new Set(rewards.unlockedCardIds);
   const frame = languageQuestStreakFrame(bestStreak);
+  const currentChapter = QUEST_CARD_CHAPTERS.find((chapter) =>
+    rewards.level >= chapter.startLevel && rewards.level <= chapter.endLevel)
+    ?? (rewards.level === 0 ? QUEST_CARD_CHAPTERS[0] : QUEST_CARD_CHAPTERS.at(-1)!);
+  const [activeChapterId, setActiveChapterId] = useState(currentChapter.id);
+  const activeChapter = QUEST_CARD_CHAPTERS.find((chapter) => chapter.id === activeChapterId)
+    ?? currentChapter;
+  const activeChapterIndex = QUEST_CARD_CHAPTERS.findIndex((chapter) => chapter.id === activeChapter.id);
+  const activeCards = LANGUAGE_QUEST_REWARD_CARDS.filter((card) =>
+    card.level >= activeChapter.startLevel && card.level <= activeChapter.endLevel);
+  const activeUnlocked = activeCards.filter((card) => unlocked.has(card.id)).length;
 
   return (
     <section id="quest-cards" className="scroll-mt-28 rounded-3xl border border-violet-200 bg-gradient-to-b from-violet-50 to-white p-5 shadow-sm dark:border-violet-500/20 dark:from-violet-950/30 dark:to-slate-950/70 sm:p-7">
@@ -228,38 +239,64 @@ export function LanguageQuestRewardCollection({
         </Badge>
       </div>
 
-      <div className="mt-7 space-y-8">
+      <div className="mt-7 grid grid-cols-2 gap-2 sm:grid-cols-5" role="tablist" aria-label="Quest Card chapters">
         {QUEST_CARD_CHAPTERS.map((chapter, chapterIndex) => {
           const chapterCards = LANGUAGE_QUEST_REWARD_CARDS.filter((card) =>
             card.level >= chapter.startLevel && card.level <= chapter.endLevel);
           const chapterUnlocked = chapterCards.filter((card) => unlocked.has(card.id)).length;
+          const selected = chapter.id === activeChapter.id;
           return (
-            <section key={chapter.id} aria-labelledby={`quest-chapter-${chapter.id}`}>
-              <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <span className={`grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br ${chapter.tone} text-sm font-black text-white shadow-lg`}>{chapterIndex + 1}</span>
-                  <div>
-                    <h3 id={`quest-chapter-${chapter.id}`} className="font-black text-slate-950 dark:text-white">{chapter.name}</h3>
-                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">{chapter.subtitle} • Levels {chapter.startLevel}–{chapter.endLevel}</p>
-                  </div>
-                </div>
-                <span className="text-xs font-black text-violet-700 dark:text-violet-300">{chapterUnlocked}/{chapterCards.length} earned</span>
-              </div>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-                {chapterCards.map((card) => (
-                  <LanguageQuestRewardCardView
-                    key={card.id}
-                    card={card}
-                    unlocked={unlocked.has(card.id)}
-                    featured={card.id === rewards.currentCardId}
-                    frame={unlocked.has(card.id) ? frame : undefined}
-                  />
-                ))}
-              </div>
-            </section>
+            <button
+              key={chapter.id}
+              type="button"
+              role="tab"
+              id={`quest-chapter-tab-${chapter.id}`}
+              aria-selected={selected}
+              aria-controls="quest-chapter-panel"
+              onClick={() => setActiveChapterId(chapter.id)}
+              className={`relative overflow-hidden rounded-2xl border p-3 text-left outline-none transition hover:-translate-y-0.5 focus-visible:ring-4 focus-visible:ring-violet-300/50 ${
+                selected
+                  ? 'border-violet-500 bg-white shadow-lg ring-2 ring-violet-200 dark:bg-slate-900 dark:ring-violet-500/20'
+                  : 'border-violet-100 bg-white/60 hover:border-violet-300 dark:border-violet-500/15 dark:bg-slate-950/40'
+              }`}
+            >
+              <span className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${chapter.tone}`} />
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Chapter {chapterIndex + 1}</span>
+              <span className="mt-1 block truncate text-xs font-black text-slate-950 dark:text-white">{chapter.name}</span>
+              <span className="mt-1 block text-[10px] font-bold text-violet-700 dark:text-violet-300">{chapterUnlocked}/{chapterCards.length} earned</span>
+            </button>
           );
         })}
       </div>
+
+      <section
+        id="quest-chapter-panel"
+        role="tabpanel"
+        aria-labelledby={`quest-chapter-tab-${activeChapter.id}`}
+        className="mt-6 rounded-3xl border border-violet-100 bg-white/55 p-4 dark:border-violet-500/15 dark:bg-slate-950/35 sm:p-5"
+      >
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className={`grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br ${activeChapter.tone} text-sm font-black text-white shadow-lg`}>{activeChapterIndex + 1}</span>
+            <div>
+              <h3 className="font-black text-slate-950 dark:text-white">{activeChapter.name}</h3>
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">{activeChapter.subtitle} • Levels {activeChapter.startLevel}–{activeChapter.endLevel}</p>
+            </div>
+          </div>
+          <span className="text-xs font-black text-violet-700 dark:text-violet-300">{activeUnlocked}/{activeCards.length} earned</span>
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+          {activeCards.map((card) => (
+            <LanguageQuestRewardCardView
+              key={card.id}
+              card={card}
+              unlocked={unlocked.has(card.id)}
+              featured={card.id === rewards.currentCardId}
+              frame={unlocked.has(card.id) ? frame : undefined}
+            />
+          ))}
+        </div>
+      </section>
     </section>
   );
 }

@@ -6,25 +6,21 @@ import {
   BookMarked,
   CheckCircle2,
   Globe2,
-  Headphones,
   Heart,
   Info,
-  Keyboard,
   Languages,
   Moon,
   ShieldCheck,
   Sparkles,
-  SpellCheck2,
   Star,
   Sun,
-  Target,
   Zap,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/src/components/theme-provider';
 import { MrlcQuestBrand, TaoMonLaeCredit } from '@/src/components/games/MrlcQuestBrand';
-import { LanguageQuestCourseFolder } from '@/src/components/games/LanguageQuestCourseFolder';
+import { LanguageQuestCourseFolders } from '@/src/components/games/LanguageQuestCourseFolder';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { orderedLanguageQuestCategories } from '@/shared/languageQuestCourseCategories';
 
@@ -134,6 +130,12 @@ export default function LanguageQuestPublic() {
             </div>
 
             <div className="lq-hero-scene relative mx-auto w-full max-w-xl py-8 sm:px-6">
+              <img
+                src="/Icons/Owl School 8.svg"
+                alt=""
+                aria-hidden="true"
+                className="lq-float-delayed pointer-events-none absolute -left-8 -top-6 z-20 hidden h-28 w-28 object-contain drop-shadow-2xl sm:block"
+              />
               <div className="lq-orbit pointer-events-none absolute left-1/2 top-1/2 h-[88%] w-[88%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-violet-300/60 dark:border-violet-400/35">
                 <span className="absolute -top-3 left-1/2 grid h-10 w-10 -translate-x-1/2 place-items-center rounded-2xl bg-amber-400 text-white shadow-lg"><Star className="h-5 w-5 fill-current" /></span>
                 <span className="absolute -bottom-3 left-1/2 grid h-10 w-10 -translate-x-1/2 place-items-center rounded-2xl bg-sky-500 text-white shadow-lg"><Globe2 className="h-5 w-5" /></span>
@@ -176,14 +178,16 @@ export default function LanguageQuestPublic() {
             </div>
             <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
               {[
-                { icon: Headphones, step: '01', title: 'Learn and listen', copy: 'Meet the key phrase, hear its pronunciation, and connect it to a real situation.', tone: 'from-sky-500 to-blue-600', shadow: 'shadow-sky-500/15' },
-                { icon: SpellCheck2, step: '02', title: 'Listen and spell', copy: 'Hear the word without seeing its letters, then type it from memory.', tone: 'from-amber-400 to-orange-600', shadow: 'shadow-amber-500/15' },
-                { icon: Keyboard, step: '03', title: 'Build the sentence', copy: 'Type the complete phrase from memory. Punctuation and capital letters will not block you.', tone: 'from-fuchsia-500 to-violet-700', shadow: 'shadow-fuchsia-500/15' },
-                { icon: Target, step: '04', title: 'Check understanding', copy: 'Choose from a clue-safe prompt, read a clear correction, and retry immediately when needed.', tone: 'from-emerald-400 to-teal-600', shadow: 'shadow-emerald-500/15' },
-              ].map(({ icon: Icon, step, title, copy, tone, shadow }) => (
+                { art: '/Icons/optimized/Eduv1_01.png', step: '01', title: 'Learn and listen', copy: 'Meet the key phrase, hear its pronunciation, and connect it to a real situation.', tone: 'from-sky-500 to-blue-600', shadow: 'shadow-sky-500/15' },
+                { art: '/Icons/optimized/Eduv1_09.png', step: '02', title: 'Listen and spell', copy: 'Hear the word without seeing its letters, then type it from memory.', tone: 'from-amber-400 to-orange-600', shadow: 'shadow-amber-500/15' },
+                { art: '/Icons/optimized/Eduv1_02.png', step: '03', title: 'Build the sentence', copy: 'Type the complete phrase from memory. Punctuation and capital letters will not block you.', tone: 'from-fuchsia-500 to-violet-700', shadow: 'shadow-fuchsia-500/15' },
+                { art: '/Icons/optimized/Eduv1_04.png', step: '04', title: 'Check understanding', copy: 'Choose from a clue-safe prompt, read a clear correction, and retry immediately when needed.', tone: 'from-emerald-400 to-teal-600', shadow: 'shadow-emerald-500/15' },
+              ].map(({ art, step, title, copy, tone, shadow }) => (
                 <article key={step} className={`group rounded-3xl border border-white bg-white p-6 shadow-xl ${shadow} transition duration-300 hover:-translate-y-2 dark:border-slate-800 dark:bg-slate-900/90`}>
                   <div className="flex items-center justify-between">
-                    <span className={`grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br ${tone} text-white shadow-lg transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110`}><Icon className="h-5 w-5" /></span>
+                    <span className={`grid h-14 w-14 place-items-center overflow-hidden rounded-2xl bg-gradient-to-br ${tone} shadow-lg transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110`}>
+                      <img src={art} alt="" aria-hidden="true" className="h-12 w-12 object-contain drop-shadow-md" />
+                    </span>
                     <span className="text-2xl font-black text-slate-200 dark:text-slate-700">{step}</span>
                   </div>
                   <h3 className="mt-5 text-xl font-black">{title}</h3>
@@ -205,42 +209,34 @@ export default function LanguageQuestPublic() {
             </div>
 
             {courses.length ? (
-              <div className="mt-10 space-y-5">
-                {courseGroups.map((group, index) => (
-                  <LanguageQuestCourseFolder
-                    key={group.category}
-                    category={group.category}
-                    count={group.courses.length}
-                    defaultOpen={index === 0}
-                    idPrefix="public-course-folder"
-                  >
-                    <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                      {group.courses.map((course) => (
-                        <article key={course.id} className="group overflow-hidden rounded-3xl border border-white bg-white shadow-lg shadow-violet-900/5 transition duration-300 hover:-translate-y-2 hover:rotate-[0.4deg] hover:shadow-2xl dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-black/20">
-                          <div className="h-2" style={{ backgroundColor: course.accentColor }} />
-                          <div className="p-6">
-                            <div className="flex items-start gap-4">
-                              <span className="grid h-14 w-14 place-items-center rounded-2xl text-3xl shadow-inner transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110" style={{ backgroundColor: `${course.accentColor}20` }}>{course.imageEmoji}</span>
-                              <div>
-                                <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{course.language}</p>
-                                <h4 className="mt-1 text-xl font-black">{course.title}</h4>
-                              </div>
-                            </div>
-                            <p className="mt-4 min-h-12 text-sm leading-6 text-slate-600 dark:text-slate-300">{course.description || 'A practical language course for everyday learning.'}</p>
-                            <div className="mt-5 flex flex-wrap gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                              <span className="rounded-full bg-slate-100 px-3 py-1.5 dark:bg-slate-800">{course.unitCount} units</span>
-                              <span className="rounded-full bg-slate-100 px-3 py-1.5 dark:bg-slate-800">{course.lessonCount} lessons</span>
-                              <span className="rounded-full bg-slate-100 px-3 py-1.5 dark:bg-slate-800">{course.challengeCount} practices</span>
-                            </div>
-                            <Button className="mt-6 w-full rounded-xl font-black text-white shadow-lg transition-transform group-hover:scale-[1.02]" style={{ backgroundColor: course.accentColor }} render={<Link to={startHref} />} nativeButton={false}>
-                              {user ? 'Open course library' : 'Sign up to learn'} <ArrowRight className="ml-2 h-4 w-4" />
-                            </Button>
+              <div className="mt-10">
+                <LanguageQuestCourseFolders
+                  groups={courseGroups}
+                  idPrefix="public-course-folder"
+                  renderCourse={(course) => (
+                    <article key={course.id} className="group overflow-hidden rounded-3xl border border-white bg-white shadow-lg shadow-violet-900/5 transition duration-300 hover:-translate-y-2 hover:rotate-[0.4deg] hover:shadow-2xl dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-black/20">
+                      <div className="h-2" style={{ backgroundColor: course.accentColor }} />
+                      <div className="p-6">
+                        <div className="flex items-start gap-4">
+                          <span className="grid h-14 w-14 place-items-center rounded-2xl text-3xl shadow-inner transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110" style={{ backgroundColor: `${course.accentColor}20` }}>{course.imageEmoji}</span>
+                          <div>
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{course.language}</p>
+                            <h4 className="mt-1 text-xl font-black">{course.title}</h4>
                           </div>
-                        </article>
-                      ))}
-                    </div>
-                  </LanguageQuestCourseFolder>
-                ))}
+                        </div>
+                        <p className="mt-4 min-h-12 text-sm leading-6 text-slate-600 dark:text-slate-300">{course.description || 'A practical language course for everyday learning.'}</p>
+                        <div className="mt-5 flex flex-wrap gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                          <span className="rounded-full bg-slate-100 px-3 py-1.5 dark:bg-slate-800">{course.unitCount} units</span>
+                          <span className="rounded-full bg-slate-100 px-3 py-1.5 dark:bg-slate-800">{course.lessonCount} lessons</span>
+                          <span className="rounded-full bg-slate-100 px-3 py-1.5 dark:bg-slate-800">{course.challengeCount} practices</span>
+                        </div>
+                        <Button className="mt-6 w-full rounded-xl font-black text-white shadow-lg transition-transform group-hover:scale-[1.02]" style={{ backgroundColor: course.accentColor }} render={<Link to={startHref} />} nativeButton={false}>
+                          {user ? 'Open course library' : 'Sign up to learn'} <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                      </div>
+                    </article>
+                  )}
+                />
               </div>
             ) : (
               <div className="mt-10 rounded-3xl border border-dashed border-violet-200 bg-white/60 p-12 text-center dark:border-violet-500/30 dark:bg-slate-900/60">

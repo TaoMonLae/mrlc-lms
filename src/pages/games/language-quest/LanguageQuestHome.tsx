@@ -10,7 +10,7 @@ import { apiGet } from '@/src/lib/api';
 import type { LanguageQuestOverview } from '@/src/types/languageQuest';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { LanguageQuestAchievements } from '@/src/components/games/LanguageQuestAchievements';
-import { LanguageQuestCourseFolder } from '@/src/components/games/LanguageQuestCourseFolder';
+import { LanguageQuestCourseFolders } from '@/src/components/games/LanguageQuestCourseFolder';
 import { useLanguageQuestSupport } from '@/src/components/games/LanguageQuestSupport';
 import { orderedLanguageQuestCategories } from '@/shared/languageQuestCourseCategories';
 import { LanguageQuestRewardTrack } from '@/src/components/games/LanguageQuestRewards';
@@ -115,6 +115,12 @@ export default function LanguageQuestHome() {
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-700 via-fuchsia-700 to-rose-600 p-6 text-white shadow-xl sm:p-8">
         <div className="absolute -right-12 -top-16 h-52 w-52 rounded-full bg-white/10" />
         <div className="absolute -bottom-20 right-24 h-44 w-44 rounded-full bg-amber-300/15" />
+        <img
+          src="/Icons/Owl School 12.svg"
+          alt=""
+          aria-hidden="true"
+          className="lq-float-delayed pointer-events-none absolute -bottom-8 right-4 hidden h-44 w-44 object-contain opacity-25 drop-shadow-2xl xl:block"
+        />
         <div className="relative flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
           <div className="max-w-2xl">
             <Badge className="border-white/20 bg-white/15 text-white hover:bg-white/15">
@@ -191,64 +197,54 @@ export default function LanguageQuestHome() {
             <p className="mt-1 text-sm text-slate-500">A teacher or administrator can create the first course.</p>
           </div>
         ) : (
-          <div className="space-y-5">
-            {courseGroups.map((group, index) => (
-              <LanguageQuestCourseFolder
-                key={group.category}
-                category={group.category}
-                count={group.courses.length}
-                defaultOpen={index === 0}
-                idPrefix="learner-course-folder"
-              >
-                <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                  {group.courses.map((course) => (
-                    <article key={course.id} className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-surface-raised dark:bg-surface-indigo">
-                      <div className="h-2" style={{ backgroundColor: course.accentColor }} />
-                      <div className="p-5">
-                        <div className="flex items-start gap-4">
-                          <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl text-3xl" style={{ backgroundColor: `${course.accentColor}18` }}>
-                            {course.imageEmoji}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <Badge variant="outline">{course.language}</Badge>
-                            <h4 className="mt-2 text-lg font-bold text-slate-900 dark:text-white">{course.title}</h4>
-                          </div>
-                        </div>
-                        <p className="mt-3 min-h-10 text-sm leading-5 text-slate-500 dark:text-slate-300">{course.description || 'A new language adventure.'}</p>
-                        <div className="mt-4 flex items-center justify-between text-xs font-medium text-slate-500">
-                          <span>{course.lessonCount} lessons</span>
-                          <span>{course.progressPercent}% complete</span>
-                        </div>
-                        <Progress value={course.progressPercent} className="mt-2 [&_[data-slot=progress-track]]:h-2 [&_[data-slot=progress-indicator]]:bg-violet-600" />
-                        <div className="mt-5 flex items-center gap-2">
-                          <Button
-                            className="flex-1"
-                            style={{ backgroundColor: course.accentColor }}
-                            render={<Link to={course.nextLessonId ? `/games/language-quest/lessons/${course.nextLessonId}` : `/games/language-quest/courses/${course.id}`} />}
-                            nativeButton={false}
-                          >
-                            {course.completed ? 'Review course' : course.nextLessonId ? (course.progressPercent > 0 ? 'Resume lesson' : 'Start course') : 'View course'}
-                          </Button>
-                          {course.progressPercent > 0 && (
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              aria-label="View course path"
-                              title="View course path"
-                              render={<Link to={`/games/language-quest/courses/${course.id}`} />}
-                              nativeButton={false}
-                            >
-                              <Map className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </article>
-                  ))}
+          <LanguageQuestCourseFolders
+            groups={courseGroups}
+            idPrefix="learner-course-folder"
+            renderCourse={(course) => (
+              <article key={course.id} className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-surface-raised dark:bg-surface-indigo">
+                <div className="h-2" style={{ backgroundColor: course.accentColor }} />
+                <div className="p-5">
+                  <div className="flex items-start gap-4">
+                    <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl text-3xl" style={{ backgroundColor: `${course.accentColor}18` }}>
+                      {course.imageEmoji}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <Badge variant="outline">{course.language}</Badge>
+                      <h4 className="mt-2 text-lg font-bold text-slate-900 dark:text-white">{course.title}</h4>
+                    </div>
+                  </div>
+                  <p className="mt-3 min-h-10 text-sm leading-5 text-slate-500 dark:text-slate-300">{course.description || 'A new language adventure.'}</p>
+                  <div className="mt-4 flex items-center justify-between text-xs font-medium text-slate-500">
+                    <span>{course.lessonCount} lessons</span>
+                    <span>{course.progressPercent}% complete</span>
+                  </div>
+                  <Progress value={course.progressPercent} className="mt-2 [&_[data-slot=progress-track]]:h-2 [&_[data-slot=progress-indicator]]:bg-violet-600" />
+                  <div className="mt-5 flex items-center gap-2">
+                    <Button
+                      className="flex-1"
+                      style={{ backgroundColor: course.accentColor }}
+                      render={<Link to={course.nextLessonId ? `/games/language-quest/lessons/${course.nextLessonId}` : `/games/language-quest/courses/${course.id}`} />}
+                      nativeButton={false}
+                    >
+                      {course.completed ? 'Review course' : course.nextLessonId ? (course.progressPercent > 0 ? 'Resume lesson' : 'Start course') : 'View course'}
+                    </Button>
+                    {course.progressPercent > 0 && (
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        aria-label="View course path"
+                        title="View course path"
+                        render={<Link to={`/games/language-quest/courses/${course.id}`} />}
+                        nativeButton={false}
+                      >
+                        <Map className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </LanguageQuestCourseFolder>
-            ))}
-          </div>
+              </article>
+            )}
+          />
         )}
       </section>
 

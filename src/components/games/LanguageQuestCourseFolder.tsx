@@ -1,31 +1,50 @@
-import type { ReactNode } from 'react';
-import { ChevronDown, FolderOpen } from 'lucide-react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { ArrowRight, FolderOpen } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
-interface LanguageQuestCourseFolderProps {
+interface CourseFolderGroup<T> {
   category: string;
-  count: number;
-  children: ReactNode;
-  defaultOpen?: boolean;
+  courses: T[];
+}
+
+interface LanguageQuestCourseFoldersProps<T> {
+  groups: CourseFolderGroup<T>[];
+  renderCourse: (course: T) => ReactNode;
   idPrefix?: string;
+  courseGridClassName?: string;
 }
 
 const categoryTones = {
   chinese: {
     icon: 'bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300',
     line: 'from-rose-500 to-red-500',
+    glow: 'from-rose-500/18 to-red-500/5',
+    art: '/Icons/Owl School 3.svg',
   },
   english: {
     icon: 'bg-violet-100 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300',
     line: 'from-violet-500 to-fuchsia-500',
+    glow: 'from-violet-500/18 to-fuchsia-500/5',
+    art: '/Icons/Owl School 2.svg',
   },
   spanish: {
     icon: 'bg-orange-100 text-orange-600 dark:bg-orange-500/15 dark:text-orange-300',
     line: 'from-orange-500 to-amber-400',
+    glow: 'from-orange-500/18 to-amber-400/5',
+    art: '/Icons/Owl School 7.svg',
+  },
+  malay: {
+    icon: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-500/15 dark:text-cyan-300',
+    line: 'from-sky-500 to-cyan-400',
+    glow: 'from-sky-500/18 to-cyan-400/5',
+    art: '/Icons/Owl School 4.svg',
   },
   other: {
-    icon: 'bg-sky-100 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300',
-    line: 'from-sky-500 to-cyan-400',
+    icon: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',
+    line: 'from-emerald-500 to-teal-400',
+    glow: 'from-emerald-500/18 to-teal-400/5',
+    art: '/Icons/Owl School 1.svg',
   },
 } as const;
 
@@ -34,6 +53,7 @@ function folderTone(category: string) {
   if (normalized.includes('chinese') || normalized.includes('mandarin')) return categoryTones.chinese;
   if (normalized.includes('english')) return categoryTones.english;
   if (normalized.includes('spanish')) return categoryTones.spanish;
+  if (normalized.includes('malay') || normalized.includes('bahasa')) return categoryTones.malay;
   return categoryTones.other;
 }
 
@@ -41,48 +61,109 @@ function categoryId(category: string, prefix: string) {
   return `${prefix}-${category.replace(/\W+/g, '-').replace(/^-|-$/g, '').toLowerCase()}`;
 }
 
-export function LanguageQuestCourseFolder({
-  category,
-  count,
-  children,
-  defaultOpen = false,
+export function LanguageQuestCourseFolders<T>({
+  groups,
+  renderCourse,
   idPrefix = 'course-folder',
-}: LanguageQuestCourseFolderProps) {
-  const tone = folderTone(category);
-  const headingId = categoryId(category, idPrefix);
+  courseGridClassName,
+}: LanguageQuestCourseFoldersProps<T>) {
+  const [activeCategory, setActiveCategory] = useState(groups[0]?.category ?? '');
+
+  useEffect(() => {
+    if (!groups.some((group) => group.category === activeCategory)) {
+      setActiveCategory(groups[0]?.category ?? '');
+    }
+  }, [activeCategory, groups]);
+
+  const activeGroup = useMemo(
+    () => groups.find((group) => group.category === activeCategory) ?? groups[0],
+    [activeCategory, groups],
+  );
+
+  if (!activeGroup) return null;
+
+  const panelId = `${idPrefix}-panel`;
 
   return (
-    <details
-      open={defaultOpen}
-      className="group/folder overflow-hidden rounded-[1.75rem] border border-violet-200/80 bg-white/75 shadow-lg shadow-violet-950/5 transition open:shadow-xl dark:border-slate-700 dark:bg-slate-900/80 dark:shadow-black/20"
-    >
-      <summary className="relative flex min-h-24 cursor-pointer list-none items-center gap-3 overflow-hidden px-3 py-4 outline-none transition hover:bg-violet-50/70 focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-violet-400/40 dark:hover:bg-slate-800/80 sm:gap-4 sm:px-6 [&::-webkit-details-marker]:hidden">
-        <span className={`absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r ${tone.line}`} />
-        <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl sm:h-14 sm:w-14 ${tone.icon}`}>
-          <FolderOpen className="h-6 w-6 sm:h-7 sm:w-7" aria-hidden="true" />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-xs font-black uppercase tracking-[0.18em] text-violet-600 dark:text-violet-300">
-            Course folder
-          </span>
-          <span id={headingId} className="mt-1 block text-lg font-black leading-tight text-slate-950 dark:text-white sm:text-2xl">
-            {category}
-          </span>
-        </span>
-        <span className="flex shrink-0 items-center gap-2">
+    <div>
+      <div
+        role="tablist"
+        aria-label="Course folders"
+        className="grid grid-cols-2 gap-3 lg:grid-cols-4"
+      >
+        {groups.map((group) => {
+          const tone = folderTone(group.category);
+          const selected = group.category === activeGroup.category;
+          const tabId = categoryId(group.category, idPrefix);
+
+          return (
+            <button
+              key={group.category}
+              id={tabId}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              aria-controls={panelId}
+              onClick={() => setActiveCategory(group.category)}
+              className={cn(
+                'group/folder relative min-h-36 overflow-hidden rounded-3xl border p-4 text-left shadow-sm outline-none transition duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:ring-4 focus-visible:ring-violet-400/35 sm:min-h-40 sm:p-5',
+                selected
+                  ? 'border-violet-400 bg-white ring-2 ring-violet-200 dark:border-violet-400/70 dark:bg-slate-900 dark:ring-violet-500/20'
+                  : 'border-slate-200 bg-white/75 hover:border-violet-300 dark:border-slate-700 dark:bg-slate-900/70 dark:hover:border-violet-500/50',
+              )}
+            >
+              <span className={`absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r ${tone.line}`} />
+              <span className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${tone.glow}`} />
+              <img
+                src={tone.art}
+                alt=""
+                aria-hidden="true"
+                className="pointer-events-none absolute -bottom-5 -right-5 h-28 w-28 object-contain opacity-45 drop-shadow-xl transition duration-300 group-hover/folder:-translate-y-1 group-hover/folder:rotate-2 group-hover/folder:scale-110 sm:h-32 sm:w-32"
+              />
+
+              <span className="relative flex h-full min-h-28 flex-col items-start justify-between sm:min-h-32">
+                <span className={`grid h-10 w-10 place-items-center rounded-2xl shadow-sm ${tone.icon}`}>
+                  <FolderOpen className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <span className="max-w-[78%]">
+                  <span className="block text-[10px] font-black uppercase tracking-[0.18em] text-violet-600 dark:text-violet-300">
+                    Course folder
+                  </span>
+                  <span className="mt-1 block text-base font-black leading-tight text-slate-950 dark:text-white sm:text-lg">
+                    {group.category}
+                  </span>
+                  <span className="mt-2 flex items-center gap-1.5 text-[11px] font-black text-slate-500 dark:text-slate-300">
+                    {group.courses.length} {group.courses.length === 1 ? 'course' : 'courses'}
+                    <ArrowRight className={cn('h-3.5 w-3.5 transition', selected && 'translate-x-1 text-violet-600')} />
+                  </span>
+                </span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      <section
+        id={panelId}
+        role="tabpanel"
+        aria-labelledby={categoryId(activeGroup.category, idPrefix)}
+        className="mt-4 rounded-[1.75rem] border border-violet-200/80 bg-white/75 p-4 shadow-lg shadow-violet-950/5 dark:border-slate-700 dark:bg-slate-900/80 dark:shadow-black/20 sm:p-6"
+      >
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-violet-600 dark:text-violet-300">
+              Open folder
+            </p>
+            <h3 className="mt-1 text-xl font-black text-slate-950 dark:text-white">{activeGroup.category}</h3>
+          </div>
           <Badge variant="secondary">
-            {count} {count === 1 ? 'course' : 'courses'}
+            {activeGroup.courses.length} {activeGroup.courses.length === 1 ? 'course' : 'courses'}
           </Badge>
-          <span className="hidden text-xs font-bold text-slate-500 dark:text-slate-300 sm:inline">
-            <span className="group-open/folder:hidden">Open folder</span>
-            <span className="hidden group-open/folder:inline">Close folder</span>
-          </span>
-          <ChevronDown className="h-5 w-5 text-slate-500 transition-transform duration-200 group-open/folder:rotate-180 dark:text-slate-300" aria-hidden="true" />
-        </span>
-      </summary>
-      <section aria-labelledby={headingId} className="border-t border-violet-100 bg-slate-50/65 p-4 dark:border-slate-700 dark:bg-slate-950/45 sm:p-6">
-        {children}
+        </div>
+        <div className={cn('grid gap-5 md:grid-cols-2 xl:grid-cols-3', courseGridClassName)}>
+          {activeGroup.courses.map(renderCourse)}
+        </div>
       </section>
-    </details>
+    </div>
   );
 }

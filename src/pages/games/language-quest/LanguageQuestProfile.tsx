@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LANGUAGE_QUEST_AVATARS } from '@/shared/languageQuestAvatars';
 import { LanguageQuestAvatar } from '@/src/components/games/LanguageQuestAvatar';
 import { apiGet, apiSend } from '@/src/lib/api';
@@ -73,6 +74,9 @@ export default function LanguageQuestProfile() {
   const [saving, setSaving] = useState(false);
   const [joining, setJoining] = useState(false);
   const [loadError, setLoadError] = useState('');
+  const [activeSection, setActiveSection] = useState(
+    window.location.hash === '#quest-cards' ? 'cards' : 'profile',
+  );
 
   const load = () => {
     setLoadError('');
@@ -92,10 +96,7 @@ export default function LanguageQuestProfile() {
   useEffect(load, []);
 
   useEffect(() => {
-    if (!profile || window.location.hash !== '#quest-cards') return;
-    window.requestAnimationFrame(() => {
-      document.getElementById('quest-cards')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
+    if (window.location.hash === '#quest-cards') setActiveSection('cards');
   }, [profile]);
 
   const save = async () => {
@@ -192,11 +193,41 @@ export default function LanguageQuestProfile() {
         </div>
       </section>
 
-      <LanguageQuestRewardCollection rewards={profile.profile.rewards} bestStreak={profile.profile.bestStreak} />
+      <Tabs
+        value={activeSection}
+        onValueChange={(value) => {
+          setActiveSection(value);
+          window.history.replaceState(
+            null,
+            '',
+            value === 'cards' ? `${window.location.pathname}#quest-cards` : window.location.pathname,
+          );
+        }}
+        className="space-y-5"
+      >
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white/90 p-2 shadow-lg backdrop-blur dark:border-slate-700 dark:bg-slate-950/90">
+          <TabsList className="grid !h-auto w-full grid-cols-2 items-stretch gap-2 bg-transparent p-0 sm:grid-cols-4">
+            <TabsTrigger value="profile" className="h-12 min-h-0 min-w-0 gap-1.5 overflow-hidden rounded-xl border border-transparent px-2 font-black after:hidden focus-visible:ring-2 focus-visible:ring-inset data-active:border-violet-400 data-active:bg-violet-600 data-active:text-white data-active:shadow-sm sm:gap-2 sm:px-3">
+              <UserRound className="h-4 w-4" /> Profile
+            </TabsTrigger>
+            <TabsTrigger value="cards" className="h-12 min-h-0 min-w-0 gap-1.5 overflow-hidden rounded-xl border border-transparent px-2 font-black after:hidden focus-visible:ring-2 focus-visible:ring-inset data-active:border-fuchsia-400 data-active:bg-fuchsia-600 data-active:text-white data-active:shadow-sm sm:gap-2 sm:px-3">
+              <Sparkles className="h-4 w-4" /> Quest Cards
+            </TabsTrigger>
+            <TabsTrigger value="comfort" className="h-12 min-h-0 min-w-0 gap-1.5 overflow-hidden rounded-xl border border-transparent px-2 font-black after:hidden focus-visible:ring-2 focus-visible:ring-inset data-active:border-sky-400 data-active:bg-sky-600 data-active:text-white data-active:shadow-sm sm:gap-2 sm:px-3">
+              <AudioLines className="h-4 w-4" /> Comfort
+            </TabsTrigger>
+            <TabsTrigger value="classrooms" className="h-12 min-h-0 min-w-0 gap-1.5 overflow-hidden rounded-xl border border-transparent px-2 font-black after:hidden focus-visible:ring-2 focus-visible:ring-inset data-active:border-emerald-400 data-active:bg-emerald-600 data-active:text-white data-active:shadow-sm sm:gap-2 sm:px-3">
+              <GraduationCap className="h-4 w-4" /> Classrooms
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-      <LanguageQuestLegendaryVault rewards={profile.profile.rewards} expanded />
+        <TabsContent value="cards" className="space-y-6 outline-none">
+          <LanguageQuestRewardCollection rewards={profile.profile.rewards} bestStreak={profile.profile.bestStreak} />
 
-      <section className="rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 to-fuchsia-50 p-5 shadow-sm dark:border-amber-500/20 dark:from-amber-950/20 dark:to-fuchsia-950/20 sm:p-7">
+          <LanguageQuestLegendaryVault rewards={profile.profile.rewards} />
+
+          <section className="rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 to-fuchsia-50 p-5 shadow-sm dark:border-amber-500/20 dark:from-amber-950/20 dark:to-fuchsia-950/20 sm:p-7">
         <div className="flex items-start gap-3">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-amber-400 to-fuchsia-500 text-white"><Sparkles className="h-5 w-5" /></span>
           <div>
@@ -220,9 +251,11 @@ export default function LanguageQuestProfile() {
             );
           })}
         </div>
-      </section>
+          </section>
+        </TabsContent>
 
-      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/85 sm:p-7">
+        <TabsContent value="comfort" className="outline-none">
+          <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/85 sm:p-7">
         <h2 className="text-xl font-black text-slate-950 dark:text-white">Learning comfort</h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">These settings stay on this device.</p>
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -276,9 +309,11 @@ export default function LanguageQuestProfile() {
             </div>
           </div>
         </div>
-      </section>
+          </section>
+        </TabsContent>
 
-      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/85 sm:p-7">
+        <TabsContent value="profile" className="outline-none">
+          <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/85 sm:p-7">
         <div className="flex items-start gap-3">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300"><UserRound className="h-5 w-5" /></span>
           <div>
@@ -323,9 +358,11 @@ export default function LanguageQuestProfile() {
             {saving ? 'Saving…' : 'Save profile'}
           </Button>
         </div>
-      </section>
+          </section>
+        </TabsContent>
 
-      <section className="rounded-3xl border border-sky-200 bg-sky-50/80 p-5 shadow-sm dark:border-sky-500/20 dark:bg-sky-950/25 sm:p-7">
+        <TabsContent value="classrooms" className="outline-none">
+          <section className="rounded-3xl border border-sky-200 bg-sky-50/80 p-5 shadow-sm dark:border-sky-500/20 dark:bg-sky-950/25 sm:p-7">
         <div className="flex items-start gap-3">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-sky-600 text-white"><GraduationCap className="h-5 w-5" /></span>
           <div>
@@ -375,7 +412,9 @@ export default function LanguageQuestProfile() {
             </article>
           ))}
         </div>
-      </section>
+          </section>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

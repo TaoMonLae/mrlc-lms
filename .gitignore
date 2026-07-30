@@ -14,3 +14,5 @@ data/
 .claude/
 # Optional local Kokoro voice environment and its downloaded model weights.
 Kokoro/
+# Local OpenClaude tool state — machine-specific, not part of the app.
+.openclaude/
