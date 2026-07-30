@@ -18,6 +18,7 @@ import { mandarinFoundationsCourse } from "../../languageQuestMandarinCourse";
 import { completeMandarinCourse } from "../../languageQuestCompleteMandarinCourse";
 import { chineseConversationStarterCourse } from "../../languageQuestChineseConversationCourse";
 import { englishWordCourses } from "../../languageQuestEnglishWordCourses";
+import { normalizeChallenge } from "../../englishWordPractice";
 import { advancedEnglishCourses } from "../../languageQuestAdvancedEnglishCourses";
 import { linguifyCefrCourses } from "../../languageQuestLinguifyCourses";
 import {
@@ -607,4 +608,29 @@ test("every built-in course produces clue-safe assessment prompts", () => {
   assert.ok(challenges.every((challenge) =>
     !/(?:Pronunciation|Example)\s*:/iu.test(languageQuestPracticePrompt(challenge.question)),
   ));
+});
+
+test("normalizeChallenge redacts example sentences that give away the answer", () => {
+  const challenge = {
+    id: "challenge-1",
+    question: "Which noun means \"a bag used for travel\"? Pronunciation: /ˈlʌɡɪdʒ/. Example: \"My luggage is very heavy.\"",
+    options: [
+      { id: "opt-correct", text: "luggage", correct: true },
+      { id: "opt-wrong-1", text: "briefcase", correct: false },
+      { id: "opt-wrong-2", text: "umbrella", correct: false },
+    ],
+    lesson: {
+      unit: {
+        course: { code: "linguify-b1", title: "Linguify B1", language: "English" },
+      },
+    },
+  };
+
+  const question = normalizeChallenge(challenge, "seed");
+
+  assert.ok(question);
+  assert.ok(!question!.prompt.toLowerCase().includes("luggage"));
+  assert.ok(!/(?:Pronunciation|Example)\s*:/iu.test(question!.prompt));
+  assert.equal(question!.prompt, "Which noun means \"a bag used for travel\"?");
+  assert.equal(question!.correctOptionId, "opt-correct");
 });

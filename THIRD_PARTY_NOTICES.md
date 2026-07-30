@@ -59,15 +59,19 @@ to the project by its owner. The source file does not include a license notice.
 Confirm the curriculum's redistribution rights before distributing it outside
 the school's authorized use.
 
-## OpenBMB VoxCPM
+## hexgrad Kokoro-82M
 
 Language Quest optionally integrates with
-[`OpenBMB/VoxCPM`](https://github.com/OpenBMB/VoxCPM) as a separately installed
-multilingual text-to-speech service. VoxCPM and its model weights are not
-bundled in this repository. The upstream project is licensed under the
-[Apache License 2.0](https://github.com/OpenBMB/VoxCPM/blob/main/LICENSE).
+[`hexgrad/Kokoro-82M`](https://huggingface.co/hexgrad/Kokoro-82M) as a
+separately installed multilingual text-to-speech service, using its published
+named voices (see [VOICES.md](https://huggingface.co/hexgrad/Kokoro-82M/blob/main/VOICES.md)).
+Kokoro and its model weights are not bundled in this repository. The upstream
+project is licensed under the
+[Apache License 2.0](https://huggingface.co/hexgrad/Kokoro-82M/resolve/main/LICENSE).
 
-Copyright 2024 OpenBMB
+Some individual training-data voice components carry a CC BY attribution
+requirement (Koniwa, CC BY 3.0; SIWIS, CC BY 4.0); see VOICES.md for the
+per-voice attribution links.
 
 ## Linguify CEFR vocabulary courses
 

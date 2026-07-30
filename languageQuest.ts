@@ -42,9 +42,9 @@ import { advancedEnglishCourses } from "./languageQuestAdvancedEnglishCourses";
 import { linguifyCefrCourses } from "./languageQuestLinguifyCourses";
 import { languageQuestVoiceServiceFromEnv } from "./languageQuestVoice";
 import {
+  kokoroSupportsLanguage,
   LANGUAGE_QUEST_VOICE_MAX_TEXT_LENGTH,
   normalizeLanguageQuestSpeechText,
-  voxCpmSupportsLanguage,
 } from "./shared/languageQuestVoice";
 
 interface JwtPayload { userId: string; role: string; email: string; externalLearner?: boolean; }
@@ -595,7 +595,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
 
   app.get("/api/language-quest/voice", authMiddleware, (_req, res) => {
     res.json({
-      provider: voiceService.enabled ? "voxcpm" : "browser",
+      provider: voiceService.enabled ? "kokoro" : "browser",
       enabled: voiceService.enabled,
       model: voiceService.enabled ? voiceService.model : null,
     });
@@ -611,7 +611,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       });
       return;
     }
-    if (!voxCpmSupportsLanguage(language)) {
+    if (!kokoroSupportsLanguage(language)) {
       res.status(422).json({
         error: "This course language uses the browser voice",
         code: "VOICE_LANGUAGE_UNSUPPORTED",
@@ -620,7 +620,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
     }
     if (!voiceService.enabled) {
       res.status(503).json({
-        error: "VoxCPM is offline; use the browser voice",
+        error: "Kokoro is offline; use the browser voice",
         code: "VOICE_PROVIDER_UNAVAILABLE",
       });
       return;
@@ -632,9 +632,9 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       res.setHeader("Cache-Control", "private, max-age=3600");
       res.send(audio.data);
     } catch (error) {
-      logger.warn?.("VoxCPM Language Quest synthesis failed:", error);
+      logger.warn?.("Kokoro Language Quest synthesis failed:", error);
       res.status(503).json({
-        error: "VoxCPM could not generate speech; use the browser voice",
+        error: "Kokoro could not generate speech; use the browser voice",
         code: "VOICE_PROVIDER_UNAVAILABLE",
       });
     }

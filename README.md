@@ -87,7 +87,7 @@ Completed courses unlock personalized certificates. Active learners can also cre
 - Sentence checks ignore capitalization, repeated spaces, and light punctuation while still requiring the correct words and spelling.
 - Correct sentence practice triggers immediate visual celebration and a short success sound.
 - Incorrect answers show the model sentence and focused retry guidance instead of ending the practice.
-- Optional VoxCPM2 speech provides a consistent multilingual teacher voice for supported courses, with automatic browser-voice fallback when the local model is offline or the language is unsupported. Learners may choose either provider in their profile.
+- Optional Kokoro-82M speech provides a consistent multilingual teacher voice for supported courses, with automatic browser-voice fallback when the local model is offline or the language is unsupported. Learners may choose either provider in their profile.
 - Learners can highlight an unfamiliar word anywhere in the lesson area to open the built-in dictionary. Available English definitions, Myanmar translations, and Mon entries appear without leaving Language Quest.
 
 #### Guidance, accessibility, and achievements
@@ -128,26 +128,27 @@ Completed courses unlock personalized certificates. Active learners can also cre
 - Adds six CEFR courses from [AyeNyeinSan22/linguify](https://github.com/AyeNyeinSan22/linguify), progressing from **A1 Foundations** to **C2 Mastery**, with 18 topic units and 360 definition, example, part-of-speech, listening, and source-supplied IPA challenges.
 - Run `npm run generate:language-quest-linguify` to rebuild the six CEFR courses from the licensed source snapshot.
 
-#### Optional VoxCPM teacher voice
+#### Optional Kokoro teacher voice
 
-Language Quest can use the Apache-2.0-licensed [OpenBMB/VoxCPM](https://github.com/OpenBMB/VoxCPM) model as a private, built-in speech provider. The browser never connects to VoxCPM directly: authenticated requests go through the LMS, which validates the language and text, caches generated audio, and falls back to browser speech if the provider is unavailable. Mon currently uses browser speech because it is not in VoxCPM2's published language list.
+Language Quest can use the Apache-2.0-licensed [hexgrad/Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) model as a private, built-in speech provider with named voices (see its [VOICES.md](https://huggingface.co/hexgrad/Kokoro-82M/blob/main/VOICES.md)). The browser never connects to Kokoro directly: authenticated requests go through the LMS, which validates the language and text, caches generated audio, and falls back to browser speech if the provider is unavailable. Each supported course language is pinned to that language's highest-graded published voice (for example American English uses `af_heart`, Japanese uses `jf_alpha`). **Kokoro's published voice list has no Burmese/Myanmar voice**, so Burmese now uses browser speech, same as Mon already does.
 
-The model is large and downloads its weights on first launch. Run it on a host with enough memory; a CUDA GPU is recommended, while Apple MPS and CPU are supported but slower. VoxCPM requires Python 3.10–3.12; the system Python 3.14 currently supplied on some Macs is not compatible.
+Kokoro is a small model (82M parameters) and downloads its weights on first launch. It runs comfortably on CPU; a GPU is optional. It also depends on the system `espeak-ng` package for phoneme fallback in most non-English languages.
 
 ```bash
-git clone https://github.com/OpenBMB/VoxCPM.git VoxCPM
-python3.12 -m venv VoxCPM/.venv
-VoxCPM/.venv/bin/pip install -e ./VoxCPM
+python3 -m venv Kokoro/.venv
+Kokoro/.venv/bin/pip install "kokoro>=0.9.2" soundfile numpy
+# macOS: brew install espeak-ng
+# Debian/Ubuntu: sudo apt-get install espeak-ng
 ```
 
-Then set `VOXCPM_API_URL=http://127.0.0.1:8810` in `.env`, start the private voice process in one terminal, and start the LMS in another:
+Then set `KOKORO_API_URL=http://127.0.0.1:8810` in `.env`, start the private voice process in one terminal, and start the LMS in another:
 
 ```bash
-npm run voice:voxcpm
+npm run voice:kokoro
 npm run dev
 ```
 
-The service binds to `127.0.0.1` by default. Do not expose port `8810` publicly. In a multi-server deployment, protect the private service network and set `VOXCPM_API_URL` to its internal address.
+The service binds to `127.0.0.1` by default. Do not expose port `8810` publicly. In a multi-server deployment, protect the private service network and set `KOKORO_API_URL` to its internal address.
 
 ### Flashcards
 
@@ -396,10 +397,9 @@ Never use the demo passwords in production. Set the three seed password variable
 | `GEMINI_MODEL` | No | `gemini-2.0-flash` in server code | Gemini model name |
 | `OLLAMA_API_URL` | Ollama only | `http://localhost:11434/api/chat` | Local Ollama chat endpoint |
 | `OLLAMA_MODEL` | No | `gemma2:9b` | Local Ollama model |
-| `VOXCPM_API_URL` | No | unset | Private VoxCPM endpoint; when unset Language Quest uses browser speech |
-| `VOXCPM_MODEL` | No | `openbmb/VoxCPM2` | Model identifier sent to the voice service |
-| `VOXCPM_VOICE` | No | Friendly teacher prompt | Natural-language teacher voice description |
-| `VOXCPM_TIMEOUT_MS` | No | `120000` | Maximum server wait for one speech generation request |
+| `KOKORO_API_URL` | No | unset | Private Kokoro endpoint; when unset Language Quest uses browser speech |
+| `KOKORO_MODEL` | No | `hexgrad/Kokoro-82M` | Model identifier sent to the voice service |
+| `KOKORO_TIMEOUT_MS` | No | `120000` | Maximum server wait for one speech generation request |
 
 Additional upload directories can be overridden for advanced deployments; see the constants near the top of `server.ts` and `flashcards.ts`.
 
@@ -633,7 +633,7 @@ Confirm `DATABASE_URL`, `SESSION_SECRET`, `APP_URL`, port availability, and writ
 ## Notable third-party data and acknowledgments
 
 - Language Quest was informed by the concepts and interface patterns in [sanidhyy/duolingo-clone](https://github.com/sanidhyy/duolingo-clone), licensed under MIT. Its Spanish seed curriculum was adapted from [TaoMonLae/duolingo-clone](https://github.com/TaoMonLae/duolingo-clone). The complete attribution and license text are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
-- Optional Language Quest speech uses [OpenBMB/VoxCPM](https://github.com/OpenBMB/VoxCPM), licensed under Apache-2.0. VoxCPM and its model weights are installed separately and are not bundled in this repository.
+- Optional Language Quest speech uses [hexgrad/Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M), licensed under Apache-2.0. Kokoro and its model weights are installed separately and are not bundled in this repository.
 - The six CEFR vocabulary courses adapt the MIT-licensed vocabulary sets from [AyeNyeinSan22/linguify](https://github.com/AyeNyeinSan22/linguify); attribution and license text are retained in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 - Sudoku is adapted from [super-sudoku](https://github.com/TN1ck/super-sudoku) by Tom Nick under the MIT License.
 - English definitions use [WordPOS](https://github.com/moos/wordpos) and Princeton WordNet 3.1.

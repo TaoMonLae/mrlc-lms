@@ -12,5 +12,5 @@ test-results/
 data/
 # Local Claude Code tool settings — machine-specific, not part of the app
 .claude/
-# Optional local VoxCPM checkout and its large model environment.
-VoxCPM/
+# Optional local Kokoro voice environment and its downloaded model weights.
+Kokoro/

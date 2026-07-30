@@ -248,13 +248,13 @@ export default function LanguageQuestProfile() {
               <span className="min-w-0 flex-1">
                 <span className="block font-black text-slate-900 dark:text-white">Lesson voice</span>
                 <span className="text-xs leading-5 text-slate-500 dark:text-slate-400">
-                  VoxCPM provides a clearer built-in AI teacher voice when the local service supports the course language. Language Quest automatically uses your browser voice if it is offline or unsupported.
+                  Kokoro provides a clearer built-in AI teacher voice when the local service supports the course language. Language Quest automatically uses your browser voice if it is offline or unsupported.
                 </span>
               </span>
             </div>
             <div className="mt-4 grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Lesson voice">
               {([
-                ['voxcpm', 'VoxCPM teacher voice', 'Built-in, multilingual, with automatic fallback'],
+                ['kokoro', 'Kokoro teacher voice', 'Built-in, multilingual, with automatic fallback'],
                 ['browser', 'Browser voice', 'Uses a speech voice installed on this device'],
               ] as const).map(([value, title, description]) => (
                 <button

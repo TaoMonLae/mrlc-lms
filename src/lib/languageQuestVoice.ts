@@ -1,12 +1,12 @@
 import { authHeaders } from '@/src/lib/api';
 import {
+  kokoroSupportsLanguage,
   languageQuestSpeechLocale,
   normalizeLanguageQuestSpeechText,
   type LanguageQuestVoiceProvider,
-  voxCpmSupportsLanguage,
 } from '@/shared/languageQuestVoice';
 
-export type LanguageQuestVoiceResult = 'voxcpm' | 'browser' | 'unavailable' | 'cancelled';
+export type LanguageQuestVoiceResult = 'kokoro' | 'browser' | 'unavailable' | 'cancelled';
 
 let activeRequest: AbortController | null = null;
 let activeAudio: HTMLAudioElement | null = null;
@@ -67,14 +67,14 @@ async function playAudioBlob(blob: Blob, version: number): Promise<boolean> {
 export async function speakLanguageQuestVoice(
   value: string,
   language: string,
-  provider: LanguageQuestVoiceProvider = 'voxcpm',
+  provider: LanguageQuestVoiceProvider = 'kokoro',
 ): Promise<LanguageQuestVoiceResult> {
   const text = normalizeLanguageQuestSpeechText(value);
   if (!text) return 'unavailable';
 
   cancelLanguageQuestVoice();
   const version = requestVersion;
-  if (provider === 'browser' || !voxCpmSupportsLanguage(language)) {
+  if (provider === 'browser' || !kokoroSupportsLanguage(language)) {
     return speakWithBrowser(text, language);
   }
 
@@ -90,7 +90,7 @@ export async function speakLanguageQuestVoice(
     if (!response.ok) throw new Error(`Voice request failed (${response.status})`);
     const blob = await response.blob();
     if (version !== requestVersion) return 'cancelled';
-    if (await playAudioBlob(blob, version)) return 'voxcpm';
+    if (await playAudioBlob(blob, version)) return 'kokoro';
   } catch (error: any) {
     if (error?.name === 'AbortError' || version !== requestVersion) return 'cancelled';
   } finally {

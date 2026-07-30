@@ -3,6 +3,7 @@ import { englishWordCourses } from "./languageQuestEnglishWordCourses";
 import { advancedEnglishCourses } from "./languageQuestAdvancedEnglishCourses";
 import { linguifyCefrCourses } from "./languageQuestLinguifyCourses";
 import { seededDailyQuestShuffle } from "./shared/dailyQuest";
+import { languageQuestPracticePrompt } from "./shared/languageQuest";
 
 export interface EnglishWordPracticeOption {
   id: string;
@@ -48,7 +49,7 @@ function decodeEntities(value: unknown): string {
     .trim();
 }
 
-function normalizeChallenge(challenge: any, seed: string): EnglishWordPracticeQuestion | null {
+export function normalizeChallenge(challenge: any, seed: string): EnglishWordPracticeQuestion | null {
   const correct = challenge.options?.filter((option: any) => option.correct) ?? [];
   if (correct.length !== 1 || challenge.options.length < 2) return null;
   const course = challenge.lesson.unit.course;
@@ -68,7 +69,15 @@ function normalizeChallenge(challenge: any, seed: string): EnglishWordPracticeQu
     sourceLabel: `Language Quest · ${course.title}`,
     subject: course.language,
     difficulty: "Practice",
-    prompt: decodeEntities(challenge.question),
+    // Some generated courses (e.g. the Linguify CEFR import) build their
+    // question text as "Which noun means \"...\"? Pronunciation: /.../
+    // Example: \"My luggage is very heavy.\"" -- the example sentence
+    // often uses the target word directly, which would hand the answer to
+    // whichever game shows this prompt. The main Language Quest lesson
+    // route already strips this via languageQuestPracticePrompt(); Word
+    // Trail and Daily Quest both build their decks from this same
+    // normalizeChallenge() and need the same redaction.
+    prompt: languageQuestPracticePrompt(decodeEntities(challenge.question)),
     options,
     correctOptionId: correct[0].id,
     explanation: `The correct answer is “${decodeEntities(correct[0].text)}”.`,

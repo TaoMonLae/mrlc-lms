@@ -1,4 +1,4 @@
-export type LanguageQuestVoiceProvider = "voxcpm" | "browser";
+export type LanguageQuestVoiceProvider = "kokoro" | "browser";
 
 const SPEECH_LOCALES: Record<string, string> = {
   english: "en-US",
@@ -14,20 +14,27 @@ const SPEECH_LOCALES: Record<string, string> = {
   japanese: "ja-JP",
 };
 
-// VoxCPM2's published language list includes these Language Quest languages.
-// Mon is deliberately omitted and continues to use an installed browser voice.
-const VOXCPM_LANGUAGE_KEYS = new Set([
-  "english",
-  "spanish",
-  "chinese",
-  "mandarin",
-  "mandarin chinese",
-  "burmese",
-  "myanmar",
-  "french",
-  "italian",
-  "japanese",
-]);
+export interface LanguageQuestKokoroVoice {
+  // Kokoro-82M groups its voices by a single-letter language code
+  // (see https://huggingface.co/hexgrad/Kokoro-82M/blob/main/VOICES.md).
+  langCode: string;
+  // The highest "Overall Grade" named voice published for that language code.
+  voice: string;
+}
+
+// Kokoro-82M's published voice list (VOICES.md) covers these Language Quest
+// languages. It has no Burmese/Myanmar voice, so Burmese continues to use an
+// installed browser voice, same as Mon already does.
+const KOKORO_VOICE_BY_LANGUAGE: Record<string, LanguageQuestKokoroVoice> = {
+  english: { langCode: "a", voice: "af_heart" },
+  spanish: { langCode: "e", voice: "ef_dora" },
+  chinese: { langCode: "z", voice: "zf_xiaoxiao" },
+  mandarin: { langCode: "z", voice: "zf_xiaoxiao" },
+  "mandarin chinese": { langCode: "z", voice: "zf_xiaoxiao" },
+  french: { langCode: "f", voice: "ff_siwis" },
+  italian: { langCode: "i", voice: "if_sara" },
+  japanese: { langCode: "j", voice: "jf_alpha" },
+};
 
 export const LANGUAGE_QUEST_VOICE_MAX_TEXT_LENGTH = 500;
 
@@ -40,8 +47,12 @@ export function languageQuestSpeechLocale(language: string): string {
   return SPEECH_LOCALES[normalized] || language;
 }
 
-export function voxCpmSupportsLanguage(language: unknown): boolean {
-  return VOXCPM_LANGUAGE_KEYS.has(normalizeLanguageQuestLanguage(language));
+export function kokoroSupportsLanguage(language: unknown): boolean {
+  return normalizeLanguageQuestLanguage(language) in KOKORO_VOICE_BY_LANGUAGE;
+}
+
+export function languageQuestKokoroVoice(language: unknown): LanguageQuestKokoroVoice | null {
+  return KOKORO_VOICE_BY_LANGUAGE[normalizeLanguageQuestLanguage(language)] ?? null;
 }
 
 export function normalizeLanguageQuestSpeechText(value: unknown): string | null {

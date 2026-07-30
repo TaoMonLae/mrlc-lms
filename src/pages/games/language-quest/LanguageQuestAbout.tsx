@@ -218,7 +218,7 @@ export default function LanguageQuestAbout() {
             <h2 className="mt-4 text-xl font-black">Learning support</h2>
             <p className="mt-2 text-sm leading-7 text-violet-100">
               Chinese pronunciation is generated with tone-marked Pinyin beneath each Hanzi. Supported courses can use the Apache-2.0-licensed{' '}
-              <SourceLink href="https://github.com/OpenBMB/VoxCPM">OpenBMB/VoxCPM</SourceLink>{' '}
+              <SourceLink href="https://huggingface.co/hexgrad/Kokoro-82M">hexgrad/Kokoro-82M</SourceLink>{' '}
               teacher voice, with an automatic browser-voice fallback.
             </p>
           </div>

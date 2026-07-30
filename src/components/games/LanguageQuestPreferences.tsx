@@ -31,9 +31,11 @@ function storeBoolean(key: string, value: boolean): void {
 
 function storedVoiceProvider(): LanguageQuestVoiceProvider {
   try {
-    return window.localStorage.getItem('lq-voice-provider') === 'browser' ? 'browser' : 'voxcpm';
+    // Any legacy stored value (e.g. the old "voxcpm" provider) other than
+    // "browser" falls through to the current default provider.
+    return window.localStorage.getItem('lq-voice-provider') === 'browser' ? 'browser' : 'kokoro';
   } catch {
-    return 'voxcpm';
+    return 'kokoro';
   }
 }
 
