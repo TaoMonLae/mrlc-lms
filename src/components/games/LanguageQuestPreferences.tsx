@@ -1,10 +1,13 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import type { LanguageQuestVoiceProvider } from '@/shared/languageQuestVoice';
 
 interface LanguageQuestPreferencesValue {
   soundEnabled: boolean;
   reducedMotion: boolean;
+  voiceProvider: LanguageQuestVoiceProvider;
   setSoundEnabled: (enabled: boolean) => void;
   setReducedMotion: (enabled: boolean) => void;
+  setVoiceProvider: (provider: LanguageQuestVoiceProvider) => void;
 }
 
 const PreferencesContext = createContext<LanguageQuestPreferencesValue | null>(null);
@@ -26,12 +29,21 @@ function storeBoolean(key: string, value: boolean): void {
   }
 }
 
+function storedVoiceProvider(): LanguageQuestVoiceProvider {
+  try {
+    return window.localStorage.getItem('lq-voice-provider') === 'browser' ? 'browser' : 'voxcpm';
+  } catch {
+    return 'voxcpm';
+  }
+}
+
 export function LanguageQuestPreferencesProvider({ children }: { children: React.ReactNode }) {
   const [soundEnabled, setSoundEnabledState] = useState(() => storedBoolean('lq-sound-enabled', true));
   const [reducedMotion, setReducedMotionState] = useState(() => storedBoolean(
     'lq-reduced-motion',
     window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false,
   ));
+  const [voiceProvider, setVoiceProviderState] = useState<LanguageQuestVoiceProvider>(storedVoiceProvider);
 
   const setSoundEnabled = (enabled: boolean) => {
     setSoundEnabledState(enabled);
@@ -41,6 +53,14 @@ export function LanguageQuestPreferencesProvider({ children }: { children: React
     setReducedMotionState(enabled);
     storeBoolean('lq-reduced-motion', enabled);
   };
+  const setVoiceProvider = (provider: LanguageQuestVoiceProvider) => {
+    setVoiceProviderState(provider);
+    try {
+      window.localStorage.setItem('lq-voice-provider', provider);
+    } catch {
+      // Keep the in-memory preference usable when storage is unavailable.
+    }
+  };
 
   useEffect(() => {
     document.documentElement.classList.toggle('lq-reduced-motion', reducedMotion);
@@ -48,8 +68,8 @@ export function LanguageQuestPreferencesProvider({ children }: { children: React
   }, [reducedMotion]);
 
   const value = useMemo(
-    () => ({ soundEnabled, reducedMotion, setSoundEnabled, setReducedMotion }),
-    [soundEnabled, reducedMotion],
+    () => ({ soundEnabled, reducedMotion, voiceProvider, setSoundEnabled, setReducedMotion, setVoiceProvider }),
+    [soundEnabled, reducedMotion, voiceProvider],
   );
   return <PreferencesContext.Provider value={value}>{children}</PreferencesContext.Provider>;
 }

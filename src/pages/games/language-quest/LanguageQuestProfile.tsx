@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowLeft,
+  AudioLines,
   BookOpen,
   Check,
   Copy,
@@ -57,7 +58,14 @@ interface LearnerProfilePayload {
 
 export default function LanguageQuestProfile() {
   const { updateUser } = useAuth();
-  const { soundEnabled, reducedMotion, setSoundEnabled, setReducedMotion } = useLanguageQuestPreferences();
+  const {
+    soundEnabled,
+    reducedMotion,
+    voiceProvider,
+    setSoundEnabled,
+    setReducedMotion,
+    setVoiceProvider,
+  } = useLanguageQuestPreferences();
   const [profile, setProfile] = useState<LearnerProfilePayload | null>(null);
   const [avatarId, setAvatarId] = useState('owl');
   const [bio, setBio] = useState('');
@@ -234,6 +242,39 @@ export default function LanguageQuestProfile() {
             </span>
             <Switch checked={reducedMotion} onCheckedChange={setReducedMotion} aria-label="Reduce motion" />
           </label>
+          <div className="rounded-2xl border border-slate-200 p-4 dark:border-slate-700 sm:col-span-2">
+            <div className="flex items-start gap-4">
+              <AudioLines className="mt-0.5 h-5 w-5 shrink-0 text-fuchsia-600" />
+              <span className="min-w-0 flex-1">
+                <span className="block font-black text-slate-900 dark:text-white">Lesson voice</span>
+                <span className="text-xs leading-5 text-slate-500 dark:text-slate-400">
+                  VoxCPM provides a clearer built-in AI teacher voice when the local service supports the course language. Language Quest automatically uses your browser voice if it is offline or unsupported.
+                </span>
+              </span>
+            </div>
+            <div className="mt-4 grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Lesson voice">
+              {([
+                ['voxcpm', 'VoxCPM teacher voice', 'Built-in, multilingual, with automatic fallback'],
+                ['browser', 'Browser voice', 'Uses a speech voice installed on this device'],
+              ] as const).map(([value, title, description]) => (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={voiceProvider === value}
+                  onClick={() => setVoiceProvider(value)}
+                  className={`rounded-xl border px-4 py-3 text-left transition ${
+                    voiceProvider === value
+                      ? 'border-fuchsia-500 bg-fuchsia-50 ring-2 ring-fuchsia-200 dark:bg-fuchsia-500/10 dark:ring-fuchsia-500/20'
+                      : 'border-slate-200 hover:border-fuchsia-300 dark:border-slate-700'
+                  }`}
+                >
+                  <span className="block text-sm font-black text-slate-900 dark:text-white">{title}</span>
+                  <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">{description}</span>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 

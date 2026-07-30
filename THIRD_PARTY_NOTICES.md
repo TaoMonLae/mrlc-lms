@@ -59,6 +59,16 @@ to the project by its owner. The source file does not include a license notice.
 Confirm the curriculum's redistribution rights before distributing it outside
 the school's authorized use.
 
+## OpenBMB VoxCPM
+
+Language Quest optionally integrates with
+[`OpenBMB/VoxCPM`](https://github.com/OpenBMB/VoxCPM) as a separately installed
+multilingual text-to-speech service. VoxCPM and its model weights are not
+bundled in this repository. The upstream project is licensed under the
+[Apache License 2.0](https://github.com/OpenBMB/VoxCPM/blob/main/LICENSE).
+
+Copyright 2024 OpenBMB
+
 ## Linguify CEFR vocabulary courses
 
 English Vocabulary A1: Foundations through English Vocabulary C2: Mastery

@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { languageQuestLookupWord } from '@/shared/languageQuest';
+import { useLanguageQuestPreferences } from '@/src/components/games/LanguageQuestPreferences';
+import { cancelLanguageQuestVoice, speakLanguageQuestVoice } from '@/src/lib/languageQuestVoice';
 
 interface DictionaryEntry {
   posLabel: string;
@@ -52,16 +54,8 @@ const MON_LANGUAGE_LABELS: Record<string, string> = {
   tha: 'Thai',
 };
 
-function pronounce(word: string) {
-  if (!('speechSynthesis' in window)) return;
-  const utterance = new SpeechSynthesisUtterance(word);
-  utterance.lang = 'en-US';
-  utterance.rate = 0.88;
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(utterance);
-}
-
 export function LanguageQuestDictionary() {
+  const { voiceProvider } = useLanguageQuestPreferences();
   const [selectionPrompt, setSelectionPrompt] = useState<SelectionPrompt | null>(null);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -70,6 +64,9 @@ export function LanguageQuestDictionary() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const controllerRef = useRef<AbortController | null>(null);
+  const pronounce = (word: string) => {
+    void speakLanguageQuestVoice(word, 'English', voiceProvider);
+  };
 
   useEffect(() => {
     const captureSelection = () => {
@@ -111,6 +108,7 @@ export function LanguageQuestDictionary() {
       document.removeEventListener('mouseup', onMouseUp);
       document.removeEventListener('touchend', onTouchEnd);
       controllerRef.current?.abort();
+      cancelLanguageQuestVoice();
     };
   }, []);
 

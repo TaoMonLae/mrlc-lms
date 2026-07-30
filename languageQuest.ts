@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import express from "express";
+import rateLimit from "express-rate-limit";
 import {
   LANGUAGE_QUEST_FIRST_CLEAR_POINTS,
   LANGUAGE_QUEST_MAX_HEARTS,
@@ -33,6 +34,12 @@ import { chineseConversationStarterCourse } from "./languageQuestChineseConversa
 import { englishWordCourses } from "./languageQuestEnglishWordCourses";
 import { advancedEnglishCourses } from "./languageQuestAdvancedEnglishCourses";
 import { linguifyCefrCourses } from "./languageQuestLinguifyCourses";
+import { languageQuestVoiceServiceFromEnv } from "./languageQuestVoice";
+import {
+  LANGUAGE_QUEST_VOICE_MAX_TEXT_LENGTH,
+  normalizeLanguageQuestSpeechText,
+  voxCpmSupportsLanguage,
+} from "./shared/languageQuestVoice";
 
 interface JwtPayload { userId: string; role: string; email: string; externalLearner?: boolean; }
 
@@ -505,6 +512,18 @@ export function canAttemptNewChallenge(hearts: number, alreadyCompleted: boolean
 
 export function registerLanguageQuestRoutes(deps: Deps): void {
   const { app, prisma, authMiddleware, createAuditLog, logger } = deps;
+  const voiceService = languageQuestVoiceServiceFromEnv();
+  const voiceLimiter = rateLimit({
+    windowMs: 60_000,
+    max: 20,
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req) => String((req as any).user.userId),
+    message: {
+      error: "Please wait before requesting more lesson audio",
+      code: "VOICE_RATE_LIMITED",
+    },
+  });
 
   // Public catalog intentionally exposes only published course marketing
   // details and counts. Lessons, answers, progress, and learner identities
@@ -545,6 +564,53 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
     } catch (error) {
       logger.error("Error loading the public Language Quest catalog:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load the course catalog" });
+    }
+  });
+
+  app.get("/api/language-quest/voice", authMiddleware, (_req, res) => {
+    res.json({
+      provider: voiceService.enabled ? "voxcpm" : "browser",
+      enabled: voiceService.enabled,
+      model: voiceService.enabled ? voiceService.model : null,
+    });
+  });
+
+  app.post("/api/language-quest/voice", authMiddleware, voiceLimiter, async (req, res) => {
+    const text = normalizeLanguageQuestSpeechText(req.body?.text);
+    const language = typeof req.body?.language === "string" ? req.body.language : "";
+    if (!text) {
+      res.status(422).json({
+        error: `Voice text must contain 1-${LANGUAGE_QUEST_VOICE_MAX_TEXT_LENGTH} characters`,
+        code: "INVALID_VOICE_TEXT",
+      });
+      return;
+    }
+    if (!voxCpmSupportsLanguage(language)) {
+      res.status(422).json({
+        error: "This course language uses the browser voice",
+        code: "VOICE_LANGUAGE_UNSUPPORTED",
+      });
+      return;
+    }
+    if (!voiceService.enabled) {
+      res.status(503).json({
+        error: "VoxCPM is offline; use the browser voice",
+        code: "VOICE_PROVIDER_UNAVAILABLE",
+      });
+      return;
+    }
+    try {
+      const audio = await voiceService.synthesize(text, language);
+      res.setHeader("Content-Type", audio.contentType);
+      res.setHeader("Content-Length", String(audio.data.length));
+      res.setHeader("Cache-Control", "private, max-age=3600");
+      res.send(audio.data);
+    } catch (error) {
+      logger.warn?.("VoxCPM Language Quest synthesis failed:", error);
+      res.status(503).json({
+        error: "VoxCPM could not generate speech; use the browser voice",
+        code: "VOICE_PROVIDER_UNAVAILABLE",
+      });
     }
   });
 

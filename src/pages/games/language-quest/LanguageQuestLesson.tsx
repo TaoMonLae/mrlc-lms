@@ -13,6 +13,10 @@ import { LanguageQuestPinyinText } from '@/src/components/games/LanguageQuestPin
 import { LanguageQuestRewardReveal } from '@/src/components/games/LanguageQuestRewards';
 import { useLanguageQuestPreferences } from '@/src/components/games/LanguageQuestPreferences';
 import { playLanguageQuestSuccessSound } from '@/src/lib/languageQuestAudio';
+import {
+  cancelLanguageQuestVoice,
+  speakLanguageQuestVoice,
+} from '@/src/lib/languageQuestVoice';
 
 interface AnswerResult {
   correct: boolean;
@@ -23,39 +27,9 @@ interface AnswerResult {
   unlockedRewardIds: string[];
 }
 
-function speechLocale(language: string): string {
-  const locales: Record<string, string> = {
-    english: 'en-US',
-    spanish: 'es-ES',
-    chinese: 'zh-CN',
-    mandarin: 'zh-CN',
-    'mandarin chinese': 'zh-CN',
-    burmese: 'my-MM',
-    myanmar: 'my-MM',
-    mon: 'mnw-MM',
-    french: 'fr-FR',
-    italian: 'it-IT',
-    japanese: 'ja-JP',
-  };
-  return locales[language.trim().toLowerCase()] || language;
-}
-
-function speak(value: string, language: string) {
-  if (!('speechSynthesis' in window)) {
-    toast.info('Speech is not supported by this browser');
-    return;
-  }
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(value);
-  utterance.lang = speechLocale(language);
-  utterance.rate = 0.88;
-  utterance.pitch = 1;
-  window.speechSynthesis.speak(utterance);
-}
-
 export default function LanguageQuestLesson() {
   const { explanationLanguage, lq } = useLanguageQuestSupport();
-  const { soundEnabled, reducedMotion } = useLanguageQuestPreferences();
+  const { soundEnabled, reducedMotion, voiceProvider } = useLanguageQuestPreferences();
   const { lessonId } = useParams<{ lessonId: string }>();
   const [lesson, setLesson] = useState<LanguageQuestLessonPayload | null>(null);
   const [loading, setLoading] = useState(true);
@@ -78,6 +52,11 @@ export default function LanguageQuestLesson() {
   const [spellingFeedback, setSpellingFeedback] = useState<'correct' | 'incorrect' | null>(null);
   const [unlockedRewardId, setUnlockedRewardId] = useState<string | null>(null);
   const [rewardRevealOpen, setRewardRevealOpen] = useState(false);
+  const speak = (value: string, language: string) => {
+    void speakLanguageQuestVoice(value, language, voiceProvider).then((result) => {
+      if (result === 'unavailable') toast.info('Speech is not supported by this browser');
+    });
+  };
 
   useEffect(() => {
     if (!lessonId) return;
@@ -108,7 +87,7 @@ export default function LanguageQuestLesson() {
       .catch(() => setPreview(null))
       .finally(() => setPreviewLoading(false));
 
-    return () => { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); };
+    return cancelLanguageQuestVoice;
   }, [lessonId]);
 
   // Nothing to teach (or the preview failed to load) — go straight to the quiz.

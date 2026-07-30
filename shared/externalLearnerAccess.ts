@@ -44,6 +44,7 @@ export function isExternalLearnerApiRequestAllowed(method: string, value: string
       || pathname === "/api/language-quest/leaderboard"
       || pathname === "/api/language-quest/engagement"
       || pathname === "/api/language-quest/mastery"
+      || pathname === "/api/language-quest/voice"
       || /^\/api\/language-quest\/courses\/[^/]+$/.test(pathname)
       || /^\/api\/language-quest\/lessons\/[^/]+(?:\/preview)?$/.test(pathname)
     );
@@ -54,6 +55,7 @@ export function isExternalLearnerApiRequestAllowed(method: string, value: string
       pathname === "/api/auth/logout"
       || pathname === "/api/auth/change-password"
       || pathname === "/api/language-quest/profile/classrooms"
+      || pathname === "/api/language-quest/voice"
       || /^\/api\/language-quest\/challenges\/[^/]+\/answer$/.test(pathname)
       || /^\/api\/language-quest\/mastery\/[^/]+\/answer$/.test(pathname)
       || /^\/api\/language-quest\/missions\/[^/]+\/claim$/.test(pathname)

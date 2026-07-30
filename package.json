@@ -15,6 +15,7 @@
     "generate:language-quest-english-words": "node scripts/generate-language-quest-english-word-courses.mjs",
     "generate:language-quest-advanced-english": "node scripts/generate-language-quest-advanced-english-courses.mjs",
     "generate:language-quest-linguify": "node scripts/generate-language-quest-linguify-courses.mjs",
+    "voice:voxcpm": "VoxCPM/.venv/bin/python scripts/voxcpm_language_quest_api.py --host 127.0.0.1 --port 8810 --device auto",
     "smoke": "node scripts/smoke-test.mjs",
     "test": "npm run test:unit",
     "test:unit": "node --import tsx --test tests/unit/*.test.ts",

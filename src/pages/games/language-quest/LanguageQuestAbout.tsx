@@ -217,7 +217,9 @@ export default function LanguageQuestAbout() {
             <BookOpen className="h-7 w-7 text-violet-200" />
             <h2 className="mt-4 text-xl font-black">Learning support</h2>
             <p className="mt-2 text-sm leading-7 text-violet-100">
-              Chinese pronunciation is generated with tone-marked Pinyin and displayed beneath each Hanzi. Speech playback uses available browser voices.
+              Chinese pronunciation is generated with tone-marked Pinyin beneath each Hanzi. Supported courses can use the Apache-2.0-licensed{' '}
+              <SourceLink href="https://github.com/OpenBMB/VoxCPM">OpenBMB/VoxCPM</SourceLink>{' '}
+              teacher voice, with an automatic browser-voice fallback.
             </p>
           </div>
         </section>
