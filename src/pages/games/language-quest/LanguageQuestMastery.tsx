@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Brain, CheckCircle2, Clock3, Flame, Link2, RotateCcw, Sparkles, Star, Trophy, Zap } from 'lucide-react';
+import { ArrowLeft, Brain, CheckCircle2, Clock3, Flame, Link2, RotateCcw, Sparkles, Star, Trophy, Volume2, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,14 +10,25 @@ import { apiGet, apiSend } from '@/src/lib/api';
 import type { LanguageQuestOption, LanguageQuestProfile } from '@/src/types/languageQuest';
 import { LanguageQuestPinyinText } from '@/src/components/games/LanguageQuestPinyinText';
 import { LanguageQuestReorderTiles } from '@/src/components/games/LanguageQuestReorderTiles';
+import { LanguageQuestMatchingBoard } from '@/src/components/games/LanguageQuestMatchingBoard';
 import { useLanguageQuestPreferences } from '@/src/components/games/LanguageQuestPreferences';
 import { playLanguageQuestSuccessSound } from '@/src/lib/languageQuestAudio';
+import { speakLanguageQuestVoice } from '@/src/lib/languageQuestVoice';
 import { LanguageQuestRewardReveal } from '@/src/components/games/LanguageQuestRewards';
 
 interface MasteryCard {
   challengeId: string;
   stage: number;
-  type: 'SELECT' | 'ASSIST' | 'CLOZE' | 'ODD_ONE_OUT' | 'REORDER';
+  type:
+    | 'SELECT'
+    | 'ASSIST'
+    | 'CLOZE'
+    | 'ODD_ONE_OUT'
+    | 'REORDER'
+    | 'MATCHING'
+    | 'MINIMAL_PAIR_LISTENING'
+    | 'DICTATION'
+    | 'GRAMMAR_TRANSFORM';
   question: string;
   course: { id: string; title: string; language: string; accentColor: string };
   options: LanguageQuestOption[];
@@ -49,13 +60,20 @@ interface MasteryResult {
 const LIGHTNING_SECONDS = 12;
 
 export default function LanguageQuestMastery() {
-  const { soundEnabled, reducedMotion } = useLanguageQuestPreferences();
+  const { soundEnabled, reducedMotion, voiceProvider } = useLanguageQuestPreferences();
   const [searchParams, setSearchParams] = useSearchParams();
   const [payload, setPayload] = useState<MasteryPayload | null>(null);
   const [index, setIndex] = useState(0);
   const [selectedId, setSelectedId] = useState('');
   const [orderedIds, setOrderedIds] = useState<string[]>([]);
+  const [matchedPairs, setMatchedPairs] = useState<[string, string][]>([]);
+  const [dictationAnswer, setDictationAnswer] = useState('');
   const [result, setResult] = useState<MasteryResult | null>(null);
+  const speak = (value: string, language: string) => {
+    void speakLanguageQuestVoice(value, language, voiceProvider).then((outcome) => {
+      if (outcome === 'unavailable') toast.info('Speech is not supported by this browser');
+    });
+  };
   const [checking, setChecking] = useState(false);
   const [sessionXp, setSessionXp] = useState(0);
   const [unlockedAwardId, setUnlockedAwardId] = useState<string | null>(null);
@@ -79,6 +97,8 @@ export default function LanguageQuestMastery() {
         setIndex(0);
         setSelectedId('');
         setOrderedIds([]);
+        setMatchedPairs([]);
+        setDictationAnswer('');
         setResult(null);
         setTimedOut(false);
       })
@@ -129,16 +149,31 @@ export default function LanguageQuestMastery() {
   }, [timedOut]);
 
   const isReorder = card?.type === 'REORDER';
-  const canCheck = isReorder ? orderedIds.length === (card?.options.length ?? -1) : Boolean(selectedId);
+  const isMatching = card?.type === 'MATCHING';
+  const isDictation = card?.type === 'DICTATION';
+  const canCheck = isReorder
+    ? orderedIds.length === (card?.options.length ?? -1)
+    : isMatching
+      ? matchedPairs.length * 2 === (card?.options.length ?? -1)
+      : isDictation
+        ? dictationAnswer.trim().length > 0
+        : Boolean(selectedId);
 
   const check = async () => {
     if (!card || !canCheck || checking || timedOut) return;
     setChecking(true);
     try {
+      const body = isReorder
+        ? { orderedOptionIds: orderedIds }
+        : isMatching
+          ? { matchedPairs }
+          : isDictation
+            ? { typedAnswer: dictationAnswer }
+            : { optionId: selectedId };
       const answer = await apiSend<MasteryResult>(
         `/api/language-quest/mastery/${card.challengeId}/answer`,
         'POST',
-        isReorder ? { orderedOptionIds: orderedIds } : { optionId: selectedId },
+        body,
       );
       setResult(answer);
       setReviewsToday((current) => current + 1);
@@ -174,6 +209,8 @@ export default function LanguageQuestMastery() {
     setIndex((current) => current + 1);
     setSelectedId('');
     setOrderedIds([]);
+    setMatchedPairs([]);
+    setDictationAnswer('');
     setResult(null);
     setTimedOut(false);
   };
@@ -286,6 +323,32 @@ export default function LanguageQuestMastery() {
               onChange={setOrderedIds}
               disabled={Boolean(result) || timedOut}
             />
+          ) : isMatching ? (
+            <LanguageQuestMatchingBoard
+              options={card.options}
+              value={matchedPairs}
+              onChange={setMatchedPairs}
+              disabled={Boolean(result) || timedOut}
+            />
+          ) : isDictation ? (
+            <div className="mt-6 space-y-4">
+              <Button
+                type="button"
+                variant="outline"
+                className="gap-2"
+                onClick={() => speak(card.options[0]?.audioText || card.options[0]?.text || card.question, card.course.language)}
+              >
+                <Volume2 className="h-4 w-4" /> Play audio
+              </Button>
+              <input
+                autoFocus
+                value={dictationAnswer}
+                onChange={(event) => setDictationAnswer(event.target.value)}
+                disabled={Boolean(result) || timedOut}
+                placeholder="Type what you hear…"
+                className="w-full rounded-2xl border-2 border-slate-200 bg-white p-4 text-lg font-semibold text-slate-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100 disabled:opacity-70 dark:border-surface-raised dark:bg-surface-indigo dark:text-white"
+              />
+            </div>
           ) : (
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
             {card.options.map((option) => {

@@ -3978,7 +3978,7 @@ model LanguageQuestChallenge {
   id       String              @id @default(uuid())
   lessonId String
   lesson   LanguageQuestLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  type     String              @default("SELECT") // SELECT | ASSIST | CLOZE | ODD_ONE_OUT | REORDER
+  type     String              @default("SELECT") // SELECT | ASSIST | CLOZE | ODD_ONE_OUT | REORDER | MATCHING | MINIMAL_PAIR_LISTENING | DICTATION | GRAMMAR_TRANSFORM
   question String
   order    Int
 

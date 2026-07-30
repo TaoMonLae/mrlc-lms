@@ -12,12 +12,21 @@ export function languageQuestSpeechInputSupported(): boolean {
   return Boolean((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
 }
 
-/** Maps a Language Quest course language to a BCP-47 speech recognition locale. */
+/**
+ * Maps a Language Quest course language to a BCP-47 speech recognition
+ * locale. Originally written for Chinese only; now covers every language
+ * with a Language Quest course so the spoken-answer option (spelling and
+ * sentence practice) can be offered broadly rather than gated to one
+ * language. Anything not explicitly listed falls back to en-US, which still
+ * lets the browser attempt recognition (imperfectly) rather than hiding the
+ * mic entirely.
+ */
 export function languageQuestSpeechLocale(language: string): string {
   const normalized = language.trim().toLowerCase();
   if (normalized.includes("chinese") || normalized.includes("mandarin")) return "zh-CN";
   if (normalized.includes("spanish")) return "es-ES";
   if (normalized.includes("burmese") || normalized.includes("myanmar")) return "my-MM";
+  if (normalized.includes("malay") || normalized.includes("bahasa")) return "ms-MY";
   return "en-US";
 }
 

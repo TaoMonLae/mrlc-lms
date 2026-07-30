@@ -2,11 +2,14 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   bossBattleResult,
+  isValidMatchingSubmission,
   isValidReorderSubmission,
   languageQuestPracticePrompt,
   languageQuestLookupWord,
+  matchingChallengeIsCorrect,
   nextLanguageQuestStreak,
   normalizeSentenceAnswer,
+  pairedMatchAnswerSummary,
   reorderChallengeIsCorrect,
   sentenceAnswerMatches,
 } from "../../shared/languageQuest";
@@ -570,6 +573,47 @@ test("isValidReorderSubmission rejects anything that isn't a genuine permutation
   assert.equal(isValidReorderSubmission(canonical, undefined), false);
 });
 
+test("matchingChallengeIsCorrect only accepts pairs that share a canonical pair index", () => {
+  // Three pairs: (a0,a1), (b0,b1), (c0,c1) -- index 2k/2k+1 per pair.
+  const canonical = ["a0", "a1", "b0", "b1", "c0", "c1"];
+
+  assert.equal(matchingChallengeIsCorrect(canonical, [["a0", "a1"], ["b0", "b1"], ["c0", "c1"]]), true);
+  // Order of the pairs, and order within a pair, doesn't matter.
+  assert.equal(matchingChallengeIsCorrect(canonical, [["c1", "c0"], ["a1", "a0"], ["b0", "b1"]]), true);
+  // One wrong pairing fails the whole submission.
+  assert.equal(matchingChallengeIsCorrect(canonical, [["a0", "b1"], ["b0", "a1"], ["c0", "c1"]]), false);
+  assert.equal(matchingChallengeIsCorrect(canonical, null), false);
+  assert.equal(matchingChallengeIsCorrect(canonical, []), false);
+});
+
+test("isValidMatchingSubmission rejects anything that isn't a genuine full pairing", () => {
+  const canonical = ["a0", "a1", "b0", "b1", "c0", "c1"];
+
+  // Well-formed: every tile paired exactly once, any grouping.
+  assert.equal(isValidMatchingSubmission(canonical, [["a0", "b1"], ["b0", "a1"], ["c0", "c1"]]), true);
+
+  // Wrong pair count.
+  assert.equal(isValidMatchingSubmission(canonical, [["a0", "a1"], ["b0", "b1"]]), false);
+  // A tile paired with itself.
+  assert.equal(isValidMatchingSubmission(canonical, [["a0", "a0"], ["b0", "b1"], ["c0", "c1"]]), false);
+  // A tile reused across two pairs, leaving another tile unpaired.
+  assert.equal(isValidMatchingSubmission(canonical, [["a0", "a1"], ["a0", "b1"], ["c0", "c1"]]), false);
+  // Id that doesn't belong to this challenge at all.
+  assert.equal(isValidMatchingSubmission(canonical, [["a0", "a1"], ["b0", "b1"], ["c0", "z"]]), false);
+  // Missing / malformed submissions.
+  assert.equal(isValidMatchingSubmission(canonical, null), false);
+  assert.equal(isValidMatchingSubmission(canonical, undefined), false);
+});
+
+test("pairedMatchAnswerSummary joins consecutive option pairs as a readable left-to-right list", () => {
+  const options = [
+    { text: "Selamat pagi" }, { text: "Good morning" },
+    { text: "Terima kasih" }, { text: "Thank you" },
+  ];
+  assert.equal(pairedMatchAnswerSummary(options), "Selamat pagi → Good morning; Terima kasih → Thank you");
+  assert.equal(pairedMatchAnswerSummary([]), "");
+});
+
 test("the ranked advanced English courses have a valid progression", () => {
   const lessons = advancedEnglishCourses.flatMap((course) => course.units.flatMap((unit) => unit.lessons));
   const challenges = lessons.flatMap((lesson) => lesson.challenges);
@@ -661,6 +705,14 @@ test("the Malay CEFR import produces five complete, unpublished A1-C1 courses", 
   }));
   assert.ok(challenges.some((challenge) => challenge.type === "REORDER"));
   assert.ok(challenges.some((challenge) => challenge.type === "CLOZE"));
+  assert.ok(challenges.some((challenge) => challenge.type === "MINIMAL_PAIR_LISTENING"));
+  // The homograph minimal-pair source exercise ("perang" = war vs. blond/
+  // brown) can't become a MINIMAL_PAIR_LISTENING challenge -- its two option
+  // texts would be identical -- so every MINIMAL_PAIR_LISTENING challenge
+  // that *was* generated must have two genuinely distinct option texts.
+  assert.ok(challenges.filter((challenge) => challenge.type === "MINIMAL_PAIR_LISTENING").every(
+    (challenge) => challenge.options[0].text.trim().toLowerCase() !== challenge.options[1].text.trim().toLowerCase(),
+  ));
   assert.ok(challenges.every(
     (challenge) => challenge.options.every((option) => option.audioText === option.text),
   ));

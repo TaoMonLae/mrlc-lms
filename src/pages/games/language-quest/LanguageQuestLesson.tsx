@@ -12,6 +12,7 @@ import { useLanguageQuestSupport } from '@/src/components/games/LanguageQuestSup
 import { LanguageQuestPinyinText } from '@/src/components/games/LanguageQuestPinyinText';
 import { LanguageQuestPhaseStepper } from '@/src/components/games/LanguageQuestPhaseStepper';
 import { LanguageQuestReorderTiles } from '@/src/components/games/LanguageQuestReorderTiles';
+import { LanguageQuestMatchingBoard } from '@/src/components/games/LanguageQuestMatchingBoard';
 import { LanguageQuestCompanion } from '@/src/components/games/LanguageQuestCompanion';
 import { LanguageQuestRewardReveal } from '@/src/components/games/LanguageQuestRewards';
 import { useLanguageQuestPreferences } from '@/src/components/games/LanguageQuestPreferences';
@@ -63,6 +64,8 @@ export default function LanguageQuestLesson() {
   const [index, setIndex] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [orderedIds, setOrderedIds] = useState<string[]>([]);
+  const [matchedPairs, setMatchedPairs] = useState<[string, string][]>([]);
+  const [dictationAnswer, setDictationAnswer] = useState('');
   const [answer, setAnswer] = useState<AnswerResult | null>(null);
   const [checking, setChecking] = useState(false);
   const [sessionPoints, setSessionPoints] = useState(0);
@@ -95,6 +98,8 @@ export default function LanguageQuestLesson() {
     setIndex(0);
     setSelectedId(null);
     setOrderedIds([]);
+    setMatchedPairs([]);
+    setDictationAnswer('');
     setAnswer(null);
     setSessionPoints(0);
     setCombo(0);
@@ -175,7 +180,8 @@ export default function LanguageQuestLesson() {
   // Optional spoken-answer input: the recognized transcript just gets typed
   // into the same spelling input, so it's graded by the exact same
   // pinyin/Hanzi-aware matching -- no separate speech-scoring path to keep
-  // in sync with checkSpelling().
+  // in sync with checkSpelling(). Originally Chinese-only; now offered for
+  // every course language (languageQuestSpeechLocale() covers all of them).
   const toggleSpellingListening = () => {
     if (listening) {
       speechSessionRef.current?.stop();
@@ -187,6 +193,35 @@ export default function LanguageQuestLesson() {
         if (transcript.trim()) {
           setSpellingInput(transcript.trim());
           setSpellingFeedback(null);
+        }
+      },
+      onEnd: () => setListening(false),
+      onError: (message) => {
+        toast.error(message);
+        setListening(false);
+      },
+    });
+    if (!session) {
+      toast.info('Voice input is not supported by this browser');
+      return;
+    }
+    speechSessionRef.current = session;
+    setListening(true);
+  };
+
+  // Same pattern as toggleSpellingListening(), for the sentence-building
+  // input instead.
+  const toggleSentenceListening = () => {
+    if (listening) {
+      speechSessionRef.current?.stop();
+      return;
+    }
+    if (!lesson) return;
+    const session = listenForLanguageQuestSpeech(languageQuestSpeechLocale(lesson.course.language), {
+      onResult: (transcript) => {
+        if (transcript.trim()) {
+          setSentenceInput(transcript.trim());
+          setSentenceFeedback(null);
         }
       },
       onEnd: () => setListening(false),
@@ -249,16 +284,31 @@ export default function LanguageQuestLesson() {
   };
 
   const isReorder = challenge?.type === 'REORDER';
-  const canCheck = isReorder ? orderedIds.length === (challenge?.options.length ?? -1) : Boolean(selectedId);
+  const isMatching = challenge?.type === 'MATCHING';
+  const isDictation = challenge?.type === 'DICTATION';
+  const canCheck = isReorder
+    ? orderedIds.length === (challenge?.options.length ?? -1)
+    : isMatching
+      ? matchedPairs.length * 2 === (challenge?.options.length ?? -1)
+      : isDictation
+        ? dictationAnswer.trim().length > 0
+        : Boolean(selectedId);
 
   const checkAnswer = async () => {
     if (!challenge || !canCheck || checking || answer) return;
     setChecking(true);
     try {
+      const body = isReorder
+        ? { orderedOptionIds: orderedIds }
+        : isMatching
+          ? { matchedPairs }
+          : isDictation
+            ? { typedAnswer: dictationAnswer }
+            : { optionId: selectedId };
       const result = await apiSend<AnswerResult>(
         `/api/language-quest/challenges/${challenge.id}/answer`,
         'POST',
-        isReorder ? { orderedOptionIds: orderedIds } : { optionId: selectedId },
+        body,
       );
       setAnswer(result);
       setProfile(result.profile);
@@ -298,6 +348,8 @@ export default function LanguageQuestLesson() {
     if (answer.correct) setIndex((current) => current + 1);
     setSelectedId(null);
     setOrderedIds([]);
+    setMatchedPairs([]);
+    setDictationAnswer('');
     setAnswer(null);
   };
 
@@ -320,6 +372,8 @@ export default function LanguageQuestLesson() {
     setSessionPoints(0);
     setSelectedId(null);
     setOrderedIds([]);
+    setMatchedPairs([]);
+    setDictationAnswer('');
     setAnswer(null);
     setCombo(0);
     setUnlockedRewardId(null);
@@ -372,10 +426,11 @@ export default function LanguageQuestLesson() {
       }
 
       if (phase === 'quiz' && challenge && !finished && !outOfHearts) {
-        // REORDER has no single "option N" to jump to with a letter/number key
-        // -- it's built by tapping tiles in the board below -- but Enter to
-        // check/continue still makes sense once a sequence is complete.
-        if (challenge.type !== 'REORDER') {
+        // REORDER/MATCHING/DICTATION have no single "option N" to jump to
+        // with a letter/number key -- they're answered by tapping tiles or
+        // typing below -- but Enter to check/continue still makes sense once
+        // an answer is complete.
+        if (challenge.type !== 'REORDER' && challenge.type !== 'MATCHING' && challenge.type !== 'DICTATION') {
           const letterIndex = optionLetters.indexOf(event.key.toUpperCase());
           const numberIndex = Number(event.key) - 1;
           const optionIndex = letterIndex >= 0 ? letterIndex : numberIndex;
@@ -395,7 +450,7 @@ export default function LanguageQuestLesson() {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, loading, lesson, previewIndex, cards.length, card, challenge, answer, selectedId, orderedIds, canCheck, finished, outOfHearts, optionLetters, checking, sentenceFeedback, sentenceInput, sentenceCard, sentenceCards.length, sentenceIndex, spellingCard]);
+  }, [phase, loading, lesson, previewIndex, cards.length, card, challenge, answer, selectedId, orderedIds, matchedPairs, dictationAnswer, canCheck, finished, outOfHearts, optionLetters, checking, sentenceFeedback, sentenceInput, sentenceCard, sentenceCards.length, sentenceIndex, spellingCard]);
 
   if (loading) {
     return <div className="grid min-h-[520px] place-items-center"><div className="h-11 w-11 animate-spin rounded-full border-4 border-violet-200 border-t-violet-600" /></div>;
@@ -528,7 +583,7 @@ export default function LanguageQuestLesson() {
               }}
               placeholder={lq('spellingPlaceholder')}
               className={`mt-2 h-16 w-full rounded-2xl border-2 bg-white px-5 text-xl font-semibold text-slate-900 outline-none transition focus:ring-4 dark:bg-surface-indigo dark:text-white ${
-                isChineseLanguage(lesson.course.language) && speechSupported ? 'pr-14' : ''
+                speechSupported ? 'pr-14' : ''
               } ${
                 spellingFeedback === 'correct'
                   ? 'border-emerald-500 focus:ring-emerald-100'
@@ -537,7 +592,7 @@ export default function LanguageQuestLesson() {
                     : 'border-slate-200 focus:border-amber-500 focus:ring-amber-100 dark:border-surface-raised'
               }`}
             />
-            {isChineseLanguage(lesson.course.language) && speechSupported && (
+            {speechSupported && (
               <button
                 type="button"
                 onClick={toggleSpellingListening}
@@ -551,11 +606,13 @@ export default function LanguageQuestLesson() {
               </button>
             )}
           </div>
-          <p lang={explanationLanguage} className="mt-2 text-xs leading-6 text-slate-500 dark:text-slate-300">{lq('spellingHelp')}</p>
+          <p lang={explanationLanguage} className="mt-2 text-xs leading-6 text-slate-500 dark:text-slate-300">
+            {lq('spellingHelp')}
+            {speechSupported && ' You can also tap the microphone and say your answer.'}
+          </p>
           {isChineseLanguage(lesson.course.language) && (
             <p lang={explanationLanguage} className="mt-1 text-xs leading-6 text-amber-600 dark:text-amber-300">
               {lq('spellingHelpChinese')}
-              {speechSupported && ' You can also tap the microphone and say your answer.'}
             </p>
           )}
 
@@ -625,31 +682,49 @@ export default function LanguageQuestLesson() {
             </Button>
           </div>
           <label htmlFor="sentence-answer" className="mt-6 text-sm font-bold text-slate-700 dark:text-slate-200">Your sentence</label>
-          <textarea
-            id="sentence-answer"
-            autoFocus
-            value={sentenceInput}
-            onChange={(event) => {
-              setSentenceInput(event.target.value);
-              if (sentenceFeedback) setSentenceFeedback(null);
-            }}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault();
-                if (sentenceFeedback === 'correct') continueSentence();
-                else checkSentence();
-              }
-            }}
-            placeholder="Write the phrase here…"
-            className={`mt-2 min-h-28 w-full resize-none rounded-2xl border-2 bg-white p-4 text-lg font-semibold text-slate-900 outline-none transition focus:ring-4 dark:bg-surface-indigo dark:text-white ${
-              sentenceFeedback === 'correct'
-                ? 'border-emerald-500 focus:ring-emerald-100'
-                : sentenceFeedback === 'incorrect'
-                  ? `border-rose-400 focus:ring-rose-100 ${reducedMotion ? '' : 'lq-shake'}`
-                  : 'border-slate-200 focus:border-fuchsia-500 focus:ring-fuchsia-100 dark:border-surface-raised'
-            }`}
-          />
-          <p lang={explanationLanguage} className="mt-2 text-xs leading-6 text-slate-500 dark:text-slate-300">{lq('sentenceHelp')}</p>
+          <div className="relative">
+            <textarea
+              id="sentence-answer"
+              autoFocus
+              value={sentenceInput}
+              onChange={(event) => {
+                setSentenceInput(event.target.value);
+                if (sentenceFeedback) setSentenceFeedback(null);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' && !event.shiftKey) {
+                  event.preventDefault();
+                  if (sentenceFeedback === 'correct') continueSentence();
+                  else checkSentence();
+                }
+              }}
+              placeholder="Write the phrase here…"
+              className={`mt-2 min-h-28 w-full resize-none rounded-2xl border-2 bg-white p-4 text-lg font-semibold text-slate-900 outline-none transition focus:ring-4 dark:bg-surface-indigo dark:text-white ${speechSupported ? 'pr-14' : ''} ${
+                sentenceFeedback === 'correct'
+                  ? 'border-emerald-500 focus:ring-emerald-100'
+                  : sentenceFeedback === 'incorrect'
+                    ? `border-rose-400 focus:ring-rose-100 ${reducedMotion ? '' : 'lq-shake'}`
+                    : 'border-slate-200 focus:border-fuchsia-500 focus:ring-fuchsia-100 dark:border-surface-raised'
+              }`}
+            />
+            {speechSupported && (
+              <button
+                type="button"
+                onClick={toggleSentenceListening}
+                aria-label={listening ? 'Stop voice input' : 'Answer by speaking'}
+                title={listening ? 'Stop voice input' : 'Answer by speaking'}
+                className={`absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full transition ${
+                  listening ? 'animate-pulse bg-rose-500 text-white' : 'text-slate-400 hover:bg-slate-100 hover:text-fuchsia-600 dark:hover:bg-surface-raised'
+                }`}
+              >
+                {listening ? <Square className="h-4 w-4 fill-current" /> : <Mic className="h-4 w-4" />}
+              </button>
+            )}
+          </div>
+          <p lang={explanationLanguage} className="mt-2 text-xs leading-6 text-slate-500 dark:text-slate-300">
+            {lq('sentenceHelp')}
+            {speechSupported && ' You can also tap the microphone and say your answer.'}
+          </p>
           {isChineseLanguage(lesson.course.language) && (
             <p lang={explanationLanguage} className="mt-1 text-xs leading-6 text-fuchsia-600 dark:text-fuchsia-300">{lq('sentenceHelpChinese')}</p>
           )}
@@ -801,6 +876,32 @@ export default function LanguageQuestLesson() {
             onChange={setOrderedIds}
             disabled={Boolean(answer)}
           />
+        ) : isMatching ? (
+          <LanguageQuestMatchingBoard
+            options={challenge.options}
+            value={matchedPairs}
+            onChange={setMatchedPairs}
+            disabled={Boolean(answer)}
+          />
+        ) : isDictation ? (
+          <div className="mt-6 space-y-4">
+            <Button
+              type="button"
+              variant="outline"
+              className="gap-2"
+              onClick={() => speak(challenge.options[0]?.audioText || challenge.options[0]?.text || challenge.question, lesson.course.language)}
+            >
+              <Volume2 className="h-4 w-4" /> Play audio
+            </Button>
+            <input
+              autoFocus
+              value={dictationAnswer}
+              onChange={(event) => setDictationAnswer(event.target.value)}
+              disabled={Boolean(answer)}
+              placeholder="Type what you hear…"
+              className="w-full rounded-2xl border-2 border-slate-200 bg-white p-4 text-lg font-semibold text-slate-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100 disabled:opacity-70 dark:border-surface-raised dark:bg-surface-indigo dark:text-white"
+            />
+          </div>
         ) : (
         <div className="mt-8 grid gap-3 sm:grid-cols-2">
           {challenge.options.map((option, optionIndex) => {
@@ -860,7 +961,7 @@ export default function LanguageQuestLesson() {
                   <div className="mt-1 flex flex-wrap items-end gap-1 text-xs">
                     <LanguageQuestPinyinText
                       text={answer.correctAnswer}
-                      pinyin={isReorder ? null : challenge.options.find((option) => option.id === answer.correctOptionId)?.pinyin ?? null}
+                      pinyin={isReorder || isMatching ? null : challenge.options.find((option) => option.id === answer.correctOptionId)?.pinyin ?? null}
                     />
                     <span>is the best response here. +{answer.pointsAwarded} XP</span>
                   </div>
@@ -876,7 +977,7 @@ export default function LanguageQuestLesson() {
                     <span>Best answer:</span>
                     <LanguageQuestPinyinText
                       text={answer.correctAnswer}
-                      pinyin={isReorder ? null : challenge.options.find((option) => option.id === answer.correctOptionId)?.pinyin ?? null}
+                      pinyin={isReorder || isMatching ? null : challenge.options.find((option) => option.id === answer.correctOptionId)?.pinyin ?? null}
                     />
                     <span>Look for the option that responds directly to the situation.</span>
                   </div>

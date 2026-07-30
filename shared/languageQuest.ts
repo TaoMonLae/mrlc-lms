@@ -192,3 +192,63 @@ export function isValidReorderSubmission(
   }
   return true;
 }
+
+// MATCHING challenges group their options into left/right pairs purely by
+// position -- for N pairs there are 2N options, and (mirroring REORDER)
+// every option is stored `correct: true` since there's no single correct
+// option. Canonical option index 2k is the "left" tile of pair k and index
+// 2k+1 is its paired "right" tile, so a tile's pair number is just
+// floor(index / 2). The learner submits the set of tile-id pairs they
+// connected on the board; grading checks every submitted pair actually
+// shares a pair number in the canonical layout.
+function matchingPairIndex(canonicalOptionIds: readonly string[], optionId: string): number | null {
+  const index = canonicalOptionIds.indexOf(optionId);
+  return index < 0 ? null : Math.floor(index / 2);
+}
+
+export function matchingChallengeIsCorrect(
+  canonicalOptionIds: readonly string[],
+  submittedPairs: readonly (readonly [string, string])[] | null | undefined,
+): boolean {
+  if (!submittedPairs || submittedPairs.length === 0) return false;
+  return submittedPairs.every(([left, right]) => {
+    const leftPair = matchingPairIndex(canonicalOptionIds, left);
+    const rightPair = matchingPairIndex(canonicalOptionIds, right);
+    return leftPair !== null && leftPair === rightPair;
+  });
+}
+
+// A MATCHING submission is well-formed only if it pairs up every tile on the
+// board exactly once -- the right count of pairs, every id belongs to this
+// challenge, no tile paired with itself, and no tile reused across pairs --
+// regardless of whether the pairing itself turns out correct.
+// Builds a human-readable "left → right" summary of the canonical pairing,
+// used as the `correctAnswer` shown in the feedback footer once a MATCHING
+// challenge has been answered (right or wrong).
+export function pairedMatchAnswerSummary(options: readonly { text: string }[]): string {
+  const pairs: string[] = [];
+  for (let index = 0; index + 1 < options.length; index += 2) {
+    pairs.push(`${options[index].text} → ${options[index + 1].text}`);
+  }
+  return pairs.join("; ");
+}
+
+export function isValidMatchingSubmission(
+  canonicalOptionIds: readonly string[],
+  submittedPairs: readonly (readonly [string, string])[] | null | undefined,
+): boolean {
+  if (!Array.isArray(submittedPairs) || submittedPairs.length * 2 !== canonicalOptionIds.length) return false;
+  const canonicalSet = new Set(canonicalOptionIds);
+  const used = new Set<string>();
+  for (const pair of submittedPairs) {
+    if (!Array.isArray(pair) || pair.length !== 2) return false;
+    const [left, right] = pair;
+    if (typeof left !== "string" || typeof right !== "string") return false;
+    if (left === right) return false;
+    if (!canonicalSet.has(left) || !canonicalSet.has(right)) return false;
+    if (used.has(left) || used.has(right)) return false;
+    used.add(left);
+    used.add(right);
+  }
+  return true;
+}

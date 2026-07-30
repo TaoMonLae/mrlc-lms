@@ -10,10 +10,13 @@ import {
   LANGUAGE_QUEST_MAX_HEARTS,
   LANGUAGE_QUEST_PRACTICE_POINTS,
   bossBattleResult,
+  isValidMatchingSubmission,
   isValidReorderSubmission,
   languageQuestDayKey,
   languageQuestPracticePrompt,
+  matchingChallengeIsCorrect,
   nextLanguageQuestStreak,
+  pairedMatchAnswerSummary,
   reorderChallengeIsCorrect,
 } from "./shared/languageQuest";
 import {
@@ -21,7 +24,7 @@ import {
   isLanguageQuestAvatarId,
 } from "./shared/languageQuestAvatars";
 import { languageQuestCategoryForLanguage } from "./shared/languageQuestCourseCategories";
-import { languageQuestPinyin } from "./shared/languageQuestPinyin";
+import { languageQuestAnswerMatches, languageQuestPinyin } from "./shared/languageQuestPinyin";
 import { languageQuestGlobalLeaderboardWhere } from "./shared/externalLearnerAccess";
 import {
   languageQuestRewardProgress,
@@ -923,12 +926,15 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         select: { id: true },
       });
 
-      // Boss Battle's UI only supports "click one option to answer," so
-      // REORDER challenges (which grade a submitted sequence, not a single
-      // chosen option) aren't eligible questions here -- finishing the
-      // course still requires clearing them in the normal lesson flow above,
-      // they're just never selected into a battle deck.
-      const battleEligibleChallenges = challenges.filter((challenge: any) => challenge.type !== "REORDER");
+      // Boss Battle's UI only supports "click one option to answer," so types
+      // that grade something other than a single chosen option -- REORDER
+      // (a submitted sequence), MATCHING (connected tile pairs), and
+      // DICTATION (typed text, whose lone option would otherwise render as a
+      // directly clickable answer) -- aren't eligible questions here.
+      // Finishing the course still requires clearing them in the normal
+      // lesson flow above; they're just never selected into a battle deck.
+      const BATTLE_INELIGIBLE_TYPES = new Set(["REORDER", "MATCHING", "DICTATION"]);
+      const battleEligibleChallenges = challenges.filter((challenge: any) => !BATTLE_INELIGIBLE_TYPES.has(challenge.type));
 
       // Rank by how often the learner has gotten each one wrong before, so
       // the battle is built from *their* weak spots. Most challenges will
@@ -1157,12 +1163,19 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
   app.post("/api/language-quest/challenges/:id/answer", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const optionId = text(req.body?.optionId, 100);
-    // REORDER challenges submit the whole sequence the learner built instead
-    // of a single chosen option -- everything else (SELECT/ASSIST/CLOZE/
-    // ODD_ONE_OUT) still submits one optionId, checked the original way.
+    // REORDER challenges submit the whole sequence the learner built, MATCHING
+    // submits the tile pairs they connected, DICTATION submits typed text --
+    // everything else (SELECT/ASSIST/CLOZE/ODD_ONE_OUT/MINIMAL_PAIR_LISTENING)
+    // still submits one optionId, checked the original way.
     const orderedOptionIds = Array.isArray(req.body?.orderedOptionIds)
       ? req.body.orderedOptionIds.filter((id: unknown): id is string => typeof id === "string")
       : null;
+    const matchedPairs = Array.isArray(req.body?.matchedPairs)
+      ? req.body.matchedPairs.filter(
+          (pair: unknown): pair is [string, string] => Array.isArray(pair) && pair.length === 2 && pair.every((id) => typeof id === "string"),
+        )
+      : null;
+    const typedAnswer = text(req.body?.typedAnswer, 300);
     try {
       const challenge = await prisma.languageQuestChallenge.findUnique({
         where: { id: req.params.id },
@@ -1185,6 +1198,22 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         isCorrect = reorderChallengeIsCorrect(canonicalIds, orderedOptionIds);
         correctOptionId = canonicalIds[0];
         correctAnswer = challenge.options.map((option: any) => option.text).join(" ");
+      } else if (challenge.type === "MATCHING") {
+        const canonicalIds = challenge.options.map((option: any) => option.id);
+        if (!isValidMatchingSubmission(canonicalIds, matchedPairs)) {
+          res.status(400).json({ error: "Connect every tile before checking your answer" });
+          return;
+        }
+        isCorrect = matchingChallengeIsCorrect(canonicalIds, matchedPairs);
+        correctOptionId = canonicalIds[0];
+        correctAnswer = pairedMatchAnswerSummary(challenge.options);
+      } else if (challenge.type === "DICTATION") {
+        if (!typedAnswer) { res.status(400).json({ error: "Type what you heard" }); return; }
+        const correctOption = challenge.options.find((option: any) => option.correct);
+        if (!correctOption) { res.status(409).json({ error: "This challenge has no correct answer configured" }); return; }
+        isCorrect = languageQuestAnswerMatches(typedAnswer, correctOption.text);
+        correctOptionId = correctOption.id;
+        correctAnswer = correctOption.text;
       } else {
         if (!optionId) { res.status(400).json({ error: "Choose an answer" }); return; }
         const selected = challenge.options.find((option: any) => option.id === optionId);
@@ -1523,6 +1552,12 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
     const orderedOptionIds = Array.isArray(req.body?.orderedOptionIds)
       ? req.body.orderedOptionIds.filter((id: unknown): id is string => typeof id === "string")
       : null;
+    const matchedPairs = Array.isArray(req.body?.matchedPairs)
+      ? req.body.matchedPairs.filter(
+          (pair: unknown): pair is [string, string] => Array.isArray(pair) && pair.length === 2 && pair.every((id) => typeof id === "string"),
+        )
+      : null;
+    const typedAnswer = text(req.body?.typedAnswer, 300);
     const now = new Date();
     try {
       const challenge = await prisma.languageQuestChallenge.findUnique({
@@ -1549,6 +1584,24 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         isCorrect = reorderChallengeIsCorrect(canonicalIds, orderedOptionIds);
         correctOptionId = canonicalIds[0];
         correctAnswer = challenge.options.map((option: any) => option.text).join(" ");
+      } else if (challenge.type === "MATCHING") {
+        const canonicalIds = challenge.options.map((option: any) => option.id);
+        if (!isValidMatchingSubmission(canonicalIds, matchedPairs)) {
+          res.status(400).json({ error: "That mastery answer is not available" });
+          return;
+        }
+        isCorrect = matchingChallengeIsCorrect(canonicalIds, matchedPairs);
+        correctOptionId = canonicalIds[0];
+        correctAnswer = pairedMatchAnswerSummary(challenge.options);
+      } else if (challenge.type === "DICTATION") {
+        const correctOption = challenge.options.find((option: any) => option.correct);
+        if (!typedAnswer || !correctOption) {
+          res.status(400).json({ error: "That mastery answer is not available" });
+          return;
+        }
+        isCorrect = languageQuestAnswerMatches(typedAnswer, correctOption.text);
+        correctOptionId = correctOption.id;
+        correctAnswer = correctOption.text;
       } else {
         const selected = optionId ? challenge.options.find((option: any) => option.id === optionId) : null;
         const correctOption = challenge.options.find((option: any) => option.correct);

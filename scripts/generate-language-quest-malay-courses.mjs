@@ -12,16 +12,37 @@
 // it reasonably can into multiple choice / typed-answer challenges and skips
 // the rest:
 //   - vocab items                          -> one SELECT/ASSIST challenge each
-//   - practiceExercises (translate/reorder) -> SELECT challenge from the
+//   - practiceExercises (reorder)           -> REORDER challenge from the
 //                                              exercise's own answer sentence
-//   - practiceExercises (matching/clozeGap/
-//     listenToPicture/minimalPairChoice)    -> SELECT challenge built from the
+//   - practiceExercises (clozeGap)          -> CLOZE challenge built from the
 //                                              exercise's itemIds
+//   - practiceExercises (minimalPairChoice) -> MINIMAL_PAIR_LISTENING
+//                                              challenge from the exercise's
+//                                              two itemIds
+//   - practiceExercises (translate)         -> SELECT challenge from the
+//                                              exercise's own answer sentence
+//   - practiceExercises (matching/
+//     listenToPicture)                      -> SELECT challenge built from
+//                                              the exercise's itemIds -- see
+//                                              note below on why "matching"
+//                                              isn't retrofitted onto the
+//                                              real MATCHING engine yet
 //   - unitQuiz mcq/listening questions      -> SELECT challenge (options as
 //                                              authored, zero invented text)
 //   - unitQuiz translate questions          -> SELECT challenge from the
 //                                              question's own answer sentence
 //   - scenario, speakingPrompts             -> not converted (no engine yet)
+//
+// Note on "matching": Language Quest's MATCHING challenge type exists (see
+// languageQuestImportedCourses.ts), but this source package's own "matching"
+// exercises only carry a loose `itemIds` list plus free-text prose describing
+// the pairing ("Match each family word to a picture of the family member",
+// itemIds with 1, 3, or 4 entries and no explicit pair keys) -- there's no
+// reliable way to auto-derive which items pair with which without guessing,
+// unlike "reorder" (a real answer sentence to tokenize) or
+// "minimalPairChoice" (always exactly two itemIds). So "matching" keeps its
+// existing best-effort SELECT downgrade rather than risk generating
+// incorrectly-paired MATCHING challenges.
 //
 // Courses are generated as unpublished drafts (published: false) because the
 // source package's own README calls for native-speaker review before this
@@ -133,6 +154,39 @@ function reorderChallenge(ex) {
     type: "REORDER",
     question: ex.prompt,
     options: tokens.map((token) => option(token, true)),
+  };
+}
+
+// minimalPairChoice exercises always carry exactly two itemIds (the two
+// similar-sounding candidates) and sometimes an explicit `answer` naming
+// which one is correct. When `answer` is absent we default to the
+// first-listed candidate, matching the prompt's own "Which did you hear:
+// 'X' or 'Y'?" ordering -- this is a best-effort guess like the rest of this
+// draft import, flagged here for native-speaker review before publishing.
+function minimalPairChallenge(ex, vmap) {
+  const itemIds = ex.itemIds || [];
+  if (itemIds.length !== 2) return null;
+  const [first, second] = itemIds.map((id) => vmap.get(id));
+  if (!first || !second) return null;
+  // A couple of these are homographs distinguished only by meaning, not
+  // spelling (e.g. "perang" = war vs. "perang" = blond/brown) -- with
+  // identical option text, a text-based UI can't let the learner pick
+  // between them at all. Bail out and let the caller fall back to the
+  // ordinary vocabulary-SELECT downgrade for those.
+  if (first.ms.trim().toLowerCase() === second.ms.trim().toLowerCase()) return null;
+  const rawAnswer = (ex.answer || "").trim().toLowerCase();
+  let firstIsCorrect;
+  if (rawAnswer) {
+    if (rawAnswer === first.ms.trim().toLowerCase()) firstIsCorrect = true;
+    else if (rawAnswer === second.ms.trim().toLowerCase()) firstIsCorrect = false;
+    else return null; // Recorded answer matches neither candidate -- skip rather than guess.
+  } else {
+    firstIsCorrect = true;
+  }
+  return {
+    type: "MINIMAL_PAIR_LISTENING",
+    question: ex.prompt,
+    options: [option(first.ms, firstIsCorrect), option(second.ms, !firstIsCorrect)],
   };
 }
 
@@ -277,6 +331,12 @@ function convertUnit(unit, levelWordPool, levelSentencePool) {
         // honestly distinguished from a plain vocabulary SELECT, even though
         // it still grades as "pick the option that fills the blank."
         built = itemExerciseChallenge(ex, vmap, wordPools, "CLOZE");
+      } else if (ex.type === "minimalPairChoice") {
+        // A genuine two-candidate listening exercise: use the real
+        // MINIMAL_PAIR_LISTENING engine instead of downgrading it, falling
+        // back to the ordinary SELECT downgrade for the rare homograph case
+        // minimalPairChallenge() declines to handle (see its comment).
+        built = minimalPairChallenge(ex, vmap) || itemExerciseChallenge(ex, vmap, wordPools);
       } else {
         built = itemExerciseChallenge(ex, vmap, wordPools);
       }

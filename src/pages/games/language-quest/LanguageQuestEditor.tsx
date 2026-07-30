@@ -19,13 +19,23 @@ interface EditorOption {
 }
 
 // Course Studio only offers authoring for SELECT/ASSIST today -- CLOZE,
-// ODD_ONE_OUT, and REORDER challenges (built by generator scripts) can still
-// be loaded here without corrupting them, but this editor has no UI to
-// create or change into those types yet.
+// ODD_ONE_OUT, REORDER, MATCHING, MINIMAL_PAIR_LISTENING, DICTATION, and
+// GRAMMAR_TRANSFORM challenges (built by generator scripts) can still be
+// loaded here without corrupting them, but this editor has no UI to create
+// or change into those types yet.
 interface EditorChallenge {
   _key: string;
   id?: string;
-  type: 'SELECT' | 'ASSIST' | 'CLOZE' | 'ODD_ONE_OUT' | 'REORDER';
+  type:
+    | 'SELECT'
+    | 'ASSIST'
+    | 'CLOZE'
+    | 'ODD_ONE_OUT'
+    | 'REORDER'
+    | 'MATCHING'
+    | 'MINIMAL_PAIR_LISTENING'
+    | 'DICTATION'
+    | 'GRAMMAR_TRANSFORM';
   question: string;
   options: EditorOption[];
 }
@@ -82,11 +92,15 @@ function hydrateCourse(raw: any): EditorCourse {
         challenges: (lesson.challenges || []).map((challenge: any) => ({
           // Preserve whatever type the challenge actually has -- collapsing
           // anything that isn't 'ASSIST' down to 'SELECT' would silently
-          // corrupt CLOZE/ODD_ONE_OUT/REORDER challenges the moment this
-          // course is opened and saved here, even without touching them.
+          // corrupt CLOZE/ODD_ONE_OUT/REORDER/MATCHING/MINIMAL_PAIR_LISTENING/
+          // DICTATION/GRAMMAR_TRANSFORM challenges the moment this course is
+          // opened and saved here, even without touching them.
           _key: key(),
           id: challenge.id,
-          type: ['SELECT', 'ASSIST', 'CLOZE', 'ODD_ONE_OUT', 'REORDER'].includes(challenge.type) ? challenge.type : 'SELECT',
+          type: [
+            'SELECT', 'ASSIST', 'CLOZE', 'ODD_ONE_OUT', 'REORDER',
+            'MATCHING', 'MINIMAL_PAIR_LISTENING', 'DICTATION', 'GRAMMAR_TRANSFORM',
+          ].includes(challenge.type) ? challenge.type : 'SELECT',
           question: challenge.question || '',
           options: (challenge.options || []).map((option: any) => ({
             _key: key(), id: option.id, text: option.text || '', correct: Boolean(option.correct), emoji: option.emoji || '', audioText: option.audioText || '',

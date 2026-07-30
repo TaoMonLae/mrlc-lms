@@ -8,19 +8,43 @@ export interface OfficialLanguageQuestOption {
   audioText: string | null;
 }
 
-// SELECT / ASSIST / CLOZE / ODD_ONE_OUT are all "pick one option" challenges
-// under the hood -- CLOZE and ODD_ONE_OUT exist as distinct labels purely so
-// authored question text and future UI treatments can tell them apart from a
-// plain vocabulary SELECT, but they submit and grade identically (one chosen
-// optionId, exactly one option flagged `correct`).
+// SELECT / ASSIST / CLOZE / ODD_ONE_OUT / MINIMAL_PAIR_LISTENING /
+// GRAMMAR_TRANSFORM are all "pick one option" challenges under the hood --
+// CLOZE, ODD_ONE_OUT, MINIMAL_PAIR_LISTENING, and GRAMMAR_TRANSFORM exist as
+// distinct labels purely so authored question text and future UI treatments
+// can tell them apart from a plain vocabulary SELECT, but they submit and
+// grade identically (one chosen optionId, exactly one option flagged
+// `correct`). MINIMAL_PAIR_LISTENING relies on the lesson UI's existing
+// "read question aloud" button as its listen prompt. GRAMMAR_TRANSFORM
+// ("make this sentence negative," "make this polite," etc.) is a pure
+// content-authoring convention -- the question states the transformation
+// task and the options are candidate transformed sentences.
 //
-// REORDER is the one genuinely different shape: `options` must be listed in
-// their correct final order (the array position becomes each option's
-// `order` column at creation time) and every option should be `correct:
-// true`, since there's no single "correct option" -- the learner submits a
-// sequence of option ids and the server checks it against that stored order.
+// REORDER and MATCHING are genuinely different shapes with no single
+// "correct option," so (like each other) every option is `correct: true`:
+//   - REORDER: `options` must be listed in their correct final order (the
+//     array position becomes each option's `order` column at creation time).
+//     The learner submits a sequence of option ids, checked against that order.
+//   - MATCHING: `options` must be listed as consecutive left/right pairs --
+//     index 2k is pair k's left tile, index 2k+1 its right tile. The learner
+//     submits the tile-id pairs they connected, checked against pair index
+//     (floor(optionIndex / 2)) rather than any single correct answer.
+//
+// DICTATION plays a single option's audio and asks the learner to type what
+// they heard -- exactly one option, flagged `correct: true`, whose `text` is
+// the canonical transcript graded with the same fuzzy/pinyin-aware matching
+// used elsewhere (`languageQuestAnswerMatches`).
 export interface OfficialLanguageQuestChallenge {
-  type: "SELECT" | "ASSIST" | "CLOZE" | "ODD_ONE_OUT" | "REORDER";
+  type:
+    | "SELECT"
+    | "ASSIST"
+    | "CLOZE"
+    | "ODD_ONE_OUT"
+    | "REORDER"
+    | "MATCHING"
+    | "MINIMAL_PAIR_LISTENING"
+    | "DICTATION"
+    | "GRAMMAR_TRANSFORM";
   question: string;
   options: OfficialLanguageQuestOption[];
 }
