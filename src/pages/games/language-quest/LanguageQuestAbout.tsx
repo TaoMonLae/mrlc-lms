@@ -153,23 +153,23 @@ export default function LanguageQuestAbout() {
         </div>
       </header>
 
-      <main className="px-4 py-8 sm:px-6 sm:py-12">
-        <section className="relative mx-auto grid min-h-[590px] max-w-7xl overflow-hidden rounded-[2.25rem] border border-violet-400/20 bg-[radial-gradient(circle_at_82%_18%,rgba(217,70,239,.28),transparent_34%),linear-gradient(135deg,#090f25_0%,#251054_55%,#45105e_100%)] text-white shadow-[0_35px_110px_-42px_rgba(88,28,135,.85)] lg:grid-cols-[1.04fr_.96fr]">
+      <main className="px-3 py-4 sm:px-6 sm:py-12">
+        <section className="relative mx-auto grid max-w-7xl overflow-hidden rounded-[1.75rem] border border-violet-400/20 bg-[radial-gradient(circle_at_82%_18%,rgba(217,70,239,.28),transparent_34%),linear-gradient(135deg,#090f25_0%,#251054_55%,#45105e_100%)] text-white shadow-[0_35px_110px_-42px_rgba(88,28,135,.85)] sm:rounded-[2.25rem] lg:min-h-[590px] lg:grid-cols-[1.04fr_.96fr]">
           <div className="pointer-events-none absolute -left-20 -top-28 h-80 w-80 rounded-full border-[48px] border-sky-400/10" />
           <div className="pointer-events-none absolute bottom-8 left-[48%] h-24 w-24 rounded-full bg-amber-300/15 blur-2xl" />
 
-          <div className="relative z-10 flex flex-col justify-center px-6 py-12 sm:px-10 sm:py-16 lg:px-14">
+          <div className="relative z-10 flex flex-col justify-center px-5 py-9 sm:px-10 sm:py-16 lg:px-14">
             <span className="inline-flex w-fit items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-black uppercase tracking-[0.18em] text-violet-100 backdrop-blur">
               <Sparkles className="h-3.5 w-3.5 text-amber-300" /> The story behind the quest
             </span>
-            <h1 className="mt-6 max-w-3xl text-[clamp(2.8rem,6.5vw,5.2rem)] font-black leading-[0.94] tracking-[-0.055em]">
+            <h1 className="mt-5 max-w-3xl text-[clamp(2.55rem,12vw,5.2rem)] font-black leading-[0.94] tracking-[-0.055em] sm:mt-6">
               Language learning,
               <span className="block bg-gradient-to-r from-amber-300 via-orange-300 to-pink-300 bg-clip-text text-transparent">made more human.</span>
             </h1>
-            <p className="mt-6 max-w-2xl text-base leading-8 text-slate-200 sm:text-lg">
+            <p className="mt-5 max-w-2xl text-[15px] leading-7 text-slate-200 sm:mt-6 sm:text-lg sm:leading-8">
               Language Quest is MRLC’s colorful learning space for useful words, complete sentences, confident speaking, and classroom connection—with transparent credit for every source that helped shape it.
             </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-7 flex flex-col gap-3 sm:mt-8 sm:flex-row">
               <Button
                 size="lg"
                 className="h-12 rounded-xl bg-amber-400 px-6 font-black text-slate-950 shadow-xl shadow-amber-950/20 hover:bg-amber-300"
@@ -188,7 +188,7 @@ export default function LanguageQuestAbout() {
                 View course sources
               </Button>
             </div>
-            <div className="mt-9 grid max-w-xl grid-cols-3 gap-2 border-t border-white/10 pt-6">
+            <div className="mt-8 grid max-w-xl grid-cols-3 gap-2 border-t border-white/10 pt-5 sm:mt-9 sm:pt-6">
               {[
                 ['5 steps', 'Learn to check'],
                 ['Free', 'Learner account'],
@@ -202,25 +202,27 @@ export default function LanguageQuestAbout() {
             </div>
           </div>
 
-          <div className="relative min-h-[440px] overflow-hidden lg:min-h-[590px]">
-            <div className="absolute bottom-10 left-1/2 h-[72%] w-[72%] -translate-x-1/2 rounded-full bg-gradient-to-b from-violet-500/30 to-sky-400/10 ring-1 ring-white/15" />
-            <div className="absolute bottom-5 left-1/2 h-12 w-[64%] -translate-x-1/2 rounded-[100%] bg-slate-950/60 blur-xl" />
-            <img
-              src="/Icons/optimized/YellowHoodieGuide.png"
-              alt="Friendly Language Quest guide wearing a yellow hoodie"
-              className="lq-float-delayed absolute bottom-0 left-1/2 h-[96%] w-auto max-w-none -translate-x-1/2 object-contain drop-shadow-[0_30px_35px_rgba(0,0,0,.35)]"
-            />
-            <div className="lq-float absolute left-4 top-12 z-10 rounded-2xl border border-white/15 bg-slate-950/65 px-4 py-3 shadow-xl backdrop-blur sm:left-10">
+          <div className="relative min-h-[360px] overflow-hidden sm:min-h-[480px] lg:min-h-[590px]">
+            <div className="absolute bottom-8 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-gradient-to-b from-violet-500/30 to-sky-400/10 ring-1 ring-white/15 sm:bottom-10 sm:h-[72%] sm:w-[72%]" />
+            <div className="absolute bottom-3 left-1/2 h-10 w-[58%] -translate-x-1/2 rounded-[100%] bg-slate-950/60 blur-xl sm:bottom-5 sm:h-12 sm:w-[64%]" />
+            <div className="absolute bottom-0 left-1/2 z-[2] h-[80%] -translate-x-1/2 sm:h-[96%]">
+              <img
+                src="/Icons/optimized/YellowHoodieGuide.png"
+                alt="Friendly Language Quest guide wearing a yellow hoodie"
+                className="lq-float-delayed h-full w-auto max-w-none object-contain drop-shadow-[0_30px_35px_rgba(0,0,0,.35)]"
+              />
+            </div>
+            <div className="lq-float absolute left-3 top-5 z-10 rounded-xl border border-white/15 bg-slate-950/75 px-3 py-2.5 shadow-xl backdrop-blur sm:left-10 sm:top-12 sm:rounded-2xl sm:px-4 sm:py-3">
               <p className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-sky-300">
                 <Headphones className="h-4 w-4" /> Listen • Pick • Spell
               </p>
             </div>
-            <div className="lq-float-delayed absolute bottom-20 right-3 z-10 max-w-[190px] rounded-2xl border border-amber-200/30 bg-amber-300 px-4 py-3 text-slate-950 shadow-xl sm:right-8">
-              <p className="flex items-center gap-2 text-sm font-black">
+            <div className="lq-float-delayed absolute bottom-5 right-3 z-10 max-w-[175px] rounded-xl border border-amber-200/30 bg-amber-300 px-3 py-2.5 text-slate-950 shadow-xl sm:bottom-20 sm:right-8 sm:max-w-[190px] sm:rounded-2xl sm:px-4 sm:py-3">
+              <p className="flex items-center gap-2 text-xs font-black sm:text-sm">
                 <MessageCircleMore className="h-4 w-4" /> English + Burmese guidance
               </p>
             </div>
-            <span className="absolute right-8 top-8 grid h-12 w-12 place-items-center rounded-2xl bg-fuchsia-500 text-white shadow-xl sm:right-14">
+            <span className="absolute right-14 top-8 hidden h-12 w-12 place-items-center rounded-2xl bg-fuchsia-500 text-white shadow-xl sm:grid">
               <Star className="h-6 w-6 fill-current" />
             </span>
           </div>
