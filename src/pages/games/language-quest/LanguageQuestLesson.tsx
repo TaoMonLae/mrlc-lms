@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import confetti from 'canvas-confetti';
-import { ArrowLeft, BookA, Flame, Heart, Lightbulb, Mic, PartyPopper, PencilLine, SpellCheck2, Square, Star, Volume2, VolumeX } from 'lucide-react';
+import { ArrowLeft, BookA, Flame, Headphones, Heart, Lightbulb, Mic, PartyPopper, PencilLine, SpellCheck2, Square, Star, Volume2, VolumeX } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -484,26 +484,60 @@ export default function LanguageQuestLesson() {
             <div className="h-10 w-10 animate-spin rounded-full border-4 border-sky-200 border-t-sky-500" />
           ) : (
             <>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-600">Learn • {previewIndex + 1} of {cards.length}</p>
+              <p className="rounded-full border border-sky-200/80 bg-sky-50/80 px-4 py-1.5 text-xs font-black uppercase tracking-[0.2em] text-sky-700 shadow-sm dark:border-sky-500/25 dark:bg-sky-500/10 dark:text-sky-300">
+                Learn • {previewIndex + 1} of {cards.length}
+              </p>
               <button
                 type="button"
                 onClick={() => speak(card.audioText || card.text, lesson.course.language)}
-                className="mt-8 flex w-full max-w-sm flex-col items-center gap-4 rounded-3xl border-2 border-slate-200 bg-white px-10 py-12 shadow-sm transition hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-md dark:border-surface-raised dark:bg-surface-indigo"
+                style={{
+                  borderColor: `${lesson.course.accentColor}70`,
+                  boxShadow: `0 24px 70px -42px ${lesson.course.accentColor}`,
+                }}
+                className="group relative isolate mt-6 flex w-full max-w-md flex-col items-center gap-4 overflow-hidden rounded-[2rem] border-2 bg-gradient-to-br from-white via-sky-50/70 to-violet-100/70 px-8 pb-10 pt-16 text-center shadow-xl transition duration-300 hover:-translate-y-1 hover:shadow-2xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/35 dark:from-slate-900 dark:via-slate-900 dark:to-violet-950/70 sm:px-12 sm:pb-12 sm:pt-16"
               >
-                {card.emoji && <span className="text-6xl" aria-hidden="true">{card.emoji}</span>}
-                <span className="font-black text-slate-900 dark:text-white">
+                <span className="pointer-events-none absolute -right-12 -top-10 h-36 w-36 rounded-full bg-sky-300/25 blur-2xl dark:bg-sky-500/10" />
+                <span className="pointer-events-none absolute -bottom-14 -left-10 h-36 w-36 rounded-full bg-fuchsia-300/25 blur-2xl dark:bg-fuchsia-500/10" />
+                <img
+                  src="/Icons/Owl School 14.svg"
+                  alt=""
+                  aria-hidden="true"
+                  className="pointer-events-none absolute -bottom-6 -right-5 h-28 w-28 object-contain opacity-15 transition duration-300 group-hover:-translate-y-1 group-hover:rotate-3 group-hover:scale-105 dark:opacity-10"
+                />
+                <span className="absolute left-5 top-5 inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white/80 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-sky-700 shadow-sm backdrop-blur dark:border-sky-500/25 dark:bg-slate-950/55 dark:text-sky-300">
+                  <Headphones className="h-3.5 w-3.5" /> Listen card
+                </span>
+                {card.emoji && <span className="relative text-6xl drop-shadow-md" aria-hidden="true">{card.emoji}</span>}
+                <span className="relative text-xl font-black text-slate-950 dark:text-white sm:text-2xl">
                   <LanguageQuestPinyinText text={card.text} pinyin={card.pinyin} size="lg" />
                 </span>
-                <span className="flex items-center gap-1.5 text-xs font-semibold text-sky-600"><Volume2 className="h-3.5 w-3.5" /> Tap to listen</span>
+                <span
+                  className="relative flex items-center gap-2 rounded-full px-4 py-2 text-xs font-black text-white shadow-lg transition group-hover:scale-105"
+                  style={{ backgroundColor: lesson.course.accentColor }}
+                >
+                  <Volume2 className="h-4 w-4" /> Tap to listen
+                </span>
               </button>
-              <div className="mt-6 max-w-lg rounded-2xl border border-sky-100 bg-sky-50 px-5 py-4 text-left dark:border-sky-500/20 dark:bg-sky-500/10">
-                <p lang={explanationLanguage} className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-sky-700 dark:text-sky-300"><Lightbulb className="h-4 w-4" /> {lq('whenToUse')}</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{card.prompt}</p>
+              <aside className="mt-6 w-full max-w-xl overflow-hidden rounded-3xl border border-sky-200/80 bg-gradient-to-br from-sky-100/90 via-white/90 to-violet-100/80 p-2 text-left shadow-lg shadow-sky-900/5 dark:border-sky-500/25 dark:from-sky-950/35 dark:via-slate-900/85 dark:to-violet-950/35">
+                <div className="flex items-center gap-3 px-3 py-2">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-sky-500 to-violet-600 text-white shadow-lg shadow-sky-500/20">
+                    <Lightbulb className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <p lang={explanationLanguage} className="text-xs font-black uppercase tracking-[0.16em] text-sky-800 dark:text-sky-200">{lq('whenToUse')}</p>
+                    <p className="mt-0.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400">Meaning, context, and a useful example</p>
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-white/80 bg-white/80 px-5 py-4 shadow-sm dark:border-white/5 dark:bg-slate-950/45">
+                  <p className="text-sm font-semibold leading-7 text-slate-700 dark:text-slate-200">{card.prompt}</p>
+                </div>
                 {explanationLanguage === 'my' && (
-                  <p lang="my" className="mt-2 rounded-xl bg-white/70 px-3 py-2 text-sm leading-7 text-slate-700 dark:bg-slate-950/35 dark:text-slate-200">{lq('burmesePromptFallback')}</p>
+                  <p lang="my" className="mx-2 mt-2 rounded-xl border border-violet-200/70 bg-violet-50/80 px-4 py-3 text-sm leading-7 text-slate-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-slate-200">{lq('burmesePromptFallback')}</p>
                 )}
-                <p lang={explanationLanguage} className="mt-2 text-xs text-slate-500 dark:text-slate-400">{lq('listenSay')}</p>
-              </div>
+                <p lang={explanationLanguage} className="flex items-center gap-2 px-3 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  <Volume2 className="h-3.5 w-3.5 text-sky-600 dark:text-sky-300" /> {lq('listenSay')}
+                </p>
+              </aside>
             </>
           )}
         </main>

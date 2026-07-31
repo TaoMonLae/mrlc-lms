@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ArrowRight, FolderOpen } from 'lucide-react';
+import { ArrowRight, ChevronDown, FolderOpen } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
@@ -67,33 +67,33 @@ export function LanguageQuestCourseFolders<T>({
   idPrefix = 'course-folder',
   courseGridClassName,
 }: LanguageQuestCourseFoldersProps<T>) {
-  const [activeCategory, setActiveCategory] = useState(groups[0]?.category ?? '');
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!groups.some((group) => group.category === activeCategory)) {
-      setActiveCategory(groups[0]?.category ?? '');
+    if (activeCategory && !groups.some((group) => group.category === activeCategory)) {
+      setActiveCategory(null);
     }
   }, [activeCategory, groups]);
 
   const activeGroup = useMemo(
-    () => groups.find((group) => group.category === activeCategory) ?? groups[0],
+    () => activeCategory ? groups.find((group) => group.category === activeCategory) : undefined,
     [activeCategory, groups],
   );
 
-  if (!activeGroup) return null;
+  if (groups.length === 0) return null;
 
   const panelId = `${idPrefix}-panel`;
 
   return (
     <div>
       <div
-        role="tablist"
+        role="group"
         aria-label="Course folders"
         className="grid grid-cols-2 gap-3 lg:grid-cols-4"
       >
         {groups.map((group) => {
           const tone = folderTone(group.category);
-          const selected = group.category === activeGroup.category;
+          const selected = group.category === activeGroup?.category;
           const tabId = categoryId(group.category, idPrefix);
 
           return (
@@ -101,10 +101,11 @@ export function LanguageQuestCourseFolders<T>({
               key={group.category}
               id={tabId}
               type="button"
-              role="tab"
-              aria-selected={selected}
-              aria-controls={panelId}
-              onClick={() => setActiveCategory(group.category)}
+              aria-pressed={selected}
+              aria-expanded={selected}
+              aria-controls={selected ? panelId : undefined}
+              aria-label={`${selected ? 'Close' : 'Open'} ${group.category} folder`}
+              onClick={() => setActiveCategory(selected ? null : group.category)}
               className={cn(
                 'group/folder relative min-h-36 overflow-hidden rounded-3xl border p-4 text-left shadow-sm outline-none transition duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:ring-4 focus-visible:ring-violet-400/35 sm:min-h-40 sm:p-5',
                 selected
@@ -134,7 +135,9 @@ export function LanguageQuestCourseFolders<T>({
                   </span>
                   <span className="mt-2 flex items-center gap-1.5 text-[11px] font-black text-slate-500 dark:text-slate-300">
                     {group.courses.length} {group.courses.length === 1 ? 'course' : 'courses'}
-                    <ArrowRight className={cn('h-3.5 w-3.5 transition', selected && 'translate-x-1 text-violet-600')} />
+                    {selected
+                      ? <ChevronDown className="h-3.5 w-3.5 text-violet-600" />
+                      : <ArrowRight className="h-3.5 w-3.5 transition group-hover/folder:translate-x-1" />}
                   </span>
                 </span>
               </span>
@@ -143,27 +146,28 @@ export function LanguageQuestCourseFolders<T>({
         })}
       </div>
 
-      <section
-        id={panelId}
-        role="tabpanel"
-        aria-labelledby={categoryId(activeGroup.category, idPrefix)}
-        className="mt-4 rounded-[1.75rem] border border-violet-200/80 bg-white/75 p-4 shadow-lg shadow-violet-950/5 dark:border-slate-700 dark:bg-slate-900/80 dark:shadow-black/20 sm:p-6"
-      >
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-violet-600 dark:text-violet-300">
-              Open folder
-            </p>
-            <h3 className="mt-1 text-xl font-black text-slate-950 dark:text-white">{activeGroup.category}</h3>
+      {activeGroup && (
+        <section
+          id={panelId}
+          aria-labelledby={categoryId(activeGroup.category, idPrefix)}
+          className="mt-4 animate-in fade-in slide-in-from-top-2 rounded-[1.75rem] border border-violet-200/80 bg-white/80 p-4 shadow-lg shadow-violet-950/5 duration-300 dark:border-slate-700 dark:bg-slate-900/80 dark:shadow-black/20 sm:p-6"
+        >
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-violet-600 dark:text-violet-300">
+                Open folder
+              </p>
+              <h3 className="mt-1 text-xl font-black text-slate-950 dark:text-white">{activeGroup.category}</h3>
+            </div>
+            <Badge variant="secondary">
+              {activeGroup.courses.length} {activeGroup.courses.length === 1 ? 'course' : 'courses'}
+            </Badge>
           </div>
-          <Badge variant="secondary">
-            {activeGroup.courses.length} {activeGroup.courses.length === 1 ? 'course' : 'courses'}
-          </Badge>
-        </div>
-        <div className={cn('grid gap-5 md:grid-cols-2 xl:grid-cols-3', courseGridClassName)}>
-          {activeGroup.courses.map(renderCourse)}
-        </div>
-      </section>
+          <div className={cn('grid gap-5 md:grid-cols-2 xl:grid-cols-3', courseGridClassName)}>
+            {activeGroup.courses.map(renderCourse)}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

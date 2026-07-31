@@ -445,10 +445,11 @@ html[lang='mnw'] :is(input, button, select) {
 /* ── Language Quest: lightweight 3D depth and playful motion ──────────────── */
 .lq-mesh {
   background:
-    radial-gradient(circle at 8% 12%, rgba(255, 174, 19, 0.24), transparent 24rem),
-    radial-gradient(circle at 88% 18%, rgba(59, 137, 255, 0.25), transparent 28rem),
-    radial-gradient(circle at 52% 80%, rgba(237, 82, 203, 0.18), transparent 32rem),
-    #f8f6ff;
+    radial-gradient(circle at 7% 10%, rgba(245, 158, 11, 0.16), transparent 24rem),
+    radial-gradient(circle at 90% 16%, rgba(59, 130, 246, 0.18), transparent 29rem),
+    radial-gradient(circle at 54% 84%, rgba(217, 70, 239, 0.12), transparent 34rem),
+    linear-gradient(135deg, #e8edf5 0%, #edf0f8 48%, #eee8f3 100%);
+  color-scheme: light;
 }
 
 .dark .lq-mesh {
