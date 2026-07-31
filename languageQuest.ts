@@ -48,6 +48,7 @@ import { linguifyCefrCourses } from "./languageQuestLinguifyCourses";
 import { malayCefrCourses } from "./languageQuestMalayCourses";
 import { malaySpeakingCourse } from "./languageQuestMalayCourse";
 import { malayGuideModernCourse } from "./languageQuestMalayGuideCourse";
+import { teachYourselfMalayCourse } from "./languageQuestTeachYourselfMalayCourse";
 import { languageQuestVoiceServiceFromEnv } from "./languageQuestVoice";
 import {
   kokoroSupportsLanguage,
@@ -423,6 +424,7 @@ export async function ensureOfficialCourses(prisma: any): Promise<void> {
     ...malayCefrCourses,
     malaySpeakingCourse,
     malayGuideModernCourse,
+    teachYourselfMalayCourse,
   ];
   for (const course of courses) {
     await ensureOfficialCourse(prisma, course);

@@ -18,6 +18,7 @@
     "generate:language-quest-malay": "node scripts/generate-language-quest-malay-courses.mjs",
     "generate:language-quest-malay-speaking": "node scripts/generate-language-quest-malay-speaking-course.mjs",
     "generate:language-quest-malay-guide": "node scripts/generate-language-quest-malay-guide-course.mjs",
+    "generate:language-quest-teach-yourself-malay": "node scripts/generate-language-quest-teach-yourself-malay.mjs",
     "voice:kokoro": "Kokoro/.venv/bin/python scripts/kokoro_language_quest_api.py --host 127.0.0.1 --port 8810 --device auto",
     "smoke": "node scripts/smoke-test.mjs",
     "test": "npm run test:unit",

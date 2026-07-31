@@ -1,0 +1,409 @@
+unit	unit_title	lesson	lesson_title	challenge	type	prompt	correct_answer	source_pages
+1	Foundation: Sounds and Survival Malay	1	Vocabulary Builder	1	SELECT	"Choose the Malay word or phrase for ""good morning""."	Selamat pagi	10-13
+1	Foundation: Sounds and Survival Malay	1	Vocabulary Builder	2	ASSIST	"Choose the Malay word or phrase for ""thank you""."	Terima kasih	10-13
+1	Foundation: Sounds and Survival Malay	1	Vocabulary Builder	3	SELECT	"Choose the Malay word or phrase for ""sorry / excuse me""."	Maaf	10-13
+1	Foundation: Sounds and Survival Malay	1	Vocabulary Builder	4	ASSIST	"Choose the Malay word or phrase for ""please / help""."	Tolong	10-13
+1	Foundation: Sounds and Survival Malay	1	Vocabulary Builder	5	SELECT	"Choose the Malay word or phrase for ""yes""."	Ya	10-13
+1	Foundation: Sounds and Survival Malay	1	Vocabulary Builder	6	ASSIST	"Choose the Malay word or phrase for ""no""."	Tidak	10-13
+1	Foundation: Sounds and Survival Malay	2	Core Conversation	1	ASSIST	"Choose the best Malay line for ""How are you?""."	Apa khabar?	10-13
+1	Foundation: Sounds and Survival Malay	2	Core Conversation	2	SELECT	"Choose the best Malay line for ""I am fine.""."	Khabar baik.	10-13
+1	Foundation: Sounds and Survival Malay	2	Core Conversation	3	ASSIST	"Choose the best Malay line for ""Could you repeat that?""."	Boleh ulang sekali lagi?	10-13
+1	Foundation: Sounds and Survival Malay	2	Core Conversation	4	SELECT	"Choose the best Malay line for ""Please speak more slowly.""."	Tolong cakap lebih perlahan.	10-13
+1	Foundation: Sounds and Survival Malay	2	Core Conversation	5	ASSIST	"Choose the best Malay line for ""I do not understand.""."	Saya tidak faham.	10-13
+1	Foundation: Sounds and Survival Malay	2	Core Conversation	6	SELECT	"Choose the best Malay line for ""How is it pronounced?""."	Bagaimana sebutannya?	10-13
+1	Foundation: Sounds and Survival Malay	3	Sentence Practice	1	ASSIST	"Choose the correct Malay sentence for ""My name is Lina.""."	Nama saya Lina.	10-13
+1	Foundation: Sounds and Survival Malay	3	Sentence Practice	2	SELECT	"Choose the correct Malay sentence for ""I am learning Malay.""."	Saya sedang belajar Bahasa Melayu.	10-13
+1	Foundation: Sounds and Survival Malay	3	Sentence Practice	3	ASSIST	"Choose the correct Malay sentence for ""May I ask a question?""."	Boleh saya tanya?	10-13
+1	Foundation: Sounds and Survival Malay	3	Sentence Practice	4	SELECT	"Choose the correct Malay sentence for ""I understand a little.""."	Saya faham sedikit.	10-13
+1	Foundation: Sounds and Survival Malay	3	Sentence Practice	5	ASSIST	"Choose the correct Malay sentence for ""What does this word mean?""."	Apa maksud perkataan ini?	10-13
+1	Foundation: Sounds and Survival Malay	3	Sentence Practice	6	SELECT	"Choose the correct Malay sentence for ""Please listen and repeat.""."	Sila dengar dan ulang.	10-13
+1	Foundation: Sounds and Survival Malay	4	Daily Speaking Scenario	1	SELECT	"What should you say in Malay for: ""Could you help me?"""	Boleh anda bantu saya?	10-13
+1	Foundation: Sounds and Survival Malay	4	Daily Speaking Scenario	2	ASSIST	"What should you say in Malay for: ""Where is the toilet?"""	Di mana tandas?	10-13
+1	Foundation: Sounds and Survival Malay	4	Daily Speaking Scenario	3	SELECT	"What should you say in Malay for: ""How much is this?"""	Berapa harga ini?	10-13
+1	Foundation: Sounds and Survival Malay	4	Daily Speaking Scenario	4	ASSIST	"What should you say in Malay for: ""I would like water."""	Saya mahu air.	10-13
+1	Foundation: Sounds and Survival Malay	4	Daily Speaking Scenario	5	SELECT	"What should you say in Malay for: ""Please write it down."""	Tolong tuliskan.	10-13
+1	Foundation: Sounds and Survival Malay	4	Daily Speaking Scenario	6	ASSIST	"What should you say in Malay for: ""See you again."""	Jumpa lagi.	10-13
+2	01 Welcome to Malaysia	1	Vocabulary Builder	1	SELECT	"Choose the Malay word or phrase for ""welcome""."	selamat datang	14-23
+2	01 Welcome to Malaysia	1	Vocabulary Builder	2	ASSIST	"Choose the Malay word or phrase for ""name""."	nama	14-23
+2	01 Welcome to Malaysia	1	Vocabulary Builder	3	SELECT	"Choose the Malay word or phrase for ""from""."	dari	14-23
+2	01 Welcome to Malaysia	1	Vocabulary Builder	4	ASSIST	"Choose the Malay word or phrase for ""country""."	negara	14-23
+2	01 Welcome to Malaysia	1	Vocabulary Builder	5	SELECT	"Choose the Malay word or phrase for ""person / people""."	orang	14-23
+2	01 Welcome to Malaysia	1	Vocabulary Builder	6	ASSIST	"Choose the Malay word or phrase for ""to meet / become acquainted""."	berkenalan	14-23
+2	01 Welcome to Malaysia	2	Core Conversation	1	ASSIST	"Choose the best Malay line for ""Welcome to Malaysia.""."	Selamat datang ke Malaysia.	14-23
+2	01 Welcome to Malaysia	2	Core Conversation	2	SELECT	"Choose the best Malay line for ""What is your name?""."	Siapa nama anda?	14-23
+2	01 Welcome to Malaysia	2	Core Conversation	3	ASSIST	"Choose the best Malay line for ""My name is Amina.""."	Nama saya Amina.	14-23
+2	01 Welcome to Malaysia	2	Core Conversation	4	SELECT	"Choose the best Malay line for ""Where are you from?""."	Anda dari mana?	14-23
+2	01 Welcome to Malaysia	2	Core Conversation	5	ASSIST	"Choose the best Malay line for ""I am from Myanmar.""."	Saya dari Myanmar.	14-23
+2	01 Welcome to Malaysia	2	Core Conversation	6	SELECT	"Choose the best Malay line for ""Pleased to meet you.""."	Gembira berkenalan dengan anda.	14-23
+2	01 Welcome to Malaysia	3	Sentence Practice	1	ASSIST	"Choose the correct Malay sentence for ""I am Malaysian.""."	Saya orang Malaysia.	14-23
+2	01 Welcome to Malaysia	3	Sentence Practice	2	SELECT	"Choose the correct Malay sentence for ""She is from Singapore.""."	Dia dari Singapura.	14-23
+2	01 Welcome to Malaysia	3	Sentence Practice	3	ASSIST	"Choose the correct Malay sentence for ""This is Mr Rahman.""."	Ini Encik Rahman.	14-23
+2	01 Welcome to Malaysia	3	Sentence Practice	4	SELECT	"Choose the correct Malay sentence for ""Are you a student?""."	Adakah anda pelajar?	14-23
+2	01 Welcome to Malaysia	3	Sentence Practice	5	ASSIST	"Choose the correct Malay sentence for ""Yes, that is correct.""."	Ya, betul.	14-23
+2	01 Welcome to Malaysia	3	Sentence Practice	6	SELECT	"Choose the correct Malay sentence for ""No, I am a teacher.""."	Bukan, saya guru.	14-23
+2	01 Welcome to Malaysia	4	Daily Speaking Scenario	1	SELECT	"What should you say in Malay for: ""Greet a guest in the morning."""	Selamat pagi.	14-23
+2	01 Welcome to Malaysia	4	Daily Speaking Scenario	2	ASSIST	"What should you say in Malay for: ""Introduce your friend Farid."""	Ini kawan saya, Farid.	14-23
+2	01 Welcome to Malaysia	4	Daily Speaking Scenario	3	SELECT	"What should you say in Malay for: ""Ask a visitor where they come from."""	Anda datang dari mana?	14-23
+2	01 Welcome to Malaysia	4	Daily Speaking Scenario	4	ASSIST	"What should you say in Malay for: ""Say that you are from Kuala Lumpur."""	Saya dari Kuala Lumpur.	14-23
+2	01 Welcome to Malaysia	4	Daily Speaking Scenario	5	SELECT	"What should you say in Malay for: ""Ask whether someone is Ms Sofia."""	Adakah anda Cik Sofia?	14-23
+2	01 Welcome to Malaysia	4	Daily Speaking Scenario	6	ASSIST	"What should you say in Malay for: ""End a first meeting politely."""	Selamat berkenalan.	14-23
+3	02 Arrivals	1	Vocabulary Builder	1	SELECT	"Choose the Malay word or phrase for ""luggage""."	bagasi	24-34
+3	02 Arrivals	1	Vocabulary Builder	2	ASSIST	"Choose the Malay word or phrase for ""passport""."	pasport	24-34
+3	02 Arrivals	1	Vocabulary Builder	3	SELECT	"Choose the Malay word or phrase for ""airport""."	lapangan terbang	24-34
+3	02 Arrivals	1	Vocabulary Builder	4	ASSIST	"Choose the Malay word or phrase for ""taxi""."	teksi	24-34
+3	02 Arrivals	1	Vocabulary Builder	5	SELECT	"Choose the Malay word or phrase for ""hotel""."	hotel	24-34
+3	02 Arrivals	1	Vocabulary Builder	6	ASSIST	"Choose the Malay word or phrase for ""address""."	alamat	24-34
+3	02 Arrivals	2	Core Conversation	1	ASSIST	"Choose the best Malay line for ""Is this your luggage?""."	Adakah ini bagasi anda?	24-34
+3	02 Arrivals	2	Core Conversation	2	SELECT	"Choose the best Malay line for ""Yes, this is my luggage.""."	Ya, ini bagasi saya.	24-34
+3	02 Arrivals	2	Core Conversation	3	ASSIST	"Choose the best Malay line for ""I need a taxi.""."	Saya perlukan teksi.	24-34
+3	02 Arrivals	2	Core Conversation	4	SELECT	"Choose the best Malay line for ""Please take me to this hotel.""."	Tolong hantarkan saya ke hotel ini.	24-34
+3	02 Arrivals	2	Core Conversation	5	ASSIST	"Choose the best Malay line for ""What is the fare?""."	Berapa tambangnya?	24-34
+3	02 Arrivals	2	Core Conversation	6	SELECT	"Choose the best Malay line for ""My luggage is outside.""."	Bagasi saya di luar.	24-34
+3	02 Arrivals	3	Sentence Practice	1	ASSIST	"Choose the correct Malay sentence for ""This is my passport.""."	Ini pasport saya.	24-34
+3	02 Arrivals	3	Sentence Practice	2	SELECT	"Choose the correct Malay sentence for ""That is her bag.""."	Itu beg dia.	24-34
+3	02 Arrivals	3	Sentence Practice	3	ASSIST	"Choose the correct Malay sentence for ""The taxi has arrived.""."	Teksi sudah sampai.	24-34
+3	02 Arrivals	3	Sentence Practice	4	SELECT	"Choose the correct Malay sentence for ""The flight has not arrived yet.""."	Penerbangan belum tiba.	24-34
+3	02 Arrivals	3	Sentence Practice	5	ASSIST	"Choose the correct Malay sentence for ""Where do you want to go?""."	Anda mahu pergi ke mana?	24-34
+3	02 Arrivals	3	Sentence Practice	6	SELECT	"Choose the correct Malay sentence for ""I have just arrived from Bangkok.""."	Saya baru tiba dari Bangkok.	24-34
+3	02 Arrivals	4	Daily Speaking Scenario	1	SELECT	"What should you say in Malay for: ""Tell the driver your destination."""	Saya mahu pergi ke Hotel Sentral.	24-34
+3	02 Arrivals	4	Daily Speaking Scenario	2	ASSIST	"What should you say in Malay for: ""Ask where the baggage counter is."""	Di mana kaunter bagasi?	24-34
+3	02 Arrivals	4	Daily Speaking Scenario	3	SELECT	"What should you say in Malay for: ""Say your suitcase is missing."""	Beg pakaian saya hilang.	24-34
+3	02 Arrivals	4	Daily Speaking Scenario	4	ASSIST	"What should you say in Malay for: ""Ask whether the taxi uses a meter."""	Teksi ini ada meter?	24-34
+3	02 Arrivals	4	Daily Speaking Scenario	5	SELECT	"What should you say in Malay for: ""Give your hotel address."""	Ini alamat hotel saya.	24-34
+3	02 Arrivals	4	Daily Speaking Scenario	6	ASSIST	"What should you say in Malay for: ""Ask for help with your bag."""	Boleh bantu saya dengan beg ini?	24-34
+4	03 Tell Me More About Yourself	1	Vocabulary Builder	1	SELECT	"Choose the Malay word or phrase for ""occupation""."	pekerjaan	35-49
+4	03 Tell Me More About Yourself	1	Vocabulary Builder	2	ASSIST	"Choose the Malay word or phrase for ""language""."	bahasa	35-49
+4	03 Tell Me More About Yourself	1	Vocabulary Builder	3	SELECT	"Choose the Malay word or phrase for ""family""."	keluarga	35-49
+4	03 Tell Me More About Yourself	1	Vocabulary Builder	4	ASSIST	"Choose the Malay word or phrase for ""wife""."	isteri	35-49
+4	03 Tell Me More About Yourself	1	Vocabulary Builder	5	SELECT	"Choose the Malay word or phrase for ""husband""."	suami	35-49
+4	03 Tell Me More About Yourself	1	Vocabulary Builder	6	ASSIST	"Choose the Malay word or phrase for ""single""."	bujang	35-49
+4	03 Tell Me More About Yourself	2	Core Conversation	1	ASSIST	"Choose the best Malay line for ""What is your occupation?""."	Apakah pekerjaan anda?	35-49
+4	03 Tell Me More About Yourself	2	Core Conversation	2	SELECT	"Choose the best Malay line for ""I work as a nurse.""."	Saya bekerja sebagai jururawat.	35-49
+4	03 Tell Me More About Yourself	2	Core Conversation	3	ASSIST	"Choose the best Malay line for ""What languages can you speak?""."	Anda boleh bertutur dalam bahasa apa?	35-49
+4	03 Tell Me More About Yourself	2	Core Conversation	4	SELECT	"Choose the best Malay line for ""I can speak three languages.""."	Saya boleh bertutur dalam tiga bahasa.	35-49
+4	03 Tell Me More About Yourself	2	Core Conversation	5	ASSIST	"Choose the best Malay line for ""Are you married?""."	Adakah anda sudah berkahwin?	35-49
+4	03 Tell Me More About Yourself	2	Core Conversation	6	SELECT	"Choose the best Malay line for ""I am still single.""."	Saya masih bujang.	35-49
+4	03 Tell Me More About Yourself	3	Sentence Practice	1	ASSIST	"Choose the correct Malay sentence for ""She is already married.""."	Dia sudah berkahwin.	35-49
+4	03 Tell Me More About Yourself	3	Sentence Practice	2	SELECT	"Choose the correct Malay sentence for ""They do not have children yet.""."	Mereka belum mempunyai anak.	35-49
+4	03 Tell Me More About Yourself	3	Sentence Practice	3	ASSIST	"Choose the correct Malay sentence for ""I am still learning Malay.""."	Saya masih belajar Bahasa Melayu.	35-49
+4	03 Tell Me More About Yourself	3	Sentence Practice	4	SELECT	"Choose the correct Malay sentence for ""He comes from Brunei.""."	Dia berasal dari Brunei.	35-49
+4	03 Tell Me More About Yourself	3	Sentence Practice	5	ASSIST	"Choose the correct Malay sentence for ""I learned Malay from my friend.""."	Saya belajar Bahasa Melayu daripada kawan saya.	35-49
+4	03 Tell Me More About Yourself	3	Sentence Practice	6	SELECT	"Choose the correct Malay sentence for ""My wife is from Singapore.""."	Isteri saya berasal dari Singapura.	35-49
+4	03 Tell Me More About Yourself	4	Daily Speaking Scenario	1	SELECT	"What should you say in Malay for: ""Ask someone what they do for work."""	Anda bekerja sebagai apa?	35-49
+4	03 Tell Me More About Yourself	4	Daily Speaking Scenario	2	ASSIST	"What should you say in Malay for: ""Say you are a full-time student."""	Saya pelajar sepenuh masa.	35-49
+4	03 Tell Me More About Yourself	4	Daily Speaking Scenario	3	SELECT	"What should you say in Malay for: ""Say you speak a little Malay."""	Saya boleh bertutur sedikit Bahasa Melayu.	35-49
+4	03 Tell Me More About Yourself	4	Daily Speaking Scenario	4	ASSIST	"What should you say in Malay for: ""Ask how many languages someone speaks."""	Anda boleh bertutur dalam berapa bahasa?	35-49
+4	03 Tell Me More About Yourself	4	Daily Speaking Scenario	5	SELECT	"What should you say in Malay for: ""Say you have two children."""	Saya mempunyai dua orang anak.	35-49
+4	03 Tell Me More About Yourself	4	Daily Speaking Scenario	6	ASSIST	"What should you say in Malay for: ""Ask where someone was born."""	Anda dilahirkan di mana?	35-49
+5	04 At Work and at School	1	Vocabulary Builder	1	SELECT	"Choose the Malay word or phrase for ""secretary""."	setiausaha	50-64
+5	04 At Work and at School	1	Vocabulary Builder	2	ASSIST	"Choose the Malay word or phrase for ""school""."	sekolah	50-64
+5	04 At Work and at School	1	Vocabulary Builder	3	SELECT	"Choose the Malay word or phrase for ""skill""."	kemahiran	50-64
+5	04 At Work and at School	1	Vocabulary Builder	4	ASSIST	"Choose the Malay word or phrase for ""experience""."	pengalaman	50-64
+5	04 At Work and at School	1	Vocabulary Builder	5	SELECT	"Choose the Malay word or phrase for ""salary""."	gaji	50-64
+5	04 At Work and at School	1	Vocabulary Builder	6	ASSIST	"Choose the Malay word or phrase for ""full-time""."	sepenuh masa	50-64
+5	04 At Work and at School	2	Core Conversation	1	ASSIST	"Choose the best Malay line for ""Please sit down.""."	Sila duduk.	50-64
+5	04 At Work and at School	2	Core Conversation	2	SELECT	"Choose the best Malay line for ""Where did you study?""."	Di mana anda belajar?	50-64
+5	04 At Work and at School	2	Core Conversation	3	ASSIST	"Choose the best Malay line for ""What skills do you have?""."	Apakah kemahiran anda?	50-64
+5	04 At Work and at School	2	Core Conversation	4	SELECT	"Choose the best Malay line for ""Can you use a computer?""."	Bolehkah anda menggunakan komputer?	50-64
+5	04 At Work and at School	2	Core Conversation	5	ASSIST	"Choose the best Malay line for ""When can you start work?""."	Bilakah anda boleh mula bekerja?	50-64
+5	04 At Work and at School	2	Core Conversation	6	SELECT	"Choose the best Malay line for ""How much salary do you expect?""."	Berapa gaji yang anda harapkan?	50-64
+5	04 At Work and at School	3	Sentence Practice	1	ASSIST	"Choose the correct Malay sentence for ""I work at a company.""."	Saya bekerja di sebuah syarikat.	50-64
+5	04 At Work and at School	3	Sentence Practice	2	SELECT	"Choose the correct Malay sentence for ""My child goes to school in Kuala Lumpur.""."	Anak saya bersekolah di Kuala Lumpur.	50-64
+5	04 At Work and at School	3	Sentence Practice	3	ASSIST	"Choose the correct Malay sentence for ""I can type quickly.""."	Saya boleh menaip dengan pantas.	50-64
+5	04 At Work and at School	3	Sentence Practice	4	SELECT	"Choose the correct Malay sentence for ""She works part-time three days a week.""."	Dia bekerja sambilan tiga hari seminggu.	50-64
+5	04 At Work and at School	3	Sentence Practice	5	ASSIST	"Choose the correct Malay sentence for ""I graduated last year.""."	Saya tamat pengajian tahun lalu.	50-64
+5	04 At Work and at School	3	Sentence Practice	6	SELECT	"Choose the correct Malay sentence for ""I have five years of experience.""."	Saya mempunyai pengalaman selama lima tahun.	50-64
+5	04 At Work and at School	4	Daily Speaking Scenario	1	SELECT	"What should you say in Malay for: ""Ask a teacher for help."""	Bolehkah cikgu membantu saya?	50-64
+5	04 At Work and at School	4	Daily Speaking Scenario	2	ASSIST	"What should you say in Malay for: ""Tell an interviewer you can start next month."""	Saya boleh mula bekerja bulan hadapan.	50-64
+5	04 At Work and at School	4	Daily Speaking Scenario	3	SELECT	"What should you say in Malay for: ""Ask where the classroom is."""	Di mana bilik darjah?	50-64
+5	04 At Work and at School	4	Daily Speaking Scenario	4	ASSIST	"What should you say in Malay for: ""Say you study in the evening."""	Saya belajar pada waktu malam.	50-64
+5	04 At Work and at School	4	Daily Speaking Scenario	5	SELECT	"What should you say in Malay for: ""Ask whether the job is full-time."""	Adakah pekerjaan ini sepenuh masa?	50-64
+5	04 At Work and at School	4	Daily Speaking Scenario	6	ASSIST	"What should you say in Malay for: ""Say you can send e-mail."""	Saya boleh menghantar e-mel.	50-64
+6	05 Meet the Family	1	Vocabulary Builder	1	SELECT	"Choose the Malay word or phrase for ""parents""."	ibu bapa	65-86
+6	05 Meet the Family	1	Vocabulary Builder	2	ASSIST	"Choose the Malay word or phrase for ""older brother""."	abang	65-86
+6	05 Meet the Family	1	Vocabulary Builder	3	SELECT	"Choose the Malay word or phrase for ""older sister""."	kakak	65-86
+6	05 Meet the Family	1	Vocabulary Builder	4	ASSIST	"Choose the Malay word or phrase for ""younger sibling""."	adik	65-86
+6	05 Meet the Family	1	Vocabulary Builder	5	SELECT	"Choose the Malay word or phrase for ""grandparents""."	datuk dan nenek	65-86
+6	05 Meet the Family	1	Vocabulary Builder	6	ASSIST	"Choose the Malay word or phrase for ""cousin""."	sepupu	65-86
+6	05 Meet the Family	2	Core Conversation	1	ASSIST	"Choose the best Malay line for ""This is my family.""."	Ini keluarga saya.	65-86
+6	05 Meet the Family	2	Core Conversation	2	SELECT	"Choose the best Malay line for ""How many siblings do you have?""."	Anda mempunyai berapa orang adik-beradik?	65-86
+6	05 Meet the Family	2	Core Conversation	3	ASSIST	"Choose the best Malay line for ""I am the eldest child.""."	Saya anak sulung.	65-86
+6	05 Meet the Family	2	Core Conversation	4	SELECT	"Choose the best Malay line for ""My younger sibling is twelve years old.""."	Adik saya berumur dua belas tahun.	65-86
+6	05 Meet the Family	2	Core Conversation	5	ASSIST	"Choose the best Malay line for ""Who is the woman beside your mother?""."	Siapakah wanita di sebelah ibu anda?	65-86
+6	05 Meet the Family	2	Core Conversation	6	SELECT	"Choose the best Malay line for ""That is my older sister.""."	Itu kakak saya.	65-86
+6	05 Meet the Family	3	Sentence Practice	1	ASSIST	"Choose the correct Malay sentence for ""Our house is near the school.""."	Rumah kami berhampiran sekolah.	65-86
+6	05 Meet the Family	3	Sentence Practice	2	SELECT	"Choose the correct Malay sentence for ""Their room is upstairs.""."	Bilik mereka di tingkat atas.	65-86
+6	05 Meet the Family	3	Sentence Practice	3	ASSIST	"Choose the correct Malay sentence for ""The children are playing.""."	Anak-anak sedang bermain.	65-86
+6	05 Meet the Family	3	Sentence Practice	4	SELECT	"Choose the correct Malay sentence for ""I live with my parents.""."	Saya tinggal bersama ibu bapa saya.	65-86
+6	05 Meet the Family	3	Sentence Practice	5	ASSIST	"Choose the correct Malay sentence for ""She is younger than me.""."	Dia lebih muda daripada saya.	65-86
+6	05 Meet the Family	3	Sentence Practice	6	SELECT	"Choose the correct Malay sentence for ""We will visit our relatives.""."	Kami akan melawat saudara-mara.	65-86
+6	05 Meet the Family	4	Daily Speaking Scenario	1	SELECT	"What should you say in Malay for: ""Introduce your mother."""	Ini ibu saya.	65-86
+6	05 Meet the Family	4	Daily Speaking Scenario	2	ASSIST	"What should you say in Malay for: ""Ask someone how old their child is."""	Anak anda berumur berapa tahun?	65-86
+6	05 Meet the Family	4	Daily Speaking Scenario	3	SELECT	"What should you say in Malay for: ""Say you have one older brother."""	Saya mempunyai seorang abang.	65-86
+6	05 Meet the Family	4	Daily Speaking Scenario	4	ASSIST	"What should you say in Malay for: ""Ask who lives in the house."""	Siapa yang tinggal di rumah ini?	65-86
+6	05 Meet the Family	4	Daily Speaking Scenario	5	SELECT	"What should you say in Malay for: ""Say your grandparents live in Penang."""	Datuk dan nenek saya tinggal di Pulau Pinang.	65-86
+6	05 Meet the Family	4	Daily Speaking Scenario	6	ASSIST	"What should you say in Malay for: ""Describe your youngest sibling."""	Adik bongsu saya masih bersekolah.	65-86
+7	06 Sightseeing	1	Vocabulary Builder	1	SELECT	"Choose the Malay word or phrase for ""historic place""."	tempat bersejarah	87-108
+7	06 Sightseeing	1	Vocabulary Builder	2	ASSIST	"Choose the Malay word or phrase for ""museum""."	muzium	87-108
+7	06 Sightseeing	1	Vocabulary Builder	3	SELECT	"Choose the Malay word or phrase for ""national park""."	taman negara	87-108
+7	06 Sightseeing	1	Vocabulary Builder	4	ASSIST	"Choose the Malay word or phrase for ""beach""."	pantai	87-108
+7	06 Sightseeing	1	Vocabulary Builder	5	SELECT	"Choose the Malay word or phrase for ""schedule""."	jadual	87-108
+7	06 Sightseeing	1	Vocabulary Builder	6	ASSIST	"Choose the Malay word or phrase for ""ticket""."	tiket	87-108
+7	06 Sightseeing	2	Core Conversation	1	ASSIST	"Choose the best Malay line for ""What is there to see here?""."	Ada apa yang boleh dilihat di sini?	87-108
+7	06 Sightseeing	2	Core Conversation	2	SELECT	"Choose the best Malay line for ""Can you recommend an interesting place?""."	Boleh cadangkan tempat yang menarik?	87-108
+7	06 Sightseeing	2	Core Conversation	3	ASSIST	"Choose the best Malay line for ""What time does the museum open?""."	Muzium dibuka pada pukul berapa?	87-108
+7	06 Sightseeing	2	Core Conversation	4	SELECT	"Choose the best Malay line for ""We want to visit the city centre.""."	Kami mahu melawat pusat bandar.	87-108
+7	06 Sightseeing	2	Core Conversation	5	ASSIST	"Choose the best Malay line for ""Is there a tour on Monday?""."	Ada lawatan pada hari Isnin?	87-108
+7	06 Sightseeing	2	Core Conversation	6	SELECT	"Choose the best Malay line for ""How long is the tour?""."	Berapa lama lawatan itu?	87-108
+7	06 Sightseeing	3	Sentence Practice	1	ASSIST	"Choose the correct Malay sentence for ""There are many interesting places in this city.""."	Ada banyak tempat menarik di bandar ini.	87-108
+7	06 Sightseeing	3	Sentence Practice	2	SELECT	"Choose the correct Malay sentence for ""The bus leaves at nine o clock.""."	Bas bertolak pada pukul sembilan.	87-108
+7	06 Sightseeing	3	Sentence Practice	3	ASSIST	"Choose the correct Malay sentence for ""The museum is closed on Tuesday.""."	Muzium tutup pada hari Selasa.	87-108
+7	06 Sightseeing	3	Sentence Practice	4	SELECT	"Choose the correct Malay sentence for ""The tour takes two hours.""."	Lawatan itu mengambil masa dua jam.	87-108
+7	06 Sightseeing	3	Sentence Practice	5	ASSIST	"Choose the correct Malay sentence for ""We chose a three-day package.""."	Kami memilih pakej tiga hari.	87-108
+7	06 Sightseeing	3	Sentence Practice	6	SELECT	"Choose the correct Malay sentence for ""Either morning or afternoon is suitable for me.""."	Sama ada pagi atau petang sesuai untuk saya.	87-108
+7	06 Sightseeing	4	Daily Speaking Scenario	1	SELECT	"What should you say in Malay for: ""Ask for the opening time."""	Tempat ini dibuka pada pukul berapa?	87-108
+7	06 Sightseeing	4	Daily Speaking Scenario	2	ASSIST	"What should you say in Malay for: ""Buy two adult tickets."""	Saya mahu dua tiket dewasa.	87-108
+7	06 Sightseeing	4	Daily Speaking Scenario	3	SELECT	"What should you say in Malay for: ""Ask whether photography is allowed."""	Boleh ambil gambar di sini?	87-108
+7	06 Sightseeing	4	Daily Speaking Scenario	4	ASSIST	"What should you say in Malay for: ""Say the visit is on Friday morning."""	Lawatan itu pada pagi Jumaat.	87-108
+7	06 Sightseeing	4	Daily Speaking Scenario	5	SELECT	"What should you say in Malay for: ""Ask what time the last tour starts."""	Lawatan terakhir bermula pada pukul berapa?	87-108
+7	06 Sightseeing	4	Daily Speaking Scenario	6	ASSIST	"What should you say in Malay for: ""Say you want a one-day tour."""	Saya mahu lawatan satu hari.	87-108
+8	07 Invitations	1	Vocabulary Builder	1	SELECT	"Choose the Malay word or phrase for ""invitation""."	jemputan	109-121
+8	07 Invitations	1	Vocabulary Builder	2	ASSIST	"Choose the Malay word or phrase for ""event""."	majlis	109-121
+8	07 Invitations	1	Vocabulary Builder	3	SELECT	"Choose the Malay word or phrase for ""feast / celebration meal""."	kenduri	109-121
+8	07 Invitations	1	Vocabulary Builder	4	ASSIST	"Choose the Malay word or phrase for ""date""."	tarikh	109-121
+8	07 Invitations	1	Vocabulary Builder	5	SELECT	"Choose the Malay word or phrase for ""month""."	bulan	109-121
+8	07 Invitations	1	Vocabulary Builder	6	ASSIST	"Choose the Malay word or phrase for ""plan""."	rancangan	109-121
+8	07 Invitations	2	Core Conversation	1	ASSIST	"Choose the best Malay line for ""I would like to invite you to dinner.""."	Saya ingin menjemput anda makan malam.	109-121
+8	07 Invitations	2	Core Conversation	2	SELECT	"Choose the best Malay line for ""Thank you, I will come.""."	Terima kasih, saya akan datang.	109-121
+8	07 Invitations	2	Core Conversation	3	ASSIST	"Choose the best Malay line for ""Sorry, I cannot come.""."	Maaf, saya tidak dapat datang.	109-121
+8	07 Invitations	2	Core Conversation	4	SELECT	"Choose the best Malay line for ""I already have plans.""."	Saya sudah ada rancangan.	109-121
+8	07 Invitations	2	Core Conversation	5	ASSIST	"Choose the best Malay line for ""How about Saturday?""."	Bagaimana kalau hari Sabtu?	109-121
+8	07 Invitations	2	Core Conversation	6	SELECT	"Choose the best Malay line for ""Give my regards to your family.""."	Sampaikan salam saya kepada keluarga anda.	109-121
+8	07 Invitations	3	Sentence Practice	1	ASSIST	"Choose the correct Malay sentence for ""The event is in August.""."	Majlis itu pada bulan Ogos.	109-121
+8	07 Invitations	3	Sentence Practice	2	SELECT	"Choose the correct Malay sentence for ""Please come to my house.""."	Datanglah ke rumah saya.	109-121
+8	07 Invitations	3	Sentence Practice	3	ASSIST	"Choose the correct Malay sentence for ""I have to work tonight.""."	Saya terpaksa bekerja malam ini.	109-121
+8	07 Invitations	3	Sentence Practice	4	SELECT	"Choose the correct Malay sentence for ""We will return on Monday.""."	Kami akan pulang pada hari Isnin.	109-121
+8	07 Invitations	3	Sentence Practice	5	ASSIST	"Choose the correct Malay sentence for ""I cannot attend because I am unwell.""."	Saya tidak dapat hadir kerana kurang sihat.	109-121
+8	07 Invitations	3	Sentence Practice	6	SELECT	"Choose the correct Malay sentence for ""Seven o clock is suitable for me.""."	Pukul tujuh sesuai untuk saya.	109-121
+8	07 Invitations	4	Daily Speaking Scenario	1	SELECT	"What should you say in Malay for: ""Invite a friend to lunch."""	Saya ingin menjemput anda makan tengah hari.	109-121
+8	07 Invitations	4	Daily Speaking Scenario	2	ASSIST	"What should you say in Malay for: ""Accept an invitation enthusiastically."""	Baik, saya dengan senang hati akan datang.	109-121
+8	07 Invitations	4	Daily Speaking Scenario	3	SELECT	"What should you say in Malay for: ""Decline because you are travelling."""	Maaf, saya akan pergi ke luar bandar.	109-121
+8	07 Invitations	4	Daily Speaking Scenario	4	ASSIST	"What should you say in Malay for: ""Ask for the event date."""	Bilakah tarikh majlis itu?	109-121
+8	07 Invitations	4	Daily Speaking Scenario	5	SELECT	"What should you say in Malay for: ""Suggest Sunday afternoon instead."""	Bagaimana kalau petang Ahad?	109-121
+8	07 Invitations	4	Daily Speaking Scenario	6	ASSIST	"What should you say in Malay for: ""Ask whether you may bring your family."""	Boleh saya bawa keluarga saya?	109-121
+9	08 Directions	1	Vocabulary Builder	1	SELECT	"Choose the Malay word or phrase for ""junction""."	simpang	122-130
+9	08 Directions	1	Vocabulary Builder	2	ASSIST	"Choose the Malay word or phrase for ""traffic light""."	lampu isyarat	122-130
+9	08 Directions	1	Vocabulary Builder	3	SELECT	"Choose the Malay word or phrase for ""beside""."	di sebelah	122-130
+9	08 Directions	1	Vocabulary Builder	4	ASSIST	"Choose the Malay word or phrase for ""opposite""."	bertentangan dengan	122-130
+9	08 Directions	1	Vocabulary Builder	5	SELECT	"Choose the Malay word or phrase for ""straight ahead""."	terus	122-130
+9	08 Directions	1	Vocabulary Builder	6	ASSIST	"Choose the Malay word or phrase for ""turn""."	belok	122-130
+9	08 Directions	2	Core Conversation	1	ASSIST	"Choose the best Malay line for ""Excuse me, where is the station?""."	Tumpang tanya, di mana stesen?	122-130
+9	08 Directions	2	Core Conversation	2	SELECT	"Choose the best Malay line for ""How do I get there?""."	Bagaimana hendak ke sana?	122-130
+9	08 Directions	2	Core Conversation	3	ASSIST	"Choose the best Malay line for ""Go straight until the traffic light.""."	Jalan terus hingga lampu isyarat.	122-130
+9	08 Directions	2	Core Conversation	4	SELECT	"Choose the best Malay line for ""Turn left at the second junction.""."	Belok kiri di simpang kedua.	122-130
+9	08 Directions	2	Core Conversation	5	ASSIST	"Choose the best Malay line for ""The building is beside the bank.""."	Bangunan itu di sebelah bank.	122-130
+9	08 Directions	2	Core Conversation	6	SELECT	"Choose the best Malay line for ""Is it far from here?""."	Adakah jauh dari sini?	122-130
+9	08 Directions	3	Sentence Practice	1	ASSIST	"Choose the correct Malay sentence for ""The clinic is between the bank and the shop.""."	Klinik terletak di antara bank dan kedai.	122-130
+9	08 Directions	3	Sentence Practice	2	SELECT	"Choose the correct Malay sentence for ""The market is across the road.""."	Pasar ada di seberang jalan.	122-130
+9	08 Directions	3	Sentence Practice	3	ASSIST	"Choose the correct Malay sentence for ""Go to the end of the road.""."	Pergi ke hujung jalan.	122-130
+9	08 Directions	3	Sentence Practice	4	SELECT	"Choose the correct Malay sentence for ""Go up the stairs to the second floor.""."	Naik tangga ke tingkat dua.	122-130
+9	08 Directions	3	Sentence Practice	5	ASSIST	"Choose the correct Malay sentence for ""The station is about five hundred metres from here.""."	Stesen kira-kira lima ratus meter dari sini.	122-130
+9	08 Directions	3	Sentence Practice	6	SELECT	"Choose the correct Malay sentence for ""Enter through the main door.""."	Masuk melalui pintu utama.	122-130
+9	08 Directions	4	Daily Speaking Scenario	1	SELECT	"What should you say in Malay for: ""Ask how to reach the hospital."""	Bagaimana hendak ke hospital?	122-130
+9	08 Directions	4	Daily Speaking Scenario	2	ASSIST	"What should you say in Malay for: ""Tell someone to turn right."""	Belok kanan di simpang ini.	122-130
+9	08 Directions	4	Daily Speaking Scenario	3	SELECT	"What should you say in Malay for: ""Say the cafe is behind the library."""	Kafe itu di belakang perpustakaan.	122-130
+9	08 Directions	4	Daily Speaking Scenario	4	ASSIST	"What should you say in Malay for: ""Ask whether you can walk there."""	Boleh berjalan kaki ke sana?	122-130
+9	08 Directions	4	Daily Speaking Scenario	5	SELECT	"What should you say in Malay for: ""Say it takes ten minutes on foot."""	Perjalanan ke sana mengambil masa sepuluh minit dengan berjalan kaki.	122-130
+9	08 Directions	4	Daily Speaking Scenario	6	ASSIST	"What should you say in Malay for: ""Ask which bus goes to the city centre."""	Bas mana pergi ke pusat bandar?	122-130
+10	09 Changing Money	1	Vocabulary Builder	1	SELECT	"Choose the Malay word or phrase for ""ringgit""."	ringgit	131-143
+10	09 Changing Money	1	Vocabulary Builder	2	ASSIST	"Choose the Malay word or phrase for ""sen""."	sen	131-143
+10	09 Changing Money	1	Vocabulary Builder	3	SELECT	"Choose the Malay word or phrase for ""exchange rate""."	kadar tukaran	131-143
+10	09 Changing Money	1	Vocabulary Builder	4	ASSIST	"Choose the Malay word or phrase for ""cash""."	tunai	131-143
+10	09 Changing Money	1	Vocabulary Builder	5	SELECT	"Choose the Malay word or phrase for ""small change""."	wang kecil	131-143
+10	09 Changing Money	1	Vocabulary Builder	6	ASSIST	"Choose the Malay word or phrase for ""receipt""."	resit	131-143
+10	09 Changing Money	2	Core Conversation	1	ASSIST	"Choose the best Malay line for ""I want to change money.""."	Saya mahu menukar wang.	131-143
+10	09 Changing Money	2	Core Conversation	2	SELECT	"Choose the best Malay line for ""What is today s exchange rate?""."	Apakah kadar tukaran hari ini?	131-143
+10	09 Changing Money	2	Core Conversation	3	ASSIST	"Choose the best Malay line for ""How many ringgit for one hundred dollars?""."	Berapa ringgit untuk seratus dolar?	131-143
+10	09 Changing Money	2	Core Conversation	4	SELECT	"Choose the best Malay line for ""Can you give me small change?""."	Boleh beri saya wang kecil?	131-143
+10	09 Changing Money	2	Core Conversation	5	ASSIST	"Choose the best Malay line for ""Here is all the money.""."	Ini semua wangnya.	131-143
+10	09 Changing Money	2	Core Conversation	6	SELECT	"Choose the best Malay line for ""May I have a receipt?""."	Boleh saya dapat resit?	131-143
+10	09 Changing Money	3	Sentence Practice	1	ASSIST	"Choose the correct Malay sentence for ""The price is two hundred and fifty ringgit.""."	Harganya dua ratus lima puluh ringgit.	131-143
+10	09 Changing Money	3	Sentence Practice	2	SELECT	"Choose the correct Malay sentence for ""It weighs five kilograms.""."	Beratnya lima kilogram.	131-143
+10	09 Changing Money	3	Sentence Practice	3	ASSIST	"Choose the correct Malay sentence for ""The distance is thirty kilometres.""."	Jaraknya tiga puluh kilometer.	131-143
+10	09 Changing Money	3	Sentence Practice	4	SELECT	"Choose the correct Malay sentence for ""The height is one metre eighty centimetres.""."	Tingginya satu meter lapan puluh sentimeter.	131-143
+10	09 Changing Money	3	Sentence Practice	5	ASSIST	"Choose the correct Malay sentence for ""I am paying in cash.""."	Saya membayar secara tunai.	131-143
+10	09 Changing Money	3	Sentence Practice	6	SELECT	"Choose the correct Malay sentence for ""Your change is twelve ringgit.""."	Baki anda ialah dua belas ringgit.	131-143
+10	09 Changing Money	4	Daily Speaking Scenario	1	SELECT	"What should you say in Malay for: ""Ask to exchange fifty dollars."""	Saya mahu menukar lima puluh dolar.	131-143
+10	09 Changing Money	4	Daily Speaking Scenario	2	ASSIST	"What should you say in Malay for: ""Ask whether there is a service charge."""	Ada caj perkhidmatan?	131-143
+10	09 Changing Money	4	Daily Speaking Scenario	3	SELECT	"What should you say in Malay for: ""Say you need smaller notes."""	Saya perlukan wang kertas yang lebih kecil.	131-143
+10	09 Changing Money	4	Daily Speaking Scenario	4	ASSIST	"What should you say in Malay for: ""Ask the total price."""	Berapakah jumlah semuanya?	131-143
+10	09 Changing Money	4	Daily Speaking Scenario	5	SELECT	"What should you say in Malay for: ""Say the parcel weighs two kilograms."""	Bungkusan ini beratnya dua kilogram.	131-143
+10	09 Changing Money	4	Daily Speaking Scenario	6	ASSIST	"What should you say in Malay for: ""Ask for the receipt and change."""	Boleh beri resit dan baki saya?	131-143
+11	10 Getting Around	1	Vocabulary Builder	1	SELECT	"Choose the Malay word or phrase for ""bus""."	bas	144-157
+11	10 Getting Around	1	Vocabulary Builder	2	ASSIST	"Choose the Malay word or phrase for ""train""."	kereta api	144-157
+11	10 Getting Around	1	Vocabulary Builder	3	SELECT	"Choose the Malay word or phrase for ""aeroplane""."	kapal terbang	144-157
+11	10 Getting Around	1	Vocabulary Builder	4	ASSIST	"Choose the Malay word or phrase for ""ferry""."	feri	144-157
+11	10 Getting Around	1	Vocabulary Builder	5	SELECT	"Choose the Malay word or phrase for ""platform""."	platform	144-157
+11	10 Getting Around	1	Vocabulary Builder	6	ASSIST	"Choose the Malay word or phrase for ""journey""."	perjalanan	144-157
+11	10 Getting Around	2	Core Conversation	1	ASSIST	"Choose the best Malay line for ""I want to buy a ticket to Ipoh.""."	Saya mahu membeli tiket ke Ipoh.	144-157
+11	10 Getting Around	2	Core Conversation	2	SELECT	"Choose the best Malay line for ""One-way or return?""."	Tiket sehala atau pergi balik?	144-157
+11	10 Getting Around	2	Core Conversation	3	ASSIST	"Choose the best Malay line for ""What time does the train leave?""."	Pukul berapa kereta api bertolak?	144-157
+11	10 Getting Around	2	Core Conversation	4	SELECT	"Choose the best Malay line for ""From which platform?""."	Dari platform mana?	144-157
+11	10 Getting Around	2	Core Conversation	5	ASSIST	"Choose the best Malay line for ""How long does the journey take?""."	Perjalanan mengambil masa berapa lama?	144-157
+11	10 Getting Around	2	Core Conversation	6	SELECT	"Choose the best Malay line for ""Does this bus stop in Melaka?""."	Bas ini berhenti di Melaka?	144-157
+11	10 Getting Around	3	Sentence Practice	1	ASSIST	"Choose the correct Malay sentence for ""The flight is delayed for one hour.""."	Penerbangan ditunda selama satu jam.	144-157
+11	10 Getting Around	3	Sentence Practice	2	SELECT	"Choose the correct Malay sentence for ""We will arrive at six in the evening.""."	Kami akan tiba pada pukul enam petang.	144-157
+11	10 Getting Around	3	Sentence Practice	3	ASSIST	"Choose the correct Malay sentence for ""The taxi is waiting outside.""."	Teksi sedang menunggu di luar.	144-157
+11	10 Getting Around	3	Sentence Practice	4	SELECT	"Choose the correct Malay sentence for ""I go to work by motorcycle.""."	Saya pergi bekerja dengan motosikal.	144-157
+11	10 Getting Around	3	Sentence Practice	5	ASSIST	"Choose the correct Malay sentence for ""The fare includes one bag.""."	Tambang termasuk satu beg.	144-157
+11	10 Getting Around	3	Sentence Practice	6	SELECT	"Choose the correct Malay sentence for ""The next train arrives in half an hour.""."	Kereta api seterusnya tiba setengah jam lagi.	144-157
+11	10 Getting Around	4	Daily Speaking Scenario	1	SELECT	"What should you say in Malay for: ""Buy a return ticket to Johor Bahru."""	Saya mahu tiket pergi balik ke Johor Bahru.	144-157
+11	10 Getting Around	4	Daily Speaking Scenario	2	ASSIST	"What should you say in Malay for: ""Ask where to board the bus."""	Di mana saya boleh menaiki bas?	144-157
+11	10 Getting Around	4	Daily Speaking Scenario	3	SELECT	"What should you say in Malay for: ""Ask whether the train is on time."""	Adakah kereta api menepati masa?	144-157
+11	10 Getting Around	4	Daily Speaking Scenario	4	ASSIST	"What should you say in Malay for: ""Say you missed the last ferry."""	Saya terlepas feri terakhir.	144-157
+11	10 Getting Around	4	Daily Speaking Scenario	5	SELECT	"What should you say in Malay for: ""Ask for the earliest flight."""	Penerbangan paling awal pada pukul berapa?	144-157
+11	10 Getting Around	4	Daily Speaking Scenario	6	ASSIST	"What should you say in Malay for: ""Tell the driver to stop here."""	Tolong berhenti di sini.	144-157
+12	11 Checking In	1	Vocabulary Builder	1	SELECT	"Choose the Malay word or phrase for ""vacant room""."	bilik kosong	158-169
+12	11 Checking In	1	Vocabulary Builder	2	ASSIST	"Choose the Malay word or phrase for ""reservation""."	tempahan	158-169
+12	11 Checking In	1	Vocabulary Builder	3	SELECT	"Choose the Malay word or phrase for ""double bed""."	katil kelamin	158-169
+12	11 Checking In	1	Vocabulary Builder	4	ASSIST	"Choose the Malay word or phrase for ""breakfast""."	sarapan pagi	158-169
+12	11 Checking In	1	Vocabulary Builder	5	SELECT	"Choose the Malay word or phrase for ""facilities""."	kemudahan	158-169
+12	11 Checking In	1	Vocabulary Builder	6	ASSIST	"Choose the Malay word or phrase for ""check out""."	daftar keluar	158-169
+12	11 Checking In	2	Core Conversation	1	ASSIST	"Choose the best Malay line for ""Is there a room available for two nights?""."	Ada bilik kosong untuk dua malam?	158-169
+12	11 Checking In	2	Core Conversation	2	SELECT	"Choose the best Malay line for ""I have made a reservation.""."	Saya telah membuat tempahan.	158-169
+12	11 Checking In	2	Core Conversation	3	ASSIST	"Choose the best Malay line for ""How much is it per night?""."	Berapa harganya untuk satu malam?	158-169
+12	11 Checking In	2	Core Conversation	4	SELECT	"Choose the best Malay line for ""Is breakfast included?""."	Adakah sarapan pagi termasuk?	158-169
+12	11 Checking In	2	Core Conversation	5	ASSIST	"Choose the best Malay line for ""May I see the room first?""."	Boleh saya lihat biliknya dahulu?	158-169
+12	11 Checking In	2	Core Conversation	6	SELECT	"Choose the best Malay line for ""What time is checkout?""."	Pukul berapa waktu daftar keluar?	158-169
+12	11 Checking In	3	Sentence Practice	1	ASSIST	"Choose the correct Malay sentence for ""I want a room facing the garden.""."	Saya mahu bilik yang menghadap taman.	158-169
+12	11 Checking In	3	Sentence Practice	2	SELECT	"Choose the correct Malay sentence for ""The bathroom has no hot water.""."	Bilik air tidak mempunyai air panas.	158-169
+12	11 Checking In	3	Sentence Practice	3	ASSIST	"Choose the correct Malay sentence for ""Please send extra towels.""."	Tolong hantar tuala tambahan.	158-169
+12	11 Checking In	3	Sentence Practice	4	SELECT	"Choose the correct Malay sentence for ""We usually eat breakfast at eight.""."	Kami biasanya bersarapan pada pukul lapan.	158-169
+12	11 Checking In	3	Sentence Practice	5	ASSIST	"Choose the correct Malay sentence for ""I will pay by card.""."	Saya akan membayar dengan kad.	158-169
+12	11 Checking In	3	Sentence Practice	6	SELECT	"Choose the correct Malay sentence for ""Can you store our bags after checkout?""."	Boleh simpan beg kami selepas daftar keluar?	158-169
+12	11 Checking In	4	Daily Speaking Scenario	1	SELECT	"What should you say in Malay for: ""Ask for a quiet room."""	Saya mahu bilik yang senyap.	158-169
+12	11 Checking In	4	Daily Speaking Scenario	2	ASSIST	"What should you say in Malay for: ""Report that the air conditioner is not working."""	Penyaman udara tidak berfungsi.	158-169
+12	11 Checking In	4	Daily Speaking Scenario	3	SELECT	"What should you say in Malay for: ""Ask for the Wi-Fi password."""	Apakah kata laluan Wi-Fi?	158-169
+12	11 Checking In	4	Daily Speaking Scenario	4	ASSIST	"What should you say in Malay for: ""Request a late checkout."""	Boleh saya daftar keluar lewat?	158-169
+12	11 Checking In	4	Daily Speaking Scenario	5	SELECT	"What should you say in Malay for: ""Ask whether there is a swimming pool."""	Ada kolam renang?	158-169
+12	11 Checking In	4	Daily Speaking Scenario	6	ASSIST	"What should you say in Malay for: ""Confirm a booking under your name."""	Tempahan itu atas nama Aung.	158-169
+13	12 Bargain Hunting	1	Vocabulary Builder	1	SELECT	"Choose the Malay word or phrase for ""size""."	saiz	170-189
+13	12 Bargain Hunting	1	Vocabulary Builder	2	ASSIST	"Choose the Malay word or phrase for ""colour""."	warna	170-189
+13	12 Bargain Hunting	1	Vocabulary Builder	3	SELECT	"Choose the Malay word or phrase for ""cloth / fabric""."	kain	170-189
+13	12 Bargain Hunting	1	Vocabulary Builder	4	ASSIST	"Choose the Malay word or phrase for ""cotton""."	kapas	170-189
+13	12 Bargain Hunting	1	Vocabulary Builder	5	SELECT	"Choose the Malay word or phrase for ""too small""."	terlalu kecil	170-189
+13	12 Bargain Hunting	1	Vocabulary Builder	6	ASSIST	"Choose the Malay word or phrase for ""discount""."	diskaun	170-189
+13	12 Bargain Hunting	2	Core Conversation	1	ASSIST	"Choose the best Malay line for ""I am looking for a batik shirt.""."	Saya mencari kemeja batik.	170-189
+13	12 Bargain Hunting	2	Core Conversation	2	SELECT	"Choose the best Malay line for ""Is there a larger size?""."	Ada saiz yang lebih besar?	170-189
+13	12 Bargain Hunting	2	Core Conversation	3	ASSIST	"Choose the best Malay line for ""May I try this shirt?""."	Boleh saya cuba baju ini?	170-189
+13	12 Bargain Hunting	2	Core Conversation	4	SELECT	"Choose the best Malay line for ""What is your best price?""."	Berapa harga yang terbaik?	170-189
+13	12 Bargain Hunting	2	Core Conversation	5	ASSIST	"Choose the best Malay line for ""That is too expensive.""."	Itu terlalu mahal.	170-189
+13	12 Bargain Hunting	2	Core Conversation	6	SELECT	"Choose the best Malay line for ""Can you reduce it a little?""."	Boleh kurang sedikit?	170-189
+13	12 Bargain Hunting	3	Sentence Practice	1	ASSIST	"Choose the correct Malay sentence for ""I want the blue one.""."	Saya mahu yang berwarna biru.	170-189
+13	12 Bargain Hunting	3	Sentence Practice	2	SELECT	"Choose the correct Malay sentence for ""This fabric is made of cotton.""."	Kain ini diperbuat daripada kapas.	170-189
+13	12 Bargain Hunting	3	Sentence Practice	3	ASSIST	"Choose the correct Malay sentence for ""That shirt is cheaper than this one.""."	Baju itu lebih murah daripada yang ini.	170-189
+13	12 Bargain Hunting	3	Sentence Practice	4	SELECT	"Choose the correct Malay sentence for ""The medium size is too tight.""."	Saiz sederhana terlalu ketat.	170-189
+13	12 Bargain Hunting	3	Sentence Practice	5	ASSIST	"Choose the correct Malay sentence for ""I will take two pieces.""."	Saya akan ambil dua helai.	170-189
+13	12 Bargain Hunting	3	Sentence Practice	6	SELECT	"Choose the correct Malay sentence for ""Is there a discount if I buy three?""."	Ada diskaun jika saya beli tiga?	170-189
+13	12 Bargain Hunting	4	Daily Speaking Scenario	1	SELECT	"What should you say in Malay for: ""Ask for a black pair of trousers."""	Saya mahu seluar panjang berwarna hitam.	170-189
+13	12 Bargain Hunting	4	Daily Speaking Scenario	2	ASSIST	"What should you say in Malay for: ""Say the shoes are too loose."""	Kasut ini terlalu longgar.	170-189
+13	12 Bargain Hunting	4	Daily Speaking Scenario	3	SELECT	"What should you say in Malay for: ""Ask whether another colour is available."""	Ada warna lain?	170-189
+13	12 Bargain Hunting	4	Daily Speaking Scenario	4	ASSIST	"What should you say in Malay for: ""Offer a lower price politely."""	Boleh saya bayar lima puluh ringgit?	170-189
+13	12 Bargain Hunting	4	Daily Speaking Scenario	5	SELECT	"What should you say in Malay for: ""Ask where the fitting room is."""	Di mana bilik persalinan?	170-189
+13	12 Bargain Hunting	4	Daily Speaking Scenario	6	ASSIST	"What should you say in Malay for: ""Say you will think about it first."""	Saya fikir dahulu.	170-189
+14	13 Eating Out	1	Vocabulary Builder	1	SELECT	"Choose the Malay word or phrase for ""menu""."	menu	190-204
+14	13 Eating Out	1	Vocabulary Builder	2	ASSIST	"Choose the Malay word or phrase for ""dish""."	hidangan	190-204
+14	13 Eating Out	1	Vocabulary Builder	3	SELECT	"Choose the Malay word or phrase for ""drink""."	minuman	190-204
+14	13 Eating Out	1	Vocabulary Builder	4	ASSIST	"Choose the Malay word or phrase for ""spicy""."	pedas	190-204
+14	13 Eating Out	1	Vocabulary Builder	5	SELECT	"Choose the Malay word or phrase for ""allergy""."	alahan	190-204
+14	13 Eating Out	1	Vocabulary Builder	6	ASSIST	"Choose the Malay word or phrase for ""dessert""."	pencuci mulut	190-204
+14	13 Eating Out	2	Core Conversation	1	ASSIST	"Choose the best Malay line for ""A table for four people.""."	Meja untuk empat orang.	190-204
+14	13 Eating Out	2	Core Conversation	2	SELECT	"Choose the best Malay line for ""May I see the menu?""."	Boleh saya lihat menu?	190-204
+14	13 Eating Out	2	Core Conversation	3	ASSIST	"Choose the best Malay line for ""I would like to order fried rice.""."	Saya mahu pesan nasi goreng.	190-204
+14	13 Eating Out	2	Core Conversation	4	SELECT	"Choose the best Malay line for ""Please do not add peanuts.""."	Tolong jangan masukkan kacang.	190-204
+14	13 Eating Out	2	Core Conversation	5	ASSIST	"Choose the best Malay line for ""What is today s special?""."	Apakah hidangan istimewa hari ini?	190-204
+14	13 Eating Out	2	Core Conversation	6	SELECT	"Choose the best Malay line for ""May I have the bill?""."	Boleh minta bil?	190-204
+14	13 Eating Out	3	Sentence Practice	1	ASSIST	"Choose the correct Malay sentence for ""I am allergic to seafood.""."	Saya alah kepada makanan laut.	190-204
+14	13 Eating Out	3	Sentence Practice	2	SELECT	"Choose the correct Malay sentence for ""We want food that is not too spicy.""."	Kami mahu makanan yang tidak terlalu pedas.	190-204
+14	13 Eating Out	3	Sentence Practice	3	ASSIST	"Choose the correct Malay sentence for ""This drink is too sweet.""."	Minuman ini terlalu manis.	190-204
+14	13 Eating Out	3	Sentence Practice	4	SELECT	"Choose the correct Malay sentence for ""Can you serve the sauce separately?""."	Boleh asingkan sosnya?	190-204
+14	13 Eating Out	3	Sentence Practice	5	ASSIST	"Choose the correct Malay sentence for ""The food will be ready in fifteen minutes.""."	Makanan akan siap dalam lima belas minit.	190-204
+14	13 Eating Out	3	Sentence Practice	6	SELECT	"Choose the correct Malay sentence for ""We are sharing one dish.""."	Kami berkongsi satu hidangan.	190-204
+14	13 Eating Out	4	Daily Speaking Scenario	1	SELECT	"What should you say in Malay for: ""Order a hot tea without sugar."""	Saya mahu teh panas tanpa gula.	190-204
+14	13 Eating Out	4	Daily Speaking Scenario	2	ASSIST	"What should you say in Malay for: ""Ask whether a dish contains eggs."""	Hidangan ini mengandungi telur?	190-204
+14	13 Eating Out	4	Daily Speaking Scenario	3	SELECT	"What should you say in Malay for: ""Request vegetarian food."""	Saya mahu makanan vegetarian.	190-204
+14	13 Eating Out	4	Daily Speaking Scenario	4	ASSIST	"What should you say in Malay for: ""Ask the waiter for a recommendation."""	Boleh cadangkan satu hidangan?	190-204
+14	13 Eating Out	4	Daily Speaking Scenario	5	SELECT	"What should you say in Malay for: ""Say the food is delicious."""	Makanan ini sedap.	190-204
+14	13 Eating Out	4	Daily Speaking Scenario	6	ASSIST	"What should you say in Malay for: ""Ask to pack the leftovers."""	Boleh bungkus makanan ini?	190-204
+15	14 At the Supermarket	1	Vocabulary Builder	1	SELECT	"Choose the Malay word or phrase for ""basket""."	bakul	205-217
+15	14 At the Supermarket	1	Vocabulary Builder	2	ASSIST	"Choose the Malay word or phrase for ""trolley""."	troli	205-217
+15	14 At the Supermarket	1	Vocabulary Builder	3	SELECT	"Choose the Malay word or phrase for ""one kilogram""."	sekilogram	205-217
+15	14 At the Supermarket	1	Vocabulary Builder	4	ASSIST	"Choose the Malay word or phrase for ""one bottle""."	sebotol	205-217
+15	14 At the Supermarket	1	Vocabulary Builder	5	SELECT	"Choose the Malay word or phrase for ""fresh""."	segar	205-217
+15	14 At the Supermarket	1	Vocabulary Builder	6	ASSIST	"Choose the Malay word or phrase for ""recipe""."	resipi	205-217
+15	14 At the Supermarket	2	Core Conversation	1	ASSIST	"Choose the best Malay line for ""Where is the vegetable section?""."	Di mana bahagian sayur?	205-217
+15	14 At the Supermarket	2	Core Conversation	2	SELECT	"Choose the best Malay line for ""I want half a kilogram of chicken.""."	Saya mahu setengah kilogram ayam.	205-217
+15	14 At the Supermarket	2	Core Conversation	3	ASSIST	"Choose the best Malay line for ""Is there unsweetened milk?""."	Ada susu tanpa gula?	205-217
+15	14 At the Supermarket	2	Core Conversation	4	SELECT	"Choose the best Malay line for ""Is this fruit still fresh?""."	Buah ini masih segar?	205-217
+15	14 At the Supermarket	2	Core Conversation	5	ASSIST	"Choose the best Malay line for ""Can you weigh this fish?""."	Boleh timbangkan ikan ini?	205-217
+15	14 At the Supermarket	2	Core Conversation	6	SELECT	"Choose the best Malay line for ""Where is the checkout counter?""."	Di mana kaunter pembayaran?	205-217
+15	14 At the Supermarket	3	Sentence Practice	1	ASSIST	"Choose the correct Malay sentence for ""Slice the onions thinly.""."	Potong bawang nipis-nipis.	205-217
+15	14 At the Supermarket	3	Sentence Practice	2	SELECT	"Choose the correct Malay sentence for ""Add two cups of water.""."	Masukkan dua cawan air.	205-217
+15	14 At the Supermarket	3	Sentence Practice	3	ASSIST	"Choose the correct Malay sentence for ""The meat must be cooked for thirty minutes.""."	Daging perlu dimasak selama tiga puluh minit.	205-217
+15	14 At the Supermarket	3	Sentence Practice	4	SELECT	"Choose the correct Malay sentence for ""The vegetables are washed before cooking.""."	Sayur itu dibasuh sebelum dimasak.	205-217
+15	14 At the Supermarket	3	Sentence Practice	5	ASSIST	"Choose the correct Malay sentence for ""I bought three apples.""."	Saya membeli tiga biji epal.	205-217
+15	14 At the Supermarket	3	Sentence Practice	6	SELECT	"Choose the correct Malay sentence for ""This recipe serves four people.""."	Resipi ini cukup untuk empat orang.	205-217
+15	14 At the Supermarket	4	Daily Speaking Scenario	1	SELECT	"What should you say in Malay for: ""Ask for one loaf of bread."""	Saya mahu sebuku roti.	205-217
+15	14 At the Supermarket	4	Daily Speaking Scenario	2	ASSIST	"What should you say in Malay for: ""Buy two bottles of water."""	Saya mahu dua botol air.	205-217
+15	14 At the Supermarket	4	Daily Speaking Scenario	3	SELECT	"What should you say in Malay for: ""Ask where the rice is."""	Beras ada di bahagian mana?	205-217
+15	14 At the Supermarket	4	Daily Speaking Scenario	4	ASSIST	"What should you say in Malay for: ""Say this product has expired."""	Produk ini sudah tamat tempoh.	205-217
+15	14 At the Supermarket	4	Daily Speaking Scenario	5	SELECT	"What should you say in Malay for: ""Ask for a reusable bag."""	Boleh saya dapat beg guna semula?	205-217
+15	14 At the Supermarket	4	Daily Speaking Scenario	6	ASSIST	"What should you say in Malay for: ""Ask whether card payment is accepted."""	Boleh bayar dengan kad?	205-217
+16	15 Hobbies and Leisure	1	Vocabulary Builder	1	SELECT	"Choose the Malay word or phrase for ""free time""."	masa lapang	218-232
+16	15 Hobbies and Leisure	1	Vocabulary Builder	2	ASSIST	"Choose the Malay word or phrase for ""favourite""."	kegemaran	218-232
+16	15 Hobbies and Leisure	1	Vocabulary Builder	3	SELECT	"Choose the Malay word or phrase for ""to exercise""."	bersenam	218-232
+16	15 Hobbies and Leisure	1	Vocabulary Builder	4	ASSIST	"Choose the Malay word or phrase for ""to watch""."	menonton	218-232
+16	15 Hobbies and Leisure	1	Vocabulary Builder	5	SELECT	"Choose the Malay word or phrase for ""to read""."	membaca	218-232
+16	15 Hobbies and Leisure	1	Vocabulary Builder	6	ASSIST	"Choose the Malay word or phrase for ""to travel""."	melancong	218-232
+16	15 Hobbies and Leisure	2	Core Conversation	1	ASSIST	"Choose the best Malay line for ""What do you do in your free time?""."	Apa yang anda lakukan pada masa lapang?	218-232
+16	15 Hobbies and Leisure	2	Core Conversation	2	SELECT	"Choose the best Malay line for ""My hobby is reading novels.""."	Hobi saya membaca novel.	218-232
+16	15 Hobbies and Leisure	2	Core Conversation	3	ASSIST	"Choose the best Malay line for ""I like comedy films the most.""."	Saya paling suka filem komedi.	218-232
+16	15 Hobbies and Leisure	2	Core Conversation	4	SELECT	"Choose the best Malay line for ""I do not really like horror films.""."	Saya tidak begitu suka filem seram.	218-232
+16	15 Hobbies and Leisure	2	Core Conversation	5	ASSIST	"Choose the best Malay line for ""How often do you exercise?""."	Berapa kali anda bersenam?	218-232
+16	15 Hobbies and Leisure	2	Core Conversation	6	SELECT	"Choose the best Malay line for ""I play badminton twice a week.""."	Saya bermain badminton dua kali seminggu.	218-232
+16	15 Hobbies and Leisure	3	Sentence Practice	1	ASSIST	"Choose the correct Malay sentence for ""I have studied piano for two years.""."	Saya sudah belajar piano selama dua tahun.	218-232
+16	15 Hobbies and Leisure	3	Sentence Practice	2	SELECT	"Choose the correct Malay sentence for ""He has played football since childhood.""."	Dia bermain bola sepak sejak kecil.	218-232
+16	15 Hobbies and Leisure	3	Sentence Practice	3	ASSIST	"Choose the correct Malay sentence for ""Our favourite activity is hiking.""."	Aktiviti kegemaran kami ialah mendaki.	218-232
+16	15 Hobbies and Leisure	3	Sentence Practice	4	SELECT	"Choose the correct Malay sentence for ""I prefer reading to watching television.""."	Saya lebih suka membaca daripada menonton televisyen.	218-232
+16	15 Hobbies and Leisure	3	Sentence Practice	5	ASSIST	"Choose the correct Malay sentence for ""They are practising for a competition.""."	Mereka sedang berlatih untuk pertandingan.	218-232
+16	15 Hobbies and Leisure	3	Sentence Practice	6	SELECT	"Choose the correct Malay sentence for ""I started jogging last month.""."	Saya mula berjoging bulan lalu.	218-232
+16	15 Hobbies and Leisure	4	Daily Speaking Scenario	1	SELECT	"What should you say in Malay for: ""Ask a friend about their favourite sport."""	Apakah sukan kegemaran anda?	218-232
+16	15 Hobbies and Leisure	4	Daily Speaking Scenario	2	ASSIST	"What should you say in Malay for: ""Say you enjoy gardening on weekends."""	Saya suka berkebun pada hujung minggu.	218-232
+16	15 Hobbies and Leisure	4	Daily Speaking Scenario	3	SELECT	"What should you say in Malay for: ""Say you dislike crowded places."""	Saya tidak suka tempat yang sesak.	218-232
+16	15 Hobbies and Leisure	4	Daily Speaking Scenario	4	ASSIST	"What should you say in Malay for: ""Ask how long someone has learned guitar."""	Sudah berapa lama anda belajar gitar?	218-232
+16	15 Hobbies and Leisure	4	Daily Speaking Scenario	5	SELECT	"What should you say in Malay for: ""Invite a friend to play badminton."""	Mari kita bermain badminton.	218-232
+16	15 Hobbies and Leisure	4	Daily Speaking Scenario	6	ASSIST	"What should you say in Malay for: ""Say you exercise every morning."""	Saya bersenam setiap pagi.	218-232
+17	16 At the Doctor	1	Vocabulary Builder	1	SELECT	"Choose the Malay word or phrase for ""fever""."	demam	233-249
+17	16 At the Doctor	1	Vocabulary Builder	2	ASSIST	"Choose the Malay word or phrase for ""cough""."	batuk	233-249
+17	16 At the Doctor	1	Vocabulary Builder	3	SELECT	"Choose the Malay word or phrase for ""headache""."	sakit kepala	233-249
+17	16 At the Doctor	1	Vocabulary Builder	4	ASSIST	"Choose the Malay word or phrase for ""medicine""."	ubat	233-249
+17	16 At the Doctor	1	Vocabulary Builder	5	SELECT	"Choose the Malay word or phrase for ""allergy""."	alahan	233-249
+17	16 At the Doctor	1	Vocabulary Builder	6	ASSIST	"Choose the Malay word or phrase for ""appointment""."	temu janji	233-249
+17	16 At the Doctor	2	Core Conversation	1	ASSIST	"Choose the best Malay line for ""What is the problem?""."	Apa masalah anda?	233-249
+17	16 At the Doctor	2	Core Conversation	2	SELECT	"Choose the best Malay line for ""I have a fever and a sore throat.""."	Saya demam dan sakit tekak.	233-249
+17	16 At the Doctor	2	Core Conversation	3	ASSIST	"Choose the best Malay line for ""How long have you been ill?""."	Sejak bila anda sakit?	233-249
+17	16 At the Doctor	2	Core Conversation	4	SELECT	"Choose the best Malay line for ""For three days.""."	Sudah tiga hari.	233-249
+17	16 At the Doctor	2	Core Conversation	5	ASSIST	"Choose the best Malay line for ""Are you allergic to any medicine?""."	Adakah anda alah kepada sebarang ubat?	233-249
+17	16 At the Doctor	2	Core Conversation	6	SELECT	"Choose the best Malay line for ""Take this medicine after eating.""."	Ambil ubat ini selepas makan.	233-249
+17	16 At the Doctor	3	Sentence Practice	1	ASSIST	"Choose the correct Malay sentence for ""I need to see a doctor.""."	Saya perlu berjumpa doktor.	233-249
+17	16 At the Doctor	3	Sentence Practice	2	SELECT	"Choose the correct Malay sentence for ""My temperature is high.""."	Suhu badan saya tinggi.	233-249
+17	16 At the Doctor	3	Sentence Practice	3	ASSIST	"Choose the correct Malay sentence for ""Please take a deep breath.""."	Tolong tarik nafas dalam-dalam.	233-249
+17	16 At the Doctor	3	Sentence Practice	4	SELECT	"Choose the correct Malay sentence for ""Do not drive after taking this medicine.""."	Jangan memandu selepas mengambil ubat ini.	233-249
+17	16 At the Doctor	3	Sentence Practice	5	ASSIST	"Choose the correct Malay sentence for ""The clinic is open from eight to five.""."	Klinik dibuka dari pukul lapan hingga lima.	233-249
+17	16 At the Doctor	3	Sentence Practice	6	SELECT	"Choose the correct Malay sentence for ""I want to make an appointment by telephone.""."	Saya mahu membuat temu janji melalui telefon.	233-249
+17	16 At the Doctor	4	Daily Speaking Scenario	1	SELECT	"What should you say in Malay for: ""Say you have chest pain."""	Saya sakit dada.	233-249
+17	16 At the Doctor	4	Daily Speaking Scenario	2	ASSIST	"What should you say in Malay for: ""Ask someone to call an ambulance."""	Tolong panggil ambulans.	233-249
+17	16 At the Doctor	4	Daily Speaking Scenario	3	SELECT	"What should you say in Malay for: ""Say your child has a rash."""	Anak saya mengalami ruam.	233-249
+17	16 At the Doctor	4	Daily Speaking Scenario	4	ASSIST	"What should you say in Malay for: ""Say it will rain this afternoon."""	Hujan akan turun petang ini.	233-249
+17	16 At the Doctor	4	Daily Speaking Scenario	5	SELECT	"What should you say in Malay for: ""Ask to speak with Doctor Farah."""	Boleh saya bercakap dengan Doktor Farah?	233-249
+17	16 At the Doctor	4	Daily Speaking Scenario	6	ASSIST	"What should you say in Malay for: ""Ask when the medicine should be taken."""	Ubat ini perlu diambil bila?	233-249

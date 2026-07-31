@@ -159,9 +159,20 @@ export function LanguageQuestCourseFolders<T>({
               </p>
               <h3 className="mt-1 text-xl font-black text-slate-950 dark:text-white">{activeGroup.category}</h3>
             </div>
-            <Badge variant="secondary">
-              {activeGroup.courses.length} {activeGroup.courses.length === 1 ? 'course' : 'courses'}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary">
+                {activeGroup.courses.length} {activeGroup.courses.length === 1 ? 'course' : 'courses'}
+              </Badge>
+              <button
+                type="button"
+                onClick={() => setActiveCategory(null)}
+                aria-label={`Close open ${activeGroup.category} course panel`}
+                className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-violet-200 bg-white px-3 text-xs font-black text-violet-700 shadow-sm transition hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet-400/30 dark:border-violet-500/30 dark:bg-slate-950 dark:text-violet-200"
+              >
+                Close folder
+                <ChevronDown className="h-3.5 w-3.5 rotate-180" aria-hidden="true" />
+              </button>
+            </div>
           </div>
           <div className={cn('grid gap-5 md:grid-cols-2 xl:grid-cols-3', courseGridClassName)}>
             {activeGroup.courses.map(renderCourse)}

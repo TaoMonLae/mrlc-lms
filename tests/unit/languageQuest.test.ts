@@ -29,6 +29,7 @@ import { linguifyCefrCourses } from "../../languageQuestLinguifyCourses";
 import { malayCefrCourses } from "../../languageQuestMalayCourses";
 import { malaySpeakingCourse } from "../../languageQuestMalayCourse";
 import { malayGuideModernCourse } from "../../languageQuestMalayGuideCourse";
+import { teachYourselfMalayCourse } from "../../languageQuestTeachYourselfMalayCourse";
 import {
   languageQuestCategoryForLanguage,
   orderedLanguageQuestCategories,
@@ -842,6 +843,27 @@ test("the Malay speaking and source-guided courses are complete and unpublished"
   assert.equal(malayGuideModernCourse.code, "MRLC-MALAY-GOVINFO-GUIDE-V1");
 });
 
+test("the Teach Yourself Malay course is complete and ready in the Malay folder", () => {
+  const lessons = teachYourselfMalayCourse.units.flatMap((unit) => unit.lessons);
+  const challenges = lessons.flatMap((lesson) => lesson.challenges);
+
+  assert.equal(teachYourselfMalayCourse.code, "MRLC-TEACH-YOURSELF-MALAY-V1");
+  assert.equal(teachYourselfMalayCourse.language, "Malay");
+  assert.equal(teachYourselfMalayCourse.category, "Malay Courses");
+  assert.equal(teachYourselfMalayCourse.units.length, 17);
+  assert.equal(lessons.length, 68);
+  assert.equal(challenges.length, 408);
+  assert.ok(teachYourselfMalayCourse.published);
+  assert.ok(challenges.every((challenge) => challenge.question.trim().length > 0));
+  assert.ok(challenges.every((challenge) => challenge.options.length >= 2));
+  assert.ok(challenges.every(
+    (challenge) => challenge.options.filter((option) => option.correct).length === 1,
+  ));
+  assert.ok(challenges.every(
+    (challenge) => challenge.options.every((option) => option.text.trim().length > 0),
+  ));
+});
+
 test("every built-in course produces clue-safe assessment prompts", () => {
   const courses = [
     importedSpanishCourse,
@@ -854,6 +876,7 @@ test("every built-in course produces clue-safe assessment prompts", () => {
     ...malayCefrCourses,
     malaySpeakingCourse,
     malayGuideModernCourse,
+    teachYourselfMalayCourse,
   ];
   const challenges = courses
     .flatMap((course) => course.units)

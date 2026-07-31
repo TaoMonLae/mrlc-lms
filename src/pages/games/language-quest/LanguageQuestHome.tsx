@@ -206,7 +206,7 @@ export default function LanguageQuestHome() {
                 <div className="p-5">
                   <div className="flex items-start gap-4">
                     <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl text-3xl" style={{ backgroundColor: `${course.accentColor}18` }}>
-                      {course.imageEmoji}
+                      {course.imageEmoji || <BookOpen className="h-6 w-6" aria-hidden="true" />}
                     </div>
                     <div className="min-w-0 flex-1">
                       <Badge variant="outline">{course.language}</Badge>
