@@ -70,7 +70,14 @@ interface Deps {
 }
 
 type DraftOption = { id?: string; text: string; correct: boolean; emoji: string | null; audioText: string | null };
-type DraftChallenge = { id?: string; type: "SELECT" | "ASSIST"; question: string; options: DraftOption[] };
+type DraftChallengeType =
+  | "SELECT" | "ASSIST" | "CLOZE" | "ODD_ONE_OUT" | "REORDER"
+  | "MATCHING" | "MINIMAL_PAIR_LISTENING" | "DICTATION" | "GRAMMAR_TRANSFORM";
+const DRAFT_CHALLENGE_TYPES: readonly DraftChallengeType[] = [
+  "SELECT", "ASSIST", "CLOZE", "ODD_ONE_OUT", "REORDER",
+  "MATCHING", "MINIMAL_PAIR_LISTENING", "DICTATION", "GRAMMAR_TRANSFORM",
+];
+type DraftChallenge = { id?: string; type: DraftChallengeType; question: string; options: DraftOption[] };
 type DraftLesson = { id?: string; title: string; description: string | null; challenges: DraftChallenge[] };
 type DraftUnit = { id?: string; title: string; description: string | null; lessons: DraftLesson[] };
 type CourseDraft = {
@@ -235,7 +242,7 @@ function isHexColor(value: string): boolean {
   return /^#[0-9a-f]{6}$/i.test(value);
 }
 
-function normalizeCourseDraft(raw: any): { value?: CourseDraft; error?: string } {
+export function normalizeCourseDraft(raw: any): { value?: CourseDraft; error?: string } {
   const title = text(raw?.title, 120);
   const language = text(raw?.language, 80);
   const category = text(raw?.category, 80) || languageQuestCategoryForLanguage(language);
@@ -270,8 +277,30 @@ function normalizeCourseDraft(raw: any): { value?: CourseDraft; error?: string }
         const sourceChallenge = sourceLesson.challenges[challengeIndex];
         const question = text(sourceChallenge?.question, 1000);
         if (!question) return { error: `Challenge ${challengeIndex + 1} in “${lessonTitle}” needs a question` };
-        if (!Array.isArray(sourceChallenge?.options) || sourceChallenge.options.length < 2 || sourceChallenge.options.length > 6) {
-          return { error: `Challenge ${challengeIndex + 1} in “${lessonTitle}” needs 2–6 answer options` };
+        // Course Studio only offers authoring for SELECT/ASSIST, but it must
+        // still be able to load, save, and publish courses (like the
+        // generator-built Malay CEFR courses) that also contain
+        // CLOZE/ODD_ONE_OUT/MINIMAL_PAIR_LISTENING/GRAMMAR_TRANSFORM (still
+        // "pick one correct option" under the hood) and REORDER/MATCHING
+        // (no single correct option -- every option is `correct: true`)
+        // without silently collapsing their type back to SELECT or rejecting
+        // them for not having "exactly one correct answer".
+        const type: DraftChallengeType = DRAFT_CHALLENGE_TYPES.includes(sourceChallenge?.type) ? sourceChallenge.type : "SELECT";
+        const isUnorderedCorrectType = type === "REORDER" || type === "MATCHING";
+        const minOptions = type === "DICTATION" ? 1 : 2;
+        if (!Array.isArray(sourceChallenge?.options) || sourceChallenge.options.length < minOptions) {
+          return { error: `Challenge ${challengeIndex + 1} in “${lessonTitle}” needs at least ${minOptions} answer option${minOptions > 1 ? "s" : ""}` };
+        }
+        // REORDER challenges are built from a sentence's own word tokens and
+        // can run longer than the 6-option multiple-choice bank; every other
+        // type (including MATCHING, capped generously at 12 tiles / 6 pairs)
+        // stays within the UI's supported range.
+        const maxOptions = type === "REORDER" ? Infinity : type === "MATCHING" ? 12 : 6;
+        if (sourceChallenge.options.length > maxOptions) {
+          return { error: `Challenge ${challengeIndex + 1} in “${lessonTitle}” has too many answer options` };
+        }
+        if (type === "MATCHING" && sourceChallenge.options.length % 2 !== 0) {
+          return { error: `Challenge ${challengeIndex + 1} in “${lessonTitle}” needs an even number of options to form pairs` };
         }
         const options: DraftOption[] = sourceChallenge.options.map((option: any) => ({
           id: typeof option?.id === "string" ? option.id : undefined,
@@ -281,12 +310,16 @@ function normalizeCourseDraft(raw: any): { value?: CourseDraft; error?: string }
           audioText: nullableText(option?.audioText, 500),
         }));
         if (options.some((option) => !option.text)) return { error: `Every option in challenge ${challengeIndex + 1} needs text` };
-        if (options.filter((option) => option.correct).length !== 1) {
+        if (isUnorderedCorrectType) {
+          if (options.some((option) => !option.correct)) {
+            return { error: `Challenge ${challengeIndex + 1} in “${lessonTitle}” needs every ${type === "REORDER" ? "tile" : "tile pair"} marked correct` };
+          }
+        } else if (options.filter((option) => option.correct).length !== 1) {
           return { error: `Challenge ${challengeIndex + 1} in “${lessonTitle}” needs exactly one correct answer` };
         }
         challenges.push({
           id: typeof sourceChallenge?.id === "string" ? sourceChallenge.id : undefined,
-          type: sourceChallenge?.type === "ASSIST" ? "ASSIST" : "SELECT",
+          type,
           question,
           options,
         });

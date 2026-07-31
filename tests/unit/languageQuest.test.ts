@@ -13,7 +13,7 @@ import {
   reorderChallengeIsCorrect,
   sentenceAnswerMatches,
 } from "../../shared/languageQuest";
-import { canAttemptNewChallenge, nextIncompleteLessonId, shuffle } from "../../languageQuest";
+import { canAttemptNewChallenge, nextIncompleteLessonId, normalizeCourseDraft, shuffle } from "../../languageQuest";
 import {
   LANGUAGE_QUEST_AVATARS,
   isLanguageQuestAvatarId,
@@ -612,6 +612,104 @@ test("pairedMatchAnswerSummary joins consecutive option pairs as a readable left
   ];
   assert.equal(pairedMatchAnswerSummary(options), "Selamat pagi → Good morning; Terima kasih → Thank you");
   assert.equal(pairedMatchAnswerSummary([]), "");
+});
+
+// Course Studio (the manage/courses editor) loads and re-saves any course,
+// including generator-built ones like the Malay CEFR courses that contain
+// REORDER/CLOZE/MINIMAL_PAIR_LISTENING challenges. normalizeCourseDraft() is
+// what the save/publish endpoint runs the submitted course through, so it
+// must recognize every challenge type Language Quest supports instead of
+// collapsing anything but ASSIST down to SELECT (which used to silently
+// corrupt saved challenges) or requiring "exactly one correct option" for
+// every type (which used to reject REORDER/MATCHING outright with a "Course
+// X needs exactly one correct answer" error -- the reported "unable to
+// publish due to missing answer" bug).
+function draftChallenge(type: string, options: Array<{ text: string; correct: boolean }>) {
+  return {
+    title: "Test course", language: "Malay", published: true,
+    units: [{
+      title: "Unit 1",
+      lessons: [{
+        title: "Lesson 1",
+        challenges: [{ type, question: "Test question?", options }],
+      }],
+    }],
+  };
+}
+
+test("normalizeCourseDraft preserves every supported challenge type instead of collapsing to SELECT", () => {
+  for (const type of [
+    "SELECT", "ASSIST", "CLOZE", "ODD_ONE_OUT", "MINIMAL_PAIR_LISTENING", "GRAMMAR_TRANSFORM",
+  ]) {
+    const raw = draftChallenge(type, [
+      { text: "Right", correct: true },
+      { text: "Wrong", correct: false },
+    ]);
+    const result = normalizeCourseDraft(raw);
+    assert.equal(result.error, undefined, `${type} should normalize without error`);
+    assert.equal(result.value?.units[0].lessons[0].challenges[0].type, type);
+  }
+});
+
+test("normalizeCourseDraft accepts REORDER and MATCHING challenges with every option marked correct", () => {
+  const reorderRaw = draftChallenge("REORDER", [
+    { text: "Saya", correct: true },
+    { text: "dari", correct: true },
+    { text: "Myanmar", correct: true },
+  ]);
+  const reorderResult = normalizeCourseDraft(reorderRaw);
+  assert.equal(reorderResult.error, undefined);
+  assert.equal(reorderResult.value?.units[0].lessons[0].challenges[0].type, "REORDER");
+
+  const matchingRaw = draftChallenge("MATCHING", [
+    { text: "Selamat pagi", correct: true },
+    { text: "Good morning", correct: true },
+    { text: "Terima kasih", correct: true },
+    { text: "Thank you", correct: true },
+  ]);
+  const matchingResult = normalizeCourseDraft(matchingRaw);
+  assert.equal(matchingResult.error, undefined);
+  assert.equal(matchingResult.value?.units[0].lessons[0].challenges[0].type, "MATCHING");
+
+  // A REORDER/MATCHING challenge with an option NOT marked correct is invalid.
+  const badReorder = draftChallenge("REORDER", [
+    { text: "Saya", correct: true },
+    { text: "dari", correct: false },
+  ]);
+  assert.ok(normalizeCourseDraft(badReorder).error);
+
+  // MATCHING needs an even number of options to form pairs.
+  const oddMatching = draftChallenge("MATCHING", [
+    { text: "a", correct: true },
+    { text: "b", correct: true },
+    { text: "c", correct: true },
+  ]);
+  assert.ok(normalizeCourseDraft(oddMatching).error);
+
+  // A REORDER challenge can exceed the normal 6-option multiple-choice cap.
+  const longReorder = draftChallenge("REORDER", Array.from({ length: 9 }, (_, i) => ({ text: `word${i}`, correct: true })));
+  assert.equal(normalizeCourseDraft(longReorder).error, undefined);
+});
+
+test("normalizeCourseDraft accepts a DICTATION challenge with a single correct option", () => {
+  const raw = draftChallenge("DICTATION", [{ text: "Selamat pagi", correct: true }]);
+  const result = normalizeCourseDraft(raw);
+  assert.equal(result.error, undefined);
+  assert.equal(result.value?.units[0].lessons[0].challenges[0].type, "DICTATION");
+});
+
+test("normalizeCourseDraft still requires exactly one correct option for ordinary SELECT-shaped types", () => {
+  const noCorrect = draftChallenge("SELECT", [
+    { text: "a", correct: false },
+    { text: "b", correct: false },
+  ]);
+  assert.ok(normalizeCourseDraft(noCorrect).error);
+
+  const twoCorrect = draftChallenge("CLOZE", [
+    { text: "a", correct: true },
+    { text: "b", correct: true },
+  ]);
+  assert.ok(normalizeCourseDraft(twoCorrect).error);
 });
 
 test("the ranked advanced English courses have a valid progression", () => {
