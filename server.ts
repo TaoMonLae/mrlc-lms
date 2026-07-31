@@ -36,6 +36,7 @@ import { registerNeonSnakeServer } from "./neonSnakeServer";
 import { registerAiAssistantRoutes } from "./aiAssistant";
 import { registerCheckersGameRoutes } from "./checkersGame";
 import { registerChessGameRoutes } from "./chessGame";
+import { registerPacmanGameRoutes } from "./pacmanGame";
 import { registerLanguageQuestRoutes } from "./languageQuest";
 import { registerDailyQuestRoutes } from "./dailyQuest";
 import { registerWordTrailRoutes } from "./wordTrail";
@@ -19671,6 +19672,14 @@ async function startServer() {
     authMiddleware,
     chatNotify,
     gameAccessMiddleware: gameControls.accessMiddleware("CHESS", true),
+  });
+
+  // ── Pac-Man Game (arcade mini-game + school-wide leaderboard) ────────────────
+  registerPacmanGameRoutes({
+    app,
+    prisma,
+    authMiddleware,
+    gameAccessMiddleware: gameControls.accessMiddleware("PACMAN", true),
   });
 
   // NOTE: the SPA catch-all (Vite middleware in dev / static dist in prod) is

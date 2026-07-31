@@ -13,9 +13,9 @@ import {
   PacManState,
   PowerUpItem,
   PowerUpType,
-  ScoreEntry,
   VisualTheme
 } from './types';
+import { apiSend } from '../../../lib/api';
 import { soundEngine } from './utils/audio';
 import { calculateGhostTarget, getNextGhostDirection } from './utils/ghostAI';
 import {
@@ -113,8 +113,9 @@ export default function PacmanGame() {
   const [lives, setLives] = useState<number>(3);
   const [isNewHighScore, setIsNewHighScore] = useState<boolean>(false);
 
-  // Leaderboard & Stats
-  const [scores, setScores] = useState<ScoreEntry[]>([]);
+  // Personal stats (kept locally — the STATS tab is per-device). The HIGH
+  // SCORES tab itself is server-backed now (see LeaderboardModal), so there's
+  // no local `scores` list to maintain here anymore.
   const [stats, setStats] = useState<GameStats>(DEFAULT_STATS);
 
   // Entities & Maze
@@ -260,9 +261,6 @@ export default function PacmanGame() {
     try {
       const savedScore = localStorage.getItem('pacman_high_score');
       if (savedScore) setHighScore(parseInt(savedScore, 10));
-
-      const savedScores = localStorage.getItem('pacman_scores');
-      if (savedScores) setScores(JSON.parse(savedScores));
 
       const savedStats = localStorage.getItem('pacman_stats');
       if (savedStats) setStats(JSON.parse(savedStats));
@@ -443,20 +441,18 @@ export default function PacmanGame() {
     [difficulty]
   );
 
-  // Record a completed run to the local leaderboard/high-score history.
+  // Record a completed run to the school-wide server leaderboard. This is
+  // best-effort — a failed submit (flaky network, expired session) shouldn't
+  // interrupt the game-over flow, so errors are swallowed here, the same
+  // treatment Snake/Checkers give their score-save calls (see
+  // authInterceptor's "optional auth" allowlist for the matching 401 case).
   const recordScore = useCallback(() => {
-    const entry: ScoreEntry = {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-      name: 'You',
+    apiSend('/api/games/pacman/scores', 'POST', {
       score: scoreRef.current,
       level: levelRef.current,
-      mode: gameMode,
-      date: new Date().toLocaleDateString()
-    };
-    setScores((prev) => {
-      const updated = [...prev, entry].sort((a, b) => b.score - a.score).slice(0, 10);
-      localStorage.setItem('pacman_scores', JSON.stringify(updated));
-      return updated;
+      gameMode
+    }).catch(() => {
+      // Swallowed intentionally — see comment above.
     });
   }, [gameMode]);
 
@@ -1155,12 +1151,6 @@ export default function PacmanGame() {
     }
   };
 
-  // Clear Leaderboard History
-  const handleClearScores = () => {
-    setScores([]);
-    localStorage.removeItem('pacman_scores');
-  };
-
   return (
     <div
       ref={gameContainerRef}
@@ -1265,7 +1255,7 @@ export default function PacmanGame() {
       <LeaderboardModal
         isOpen={isLeaderboardOpen}
         onClose={() => setIsLeaderboardOpen(false)}
-        scores={scores}
+        gameMode={gameMode}
         stats={stats}
         achievements={[
           {
@@ -1305,7 +1295,6 @@ export default function PacmanGame() {
             maxProgress: 10
           }
         ]}
-        onClearScores={handleClearScores}
       />
 
       <SettingsModal

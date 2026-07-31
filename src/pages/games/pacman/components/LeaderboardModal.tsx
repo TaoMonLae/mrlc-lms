@@ -1,27 +1,86 @@
-import React, { useState } from 'react';
-import { X, Trophy, Award, BarChart2, Zap } from 'lucide-react';
-import { Achievement, GameStats, ScoreEntry } from '../types';
+import React, { useEffect, useState } from 'react';
+import { X, Trophy, Award, BarChart2, Loader2 } from 'lucide-react';
+import { UserAvatar } from '@/components/ui/user-avatar';
+import { apiGet } from '../../../../lib/api';
+import { Achievement, GameMode, GameStats } from '../types';
+
+interface LeaderboardRow {
+  rank: number;
+  id: string;
+  name: string;
+  profilePhotoUrl: string | null;
+  groupLabel: string | null;
+  score: number;
+  level: number;
+  gameMode: string;
+  playedAt: string;
+  isCurrentUser: boolean;
+}
+
+interface LeaderboardResponse {
+  success: boolean;
+  gameMode: string;
+  leaderboard: LeaderboardRow[];
+  you: { rank: number; score: number } | null;
+  total: number;
+}
 
 interface LeaderboardModalProps {
   isOpen: boolean;
   onClose: () => void;
-  scores: ScoreEntry[];
+  gameMode: GameMode;
   stats: GameStats;
   achievements: Achievement[];
-  onClearScores: () => void;
 }
+
+const RANK_STYLE: Record<number, string> = {
+  1: 'text-yellow-400 text-base',
+  2: 'text-slate-300',
+  3: 'text-amber-600'
+};
 
 export const LeaderboardModal: React.FC<LeaderboardModalProps> = React.memo(({
   isOpen,
   onClose,
-  scores,
+  gameMode,
   stats,
-  achievements,
-  onClearScores
+  achievements
 }) => {
   const [activeTab, setActiveTab] = useState<'SCORES' | 'STATS' | 'ACHIEVEMENTS'>('SCORES');
+  const [rows, setRows] = useState<LeaderboardRow[] | null>(null);
+  const [you, setYou] = useState<{ rank: number; score: number } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch the real, school-wide leaderboard every time the modal is opened
+  // (and whenever the active game mode changes while it's open) — this is
+  // the shared server board every player's runs land on, not a per-browser
+  // history, so it always reflects everyone else's scores too.
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    setRows(null);
+    setError(null);
+    setYou(null);
+
+    apiGet<LeaderboardResponse>(`/api/games/pacman/leaderboard?gameMode=${gameMode}`)
+      .then((data) => {
+        if (cancelled) return;
+        setRows(data.leaderboard);
+        setYou(data.you);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setError(err?.message || "Couldn't load the leaderboard");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, gameMode]);
 
   if (!isOpen) return null;
+
+  const youMadeTop = you !== null && rows?.some((row) => row.isCurrentUser);
 
   return (
     <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
@@ -78,55 +137,56 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = React.memo(({
         <div className="p-5 overflow-y-auto flex-1 font-mono">
           {activeTab === 'SCORES' && (
             <div className="space-y-3">
-              {scores.length === 0 ? (
+              <p className="text-[10px] text-slate-500 uppercase tracking-wide -mt-1">
+                Whole-school leaderboard &bull; {gameMode.replace('_', ' ')} mode
+              </p>
+
+              {rows === null ? (
+                <div className="flex items-center justify-center py-10 text-slate-500">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                </div>
+              ) : error ? (
+                <div className="text-center py-8 text-slate-500 text-sm">{error}</div>
+              ) : rows.length === 0 ? (
                 <div className="text-center py-8 text-slate-500 text-sm">
                   No high scores recorded yet. Play a game to make history!
                 </div>
               ) : (
                 <div className="divide-y divide-slate-800">
-                  {scores.map((entry, index) => (
+                  {rows.map((row) => (
                     <div
-                      key={entry.id || index}
-                      className="py-2.5 flex items-center justify-between text-sm"
+                      key={row.id}
+                      className={`py-2.5 flex items-center justify-between text-sm gap-3 rounded-lg ${
+                        row.isCurrentUser ? 'bg-cyan-500/10 px-2 -mx-2' : ''
+                      }`}
                     >
-                      <div className="flex items-center gap-3">
-                        <span
-                          className={`w-6 text-center font-black ${
-                            index === 0
-                              ? 'text-yellow-400 text-base'
-                              : index === 1
-                              ? 'text-slate-300'
-                              : index === 2
-                              ? 'text-amber-600'
-                              : 'text-slate-500'
-                          }`}
-                        >
-                          #{index + 1}
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className={`w-6 text-center font-black shrink-0 ${RANK_STYLE[row.rank] ?? 'text-slate-500'}`}>
+                          #{row.rank}
                         </span>
-                        <div>
-                          <div className="font-bold text-white uppercase">{entry.name}</div>
-                          <div className="text-[10px] text-slate-500">
-                            Stage #{entry.level} &bull; {entry.date}
+                        <UserAvatar name={row.name} src={row.profilePhotoUrl} className="w-8 h-8 text-[11px] shrink-0" />
+                        <div className="min-w-0">
+                          <div className="font-bold text-white uppercase truncate">
+                            {row.name}
+                            {row.isCurrentUser && <span className="text-cyan-400 normal-case"> (you)</span>}
+                          </div>
+                          <div className="text-[10px] text-slate-500 truncate">
+                            {row.groupLabel ? `${row.groupLabel} • ` : ''}Stage #{row.level}
                           </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="font-black text-yellow-300">{entry.score.toLocaleString()}</div>
-                        <div className="text-[10px] text-cyan-400 uppercase">{entry.mode}</div>
+                      <div className="text-right shrink-0">
+                        <div className="font-black text-yellow-300">{row.score.toLocaleString()}</div>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
 
-              {scores.length > 0 && (
-                <div className="pt-4 text-center">
-                  <button
-                    onClick={onClearScores}
-                    className="text-xs text-red-400 hover:text-red-300 underline cursor-pointer"
-                  >
-                    Clear Leaderboard History
-                  </button>
+              {you && !youMadeTop && (
+                <div className="pt-3 mt-3 border-t border-slate-800 flex items-center justify-between text-sm">
+                  <span className="text-cyan-400 font-bold">Your rank: #{you.rank}</span>
+                  <span className="font-black text-yellow-300">{you.score.toLocaleString()}</span>
                 </div>
               )}
             </div>

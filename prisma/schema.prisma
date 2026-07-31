@@ -283,6 +283,7 @@ model User {
   reportedRuleViolations     RuleViolation[]                  @relation("ReportedRuleViolations")
   chessMatchesWhite          ChessMatch[]                     @relation("ChessWhite")
   chessMatchesBlack          ChessMatch[]                     @relation("ChessBlack")
+  pacmanGameScores           PacmanGameScore[]
   languageQuestProgress      LanguageQuestUserProgress?
   languageQuestChallenges    LanguageQuestChallengeProgress[]
   languageQuestXpEvents      LanguageQuestXpEvent[]
@@ -3828,6 +3829,38 @@ model CheckerGameScore {
   @@index([gameMode])
   @@index([playedAt])
   @@index([result])
+}
+
+// -----------------------------------------------------------------------------
+// PAC-MAN GAME (arcade mini-game with a school-wide leaderboard)
+// -----------------------------------------------------------------------------
+
+model PacmanGameScore {
+  id String @id @default(uuid())
+
+  // Tied directly to User (not Student) so any logged-in account — student,
+  // teacher, or other staff — can appear on the shared, whole-school
+  // leaderboard. Mirrors ChessMatch, which is scoped to User rather than
+  // Student for the same reason.
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  score     Int
+  level     Int     @default(1)
+  gameMode  String  @default("CLASSIC") // CLASSIC | TIME_ATTACK | SURVIVAL | PRACTICE
+  highScore Boolean @default(false) // Whether this was a personal best at the time
+
+  deviceInfo Json? // User agent, screen size, etc.
+  ipAddress  String?
+
+  playedAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([score])
+  @@index([gameMode])
+  @@index([playedAt])
 }
 
 // Teacher/admin-authored vocabulary for the Checkers vocabulary game. These are
