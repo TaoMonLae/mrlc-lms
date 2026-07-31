@@ -386,7 +386,7 @@ export default function PacmanGame() {
           frightenedColor: '#1e3a8a',
           scatterTarget: { x: 1, y: 0 },
           state: 'HOUSE',
-          frightenedTimer: 1.5,
+          frightenedTimer: 0,
           houseTimer: 1.5,
           target: { x: 0, y: 0 },
           dotCounter: 0
@@ -402,7 +402,7 @@ export default function PacmanGame() {
           frightenedColor: '#1e3a8a',
           scatterTarget: { x: mazeCopy[0].length - 2, y: mazeCopy.length - 1 },
           state: 'HOUSE',
-          frightenedTimer: 3.5,
+          frightenedTimer: 0,
           houseTimer: 3.5,
           target: { x: 0, y: 0 },
           dotCounter: 0
@@ -418,12 +418,18 @@ export default function PacmanGame() {
           frightenedColor: '#1e3a8a',
           scatterTarget: { x: 1, y: mazeCopy.length - 1 },
           state: 'HOUSE',
-          frightenedTimer: 6.0,
+          frightenedTimer: 0,
           houseTimer: 6.0,
           target: { x: 0, y: 0 },
           dotCounter: 0
         }
       ];
+
+      // Reset the ghost-eating combo multiplier — without this, a combo
+      // built up right before clearing a level (e.g. eating several ghosts
+      // off one energizer) would silently carry into the next level and
+      // inflate the very first ghost's point value there.
+      ghostComboRef.current = 1;
 
       particleSystemRef.current.clear();
       setFloatingTexts([]);
@@ -699,25 +705,43 @@ export default function PacmanGame() {
           (pac.dir === 'DOWN' && pac.nextDir === 'UP');
 
         if (pac.dir === 'NONE' || isOpposite) {
-          // Immediately check if target cell in nextDir is walkable
-          const testX = Math.round(pac.x);
-          const testY = Math.round(pac.y);
-          let targetX = testX;
-          let targetY = testY;
-          if (pac.nextDir === 'UP') targetY -= 1;
-          else if (pac.nextDir === 'DOWN') targetY += 1;
-          else if (pac.nextDir === 'LEFT') targetX -= 1;
-          else if (pac.nextDir === 'RIGHT') targetX += 1;
-
+          // Immediately check if target cell in nextDir is walkable.
+          // Half-tile-wide spawn/gate corridors mean pac.x (or pac.y) can
+          // sit exactly on a column boundary (e.g. 13.5) before Pac-Man's
+          // first move — Math.round alone commits to one specific
+          // neighboring column, and if that particular one doesn't have a
+          // clear path (even though the other one does) the very first
+          // keypress would be silently rejected. Try every neighboring
+          // column/row implied by the current fractional position before
+          // giving up.
           const cols = maze[0].length;
-          if (targetX < 0) targetX = cols - 1;
-          if (targetX >= cols) targetX = 0;
+          const candidateXs = Array.from(
+            new Set([Math.round(pac.x), Math.floor(pac.x), Math.ceil(pac.x)])
+          );
+          const candidateYs = Array.from(
+            new Set([Math.round(pac.y), Math.floor(pac.y), Math.ceil(pac.y)])
+          );
 
-          const targetTile = maze[targetY]?.[targetX];
-          if (targetTile !== undefined && isWalkableForPacman(targetTile)) {
-            pac.dir = pac.nextDir;
-            if (pac.nextDir === 'UP' || pac.nextDir === 'DOWN') pac.x = testX;
-            if (pac.nextDir === 'LEFT' || pac.nextDir === 'RIGHT') pac.y = testY;
+          findTarget: for (const testX of candidateXs) {
+            for (const testY of candidateYs) {
+              let targetX = testX;
+              let targetY = testY;
+              if (pac.nextDir === 'UP') targetY -= 1;
+              else if (pac.nextDir === 'DOWN') targetY += 1;
+              else if (pac.nextDir === 'LEFT') targetX -= 1;
+              else if (pac.nextDir === 'RIGHT') targetX += 1;
+
+              if (targetX < 0) targetX = cols - 1;
+              if (targetX >= cols) targetX = 0;
+
+              const targetTile = maze[targetY]?.[targetX];
+              if (targetTile !== undefined && isWalkableForPacman(targetTile)) {
+                pac.dir = pac.nextDir;
+                if (pac.nextDir === 'UP' || pac.nextDir === 'DOWN') pac.x = testX;
+                if (pac.nextDir === 'LEFT' || pac.nextDir === 'RIGHT') pac.y = testY;
+                break findTarget;
+              }
+            }
           }
         } else if (pac.nextDir !== pac.dir) {
           // Check perpendicular turn alignment at intersections
@@ -768,6 +792,34 @@ export default function PacmanGame() {
           // Snap to exact center when hitting wall
           pac.x = Math.round(pac.x);
           pac.y = Math.round(pac.y);
+
+          // Defensive guard: the tile we just snapped onto should always be
+          // walkable (it's the tile Pac-Man was already standing in), but if
+          // it somehow isn't — e.g. accumulated floating-point drift over a
+          // long session, or a maze edit — nudge him onto the nearest open
+          // tile instead of leaving him permanently embedded in a wall with
+          // no valid tile to move out of.
+          const landedTile = maze[pac.y]?.[pac.x];
+          if (landedTile === undefined || !isWalkableForPacman(landedTile)) {
+            const neighborOffsets = [
+              { dx: 0, dy: 0 },
+              { dx: 1, dy: 0 },
+              { dx: -1, dy: 0 },
+              { dx: 0, dy: 1 },
+              { dx: 0, dy: -1 }
+            ];
+            for (const offset of neighborOffsets) {
+              const nx = pac.x + offset.dx;
+              const ny = pac.y + offset.dy;
+              const tile = maze[ny]?.[nx];
+              if (tile !== undefined && isWalkableForPacman(tile)) {
+                pac.x = nx;
+                pac.y = ny;
+                break;
+              }
+            }
+          }
+
           pac.dir = 'NONE';
         }
       }
@@ -938,7 +990,19 @@ export default function PacmanGame() {
           ghost.x = Math.round(ghost.x);
           ghost.y = Math.round(ghost.y);
           ghost.dir = getNextGhostDirection(ghost, maze, ghost.target);
-          moveGhost();
+          if (!moveGhost()) {
+            // Last-resort recovery: the AI's chosen direction still can't
+            // advance (e.g. it disagreed with canGhostAdvance about the tile
+            // ahead). Brute-force every direction, reversal included, so a
+            // ghost can never end up permanently frozen for the rest of the
+            // level — worst case it briefly backtracks instead of vanishing
+            // in place.
+            const allDirections: Direction[] = ['UP', 'DOWN', 'LEFT', 'RIGHT'];
+            for (const dir of allDirections) {
+              ghost.dir = dir;
+              if (moveGhost()) break;
+            }
+          }
         }
 
         // 6. GHOST vs PAC-MAN COLLISION DETECTION
