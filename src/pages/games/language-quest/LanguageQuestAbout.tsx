@@ -2,15 +2,21 @@ import { useEffect, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowLeft,
+  ArrowRight,
   BookOpen,
+  CheckCircle2,
   ExternalLink,
   Github,
   HeartHandshake,
+  Headphones,
   Languages,
   LibraryBig,
+  MessageCircleMore,
+  MousePointerClick,
   ScrollText,
   ShieldCheck,
   Sparkles,
+  Star,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MrlcQuestBrand, TaoMonLaeCredit } from '@/src/components/games/MrlcQuestBrand';
@@ -21,6 +27,7 @@ interface CourseSource {
   badge: string;
   description: ReactNode;
   accent: string;
+  art: string;
 }
 
 const COURSE_SOURCES: CourseSource[] = [
@@ -29,6 +36,7 @@ const COURSE_SOURCES: CourseSource[] = [
     courses: 'Everyday English, Mandarin Foundations, and Chinese Conversation Starter',
     badge: 'Original',
     accent: 'from-violet-600 to-fuchsia-600',
+    art: '/Icons/optimized/Eduv1_01.png',
     description: 'Written and organized for MRLC learners, with practical situations, guided sentence practice, and classroom-friendly lesson lengths.',
   },
   {
@@ -36,6 +44,7 @@ const COURSE_SOURCES: CourseSource[] = [
     courses: 'Spanish Foundations',
     badge: 'Adapted',
     accent: 'from-orange-500 to-amber-500',
+    art: '/Icons/optimized/Eduv1_04.png',
     description: (
       <>
         Adapted from{' '}
@@ -51,13 +60,23 @@ const COURSE_SOURCES: CourseSource[] = [
     courses: 'Mandarin Complete Course',
     badge: 'School source',
     accent: 'from-rose-600 to-red-500',
+    art: '/Icons/optimized/Eduv1_02.png',
     description: 'Generated from a Mandarin curriculum file supplied to the project by its owner. The source has no included license notice, so redistribution rights should be confirmed before distributing it outside the school’s authorized use.',
+  },
+  {
+    title: 'Malay learning paths',
+    courses: 'Bahasa Malaysia A1-C1, Malay Speaking, Modern Spoken Malay, and Teach Yourself Malay',
+    badge: 'Source guided',
+    accent: 'from-amber-500 to-orange-600',
+    art: '/Icons/optimized/Eduv1_10.png',
+    description: 'Built from school- and rights-holder-supplied curriculum packages plus a newly written modernization of a public-domain U.S. government Malay guide. Draft paths remain subject to native-speaker review and source-specific redistribution conditions.',
   },
   {
     title: 'English word collection and definitions',
     courses: 'Everyday English Word Quest, Academic English Word Quest, and English Word Power',
     badge: 'Curated',
     accent: 'from-sky-600 to-cyan-500',
+    art: '/Icons/optimized/Eduv1_06.png',
     description: (
       <>
         Terms are curated from{' '}
@@ -73,6 +92,7 @@ const COURSE_SOURCES: CourseSource[] = [
     courses: 'Advanced English: Core, Mastery, and Expert',
     badge: 'Curated',
     accent: 'from-indigo-600 to-blue-600',
+    art: '/Icons/optimized/Eduv1_07.png',
     description: (
       <>
         Individual terms and ranking signals are selected from{' '}
@@ -88,6 +108,7 @@ const COURSE_SOURCES: CourseSource[] = [
     courses: 'English Vocabulary A1: Foundations through C2: Mastery',
     badge: 'MIT licensed',
     accent: 'from-emerald-600 to-teal-500',
+    art: '/Icons/optimized/Eduv1_09.png',
     description: (
       <>
         Adapted from the MIT-licensed vocabulary sets in{' '}
@@ -132,114 +153,252 @@ export default function LanguageQuestAbout() {
         </div>
       </header>
 
-      <main className="px-4 py-10 sm:px-6 sm:py-16">
-        <section className="relative mx-auto max-w-7xl overflow-hidden rounded-[2rem] bg-gradient-to-br from-slate-950 via-violet-950 to-fuchsia-950 px-6 py-12 text-white shadow-2xl sm:px-10 sm:py-16">
-          <div className="absolute -left-16 -top-20 h-64 w-64 rounded-full bg-sky-500/20 blur-3xl" />
-          <div className="absolute -bottom-20 -right-10 h-72 w-72 rounded-full bg-fuchsia-500/25 blur-3xl" />
-          <div className="relative max-w-3xl">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-black uppercase tracking-[0.18em] text-violet-100">
-              <Sparkles className="h-3.5 w-3.5" /> Learn with transparency
+      <main className="px-4 py-8 sm:px-6 sm:py-12">
+        <section className="relative mx-auto grid min-h-[590px] max-w-7xl overflow-hidden rounded-[2.25rem] border border-violet-400/20 bg-[radial-gradient(circle_at_82%_18%,rgba(217,70,239,.28),transparent_34%),linear-gradient(135deg,#090f25_0%,#251054_55%,#45105e_100%)] text-white shadow-[0_35px_110px_-42px_rgba(88,28,135,.85)] lg:grid-cols-[1.04fr_.96fr]">
+          <div className="pointer-events-none absolute -left-20 -top-28 h-80 w-80 rounded-full border-[48px] border-sky-400/10" />
+          <div className="pointer-events-none absolute bottom-8 left-[48%] h-24 w-24 rounded-full bg-amber-300/15 blur-2xl" />
+
+          <div className="relative z-10 flex flex-col justify-center px-6 py-12 sm:px-10 sm:py-16 lg:px-14">
+            <span className="inline-flex w-fit items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-black uppercase tracking-[0.18em] text-violet-100 backdrop-blur">
+              <Sparkles className="h-3.5 w-3.5 text-amber-300" /> The story behind the quest
             </span>
-            <h1 className="mt-5 text-4xl font-black tracking-[-0.04em] sm:text-6xl">About Language Quest</h1>
-            <p className="mt-5 max-w-2xl text-base leading-8 text-slate-300 sm:text-lg">
-              A practical language-learning experience created for MRLC learners, families, and classrooms—with clear credit for the projects and curriculum sources that helped make it possible.
+            <h1 className="mt-6 max-w-3xl text-[clamp(2.8rem,6.5vw,5.2rem)] font-black leading-[0.94] tracking-[-0.055em]">
+              Language learning,
+              <span className="block bg-gradient-to-r from-amber-300 via-orange-300 to-pink-300 bg-clip-text text-transparent">made more human.</span>
+            </h1>
+            <p className="mt-6 max-w-2xl text-base leading-8 text-slate-200 sm:text-lg">
+              Language Quest is MRLC’s colorful learning space for useful words, complete sentences, confident speaking, and classroom connection—with transparent credit for every source that helped shape it.
             </p>
-          </div>
-        </section>
-
-        <section className="mx-auto mt-12 max-w-7xl">
-          <div className="grid gap-5 md:grid-cols-3">
-            {[
-              { icon: Languages, title: 'Practical learning', copy: 'Listen, build complete sentences, check understanding, and retry with supportive feedback.' },
-              { icon: ShieldCheck, title: 'Learner-first privacy', copy: 'Public learner accounts remain separated from private student records and school administration.' },
-              { icon: HeartHandshake, title: 'Classroom ready', copy: 'Teachers can organize opt-in classrooms while learners keep ownership of their personal progress.' },
-            ].map(({ icon: Icon, title, copy }) => (
-              <article key={title} className="rounded-3xl border border-white bg-white/85 p-6 shadow-lg shadow-violet-900/5 dark:border-slate-800 dark:bg-slate-900/85">
-                <span className="grid h-11 w-11 place-items-center rounded-2xl bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">
-                  <Icon className="h-5 w-5" />
-                </span>
-                <h2 className="mt-4 text-lg font-black">{title}</h2>
-                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{copy}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="mx-auto mt-16 max-w-7xl">
-          <div className="max-w-3xl">
-            <p className="flex items-center gap-2 text-sm font-black uppercase tracking-[0.18em] text-violet-700 dark:text-violet-300">
-              <LibraryBig className="h-4 w-4" /> Notable course sources
-            </p>
-            <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Where the learning content comes from</h2>
-            <p className="mt-3 leading-7 text-slate-600 dark:text-slate-300">
-              Some courses are original MRLC work; others adapt or curate external material. These notes summarize the most important provenance and licensing details.
-            </p>
-          </div>
-
-          <div className="mt-8 grid gap-5 lg:grid-cols-2">
-            {COURSE_SOURCES.map((source) => (
-              <article key={source.title} className="overflow-hidden rounded-3xl border border-white bg-white/90 shadow-xl shadow-violet-900/5 dark:border-slate-800 dark:bg-slate-900/90">
-                <div className={`h-2 bg-gradient-to-r ${source.accent}`} />
-                <div className="p-6">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <h3 className="text-xl font-black">{source.title}</h3>
-                      <p className="mt-1 text-sm font-bold text-slate-500 dark:text-slate-400">{source.courses}</p>
-                    </div>
-                    <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-black text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">{source.badge}</span>
-                  </div>
-                  <p className="mt-4 text-sm leading-7 text-slate-600 dark:text-slate-300">{source.description}</p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Button
+                size="lg"
+                className="h-12 rounded-xl bg-amber-400 px-6 font-black text-slate-950 shadow-xl shadow-amber-950/20 hover:bg-amber-300"
+                render={<Link to="/language-quest" />}
+                nativeButton={false}
+              >
+                Explore courses <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="h-12 rounded-xl border-white/20 bg-white/10 px-6 font-black text-white backdrop-blur hover:bg-white/20 hover:text-white"
+                render={<a href="#course-sources" />}
+                nativeButton={false}
+              >
+                View course sources
+              </Button>
+            </div>
+            <div className="mt-9 grid max-w-xl grid-cols-3 gap-2 border-t border-white/10 pt-6">
+              {[
+                ['5 steps', 'Learn to check'],
+                ['Free', 'Learner account'],
+                ['Global', 'Quest community'],
+              ].map(([value, label]) => (
+                <div key={value}>
+                  <p className="text-lg font-black text-white sm:text-xl">{value}</p>
+                  <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 sm:text-xs">{label}</p>
                 </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="relative min-h-[440px] overflow-hidden lg:min-h-[590px]">
+            <div className="absolute bottom-10 left-1/2 h-[72%] w-[72%] -translate-x-1/2 rounded-full bg-gradient-to-b from-violet-500/30 to-sky-400/10 ring-1 ring-white/15" />
+            <div className="absolute bottom-5 left-1/2 h-12 w-[64%] -translate-x-1/2 rounded-[100%] bg-slate-950/60 blur-xl" />
+            <img
+              src="/Icons/optimized/YellowHoodieGuide.png"
+              alt="Friendly Language Quest guide wearing a yellow hoodie"
+              className="lq-float-delayed absolute bottom-0 left-1/2 h-[96%] w-auto max-w-none -translate-x-1/2 object-contain drop-shadow-[0_30px_35px_rgba(0,0,0,.35)]"
+            />
+            <div className="lq-float absolute left-4 top-12 z-10 rounded-2xl border border-white/15 bg-slate-950/65 px-4 py-3 shadow-xl backdrop-blur sm:left-10">
+              <p className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-sky-300">
+                <Headphones className="h-4 w-4" /> Listen • Pick • Spell
+              </p>
+            </div>
+            <div className="lq-float-delayed absolute bottom-20 right-3 z-10 max-w-[190px] rounded-2xl border border-amber-200/30 bg-amber-300 px-4 py-3 text-slate-950 shadow-xl sm:right-8">
+              <p className="flex items-center gap-2 text-sm font-black">
+                <MessageCircleMore className="h-4 w-4" /> English + Burmese guidance
+              </p>
+            </div>
+            <span className="absolute right-8 top-8 grid h-12 w-12 place-items-center rounded-2xl bg-fuchsia-500 text-white shadow-xl sm:right-14">
+              <Star className="h-6 w-6 fill-current" />
+            </span>
+          </div>
+        </section>
+
+        <section className="mx-auto mt-8 max-w-7xl rounded-[2rem] border border-white/80 bg-white/75 p-3 shadow-xl shadow-violet-900/5 backdrop-blur dark:border-slate-800 dark:bg-slate-950/55 sm:p-4">
+          <div className="grid gap-3 md:grid-cols-3">
+            {[
+              {
+                art: '/Icons/optimized/Eduv1_01.png',
+                icon: Languages,
+                title: 'Practise for real life',
+                copy: 'Move from listening and recognition to spelling, sentence building, and confident recall.',
+                tone: 'from-sky-100 to-cyan-50 dark:from-sky-950 dark:to-slate-900',
+              },
+              {
+                art: '/Icons/optimized/Eduv1_05.png',
+                icon: ShieldCheck,
+                title: 'A safe learner space',
+                copy: 'Public learner accounts stay separated from private student records and LMS administration.',
+                tone: 'from-violet-100 to-fuchsia-50 dark:from-violet-950 dark:to-slate-900',
+              },
+              {
+                art: '/Icons/optimized/Eduv1_08.png',
+                icon: HeartHandshake,
+                title: 'Ready for classrooms',
+                copy: 'Teachers can organize opt-in classrooms while learners keep their own progress and rewards.',
+                tone: 'from-amber-100 to-orange-50 dark:from-amber-950 dark:to-slate-900',
+              },
+            ].map(({ art, icon: Icon, title, copy, tone }) => (
+              <article key={title} className={`group relative min-h-56 overflow-hidden rounded-[1.6rem] bg-gradient-to-br ${tone} p-6`}>
+                <div className="relative z-10 max-w-[72%]">
+                  <span className="grid h-10 w-10 place-items-center rounded-xl bg-white/80 text-violet-700 shadow-sm dark:bg-white/10 dark:text-violet-300">
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <h2 className="mt-5 text-xl font-black">{title}</h2>
+                  <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{copy}</p>
+                </div>
+                <img
+                  src={art}
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute -bottom-8 -right-9 h-40 w-40 object-contain opacity-90 drop-shadow-xl transition duration-300 group-hover:-translate-y-2 group-hover:rotate-3 group-hover:scale-105"
+                />
               </article>
             ))}
           </div>
         </section>
 
-        <section className="mx-auto mt-12 grid max-w-7xl gap-5 lg:grid-cols-[1.2fr_.8fr]">
-          <div className="rounded-3xl border border-amber-200 bg-amber-50/90 p-6 dark:border-amber-500/25 dark:bg-amber-500/10">
-            <h2 className="flex items-center gap-2 font-black text-amber-900 dark:text-amber-200">
-              <ScrollText className="h-5 w-5" /> Attribution and redistribution
-            </h2>
-            <p className="mt-3 text-sm leading-7 text-amber-900/75 dark:text-amber-100/75">
-              This page is a readable summary, not a replacement for the complete notices. Review the full license text and source-specific conditions before redistributing course content.
-            </p>
-            <a
-              href="https://github.com/TaoMonLae/mrlc-lms/blob/main/THIRD_PARTY_NOTICES.md"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-4 inline-flex items-center gap-2 text-sm font-black text-amber-900 underline-offset-4 hover:underline dark:text-amber-200"
-            >
-              Read complete third-party notices <ExternalLink className="h-4 w-4" />
-            </a>
-          </div>
+        <section id="course-sources" className="mx-auto mt-20 max-w-7xl scroll-mt-28">
+          <div className="grid gap-10 lg:grid-cols-[.72fr_1.28fr] lg:items-start">
+            <div className="lg:sticky lg:top-28">
+              <p className="flex items-center gap-2 text-sm font-black uppercase tracking-[0.18em] text-violet-700 dark:text-violet-300">
+                <LibraryBig className="h-4 w-4" /> Notable course sources
+              </p>
+              <h2 className="mt-4 text-4xl font-black leading-tight tracking-[-0.035em] sm:text-5xl">
+                Clear credit builds better learning.
+              </h2>
+              <p className="mt-5 max-w-xl leading-7 text-slate-600 dark:text-slate-300">
+                Some courses are original MRLC work; others adapt or curate external material. These notes make the most important provenance and licensing details easy to find.
+              </p>
+              <div className="relative mt-8 hidden min-h-72 overflow-hidden rounded-[2rem] bg-gradient-to-br from-violet-700 via-fuchsia-700 to-rose-500 p-6 text-white shadow-2xl shadow-violet-700/20 lg:block">
+                <div className="relative z-10 max-w-[60%]">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-100">Open learning</p>
+                  <p className="mt-3 text-2xl font-black">Know what you study—and where it came from.</p>
+                </div>
+                <img
+                  src="/Icons/Owl School 15.svg"
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute -bottom-8 -right-14 h-64 w-72 object-contain drop-shadow-2xl"
+                />
+              </div>
+            </div>
 
-          <div className="rounded-3xl border border-violet-200 bg-gradient-to-br from-violet-700 to-fuchsia-700 p-6 text-white shadow-xl shadow-violet-700/20">
-            <BookOpen className="h-7 w-7 text-violet-200" />
-            <h2 className="mt-4 text-xl font-black">Learning support</h2>
-            <p className="mt-2 text-sm leading-7 text-violet-100">
-              Chinese pronunciation is generated with tone-marked Pinyin beneath each Hanzi. Supported courses can use the Apache-2.0-licensed{' '}
-              <SourceLink href="https://huggingface.co/hexgrad/Kokoro-82M">hexgrad/Kokoro-82M</SourceLink>{' '}
-              teacher voice, with an automatic browser-voice fallback.
-            </p>
+            <div className="grid gap-4">
+              {COURSE_SOURCES.map((source, index) => (
+                <article
+                  key={source.title}
+                  className="group relative overflow-hidden rounded-3xl border border-white bg-white/90 p-5 shadow-lg shadow-violet-900/5 transition duration-300 hover:-translate-y-1 hover:shadow-2xl dark:border-slate-800 dark:bg-slate-900/90 sm:p-6"
+                >
+                  <div className={`absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b ${source.accent}`} />
+                  <div className="flex gap-4 sm:gap-5">
+                    <div className={`relative hidden h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br ${source.accent} sm:block`}>
+                      <img src={source.art} alt="" aria-hidden="true" className="absolute inset-1 h-[calc(100%-8px)] w-[calc(100%-8px)] object-contain drop-shadow-lg" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Source {String(index + 1).padStart(2, '0')}</p>
+                          <h3 className="mt-1 text-xl font-black">{source.title}</h3>
+                          <p className="mt-1 text-sm font-bold text-slate-500 dark:text-slate-400">{source.courses}</p>
+                        </div>
+                        <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-black text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">{source.badge}</span>
+                      </div>
+                      <p className="mt-4 text-sm leading-7 text-slate-600 dark:text-slate-300">{source.description}</p>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
           </div>
         </section>
 
-        <section className="mx-auto mt-12 max-w-7xl rounded-[2rem] border border-white bg-white/90 p-8 text-center shadow-xl shadow-violet-900/5 dark:border-slate-800 dark:bg-slate-900/90 sm:p-12">
-          <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-slate-950 text-white shadow-lg dark:bg-violet-600">
-            <Github className="h-7 w-7" />
-          </span>
-          <h2 className="mt-5 text-2xl font-black">Developed by Tao Mon Lae</h2>
-          <p className="mx-auto mt-2 max-w-xl text-sm leading-7 text-slate-600 dark:text-slate-300">
-            Designed and built for the learners, teachers, and community of the Mon Refugee Learning Centre.
-          </p>
-          <a
-            href="https://github.com/TaoMonLae"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-black text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-violet-800 dark:bg-violet-600 dark:hover:bg-violet-500"
-          >
-            <Github className="h-4 w-4" /> Visit GitHub profile
-          </a>
+        <section className="mx-auto mt-16 grid max-w-7xl gap-5 lg:grid-cols-2">
+          <div className="relative overflow-hidden rounded-[2rem] border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-100 p-7 dark:border-amber-500/25 dark:from-amber-950/65 dark:to-slate-950">
+            <div className="relative z-10 max-w-[78%]">
+              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-amber-400 text-amber-950 shadow-lg">
+                <ScrollText className="h-6 w-6" />
+              </span>
+              <h2 className="mt-5 text-xl font-black text-amber-950 dark:text-amber-100">Attribution and redistribution</h2>
+              <p className="mt-3 text-sm leading-7 text-amber-950/75 dark:text-amber-100/75">
+                This page is a readable summary, not a replacement for the complete notices. Review the full license text and source-specific conditions before redistributing course content.
+              </p>
+              <a
+                href="https://github.com/TaoMonLae/mrlc-lms/blob/main/THIRD_PARTY_NOTICES.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-5 inline-flex items-center gap-2 text-sm font-black text-amber-950 underline-offset-4 hover:underline dark:text-amber-200"
+              >
+                Read complete notices <ExternalLink className="h-4 w-4" />
+              </a>
+            </div>
+            <img src="/Icons/optimized/Eduv1_03.png" alt="" aria-hidden="true" className="absolute -bottom-8 -right-8 h-40 w-40 object-contain opacity-80 drop-shadow-xl" />
+          </div>
+
+          <div className="relative overflow-hidden rounded-[2rem] border border-violet-400/20 bg-gradient-to-br from-violet-800 via-indigo-900 to-slate-950 p-7 text-white shadow-xl shadow-violet-700/15">
+            <div className="relative z-10 max-w-[78%]">
+              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-white/10 text-violet-200 shadow-lg backdrop-blur">
+                <BookOpen className="h-6 w-6" />
+              </span>
+              <h2 className="mt-5 text-xl font-black">Learning support</h2>
+              <p className="mt-3 text-sm leading-7 text-violet-100 [&_a]:text-violet-100">
+                Chinese pronunciation uses tone-marked Pinyin beneath each Hanzi. Supported courses can use the Apache-2.0-licensed{' '}
+                <SourceLink href="https://huggingface.co/hexgrad/Kokoro-82M">hexgrad/Kokoro-82M</SourceLink>{' '}
+                teacher voice, with an automatic browser-voice fallback.
+              </p>
+            </div>
+            <img src="/Icons/optimized/Eduv1_02.png" alt="" aria-hidden="true" className="absolute -bottom-8 -right-8 h-40 w-40 object-contain opacity-80 drop-shadow-xl" />
+          </div>
+        </section>
+
+        <section className="relative mx-auto mt-16 grid max-w-7xl overflow-hidden rounded-[2.25rem] border border-white bg-white/90 shadow-2xl shadow-violet-900/10 dark:border-slate-800 dark:bg-slate-900/90 lg:grid-cols-[.8fr_1.2fr]">
+          <div className="relative min-h-72 overflow-hidden bg-gradient-to-br from-sky-100 via-violet-100 to-fuchsia-100 dark:from-sky-950 dark:via-violet-950 dark:to-slate-950">
+            <div className="absolute left-8 top-8 h-24 w-24 rounded-full border-[18px] border-white/60 dark:border-white/10" />
+            <img
+              src="/Icons/Owl School 10.svg"
+              alt=""
+              aria-hidden="true"
+              className="absolute bottom-0 left-1/2 h-[92%] w-[92%] -translate-x-1/2 object-contain drop-shadow-2xl"
+            />
+          </div>
+          <div className="flex flex-col justify-center p-8 sm:p-12">
+            <p className="text-sm font-black uppercase tracking-[0.18em] text-violet-700 dark:text-violet-300">Built with the community in mind</p>
+            <h2 className="mt-3 text-3xl font-black tracking-tight">Developed by Tao Mon Lae</h2>
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 dark:text-slate-300">
+              Designed and built for the learners, teachers, and community of the Mon Refugee Learning Centre. Language Quest is open source so others can learn from it, improve it, and give credit to the work behind it.
+            </p>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <a
+                href="https://github.com/TaoMonLae"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-black text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-violet-800 dark:bg-violet-600 dark:hover:bg-violet-500"
+              >
+                <Github className="h-4 w-4" /> Visit GitHub profile
+              </a>
+              <Link
+                to="/language-quest"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-800 transition hover:border-violet-300 hover:text-violet-700 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+              >
+                Start learning <MousePointerClick className="h-4 w-4" />
+              </Link>
+            </div>
+            <p className="mt-6 flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400">
+              <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Open-source project • MIT licensed
+            </p>
+          </div>
         </section>
       </main>
 
