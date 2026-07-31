@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, BookOpenText, Check, ChevronRight, Dices, Globe2, Headphones, Keyboard, Lightbulb, Lock, Map, Play, RotateCcw, Skull, SpellCheck2, Trophy } from 'lucide-react';
+import { ArrowLeft, BookOpenText, Check, ChevronRight, Dices, Globe2, Headphones, Keyboard, Lightbulb, ListChecks, Lock, Map, Play, RotateCcw, Skull, SpellCheck2, Trophy } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -151,8 +151,9 @@ export default function LanguageQuestCourse() {
           <div>
             <h2 lang={explanationLanguage} className="font-black text-slate-900 dark:text-white">{lq('lessonGuideTitle')}</h2>
             <p lang={explanationLanguage} className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">{lq('lessonGuideBody')}</p>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
               <div className="flex gap-2 rounded-xl bg-white/80 p-3 dark:bg-surface-indigo/60"><Headphones className="mt-0.5 h-4 w-4 shrink-0 text-sky-600" /><p lang={explanationLanguage} className="text-xs leading-5 text-slate-600 dark:text-slate-200"><strong className="block text-slate-800 dark:text-white">{lq('learnTitle')}</strong>{lq('learnBody')}</p></div>
+              <div className="flex gap-2 rounded-xl bg-white/80 p-3 dark:bg-surface-indigo/60"><ListChecks className="mt-0.5 h-4 w-4 shrink-0 text-violet-600" /><p lang={explanationLanguage} className="text-xs leading-5 text-slate-600 dark:text-slate-200"><strong className="block text-slate-800 dark:text-white">{lq('vocabularyTitle')}</strong>{lq('vocabularyBody')}</p></div>
               <div className="flex gap-2 rounded-xl bg-white/80 p-3 dark:bg-surface-indigo/60"><SpellCheck2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" /><p lang={explanationLanguage} className="text-xs leading-5 text-slate-600 dark:text-slate-200"><strong className="block text-slate-800 dark:text-white">{lq('spellTitle')}</strong>{lq('spellBody')}</p></div>
               <div className="flex gap-2 rounded-xl bg-white/80 p-3 dark:bg-surface-indigo/60"><Keyboard className="mt-0.5 h-4 w-4 shrink-0 text-fuchsia-600" /><p lang={explanationLanguage} className="text-xs leading-5 text-slate-600 dark:text-slate-200"><strong className="block text-slate-800 dark:text-white">{lq('buildTitle')}</strong>{lq('buildBody')}</p></div>
               <div className="flex gap-2 rounded-xl bg-white/80 p-3 dark:bg-surface-indigo/60"><Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" /><p lang={explanationLanguage} className="text-xs leading-5 text-slate-600 dark:text-slate-200"><strong className="block text-slate-800 dark:text-white">{lq('checkTitle')}</strong>{lq('checkBody')}</p></div>

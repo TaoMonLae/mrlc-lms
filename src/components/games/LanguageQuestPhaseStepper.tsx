@@ -1,6 +1,6 @@
-import { Check, Headphones, PencilLine, SpellCheck2 } from 'lucide-react';
+import { Check, Headphones, ListChecks, PencilLine, SpellCheck2 } from 'lucide-react';
 
-export type LanguageQuestLessonPhase = 'learn' | 'spelling' | 'sentence' | 'quiz';
+export type LanguageQuestLessonPhase = 'learn' | 'vocabulary' | 'spelling' | 'sentence' | 'quiz';
 
 interface StepDefinition {
   key: LanguageQuestLessonPhase;
@@ -10,21 +10,23 @@ interface StepDefinition {
 
 interface LanguageQuestPhaseStepperProps {
   phase: LanguageQuestLessonPhase;
+  hasVocabulary: boolean;
   hasSpelling: boolean;
   hasSentence: boolean;
   accentColor: string;
 }
 
 /**
- * The four-step lesson routine (Learn -> Spell -> Build -> Check), rendered
+ * The five-step lesson routine (Learn -> Pick -> Spell -> Build -> Check), rendered
  * as a small stepper so learners always know where they are and what's
  * still ahead. Steps a lesson skips (e.g. a lesson with no full-sentence
  * cards has no "Build" step) are omitted rather than shown as permanently
  * disabled, since they'll never become reachable in that lesson.
  */
-export function LanguageQuestPhaseStepper({ phase, hasSpelling, hasSentence, accentColor }: LanguageQuestPhaseStepperProps) {
+export function LanguageQuestPhaseStepper({ phase, hasVocabulary, hasSpelling, hasSentence, accentColor }: LanguageQuestPhaseStepperProps) {
   const steps: StepDefinition[] = [
     { key: 'learn', label: 'Learn', icon: Headphones },
+    ...(hasVocabulary ? [{ key: 'vocabulary' as const, label: 'Pick', icon: ListChecks }] : []),
     ...(hasSpelling ? [{ key: 'spelling' as const, label: 'Spell', icon: SpellCheck2 }] : []),
     ...(hasSentence ? [{ key: 'sentence' as const, label: 'Build', icon: PencilLine }] : []),
     { key: 'quiz', label: 'Check', icon: Check },

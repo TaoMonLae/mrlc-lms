@@ -1,13 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import confetti from 'canvas-confetti';
-import { ArrowLeft, BookA, Flame, Headphones, Heart, Lightbulb, Mic, PartyPopper, PencilLine, SpellCheck2, Square, Star, Volume2, VolumeX } from 'lucide-react';
+import { ArrowLeft, BookA, Flame, Headphones, Heart, Lightbulb, ListChecks, Mic, PartyPopper, PencilLine, SpellCheck2, Square, Star, Volume2, VolumeX } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ApiError, apiGet, apiSend } from '@/src/lib/api';
 import type { LanguageQuestLessonPayload, LanguageQuestLessonPreview, LanguageQuestProfile } from '@/src/types/languageQuest';
 import { isChineseLanguage, languageQuestAnswerMatches } from '@/shared/languageQuestPinyin';
+import {
+  buildLanguageQuestVocabularyQuestions,
+  uniqueLanguageQuestVocabularyCards,
+} from '@/shared/languageQuestVocabularyPractice';
 import { useLanguageQuestSupport } from '@/src/components/games/LanguageQuestSupport';
 import { LanguageQuestPinyinText } from '@/src/components/games/LanguageQuestPinyinText';
 import { LanguageQuestPhaseStepper } from '@/src/components/games/LanguageQuestPhaseStepper';
@@ -70,10 +74,13 @@ export default function LanguageQuestLesson() {
   const [checking, setChecking] = useState(false);
   const [sessionPoints, setSessionPoints] = useState(0);
   const [profile, setProfile] = useState<LanguageQuestProfile | null>(null);
-  const [phase, setPhase] = useState<'learn' | 'spelling' | 'sentence' | 'quiz'>('learn');
+  const [phase, setPhase] = useState<'learn' | 'vocabulary' | 'spelling' | 'sentence' | 'quiz'>('learn');
   const [preview, setPreview] = useState<LanguageQuestLessonPreview | null>(null);
   const [previewLoading, setPreviewLoading] = useState(true);
   const [previewIndex, setPreviewIndex] = useState(0);
+  const [vocabularyIndex, setVocabularyIndex] = useState(0);
+  const [vocabularySelectedText, setVocabularySelectedText] = useState<string | null>(null);
+  const [vocabularyFeedback, setVocabularyFeedback] = useState<'correct' | 'incorrect' | null>(null);
   const [combo, setCombo] = useState(0);
   const [sentenceIndex, setSentenceIndex] = useState(0);
   const [sentenceInput, setSentenceInput] = useState('');
@@ -95,6 +102,9 @@ export default function LanguageQuestLesson() {
     if (!lessonId) return;
     setPhase('learn');
     setPreviewIndex(0);
+    setVocabularyIndex(0);
+    setVocabularySelectedText(null);
+    setVocabularyFeedback(null);
     setIndex(0);
     setSelectedId(null);
     setOrderedIds([]);
@@ -143,14 +153,23 @@ export default function LanguageQuestLesson() {
   const finished = Boolean(lesson && index >= lesson.challenges.length);
   const cards = preview?.cards ?? [];
   const card = cards[previewIndex];
+  const practiceCards = useMemo(
+    () => uniqueLanguageQuestVocabularyCards(cards),
+    [cards],
+  );
   const sentenceCards = useMemo(
-    () => cards.filter((candidate) => candidate.text.trim().split(/\s+/).length >= 2),
-    [cards],
+    () => practiceCards.filter((candidate) => candidate.text.trim().split(/\s+/).length >= 2),
+    [practiceCards],
   );
-  const spellingCards = useMemo(
-    () => cards.filter((candidate) => candidate.text.trim().length > 0),
-    [cards],
+  const spellingCards = practiceCards;
+  const vocabularyQuestions = useMemo(
+    () => buildLanguageQuestVocabularyQuestions(
+      practiceCards,
+      lesson?.challenges.flatMap((candidate) => candidate.options) ?? [],
+    ),
+    [lesson, practiceCards],
   );
+  const vocabularyQuestion = vocabularyQuestions[vocabularyIndex];
   const sentenceCard = sentenceCards[sentenceIndex];
   const spellingCard = spellingCards[spellingIndex];
   // Practising an already-completed challenge is how hearts get refilled, so
@@ -166,11 +185,52 @@ export default function LanguageQuestLesson() {
 
   const startPractice = () => {
     celebrate({ particleCount: 60, spread: 65, origin: { y: 0.7 }, colors: [lesson?.course.accentColor || '#7c3aed', '#ffffff'] });
+    setPhase(vocabularyQuestions.length ? 'vocabulary' : spellingCards.length ? 'spelling' : sentenceCards.length ? 'sentence' : 'quiz');
+    if (vocabularyQuestions.length) return;
+    const firstSpellingCard = spellingCards[0];
+    if (firstSpellingCard && lesson) {
+      speak(firstSpellingCard.audioText || firstSpellingCard.text, lesson.course.language);
+    }
+  };
+
+  const continueAfterVocabulary = () => {
     setPhase(spellingCards.length ? 'spelling' : sentenceCards.length ? 'sentence' : 'quiz');
     const firstSpellingCard = spellingCards[0];
     if (firstSpellingCard && lesson) {
       speak(firstSpellingCard.audioText || firstSpellingCard.text, lesson.course.language);
     }
+  };
+
+  const checkVocabulary = () => {
+    if (!vocabularyQuestion || !vocabularySelectedText || vocabularyFeedback) return;
+    const correct = vocabularySelectedText === vocabularyQuestion.correctText;
+    setVocabularyFeedback(correct ? 'correct' : 'incorrect');
+    if (correct) {
+      if (soundEnabled) playLanguageQuestSuccessSound();
+      celebrate({
+        particleCount: 24,
+        spread: 42,
+        origin: { y: 0.72 },
+        scalar: 0.68,
+        colors: [lesson?.course.accentColor || '#7c3aed', '#22c55e'],
+      });
+    }
+  };
+
+  const continueVocabulary = () => {
+    if (!vocabularyFeedback) return;
+    if (vocabularyFeedback === 'incorrect') {
+      setVocabularySelectedText(null);
+      setVocabularyFeedback(null);
+      return;
+    }
+    if (vocabularyIndex + 1 < vocabularyQuestions.length) {
+      setVocabularyIndex((current) => current + 1);
+      setVocabularySelectedText(null);
+      setVocabularyFeedback(null);
+      return;
+    }
+    continueAfterVocabulary();
   };
 
   const continueAfterSpelling = () => {
@@ -368,6 +428,17 @@ export default function LanguageQuestLesson() {
     } catch (error: any) {
       toast.error(error?.message || 'Could not refresh the lesson');
     }
+    setPhase('learn');
+    setPreviewIndex(0);
+    setVocabularyIndex(0);
+    setVocabularySelectedText(null);
+    setVocabularyFeedback(null);
+    setSpellingIndex(0);
+    setSpellingInput('');
+    setSpellingFeedback(null);
+    setSentenceIndex(0);
+    setSentenceInput('');
+    setSentenceFeedback(null);
     setIndex(0);
     setSessionPoints(0);
     setSelectedId(null);
@@ -412,6 +483,23 @@ export default function LanguageQuestLesson() {
         return;
       }
 
+      if (phase === 'vocabulary' && vocabularyQuestion) {
+        const letterIndex = optionLetters.indexOf(event.key.toUpperCase());
+        const numberIndex = Number(event.key) - 1;
+        const optionIndex = letterIndex >= 0 ? letterIndex : numberIndex;
+        if (!vocabularyFeedback && optionIndex >= 0 && optionIndex < vocabularyQuestion.options.length) {
+          event.preventDefault();
+          setVocabularySelectedText(vocabularyQuestion.options[optionIndex].text);
+          return;
+        }
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          if (vocabularyFeedback) continueVocabulary();
+          else if (vocabularySelectedText) checkVocabulary();
+        }
+        return;
+      }
+
       if (phase === 'sentence' && event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
         if (sentenceFeedback === 'correct') continueSentence();
@@ -450,7 +538,7 @@ export default function LanguageQuestLesson() {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, loading, lesson, previewIndex, cards.length, card, challenge, answer, selectedId, orderedIds, matchedPairs, dictationAnswer, canCheck, finished, outOfHearts, optionLetters, checking, sentenceFeedback, sentenceInput, sentenceCard, sentenceCards.length, sentenceIndex, spellingCard]);
+  }, [phase, loading, lesson, previewIndex, cards.length, card, vocabularyQuestion, vocabularyFeedback, vocabularySelectedText, challenge, answer, selectedId, orderedIds, matchedPairs, dictationAnswer, canCheck, finished, outOfHearts, optionLetters, checking, sentenceFeedback, sentenceInput, sentenceCard, sentenceCards.length, sentenceIndex, spellingCard]);
 
   if (loading) {
     return <div className="grid min-h-[520px] place-items-center"><div className="h-11 w-11 animate-spin rounded-full border-4 border-violet-200 border-t-violet-600" /></div>;
@@ -477,7 +565,7 @@ export default function LanguageQuestLesson() {
           <Progress value={learnProgress} className="flex-1 [&_[data-slot=progress-track]]:h-3 [&_[data-slot=progress-indicator]]:bg-sky-500" />
           <Button variant="ghost" size="sm" className="text-slate-400 hover:text-slate-600" onClick={startPractice}>Skip learning</Button>
         </header>
-        <LanguageQuestPhaseStepper phase="learn" hasSpelling={spellingCards.length > 0} hasSentence={sentenceCards.length > 0} accentColor={lesson.course.accentColor} />
+        <LanguageQuestPhaseStepper phase="learn" hasVocabulary={vocabularyQuestions.length > 0} hasSpelling={spellingCards.length > 0} hasSentence={sentenceCards.length > 0} accentColor={lesson.course.accentColor} />
 
         <main className="flex flex-1 flex-col items-center justify-center py-8 text-center">
           {previewLoading || !card ? (
@@ -562,6 +650,153 @@ export default function LanguageQuestLesson() {
     );
   }
 
+  if (phase === 'vocabulary' && vocabularyQuestion) {
+    const vocabularyProgress = Math.round((vocabularyIndex / vocabularyQuestions.length) * 100);
+    const questionsThisRound = vocabularyQuestions.filter(
+      (candidate) => candidate.round === vocabularyQuestion.round,
+    );
+    const roundPosition = questionsThisRound.findIndex(
+      (candidate) => candidate.id === vocabularyQuestion.id,
+    ) + 1;
+
+    return (
+      <div className="mx-auto flex min-h-[calc(100dvh-8rem)] max-w-3xl flex-col pb-6">
+        <header className="flex items-center gap-3 py-2 sm:gap-5">
+          <Button variant="ghost" size="icon" aria-label="Exit lesson" render={<Link to={`/games/language-quest/courses/${lesson.course.id}`} />} nativeButton={false}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <SoundToggleButton soundEnabled={soundEnabled} onToggle={() => setSoundEnabled(!soundEnabled)} />
+          <Progress value={vocabularyProgress} className="flex-1 [&_[data-slot=progress-track]]:h-3 [&_[data-slot=progress-indicator]]:bg-violet-600" />
+          <span className="text-xs font-bold text-slate-500">
+            {roundPosition}/{questionsThisRound.length}
+          </span>
+        </header>
+        <LanguageQuestPhaseStepper phase="vocabulary" hasVocabulary={vocabularyQuestions.length > 0} hasSpelling={spellingCards.length > 0} hasSentence={sentenceCards.length > 0} accentColor={lesson.course.accentColor} />
+
+        <main className="flex flex-1 flex-col justify-center py-8">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-2 rounded-full bg-violet-100 px-3 py-1.5 text-xs font-black uppercase tracking-wider text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">
+              <ListChecks className="h-4 w-4" /> {lq('vocabularyTitle')}
+            </span>
+            <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-black text-slate-500 dark:border-surface-raised dark:bg-surface-indigo dark:text-slate-300">
+              Round {vocabularyQuestion.round + 1} of {vocabularyQuestion.totalRounds}
+            </span>
+          </div>
+          <h1 lang={explanationLanguage} className="mt-4 text-2xl font-black leading-tight text-slate-900 dark:text-white sm:text-3xl">
+            {lq('vocabularyHeading')}
+          </h1>
+          <p lang={explanationLanguage} className="mt-2 max-w-2xl text-sm leading-6 text-slate-500 dark:text-slate-300">
+            {lq('vocabularyInstruction')}
+          </p>
+
+          <section className="mt-6 rounded-3xl border border-violet-200/80 bg-gradient-to-br from-violet-50 via-white to-sky-50 p-5 shadow-lg shadow-violet-950/5 dark:border-violet-500/20 dark:from-violet-950/35 dark:via-slate-900 dark:to-sky-950/30 sm:p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-violet-600 dark:text-violet-300">Meaning clue</p>
+                <h2 className="mt-2 max-w-2xl text-lg font-black leading-7 text-slate-900 dark:text-white sm:text-xl">
+                  {vocabularyQuestion.card.practicePrompt}
+                </h2>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="shrink-0 rounded-full"
+                onClick={() => speak(vocabularyQuestion.card.practicePrompt, lesson.course.language)}
+                aria-label="Read vocabulary clue aloud"
+              >
+                <Volume2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </section>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            {vocabularyQuestion.options.map((option, optionIndex) => {
+              const selected = vocabularySelectedText === option.text;
+              const isCorrect = Boolean(vocabularyFeedback && option.text === vocabularyQuestion.correctText);
+              const isWrongSelection = vocabularyFeedback === 'incorrect' && selected;
+              return (
+                <div key={`${vocabularyQuestion.id}:${option.text}`} className="relative">
+                  <button
+                    type="button"
+                    disabled={Boolean(vocabularyFeedback)}
+                    onClick={() => setVocabularySelectedText(option.text)}
+                    className={`group flex min-h-24 w-full items-center gap-4 rounded-2xl border-2 p-4 text-left transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet-200 disabled:cursor-default ${option.audioText ? 'pr-14' : ''} ${
+                      isCorrect
+                        ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10'
+                        : isWrongSelection
+                          ? `border-rose-500 bg-rose-50 dark:bg-rose-500/10 ${reducedMotion ? '' : 'lq-shake'}`
+                          : selected
+                            ? 'border-violet-500 bg-violet-50 shadow-sm dark:bg-violet-500/10'
+                            : 'border-slate-200 bg-white hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-md dark:border-surface-raised dark:bg-surface-indigo'
+                    }`}
+                  >
+                    <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-black ${selected ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-500 dark:bg-surface-raised dark:text-slate-300'}`}>
+                      {optionLetters[optionIndex]}
+                    </span>
+                    {option.emoji && <span className="text-3xl" aria-hidden="true">{option.emoji}</span>}
+                    <span className="min-w-0 flex-1 font-semibold text-slate-800 dark:text-white">
+                      <LanguageQuestPinyinText text={option.text} pinyin={option.pinyin ?? null} />
+                    </span>
+                  </button>
+                  {option.audioText && (
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-violet-600 dark:hover:bg-surface-raised"
+                      onClick={() => speak(option.audioText || option.text, lesson.course.language)}
+                      aria-label={`Listen to ${option.text}`}
+                    >
+                      <Volume2 className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {vocabularyFeedback === 'incorrect' && (
+            <div className={`mt-5 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-rose-800 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300 ${reducedMotion ? '' : 'lq-shake'}`}>
+              <p lang={explanationLanguage} className="font-black">{lq('vocabularyIncorrectTitle')}</p>
+              <p lang={explanationLanguage} className="mt-1 text-sm leading-6 opacity-80">{lq('vocabularyIncorrectHelp')}</p>
+            </div>
+          )}
+          {vocabularyFeedback === 'correct' && (
+            <div className={`mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300 ${reducedMotion ? '' : 'lq-cheer'}`}>
+              <p lang={explanationLanguage} className="font-black">{lq('vocabularyCorrectTitle')}</p>
+              <p lang={explanationLanguage} className="mt-1 text-sm leading-6">{lq('vocabularyCorrectHelp')}</p>
+            </div>
+          )}
+        </main>
+
+        <footer className="-mx-4 mt-auto border-t border-slate-200 px-4 py-4 sm:-mx-6 sm:px-6 dark:border-surface-raised">
+          <div className="mx-auto flex max-w-3xl items-center justify-between gap-4">
+            <Button variant="ghost" onClick={continueAfterVocabulary}>{lq('skipVocabulary')}</Button>
+            {vocabularyFeedback ? (
+              <Button
+                className={vocabularyFeedback === 'correct' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'}
+                onClick={continueVocabulary}
+              >
+                {vocabularyFeedback === 'incorrect'
+                  ? lq('retryVocabulary')
+                  : vocabularyIndex + 1 < vocabularyQuestions.length
+                    ? lq('nextVocabulary')
+                    : lq('startSpelling')}
+              </Button>
+            ) : (
+              <Button
+                onClick={checkVocabulary}
+                disabled={!vocabularySelectedText}
+                style={vocabularySelectedText ? { backgroundColor: lesson.course.accentColor } : undefined}
+              >
+                {lq('checkVocabulary')}
+              </Button>
+            )}
+          </div>
+        </footer>
+      </div>
+    );
+  }
+
   if (phase === 'spelling' && spellingCard) {
     const spellingProgress = Math.round((spellingIndex / spellingCards.length) * 100);
     return (
@@ -574,7 +809,7 @@ export default function LanguageQuestLesson() {
           <Progress value={spellingProgress} className="flex-1 [&_[data-slot=progress-track]]:h-3 [&_[data-slot=progress-indicator]]:bg-amber-500" />
           <span className="text-xs font-bold text-slate-500">{spellingIndex + 1}/{spellingCards.length}</span>
         </header>
-        <LanguageQuestPhaseStepper phase="spelling" hasSpelling={spellingCards.length > 0} hasSentence={sentenceCards.length > 0} accentColor={lesson.course.accentColor} />
+        <LanguageQuestPhaseStepper phase="spelling" hasVocabulary={vocabularyQuestions.length > 0} hasSpelling={spellingCards.length > 0} hasSentence={sentenceCards.length > 0} accentColor={lesson.course.accentColor} />
 
         <main className="flex flex-1 flex-col justify-center py-8">
           <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-amber-600 dark:text-amber-300">
@@ -701,7 +936,7 @@ export default function LanguageQuestLesson() {
           <Progress value={sentenceProgress} className="flex-1 [&_[data-slot=progress-track]]:h-3 [&_[data-slot=progress-indicator]]:bg-fuchsia-600" />
           <span className="text-xs font-bold text-slate-500">{sentenceIndex + 1}/{sentenceCards.length}</span>
         </header>
-        <LanguageQuestPhaseStepper phase="sentence" hasSpelling={spellingCards.length > 0} hasSentence={sentenceCards.length > 0} accentColor={lesson.course.accentColor} />
+        <LanguageQuestPhaseStepper phase="sentence" hasVocabulary={vocabularyQuestions.length > 0} hasSpelling={spellingCards.length > 0} hasSentence={sentenceCards.length > 0} accentColor={lesson.course.accentColor} />
 
         <main className="flex flex-1 flex-col justify-center py-8">
           <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-fuchsia-700">
@@ -888,7 +1123,7 @@ export default function LanguageQuestLesson() {
         <div className="flex items-center gap-1 text-sm font-black text-rose-500"><Heart className="h-5 w-5 fill-current" /> {profile?.hearts ?? 0}</div>
         <div className="hidden items-center gap-1 text-sm font-black text-amber-500 sm:flex" title={`Level ${profile?.rewards.level ?? 1}`}><Star className="h-5 w-5 fill-current" /> {profile?.points ?? 0} XP</div>
       </header>
-      <LanguageQuestPhaseStepper phase="quiz" hasSpelling={spellingCards.length > 0} hasSentence={sentenceCards.length > 0} accentColor={lesson.course.accentColor} />
+      <LanguageQuestPhaseStepper phase="quiz" hasVocabulary={vocabularyQuestions.length > 0} hasSpelling={spellingCards.length > 0} hasSentence={sentenceCards.length > 0} accentColor={lesson.course.accentColor} />
 
       <main className="flex flex-1 flex-col justify-center py-8">
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-violet-600">{lesson.title} • {index + 1} of {lesson.challenges.length}</p>
