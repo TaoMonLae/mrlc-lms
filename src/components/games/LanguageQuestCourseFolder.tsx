@@ -13,6 +13,7 @@ interface LanguageQuestCourseFoldersProps<T> {
   renderCourse: (course: T) => ReactNode;
   idPrefix?: string;
   courseGridClassName?: string;
+  defaultCategory?: string | null;
 }
 
 const categoryTones = {
@@ -66,8 +67,9 @@ export function LanguageQuestCourseFolders<T>({
   renderCourse,
   idPrefix = 'course-folder',
   courseGridClassName,
+  defaultCategory = null,
 }: LanguageQuestCourseFoldersProps<T>) {
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string | null>(defaultCategory);
 
   useEffect(() => {
     if (activeCategory && !groups.some((group) => group.category === activeCategory)) {

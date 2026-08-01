@@ -57,7 +57,13 @@ export interface OfficialLanguageQuestCourse {
   category?: string;
   imageEmoji: string;
   accentColor: string;
-  published: true;
+  published: boolean;
+  /**
+   * Retired built-in courses remain in the database so historical learner
+   * progress is preserved, but they are forced out of the public catalog and
+   * cannot be republished from Course Studio.
+   */
+  retired?: boolean;
   units: Array<{
     title: string;
     description: string;
@@ -164,7 +170,8 @@ export const importedSpanishCourse: OfficialLanguageQuestCourse = {
   language: "Spanish",
   imageEmoji: "🇪🇸",
   accentColor: "#f97316",
-  published: true,
+  published: false,
+  retired: true,
   units: [
     {
       title: "Unit 1",

@@ -13,7 +13,7 @@ import {
   reorderChallengeIsCorrect,
   sentenceAnswerMatches,
 } from "../../shared/languageQuest";
-import { canAttemptNewChallenge, nextIncompleteLessonId, normalizeCourseDraft, shuffle } from "../../languageQuest";
+import { canAttemptNewChallenge, ensureOfficialCourse, nextIncompleteLessonId, normalizeCourseDraft, shuffle } from "../../languageQuest";
 import {
   LANGUAGE_QUEST_AVATARS,
   isLanguageQuestAvatarId,
@@ -323,8 +323,36 @@ test("the imported Spanish course preserves the source curriculum shape", () => 
   assert.equal(importedSpanishCourse.units.length, 2);
   assert.equal(lessons.length, 10);
   assert.equal(challenges.length, 80);
+  assert.equal(importedSpanishCourse.published, false);
+  assert.equal(importedSpanishCourse.retired, true);
   assert.ok(challenges.every((challenge) => challenge.options.filter((option) => option.correct).length === 1));
   assert.ok(challenges.every((challenge) => challenge.options.length === 3));
+});
+
+test("retiring an official course preserves curriculum and clears active selections", async () => {
+  const existing = { id: "spanish-v1", code: importedSpanishCourse.code, published: true };
+  const calls: string[] = [];
+  const prisma: any = {
+    languageQuestCourse: {
+      findUnique: async () => existing,
+      update: async ({ data }: any) => {
+        calls.push("course:update");
+        return { ...existing, ...data };
+      },
+    },
+    languageQuestUserProgress: {
+      updateMany: async ({ where, data }: any) => {
+        calls.push(`progress:${where.activeCourseId}:${String(data.activeCourseId)}`);
+        return { count: 2 };
+      },
+    },
+    $transaction: async (operation: (tx: any) => Promise<any>) => operation(prisma),
+  };
+
+  const result = await ensureOfficialCourse(prisma, importedSpanishCourse);
+
+  assert.equal(result.published, false);
+  assert.deepEqual(calls, ["course:update", "progress:spanish-v1:null"]);
 });
 
 test("the original Mandarin course has a complete and valid curriculum", () => {

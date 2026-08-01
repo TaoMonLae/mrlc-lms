@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { apiGet } from '@/src/lib/api';
-import type { LanguageQuestOverview } from '@/src/types/languageQuest';
+import type { LanguageQuestCourseSummary, LanguageQuestOverview } from '@/src/types/languageQuest';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { LanguageQuestAchievements } from '@/src/components/games/LanguageQuestAchievements';
 import { LanguageQuestCourseFolders } from '@/src/components/games/LanguageQuestCourseFolder';
@@ -29,6 +29,81 @@ function StatCard({ icon, label, value, tone }: { icon: React.ReactNode; label: 
         <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-300">{label}</p>
       </div>
     </div>
+  );
+}
+
+function CourseLibrary({ courses, progressSavedText }: { courses: LanguageQuestCourseSummary[]; progressSavedText: string }) {
+  const courseGroups = orderedLanguageQuestCategories(courses);
+  const nextCourse = courses.find((course) => course.progressPercent > 0 && !course.completed) ?? courses[0];
+
+  return (
+    <section aria-labelledby="language-quest-course-library-title">
+      <div className="mb-4 flex items-end justify-between gap-3">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-violet-600 dark:text-violet-300">Continue learning</p>
+          <h2 id="language-quest-course-library-title" className="mt-1 text-xl font-bold text-slate-900 dark:text-white">Choose a course</h2>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{progressSavedText}</p>
+        </div>
+      </div>
+
+      {courses.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-slate-300 p-12 text-center dark:border-slate-700">
+          <BookOpen className="mx-auto h-11 w-11 text-slate-300" />
+          <p className="mt-3 font-semibold text-slate-700 dark:text-slate-200">No published courses yet</p>
+          <p className="mt-1 text-sm text-slate-500">A teacher or administrator can create the first course.</p>
+        </div>
+      ) : (
+        <LanguageQuestCourseFolders
+          groups={courseGroups}
+          idPrefix="learner-course-folder"
+          defaultCategory={nextCourse?.category}
+          renderCourse={(course) => (
+            <article key={course.id} className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-surface-raised dark:bg-surface-indigo">
+              <div className="h-2" style={{ backgroundColor: course.accentColor }} />
+              <div className="p-5">
+                <div className="flex items-start gap-4">
+                  <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl text-3xl" style={{ backgroundColor: `${course.accentColor}18` }}>
+                    {course.imageEmoji || <BookOpen className="h-6 w-6" aria-hidden="true" />}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <Badge variant="outline">{course.language}</Badge>
+                    <h4 className="mt-2 text-lg font-bold text-slate-900 dark:text-white">{course.title}</h4>
+                  </div>
+                </div>
+                <p className="mt-3 min-h-10 text-sm leading-5 text-slate-500 dark:text-slate-300">{course.description || 'A new language adventure.'}</p>
+                <div className="mt-4 flex items-center justify-between text-xs font-medium text-slate-500">
+                  <span>{course.lessonCount} lessons</span>
+                  <span>{course.progressPercent}% complete</span>
+                </div>
+                <Progress value={course.progressPercent} className="mt-2 [&_[data-slot=progress-track]]:h-2 [&_[data-slot=progress-indicator]]:bg-violet-600" />
+                <div className="mt-5 flex items-center gap-2">
+                  <Button
+                    className="flex-1"
+                    style={{ backgroundColor: course.accentColor }}
+                    render={<Link to={course.nextLessonId ? `/games/language-quest/lessons/${course.nextLessonId}` : `/games/language-quest/courses/${course.id}`} />}
+                    nativeButton={false}
+                  >
+                    {course.completed ? 'Review course' : course.nextLessonId ? (course.progressPercent > 0 ? 'Resume lesson' : 'Start course') : 'View course'}
+                  </Button>
+                  {course.progressPercent > 0 && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      aria-label="View course path"
+                      title="View course path"
+                      render={<Link to={`/games/language-quest/courses/${course.id}`} />}
+                      nativeButton={false}
+                    >
+                      <Map className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </article>
+          )}
+        />
+      )}
+    </section>
   );
 }
 
@@ -108,8 +183,6 @@ export default function LanguageQuestHome() {
     );
   }
 
-  const courseGroups = orderedLanguageQuestCategories(data.courses);
-
   return (
     <div className="space-y-7 pb-10">
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-700 via-fuchsia-700 to-rose-600 p-6 text-white shadow-xl sm:p-8">
@@ -164,6 +237,8 @@ export default function LanguageQuestHome() {
         <StatCard icon={<Trophy className="h-5 w-5" />} label="Best streak" value={data.profile.bestStreak} tone="bg-violet-100 text-violet-600 dark:bg-violet-500/15" />
       </section>
 
+      <CourseLibrary courses={data.courses} progressSavedText={lq('progressSaved')} />
+
       <LanguageQuestEngagement onXpChanged={load} />
 
       <LanguageQuestRewardTrack rewards={data.profile.rewards} bestStreak={data.profile.bestStreak} />
@@ -180,72 +255,6 @@ export default function LanguageQuestHome() {
             <p lang={explanationLanguage} className="mt-1 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">{lq('sentenceFeatureBody')}</p>
           </div>
         </div>
-      </section>
-
-      <section>
-        <div className="mb-4 flex items-end justify-between gap-3">
-          <div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Choose a course</h2>
-            <p lang={explanationLanguage} className="mt-1 text-sm text-slate-500 dark:text-slate-300">{lq('progressSaved')}</p>
-          </div>
-        </div>
-
-        {data.courses.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-300 p-12 text-center dark:border-slate-700">
-            <BookOpen className="mx-auto h-11 w-11 text-slate-300" />
-            <p className="mt-3 font-semibold text-slate-700 dark:text-slate-200">No published courses yet</p>
-            <p className="mt-1 text-sm text-slate-500">A teacher or administrator can create the first course.</p>
-          </div>
-        ) : (
-          <LanguageQuestCourseFolders
-            groups={courseGroups}
-            idPrefix="learner-course-folder"
-            renderCourse={(course) => (
-              <article key={course.id} className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-surface-raised dark:bg-surface-indigo">
-                <div className="h-2" style={{ backgroundColor: course.accentColor }} />
-                <div className="p-5">
-                  <div className="flex items-start gap-4">
-                    <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl text-3xl" style={{ backgroundColor: `${course.accentColor}18` }}>
-                      {course.imageEmoji || <BookOpen className="h-6 w-6" aria-hidden="true" />}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <Badge variant="outline">{course.language}</Badge>
-                      <h4 className="mt-2 text-lg font-bold text-slate-900 dark:text-white">{course.title}</h4>
-                    </div>
-                  </div>
-                  <p className="mt-3 min-h-10 text-sm leading-5 text-slate-500 dark:text-slate-300">{course.description || 'A new language adventure.'}</p>
-                  <div className="mt-4 flex items-center justify-between text-xs font-medium text-slate-500">
-                    <span>{course.lessonCount} lessons</span>
-                    <span>{course.progressPercent}% complete</span>
-                  </div>
-                  <Progress value={course.progressPercent} className="mt-2 [&_[data-slot=progress-track]]:h-2 [&_[data-slot=progress-indicator]]:bg-violet-600" />
-                  <div className="mt-5 flex items-center gap-2">
-                    <Button
-                      className="flex-1"
-                      style={{ backgroundColor: course.accentColor }}
-                      render={<Link to={course.nextLessonId ? `/games/language-quest/lessons/${course.nextLessonId}` : `/games/language-quest/courses/${course.id}`} />}
-                      nativeButton={false}
-                    >
-                      {course.completed ? 'Review course' : course.nextLessonId ? (course.progressPercent > 0 ? 'Resume lesson' : 'Start course') : 'View course'}
-                    </Button>
-                    {course.progressPercent > 0 && (
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        aria-label="View course path"
-                        title="View course path"
-                        render={<Link to={`/games/language-quest/courses/${course.id}`} />}
-                        nativeButton={false}
-                      >
-                        <Map className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </article>
-            )}
-          />
-        )}
       </section>
 
       <LanguageQuestAchievements

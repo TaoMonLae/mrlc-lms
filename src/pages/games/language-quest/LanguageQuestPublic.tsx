@@ -9,6 +9,7 @@ import {
   Heart,
   Info,
   Languages,
+  LogIn,
   Moon,
   ShieldCheck,
   Sparkles,
@@ -72,8 +73,15 @@ export default function LanguageQuestPublic() {
               <Info className="mr-2 h-4 w-4" /> About
             </Button>
             {!user && (
-              <Button variant="ghost" className="hidden font-bold text-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 sm:inline-flex" render={<Link to="/login" />} nativeButton={false}>
-                Sign in
+              <Button
+                variant="ghost"
+                className="h-9 w-9 px-0 font-bold text-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 sm:h-10 sm:w-auto sm:px-4"
+                aria-label="Sign in"
+                render={<Link to="/login" />}
+                nativeButton={false}
+              >
+                <LogIn className="h-4 w-4 sm:hidden" aria-hidden="true" />
+                <span className="hidden sm:inline">Sign in</span>
               </Button>
             )}
             <Button
@@ -230,8 +238,8 @@ export default function LanguageQuestPublic() {
                           <span className="rounded-full bg-slate-100 px-3 py-1.5 dark:bg-slate-800">{course.lessonCount} lessons</span>
                           <span className="rounded-full bg-slate-100 px-3 py-1.5 dark:bg-slate-800">{course.challengeCount} practices</span>
                         </div>
-                        <Button className="mt-6 w-full rounded-xl font-black text-white shadow-lg transition-transform group-hover:scale-[1.02]" style={{ backgroundColor: course.accentColor }} render={<Link to={startHref} />} nativeButton={false}>
-                          {user ? 'Open course library' : 'Sign up to learn'} <ArrowRight className="ml-2 h-4 w-4" />
+                        <Button className="mt-6 w-full rounded-xl font-black text-white shadow-lg transition-transform group-hover:scale-[1.02]" style={{ backgroundColor: course.accentColor }} render={<Link to={user ? `/games/language-quest/courses/${course.id}` : '/signup'} />} nativeButton={false}>
+                          {user ? 'Open this course' : 'Sign up to learn'} <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                       </div>
                     </article>

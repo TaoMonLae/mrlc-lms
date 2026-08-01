@@ -56,6 +56,12 @@ import {
   normalizeLanguageQuestSpeechText,
 } from "./shared/languageQuestVoice";
 
+const RETIRED_OFFICIAL_COURSE_CODES = new Set(
+  [importedSpanishCourse]
+    .filter((course) => course.retired)
+    .map((course) => course.code),
+);
+
 interface JwtPayload { userId: string; role: string; email: string; externalLearner?: boolean; }
 
 interface Deps {
@@ -344,9 +350,22 @@ export function normalizeCourseDraft(raw: any): { value?: CourseDraft; error?: s
   return { value: { title, description, language, category, imageEmoji, accentColor, published, units } };
 }
 
-async function ensureOfficialCourse(prisma: any, course: OfficialLanguageQuestCourse): Promise<any> {
+export async function ensureOfficialCourse(prisma: any, course: OfficialLanguageQuestCourse): Promise<any> {
   const existing = await prisma.languageQuestCourse.findUnique({ where: { code: course.code } });
-  if (existing) return existing;
+  if (existing) {
+    if (!course.retired || !existing.published) return existing;
+    return prisma.$transaction(async (tx: any) => {
+      const retired = await tx.languageQuestCourse.update({
+        where: { id: existing.id },
+        data: { published: false },
+      });
+      await tx.languageQuestUserProgress.updateMany({
+        where: { activeCourseId: existing.id },
+        data: { activeCourseId: null },
+      });
+      return retired;
+    });
+  }
   try {
     return await prisma.$transaction(async (tx: any) => {
       const created = await tx.languageQuestCourse.create({
@@ -2293,7 +2312,8 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         id: course.id, code: course.code, title: course.title, description: course.description,
         language: course.language, category: course.category,
         imageEmoji: course.imageEmoji, accentColor: course.accentColor,
-        published: course.published, official: course.createdById === null, updatedAt: course.updatedAt,
+        published: course.published, official: course.createdById === null,
+        retired: RETIRED_OFFICIAL_COURSE_CODES.has(course.code), updatedAt: course.updatedAt,
         unitCount: course.units.length,
         lessonCount: course.units.reduce((sum: number, unit: any) => sum + unit.lessons.length, 0),
         challengeCount: course.units.reduce((sum: number, unit: any) => sum + unit.lessons.reduce((inner: number, lesson: any) => inner + lesson.challenges.length, 0), 0),
@@ -2320,7 +2340,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       });
       if (!course) { res.status(404).json({ error: "Course not found" }); return; }
       if (jwtUser.role !== "ADMIN" && course.createdById !== jwtUser.userId) { res.status(403).json({ error: "You can only edit courses you created" }); return; }
-      res.json(course);
+      res.json({ ...course, retired: RETIRED_OFFICIAL_COURSE_CODES.has(course.code) });
     } catch (error) {
       logger.error("Error loading managed Language Quest course:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load the course editor" });
@@ -2446,6 +2466,10 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       const course = await prisma.languageQuestCourse.findUnique({ where: { id: req.params.id } });
       if (!course) { res.status(404).json({ error: "Course not found" }); return; }
       if (jwtUser.role !== "ADMIN" && course.createdById !== jwtUser.userId) { res.status(403).json({ error: "You can only edit courses you created" }); return; }
+      if (RETIRED_OFFICIAL_COURSE_CODES.has(course.code) && normalized.value.published) {
+        res.status(409).json({ error: "This legacy course is retired and cannot be republished. Its learner progress is preserved for records." });
+        return;
+      }
       const saved = await saveCurriculum(course.id, normalized.value);
       await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "LANGUAGE_QUEST_COURSE", saved.id, `Updated Language Quest course “${saved.title}”`, req.ip || null, req.headers["user-agent"] || null);
       res.json({ id: saved.id });

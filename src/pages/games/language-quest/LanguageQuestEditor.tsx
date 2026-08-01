@@ -64,6 +64,7 @@ interface EditorCourse {
   imageEmoji: string;
   accentColor: string;
   published: boolean;
+  retired: boolean;
   units: EditorUnit[];
 }
 
@@ -77,14 +78,14 @@ const newLesson = (): EditorLesson => ({ _key: key(), title: '', description: ''
 const newUnit = (): EditorUnit => ({ _key: key(), title: '', description: '', lessons: [newLesson()] });
 const emptyCourse = (): EditorCourse => ({
   title: '', description: '', language: 'English', category: 'English Courses',
-  imageEmoji: '🌍', accentColor: '#7c3aed', published: false, units: [newUnit()],
+  imageEmoji: '🌍', accentColor: '#7c3aed', published: false, retired: false, units: [newUnit()],
 });
 
 function hydrateCourse(raw: any): EditorCourse {
   return {
     title: raw?.title || '', description: raw?.description || '', language: raw?.language || '',
     category: raw?.category || 'Other Courses',
-    imageEmoji: raw?.imageEmoji || '🌍', accentColor: raw?.accentColor || '#7c3aed', published: Boolean(raw?.published),
+    imageEmoji: raw?.imageEmoji || '🌍', accentColor: raw?.accentColor || '#7c3aed', published: Boolean(raw?.published), retired: Boolean(raw?.retired),
     units: (raw?.units || []).map((unit: any) => ({
       _key: key(), id: unit.id, title: unit.title || '', description: unit.description || '',
       lessons: (unit.lessons || []).map((lesson: any) => ({
@@ -315,8 +316,15 @@ export default function LanguageQuestEditor() {
         </div>
         <div className="mt-4 space-y-1.5"><Label htmlFor="course-description">Description</Label><Textarea id="course-description" value={course.description} maxLength={1000} rows={2} placeholder="What will people learn in this course?" onChange={(event) => setCourse({ ...course, description: event.target.value })} /></div>
         <div className="mt-5 flex items-start justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-surface-raised dark:bg-surface-raised/30">
-          <div><Label htmlFor="course-published" className="text-sm font-semibold">Published for everyone</Label><p className="mt-0.5 text-xs text-slate-500">Draft courses are only visible in Course Studio. Publish after the lessons are ready.</p></div>
-          <Switch id="course-published" checked={course.published} onCheckedChange={(checked) => setCourse({ ...course, published: checked })} />
+          <div>
+            <Label htmlFor="course-published" className="text-sm font-semibold">Published for everyone</Label>
+            <p className="mt-0.5 text-xs text-slate-500">
+              {course.retired
+                ? 'This legacy course is retired. Existing learner records are preserved, but the course cannot return to the public catalog.'
+                : 'Draft courses are only visible in Course Studio. Publish after the lessons are ready.'}
+            </p>
+          </div>
+          <Switch id="course-published" checked={course.published} disabled={course.retired} onCheckedChange={(checked) => setCourse({ ...course, published: checked })} />
         </div>
       </section>
 
