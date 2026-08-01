@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Users, BookOpen, Clock, CheckCircle2, GraduationCap, Calendar, ArrowRight, MoreHorizontal } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 import { apiGet } from "../../lib/api";
 import { DailyQuestCard } from "@/src/components/daily-quest/DailyQuestCard";
 import { WordTrailCard } from "@/src/components/word-trail/WordTrailCard";
+import { useUser } from "@/src/lib/permissions";
 
 function sanitizeText(text: string): string {
   if (!text) return text;
@@ -42,6 +42,7 @@ interface TodaySession {
 
 export default function TeacherDashboard() {
   const navigate = useNavigate();
+  const { user } = useUser();
   const [data, setData] = useState<DashboardData>({
     stats: { studentCount: 0, classCount: 0, attendanceRate: 0, upcomingExamCount: 0 },
     classes: [], attendanceData: [], upcomingExams: [], recentPerformance: [],
@@ -68,30 +69,35 @@ export default function TeacherDashboard() {
   }, []);
 
   const { stats, classes: assignedClasses, attendanceData, upcomingExams, recentPerformance } = data;
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const firstName = user?.name?.trim().split(/\s+/)[0];
   const teacherStats = [
-    { title: "My Students", value: String(stats.studentCount), description: `Across ${stats.classCount} classes`, icon: Users, color: "text-blue-500", bgColor: "bg-blue-500/10" },
-    { title: "Attendance", value: `${stats.attendanceRate}%`, description: "Average this period", icon: CheckCircle2, color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
-    { title: "My Classes", value: String(stats.classCount), description: "Assigned to you", icon: BookOpen, color: "text-aubergine-500", bgColor: "bg-aubergine-500/10" },
-    { title: "Exams Slated", value: String(stats.upcomingExamCount), description: "Upcoming exams", icon: GraduationCap, color: "text-purple-500", bgColor: "bg-purple-500/10" },
+    { title: "My Students", value: String(stats.studentCount), description: `Across ${stats.classCount} classes`, icon: Users, color: "text-academic-sky", bgColor: "bg-academic-sky/10", accent: "bg-academic-sky" },
+    { title: "Attendance", value: `${stats.attendanceRate}%`, description: "Average this period", icon: CheckCircle2, color: "text-academic-teal", bgColor: "bg-academic-teal/10", accent: "bg-academic-teal" },
+    { title: "My Classes", value: String(stats.classCount), description: "Assigned to you", icon: BookOpen, color: "text-academic-navy dark:text-slate-200", bgColor: "bg-academic-navy/10 dark:bg-white/10", accent: "bg-academic-navy dark:bg-slate-300" },
+    { title: "Exams Slated", value: String(stats.upcomingExamCount), description: "Upcoming exams", icon: GraduationCap, color: "text-[#b7791f] dark:text-academic-gold", bgColor: "bg-academic-gold/15", accent: "bg-academic-gold" },
   ];
 
   return (
-    <div className="space-y-8 max-w-[1600px] mx-auto">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-8 max-w-[1600px] mx-auto pb-8">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight dark:text-white">Teacher Dashboard</h1>
-          <p className="text-sm text-slate-500 mt-1 font-medium">
+          <p className="mb-1 text-xs font-bold uppercase tracking-[0.18em] text-aubergine-700 dark:text-aubergine-300">
+            {greeting}{firstName ? `, ${firstName}` : ''}
+          </p>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight dark:text-white">Teacher Dashboard</h1>
+          <p className="text-sm text-slate-500 mt-1.5 font-medium dark:text-slate-300">
             {stats.classCount > 0
               ? `Managing ${stats.classCount} assigned ${stats.classCount === 1 ? 'class' : 'classes'} with ${stats.studentCount} students.`
               : 'No classes assigned to you yet.'}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button
             id="dashboard-mark-attendance-btn"
-            variant="outline"
             size="sm"
-            className="bg-white border-slate-200 text-slate-700 shadow-sm font-bold text-[11px] uppercase tracking-wider h-10 px-4"
+            className="h-10 rounded-lg bg-academic-teal px-4 text-[11px] font-bold uppercase tracking-wider text-white shadow-sm hover:bg-aubergine-700"
             onClick={() => navigate('/teacher/attendance')}
           >
             Mark Attendance
@@ -100,7 +106,7 @@ export default function TeacherDashboard() {
             id="dashboard-planner-btn"
             variant="outline"
             size="sm"
-            className="bg-white border-slate-200 text-slate-700 shadow-sm font-bold text-[11px] uppercase tracking-wider h-10 px-4"
+            className="h-10 rounded-lg border-border bg-card px-4 text-[11px] font-bold uppercase tracking-wider text-slate-700 shadow-sm dark:text-slate-200"
             onClick={() => navigate('/teacher/planner')}
           >
             Lesson Planner
@@ -108,7 +114,7 @@ export default function TeacherDashboard() {
           <Button
             id="dashboard-new-assessment-btn"
             size="sm"
-            className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm font-bold text-[11px] uppercase tracking-wider h-10 px-4"
+            className="h-10 rounded-lg bg-academic-navy px-4 text-[11px] font-bold uppercase tracking-wider text-white shadow-sm hover:bg-[#102942] dark:bg-slate-100 dark:text-academic-navy dark:hover:bg-white"
             onClick={() => navigate('/exams/new')}
           >
             New Assessment
@@ -116,15 +122,13 @@ export default function TeacherDashboard() {
         </div>
       </div>
 
-      <DailyQuestCard />
-      <WordTrailCard />
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {teacherStats.map((stat) => (
-          <Card key={stat.title} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:shadow-md dark:bg-surface-indigo/50 dark:border-surface-raised">
+          <Card key={stat.title} className="relative rounded-2xl border border-border bg-card p-5 shadow-[0_8px_24px_rgba(25,50,77,0.06)] transition-all hover:-translate-y-0.5 hover:shadow-[0_14px_32px_rgba(25,50,77,0.10)]">
+            <div className={`absolute inset-x-0 top-0 h-1 ${stat.accent}`} aria-hidden="true" />
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 whitespace-nowrap">{stat.title}</span>
-              <div className={`rounded-full p-2 ${stat.bgColor} ${stat.color}`}>
+              <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400 whitespace-nowrap">{stat.title}</span>
+              <div className={`rounded-xl p-2.5 ${stat.bgColor} ${stat.color}`}>
                 <stat.icon className="h-4 w-4" />
               </div>
             </div>
@@ -138,8 +142,8 @@ export default function TeacherDashboard() {
 
       {/* Today's sessions — one tap into attendance for that session */}
       {todaySessions.length > 0 && (
-        <Card className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden dark:bg-surface-indigo/50 dark:border-surface-raised">
-          <div className="flex items-center justify-between border-b px-6 py-4 dark:border-surface-raised">
+        <Card className="rounded-2xl border border-border bg-card shadow-[0_8px_24px_rgba(25,50,77,0.05)] overflow-hidden">
+          <div className="flex items-center justify-between border-b border-border px-6 py-4">
             <h3 className="font-bold text-slate-800 text-sm dark:text-slate-100 flex items-center gap-2">
               <Clock className="h-4 w-4 text-aubergine-600" /> Today's Sessions
             </h3>
@@ -153,7 +157,7 @@ export default function TeacherDashboard() {
                 key={s.id}
                 type="button"
                 onClick={() => navigate(`/teacher/attendance?sessionId=${s.id}`)}
-                className="group flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 p-3 text-left transition-colors hover:border-aubergine-400 hover:bg-aubergine-50 dark:border-surface-raised dark:bg-surface-raised/30 dark:hover:bg-aubergine-900/20"
+                className="group flex items-center justify-between rounded-xl border border-border bg-background/75 p-3.5 text-left transition-all hover:border-aubergine-400 hover:bg-aubergine-50 dark:hover:bg-aubergine-900/20"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-bold text-slate-800 dark:text-slate-200">{sanitizeText(s.subjectName || 'Session')}</p>
@@ -169,6 +173,22 @@ export default function TeacherDashboard() {
           </div>
         </Card>
       )}
+
+      <section className="space-y-4" aria-labelledby="learning-activities-heading">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <h2 id="learning-activities-heading" className="text-base font-bold text-slate-900 dark:text-white">Learning activities</h2>
+            <p className="mt-0.5 text-xs font-medium text-slate-500 dark:text-slate-400">A little daily practice keeps learning momentum strong.</p>
+          </div>
+          <span className="hidden rounded-full bg-academic-gold/15 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-[#97651b] sm:inline dark:text-academic-gold">
+            Build a streak
+          </span>
+        </div>
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+          <DailyQuestCard />
+          <WordTrailCard />
+        </div>
+      </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <Card className="lg:col-span-2 rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden dark:bg-surface-indigo/50 dark:border-surface-raised flex flex-col">
@@ -248,7 +268,7 @@ export default function TeacherDashboard() {
                     />
                     <Bar dataKey="rate" radius={[4, 4, 0, 0]}>
                       {attendanceData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.rate > 90 ? '#10b981' : '#f59e0b'} />
+                        <Cell key={`cell-${index}`} fill={entry.rate > 90 ? '#168c83' : '#f2b84b'} />
                       ))}
                     </Bar>
                   </BarChart>

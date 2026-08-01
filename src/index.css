@@ -33,19 +33,26 @@
   --radius-sm: calc(var(--radius) - 4px);
 
   /* ─── Webflow-inspired brand palette ─────────────────────────────── */
-  /* Purple — lead brand accent. 600 = brand value (#7a3dff). The legacy
-     "aubergine" utility names now resolve to this purple ramp. */
-  --color-aubergine-50: #f5efff;
-  --color-aubergine-100: #ece1ff;
-  --color-aubergine-200: #ddc9ff;
-  --color-aubergine-300: #c4a6ff;
-  --color-aubergine-400: #a87dff;
-  --color-aubergine-500: #8f5cff;
-  --color-aubergine-600: #7a3dff;
-  --color-aubergine-700: #6325e6;
-  --color-aubergine-800: #4f1cb8;
-  --color-aubergine-900: #3f1a8f;
-  --color-aubergine-950: #25104f;
+  /* Existing aubergine utility names are retained for compatibility, but now
+     resolve to the calm teal ramp used for interactive accents. */
+  --color-aubergine-50: #eef8f6;
+  --color-aubergine-100: #dcefeb;
+  --color-aubergine-200: #bde0db;
+  --color-aubergine-300: #8fc9c2;
+  --color-aubergine-400: #58aaa3;
+  --color-aubergine-500: #2f918a;
+  --color-aubergine-600: #168c83;
+  --color-aubergine-700: #14736d;
+  --color-aubergine-800: #155c58;
+  --color-aubergine-900: #164c49;
+  --color-aubergine-950: #082e2d;
+
+  --color-academic-navy: #19324d;
+  --color-academic-navy-deep: #0c2538;
+  --color-academic-teal: #168c83;
+  --color-academic-gold: #f2b84b;
+  --color-academic-coral: #e97961;
+  --color-academic-sky: #4e91bd;
 
   /* Pink — second accent (legacy "magenta" names). 500 = #ed52cb */
   --color-magenta-50: #fdeef9;
@@ -61,27 +68,27 @@
   --color-magenta-950: #46093a;
 
   /* Five-stop accent system (product-category colors) */
-  --color-accent-purple: #7a3dff;
-  --color-accent-pink: #ed52cb;
-  --color-accent-blue: #3b89ff;
-  --color-accent-blue-info: #146ef5;
-  --color-accent-orange: #ff6b00;
-  --color-accent-green: #00d722;
-  --color-accent-yellow: #ffae13;
+  --color-accent-purple: #496a91;
+  --color-accent-pink: #e97961;
+  --color-accent-blue: #4e91bd;
+  --color-accent-blue-info: #347da7;
+  --color-accent-orange: #d78a35;
+  --color-accent-green: #168c83;
+  --color-accent-yellow: #f2b84b;
 
   /* Link blue */
-  --color-linkblue-500: #146ef5;
-  --color-linkblue-600: #006acc;
-  --color-linkblue-700: #006acc;
+  --color-linkblue-500: #347da7;
+  --color-linkblue-600: #286788;
+  --color-linkblue-700: #20536f;
 
   /* Warm / soft surfaces (legacy) */
-  --color-cream: #f4f4f4;
-  --color-lavender: #f5efff;
+  --color-cream: #faf8f2;
+  --color-lavender: #eef4f7;
 
-  /* Surfaces — near-black canvas + raised panels (dark mode) */
-  --color-canvas: #080808;
-  --color-surface-indigo: #161616;
-  --color-surface-raised: #222222;
+  /* Blue-grey surfaces replace pure black in the application shell. */
+  --color-canvas: #101720;
+  --color-surface-indigo: #18232f;
+  --color-surface-raised: #22313f;
 
   /* Myanmar/Mon script display font for News titles (see @font-face below).
      Registering it under --font-* makes Tailwind generate a `font-myanmar`
@@ -118,48 +125,48 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 24.6 95% 53.1%;
-    --primary-foreground: 60 9.1% 97.8%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 24.6 95% 53.1%;
+    --background: #f5f7fa;
+    --foreground: #172033;
+    --card: #ffffff;
+    --card-foreground: #172033;
+    --popover: #ffffff;
+    --popover-foreground: #172033;
+    --primary: #19324d;
+    --primary-foreground: #ffffff;
+    --secondary: #edf2f5;
+    --secondary-foreground: #19324d;
+    --muted: #edf2f5;
+    --muted-foreground: #627387;
+    --accent: #e6f3f1;
+    --accent-foreground: #126a65;
+    --destructive: #d65445;
+    --destructive-foreground: #ffffff;
+    --border: #dce3ea;
+    --input: #d5dee7;
+    --ring: #168c83;
     --radius: 0.75rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 24.6 95% 53.1%;
-    --primary-foreground: 60 9.1% 97.8%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 24.6 95% 53.1%;
+    --background: #101720;
+    --foreground: #f4f7fa;
+    --card: #18232f;
+    --card-foreground: #f4f7fa;
+    --popover: #18232f;
+    --popover-foreground: #f4f7fa;
+    --primary: #55b7ae;
+    --primary-foreground: #071c1b;
+    --secondary: #22313f;
+    --secondary-foreground: #f4f7fa;
+    --muted: #22313f;
+    --muted-foreground: #a9b7c6;
+    --accent: #183b3a;
+    --accent-foreground: #9bd7d1;
+    --destructive: #e56f61;
+    --destructive-foreground: #ffffff;
+    --border: #304252;
+    --input: #344858;
+    --ring: #55b7ae;
   }
 }
 
@@ -330,75 +337,74 @@
 }
 
 :root {
-    /* Light mode — Webflow: white canvas, near-black ink, purple accent,
-       hairline borders, sharp small radii. */
-    --background: #ffffff;
-    --foreground: #080808;
+    /* Light mode — warm, low-glare academic canvas with navy ink. */
+    --background: #f5f7fa;
+    --foreground: #172033;
     --card: #ffffff;
-    --card-foreground: #080808;
+    --card-foreground: #172033;
     --popover: #ffffff;
-    --popover-foreground: #080808;
-    --primary: #080808;
+    --popover-foreground: #172033;
+    --primary: #19324d;
     --primary-foreground: #ffffff;
-    --secondary: #f4f4f4;
-    --secondary-foreground: #080808;
-    --muted: #f4f4f4;
-    --muted-foreground: #5a5a5a;
-    --accent: #f5efff;
-    --accent-foreground: #6325e6;
-    --destructive: #ee1d36;
-    --border: #d8d8d8;
-    --input: #d8d8d8;
-    --ring: #7a3dff;
-    --chart-1: #7a3dff;
-    --chart-2: #3b89ff;
-    --chart-3: #00d722;
-    --chart-4: #ff6b00;
-    --chart-5: #ed52cb;
-    --radius: 0.5rem;
-    --sidebar: #080808;
+    --secondary: #edf2f5;
+    --secondary-foreground: #19324d;
+    --muted: #edf2f5;
+    --muted-foreground: #627387;
+    --accent: #e6f3f1;
+    --accent-foreground: #126a65;
+    --destructive: #d65445;
+    --border: #dce3ea;
+    --input: #d5dee7;
+    --ring: #168c83;
+    --chart-1: #168c83;
+    --chart-2: #4e91bd;
+    --chart-3: #19324d;
+    --chart-4: #f2b84b;
+    --chart-5: #e97961;
+    --radius: 0.75rem;
+    --sidebar: #0c2538;
     --sidebar-foreground: #ffffff;
-    --sidebar-primary: #7a3dff;
+    --sidebar-primary: #168c83;
     --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #222222;
+    --sidebar-accent: #173a50;
     --sidebar-accent-foreground: #ffffff;
-    --sidebar-border: rgba(255, 255, 255, 0.10);
-    --sidebar-ring: #7a3dff;
+    --sidebar-border: rgba(255, 255, 255, 0.12);
+    --sidebar-ring: #f2b84b;
 }
 
 .dark {
-    /* Dark mode — near-black canvas, gray raised surfaces, white ink, purple accent. */
-    --background: #080808;
-    --foreground: #ffffff;
-    --card: #161616;
-    --card-foreground: #ffffff;
-    --popover: #161616;
-    --popover-foreground: #ffffff;
-    --primary: #ffffff;
-    --primary-foreground: #080808;
-    --secondary: #161616;
-    --secondary-foreground: #ffffff;
-    --muted: #161616;
-    --muted-foreground: #ababab;
-    --accent: #222222;
-    --accent-foreground: #ffffff;
-    --destructive: #ee1d36;
-    --border: rgba(255, 255, 255, 0.12);
-    --input: rgba(255, 255, 255, 0.16);
-    --ring: #8f5cff;
-    --chart-1: #a87dff;
-    --chart-2: #3b89ff;
-    --chart-3: #00d722;
-    --chart-4: #ff6b00;
-    --chart-5: #ed52cb;
-    --sidebar: #080808;
+    /* Dark mode — layered blue-grey surfaces instead of pure black. */
+    --background: #101720;
+    --foreground: #f4f7fa;
+    --card: #18232f;
+    --card-foreground: #f4f7fa;
+    --popover: #18232f;
+    --popover-foreground: #f4f7fa;
+    --primary: #55b7ae;
+    --primary-foreground: #071c1b;
+    --secondary: #22313f;
+    --secondary-foreground: #f4f7fa;
+    --muted: #22313f;
+    --muted-foreground: #a9b7c6;
+    --accent: #183b3a;
+    --accent-foreground: #9bd7d1;
+    --destructive: #e56f61;
+    --border: #304252;
+    --input: #344858;
+    --ring: #55b7ae;
+    --chart-1: #55b7ae;
+    --chart-2: #71add0;
+    --chart-3: #9db5ca;
+    --chart-4: #f4c86e;
+    --chart-5: #ef9684;
+    --sidebar: #0c2538;
     --sidebar-foreground: #ffffff;
-    --sidebar-primary: #8f5cff;
-    --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #222222;
+    --sidebar-primary: #55b7ae;
+    --sidebar-primary-foreground: #071c1b;
+    --sidebar-accent: #173a50;
     --sidebar-accent-foreground: #ffffff;
-    --sidebar-border: rgba(255, 255, 255, 0.10);
-    --sidebar-ring: #8f5cff;
+    --sidebar-border: rgba(255, 255, 255, 0.12);
+    --sidebar-ring: #f4c86e;
 }
 
 @layer base {
@@ -407,10 +413,25 @@
     }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     }
   html {
     @apply font-sans;
     }
+}
+
+/* Subtle depth for the LMS shell without adding visual noise behind content. */
+.academic-workspace {
+  background-color: var(--background);
+  background-image:
+    radial-gradient(circle at 8% 4%, color-mix(in srgb, #168c83 7%, transparent) 0, transparent 25rem),
+    radial-gradient(circle at 96% 0%, color-mix(in srgb, #f2b84b 8%, transparent) 0, transparent 22rem);
+}
+
+.dark .academic-workspace {
+  background-image:
+    radial-gradient(circle at 8% 4%, color-mix(in srgb, #55b7ae 8%, transparent) 0, transparent 28rem),
+    radial-gradient(circle at 96% 0%, color-mix(in srgb, #f2b84b 4%, transparent) 0, transparent 24rem);
 }
 /* ── Myanmar / Mon script support ─────────────────────────────────────────────
    Myanmar script stacks vowel signs and medials above and below the baseline.

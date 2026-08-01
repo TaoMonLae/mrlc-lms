@@ -35,8 +35,8 @@ export function DailyQuestCard() {
       : 'Build your streak with five minutes of focused English word practice.';
 
   return (
-    <Card className="relative overflow-hidden rounded-2xl border-0 bg-gradient-to-r from-violet-700 via-indigo-700 to-sky-700 p-5 text-white shadow-lg shadow-violet-950/10">
-      <div aria-hidden="true" className="absolute -right-10 -top-16 h-44 w-44 rounded-full bg-white/10 blur-2xl" />
+    <Card className="relative overflow-hidden rounded-2xl border border-white/10 bg-[linear-gradient(135deg,#19324d_0%,#234e64_58%,#168c83_100%)] p-5 text-white shadow-[0_12px_30px_rgba(25,50,77,0.16)]">
+      <div aria-hidden="true" className="absolute -right-10 -top-16 h-44 w-44 rounded-full bg-academic-gold/15 blur-2xl" />
       <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-4">
           <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white/15 ring-1 ring-white/20">
@@ -56,14 +56,14 @@ export function DailyQuestCard() {
                 </Badge>
               )}
             </div>
-            <p className="mt-1 max-w-2xl text-sm leading-6 text-violet-100">
+            <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-100/85">
               {loading ? 'Preparing today’s English vocabulary practice.' : description}
             </p>
           </div>
         </div>
         {!loading && (
           <Button
-            className="shrink-0 bg-white font-bold text-violet-700 hover:bg-violet-50"
+            className="shrink-0 rounded-lg bg-white font-bold text-academic-navy shadow-sm hover:bg-[#fff8e8]"
             render={<Link to="/daily-quest" />}
             nativeButton={false}
           >

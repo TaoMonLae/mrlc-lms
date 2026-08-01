@@ -115,7 +115,7 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon" className="bg-canvas text-white/80 border-r border-white/10 [&>[data-slot=sidebar-inner]]:bg-canvas [&>[data-slot=sidebar-inner]]:text-white/80" aria-label="Main application navigation">
+    <Sidebar collapsible="icon" className="bg-academic-navy-deep text-white/80 border-r border-white/10 [&>[data-slot=sidebar-inner]]:bg-[linear-gradient(180deg,#0c2538_0%,#102d42_55%,#0b2233_100%)] [&>[data-slot=sidebar-inner]]:text-white/80" aria-label="Main application navigation">
       <SidebarHeader className="h-16 flex items-center px-6 border-b border-white/10 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
         <div className="flex items-center gap-3 font-semibold group-data-[collapsible=icon]:gap-0">
           {brandingSettings.logoUrl ? (
@@ -146,7 +146,7 @@ export function AppSidebar() {
                           render={<Link to={entry.url} onClick={closeOnMobile} />}
                           isActive={isPathActive(entry.url)}
                           tooltip={entry.title}
-                          className="h-9 hover:bg-white/10 hover:text-white data-[active=true]:bg-aubergine-600 data-[active=true]:text-white transition-colors duration-200"
+                          className="h-10 rounded-xl hover:bg-white/10 hover:text-white data-[active=true]:bg-white/12 data-[active=true]:text-white data-[active=true]:shadow-[inset_3px_0_0_#f2b84b] transition-colors duration-200"
                         >
                           <entry.icon className="h-4 w-4 opacity-70" />
                           <span className="text-sm font-medium">{entry.title}</span>
@@ -165,7 +165,7 @@ export function AppSidebar() {
                     <SidebarMenuItem key={entry.label}>
                       <SidebarMenuButton
                         onClick={() => toggleGroup(entry.label, containsActive)}
-                        className="h-9 hover:bg-white/10 hover:text-white transition-colors duration-200"
+                        className="h-10 rounded-xl hover:bg-white/10 hover:text-white transition-colors duration-200"
                         aria-expanded={open}
                       >
                         <entry.icon className="h-4 w-4 opacity-70" />
@@ -179,7 +179,7 @@ export function AppSidebar() {
                               <SidebarMenuSubButton
                                 render={<Link to={item.url} onClick={closeOnMobile} />}
                                 isActive={isPathActive(item.url)}
-                                className="h-8 text-white/70 hover:bg-white/10 hover:text-white data-active:bg-aubergine-600 data-active:text-white data-[active=true]:bg-aubergine-600 data-[active=true]:text-white [&_svg]:text-white/50"
+                                className="h-9 rounded-lg text-white/70 hover:bg-white/10 hover:text-white data-active:bg-white/12 data-active:text-white data-[active=true]:bg-white/12 data-[active=true]:text-white data-[active=true]:shadow-[inset_2px_0_0_#f2b84b] [&_svg]:text-white/50"
                               >
                                 <item.icon className="h-3.5 w-3.5" />
                                 <span className="text-sm font-medium">{item.title}</span>
@@ -207,7 +207,7 @@ export function AppSidebar() {
                       render={<Link to={item.url} onClick={closeOnMobile} />}
                       isActive={isPathActive(item.url)}
                       tooltip={item.title}
-                      className="h-9 hover:bg-white/10 hover:text-white data-[active=true]:bg-aubergine-600 data-[active=true]:text-white transition-colors duration-200"
+                      className="h-10 rounded-xl hover:bg-white/10 hover:text-white data-[active=true]:bg-white/12 data-[active=true]:text-white data-[active=true]:shadow-[inset_3px_0_0_#f2b84b] transition-colors duration-200"
                     >
                       <item.icon className="h-4 w-4 opacity-70" />
                       <span className="text-sm font-medium">{item.title}</span>

@@ -23,7 +23,7 @@ export function AppLayout() {
     <ChatProvider>
     <SocialProvider>
     <SidebarProvider>
-      <div className="flex h-screen w-full bg-slate-50 dark:bg-canvas font-sans text-slate-900 dark:text-white overflow-hidden">
+      <div className="flex h-screen w-full bg-background font-sans text-foreground overflow-hidden">
         {/* Skip navigation link for keyboard users */}
         <a
           href="#main-content"
@@ -34,7 +34,7 @@ export function AppLayout() {
         <AppSidebar />
         <SidebarInset className="flex min-w-0 flex-col overflow-hidden bg-transparent">
           <TopBar />
-          <main id="main-content" className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar" tabIndex={-1}>
+          <main id="main-content" className="academic-workspace min-w-0 flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar" tabIndex={-1}>
             <motion.div
               key={location.pathname}
               initial={{ opacity: 0, y: 10 }}

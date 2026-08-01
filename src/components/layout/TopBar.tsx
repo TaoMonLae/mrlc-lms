@@ -120,27 +120,27 @@ export function TopBar() {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 dark:border-white/10 bg-white dark:bg-surface-indigo px-4 sm:px-6 md:px-8 gap-2">
+    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border bg-card/95 px-4 shadow-[0_1px_0_rgba(25,50,77,0.02)] backdrop-blur-xl sm:px-6 md:px-8 gap-2">
       <div className="flex flex-1 items-center gap-4">
         {canSearch && (
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
-            className="relative hidden w-full max-w-md md:block text-left"
+            className="relative hidden w-full max-w-md xl:block text-left"
             aria-label="Open search (Ctrl+K)"
           >
             <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-600 dark:text-slate-300">
               <Search className="h-5 w-5" />
             </span>
-            <span className="block w-full rounded-md border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-surface-raised py-2 pl-10 pr-3 text-sm text-slate-600 dark:text-slate-300 transition-all hover:border-aubergine-400">
+            <span className="block w-full rounded-xl border border-border bg-background/80 py-2 pl-10 pr-3 text-sm text-slate-600 shadow-inner shadow-slate-900/[0.02] transition-all hover:border-aubergine-400 dark:text-slate-300">
               Search students, teachers, classes...
             </span>
-            <kbd className="absolute right-3 top-1/2 -translate-y-1/2 rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:border-white/10 dark:bg-surface-indigo dark:text-slate-300">
+            <kbd className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md border border-border bg-card px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 shadow-sm dark:text-slate-300">
               ⌘K
             </kbd>
           </button>
         )}
-        <div className="flex items-center gap-2 md:hidden">
+        <div className="flex items-center gap-2 xl:hidden">
           {canSearch && (
             <Button
               variant="ghost"
@@ -152,13 +152,13 @@ export function TopBar() {
               <Search className="h-5 w-5" />
             </Button>
           )}
-          <SidebarTrigger className="bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-surface-raised dark:text-slate-300" aria-label="Toggle sidebar navigation" />
+          <SidebarTrigger className="bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-surface-raised dark:text-slate-300 md:hidden" aria-label="Toggle sidebar navigation" />
         </div>
       </div>
 
       <div className="flex items-center gap-1 sm:gap-3">
         {/* Time and Date Display */}
-        <div className="hidden md:flex items-center gap-3 px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-surface-raised/50 border border-slate-200 dark:border-white/10">
+        <div className="hidden xl:flex items-center gap-3 px-3 py-1.5 rounded-xl bg-background/80 border border-border">
           <Calendar className="h-4 w-4 text-slate-500 dark:text-slate-400" />
           <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
             {format(currentTime, 'EEEE, MMM d, yyyy')}

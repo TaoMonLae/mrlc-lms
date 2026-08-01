@@ -26,8 +26,8 @@ const DEFAULT_SCHOOL: SchoolProfile = {
 const DEFAULT_BRANDING: BrandingSettings = {
   logoUrl: null,
   pdfLogoUrl: null,
-  primaryColor: '#7a3dff',
-  accentColor: '#3b89ff',
+  primaryColor: '#19324d',
+  accentColor: '#168c83',
   darkModeDefault: false,
   reportHeaderStyle: 'standard',
   signatureUrl: null,
