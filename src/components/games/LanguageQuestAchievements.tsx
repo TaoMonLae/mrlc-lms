@@ -27,14 +27,32 @@ function roundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, width:
   ctx.closePath();
 }
 
-function fitText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, initialSize: number, weight = 800): number {
+function fitText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, initialSize: number, weight = 800, minSize = 28): number {
   let size = initialSize;
-  while (size > 28) {
+  while (size > minSize) {
     ctx.font = `${weight} ${size}px "Geist", "Padauk", "Noto Sans Myanmar", sans-serif`;
     if (ctx.measureText(text).width <= maxWidth) return size;
     size -= 2;
   }
   return size;
+}
+
+// Draws `text` at `size` (already set on ctx.font by the caller) left-aligned
+// at (x, y). If it still overflows `maxWidth` even at the smallest size
+// fitText was willing to go (e.g. an unusually long name), this squeezes it
+// horizontally so the *whole* name stays on one line and fully visible,
+// rather than letting it run past the text column into the mascot artwork.
+function fillTextFit(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number) {
+  const width = ctx.measureText(text).width;
+  if (width <= maxWidth) {
+    ctx.fillText(text, x, y);
+    return;
+  }
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(maxWidth / width, 1);
+  ctx.fillText(text, 0, 0);
+  ctx.restore();
 }
 
 function loadImage(src: string): Promise<HTMLImageElement | null> {
@@ -227,35 +245,39 @@ export async function createLanguageQuestAchievementBlob(input: {
     }
 
     const textLeft = 86;
-    const textMaxWidth = 640;
+    const textMaxWidth = 680;
     ctx.textAlign = 'left';
 
     ctx.fillStyle = '#fbbf24';
-    ctx.font = '900 22px "Geist", sans-serif';
-    ctx.fillText('CERTIFICATE OF COMPLETION', textLeft, 218);
+    ctx.font = '900 28px "Geist", sans-serif';
+    ctx.fillText('CERTIFICATE OF COMPLETION', textLeft, 213);
     ctx.fillStyle = '#fbbf24';
-    ctx.fillRect(textLeft, 234, 70, 4);
+    ctx.fillRect(textLeft, 234, 84, 5);
 
+    // The learner's name is the whole point of the certificate, so it gets
+    // the biggest type on the page. fitText shrinks it to fit the column,
+    // and fillTextFit squeezes it horizontally as a last resort so it can
+    // never spill into the mascot artwork even for unusually long names.
     ctx.fillStyle = '#fff';
-    const nameSize = fitText(ctx, input.learnerName, textMaxWidth, 58, 900);
+    const nameSize = fitText(ctx, input.learnerName, textMaxWidth, 72, 900, 34);
     ctx.font = `900 ${nameSize}px "Geist", "Padauk", "Noto Sans Myanmar", sans-serif`;
-    ctx.fillText(input.learnerName, textLeft, 292);
+    fillTextFit(ctx, input.learnerName, textLeft, 326, textMaxWidth);
 
     ctx.fillStyle = '#cbd5e1';
-    ctx.font = '600 22px "Geist", sans-serif';
-    ctx.fillText('has completed', textLeft, 328);
+    ctx.font = '600 26px "Geist", sans-serif';
+    ctx.fillText('has completed', textLeft, 372);
 
     ctx.fillStyle = '#fff';
     const courseTitle = input.course?.title || 'Language Quest course';
-    const courseSize = fitText(ctx, courseTitle, textMaxWidth, 40, 800);
+    const courseSize = fitText(ctx, courseTitle, textMaxWidth, 50, 800, 30);
     ctx.font = `800 ${courseSize}px "Geist", "Padauk", "Noto Sans Myanmar", sans-serif`;
-    ctx.fillText(courseTitle, textLeft, 386);
+    fillTextFit(ctx, courseTitle, textLeft, 434, textMaxWidth);
 
     ctx.fillStyle = '#a7f3d0';
-    ctx.font = '700 20px "Geist", sans-serif';
-    ctx.fillText(`${input.profile.points} points earned • ${new Intl.DateTimeFormat('en-GB', { dateStyle: 'long' }).format(new Date())}`, textLeft, 428);
+    ctx.font = '700 24px "Geist", sans-serif';
+    ctx.fillText(`${input.profile.points} points earned • ${new Intl.DateTimeFormat('en-GB', { dateStyle: 'long' }).format(new Date())}`, textLeft, 480);
 
-    drawSeal(ctx, 118, 524, 24);
+    drawSeal(ctx, 118, 530, 22);
   } else {
     ctx.textAlign = 'center';
     ctx.fillStyle = '#fdba74';
