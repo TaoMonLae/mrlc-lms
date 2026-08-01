@@ -39,7 +39,6 @@ import {
   nextLanguageQuestMasteryReview,
 } from "./shared/languageQuestEngagement";
 import { importedSpanishCourse, type OfficialLanguageQuestCourse } from "./languageQuestImportedCourses";
-import { libreLingoSpanishCourse } from "./languageQuestLibreLingoSpanishCourse";
 import { mandarinFoundationsCourse } from "./languageQuestMandarinCourse";
 import { completeMandarinCourse } from "./languageQuestCompleteMandarinCourse";
 import { chineseConversationStarterCourse } from "./languageQuestChineseConversationCourse";
@@ -416,7 +415,6 @@ export async function ensureOfficialCourses(prisma: any): Promise<void> {
   const courses = [
     starterCourse,
     importedSpanishCourse,
-    libreLingoSpanishCourse,
     mandarinFoundationsCourse,
     completeMandarinCourse,
     chineseConversationStarterCourse,
