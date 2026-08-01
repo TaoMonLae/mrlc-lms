@@ -19,6 +19,7 @@ import {
   isLanguageQuestAvatarId,
 } from "../../shared/languageQuestAvatars";
 import { importedSpanishCourse } from "../../languageQuestImportedCourses";
+import { libreLingoSpanishCourse } from "../../languageQuestLibreLingoSpanishCourse";
 import { mandarinFoundationsCourse } from "../../languageQuestMandarinCourse";
 import { completeMandarinCourse } from "../../languageQuestCompleteMandarinCourse";
 import { chineseConversationStarterCourse } from "../../languageQuestChineseConversationCourse";
@@ -325,6 +326,31 @@ test("the imported Spanish course preserves the source curriculum shape", () => 
   assert.equal(challenges.length, 80);
   assert.ok(challenges.every((challenge) => challenge.options.filter((option) => option.correct).length === 1));
   assert.ok(challenges.every((challenge) => challenge.options.length === 3));
+});
+
+test("the LibreLingo Spanish course is progressive, varied, and valid", () => {
+  const lessons = libreLingoSpanishCourse.units.flatMap((unit) => unit.lessons);
+  const challenges = lessons.flatMap((lesson) => lesson.challenges);
+  const challengeTypes = new Set(challenges.map((challenge) => challenge.type));
+
+  assert.equal(libreLingoSpanishCourse.language, "Spanish");
+  assert.equal(libreLingoSpanishCourse.units.length, 3);
+  assert.equal(lessons.length, 13);
+  assert.equal(challenges.length, 78);
+  assert.deepEqual(
+    [...challengeTypes].sort(),
+    ["ASSIST", "CLOZE", "DICTATION", "GRAMMAR_TRANSFORM", "MATCHING", "REORDER", "SELECT"].sort(),
+  );
+  assert.ok(challenges.every((challenge) => challenge.question.trim().length > 0));
+  assert.ok(challenges.every((challenge) => challenge.options.length > 0));
+  assert.ok(challenges.every((challenge) =>
+    challenge.type === "REORDER" || challenge.type === "MATCHING"
+      ? challenge.options.every((courseOption) => courseOption.correct)
+      : challenge.options.filter((courseOption) => courseOption.correct).length === 1,
+  ));
+  assert.ok(challenges.every((challenge) =>
+    challenge.type !== "MATCHING" || challenge.options.length % 2 === 0,
+  ));
 });
 
 test("the original Mandarin course has a complete and valid curriculum", () => {
@@ -867,6 +893,7 @@ test("the Teach Yourself Malay course is complete and ready in the Malay folder"
 test("every built-in course produces clue-safe assessment prompts", () => {
   const courses = [
     importedSpanishCourse,
+    libreLingoSpanishCourse,
     mandarinFoundationsCourse,
     completeMandarinCourse,
     chineseConversationStarterCourse,

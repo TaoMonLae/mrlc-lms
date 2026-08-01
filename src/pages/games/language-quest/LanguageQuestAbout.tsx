@@ -56,6 +56,25 @@ const COURSE_SOURCES: CourseSource[] = [
     ),
   },
   {
+    title: 'LibreLingo Spanish curriculum',
+    courses: 'Spanish from English: Foundations',
+    badge: 'CC BY-NC-SA 4.0',
+    accent: 'from-red-600 to-orange-500',
+    art: '/Icons/optimized/Eduv1_04.png',
+    description: (
+      <>
+        Adapted and reorganized from the{' '}
+        <SourceLink href="https://github.com/LibreLingo/LibreLingo-ES-from-EN">
+          LibreLingo Spanish-from-English course
+        </SourceLink>{' '}
+        with new Language Quest exercise formats and a school-friendly sequence. This modified curriculum follows the repository’s{' '}
+        <SourceLink href="https://creativecommons.org/licenses/by-nc-sa/4.0/">
+          Creative Commons BY-NC-SA 4.0 license
+        </SourceLink>.
+      </>
+    ),
+  },
+  {
     title: 'School-provided Mandarin curriculum',
     courses: 'Mandarin Complete Course',
     badge: 'School source',
