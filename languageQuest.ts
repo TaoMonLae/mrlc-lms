@@ -4,12 +4,15 @@ import rateLimit from "express-rate-limit";
 import {
   LANGUAGE_QUEST_BOSS_BATTLE_MAX_QUESTIONS,
   LANGUAGE_QUEST_BOSS_BATTLE_MIN_QUESTIONS,
+  LANGUAGE_QUEST_BOSS_BATTLE_ATTEMPT_MINUTES,
+  LANGUAGE_QUEST_BOSS_BATTLE_INELIGIBLE_TYPES,
   LANGUAGE_QUEST_BOSS_BATTLE_PASS_RATIO,
   LANGUAGE_QUEST_BOSS_BATTLE_POINTS,
   LANGUAGE_QUEST_FIRST_CLEAR_POINTS,
   LANGUAGE_QUEST_MAX_HEARTS,
   LANGUAGE_QUEST_PRACTICE_POINTS,
   bossBattleResult,
+  bossBattleSubmissionMatchesDeck,
   isValidMatchingSubmission,
   isValidReorderSubmission,
   languageQuestDayKey,
@@ -507,6 +510,22 @@ export async function ensureOfficialCourses(prisma: any): Promise<void> {
   }
 }
 
+// Official curricula are immutable for the lifetime of a deployed server.
+// Seed/check them once per Prisma client instead of issuing one findUnique per
+// built-in course on every public catalog or learner overview request. A failed
+// attempt is evicted so a temporarily unavailable database can recover.
+const officialCourseEnsurePromises = new WeakMap<object, Promise<void>>();
+async function ensureOfficialCoursesOnce(prisma: any): Promise<void> {
+  const existing = officialCourseEnsurePromises.get(prisma);
+  if (existing) return existing;
+  const pending = ensureOfficialCourses(prisma).catch((error) => {
+    officialCourseEnsurePromises.delete(prisma);
+    throw error;
+  });
+  officialCourseEnsurePromises.set(prisma, pending);
+  return pending;
+}
+
 async function getProgress(prisma: any, userId: string): Promise<any> {
   let progress = await prisma.languageQuestUserProgress.upsert({
     where: { userId },
@@ -627,14 +646,25 @@ function databaseError(res: express.Response, error: any): boolean {
 
 async function lessonLockMessage(prisma: any, jwtUser: JwtPayload, lesson: any): Promise<string | null> {
   if (isManager(jwtUser.role)) return null;
-  const orderedUnits = await prisma.languageQuestUnit.findMany({
-    where: { courseId: lesson.unit.courseId },
-    orderBy: { order: "asc" },
-    include: { lessons: { orderBy: { order: "asc" }, include: { challenges: { select: { id: true } } } } },
+  let previous = await prisma.languageQuestLesson.findFirst({
+    where: { unitId: lesson.unitId, order: { lt: lesson.order } },
+    orderBy: { order: "desc" },
+    include: { challenges: { select: { id: true } } },
   });
-  const lessons = orderedUnits.flatMap((unit: any) => unit.lessons);
-  const index = lessons.findIndex((candidate: any) => candidate.id === lesson.id);
-  const previous = index > 0 ? lessons[index - 1] : null;
+  if (!previous) {
+    const previousUnit = await prisma.languageQuestUnit.findFirst({
+      where: { courseId: lesson.unit.courseId, order: { lt: lesson.unit.order } },
+      orderBy: { order: "desc" },
+      include: {
+        lessons: {
+          orderBy: { order: "desc" },
+          take: 1,
+          include: { challenges: { select: { id: true } } },
+        },
+      },
+    });
+    previous = previousUnit?.lessons[0] ?? null;
+  }
   if (!previous) return null;
   const completed = await prisma.languageQuestChallengeProgress.count({
     where: { userId: jwtUser.userId, completed: true, challengeId: { in: previous.challenges.map((challenge: any) => challenge.id) } },
@@ -678,18 +708,22 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
   // remain behind signup and authentication.
   app.get("/api/language-quest/public/catalog", async (_req, res) => {
     try {
-      await ensureOfficialCourses(prisma);
-      const courses = await prisma.languageQuestCourse.findMany({
-        where: { published: true },
-        orderBy: [{ createdAt: "asc" }, { title: "asc" }],
-        include: {
-          units: {
-            include: {
-              lessons: { include: { challenges: { select: { id: true } } } },
-            },
-          },
-        },
-      });
+      await ensureOfficialCoursesOnce(prisma);
+      const courses: any[] = await prisma.$queryRaw`
+        SELECT
+          c."id", c."code", c."title", c."description", c."language", c."category",
+          c."imageEmoji", c."accentColor",
+          COUNT(DISTINCT u."id")::int AS "unitCount",
+          COUNT(DISTINCT l."id")::int AS "lessonCount",
+          COUNT(DISTINCT ch."id")::int AS "challengeCount"
+        FROM "LanguageQuestCourse" c
+        LEFT JOIN "LanguageQuestUnit" u ON u."courseId" = c."id"
+        LEFT JOIN "LanguageQuestLesson" l ON l."unitId" = u."id"
+        LEFT JOIN "LanguageQuestChallenge" ch ON ch."lessonId" = l."id"
+        WHERE c."published" = true
+        GROUP BY c."id"
+        ORDER BY c."createdAt" ASC, c."title" ASC
+      `;
       res.json({
         courses: courses.map((course: any) => ({
           id: course.id,
@@ -700,13 +734,9 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           category: course.category,
           imageEmoji: course.imageEmoji,
           accentColor: course.accentColor,
-          unitCount: course.units.length,
-          lessonCount: course.units.reduce((sum: number, unit: any) => sum + unit.lessons.length, 0),
-          challengeCount: course.units.reduce(
-            (sum: number, unit: any) =>
-              sum + unit.lessons.reduce((inner: number, lesson: any) => inner + lesson.challenges.length, 0),
-            0,
-          ),
+          unitCount: course.unitCount,
+          lessonCount: course.lessonCount,
+          challengeCount: course.challengeCount,
         })),
       });
     } catch (error) {
@@ -879,7 +909,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
   app.get("/api/language-quest/overview", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
-      await ensureOfficialCourses(prisma);
+      await ensureOfficialCoursesOnce(prisma);
       const [progress, courses, completedRows] = await Promise.all([
         getProgress(prisma, jwtUser.userId),
         prisma.languageQuestCourse.findMany({
@@ -1044,8 +1074,15 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       // directly clickable answer) -- aren't eligible questions here.
       // Finishing the course still requires clearing them in the normal
       // lesson flow above; they're just never selected into a battle deck.
-      const BATTLE_INELIGIBLE_TYPES = new Set(["REORDER", "MATCHING", "DICTATION"]);
-      const battleEligibleChallenges = challenges.filter((challenge: any) => !BATTLE_INELIGIBLE_TYPES.has(challenge.type));
+      const battleEligibleChallenges = challenges.filter(
+        (challenge: any) => !LANGUAGE_QUEST_BOSS_BATTLE_INELIGIBLE_TYPES.has(challenge.type),
+      );
+      if (battleEligibleChallenges.length < LANGUAGE_QUEST_BOSS_BATTLE_MIN_QUESTIONS) {
+        res.status(409).json({
+          error: `This course needs at least ${LANGUAGE_QUEST_BOSS_BATTLE_MIN_QUESTIONS} multiple-choice challenges for a Boss Battle.`,
+        });
+        return;
+      }
 
       // Rank by how often the learner has gotten each one wrong before, so
       // the battle is built from *their* weak spots. Most challenges will
@@ -1057,12 +1094,24 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         .slice(0, LANGUAGE_QUEST_BOSS_BATTLE_MAX_QUESTIONS)
         .map((entry: any) => entry.challenge);
 
+      const deck = shuffle(ranked);
+      const attempt = await prisma.languageQuestBossBattleAttempt.create({
+        data: {
+          userId: jwtUser.userId,
+          courseId: course.id,
+          challengeIds: deck.map((challenge: any) => challenge.id),
+          expiresAt: new Date(Date.now() + LANGUAGE_QUEST_BOSS_BATTLE_ATTEMPT_MINUTES * 60_000),
+        },
+        select: { id: true },
+      });
+
       res.json({
+        attemptId: attempt.id,
         course: { id: course.id, title: course.title, language: course.language, accentColor: course.accentColor },
         cleared: Boolean(clearedEvent),
         minQuestions: LANGUAGE_QUEST_BOSS_BATTLE_MIN_QUESTIONS,
         passRatio: LANGUAGE_QUEST_BOSS_BATTLE_PASS_RATIO,
-        cards: shuffle(ranked).map((challenge: any) => ({
+        cards: deck.map((challenge: any) => ({
           challengeId: challenge.id,
           question: languageQuestPracticePrompt(challenge.question),
           options: shuffle(challenge.options).map((option: any) => ({
@@ -1079,8 +1128,9 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
 
   app.post("/api/language-quest/courses/:id/boss-battle/finish", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
+    const attemptId = text(req.body?.attemptId, 100);
     const submitted = Array.isArray(req.body?.answers) ? req.body.answers : [];
-    if (submitted.length === 0 || submitted.length > LANGUAGE_QUEST_BOSS_BATTLE_MAX_QUESTIONS * 2) {
+    if (!attemptId || submitted.length === 0 || submitted.length > LANGUAGE_QUEST_BOSS_BATTLE_MAX_QUESTIONS) {
       res.status(400).json({ error: "Submit your boss battle answers" });
       return;
     }
@@ -1092,6 +1142,23 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       }));
     const now = new Date();
     try {
+      const attempt = await prisma.languageQuestBossBattleAttempt.findFirst({
+        where: {
+          id: attemptId,
+          userId: jwtUser.userId,
+          courseId: req.params.id,
+          consumedAt: null,
+          expiresAt: { gt: now },
+        },
+      });
+      const deckChallengeIds = Array.isArray(attempt?.challengeIds)
+        ? attempt.challengeIds.filter((id: unknown): id is string => typeof id === "string")
+        : [];
+      if (!attempt || !bossBattleSubmissionMatchesDeck(deckChallengeIds, answers.map((answer: any) => answer.challengeId))) {
+        res.status(409).json({ error: "This Boss Battle has expired or its question set changed. Start a new battle." });
+        return;
+      }
+
       const course = await prisma.languageQuestCourse.findUnique({
         where: { id: req.params.id },
         include: {
@@ -1115,7 +1182,15 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       // The answer key is built fresh from the database here -- never from
       // anything the client sent -- so grading can't be spoofed by a crafted
       // request claiming a made-up option id was correct.
-      const answerKey = challenges.map((challenge: any) => {
+      const deckIds = new Set(deckChallengeIds);
+      const deckChallenges = challenges.filter(
+        (challenge: any) => deckIds.has(challenge.id) && !LANGUAGE_QUEST_BOSS_BATTLE_INELIGIBLE_TYPES.has(challenge.type),
+      );
+      if (deckChallenges.length !== deckChallengeIds.length) {
+        res.status(409).json({ error: "This Boss Battle is no longer available. Start a new battle." });
+        return;
+      }
+      const answerKey = deckChallenges.map((challenge: any) => {
         const correctOption = challenge.options.find((option: any) => option.correct);
         return { challengeId: challenge.id, correctOptionId: correctOption?.id ?? "", correctAnswer: correctOption?.text ?? "" };
       });
@@ -1123,6 +1198,15 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         minQuestions: LANGUAGE_QUEST_BOSS_BATTLE_MIN_QUESTIONS,
         passRatio: LANGUAGE_QUEST_BOSS_BATTLE_PASS_RATIO,
       });
+
+      const consumed = await prisma.languageQuestBossBattleAttempt.updateMany({
+        where: { id: attempt.id, consumedAt: null, expiresAt: { gt: now } },
+        data: { consumedAt: now },
+      });
+      if (consumed.count !== 1) {
+        res.status(409).json({ error: "This Boss Battle was already finished. Start a new battle." });
+        return;
+      }
 
       const existingClear = await prisma.languageQuestXpEvent.findFirst({
         where: { userId: jwtUser.userId, courseId: course.id, source: "BOSS_BATTLE" },
@@ -1222,6 +1306,18 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
             pinyin: languageQuestPinyin(option.text, lesson.unit.course.language),
           })),
         })),
+        cards: lesson.challenges.map((challenge: any) => {
+          const correct = challenge.options.find((option: any) => option.correct);
+          return {
+            id: challenge.id,
+            prompt: challenge.question,
+            practicePrompt: languageQuestPracticePrompt(challenge.question),
+            text: correct?.text ?? "",
+            emoji: correct?.emoji ?? null,
+            audioText: correct?.audioText ?? correct?.text ?? null,
+            pinyin: languageQuestPinyin(correct?.text ?? "", lesson.unit.course.language),
+          };
+        }),
       });
     } catch (error) {
       logger.error("Error loading Language Quest lesson:", error);
@@ -1297,6 +1393,13 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         },
       });
       if (!challenge || !challenge.lesson.unit.course.published) { res.status(404).json({ error: "Challenge not found" }); return; }
+
+      // The lesson and preview endpoints enforce path progression, but the
+      // answer endpoint is the authority that changes progress and awards XP.
+      // Enforce the same rule here so a captured challenge id cannot skip a
+      // locked lesson by posting directly to this route.
+      const lockMessage = await lessonLockMessage(prisma, jwtUser, challenge.lesson);
+      if (lockMessage) { res.status(403).json({ error: lockMessage }); return; }
 
       let isCorrect: boolean;
       let correctOptionId: string;
@@ -2894,7 +2997,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
     const jwtUser = (req as any).user as JwtPayload;
     if (!isManager(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
     try {
-      await ensureOfficialCourses(prisma);
+      await ensureOfficialCoursesOnce(prisma);
       const courses = await prisma.languageQuestCourse.findMany({
         where: jwtUser.role === "ADMIN" ? {} : { createdById: jwtUser.userId },
         orderBy: { updatedAt: "desc" },
@@ -2946,72 +3049,155 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
     }
   });
 
-  async function saveCurriculum(courseId: string, draft: CourseDraft, courseUpdates: Record<string, any> = {}): Promise<any> {
-    const current = await prisma.languageQuestCourse.findUnique({
-      where: { id: courseId },
-      include: { units: { include: { lessons: { include: { challenges: { include: { options: true } } } } } } },
-    });
-    if (!current) throw Object.assign(new Error("Course not found"), { statusCode: 404 });
-    const unitMap = new Map(current.units.map((unit: any) => [unit.id, unit]));
-    const lessonMap = new Map(current.units.flatMap((unit: any) => unit.lessons).map((lesson: any) => [lesson.id, lesson]));
-    const challengeMap = new Map(current.units.flatMap((unit: any) => unit.lessons.flatMap((lesson: any) => lesson.challenges)).map((challenge: any) => [challenge.id, challenge]));
-    const optionMap = new Map(current.units.flatMap((unit: any) => unit.lessons.flatMap((lesson: any) => lesson.challenges.flatMap((challenge: any) => challenge.options))).map((option: any) => [option.id, option]));
-    for (const unit of draft.units) {
-      if (unit.id && !unitMap.has(unit.id)) throw Object.assign(new Error("A unit no longer belongs to this course"), { statusCode: 409 });
-      for (const lesson of unit.lessons) {
-        if (lesson.id && !lessonMap.has(lesson.id)) throw Object.assign(new Error("A lesson no longer belongs to this course"), { statusCode: 409 });
-        for (const challenge of lesson.challenges) {
-          if (challenge.id && !challengeMap.has(challenge.id)) throw Object.assign(new Error("A challenge no longer belongs to this course"), { statusCode: 409 });
-          for (const option of challenge.options) {
-            if (option.id && !optionMap.has(option.id)) throw Object.assign(new Error("An option no longer belongs to this course"), { statusCode: 409 });
+  async function saveCurriculum(
+    courseId: string,
+    draft: CourseDraft,
+    courseUpdates: Record<string, any> = {},
+    expectedUpdatedAt?: Date,
+  ): Promise<any> {
+    const conflict = (message: string) => Object.assign(new Error(message), { statusCode: 409 });
+    const sequenceChanged = (currentItems: any[], draftItems: { id?: string }[]) =>
+      currentItems.length !== draftItems.length || draftItems.some((item, index) => item.id !== currentItems[index]?.id);
+    const removedIds = (currentItems: any[], savedIds: string[]) => {
+      const saved = new Set(savedIds);
+      return currentItems.map((item) => item.id).filter((id) => !saved.has(id));
+    };
+
+    return prisma.$transaction(async (tx: any) => {
+      // Lock the course row before reading its curriculum. The editor sends the
+      // updatedAt revision it loaded, so a second tab cannot silently overwrite
+      // a newer save while this diff is being calculated.
+      const lockedRows: any[] = await tx.$queryRaw`
+        SELECT "updatedAt" FROM "LanguageQuestCourse" WHERE "id" = ${courseId} FOR UPDATE
+      `;
+      if (!lockedRows.length) throw Object.assign(new Error("Course not found"), { statusCode: 404 });
+      if (expectedUpdatedAt && new Date(lockedRows[0].updatedAt).getTime() !== expectedUpdatedAt.getTime()) {
+        throw conflict("This course was updated in another tab. Reload it before saving your changes.");
+      }
+
+      const current = await tx.languageQuestCourse.findUnique({
+        where: { id: courseId },
+        include: {
+          units: { orderBy: { order: "asc" }, include: {
+            lessons: { orderBy: { order: "asc" }, include: {
+              challenges: { orderBy: { order: "asc" }, include: { options: { orderBy: { order: "asc" } } } },
+            } },
+          } },
+        },
+      });
+      if (!current) throw Object.assign(new Error("Course not found"), { statusCode: 404 });
+
+      const unitMap = new Map(current.units.map((unit: any) => [unit.id, unit]));
+      const lessonMap = new Map(current.units.flatMap((unit: any) => unit.lessons).map((lesson: any) => [lesson.id, lesson]));
+      const challengeMap = new Map(current.units.flatMap((unit: any) => unit.lessons.flatMap((lesson: any) => lesson.challenges)).map((challenge: any) => [challenge.id, challenge]));
+      const optionMap = new Map(current.units.flatMap((unit: any) => unit.lessons.flatMap((lesson: any) => lesson.challenges.flatMap((challenge: any) => challenge.options))).map((option: any) => [option.id, option]));
+
+      for (const unit of draft.units) {
+        const existingUnit: any = unit.id ? unitMap.get(unit.id) : null;
+        if (unit.id && !existingUnit) throw conflict("A unit no longer belongs to this course");
+        for (const lesson of unit.lessons) {
+          const existingLesson: any = lesson.id ? lessonMap.get(lesson.id) : null;
+          if (lesson.id && (!existingLesson || existingLesson.unitId !== unit.id)) throw conflict("A lesson no longer belongs to this unit");
+          for (const challenge of lesson.challenges) {
+            const existingChallenge: any = challenge.id ? challengeMap.get(challenge.id) : null;
+            if (challenge.id && (!existingChallenge || existingChallenge.lessonId !== lesson.id)) throw conflict("A challenge no longer belongs to this lesson");
+            for (const option of challenge.options) {
+              const existingOption: any = option.id ? optionMap.get(option.id) : null;
+              if (option.id && (!existingOption || existingOption.challengeId !== challenge.id)) throw conflict("An option no longer belongs to this challenge");
+            }
           }
         }
       }
-    }
 
-    return prisma.$transaction(async (tx: any) => {
-      await Promise.all([
-        tx.languageQuestUnit.updateMany({ where: { courseId }, data: { order: { increment: 10_000 } } }),
-        tx.languageQuestLesson.updateMany({ where: { unit: { courseId } }, data: { order: { increment: 10_000 } } }),
-        tx.languageQuestChallenge.updateMany({ where: { lesson: { unit: { courseId } } }, data: { order: { increment: 10_000 } } }),
-        tx.languageQuestOption.updateMany({ where: { challenge: { lesson: { unit: { courseId } } } }, data: { order: { increment: 10_000 } } }),
-      ]);
+      const unitsReordered = sequenceChanged(current.units, draft.units);
+      if (unitsReordered) {
+        await tx.languageQuestUnit.updateMany({ where: { courseId }, data: { order: { increment: 10_000 } } });
+      }
       const savedUnitIds: string[] = [];
       for (let unitOrder = 0; unitOrder < draft.units.length; unitOrder += 1) {
         const unitDraft = draft.units[unitOrder];
-        const unit = unitDraft.id
-          ? await tx.languageQuestUnit.update({ where: { id: unitDraft.id }, data: { title: unitDraft.title, description: unitDraft.description, order: unitOrder } })
+        const existingUnit: any = unitDraft.id ? unitMap.get(unitDraft.id) : null;
+        const unitChanged = existingUnit && (
+          unitsReordered || existingUnit.title !== unitDraft.title || existingUnit.description !== unitDraft.description
+        );
+        const unit = existingUnit
+          ? (unitChanged
+            ? await tx.languageQuestUnit.update({ where: { id: existingUnit.id }, data: { title: unitDraft.title, description: unitDraft.description, order: unitOrder } })
+            : existingUnit)
           : await tx.languageQuestUnit.create({ data: { courseId, title: unitDraft.title, description: unitDraft.description, order: unitOrder } });
         savedUnitIds.push(unit.id);
+
+        const currentLessons = existingUnit?.lessons ?? [];
+        const lessonsReordered = sequenceChanged(currentLessons, unitDraft.lessons);
+        if (lessonsReordered && currentLessons.length) {
+          await tx.languageQuestLesson.updateMany({ where: { unitId: unit.id }, data: { order: { increment: 10_000 } } });
+        }
         const savedLessonIds: string[] = [];
         for (let lessonOrder = 0; lessonOrder < unitDraft.lessons.length; lessonOrder += 1) {
           const lessonDraft = unitDraft.lessons[lessonOrder];
-          const lesson = lessonDraft.id
-            ? await tx.languageQuestLesson.update({ where: { id: lessonDraft.id }, data: { unitId: unit.id, title: lessonDraft.title, description: lessonDraft.description, order: lessonOrder } })
+          const existingLesson: any = lessonDraft.id ? lessonMap.get(lessonDraft.id) : null;
+          const lessonChanged = existingLesson && (
+            lessonsReordered || existingLesson.title !== lessonDraft.title || existingLesson.description !== lessonDraft.description
+          );
+          const lesson = existingLesson
+            ? (lessonChanged
+              ? await tx.languageQuestLesson.update({ where: { id: existingLesson.id }, data: { title: lessonDraft.title, description: lessonDraft.description, order: lessonOrder } })
+              : existingLesson)
             : await tx.languageQuestLesson.create({ data: { unitId: unit.id, title: lessonDraft.title, description: lessonDraft.description, order: lessonOrder } });
           savedLessonIds.push(lesson.id);
+
+          const currentChallenges = existingLesson?.challenges ?? [];
+          const challengesReordered = sequenceChanged(currentChallenges, lessonDraft.challenges);
+          if (challengesReordered && currentChallenges.length) {
+            await tx.languageQuestChallenge.updateMany({ where: { lessonId: lesson.id }, data: { order: { increment: 10_000 } } });
+          }
           const savedChallengeIds: string[] = [];
           for (let challengeOrder = 0; challengeOrder < lessonDraft.challenges.length; challengeOrder += 1) {
             const challengeDraft = lessonDraft.challenges[challengeOrder];
-            const challenge = challengeDraft.id
-              ? await tx.languageQuestChallenge.update({ where: { id: challengeDraft.id }, data: { lessonId: lesson.id, type: challengeDraft.type, question: challengeDraft.question, explanation: challengeDraft.explanation, order: challengeOrder } })
+            const existingChallenge: any = challengeDraft.id ? challengeMap.get(challengeDraft.id) : null;
+            const challengeChanged = existingChallenge && (
+              challengesReordered || existingChallenge.type !== challengeDraft.type || existingChallenge.question !== challengeDraft.question
+              || existingChallenge.explanation !== challengeDraft.explanation
+            );
+            const challenge = existingChallenge
+              ? (challengeChanged
+                ? await tx.languageQuestChallenge.update({ where: { id: existingChallenge.id }, data: { type: challengeDraft.type, question: challengeDraft.question, explanation: challengeDraft.explanation, order: challengeOrder } })
+                : existingChallenge)
               : await tx.languageQuestChallenge.create({ data: { lessonId: lesson.id, type: challengeDraft.type, question: challengeDraft.question, explanation: challengeDraft.explanation, order: challengeOrder } });
             savedChallengeIds.push(challenge.id);
+
+            const currentOptions = existingChallenge?.options ?? [];
+            const optionsReordered = sequenceChanged(currentOptions, challengeDraft.options);
+            if (optionsReordered && currentOptions.length) {
+              await tx.languageQuestOption.updateMany({ where: { challengeId: challenge.id }, data: { order: { increment: 10_000 } } });
+            }
             const savedOptionIds: string[] = [];
             for (let optionOrder = 0; optionOrder < challengeDraft.options.length; optionOrder += 1) {
               const optionDraft = challengeDraft.options[optionOrder];
-              const option = optionDraft.id
-                ? await tx.languageQuestOption.update({ where: { id: optionDraft.id }, data: { challengeId: challenge.id, text: optionDraft.text, correct: optionDraft.correct, emoji: optionDraft.emoji, audioText: optionDraft.audioText, order: optionOrder } })
+              const existingOption: any = optionDraft.id ? optionMap.get(optionDraft.id) : null;
+              const optionChanged = existingOption && (
+                optionsReordered || existingOption.text !== optionDraft.text || existingOption.correct !== optionDraft.correct
+                || existingOption.emoji !== optionDraft.emoji || existingOption.audioText !== optionDraft.audioText
+              );
+              const option = existingOption
+                ? (optionChanged
+                  ? await tx.languageQuestOption.update({ where: { id: existingOption.id }, data: { text: optionDraft.text, correct: optionDraft.correct, emoji: optionDraft.emoji, audioText: optionDraft.audioText, order: optionOrder } })
+                  : existingOption)
                 : await tx.languageQuestOption.create({ data: { challengeId: challenge.id, text: optionDraft.text, correct: optionDraft.correct, emoji: optionDraft.emoji, audioText: optionDraft.audioText, order: optionOrder } });
               savedOptionIds.push(option.id);
             }
-            await tx.languageQuestOption.deleteMany({ where: { challengeId: challenge.id, ...(savedOptionIds.length ? { id: { notIn: savedOptionIds } } : {}) } });
+            const deletedOptions = removedIds(currentOptions, savedOptionIds);
+            if (deletedOptions.length) await tx.languageQuestOption.deleteMany({ where: { id: { in: deletedOptions }, challengeId: challenge.id } });
           }
-          await tx.languageQuestChallenge.deleteMany({ where: { lessonId: lesson.id, ...(savedChallengeIds.length ? { id: { notIn: savedChallengeIds } } : {}) } });
+          const deletedChallenges = removedIds(currentChallenges, savedChallengeIds);
+          if (deletedChallenges.length) await tx.languageQuestChallenge.deleteMany({ where: { id: { in: deletedChallenges }, lessonId: lesson.id } });
         }
-        await tx.languageQuestLesson.deleteMany({ where: { unitId: unit.id, ...(savedLessonIds.length ? { id: { notIn: savedLessonIds } } : {}) } });
+        const deletedLessons = removedIds(currentLessons, savedLessonIds);
+        if (deletedLessons.length) await tx.languageQuestLesson.deleteMany({ where: { id: { in: deletedLessons }, unitId: unit.id } });
       }
-      await tx.languageQuestUnit.deleteMany({ where: { courseId, ...(savedUnitIds.length ? { id: { notIn: savedUnitIds } } : {}) } });
+      const deletedUnits = removedIds(current.units, savedUnitIds);
+      if (deletedUnits.length) await tx.languageQuestUnit.deleteMany({ where: { id: { in: deletedUnits }, courseId } });
+
       return tx.languageQuestCourse.update({
         where: { id: courseId },
         data: {
@@ -3058,6 +3244,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "LANGUAGE_QUEST_COURSE", saved.id, `Created Language Quest course “${saved.title}”`, req.ip || null, req.headers["user-agent"] || null);
       res.status(201).json({
         id: saved.id,
+        updatedAt: saved.updatedAt,
         published: saved.published,
         reviewRequired: saved.reviewRequired,
         reviewStatus: saved.reviewStatus,
@@ -3073,6 +3260,11 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
     if (!isManager(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
     const normalized = normalizeCourseDraft(req.body);
     if (!normalized.value) { res.status(400).json({ error: normalized.error }); return; }
+    const expectedUpdatedAt = new Date(req.body?.updatedAt);
+    if (!req.body?.updatedAt || Number.isNaN(expectedUpdatedAt.getTime())) {
+      res.status(400).json({ error: "Reload this course before saving changes" });
+      return;
+    }
     try {
       const course = await prisma.languageQuestCourse.findUnique({ where: { id: req.params.id } });
       if (!course) { res.status(404).json({ error: "Course not found" }); return; }
@@ -3093,10 +3285,12 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         course.id,
         draft,
         teacherOwnedEdit ? languageQuestTeacherEditReviewData() : {},
+        expectedUpdatedAt,
       );
       await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "LANGUAGE_QUEST_COURSE", saved.id, `Updated Language Quest course “${saved.title}”`, req.ip || null, req.headers["user-agent"] || null);
       res.json({
         id: saved.id,
+        updatedAt: saved.updatedAt,
         published: saved.published,
         reviewRequired: saved.reviewRequired,
         reviewStatus: saved.reviewStatus,
@@ -3162,8 +3356,12 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         res.status(409).json({ error: "The course review state changed. Refresh Course Studio and try again" });
         return;
       }
+      const submittedCourse = await prisma.languageQuestCourse.findUnique({
+        where: { id: course.id },
+        select: { updatedAt: true },
+      });
       await createAuditLog(jwtUser.userId, jwtUser.email, "SUBMIT", "LANGUAGE_QUEST_COURSE", course.id, `Submitted Language Quest course “${course.title}” for review`, req.ip || null, req.headers["user-agent"] || null);
-      res.json({ id: course.id, reviewStatus: "PENDING", published: false });
+      res.json({ id: course.id, reviewStatus: "PENDING", published: false, updatedAt: submittedCourse?.updatedAt });
     } catch (error) {
       logger.error("Error submitting Language Quest course for review:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to submit the course for review" });

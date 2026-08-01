@@ -129,6 +129,7 @@ export interface LanguageQuestLessonPayload {
   course: { id: string; title: string; language: string; accentColor: string };
   profile: LanguageQuestProfile;
   challenges: LanguageQuestChallenge[];
+  cards: LanguageQuestFlashcard[];
 }
 
 export interface LanguageQuestFlashcard {

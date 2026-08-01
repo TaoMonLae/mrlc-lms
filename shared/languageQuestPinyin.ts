@@ -1,17 +1,9 @@
 import { convert, pinyin } from "pinyin-pro";
 import { normalizeSentenceAnswer } from "./languageQuest";
+import { containsHanCharacters, isChineseLanguage } from "./languageQuestLanguage";
 
 const HAN_CHARACTER_RE = /\p{Script=Han}/u;
-
-/** True if the string contains at least one Chinese (Han) character. */
-export function containsHanCharacters(value: string): boolean {
-  return HAN_CHARACTER_RE.test(value);
-}
-
-export function isChineseLanguage(language: string): boolean {
-  const normalized = language.trim().toLocaleLowerCase();
-  return normalized.includes("chinese") || normalized.includes("mandarin");
-}
+export { containsHanCharacters, isChineseLanguage } from "./languageQuestLanguage";
 
 /**
  * Return one display token per Unicode character so the lesson UI can place

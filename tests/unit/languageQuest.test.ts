@@ -3,6 +3,7 @@ import { existsSync } from "node:fs";
 import test from "node:test";
 import {
   bossBattleResult,
+  bossBattleSubmissionMatchesDeck,
   isValidMatchingSubmission,
   isValidReorderSubmission,
   languageQuestPracticePrompt,
@@ -694,6 +695,15 @@ test("bossBattleResult grades a battle against the server-side answer key", () =
     options,
   );
   assert.equal(duped.total, 1);
+});
+
+test("Boss Battle submissions must match the exact one-time deck", () => {
+  const deck = ["c1", "c2", "c3", "c4"];
+  assert.equal(bossBattleSubmissionMatchesDeck(deck, ["c1", "c2", "c3", "c4"]), true);
+  assert.equal(bossBattleSubmissionMatchesDeck(deck, ["c4", "c2", "c1", "c3"]), false);
+  assert.equal(bossBattleSubmissionMatchesDeck(deck, ["c1", "c2", "c3"]), false);
+  assert.equal(bossBattleSubmissionMatchesDeck(deck, ["c1", "c2", "c3", "easy"]), false);
+  assert.equal(bossBattleSubmissionMatchesDeck(deck, ["c1", "c1", "c3", "c4"]), false);
 });
 
 test("reorderChallengeIsCorrect only accepts the exact canonical sequence", () => {

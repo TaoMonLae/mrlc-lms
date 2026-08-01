@@ -11,6 +11,7 @@ import {
   Languages,
   LogIn,
   Moon,
+  RefreshCcw,
   ShieldCheck,
   Sparkles,
   Star,
@@ -42,14 +43,24 @@ export default function LanguageQuestPublic() {
   const { user } = useAuth();
   const { theme, setTheme } = useTheme();
   const [courses, setCourses] = useState<PublicCourse[]>([]);
+  const [catalogStatus, setCatalogStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [catalogRetry, setCatalogRetry] = useState(0);
   const [systemDark, setSystemDark] = useState(false);
 
   useEffect(() => {
-    fetch('/api/language-quest/public/catalog')
-      .then((response) => (response.ok ? response.json() : Promise.reject()))
-      .then((payload) => setCourses(payload.courses ?? []))
-      .catch(() => setCourses([]));
-  }, []);
+    const controller = new AbortController();
+    setCatalogStatus('loading');
+    fetch('/api/language-quest/public/catalog', { signal: controller.signal })
+      .then((response) => (response.ok ? response.json() : Promise.reject(new Error(`Catalog request failed (${response.status})`))))
+      .then((payload) => {
+        setCourses(payload.courses ?? []);
+        setCatalogStatus('ready');
+      })
+      .catch((error: any) => {
+        if (error?.name !== 'AbortError') setCatalogStatus('error');
+      });
+    return () => controller.abort();
+  }, [catalogRetry]);
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-color-scheme: dark)');
@@ -194,7 +205,7 @@ export default function LanguageQuestPublic() {
                 <article key={step} className={`group rounded-3xl border border-white bg-white p-6 shadow-xl ${shadow} transition duration-300 hover:-translate-y-2 dark:border-slate-800 dark:bg-slate-900/90`}>
                   <div className="flex items-center justify-between">
                     <span className={`grid h-14 w-14 place-items-center overflow-hidden rounded-2xl bg-gradient-to-br ${tone} shadow-lg transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110`}>
-                      <img src={art} alt="" aria-hidden="true" className="h-12 w-12 object-contain drop-shadow-md" />
+                      <img src={art} alt="" aria-hidden="true" loading="lazy" decoding="async" className="h-12 w-12 object-contain drop-shadow-md" />
                     </span>
                     <span className="text-2xl font-black text-slate-200 dark:text-slate-700">{step}</span>
                   </div>
@@ -216,7 +227,19 @@ export default function LanguageQuestPublic() {
               <p className="max-w-md text-sm leading-6 text-slate-600 dark:text-slate-300">Browse freely. Create an account when you are ready to open a lesson and save your progress.</p>
             </div>
 
-            {courses.length ? (
+            {catalogStatus === 'loading' ? (
+              <div className="mt-10 rounded-3xl border border-violet-100 bg-white/60 p-12 text-center dark:border-slate-800 dark:bg-slate-900/60" aria-busy="true">
+                <div className="mx-auto h-9 w-9 animate-spin rounded-full border-4 border-violet-200 border-t-violet-700" />
+                <p className="mt-4 font-bold">Loading course previews…</p>
+              </div>
+            ) : catalogStatus === 'error' ? (
+              <div className="mt-10 rounded-3xl border border-rose-200 bg-rose-50/80 p-10 text-center dark:border-rose-500/30 dark:bg-rose-950/20" role="alert">
+                <BookOpen className="mx-auto h-10 w-10 text-rose-400" />
+                <p className="mt-3 font-black">We could not load the course library.</p>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Check your connection and try again.</p>
+                <Button variant="outline" className="mt-5" onClick={() => setCatalogRetry((value) => value + 1)}><RefreshCcw className="mr-2 h-4 w-4" /> Try again</Button>
+              </div>
+            ) : courses.length ? (
               <div className="mt-10">
                 <LanguageQuestCourseFolders
                   groups={courseGroups}
@@ -249,7 +272,7 @@ export default function LanguageQuestPublic() {
             ) : (
               <div className="mt-10 rounded-3xl border border-dashed border-violet-200 bg-white/60 p-12 text-center dark:border-violet-500/30 dark:bg-slate-900/60">
                 <BookOpen className="mx-auto h-10 w-10 text-violet-300 dark:text-violet-400" />
-                <p className="mt-3 font-bold">Course previews are being prepared.</p>
+                <p className="mt-3 font-bold">No courses are published yet.</p>
               </div>
             )}
           </div>

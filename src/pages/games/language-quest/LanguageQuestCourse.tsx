@@ -45,10 +45,18 @@ export default function LanguageQuestCourse() {
 
   useEffect(() => {
     if (!courseId) return;
-    apiGet<CoursePayload>(`/api/language-quest/courses/${courseId}`)
+    const controller = new AbortController();
+    setLoading(true);
+    setCourse(null);
+    apiGet<CoursePayload>(`/api/language-quest/courses/${courseId}`, { signal: controller.signal })
       .then(setCourse)
-      .catch((error: any) => toast.error(error?.message || 'Could not load the course'))
-      .finally(() => setLoading(false));
+      .catch((error: any) => {
+        if (error?.name !== 'AbortError') toast.error(error?.message || 'Could not load the course');
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
   }, [courseId]);
 
   if (loading) {

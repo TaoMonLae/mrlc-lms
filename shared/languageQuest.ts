@@ -9,6 +9,8 @@ export const LANGUAGE_QUEST_BOSS_BATTLE_POINTS = 40;
 export const LANGUAGE_QUEST_BOSS_BATTLE_PASS_RATIO = 0.7;
 export const LANGUAGE_QUEST_BOSS_BATTLE_MIN_QUESTIONS = 4;
 export const LANGUAGE_QUEST_BOSS_BATTLE_MAX_QUESTIONS = 8;
+export const LANGUAGE_QUEST_BOSS_BATTLE_ATTEMPT_MINUTES = 20;
+export const LANGUAGE_QUEST_BOSS_BATTLE_INELIGIBLE_TYPES = new Set(["REORDER", "MATCHING", "DICTATION"]);
 export const LANGUAGE_QUEST_TIME_ZONE = "Asia/Kuala_Lumpur";
 
 export function languageQuestDayKey(
@@ -181,6 +183,16 @@ export function bossBattleResult(
   const total = results.length;
   const won = total >= options.minQuestions && correctCount / total >= options.passRatio;
   return { results, correctCount, total, won };
+}
+
+/** A battle submission must answer exactly the one-time deck issued by the server. */
+export function bossBattleSubmissionMatchesDeck(
+  challengeIds: readonly string[],
+  submittedChallengeIds: readonly string[],
+): boolean {
+  if (challengeIds.length !== submittedChallengeIds.length) return false;
+  if (new Set(challengeIds).size !== challengeIds.length) return false;
+  return challengeIds.every((id, index) => id === submittedChallengeIds[index]);
 }
 
 // REORDER challenges store their tokens/words in canonical (correct) order as

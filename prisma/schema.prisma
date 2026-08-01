@@ -289,6 +289,7 @@ model User {
   languageQuestXpEvents      LanguageQuestXpEvent[]
   languageQuestMastery       LanguageQuestMasteryProgress[]
   languageQuestMissionClaims LanguageQuestMissionClaim[]
+  languageQuestBossBattles   LanguageQuestBossBattleAttempt[]
   languageQuestAvatar        String                           @default("owl")
   languageQuestBio           String?
   languageQuestClassrooms    LanguageQuestClassroom[]         @relation("LanguageQuestClassroomTeacher")
@@ -3973,6 +3974,7 @@ model LanguageQuestCourse {
   userProgress LanguageQuestUserProgress[]
   classrooms   LanguageQuestClassroom[]
   xpEvents     LanguageQuestXpEvent[]
+  bossBattles  LanguageQuestBossBattleAttempt[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -4109,6 +4111,21 @@ model LanguageQuestXpEvent {
   @@index([userId, occurredAt])
   @@index([courseId, occurredAt])
   @@index([source, occurredAt])
+}
+
+model LanguageQuestBossBattleAttempt {
+  id           String              @id @default(uuid())
+  userId       String
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId     String
+  course       LanguageQuestCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  challengeIds Json
+  expiresAt    DateTime
+  consumedAt   DateTime?
+  createdAt    DateTime            @default(now())
+
+  @@index([userId, courseId])
+  @@index([expiresAt])
 }
 
 model LanguageQuestMasteryProgress {

@@ -19,6 +19,7 @@ interface BossBattleCard {
 }
 
 interface BossBattlePayload {
+  attemptId: string;
   course: { id: string; title: string; language: string; accentColor: string };
   cleared: boolean;
   minQuestions: number;
@@ -89,14 +90,14 @@ export default function LanguageQuestBossBattle() {
   const total = payload?.cards.length ?? 0;
 
   const finishBattle = async (finalAnswers: { challengeId: string; optionId: string | null }[]) => {
-    if (!courseId || finishedRef.current) return;
+    if (!courseId || !payload || finishedRef.current) return;
     finishedRef.current = true;
     setSubmitting(true);
     try {
       const response = await apiSend<BossBattleFinishResponse>(
         `/api/language-quest/courses/${courseId}/boss-battle/finish`,
         'POST',
-        { answers: finalAnswers },
+        { attemptId: payload.attemptId, answers: finalAnswers },
       );
       setResult(response);
       if (response.won) {

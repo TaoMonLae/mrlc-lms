@@ -7,8 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ApiError, apiGet, apiSend } from '@/src/lib/api';
 import type { LanguageQuestChallenge, LanguageQuestLessonPayload, LanguageQuestLessonPreview, LanguageQuestProfile } from '@/src/types/languageQuest';
-import { requeueMissedLanguageQuestChallenge } from '@/shared/languageQuest';
-import { isChineseLanguage, languageQuestAnswerMatches } from '@/shared/languageQuestPinyin';
+import { normalizeSentenceAnswer, requeueMissedLanguageQuestChallenge } from '@/shared/languageQuest';
+import { containsHanCharacters, isChineseLanguage } from '@/shared/languageQuestLanguage';
 import {
   buildLanguageQuestVocabularyQuestions,
   uniqueLanguageQuestVocabularyCards,
@@ -93,6 +93,17 @@ const CHALLENGE_GUIDANCE: Partial<Record<LanguageQuestChallenge['type'], { title
 
 const guidanceStorageKey = (type: LanguageQuestChallenge['type']) => `lq-challenge-guidance-v1:${type}`;
 
+async function lessonAnswerMatches(answer: string, modelText: string): Promise<boolean> {
+  const normalizedAnswer = normalizeSentenceAnswer(answer);
+  if (!normalizedAnswer) return false;
+  if (normalizedAnswer === normalizeSentenceAnswer(modelText)) return true;
+  if (!containsHanCharacters(modelText)) return false;
+  // pinyin-pro is sizeable; only load it when a learner actually checks a
+  // Hanzi answer that did not already match directly.
+  const { languageQuestAnswerMatches } = await import('@/shared/languageQuestPinyin');
+  return languageQuestAnswerMatches(answer, modelText);
+}
+
 export default function LanguageQuestLesson() {
   const { explanationLanguage, lq } = useLanguageQuestSupport();
   const { soundEnabled, setSoundEnabled, reducedMotion, voiceProvider } = useLanguageQuestPreferences();
@@ -136,6 +147,11 @@ export default function LanguageQuestLesson() {
 
   useEffect(() => {
     if (!lessonId) return;
+    const controller = new AbortController();
+    setLoading(true);
+    setLesson(null);
+    setPreviewLoading(true);
+    setPreview(null);
     setPhase('learn');
     setPreviewIndex(0);
     setVocabularyIndex(0);
@@ -161,22 +177,33 @@ export default function LanguageQuestLesson() {
     speechSessionRef.current?.stop();
     setListening(false);
 
-    apiGet<LanguageQuestLessonPayload>(`/api/language-quest/lessons/${lessonId}`)
+    apiGet<LanguageQuestLessonPayload>(`/api/language-quest/lessons/${lessonId}`, { signal: controller.signal })
       .then((payload) => {
         setLesson(payload);
         setQuizChallenges(payload.challenges);
         setProfile(payload.profile);
+        setPreview({
+          id: payload.id,
+          title: payload.title,
+          description: payload.description,
+          course: payload.course,
+          cards: payload.cards,
+        });
+        setPreviewLoading(false);
       })
-      .catch((error: any) => toast.error(error?.message || 'Could not load the lesson'))
-      .finally(() => setLoading(false));
-
-    setPreviewLoading(true);
-    apiGet<LanguageQuestLessonPreview>(`/api/language-quest/lessons/${lessonId}/preview`)
-      .then(setPreview)
-      .catch(() => setPreview(null))
-      .finally(() => setPreviewLoading(false));
+      .catch((error: any) => {
+        if (error?.name !== 'AbortError') {
+          setPreview(null);
+          setPreviewLoading(false);
+          toast.error(error?.message || 'Could not load the lesson');
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
 
     return () => {
+      controller.abort();
       cancelLanguageQuestVoice();
       speechSessionRef.current?.stop();
     };
@@ -363,9 +390,9 @@ export default function LanguageQuestLesson() {
     setListening(true);
   };
 
-  const checkSpelling = () => {
+  const checkSpelling = async () => {
     if (!spellingCard || !spellingInput.trim()) return;
-    const correct = languageQuestAnswerMatches(spellingInput, spellingCard.text);
+    const correct = await lessonAnswerMatches(spellingInput, spellingCard.text);
     setSpellingFeedback(correct ? 'correct' : 'incorrect');
     if (correct) {
       if (soundEnabled) playLanguageQuestSuccessSound();
@@ -387,9 +414,9 @@ export default function LanguageQuestLesson() {
     continueAfterSpelling();
   };
 
-  const checkSentence = () => {
+  const checkSentence = async () => {
     if (!sentenceCard || !sentenceInput.trim()) return;
-    const correct = languageQuestAnswerMatches(sentenceInput, sentenceCard.text);
+    const correct = await lessonAnswerMatches(sentenceInput, sentenceCard.text);
     setSentenceFeedback(correct ? 'correct' : 'incorrect');
     if (correct) {
       if (soundEnabled) playLanguageQuestSuccessSound();

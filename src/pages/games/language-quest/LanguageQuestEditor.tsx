@@ -90,11 +90,13 @@ interface EditorCourse {
   reviewNote: string;
   submittedForReviewAt: string | null;
   reviewedAt: string | null;
+  updatedAt: string | null;
   units: EditorUnit[];
 }
 
 interface CourseSaveResult {
   id: string;
+  updatedAt: string;
   published: boolean;
   reviewRequired: boolean;
   reviewStatus: LanguageQuestCourseReviewStatus;
@@ -125,6 +127,7 @@ const emptyCourse = (): EditorCourse => ({
   title: '', description: '', language: 'English', category: 'English Courses',
   imageEmoji: '🌍', accentColor: '#7c3aed', published: false, retired: false,
   reviewRequired: false, reviewStatus: 'DRAFT', reviewNote: '', submittedForReviewAt: null, reviewedAt: null,
+  updatedAt: null,
   units: [newUnit()],
 });
 
@@ -138,6 +141,7 @@ function hydrateCourse(raw: any): EditorCourse {
     reviewNote: raw?.reviewNote || '',
     submittedForReviewAt: raw?.submittedForReviewAt || null,
     reviewedAt: raw?.reviewedAt || null,
+    updatedAt: raw?.updatedAt || null,
     units: (raw?.units || []).map((unit: any) => ({
       _key: key(), id: unit.id, title: unit.title || '', description: unit.description || '',
       lessons: (unit.lessons || []).map((lesson: any) => ({
@@ -161,6 +165,19 @@ function hydrateCourse(raw: any): EditorCourse {
       })),
     })),
   };
+}
+
+function courseContentSnapshot(course: EditorCourse): string {
+  return JSON.stringify({
+    title: course.title,
+    description: course.description,
+    language: course.language,
+    category: course.category,
+    imageEmoji: course.imageEmoji,
+    accentColor: course.accentColor,
+    published: course.published,
+    units: course.units,
+  });
 }
 
 function ChoiceOptionEditor({ option, index, canRemove, correctLabel, onChange, onRemove, onCorrect }: {
@@ -463,9 +480,11 @@ export default function LanguageQuestEditor() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
   const [course, setCourse] = useState<EditorCourse>(emptyCourse);
+  const [savedSnapshot, setSavedSnapshot] = useState<string | null>(isEdit ? null : courseContentSnapshot(course));
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const dirty = savedSnapshot !== null && savedSnapshot !== courseContentSnapshot(course);
 
   const reviewRequired = course.reviewRequired || (!isEdit && user?.role === 'TEACHER');
   const canSubmitForReview = isEdit
@@ -475,12 +494,33 @@ export default function LanguageQuestEditor() {
     && !course.retired;
 
   useEffect(() => {
-    if (!id) return;
-    apiGet(`/api/language-quest/manage/courses/${id}`)
-      .then((payload) => setCourse(hydrateCourse(payload)))
-      .catch((error: any) => toast.error(error?.message || 'Could not load the course'))
-      .finally(() => setLoading(false));
+    if (!id) { setLoading(false); return; }
+    const controller = new AbortController();
+    setLoading(true);
+    apiGet(`/api/language-quest/manage/courses/${id}`, { signal: controller.signal })
+      .then((payload) => {
+        const hydrated = hydrateCourse(payload);
+        setCourse(hydrated);
+        setSavedSnapshot(courseContentSnapshot(hydrated));
+      })
+      .catch((error: any) => {
+        if (error?.name !== 'AbortError') toast.error(error?.message || 'Could not load the course');
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
   }, [id]);
+
+  useEffect(() => {
+    if (!dirty) return;
+    const warnBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', warnBeforeUnload);
+    return () => window.removeEventListener('beforeunload', warnBeforeUnload);
+  }, [dirty]);
 
   const updateUnit = (unitKey: string, next: EditorUnit) => setCourse((current) => ({ ...current, units: current.units.map((unit) => unit._key === unitKey ? next : unit) }));
 
@@ -490,6 +530,7 @@ export default function LanguageQuestEditor() {
     setSaving(true);
     try {
       if (isEdit) {
+        const submittedCourse = course;
         const result = await apiSend<CourseSaveResult>(`/api/language-quest/manage/courses/${id}`, 'PUT', course);
         setCourse((current) => ({
           ...current,
@@ -499,6 +540,17 @@ export default function LanguageQuestEditor() {
           reviewNote: result.reviewStatus === 'DRAFT' ? '' : current.reviewNote,
           submittedForReviewAt: result.reviewStatus === 'DRAFT' ? null : current.submittedForReviewAt,
           reviewedAt: result.reviewStatus === 'DRAFT' ? null : current.reviewedAt,
+          updatedAt: result.updatedAt,
+        }));
+        setSavedSnapshot(courseContentSnapshot({
+          ...submittedCourse,
+          published: result.published,
+          reviewRequired: result.reviewRequired,
+          reviewStatus: result.reviewStatus,
+          reviewNote: result.reviewStatus === 'DRAFT' ? '' : submittedCourse.reviewNote,
+          submittedForReviewAt: result.reviewStatus === 'DRAFT' ? null : submittedCourse.submittedForReviewAt,
+          reviewedAt: result.reviewStatus === 'DRAFT' ? null : submittedCourse.reviewedAt,
+          updatedAt: result.updatedAt,
         }));
         toast.success(result.published ? 'Course saved and published' : 'Draft saved');
       } else {
@@ -515,13 +567,17 @@ export default function LanguageQuestEditor() {
     }
   };
 
+  const confirmLeave = (event: React.MouseEvent) => {
+    if (dirty && !window.confirm('Discard your unsaved Course Studio changes?')) event.preventDefault();
+  };
+
   const submitForReview = async () => {
     if (!id || !canSubmitForReview) return;
     setSubmitting(true);
     try {
       const saved = await save();
       if (!saved) return;
-      const result = await apiSend<{ reviewStatus: LanguageQuestCourseReviewStatus; published: boolean }>(`/api/language-quest/manage/courses/${id}/submit-review`, 'POST');
+      const result = await apiSend<{ reviewStatus: LanguageQuestCourseReviewStatus; published: boolean; updatedAt: string }>(`/api/language-quest/manage/courses/${id}/submit-review`, 'POST');
       setCourse((current) => ({
         ...current,
         reviewStatus: result.reviewStatus,
@@ -529,6 +585,7 @@ export default function LanguageQuestEditor() {
         reviewNote: '',
         submittedForReviewAt: new Date().toISOString(),
         reviewedAt: null,
+        updatedAt: result.updatedAt,
       }));
       toast.success('Course submitted for administrator review');
     } catch (error: any) {
@@ -544,10 +601,11 @@ export default function LanguageQuestEditor() {
     <div className="mx-auto max-w-5xl space-y-6 pb-24">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" render={<Link to="/games/language-quest/manage" />} nativeButton={false}><ArrowLeft className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="icon" onClick={confirmLeave} render={<Link to="/games/language-quest/manage" />} nativeButton={false}><ArrowLeft className="h-4 w-4" /></Button>
           <div><h1 className="text-2xl font-black text-slate-900 dark:text-white">{isEdit ? 'Edit Course' : 'New Course'}</h1><p className="text-sm text-slate-500">Build from units → lessons → challenges.</p></div>
         </div>
         <div className="flex flex-wrap gap-2">
+          {dirty && <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">Unsaved changes</Badge>}
           {canSubmitForReview && (
             <Button variant="outline" onClick={submitForReview} disabled={saving || submitting}>
               <Send className="mr-2 h-4 w-4" /> {submitting ? 'Submitting…' : 'Save & submit'}
@@ -604,7 +662,7 @@ export default function LanguageQuestEditor() {
               </Button>
             )}
             {isAdmin && course.reviewStatus === 'PENDING' && (
-              <Button className="mt-4" variant="outline" render={<Link to="/games/language-quest/manage" />} nativeButton={false}>
+              <Button className="mt-4" variant="outline" onClick={confirmLeave} render={<Link to="/games/language-quest/manage" />} nativeButton={false}>
                 <ShieldCheck className="mr-2 h-4 w-4" /> Return to review queue
               </Button>
             )}
