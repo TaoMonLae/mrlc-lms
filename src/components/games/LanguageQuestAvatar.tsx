@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import {
   DEFAULT_LANGUAGE_QUEST_AVATAR,
@@ -22,6 +23,12 @@ export function LanguageQuestAvatar({
   className,
 }: LanguageQuestAvatarProps) {
   const avatar = getLanguageQuestAvatar(avatarId);
+  const imageSrc = 'image' in avatar ? avatar.image : undefined;
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [imageSrc]);
 
   return (
     <span
@@ -34,11 +41,12 @@ export function LanguageQuestAvatar({
       )}
       style={{ background: `linear-gradient(135deg, ${avatar.colors[0]}, ${avatar.colors[1]})` }}
     >
-      {'image' in avatar ? (
+      {imageSrc && !imageFailed ? (
         <img
-          src={avatar.image}
+          src={imageSrc}
           alt=""
           aria-hidden="true"
+          onError={() => setImageFailed(true)}
           className="h-full w-full object-contain p-1 drop-shadow-md"
         />
       ) : (

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
 import test from "node:test";
 import {
   bossBattleResult,
@@ -374,6 +375,20 @@ test("Language Quest accepts only the curated built-in learner avatars", () => {
   assert.equal(isLanguageQuestAvatarId("owl"), true);
   assert.equal(isLanguageQuestAvatarId("https://example.com/photo.jpg"), false);
   assert.equal(isLanguageQuestAvatarId("../uploads/avatar.png"), false);
+});
+
+test("Language Quest avatar images use case-correct public asset routes", () => {
+  const publicRoot = new URL("../../public/", import.meta.url);
+  const imageAvatars = LANGUAGE_QUEST_AVATARS.filter((avatar) => "image" in avatar);
+
+  assert.ok(imageAvatars.length > 0);
+  for (const avatar of imageAvatars) {
+    assert.match(avatar.image, /^\/icons\//, `${avatar.id} uses the deployed public directory casing`);
+    assert.ok(
+      existsSync(new URL(avatar.image.slice(1), publicRoot)),
+      `${avatar.id} image exists at public${avatar.image}`,
+    );
+  }
 });
 
 test("Language Quest only increments once per Kuala Lumpur calendar day", () => {
