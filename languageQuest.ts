@@ -2117,11 +2117,20 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
     if (jwtUser.role !== "ADMIN") { res.status(403).json({ error: "Administrator access required" }); return; }
     const query = text(req.query.q, 100);
     const status = text(req.query.status, 20).toUpperCase();
+    const courseId = text(req.query.courseId, 60);
+    // "external" (default) matches the original scope of this page — public
+    // self-signup learners, whose account lifecycle (deactivate/terminate)
+    // lives here. "all" widens the list to every account with any Language
+    // Quest activity — students, teachers, everyone — purely so an admin can
+    // see and filter by course; the account-management actions below stay
+    // restricted to external learners regardless of which scope is loaded.
+    const scope = text(req.query.scope, 20).toLowerCase() === "all" ? "all" : "external";
     try {
       const learners = await prisma.user.findMany({
         where: {
-          isExternalLearner: true,
+          ...(scope === "external" ? { isExternalLearner: true } : { languageQuestProgress: { isNot: null } }),
           ...(status === "ACTIVE" ? { isActive: true } : status === "INACTIVE" ? { isActive: false } : {}),
+          ...(courseId ? { languageQuestProgress: { activeCourseId: courseId } } : {}),
           ...(query ? {
             OR: [
               { firstName: { contains: query, mode: "insensitive" } },
@@ -2136,23 +2145,69 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           firstName: true,
           lastName: true,
           email: true,
+          role: true,
           isActive: true,
+          isExternalLearner: true,
           languageQuestAvatar: true,
           languageQuestBio: true,
           lastLoginAt: true,
           createdAt: true,
-          languageQuestProgress: true,
+          languageQuestProgress: {
+            include: {
+              activeCourse: { select: { id: true, code: true, title: true, language: true, category: true, imageEmoji: true } },
+            },
+          },
           languageQuestChallenges: { where: { completed: true }, select: { id: true } },
           languageQuestMemberships: {
             select: { classroom: { select: { id: true, name: true } } },
           },
         },
       } as any);
+
+      // Beyond "what course are they on right now", pull each learner's full
+      // course history (every course they've ever earned XP in) so an admin
+      // can spot patterns like course-hopping or which courses actually hold
+      // attention — the activeCourse alone only shows the most recent one.
+      const learnerIds = learners.map((learner: any) => learner.id);
+      const xpByUserCourse = learnerIds.length
+        ? await prisma.languageQuestXpEvent.groupBy({
+            by: ["userId", "courseId"],
+            where: { userId: { in: learnerIds }, courseId: { not: null } },
+            _sum: { points: true },
+            _max: { occurredAt: true },
+          })
+        : [];
+      const courseIds = [...new Set(xpByUserCourse.map((row: any) => row.courseId).filter(Boolean))];
+      const courses = courseIds.length
+        ? await prisma.languageQuestCourse.findMany({
+            where: { id: { in: courseIds as string[] } },
+            select: { id: true, code: true, title: true, language: true, imageEmoji: true },
+          })
+        : [];
+      const courseById = new Map(courses.map((course: any) => [course.id, course]));
+      const historyByUser = new Map<string, any[]>();
+      for (const row of xpByUserCourse) {
+        const course = courseById.get(row.courseId as string);
+        if (!course) continue;
+        const list = historyByUser.get(row.userId) ?? [];
+        list.push({
+          course,
+          points: row._sum.points ?? 0,
+          lastActivityAt: row._max.occurredAt,
+        });
+        historyByUser.set(row.userId, list);
+      }
+      for (const list of historyByUser.values()) {
+        list.sort((a, b) => b.points - a.points);
+      }
+
       res.json({
         learners: learners.map((learner: any) => ({
           id: learner.id,
           name: `${learner.firstName} ${learner.lastName}`.trim(),
           email: learner.email,
+          role: learner.role,
+          isExternalLearner: learner.isExternalLearner,
           active: learner.isActive,
           avatarId: learner.languageQuestAvatar || DEFAULT_LANGUAGE_QUEST_AVATAR,
           bio: learner.languageQuestBio || "",
@@ -2163,10 +2218,12 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           lastLoginAt: learner.lastLoginAt,
           createdAt: learner.createdAt,
           classrooms: learner.languageQuestMemberships.map((membership: any) => membership.classroom),
+          activeCourse: learner.languageQuestProgress?.activeCourse || null,
+          courseHistory: historyByUser.get(learner.id) ?? [],
         })),
       });
     } catch (error) {
-      logger.error("Error loading Language Quest public learners:", error);
+      logger.error("Error loading Language Quest learners:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load learner accounts" });
     }
   });
