@@ -200,9 +200,11 @@ export default function AboutPage() {
               <p className="flex items-center gap-2 text-sm font-black"><ShieldCheck className="h-4 w-4" /> Built for school life</p>
             </div>
             <img
-              src="/icons/002.png"
+              src="/icons/about-guide.webp"
               alt=""
               aria-hidden="true"
+              decoding="async"
+              fetchPriority="high"
               className="absolute bottom-0 left-1/2 z-10 h-[108%] max-h-[440px] w-auto -translate-x-1/2 object-contain drop-shadow-[0_28px_24px_rgba(68,45,20,0.22)]"
             />
           </div>
@@ -226,7 +228,14 @@ export default function AboutPage() {
                 <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">{pillar.description}</p>
               </div>
               <div className="absolute -bottom-8 -right-8 h-40 w-40 rounded-full bg-white/70 dark:bg-white/5" />
-              <img src={pillar.art} alt="" aria-hidden="true" className="absolute bottom-3 right-2 h-28 w-28 object-contain drop-shadow-xl transition duration-300 group-hover:scale-105 group-hover:-rotate-2" />
+              <img
+                src={pillar.art}
+                alt=""
+                aria-hidden="true"
+                loading="lazy"
+                decoding="async"
+                className="absolute bottom-3 right-2 h-28 w-28 object-contain drop-shadow-xl transition duration-300 group-hover:scale-105 group-hover:-rotate-2"
+              />
             </article>
           ))}
         </div>

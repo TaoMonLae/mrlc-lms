@@ -16,3 +16,7 @@ data/
 Kokoro/
 # Local OpenClaude tool state — machine-specific, not part of the app.
 .openclaude/
+
+# Spreadsheet authoring sidecars and temporary Excel lock files.
+*.xlsx.inspect.ndjson
+~$*.xlsx

@@ -10091,7 +10091,7 @@ msgstr "ရောင်းချသူများ မတွေ့ရှိပ�
 
 # Extracted string
 msgid "= 100) return"
-msgstr ""
+msgstr "= 100) ပြန်လာ"
 
 # Extracted string
 msgid "Allocated"
@@ -10207,15 +10207,15 @@ msgstr "ကျွန်ုပ်၏ တာဝန်များ"
 
 # Extracted string
 msgid "string | number): Record"
-msgstr ""
+msgstr "string | နံပါတ်): မှတ်တမ်း"
 
 # Extracted string
 msgid "= ([] as Array"
-msgstr ""
+msgstr "= ([] as Array"
 
 # Extracted string
 msgid "String(n))).indexOf(char)"
-msgstr ""
+msgstr "စာကြောင်း(n))).indexOf(char)"
 
 # Extracted string
 msgid "Enter your email or username"
@@ -10531,7 +10531,7 @@ msgstr "ချိုးဖောက်ခဲ့သော စည်းကမ်�
 
 # Extracted string
 msgid "Logged. This is ${ordinal} ${studentName} has broken rule ${selectedRule?.code}."
-msgstr ""
+msgstr "မှတ်တမ်းတင်ထားသည်။ ၎င်းသည်${ordinal}${studentName}စည်းမျဉ်း ${selectedRule?.code} ကို ချိုးဖောက်ထားသည်။"
 
 # Extracted string
 msgid "Record removed"
@@ -11351,7 +11351,7 @@ msgstr "အနည်းဆုံး ကျောင်းသားတစ်ဦ�
 
 # Extracted string
 msgid "Created ${result.created} assignments${result.unfilled.length > 0 ?"
-msgstr ""
+msgstr "${result.created}assignments ${result.unfilled.length > 0 ?"
 
 # Extracted string
 msgid "Fill in duty, student, and date"
@@ -11767,7 +11767,7 @@ msgstr "မထုတ်ပြန်မီ အနည်းဆုံး မေး�
 
 # Extracted string
 msgid "Question ${badIdx + 1} has no correct answer marked."
-msgstr ""
+msgstr "မေးခွန်း ${badIdx + 1} တွင် အဖြေမှန် အမှတ်အသားမရှိပါ။"
 
 # Extracted string
 msgid "Saved."
@@ -11799,7 +11799,7 @@ msgstr "IEP/504 မှတ်စု"
 
 # Extracted string
 msgid "(i"
-msgstr ""
+msgstr "(ဈ"
 
 # Extracted string
 msgid "Preview as student"
@@ -11835,7 +11835,7 @@ msgstr "၎င်းသည် ကျောင်းသားများ မြ�
 
 # Extracted string
 msgid ": active ?"
-msgstr ""
+msgstr ": တက်ကြွ ?"
 
 # Extracted string
 msgid "Inline $…$ · display $$…$$"
@@ -12519,7 +12519,7 @@ msgstr "လခ သတ်မှတ်ချက်ပုံစံများက�
 
 # Extracted string
 msgid "Are you sure you want to delete \"${name}\"?"
-msgstr ""
+msgstr "\"${name}\" ကို ဖျက်လိုသည်မှာ သေချာပါသလား။"
 
 # Extracted string
 msgid "Search structures..."
@@ -12931,7 +12931,7 @@ msgstr "ထိုဖိုင်ထဲတွင် ဝေါဟာရ/အဓိ�
 
 # Extracted string
 msgid "Imported ${imported.length} card${imported.length === 1 ? '' : 's'}"
-msgstr ""
+msgstr "တင်သွင်းထားသည့်${imported.length}ကတ်${imported.length === 1 ? '':'s'}"
 
 # Extracted string
 msgid "Could not read that CSV file"
@@ -13695,7 +13695,7 @@ msgstr "ဤဂိမ်းကို ပြန်စရန် သေချာပ�
 
 # Extracted string
 msgid "You are currently playing sudoku ${translateCollectionName(gameState.sudokuCollectionName)} #${gameState.sudokuIndex + 1}, do you want to pause it and start ${translateCollectionName(sudokuCollectionName)} #${sudokuIndex}?"
-msgstr ""
+msgstr "သင်သည် လက်ရှိတွင် sudoku ${translateCollectionName(gameState.sudokuCollectionName)} #${gameState.sudokuIndex + 1} ကို ခေတ္တရပ်ပြီး ${translateCollectionName(sudokuCollectionName)} #${sudokuIndex}စတင်လိုပါသလား။"
 
 # Extracted string
 msgid "This sudoku doesn't seem to be valid."
@@ -14572,3 +14572,4208 @@ msgstr "လမ်းညွှန်ချက်များ"
 
 msgid "Understand simple instructions for moving around."
 msgstr "သွားလာလှုပ်ရှားမှုအတွက် ရိုးရှင်းသော ညွှန်ကြားချက်များကို နားလည်သဘောပေါက်ခြင်း။"
+
+# Extracted string
+msgid "Loading page…"
+msgstr "စာမျက်နှာ…ကို ဖွင့်နေသည်"
+
+# Extracted string
+msgid "Use a PNG, JPG, WebP, or GIF image."
+msgstr "PNG၊ JPG၊ WebP သို့မဟုတ် GIF ပုံတစ်ပုံကို သုံးပါ။"
+
+# Extracted string
+msgid "Question images must be 10 MB or smaller."
+msgstr "မေးခွန်းပုံများသည် 10 MB သို့မဟုတ် ထို့ထက်ငယ်ရပါမည်။"
+
+# Extracted string
+msgid "Ask about your classes, exams, grading…"
+msgstr "သင့်အတန်းများ၊ စာမေးပွဲများ၊ အဆင့်သတ်မှတ်ခြင်း…အကြောင်းမေးပါ"
+
+# Extracted string
+msgid "AI Assistant"
+msgstr "AI လက်ထောက်"
+
+# Extracted string
+msgid "Context-aware · read-only"
+msgstr "အကြောင်းအရာ-သတိပြုမိ·ဖတ်ရန်သာ"
+
+# Extracted string
+msgid "I can see your classes, exams, grading queue, attendance and recent activity — all read-only. Ask me anything, or start here:"
+msgstr "မင်းရဲ့အတန်းတွေ၊ စာမေးပွဲတွေ၊ အဆင့်သတ်မှတ်တန်းစီ၊ တက်ရောက်သူနဲ့ လတ်တလော လုပ်ဆောင်ချက်—အားလုံးကို ဖတ်ရန်သာ မြင်နိုင်ပါတယ်။ တစ်ခုခုမေးပါ သို့မဟုတ် ဤနေရာတွင် စတင်ပါ။"
+
+# Extracted string
+msgid "Thinking…"
+msgstr "စဉ်းစားနေသည်…"
+
+# Extracted string
+msgid "Read-only · sees your classes, exams &amp; activity ·"
+msgstr "ဖတ်ရန်သီးသန့်·သည် သင့်အတန်းများ၊ စာမေးပွဲများ&amp;လုပ်ဆောင်ချက်·ကို မြင်သည်"
+
+# Extracted string
+msgid "Shift+Enter"
+msgstr "Shift+Enter"
+
+# Extracted string
+msgid "for a new line"
+msgstr "လိုင်းအသစ်အတွက်"
+
+# Extracted string
+msgid "Game access could not be checked"
+msgstr "ဂိမ်းဝင်ရောက်ခွင့်ကို စစ်ဆေး၍မရပါ။"
+
+# Extracted string
+msgid "The game is paused until the student screen-time rules can be verified."
+msgstr "ကျောင်းသားမျက်နှာပြင်အချိန်စည်းမျဉ်းများကို အတည်ပြုနိုင်သည်အထိ ဂိမ်းကို ခေတ္တရပ်ထားသည်။"
+
+# Extracted string
+msgid "Try again"
+msgstr "ထပ်ကြိုးစားပါ။"
+
+# Extracted string
+msgid "Daily allowance"
+msgstr "နေ့စဉ်ထောက်ပံ့ကြေး"
+
+# Extracted string
+msgid "Each session"
+msgstr "session တစ်ခုစီ"
+
+# Extracted string
+msgid "Use this break to stretch, rest your eyes, or continue with a learning activity."
+msgstr "မျက်လုံးကိုဆန့်ရန်၊ အနားယူရန် သို့မဟုတ် သင်ယူမှုတစ်ခုပြုလုပ်ရန် ဤအနားယူချိန်ကို အသုံးပြုပါ။"
+
+# Extracted string
+msgid "Back to learning"
+msgstr "သင်ယူခြင်းသို့ ပြန်သွားရန်"
+
+# Extracted string
+msgid "Open Language Quest"
+msgstr "ဘာသာစကား Quest ကိုဖွင့်ပါ။"
+
+# Extracted string
+msgid "apiGet"
+msgstr "apiGet"
+
+# Extracted string
+msgid "apiSend"
+msgstr "apiSend"
+
+# Extracted string
+msgid "Sharing files is unavailable here, so the image was saved. Attach it to your social post."
+msgstr "ဖိုင်များကို မျှဝေခြင်းအား ဤနေရာတွင် မရရှိနိုင်ပါ၊ ထို့ကြောင့် ပုံအား သိမ်းဆည်းထားပါသည်။ ၎င်းကို သင်၏လူမှုရေးပို့စ်တွင် တွဲပါ။"
+
+# Extracted string
+msgid "Achievement image saved"
+msgstr "အောင်မြင်မှုပုံရိပ်ကို သိမ်းဆည်းထားသည်။"
+
+# Extracted string
+msgid "Achievements"
+msgstr "အောင်မြင်မှုများ"
+
+# Extracted string
+msgid "Learning streak"
+msgstr "သင်ယူမှုအဆင့်"
+
+# Extracted string
+msgid "Complete a lesson today to unlock."
+msgstr "လော့ခ်ဖွင့်ရန် ယနေ့သင်ခန်းစာကို ပြီးအောင်လုပ်ပါ။"
+
+# Extracted string
+msgid "Finish every lesson in a course to unlock its certificate -- every course you complete earns its own."
+msgstr "၎င်း၏ လက်မှတ်ကို သော့ဖွင့်ရန် သင်တန်းတစ်ခုစီတွင် သင်ခန်းစာတိုင်းကို ပြီးအောင်လုပ်ပါ -- သင်ပြီးသည့် သင်တန်းတိုင်းသည် ၎င်း၏ကိုယ်ပိုင်ဝင်ငွေဖြစ်သည်။"
+
+# Extracted string
+msgid "Mon Refugee Learning Centre"
+msgstr "Mon Refugee Learning Center"
+
+# Extracted string
+msgid "Language Quest"
+msgstr "ဘာသာစကား Quest"
+
+# Extracted string
+msgid "Certificate of Completion"
+msgstr "ဘွဲ့လက်မှတ်"
+
+# Extracted string
+msgid "LQ"
+msgstr "LQ"
+
+# Extracted string
+msgid "Print-ready landscape certificate"
+msgstr "ပုံနှိပ်ရန်အဆင်သင့် ရှုခင်းလက်မှတ်"
+
+# Extracted string
+msgid "Course folders"
+msgstr "သင်တန်းဖိုင်တွဲများ"
+
+# Extracted string
+msgid "Course folder"
+msgstr "သင်တန်းဖိုင်တွဲ"
+
+# Extracted string
+msgid "Open folder"
+msgstr "ဖိုင်တွဲကိုဖွင့်ပါ။"
+
+# Extracted string
+msgid "Close folder"
+msgstr "ဖိုင်တွဲကို ပိတ်ပါ။"
+
+# Extracted string
+msgid "Open dictionary"
+msgstr "အဘိဓာန်ဖွင့်ပါ။"
+
+# Extracted string
+msgid "Type or highlight a word…"
+msgstr "…စကားလုံးကို ရိုက်ထည့်ပါ သို့မဟုတ် အသားပေးဖော်ပြပါ"
+
+# Extracted string
+msgid "Dictionary word"
+msgstr "အဘိဓာန်စကားလုံး"
+
+# Extracted string
+msgid "Language Quest Dictionary"
+msgstr "ဘာသာစကား Quest အဘိဓာန်"
+
+# Extracted string
+msgid "Highlight a word anywhere in the lesson, then choose"
+msgstr "သင်ခန်းစာရှိ မည်သည့်နေရာတွင်မဆို စကားလုံးတစ်ခုကို မီးမောင်းထိုးပြပြီး ရွေးချယ်ပါ။"
+
+# Extracted string
+msgid "Look up"
+msgstr "ဦးမော့လာသည်"
+
+# Extracted string
+msgid "Myanmar translation"
+msgstr "မြန်မာဘာသာပြန်"
+
+# Extracted string
+msgid "Chinese dictionary"
+msgstr "တရုတ်အဘိဓာန်"
+
+# Extracted string
+msgid "Mon dictionary"
+msgstr "မွန်အဘိဓာန်"
+
+# Extracted string
+msgid "Search here, or close this window and highlight an unfamiliar word."
+msgstr "ဤနေရာတွင် ရှာဖွေပါ သို့မဟုတ် ဤဝင်းဒိုးကိုပိတ်ပြီး မရင်းနှီးသောစကားလုံးကို မီးမောင်းထိုးပြပါ။"
+
+# Extracted string
+msgid "+${mission.rewardXp} XP claimed from ${mission.title}"
+msgstr "+${mission.rewardXp}XP ကို ​​${mission.title}မှ တောင်းဆိုထားသည်"
+
+# Extracted string
+msgid "Daily &amp; weekly missions"
+msgstr "နေ့စဉ်&amp;အပတ်စဉ် မစ်ရှင်များ"
+
+# Extracted string
+msgid "Small goals, extra XP"
+msgstr "သေးငယ်သောပန်းတိုင်များ၊ အပို XP"
+
+# Extracted string
+msgid "Daily Chain"
+msgstr "နေ့စဉ်ကွင်းဆက်"
+
+# Extracted string
+msgid "Lightning Round"
+msgstr "မိုးကြိုးဝိုင်း"
+
+# Extracted string
+msgid "Claimed"
+msgstr "တိုင်ကြားထားသည်။"
+
+# Extracted string
+msgid "Classroom team goals"
+msgstr "စာသင်ခန်းအသင်း၏ ရည်မှန်းချက်များ"
+
+# Extracted string
+msgid "Learn together"
+msgstr "အတူလေ့လာပါ။"
+
+# Extracted string
+msgid "Join a classroom to take part in teacher-created XP goals."
+msgstr "ဆရာဖန်တီးထားသော XP ပန်းတိုင်များတွင် ပါဝင်ရန် စာသင်ခန်းသို့ ဝင်ပါ။"
+
+# Extracted string
+msgid "Language albums"
+msgstr "ဘာသာစကား အယ်လ်ဘမ်များ"
+
+# Extracted string
+msgid "A card journey for every language"
+msgstr "ဘာသာစကားတိုင်းအတွက် ကတ်ခရီး"
+
+# Extracted string
+msgid "Each completed challenge fills that language’s album. No purchases or random packs."
+msgstr "ပြီးသွားသော စိန်ခေါ်မှုတိုင်းသည် ထိုဘာသာစကား၏ အယ်လ်ဘမ်ကို ဖြည့်ပေးသည်။ ဝယ်ယူမှုများ သို့မဟုတ် ကျပန်းပက်ကေ့ခ်ျများ မရှိပါ။"
+
+# Extracted string
+msgid "Renowned Mon Kings in History collection overview"
+msgstr "ထင်ရှားကျော်ကြားသော မွန်ဘုရင်များ သမိုင်းစုစည်းမှု ခြုံငုံသုံးသပ်ချက်"
+
+# Extracted string
+msgid "Legendary"
+msgstr "ဒဏ္ဍာရီ"
+
+# Extracted string
+msgid "Sealed legend"
+msgstr "အလုံပိတ် ဒဏ္ဍာရီ"
+
+# Extracted string
+msgid "Legendary Vault"
+msgstr "ဒဏ္ဍာရီ Vault"
+
+# Extracted string
+msgid "Complete the full Quest Card path, then continue earning learning XP to open sealed golden chests and reveal MRLC’s Mon history collection. Every portrait stays hidden until its milestone is reached."
+msgstr "Quest Card လမ်းကြောင်းအပြည့်အစုံကို ဖြည့်ပါ၊ ထို့နောက် အလုံပိတ်ရွှေသေတ္တာများကိုဖွင့်ပြီး MRLC ၏မွန်သမိုင်းစုဆောင်းမှုကိုဖော်ပြရန် XP ကို ​​ဆက်လက်သင်ယူပါ။ ပုံတူတစ်ခုစီသည် ၎င်း၏မှတ်တိုင်မရောက်မချင်း ဖုံးကွယ်ထားမည်ဖြစ်သည်။"
+
+# Extracted string
+msgid "Renowned Mon Kings in History"
+msgstr "သမိုင်းတွင် ကျော်ကြားသော မွန်ဘုရင်များ"
+
+# Extracted string
+msgid "Mystery • Heritage • Achievement"
+msgstr "လျှို့ဝှက်ဆန်းကြယ်•အမွေအနှစ်•အောင်မြင်မှု"
+
+# Extracted string
+msgid "My legendary history collection"
+msgstr "ကျွန်ုပ်၏ဒဏ္ဍာရီသမိုင်းစုစည်းမှု"
+
+# Extracted string
+msgid "Locked portraits stay secret until their golden chest opens."
+msgstr "သော့ခတ်ထားသော ပုံတူများသည် ၎င်းတို့၏ ရွှေသေတ္တာပွင့်သည်အထိ လျှို့ဝှက်ထားသည်။"
+
+# Extracted string
+msgid "Legendary chest unlocked!"
+msgstr "ဒဏ္ဍာရီလာ ရင်ဘတ်ကို သော့ဖွင့်ထားသည်။"
+
+# Extracted string
+msgid "Add to my legendary vault"
+msgstr "ကျွန်ုပ်၏ဒဏ္ဍာရီပြခန်းထဲသို့ ထည့်ပါ။"
+
+# Extracted string
+msgid "Tap two tiles that go together to connect them…"
+msgstr "၎င်းတို့ကို ချိတ်ဆက်ရန်…တွဲသွားသော အကွက်နှစ်ခုကို တို့ပါ"
+
+# Extracted string
+msgid "Lesson progress"
+msgstr "သင်ခန်းစာတိုးတက်မှု"
+
+# Extracted string
+msgid "Tap the words below in order…"
+msgstr "…အလို့ငှာ အောက်ပါစကားလုံးများကို တို့ပါ"
+
+# Extracted string
+msgid "Current companion"
+msgstr "လက်ရှိအဖော်"
+
+# Extracted string
+msgid "Quest Card chapters"
+msgstr "Quest Card အခန်းများ"
+
+# Extracted string
+msgid "Achievement"
+msgstr "အောင်မြင်မှု"
+
+# Extracted string
+msgid "Every correct first answer earns XP. Your first companion unlocks at 100 XP, and every later card demands a bigger learning milestone."
+msgstr "ပထမဆုံး အဖြေမှန်တိုင်း XP ကို ​​ရရှိသည်။ သင်၏ပထမဆုံးအဖော်သည် 100 XP တွင် လော့ခ်ဖွင့်ပြီး နောက်ပိုင်းကတ်တိုင်းသည် ပိုမိုကြီးမားသောသင်ယူမှုမှတ်တိုင်တစ်ခု လိုအပ်သည်။"
+
+# Extracted string
+msgid "View my collection"
+msgstr "ကျွန်ုပ်၏စုဆောင်းမှုကိုကြည့်ပါ။"
+
+# Extracted string
+msgid "My Quest Cards"
+msgstr "ကျွန်ုပ်၏ Quest ကတ်များ"
+
+# Extracted string
+msgid "New Quest Card unlocked!"
+msgstr "Quest Card အသစ်ကို လော့ခ်ဖွင့်ပါပြီ။"
+
+# Extracted string
+msgid "Add to my collection"
+msgstr "ကျွန်ုပ်၏စုစည်းမှုသို့ထည့်ပါ။"
+
+# Extracted string
+msgid "Mastery reviews"
+msgstr "ကျွမ်းကျင်သောသုံးသပ်ချက်များ"
+
+# Extracted string
+msgid "Learning analytics"
+msgstr "ခွဲခြမ်းစိတ်ဖြာလေ့လာခြင်း။"
+
+# Extracted string
+msgid "Classrooms"
+msgstr "စာသင်ခန်းများ"
+
+# Extracted string
+msgid "Manage learners"
+msgstr "သင်ယူသူများကို စီမံခန့်ခွဲပါ။"
+
+# Extracted string
+msgid "Learner profile"
+msgstr "လေ့လာသူ ပရိုဖိုင်"
+
+# Extracted string
+msgid "Sign out"
+msgstr "ဆိုင်းအောက်"
+
+# Extracted string
+msgid "Learners"
+msgstr "သင်ယူသူများ"
+
+# Extracted string
+msgid "Learn • Practise • Grow"
+msgstr "•အလေ့အကျင့်•တိုးတက်ကြီးပွားအောင် လေ့လာပါ။"
+
+# Extracted string
+msgid "About &amp; course sources"
+msgstr "&amp;သင်တန်းရင်းမြစ်များအကြောင်း"
+
+# Extracted string
+msgid "EN"
+msgstr "EN"
+
+# Extracted string
+msgid "မြန်မာ"
+msgstr "မြန်မာ"
+
+# Extracted string
+msgid "MRLC Language Quest home"
+msgstr "MRLC ဘာသာစကား Quest အိမ်"
+
+# Extracted string
+msgid "MRLC logo"
+msgstr "MRLC လိုဂို"
+
+# Extracted string
+msgid "Tao Mon Lae on GitHub"
+msgstr "GitHub တွင် Tao Mon Lae"
+
+# Extracted string
+msgid "MRLC"
+msgstr "MRLC"
+
+# Extracted string
+msgid "Tao Mon Lae"
+msgstr "Tao Mon Lae"
+
+# Extracted string
+msgid "Notifications"
+msgstr "အသိပေးချက်များ"
+
+# Extracted string
+msgid "You're all caught up"
+msgstr "အားလုံး ဖမ်းမိသွားပါပြီ။"
+
+# Extracted string
+msgid "Notification preferences →"
+msgstr "အကြောင်းကြားချက် ရွေးချယ်မှုများ→"
+
+# Extracted string
+msgid "Could not load MFA status"
+msgstr "MFA အခြေအနေကို ဖွင့်၍မရပါ။"
+
+# Extracted string
+msgid "Enter your current password"
+msgstr "သင်၏လက်ရှိစကားဝှက်ကိုထည့်ပါ။"
+
+# Extracted string
+msgid "Multi-factor authentication enabled"
+msgstr "အချက်ပေါင်းများစွာ အထောက်အထားစိစစ်ခြင်းကို ဖွင့်ထားသည်။"
+
+# Extracted string
+msgid "Multi-factor authentication disabled"
+msgstr "အချက်ပေါင်းများစွာ အထောက်အထားစိစစ်ခြင်းကို ပိတ်ထားသည်။"
+
+# Extracted string
+msgid "New recovery codes created; previous codes no longer work"
+msgstr "ပြန်လည်ရယူရေးကုဒ်အသစ်များ ဖန်တီးထားသည်။ ယခင်ကုဒ်များ အလုပ်မလုပ်တော့ပါ။"
+
+# Extracted string
+msgid "Recovery codes copied"
+msgstr "ပြန်လည်ရယူရေးကုဒ်များကို ကူးယူထားသည်။"
+
+# Extracted string
+msgid "Disable multi-factor authentication for this account?"
+msgstr "ဤအကောင့်အတွက် အချက်ပေါင်းများစွာ အထောက်အထားစိစစ်ခြင်းကို ပိတ်မလား။"
+
+# Extracted string
+msgid "QR code for adding MRLC LMS to an authenticator app"
+msgstr "အထောက်အထားစိစစ်ခြင်းအက်ပ်သို့ MRLC LMS ထည့်ရန်အတွက် QR ကုဒ်"
+
+# Extracted string
+msgid "setStatus(await apiGet"
+msgstr "setStatus(apiGet ကိုစောင့်ပါ။"
+
+# Extracted string
+msgid "Multi-factor authentication"
+msgstr "Multi-factor စစ်မှန်ကြောင်းအထောက်အထားပြခြင်း။"
+
+# Extracted string
+msgid "Protect sign-in with a 6-digit code from any TOTP authenticator app."
+msgstr "မည်သည့် TOTP authenticator app မှ ဂဏန်း 6 လုံး ကုဒ်ဖြင့် လက်မှတ်ထိုးဝင်ခြင်းကို ကာကွယ်ပါ။"
+
+# Extracted string
+msgid "Enabled"
+msgstr "ဖွင့်ထားသည်။"
+
+# Extracted string
+msgid "Recommended for your role"
+msgstr "သင့်အခန်းကဏ္ဍအတွက် အကြံပြုထားသည်။"
+
+# Extracted string
+msgid "Loading security status…"
+msgstr "လုံခြုံရေးအခြေအနေ…ကို ဖွင့်နေသည်"
+
+# Extracted string
+msgid "1. Scan the QR code"
+msgstr "1. QR ကုဒ်ကို စကင်န်ဖတ်ပါ။"
+
+# Extracted string
+msgid "If scanning is unavailable, enter this key manually:"
+msgstr "စကင်န်ဖတ်ခြင်း မရရှိနိုင်ပါက၊ ဤကီးကို ကိုယ်တိုင်ထည့်ပါ-"
+
+# Extracted string
+msgid "2. Enter the current 6-digit code"
+msgstr "2. လက်ရှိ ဂဏန်း 6 လုံး ကုဒ်ကို ထည့်ပါ။"
+
+# Extracted string
+msgid "Authentication or recovery code"
+msgstr "အထောက်အထားစိစစ်ခြင်း သို့မဟုတ် ပြန်လည်ရယူရေးကုဒ်"
+
+# Extracted string
+msgid "Save these one-time recovery codes now"
+msgstr "ဤတစ်ကြိမ်ပြန်လည်ရယူရေးကုဒ်များကို ယခုသိမ်းဆည်းပါ။"
+
+# Extracted string
+msgid "They will not be shown again. Each code works once if your authenticator is unavailable."
+msgstr "၎င်းတို့ကို ထပ်မံပြသမည်မဟုတ်ပါ။ သင်၏ စစ်မှန်ကြောင်းအထောက်အထား မရရှိနိုင်ပါက ကုဒ်တစ်ခုစီသည် တစ်ကြိမ် အလုပ်လုပ်ပါသည်။"
+
+# Extracted string
+msgid "Copy"
+msgstr "ကော်ပီ"
+
+# Extracted string
+msgid "Notification preferences saved"
+msgstr "အကြောင်းကြားချက် ဦးစားပေးများကို သိမ်းဆည်းထားသည်။"
+
+# Extracted string
+msgid "Choose which reminders appear in the notification bell. Email delivery is queued when enabled."
+msgstr "အသိပေးချက်ခေါင်းလောင်းတွင် မည်သည့်သတိပေးချက်များကို ရွေးချယ်ပါ။ ဖွင့်ထားချိန်တွင် အီးမေးလ်ပေးပို့မှုကို တန်းစီထားသည်။"
+
+# Extracted string
+msgid "Device signed out"
+msgstr "စက်မှ ထွက်သွားပြီ"
+
+# Extracted string
+msgid "Other devices signed out"
+msgstr "အခြားစက်ပစ္စည်းများမှ ထွက်ထားသည်။"
+
+# Extracted string
+msgid "Signed-in devices"
+msgstr "လက်မှတ်ထိုးဝင်ထားသည့် စက်များ"
+
+# Extracted string
+msgid "Review active sessions and sign out devices you do not recognize."
+msgstr "လက်ရှိအသုံးပြုနေသော ဆက်ရှင်များကို ပြန်လည်သုံးသပ်ပြီး သင်မမှတ်မိသော စက်များကို ထွက်လိုက်ပါ။"
+
+# Extracted string
+msgid "Loading devices…"
+msgstr "စက်ပစ္စည်းများ…ကိုဖွင့်နေသည်"
+
+# Extracted string
+msgid "No managed sessions found. Your current session may predate this security update."
+msgstr "စီမံခန့်ခွဲသည့် ဆက်ရှင်များ မတွေ့ပါ။ သင့်လက်ရှိစက်ရှင်သည် ဤလုံခြုံရေးအပ်ဒိတ်ကို ကြိုတင်ဖော်ပြနိုင်သည်။"
+
+# Extracted string
+msgid "Current device"
+msgstr "လက်ရှိစက်ပစ္စည်း"
+
+# Extracted string
+msgid ". Optional: password (min 6 chars), employmentType (FULL_TIME, PART_TIME, or VOLUNTEER; defaults to FULL_TIME), subjects, phone, joinedDate, baseSalary, teacherCode, and notes."
+msgstr ". ရွေးချယ်နိုင်သည်- စကားဝှက် (အနည်းဆုံး 6 စာလုံး)၊ အလုပ်အကိုင်အမျိုးအစား (FULL_TIME၊ PART_TIME၊ သို့မဟုတ် စေတနာရှင်၊ ပုံသေအဖြစ် FULL_TIME)၊ ဘာသာရပ်များ၊ ဖုန်း၊ ပါဝင်ရက်စွဲ၊ အခြေခံလစာ၊ ဆရာကုဒ်နှင့် မှတ်စုများ။"
+
+# Extracted string
+msgid "Reason for cancellation..."
+msgstr "ဖျက်သိမ်းရခြင်းအကြောင်းအရင်း..."
+
+# Extracted string
+msgid "Weekdays"
+msgstr "ရက်သတ္တပတ်များ"
+
+# Extracted string
+msgid "Every day"
+msgstr "နေ့တိုင်း"
+
+# Extracted string
+msgid "Status & Cancellation"
+msgstr "အခြေအနေနှင့် ပယ်ဖျက်ခြင်း။"
+
+# Extracted string
+msgid "Cancellation Reason"
+msgstr "ပယ်ဖျက်ရခြင်း အကြောင်းအရင်း"
+
+# Extracted string
+msgid "Choose a JPG, PNG, or WEBP image"
+msgstr "JPG၊ PNG သို့မဟုတ် WEBP ပုံတစ်ပုံကို ရွေးပါ။"
+
+# Extracted string
+msgid "Thumbnail images must be 5 MB or smaller"
+msgstr "ပုံသေးပုံများသည် 5 MB သို့မဟုတ် ထို့ထက်သေးငယ်ရပါမည်။"
+
+# Extracted string
+msgid "Video thumbnail preview"
+msgstr "ဗီဒီယို ပုံသေး အစမ်းကြည့်ရှုခြင်း။"
+
+# Extracted string
+msgid "No thumbnail"
+msgstr "ပုံသေးမရှိပါ။"
+
+# Extracted string
+msgid "JPG, PNG, or WEBP up to 5 MB. Images are optimized for video cards."
+msgstr "JPG၊ PNG သို့မဟုတ် WEBP သည် 5 MB အထိ။ ရုပ်ပုံများကို ဗီဒီယိုကတ်များအတွက် အကောင်းဆုံးဖြစ်အောင် ပြုလုပ်ထားသည်။"
+
+# Extracted string
+msgid "The lesson was cleared, but the temporary upload could not be removed from the server"
+msgstr "သင်ခန်းစာကို ရှင်းလင်းထားသော်လည်း ယာယီအပ်လုဒ်ကို ဆာဗာမှ ဖယ်ရှား၍မရပါ။"
+
+# Extracted string
+msgid "Mon Language"
+msgstr "မွန်ဘာသာစကား"
+
+# Extracted string
+msgid "Daily Quest"
+msgstr "နေ့စဉ် Quest"
+
+# Extracted string
+msgid "Chess"
+msgstr "စစ်တုရင်ကစားနည်း"
+
+# Extracted string
+msgid "Pac-Man"
+msgstr "Pac-Man"
+
+# Extracted string
+msgid "Word Trail"
+msgstr "Word Trail"
+
+# Extracted string
+msgid "Game Time Controls"
+msgstr "ဂိမ်းအချိန်ထိန်းချုပ်မှုများ"
+
+# Extracted string
+msgid "Language Learning"
+msgstr "ဘာသာစကားသင်ယူခြင်း။"
+
+# Extracted string
+msgid "Reading Analytics"
+msgstr "ပိုင်းခြားစိတ်ဖြာဖတ်ခြင်း"
+
+# Extracted string
+msgid "Student Success"
+msgstr "ကျောင်းသားအောင်မြင်"
+
+# Extracted string
+msgid "Account & Security"
+msgstr "အကောင့်နှင့် လုံခြုံရေး"
+
+# Extracted string
+msgid "sanidhyy/duolingo-clone"
+msgstr "sanidhyy/duolingo-clone"
+
+# Extracted string
+msgid "TaoMonLae/duolingo-clone"
+msgstr "TaoMonLae/duolingo-clone"
+
+# Extracted string
+msgid "WordPOS"
+msgstr "WordPOS"
+
+# Extracted string
+msgid "MonDictDB"
+msgstr "MonDictDB"
+
+# Extracted string
+msgid "Gutendex"
+msgstr "Gutendex"
+
+# Extracted string
+msgid "About MRLC–LMS"
+msgstr "MRLC–LMS အကြောင်း"
+
+# Extracted string
+msgid "One school. One shared place to"
+msgstr "ကျောင်းတစ်ကျောင်း။ မျှဝေထားတဲ့ နေရာတစ်ခုပါ။"
+
+# Extracted string
+msgid "learn, teach, and grow."
+msgstr "သင်ယူပါ၊ သင်ကြားပါ၊ ကြီးထွားပါ။"
+
+# Extracted string
+msgid "The Mon Refugee Learning Centre LMS brings learning, school operations, and community into one thoughtful digital home—made for the people who use it every day."
+msgstr "Mon Refugee Learning Center LMS သည် သင်ယူမှု၊ ကျောင်းလည်ပတ်မှုများနှင့် အသိုင်းအဝိုင်းကို နေ့စဉ်အသုံးပြုသူများအတွက် ဖန်တီးထားသည့် တွေးခေါ်မြော်မြင်နိုင်သော ဒစ်ဂျစ်တယ်အိမ်—အဖြစ်သို့ ယူဆောင်လာပါသည်။"
+
+# Extracted string
+msgid "Our purpose"
+msgstr "ကျွန်တော်တို့ရဲ့ရည်ရွယ်ချက်"
+
+# Extracted string
+msgid "Learning with dignity"
+msgstr "သိက္ခာရှိရှိ သင်ယူပါ။"
+
+# Extracted string
+msgid "Built for school life"
+msgstr "ကျောင်းနေဘဝအတွက် တည်ဆောက်ထားတာပါ။"
+
+# Extracted string
+msgid "A complete school workspace"
+msgstr "ပြီးပြည့်စုံသော ကျောင်းလုပ်ငန်းခွင်"
+
+# Extracted string
+msgid "Built around the whole school day"
+msgstr "ကျောင်းတစ်ရက်လုံး ဆောက်တယ်။"
+
+# Extracted string
+msgid "Useful administration and joyful learning belong together. Each part of the LMS supports the next."
+msgstr "အသုံးဝင်သော စီမံအုပ်ချုပ်မှု နှင့် ပျော်ရွှင်ဖွယ်ရာ သင်ယူမှုတို့ သည် အတူတူဖြစ်သည်။ LMS ၏ အစိတ်အပိုင်းတစ်ခုစီသည် နောက်တစ်ခုကို ပံ့ပိုးပေးသည်။"
+
+# Extracted string
+msgid "Made with care"
+msgstr "ဂရုတစိုက်နဲ့လုပ်တယ်။"
+
+# Extracted string
+msgid "Technology serving people"
+msgstr "နည်းပညာက လူတွေကို ဝန်ဆောင်မှုပေးတယ်။"
+
+# Extracted string
+msgid "The platform combines open-source foundations with features built specifically for MRLC—not a generic school dropped into a template."
+msgstr "ပလပ်ဖောင်းသည် MRLC—အတွက် သီးသန့်တည်ဆောက်ထားသော အင်္ဂါရပ်များနှင့် ပွင့်လင်းမြင်သာသော အခြေခံအုတ်မြစ်များကို ပေါင်းစပ်ထားသော ယေဘူယျကျောင်းပုံစံပုံစံထဲသို့ ထည့်သွင်းထားခြင်းမဟုတ်ပါ။"
+
+# Extracted string
+msgid "Open-source acknowledgments"
+msgstr "Open-source အသိအမှတ်ပြုချက်များ"
+
+# Extracted string
+msgid "Credit belongs where it is due."
+msgstr "ခရက်ဒစ်သည် ပေးချေရမည့်နေရာဖြစ်သည်။"
+
+# Extracted string
+msgid "MRLC–LMS stands on generous public projects and datasets. Sources, licenses, and distribution limits remain documented clearly."
+msgstr "MRLC–LMS သည် ရက်ရောသော အများသူငှာ ပရောဂျက်များနှင့် ဒေတာအတွဲများပေါ်တွင် ရပ်တည်ပါသည်။ အရင်းအမြစ်များ၊ လိုင်စင်များနှင့် ဖြန့်ဖြူးမှုကန့်သတ်ချက်များကို ရှင်းရှင်းလင်းလင်း မှတ်တမ်းတင်ထားသည်။"
+
+# Extracted string
+msgid "Designed and developed by"
+msgstr "ဒီဇိုင်းထွင်ပြီး"
+
+# Extracted string
+msgid "Built for the students, teachers, and staff of the Mon Refugee Learning Centre—with the belief that school technology should feel capable, welcoming, and distinctly ours."
+msgstr "ကျောင်းနည်းပညာသည် ကျွန်ုပ်တို့၏စွမ်းဆောင်နိုင်မှု၊ ကြိုဆိုမှုနှင့် ကျွန်ုပ်တို့၏ထူးခြားမှုဖြစ်သင့်သည်ဟု ယုံကြည်ချက်ဖြင့် Mon Refugee Learning Center—မှ ကျောင်းသားများ၊ ဆရာများနှင့် ဝန်ထမ်းများအတွက် တည်ဆောက်ထားပါသည်။"
+
+# Extracted string
+msgid "View GitHub"
+msgstr "GitHub ကိုကြည့်ပါ။"
+
+# Extracted string
+msgid "Today's schedule table"
+msgstr "ယနေ့အချိန်ဇယား"
+
+# Extracted string
+msgid "Reset your password"
+msgstr "သင့်စကားဝှက်ကို ပြန်လည်သတ်မှတ်ပါ။"
+
+# Extracted string
+msgid "Enter your email address or username. If it matches an active account, we’ll email a link that expires in 30 minutes."
+msgstr "သင့်အီးမေးလ်လိပ်စာ သို့မဟုတ် အသုံးပြုသူအမည်ကို ထည့်သွင်းပါ။ ၎င်းသည် လက်ရှိအကောင့်နှင့် ကိုက်ညီပါက၊ မိနစ် 30 အတွင်း သက်တမ်းကုန်ဆုံးမည့် လင့်ခ်ကို ကျွန်ုပ်တို့ အီးမေးလ်ပို့ပါမည်။"
+
+# Extracted string
+msgid "Check your email"
+msgstr "သင်၏အီးမေးလ်ကိုစစ်ဆေးပါ။"
+
+# Extracted string
+msgid "Back to sign in"
+msgstr "လက်မှတ်ထိုးဝင်ရန် ပြန်သွားပါ။"
+
+# Extracted string
+msgid "Try Language Quest"
+msgstr "ဘာသာစကား Quest ကိုစမ်းကြည့်ပါ။"
+
+# Extracted string
+msgid "6-digit code or recovery code"
+msgstr "ဂဏန်း 6 လုံးကုဒ် သို့မဟုတ် ပြန်လည်ရယူရေးကုဒ်"
+
+# Extracted string
+msgid "Authentication code"
+msgstr "အထောက်အထားပြကုဒ်"
+
+# Extracted string
+msgid "Open your authenticator app, or enter one unused recovery code."
+msgstr "သင်၏ အထောက်အထားစိစစ်ခြင်းအက်ပ်ကို ဖွင့်ပါ၊ သို့မဟုတ် အသုံးမပြုသော ပြန်လည်ရယူရေးကုဒ်တစ်ခုကို ထည့်ပါ။"
+
+# Extracted string
+msgid "Create a free learner account"
+msgstr "အခမဲ့သင်ယူသူအကောင့်တစ်ခုဖန်တီးပါ။"
+
+# Extracted string
+msgid "Secure access for school members and Language Quest learners"
+msgstr "ကျောင်းအဖွဲ့ဝင်များနှင့် Language Quest သင်ယူသူများအတွက် လုံခြုံသောဝင်ရောက်ခွင့်"
+
+# Extracted string
+msgid "Developed by Tao Mon Lae"
+msgstr "Tao Mon Lae မှတီထွင်သည်။"
+
+# Extracted string
+msgid "The Mon Language learning app"
+msgstr "မွန်ဘာသာစကားသင်ယူခြင်းအက်ပ်"
+
+# Extracted string
+msgid "The Mon Language"
+msgstr "မွန်ဘာသာစကား"
+
+# Extracted string
+msgid "Learn and practise Mon language activities without leaving the platform."
+msgstr "ပလက်ဖောင်းမှမထွက်ဘဲ မွန်ဘာသာစကားလှုပ်ရှားမှုများကို လေ့လာပြီး လေ့ကျင့်ပါ။"
+
+# Extracted string
+msgid "Loading The Mon Language…"
+msgstr "မွန်ဘာသာစကား…ကိုဖွင့်နေသည်"
+
+# Extracted string
+msgid "Error 404"
+msgstr "အမှား ၄၀၄"
+
+# Extracted string
+msgid "This page wandered off"
+msgstr "ဒီစာမျက်နှာက ပျက်သွားတယ်။"
+
+# Extracted string
+msgid "Return home"
+msgstr "အိမ်ပြန်ပါ။"
+
+# Extracted string
+msgid "Go back"
+msgstr "ပြန်သွားသည်"
+
+# Extracted string
+msgid "Choose a new password"
+msgstr "စကားဝှက်အသစ်ကို ရွေးပါ။"
+
+# Extracted string
+msgid "Password updated"
+msgstr "စကားဝှက်ကို အပ်ဒိတ်လုပ်ထားသည်။"
+
+# Extracted string
+msgid "All previous sessions were signed out for your protection."
+msgstr "သင်၏ကာကွယ်မှုအတွက် ယခင်ဆက်ရှင်များအားလုံးကို ထွက်လိုက်ပါပြီ။"
+
+# Extracted string
+msgid "Continue to sign in"
+msgstr "ဆက်လက်ဝင်ရောက်ပါ။"
+
+# Extracted string
+msgid "Use at least 8 characters and avoid reusing a password from another service."
+msgstr "အနည်းဆုံး အက္ခရာ 8 လုံးကို အသုံးပြုပြီး အခြားဝန်ဆောင်မှုမှ စကားဝှက်ကို ပြန်သုံးခြင်းမှ ရှောင်ကြဉ်ပါ။"
+
+# Extracted string
+msgid "Your first name"
+msgstr "မင်းရဲ့နာမည်"
+
+# Extracted string
+msgid "Your last name"
+msgstr "မင်းရဲ့နောက်ဆုံးနာမည်"
+
+# Extracted string
+msgid "you@example.com"
+msgstr "you@example.com"
+
+# Extracted string
+msgid "At least 8 characters"
+msgstr "အနည်းဆုံး စာလုံး ၈ လုံး"
+
+# Extracted string
+msgid "Back to Language Quest"
+msgstr "ဘာသာစကား Quest သို့ ပြန်သွားရန်"
+
+# Extracted string
+msgid "A colorful learning journey"
+msgstr "ရောင်စုံလေ့လာရေးခရီး"
+
+# Extracted string
+msgid "Your sentences get stronger one short lesson at a time."
+msgstr "သင့်စာကြောင်းများသည် တစ်ကြိမ်လျှင် သင်ခန်းစာအတိုတစ်ခု ပိုမိုအားကောင်းလာသည်။"
+
+# Extracted string
+msgid "A learner account saves your course path, streak, points, and completed practices."
+msgstr "သင်ယူသူအကောင့်တစ်ခုသည် သင်၏သင်တန်းလမ်းကြောင်း၊ လမ်းကြောင်း၊ အမှတ်များနှင့် ပြီးမြောက်သော အလေ့အကျင့်များကို သိမ်းဆည်းပေးပါသည်။"
+
+# Extracted string
+msgid "Lesson 01"
+msgstr "သင်ခန်းစာ ၀၁"
+
+# Extracted string
+msgid "Listen, remember, then write:"
+msgstr "နားထောင်ပါ၊ မှတ်ပါ၊ ထို့နောက်ရေးပါ။"
+
+# Extracted string
+msgid "“Good morning!”"
+msgstr "\"မင်္ဂလာနံနက်ခင်းပါ!\""
+
+# Extracted string
+msgid "Free learner account"
+msgstr "အခမဲ့သင်ယူသူအကောင့်"
+
+# Extracted string
+msgid "Start your Language Quest"
+msgstr "သင်၏ဘာသာစကားရှာဖွေမှုစတင်ပါ။"
+
+# Extracted string
+msgid "Choose a learner avatar"
+msgstr "သင်ယူသူကိုယ်ပွားကို ရွေးပါ။"
+
+# Extracted string
+msgid "Built-in characters only—profile-photo uploads are not used in Language Quest."
+msgstr "ပါ၀င်သော စာလုံးများသာ—ပရိုဖိုင်-ဓာတ်ပုံ အပ်လုဒ်များကို Language Quest တွင် အသုံးမပြုပါ။"
+
+# Extracted string
+msgid "Use at least 8 characters."
+msgstr "အနည်းဆုံး စာလုံး 8 လုံး အသုံးပြုပါ။"
+
+# Extracted string
+msgid "Already have an account?"
+msgstr "အကောင့်ရှိပြီးသားလား။"
+
+# Extracted string
+msgid "By continuing, you agree to use the learning experience respectfully. Never share your password."
+msgstr "ရှေ့ဆက်ခြင်းဖြင့် သင်သည် သင်ယူမှုအတွေ့အကြုံကို လေးစားစွာအသုံးပြုရန် သဘောတူပါသည်။ သင့်စကားဝှက်ကို ဘယ်တော့မှ မမျှဝေပါနဲ့။"
+
+# Extracted string
+msgid "Points must be greater than zero"
+msgstr "အမှတ်များသည် သုညထက် ကြီးရမည်။"
+
+# Extracted string
+msgid "Add at least two answer options"
+msgstr "အနည်းဆုံး အဖြေရွေးချယ်စရာနှစ်ခု ထည့်ပါ။"
+
+# Extracted string
+msgid "Mark at least one correct answer"
+msgstr "အနည်းဆုံး အဖြေမှန်တစ်ခုကို အမှတ်အသားပြုပါ။"
+
+# Extracted string
+msgid "Mark exactly one correct answer, or enable partial credit"
+msgstr "အဖြေမှန်တစ်ခုကို အတိအကျမှတ်သားပါ၊ သို့မဟုတ် တစ်စိတ်တစ်ပိုင်း ခရက်ဒစ်ကို ဖွင့်ပါ။"
+
+# Extracted string
+msgid "Question illustration"
+msgstr "မေးခွန်းပုံဥပမာ"
+
+# Extracted string
+msgid "Shown beside the question in the student player."
+msgstr "ကျောင်းသားကစားသမား၏ မေးခွန်းအနားတွင် ပြထားသည်။"
+
+# Extracted string
+msgid "Allocated amount must be greater than zero"
+msgstr "ခွဲဝေပေးသည့် ပမာဏသည် သုညထက် ပိုနေရပါမည်။"
+
+# Extracted string
+msgid "End date must be on or after start date"
+msgstr "ပြီးဆုံးသည့်ရက်စွဲသည် စတင်သည့်ရက်စွဲ သို့မဟုတ် နောက်ပိုင်းတွင် ဖြစ်ရမည်။"
+
+# Extracted string
+msgid "Exhausted and exceeded states are calculated from approved expense totals."
+msgstr "ကုန်ဆုံးသွားသော နှင့် ကျော်လွန်နေသော ပြည်နယ်များကို အတည်ပြုထားသော ကုန်ကျစရိတ် စုစုပေါင်းများမှ တွက်ချက်ပါသည်။"
+
+# Extracted string
+msgid "Select at least one rule that was broken"
+msgstr "ပျက်သွားသော အနည်းဆုံးစည်းမျဉ်းတစ်ခုကို ရွေးပါ။"
+
+# Extracted string
+msgid "Logged ${result.violations.length} violation${result.violations.length === 1 ? '' : 's'} for ${studentName}."
+msgstr "${result.violations.length}ချိုးဖောက်မှု ${result.violations.length === 1 ?${studentName}အတွက် '' : 's'}"
+
+# Extracted string
+msgid "Search rules by code or title…"
+msgstr "ကုဒ် သို့မဟုတ် ခေါင်းစဉ်…ဖြင့် စည်းမျဉ်းများကို ရှာဖွေပါ"
+
+# Extracted string
+msgid "e.g. Verbal warning, after-school detention, parent meeting scheduled…"
+msgstr "ဥပမာ နှုတ်ဖြင့်သတိပေးခြင်း၊ ကျောင်းအပြီးထိန်းသိမ်းခြင်း၊ မိဘအစည်းအဝေးစီစဉ်ထားသည့်…"
+
+# Extracted string
+msgid "Download disciplinary notice for this record"
+msgstr "ဤမှတ်တမ်းအတွက် စည်းကမ်းထိန်းသိမ်းရေးသတိပေးချက်ကို ဒေါင်းလုဒ်လုပ်ပါ။"
+
+# Extracted string
+msgid "Generate a printable Disciplinary Notice — with the rule(s) broken, escalation context, and signature lines — to send home or file."
+msgstr "အိမ် သို့မဟုတ် ဖိုင်ကို ပေးပို့ရန်အတွက် စည်းကမ်း(များ) ပျက်သွားခြင်း၊ တိုးမြင့်လာခြင်းနှင့် လက်မှတ်လိုင်းများ—ဖြင့် ပုံနှိပ်နိုင်သော စည်းကမ်းသတိပေးချက်—ကို ဖန်တီးပါ။"
+
+# Extracted string
+msgid "Rules broken *"
+msgstr "စည်းကမ်းပျက် *"
+
+# Extracted string
+msgid "Printed on the Disciplinary Notice under \"Recommended Action\"."
+msgstr "\"အကြံပြုအရေးယူမှု\" အောက်တွင် စည်းကမ်းထိန်းသိမ်းရေးသတိပေးချက်ကို ပုံနှိပ်ထားသည်။"
+
+# Extracted string
+msgid "Done"
+msgstr "ပြီးပြီ။"
+
+# Extracted string
+msgid "Type an English word, or paste a Mon or Chinese word…"
+msgstr "အင်္ဂလိပ်စကားလုံးကို ရိုက်ထည့်ပါ သို့မဟုတ် မွန် သို့မဟုတ် တရုတ်စကားလုံး…ကို ကူးထည့်ပါ"
+
+# Extracted string
+msgid "Look up any English word — definitions, examples, synonyms, and Myanmar/Mon/Chinese translations — or paste a Mon or Chinese word directly. Free to use, no sign-in required."
+msgstr "မည်သည့်အင်္ဂလိပ်စကားလုံး—အဓိပ္ပါယ်ဖွင့်ဆိုချက်များ၊ ဥပမာများ၊ အဓိပ္ပါယ်တူများနှင့် မြန်မာ/မွန်/တရုတ်ဘာသာပြန်များ—ကိုရှာဖွေပါ သို့မဟုတ် မွန် သို့မဟုတ် တရုတ်စကားလုံးကို တိုက်ရိုက်ကူးထည့်ပါ။ အသုံးပြုရန် အခမဲ့၊ လက်မှတ်ထိုးဝင်ရန် မလိုအပ်ပါ။"
+
+# Extracted string
+msgid "Search student, code, or class…"
+msgstr "ကျောင်းသား၊ ကုဒ် သို့မဟုတ် အတန်း…ကို ရှာပါ"
+
+# Extracted string
+msgid "Loading reading analytics…"
+msgstr "ဖတ်ရှုခြင်း ခွဲခြမ်းစိတ်ဖြာချက်…ကို ဖွင့်နေသည်"
+
+# Extracted string
+msgid "E-Book Reading Analytics"
+msgstr "E-Book Reading Analytics"
+
+# Extracted string
+msgid "Student completion, progress, and active reading time."
+msgstr "ကျောင်းသားပြီးဆုံးမှု၊ တိုးတက်မှုနှင့် တက်ကြွသောစာဖတ်ချိန်။"
+
+# Extracted string
+msgid "No student reading activity found."
+msgstr "ကျောင်းသား စာဖတ်သည့် လှုပ်ရှားမှုကို မတွေ့ပါ။"
+
+# Extracted string
+msgid "Average Progress"
+msgstr "ပျမ်းမျှတိုးတက်မှု"
+
+# Extracted string
+msgid "Reading Time"
+msgstr "စာဖတ်ချိန်"
+
+# Extracted string
+msgid "Last Read"
+msgstr "နောက်ဆုံးဖတ်ပါ။"
+
+# Extracted string
+msgid "Series volume must be a positive whole number."
+msgstr "စီးရီးအသံအတိုးအကျယ်သည် အပေါင်းကိန်းတစ်ခုလုံးဖြစ်ရပါမည်။"
+
+# Extracted string
+msgid "Series name (optional)"
+msgstr "စီးရီးအမည် (ချန်လှပ်ထားနိုင်သည်)"
+
+# Extracted string
+msgid "Genre / category"
+msgstr "အမျိုးအစား/အမျိုးအစား"
+
+# Extracted string
+msgid "Book series"
+msgstr "စာအုပ်စီးရီး"
+
+# Extracted string
+msgid "Volume number"
+msgstr "အတွဲနံပါတ်"
+
+# Extracted string
+msgid "Delete \"${book.title}\" from the e-library?"
+msgstr "\"${book.title}\" ကို e-library မှ ဖျက်မလား။"
+
+# Extracted string
+msgid "Search all books…"
+msgstr "စာအုပ်အားလုံးကို ရှာပါ…"
+
+# Extracted string
+msgid "Clear library search"
+msgstr "စာကြည့်တိုက်ရှာဖွေမှုကို ရှင်းလင်းပါ။"
+
+# Extracted string
+msgid "Sort search results"
+msgstr "ရှာဖွေမှုရလဒ်များကိုစီပါ။"
+
+# Extracted string
+msgid "Search this shelf…"
+msgstr "ဤစင်…ကို ရှာပါ"
+
+# Extracted string
+msgid "Sort books"
+msgstr "စာအုပ်များကို အမျိုးအစားခွဲပါ။"
+
+# Extracted string
+msgid "Browse by genre, preview book details, and read online."
+msgstr "အမျိုးအစားအလိုက် ရှာဖွေပါ၊ စာအုပ်အသေးစိတ်အချက်အလက်များကို အစမ်းကြည့်ရှုပြီး အွန်လိုင်းတွင် ဖတ်ရှုပါ။"
+
+# Extracted string
+msgid "The E-Library could not be loaded."
+msgstr "E-Library ကို တင်၍မရပါ။"
+
+# Extracted string
+msgid "No e-books yet."
+msgstr "e-books မရှိသေးပါ။"
+
+# Extracted string
+msgid "Upload a PDF, EPUB, CBR, or CBZ file to create the first shelf."
+msgstr "ပထမဆုံးစင်ကိုဖန်တီးရန် PDF၊ EPUB၊ CBR သို့မဟုတ် CBZ ဖိုင်ကို အပ်လုဒ်လုပ်ပါ။"
+
+# Extracted string
+msgid "Find your next read"
+msgstr "သင်၏နောက်ထပ်ဖတ်မှုကိုရှာပါ။"
+
+# Extracted string
+msgid "Search the whole library"
+msgstr "စာကြည့်တိုက်တစ်ခုလုံးကို ရှာဖွေပါ။"
+
+# Extracted string
+msgid "Search by title, author, genre, series, language, or format."
+msgstr "ခေါင်းစဉ်၊ စာရေးဆရာ၊ အမျိုးအစား၊ စီးရီး၊ ဘာသာစကား သို့မဟုတ် ဖော်မတ်ဖြင့် ရှာဖွေပါ။"
+
+# Extracted string
+msgid "Search all books"
+msgstr "စာအုပ်အားလုံးကိုရှာပါ။"
+
+# Extracted string
+msgid "Search results"
+msgstr "ရှာဖွေမှုရလဒ်များ"
+
+# Extracted string
+msgid "Try a title, author, genre, or series name."
+msgstr "ခေါင်းစဉ်၊ စာရေးဆရာ၊ အမျိုးအစား သို့မဟုတ် စီးရီးအမည်ကို စမ်းကြည့်ပါ။"
+
+# Extracted string
+msgid "Library collections"
+msgstr "စာကြည့်တိုက်စုစည်းမှုများ"
+
+# Extracted string
+msgid "Browse genres"
+msgstr "အမျိုးအစားများကို ကြည့်ပါ။"
+
+# Extracted string
+msgid "Select a collection to open its bookshelf."
+msgstr "၎င်း၏စာအုပ်စင်ဖွင့်ရန် စုစည်းမှုတစ်ခုကို ရွေးပါ။"
+
+# Extracted string
+msgid "Drag or scroll to browse. Select a cover to view the books in that genre."
+msgstr "ရှာဖွေရန် ဆွဲယူ သို့မဟုတ် လှိမ့်ပါ။ ထိုအမျိုးအစားရှိ စာအုပ်များကို ကြည့်ရန် အဖုံးကို ရွေးပါ။"
+
+# Extracted string
+msgid "All genres"
+msgstr "အမျိုးအစားအားလုံး"
+
+# Extracted string
+msgid "Search this shelf"
+msgstr "ဤစင်ကို ရှာပါ။"
+
+# Extracted string
+msgid "Individual books"
+msgstr "တစ်ဦးချင်းစာအုပ်များ"
+
+# Extracted string
+msgid "Language:"
+msgstr "ဘာသာစကား-"
+
+# Extracted string
+msgid "Size:"
+msgstr "အရွယ်အစား-"
+
+# Extracted string
+msgid "Read now"
+msgstr "ယခုဖတ်ပါ။"
+
+# Extracted string
+msgid "Assign"
+msgstr "တာဝန်ပေးပါ။"
+
+# Extracted string
+msgid "Highlight color"
+msgstr "အသားပေးအရောင်"
+
+# Extracted string
+msgid "Previous page"
+msgstr "ယခင်စာမျက်နှာ"
+
+# Extracted string
+msgid "Next page"
+msgstr "နောက်စာမျက်နှာ"
+
+# Extracted string
+msgid "Zoom out (-)"
+msgstr "ချုံ့ချဲ့ (-)"
+
+# Extracted string
+msgid "Reset zoom to 100% (0)"
+msgstr "Zoom ကို 100% (0) သို့ ပြန်လည်သတ်မှတ်ပါ"
+
+# Extracted string
+msgid "Zoom in (+)"
+msgstr "ဇူးမ်ချဲ့ရန် (+)"
+
+# Extracted string
+msgid "Page view"
+msgstr "စာမျက်နှာမြင်ကွင်း"
+
+# Extracted string
+msgid "Fit mode"
+msgstr "ကြံ့ခိုင်မှုမုဒ်"
+
+# Extracted string
+msgid "Reading direction"
+msgstr "စာဖတ်ခြင်းလမ်းညွှန်"
+
+# Extracted string
+msgid "Opening comic…"
+msgstr "ရုပ်ပြအဖွင့်…"
+
+# Extracted string
+msgid "Single Page"
+msgstr "စာမျက်နှာတစ်ခုတည်း"
+
+# Extracted string
+msgid "Two Page"
+msgstr "နှစ်မျက်နှာ"
+
+# Extracted string
+msgid "Fit Page"
+msgstr "ကွက်တိပေ့"
+
+# Extracted string
+msgid "Fit Width"
+msgstr "ကွက်တိ အကျယ်"
+
+# Extracted string
+msgid "Fit Height"
+msgstr "Fit အမြင့်"
+
+# Extracted string
+msgid "Left to Right"
+msgstr "ဘယ်မှညာ"
+
+# Extracted string
+msgid "Right to Left"
+msgstr "ညာမှလက်ဝဲ"
+
+# Extracted string
+msgid "Fit to Width"
+msgstr "အနံနှင့် အံကိုက်"
+
+# Extracted string
+msgid "Fit to Height"
+msgstr "အမြင့်နှင့် အံကိုက်"
+
+# Extracted string
+msgid "${f.name}: only PDF, EPUB, CBR, and CBZ files are allowed."
+msgstr "${f.name}: PDF၊ EPUB၊ CBR နှင့် CBZ ဖိုင်များကိုသာ ခွင့်ပြုထားသည်။"
+
+# Extracted string
+msgid "${f.name}: this format has a ${maxMb} MB upload limit."
+msgstr "${f.name}: ဤဖော်မတ်သည်${maxMb}MB အပ်လုဒ်ကန့်သတ်ချက် ရှိသည်။"
+
+# Extracted string
+msgid "${f.name}: this file is already in the upload queue."
+msgstr "${f.name}: ဤဖိုင်သည် အပ်လုဒ်တင်ရန် တန်းစီနေပြီဖြစ်သည်။"
+
+# Extracted string
+msgid "Add at least one PDF, EPUB, CBR, or CBZ file."
+msgstr "အနည်းဆုံး PDF၊ EPUB၊ CBR သို့မဟုတ် CBZ ဖိုင်တစ်ခု ထည့်ပါ။"
+
+# Extracted string
+msgid "Each queued book must have a unique title."
+msgstr "တန်းစီထားသော စာအုပ်တိုင်းတွင် ထူးခြားသော ခေါင်းစဉ်တစ်ခု ရှိရပါမည်။"
+
+# Extracted string
+msgid "Enter a series name or turn off series upload."
+msgstr "စီးရီးအမည်ကို ထည့်ပါ သို့မဟုတ် စီးရီးအပ်လုဒ်ကို ပိတ်ပါ။"
+
+# Extracted string
+msgid "Starting volume must be a positive whole number."
+msgstr "စတင်သည့်အသံအတိုးအကျယ်သည် အပေါင်းကိန်းဂဏန်းတစ်ခုလုံးဖြစ်ရပါမည်။"
+
+# Extracted string
+msgid "Choose PDF, EPUB, CBR, or CBZ files to upload"
+msgstr "အပ်လုဒ်လုပ်ရန် PDF၊ EPUB၊ CBR သို့မဟုတ် CBZ ဖိုင်များကို ရွေးပါ။"
+
+# Extracted string
+msgid "Upload these books as a series"
+msgstr "ဤစာအုပ်များကို စီးရီးအဖြစ် အပ်လုဒ်လုပ်ပါ။"
+
+# Extracted string
+msgid "e.g. Harry Potter"
+msgstr "ဥပမာ ဟယ်ရီပေါ်တာ"
+
+# Extracted string
+msgid "Add PDF, EPUB, CBR, or CBZ books to the E-Library."
+msgstr "PDF၊ EPUB၊ CBR သို့မဟုတ် CBZ စာအုပ်များကို E-Library သို့ထည့်ပါ။"
+
+# Extracted string
+msgid "Series name *"
+msgstr "စီးရီးအမည် *"
+
+# Extracted string
+msgid "Choose an existing name to add volumes to that series, or type a new one."
+msgstr "ထိုစီးရီးသို့ အတွဲများထည့်ရန် ရှိပြီးသားအမည်ကို ရွေးပါ သို့မဟုတ် အသစ်တစ်ခုရိုက်ပါ။"
+
+# Extracted string
+msgid "Existing series"
+msgstr "ရှိပြီးသားစီးရီး"
+
+# Extracted string
+msgid "Series preview"
+msgstr "စီးရီးအကြိုကြည့်ရှုခြင်း။"
+
+# Extracted string
+msgid "Fullscreen could not be started on this device."
+msgstr "မျက်နှာပြင်အပြည့်ကို ဤစက်ပစ္စည်းတွင် စတင်၍မရပါ။"
+
+# Extracted string
+msgid "No questions are available"
+msgstr "မေးခွန်းများ မရရှိနိုင်ပါ။"
+
+# Extracted string
+msgid "Ask your teacher to review this exam before you continue."
+msgstr "ဆက်မလုပ်မီ ဤစာမေးပွဲကို ပြန်လည်သုံးသပ်ရန် သင့်ဆရာကို တောင်းဆိုပါ။"
+
+# Extracted string
+msgid "✓ All blanks filled — you can tap a blank to change it."
+msgstr "✓ကွက်လပ်များ—ဖြည့်ထားသော ကွက်လပ်များအားလုံးကို သင်ပြောင်းလဲရန် ဗလာကိုနှိပ်နိုင်သည်။"
+
+# Extracted string
+msgid "Integrity monitoring active."
+msgstr "သမာဓိစောင့်ကြပ်တက်ကြွမှု။"
+
+# Extracted string
+msgid "Enter fullscreen"
+msgstr "မျက်နှာပြင်အပြည့်ထည့်ပါ။"
+
+# Extracted string
+msgid "Exam style applied. You can customize every setting."
+msgstr "စာမေးပွဲပုံစံကို အသုံးပြုထားသည်။ ဆက်တင်တိုင်းကို စိတ်ကြိုက်ပြင်ဆင်နိုင်ပါတယ်။"
+
+# Extracted string
+msgid "Duration must be at least 1 minute."
+msgstr "ကြာချိန်သည် အနည်းဆုံး 1 မိနစ် ဖြစ်ရပါမည်။"
+
+# Extracted string
+msgid "Set a close time for scheduled result release."
+msgstr "စီစဉ်ထားသော ရလဒ်ထုတ်ပြန်မှုအတွက် အနီးကပ်အချိန်ကို သတ်မှတ်ပါ။"
+
+# Extracted string
+msgid "Question ${emptyIdx + 1} is missing its question text."
+msgstr "မေးခွန်း ${emptyIdx + 1} သည် ၎င်း၏မေးခွန်းစာသား ပျောက်နေသည်။"
+
+# Extracted string
+msgid "Question ${emptyOptionIdx + 1} has an empty answer option."
+msgstr "မေးခွန်း ${emptyOptionIdx + 1} တွင် အလွတ်အဖြေ ရွေးစရာတစ်ခု ရှိသည်။"
+
+# Extracted string
+msgid "Question ${dragIdx + 1} needs exactly one marked correct word for each blank."
+msgstr "မေးခွန်း ${dragIdx + 1} သည် ဗလာတစ်ခုစီအတွက် မှန်ကန်သော အမှတ်အသားတစ်ခုစီ လိုအပ်ပါသည်။"
+
+# Extracted string
+msgid "Paste a reading passage, source text, chart description, or scenario. Students see it beside the question."
+msgstr "ဖတ်နေသည့်စာပိုဒ်၊ ရင်းမြစ်စာသား၊ ကားချပ်ဖော်ပြချက် သို့မဟုတ် မြင်ကွင်းတစ်ခုကို ကူးထည့်ပါ။ ကျောင်းသားတွေက မေးခွန်းနားမှာ တွေ့တယ်။"
+
+# Extracted string
+msgid "Question standard"
+msgstr "မေးခွန်းစံ"
+
+# Extracted string
+msgid "Standard multiple choice"
+msgstr "စံရွေးချယ်မှုမျိုးစုံ"
+
+# Extracted string
+msgid "GED Reasoning Through Language Arts"
+msgstr "ဘာသာစကားအနုပညာမှတဆင့် GED ကျိုးကြောင်းဆင်ခြင်ခြင်း။"
+
+# Extracted string
+msgid "PNG, JPG, WebP, or GIF · up to 10 MB."
+msgstr "PNG၊ JPG၊ WebP သို့မဟုတ် GIF·10 MB အထိ။"
+
+# Extracted string
+msgid "Mock exam"
+msgstr "လှောင်ပြောင်စာမေးပွဲ"
+
+# Extracted string
+msgid "GED neutral"
+msgstr "GED ကြားနေ"
+
+# Extracted string
+msgid "Classroom classic"
+msgstr "စာသင်ခန်းဂန္ထဝင်"
+
+# Extracted string
+msgid "Colorful K–5"
+msgstr "ရောင်စုံ K–၅"
+
+# Extracted string
+msgid "High-contrast focus"
+msgstr "ဆန့်ကျင်ဘက် အာရုံစူးစိုက်မှု မြင့်မားခြင်း။"
+
+# Extracted string
+msgid "Integrity events are visible to teachers. Browser controls deter common actions but cannot guarantee prevention on every device."
+msgstr "သမာဓိ အဖြစ်အပျက်များကို ဆရာများ မြင်နိုင်သည်။ ဘရောက်ဆာသည် သာမန်လုပ်ဆောင်မှုများကို ဟန့်တားသော်လည်း စက်ပစ္စည်းတိုင်းတွင် ကာကွယ်မှုကို အာမမခံနိုင်ပါ။"
+
+# Extracted string
+msgid "Amount must be greater than zero and tax cannot be negative"
+msgstr "ပမာဏသည် သုညထက် ပိုများရမည်ဖြစ်ပြီး အခွန်အနုတ်မဖြစ်နိုင်ပါ။"
+
+# Extracted string
+msgid "Due date must be on or after the expense date"
+msgstr "ကုန်ဆုံးရက်သည် ကုန်ကျစရိတ်ရက်စွဲ သို့မဟုတ် အပြီးတွင် ဖြစ်ရမည်။"
+
+# Extracted string
+msgid "A deck can contain at most ${MAX_CARDS} cards"
+msgstr "ကုန်းပတ်တစ်ခုတွင် အများဆုံး${MAX_CARDS}ကတ်များ ပါဝင်နိုင်သည်။"
+
+# Extracted string
+msgid "Use a PNG, JPG, WEBP, or GIF image"
+msgstr "PNG၊ JPG၊ WEBP သို့မဟုတ် GIF ပုံတစ်ပုံကို သုံးပါ။"
+
+# Extracted string
+msgid "Image must be 8 MB or smaller"
+msgstr "ပုံသည် 8 MB သို့မဟုတ် ထို့ထက်ငယ်ရပါမည်။"
+
+# Extracted string
+msgid "Only the first ${MAX_CARDS} cards were kept"
+msgstr "ပထမဆုံး${MAX_CARDS}ကတ်များကိုသာ သိမ်းဆည်းခဲ့သည်။"
+
+# Extracted string
+msgid "Wait for the image upload to finish"
+msgstr "ပုံအပ်လုဒ်ပြီးအောင်စောင့်ပါ။"
+
+# Extracted string
+msgid "Card ${incompleteIndex + 1} needs both a term and a definition"
+msgstr "ကတ် ${incompleteIndex + 1} သည် ဝေါဟာရတစ်ခုနှင့် အဓိပ္ပါယ်နှစ်ခုစလုံး လိုအပ်ပါသည်။"
+
+# Extracted string
+msgid "Couldn't load this flashcard deck."
+msgstr "ဤ flashcard deck ကို တင်၍မရပါ။"
+
+# Extracted string
+msgid "Your match result could not be saved"
+msgstr "သင့်ပွဲရလဒ်ကို မသိမ်းဆည်းနိုင်ပါ။"
+
+# Extracted string
+msgid "Your quiz result could not be saved"
+msgstr "သင့်ပဟေဠိရလဒ်ကို မသိမ်းဆည်းနိုင်ပါ။"
+
+# Extracted string
+msgid "Your spelling result could not be saved"
+msgstr "သင့်စာလုံးပေါင်းရလဒ်ကို မသိမ်းဆည်းနိုင်ပါ။"
+
+# Extracted string
+msgid "Couldn't load your assigned decks."
+msgstr "သင့်သတ်မှတ်ထားသော ကုန်းပတ်များကို မတင်နိုင်ခဲ့ပါ။"
+
+# Extracted string
+msgid "Tap the card or press Space to flip · Arrow keys move between cards"
+msgstr "ကတ်ကို နှိပ်ပါ သို့မဟုတ်·မြှားခလုတ်များကို ကတ်များကြားရွှေ့ရန် Space ကိုနှိပ်ပါ။"
+
+# Extracted string
+msgid "Choose a ${form.scope === \"CLASS\" ? \"class\" : \"student\"} first"
+msgstr "${form.scope === \"CLASS\" ကို ရွေးပါ ။ \"class\" : \"student\"} ပထမ"
+
+# Extracted string
+msgid "Set a block, time limit, or allowed schedule"
+msgstr "ပိတ်ဆို့ခြင်း၊ အချိန်ကန့်သတ်ချက် သို့မဟုတ် ခွင့်ပြုထားသော အချိန်ဇယားကို သတ်မှတ်ပါ။"
+
+# Extracted string
+msgid "Game control removed"
+msgstr "ဂိမ်းထိန်းချုပ်မှုကို ဖယ်ရှားခဲ့သည်။"
+
+# Extracted string
+msgid "Remove the ${gameLabel(policy.gameKey)} control for ${targetLabel(policy)}?"
+msgstr "${targetLabel(မူဝါဒ)} အတွက် ${gameLabel(policy.gameKey)} ထိန်းချုပ်မှုကို ဖယ်ရှားမလား။"
+
+# Extracted string
+msgid "Choose a student"
+msgstr "ကျောင်းသားကို ရွေးချယ်ပါ။"
+
+# Extracted string
+msgid "Unlimited"
+msgstr "အကန့်အသတ်"
+
+# Extracted string
+msgid "Example: Games are available after homework and reading time."
+msgstr "ဥပမာ- အိမ်စာနှင့် စာဖတ်ချိန်ပြီးနောက် ဂိမ်းများကို ရနိုင်သည်။"
+
+# Extracted string
+msgid "Edit control"
+msgstr "ထိန်းချုပ်မှုကို တည်းဖြတ်ပါ။"
+
+# Extracted string
+msgid "Remove control"
+msgstr "ထိန်းချုပ်မှုကို ဖယ်ရှားပါ။"
+
+# Extracted string
+msgid "Game-time parental controls"
+msgstr "ဂိမ်းအချိန်မိဘထိန်းချုပ်မှုများ"
+
+# Extracted string
+msgid "Active rules"
+msgstr "အသက်ဝင်သောစည်းမျဉ်းများ"
+
+# Extracted string
+msgid "Your classes"
+msgstr "မင်းရဲ့အတန်း"
+
+# Extracted string
+msgid "Blank time fields mean unlimited. Blocking always overrides timers."
+msgstr "အလွတ်ကွက်လပ်များသည် အကန့်အသတ်မရှိဟု ဆိုလိုသည်။ ပိတ်ဆို့ခြင်းသည် အချိန်တိုင်းမာများကို အမြဲတမ်းလွှမ်းမိုးသည်။"
+
+# Extracted string
+msgid "Who does this apply to?"
+msgstr "ဒါက ဘယ်သူ့အတွက်လဲ။"
+
+# Extracted string
+msgid "All students"
+msgstr "ကျောင်းသားအားလုံး"
+
+# Extracted string
+msgid "A class"
+msgstr "အတန်းတစ်ခု"
+
+# Extracted string
+msgid "One student"
+msgstr "ကျောင်းသားတစ်ယောက်"
+
+# Extracted string
+msgid "Game"
+msgstr "ဂိမ်း"
+
+# Extracted string
+msgid "All recreational games"
+msgstr "အပန်းဖြေဂိမ်းအားလုံး"
+
+# Extracted string
+msgid "Block completely"
+msgstr "လုံးဝပိတ်ပင်ပါ။"
+
+# Extracted string
+msgid "Students cannot open or continue the selected game."
+msgstr "ကျောင်းသားများသည် ရွေးချယ်ထားသောဂိမ်းကို ဖွင့်ခြင်း သို့မဟုတ် ဆက်၍မရနိုင်ပါ။"
+
+# Extracted string
+msgid "Minutes per day"
+msgstr "တစ်နေ့လျှင် မိနစ်"
+
+# Extracted string
+msgid "Minutes per session"
+msgstr "စက်ရှင်တစ်ခုလျှင် မိနစ်"
+
+# Extracted string
+msgid "Break between sessions"
+msgstr "အစည်းအဝေးများကြား ဖြတ်ပါ။"
+
+# Extracted string
+msgid "Allowed-time schedule"
+msgstr "ခွင့်ပြုချိန်ဇယား"
+
+# Extracted string
+msgid "Outside this window, games are locked automatically."
+msgstr "ဤဝင်းဒိုးအပြင်ဘက်တွင် ဂိမ်းများကို အလိုအလျောက် လော့ခ်ချထားသည်။"
+
+# Extracted string
+msgid "Games open"
+msgstr "ဂိမ်းများဖွင့်သည်။"
+
+# Extracted string
+msgid "Games close"
+msgstr "ဂိမ်းတွေပိတ်"
+
+# Extracted string
+msgid "Cancel edit"
+msgstr "တည်းဖြတ်ခြင်းကို ပယ်ဖျက်ပါ။"
+
+# Extracted string
+msgid "Current controls"
+msgstr "လက်ရှိ ထိန်းချုပ်မှုများ"
+
+# Extracted string
+msgid "All applicable rules are combined; stricter limits take priority."
+msgstr "သက်ဆိုင်သော စည်းမျဉ်းများအားလုံးကို ပေါင်းစပ်ထားသည်။ တင်းကျပ်သောကန့်သတ်ချက်များကိုဦးစားပေးသည်။"
+
+# Extracted string
+msgid "No game controls yet"
+msgstr "ဂိမ်းထိန်းချုပ်မှုမရှိသေးပါ။"
+
+# Extracted string
+msgid "Add a balanced daily limit to start reducing screen time."
+msgstr "စခရင်အချိန်ကို လျှော့ချစတင်ရန် မျှတသောနေ့စဉ်ကန့်သတ်ချက်ကို ထည့်ပါ။"
+
+# Extracted string
+msgid "Admin locked"
+msgstr "Admin သော့ခတ်ထားသည်။"
+
+# Extracted string
+msgid "Successfully imported ${parsedWords.length} words!"
+msgstr "${parsedWords.length}စကားလုံးများကို အောင်မြင်စွာ ထည့်သွင်းခဲ့သည်။"
+
+# Extracted string
+msgid "Download CSV Template"
+msgstr "CSV Template ကို ဒေါင်းလုဒ်လုပ်ပါ။"
+
+# Extracted string
+msgid "Checkers Leaderboard"
+msgstr "Checkers Leaderboard"
+
+# Extracted string
+msgid "My class"
+msgstr "ငါ့အတန်း"
+
+# Extracted string
+msgid "Whole school"
+msgstr "တစ်ကျောင်းလုံး"
+
+# Extracted string
+msgid "No scores yet. Finish a game to claim the top spot!"
+msgstr "အမှတ်များ မရှိသေးပါ။ ထိပ်တန်းနေရာကို ရယူရန် ဂိမ်းတစ်ခုကို အပြီးသတ်ပါ။"
+
+# Extracted string
+msgid "Play"
+msgstr "ကစားပါ။"
+
+# Extracted string
+msgid "AI Opponent"
+msgstr "AI ဆန့်ကျင်သူ"
+
+# Extracted string
+msgid "Classic board game with AI, vocabulary learning, and class leaderboards!"
+msgstr "AI၊ ဝေါဟာရသင်ယူမှုနှင့် အတန်းခေါင်းဆောင်ဘုတ်များပါရှိသော ဂန္တဝင်ဘုတ်ဂိမ်း။"
+
+# Extracted string
+msgid "Chess board"
+msgstr "စစ်တုရင်ခုံ"
+
+# Extracted string
+msgid "Choose promotion piece"
+msgstr "ပရိုမိုးရှင်းအပိုင်းကို ရွေးပါ။"
+
+# Extracted string
+msgid "Confirm resignation"
+msgstr "နုတ်ထွက်ကြောင်း အတည်ပြုပါ။"
+
+# Extracted string
+msgid "Loading game…"
+msgstr "ဂိမ်းကိုဖွင့်နေသည်…"
+
+# Extracted string
+msgid "Back to lobby"
+msgstr "ဧည့်ခန်း သို့ ပြန်သွားရန်"
+
+# Extracted string
+msgid "Promote pawn to"
+msgstr "အပေါင်ကို မြှင့်တင်ပါ။"
+
+# Extracted string
+msgid "Resign this game?"
+msgstr "ဒီဂိမ်းကို နုတ်ထွက်မလား။"
+
+# Extracted string
+msgid "Your opponent will be credited with the win."
+msgstr "မင်းရဲ့ပြိုင်ဘက်ကို အနိုင်ရတာနဲ့ ဂုဏ်ပြုခံရလိမ့်မယ်။"
+
+# Extracted string
+msgid "Resign"
+msgstr "နုတ်ထွက်ပါ။"
+
+# Extracted string
+msgid "Play again"
+msgstr "ပြန်ကစားပါ။"
+
+# Extracted string
+msgid "Moves"
+msgstr "ရွေ့လျား"
+
+# Extracted string
+msgid "Select a piece to begin"
+msgstr "စတင်ရန် အပိုင်းတစ်ခုကို ရွေးပါ။"
+
+# Extracted string
+msgid "Flip"
+msgstr "လှန်ပါ။"
+
+# Extracted string
+msgid "◀ Back to lobby"
+msgstr "◀ ဧည့်ခန်းသို့ ပြန်သွားရန်"
+
+# Extracted string
+msgid "Thinking"
+msgstr "စဉ်းစားနေသည်။"
+
+# Extracted string
+msgid "To move"
+msgstr "ရွှေ့ရန်"
+
+# Extracted string
+msgid "Chess leaderboard"
+msgstr "စစ်တုရင် ဦးဆောင်သူ"
+
+# Extracted string
+msgid "◀ Lobby"
+msgstr "◀ လော်ဘီ"
+
+# Extracted string
+msgid "Pts"
+msgstr "Pts"
+
+# Extracted string
+msgid "Challenge sent!"
+msgstr "Challenge ပို့လိုက်ပါပြီ။"
+
+# Extracted string
+msgid "wants to play chess"
+msgstr "စစ်တုရင်ကစားချင်တယ်။"
+
+# Extracted string
+msgid "waiting for a response…"
+msgstr "တုံ့ပြန်ချက်ကို စောင့်ဆိုင်းနေသည်…"
+
+# Extracted string
+msgid "Multiplayer lobby"
+msgstr "လူပေါင်းစုံ ဧည့်ခန်း"
+
+# Extracted string
+msgid "◀ Setup"
+msgstr "◀ စနစ်ထည့်သွင်းခြင်း။"
+
+# Extracted string
+msgid "Challenges for you"
+msgstr "သင့်အတွက် စိန်ခေါ်မှုများ"
+
+# Extracted string
+msgid "Accept"
+msgstr "လက်ခံပါတယ်။"
+
+# Extracted string
+msgid "Decline"
+msgstr "ငြင်းသည်။"
+
+# Extracted string
+msgid "Your games"
+msgstr "သင်၏ဂိမ်းများ"
+
+# Extracted string
+msgid "Sent challenges"
+msgstr "စိန်ခေါ်မှုများ ပေးပို့ခဲ့သည်။"
+
+# Extracted string
+msgid "Recent games"
+msgstr "လတ်တလောဂိမ်းများ"
+
+# Extracted string
+msgid "No game selected."
+msgstr "မည်သည့်ဂိမ်းကိုမျှ ရွေးချယ်ထားခြင်းမရှိပါ။"
+
+# Extracted string
+msgid "Open multiplayer lobby"
+msgstr "ကစားသူအများအပြား ဧည့်ခန်းကိုဖွင့်ပါ။"
+
+# Extracted string
+msgid "◀ Back"
+msgstr "◀ နောက်ပြန်"
+
+# Extracted string
+msgid "Classical starting position"
+msgstr "ဂန္ထဝင်စတင်အနေအထား"
+
+# Extracted string
+msgid "Choose an opponent"
+msgstr "ပြိုင်ဘက်ကိုရွေးချယ်ပါ။"
+
+# Extracted string
+msgid "Online multiplayer"
+msgstr "အွန်လိုင်း Multiplayer"
+
+# Extracted string
+msgid "Computer"
+msgstr "ကွန်ပျူတာ"
+
+# Extracted string
+msgid "Local friend"
+msgstr "ဒေသခံမိတ်ဆွေ"
+
+# Extracted string
+msgid "Share this device"
+msgstr "ဤစက်ပစ္စည်းကို မျှဝေပါ။"
+
+# Extracted string
+msgid "Computer strength"
+msgstr "ကွန်ပျူတာအင်အား"
+
+# Extracted string
+msgid "Leave Daily Quest"
+msgstr "နေ့စဉ် Quest မှထွက်ပါ။"
+
+# Extracted string
+msgid "Preparing today’s quest…"
+msgstr "ယနေ့မေးခွန်းကို ပြင်ဆင်နေသည်…"
+
+# Extracted string
+msgid "Daily Quest is unavailable"
+msgstr "နေ့စဉ် Quest မရနိုင်ပါ။"
+
+# Extracted string
+msgid "New quest every day"
+msgstr "နေ့စဉ်ရှာဖွေမှုအသစ်"
+
+# Extracted string
+msgid "Today&apos;s English Word Quest"
+msgstr "ယနေ့&apos;s English Word Quest"
+
+# Extracted string
+msgid "Choose your pace"
+msgstr "သင်၏အရှိန်အဟုန်ကိုရွေးချယ်ပါ။"
+
+# Extracted string
+msgid "You can complete one quest each day. Pick the level that feels right."
+msgstr "သင်သည် တစ်နေ့လျှင် quest တစ်ခုပြီးမြောက်နိုင်သည်။ မှန်ကန်တယ်လို့ ခံစားရတဲ့ အဆင့်ကို ရွေးပါ။"
+
+# Extracted string
+msgid "Quest complete"
+msgstr "Quest ပြီးပါပြီ။"
+
+# Extracted string
+msgid "You showed up and learned!"
+msgstr "သင်ပေါ်လာပြီး သင်ယူပါ။"
+
+# Extracted string
+msgid "Come back tomorrow for fresh English words."
+msgstr "အင်္ဂလိပ်စကားလုံးအသစ်များအတွက် မနက်ဖြန်ပြန်လာပါ။"
+
+# Extracted string
+msgid "XP"
+msgstr "XP"
+
+# Extracted string
+msgid "Day streak"
+msgstr "နေ့စဥ်"
+
+# Extracted string
+msgid "You answered"
+msgstr "မင်းဖြေတယ်။"
+
+# Extracted string
+msgid "Done for today"
+msgstr "ဒီနေ့အတွက် ပြီးပါပြီ။"
+
+# Extracted string
+msgid "Keep learning"
+msgstr "ဆက်လေ့လာပါ။"
+
+# Extracted string
+msgid "Review question"
+msgstr "ပြန်လှန်မေးခွန်း"
+
+# Extracted string
+msgid "Correct answer:"
+msgstr "အဖြေမှန်-"
+
+# Extracted string
+msgid "Friendly Language Quest guide wearing a yellow hoodie"
+msgstr "အဝါရောင် hoodie ၀တ်ဆင်ထားသော အဆင်ပြေသော ဘာသာစကားရှာဖွေရေး လမ်းညွှန်"
+
+# Extracted string
+msgid "dwyl/english-words"
+msgstr "dwyl/ အင်္ဂလိပ်-စကားလုံးများ"
+
+# Extracted string
+msgid "Isomorpheuss/advanced-english-vocabulary"
+msgstr "Isomorpheuss/advanced-english-vocabulary"
+
+# Extracted string
+msgid "AyeNyeinSan22/linguify"
+msgstr "AyeNyeinSan22/ဘာသာပြန်"
+
+# Extracted string
+msgid "Course library"
+msgstr "သင်တန်းစာကြည့်တိုက်"
+
+# Extracted string
+msgid "The story behind the quest"
+msgstr "ပစ္စုပ္ပန်နောက်ကွယ်က ဇာတ်လမ်း"
+
+# Extracted string
+msgid "Language learning,"
+msgstr "ဘာသာစကားသင်ယူမှု၊"
+
+# Extracted string
+msgid "made more human."
+msgstr "လူပိုလုပ်တယ်။"
+
+# Extracted string
+msgid "Language Quest is MRLC’s colorful learning space for useful words, complete sentences, confident speaking, and classroom connection—with transparent credit for every source that helped shape it."
+msgstr "Language Quest သည် MRLC ၏ အသုံးဝင်သော စကားလုံးများ၊ စာကြောင်းများ အပြည့်အစုံ၊ ယုံကြည်စွာ ပြောဆိုခြင်းနှင့် စာသင်ခန်းချိတ်ဆက်မှု—အတွက် MRLC ၏ အရောင်အသွေးစုံလင်သော သင်ယူမှုနေရာဖြစ်ပြီး ၎င်းကို ပုံသွင်းပေးသော အရင်းအမြစ်တိုင်းအတွက် ပွင့်လင်းမြင်သာသော ခရက်ဒစ်ဖြင့် ပြုလုပ်ပါသည်။"
+
+# Extracted string
+msgid "Explore courses"
+msgstr "သင်တန်းများကို လေ့လာပါ။"
+
+# Extracted string
+msgid "View course sources"
+msgstr "သင်တန်းရင်းမြစ်များကိုကြည့်ပါ။"
+
+# Extracted string
+msgid "Listen • Pick • Spell"
+msgstr "••စာလုံးပေါင်းကို ရွေးပါ။"
+
+# Extracted string
+msgid "English + Burmese guidance"
+msgstr "အင်္ဂလိပ်+မြန်မာ လမ်းညွှန်"
+
+# Extracted string
+msgid "Notable course sources"
+msgstr "ထင်ရှားသော သင်တန်းရင်းမြစ်များ"
+
+# Extracted string
+msgid "Clear credit builds better learning."
+msgstr "ရှင်းလင်းသော ခရက်ဒစ်သည် ပိုမိုကောင်းမွန်သော သင်ယူမှုကို တည်ဆောက်သည်။"
+
+# Extracted string
+msgid "Some courses are original MRLC work; others adapt or curate external material. These notes make the most important provenance and licensing details easy to find."
+msgstr "အချို့သောသင်တန်းများသည် မူရင်း MRLC အလုပ်ဖြစ်သည်။ အခြားသူများက ပြင်ပပစ္စည်းကို လိုက်လျောညီထွေဖြစ်အောင် သို့မဟုတ် ပြုပြင်ပေးသည်။ ဤမှတ်စုများသည် အရေးကြီးဆုံးအထောက်အထားနှင့် လိုင်စင်အသေးစိတ်အချက်အလက်များကို ရှာဖွေရလွယ်ကူစေသည်။"
+
+# Extracted string
+msgid "Open learning"
+msgstr "ဖွင့်လှစ်သင်ကြားခြင်း။"
+
+# Extracted string
+msgid "Know what you study—and where it came from."
+msgstr "သင်—နှင့် ၎င်းသည် မည်သည့်နေရာမှ သင်ယူခဲ့သည်ကို သိပါ။"
+
+# Extracted string
+msgid "Attribution and redistribution"
+msgstr "ထည့်သွင်းတွက်ချက်ခြင်းနှင့် ပြန်လည်ဖြန့်ဖြူးခြင်း။"
+
+# Extracted string
+msgid "This page is a readable summary, not a replacement for the complete notices. Review the full license text and source-specific conditions before redistributing course content."
+msgstr "ဤစာမျက်နှာသည် ပြီးပြည့်စုံသောသတိပေးချက်များကို အစားထိုးခြင်းမဟုတ်ဘဲ ဖတ်နိုင်သော အကျဉ်းချုပ်ဖြစ်သည်။ သင်တန်းအကြောင်းအရာကို ပြန်လည်ဖြန့်ဝေခြင်းမပြုမီ လိုင်စင်စာသားအပြည့်အစုံနှင့် ရင်းမြစ်ဆိုင်ရာ သီးခြားအခြေအနေများကို ပြန်လည်သုံးသပ်ပါ။"
+
+# Extracted string
+msgid "Read complete notices"
+msgstr "သတိပေးချက်များကို အပြည့်အစုံဖတ်ပါ။"
+
+# Extracted string
+msgid "Learning support"
+msgstr "သင်ယူမှုအထောက်အပံ့"
+
+# Extracted string
+msgid "hexgrad/Kokoro-82M"
+msgstr "hexgrad/Kokoro-82M"
+
+# Extracted string
+msgid "Built with the community in mind"
+msgstr "အသိုက်အဝန်းနဲ့ တည်ဆောက်ထားတာပါ။"
+
+# Extracted string
+msgid "Designed and built for the learners, teachers, and community of the Mon Refugee Learning Centre. Language Quest is open source so others can learn from it, improve it, and give credit to the work behind it."
+msgstr "Mon Refugee Learning Centre ၏ သင်ယူသူများ၊ ဆရာများနှင့် အသိုက်အဝန်းအတွက် ဒီဇိုင်းဆွဲတည်ဆောက်ထားသည်။ Language Quest သည် open source ဖြစ်ပြီး အခြားသူများမှ ၎င်းထံမှ သင်ယူနိုင်၊ မြှင့်တင်ရန်နှင့် ၎င်းနောက်ကွယ်မှ အလုပ်အတွက် ခရက်ဒစ်ပေးနိုင်ပါသည်။"
+
+# Extracted string
+msgid "Visit GitHub profile"
+msgstr "GitHub ပရိုဖိုင်ကို ဝင်ကြည့်ပါ။"
+
+# Extracted string
+msgid "Start learning"
+msgstr "စတင်လေ့လာပါ။"
+
+# Extracted string
+msgid "Open-source project • MIT licensed"
+msgstr "Open-source ပရောဂျက်•MIT လိုင်စင်ရထားသည်။"
+
+# Extracted string
+msgid "Analytics could not load"
+msgstr "ပိုင်းခြားစိတ်ဖြာချက်ကို မတင်နိုင်ခဲ့ပါ။"
+
+# Extracted string
+msgid "Building the class learning picture…"
+msgstr "အတန်းသင်ယူမှုပုံ…တည်ဆောက်ခြင်း"
+
+# Extracted string
+msgid "Teacher learning insights"
+msgstr "ဆရာများ၏ သင်ယူမှု ဗဟုသုတများ"
+
+# Extracted string
+msgid "Language Quest Analytics"
+msgstr "ဘာသာစကား Quest ပိုင်းခြားစိတ်ဖြာချက်"
+
+# Extracted string
+msgid "See which questions, lessons, and practice skills need reteaching—and which learners may benefit from focused support."
+msgstr "မည်သည့်မေးခွန်းများ၊ သင်ခန်းစာများနှင့် အလေ့အကျင့်စွမ်းရည်များ—ကို ပြန်လည်သင်ကြားရန် လိုအပ်ပြီး သင်ယူသူများသည် အာရုံစိုက်ပံ့ပိုးမှုမှ အကျိုးကျေးဇူးရရှိနိုင်မည့်အရာများကို ကြည့်ရှုပါ။"
+
+# Extracted string
+msgid "Current view"
+msgstr "လက်ရှိအမြင်"
+
+# Extracted string
+msgid "Analytics scope"
+msgstr "ပိုင်းခြားစိတ်ဖြာမှုနယ်ပယ်"
+
+# Extracted string
+msgid "Classroom"
+msgstr "စာသင်ခန်း"
+
+# Extracted string
+msgid "Course"
+msgstr "သင်တန်း"
+
+# Extracted string
+msgid "All courses"
+msgstr "သင်တန်းများအားလုံး"
+
+# Extracted string
+msgid "Classroom focus:"
+msgstr "စာသင်ခန်း အာရုံစူးစိုက်မှု-"
+
+# Extracted string
+msgid ". Choose it above to isolate that course."
+msgstr ". ထိုသင်တန်းကို ခွဲထုတ်ရန် အပေါ်မှရွေးချယ်ပါ။"
+
+# Extracted string
+msgid "No attempts in this view yet"
+msgstr "ဤမြင်ကွင်းတွင် ကြိုးစားမှုမရှိသေးပါ။"
+
+# Extracted string
+msgid "Try another classroom or course. Analytics will appear after learners answer Language Quest challenges."
+msgstr "အခြားစာသင်ခန်း သို့မဟုတ် သင်တန်းကို စမ်းကြည့်ပါ။ သင်ယူသူများသည် Language Quest စိန်ခေါ်မှုများကိုဖြေဆိုပြီးနောက် ပိုင်းခြားစိတ်ဖြာချက်ပေါ်လာပါမည်။"
+
+# Extracted string
+msgid "Practice skills"
+msgstr "အတတ်ပညာကို လေ့ကျင့်ပါ။"
+
+# Extracted string
+msgid "Accuracy by activity"
+msgstr "လုပ်ဆောင်ချက်အလိုက် တိကျမှု"
+
+# Extracted string
+msgid "Lesson signals"
+msgstr "သင်ခန်းစာအချက်များ"
+
+# Extracted string
+msgid "Lessons needing attention"
+msgstr "သင်ခန်းစာများ အာရုံစိုက်ရန် လိုအပ်သည်။"
+
+# Extracted string
+msgid "Question diagnosis"
+msgstr "မေးခွန်းရောဂါလက္ခဏာ"
+
+# Extracted string
+msgid "Use these prompts for a mini-lesson, small group, or targeted practice."
+msgstr "သင်ခန်းစာအသေးစား၊ အဖွဲ့ငယ် သို့မဟုတ် ပစ်မှတ်ထားသော အလေ့အကျင့်အတွက် ဤအချက်များကို အသုံးပြုပါ။"
+
+# Extracted string
+msgid "Skill"
+msgstr "ကျွမ်းကျင်မှု"
+
+# Extracted string
+msgid "Accuracy"
+msgstr "တိကျမှု"
+
+# Extracted string
+msgid "Attempts"
+msgstr "ကြိုးစားမှု"
+
+# Extracted string
+msgid "Signal"
+msgstr "အချက်ပြ"
+
+# Extracted string
+msgid "Learner support"
+msgstr "သင်ယူသူပံ့ပိုးမှု"
+
+# Extracted string
+msgid "Who may need a check-in"
+msgstr "ဘယ်သူက check-in လိုအပ်လဲ။"
+
+# Extracted string
+msgid "Lowest accuracy appears first; learners without attempts remain visible for classroom scopes."
+msgstr "အနိမ့်ဆုံး တိကျမှု ပထမပေါ်လာသည် ။ ကြိုးစားမှုမရှိဘဲ သင်ယူသူများသည် စာသင်ခန်း နယ်ပယ်များအတွက် မြင်နိုင်ဆဲဖြစ်သည်။"
+
+# Extracted string
+msgid "Back to course"
+msgstr "သင်တန်းသို့ ပြန်သွားရန်"
+
+# Extracted string
+msgid "Boss Battle locked"
+msgstr "Boss Battle သော့ခတ်ထားသည်။"
+
+# Extracted string
+msgid "Boss Battle"
+msgstr "သူဌေးတိုက်ပွဲ"
+
+# Extracted string
+msgid "Boss health"
+msgstr "သူဌေးကျန်းမာရေး"
+
+# Extracted string
+msgid "Challenge again"
+msgstr "စိန်ခေါ်ပြန်တယ်။"
+
+# Extracted string
+msgid "${classroom.name} created"
+msgstr "${classroom.name}ဖန်တီးထားသည်။"
+
+# Extracted string
+msgid "Focus course updated"
+msgstr "အာရုံစိုက်သင်တန်း အပ်ဒိတ်လုပ်ထားသည်။"
+
+# Extracted string
+msgid "Join code copied"
+msgstr "Join ကုဒ်ကို ကူးယူထားပါတယ်။"
+
+# Extracted string
+msgid "Classroom code: ${selectedSummary.joinCode}"
+msgstr "စာသင်ခန်းကုဒ်-${selectedSummary.joinCode}"
+
+# Extracted string
+msgid "${member.name} removed from the classroom"
+msgstr "${member.name}ကို စာသင်ခန်းမှ ဖယ်ရှားခဲ့သည်။"
+
+# Extracted string
+msgid "Team challenge started"
+msgstr "အသင်းစိန်ခေါ်မှု စတင်ပါပြီ။"
+
+# Extracted string
+msgid "Team challenge closed"
+msgstr "အသင်းစိန်ခေါ်ပွဲ ပိတ်သည်။"
+
+# Extracted string
+msgid "Remove ${member.name} from ${detail.name}? Their personal learning progress will not be deleted."
+msgstr "${member.name}ကို${detail.name}မှ ဖယ်ရှားမလား။ ၎င်းတို့၏ ကိုယ်ရေးကိုယ်တာ သင်ယူမှုတိုးတက်မှုကို ဖျက်မည်မဟုတ်ပါ။"
+
+# Extracted string
+msgid "Example: GED English A"
+msgstr "ဥပမာ- GED English A"
+
+# Extracted string
+msgid "Copy join code"
+msgstr "Join ကုဒ်ကို ကူးယူပါ။"
+
+# Extracted string
+msgid "Finish strong this week"
+msgstr "ဒီတပတ် ခိုင်ခံ့အောင် လုပ်ပါ။"
+
+# Extracted string
+msgid "Homework pass or class cheer"
+msgstr "အိမ်စာ အောင်ပြီး သို့မဟုတ် အတန်းပျော်ပါ။"
+
+# Extracted string
+msgid "Refresh roster"
+msgstr "စာရင်းကို ပြန်လည်စတင်ပါ။"
+
+# Extracted string
+msgid "Teacher classroom tools"
+msgstr "ဆရာမ စာသင်ခန်းသုံးကိရိယာများ"
+
+# Extracted string
+msgid "Language Quest Classrooms"
+msgstr "ဘာသာစကား Quest စာသင်ခန်းများ"
+
+# Extracted string
+msgid "Create a classroom, share its join code, choose a focus course, and quickly see who may need encouragement or extra practice."
+msgstr "စာသင်ခန်းတစ်ခု ဖန်တီးပါ၊ ၎င်း၏ ပူးပေါင်းကုဒ်ကို မျှဝေပါ၊ အာရုံစူးစိုက်မှု သင်တန်းကို ရွေးချယ်ကာ အားပေးမှု သို့မဟုတ် လေ့ကျင့်မှု အပိုလိုအပ်နိုင်သူများကို အမြန်ကြည့်ရှုပါ။"
+
+# Extracted string
+msgid "Opt-in rosters"
+msgstr "စာရင်းဇယားများကို ရွေးချယ်ပါ။"
+
+# Extracted string
+msgid "Progress only"
+msgstr "တိုးတက်မှုသာ"
+
+# Extracted string
+msgid "New classroom"
+msgstr "စာသင်ခန်းအသစ်"
+
+# Extracted string
+msgid "A join code is created automatically."
+msgstr "Join ကုဒ်ကို အလိုအလျောက် ဖန်တီးပါသည်။"
+
+# Extracted string
+msgid "Classroom name"
+msgstr "စာသင်ခန်းအမည်"
+
+# Extracted string
+msgid "Focus course"
+msgstr "အာရုံပြုနေကြတာပါ။"
+
+# Extracted string
+msgid "No focus course yet"
+msgstr "အာရုံစူးစိုက်မှု မရှိသေးပါ။"
+
+# Extracted string
+msgid "Your classrooms"
+msgstr "မင်းရဲ့စာသင်ခန်းတွေ"
+
+# Extracted string
+msgid "Create your first classroom"
+msgstr "သင်၏ပထမဆုံးစာသင်ခန်းကိုဖန်တီးပါ။"
+
+# Extracted string
+msgid "Select or create a classroom"
+msgstr "စာသင်ခန်းတစ်ခုကို ရွေးချယ်ပါ သို့မဟုတ် ဖန်တီးပါ။"
+
+# Extracted string
+msgid "Learner join code"
+msgstr "သင်ယူသူ ချိတ်ဆက်ကုဒ်"
+
+# Extracted string
+msgid "No focus course"
+msgstr "အာရုံစူးစိုက်မှု မရှိဘူး။"
+
+# Extracted string
+msgid "Classroom XP challenges"
+msgstr "Classroom XP စိန်ခေါ်မှုများ"
+
+# Extracted string
+msgid "Set a cooperative goal. Every learner’s eligible XP contributes—there is no public messaging or individual pressure."
+msgstr "သမဝါယမပန်းတိုင်ကို ချမှတ်ပါ။ သင်ယူသူတိုင်း၏ အရည်အချင်းပြည့်မီသော XP သည်—အများသူငှာ မက်ဆေ့ဂျ်ပို့ခြင်း သို့မဟုတ် တစ်ဦးချင်းဖိအားပေးခြင်း မရှိပေ။"
+
+# Extracted string
+msgid "Challenge title"
+msgstr "စိန်ခေါ်မှုခေါင်းစဉ်"
+
+# Extracted string
+msgid "Target XP"
+msgstr "XP ပစ်မှတ်"
+
+# Extracted string
+msgid "3 days"
+msgstr "၃ ရက်"
+
+# Extracted string
+msgid "1 week"
+msgstr "၁ပတ်"
+
+# Extracted string
+msgid "2 weeks"
+msgstr "၂ပတ်"
+
+# Extracted string
+msgid "1 month"
+msgstr "၁ လ"
+
+# Extracted string
+msgid "No classroom challenges yet."
+msgstr "စာသင်ခန်းစိန်ခေါ်မှုများ မရှိသေးပါ။"
+
+# Extracted string
+msgid "Learner roster"
+msgstr "သင်ယူသူစာရင်း"
+
+# Extracted string
+msgid "No learners have joined yet"
+msgstr "သင်ယူသူ မရှိသေးပါ။"
+
+# Extracted string
+msgid "Share the join code above. Learners enter it from their Language Quest profile."
+msgstr "အပေါ်က Join Code ကိုမျှဝေပါ။ သင်ယူသူများသည် ၎င်းတို့၏ Language Quest ပရိုဖိုင်မှ ၎င်းကို ထည့်သွင်းသည်။"
+
+# Extracted string
+msgid "Loading course"
+msgstr "သင်တန်းတက်နေသည်။"
+
+# Extracted string
+msgid "This course could not be found."
+msgstr "ဤသင်တန်းကို ရှာမတွေ့ပါ။"
+
+# Extracted string
+msgid "Pick up where you left off"
+msgstr "သင်ထားခဲ့တဲ့နေရာကို ရွေးပါ။"
+
+# Extracted string
+msgid "Resume lesson"
+msgstr "သင်ခန်းစာပြန်စပါ။"
+
+# Extracted string
+msgid "Lessons are coming soon."
+msgstr "မကြာခင် သင်ခန်းစာတွေ လာတော့မယ်။"
+
+# Extracted string
+msgid "Course complete!"
+msgstr "သင်တန်းပြီးပါပြီ။"
+
+# Extracted string
+msgid "Challenge the Boss"
+msgstr "Boss ကိုစိန်ခေါ်ပါ။"
+
+# Extracted string
+msgid "Culture Quest"
+msgstr "ယဉ်ကျေးမှုရှာပုံတော်"
+
+# Extracted string
+msgid "Story Mode"
+msgstr "ဇာတ်လမ်းမုဒ်"
+
+# Extracted string
+msgid "Practice this course in Word Trail"
+msgstr "ဤသင်တန်းကို Word Trail တွင်လေ့ကျင့်ပါ။"
+
+# Extracted string
+msgid "Beyond the words"
+msgstr "စကားမလွန်"
+
+# Extracted string
+msgid "Keep learning the language in the meantime -- this corner will fill in over time."
+msgstr "ဤအတောအတွင်း ဘာသာစကားကို ဆက်လက်လေ့လာပါ - ဤထောင့်သည် အချိန်ကြာလာသည်နှင့်အမျှ ဖြည့်စွက်ပါမည်။"
+
+# Extracted string
+msgid "Give the course a title"
+msgstr "သင်တန်းခေါင်းစဉ်ပေးပါ။"
+
+# Extracted string
+msgid "Enter the language being taught"
+msgstr "သင်ကြားနေသော ဘာသာစကားကို ထည့်သွင်းပါ။"
+
+# Extracted string
+msgid "Course submitted for administrator review"
+msgstr "စီမံခန့်ခွဲသူ၏ သုံးသပ်ချက်အတွက် တင်ပြထားသော သင်တန်း"
+
+# Extracted string
+msgid "🌟"
+msgstr ""
+
+# Extracted string
+msgid "Spoken text (optional)"
+msgstr "စကားပြောစာသား (ချန်လှပ်ထားနိုင်သည်)"
+
+# Extracted string
+msgid "Spoken tile text (optional)"
+msgstr "စကားပြောအကွက်စာသား (ချန်လှပ်ထားနိုင်သည်)"
+
+# Extracted string
+msgid "The exact word or sentence learners should type"
+msgstr "အတိအကျ စကားလုံး သို့မဟုတ် ဝါကျကို လေ့လာသူများသည် စာရိုက်သင့်သည်။"
+
+# Extracted string
+msgid "Defaults to the transcript"
+msgstr "စာသားမှတ်တမ်းအတွက် မူရင်းများ"
+
+# Extracted string
+msgid "Remove challenge"
+msgstr "စိန်ခေါ်မှုကို ဖယ်ရှားပါ။"
+
+# Extracted string
+msgid "Explain why the answer is correct, or clarify the pattern learners should notice."
+msgstr "အဘယ်ကြောင့် အဖြေမှန်ကြောင်း ရှင်းပြပါ သို့မဟုတ် သင်ယူသူများ သတိပြုသင့်သည့် ပုံစံကို ရှင်းလင်းပါ။"
+
+# Extracted string
+msgid "e.g. Friendly greetings"
+msgstr "ဥပမာ ခင်မင်ရင်းနှီးစွာ နှုတ်ဆက်သည်။"
+
+# Extracted string
+msgid "What learners will practise"
+msgstr "သင်ယူသူတွေ ဘယ်လိုလေ့ကျင့်ကြမလဲ။"
+
+# Extracted string
+msgid "e.g. Everyday Basics"
+msgstr "ဥပမာ နေ့စဉ်အခြေခံများ"
+
+# Extracted string
+msgid "What this unit covers"
+msgstr "ဒီယူနစ်က ဘာတွေပါလဲ။"
+
+# Extracted string
+msgid "English"
+msgstr "အင်္ဂလိပ်စာ"
+
+# Extracted string
+msgid "English Courses"
+msgstr "အင်္ဂလိပ်စာသင်တန်းများ"
+
+# Extracted string
+msgid "What will people learn in this course?"
+msgstr "ဒီသင်တန်းမှာ လူတွေ ဘာတွေ သင်ယူကြမလဲ။"
+
+# Extracted string
+msgid "Tile"
+msgstr "ကြွေပြား"
+
+# Extracted string
+msgid "Remove pair"
+msgstr "အတွဲကို ဖယ်ရှားပါ။"
+
+# Extracted string
+msgid "Pair"
+msgstr "တွဲ"
+
+# Extracted string
+msgid "Canonical transcript"
+msgstr "Canonical စာသား"
+
+# Extracted string
+msgid "Spoken text"
+msgstr "စကားပြောစာသား"
+
+# Extracted string
+msgid "Activity type"
+msgstr "လုပ်ဆောင်ချက်အမျိုးအစား"
+
+# Extracted string
+msgid "Tip: add ___ where the answer should appear."
+msgstr "အကြံပြုချက်- အဖြေပေါ်လာမည့်နေရာတွင် ___ ထည့်ပါ။"
+
+# Extracted string
+msgid "Teaching explanation"
+msgstr "သင်ကြားရေးဆိုင်ရာ ရှင်းလင်းချက်"
+
+# Extracted string
+msgid "Shown only after the learner checks an answer."
+msgstr "သင်ယူသူသည် အဖြေတစ်ခုကို စစ်ဆေးပြီးနောက်မှသာ ပြသသည်။"
+
+# Extracted string
+msgid "Correct tile order"
+msgstr "ကြွေပြားအစီအစဥ် မှန်ကန်ခြင်း။"
+
+# Extracted string
+msgid "Enter tiles in the finished sentence order; learners will receive them shuffled."
+msgstr "ပြီးသောဝါကျအစီအစဥ်တွင် အကွက်များထည့်ပါ။ သင်ယူသူများသည် ၎င်းတို့ကို ရှပ်ထိုးလက်ခံမည်ဖြစ်သည်။"
+
+# Extracted string
+msgid "Matching pairs"
+msgstr "လိုက်ဖက်သောအတွဲများ"
+
+# Extracted string
+msgid "Each left tile is stored directly beside its correct partner."
+msgstr "ဘယ်ဘက်အကွက်တစ်ခုစီကို ၎င်း၏မှန်ကန်သောအဖော်ဘေးတွင် တိုက်ရိုက်သိမ်းဆည်းထားသည်။"
+
+# Extracted string
+msgid "Dictation answer"
+msgstr "သတ်ပုံအဖြေ"
+
+# Extracted string
+msgid "Learners hear the spoken text and type the canonical transcript."
+msgstr "သင်ယူသူများသည် စကားပြောစာသားကို နားထောင်ပြီး ကျမ်းဂန်စာသားမှတ်တမ်းကို ရိုက်ထည့်ပါ။"
+
+# Extracted string
+msgid "Option"
+msgstr "ရွေးချယ်မှု"
+
+# Extracted string
+msgid "Short description"
+msgstr "အတိုချုံးဖော်ပြချက်"
+
+# Extracted string
+msgid "Add challenge"
+msgstr "စိန်ခေါ်မှုကို ထည့်ပါ။"
+
+# Extracted string
+msgid "Unit title"
+msgstr "ယူနစ်ခေါင်းစဉ်"
+
+# Extracted string
+msgid "Add lesson"
+msgstr "သင်ခန်းစာထည့်ပါ။"
+
+# Extracted string
+msgid "Build from units → lessons → challenges."
+msgstr "ယူနစ်→သင်ခန်းစာ→စိန်ခေါ်မှုများမှ တည်ဆောက်ပါ။"
+
+# Extracted string
+msgid "Course title"
+msgstr "သင်တန်းခေါင်းစဉ်"
+
+# Extracted string
+msgid "Icon"
+msgstr "အိုင်ကွန်"
+
+# Extracted string
+msgid "Colour"
+msgstr "အရောင်"
+
+# Extracted string
+msgid "Administrator approval"
+msgstr "အုပ်ချုပ်ရေးမှူးခွင့်ပြုချက်"
+
+# Extracted string
+msgid "Reviewer feedback"
+msgstr "သုံးသပ်သူ တုံ့ပြန်ချက်"
+
+# Extracted string
+msgid "Return to review queue"
+msgstr "တန်းစီခြင်းကို ပြန်လည်သုံးသပ်ရန် ပြန်သွားပါ။"
+
+# Extracted string
+msgid "Published for everyone"
+msgstr "လူတိုင်းအတွက် ထုတ်ဝေခဲ့သည်။"
+
+# Extracted string
+msgid "Add unit"
+msgstr "ယူနစ်ထည့်ပါ။"
+
+# Extracted string
+msgid "View course path"
+msgstr "သင်တန်းလမ်းကြောင်းကိုကြည့်ပါ။"
+
+# Extracted string
+msgid "Loading Language Quest"
+msgstr "ဘာသာစကား Quest ကို တင်နေသည်။"
+
+# Extracted string
+msgid "Continue learning"
+msgstr "ဆက်လေ့လာပါ။"
+
+# Extracted string
+msgid "Choose a course"
+msgstr "သင်တန်းတစ်ခုရွေးပါ။"
+
+# Extracted string
+msgid "No published courses yet"
+msgstr "ထုတ်ပြန်ထားသော သင်တန်းများ မရှိသေးပါ။"
+
+# Extracted string
+msgid "A teacher or administrator can create the first course."
+msgstr "ဆရာ သို့မဟုတ် စီမံခန့်ခွဲသူတစ်ဦးသည် ပထမဆုံးသင်တန်းကို ဖန်တီးနိုင်သည်။"
+
+# Extracted string
+msgid "Language Quest is taking a break"
+msgstr "Language Quest သည် အနားယူနေပါသည်။"
+
+# Extracted string
+msgid "Please try loading the courses again."
+msgstr "သင်တန်းများကို ထပ်တင်ကြည့်ပါ။"
+
+# Extracted string
+msgid "Learn • Play • Grow"
+msgstr "•Play•ကြီးထွားလေ့လာရန်"
+
+# Extracted string
+msgid "MRLC Language Quest"
+msgstr "MRLC ဘာသာစကားရှာဖွေမှု"
+
+# Extracted string
+msgid "Manage Courses"
+msgstr "သင်တန်းများကို စီမံခန့်ခွဲပါ။"
+
+# Extracted string
+msgid "Manage Learners"
+msgstr "သင်ယူသူများကို စီမံခန့်ခွဲပါ။"
+
+# Extracted string
+msgid "Fair ways to compete"
+msgstr "တရားမျှတသော ယှဉ်ပြိုင်နည်းများ"
+
+# Extracted string
+msgid "Language Leaderboard"
+msgstr "ဘာသာစကား ဦးဆောင်ဘုတ်အဖွဲ့"
+
+# Extracted string
+msgid "Course category"
+msgstr "သင်တန်းအမျိုးအစား"
+
+# Extracted string
+msgid "Global keeps the original lifetime ranking. Every focused view uses learning XP from the last 30 days, excluding mission bonuses."
+msgstr "Global သည် မူလတစ်သက်တာအဆင့်ကို ထိန်းသိမ်းထားသည်။ အာရုံစူးစိုက်ထားသည့် မြင်ကွင်းတိုင်းသည် မစ်ရှင်ဆုကြေးငွေများအပါအ ၀ င်ပြီးခဲ့သည့်ရက် 30 မှသင်ယူမှု XP ကိုအသုံးပြုသည်။"
+
+# Extracted string
+msgid "Your recent-XP bracket"
+msgstr "သင်၏ လတ်တလော-XP ကွင်းပိတ်"
+
+# Extracted string
+msgid "Compete with learners building at a similar recent pace."
+msgstr "အလားတူ မကြာသေးမီက အရှိန်အဟုန်ဖြင့် တည်ဆောက်နေသော ကျောင်းသားများနှင့် ယှဉ်ပြိုင်ပါ။"
+
+# Extracted string
+msgid "Monthly learner showcase"
+msgstr "လစဉ်လေ့လာသူ ပြပွဲ"
+
+# Extracted string
+msgid "Celebrating consistent learning"
+msgstr "တသမတ်တည်း သင်ယူမှုကို ဂုဏ်ပြုခြင်း။"
+
+# Extracted string
+msgid "The month’s first learner can still take this spot."
+msgstr "လ၏ ပထမဆုံး သင်ယူသူသည် ဤနေရာကို ရယူနိုင်သေးသည်။"
+
+# Extracted string
+msgid "Updating…"
+msgstr "…ကို အပ်ဒိတ်လုပ်နေသည်"
+
+# Extracted string
+msgid "No scores in this view yet"
+msgstr "ဤမြင်ကွင်းတွင် ရမှတ်များ မရှိသေးပါ။"
+
+# Extracted string
+msgid "Complete a matching lesson to take the first spot."
+msgstr "ပထမနေရာကိုရယူရန် ကိုက်ညီသောသင်ခန်းစာတစ်ခုကို ပြီးအောင်လုပ်ပါ။"
+
+# Extracted string
+msgid "${learner.name} ${active ? 'reactivated' : 'deactivated'}"
+msgstr "${learner.name}${ တက်ကြွနေပါသလား။ 'ပြန်လည်အသက်သွင်းသည်' : 'ပိတ်လိုက်သည်'}"
+
+# Extracted string
+msgid "Deactivate the learner before terminating the account"
+msgstr "အကောင့်ကို မပိတ်မီ သင်ယူသူအား ပိတ်ပါ။"
+
+# Extracted string
+msgid "${learner.name}'s account was terminated"
+msgstr "${learner.name}၏ အကောင့်ကို ရပ်စဲခဲ့သည်။"
+
+# Extracted string
+msgid "${action[0].toUpperCase()}${action.slice(1)} ${learner.name}?${active ? '' : ' Their current sessions will be signed out.'}"
+msgstr "${action[0].toUpperCase()}${action.slice(1)}${learner.name}?${active ? '' : ' ၎င်းတို့၏ လက်ရှိဆက်ရှင်များကို ထွက်လိုက်ပါမည်။'}"
+
+# Extracted string
+msgid "Permanently terminate ${learner.name} (${learner.email})? This deletes the learner profile, classroom memberships, points, streaks, and lesson history. This cannot be undone."
+msgstr "${learner.name}(${learner.email}) ကို အပြီးအပိုင် ပိတ်မလား။ ၎င်းသည် သင်ယူသူပရိုဖိုင်၊ စာသင်ခန်းအဖွဲ့ဝင်များ၊ အမှတ်များ၊ အစီအစဥ်များနှင့် သင်ခန်းစာမှတ်တမ်းကို ဖျက်သည်။ ဒါကို ပြန်ပြင်လို့ မရပါဘူး။"
+
+# Extracted string
+msgid "Search name or email…"
+msgstr "အမည် သို့မဟုတ် အီးမေးလ်…ရှာပါ"
+
+# Extracted string
+msgid "Administrator tools"
+msgstr "စီမံခန့်ခွဲရေးကိရိယာများ"
+
+# Extracted string
+msgid "Language Quest Learners"
+msgstr "ဘာသာစကား Quest သင်ယူသူများ"
+
+# Extracted string
+msgid "Public learners"
+msgstr "အများသူငှာ သင်ယူသူများ"
+
+# Extracted string
+msgid "Search learners"
+msgstr "သင်ယူသူများကို ရှာဖွေပါ။"
+
+# Extracted string
+msgid "Filter by status"
+msgstr "အခြေအနေအလိုက် စစ်ထုတ်ပါ။"
+
+# Extracted string
+msgid "Filter by course"
+msgstr "သင်တန်းအလိုက် စစ်ထုတ်ပါ။"
+
+# Extracted string
+msgid "Any course"
+msgstr "သင်တန်းတစ်ခုခု"
+
+# Extracted string
+msgid "No learner accounts found"
+msgstr "သင်ယူသူအကောင့်များ မတွေ့ပါ။"
+
+# Extracted string
+msgid "Try a different search or status filter."
+msgstr "အခြားရှာဖွေမှု သို့မဟုတ် အခြေအနေစစ်ထုတ်မှုကို စမ်းကြည့်ပါ။"
+
+# Extracted string
+msgid "Independent learner"
+msgstr "လွတ်လပ်သောသင်ယူသူ"
+
+# Extracted string
+msgid "No course started yet"
+msgstr "သင်တန်းမစရသေးပါ။"
+
+# Extracted string
+msgid "Streak"
+msgstr "Streak ပါ။"
+
+# Extracted string
+msgid "Last practice"
+msgstr "နောက်ဆုံးအလေ့အကျင့်"
+
+# Extracted string
+msgid "Last login"
+msgstr "နောက်ဆုံးဝင်ပါ။"
+
+# Extracted string
+msgid "Joined"
+msgstr "မှီဝဲ"
+
+# Extracted string
+msgid "Managed via Users"
+msgstr "အသုံးပြုသူများမှတဆင့် စီမံခန့်ခွဲသည်။"
+
+# Extracted string
+msgid "Terminate"
+msgstr "ရပ်စဲ"
+
+# Extracted string
+msgid "Account lifecycle:"
+msgstr "အကောင့်ဘဝသံသရာ-"
+
+# Extracted string
+msgid "deactivation blocks sign-in and revokes current sessions but preserves learning history. Termination is permanent and is intentionally available only after deactivation."
+msgstr "ပိတ်ထားခြင်းသည် လက်မှတ်ထိုးဝင်ခြင်းကို ပိတ်ဆို့ထားပြီး လက်ရှိ စက်ရှင်များကို ရုပ်သိမ်းသော်လည်း သင်ယူမှုမှတ်တမ်းကို ထိန်းသိမ်းထားသည်။ ရပ်စဲခြင်းသည် အမြဲတမ်းဖြစ်ပြီး ပိတ်ထားပြီးနောက်မှသာ ရည်ရွယ်ချက်ရှိရှိ ရရှိနိုင်ပါသည်။"
+
+# Extracted string
+msgid "Speech is not supported by this browser"
+msgstr "ဤဘရောက်ဆာမှ စကားပြောကို မပံ့ပိုးပါ။"
+
+# Extracted string
+msgid "Voice input is not supported by this browser"
+msgstr "ဤဘရောက်ဆာမှ အသံထည့်သွင်းခြင်းကို မပံ့ပိုးပါ။"
+
+# Extracted string
+msgid "Exit lesson"
+msgstr "သင်ခန်းစာထွက်ပါ။"
+
+# Extracted string
+msgid "Read vocabulary clue aloud"
+msgstr "ဝေါဟာရသဲလွန်စကို အသံထွက်ဖတ်ပါ။"
+
+# Extracted string
+msgid "Write the phrase here…"
+msgstr "ဤနေရာတွင်…စကားစုကို ရေးပါ"
+
+# Extracted string
+msgid "Read question aloud"
+msgstr "မေးခွန်းကို အသံထွက်ဖတ်ပါ။"
+
+# Extracted string
+msgid "Type what you hear…"
+msgstr "သင်ကြားသည့်အရာကို…ရိုက်ထည့်ပါ"
+
+# Extracted string
+msgid "This lesson is unavailable."
+msgstr "ဤသင်ခန်းစာကို မရနိုင်ပါ။"
+
+# Extracted string
+msgid "Skip learning"
+msgstr "သင်ယူမှုကို ကျော်သွားပါ။"
+
+# Extracted string
+msgid "Listen card"
+msgstr "နားထောင်ကတ်"
+
+# Extracted string
+msgid "Tap to listen"
+msgstr "နားထောင်ရန် တို့ပါ။"
+
+# Extracted string
+msgid "Meaning, context, and a useful example"
+msgstr "အဓိပ္ပါယ်၊ အကြောင်းအရာနှင့် အသုံးဝင်သော ဥပမာတစ်ခု"
+
+# Extracted string
+msgid "Start practice"
+msgstr "စတင်လေ့ကျင့်ပါ။"
+
+# Extracted string
+msgid "Meaning clue"
+msgstr "အဓိပ္ပါယ် သဲလွန်စ"
+
+# Extracted string
+msgid "Listen again"
+msgstr "ထပ်နားထောင်ပါ။"
+
+# Extracted string
+msgid "Build the sentence"
+msgstr "ဝါကျကိုတည်ဆောက်ပါ။"
+
+# Extracted string
+msgid "Your sentence"
+msgstr "မင်းရဲ့ဝါကျ"
+
+# Extracted string
+msgid "Model sentence:"
+msgstr "နမူနာဝါကျ-"
+
+# Extracted string
+msgid "Skip sentence practice"
+msgstr "ဝါကျအလေ့အကျင့်ကိုကျော်ပါ။"
+
+# Extracted string
+msgid "Check sentence"
+msgstr "စီရင်ချက်စစ်ဆေးပါ။"
+
+# Extracted string
+msgid "Lesson complete!"
+msgstr "သင်ခန်းစာပြီးပါပြီ။"
+
+# Extracted string
+msgid "You finished"
+msgstr "မင်း ပြီးပြီ။"
+
+# Extracted string
+msgid ". Great work!"
+msgstr ". ကောင်းမွန်သောအလုပ်။"
+
+# Extracted string
+msgid "XP earned"
+msgstr "XP ရရှိခဲ့သည်။"
+
+# Extracted string
+msgid "Words learned"
+msgstr "စကားလုံးများ သင်ယူခဲ့သည်။"
+
+# Extracted string
+msgid "Quest level"
+msgstr "Quest အဆင့်"
+
+# Extracted string
+msgid "Practise again"
+msgstr "ထပ်လေ့ကျင့်ပါ။"
+
+# Extracted string
+msgid "Continue the path"
+msgstr "လမ်းကြောင်းကို ဆက်သွားပါ။"
+
+# Extracted string
+msgid "Out of hearts for now"
+msgstr "လောလောဆယ်တော့ နှလုံးသားထဲက"
+
+# Extracted string
+msgid "Got it"
+msgstr "နားလည်ပြီ"
+
+# Extracted string
+msgid "Highlight an unfamiliar word to check the dictionary."
+msgstr "အဘိဓာန်ကိုစစ်ဆေးရန် မရင်းနှီးသောစကားလုံးကို အသားပေးဖော်ပြပါ။"
+
+# Extracted string
+msgid "Play audio"
+msgstr "အသံဖွင့်ပါ။"
+
+# Extracted string
+msgid "Excellent — that meaning fits."
+msgstr "မြတ်သော—အဓိပ္ပါယ် ကိုက်ညီပါသည်။"
+
+# Extracted string
+msgid "Not quite — we’ll revisit this after a few more questions."
+msgstr "မဟုတ်ပါ—နောက်ထပ်မေးခွန်းအနည်းငယ်ပြီးနောက် ၎င်းကို ပြန်လည်ကြည့်ရှုပါမည်။"
+
+# Extracted string
+msgid "Best answer:"
+msgstr "အကောင်းဆုံးအဖြေ-"
+
+# Extracted string
+msgid "Look for the option that responds directly to the situation."
+msgstr "အခြေအနေနှင့်တိုက်ရိုက်တုံ့ပြန်နိုင်သည့် option ကိုရှာပါ။"
+
+# Extracted string
+msgid "Course deleted"
+msgstr "သင်တန်းကို ဖျက်လိုက်ပါပြီ။"
+
+# Extracted string
+msgid "Add a clear note so the teacher knows what to improve"
+msgstr "ဆရာက ဘာကို မြှင့်တင်ရမယ်ဆိုတာ သိအောင် ရှင်းရှင်းလင်းလင်း မှတ်စုထည့်ပါ။"
+
+# Extracted string
+msgid "Delete “${course.title}” and all of its learner progress? This cannot be undone."
+msgstr "“${course.title}” နှင့် ၎င်း၏ သင်ယူသူတိုးတက်မှုအားလုံးကို ဖျက်မလား။ ဒါကို ပြန်ပြင်လို့ မရပါဘူး။"
+
+# Extracted string
+msgid "Feedback for the teacher (required when requesting changes)"
+msgstr "ဆရာမအတွက် အကြံပြုချက် (အပြောင်းအလဲများကို တောင်းဆိုသည့်အခါ လိုအပ်သည်)"
+
+# Extracted string
+msgid "Course Studio"
+msgstr "သင်တန်းစတူဒီယို"
+
+# Extracted string
+msgid "New Course"
+msgstr "သင်တန်းအသစ်"
+
+# Extracted string
+msgid "Admin review queue"
+msgstr "စီမံခန့်ခွဲသူ တန်းစီသုံးသပ်ချက်"
+
+# Extracted string
+msgid "Create your first course"
+msgstr "သင်၏ပထမဆုံးသင်တန်းကိုဖန်တီးပါ။"
+
+# Extracted string
+msgid "Add units, lessons, and interactive language challenges."
+msgstr "ယူနစ်များ၊ သင်ခန်းစာများနှင့် အပြန်အလှန်အကျိုးပြုသော ဘာသာစကားစိန်ခေါ်မှုများကို ထည့်ပါ။"
+
+# Extracted string
+msgid "Official"
+msgstr "တရားဝင်"
+
+# Extracted string
+msgid "Units"
+msgstr "ယူနစ်"
+
+# Extracted string
+msgid "Lessons"
+msgstr "သင်ခန်းစာများ"
+
+# Extracted string
+msgid "Ready for your review"
+msgstr "သင့်သုံးသပ်ချက်အတွက် အဆင်သင့်ဖြစ်နေပါပြီ။"
+
+# Extracted string
+msgid "Open the course to inspect its lessons, then approve it or send focused feedback."
+msgstr "၎င်း၏ သင်ခန်းစာများကို စစ်ဆေးရန် သင်တန်းဖွင့်ပြီးနောက် ၎င်းကို အတည်ပြုပါ သို့မဟုတ် အလေးထားသော အကြံပြုချက် ပေးပို့ပါ။"
+
+# Extracted string
+msgid "Changes"
+msgstr "အပြောင်းအလဲများ"
+
+# Extracted string
+msgid "Toggle Lightning mode"
+msgstr "Lightning မုဒ်ကို ပြောင်းပါ။"
+
+# Extracted string
+msgid "Spaced repetition"
+msgstr "နေရာလွတ် ထပ်ခါထပ်ခါ"
+
+# Extracted string
+msgid "Today's chain"
+msgstr "ယနေ့ကွင်းဆက်"
+
+# Extracted string
+msgid "Ready today"
+msgstr "ဒီနေ့ အဆင်သင့်"
+
+# Extracted string
+msgid "Due reviews"
+msgstr "သုံးသပ်ချက်များ"
+
+# Extracted string
+msgid "Lightning mode"
+msgstr "မိုးကြိုးမုဒ်"
+
+# Extracted string
+msgid "Lightning score"
+msgstr "မိုးကြိုးအမှတ်"
+
+# Extracted string
+msgid "Best combo"
+msgstr "အကောင်းဆုံးပေါင်းစပ်မှု"
+
+# Extracted string
+msgid "How did this recall feel?"
+msgstr "ဒီအမှတ်တရက ဘယ်လိုခံစားရလဲ။"
+
+# Extracted string
+msgid "Your confidence fine-tunes when a correct card returns."
+msgstr "မှန်ကန်သောကတ်တစ်ခု ပြန်လာသောအခါ သင်၏ယုံကြည်မှုကို ညှိပေးသည်။"
+
+# Extracted string
+msgid "Too slow! This card stays in your deck for next time."
+msgstr "အရမ်းနှေးတယ်။ ဤကတ်သည် နောက်တစ်ကြိမ် သင့်ဒပ်တွင် ရှိနေမည်ဖြစ်သည်။"
+
+# Extracted string
+msgid "Next review"
+msgstr "နောက်တစ်ခုသုံးသပ်ချက်"
+
+# Extracted string
+msgid "Learner profile saved"
+msgstr "သင်ယူသူပရိုဖိုင်ကို သိမ်းဆည်းပြီးပါပြီ။"
+
+# Extracted string
+msgid "Joined ${classroom.name} with ${classroom.teacherName}"
+msgstr "${classroom.teacherName}ဖြင့်${classroom.name}ပါဝင်ခဲ့သည်"
+
+# Extracted string
+msgid "Left ${classroom.name}"
+msgstr "ဘယ်ဘက်${classroom.name}"
+
+# Extracted string
+msgid "Leave ${classroom.name}? Your learning progress will stay in your account."
+msgstr "${classroom.name}ထားခဲ့မလား။ သင်၏သင်ယူမှုတိုးတက်မှုသည် သင့်အကောင့်ထဲတွင် ရှိနေမည်ဖြစ်သည်။"
+
+# Extracted string
+msgid "Success sounds"
+msgstr "အောင်မြင်သံများ"
+
+# Extracted string
+msgid "Reduce motion"
+msgstr "လှုပ်ရှားမှုကို လျှော့ချပါ။"
+
+# Extracted string
+msgid "Lesson voice"
+msgstr "သင်ခန်းစာအသံ"
+
+# Extracted string
+msgid "Example: I am learning English for school and everyday conversations."
+msgstr "ဥပမာ- ကျောင်းနဲ့ နေ့စဉ် စကားဝိုင်းတွေအတွက် အင်္ဂလိပ်စာ သင်ယူနေပါတယ်။"
+
+# Extracted string
+msgid "JOINCODE"
+msgstr "ချိတ်ဆက်ပါ။"
+
+# Extracted string
+msgid "We could not load your profile"
+msgstr "သင့်ပရိုဖိုင်ကို ကျွန်ုပ်တို့ မတင်နိုင်ခဲ့ပါ။"
+
+# Extracted string
+msgid "Learning-only account"
+msgstr "သင်ကြားရေးသီးသန့်အကောင့်"
+
+# Extracted string
+msgid "Quest Cards"
+msgstr "Quest ကတ်များ"
+
+# Extracted string
+msgid "Comfort"
+msgstr "နှစ်သိမ့်မှု"
+
+# Extracted string
+msgid "Streak card frames"
+msgstr "Streak ကတ်ဘောင်များ"
+
+# Extracted string
+msgid "Learning comfort"
+msgstr "သင်ယူမှုအဆင်ပြေ"
+
+# Extracted string
+msgid "These settings stay on this device."
+msgstr "ဤဆက်တင်များသည် ဤစက်ပစ္စည်းပေါ်တွင် ရှိနေပါသည်။"
+
+# Extracted string
+msgid "Play a short sound for correct answers."
+msgstr "အဖြေမှန်အတွက် အသံတိုတိုကို ဖွင့်ပါ။"
+
+# Extracted string
+msgid "Limit confetti, card tilts, and movement."
+msgstr "စာရွက်များ၊ ကတ်စောင်းများနှင့် လှုပ်ရှားမှုကို ကန့်သတ်ပါ။"
+
+# Extracted string
+msgid "Kokoro provides a clearer built-in AI teacher voice when the local service supports the course language. Language Quest automatically uses your browser voice if it is offline or unsupported."
+msgstr "Kokoro သည် သင်တန်းဘာသာစကားကို ဒေသန္တရဝန်ဆောင်မှုမှပံ့ပိုးပေးသောအခါတွင် ပိုမိုရှင်းလင်းသော built-in AI ဆရာ၏အသံကို ပံ့ပိုးပေးပါသည်။ အော့ဖ်လိုင်းဖြစ်နေလျှင် သို့မဟုတ် ပံ့ပိုးမထားသော ဘာသာစကား Quest သည် သင့်ဘရောက်ဆာအသံကို အလိုအလျောက်အသုံးပြုသည်။"
+
+# Extracted string
+msgid "Choose your Language Quest avatar"
+msgstr "သင်၏ Language Quest ကိုယ်ပွားကို ရွေးပါ။"
+
+# Extracted string
+msgid "Pick a friendly built-in character. Language Quest does not accept profile-photo uploads."
+msgstr "ဖော်ရွေသော ပါ၀င်သည့် ဇာတ်ကောင်ကို ရွေးပါ။ Language Quest သည် ပရိုဖိုင်-ဓာတ်ပုံ အပ်လုဒ်များကို လက်မခံပါ။"
+
+# Extracted string
+msgid "About my learning"
+msgstr "ငါ့ရဲ့သင်ယူမှုအကြောင်း"
+
+# Extracted string
+msgid "My classrooms"
+msgstr "ငါ့စာသင်ခန်း"
+
+# Extracted string
+msgid "A teacher can share an eight-character code. Joining lets that teacher see your Language Quest points, streak, activity date, and progress in the class focus course."
+msgstr "ဆရာတစ်ဦးသည် စာလုံးရှစ်လုံးပါသော ကုဒ်တစ်ခုကို မျှဝေနိုင်သည်။ ပါဝင်ခြင်းဖြင့် ထိုဆရာသည် သင်၏ ဘာသာစကားရှာဖွေမှု အမှတ်များ၊ ပွဲစဉ်၊ လှုပ်ရှားမှု ရက်စွဲနှင့် အတန်းချိန်ညှိမှု သင်တန်းတွင် တိုးတက်မှုကို မြင်နိုင်စေပါသည်။"
+
+# Extracted string
+msgid "Classroom join code"
+msgstr "Classroom join code"
+
+# Extracted string
+msgid "You have not joined a classroom yet"
+msgstr "စာသင်ခန်းထဲ မ၀င်ရသေးဘူး။"
+
+# Extracted string
+msgid "You can still learn independently."
+msgstr "လွတ်လပ်စွာ သင်ယူနိုင်ပါသေးသည်။"
+
+# Extracted string
+msgid "Practical language for real life"
+msgstr "လက်တွေ့ဘဝအတွက် လက်တွေ့ကျသော ဘာသာစကား"
+
+# Extracted string
+msgid "Learn the words."
+msgstr "စကားလုံးများကို လေ့လာပါ။"
+
+# Extracted string
+msgid "Build the sentence."
+msgstr "ဝါကျကိုတည်ဆောက်ပါ။"
+
+# Extracted string
+msgid "Speak with confidence."
+msgstr "ယုံကြည်စွာပြောဆိုပါ။"
+
+# Extracted string
+msgid "Short guided lessons combine listening, spelling, sentence writing, and friendly clue-safe quizzes. Learn at your own pace and keep every achievement in one free account."
+msgstr "အတိုချုံးလမ်းညွှန်သင်ခန်းစာများသည် နားထောင်ခြင်း၊ စာလုံးပေါင်းခြင်း၊ ဝါကျရေးသားခြင်းနှင့် ဖော်ရွေသောသဲလွန်စ-ဘေးကင်းသော ပဟေဋ္ဌိများကို ပေါင်းစပ်ထားသည်။ သင့်ကိုယ်ပိုင်အရှိန်အဟုန်ဖြင့် လေ့လာပြီး အောင်မြင်မှုတိုင်းကို အခမဲ့အကောင့်တစ်ခုတွင် သိမ်းဆည်းပါ။"
+
+# Extracted string
+msgid "Visitors can browse courses. A free signup is required to begin and save progress."
+msgstr "ဧည့်သည်များသည် သင်တန်းများကို ကြည့်ရှုနိုင်ပါသည်။ တိုးတက်မှုကို စတင်ရန်နှင့် သိမ်းဆည်းရန်အတွက် အခမဲ့ အကောင့်ဖွင့်ရန် လိုအပ်ပါသည်။"
+
+# Extracted string
+msgid "🎧 Listen"
+msgstr "🎧 နားထောင်ပါ။"
+
+# Extracted string
+msgid "🔤 Spell"
+msgstr "🔤 စာလုံးပေါင်း"
+
+# Extracted string
+msgid "✍️ Write"
+msgstr "✍️ ရေးပါ။"
+
+# Extracted string
+msgid "💬 Speak"
+msgstr "💬 စကားပြောပါ။"
+
+# Extracted string
+msgid "Sentence practice"
+msgstr "ဝါကျကျင့်စဉ်"
+
+# Extracted string
+msgid "Write the polite response:"
+msgstr "ယဉ်ကျေးသော တုံ့ပြန်မှုကို ရေးပါ-"
+
+# Extracted string
+msgid "“Thank you.”"
+msgstr "\"ကျေးဇူးတင်ပါသည်။\""
+
+# Extracted string
+msgid "You’re welcome."
+msgstr "ရပါတယ်။"
+
+# Extracted string
+msgid "Meaning + form + confidence"
+msgstr "အဓိပ္ပါယ် + ရုပ် + ယုံကြည်မှု"
+
+# Extracted string
+msgid "3 useful sentences learned"
+msgstr "အသုံးဝင်သော စာကြောင်း ၃ ကြောင်း သင်ယူခဲ့သည်။"
+
+# Extracted string
+msgid "Your lesson guide"
+msgstr "မင်းရဲ့သင်ခန်းစာလမ်းညွှန်"
+
+# Extracted string
+msgid "A clear routine in every lesson"
+msgstr "သင်ခန်းစာတိုင်းတွင် ရှင်းလင်းပြတ်သားသော လုပ်ရိုးလုပ်စဉ်တစ်ခု"
+
+# Extracted string
+msgid "You always know what to do next, why it matters, and how to recover from a mistake."
+msgstr "နောက်ဘာလုပ်ရမလဲ၊ ဘာ့ကြောင့်အရေးကြီးလဲ၊ အမှားကနေ ဘယ်လိုပြန်ဆယ်ရမလဲဆိုတာ အမြဲသိတယ်။"
+
+# Extracted string
+msgid "Choose your next quest"
+msgstr "သင်၏နောက်ထပ်ရှာဖွေမှုကိုရွေးချယ်ပါ။"
+
+# Extracted string
+msgid "Browse freely. Create an account when you are ready to open a lesson and save your progress."
+msgstr "လွတ်လပ်စွာကြည့်ရှုပါ။ သင်ခန်းစာတစ်ခုဖွင့်ပြီး သင်၏တိုးတက်မှုကို သိမ်းဆည်းရန် အသင့်ဖြစ်သောအခါ အကောင့်တစ်ခုဖန်တီးပါ။"
+
+# Extracted string
+msgid "Course previews are being prepared."
+msgstr "သင်တန်းကြိုတင်ပြင်ဆင်မှုများ ပြုလုပ်လျက်ရှိသည်။"
+
+# Extracted string
+msgid "Ready to say more than single words?"
+msgstr "စကားလုံးတစ်လုံးထက်ပိုပြောဖို့ အဆင်သင့်ဖြစ်ပြီလား။"
+
+# Extracted string
+msgid "Create your free learner account and turn useful language into complete, confident sentences."
+msgstr "သင်၏အခမဲ့သင်ယူသူအကောင့်ကိုဖန်တီးပြီး အသုံးဝင်သောဘာသာစကားကို ပြီးပြည့်စုံပြီး ယုံကြည်စိတ်ချရသောစာကြောင်းများအဖြစ် ပြောင်းလဲပါ။"
+
+# Extracted string
+msgid "Learning made with care for every learner."
+msgstr "သင်ယူသူတိုင်းအတွက် ဂရုတစိုက်ဖြင့် သင်ယူပါ။"
+
+# Extracted string
+msgid "Listen"
+msgstr "နားထောင်ပါ။"
+
+# Extracted string
+msgid "This story could not be found."
+msgstr "ဤဇာတ်လမ်းကို ရှာမတွေ့ပါ။"
+
+# Extracted string
+msgid "Try a different path"
+msgstr "မတူညီသောလမ်းကြောင်းကို စမ်းကြည့်ပါ။"
+
+# Extracted string
+msgid "ft.life"
+msgstr "ft.ဘဝ"
+
+# Extracted string
+msgid "Move left"
+msgstr "ဘယ်ဘက်သို့ ရွှေ့ပါ။"
+
+# Extracted string
+msgid "Move right"
+msgstr "ညာဘက်ကို ရွှေ့ပါ။"
+
+# Extracted string
+msgid "C:"
+msgstr "C:"
+
+# Extracted string
+msgid "PAC-MAN MODERN"
+msgstr "PAC-MAN ခေတ်မီ"
+
+# Extracted string
+msgid "Eat dots, dodge ghosts, trigger neon power-ups & unleash high score combos!"
+msgstr "အစက်များကိုစားပါ၊ သရဲတစ္ဆေများကိုရှောင်ပါ၊ နီယွန်ပါဝါကိုဖွင့်ပြီး ရမှတ်မြင့်သောတွဲများကိုထုတ်ပါ။"
+
+# Extracted string
+msgid "START GAME"
+msgstr "ဂိမ်းစတင်ပါ။"
+
+# Extracted string
+msgid "GAME PAUSED"
+msgstr "ဂိမ်းကို ခေတ္တရပ်ထားသည်။"
+
+# Extracted string
+msgid "RESUME"
+msgstr "ကိုယ်ရေးအကျဥ်း"
+
+# Extracted string
+msgid "RESTART"
+msgstr "ပြန်စတင်သည်"
+
+# Extracted string
+msgid "LEVEL CLEAR!"
+msgstr "အဆင့်ရှင်းလင်းပါ။"
+
+# Extracted string
+msgid "Stage"
+msgstr "ဇာတ်ခုံ"
+
+# Extracted string
+msgid "Completed!"
+msgstr "ပြီးပါပြီ။"
+
+# Extracted string
+msgid "NEXT LEVEL &rarr;"
+msgstr "နောက်အဆင့်&rarr;"
+
+# Extracted string
+msgid "GAME OVER"
+msgstr "ပြီးသွားပါပြီ"
+
+# Extracted string
+msgid "FINAL SCORE"
+msgstr "နောက်ဆုံးရမှတ်"
+
+# Extracted string
+msgid "NEW HIGH SCORE!"
+msgstr "အမြင့်ဆုံးရမှတ်အသစ်။"
+
+# Extracted string
+msgid "PLAY AGAIN"
+msgstr "ထပ်ကစားပါ။"
+
+# Extracted string
+msgid "Swipe the maze or use the direction pad"
+msgstr "ဝင်္ကဘာကို ပွတ်ဆွဲပါ သို့မဟုတ် ဦးတည်ချက် pad ကို အသုံးပြုပါ။"
+
+# Extracted string
+msgid "Boost"
+msgstr "မြှင့်တင်ပါ။"
+
+# Extracted string
+msgid "ARROW KEYS / WASD"
+msgstr "မြှားသော့များ / WASD"
+
+# Extracted string
+msgid "MOVE"
+msgstr "ရွှေ့ပါ။"
+
+# Extracted string
+msgid "&bull;"
+msgstr "&bull;"
+
+# Extracted string
+msgid "SPACE"
+msgstr "အာကာသ"
+
+# Extracted string
+msgid "POWER BOOST"
+msgstr "ပါဝါမြှင့်တင်ပါ။"
+
+# Extracted string
+msgid "P / ESC"
+msgstr "P/ESC"
+
+# Extracted string
+msgid "PAUSE"
+msgstr "ခဏရပ်ပါ။"
+
+# Extracted string
+msgid "Leaderboard & Stats"
+msgstr "ဦးဆောင်ဘုတ်နှင့် စာရင်းအင်းများ"
+
+# Extracted string
+msgid "How to Play"
+msgstr "ကစားနည်း"
+
+# Extracted string
+msgid "1UP SCORE"
+msgstr "1UP ရမှတ်"
+
+# Extracted string
+msgid "HIGH SCORE"
+msgstr "မြင့်မားသောရမှတ်"
+
+# Extracted string
+msgid "LEVEL"
+msgstr "အဆင့်"
+
+# Extracted string
+msgid "LIVES:"
+msgstr "တိုက်ရိုက်ထုတ်လွှင့်မှုများ"
+
+# Extracted string
+msgid "NONE"
+msgstr "မရှိပါ။"
+
+# Extracted string
+msgid "HOW TO PLAY"
+msgstr "ကစားနည်း"
+
+# Extracted string
+msgid "OBJECTIVE"
+msgstr "ရည်မှန်းချက်"
+
+# Extracted string
+msgid "Navigate the maze, clear all pellets, dodge the ghosts, and collect special bonus items!"
+msgstr "ဝင်္ကဘာကို လမ်းညွှန်ပါ၊ အလုံးလိုက်အားလုံးကို ရှင်းလင်းပါ၊ သရဲများကို ရှောင်ပါ၊ အထူးဆုကြေးငွေများကို စုဆောင်းပါ။"
+
+# Extracted string
+msgid "CONTROLS"
+msgstr "ထိန်းချုပ်မှုများ"
+
+# Extracted string
+msgid "Move Pac-Man"
+msgstr "Pac-Man ကိုရွှေ့ပါ။"
+
+# Extracted string
+msgid "SPACEBAR"
+msgstr "SPACEBAR"
+
+# Extracted string
+msgid "Trigger Power Boost"
+msgstr "ပါဝါမြှင့်တင်ပါ။"
+
+# Extracted string
+msgid "TOUCH D-PAD"
+msgstr "D-PAD ကိုနှိပ်ပါ။"
+
+# Extracted string
+msgid "Mobile Controls"
+msgstr "မိုဘိုင်းထိန်းချုပ်မှုများ"
+
+# Extracted string
+msgid "Pause / Resume"
+msgstr "ခေတ္တရပ်/ပြန်လည်စတင်ပါ။"
+
+# Extracted string
+msgid "POWER-UPS & ITEMS"
+msgstr "Power-UPS နှင့် ပစ္စည်းများ"
+
+# Extracted string
+msgid "Turns ghosts blue! Eat them for 200, 400, 800, 1600 points."
+msgstr "သရဲတစ္ဆေများပြာသွားသည် ။ 200, 400, 800, 1600 အမှတ်အတွက်သူတို့ကိုစားပါ။"
+
+# Extracted string
+msgid "Pac-Man gains 1.5x movement speed!"
+msgstr "Pac-Man သည် 1.5x လှုပ်ရှားမှုအမြန်နှုန်းကို ရရှိသည်။"
+
+# Extracted string
+msgid "Freezes all ghosts in ice for 5 seconds!"
+msgstr "သရဲတစ္ဆေအားလုံးကို ရေခဲထဲတွင် 5 စက္ကန့်ကြာ အေးခဲစေသည် ။"
+
+# Extracted string
+msgid "Attracts dots toward Pac-Man automatically!"
+msgstr "Pac-Man ဆီသို့ အစက်များကို အလိုအလျောက် ဆွဲဆောင်သည်။"
+
+# Extracted string
+msgid "GHOST PERSONALITIES"
+msgstr "သရဲ ပင်ကိုယ်စရိုက်များ"
+
+# Extracted string
+msgid "Directly hunts your tile."
+msgstr "သင့်အကွက်ကို တိုက်ရိုက်လိုက်ရှာသည်။"
+
+# Extracted string
+msgid "Ambushes 4 tiles ahead."
+msgstr "ရှေ့တွင် အကွက် ၄ ချပ်ကို ချောင်းမြောင်းထားသည်။"
+
+# Extracted string
+msgid "Flanks using vector math."
+msgstr "ကိန်းဂဏန်းသင်္ချာကို အသုံးပြု၍ အလံများ။"
+
+# Extracted string
+msgid "Shy behavior, retreats when close."
+msgstr "ရှက်ရွံ့သောအမူအရာ၊ အနီးကပ်နေချိန်တွင် နောက်ပြန်ဆုတ်ပါ။"
+
+# Extracted string
+msgid "ARCADE HALL OF FAME"
+msgstr "အာကိတ်ခန်းမ"
+
+# Extracted string
+msgid "HIGH SCORES"
+msgstr "မြင့်မားသောရမှတ်များ"
+
+# Extracted string
+msgid "STATISTICS"
+msgstr "စာရင်းအင်းများ"
+
+# Extracted string
+msgid "ACHIEVEMENTS"
+msgstr "အောင်မြင်မှုများ"
+
+# Extracted string
+msgid "No high scores recorded yet. Play a game to make history!"
+msgstr "မြင့်မားသောရမှတ်များ မမှတ်တမ်းတင်ရသေးပါ။ သမိုင်းကိုဖန်တီးရန် ဂိမ်းတစ်ခုကို ကစားပါ။"
+
+# Extracted string
+msgid "Dots Eaten"
+msgstr "အစက်များ စားပြီးပါပြီ။"
+
+# Extracted string
+msgid "Ghosts Eaten"
+msgstr "သရဲတစ္ဆေတွေစားတယ်။"
+
+# Extracted string
+msgid "Power-Ups Activated"
+msgstr "ပါဝါအပ်များကို အသက်သွင်းထားသည်။"
+
+# Extracted string
+msgid "Bonus Fruits"
+msgstr "Bonus သစ်သီးများ"
+
+# Extracted string
+msgid "Games Played"
+msgstr "ကစားခဲ့သောဂိမ်းများ"
+
+# Extracted string
+msgid "Highest Ghost Combo"
+msgstr "အမြင့်ဆုံး Ghost Combo"
+
+# Extracted string
+msgid "UNLOCKED"
+msgstr "သော့ဖွင့်ထားသည်။"
+
+# Extracted string
+msgid "LOCKED"
+msgstr "သော့ခတ်ထားသည်။"
+
+# Extracted string
+msgid "ARCADE CONFIGURATION"
+msgstr "ARCADE ဖွဲ့စည်းမှု"
+
+# Extracted string
+msgid "VISUAL THEME"
+msgstr "အမြင်အာရုံ"
+
+# Extracted string
+msgid "GHOST AI DIFFICULTY"
+msgstr "GHOST AI အခက်အခဲ"
+
+# Extracted string
+msgid "GAME MODE"
+msgstr "ဂိမ်းမုဒ်"
+
+# Extracted string
+msgid "CRT Scanlines & Vignette"
+msgstr "CRT Scanlines & Vignette"
+
+# Extracted string
+msgid "On-Screen Touch D-Pad"
+msgstr "မျက်နှာပြင်ပေါ်ရှိ Touch D-Pad"
+
+# Extracted string
+msgid "👻"
+msgstr ""
+
+# Extracted string
+msgid "Pac-Man Modern Arcade"
+msgstr "Pac-Man Modern Arcade"
+
+# Extracted string
+msgid "Neon-styled classic arcade action &mdash; eat dots, dodge ghosts, and chase high scores."
+msgstr "နီယွန်ပုံစံ ဂန္ထဝင် အာကိတ်ဂိမ်း&mdash;အစက်များကို စားသည်၊ သရဲတစ္ဆေများကို ရှောင်ဖယ်ကာ မြင့်မားသောရမှတ်များကို လိုက်ဖမ်းသည်။"
+
+# Extracted string
+msgid "Multiple mazes, authentic ghost AI, and special power-ups (speed, freeze, magnet, shield)."
+msgstr "ဝင်္ကပါများစွာ၊ စစ်မှန်သော တစ္ဆေ AI နှင့် အထူးစွမ်းအားမြှင့်ခြင်းများ (မြန်နှုန်း၊ အေးခဲ၊ သံလိုက်၊ အကာ)။"
+
+# Extracted string
+msgid "Use arrow keys / WASD to move, Space for a power boost, P or Esc to pause. Touch controls appear automatically on mobile."
+msgstr "ရွှေ့ရန် မြှားခလုတ်များ / WASD ကိုသုံးပါ၊ ပါဝါမြှင့်တင်ရန်အတွက် နေရာလွတ်၊ ခေတ္တရပ်ရန် P သို့မဟုတ် Esc ။ ထိတွေ့ထိန်းချုပ်မှုများသည် မိုဘိုင်းတွင် အလိုအလျောက်ပေါ်လာသည်။"
+
+# Extracted string
+msgid "▶ Play Pac-Man"
+msgstr "▶ Pac-Man ကစားပါ။"
+
+# Extracted string
+msgid "Neon"
+msgstr "နီယွန်"
+
+# Extracted string
+msgid "Live leaderboard"
+msgstr "တိုက်ရိုက်ဦးဆောင်ဘုတ်အဖွဲ့"
+
+# Extracted string
+msgid "NEON.SNAKE"
+msgstr "NEON.SNAKE"
+
+# Extracted string
+msgid "· AI obstacle active"
+msgstr "·AI အတားအဆီး တက်ကြွနေသည်။"
+
+# Extracted string
+msgid "Swipe left/right to steer · Swipe up to boost"
+msgstr "အရှိန်မြှင့်ရန်·မောင်းနှင်ရန် ဘယ်/ညာ ပွတ်ဆွဲပါ။"
+
+# Extracted string
+msgid "A / D or ← / → to turn"
+msgstr "A/D သို့မဟုတ် ← /→လှည့်ရန်"
+
+# Extracted string
+msgid "Space to boost"
+msgstr "မြှင့်တင်ရန်နေရာ"
+
+# Extracted string
+msgid "LEADERBOARD"
+msgstr "ဦးဆောင်ဘုတ်အဖွဲ့"
+
+# Extracted string
+msgid "Arena run complete"
+msgstr "Arena ပြေးပြီးပါပြီ။"
+
+# Extracted string
+msgid "YOU CRASHED"
+msgstr "ပျက်သွားသလား"
+
+# Extracted string
+msgid "Multiplayer arena"
+msgstr "လူမျိုးစုံ ကစားကွင်း"
+
+# Extracted string
+msgid "JOIN THE GLOW"
+msgstr "GLOW တွင်ပါဝင်ပါ။"
+
+# Extracted string
+msgid "Collect neon orbs, grow longer, and avoid the other snakes."
+msgstr "နီယွန် orbs များကို စုဆောင်းပါ၊ ပိုရှည်လာပြီး အခြားမြွေများကို ရှောင်ပါ။"
+
+# Extracted string
+msgid "BOOST"
+msgstr "မြှင့်တင်ပါ။"
+
+# Extracted string
+msgid "Trail cleared — ready for a fresh start."
+msgstr "လမ်းကြောင်းကို ရှင်းလင်းပြီး—အသစ်စတင်ရန် အသင့်ဖြစ်နေပါပြီ။"
+
+# Extracted string
+msgid "Start over? Your current trail progress will be cleared (it will not count as a loss)."
+msgstr "ပြန်စမလား။ သင်၏ လက်ရှိလမ်းကြောင်း တိုးတက်မှုကို ရှင်းပစ်မည် (၎င်းကို ဆုံးရှုံးမှုအဖြစ် ရေတွက်မည်မဟုတ်ပါ)။"
+
+# Extracted string
+msgid "Leave Word Trail? Your game is saved and can be continued later."
+msgstr "Word Trail ထားခဲ့မလား။ သင့်ဂိမ်းကို သိမ်းဆည်းထားပြီး နောက်ပိုင်းတွင် ဆက်လက်လုပ်ဆောင်နိုင်ပါသည်။"
+
+# Extracted string
+msgid "Leave Word Trail"
+msgstr "Word Trail ထားခဲ့ပါ။"
+
+# Extracted string
+msgid "🧭"
+msgstr ""
+
+# Extracted string
+msgid "English Word board game"
+msgstr "အင်္ဂလိပ်စကားလုံးဘုတ်ဂိမ်း"
+
+# Extracted string
+msgid "Game in progress"
+msgstr "ဂိမ်းကို လုပ်ဆောင်နေသည်။"
+
+# Extracted string
+msgid "Word waiting"
+msgstr "စောင့်နေတဲ့ စကားလုံး"
+
+# Extracted string
+msgid "Last game"
+msgstr "နောက်ဆုံးဂိမ်း"
+
+# Extracted string
+msgid "How to play"
+msgstr "ကစားနည်း"
+
+# Extracted string
+msgid "📚 Bridge = move ahead"
+msgstr "📚 တံတား = ရှေ့ကို ဆက်သွားပါ။"
+
+# Extracted string
+msgid "⭐ Star = bonus points"
+msgstr "⭐ ကြယ်ပွင့် = ဘောနပ်စ်အမှတ်များ"
+
+# Extracted string
+msgid "🌀 Slip = move back"
+msgstr "🌀 စလစ် = နောက်ပြန်ရွှေ့"
+
+# Extracted string
+msgid "Top learners"
+msgstr "ထိပ်တန်းသင်ယူသူများ"
+
+# Extracted string
+msgid "Word Trail leaderboard"
+msgstr "Word Trail ဦးဆောင်သူစာရင်း"
+
+# Extracted string
+msgid "Be the first learner to reach the trophy."
+msgstr "ဆုဖလားကို ပထမဆုံးရောက်ဖို့ သင်ယူသူဖြစ်ပါစေ။"
+
+# Extracted string
+msgid "Setting up the Word Trail board…"
+msgstr "Word Trail board ကို စနစ်ထည့်သွင်းခြင်း…"
+
+# Extracted string
+msgid "Word Trail is unavailable"
+msgstr "Word Trail မရနိုင်ပါ။"
+
+# Extracted string
+msgid "Check your connection or try again in a moment."
+msgstr "သင့်ချိတ်ဆက်မှုကို စစ်ဆေးပါ သို့မဟုတ် ခဏအတွင်း ထပ်စမ်းကြည့်ပါ။"
+
+# Extracted string
+msgid "Best streak"
+msgstr "အကောင်းဆုံးစီးရီး"
+
+# Extracted string
+msgid "You practised"
+msgstr "မင်းလေ့ကျင့်ခဲ့တယ်။"
+
+# Extracted string
+msgid "correctly."
+msgstr "မှန်ကန်စွာ။"
+
+# Extracted string
+msgid "View lobby"
+msgstr "ဧည့်ခန်းကို ကြည့်ပါ။"
+
+# Extracted string
+msgid "Start over"
+msgstr "ပြန်စပါ။"
+
+# Extracted string
+msgid "via"
+msgstr "မှတဆင့်"
+
+# Extracted string
+msgid "−1 heart"
+msgstr "-၁ နှလုံး"
+
+# Extracted string
+msgid "English Word"
+msgstr "အင်္ဂလိပ်စကား"
+
+# Extracted string
+msgid "Tip: double-tap a choice or press Enter to lock in"
+msgstr "အကြံပြုချက်- ရွေးချယ်မှုတစ်ခုကို နှစ်ချက်နှိပ်ပါ သို့မဟုတ် လော့ခ်ချရန် Enter နှိပ်ပါ။"
+
+# Extracted string
+msgid "Hearts"
+msgstr "နှလုံးသားများ"
+
+# Extracted string
+msgid "Correct"
+msgstr "မှန်ပါ့"
+
+# Extracted string
+msgid "Cancel this approved leave request and return its days to the employee balance?"
+msgstr "ဤခွင့်ပြုထားသော ခွင့်ပန်ချက်ကို ပယ်ဖျက်ပြီး ၎င်း၏နေ့ရက်များကို ဝန်ထမ်းလက်ကျန်သို့ ပြန်ပေးမလား။"
+
+# Extracted string
+msgid "Cancel approved leave"
+msgstr "ခွင့်ပြုထားသော ထွက်ခွာခွင့်ကို ပယ်ဖျက်ပါ။"
+
+# Extracted string
+msgid "Paid leave"
+msgstr "လစာတိုးပေးတယ်။"
+
+# Extracted string
+msgid "Year must be between 2000 and 2100"
+msgstr "နှစ်သည် 2000 နှင့် 2100 ကြား ဖြစ်ရမည်။"
+
+# Extracted string
+msgid "Mark this payroll as paid? This permanently locks every payslip in the run."
+msgstr "ဤလစာငွေကို အခကြေးငွေအဖြစ် အမှတ်အသားပြုလိုပါသလား။ ၎င်းသည် လည်ပတ်နေသည့် လစာစလစ်တိုင်းကို အပြီးအပိုင် လော့ခ်ချသည်။"
+
+# Extracted string
+msgid "File replaced."
+msgstr "ဖိုင်ကို အစားထိုးခဲ့သည်။"
+
+# Extracted string
+msgid "Attached file"
+msgstr "ပူးတွဲဖိုင်"
+
+# Extracted string
+msgid "Failed to load more"
+msgstr "နောက်ထပ်တင်ရန် မအောင်မြင်ပါ။"
+
+# Extracted string
+msgid "Creating ${type.toLowerCase()}…"
+msgstr "${type.toLowerCase()}…ဖန်တီးနေသည်"
+
+# Extracted string
+msgid "${type} created."
+msgstr "${type}ဖန်တီးထားသည်။"
+
+# Extracted string
+msgid "Backup verified"
+msgstr "အရန်သိမ်းခြင်းကို စစ်ဆေးပြီးပါပြီ။"
+
+# Extracted string
+msgid "Backup verification failed"
+msgstr "အရန်သိမ်းခြင်း စိစစ်ခြင်း မအောင်မြင်ပါ။"
+
+# Extracted string
+msgid "Backups contain sensitive school and student data. Verify artifacts before relying on them, keep downloaded copies encrypted, and restrict access to authorized operators."
+msgstr "မိတ္တူတွင် အရေးကြီးသော ကျောင်းနှင့် ကျောင်းသားဒေတာများ ပါဝင်သည်။ ၎င်းတို့ကို မမှီခိုမီ ရှေးဟောင်းပစ္စည်းများကို စစ်ဆေးပါ၊ ဒေါင်းလုဒ်လုပ်ထားသော မိတ္တူများကို ကုဒ်ဝှက်ထားကာ ခွင့်ပြုထားသော အော်ပရေတာများသို့ ဝင်ရောက်ခွင့်ကို ကန့်သတ်ပါ။"
+
+# Extracted string
+msgid "Complete PostgreSQL custom archive of all tables and relationships."
+msgstr "ဇယားများနှင့် ဆက်ဆံရေးအားလုံး၏ PostgreSQL စိတ်ကြိုက် မော်ကွန်းကို အပြီးသတ်ပါ။"
+
+# Extracted string
+msgid "Restore Readiness"
+msgstr "အဆင်သင့်ပြန်ယူပါ။"
+
+# Extracted string
+msgid "Verify before restoring"
+msgstr "ပြန်လည်မရယူမီ စစ်ဆေးပါ။"
+
+# Extracted string
+msgid "Use Verify in the history table to test database catalogs, ZIP structure, or JSON schema before downloading an artifact."
+msgstr "ရှေးဟောင်းပစ္စည်းတစ်ခုကို မဒေါင်းလုဒ်မလုပ်မီ ဒေတာဘေ့စ်ကတ်တလောက်များ၊ စာပို့ဖွဲ့စည်းပုံ သို့မဟုတ် JSON အစီအစဉ်ကို စမ်းသပ်ရန် မှတ်တမ်းဇယားတွင် Verify ကိုသုံးပါ။"
+
+# Extracted string
+msgid "Production restore remains an operator-only action. Database dumps must be restored with"
+msgstr "ထုတ်လုပ်မှုပြန်လည်ရယူခြင်းသည် အော်ပရေတာသီးသန့်လုပ်ဆောင်မှုတစ်ခုအဖြစ် ကျန်ရှိနေပါသည်။ ဒေတာဘေ့စ်အမှိုက်များကို ပြန်လည်ရယူရပါမည်။"
+
+# Extracted string
+msgid "pg_restore"
+msgstr "pg_restore"
+
+# Extracted string
+msgid "during a maintenance window; file archives are extracted into the configured upload volume."
+msgstr "ပြုပြင်ထိန်းသိမ်းမှုပြတင်းပေါက်အတွင်း၊ ဖိုင်မှတ်တမ်းများကို ပြင်ဆင်သတ်မှတ်ထားသော အပ်လုဒ်အသံအတိုးအကျယ်ထဲသို့ ထုတ်ယူသည်။"
+
+# Extracted string
+msgid "Check System Health"
+msgstr "စနစ်ကျန်းမာရေးစစ်ဆေးပါ။"
+
+# Extracted string
+msgid "Off-site"
+msgstr "ဆိုက်ပြင်ပ"
+
+# Extracted string
+msgid "“${target.title}” was permanently deleted"
+msgstr "“${target.title}” ကို အပြီးတိုင် ဖျက်လိုက်ပါပြီ။"
+
+# Extracted string
+msgid "Search by exam, class, subject, or status"
+msgstr "စာမေးပွဲ၊ အတန်း၊ ဘာသာရပ်၊ သို့မဟုတ် အခြေအနေအလိုက် ရှာဖွေပါ။"
+
+# Extracted string
+msgid "Exam records"
+msgstr "စာမေးပွဲမှတ်တမ်းများ"
+
+# Extracted string
+msgid "Permanently remove an exam and all of its questions, attempts, answers, grading records, schedules, and integrity events."
+msgstr "စာမေးပွဲတစ်ခုနှင့် ၎င်း၏မေးခွန်းများ၊ ကြိုးပမ်းမှုများ၊ အဖြေများ၊ အဆင့်သတ်မှတ်ခြင်းမှတ်တမ်းများ၊ အချိန်ဇယားများနှင့် သမာဓိရှိဖြစ်ရပ်များအားလုံးကို အပြီးတိုင်ဖယ်ရှားပါ။"
+
+# Extracted string
+msgid "Permanent deletion cannot be undone"
+msgstr "ထာဝရဖျက်ခြင်းကို ပြန်ပြင်၍မရပါ။"
+
+# Extracted string
+msgid "Use Archive from the Exams page when records should be preserved. This admin tool is only for records that must be completely removed."
+msgstr "မှတ်တမ်းများကို ထိန်းသိမ်းထားသင့်သည့်အခါ စာမေးပွဲများ စာမျက်နှာမှ မှတ်တမ်းဟောင်းကို အသုံးပြုပါ။ ဤစီမံခန့်ခွဲသူကိရိယာသည် လုံးဝဖယ်ရှားပစ်ရမည့် မှတ်တမ်းများအတွက်သာဖြစ်သည်။"
+
+# Extracted string
+msgid "Loading exams…"
+msgstr "စာမေးပွဲများ…ကိုဖွင့်နေသည်"
+
+# Extracted string
+msgid "No matching exams."
+msgstr "ကိုက်ညီသောစာမေးပွဲများမရှိပါ။"
+
+# Extracted string
+msgid "Delete permanently"
+msgstr "အပြီးတိုင်ဖျက်ပါ။"
+
+# Extracted string
+msgid "Delete exam permanently?"
+msgstr "စာမေးပွဲကို အပြီးဖျက်မလား။"
+
+# Extracted string
+msgid "This removes"
+msgstr "ဒါက ဖယ်ရှားပေးတယ်။"
+
+# Extracted string
+msgid "and every student record connected to it."
+msgstr "ကျောင်းသား မှတ်တမ်းတိုင်းကို ၎င်းနှင့် ချိတ်ဆက်ထားသည်။"
+
+# Extracted string
+msgid "Type the exact exam title:"
+msgstr "စာမေးပွဲခေါင်းစဉ်အတိအကျကို ရိုက်ထည့်ပါ"
+
+# Extracted string
+msgid "DELETE"
+msgstr "ဖျက်ပါ။"
+
+# Extracted string
+msgid "Authoritative system access reference. Role rules are shared by the API, navigation, and protected pages."
+msgstr "တရားဝင်အသုံးပြုခွင့်စနစ် ကိုးကား။ အခန်းကဏ္ဍစည်းမျဉ်းများကို API၊ လမ်းညွှန်ချက်နှင့် ကာကွယ်ထားသော စာမျက်နှာများမှ မျှဝေပါသည်။"
+
+# Extracted string
+msgid "Full-time, part-time, and volunteer are employment types. Their academic data scope comes from class and subject assignments."
+msgstr "အချိန်ပြည့်၊ အချိန်ပိုင်းနှင့် စေတနာ့ဝန်ထမ်းတို့သည် အလုပ်အကိုင်အမျိုးအစားများဖြစ်သည်။ ၎င်းတို့၏ ပညာရေးဆိုင်ရာ အချက်အလက်နယ်ပယ်သည် အတန်းနှင့် ဘာသာရပ်တာဝန်များမှ လာပါသည်။"
+
+# Extracted string
+msgid "Access matrix"
+msgstr "မက်ထရစ်ကို ရယူပါ။"
+
+# Extracted string
+msgid "This read-only matrix is generated from the same registry used by access checks."
+msgstr "ဤဖတ်ရှုရန်-သီးသန့်မက်ထရစ်ကို ဝင်ရောက်စစ်ဆေးခြင်းဖြင့် အသုံးပြုသည့် တူညီသော မှတ်ပုံတင်ခြင်းမှ ထုတ်လုပ်သည်။"
+
+# Extracted string
+msgid "System Health"
+msgstr "စနစ်ကျန်းမာရေး"
+
+# Extracted string
+msgid "Live checks for the database, storage, backup utilities, media tools, and comic support."
+msgstr "ဒေတာဘေ့စ၊ သိုလှောင်မှု၊ အရန်ကိရိယာများ၊ မီဒီယာတူးလ်များနှင့် ရုပ်ပြပံ့ပိုးမှုများအတွက် တိုက်ရိုက်စစ်ဆေးမှုများ။"
+
+# Extracted string
+msgid "Checks passed"
+msgstr "စစ်ဆေးမှုတွေ လွန်သွားပါပြီ။"
+
+# Extracted string
+msgid "Backup artifacts"
+msgstr "အရန်ပစ္စည်းများ"
+
+# Extracted string
+msgid "Off-site copy"
+msgstr "ဆိုက်ပြင်ပ မိတ္တူ"
+
+# Extracted string
+msgid "Running system checks…"
+msgstr "စနစ်စစ်ဆေးမှုများ လုပ်ဆောင်နေသည်…"
+
+# Extracted string
+msgid "A post can have at most ${MAX_PHOTOS} photos"
+msgstr "ပို့စ်တစ်ခုတွင် အများဆုံး${MAX_PHOTOS}ဓာတ်ပုံများ ပါဝင်နိုင်သည်။"
+
+# Extracted string
+msgid "Only ${room} more photo${room === 1 ? '' : 's'} fit (max ${MAX_PHOTOS})"
+msgstr "${room}နောက်ထပ် ဓာတ်ပုံ${room === 1 ? '' : 's'} အံကိုက် (အမြင့်ဆုံး${MAX_PHOTOS})"
+
+# Extracted string
+msgid "Add a photo for the class snapshot"
+msgstr "အတန်းလျှပ်တစ်ပြက်အတွက် ဓာတ်ပုံတစ်ပုံကို ထည့်ပါ။"
+
+# Extracted string
+msgid "Choose a video lesson"
+msgstr "ဗီဒီယိုသင်ခန်းစာကို ရွေးချယ်ပါ။"
+
+# Extracted string
+msgid "Could not update reaction"
+msgstr "တုံ့ပြန်မှုကို အပ်ဒိတ်မလုပ်နိုင်ခဲ့ပါ။"
+
+# Extracted string
+msgid "Post cannot be empty"
+msgstr "ပို့စ်သည် ဗလာမဖြစ်ရပါ။"
+
+# Extracted string
+msgid "Post updated"
+msgstr "ပို့စ်ကို အပ်ဒိတ်လုပ်ထားသည်။"
+
+# Extracted string
+msgid "Delete this comment?"
+msgstr "ဤမှတ်ချက်ကို ဖျက်မလား။"
+
+# Extracted string
+msgid "Social Space sections"
+msgstr "Social Space ကဏ္ဍများ"
+
+# Extracted string
+msgid "Choose a published video"
+msgstr "ထုတ်ဝေထားသော ဗီဒီယိုကို ရွေးပါ။"
+
+# Extracted string
+msgid "Why should students watch this?"
+msgstr "ဒါကို ကျောင်းသားတွေက ဘာကြောင့် ကြည့်သင့်တာလဲ။"
+
+# Extracted string
+msgid "Remove photo"
+msgstr "ဓာတ်ပုံကို ဖယ်ရှားပါ။"
+
+# Extracted string
+msgid "Edit post"
+msgstr "ပို့စ်ကို တည်းဖြတ်ပါ။"
+
+# Extracted string
+msgid "Delete post"
+msgstr "ပို့စ်ကိုဖျက်ပါ။"
+
+# Extracted string
+msgid "Edit comment"
+msgstr "မှတ်ချက်ကို တည်းဖြတ်ပါ။"
+
+# Extracted string
+msgid "Report comment"
+msgstr "မှတ်ချက်အစီရင်ခံပါ။"
+
+# Extracted string
+msgid "Delete comment"
+msgstr "မှတ်ချက်ကို ဖျက်ပါ။"
+
+# Extracted string
+msgid "Add a comment… (Enter to send, Shift+Enter for a new line)"
+msgstr "မှတ်ချက်တစ်ခုထည့်ပါ…(ပေးပို့ရန် ရိုက်ထည့်ပါ၊ လိုင်းအသစ်အတွက် Shift+Enter)"
+
+# Extracted string
+msgid "Previous photo"
+msgstr "ယခင်ဓာတ်ပုံ"
+
+# Extracted string
+msgid "Next photo"
+msgstr "နောက်ဓာတ်ပုံ"
+
+# Extracted string
+msgid "View full size"
+msgstr "အရွယ်အစားအပြည့်အစုံကို ကြည့်ရှုပါ။"
+
+# Extracted string
+msgid "School moments, class snapshots, and lessons worth watching."
+msgstr "ကျောင်းအခိုက်အတန့်များ၊ အတန်းပုံရိပ်များ နှင့် သင်ခန်းစာများကို ကြည့်ရှုသင့်ပါသည်။"
+
+# Extracted string
+msgid "Video lesson"
+msgstr "ဗီဒီယိုသင်ခန်းစာ"
+
+# Extracted string
+msgid "Ready to feature"
+msgstr "စွမ်းဆောင်ရန် အသင့်ဖြစ်နေပါပြီ။"
+
+# Extracted string
+msgid "One class"
+msgstr "တစ်တန်း"
+
+# Extracted string
+msgid "Staff only"
+msgstr "ဝန်ထမ်းများသာ"
+
+# Extracted string
+msgid "Keep visible"
+msgstr "မြင်အောင်ထားပါ။"
+
+# Extracted string
+msgid "7 days"
+msgstr "၇ ရက်"
+
+# Extracted string
+msgid "30 days"
+msgstr "30 ရက်"
+
+# Extracted string
+msgid "90 days"
+msgstr "ရက် 90"
+
+# Extracted string
+msgid "School"
+msgstr "ကျောင်း"
+
+# Extracted string
+msgid "Featured lesson"
+msgstr "အထူးပြုသင်ခန်းစာ"
+
+# Extracted string
+msgid "Watch video lesson"
+msgstr "ဗီဒီယိုသင်ခန်းစာကိုကြည့်ပါ။"
+
+# Extracted string
+msgid "Loading comments…"
+msgstr "မှတ်ချက်များ တင်နေသည်…"
+
+# Extracted string
+msgid "Attach up to ${HOMEWORK_SUBMISSION_FILE_LIMIT} files"
+msgstr "${HOMEWORK_SUBMISSION_FILE_LIMIT}ဖိုင်များအထိ ပူးတွဲပါ"
+
+# Extracted string
+msgid "${uploadedCount} ${uploadedCount === 1 ? 'file' : 'files'} attached"
+msgstr "${uploadedCount}${uploadedCount === 1 ? 'file' : 'files'} တွဲထားသည်။"
+
+# Extracted string
+msgid "${uploadedCount} file${uploadedCount === 1 ? '' : 's'} attached before the upload stopped"
+msgstr "${uploadedCount}ဖိုင်${uploadedCount === 1 ? ' : 's'} အပ်လုဒ်မရပ်မီ ပူးတွဲပါရှိသည်။"
+
+# Extracted string
+msgid "Write something or attach your work"
+msgstr "တစ်ခုခုရေးပါ သို့မဟုတ် သင့်အလုပ်ကို ပူးတွဲပါ"
+
+# Extracted string
+msgid "Up to 5 files, 10 MB each. Images, PDF, Word, PowerPoint, Excel, text and OpenDocument are accepted."
+msgstr "5 ဖိုင်အထိ၊ တစ်ခုလျှင် 10 MB။ ပုံများ၊ PDF၊ Word၊ PowerPoint၊ Excel၊ စာသားနှင့် OpenDocument ကို လက်ခံပါသည်။"
+
+# Extracted string
+msgid "Type an answer or upload photos and documents for your teacher to review."
+msgstr "အဖြေတစ်ခုကို ရိုက်ထည့်ပါ သို့မဟုတ် သင့်ဆရာကို ပြန်လည်သုံးသပ်ရန်အတွက် ဓာတ်ပုံနှင့် စာရွက်စာတမ်းများကို အပ်လုဒ်လုပ်ပါ။"
+
+# Extracted string
+msgid "Intervention plan created"
+msgstr "စွက်ဖက်မှု အစီအစဉ်ကို ဖန်တီးခဲ့သည်။"
+
+# Extracted string
+msgid "Plan updated"
+msgstr "အစီအစဉ်ကို အပ်ဒိတ်လုပ်ထားသည်။"
+
+# Extracted string
+msgid "e.g. Four-week attendance support"
+msgstr "ဥပမာ လေးပတ်ကြာ တက်ရောက်အားပေးမှု"
+
+# Extracted string
+msgid "Intervention priority"
+msgstr "စွက်ဖက်မှုဦးစားပေး"
+
+# Extracted string
+msgid "Assigned person"
+msgstr "တာဝန်ပေးခံရသူ"
+
+# Extracted string
+msgid "Contact student, arrange support…"
+msgstr "ကျောင်းသားကို ဆက်သွယ်ပါ၊ ပံ့ပိုးကူညီရန် စီစဉ်ပါ…"
+
+# Extracted string
+msgid "Transparent warnings across attendance, homework, exams, and GED readiness."
+msgstr "တက်ရောက်မှု၊ အိမ်စာ၊ စာမေးပွဲများနှင့် GED အဆင်သင့်ရှိမှုတို့တွင် ပွင့်လင်းသောသတိပေးချက်များ။"
+
+# Extracted string
+msgid "High priority"
+msgstr "ဦးစားပေး"
+
+# Extracted string
+msgid "Watch closely"
+msgstr "အနီးကပ်စောင့်ကြည့်ပါ။"
+
+# Extracted string
+msgid "Open plans"
+msgstr "အစီအစဉ်များဖွင့်ပါ။"
+
+# Extracted string
+msgid "Overdue actions"
+msgstr "ရက်လွန်လုပ်ရပ်များ"
+
+# Extracted string
+msgid "Plan title"
+msgstr "အစီအစဉ်ခေါင်းစဉ်"
+
+# Extracted string
+msgid "Review date"
+msgstr "သုံးသပ်ချက် ရက်စွဲ"
+
+# Extracted string
+msgid "First action"
+msgstr "ပထမဆုံးလုပ်ဆောင်ချက်"
+
+# Extracted string
+msgid "Students needing attention"
+msgstr "ကျောင်းသားတွေ သတိထားဖို့ လိုတယ်။"
+
+# Extracted string
+msgid "No active students found."
+msgstr "တက်တက်ကြွကြွ ကျောင်းသား မတွေ့ပါ။"
+
+# Extracted string
+msgid "No current threshold warnings"
+msgstr "လက်ရှိအဆင့်သတိပေးချက်များမရှိပါ။"
+
+# Extracted string
+msgid "Plan support"
+msgstr "ပံ့ပိုးမှုအစီအစဉ်"
+
+# Extracted string
+msgid "Intervention plans"
+msgstr "ကြားဝင်စီမံချက်များ"
+
+# Extracted string
+msgid "No intervention plans yet."
+msgstr "ဝင်ရောက်စွက်ဖက်ရန် အစီအစဉ်မရှိသေးပါ။"
+
+# Extracted string
+msgid "Risk levels are rule-based and explain every reason. They support professional judgment; they never automatically label, discipline, or restrict a student."
+msgstr "အန္တရာယ်အဆင့်များသည် စည်းကမ်းအခြေခံပြီး အကြောင်းပြချက်တိုင်းကို ရှင်းပြပါ။ သူတို့က ပရော်ဖက်ရှင်နယ် စီရင်ဆုံးဖြတ်တာကို ထောက်ခံတယ်။ သူတို့သည် ကျောင်းသားတစ်ဦးကို အလိုအလျောက်တံဆိပ်ကပ်ခြင်း၊ စည်းကမ်းသတ်မှတ်ခြင်း သို့မဟုတ် ကန့်သတ်ခြင်းမျိုး ဘယ်သောအခါမှ မပြုလုပ်ပါ။"
+
+# Extracted string
+msgid "Max marks must be a number greater than 0"
+msgstr "အများဆုံးအမှတ်များသည် 0 ထက်ကြီးသော ဂဏန်းဖြစ်ရပါမည်။"
+
+# Extracted string
+msgid "Max marks cannot be removed after syncing to the gradebook"
+msgstr "gradebook သို့ စင့်ခ်လုပ်ပြီးနောက် အများဆုံးအမှတ်များကို ဖယ်ရှား၍မရပါ။"
+
+# Extracted string
+msgid "Add feedback explaining what the student should change"
+msgstr "ကျောင်းသားပြောင်းလဲသင့်သည်များကို ရှင်းပြသည့် တုံ့ပြန်ချက်ထည့်ပါ။"
+
+# Extracted string
+msgid "Enter a valid score of 0 or more"
+msgstr "မှန်ကန်သောရမှတ် 0 သို့မဟုတ် ထို့ထက်ပို၍ထည့်ပါ။"
+
+# Extracted string
+msgid "Search student name or code"
+msgstr "ကျောင်းသားအမည် သို့မဟုတ် ကုဒ်ကို ရှာပါ။"
+
+# Extracted string
+msgid "Previous submission"
+msgstr "ယခင်တင်ပြချက်"
+
+# Extracted string
+msgid "Next submission"
+msgstr "နောက်တစ်ခု တင်ပြချက်"
+
+# Extracted string
+msgid "Close review"
+msgstr "အနီးကပ် သုံးသပ်ချက်"
+
+# Extracted string
+msgid "What was done well? What should the student improve?"
+msgstr "ဘာတွေ ကောင်းကောင်း ပြီးခဲ့လဲ။ ကျောင်းသားက ဘာတွေ တိုးတက်သင့်လဲ။"
+
+# Extracted string
+msgid "Required because this homework is linked to the gradebook."
+msgstr "ဤအိမ်စာသည် အတန်းစာအုပ်နှင့် ချိတ်ဆက်ထားသောကြောင့် လိုအပ်ပါသည်။"
+
+# Extracted string
+msgid "Needs review"
+msgstr "ပြန်လည်သုံးသပ်ရန် လိုအပ်ပါသည်။"
+
+# Extracted string
+msgid "Changes requested"
+msgstr "အပြောင်းအလဲများ တောင်းဆိုထားသည်။"
+
+# Extracted string
+msgid "Submitted documents"
+msgstr "စာတမ်းများတင်သွင်းခဲ့သည်။"
+
+# Extracted string
+msgid "This document opens in its compatible viewer. Use Open to inspect it or Download to save a copy."
+msgstr "ဤစာရွက်စာတမ်းသည် ၎င်း၏ တွဲဖက်သုံးနိုင်သော ကြည့်ရှုမှုတွင် ဖွင့်သည်။ ၎င်းကိုစစ်ဆေးရန် Open ကိုသုံးပါ သို့မဟုတ် မိတ္တူကိုသိမ်းဆည်းရန် ဒေါင်းလုဒ်လုပ်ပါ။"
+
+# Extracted string
+msgid "Teacher feedback"
+msgstr "ဆရာ့တုံ့ပြန်ချက်"
+
+# Extracted string
+msgid "Give clear next steps. Feedback is required when requesting changes."
+msgstr "နောက်အဆင့်တွေကို ရှင်းလင်းပေးပါ။ အပြောင်းအလဲများကို တောင်းဆိုသည့်အခါ တုံ့ပြန်ချက် လိုအပ်သည်။"
+
+# Extracted string
+msgid "Request changes"
+msgstr "အပြောင်းအလဲများကို တောင်းဆိုပါ။"
+
+# Extracted string
+msgid "Remove attachment"
+msgstr "ပူးတွဲပါဖိုင်ကို ဖယ်ရှားပါ။"
+
+# Extracted string
+msgid "Search homework, class or subject"
+msgstr "အိမ်စာ၊ အတန်း သို့မဟုတ် ဘာသာရပ်ကို ရှာပါ။"
+
+# Extracted string
+msgid "All homework"
+msgstr "အိမ်စာတွေအကုန်လုံး"
+
+# Extracted string
+msgid "No homework matches these filters."
+msgstr "ဤစစ်ထုတ်မှုများနှင့် ကိုက်ညီသော အိမ်စာမရှိပါ။"
+
+# Extracted string
+msgid "Learning activities"
+msgstr "သင်ယူလှုပ်ရှားမှုများ"
+
+# Extracted string
+msgid "A little daily practice keeps learning momentum strong."
+msgstr "နေ့စဉ်အလေ့အကျင့်အနည်းငယ်သည် သင်ယူမှုအရှိန်ကို အားကောင်းစေသည်။"
+
+# Extracted string
+msgid "Build a streak"
+msgstr "တန်းစီတည်ဆောက်ပါ။"
+
+# Extracted string
+msgid "Only uploaded school files can be saved offline."
+msgstr "အပ်လုဒ်လုပ်ထားသော ကျောင်းဖိုင်များကိုသာ အော့ဖ်လိုင်းတွင် သိမ်းဆည်းနိုင်ပါသည်။"
+
+# Extracted string
+msgid "Saved for offline use on this device"
+msgstr "ဤစက်တွင် အော့ဖ်လိုင်းအသုံးပြုရန်အတွက် သိမ်းဆည်းထားသည်။"
+
+# Extracted string
+msgid "Could not save this resource offline"
+msgstr "ဤအရင်းအမြစ်ကို အော့ဖ်လိုင်းတွင် မသိမ်းဆည်းနိုင်ပါ။"
+
+# Extracted string
+msgid "Delete \"${resource.title}\"? This also removes its uploaded file."
+msgstr "\"${resource.title}\" ကို ဖျက်မလား။ ၎င်းသည် ၎င်း၏ အပ်လုဒ်လုပ်ထားသော ဖိုင်ကိုလည်း ဖယ်ရှားသည်။"
+
+# Extracted string
+msgid "View in app"
+msgstr "အက်ပ်တွင်ကြည့်ပါ။"
+
+# Extracted string
+msgid "Save for offline"
+msgstr "အော့ဖ်လိုင်းအတွက် သိမ်းဆည်းပါ။"
+
+# Extracted string
+msgid "Teaching schedule grid"
+msgstr "သင်ကြားမှုဇယားကွက်"
+
+# Extracted string
+msgid "Session type"
+msgstr "Session အမျိုးအစား"
+
+# Extracted string
+msgid "Employment type does not change account permissions. Assigned classes and subjects determine academic access."
+msgstr "အလုပ်အကိုင်အမျိုးအစားသည် အကောင့်ခွင့်ပြုချက်များကို မပြောင်းလဲပါ။ သတ်မှတ်ထားသော အတန်းများနှင့် ဘာသာရပ်များသည် ပညာရေးဝင်ခွင့်ကို ဆုံးဖြတ်သည်။"
+
+# Extracted string
+msgid "HR classification only. Full-time, part-time, and volunteer teachers receive the same Teacher role; class and subject assignments scope their access."
+msgstr "HR အမျိုးအစားခွဲခြားခြင်းသာဖြစ်သည်။ အချိန်ပြည့်၊ အချိန်ပိုင်းနှင့် စေတနာ့ဝန်ထမ်း ဆရာများသည် တူညီသော ဆရာတာဝန်ကို ရရှိကြသည်။ အတန်းနှင့် ဘာသာရပ်ဆိုင်ရာ တာဝန်များသည် ၎င်းတို့၏ ဝင်ရောက်ခွင့်ကို အတိုင်းအတာတစ်ခုအထိ ကန့်သတ်ထားသည်။"
+
+# Extracted string
+msgid "All Employment"
+msgstr "အလုပ်အကိုင်အားလုံး"
+
+# Extracted string
+msgid "Role Access Reference"
+msgstr "Role Access Reference"
+
+# Extracted string
+msgid "Review the system-defined access granted to each account role."
+msgstr "အကောင့်ကဏ္ဍတစ်ခုစီအတွက် ပေးထားသော စနစ်သတ်မှတ်ဝင်ရောက်ခွင့်ကို ပြန်လည်သုံးသပ်ပါ။"
+
+# Extracted string
+msgid "Role permissions are deployment-managed and cannot be changed from this screen."
+msgstr "အခန်းကဏ္ဍခွင့်ပြုချက်များသည် ဖြန့်ကျက်မှု-စီမံခန့်ခွဲပြီး ဤစခရင်မှ ပြောင်းလဲ၍မရပါ။"
+
+# Extracted string
+msgid "Select role to review"
+msgstr "ပြန်လည်သုံးသပ်ရန် အခန်းကဏ္ဍကို ရွေးချယ်ပါ။"
+
+# Extracted string
+msgid "All roles overview"
+msgstr "အခန်းကဏ္ဍအားလုံးခြုံငုံသုံးသပ်ချက်"
+
+# Extracted string
+msgid "Role Access"
+msgstr "Role Access"
+
+# Extracted string
+msgid "Converting video for web playback…"
+msgstr "ဝဘ်ပြန်ဖွင့်ခြင်းအတွက် ဗီဒီယိုကို ပြောင်းနေသည်…"
+
+# Extracted string
+msgid "This runs once after upload. Large files may take a few minutes — this page updates automatically."
+msgstr "အပ်လုဒ်လုပ်ပြီးသည်နှင့် တစ်ကြိမ်လုပ်ဆောင်သည်။ ဖိုင်ကြီးများသည် မိနစ်အနည်းငယ် ကြာနိုင်သည်—ဤစာမျက်နှာသည် အလိုအလျောက် အပ်ဒိတ်လုပ်သည်။"
+
+# Extracted string
+msgid "This video couldn’t be converted for playback."
+msgstr "ဤဗီဒီယိုကို ပြန်ဖွင့်ရန်အတွက် ပြောင်း၍မရပါ။"
+
+# Extracted string
+msgid "The converted video could not be loaded."
+msgstr "ပြောင်းထားသော ဗီဒီယိုကို တင်၍မရပါ။"
+
+# Extracted string
+msgid "The file may be incomplete or use an unsupported codec. Try converting it again."
+msgstr "ဖိုင်သည် မပြည့်စုံနိုင် သို့မဟုတ် ပံ့ပိုးမထားသော ကုဒ်ဒစ်ကို အသုံးပြုနိုင်သည်။ ထပ်ပြောင်းကြည့်ပါ။"
+
+# Extracted string
+msgid "Retry playback"
+msgstr "ပြန်ဖွင့်ကြည့်ပါ။"
+

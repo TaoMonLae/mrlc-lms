@@ -131,10 +131,11 @@ function isValidJsxText(str) {
 
   // Filter out expressions that are actually JS code
   if (str.includes('&&') || str.includes('||') || str.includes('=>') || str.includes('===') || str.includes('!==') || str.includes('==') || str.includes('!=')) return false;
-  if (str.startsWith(')') || str.endsWith('(') || str.startsWith('}') || str.endsWith('{')) return false;
+  if (str.startsWith(')') || str.endsWith('(') || str.startsWith('}') || str.endsWith('{') || str.startsWith('(') || str.endsWith(')') || str.endsWith(']') || str.endsWith('}')) return false;
+  if (str.startsWith('=') || str.startsWith(':')) return false;
   if (str.includes(') :') || str.includes(') ?') || str.includes('? (') || str.includes(') &&')) return false;
-  if (str.includes('return ') || str.includes('import ')) return false;
-  if (/\bexport\s+(?:const|default|class|function|type|interface|{)\b/.test(str)) return false;
+  if (str.includes('return ') || str.includes('import ') || str.includes('export ')) return false;
+  if (str.includes('as ') || str.includes('|') || str.includes('Map<') || str.includes('Set<') || str.includes('Record<') || str.includes('Array<')) return false;
   if (str.includes('React.') || str.includes('SVGProps') || str.includes('ChangeEvent')) return false;
   if (/\b(?:true|false|null|undefined|void)\b/.test(str)) return false;
 
@@ -170,12 +171,14 @@ walk(srcDir, (f) => f.endsWith('.tsx') || f.endsWith('.ts'), (filePath) => {
     addString(unescapeJs(m[3]));
   }
 
-  // 5. Match static JSX text
-  const jsxTextMatches = content.matchAll(/>\s*([^<>{}\n]+)\s*</g);
-  for (const m of jsxTextMatches) {
-    const str = m[1].trim();
-    if (isValidJsxText(str)) {
-      addString(str);
+  // 5. Match static JSX text (only in TSX files)
+  if (filePath.endsWith('.tsx')) {
+    const jsxTextMatches = content.matchAll(/>\s*([^<>{}\n]+)\s*</g);
+    for (const m of jsxTextMatches) {
+      const str = m[1].trim();
+      if (isValidJsxText(str)) {
+        addString(str);
+      }
     }
   }
 

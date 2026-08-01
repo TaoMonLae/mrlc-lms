@@ -1,7 +1,9 @@
 import express from "express";
+import compression from "compression";
 import path from "path";
 import fs from "fs";
 import crypto from "crypto";
+import { constants as zlibConstants } from "zlib";
 import multer from "multer";
 import { z } from "zod";
 import helmet from "helmet";
@@ -1819,6 +1821,28 @@ async function startServer() {
   // express-rate-limit see the real client IP instead of the proxy's address.
   // Without this, all traffic shares one IP and rate limiting blocks everyone.
   app.set("trust proxy", 1);
+
+  // Compress HTML, API responses, and frontend assets at the application edge.
+  // A moderate Brotli quality keeps response sizes low without making Node spend
+  // excessive CPU on content that Cloudflare may cache after the first request.
+  app.use(
+    compression({
+      threshold: 1024,
+      brotli: {
+        params: {
+          [zlibConstants.BROTLI_PARAM_QUALITY]: 4,
+        },
+      },
+      filter: (req, res) => {
+        const contentType = res.getHeader("Content-Type");
+        const isEventStream =
+          req.headers.accept?.includes("text/event-stream") ||
+          (typeof contentType === "string" && contentType.includes("text/event-stream"));
+
+        return !isEventStream && compression.filter(req, res);
+      },
+    })
+  );
 
   // ── Security headers ────────────────────────────────────────────────────────
   app.use(
@@ -22332,13 +22356,37 @@ async function startServer() {
     });
   } else {
     const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
+    const distAssetsPath = path.join(distPath, "assets");
+
+    // Vite fingerprints everything in /assets, so these files can safely stay in
+    // browser and CDN caches for a year. Public files keep a short cache window
+    // because their filenames are stable and can change between deployments.
+    app.use("/assets", express.static(distAssetsPath, {
+      maxAge: "1y",
+      immutable: true,
+    }));
+    app.use(express.static(distPath, {
+      maxAge: "1d",
+      setHeaders: (res, filePath) => {
+        const filename = path.basename(filePath);
+        if (
+          filename === "index.html" ||
+          filename === "sw.js" ||
+          filename === "service-worker.js" ||
+          filename === "manifest.json" ||
+          filename.endsWith(".webmanifest")
+        ) {
+          res.setHeader("Cache-Control", "no-cache");
+        }
+      },
+    }));
     app.get("*", (req, res) => {
       // Unmatched API routes get a JSON 404 instead of the HTML shell.
       if (req.originalUrl.startsWith("/api/")) {
         res.status(404).json({ error: "Not found" });
         return;
       }
+      res.setHeader("Cache-Control", "no-cache");
       res.sendFile(path.join(distPath, "index.html"));
     });
   }

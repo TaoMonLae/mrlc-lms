@@ -14337,3 +14337,4211 @@ msgstr ""
 msgid "Expense Count"
 msgstr ""
 
+# Extracted string
+msgid "Loading page…"
+msgstr ""
+
+# Extracted string
+msgid "Use a PNG, JPG, WebP, or GIF image."
+msgstr ""
+
+# Extracted string
+msgid "Question images must be 10 MB or smaller."
+msgstr ""
+
+# Extracted string
+msgid "Ask about your classes, exams, grading…"
+msgstr ""
+
+# Extracted string
+msgid "AI Assistant"
+msgstr ""
+
+# Extracted string
+msgid "Context-aware · read-only"
+msgstr ""
+
+# Extracted string
+msgid "I can see your classes, exams, grading queue, attendance and recent activity — all read-only. Ask me anything, or start here:"
+msgstr ""
+
+# Extracted string
+msgid "Thinking…"
+msgstr ""
+
+# Extracted string
+msgid "Read-only · sees your classes, exams &amp; activity ·"
+msgstr ""
+
+# Extracted string
+msgid "Shift+Enter"
+msgstr ""
+
+# Extracted string
+msgid "for a new line"
+msgstr ""
+
+# Extracted string
+msgid "Game access could not be checked"
+msgstr ""
+
+# Extracted string
+msgid "The game is paused until the student screen-time rules can be verified."
+msgstr ""
+
+# Extracted string
+msgid "Try again"
+msgstr ""
+
+# Extracted string
+msgid "Daily allowance"
+msgstr ""
+
+# Extracted string
+msgid "Each session"
+msgstr ""
+
+# Extracted string
+msgid "Use this break to stretch, rest your eyes, or continue with a learning activity."
+msgstr ""
+
+# Extracted string
+msgid "Back to learning"
+msgstr ""
+
+# Extracted string
+msgid "Open Language Quest"
+msgstr ""
+
+# Extracted string
+msgid "apiGet"
+msgstr ""
+
+# Extracted string
+msgid "apiSend"
+msgstr ""
+
+# Extracted string
+msgid "Sharing files is unavailable here, so the image was saved. Attach it to your social post."
+msgstr ""
+
+# Extracted string
+msgid "Achievement image saved"
+msgstr ""
+
+# Extracted string
+msgid "Achievements"
+msgstr ""
+
+# Extracted string
+msgid "Learning streak"
+msgstr ""
+
+# Extracted string
+msgid "Complete a lesson today to unlock."
+msgstr ""
+
+# Extracted string
+msgid "Finish every lesson in a course to unlock its certificate -- every course you complete earns its own."
+msgstr ""
+
+# Extracted string
+msgid "Mon Refugee Learning Centre"
+msgstr ""
+
+# Extracted string
+msgid "Language Quest"
+msgstr ""
+
+# Extracted string
+msgid "Certificate of Completion"
+msgstr ""
+
+# Extracted string
+msgid "LQ"
+msgstr ""
+
+# Extracted string
+msgid "Print-ready landscape certificate"
+msgstr ""
+
+# Extracted string
+msgid "Course folders"
+msgstr ""
+
+# Extracted string
+msgid "Course folder"
+msgstr ""
+
+# Extracted string
+msgid "Open folder"
+msgstr ""
+
+# Extracted string
+msgid "Close folder"
+msgstr ""
+
+# Extracted string
+msgid "Open dictionary"
+msgstr ""
+
+# Extracted string
+msgid "Type or highlight a word…"
+msgstr ""
+
+# Extracted string
+msgid "Dictionary word"
+msgstr ""
+
+# Extracted string
+msgid "Language Quest Dictionary"
+msgstr ""
+
+# Extracted string
+msgid "Highlight a word anywhere in the lesson, then choose"
+msgstr ""
+
+# Extracted string
+msgid "Look up"
+msgstr ""
+
+# Extracted string
+msgid "Myanmar translation"
+msgstr ""
+
+# Extracted string
+msgid "Chinese dictionary"
+msgstr ""
+
+# Extracted string
+msgid "Mon dictionary"
+msgstr ""
+
+# Extracted string
+msgid "Search here, or close this window and highlight an unfamiliar word."
+msgstr ""
+
+# Extracted string
+msgid "+${mission.rewardXp} XP claimed from ${mission.title}"
+msgstr ""
+
+# Extracted string
+msgid "Daily &amp; weekly missions"
+msgstr ""
+
+# Extracted string
+msgid "Small goals, extra XP"
+msgstr ""
+
+# Extracted string
+msgid "Daily Chain"
+msgstr ""
+
+# Extracted string
+msgid "Lightning Round"
+msgstr ""
+
+# Extracted string
+msgid "Claimed"
+msgstr ""
+
+# Extracted string
+msgid "Classroom team goals"
+msgstr ""
+
+# Extracted string
+msgid "Learn together"
+msgstr ""
+
+# Extracted string
+msgid "Join a classroom to take part in teacher-created XP goals."
+msgstr ""
+
+# Extracted string
+msgid "Language albums"
+msgstr ""
+
+# Extracted string
+msgid "A card journey for every language"
+msgstr ""
+
+# Extracted string
+msgid "Each completed challenge fills that language’s album. No purchases or random packs."
+msgstr ""
+
+# Extracted string
+msgid "Renowned Mon Kings in History collection overview"
+msgstr ""
+
+# Extracted string
+msgid "Legendary"
+msgstr ""
+
+# Extracted string
+msgid "Sealed legend"
+msgstr ""
+
+# Extracted string
+msgid "Legendary Vault"
+msgstr ""
+
+# Extracted string
+msgid "Complete the full Quest Card path, then continue earning learning XP to open sealed golden chests and reveal MRLC’s Mon history collection. Every portrait stays hidden until its milestone is reached."
+msgstr ""
+
+# Extracted string
+msgid "Renowned Mon Kings in History"
+msgstr ""
+
+# Extracted string
+msgid "Mystery • Heritage • Achievement"
+msgstr ""
+
+# Extracted string
+msgid "My legendary history collection"
+msgstr ""
+
+# Extracted string
+msgid "Locked portraits stay secret until their golden chest opens."
+msgstr ""
+
+# Extracted string
+msgid "Legendary chest unlocked!"
+msgstr ""
+
+# Extracted string
+msgid "Add to my legendary vault"
+msgstr ""
+
+# Extracted string
+msgid "Tap two tiles that go together to connect them…"
+msgstr ""
+
+# Extracted string
+msgid "Lesson progress"
+msgstr ""
+
+# Extracted string
+msgid "Tap the words below in order…"
+msgstr ""
+
+# Extracted string
+msgid "Current companion"
+msgstr ""
+
+# Extracted string
+msgid "Quest Card chapters"
+msgstr ""
+
+# Extracted string
+msgid "Achievement"
+msgstr ""
+
+# Extracted string
+msgid "Every correct first answer earns XP. Your first companion unlocks at 100 XP, and every later card demands a bigger learning milestone."
+msgstr ""
+
+# Extracted string
+msgid "View my collection"
+msgstr ""
+
+# Extracted string
+msgid "My Quest Cards"
+msgstr ""
+
+# Extracted string
+msgid "New Quest Card unlocked!"
+msgstr ""
+
+# Extracted string
+msgid "Add to my collection"
+msgstr ""
+
+# Extracted string
+msgid "Mastery reviews"
+msgstr ""
+
+# Extracted string
+msgid "Learning analytics"
+msgstr ""
+
+# Extracted string
+msgid "Classrooms"
+msgstr ""
+
+# Extracted string
+msgid "Manage learners"
+msgstr ""
+
+# Extracted string
+msgid "Learner profile"
+msgstr ""
+
+# Extracted string
+msgid "Sign out"
+msgstr ""
+
+# Extracted string
+msgid "Learners"
+msgstr ""
+
+# Extracted string
+msgid "Learn • Practise • Grow"
+msgstr ""
+
+# Extracted string
+msgid "About &amp; course sources"
+msgstr ""
+
+# Extracted string
+msgid "EN"
+msgstr ""
+
+# Extracted string
+msgid "မြန်မာ"
+msgstr ""
+
+# Extracted string
+msgid "MRLC Language Quest home"
+msgstr ""
+
+# Extracted string
+msgid "MRLC logo"
+msgstr ""
+
+# Extracted string
+msgid "Tao Mon Lae on GitHub"
+msgstr ""
+
+# Extracted string
+msgid "MRLC"
+msgstr ""
+
+# Extracted string
+msgid "Tao Mon Lae"
+msgstr ""
+
+# Extracted string
+msgid "Notifications"
+msgstr ""
+
+# Extracted string
+msgid "You're all caught up"
+msgstr ""
+
+# Extracted string
+msgid "Notification preferences →"
+msgstr ""
+
+# Extracted string
+msgid "Could not load MFA status"
+msgstr ""
+
+# Extracted string
+msgid "Enter your current password"
+msgstr ""
+
+# Extracted string
+msgid "Multi-factor authentication enabled"
+msgstr ""
+
+# Extracted string
+msgid "Multi-factor authentication disabled"
+msgstr ""
+
+# Extracted string
+msgid "New recovery codes created; previous codes no longer work"
+msgstr ""
+
+# Extracted string
+msgid "Recovery codes copied"
+msgstr ""
+
+# Extracted string
+msgid "Disable multi-factor authentication for this account?"
+msgstr ""
+
+# Extracted string
+msgid "QR code for adding MRLC LMS to an authenticator app"
+msgstr ""
+
+# Extracted string
+msgid "setStatus(await apiGet"
+msgstr ""
+
+# Extracted string
+msgid "Multi-factor authentication"
+msgstr ""
+
+# Extracted string
+msgid "Protect sign-in with a 6-digit code from any TOTP authenticator app."
+msgstr ""
+
+# Extracted string
+msgid "Enabled"
+msgstr ""
+
+# Extracted string
+msgid "Recommended for your role"
+msgstr ""
+
+# Extracted string
+msgid "Loading security status…"
+msgstr ""
+
+# Extracted string
+msgid "1. Scan the QR code"
+msgstr ""
+
+# Extracted string
+msgid "If scanning is unavailable, enter this key manually:"
+msgstr ""
+
+# Extracted string
+msgid "2. Enter the current 6-digit code"
+msgstr ""
+
+# Extracted string
+msgid "Authentication or recovery code"
+msgstr ""
+
+# Extracted string
+msgid "Save these one-time recovery codes now"
+msgstr ""
+
+# Extracted string
+msgid "They will not be shown again. Each code works once if your authenticator is unavailable."
+msgstr ""
+
+# Extracted string
+msgid "Copy"
+msgstr ""
+
+# Extracted string
+msgid "Notification preferences saved"
+msgstr ""
+
+# Extracted string
+msgid "Choose which reminders appear in the notification bell. Email delivery is queued when enabled."
+msgstr ""
+
+# Extracted string
+msgid "Device signed out"
+msgstr ""
+
+# Extracted string
+msgid "Other devices signed out"
+msgstr ""
+
+# Extracted string
+msgid "Signed-in devices"
+msgstr ""
+
+# Extracted string
+msgid "Review active sessions and sign out devices you do not recognize."
+msgstr ""
+
+# Extracted string
+msgid "Loading devices…"
+msgstr ""
+
+# Extracted string
+msgid "No managed sessions found. Your current session may predate this security update."
+msgstr ""
+
+# Extracted string
+msgid "Current device"
+msgstr ""
+
+# Extracted string
+msgid ". Optional: password (min 6 chars), employmentType (FULL_TIME, PART_TIME, or VOLUNTEER; defaults to FULL_TIME), subjects, phone, joinedDate, baseSalary, teacherCode, and notes."
+msgstr ""
+
+# Extracted string
+msgid "Reason for cancellation..."
+msgstr ""
+
+# Extracted string
+msgid "Weekdays"
+msgstr ""
+
+# Extracted string
+msgid "Every day"
+msgstr ""
+
+# Extracted string
+msgid "Status & Cancellation"
+msgstr ""
+
+# Extracted string
+msgid "Cancellation Reason"
+msgstr ""
+
+# Extracted string
+msgid "Choose a JPG, PNG, or WEBP image"
+msgstr ""
+
+# Extracted string
+msgid "Thumbnail images must be 5 MB or smaller"
+msgstr ""
+
+# Extracted string
+msgid "Video thumbnail preview"
+msgstr ""
+
+# Extracted string
+msgid "No thumbnail"
+msgstr ""
+
+# Extracted string
+msgid "JPG, PNG, or WEBP up to 5 MB. Images are optimized for video cards."
+msgstr ""
+
+# Extracted string
+msgid "The lesson was cleared, but the temporary upload could not be removed from the server"
+msgstr ""
+
+# Extracted string
+msgid "Mon Language"
+msgstr ""
+
+# Extracted string
+msgid "Daily Quest"
+msgstr ""
+
+# Extracted string
+msgid "Chess"
+msgstr ""
+
+# Extracted string
+msgid "Pac-Man"
+msgstr ""
+
+# Extracted string
+msgid "Word Trail"
+msgstr ""
+
+# Extracted string
+msgid "Game Time Controls"
+msgstr ""
+
+# Extracted string
+msgid "Language Learning"
+msgstr ""
+
+# Extracted string
+msgid "Reading Analytics"
+msgstr ""
+
+# Extracted string
+msgid "Student Success"
+msgstr ""
+
+# Extracted string
+msgid "Account & Security"
+msgstr ""
+
+# Extracted string
+msgid "sanidhyy/duolingo-clone"
+msgstr ""
+
+# Extracted string
+msgid "TaoMonLae/duolingo-clone"
+msgstr ""
+
+# Extracted string
+msgid "WordPOS"
+msgstr ""
+
+# Extracted string
+msgid "MonDictDB"
+msgstr ""
+
+# Extracted string
+msgid "Gutendex"
+msgstr ""
+
+# Extracted string
+msgid "About MRLC–LMS"
+msgstr ""
+
+# Extracted string
+msgid "One school. One shared place to"
+msgstr ""
+
+# Extracted string
+msgid "learn, teach, and grow."
+msgstr ""
+
+# Extracted string
+msgid "The Mon Refugee Learning Centre LMS brings learning, school operations, and community into one thoughtful digital home—made for the people who use it every day."
+msgstr ""
+
+# Extracted string
+msgid "Our purpose"
+msgstr ""
+
+# Extracted string
+msgid "Learning with dignity"
+msgstr ""
+
+# Extracted string
+msgid "Built for school life"
+msgstr ""
+
+# Extracted string
+msgid "A complete school workspace"
+msgstr ""
+
+# Extracted string
+msgid "Built around the whole school day"
+msgstr ""
+
+# Extracted string
+msgid "Useful administration and joyful learning belong together. Each part of the LMS supports the next."
+msgstr ""
+
+# Extracted string
+msgid "Made with care"
+msgstr ""
+
+# Extracted string
+msgid "Technology serving people"
+msgstr ""
+
+# Extracted string
+msgid "The platform combines open-source foundations with features built specifically for MRLC—not a generic school dropped into a template."
+msgstr ""
+
+# Extracted string
+msgid "Open-source acknowledgments"
+msgstr ""
+
+# Extracted string
+msgid "Credit belongs where it is due."
+msgstr ""
+
+# Extracted string
+msgid "MRLC–LMS stands on generous public projects and datasets. Sources, licenses, and distribution limits remain documented clearly."
+msgstr ""
+
+# Extracted string
+msgid "Designed and developed by"
+msgstr ""
+
+# Extracted string
+msgid "Built for the students, teachers, and staff of the Mon Refugee Learning Centre—with the belief that school technology should feel capable, welcoming, and distinctly ours."
+msgstr ""
+
+# Extracted string
+msgid "View GitHub"
+msgstr ""
+
+# Extracted string
+msgid "Today's schedule table"
+msgstr ""
+
+# Extracted string
+msgid "Reset your password"
+msgstr ""
+
+# Extracted string
+msgid "Enter your email address or username. If it matches an active account, we’ll email a link that expires in 30 minutes."
+msgstr ""
+
+# Extracted string
+msgid "Check your email"
+msgstr ""
+
+# Extracted string
+msgid "Back to sign in"
+msgstr ""
+
+# Extracted string
+msgid "Try Language Quest"
+msgstr ""
+
+# Extracted string
+msgid "6-digit code or recovery code"
+msgstr ""
+
+# Extracted string
+msgid "Authentication code"
+msgstr ""
+
+# Extracted string
+msgid "Open your authenticator app, or enter one unused recovery code."
+msgstr ""
+
+# Extracted string
+msgid "Create a free learner account"
+msgstr ""
+
+# Extracted string
+msgid "Secure access for school members and Language Quest learners"
+msgstr ""
+
+# Extracted string
+msgid "Developed by Tao Mon Lae"
+msgstr ""
+
+# Extracted string
+msgid "The Mon Language learning app"
+msgstr ""
+
+# Extracted string
+msgid "The Mon Language"
+msgstr ""
+
+# Extracted string
+msgid "Learn and practise Mon language activities without leaving the platform."
+msgstr ""
+
+# Extracted string
+msgid "Loading The Mon Language…"
+msgstr ""
+
+# Extracted string
+msgid "Error 404"
+msgstr ""
+
+# Extracted string
+msgid "This page wandered off"
+msgstr ""
+
+# Extracted string
+msgid "Return home"
+msgstr ""
+
+# Extracted string
+msgid "Go back"
+msgstr ""
+
+# Extracted string
+msgid "Choose a new password"
+msgstr ""
+
+# Extracted string
+msgid "Password updated"
+msgstr ""
+
+# Extracted string
+msgid "All previous sessions were signed out for your protection."
+msgstr ""
+
+# Extracted string
+msgid "Continue to sign in"
+msgstr ""
+
+# Extracted string
+msgid "Use at least 8 characters and avoid reusing a password from another service."
+msgstr ""
+
+# Extracted string
+msgid "Your first name"
+msgstr ""
+
+# Extracted string
+msgid "Your last name"
+msgstr ""
+
+# Extracted string
+msgid "you@example.com"
+msgstr ""
+
+# Extracted string
+msgid "At least 8 characters"
+msgstr ""
+
+# Extracted string
+msgid "Back to Language Quest"
+msgstr ""
+
+# Extracted string
+msgid "A colorful learning journey"
+msgstr ""
+
+# Extracted string
+msgid "Your sentences get stronger one short lesson at a time."
+msgstr ""
+
+# Extracted string
+msgid "A learner account saves your course path, streak, points, and completed practices."
+msgstr ""
+
+# Extracted string
+msgid "Lesson 01"
+msgstr ""
+
+# Extracted string
+msgid "Listen, remember, then write:"
+msgstr ""
+
+# Extracted string
+msgid "“Good morning!”"
+msgstr ""
+
+# Extracted string
+msgid "Free learner account"
+msgstr ""
+
+# Extracted string
+msgid "Start your Language Quest"
+msgstr ""
+
+# Extracted string
+msgid "Choose a learner avatar"
+msgstr ""
+
+# Extracted string
+msgid "Built-in characters only—profile-photo uploads are not used in Language Quest."
+msgstr ""
+
+# Extracted string
+msgid "Use at least 8 characters."
+msgstr ""
+
+# Extracted string
+msgid "Already have an account?"
+msgstr ""
+
+# Extracted string
+msgid "By continuing, you agree to use the learning experience respectfully. Never share your password."
+msgstr ""
+
+# Extracted string
+msgid "Points must be greater than zero"
+msgstr ""
+
+# Extracted string
+msgid "Add at least two answer options"
+msgstr ""
+
+# Extracted string
+msgid "Mark at least one correct answer"
+msgstr ""
+
+# Extracted string
+msgid "Mark exactly one correct answer, or enable partial credit"
+msgstr ""
+
+# Extracted string
+msgid "Question illustration"
+msgstr ""
+
+# Extracted string
+msgid "Shown beside the question in the student player."
+msgstr ""
+
+# Extracted string
+msgid "Allocated amount must be greater than zero"
+msgstr ""
+
+# Extracted string
+msgid "End date must be on or after start date"
+msgstr ""
+
+# Extracted string
+msgid "Exhausted and exceeded states are calculated from approved expense totals."
+msgstr ""
+
+# Extracted string
+msgid "Select at least one rule that was broken"
+msgstr ""
+
+# Extracted string
+msgid "Logged ${result.violations.length} violation${result.violations.length === 1 ? '' : 's'} for ${studentName}."
+msgstr ""
+
+# Extracted string
+msgid "Search rules by code or title…"
+msgstr ""
+
+# Extracted string
+msgid "e.g. Verbal warning, after-school detention, parent meeting scheduled…"
+msgstr ""
+
+# Extracted string
+msgid "Download disciplinary notice for this record"
+msgstr ""
+
+# Extracted string
+msgid "Generate a printable Disciplinary Notice — with the rule(s) broken, escalation context, and signature lines — to send home or file."
+msgstr ""
+
+# Extracted string
+msgid "Rules broken *"
+msgstr ""
+
+# Extracted string
+msgid "Printed on the Disciplinary Notice under \"Recommended Action\"."
+msgstr ""
+
+# Extracted string
+msgid "Done"
+msgstr ""
+
+# Extracted string
+msgid "Type an English word, or paste a Mon or Chinese word…"
+msgstr ""
+
+# Extracted string
+msgid "Look up any English word — definitions, examples, synonyms, and Myanmar/Mon/Chinese translations — or paste a Mon or Chinese word directly. Free to use, no sign-in required."
+msgstr ""
+
+# Extracted string
+msgid "Search student, code, or class…"
+msgstr ""
+
+# Extracted string
+msgid "Loading reading analytics…"
+msgstr ""
+
+# Extracted string
+msgid "E-Book Reading Analytics"
+msgstr ""
+
+# Extracted string
+msgid "Student completion, progress, and active reading time."
+msgstr ""
+
+# Extracted string
+msgid "No student reading activity found."
+msgstr ""
+
+# Extracted string
+msgid "Average Progress"
+msgstr ""
+
+# Extracted string
+msgid "Reading Time"
+msgstr ""
+
+# Extracted string
+msgid "Last Read"
+msgstr ""
+
+# Extracted string
+msgid "Series volume must be a positive whole number."
+msgstr ""
+
+# Extracted string
+msgid "Series name (optional)"
+msgstr ""
+
+# Extracted string
+msgid "Genre / category"
+msgstr ""
+
+# Extracted string
+msgid "Book series"
+msgstr ""
+
+# Extracted string
+msgid "Volume number"
+msgstr ""
+
+# Extracted string
+msgid "Delete \"${book.title}\" from the e-library?"
+msgstr ""
+
+# Extracted string
+msgid "Search all books…"
+msgstr ""
+
+# Extracted string
+msgid "Clear library search"
+msgstr ""
+
+# Extracted string
+msgid "Sort search results"
+msgstr ""
+
+# Extracted string
+msgid "Search this shelf…"
+msgstr ""
+
+# Extracted string
+msgid "Sort books"
+msgstr ""
+
+# Extracted string
+msgid "Browse by genre, preview book details, and read online."
+msgstr ""
+
+# Extracted string
+msgid "The E-Library could not be loaded."
+msgstr ""
+
+# Extracted string
+msgid "No e-books yet."
+msgstr ""
+
+# Extracted string
+msgid "Upload a PDF, EPUB, CBR, or CBZ file to create the first shelf."
+msgstr ""
+
+# Extracted string
+msgid "Find your next read"
+msgstr ""
+
+# Extracted string
+msgid "Search the whole library"
+msgstr ""
+
+# Extracted string
+msgid "Search by title, author, genre, series, language, or format."
+msgstr ""
+
+# Extracted string
+msgid "Search all books"
+msgstr ""
+
+# Extracted string
+msgid "Search results"
+msgstr ""
+
+# Extracted string
+msgid "Try a title, author, genre, or series name."
+msgstr ""
+
+# Extracted string
+msgid "Library collections"
+msgstr ""
+
+# Extracted string
+msgid "Browse genres"
+msgstr ""
+
+# Extracted string
+msgid "Select a collection to open its bookshelf."
+msgstr ""
+
+# Extracted string
+msgid "Drag or scroll to browse. Select a cover to view the books in that genre."
+msgstr ""
+
+# Extracted string
+msgid "All genres"
+msgstr ""
+
+# Extracted string
+msgid "Search this shelf"
+msgstr ""
+
+# Extracted string
+msgid "Individual books"
+msgstr ""
+
+# Extracted string
+msgid "Language:"
+msgstr ""
+
+# Extracted string
+msgid "Size:"
+msgstr ""
+
+# Extracted string
+msgid "Read now"
+msgstr ""
+
+# Extracted string
+msgid "Assign"
+msgstr ""
+
+# Extracted string
+msgid "Highlight color"
+msgstr ""
+
+# Extracted string
+msgid "Previous page"
+msgstr ""
+
+# Extracted string
+msgid "Next page"
+msgstr ""
+
+# Extracted string
+msgid "Zoom out (-)"
+msgstr ""
+
+# Extracted string
+msgid "Reset zoom to 100% (0)"
+msgstr ""
+
+# Extracted string
+msgid "Zoom in (+)"
+msgstr ""
+
+# Extracted string
+msgid "Page view"
+msgstr ""
+
+# Extracted string
+msgid "Fit mode"
+msgstr ""
+
+# Extracted string
+msgid "Reading direction"
+msgstr ""
+
+# Extracted string
+msgid "Opening comic…"
+msgstr ""
+
+# Extracted string
+msgid "Single Page"
+msgstr ""
+
+# Extracted string
+msgid "Two Page"
+msgstr ""
+
+# Extracted string
+msgid "Fit Page"
+msgstr ""
+
+# Extracted string
+msgid "Fit Width"
+msgstr ""
+
+# Extracted string
+msgid "Fit Height"
+msgstr ""
+
+# Extracted string
+msgid "Left to Right"
+msgstr ""
+
+# Extracted string
+msgid "Right to Left"
+msgstr ""
+
+# Extracted string
+msgid "Fit to Width"
+msgstr ""
+
+# Extracted string
+msgid "Fit to Height"
+msgstr ""
+
+# Extracted string
+msgid "${f.name}: only PDF, EPUB, CBR, and CBZ files are allowed."
+msgstr ""
+
+# Extracted string
+msgid "${f.name}: this format has a ${maxMb} MB upload limit."
+msgstr ""
+
+# Extracted string
+msgid "${f.name}: this file is already in the upload queue."
+msgstr ""
+
+# Extracted string
+msgid "Add at least one PDF, EPUB, CBR, or CBZ file."
+msgstr ""
+
+# Extracted string
+msgid "Each queued book must have a unique title."
+msgstr ""
+
+# Extracted string
+msgid "Enter a series name or turn off series upload."
+msgstr ""
+
+# Extracted string
+msgid "Starting volume must be a positive whole number."
+msgstr ""
+
+# Extracted string
+msgid "Choose PDF, EPUB, CBR, or CBZ files to upload"
+msgstr ""
+
+# Extracted string
+msgid "Upload these books as a series"
+msgstr ""
+
+# Extracted string
+msgid "e.g. Harry Potter"
+msgstr ""
+
+# Extracted string
+msgid "Add PDF, EPUB, CBR, or CBZ books to the E-Library."
+msgstr ""
+
+# Extracted string
+msgid "Series name *"
+msgstr ""
+
+# Extracted string
+msgid "Choose an existing name to add volumes to that series, or type a new one."
+msgstr ""
+
+# Extracted string
+msgid "Existing series"
+msgstr ""
+
+# Extracted string
+msgid "Series preview"
+msgstr ""
+
+# Extracted string
+msgid "Fullscreen could not be started on this device."
+msgstr ""
+
+# Extracted string
+msgid "No questions are available"
+msgstr ""
+
+# Extracted string
+msgid "Ask your teacher to review this exam before you continue."
+msgstr ""
+
+# Extracted string
+msgid "✓ All blanks filled — you can tap a blank to change it."
+msgstr ""
+
+# Extracted string
+msgid "Integrity monitoring active."
+msgstr ""
+
+# Extracted string
+msgid "Enter fullscreen"
+msgstr ""
+
+# Extracted string
+msgid "Exam style applied. You can customize every setting."
+msgstr ""
+
+# Extracted string
+msgid "Duration must be at least 1 minute."
+msgstr ""
+
+# Extracted string
+msgid "Set a close time for scheduled result release."
+msgstr ""
+
+# Extracted string
+msgid "Question ${emptyIdx + 1} is missing its question text."
+msgstr ""
+
+# Extracted string
+msgid "Question ${emptyOptionIdx + 1} has an empty answer option."
+msgstr ""
+
+# Extracted string
+msgid "Question ${dragIdx + 1} needs exactly one marked correct word for each blank."
+msgstr ""
+
+# Extracted string
+msgid "Paste a reading passage, source text, chart description, or scenario. Students see it beside the question."
+msgstr ""
+
+# Extracted string
+msgid "Question standard"
+msgstr ""
+
+# Extracted string
+msgid "Standard multiple choice"
+msgstr ""
+
+# Extracted string
+msgid "GED Reasoning Through Language Arts"
+msgstr ""
+
+# Extracted string
+msgid "PNG, JPG, WebP, or GIF · up to 10 MB."
+msgstr ""
+
+# Extracted string
+msgid "Mock exam"
+msgstr ""
+
+# Extracted string
+msgid "GED neutral"
+msgstr ""
+
+# Extracted string
+msgid "Classroom classic"
+msgstr ""
+
+# Extracted string
+msgid "Colorful K–5"
+msgstr ""
+
+# Extracted string
+msgid "High-contrast focus"
+msgstr ""
+
+# Extracted string
+msgid "Integrity events are visible to teachers. Browser controls deter common actions but cannot guarantee prevention on every device."
+msgstr ""
+
+# Extracted string
+msgid "Amount must be greater than zero and tax cannot be negative"
+msgstr ""
+
+# Extracted string
+msgid "Due date must be on or after the expense date"
+msgstr ""
+
+# Extracted string
+msgid "A deck can contain at most ${MAX_CARDS} cards"
+msgstr ""
+
+# Extracted string
+msgid "Use a PNG, JPG, WEBP, or GIF image"
+msgstr ""
+
+# Extracted string
+msgid "Image must be 8 MB or smaller"
+msgstr ""
+
+# Extracted string
+msgid "Only the first ${MAX_CARDS} cards were kept"
+msgstr ""
+
+# Extracted string
+msgid "Wait for the image upload to finish"
+msgstr ""
+
+# Extracted string
+msgid "Card ${incompleteIndex + 1} needs both a term and a definition"
+msgstr ""
+
+# Extracted string
+msgid "Couldn't load this flashcard deck."
+msgstr ""
+
+# Extracted string
+msgid "Your match result could not be saved"
+msgstr ""
+
+# Extracted string
+msgid "Your quiz result could not be saved"
+msgstr ""
+
+# Extracted string
+msgid "Your spelling result could not be saved"
+msgstr ""
+
+# Extracted string
+msgid "Couldn't load your assigned decks."
+msgstr ""
+
+# Extracted string
+msgid "Tap the card or press Space to flip · Arrow keys move between cards"
+msgstr ""
+
+# Extracted string
+msgid "Choose a ${form.scope === \"CLASS\" ? \"class\" : \"student\"} first"
+msgstr ""
+
+# Extracted string
+msgid "Set a block, time limit, or allowed schedule"
+msgstr ""
+
+# Extracted string
+msgid "Game control removed"
+msgstr ""
+
+# Extracted string
+msgid "Remove the ${gameLabel(policy.gameKey)} control for ${targetLabel(policy)}?"
+msgstr ""
+
+# Extracted string
+msgid "Choose a student"
+msgstr ""
+
+# Extracted string
+msgid "Unlimited"
+msgstr ""
+
+# Extracted string
+msgid "Example: Games are available after homework and reading time."
+msgstr ""
+
+# Extracted string
+msgid "Edit control"
+msgstr ""
+
+# Extracted string
+msgid "Remove control"
+msgstr ""
+
+# Extracted string
+msgid "Game-time parental controls"
+msgstr ""
+
+# Extracted string
+msgid "Active rules"
+msgstr ""
+
+# Extracted string
+msgid "Your classes"
+msgstr ""
+
+# Extracted string
+msgid "Blank time fields mean unlimited. Blocking always overrides timers."
+msgstr ""
+
+# Extracted string
+msgid "Who does this apply to?"
+msgstr ""
+
+# Extracted string
+msgid "All students"
+msgstr ""
+
+# Extracted string
+msgid "A class"
+msgstr ""
+
+# Extracted string
+msgid "One student"
+msgstr ""
+
+# Extracted string
+msgid "Game"
+msgstr ""
+
+# Extracted string
+msgid "All recreational games"
+msgstr ""
+
+# Extracted string
+msgid "Block completely"
+msgstr ""
+
+# Extracted string
+msgid "Students cannot open or continue the selected game."
+msgstr ""
+
+# Extracted string
+msgid "Minutes per day"
+msgstr ""
+
+# Extracted string
+msgid "Minutes per session"
+msgstr ""
+
+# Extracted string
+msgid "Break between sessions"
+msgstr ""
+
+# Extracted string
+msgid "Allowed-time schedule"
+msgstr ""
+
+# Extracted string
+msgid "Outside this window, games are locked automatically."
+msgstr ""
+
+# Extracted string
+msgid "Games open"
+msgstr ""
+
+# Extracted string
+msgid "Games close"
+msgstr ""
+
+# Extracted string
+msgid "Cancel edit"
+msgstr ""
+
+# Extracted string
+msgid "Current controls"
+msgstr ""
+
+# Extracted string
+msgid "All applicable rules are combined; stricter limits take priority."
+msgstr ""
+
+# Extracted string
+msgid "No game controls yet"
+msgstr ""
+
+# Extracted string
+msgid "Add a balanced daily limit to start reducing screen time."
+msgstr ""
+
+# Extracted string
+msgid "Admin locked"
+msgstr ""
+
+# Extracted string
+msgid "Successfully imported ${parsedWords.length} words!"
+msgstr ""
+
+# Extracted string
+msgid "Download CSV Template"
+msgstr ""
+
+# Extracted string
+msgid "Checkers Leaderboard"
+msgstr ""
+
+# Extracted string
+msgid "My class"
+msgstr ""
+
+# Extracted string
+msgid "Whole school"
+msgstr ""
+
+# Extracted string
+msgid "No scores yet. Finish a game to claim the top spot!"
+msgstr ""
+
+# Extracted string
+msgid "Play"
+msgstr ""
+
+# Extracted string
+msgid "AI Opponent"
+msgstr ""
+
+# Extracted string
+msgid "Classic board game with AI, vocabulary learning, and class leaderboards!"
+msgstr ""
+
+# Extracted string
+msgid "Chess board"
+msgstr ""
+
+# Extracted string
+msgid "Choose promotion piece"
+msgstr ""
+
+# Extracted string
+msgid "Confirm resignation"
+msgstr ""
+
+# Extracted string
+msgid "Loading game…"
+msgstr ""
+
+# Extracted string
+msgid "Back to lobby"
+msgstr ""
+
+# Extracted string
+msgid "Promote pawn to"
+msgstr ""
+
+# Extracted string
+msgid "Resign this game?"
+msgstr ""
+
+# Extracted string
+msgid "Your opponent will be credited with the win."
+msgstr ""
+
+# Extracted string
+msgid "Resign"
+msgstr ""
+
+# Extracted string
+msgid "Play again"
+msgstr ""
+
+# Extracted string
+msgid "Moves"
+msgstr ""
+
+# Extracted string
+msgid "Select a piece to begin"
+msgstr ""
+
+# Extracted string
+msgid "Flip"
+msgstr ""
+
+# Extracted string
+msgid "◀ Back to lobby"
+msgstr ""
+
+# Extracted string
+msgid "Thinking"
+msgstr ""
+
+# Extracted string
+msgid "To move"
+msgstr ""
+
+# Extracted string
+msgid "Chess leaderboard"
+msgstr ""
+
+# Extracted string
+msgid "◀ Lobby"
+msgstr ""
+
+# Extracted string
+msgid "Pts"
+msgstr ""
+
+# Extracted string
+msgid "Challenge sent!"
+msgstr ""
+
+# Extracted string
+msgid "wants to play chess"
+msgstr ""
+
+# Extracted string
+msgid "waiting for a response…"
+msgstr ""
+
+# Extracted string
+msgid "Multiplayer lobby"
+msgstr ""
+
+# Extracted string
+msgid "◀ Setup"
+msgstr ""
+
+# Extracted string
+msgid "Challenges for you"
+msgstr ""
+
+# Extracted string
+msgid "Accept"
+msgstr ""
+
+# Extracted string
+msgid "Decline"
+msgstr ""
+
+# Extracted string
+msgid "Your games"
+msgstr ""
+
+# Extracted string
+msgid "Sent challenges"
+msgstr ""
+
+# Extracted string
+msgid "Recent games"
+msgstr ""
+
+# Extracted string
+msgid "No game selected."
+msgstr ""
+
+# Extracted string
+msgid "Open multiplayer lobby"
+msgstr ""
+
+# Extracted string
+msgid "◀ Back"
+msgstr ""
+
+# Extracted string
+msgid "Classical starting position"
+msgstr ""
+
+# Extracted string
+msgid "Choose an opponent"
+msgstr ""
+
+# Extracted string
+msgid "Online multiplayer"
+msgstr ""
+
+# Extracted string
+msgid "Computer"
+msgstr ""
+
+# Extracted string
+msgid "Local friend"
+msgstr ""
+
+# Extracted string
+msgid "Share this device"
+msgstr ""
+
+# Extracted string
+msgid "Computer strength"
+msgstr ""
+
+# Extracted string
+msgid "Leave Daily Quest"
+msgstr ""
+
+# Extracted string
+msgid "Preparing today’s quest…"
+msgstr ""
+
+# Extracted string
+msgid "Daily Quest is unavailable"
+msgstr ""
+
+# Extracted string
+msgid "New quest every day"
+msgstr ""
+
+# Extracted string
+msgid "Today&apos;s English Word Quest"
+msgstr ""
+
+# Extracted string
+msgid "Choose your pace"
+msgstr ""
+
+# Extracted string
+msgid "You can complete one quest each day. Pick the level that feels right."
+msgstr ""
+
+# Extracted string
+msgid "Quest complete"
+msgstr ""
+
+# Extracted string
+msgid "You showed up and learned!"
+msgstr ""
+
+# Extracted string
+msgid "Come back tomorrow for fresh English words."
+msgstr ""
+
+# Extracted string
+msgid "XP"
+msgstr ""
+
+# Extracted string
+msgid "Day streak"
+msgstr ""
+
+# Extracted string
+msgid "You answered"
+msgstr ""
+
+# Extracted string
+msgid "Done for today"
+msgstr ""
+
+# Extracted string
+msgid "Keep learning"
+msgstr ""
+
+# Extracted string
+msgid "Review question"
+msgstr ""
+
+# Extracted string
+msgid "Correct answer:"
+msgstr ""
+
+# Extracted string
+msgid "Friendly Language Quest guide wearing a yellow hoodie"
+msgstr ""
+
+# Extracted string
+msgid "dwyl/english-words"
+msgstr ""
+
+# Extracted string
+msgid "Isomorpheuss/advanced-english-vocabulary"
+msgstr ""
+
+# Extracted string
+msgid "AyeNyeinSan22/linguify"
+msgstr ""
+
+# Extracted string
+msgid "Course library"
+msgstr ""
+
+# Extracted string
+msgid "The story behind the quest"
+msgstr ""
+
+# Extracted string
+msgid "Language learning,"
+msgstr ""
+
+# Extracted string
+msgid "made more human."
+msgstr ""
+
+# Extracted string
+msgid "Language Quest is MRLC’s colorful learning space for useful words, complete sentences, confident speaking, and classroom connection—with transparent credit for every source that helped shape it."
+msgstr ""
+
+# Extracted string
+msgid "Explore courses"
+msgstr ""
+
+# Extracted string
+msgid "View course sources"
+msgstr ""
+
+# Extracted string
+msgid "Listen • Pick • Spell"
+msgstr ""
+
+# Extracted string
+msgid "English + Burmese guidance"
+msgstr ""
+
+# Extracted string
+msgid "Notable course sources"
+msgstr ""
+
+# Extracted string
+msgid "Clear credit builds better learning."
+msgstr ""
+
+# Extracted string
+msgid "Some courses are original MRLC work; others adapt or curate external material. These notes make the most important provenance and licensing details easy to find."
+msgstr ""
+
+# Extracted string
+msgid "Open learning"
+msgstr ""
+
+# Extracted string
+msgid "Know what you study—and where it came from."
+msgstr ""
+
+# Extracted string
+msgid "Attribution and redistribution"
+msgstr ""
+
+# Extracted string
+msgid "This page is a readable summary, not a replacement for the complete notices. Review the full license text and source-specific conditions before redistributing course content."
+msgstr ""
+
+# Extracted string
+msgid "Read complete notices"
+msgstr ""
+
+# Extracted string
+msgid "Learning support"
+msgstr ""
+
+# Extracted string
+msgid "hexgrad/Kokoro-82M"
+msgstr ""
+
+# Extracted string
+msgid "Built with the community in mind"
+msgstr ""
+
+# Extracted string
+msgid "Designed and built for the learners, teachers, and community of the Mon Refugee Learning Centre. Language Quest is open source so others can learn from it, improve it, and give credit to the work behind it."
+msgstr ""
+
+# Extracted string
+msgid "Visit GitHub profile"
+msgstr ""
+
+# Extracted string
+msgid "Start learning"
+msgstr ""
+
+# Extracted string
+msgid "Open-source project • MIT licensed"
+msgstr ""
+
+# Extracted string
+msgid "Analytics could not load"
+msgstr ""
+
+# Extracted string
+msgid "Building the class learning picture…"
+msgstr ""
+
+# Extracted string
+msgid "Teacher learning insights"
+msgstr ""
+
+# Extracted string
+msgid "Language Quest Analytics"
+msgstr ""
+
+# Extracted string
+msgid "See which questions, lessons, and practice skills need reteaching—and which learners may benefit from focused support."
+msgstr ""
+
+# Extracted string
+msgid "Current view"
+msgstr ""
+
+# Extracted string
+msgid "Analytics scope"
+msgstr ""
+
+# Extracted string
+msgid "Classroom"
+msgstr ""
+
+# Extracted string
+msgid "Course"
+msgstr ""
+
+# Extracted string
+msgid "All courses"
+msgstr ""
+
+# Extracted string
+msgid "Classroom focus:"
+msgstr ""
+
+# Extracted string
+msgid ". Choose it above to isolate that course."
+msgstr ""
+
+# Extracted string
+msgid "No attempts in this view yet"
+msgstr ""
+
+# Extracted string
+msgid "Try another classroom or course. Analytics will appear after learners answer Language Quest challenges."
+msgstr ""
+
+# Extracted string
+msgid "Practice skills"
+msgstr ""
+
+# Extracted string
+msgid "Accuracy by activity"
+msgstr ""
+
+# Extracted string
+msgid "Lesson signals"
+msgstr ""
+
+# Extracted string
+msgid "Lessons needing attention"
+msgstr ""
+
+# Extracted string
+msgid "Question diagnosis"
+msgstr ""
+
+# Extracted string
+msgid "Use these prompts for a mini-lesson, small group, or targeted practice."
+msgstr ""
+
+# Extracted string
+msgid "Skill"
+msgstr ""
+
+# Extracted string
+msgid "Accuracy"
+msgstr ""
+
+# Extracted string
+msgid "Attempts"
+msgstr ""
+
+# Extracted string
+msgid "Signal"
+msgstr ""
+
+# Extracted string
+msgid "Learner support"
+msgstr ""
+
+# Extracted string
+msgid "Who may need a check-in"
+msgstr ""
+
+# Extracted string
+msgid "Lowest accuracy appears first; learners without attempts remain visible for classroom scopes."
+msgstr ""
+
+# Extracted string
+msgid "Back to course"
+msgstr ""
+
+# Extracted string
+msgid "Boss Battle locked"
+msgstr ""
+
+# Extracted string
+msgid "Boss Battle"
+msgstr ""
+
+# Extracted string
+msgid "Boss health"
+msgstr ""
+
+# Extracted string
+msgid "Challenge again"
+msgstr ""
+
+# Extracted string
+msgid "${classroom.name} created"
+msgstr ""
+
+# Extracted string
+msgid "Focus course updated"
+msgstr ""
+
+# Extracted string
+msgid "Join code copied"
+msgstr ""
+
+# Extracted string
+msgid "Classroom code: ${selectedSummary.joinCode}"
+msgstr ""
+
+# Extracted string
+msgid "${member.name} removed from the classroom"
+msgstr ""
+
+# Extracted string
+msgid "Team challenge started"
+msgstr ""
+
+# Extracted string
+msgid "Team challenge closed"
+msgstr ""
+
+# Extracted string
+msgid "Remove ${member.name} from ${detail.name}? Their personal learning progress will not be deleted."
+msgstr ""
+
+# Extracted string
+msgid "Example: GED English A"
+msgstr ""
+
+# Extracted string
+msgid "Copy join code"
+msgstr ""
+
+# Extracted string
+msgid "Finish strong this week"
+msgstr ""
+
+# Extracted string
+msgid "Homework pass or class cheer"
+msgstr ""
+
+# Extracted string
+msgid "Refresh roster"
+msgstr ""
+
+# Extracted string
+msgid "Teacher classroom tools"
+msgstr ""
+
+# Extracted string
+msgid "Language Quest Classrooms"
+msgstr ""
+
+# Extracted string
+msgid "Create a classroom, share its join code, choose a focus course, and quickly see who may need encouragement or extra practice."
+msgstr ""
+
+# Extracted string
+msgid "Opt-in rosters"
+msgstr ""
+
+# Extracted string
+msgid "Progress only"
+msgstr ""
+
+# Extracted string
+msgid "New classroom"
+msgstr ""
+
+# Extracted string
+msgid "A join code is created automatically."
+msgstr ""
+
+# Extracted string
+msgid "Classroom name"
+msgstr ""
+
+# Extracted string
+msgid "Focus course"
+msgstr ""
+
+# Extracted string
+msgid "No focus course yet"
+msgstr ""
+
+# Extracted string
+msgid "Your classrooms"
+msgstr ""
+
+# Extracted string
+msgid "Create your first classroom"
+msgstr ""
+
+# Extracted string
+msgid "Select or create a classroom"
+msgstr ""
+
+# Extracted string
+msgid "Learner join code"
+msgstr ""
+
+# Extracted string
+msgid "No focus course"
+msgstr ""
+
+# Extracted string
+msgid "Classroom XP challenges"
+msgstr ""
+
+# Extracted string
+msgid "Set a cooperative goal. Every learner’s eligible XP contributes—there is no public messaging or individual pressure."
+msgstr ""
+
+# Extracted string
+msgid "Challenge title"
+msgstr ""
+
+# Extracted string
+msgid "Target XP"
+msgstr ""
+
+# Extracted string
+msgid "3 days"
+msgstr ""
+
+# Extracted string
+msgid "1 week"
+msgstr ""
+
+# Extracted string
+msgid "2 weeks"
+msgstr ""
+
+# Extracted string
+msgid "1 month"
+msgstr ""
+
+# Extracted string
+msgid "No classroom challenges yet."
+msgstr ""
+
+# Extracted string
+msgid "Learner roster"
+msgstr ""
+
+# Extracted string
+msgid "No learners have joined yet"
+msgstr ""
+
+# Extracted string
+msgid "Share the join code above. Learners enter it from their Language Quest profile."
+msgstr ""
+
+# Extracted string
+msgid "Loading course"
+msgstr ""
+
+# Extracted string
+msgid "This course could not be found."
+msgstr ""
+
+# Extracted string
+msgid "Pick up where you left off"
+msgstr ""
+
+# Extracted string
+msgid "Resume lesson"
+msgstr ""
+
+# Extracted string
+msgid "Lessons are coming soon."
+msgstr ""
+
+# Extracted string
+msgid "Course complete!"
+msgstr ""
+
+# Extracted string
+msgid "Challenge the Boss"
+msgstr ""
+
+# Extracted string
+msgid "Culture Quest"
+msgstr ""
+
+# Extracted string
+msgid "Story Mode"
+msgstr ""
+
+# Extracted string
+msgid "Practice this course in Word Trail"
+msgstr ""
+
+# Extracted string
+msgid "Beyond the words"
+msgstr ""
+
+# Extracted string
+msgid "Keep learning the language in the meantime -- this corner will fill in over time."
+msgstr ""
+
+# Extracted string
+msgid "Give the course a title"
+msgstr ""
+
+# Extracted string
+msgid "Enter the language being taught"
+msgstr ""
+
+# Extracted string
+msgid "Course submitted for administrator review"
+msgstr ""
+
+# Extracted string
+msgid "🌟"
+msgstr ""
+
+# Extracted string
+msgid "Spoken text (optional)"
+msgstr ""
+
+# Extracted string
+msgid "Spoken tile text (optional)"
+msgstr ""
+
+# Extracted string
+msgid "The exact word or sentence learners should type"
+msgstr ""
+
+# Extracted string
+msgid "Defaults to the transcript"
+msgstr ""
+
+# Extracted string
+msgid "Remove challenge"
+msgstr ""
+
+# Extracted string
+msgid "Explain why the answer is correct, or clarify the pattern learners should notice."
+msgstr ""
+
+# Extracted string
+msgid "e.g. Friendly greetings"
+msgstr ""
+
+# Extracted string
+msgid "What learners will practise"
+msgstr ""
+
+# Extracted string
+msgid "e.g. Everyday Basics"
+msgstr ""
+
+# Extracted string
+msgid "What this unit covers"
+msgstr ""
+
+# Extracted string
+msgid "Everyday English"
+msgstr ""
+
+# Extracted string
+msgid "English"
+msgstr ""
+
+# Extracted string
+msgid "English Courses"
+msgstr ""
+
+# Extracted string
+msgid "What will people learn in this course?"
+msgstr ""
+
+# Extracted string
+msgid "Tile"
+msgstr ""
+
+# Extracted string
+msgid "Remove pair"
+msgstr ""
+
+# Extracted string
+msgid "Pair"
+msgstr ""
+
+# Extracted string
+msgid "Canonical transcript"
+msgstr ""
+
+# Extracted string
+msgid "Spoken text"
+msgstr ""
+
+# Extracted string
+msgid "Activity type"
+msgstr ""
+
+# Extracted string
+msgid "Tip: add ___ where the answer should appear."
+msgstr ""
+
+# Extracted string
+msgid "Teaching explanation"
+msgstr ""
+
+# Extracted string
+msgid "Shown only after the learner checks an answer."
+msgstr ""
+
+# Extracted string
+msgid "Correct tile order"
+msgstr ""
+
+# Extracted string
+msgid "Enter tiles in the finished sentence order; learners will receive them shuffled."
+msgstr ""
+
+# Extracted string
+msgid "Matching pairs"
+msgstr ""
+
+# Extracted string
+msgid "Each left tile is stored directly beside its correct partner."
+msgstr ""
+
+# Extracted string
+msgid "Dictation answer"
+msgstr ""
+
+# Extracted string
+msgid "Learners hear the spoken text and type the canonical transcript."
+msgstr ""
+
+# Extracted string
+msgid "Option"
+msgstr ""
+
+# Extracted string
+msgid "Short description"
+msgstr ""
+
+# Extracted string
+msgid "Add challenge"
+msgstr ""
+
+# Extracted string
+msgid "Unit title"
+msgstr ""
+
+# Extracted string
+msgid "Add lesson"
+msgstr ""
+
+# Extracted string
+msgid "Build from units → lessons → challenges."
+msgstr ""
+
+# Extracted string
+msgid "Course title"
+msgstr ""
+
+# Extracted string
+msgid "Icon"
+msgstr ""
+
+# Extracted string
+msgid "Colour"
+msgstr ""
+
+# Extracted string
+msgid "Administrator approval"
+msgstr ""
+
+# Extracted string
+msgid "Reviewer feedback"
+msgstr ""
+
+# Extracted string
+msgid "Return to review queue"
+msgstr ""
+
+# Extracted string
+msgid "Published for everyone"
+msgstr ""
+
+# Extracted string
+msgid "Add unit"
+msgstr ""
+
+# Extracted string
+msgid "View course path"
+msgstr ""
+
+# Extracted string
+msgid "Loading Language Quest"
+msgstr ""
+
+# Extracted string
+msgid "Continue learning"
+msgstr ""
+
+# Extracted string
+msgid "Choose a course"
+msgstr ""
+
+# Extracted string
+msgid "No published courses yet"
+msgstr ""
+
+# Extracted string
+msgid "A teacher or administrator can create the first course."
+msgstr ""
+
+# Extracted string
+msgid "Language Quest is taking a break"
+msgstr ""
+
+# Extracted string
+msgid "Please try loading the courses again."
+msgstr ""
+
+# Extracted string
+msgid "Learn • Play • Grow"
+msgstr ""
+
+# Extracted string
+msgid "MRLC Language Quest"
+msgstr ""
+
+# Extracted string
+msgid "Manage Courses"
+msgstr ""
+
+# Extracted string
+msgid "Manage Learners"
+msgstr ""
+
+# Extracted string
+msgid "Fair ways to compete"
+msgstr ""
+
+# Extracted string
+msgid "Language Leaderboard"
+msgstr ""
+
+# Extracted string
+msgid "Course category"
+msgstr ""
+
+# Extracted string
+msgid "Global keeps the original lifetime ranking. Every focused view uses learning XP from the last 30 days, excluding mission bonuses."
+msgstr ""
+
+# Extracted string
+msgid "Your recent-XP bracket"
+msgstr ""
+
+# Extracted string
+msgid "Compete with learners building at a similar recent pace."
+msgstr ""
+
+# Extracted string
+msgid "Monthly learner showcase"
+msgstr ""
+
+# Extracted string
+msgid "Celebrating consistent learning"
+msgstr ""
+
+# Extracted string
+msgid "The month’s first learner can still take this spot."
+msgstr ""
+
+# Extracted string
+msgid "Updating…"
+msgstr ""
+
+# Extracted string
+msgid "No scores in this view yet"
+msgstr ""
+
+# Extracted string
+msgid "Complete a matching lesson to take the first spot."
+msgstr ""
+
+# Extracted string
+msgid "${learner.name} ${active ? 'reactivated' : 'deactivated'}"
+msgstr ""
+
+# Extracted string
+msgid "Deactivate the learner before terminating the account"
+msgstr ""
+
+# Extracted string
+msgid "${learner.name}'s account was terminated"
+msgstr ""
+
+# Extracted string
+msgid "${action[0].toUpperCase()}${action.slice(1)} ${learner.name}?${active ? '' : ' Their current sessions will be signed out.'}"
+msgstr ""
+
+# Extracted string
+msgid "Permanently terminate ${learner.name} (${learner.email})? This deletes the learner profile, classroom memberships, points, streaks, and lesson history. This cannot be undone."
+msgstr ""
+
+# Extracted string
+msgid "Search name or email…"
+msgstr ""
+
+# Extracted string
+msgid "Administrator tools"
+msgstr ""
+
+# Extracted string
+msgid "Language Quest Learners"
+msgstr ""
+
+# Extracted string
+msgid "Public learners"
+msgstr ""
+
+# Extracted string
+msgid "Search learners"
+msgstr ""
+
+# Extracted string
+msgid "Filter by status"
+msgstr ""
+
+# Extracted string
+msgid "Filter by course"
+msgstr ""
+
+# Extracted string
+msgid "Any course"
+msgstr ""
+
+# Extracted string
+msgid "No learner accounts found"
+msgstr ""
+
+# Extracted string
+msgid "Try a different search or status filter."
+msgstr ""
+
+# Extracted string
+msgid "Independent learner"
+msgstr ""
+
+# Extracted string
+msgid "No course started yet"
+msgstr ""
+
+# Extracted string
+msgid "Streak"
+msgstr ""
+
+# Extracted string
+msgid "Last practice"
+msgstr ""
+
+# Extracted string
+msgid "Last login"
+msgstr ""
+
+# Extracted string
+msgid "Joined"
+msgstr ""
+
+# Extracted string
+msgid "Managed via Users"
+msgstr ""
+
+# Extracted string
+msgid "Terminate"
+msgstr ""
+
+# Extracted string
+msgid "Account lifecycle:"
+msgstr ""
+
+# Extracted string
+msgid "deactivation blocks sign-in and revokes current sessions but preserves learning history. Termination is permanent and is intentionally available only after deactivation."
+msgstr ""
+
+# Extracted string
+msgid "Speech is not supported by this browser"
+msgstr ""
+
+# Extracted string
+msgid "Voice input is not supported by this browser"
+msgstr ""
+
+# Extracted string
+msgid "Exit lesson"
+msgstr ""
+
+# Extracted string
+msgid "Read vocabulary clue aloud"
+msgstr ""
+
+# Extracted string
+msgid "Write the phrase here…"
+msgstr ""
+
+# Extracted string
+msgid "Read question aloud"
+msgstr ""
+
+# Extracted string
+msgid "Type what you hear…"
+msgstr ""
+
+# Extracted string
+msgid "This lesson is unavailable."
+msgstr ""
+
+# Extracted string
+msgid "Skip learning"
+msgstr ""
+
+# Extracted string
+msgid "Listen card"
+msgstr ""
+
+# Extracted string
+msgid "Tap to listen"
+msgstr ""
+
+# Extracted string
+msgid "Meaning, context, and a useful example"
+msgstr ""
+
+# Extracted string
+msgid "Start practice"
+msgstr ""
+
+# Extracted string
+msgid "Meaning clue"
+msgstr ""
+
+# Extracted string
+msgid "Listen again"
+msgstr ""
+
+# Extracted string
+msgid "Build the sentence"
+msgstr ""
+
+# Extracted string
+msgid "Your sentence"
+msgstr ""
+
+# Extracted string
+msgid "Model sentence:"
+msgstr ""
+
+# Extracted string
+msgid "Skip sentence practice"
+msgstr ""
+
+# Extracted string
+msgid "Check sentence"
+msgstr ""
+
+# Extracted string
+msgid "Lesson complete!"
+msgstr ""
+
+# Extracted string
+msgid "You finished"
+msgstr ""
+
+# Extracted string
+msgid ". Great work!"
+msgstr ""
+
+# Extracted string
+msgid "XP earned"
+msgstr ""
+
+# Extracted string
+msgid "Words learned"
+msgstr ""
+
+# Extracted string
+msgid "Quest level"
+msgstr ""
+
+# Extracted string
+msgid "Practise again"
+msgstr ""
+
+# Extracted string
+msgid "Continue the path"
+msgstr ""
+
+# Extracted string
+msgid "Out of hearts for now"
+msgstr ""
+
+# Extracted string
+msgid "Got it"
+msgstr ""
+
+# Extracted string
+msgid "Highlight an unfamiliar word to check the dictionary."
+msgstr ""
+
+# Extracted string
+msgid "Play audio"
+msgstr ""
+
+# Extracted string
+msgid "Excellent — that meaning fits."
+msgstr ""
+
+# Extracted string
+msgid "Not quite — we’ll revisit this after a few more questions."
+msgstr ""
+
+# Extracted string
+msgid "Best answer:"
+msgstr ""
+
+# Extracted string
+msgid "Look for the option that responds directly to the situation."
+msgstr ""
+
+# Extracted string
+msgid "Course deleted"
+msgstr ""
+
+# Extracted string
+msgid "Add a clear note so the teacher knows what to improve"
+msgstr ""
+
+# Extracted string
+msgid "Delete “${course.title}” and all of its learner progress? This cannot be undone."
+msgstr ""
+
+# Extracted string
+msgid "Feedback for the teacher (required when requesting changes)"
+msgstr ""
+
+# Extracted string
+msgid "Course Studio"
+msgstr ""
+
+# Extracted string
+msgid "New Course"
+msgstr ""
+
+# Extracted string
+msgid "Admin review queue"
+msgstr ""
+
+# Extracted string
+msgid "Create your first course"
+msgstr ""
+
+# Extracted string
+msgid "Add units, lessons, and interactive language challenges."
+msgstr ""
+
+# Extracted string
+msgid "Official"
+msgstr ""
+
+# Extracted string
+msgid "Units"
+msgstr ""
+
+# Extracted string
+msgid "Lessons"
+msgstr ""
+
+# Extracted string
+msgid "Ready for your review"
+msgstr ""
+
+# Extracted string
+msgid "Open the course to inspect its lessons, then approve it or send focused feedback."
+msgstr ""
+
+# Extracted string
+msgid "Changes"
+msgstr ""
+
+# Extracted string
+msgid "Toggle Lightning mode"
+msgstr ""
+
+# Extracted string
+msgid "Spaced repetition"
+msgstr ""
+
+# Extracted string
+msgid "Today's chain"
+msgstr ""
+
+# Extracted string
+msgid "Ready today"
+msgstr ""
+
+# Extracted string
+msgid "Due reviews"
+msgstr ""
+
+# Extracted string
+msgid "Lightning mode"
+msgstr ""
+
+# Extracted string
+msgid "Lightning score"
+msgstr ""
+
+# Extracted string
+msgid "Best combo"
+msgstr ""
+
+# Extracted string
+msgid "How did this recall feel?"
+msgstr ""
+
+# Extracted string
+msgid "Your confidence fine-tunes when a correct card returns."
+msgstr ""
+
+# Extracted string
+msgid "Too slow! This card stays in your deck for next time."
+msgstr ""
+
+# Extracted string
+msgid "Next review"
+msgstr ""
+
+# Extracted string
+msgid "Learner profile saved"
+msgstr ""
+
+# Extracted string
+msgid "Joined ${classroom.name} with ${classroom.teacherName}"
+msgstr ""
+
+# Extracted string
+msgid "Left ${classroom.name}"
+msgstr ""
+
+# Extracted string
+msgid "Leave ${classroom.name}? Your learning progress will stay in your account."
+msgstr ""
+
+# Extracted string
+msgid "Success sounds"
+msgstr ""
+
+# Extracted string
+msgid "Reduce motion"
+msgstr ""
+
+# Extracted string
+msgid "Lesson voice"
+msgstr ""
+
+# Extracted string
+msgid "Example: I am learning English for school and everyday conversations."
+msgstr ""
+
+# Extracted string
+msgid "JOINCODE"
+msgstr ""
+
+# Extracted string
+msgid "We could not load your profile"
+msgstr ""
+
+# Extracted string
+msgid "Learning-only account"
+msgstr ""
+
+# Extracted string
+msgid "Quest Cards"
+msgstr ""
+
+# Extracted string
+msgid "Comfort"
+msgstr ""
+
+# Extracted string
+msgid "Streak card frames"
+msgstr ""
+
+# Extracted string
+msgid "Learning comfort"
+msgstr ""
+
+# Extracted string
+msgid "These settings stay on this device."
+msgstr ""
+
+# Extracted string
+msgid "Play a short sound for correct answers."
+msgstr ""
+
+# Extracted string
+msgid "Limit confetti, card tilts, and movement."
+msgstr ""
+
+# Extracted string
+msgid "Kokoro provides a clearer built-in AI teacher voice when the local service supports the course language. Language Quest automatically uses your browser voice if it is offline or unsupported."
+msgstr ""
+
+# Extracted string
+msgid "Choose your Language Quest avatar"
+msgstr ""
+
+# Extracted string
+msgid "Pick a friendly built-in character. Language Quest does not accept profile-photo uploads."
+msgstr ""
+
+# Extracted string
+msgid "About my learning"
+msgstr ""
+
+# Extracted string
+msgid "My classrooms"
+msgstr ""
+
+# Extracted string
+msgid "A teacher can share an eight-character code. Joining lets that teacher see your Language Quest points, streak, activity date, and progress in the class focus course."
+msgstr ""
+
+# Extracted string
+msgid "Classroom join code"
+msgstr ""
+
+# Extracted string
+msgid "You have not joined a classroom yet"
+msgstr ""
+
+# Extracted string
+msgid "You can still learn independently."
+msgstr ""
+
+# Extracted string
+msgid "Practical language for real life"
+msgstr ""
+
+# Extracted string
+msgid "Learn the words."
+msgstr ""
+
+# Extracted string
+msgid "Build the sentence."
+msgstr ""
+
+# Extracted string
+msgid "Speak with confidence."
+msgstr ""
+
+# Extracted string
+msgid "Short guided lessons combine listening, spelling, sentence writing, and friendly clue-safe quizzes. Learn at your own pace and keep every achievement in one free account."
+msgstr ""
+
+# Extracted string
+msgid "Visitors can browse courses. A free signup is required to begin and save progress."
+msgstr ""
+
+# Extracted string
+msgid "🎧 Listen"
+msgstr ""
+
+# Extracted string
+msgid "🔤 Spell"
+msgstr ""
+
+# Extracted string
+msgid "✍️ Write"
+msgstr ""
+
+# Extracted string
+msgid "💬 Speak"
+msgstr ""
+
+# Extracted string
+msgid "Sentence practice"
+msgstr ""
+
+# Extracted string
+msgid "Write the polite response:"
+msgstr ""
+
+# Extracted string
+msgid "“Thank you.”"
+msgstr ""
+
+# Extracted string
+msgid "You’re welcome."
+msgstr ""
+
+# Extracted string
+msgid "Meaning + form + confidence"
+msgstr ""
+
+# Extracted string
+msgid "3 useful sentences learned"
+msgstr ""
+
+# Extracted string
+msgid "Your lesson guide"
+msgstr ""
+
+# Extracted string
+msgid "A clear routine in every lesson"
+msgstr ""
+
+# Extracted string
+msgid "You always know what to do next, why it matters, and how to recover from a mistake."
+msgstr ""
+
+# Extracted string
+msgid "Choose your next quest"
+msgstr ""
+
+# Extracted string
+msgid "Browse freely. Create an account when you are ready to open a lesson and save your progress."
+msgstr ""
+
+# Extracted string
+msgid "Course previews are being prepared."
+msgstr ""
+
+# Extracted string
+msgid "Ready to say more than single words?"
+msgstr ""
+
+# Extracted string
+msgid "Create your free learner account and turn useful language into complete, confident sentences."
+msgstr ""
+
+# Extracted string
+msgid "Learning made with care for every learner."
+msgstr ""
+
+# Extracted string
+msgid "Listen"
+msgstr ""
+
+# Extracted string
+msgid "This story could not be found."
+msgstr ""
+
+# Extracted string
+msgid "Try a different path"
+msgstr ""
+
+# Extracted string
+msgid "ft.life"
+msgstr ""
+
+# Extracted string
+msgid "Move left"
+msgstr ""
+
+# Extracted string
+msgid "Move right"
+msgstr ""
+
+# Extracted string
+msgid "C:"
+msgstr ""
+
+# Extracted string
+msgid "PAC-MAN MODERN"
+msgstr ""
+
+# Extracted string
+msgid "Eat dots, dodge ghosts, trigger neon power-ups & unleash high score combos!"
+msgstr ""
+
+# Extracted string
+msgid "START GAME"
+msgstr ""
+
+# Extracted string
+msgid "GAME PAUSED"
+msgstr ""
+
+# Extracted string
+msgid "RESUME"
+msgstr ""
+
+# Extracted string
+msgid "RESTART"
+msgstr ""
+
+# Extracted string
+msgid "LEVEL CLEAR!"
+msgstr ""
+
+# Extracted string
+msgid "Stage"
+msgstr ""
+
+# Extracted string
+msgid "Completed!"
+msgstr ""
+
+# Extracted string
+msgid "NEXT LEVEL &rarr;"
+msgstr ""
+
+# Extracted string
+msgid "GAME OVER"
+msgstr ""
+
+# Extracted string
+msgid "FINAL SCORE"
+msgstr ""
+
+# Extracted string
+msgid "NEW HIGH SCORE!"
+msgstr ""
+
+# Extracted string
+msgid "PLAY AGAIN"
+msgstr ""
+
+# Extracted string
+msgid "Swipe the maze or use the direction pad"
+msgstr ""
+
+# Extracted string
+msgid "Boost"
+msgstr ""
+
+# Extracted string
+msgid "ARROW KEYS / WASD"
+msgstr ""
+
+# Extracted string
+msgid "MOVE"
+msgstr ""
+
+# Extracted string
+msgid "&bull;"
+msgstr ""
+
+# Extracted string
+msgid "SPACE"
+msgstr ""
+
+# Extracted string
+msgid "POWER BOOST"
+msgstr ""
+
+# Extracted string
+msgid "P / ESC"
+msgstr ""
+
+# Extracted string
+msgid "PAUSE"
+msgstr ""
+
+# Extracted string
+msgid "Leaderboard & Stats"
+msgstr ""
+
+# Extracted string
+msgid "How to Play"
+msgstr ""
+
+# Extracted string
+msgid "1UP SCORE"
+msgstr ""
+
+# Extracted string
+msgid "HIGH SCORE"
+msgstr ""
+
+# Extracted string
+msgid "LEVEL"
+msgstr ""
+
+# Extracted string
+msgid "LIVES:"
+msgstr ""
+
+# Extracted string
+msgid "NONE"
+msgstr ""
+
+# Extracted string
+msgid "HOW TO PLAY"
+msgstr ""
+
+# Extracted string
+msgid "OBJECTIVE"
+msgstr ""
+
+# Extracted string
+msgid "Navigate the maze, clear all pellets, dodge the ghosts, and collect special bonus items!"
+msgstr ""
+
+# Extracted string
+msgid "CONTROLS"
+msgstr ""
+
+# Extracted string
+msgid "Move Pac-Man"
+msgstr ""
+
+# Extracted string
+msgid "SPACEBAR"
+msgstr ""
+
+# Extracted string
+msgid "Trigger Power Boost"
+msgstr ""
+
+# Extracted string
+msgid "TOUCH D-PAD"
+msgstr ""
+
+# Extracted string
+msgid "Mobile Controls"
+msgstr ""
+
+# Extracted string
+msgid "Pause / Resume"
+msgstr ""
+
+# Extracted string
+msgid "POWER-UPS & ITEMS"
+msgstr ""
+
+# Extracted string
+msgid "Turns ghosts blue! Eat them for 200, 400, 800, 1600 points."
+msgstr ""
+
+# Extracted string
+msgid "Pac-Man gains 1.5x movement speed!"
+msgstr ""
+
+# Extracted string
+msgid "Freezes all ghosts in ice for 5 seconds!"
+msgstr ""
+
+# Extracted string
+msgid "Attracts dots toward Pac-Man automatically!"
+msgstr ""
+
+# Extracted string
+msgid "GHOST PERSONALITIES"
+msgstr ""
+
+# Extracted string
+msgid "Directly hunts your tile."
+msgstr ""
+
+# Extracted string
+msgid "Ambushes 4 tiles ahead."
+msgstr ""
+
+# Extracted string
+msgid "Flanks using vector math."
+msgstr ""
+
+# Extracted string
+msgid "Shy behavior, retreats when close."
+msgstr ""
+
+# Extracted string
+msgid "ARCADE HALL OF FAME"
+msgstr ""
+
+# Extracted string
+msgid "HIGH SCORES"
+msgstr ""
+
+# Extracted string
+msgid "STATISTICS"
+msgstr ""
+
+# Extracted string
+msgid "ACHIEVEMENTS"
+msgstr ""
+
+# Extracted string
+msgid "No high scores recorded yet. Play a game to make history!"
+msgstr ""
+
+# Extracted string
+msgid "Dots Eaten"
+msgstr ""
+
+# Extracted string
+msgid "Ghosts Eaten"
+msgstr ""
+
+# Extracted string
+msgid "Power-Ups Activated"
+msgstr ""
+
+# Extracted string
+msgid "Bonus Fruits"
+msgstr ""
+
+# Extracted string
+msgid "Games Played"
+msgstr ""
+
+# Extracted string
+msgid "Highest Ghost Combo"
+msgstr ""
+
+# Extracted string
+msgid "UNLOCKED"
+msgstr ""
+
+# Extracted string
+msgid "LOCKED"
+msgstr ""
+
+# Extracted string
+msgid "ARCADE CONFIGURATION"
+msgstr ""
+
+# Extracted string
+msgid "VISUAL THEME"
+msgstr ""
+
+# Extracted string
+msgid "GHOST AI DIFFICULTY"
+msgstr ""
+
+# Extracted string
+msgid "GAME MODE"
+msgstr ""
+
+# Extracted string
+msgid "CRT Scanlines & Vignette"
+msgstr ""
+
+# Extracted string
+msgid "On-Screen Touch D-Pad"
+msgstr ""
+
+# Extracted string
+msgid "👻"
+msgstr ""
+
+# Extracted string
+msgid "Pac-Man Modern Arcade"
+msgstr ""
+
+# Extracted string
+msgid "Neon-styled classic arcade action &mdash; eat dots, dodge ghosts, and chase high scores."
+msgstr ""
+
+# Extracted string
+msgid "Multiple mazes, authentic ghost AI, and special power-ups (speed, freeze, magnet, shield)."
+msgstr ""
+
+# Extracted string
+msgid "Use arrow keys / WASD to move, Space for a power boost, P or Esc to pause. Touch controls appear automatically on mobile."
+msgstr ""
+
+# Extracted string
+msgid "▶ Play Pac-Man"
+msgstr ""
+
+# Extracted string
+msgid "Neon"
+msgstr ""
+
+# Extracted string
+msgid "Live leaderboard"
+msgstr ""
+
+# Extracted string
+msgid "NEON.SNAKE"
+msgstr ""
+
+# Extracted string
+msgid "· AI obstacle active"
+msgstr ""
+
+# Extracted string
+msgid "Swipe left/right to steer · Swipe up to boost"
+msgstr ""
+
+# Extracted string
+msgid "A / D or ← / → to turn"
+msgstr ""
+
+# Extracted string
+msgid "Space to boost"
+msgstr ""
+
+# Extracted string
+msgid "LEADERBOARD"
+msgstr ""
+
+# Extracted string
+msgid "Arena run complete"
+msgstr ""
+
+# Extracted string
+msgid "YOU CRASHED"
+msgstr ""
+
+# Extracted string
+msgid "Multiplayer arena"
+msgstr ""
+
+# Extracted string
+msgid "JOIN THE GLOW"
+msgstr ""
+
+# Extracted string
+msgid "Collect neon orbs, grow longer, and avoid the other snakes."
+msgstr ""
+
+# Extracted string
+msgid "BOOST"
+msgstr ""
+
+# Extracted string
+msgid "Trail cleared — ready for a fresh start."
+msgstr ""
+
+# Extracted string
+msgid "Start over? Your current trail progress will be cleared (it will not count as a loss)."
+msgstr ""
+
+# Extracted string
+msgid "Leave Word Trail? Your game is saved and can be continued later."
+msgstr ""
+
+# Extracted string
+msgid "Leave Word Trail"
+msgstr ""
+
+# Extracted string
+msgid "🧭"
+msgstr ""
+
+# Extracted string
+msgid "English Word board game"
+msgstr ""
+
+# Extracted string
+msgid "Game in progress"
+msgstr ""
+
+# Extracted string
+msgid "Word waiting"
+msgstr ""
+
+# Extracted string
+msgid "Last game"
+msgstr ""
+
+# Extracted string
+msgid "How to play"
+msgstr ""
+
+# Extracted string
+msgid "📚 Bridge = move ahead"
+msgstr ""
+
+# Extracted string
+msgid "⭐ Star = bonus points"
+msgstr ""
+
+# Extracted string
+msgid "🌀 Slip = move back"
+msgstr ""
+
+# Extracted string
+msgid "Top learners"
+msgstr ""
+
+# Extracted string
+msgid "Word Trail leaderboard"
+msgstr ""
+
+# Extracted string
+msgid "Be the first learner to reach the trophy."
+msgstr ""
+
+# Extracted string
+msgid "Setting up the Word Trail board…"
+msgstr ""
+
+# Extracted string
+msgid "Word Trail is unavailable"
+msgstr ""
+
+# Extracted string
+msgid "Check your connection or try again in a moment."
+msgstr ""
+
+# Extracted string
+msgid "Best streak"
+msgstr ""
+
+# Extracted string
+msgid "You practised"
+msgstr ""
+
+# Extracted string
+msgid "correctly."
+msgstr ""
+
+# Extracted string
+msgid "View lobby"
+msgstr ""
+
+# Extracted string
+msgid "Start over"
+msgstr ""
+
+# Extracted string
+msgid "via"
+msgstr ""
+
+# Extracted string
+msgid "−1 heart"
+msgstr ""
+
+# Extracted string
+msgid "English Word"
+msgstr ""
+
+# Extracted string
+msgid "Tip: double-tap a choice or press Enter to lock in"
+msgstr ""
+
+# Extracted string
+msgid "Hearts"
+msgstr ""
+
+# Extracted string
+msgid "Correct"
+msgstr ""
+
+# Extracted string
+msgid "Cancel this approved leave request and return its days to the employee balance?"
+msgstr ""
+
+# Extracted string
+msgid "Cancel approved leave"
+msgstr ""
+
+# Extracted string
+msgid "Paid leave"
+msgstr ""
+
+# Extracted string
+msgid "Year must be between 2000 and 2100"
+msgstr ""
+
+# Extracted string
+msgid "Mark this payroll as paid? This permanently locks every payslip in the run."
+msgstr ""
+
+# Extracted string
+msgid "File replaced."
+msgstr ""
+
+# Extracted string
+msgid "Attached file"
+msgstr ""
+
+# Extracted string
+msgid "Failed to load more"
+msgstr ""
+
+# Extracted string
+msgid "Creating ${type.toLowerCase()}…"
+msgstr ""
+
+# Extracted string
+msgid "${type} created."
+msgstr ""
+
+# Extracted string
+msgid "Backup verified"
+msgstr ""
+
+# Extracted string
+msgid "Backup verification failed"
+msgstr ""
+
+# Extracted string
+msgid "Backups contain sensitive school and student data. Verify artifacts before relying on them, keep downloaded copies encrypted, and restrict access to authorized operators."
+msgstr ""
+
+# Extracted string
+msgid "Complete PostgreSQL custom archive of all tables and relationships."
+msgstr ""
+
+# Extracted string
+msgid "Restore Readiness"
+msgstr ""
+
+# Extracted string
+msgid "Verify before restoring"
+msgstr ""
+
+# Extracted string
+msgid "Use Verify in the history table to test database catalogs, ZIP structure, or JSON schema before downloading an artifact."
+msgstr ""
+
+# Extracted string
+msgid "Production restore remains an operator-only action. Database dumps must be restored with"
+msgstr ""
+
+# Extracted string
+msgid "pg_restore"
+msgstr ""
+
+# Extracted string
+msgid "during a maintenance window; file archives are extracted into the configured upload volume."
+msgstr ""
+
+# Extracted string
+msgid "Check System Health"
+msgstr ""
+
+# Extracted string
+msgid "Off-site"
+msgstr ""
+
+# Extracted string
+msgid "“${target.title}” was permanently deleted"
+msgstr ""
+
+# Extracted string
+msgid "Search by exam, class, subject, or status"
+msgstr ""
+
+# Extracted string
+msgid "Exam records"
+msgstr ""
+
+# Extracted string
+msgid "Permanently remove an exam and all of its questions, attempts, answers, grading records, schedules, and integrity events."
+msgstr ""
+
+# Extracted string
+msgid "Permanent deletion cannot be undone"
+msgstr ""
+
+# Extracted string
+msgid "Use Archive from the Exams page when records should be preserved. This admin tool is only for records that must be completely removed."
+msgstr ""
+
+# Extracted string
+msgid "Loading exams…"
+msgstr ""
+
+# Extracted string
+msgid "No matching exams."
+msgstr ""
+
+# Extracted string
+msgid "Delete permanently"
+msgstr ""
+
+# Extracted string
+msgid "Delete exam permanently?"
+msgstr ""
+
+# Extracted string
+msgid "This removes"
+msgstr ""
+
+# Extracted string
+msgid "and every student record connected to it."
+msgstr ""
+
+# Extracted string
+msgid "Type the exact exam title:"
+msgstr ""
+
+# Extracted string
+msgid "DELETE"
+msgstr ""
+
+# Extracted string
+msgid "Authoritative system access reference. Role rules are shared by the API, navigation, and protected pages."
+msgstr ""
+
+# Extracted string
+msgid "Full-time, part-time, and volunteer are employment types. Their academic data scope comes from class and subject assignments."
+msgstr ""
+
+# Extracted string
+msgid "Access matrix"
+msgstr ""
+
+# Extracted string
+msgid "This read-only matrix is generated from the same registry used by access checks."
+msgstr ""
+
+# Extracted string
+msgid "System Health"
+msgstr ""
+
+# Extracted string
+msgid "Live checks for the database, storage, backup utilities, media tools, and comic support."
+msgstr ""
+
+# Extracted string
+msgid "Checks passed"
+msgstr ""
+
+# Extracted string
+msgid "Backup artifacts"
+msgstr ""
+
+# Extracted string
+msgid "Off-site copy"
+msgstr ""
+
+# Extracted string
+msgid "Running system checks…"
+msgstr ""
+
+# Extracted string
+msgid "A post can have at most ${MAX_PHOTOS} photos"
+msgstr ""
+
+# Extracted string
+msgid "Only ${room} more photo${room === 1 ? '' : 's'} fit (max ${MAX_PHOTOS})"
+msgstr ""
+
+# Extracted string
+msgid "Add a photo for the class snapshot"
+msgstr ""
+
+# Extracted string
+msgid "Choose a video lesson"
+msgstr ""
+
+# Extracted string
+msgid "Could not update reaction"
+msgstr ""
+
+# Extracted string
+msgid "Post cannot be empty"
+msgstr ""
+
+# Extracted string
+msgid "Post updated"
+msgstr ""
+
+# Extracted string
+msgid "Delete this comment?"
+msgstr ""
+
+# Extracted string
+msgid "Social Space sections"
+msgstr ""
+
+# Extracted string
+msgid "Choose a published video"
+msgstr ""
+
+# Extracted string
+msgid "Why should students watch this?"
+msgstr ""
+
+# Extracted string
+msgid "Remove photo"
+msgstr ""
+
+# Extracted string
+msgid "Edit post"
+msgstr ""
+
+# Extracted string
+msgid "Delete post"
+msgstr ""
+
+# Extracted string
+msgid "Edit comment"
+msgstr ""
+
+# Extracted string
+msgid "Report comment"
+msgstr ""
+
+# Extracted string
+msgid "Delete comment"
+msgstr ""
+
+# Extracted string
+msgid "Add a comment… (Enter to send, Shift+Enter for a new line)"
+msgstr ""
+
+# Extracted string
+msgid "Previous photo"
+msgstr ""
+
+# Extracted string
+msgid "Next photo"
+msgstr ""
+
+# Extracted string
+msgid "View full size"
+msgstr ""
+
+# Extracted string
+msgid "School moments, class snapshots, and lessons worth watching."
+msgstr ""
+
+# Extracted string
+msgid "Video lesson"
+msgstr ""
+
+# Extracted string
+msgid "Ready to feature"
+msgstr ""
+
+# Extracted string
+msgid "One class"
+msgstr ""
+
+# Extracted string
+msgid "Staff only"
+msgstr ""
+
+# Extracted string
+msgid "Keep visible"
+msgstr ""
+
+# Extracted string
+msgid "7 days"
+msgstr ""
+
+# Extracted string
+msgid "30 days"
+msgstr ""
+
+# Extracted string
+msgid "90 days"
+msgstr ""
+
+# Extracted string
+msgid "School"
+msgstr ""
+
+# Extracted string
+msgid "Featured lesson"
+msgstr ""
+
+# Extracted string
+msgid "Watch video lesson"
+msgstr ""
+
+# Extracted string
+msgid "Loading comments…"
+msgstr ""
+
+# Extracted string
+msgid "Attach up to ${HOMEWORK_SUBMISSION_FILE_LIMIT} files"
+msgstr ""
+
+# Extracted string
+msgid "${uploadedCount} ${uploadedCount === 1 ? 'file' : 'files'} attached"
+msgstr ""
+
+# Extracted string
+msgid "${uploadedCount} file${uploadedCount === 1 ? '' : 's'} attached before the upload stopped"
+msgstr ""
+
+# Extracted string
+msgid "Write something or attach your work"
+msgstr ""
+
+# Extracted string
+msgid "Up to 5 files, 10 MB each. Images, PDF, Word, PowerPoint, Excel, text and OpenDocument are accepted."
+msgstr ""
+
+# Extracted string
+msgid "Type an answer or upload photos and documents for your teacher to review."
+msgstr ""
+
+# Extracted string
+msgid "Intervention plan created"
+msgstr ""
+
+# Extracted string
+msgid "Plan updated"
+msgstr ""
+
+# Extracted string
+msgid "e.g. Four-week attendance support"
+msgstr ""
+
+# Extracted string
+msgid "Intervention priority"
+msgstr ""
+
+# Extracted string
+msgid "Assigned person"
+msgstr ""
+
+# Extracted string
+msgid "Contact student, arrange support…"
+msgstr ""
+
+# Extracted string
+msgid "Transparent warnings across attendance, homework, exams, and GED readiness."
+msgstr ""
+
+# Extracted string
+msgid "High priority"
+msgstr ""
+
+# Extracted string
+msgid "Watch closely"
+msgstr ""
+
+# Extracted string
+msgid "Open plans"
+msgstr ""
+
+# Extracted string
+msgid "Overdue actions"
+msgstr ""
+
+# Extracted string
+msgid "Plan title"
+msgstr ""
+
+# Extracted string
+msgid "Review date"
+msgstr ""
+
+# Extracted string
+msgid "First action"
+msgstr ""
+
+# Extracted string
+msgid "Students needing attention"
+msgstr ""
+
+# Extracted string
+msgid "No active students found."
+msgstr ""
+
+# Extracted string
+msgid "No current threshold warnings"
+msgstr ""
+
+# Extracted string
+msgid "Plan support"
+msgstr ""
+
+# Extracted string
+msgid "Intervention plans"
+msgstr ""
+
+# Extracted string
+msgid "No intervention plans yet."
+msgstr ""
+
+# Extracted string
+msgid "Risk levels are rule-based and explain every reason. They support professional judgment; they never automatically label, discipline, or restrict a student."
+msgstr ""
+
+# Extracted string
+msgid "Max marks must be a number greater than 0"
+msgstr ""
+
+# Extracted string
+msgid "Max marks cannot be removed after syncing to the gradebook"
+msgstr ""
+
+# Extracted string
+msgid "Add feedback explaining what the student should change"
+msgstr ""
+
+# Extracted string
+msgid "Enter a valid score of 0 or more"
+msgstr ""
+
+# Extracted string
+msgid "Search student name or code"
+msgstr ""
+
+# Extracted string
+msgid "Previous submission"
+msgstr ""
+
+# Extracted string
+msgid "Next submission"
+msgstr ""
+
+# Extracted string
+msgid "Close review"
+msgstr ""
+
+# Extracted string
+msgid "What was done well? What should the student improve?"
+msgstr ""
+
+# Extracted string
+msgid "Required because this homework is linked to the gradebook."
+msgstr ""
+
+# Extracted string
+msgid "Needs review"
+msgstr ""
+
+# Extracted string
+msgid "Changes requested"
+msgstr ""
+
+# Extracted string
+msgid "Submitted documents"
+msgstr ""
+
+# Extracted string
+msgid "This document opens in its compatible viewer. Use Open to inspect it or Download to save a copy."
+msgstr ""
+
+# Extracted string
+msgid "Teacher feedback"
+msgstr ""
+
+# Extracted string
+msgid "Give clear next steps. Feedback is required when requesting changes."
+msgstr ""
+
+# Extracted string
+msgid "Request changes"
+msgstr ""
+
+# Extracted string
+msgid "Remove attachment"
+msgstr ""
+
+# Extracted string
+msgid "Search homework, class or subject"
+msgstr ""
+
+# Extracted string
+msgid "All homework"
+msgstr ""
+
+# Extracted string
+msgid "No homework matches these filters."
+msgstr ""
+
+# Extracted string
+msgid "Learning activities"
+msgstr ""
+
+# Extracted string
+msgid "A little daily practice keeps learning momentum strong."
+msgstr ""
+
+# Extracted string
+msgid "Build a streak"
+msgstr ""
+
+# Extracted string
+msgid "Only uploaded school files can be saved offline."
+msgstr ""
+
+# Extracted string
+msgid "Saved for offline use on this device"
+msgstr ""
+
+# Extracted string
+msgid "Could not save this resource offline"
+msgstr ""
+
+# Extracted string
+msgid "Delete \"${resource.title}\"? This also removes its uploaded file."
+msgstr ""
+
+# Extracted string
+msgid "View in app"
+msgstr ""
+
+# Extracted string
+msgid "Save for offline"
+msgstr ""
+
+# Extracted string
+msgid "Teaching schedule grid"
+msgstr ""
+
+# Extracted string
+msgid "Session type"
+msgstr ""
+
+# Extracted string
+msgid "Employment type does not change account permissions. Assigned classes and subjects determine academic access."
+msgstr ""
+
+# Extracted string
+msgid "HR classification only. Full-time, part-time, and volunteer teachers receive the same Teacher role; class and subject assignments scope their access."
+msgstr ""
+
+# Extracted string
+msgid "All Employment"
+msgstr ""
+
+# Extracted string
+msgid "Role Access Reference"
+msgstr ""
+
+# Extracted string
+msgid "Review the system-defined access granted to each account role."
+msgstr ""
+
+# Extracted string
+msgid "Role permissions are deployment-managed and cannot be changed from this screen."
+msgstr ""
+
+# Extracted string
+msgid "Select role to review"
+msgstr ""
+
+# Extracted string
+msgid "All roles overview"
+msgstr ""
+
+# Extracted string
+msgid "Role Access"
+msgstr ""
+
+# Extracted string
+msgid "Converting video for web playback…"
+msgstr ""
+
+# Extracted string
+msgid "This runs once after upload. Large files may take a few minutes — this page updates automatically."
+msgstr ""
+
+# Extracted string
+msgid "This video couldn’t be converted for playback."
+msgstr ""
+
+# Extracted string
+msgid "The converted video could not be loaded."
+msgstr ""
+
+# Extracted string
+msgid "The file may be incomplete or use an unsupported codec. Try converting it again."
+msgstr ""
+
+# Extracted string
+msgid "Retry playback"
+msgstr ""
+
