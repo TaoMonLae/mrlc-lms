@@ -37,13 +37,132 @@ function fitText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, 
   return size;
 }
 
-function loadLogo(): Promise<HTMLImageElement | null> {
+function loadImage(src: string): Promise<HTMLImageElement | null> {
   return new Promise((resolve) => {
     const image = new Image();
     image.onload = () => resolve(image);
     image.onerror = () => resolve(null);
-    image.src = '/icon-192.png';
+    image.src = src;
   });
+}
+
+interface UnitBounds {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+// The certificate's character illustrations (public/Icons) have generous
+// transparent margins around the figure. This finds the tight bounding box
+// of the actual artwork (as 0..1 fractions of the image) by rendering it
+// small and scanning for non-transparent pixels, so the character can be
+// composited without a lot of dead space eating into its on-canvas size.
+function opaqueBounds(image: HTMLImageElement): UnitBounds {
+  const fallback: UnitBounds = { x: 0, y: 0, width: 1, height: 1 };
+  const probe = document.createElement('canvas');
+  const scale = Math.min(240 / image.width, 240 / image.height, 1);
+  probe.width = Math.max(1, Math.round(image.width * scale));
+  probe.height = Math.max(1, Math.round(image.height * scale));
+  const pctx = probe.getContext('2d', { willReadFrequently: true });
+  if (!pctx) return fallback;
+  pctx.drawImage(image, 0, 0, probe.width, probe.height);
+
+  let data: Uint8ClampedArray;
+  try {
+    data = pctx.getImageData(0, 0, probe.width, probe.height).data;
+  } catch {
+    return fallback;
+  }
+
+  let minX = probe.width;
+  let minY = probe.height;
+  let maxX = 0;
+  let maxY = 0;
+  for (let y = 0; y < probe.height; y++) {
+    for (let x = 0; x < probe.width; x++) {
+      if (data[(y * probe.width + x) * 4 + 3] > 16) {
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+  if (maxX < minX || maxY < minY) return fallback;
+  return {
+    x: minX / probe.width,
+    y: minY / probe.height,
+    width: (maxX - minX + 1) / probe.width,
+    height: (maxY - minY + 1) / probe.height,
+  };
+}
+
+// Draws `image` (cropped to its trimmed opaque `bounds`) scaled to fit
+// inside `box` without distorting it, anchored to the box's bottom edge so a
+// standing character's feet land there regardless of how much transparent
+// margin the source PNG had.
+function drawContained(ctx: CanvasRenderingContext2D, image: HTMLImageElement, bounds: UnitBounds, box: UnitBounds) {
+  const cropWidth = image.width * bounds.width;
+  const cropHeight = image.height * bounds.height;
+  const scale = Math.min(box.width / cropWidth, box.height / cropHeight);
+  const drawWidth = cropWidth * scale;
+  const drawHeight = cropHeight * scale;
+  const dx = box.x + (box.width - drawWidth) / 2;
+  const dy = box.y + box.height - drawHeight;
+  ctx.drawImage(
+    image,
+    bounds.x * image.width, bounds.y * image.height, cropWidth, cropHeight,
+    dx, dy, drawWidth, drawHeight,
+  );
+}
+
+// Small gold seal-and-ribbon flourish, drawn in place of the old text
+// credit line so that corner of the certificate doesn't sit empty.
+function drawSeal(ctx: CanvasRenderingContext2D, cx: number, cy: number, radius: number) {
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  ctx.beginPath();
+  ctx.moveTo(-radius * 0.55, radius * 0.5);
+  ctx.lineTo(-radius * 0.2, radius * 1.9);
+  ctx.lineTo(0, radius * 1.35);
+  ctx.lineTo(radius * 0.2, radius * 1.9);
+  ctx.lineTo(radius * 0.55, radius * 0.5);
+  ctx.closePath();
+  ctx.fillStyle = '#0ea5e9';
+  ctx.fill();
+
+  const seal = ctx.createRadialGradient(-radius * 0.3, -radius * 0.3, radius * 0.1, 0, 0, radius);
+  seal.addColorStop(0, '#fde68a');
+  seal.addColorStop(1, '#f59e0b');
+  ctx.beginPath();
+  ctx.arc(0, 0, radius, 0, Math.PI * 2);
+  ctx.fillStyle = seal;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.75)';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.arc(0, 0, radius - 5, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.fillStyle = '#fffbeb';
+  ctx.beginPath();
+  const points = 5;
+  const outer = radius * 0.56;
+  const inner = radius * 0.24;
+  for (let i = 0; i < points * 2; i++) {
+    const r = i % 2 === 0 ? outer : inner;
+    const angle = (Math.PI / points) * i - Math.PI / 2;
+    const px = Math.cos(angle) * r;
+    const py = Math.sin(angle) * r;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
 }
 
 export async function createLanguageQuestAchievementBlob(input: {
@@ -82,7 +201,7 @@ export async function createLanguageQuestAchievementBlob(input: {
   ctx.lineWidth = 2;
   ctx.stroke();
 
-  const logo = await loadLogo();
+  const logo = await loadImage('/icon-192.png');
   if (logo) {
     ctx.fillStyle = '#fff';
     roundedRect(ctx, 86, 78, 78, 78, 18);
@@ -96,27 +215,49 @@ export async function createLanguageQuestAchievementBlob(input: {
   ctx.font = '700 18px "Geist", sans-serif';
   ctx.fillText('Learn • Practise • Grow', 184, 142);
 
-  ctx.textAlign = 'center';
   if (isCertificate) {
+    // The Wise Owl mascot (graduation cap, diploma, medal) stands bottom-right
+    // of the card; the text column stays clear of it (maxWidth 640, well
+    // short of the 790px box start).
+    const mascot = await loadImage('/Icons/Owl School 13.svg');
+    if (mascot) {
+      const bounds = opaqueBounds(mascot);
+      // Sized to stay clear of the header above and the footer seal below.
+      drawContained(ctx, mascot, bounds, { x: 790, y: 140, width: 330, height: 390 });
+    }
+
+    const textLeft = 86;
+    const textMaxWidth = 640;
+    ctx.textAlign = 'left';
+
     ctx.fillStyle = '#fbbf24';
-    ctx.font = '900 24px "Geist", sans-serif';
-    ctx.fillText('CERTIFICATE OF COMPLETION', 600, 224);
+    ctx.font = '900 22px "Geist", sans-serif';
+    ctx.fillText('CERTIFICATE OF COMPLETION', textLeft, 218);
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillRect(textLeft, 234, 70, 4);
+
     ctx.fillStyle = '#fff';
-    const nameSize = fitText(ctx, input.learnerName, 920, 62, 900);
+    const nameSize = fitText(ctx, input.learnerName, textMaxWidth, 58, 900);
     ctx.font = `900 ${nameSize}px "Geist", "Padauk", "Noto Sans Myanmar", sans-serif`;
-    ctx.fillText(input.learnerName, 600, 304);
+    ctx.fillText(input.learnerName, textLeft, 292);
+
     ctx.fillStyle = '#cbd5e1';
-    ctx.font = '600 24px "Geist", sans-serif';
-    ctx.fillText('has completed', 600, 350);
+    ctx.font = '600 22px "Geist", sans-serif';
+    ctx.fillText('has completed', textLeft, 328);
+
     ctx.fillStyle = '#fff';
     const courseTitle = input.course?.title || 'Language Quest course';
-    const courseSize = fitText(ctx, courseTitle, 900, 44, 800);
+    const courseSize = fitText(ctx, courseTitle, textMaxWidth, 40, 800);
     ctx.font = `800 ${courseSize}px "Geist", "Padauk", "Noto Sans Myanmar", sans-serif`;
-    ctx.fillText(courseTitle, 600, 414);
+    ctx.fillText(courseTitle, textLeft, 386);
+
     ctx.fillStyle = '#a7f3d0';
-    ctx.font = '700 21px "Geist", sans-serif';
-    ctx.fillText(`${input.profile.points} points earned • ${new Intl.DateTimeFormat('en-GB', { dateStyle: 'long' }).format(new Date())}`, 600, 468);
+    ctx.font = '700 20px "Geist", sans-serif';
+    ctx.fillText(`${input.profile.points} points earned • ${new Intl.DateTimeFormat('en-GB', { dateStyle: 'long' }).format(new Date())}`, textLeft, 428);
+
+    drawSeal(ctx, 118, 524, 24);
   } else {
+    ctx.textAlign = 'center';
     ctx.fillStyle = '#fdba74';
     ctx.font = '900 24px "Geist", sans-serif';
     ctx.fillText('LEARNING STREAK', 600, 222);
@@ -135,11 +276,9 @@ export async function createLanguageQuestAchievementBlob(input: {
     ctx.fillText(`Best streak: ${input.profile.bestStreak} days • ${input.profile.points} points`, 600, 516);
   }
 
-  ctx.textAlign = 'left';
+  ctx.textAlign = 'right';
   ctx.fillStyle = 'rgba(255,255,255,.65)';
   ctx.font = '600 16px "Geist", sans-serif';
-  ctx.fillText('Developed by Tao Mon Lae', 86, 556);
-  ctx.textAlign = 'right';
   ctx.fillText('MRLC • Language Quest', 1114, 556);
 
   return new Promise<Blob>((resolve, reject) => {
