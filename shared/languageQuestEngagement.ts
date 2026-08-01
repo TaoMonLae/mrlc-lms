@@ -147,16 +147,98 @@ export function languageQuestMissionProgress(input: {
 }
 
 const MASTERY_INTERVAL_DAYS = [1, 3, 7, 14, 30] as const;
+const MIN_MASTERY_EASE = 1.3;
+const MAX_MASTERY_EASE = 3.2;
+
+export const LANGUAGE_QUEST_MASTERY_CONFIDENCE_LEVELS = ["HARD", "GOOD", "EASY"] as const;
+export type LanguageQuestMasteryConfidence = typeof LANGUAGE_QUEST_MASTERY_CONFIDENCE_LEVELS[number];
+
+export function isLanguageQuestMasteryConfidence(value: unknown): value is LanguageQuestMasteryConfidence {
+  return LANGUAGE_QUEST_MASTERY_CONFIDENCE_LEVELS.includes(value as LanguageQuestMasteryConfidence);
+}
+
+function rounded(value: number, digits = 3): number {
+  const multiplier = 10 ** digits;
+  return Math.round(value * multiplier) / multiplier;
+}
+
+export function languageQuestMasteryAccuracy(
+  correctReviews: number,
+  wrongReviews: number,
+  recentAccuracy: number | null | undefined,
+): number {
+  if (typeof recentAccuracy === "number" && Number.isFinite(recentAccuracy)) {
+    return Math.min(1, Math.max(0, recentAccuracy));
+  }
+  const correct = Math.max(0, correctReviews);
+  const wrong = Math.max(0, wrongReviews);
+  // A light Bayesian prior stops a single miss from permanently overwhelming
+  // the queue while still ranking repeated misses as the weakest material.
+  return (correct + 1) / (correct + wrong + 2);
+}
 
 export function nextLanguageQuestMasteryReview(
   currentStage: number,
   correct: boolean,
   now = new Date(),
-): { stage: number; dueAt: Date } {
+  state: {
+    easeFactor?: number | null;
+    intervalDays?: number | null;
+    recentAccuracy?: number | null;
+    confidence?: LanguageQuestMasteryConfidence;
+  } = {},
+): { stage: number; dueAt: Date; easeFactor: number; intervalDays: number; recentAccuracy: number } {
+  const stageBefore = Math.max(0, currentStage);
+  const easeBefore = typeof state.easeFactor === "number" && Number.isFinite(state.easeFactor)
+    ? Math.min(MAX_MASTERY_EASE, Math.max(MIN_MASTERY_EASE, state.easeFactor))
+    : 2.5;
+  const fallbackInterval = stageBefore > 0
+    ? MASTERY_INTERVAL_DAYS[Math.min(stageBefore - 1, MASTERY_INTERVAL_DAYS.length - 1)]
+    : 0;
+  const intervalBefore = typeof state.intervalDays === "number" && Number.isFinite(state.intervalDays)
+    ? Math.max(0, state.intervalDays)
+    : fallbackInterval;
+  const accuracyBefore = typeof state.recentAccuracy === "number" && Number.isFinite(state.recentAccuracy)
+    ? Math.min(1, Math.max(0, state.recentAccuracy))
+    : null;
+  const recentAccuracy = accuracyBefore === null
+    ? (correct ? 1 : 0)
+    : rounded(accuracyBefore * 0.7 + (correct ? 0.3 : 0));
+
   if (!correct) {
-    return { stage: 0, dueAt: new Date(now.getTime() + 4 * 60 * 60 * 1000) };
+    // A lapse steps a mature card down gradually instead of erasing all of
+    // its history. Repeated misses still bring it back progressively sooner.
+    const stage = Math.max(0, stageBefore - 2);
+    const intervalDays = rounded(Math.min(2, Math.max(4 / 24, intervalBefore * 0.2)), 2);
+    return {
+      stage,
+      dueAt: new Date(now.getTime() + intervalDays * DAY_MS),
+      easeFactor: rounded(Math.max(MIN_MASTERY_EASE, easeBefore - 0.2), 2),
+      intervalDays,
+      recentAccuracy,
+    };
   }
-  const stage = Math.min(MASTERY_INTERVAL_DAYS.length, Math.max(0, currentStage) + 1);
-  const intervalDays = MASTERY_INTERVAL_DAYS[Math.min(stage - 1, MASTERY_INTERVAL_DAYS.length - 1)];
-  return { stage, dueAt: new Date(now.getTime() + intervalDays * DAY_MS) };
+
+  const confidence = state.confidence ?? "GOOD";
+  const quality = confidence === "EASY" ? 5 : confidence === "HARD" ? 3 : 4;
+  const easeFactor = rounded(Math.min(
+    MAX_MASTERY_EASE,
+    Math.max(MIN_MASTERY_EASE, easeBefore + 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02)),
+  ), 2);
+  const stage = stageBefore + 1;
+  let intervalDays: number;
+  if (stage === 1) intervalDays = confidence === "HARD" ? 0.5 : confidence === "EASY" ? 3 : 1;
+  else if (stage === 2) intervalDays = confidence === "HARD" ? 2 : confidence === "EASY" ? 6 : 3;
+  else {
+    const confidenceMultiplier = confidence === "HARD" ? 0.8 : confidence === "EASY" ? 1.3 : 1;
+    intervalDays = Math.min(180, Math.max(1, intervalBefore) * easeFactor * confidenceMultiplier);
+  }
+  intervalDays = rounded(intervalDays, 2);
+  return {
+    stage,
+    dueAt: new Date(now.getTime() + intervalDays * DAY_MS),
+    easeFactor,
+    intervalDays,
+    recentAccuracy,
+  };
 }

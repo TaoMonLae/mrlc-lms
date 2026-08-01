@@ -3956,6 +3956,15 @@ model LanguageQuestCourse {
   accentColor String  @default("#7c3aed")
   published   Boolean @default(false)
 
+  // Teacher-authored courses must pass an administrator review before they
+  // can appear in the learner catalog. Official and administrator-authored
+  // courses can still be published directly.
+  reviewRequired       Boolean   @default(false)
+  reviewStatus         String    @default("DRAFT")
+  reviewNote           String?
+  submittedForReviewAt DateTime?
+  reviewedAt           DateTime?
+
   // Kept as a scalar rather than a relation so courses survive account cleanup.
   // Null identifies an official/system-provided course.
   createdById String?
@@ -3971,6 +3980,7 @@ model LanguageQuestCourse {
   @@index([published])
   @@index([category])
   @@index([createdById])
+  @@index([reviewStatus])
 }
 
 model LanguageQuestUnit {
@@ -4008,12 +4018,13 @@ model LanguageQuestLesson {
 }
 
 model LanguageQuestChallenge {
-  id       String              @id @default(uuid())
-  lessonId String
-  lesson   LanguageQuestLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  type     String              @default("SELECT") // SELECT | ASSIST | CLOZE | ODD_ONE_OUT | REORDER | MATCHING | MINIMAL_PAIR_LISTENING | DICTATION | GRAMMAR_TRANSFORM
-  question String
-  order    Int
+  id          String              @id @default(uuid())
+  lessonId    String
+  lesson      LanguageQuestLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  type        String              @default("SELECT") // SELECT | ASSIST | CLOZE | ODD_ONE_OUT | REORDER | MATCHING | MINIMAL_PAIR_LISTENING | DICTATION | GRAMMAR_TRANSFORM
+  question    String
+  explanation String? // Teaching feedback shown after an answer is checked
+  order       Int
 
   options  LanguageQuestOption[]
   progress LanguageQuestChallengeProgress[]
@@ -4111,6 +4122,10 @@ model LanguageQuestMasteryProgress {
   lastReviewedAt DateTime?
   correctReviews Int                    @default(0)
   wrongReviews   Int                    @default(0)
+  easeFactor     Float                  @default(2.5)
+  intervalDays   Float                  @default(0)
+  recentAccuracy Float?
+  lastConfidence String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

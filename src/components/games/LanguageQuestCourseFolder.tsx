@@ -21,31 +21,34 @@ const categoryTones = {
     icon: 'bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300',
     line: 'from-rose-500 to-red-500',
     glow: 'from-rose-500/18 to-red-500/5',
-    art: '/Icons/Owl School 3.svg',
+    art: '/icons/LanguageQuests_Graphics/Contry Flags/030-china.svg',
   },
   english: {
     icon: 'bg-violet-100 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300',
     line: 'from-violet-500 to-fuchsia-500',
     glow: 'from-violet-500/18 to-fuchsia-500/5',
-    art: '/Icons/Owl School 2.svg',
+    art: '/icons/LanguageQuests_Graphics/Contry Flags/042-united states of america.svg',
   },
   spanish: {
     icon: 'bg-orange-100 text-orange-600 dark:bg-orange-500/15 dark:text-orange-300',
     line: 'from-orange-500 to-amber-400',
     glow: 'from-orange-500/18 to-amber-400/5',
-    art: '/Icons/Owl School 7.svg',
+    // No Spain flag ships in the Contry Flags pack (only Mexico, which isn't
+    // an accurate stand-in for "Spanish") -- keep the mascot art here until
+    // a Spain flag asset is added.
+    art: '/icons/LanguageQuests_Graphics/Owl School 7.svg',
   },
   malay: {
     icon: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-500/15 dark:text-cyan-300',
     line: 'from-sky-500 to-cyan-400',
     glow: 'from-sky-500/18 to-cyan-400/5',
-    art: '/Icons/Owl School 4.svg',
+    art: '/icons/LanguageQuests_Graphics/Contry Flags/034-malaysia.svg',
   },
   other: {
     icon: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',
     line: 'from-emerald-500 to-teal-400',
     glow: 'from-emerald-500/18 to-teal-400/5',
-    art: '/Icons/Owl School 1.svg',
+    art: '/icons/LanguageQuests_Graphics/Owl School 1.svg',
   },
 } as const;
 

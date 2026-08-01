@@ -36,20 +36,20 @@ const COURSE_SOURCES: CourseSource[] = [
     courses: 'Everyday English, Mandarin Foundations, and Chinese Conversation Starter',
     badge: 'Original',
     accent: 'from-violet-600 to-fuchsia-600',
-    art: '/Icons/optimized/Eduv1_01.png',
+    art: '/icons/optimized/Eduv1_01.png',
     description: 'Written and organized for MRLC learners, with practical situations, guided sentence practice, and classroom-friendly lesson lengths.',
   },
   {
-    title: 'Spanish seed curriculum',
-    courses: 'Spanish Foundations',
-    badge: 'Adapted',
+    title: 'Archived Spanish experiment',
+    courses: 'Spanish Foundations (not in the learner catalog)',
+    badge: 'Archived',
     accent: 'from-orange-500 to-amber-500',
-    art: '/Icons/optimized/Eduv1_04.png',
+    art: '/icons/optimized/Eduv1_04.png',
     description: (
       <>
-        Adapted from{' '}
+        Historical seed content adapted from{' '}
         <SourceLink href="https://github.com/TaoMonLae/duolingo-clone">TaoMonLae/duolingo-clone</SourceLink>.
-        Language Quest’s learning flow was also informed by the MIT-licensed{' '}
+        The course remains retired while its records are preserved. Language Quest’s learning flow was also informed by the MIT-licensed{' '}
         <SourceLink href="https://github.com/sanidhyy/duolingo-clone">sanidhyy/duolingo-clone</SourceLink>{' '}
         project.
       </>
@@ -57,26 +57,26 @@ const COURSE_SOURCES: CourseSource[] = [
   },
   {
     title: 'School-provided Mandarin curriculum',
-    courses: 'Mandarin Complete Course',
+    courses: 'Mandarin Complete A1–B2',
     badge: 'School source',
     accent: 'from-rose-600 to-red-500',
-    art: '/Icons/optimized/Eduv1_02.png',
+    art: '/icons/optimized/Eduv1_02.png',
     description: 'Generated from a Mandarin curriculum file supplied to the project by its owner. The source has no included license notice, so redistribution rights should be confirmed before distributing it outside the school’s authorized use.',
   },
   {
     title: 'Malay learning paths',
-    courses: 'Bahasa Malaysia A1-C1, Malay Speaking, Modern Spoken Malay, and Teach Yourself Malay',
-    badge: 'Source guided',
+    courses: 'Canonical Bahasa Malaysia A1–C1 path',
+    badge: 'Canonical path',
     accent: 'from-amber-500 to-orange-600',
-    art: '/Icons/optimized/Eduv1_10.png',
-    description: 'Built from school- and rights-holder-supplied curriculum packages plus a newly written modernization of a public-domain U.S. government Malay guide. Draft paths remain subject to native-speaker review and source-specific redistribution conditions.',
+    art: '/icons/optimized/Eduv1_10.png',
+    description: 'The five-level CEFR progression is the learner-facing Malay path. Overlapping Malay Speaking, Modern Spoken Malay, and Teach Yourself Malay courses are archived with historical progress preserved. Content remains subject to ongoing native-speaker review and source-specific redistribution conditions.',
   },
   {
     title: 'English word collection and definitions',
     courses: 'Everyday English Word Quest, Academic English Word Quest, and English Word Power',
     badge: 'Curated',
     accent: 'from-sky-600 to-cyan-500',
-    art: '/Icons/optimized/Eduv1_06.png',
+    art: '/icons/optimized/Eduv1_06.png',
     description: (
       <>
         Terms are curated from{' '}
@@ -92,7 +92,7 @@ const COURSE_SOURCES: CourseSource[] = [
     courses: 'Advanced English: Core, Mastery, and Expert',
     badge: 'Curated',
     accent: 'from-indigo-600 to-blue-600',
-    art: '/Icons/optimized/Eduv1_07.png',
+    art: '/icons/optimized/Eduv1_07.png',
     description: (
       <>
         Individual terms and ranking signals are selected from{' '}
@@ -108,7 +108,7 @@ const COURSE_SOURCES: CourseSource[] = [
     courses: 'English Vocabulary A1: Foundations through C2: Mastery',
     badge: 'MIT licensed',
     accent: 'from-emerald-600 to-teal-500',
-    art: '/Icons/optimized/Eduv1_09.png',
+    art: '/icons/optimized/Eduv1_09.png',
     description: (
       <>
         Adapted from the MIT-licensed vocabulary sets in{' '}
@@ -207,7 +207,7 @@ export default function LanguageQuestAbout() {
             <div className="absolute bottom-3 left-1/2 h-10 w-[58%] -translate-x-1/2 rounded-[100%] bg-slate-950/60 blur-xl sm:bottom-5 sm:h-12 sm:w-[64%]" />
             <div className="absolute bottom-0 left-1/2 z-[2] h-[80%] -translate-x-1/2 sm:h-[96%]">
               <img
-                src="/Icons/optimized/YellowHoodieGuide.png"
+                src="/icons/optimized/YellowHoodieGuide.png"
                 alt="Friendly Language Quest guide wearing a yellow hoodie"
                 className="lq-float-delayed h-full w-auto max-w-none object-contain drop-shadow-[0_30px_35px_rgba(0,0,0,.35)]"
               />
@@ -232,21 +232,21 @@ export default function LanguageQuestAbout() {
           <div className="grid gap-3 md:grid-cols-3">
             {[
               {
-                art: '/Icons/optimized/Eduv1_01.png',
+                art: '/icons/optimized/LanguageLearning/V1/Languages.png',
                 icon: Languages,
                 title: 'Practise for real life',
                 copy: 'Move from listening and recognition to spelling, sentence building, and confident recall.',
                 tone: 'from-sky-100 to-cyan-50 dark:from-sky-950 dark:to-slate-900',
               },
               {
-                art: '/Icons/optimized/Eduv1_05.png',
+                art: '/icons/optimized/Eduv1_05.png',
                 icon: ShieldCheck,
                 title: 'A safe learner space',
                 copy: 'Public learner accounts stay separated from private student records and LMS administration.',
                 tone: 'from-violet-100 to-fuchsia-50 dark:from-violet-950 dark:to-slate-900',
               },
               {
-                art: '/Icons/optimized/Eduv1_08.png',
+                art: '/icons/optimized/LanguageLearning/V1/Blackboard.png',
                 icon: HeartHandshake,
                 title: 'Ready for classrooms',
                 copy: 'Teachers can organize opt-in classrooms while learners keep their own progress and rewards.',
@@ -290,7 +290,7 @@ export default function LanguageQuestAbout() {
                   <p className="mt-3 text-2xl font-black">Know what you study—and where it came from.</p>
                 </div>
                 <img
-                  src="/Icons/Owl School 15.svg"
+                  src="/icons/LanguageQuests_Graphics/Owl School 15.svg"
                   alt=""
                   aria-hidden="true"
                   className="absolute -bottom-8 -right-14 h-64 w-72 object-contain drop-shadow-2xl"
@@ -346,7 +346,7 @@ export default function LanguageQuestAbout() {
                 Read complete notices <ExternalLink className="h-4 w-4" />
               </a>
             </div>
-            <img src="/Icons/optimized/Eduv1_03.png" alt="" aria-hidden="true" className="absolute -bottom-8 -right-8 h-40 w-40 object-contain opacity-80 drop-shadow-xl" />
+            <img src="/icons/optimized/Eduv1_03.png" alt="" aria-hidden="true" className="absolute -bottom-8 -right-8 h-40 w-40 object-contain opacity-80 drop-shadow-xl" />
           </div>
 
           <div className="relative overflow-hidden rounded-[2rem] border border-violet-400/20 bg-gradient-to-br from-violet-800 via-indigo-900 to-slate-950 p-7 text-white shadow-xl shadow-violet-700/15">
@@ -361,7 +361,7 @@ export default function LanguageQuestAbout() {
                 teacher voice, with an automatic browser-voice fallback.
               </p>
             </div>
-            <img src="/Icons/optimized/Eduv1_02.png" alt="" aria-hidden="true" className="absolute -bottom-8 -right-8 h-40 w-40 object-contain opacity-80 drop-shadow-xl" />
+            <img src="/icons/optimized/Eduv1_02.png" alt="" aria-hidden="true" className="absolute -bottom-8 -right-8 h-40 w-40 object-contain opacity-80 drop-shadow-xl" />
           </div>
         </section>
 
@@ -369,7 +369,7 @@ export default function LanguageQuestAbout() {
           <div className="relative min-h-72 overflow-hidden bg-gradient-to-br from-sky-100 via-violet-100 to-fuchsia-100 dark:from-sky-950 dark:via-violet-950 dark:to-slate-950">
             <div className="absolute left-8 top-8 h-24 w-24 rounded-full border-[18px] border-white/60 dark:border-white/10" />
             <img
-              src="/Icons/Owl School 10.svg"
+              src="/icons/LanguageQuests_Graphics/Owl School 10.svg"
               alt=""
               aria-hidden="true"
               className="absolute bottom-0 left-1/2 h-[92%] w-[92%] -translate-x-1/2 object-contain drop-shadow-2xl"

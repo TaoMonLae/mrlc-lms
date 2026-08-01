@@ -10,6 +10,7 @@ import {
   nextLanguageQuestStreak,
   normalizeSentenceAnswer,
   pairedMatchAnswerSummary,
+  requeueMissedLanguageQuestChallenge,
   reorderChallengeIsCorrect,
   sentenceAnswerMatches,
 } from "../../shared/languageQuest";
@@ -50,10 +51,76 @@ import {
   newlyUnlockedLanguageQuestRewardIds,
 } from "../../shared/languageQuestRewards";
 import {
+  languageQuestMasteryAccuracy,
   languageQuestMissionProgress,
   languageQuestPeriodBounds,
   nextLanguageQuestMasteryReview,
 } from "../../shared/languageQuestEngagement";
+import { normalizeLanguageQuestAuthoringOptions } from "../../shared/languageQuestAuthoring";
+import {
+  languageQuestCourseReviewDecision,
+  languageQuestTeacherEditReviewData,
+} from "../../shared/languageQuestCourseReview";
+import {
+  languageQuestLeaderboardScope,
+  languageQuestLeagueForXp,
+} from "../../shared/languageQuestLeaderboard";
+import {
+  LANGUAGE_QUEST_SKILL_LABELS,
+  languageQuestAnalyticsAccuracyPercent,
+  languageQuestAnalyticsStatus,
+  languageQuestAnalyticsStatusLabel,
+} from "../../shared/languageQuestAnalytics";
+
+test("teacher edits return reviewed Language Quest courses to a private draft", () => {
+  assert.deepEqual(languageQuestTeacherEditReviewData(), {
+    published: false,
+    reviewStatus: "DRAFT",
+    reviewNote: null,
+    submittedForReviewAt: null,
+    reviewedAt: null,
+  });
+});
+
+test("Language Quest review decisions publish approvals and keep change requests private", () => {
+  const reviewedAt = new Date("2026-08-01T12:00:00.000Z");
+  assert.deepEqual(languageQuestCourseReviewDecision("APPROVE", "Ready to launch", reviewedAt), {
+    published: true,
+    reviewStatus: "APPROVED",
+    reviewNote: "Ready to launch",
+    reviewedAt,
+  });
+  assert.deepEqual(languageQuestCourseReviewDecision("REQUEST_CHANGES", "Add audio prompts", reviewedAt), {
+    published: false,
+    reviewStatus: "CHANGES_REQUESTED",
+    reviewNote: "Add audio prompts",
+    reviewedAt,
+  });
+});
+
+test("Language Quest leaderboard scopes reject unknown values and use stable recent-XP leagues", () => {
+  assert.equal(languageQuestLeaderboardScope("classroom"), "classroom");
+  assert.equal(languageQuestLeaderboardScope("anything-else"), "global");
+  assert.equal(languageQuestLeagueForXp(0).id, "sprout");
+  assert.equal(languageQuestLeagueForXp(99).id, "sprout");
+  assert.equal(languageQuestLeagueForXp(100).id, "explorer");
+  assert.equal(languageQuestLeagueForXp(300).id, "pathfinder");
+  assert.equal(languageQuestLeagueForXp(700).id, "luminary");
+});
+
+test("Language Quest analytics classifies accuracy signals consistently", () => {
+  assert.equal(languageQuestAnalyticsAccuracyPercent(0, 0), null);
+  assert.equal(languageQuestAnalyticsAccuracyPercent(2, 3), 67);
+  assert.equal(languageQuestAnalyticsAccuracyPercent(9, 10), 90);
+  assert.equal(languageQuestAnalyticsStatus(0, 0), "NO_DATA");
+  assert.equal(languageQuestAnalyticsStatus(2, 1), "DEVELOPING");
+  assert.equal(languageQuestAnalyticsStatus(3, 2), "NEEDS_REVIEW");
+  assert.equal(languageQuestAnalyticsStatus(10, 8), "DEVELOPING");
+  assert.equal(languageQuestAnalyticsStatus(10, 9), "SECURE");
+  assert.equal(languageQuestAnalyticsStatusLabel("NEEDS_REVIEW"), "Needs review");
+  assert.equal(LANGUAGE_QUEST_SKILL_LABELS.DICTATION, "Dictation");
+  assert.equal(LANGUAGE_QUEST_SKILL_LABELS.GRAMMAR_TRANSFORM, "Grammar and usage");
+});
 
 test("Language Quest turns saved XP into stable levels and collectible cards", () => {
   const beginner = languageQuestRewardProgress(0);
@@ -152,8 +219,28 @@ test("mastery reviews expand after success and return sooner after a miss", () =
   assert.equal(success.stage, 2);
   assert.equal(success.dueAt.toISOString(), "2026-08-01T00:00:00.000Z");
   const retry = nextLanguageQuestMasteryReview(4, false, now);
-  assert.equal(retry.stage, 0);
-  assert.equal(retry.dueAt.toISOString(), "2026-07-29T04:00:00.000Z");
+  assert.equal(retry.stage, 2);
+  assert.equal(retry.intervalDays, 2);
+  assert.equal(retry.dueAt.toISOString(), "2026-07-31T00:00:00.000Z");
+});
+
+test("mastery confidence changes the next interval and ease factor", () => {
+  const now = new Date("2026-07-29T00:00:00.000Z");
+  const base = { easeFactor: 2.5, intervalDays: 7, recentAccuracy: 0.75 };
+  const hard = nextLanguageQuestMasteryReview(3, true, now, { ...base, confidence: "HARD" });
+  const good = nextLanguageQuestMasteryReview(3, true, now, { ...base, confidence: "GOOD" });
+  const easy = nextLanguageQuestMasteryReview(3, true, now, { ...base, confidence: "EASY" });
+  assert.ok(hard.intervalDays < good.intervalDays);
+  assert.ok(good.intervalDays < easy.intervalDays);
+  assert.ok(hard.easeFactor < good.easeFactor);
+  assert.ok(good.easeFactor < easy.easeFactor);
+  assert.equal(hard.recentAccuracy, 0.825);
+});
+
+test("weak-area accuracy prefers rolling performance and smooths lifetime results", () => {
+  assert.equal(languageQuestMasteryAccuracy(9, 1, 0.62), 0.62);
+  assert.equal(languageQuestMasteryAccuracy(0, 1, null), 1 / 3);
+  assert.equal(languageQuestMasteryAccuracy(3, 1, null), 4 / 6);
 });
 
 test("Language Quest starts a new streak on the first active day", () => {
@@ -271,7 +358,11 @@ test("every Hanzi answer in every built-in Chinese course receives Pinyin", () =
     ),
   );
 
-  assert.ok(hanziOptions.length > 5_000);
+  // Reverse-meaning and listening challenges intentionally use English
+  // answer choices, while dictation stores one Hanzi transcript instead of
+  // three choices. The remaining Hanzi bank is still large and every entry
+  // must retain character-aligned pronunciation data.
+  assert.ok(hanziOptions.length > 2_000);
   assert.ok(hanziOptions.every((option) =>
     languageQuestPinyin(option.text, "Mandarin Chinese")?.length === Array.from(option.text).length,
   ));
@@ -412,18 +503,26 @@ test("Language Quest groups language courses into a predictable category order",
   );
 });
 
-test("the generated Mandarin Complete course contains every supplied translation", () => {
+test("the generated Mandarin Complete course contains every supplied translation in varied practice", () => {
   const lessons = completeMandarinCourse.units.flatMap((unit) => unit.lessons);
   const challenges = lessons.flatMap((lesson) => lesson.challenges);
 
-  assert.equal(completeMandarinCourse.code, "MRLC-MANDARIN-COMPLETE-V1");
+  assert.equal(completeMandarinCourse.code, "MRLC-MANDARIN-COMPLETE-V2");
+  assert.equal(completeMandarinCourse.title, "Mandarin Complete A1–B2");
   assert.equal(completeMandarinCourse.units.length, 7);
   assert.equal(lessons.length, 71);
   assert.equal(challenges.length, 1870);
   assert.ok(completeMandarinCourse.units.every((unit) => unit.lessons.length <= 30));
   assert.ok(lessons.every((lesson) => lesson.challenges.length <= 50));
-  assert.ok(challenges.every((challenge) => challenge.options.length === 3));
+  assert.ok(challenges.every((challenge) => challenge.type === "DICTATION"
+    ? challenge.options.length === 1
+    : challenge.options.length === 3));
   assert.ok(challenges.every((challenge) => challenge.options.filter((option) => option.correct).length === 1));
+  assert.ok(challenges.every((challenge) => challenge.explanation?.trim()));
+  for (const type of ["SELECT", "ASSIST", "CLOZE", "MINIMAL_PAIR_LISTENING", "DICTATION"]) {
+    assert.ok(challenges.some((challenge) => challenge.type === type), `missing ${type}`);
+  }
+  assert.ok(completeMandarinCourse.units.every((unit) => /^[ABC][12] · /.test(unit.title)));
 });
 
 test("the generated English word courses are focused and classroom-ready", () => {
@@ -433,12 +532,23 @@ test("the generated English word courses are focused and classroom-ready", () =>
   assert.equal(englishWordCourses.length, 3);
   assert.equal(lessons.length, 18);
   assert.equal(challenges.length, 180);
+  assert.deepEqual(
+    englishWordCourses.map((course) => course.code),
+    [
+      "MRLC-ENGLISH-WORDS-EVERYDAY-V2",
+      "MRLC-ENGLISH-WORDS-ACADEMIC-V2",
+      "MRLC-ENGLISH-WORDS-POWER-V2",
+    ],
+  );
   assert.ok(englishWordCourses.every((course) => course.units.length === 2));
   assert.ok(englishWordCourses.every((course) => course.units.flatMap((unit) => unit.lessons).length === 6));
   assert.ok(englishWordCourses.every((course) => course.units.flatMap((unit) => unit.lessons).flatMap((lesson) => lesson.challenges).length === 60));
   assert.ok(challenges.every((challenge) => challenge.options.length === 3));
   assert.ok(challenges.every((challenge) => challenge.options.filter((option) => option.correct).length === 1));
   assert.ok(challenges.every((challenge) => challenge.options.every((option) => option.audioText === option.text)));
+  assert.equal(challenges.filter((challenge) => challenge.type === "CLOZE").length, 54);
+  assert.equal(challenges.filter((challenge) => challenge.type === "GRAMMAR_TRANSFORM").length, 54);
+  assert.ok(challenges.every((challenge) => challenge.explanation?.includes("Example:")));
 });
 
 test("shuffle returns every option exactly once, in some order", () => {
@@ -643,6 +753,44 @@ test("pairedMatchAnswerSummary joins consecutive option pairs as a readable left
   assert.equal(pairedMatchAnswerSummary([]), "");
 });
 
+test("a missed Language Quest challenge is requeued after an interleaving gap", () => {
+  const original = ["a", "b", "c", "d", "e"];
+  const requeued = requeueMissedLanguageQuestChallenge(original, 1);
+
+  assert.deepEqual(requeued, ["a", "b", "c", "d", "b", "e"]);
+  assert.deepEqual(original, ["a", "b", "c", "d", "e"], "the source queue must stay immutable");
+  assert.deepEqual(requeueMissedLanguageQuestChallenge(original, 4), ["a", "b", "c", "d", "e", "e"]);
+  assert.deepEqual(requeueMissedLanguageQuestChallenge(original, 99), original);
+});
+
+test("Course Studio type switching produces valid option shapes", () => {
+  let nextId = 0;
+  const createOption = (correct = false) => ({ id: `new-${nextId++}`, correct });
+  const source = [
+    { id: "a", correct: true },
+    { id: "b", correct: true },
+    { id: "c", correct: false },
+  ];
+
+  const multipleChoice = normalizeLanguageQuestAuthoringOptions("SELECT", source, createOption);
+  assert.equal(multipleChoice.length, 3);
+  assert.deepEqual(multipleChoice.map((option) => option.correct), [true, false, false]);
+
+  const reorder = normalizeLanguageQuestAuthoringOptions("REORDER", source, createOption);
+  assert.deepEqual(reorder.map((option) => option.correct), [true, true, true]);
+
+  const matching = normalizeLanguageQuestAuthoringOptions("MATCHING", source, createOption);
+  assert.equal(matching.length, 4, "an incomplete pair should receive a partner tile");
+  assert.ok(matching.every((option) => option.correct));
+
+  const dictation = normalizeLanguageQuestAuthoringOptions("DICTATION", source, createOption);
+  assert.deepEqual(dictation, [{ id: "a", correct: true }]);
+
+  const emptyChoice = normalizeLanguageQuestAuthoringOptions("CLOZE", [], createOption);
+  assert.equal(emptyChoice.length, 2);
+  assert.deepEqual(emptyChoice.map((option) => option.correct), [true, false]);
+});
+
 // Course Studio (the manage/courses editor) loads and re-saves any course,
 // including generator-built ones like the Malay CEFR courses that contain
 // REORDER/CLOZE/MINIMAL_PAIR_LISTENING challenges. normalizeCourseDraft() is
@@ -678,6 +826,23 @@ test("normalizeCourseDraft preserves every supported challenge type instead of c
     assert.equal(result.error, undefined, `${type} should normalize without error`);
     assert.equal(result.value?.units[0].lessons[0].challenges[0].type, type);
   }
+});
+
+test("normalizeCourseDraft preserves optional teaching explanations", () => {
+  const raw = draftChallenge("SELECT", [
+    { text: "Right", correct: true },
+    { text: "Wrong", correct: false },
+  ]);
+  Object.assign(raw.units[0].lessons[0].challenges[0], {
+    explanation: "  Use this form for a polite request.  ",
+  });
+
+  const result = normalizeCourseDraft(raw);
+  assert.equal(result.error, undefined);
+  assert.equal(
+    result.value?.units[0].lessons[0].challenges[0].explanation,
+    "Use this form for a polite request.",
+  );
 });
 
 test("normalizeCourseDraft accepts REORDER and MATCHING challenges with every option marked correct", () => {
@@ -795,24 +960,22 @@ test("the Linguify import creates a complete A1-C2 vocabulary path", () => {
   );
 });
 
-test("the Malay CEFR import produces five complete, unpublished A1-C1 courses", () => {
+test("the Malay CEFR import produces one canonical published A1-C1 path", () => {
   const units = malayCefrCourses.flatMap((course) => course.units);
   const lessons = units.flatMap((unit) => unit.lessons);
   const challenges = lessons.flatMap((lesson) => lesson.challenges);
 
   assert.deepEqual(
     malayCefrCourses.map((course) => course.code),
-    ["A1", "A2", "B1", "B2", "C1"].map((level) => `MRLC-MALAY-${level}-V1`),
+    ["A1", "A2", "B1", "B2", "C1"].map((level) => `MRLC-MALAY-${level}-V2`),
   );
   assert.equal(malayCefrCourses.length, 5);
   assert.equal(units.length, 46);
   assert.ok(lessons.length > 0);
   assert.ok(challenges.length > 0);
   assert.ok(malayCefrCourses.every((course) => course.language === "Malay"));
-  // The source package's own README says this content needs native-speaker
-  // review before going live -- these courses must stay unpublished drafts
-  // until a teacher/admin reviews and publishes them from the editor.
-  assert.ok(malayCefrCourses.every((course) => !course.published));
+  assert.ok(malayCefrCourses.every((course) => course.published));
+  assert.ok(malayCefrCourses.every((course) => course.description.startsWith("Canonical ")));
   assert.ok(lessons.every((lesson) => lesson.challenges.length > 0));
   // REORDER challenges are built from a sentence's own word tokens, so they
   // can run longer than the 2-6 option bank used for multiple choice; every
@@ -859,6 +1022,7 @@ test("the Malay speaking and source-guided courses are complete and unpublished"
     assert.equal(challenges.length, 384);
     // Same review-before-publish policy as every other Malay course.
     assert.ok(!course.published);
+    assert.ok(course.retired);
     assert.ok(challenges.every((challenge) => challenge.options.length === 3));
     assert.ok(challenges.every(
       (challenge) => challenge.options.filter((option) => option.correct).length === 1,
@@ -871,7 +1035,7 @@ test("the Malay speaking and source-guided courses are complete and unpublished"
   assert.equal(malayGuideModernCourse.code, "MRLC-MALAY-GOVINFO-GUIDE-V1");
 });
 
-test("the Teach Yourself Malay course is complete and ready in the Malay folder", () => {
+test("the overlapping Teach Yourself Malay course is archived with its content intact", () => {
   const lessons = teachYourselfMalayCourse.units.flatMap((unit) => unit.lessons);
   const challenges = lessons.flatMap((lesson) => lesson.challenges);
 
@@ -881,7 +1045,8 @@ test("the Teach Yourself Malay course is complete and ready in the Malay folder"
   assert.equal(teachYourselfMalayCourse.units.length, 17);
   assert.equal(lessons.length, 68);
   assert.equal(challenges.length, 408);
-  assert.ok(teachYourselfMalayCourse.published);
+  assert.ok(!teachYourselfMalayCourse.published);
+  assert.ok(teachYourselfMalayCourse.retired);
   assert.ok(challenges.every((challenge) => challenge.question.trim().length > 0));
   assert.ok(challenges.every((challenge) => challenge.options.length >= 2));
   assert.ok(challenges.every(

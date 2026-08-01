@@ -6,7 +6,8 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ApiError, apiGet, apiSend } from '@/src/lib/api';
-import type { LanguageQuestLessonPayload, LanguageQuestLessonPreview, LanguageQuestProfile } from '@/src/types/languageQuest';
+import type { LanguageQuestChallenge, LanguageQuestLessonPayload, LanguageQuestLessonPreview, LanguageQuestProfile } from '@/src/types/languageQuest';
+import { requeueMissedLanguageQuestChallenge } from '@/shared/languageQuest';
 import { isChineseLanguage, languageQuestAnswerMatches } from '@/shared/languageQuestPinyin';
 import {
   buildLanguageQuestVocabularyQuestions,
@@ -59,11 +60,45 @@ interface AnswerResult {
   unlockedRewardIds: string[];
 }
 
+const CHALLENGE_GUIDANCE: Partial<Record<LanguageQuestChallenge['type'], { title: string; description: string }>> = {
+  CLOZE: {
+    title: 'Complete the blank',
+    description: 'Read the whole sentence, then choose the option that makes its meaning and grammar complete.',
+  },
+  ODD_ONE_OUT: {
+    title: 'Find the outsider',
+    description: 'Compare every option and choose the one that does not belong to the same meaning group or pattern.',
+  },
+  REORDER: {
+    title: 'Build the sentence',
+    description: 'Tap the word tiles in the order they should appear. Tap a placed tile to move it back.',
+  },
+  MATCHING: {
+    title: 'Connect the pairs',
+    description: 'Choose two tiles that belong together. Continue until every word has its matching partner.',
+  },
+  MINIMAL_PAIR_LISTENING: {
+    title: 'Listen for the difference',
+    description: 'Play the audio carefully and focus on the sound that changes between the similar choices.',
+  },
+  DICTATION: {
+    title: 'Type what you hear',
+    description: 'Play the audio as often as you need, then type the complete word or sentence you heard.',
+  },
+  GRAMMAR_TRANSFORM: {
+    title: 'Transform the sentence',
+    description: 'Keep the original meaning in mind while applying the requested grammar change.',
+  },
+};
+
+const guidanceStorageKey = (type: LanguageQuestChallenge['type']) => `lq-challenge-guidance-v1:${type}`;
+
 export default function LanguageQuestLesson() {
   const { explanationLanguage, lq } = useLanguageQuestSupport();
   const { soundEnabled, setSoundEnabled, reducedMotion, voiceProvider } = useLanguageQuestPreferences();
   const { lessonId } = useParams<{ lessonId: string }>();
   const [lesson, setLesson] = useState<LanguageQuestLessonPayload | null>(null);
+  const [quizChallenges, setQuizChallenges] = useState<LanguageQuestChallenge[]>([]);
   const [loading, setLoading] = useState(true);
   const [index, setIndex] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -92,6 +127,7 @@ export default function LanguageQuestLesson() {
   const speechSessionRef = useRef<LanguageQuestSpeechSession | null>(null);
   const [unlockedRewardId, setUnlockedRewardId] = useState<string | null>(null);
   const [rewardRevealOpen, setRewardRevealOpen] = useState(false);
+  const [guidanceType, setGuidanceType] = useState<LanguageQuestChallenge['type'] | null>(null);
   const speak = (value: string, language: string) => {
     void speakLanguageQuestVoice(value, language, voiceProvider).then((result) => {
       if (result === 'unavailable') toast.info('Speech is not supported by this browser');
@@ -106,6 +142,7 @@ export default function LanguageQuestLesson() {
     setVocabularySelectedText(null);
     setVocabularyFeedback(null);
     setIndex(0);
+    setQuizChallenges([]);
     setSelectedId(null);
     setOrderedIds([]);
     setMatchedPairs([]);
@@ -125,7 +162,11 @@ export default function LanguageQuestLesson() {
     setListening(false);
 
     apiGet<LanguageQuestLessonPayload>(`/api/language-quest/lessons/${lessonId}`)
-      .then((payload) => { setLesson(payload); setProfile(payload.profile); })
+      .then((payload) => {
+        setLesson(payload);
+        setQuizChallenges(payload.challenges);
+        setProfile(payload.profile);
+      })
       .catch((error: any) => toast.error(error?.message || 'Could not load the lesson'))
       .finally(() => setLoading(false));
 
@@ -148,9 +189,11 @@ export default function LanguageQuestLesson() {
     }
   }, [phase, previewLoading, preview]);
 
-  const challenge = lesson?.challenges[index];
-  const progressPercent = lesson ? Math.round((Math.min(index, lesson.challenges.length) / lesson.challenges.length) * 100) : 0;
-  const finished = Boolean(lesson && index >= lesson.challenges.length);
+  const challenge = quizChallenges[index];
+  const progressPercent = quizChallenges.length
+    ? Math.round((Math.min(index, quizChallenges.length) / quizChallenges.length) * 100)
+    : 0;
+  const finished = Boolean(lesson && quizChallenges.length > 0 && index >= quizChallenges.length);
   const cards = preview?.cards ?? [];
   const card = cards[previewIndex];
   const practiceCards = useMemo(
@@ -176,6 +219,28 @@ export default function LanguageQuestLesson() {
   // only gate challenges the learner hasn't cleared yet (matches the server
   // check in the answer endpoint).
   const outOfHearts = Boolean(challenge && !challenge.completed && (profile?.hearts ?? 1) <= 0);
+
+  useEffect(() => {
+    if (phase !== 'quiz' || !challenge || !CHALLENGE_GUIDANCE[challenge.type]) {
+      setGuidanceType(null);
+      return;
+    }
+    try {
+      setGuidanceType(window.localStorage.getItem(guidanceStorageKey(challenge.type)) ? null : challenge.type);
+    } catch {
+      setGuidanceType(challenge.type);
+    }
+  }, [challenge?.type, phase]);
+
+  const dismissGuidance = () => {
+    if (!guidanceType) return;
+    try {
+      window.localStorage.setItem(guidanceStorageKey(guidanceType), 'seen');
+    } catch {
+      // Dismiss for this session even when browser storage is unavailable.
+    }
+    setGuidanceType(null);
+  };
 
   const optionLetters = useMemo(() => ['A', 'B', 'C', 'D', 'E', 'F'], []);
   const speechSupported = useMemo(() => languageQuestSpeechInputSupported(), []);
@@ -405,7 +470,10 @@ export default function LanguageQuestLesson() {
 
   const continueLesson = () => {
     if (!answer) return;
-    if (answer.correct) setIndex((current) => current + 1);
+    if (!answer.correct) {
+      setQuizChallenges((current) => requeueMissedLanguageQuestChallenge(current, index));
+    }
+    setIndex((current) => current + 1);
     setSelectedId(null);
     setOrderedIds([]);
     setMatchedPairs([]);
@@ -424,6 +492,7 @@ export default function LanguageQuestLesson() {
     try {
       const payload = await apiGet<LanguageQuestLessonPayload>(`/api/language-quest/lessons/${lessonId}`);
       setLesson(payload);
+      setQuizChallenges(payload.challenges);
       setProfile(payload.profile);
     } catch (error: any) {
       toast.error(error?.message || 'Could not refresh the lesson');
@@ -587,7 +656,7 @@ export default function LanguageQuestLesson() {
                 <span className="pointer-events-none absolute -right-12 -top-10 h-36 w-36 rounded-full bg-sky-300/25 blur-2xl dark:bg-sky-500/10" />
                 <span className="pointer-events-none absolute -bottom-14 -left-10 h-36 w-36 rounded-full bg-fuchsia-300/25 blur-2xl dark:bg-fuchsia-500/10" />
                 <img
-                  src="/Icons/Owl School 14.svg"
+                  src="/icons/LanguageQuests_Graphics/Owl School 14.svg"
                   alt=""
                   aria-hidden="true"
                   className="pointer-events-none absolute -bottom-6 -right-5 h-28 w-28 object-contain opacity-15 transition duration-300 group-hover:-translate-y-1 group-hover:rotate-3 group-hover:scale-105 dark:opacity-10"
@@ -1126,7 +1195,19 @@ export default function LanguageQuestLesson() {
       <LanguageQuestPhaseStepper phase="quiz" hasVocabulary={vocabularyQuestions.length > 0} hasSpelling={spellingCards.length > 0} hasSentence={sentenceCards.length > 0} accentColor={lesson.course.accentColor} />
 
       <main className="flex flex-1 flex-col justify-center py-8">
-        <p className="text-xs font-bold uppercase tracking-[0.2em] text-violet-600">{lesson.title} • {index + 1} of {lesson.challenges.length}</p>
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-violet-600">{lesson.title} • {index + 1} of {quizChallenges.length}</p>
+        {guidanceType && CHALLENGE_GUIDANCE[guidanceType] && (
+          <aside aria-live="polite" className="mt-4 flex flex-col gap-3 rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sky-950 sm:flex-row sm:items-center dark:border-sky-500/25 dark:bg-sky-500/10 dark:text-sky-100">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-sky-600 text-white">
+              <Lightbulb className="h-5 w-5" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="font-black">New activity: {CHALLENGE_GUIDANCE[guidanceType].title}</p>
+              <p className="mt-1 text-sm leading-6 text-sky-800 dark:text-sky-200">{CHALLENGE_GUIDANCE[guidanceType].description}</p>
+            </div>
+            <Button type="button" size="sm" variant="outline" className="shrink-0 border-sky-300 bg-white/70" onClick={dismissGuidance}>Got it</Button>
+          </aside>
+        )}
         <div className="mt-3 flex items-start justify-between gap-4">
           <h1 className="max-w-2xl text-2xl font-black leading-tight text-slate-900 dark:text-white sm:text-3xl">{challenge.question}</h1>
           <Button variant="outline" size="icon" className="shrink-0 rounded-full" onClick={() => speak(challenge.question, lesson.course.language)} aria-label="Read question aloud">
@@ -1227,6 +1308,9 @@ export default function LanguageQuestLesson() {
                 <LanguageQuestCompanion rewards={profile?.rewards} reaction="correct" reducedMotion={reducedMotion} size="sm" />
                 <div>
                   <p className="font-black">Excellent — that meaning fits.</p>
+                  {challenge.explanation && (
+                    <p className="mt-1 max-w-2xl text-sm leading-6 text-emerald-800 dark:text-emerald-300">{challenge.explanation}</p>
+                  )}
                   <div className="mt-1 flex flex-wrap items-end gap-1 text-xs">
                     <LanguageQuestPinyinText
                       text={answer.correctAnswer}
@@ -1241,7 +1325,10 @@ export default function LanguageQuestLesson() {
               <div className="flex items-center gap-3 text-rose-700 dark:text-rose-400">
                 <LanguageQuestCompanion rewards={profile?.rewards} reaction="incorrect" reducedMotion={reducedMotion} size="sm" />
                 <div>
-                  <p className="font-black">Not quite — compare the meaning and retry.</p>
+                  <p className="font-black">Not quite — we’ll revisit this after a few more questions.</p>
+                  {challenge.explanation && (
+                    <p className="mt-1 max-w-2xl text-sm leading-6 text-rose-800 dark:text-rose-300">{challenge.explanation}</p>
+                  )}
                   <div className="mt-1 flex flex-wrap items-end gap-1 text-xs">
                     <span>Best answer:</span>
                     <LanguageQuestPinyinText
@@ -1256,7 +1343,7 @@ export default function LanguageQuestLesson() {
           </div>
           {answer ? (
             <Button onClick={continueLesson} className={answer.correct ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'}>
-              {answer.correct ? 'Continue' : 'Try again'}
+              {answer.correct ? 'Continue' : 'Continue — review later'}
             </Button>
           ) : (
             <Button onClick={checkAnswer} disabled={!canCheck || checking} style={canCheck ? { backgroundColor: lesson.course.accentColor } : undefined}>

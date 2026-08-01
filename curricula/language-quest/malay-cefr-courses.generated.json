@@ -1,13 +1,13 @@
 [
   {
-    "code": "MRLC-MALAY-A1-V1",
+    "code": "MRLC-MALAY-A1-V2",
     "title": "Bahasa Malaysia A1: Baru Belajar",
-    "description": "Survival Malay: greetings, numbers, family, market, food, time, transport, and health basics.",
+    "description": "Canonical A1 Malay path: greetings, numbers, family, market, food, time, transport, and health basics.",
     "imageEmoji": "🌱",
     "accentColor": "#059669",
     "language": "Malay",
     "category": "Malay Courses",
-    "published": false,
+    "published": true,
     "units": [
       {
         "title": "Salam & Perkenalan (Greetings & Introductions)",
@@ -5700,14 +5700,14 @@
     ]
   },
   {
-    "code": "MRLC-MALAY-A2-V1",
+    "code": "MRLC-MALAY-A2-V2",
     "title": "Bahasa Malaysia A2: Boleh Berbual Sikit",
-    "description": "Everyday transactions: clinics, LRT/Grab, banking, renting, work, slang, and simple past-tense stories.",
+    "description": "Canonical A2 Malay path: clinics, public transport, banking, renting, work, slang, and simple past-tense stories.",
     "imageEmoji": "🧭",
     "accentColor": "#0ea5e9",
     "language": "Malay",
     "category": "Malay Courses",
-    "published": false,
+    "published": true,
     "units": [
       {
         "title": "Di Klinik Kesihatan (At the Government Health Clinic)",
@@ -9330,14 +9330,14 @@
     ]
   },
   {
-    "code": "MRLC-MALAY-B1-V1",
+    "code": "MRLC-MALAY-B1-V2",
     "title": "Bahasa Malaysia B1: Boleh Uruskan Sendiri",
-    "description": "Independent living: immigration paperwork, job hunting, tenancy disputes, school, money, and negotiation.",
+    "description": "Canonical B1 Malay path: independent living, forms, job hunting, tenancy, school, money, and negotiation.",
     "imageEmoji": "📘",
     "accentColor": "#6366f1",
     "language": "Malay",
     "category": "Malay Courses",
-    "published": false,
+    "published": true,
     "units": [
       {
         "title": "Urusan Imigresen & Dokumen (Immigration Affairs & Documents)",
@@ -13782,14 +13782,14 @@
     ]
   },
   {
-    "code": "MRLC-MALAY-B2-V1",
+    "code": "MRLC-MALAY-B2-V2",
     "title": "Bahasa Malaysia B2: Fasih untuk Kerja",
-    "description": "Confident, professional Malay: meetings, customer service, news, legal literacy, culture, and debate.",
+    "description": "Canonical B2 Malay path: meetings, customer service, news, legal literacy, culture, and debate.",
     "imageEmoji": "💼",
     "accentColor": "#db2777",
     "language": "Malay",
     "category": "Malay Courses",
-    "published": false,
+    "published": true,
     "units": [
       {
         "title": "Mesyuarat & Pembentangan (Meetings & Presentations)",
@@ -18114,14 +18114,14 @@
     ]
   },
   {
-    "code": "MRLC-MALAY-C1-V1",
+    "code": "MRLC-MALAY-C1-V2",
     "title": "Bahasa Malaysia C1: Mahir",
-    "description": "Advanced, academic Malay: leadership, complex debate, literature, formal writing, and a capstone mock exam.",
+    "description": "Canonical C1 Malay path: leadership, complex debate, literature, formal writing, and a capstone mock exam.",
     "imageEmoji": "🎓",
     "accentColor": "#d97706",
     "language": "Malay",
     "category": "Malay Courses",
-    "published": false,
+    "published": true,
     "units": [
       {
         "title": "Wacana Akademik (Academic Discourse)",

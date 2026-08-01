@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
-import { Brain, GraduationCap, Info, Languages, LogOut, Moon, Settings2, Sun, Trophy, Users } from 'lucide-react';
+import { BarChart3, Brain, GraduationCap, Info, Languages, LogOut, Moon, Settings2, Sun, Trophy, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useTheme } from '@/src/components/theme-provider';
@@ -64,6 +64,16 @@ function LanguageQuestShellContent() {
               <Button variant="ghost" size="sm" className="hidden xl:flex" render={<Link to="/games/language-quest/manage" />} nativeButton={false}>
                 <Settings2 className="mr-2 h-4 w-4" /> Manage
               </Button>
+            )}
+            {canManage && (
+              <>
+                <Button variant="ghost" size="sm" className="hidden xl:flex" render={<Link to="/games/language-quest/analytics" />} nativeButton={false}>
+                  <BarChart3 className="mr-2 h-4 w-4" /> Analytics
+                </Button>
+                <Button variant="ghost" size="icon" className="hidden text-fuchsia-600 min-[680px]:inline-flex xl:hidden" aria-label="Learning analytics" render={<Link to="/games/language-quest/analytics" />} nativeButton={false}>
+                  <BarChart3 className="h-4 w-4" />
+                </Button>
+              </>
             )}
             {canManage && (
               <>

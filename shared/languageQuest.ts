@@ -85,6 +85,28 @@ export function languageQuestPracticePrompt(value: string): string {
   return prompt || "Choose the best answer.";
 }
 
+/**
+ * Adds a missed quiz item back into the queue after a short interleaving gap.
+ * The answered occurrence stays behind the cursor as session history, while
+ * the returned copy becomes a future attempt. The input array is never
+ * mutated so React state updates remain predictable.
+ */
+export function requeueMissedLanguageQuestChallenge<T>(
+  queue: readonly T[],
+  currentIndex: number,
+  interveningChallenges = 2,
+): T[] {
+  const missed = queue[currentIndex];
+  if (missed === undefined) return [...queue];
+  const gap = Math.max(0, Math.floor(interveningChallenges));
+  const insertionIndex = Math.min(queue.length, currentIndex + gap + 1);
+  return [
+    ...queue.slice(0, insertionIndex),
+    missed,
+    ...queue.slice(insertionIndex),
+  ];
+}
+
 const LANGUAGE_QUEST_MYANMAR_SCRIPT_RE = /[က-႟]/;
 const LANGUAGE_QUEST_HAN_SCRIPT_RE = /\p{Script=Han}/u;
 

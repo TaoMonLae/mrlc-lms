@@ -24,7 +24,7 @@ const THIRD_PARTY_NOTICES: { title: string; description: ReactNode }[] = [
         <a href="https://github.com/sanidhyy/duolingo-clone" target="_blank" rel="noopener noreferrer" className="font-medium text-aubergine-600 hover:underline">
           sanidhyy/duolingo-clone
         </a>{" "}
-        (MIT License). Its Spanish seed curriculum was adapted from{" "}
+        (MIT License). An archived Spanish seed experiment was adapted from{" "}
         <a href="https://github.com/TaoMonLae/duolingo-clone" target="_blank" rel="noopener noreferrer" className="font-medium text-aubergine-600 hover:underline">
           TaoMonLae/duolingo-clone
         </a>
@@ -91,7 +91,7 @@ const CREDITS: { title: string; description: string; icon: any }[] = [
   {
     title: "Language Quest",
     description:
-      "An LMS-native learning experience inspired by Sanidhya Kumar Verma's MIT-licensed Lingo project, with its Spanish seed course adapted for MRLC accounts, progress, and reporting.",
+      "An LMS-native learning experience inspired by Sanidhya Kumar Verma's MIT-licensed Lingo project; the earlier Spanish seed experiment is archived while its historical records are preserved.",
     icon: Languages,
   },
   {

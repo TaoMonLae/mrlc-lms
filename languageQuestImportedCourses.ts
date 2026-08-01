@@ -1,6 +1,8 @@
 // Curriculum adapted from the MIT-licensed seed data in:
 // https://github.com/TaoMonLae/duolingo-clone/blob/main/scripts/prod.ts
 
+import type { LanguageQuestChallengeType } from "./shared/languageQuestAuthoring";
+
 export interface OfficialLanguageQuestOption {
   text: string;
   correct: boolean;
@@ -35,17 +37,10 @@ export interface OfficialLanguageQuestOption {
 // the canonical transcript graded with the same fuzzy/pinyin-aware matching
 // used elsewhere (`languageQuestAnswerMatches`).
 export interface OfficialLanguageQuestChallenge {
-  type:
-    | "SELECT"
-    | "ASSIST"
-    | "CLOZE"
-    | "ODD_ONE_OUT"
-    | "REORDER"
-    | "MATCHING"
-    | "MINIMAL_PAIR_LISTENING"
-    | "DICTATION"
-    | "GRAMMAR_TRANSFORM";
+  type: LanguageQuestChallengeType;
   question: string;
+  /** Optional teaching note revealed after the learner checks an answer. */
+  explanation?: string | null;
   options: OfficialLanguageQuestOption[];
 }
 

@@ -24,8 +24,26 @@ import {
   isLanguageQuestAvatarId,
 } from "./shared/languageQuestAvatars";
 import { languageQuestCategoryForLanguage } from "./shared/languageQuestCourseCategories";
+import {
+  LANGUAGE_QUEST_CHALLENGE_TYPES,
+  type LanguageQuestChallengeType,
+} from "./shared/languageQuestAuthoring";
+import {
+  LANGUAGE_QUEST_SKILL_LABELS,
+  languageQuestAnalyticsAccuracyPercent,
+  languageQuestAnalyticsStatus,
+} from "./shared/languageQuestAnalytics";
+import {
+  isLanguageQuestCourseReviewAction,
+  languageQuestCourseReviewDecision,
+  languageQuestTeacherEditReviewData,
+} from "./shared/languageQuestCourseReview";
 import { languageQuestAnswerMatches, languageQuestPinyin } from "./shared/languageQuestPinyin";
 import { languageQuestGlobalLeaderboardWhere } from "./shared/externalLearnerAccess";
+import {
+  languageQuestLeaderboardScope,
+  languageQuestLeagueForXp,
+} from "./shared/languageQuestLeaderboard";
 import {
   languageQuestRewardProgress,
   newlyUnlockedLanguageQuestRewardIds,
@@ -34,6 +52,8 @@ import {
   LANGUAGE_QUEST_DAILY_CHAIN_TARGET,
   LANGUAGE_QUEST_MASTERY_POINTS,
   LANGUAGE_QUEST_MISSIONS,
+  isLanguageQuestMasteryConfidence,
+  languageQuestMasteryAccuracy,
   languageQuestMissionProgress,
   languageQuestPeriodBounds,
   nextLanguageQuestMasteryReview,
@@ -56,11 +76,21 @@ import {
   normalizeLanguageQuestSpeechText,
 } from "./shared/languageQuestVoice";
 
-const RETIRED_OFFICIAL_COURSE_CODES = new Set(
-  [importedSpanishCourse]
-    .filter((course) => course.retired)
-    .map((course) => course.code),
-);
+const RETIRED_OFFICIAL_COURSE_CODES = new Set([
+  importedSpanishCourse.code,
+  malaySpeakingCourse.code,
+  malayGuideModernCourse.code,
+  teachYourselfMalayCourse.code,
+  "MRLC-MANDARIN-COMPLETE-V1",
+  "MRLC-ENGLISH-WORDS-EVERYDAY-V1",
+  "MRLC-ENGLISH-WORDS-ACADEMIC-V1",
+  "MRLC-ENGLISH-WORDS-POWER-V1",
+  "MRLC-MALAY-A1-V1",
+  "MRLC-MALAY-A2-V1",
+  "MRLC-MALAY-B1-V1",
+  "MRLC-MALAY-B2-V1",
+  "MRLC-MALAY-C1-V1",
+]);
 
 interface JwtPayload { userId: string; role: string; email: string; externalLearner?: boolean; }
 
@@ -77,14 +107,9 @@ interface Deps {
 }
 
 type DraftOption = { id?: string; text: string; correct: boolean; emoji: string | null; audioText: string | null };
-type DraftChallengeType =
-  | "SELECT" | "ASSIST" | "CLOZE" | "ODD_ONE_OUT" | "REORDER"
-  | "MATCHING" | "MINIMAL_PAIR_LISTENING" | "DICTATION" | "GRAMMAR_TRANSFORM";
-const DRAFT_CHALLENGE_TYPES: readonly DraftChallengeType[] = [
-  "SELECT", "ASSIST", "CLOZE", "ODD_ONE_OUT", "REORDER",
-  "MATCHING", "MINIMAL_PAIR_LISTENING", "DICTATION", "GRAMMAR_TRANSFORM",
-];
-type DraftChallenge = { id?: string; type: DraftChallengeType; question: string; options: DraftOption[] };
+type DraftChallengeType = LanguageQuestChallengeType;
+const DRAFT_CHALLENGE_TYPES: readonly DraftChallengeType[] = LANGUAGE_QUEST_CHALLENGE_TYPES;
+type DraftChallenge = { id?: string; type: DraftChallengeType; question: string; explanation: string | null; options: DraftOption[] };
 type DraftLesson = { id?: string; title: string; description: string | null; challenges: DraftChallenge[] };
 type DraftUnit = { id?: string; title: string; description: string | null; lessons: DraftLesson[] };
 type CourseDraft = {
@@ -283,6 +308,7 @@ export function normalizeCourseDraft(raw: any): { value?: CourseDraft; error?: s
       for (let challengeIndex = 0; challengeIndex < sourceLesson.challenges.length; challengeIndex += 1) {
         const sourceChallenge = sourceLesson.challenges[challengeIndex];
         const question = text(sourceChallenge?.question, 1000);
+        const explanation = nullableText(sourceChallenge?.explanation, 1600);
         if (!question) return { error: `Challenge ${challengeIndex + 1} in “${lessonTitle}” needs a question` };
         // Course Studio only offers authoring for SELECT/ASSIST, but it must
         // still be able to load, save, and publish courses (like the
@@ -328,6 +354,7 @@ export function normalizeCourseDraft(raw: any): { value?: CourseDraft; error?: s
           id: typeof sourceChallenge?.id === "string" ? sourceChallenge.id : undefined,
           type,
           question,
+          explanation,
           options,
         });
       }
@@ -393,7 +420,14 @@ export async function ensureOfficialCourse(prisma: any, course: OfficialLanguage
           lessons.push({ id: lessonId, unitId, title: lesson.title, description: lesson.description, order: lessonOrder });
           lesson.challenges.forEach((challenge, challengeOrder) => {
             const challengeId = randomUUID();
-            challenges.push({ id: challengeId, lessonId, type: challenge.type, question: challenge.question, order: challengeOrder });
+            challenges.push({
+              id: challengeId,
+              lessonId,
+              type: challenge.type,
+              question: challenge.question,
+              explanation: challenge.explanation ?? null,
+              order: challengeOrder,
+            });
             challenge.options.forEach((option, optionOrder) => {
               options.push({ id: randomUUID(), challengeId, ...option, order: optionOrder });
             });
@@ -447,6 +481,29 @@ export async function ensureOfficialCourses(prisma: any): Promise<void> {
   ];
   for (const course of courses) {
     await ensureOfficialCourse(prisma, course);
+  }
+  // Generated curriculum upgrades use new course codes so historical lesson
+  // and challenge progress remains intact. Once the replacement exists, hide
+  // every superseded path and detach it as a learner's active course.
+  const staleCourses = await prisma.languageQuestCourse.findMany({
+    where: {
+      code: { in: [...RETIRED_OFFICIAL_COURSE_CODES] },
+      published: true,
+    },
+    select: { id: true },
+  });
+  if (staleCourses.length) {
+    const staleIds = staleCourses.map((course: any) => course.id);
+    await prisma.$transaction([
+      prisma.languageQuestCourse.updateMany({
+        where: { id: { in: staleIds } },
+        data: { published: false },
+      }),
+      prisma.languageQuestUserProgress.updateMany({
+        where: { activeCourseId: { in: staleIds } },
+        data: { activeCourseId: null },
+      }),
+    ]);
   }
 }
 
@@ -1158,6 +1215,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           id: challenge.id,
           type: challenge.type,
           question: languageQuestPracticePrompt(challenge.question),
+          explanation: challenge.explanation,
           completed: completedIds.has(challenge.id),
           options: shuffle(challenge.options).map((option: any) => ({
             id: option.id, text: option.text, emoji: option.emoji, audioText: option.audioText,
@@ -1341,6 +1399,8 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           });
           if (firstClear) {
             const firstReview = nextLanguageQuestMasteryReview(0, true, now);
+            const lessonAttempts = (existing?.attempts ?? 0) + 1;
+            const lessonAccuracy = ((existing?.correctAttempts ?? 0) + 1) / lessonAttempts;
             await tx.languageQuestMasteryProgress.upsert({
               where: {
                 userId_challengeId: { userId: jwtUser.userId, challengeId: challenge.id },
@@ -1351,6 +1411,9 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
                 challengeId: challenge.id,
                 stage: 1,
                 dueAt: firstReview.dueAt,
+                easeFactor: firstReview.easeFactor,
+                intervalDays: firstReview.intervalDays,
+                recentAccuracy: lessonAccuracy < 1 ? lessonAccuracy : null,
               },
             });
           }
@@ -1412,7 +1475,8 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
     const jwtUser = (req as any).user as JwtPayload;
     const now = new Date();
     try {
-      const [{ missions }, classroomChallenges, masteryDueCount] = await Promise.all([
+      const { dayStart } = languageQuestPeriodBounds(now);
+      const [{ missions }, classroomChallenges, masteryDueCount, masteryWeakCount] = await Promise.all([
         missionSnapshot(prisma, jwtUser.userId, now),
         prisma.languageQuestClassroomChallenge.findMany({
           where: {
@@ -1434,6 +1498,15 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         prisma.languageQuestMasteryProgress.count({
           where: { userId: jwtUser.userId, dueAt: { lte: now } },
         }),
+        prisma.languageQuestMasteryProgress.count({
+          where: {
+            userId: jwtUser.userId,
+            AND: [
+              { OR: [{ wrongReviews: { gt: 0 } }, { recentAccuracy: { lt: 0.8 } }] },
+              { OR: [{ lastReviewedAt: null }, { lastReviewedAt: { lt: dayStart } }] },
+            ],
+          },
+        }),
       ]);
       const teamChallenges = await Promise.all(classroomChallenges.map(async (challenge: any) => {
         const progressXp = await classroomChallengeProgress(prisma, challenge);
@@ -1450,7 +1523,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           complete: progressXp >= challenge.targetXp,
         };
       }));
-      res.json({ missions, classroomChallenges: teamChallenges, masteryDueCount });
+      res.json({ missions, classroomChallenges: teamChallenges, masteryDueCount, masteryWeakCount });
     } catch (error) {
       logger.error("Error loading Language Quest engagement:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load missions and challenges" });
@@ -1523,10 +1596,11 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
   app.get("/api/language-quest/mastery", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     const now = new Date();
+    const weakMode = req.query.mode === "weak";
     try {
       const completed = await prisma.languageQuestChallengeProgress.findMany({
         where: { userId: jwtUser.userId, completed: true },
-        select: { challengeId: true },
+        select: { challengeId: true, attempts: true, correctAttempts: true },
       });
       const existing = await prisma.languageQuestMasteryProgress.findMany({
         where: { userId: jwtUser.userId },
@@ -1540,12 +1614,22 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           challengeId: row.challengeId,
           stage: 0,
           dueAt: now,
+          recentAccuracy: row.attempts > 0 && row.correctAttempts < row.attempts
+            ? row.correctAttempts / row.attempts
+            : null,
         }));
       if (missing.length > 0) {
         await prisma.languageQuestMasteryProgress.createMany({ data: missing, skipDuplicates: true });
       }
       const { dayStart, dayEnd } = languageQuestPeriodBounds(now);
-      const [dueCount, reviewsToday, cards] = await Promise.all([
+      const weakWhere = {
+        userId: jwtUser.userId,
+        AND: [
+          { OR: [{ wrongReviews: { gt: 0 } }, { recentAccuracy: { lt: 0.8 } }] },
+          { OR: [{ lastReviewedAt: null }, { lastReviewedAt: { lt: dayStart } }] },
+        ],
+      };
+      const [dueCount, reviewsToday, weakAreaCount, candidateRows] = await Promise.all([
         prisma.languageQuestMasteryProgress.count({
           where: { userId: jwtUser.userId, dueAt: { lte: now } },
         }),
@@ -1556,10 +1640,13 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         prisma.languageQuestMasteryProgress.count({
           where: { userId: jwtUser.userId, lastReviewedAt: { gte: dayStart, lt: dayEnd } },
         }),
+        prisma.languageQuestMasteryProgress.count({ where: weakWhere }),
         prisma.languageQuestMasteryProgress.findMany({
-          where: { userId: jwtUser.userId, dueAt: { lte: now } },
-          take: 10,
-          orderBy: [{ dueAt: "asc" }, { stage: "asc" }],
+          where: weakMode ? weakWhere : { userId: jwtUser.userId, dueAt: { lte: now } },
+          take: weakMode ? 250 : 10,
+          orderBy: weakMode
+            ? [{ recentAccuracy: { sort: "asc", nulls: "last" } }, { wrongReviews: "desc" }, { lastReviewedAt: "asc" }]
+            : [{ dueAt: "asc" }, { stage: "asc" }],
           include: {
             challenge: {
               include: {
@@ -1570,13 +1657,54 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           },
         }),
       ]);
+
+      let cards = candidateRows;
+      if (weakMode) {
+        const score = (row: any) => languageQuestMasteryAccuracy(row.correctReviews, row.wrongReviews, row.recentAccuracy);
+        const grouped = new Map<string, any[]>();
+        candidateRows.forEach((row: any) => {
+          const course = row.challenge.lesson.unit.course;
+          const groupKey = `${course.category}:${row.challenge.type}`;
+          const bucket = grouped.get(groupKey) ?? [];
+          bucket.push(row);
+          grouped.set(groupKey, bucket);
+        });
+        const buckets = [...grouped.values()]
+          .map((rows) => rows.sort((left, right) => score(left) - score(right) || right.wrongReviews - left.wrongReviews))
+          .sort((left, right) => score(left[0]) - score(right[0]));
+        const diversified: any[] = [];
+        while (diversified.length < 10 && buckets.some((bucket) => bucket.length > 0)) {
+          for (const bucket of buckets) {
+            const next = bucket.shift();
+            if (next) diversified.push(next);
+            if (diversified.length === 10) break;
+          }
+        }
+        cards = diversified;
+      }
+
+      const skillLabels: Record<string, string> = {
+        SELECT: "Recall",
+        ASSIST: "Translation",
+        CLOZE: "Fill in the blank",
+        ODD_ONE_OUT: "Word groups",
+        REORDER: "Sentence building",
+        MATCHING: "Matching",
+        MINIMAL_PAIR_LISTENING: "Listening contrast",
+        DICTATION: "Dictation",
+        GRAMMAR_TRANSFORM: "Grammar",
+      };
       res.json({
         dueCount,
+        weakAreaCount,
         reviewsToday,
         chainTarget: LANGUAGE_QUEST_DAILY_CHAIN_TARGET,
+        mode: weakMode ? "weak" : "due",
         cards: cards.map((row: any) => ({
           challengeId: row.challengeId,
           stage: row.stage,
+          accuracyPercent: Math.round(languageQuestMasteryAccuracy(row.correctReviews, row.wrongReviews, row.recentAccuracy) * 100),
+          skillLabel: `${row.challenge.lesson.unit.course.category} · ${skillLabels[row.challenge.type] ?? "Practice"}`,
           type: row.challenge.type,
           question: languageQuestPracticePrompt(row.challenge.question),
           course: {
@@ -1612,6 +1740,8 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         )
       : null;
     const typedAnswer = text(req.body?.typedAnswer, 300);
+    const confidence = isLanguageQuestMasteryConfidence(req.body?.confidence) ? req.body.confidence : "GOOD";
+    const weakMode = req.body?.mode === "weak";
     const now = new Date();
     try {
       const challenge = await prisma.languageQuestChallenge.findUnique({
@@ -1680,13 +1810,30 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           FOR UPDATE
         `;
         const review = reviewRows[0];
-        if (!review || review.dueAt > now) return { unavailable: true as const };
-        const next = nextLanguageQuestMasteryReview(review.stage, isCorrect, now);
+        const { dayStart } = languageQuestPeriodBounds(now);
+        const wasDue = Boolean(review && review.dueAt <= now);
+        const weakPracticeAvailable = Boolean(
+          review
+          && weakMode
+          && (review.wrongReviews > 0 || (typeof review.recentAccuracy === "number" && review.recentAccuracy < 0.8))
+          && (!review.lastReviewedAt || review.lastReviewedAt < dayStart),
+        );
+        if (!review || (!wasDue && !weakPracticeAvailable)) return { unavailable: true as const };
+        const next = nextLanguageQuestMasteryReview(review.stage, isCorrect, now, {
+          easeFactor: review.easeFactor,
+          intervalDays: review.intervalDays,
+          recentAccuracy: review.recentAccuracy,
+          confidence,
+        });
         await tx.languageQuestMasteryProgress.update({
           where: { userId_challengeId: { userId: jwtUser.userId, challengeId: challenge.id } },
           data: {
             stage: next.stage,
             dueAt: next.dueAt,
+            easeFactor: next.easeFactor,
+            intervalDays: next.intervalDays,
+            recentAccuracy: next.recentAccuracy,
+            lastConfidence: isCorrect ? confidence : "AGAIN",
             lastReviewedAt: now,
             ...(isCorrect
               ? { correctReviews: { increment: 1 } }
@@ -1700,6 +1847,19 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
             nextDueAt: next.dueAt,
             correctOptionId,
             correctAnswer,
+            easeFactor: next.easeFactor,
+            intervalDays: next.intervalDays,
+          };
+        }
+        if (!wasDue) {
+          return {
+            correct: true,
+            pointsAwarded: 0,
+            nextDueAt: next.dueAt,
+            correctOptionId,
+            correctAnswer,
+            easeFactor: next.easeFactor,
+            intervalDays: next.intervalDays,
           };
         }
         const progressRows: any[] = await tx.$queryRaw`
@@ -1738,6 +1898,8 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           nextDueAt: next.dueAt,
           correctOptionId,
           correctAnswer,
+          easeFactor: next.easeFactor,
+          intervalDays: next.intervalDays,
           profile: profileJson(updated),
           unlockedRewardIds: newlyUnlockedLanguageQuestRewardIds(progress.points, updated.points),
         };
@@ -1756,11 +1918,59 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
   app.get("/api/language-quest/leaderboard", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
-      const periods = languageQuestPeriodBounds();
-      // Language Quest uses one global board for every active learner. Access
-      // to private LMS routes and APIs remains independently restricted.
+      const now = new Date();
+      const periods = languageQuestPeriodBounds(now);
+      const scope = languageQuestLeaderboardScope(req.query.scope);
       const audienceWhere = languageQuestGlobalLeaderboardWhere();
-      const [leaders, mine, monthlyXp] = await Promise.all([
+
+      const classroomWhere = jwtUser.role === "ADMIN"
+        ? { active: true }
+        : jwtUser.role === "TEACHER"
+          ? {
+              active: true,
+              OR: [
+                { teacherId: jwtUser.userId },
+                { members: { some: { userId: jwtUser.userId } } },
+              ],
+            }
+          : { active: true, members: { some: { userId: jwtUser.userId } } };
+      const [courses, categoryRows, classrooms] = await Promise.all([
+        prisma.languageQuestCourse.findMany({
+          where: { published: true },
+          orderBy: [{ category: "asc" }, { title: "asc" }],
+          select: { id: true, title: true, category: true, imageEmoji: true },
+        }),
+        prisma.languageQuestCourse.findMany({
+          where: { published: true },
+          distinct: ["category"],
+          orderBy: { category: "asc" },
+          select: { category: true },
+        }),
+        prisma.languageQuestClassroom.findMany({
+          where: classroomWhere,
+          orderBy: { name: "asc" },
+          select: {
+            id: true,
+            name: true,
+            focusCourseId: true,
+            focusCourse: { select: { title: true } },
+            members: { select: { userId: true } },
+          },
+        }),
+      ]);
+      const filters = {
+        courses,
+        categories: categoryRows.map((row: any) => row.category),
+        classrooms: classrooms.map((classroom: any) => ({
+          id: classroom.id,
+          name: classroom.name,
+          focusCourseTitle: classroom.focusCourse?.title || null,
+        })),
+      };
+
+      if (scope === "global") {
+        // The original school-wide lifetime board remains the default view.
+        const [leaders, mine, monthlyXp] = await Promise.all([
         prisma.languageQuestUserProgress.findMany({
           where: { user: audienceWhere },
           take: 50,
@@ -1779,49 +1989,431 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           orderBy: { _sum: { points: "desc" } },
           take: 3,
         }),
-      ]);
-      const showcaseUsers = monthlyXp.length
-        ? await prisma.user.findMany({
-          where: { id: { in: monthlyXp.map((row: any) => row.userId) } },
-          select: {
-            id: true, firstName: true, lastName: true, languageQuestAvatar: true,
-            languageQuestProgress: { select: { points: true } },
-          },
-        })
-        : [];
-      const showcaseById = new Map(showcaseUsers.map((user: any) => [user.id, user]));
-      const rank = await prisma.languageQuestUserProgress.count({
-        where: {
-          points: { gt: mine.points },
-          user: audienceWhere,
-        },
-      });
-      res.json({
-        currentUserId: jwtUser.userId,
-        currentUserRank: rank + 1,
-        monthlyShowcase: monthlyXp.map((row: any, index: number) => {
-          const user: any = showcaseById.get(row.userId);
-          const rewards = languageQuestRewardProgress(user?.languageQuestProgress?.points || 0);
-          return {
+        ]);
+        const showcaseUsers = monthlyXp.length
+          ? await prisma.user.findMany({
+              where: { id: { in: monthlyXp.map((row: any) => row.userId) } },
+              select: {
+                id: true, firstName: true, lastName: true, languageQuestAvatar: true,
+                languageQuestProgress: { select: { points: true } },
+              },
+            })
+          : [];
+        const showcaseById = new Map(showcaseUsers.map((user: any) => [user.id, user]));
+        const rank = await prisma.languageQuestUserProgress.count({
+          where: { points: { gt: mine.points }, user: audienceWhere },
+        });
+        res.json({
+          currentUserId: jwtUser.userId,
+          currentUserRank: rank + 1,
+          scope,
+          selection: { label: "School-wide", metricLabel: "Lifetime XP", periodStart: null },
+          filters,
+          league: null,
+          monthlyShowcase: monthlyXp.map((row: any, index: number) => {
+            const user: any = showcaseById.get(row.userId);
+            const rewards = languageQuestRewardProgress(user?.languageQuestProgress?.points || 0);
+            return {
+              rank: index + 1,
+              userId: row.userId,
+              name: user ? `${user.firstName} ${user.lastName}`.trim() : "Learner",
+              avatarId: user?.languageQuestAvatar || DEFAULT_LANGUAGE_QUEST_AVATAR,
+              monthXp: row._sum.points || 0,
+              currentCardId: rewards.currentCardId,
+              monthKey: periods.monthKey,
+            };
+          }),
+          leaders: leaders.map((row: any, index: number) => ({
             rank: index + 1,
             userId: row.userId,
-            name: user ? `${user.firstName} ${user.lastName}`.trim() : "Learner",
-            avatarId: user?.languageQuestAvatar || DEFAULT_LANGUAGE_QUEST_AVATAR,
-            monthXp: row._sum.points || 0,
-            currentCardId: rewards.currentCardId,
-            monthKey: periods.monthKey,
-          };
-        }),
-        leaders: leaders.map((row: any, index: number) => ({
-          rank: index + 1, userId: row.userId,
-          name: `${row.user.firstName} ${row.user.lastName}`.trim(), role: row.user.role,
-          avatarId: row.user.languageQuestAvatar || DEFAULT_LANGUAGE_QUEST_AVATAR,
-          points: row.points, currentStreak: row.currentStreak,
+            name: `${row.user.firstName} ${row.user.lastName}`.trim(),
+            role: row.user.role,
+            avatarId: row.user.languageQuestAvatar || DEFAULT_LANGUAGE_QUEST_AVATAR,
+            points: row.points,
+            currentStreak: row.currentStreak,
+          })),
+        });
+        return;
+      }
+
+      const requestedCourseId = text(req.query.courseId, 100);
+      const requestedCategory = text(req.query.category, 80);
+      const requestedClassroomId = text(req.query.classroomId, 100);
+      const selectedCourse = courses.find((course: any) => course.id === requestedCourseId) || courses[0] || null;
+      const selectedCategory = filters.categories.includes(requestedCategory) ? requestedCategory : (filters.categories[0] || null);
+      const selectedClassroom = classrooms.find((classroom: any) => classroom.id === requestedClassroomId) || classrooms[0] || null;
+      const periodStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const eventWhere: any = {
+        occurredAt: { gte: periodStart, lte: now },
+        source: { not: "MISSION_REWARD" },
+        user: audienceWhere,
+      };
+      let selectionLabel = "Recent activity";
+      if (scope === "course") {
+        if (selectedCourse) {
+          eventWhere.courseId = selectedCourse.id;
+          selectionLabel = selectedCourse.title;
+        } else {
+          eventWhere.userId = { in: [] };
+          selectionLabel = "No published courses";
+        }
+      } else if (scope === "category") {
+        if (selectedCategory) {
+          eventWhere.course = { is: { category: selectedCategory } };
+          selectionLabel = selectedCategory;
+        } else {
+          eventWhere.userId = { in: [] };
+          selectionLabel = "No course categories";
+        }
+      } else if (scope === "classroom") {
+        if (selectedClassroom) {
+          eventWhere.userId = { in: selectedClassroom.members.map((member: any) => member.userId) };
+          if (selectedClassroom.focusCourseId) eventWhere.courseId = selectedClassroom.focusCourseId;
+          selectionLabel = selectedClassroom.focusCourse?.title
+            ? `${selectedClassroom.name} · ${selectedClassroom.focusCourse.title}`
+            : selectedClassroom.name;
+        } else {
+          eventWhere.userId = { in: [] };
+          selectionLabel = "No joined classrooms";
+        }
+      }
+
+      let scoreRows = await prisma.languageQuestXpEvent.groupBy({
+        by: ["userId"],
+        where: eventWhere,
+        _sum: { points: true },
+        orderBy: { _sum: { points: "desc" } },
+      });
+      let league: ReturnType<typeof languageQuestLeagueForXp> | null = null;
+      if (scope === "league") {
+        const mine = scoreRows.find((row: any) => row.userId === jwtUser.userId);
+        const myRecentXp = mine?._sum.points || 0;
+        league = languageQuestLeagueForXp(myRecentXp);
+        if (!mine) scoreRows.push({ userId: jwtUser.userId, _sum: { points: 0 } });
+        scoreRows = scoreRows.filter((row: any) => languageQuestLeagueForXp(row._sum.points || 0).id === league?.id);
+        selectionLabel = league.title;
+      }
+
+      const scoreUserIds = scoreRows.map((row: any) => row.userId);
+      const users = scoreUserIds.length
+        ? await prisma.user.findMany({
+            where: { id: { in: scoreUserIds }, ...audienceWhere },
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              role: true,
+              languageQuestAvatar: true,
+              languageQuestProgress: { select: { currentStreak: true, updatedAt: true } },
+            },
+          })
+        : [];
+      const userById = new Map(users.map((user: any) => [user.id, user]));
+      const ranked = scoreRows
+        .map((row: any) => ({ row, user: userById.get(row.userId) as any }))
+        .filter((entry: any) => entry.user)
+        .sort((left: any, right: any) =>
+          (right.row._sum.points || 0) - (left.row._sum.points || 0)
+          || (right.user.languageQuestProgress?.currentStreak || 0) - (left.user.languageQuestProgress?.currentStreak || 0)
+          || new Date(left.user.languageQuestProgress?.updatedAt || 0).getTime() - new Date(right.user.languageQuestProgress?.updatedAt || 0).getTime(),
+        );
+      const currentUserIndex = ranked.findIndex((entry: any) => entry.user.id === jwtUser.userId);
+      res.json({
+        currentUserId: jwtUser.userId,
+        currentUserRank: currentUserIndex >= 0 ? currentUserIndex + 1 : null,
+        scope,
+        selection: { label: selectionLabel, metricLabel: "Learning XP · last 30 days", periodStart },
+        filters,
+        league,
+        monthlyShowcase: [],
+        leaders: ranked.slice(0, 50).map((entry: any, index: number) => ({
+          rank: index + 1,
+          userId: entry.user.id,
+          name: `${entry.user.firstName} ${entry.user.lastName}`.trim(),
+          role: entry.user.role,
+          avatarId: entry.user.languageQuestAvatar || DEFAULT_LANGUAGE_QUEST_AVATAR,
+          points: entry.row._sum.points || 0,
+          currentStreak: entry.user.languageQuestProgress?.currentStreak || 0,
         })),
       });
     } catch (error) {
       logger.error("Error loading Language Quest leaderboard:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load the leaderboard" });
+    }
+  });
+
+  app.get("/api/language-quest/analytics", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!isManager(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    const requestedClassroomId = text(req.query.classroomId, 100);
+    const requestedCourseId = text(req.query.courseId, 100);
+    try {
+      const classrooms = await prisma.languageQuestClassroom.findMany({
+        where: jwtUser.role === "ADMIN" ? {} : { teacherId: jwtUser.userId },
+        orderBy: [{ active: "desc" }, { name: "asc" }],
+        include: {
+          focusCourse: { select: { id: true, title: true } },
+          members: {
+            where: { user: { isActive: true } },
+            select: {
+              user: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  languageQuestAvatar: true,
+                },
+              },
+            },
+          },
+        },
+      });
+      const selectedClassroom = requestedClassroomId
+        ? classrooms.find((classroom: any) => classroom.id === requestedClassroomId)
+        : null;
+      if (requestedClassroomId && !selectedClassroom) {
+        res.status(404).json({ error: "Classroom not found" });
+        return;
+      }
+
+      const courses = await prisma.languageQuestCourse.findMany({
+        where: jwtUser.role === "ADMIN"
+          ? {}
+          : { OR: [{ published: true }, { createdById: jwtUser.userId }] },
+        orderBy: [{ published: "desc" }, { category: "asc" }, { title: "asc" }],
+        select: { id: true, title: true, category: true, language: true, imageEmoji: true, published: true },
+      });
+      const effectiveCourseId = requestedCourseId;
+      const selectedCourse = effectiveCourseId
+        ? courses.find((course: any) => course.id === effectiveCourseId)
+        : null;
+      if (effectiveCourseId && !selectedCourse) {
+        res.status(404).json({ error: "Course not found" });
+        return;
+      }
+
+      const scopedMemberRows = selectedClassroom
+        ? selectedClassroom.members
+        : jwtUser.role === "TEACHER"
+          ? classrooms.flatMap((classroom: any) => classroom.members)
+          : [];
+      const scopedMembers = new Map<string, any>();
+      scopedMemberRows.forEach((membership: any) => scopedMembers.set(membership.user.id, membership.user));
+      const scopedUserIds = selectedClassroom || jwtUser.role === "TEACHER"
+        ? [...scopedMembers.keys()]
+        : null;
+
+      const progressRows = await prisma.languageQuestChallengeProgress.findMany({
+        where: {
+          ...(scopedUserIds ? { userId: { in: scopedUserIds } } : {}),
+          ...(selectedCourse ? { challenge: { lesson: { unit: { courseId: selectedCourse.id } } } } : {}),
+          attempts: { gt: 0 },
+          user: { isActive: true },
+        },
+        select: {
+          userId: true,
+          attempts: true,
+          correctAttempts: true,
+          wrongAttempts: true,
+          lastAttemptAt: true,
+          user: {
+            select: { id: true, firstName: true, lastName: true, languageQuestAvatar: true },
+          },
+          challenge: {
+            select: {
+              id: true,
+              type: true,
+              question: true,
+              lesson: {
+                select: {
+                  id: true,
+                  title: true,
+                  unit: {
+                    select: {
+                      id: true,
+                      title: true,
+                      course: { select: { id: true, title: true, imageEmoji: true } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      type AnalyticsBucket = {
+        attempts: number;
+        correctAttempts: number;
+        wrongAttempts: number;
+        learners: Set<string>;
+        questions: Set<string>;
+        lastAttemptAt: Date | null;
+      };
+      const bucket = (): AnalyticsBucket => ({
+        attempts: 0,
+        correctAttempts: 0,
+        wrongAttempts: 0,
+        learners: new Set<string>(),
+        questions: new Set<string>(),
+        lastAttemptAt: null,
+      });
+      const add = (target: AnalyticsBucket, row: any) => {
+        target.attempts += row.attempts;
+        target.correctAttempts += row.correctAttempts;
+        target.wrongAttempts += row.wrongAttempts;
+        target.learners.add(row.userId);
+        target.questions.add(row.challenge.id);
+        if (!target.lastAttemptAt || row.lastAttemptAt > target.lastAttemptAt) target.lastAttemptAt = row.lastAttemptAt;
+      };
+      const serialize = (target: AnalyticsBucket) => ({
+        attempts: target.attempts,
+        correctAttempts: target.correctAttempts,
+        wrongAttempts: target.wrongAttempts,
+        accuracyPercent: languageQuestAnalyticsAccuracyPercent(target.correctAttempts, target.attempts),
+        learnerCount: target.learners.size,
+        questionCount: target.questions.size,
+        lastAttemptAt: target.lastAttemptAt,
+        status: languageQuestAnalyticsStatus(target.attempts, target.correctAttempts),
+      });
+
+      const overall = bucket();
+      const skillBuckets = new Map<string, AnalyticsBucket>();
+      const lessonBuckets = new Map<string, AnalyticsBucket & Record<string, any>>();
+      const questionBuckets = new Map<string, AnalyticsBucket & Record<string, any>>();
+      const learnerBuckets = new Map<string, AnalyticsBucket & Record<string, any>>();
+      progressRows.forEach((row: any) => {
+        add(overall, row);
+        const challenge = row.challenge;
+        const lesson = challenge.lesson;
+        const unit = lesson.unit;
+        const course = unit.course;
+
+        const skill = skillBuckets.get(challenge.type) ?? bucket();
+        add(skill, row);
+        skillBuckets.set(challenge.type, skill);
+
+        const lessonBucket = lessonBuckets.get(lesson.id) ?? Object.assign(bucket(), {
+          lessonId: lesson.id,
+          lessonTitle: lesson.title,
+          unitTitle: unit.title,
+          courseId: course.id,
+          courseTitle: course.title,
+        });
+        add(lessonBucket, row);
+        lessonBuckets.set(lesson.id, lessonBucket);
+
+        const questionBucket = questionBuckets.get(challenge.id) ?? Object.assign(bucket(), {
+          challengeId: challenge.id,
+          question: challenge.question,
+          type: challenge.type,
+          lessonTitle: lesson.title,
+          unitTitle: unit.title,
+          courseId: course.id,
+          courseTitle: course.title,
+        });
+        add(questionBucket, row);
+        questionBuckets.set(challenge.id, questionBucket);
+
+        const learnerBucket = learnerBuckets.get(row.userId) ?? Object.assign(bucket(), {
+          userId: row.userId,
+          name: `${row.user.firstName} ${row.user.lastName}`.trim(),
+          avatarId: row.user.languageQuestAvatar || DEFAULT_LANGUAGE_QUEST_AVATAR,
+        });
+        add(learnerBucket, row);
+        learnerBuckets.set(row.userId, learnerBucket);
+      });
+
+      scopedMembers.forEach((member: any, userId: string) => {
+        if (!learnerBuckets.has(userId)) {
+          learnerBuckets.set(userId, Object.assign(bucket(), {
+            userId,
+            name: `${member.firstName} ${member.lastName}`.trim(),
+            avatarId: member.languageQuestAvatar || DEFAULT_LANGUAGE_QUEST_AVATAR,
+          }));
+        }
+      });
+
+      const questions = [...questionBuckets.values()]
+        .map((entry: any) => ({
+          challengeId: entry.challengeId,
+          question: entry.question,
+          type: entry.type,
+          skillLabel: LANGUAGE_QUEST_SKILL_LABELS[entry.type as LanguageQuestChallengeType] || "Practice",
+          lessonTitle: entry.lessonTitle,
+          unitTitle: entry.unitTitle,
+          courseId: entry.courseId,
+          courseTitle: entry.courseTitle,
+          ...serialize(entry),
+        }))
+        .sort((left, right) =>
+          (left.accuracyPercent ?? 101) - (right.accuracyPercent ?? 101)
+          || right.wrongAttempts - left.wrongAttempts
+          || right.attempts - left.attempts,
+        );
+      const learners = [...learnerBuckets.values()]
+        .map((entry: any) => ({
+          userId: entry.userId,
+          name: entry.name,
+          avatarId: entry.avatarId,
+          ...serialize(entry),
+        }))
+        .sort((left, right) =>
+          (left.accuracyPercent ?? -1) - (right.accuracyPercent ?? -1)
+          || right.wrongAttempts - left.wrongAttempts
+          || left.name.localeCompare(right.name),
+        );
+
+      res.json({
+        filters: {
+          classrooms: classrooms.map((classroom: any) => ({
+            id: classroom.id,
+            name: classroom.name,
+            active: classroom.active,
+            memberCount: classroom.members.length,
+            focusCourseId: classroom.focusCourseId,
+            focusCourseTitle: classroom.focusCourse?.title || null,
+          })),
+          courses,
+        },
+        selection: {
+          classroomId: selectedClassroom?.id || null,
+          classroomLabel: selectedClassroom?.name || (jwtUser.role === "ADMIN" ? "All learners" : "All my classrooms"),
+          courseId: selectedCourse?.id || null,
+          courseLabel: selectedCourse?.title || "All courses",
+        },
+        summary: {
+          ...serialize(overall),
+          learnerCount: scopedUserIds ? scopedUserIds.length : overall.learners.size,
+          activeLearnerCount: overall.learners.size,
+          needsReviewCount: questions.filter((question) => question.status === "NEEDS_REVIEW").length,
+        },
+        skills: [...skillBuckets.entries()]
+          .map(([type, entry]) => ({
+            type,
+            label: LANGUAGE_QUEST_SKILL_LABELS[type as LanguageQuestChallengeType] || "Practice",
+            ...serialize(entry),
+          }))
+          .sort((left, right) => (left.accuracyPercent ?? 101) - (right.accuracyPercent ?? 101)),
+        lessons: [...lessonBuckets.values()]
+          .map((entry: any) => ({
+            lessonId: entry.lessonId,
+            lessonTitle: entry.lessonTitle,
+            unitTitle: entry.unitTitle,
+            courseId: entry.courseId,
+            courseTitle: entry.courseTitle,
+            ...serialize(entry),
+          }))
+          .sort((left, right) =>
+            (left.accuracyPercent ?? 101) - (right.accuracyPercent ?? 101)
+            || right.wrongAttempts - left.wrongAttempts,
+          ),
+        questions: questions.slice(0, 75),
+        learners,
+      });
+    } catch (error) {
+      logger.error("Error loading Language Quest analytics:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load Language Quest analytics" });
     }
   });
 
@@ -2313,6 +2905,9 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         language: course.language, category: course.category,
         imageEmoji: course.imageEmoji, accentColor: course.accentColor,
         published: course.published, official: course.createdById === null,
+        reviewRequired: course.reviewRequired, reviewStatus: course.reviewStatus,
+        reviewNote: course.reviewNote, submittedForReviewAt: course.submittedForReviewAt,
+        reviewedAt: course.reviewedAt, canReview: jwtUser.role === "ADMIN",
         retired: RETIRED_OFFICIAL_COURSE_CODES.has(course.code), updatedAt: course.updatedAt,
         unitCount: course.units.length,
         lessonCount: course.units.reduce((sum: number, unit: any) => sum + unit.lessons.length, 0),
@@ -2340,14 +2935,18 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       });
       if (!course) { res.status(404).json({ error: "Course not found" }); return; }
       if (jwtUser.role !== "ADMIN" && course.createdById !== jwtUser.userId) { res.status(403).json({ error: "You can only edit courses you created" }); return; }
-      res.json({ ...course, retired: RETIRED_OFFICIAL_COURSE_CODES.has(course.code) });
+      res.json({
+        ...course,
+        canReview: jwtUser.role === "ADMIN",
+        retired: RETIRED_OFFICIAL_COURSE_CODES.has(course.code),
+      });
     } catch (error) {
       logger.error("Error loading managed Language Quest course:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load the course editor" });
     }
   });
 
-  async function saveCurriculum(courseId: string, draft: CourseDraft): Promise<any> {
+  async function saveCurriculum(courseId: string, draft: CourseDraft, courseUpdates: Record<string, any> = {}): Promise<any> {
     const current = await prisma.languageQuestCourse.findUnique({
       where: { id: courseId },
       include: { units: { include: { lessons: { include: { challenges: { include: { options: true } } } } } } },
@@ -2395,8 +2994,8 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           for (let challengeOrder = 0; challengeOrder < lessonDraft.challenges.length; challengeOrder += 1) {
             const challengeDraft = lessonDraft.challenges[challengeOrder];
             const challenge = challengeDraft.id
-              ? await tx.languageQuestChallenge.update({ where: { id: challengeDraft.id }, data: { lessonId: lesson.id, type: challengeDraft.type, question: challengeDraft.question, order: challengeOrder } })
-              : await tx.languageQuestChallenge.create({ data: { lessonId: lesson.id, type: challengeDraft.type, question: challengeDraft.question, order: challengeOrder } });
+              ? await tx.languageQuestChallenge.update({ where: { id: challengeDraft.id }, data: { lessonId: lesson.id, type: challengeDraft.type, question: challengeDraft.question, explanation: challengeDraft.explanation, order: challengeOrder } })
+              : await tx.languageQuestChallenge.create({ data: { lessonId: lesson.id, type: challengeDraft.type, question: challengeDraft.question, explanation: challengeDraft.explanation, order: challengeOrder } });
             savedChallengeIds.push(challenge.id);
             const savedOptionIds: string[] = [];
             for (let optionOrder = 0; optionOrder < challengeDraft.options.length; optionOrder += 1) {
@@ -2419,6 +3018,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           title: draft.title, description: draft.description, language: draft.language,
           category: draft.category,
           imageEmoji: draft.imageEmoji, accentColor: draft.accentColor, published: draft.published,
+          ...courseUpdates,
         },
       });
     }, { timeout: 30_000 });
@@ -2430,6 +3030,10 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
     const normalized = normalizeCourseDraft(req.body);
     if (!normalized.value) { res.status(400).json({ error: normalized.error }); return; }
     try {
+      const reviewRequired = jwtUser.role === "TEACHER";
+      const draft = reviewRequired
+        ? { ...normalized.value, published: false }
+        : normalized.value;
       const slug = normalized.value.title.toUpperCase().replace(/[^A-Z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 48) || "COURSE";
       let course: any;
       for (let attempt = 0; attempt < 3; attempt += 1) {
@@ -2441,6 +3045,8 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
               language: normalized.value.language, category: normalized.value.category,
               imageEmoji: normalized.value.imageEmoji,
               accentColor: normalized.value.accentColor, published: false, createdById: jwtUser.userId,
+              reviewRequired,
+              reviewStatus: !reviewRequired && draft.published ? "APPROVED" : "DRAFT",
             },
           });
           break;
@@ -2448,9 +3054,14 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           if (error?.code !== "P2002" || attempt === 2) throw error;
         }
       }
-      const saved = await saveCurriculum(course.id, normalized.value);
+      const saved = await saveCurriculum(course.id, draft);
       await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "LANGUAGE_QUEST_COURSE", saved.id, `Created Language Quest course “${saved.title}”`, req.ip || null, req.headers["user-agent"] || null);
-      res.status(201).json({ id: saved.id });
+      res.status(201).json({
+        id: saved.id,
+        published: saved.published,
+        reviewRequired: saved.reviewRequired,
+        reviewStatus: saved.reviewStatus,
+      });
     } catch (error) {
       logger.error("Error creating Language Quest course:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to create the course" });
@@ -2470,13 +3081,147 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         res.status(409).json({ error: "This legacy course is retired and cannot be republished. Its learner progress is preserved for records." });
         return;
       }
-      const saved = await saveCurriculum(course.id, normalized.value);
+      if (course.reviewRequired && normalized.value.published && course.reviewStatus !== "APPROVED") {
+        res.status(409).json({ error: "This course must be approved by an administrator before it can be published" });
+        return;
+      }
+      const teacherOwnedEdit = course.reviewRequired && jwtUser.role !== "ADMIN";
+      const draft = teacherOwnedEdit
+        ? { ...normalized.value, published: false }
+        : normalized.value;
+      const saved = await saveCurriculum(
+        course.id,
+        draft,
+        teacherOwnedEdit ? languageQuestTeacherEditReviewData() : {},
+      );
       await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "LANGUAGE_QUEST_COURSE", saved.id, `Updated Language Quest course “${saved.title}”`, req.ip || null, req.headers["user-agent"] || null);
-      res.json({ id: saved.id });
+      res.json({
+        id: saved.id,
+        published: saved.published,
+        reviewRequired: saved.reviewRequired,
+        reviewStatus: saved.reviewStatus,
+      });
     } catch (error: any) {
       logger.error("Error updating Language Quest course:", error);
       if (error?.statusCode) { res.status(error.statusCode).json({ error: error.message }); return; }
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to update the course" });
+    }
+  });
+
+  app.post("/api/language-quest/manage/courses/:id/submit-review", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!isManager(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    try {
+      const course = await prisma.languageQuestCourse.findUnique({
+        where: { id: req.params.id },
+        include: { units: { include: { lessons: { include: { challenges: { select: { id: true } } } } } } },
+      });
+      if (!course) { res.status(404).json({ error: "Course not found" }); return; }
+      if (jwtUser.role !== "ADMIN" && course.createdById !== jwtUser.userId) {
+        res.status(403).json({ error: "You can only submit courses you created" });
+        return;
+      }
+      if (!course.reviewRequired) {
+        res.status(400).json({ error: "This course can be published directly and does not require review" });
+        return;
+      }
+      if (course.reviewStatus === "PENDING") {
+        res.status(409).json({ error: "This course is already awaiting review" });
+        return;
+      }
+      if (course.reviewStatus === "APPROVED") {
+        res.status(409).json({ error: "This course is already approved. Save an edit before submitting it again" });
+        return;
+      }
+      if (RETIRED_OFFICIAL_COURSE_CODES.has(course.code)) {
+        res.status(409).json({ error: "Retired courses cannot be submitted for publication" });
+        return;
+      }
+      const challengeCount = course.units.reduce(
+        (total: number, unit: any) => total + unit.lessons.reduce(
+          (lessonTotal: number, lesson: any) => lessonTotal + lesson.challenges.length,
+          0,
+        ),
+        0,
+      );
+      if (challengeCount === 0) {
+        res.status(400).json({ error: "Add at least one challenge before submitting this course" });
+        return;
+      }
+      const submitted = await prisma.languageQuestCourse.updateMany({
+        where: { id: course.id, reviewStatus: { in: ["DRAFT", "CHANGES_REQUESTED"] } },
+        data: {
+          published: false,
+          reviewStatus: "PENDING",
+          reviewNote: null,
+          submittedForReviewAt: new Date(),
+          reviewedAt: null,
+        },
+      });
+      if (submitted.count !== 1) {
+        res.status(409).json({ error: "The course review state changed. Refresh Course Studio and try again" });
+        return;
+      }
+      await createAuditLog(jwtUser.userId, jwtUser.email, "SUBMIT", "LANGUAGE_QUEST_COURSE", course.id, `Submitted Language Quest course “${course.title}” for review`, req.ip || null, req.headers["user-agent"] || null);
+      res.json({ id: course.id, reviewStatus: "PENDING", published: false });
+    } catch (error) {
+      logger.error("Error submitting Language Quest course for review:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to submit the course for review" });
+    }
+  });
+
+  app.post("/api/language-quest/manage/courses/:id/review", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (jwtUser.role !== "ADMIN") { res.status(403).json({ error: "Only administrators can review courses" }); return; }
+    const action = req.body?.action;
+    const note = nullableText(req.body?.note, 1000);
+    if (!isLanguageQuestCourseReviewAction(action)) {
+      res.status(400).json({ error: "Choose approve or request changes" });
+      return;
+    }
+    if (action === "REQUEST_CHANGES" && !note) {
+      res.status(400).json({ error: "Explain the changes the teacher should make" });
+      return;
+    }
+    try {
+      const course = await prisma.languageQuestCourse.findUnique({ where: { id: req.params.id } });
+      if (!course) { res.status(404).json({ error: "Course not found" }); return; }
+      if (!course.reviewRequired) {
+        res.status(400).json({ error: "This course does not require administrator review" });
+        return;
+      }
+      if (course.reviewStatus !== "PENDING") {
+        res.status(409).json({ error: "Only courses awaiting review can be reviewed" });
+        return;
+      }
+      if (RETIRED_OFFICIAL_COURSE_CODES.has(course.code)) {
+        res.status(409).json({ error: "Retired courses cannot be approved" });
+        return;
+      }
+      const reviewedAt = new Date();
+      const reviewed = await prisma.languageQuestCourse.updateMany({
+        where: { id: course.id, reviewRequired: true, reviewStatus: "PENDING" },
+        data: languageQuestCourseReviewDecision(action, note, reviewedAt),
+      });
+      if (reviewed.count !== 1) {
+        res.status(409).json({ error: "The course changed while it was being reviewed. Refresh the queue and review the latest draft" });
+        return;
+      }
+      const auditAction = action === "APPROVE" ? "APPROVE" : "REQUEST_CHANGES";
+      const auditDescription = action === "APPROVE"
+        ? `Approved and published Language Quest course “${course.title}”`
+        : `Requested changes to Language Quest course “${course.title}”`;
+      await createAuditLog(jwtUser.userId, jwtUser.email, auditAction, "LANGUAGE_QUEST_COURSE", course.id, auditDescription, req.ip || null, req.headers["user-agent"] || null);
+      res.json({
+        id: course.id,
+        reviewStatus: action === "APPROVE" ? "APPROVED" : "CHANGES_REQUESTED",
+        reviewNote: note,
+        published: action === "APPROVE",
+        reviewedAt,
+      });
+    } catch (error) {
+      logger.error("Error reviewing Language Quest course:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to review the course" });
     }
   });
 

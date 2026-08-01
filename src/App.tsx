@@ -202,6 +202,7 @@ const LanguageQuestLeaderboard = lazy(() => import("./pages/games/language-quest
 const LanguageQuestProfile = lazy(() => import("./pages/games/language-quest/LanguageQuestProfile"));
 const LanguageQuestMastery = lazy(() => import("./pages/games/language-quest/LanguageQuestMastery"));
 const LanguageQuestClassrooms = lazy(() => import("./pages/games/language-quest/LanguageQuestClassrooms"));
+const LanguageQuestAnalytics = lazy(() => import("./pages/games/language-quest/LanguageQuestAnalytics"));
 const LanguageQuestLearners = lazy(() => import("./pages/games/language-quest/LanguageQuestLearners"));
 const LanguageQuestManage = lazy(() => import("./pages/games/language-quest/LanguageQuestManage"));
 const LanguageQuestEditor = lazy(() => import("./pages/games/language-quest/LanguageQuestEditor"));
@@ -323,6 +324,7 @@ export default function App() {
                 <Route path="/games/language-quest/courses/:courseId/story/:storyId" element={<LanguageQuestStory />} />
                 <Route element={<ProtectedRoute allowedRoles={['TEACHER', 'ADMIN']} />}>
                   <Route path="/games/language-quest/classrooms" element={<LanguageQuestClassrooms />} />
+                  <Route path="/games/language-quest/analytics" element={<LanguageQuestAnalytics />} />
                 </Route>
                 <Route element={<ProtectedRoute strictRoles={['ADMIN']} />}>
                   <Route path="/games/language-quest/learners" element={<LanguageQuestLearners />} />

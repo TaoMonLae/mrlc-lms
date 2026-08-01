@@ -139,7 +139,7 @@ export default function LanguageQuestPublic() {
 
             <div className="lq-hero-scene relative mx-auto w-full max-w-xl py-8 sm:px-6">
               <img
-                src="/Icons/Owl School 8.svg"
+                src="/icons/LanguageQuests_Graphics/Owl School 8.svg"
                 alt=""
                 aria-hidden="true"
                 className="lq-float-delayed pointer-events-none absolute -left-8 -top-6 z-20 hidden h-28 w-28 object-contain drop-shadow-2xl sm:block"
@@ -186,10 +186,10 @@ export default function LanguageQuestPublic() {
             </div>
             <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
               {[
-                { art: '/Icons/optimized/Eduv1_01.png', step: '01', title: 'Learn and listen', copy: 'Meet the key phrase, hear its pronunciation, and connect it to a real situation.', tone: 'from-sky-500 to-blue-600', shadow: 'shadow-sky-500/15' },
-                { art: '/Icons/optimized/Eduv1_09.png', step: '02', title: 'Listen and spell', copy: 'Hear the word without seeing its letters, then type it from memory.', tone: 'from-amber-400 to-orange-600', shadow: 'shadow-amber-500/15' },
-                { art: '/Icons/optimized/Eduv1_02.png', step: '03', title: 'Build the sentence', copy: 'Type the complete phrase from memory. Punctuation and capital letters will not block you.', tone: 'from-fuchsia-500 to-violet-700', shadow: 'shadow-fuchsia-500/15' },
-                { art: '/Icons/optimized/Eduv1_04.png', step: '04', title: 'Check understanding', copy: 'Choose from a clue-safe prompt, read a clear correction, and retry immediately when needed.', tone: 'from-emerald-400 to-teal-600', shadow: 'shadow-emerald-500/15' },
+                { art: '/icons/optimized/LanguageLearning/V1/Listening.png', step: '01', title: 'Learn and listen', copy: 'Meet the key phrase, hear its pronunciation, and connect it to a real situation.', tone: 'from-sky-500 to-blue-600', shadow: 'shadow-sky-500/15' },
+                { art: '/icons/optimized/LanguageLearning/V1/Notes.png', step: '02', title: 'Listen and spell', copy: 'Hear the word without seeing its letters, then type it from memory.', tone: 'from-amber-400 to-orange-600', shadow: 'shadow-amber-500/15' },
+                { art: '/icons/optimized/LanguageLearning/V1/Conversation.png', step: '03', title: 'Build the sentence', copy: 'Type the complete phrase from memory. Punctuation and capital letters will not block you.', tone: 'from-fuchsia-500 to-violet-700', shadow: 'shadow-fuchsia-500/15' },
+                { art: '/icons/optimized/LanguageLearning/V1/Dictionary.png', step: '04', title: 'Check understanding', copy: 'Choose from a clue-safe prompt, read a clear correction, and retry immediately when needed.', tone: 'from-emerald-400 to-teal-600', shadow: 'shadow-emerald-500/15' },
               ].map(({ art, step, title, copy, tone, shadow }) => (
                 <article key={step} className={`group rounded-3xl border border-white bg-white p-6 shadow-xl ${shadow} transition duration-300 hover:-translate-y-2 dark:border-slate-800 dark:bg-slate-900/90`}>
                   <div className="flex items-center justify-between">

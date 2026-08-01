@@ -1,4 +1,6 @@
 import type { LanguageQuestRewardProgress } from '@/shared/languageQuestRewards';
+import type { LanguageQuestChallengeType } from '@/shared/languageQuestAuthoring';
+import type { LanguageQuestAnalyticsStatus } from '@/shared/languageQuestAnalytics';
 
 export interface LanguageQuestProfile {
   hearts: number;
@@ -35,6 +37,74 @@ export interface LanguageQuestOverview {
   courses: LanguageQuestCourseSummary[];
 }
 
+export interface LanguageQuestAnalyticsMetrics {
+  attempts: number;
+  correctAttempts: number;
+  wrongAttempts: number;
+  accuracyPercent: number | null;
+  learnerCount: number;
+  questionCount: number;
+  lastAttemptAt: string | null;
+  status: LanguageQuestAnalyticsStatus;
+}
+
+export interface LanguageQuestAnalyticsPayload {
+  filters: {
+    classrooms: Array<{
+      id: string;
+      name: string;
+      active: boolean;
+      memberCount: number;
+      focusCourseId: string | null;
+      focusCourseTitle: string | null;
+    }>;
+    courses: Array<{
+      id: string;
+      title: string;
+      category: string;
+      language: string;
+      imageEmoji: string;
+      published: boolean;
+    }>;
+  };
+  selection: {
+    classroomId: string | null;
+    classroomLabel: string;
+    courseId: string | null;
+    courseLabel: string;
+  };
+  summary: LanguageQuestAnalyticsMetrics & {
+    activeLearnerCount: number;
+    needsReviewCount: number;
+  };
+  skills: Array<LanguageQuestAnalyticsMetrics & {
+    type: LanguageQuestChallengeType;
+    label: string;
+  }>;
+  lessons: Array<LanguageQuestAnalyticsMetrics & {
+    lessonId: string;
+    lessonTitle: string;
+    unitTitle: string;
+    courseId: string;
+    courseTitle: string;
+  }>;
+  questions: Array<LanguageQuestAnalyticsMetrics & {
+    challengeId: string;
+    question: string;
+    type: LanguageQuestChallengeType;
+    skillLabel: string;
+    lessonTitle: string;
+    unitTitle: string;
+    courseId: string;
+    courseTitle: string;
+  }>;
+  learners: Array<LanguageQuestAnalyticsMetrics & {
+    userId: string;
+    name: string;
+    avatarId: string;
+  }>;
+}
+
 export interface LanguageQuestOption {
   id: string;
   text: string;
@@ -45,17 +115,9 @@ export interface LanguageQuestOption {
 
 export interface LanguageQuestChallenge {
   id: string;
-  type:
-    | 'SELECT'
-    | 'ASSIST'
-    | 'CLOZE'
-    | 'ODD_ONE_OUT'
-    | 'REORDER'
-    | 'MATCHING'
-    | 'MINIMAL_PAIR_LISTENING'
-    | 'DICTATION'
-    | 'GRAMMAR_TRANSFORM';
+  type: LanguageQuestChallengeType;
   question: string;
+  explanation: string | null;
   completed: boolean;
   options: LanguageQuestOption[];
 }

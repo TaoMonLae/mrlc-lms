@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, Flame, GraduationCap, Heart, Languages, Map, Settings2, Sparkles, Star, Trophy, UserRound, Users, WholeWord } from 'lucide-react';
+import { BarChart3, BookOpen, Flame, GraduationCap, Heart, Languages, Map, Settings2, Sparkles, Star, Trophy, UserRound, Users, WholeWord } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -189,7 +189,7 @@ export default function LanguageQuestHome() {
         <div className="absolute -right-12 -top-16 h-52 w-52 rounded-full bg-white/10" />
         <div className="absolute -bottom-20 right-24 h-44 w-44 rounded-full bg-amber-300/15" />
         <img
-          src="/Icons/Owl School 12.svg"
+          src="/icons/LanguageQuests_Graphics/Owl School 12.svg"
           alt=""
           aria-hidden="true"
           className="lq-float-delayed pointer-events-none absolute -bottom-8 right-4 hidden h-44 w-44 object-contain opacity-25 drop-shadow-2xl xl:block"
@@ -215,6 +215,9 @@ export default function LanguageQuestHome() {
               <>
                 <Button className="bg-white text-violet-700 hover:bg-white/90" render={<Link to="/games/language-quest/classrooms" />} nativeButton={false}>
                   <GraduationCap className="mr-2 h-4 w-4" /> Classrooms
+                </Button>
+                <Button className="bg-white text-violet-700 hover:bg-white/90" render={<Link to="/games/language-quest/analytics" />} nativeButton={false}>
+                  <BarChart3 className="mr-2 h-4 w-4" /> Analytics
                 </Button>
                 <Button className="bg-white text-violet-700 hover:bg-white/90" render={<Link to="/games/language-quest/manage" />} nativeButton={false}>
                   <Settings2 className="mr-2 h-4 w-4" /> Manage Courses

@@ -1,8 +1,8 @@
 [
   {
-    "code": "MRLC-ENGLISH-WORDS-EVERYDAY-V1",
-    "title": "Everyday English Word Quest",
-    "description": "Build practical vocabulary for school, home, food, feelings, actions, and places.",
+    "code": "MRLC-ENGLISH-WORDS-EVERYDAY-V2",
+    "title": "Everyday English Word Quest A1–A2",
+    "description": "Build practical A1–A2 vocabulary in definitions and real usage contexts for school, home, food, feelings, actions, and places.",
     "language": "English",
     "imageEmoji": "💬",
     "accentColor": "#2563eb",
@@ -14,11 +14,12 @@
         "lessons": [
           {
             "title": "School",
-            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "description": "Learn 10 English words through definitions, sentence context, and precise usage.",
             "challenges": [
               {
                 "type": "SELECT",
                 "question": "Which word means “a learner who is enrolled in an educational institution”?",
+                "explanation": "“student” means a learner who is enrolled in an educational institution. Example: The student asked a thoughtful question during the lesson.",
                 "options": [
                   {
                     "text": "student",
@@ -41,8 +42,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “a person whose occupation is teaching”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “The _____ explained the new idea with a clear example.”",
+                "explanation": "“teacher” means a person whose occupation is teaching. Example: The teacher explained the new idea with a clear example.",
                 "options": [
                   {
                     "text": "classroom",
@@ -65,8 +67,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “a room in a school where lessons take place”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “The _____ became quiet when the lesson began.”",
+                "explanation": "“classroom” means a room in a school where lessons take place. Example: The classroom became quiet when the lesson began.",
                 "options": [
                   {
                     "text": "lesson",
@@ -89,8 +92,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
+                "type": "SELECT",
                 "question": "Which word means “a unit of instruction”?",
+                "explanation": "“lesson” means a unit of instruction. Example: Today's lesson introduces the water cycle.",
                 "options": [
                   {
                     "text": "lesson",
@@ -113,8 +117,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “preparatory school work done outside school (especially at home)”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “I finished my _____ before dinner.”",
+                "explanation": "“homework” means preparatory school work done outside school (especially at home). Example: I finished my homework before dinner.",
                 "options": [
                   {
                     "text": "library",
@@ -137,8 +142,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “a room where books are kept”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “We borrowed two science books from the _____.”",
+                "explanation": "“library” means a room where books are kept. Example: We borrowed two science books from the library.",
                 "options": [
                   {
                     "text": "pencil",
@@ -163,6 +169,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “a thin cylindrical pointed writing implement”?",
+                "explanation": "“pencil” means a thin cylindrical pointed writing implement. Example: Use a pencil so you can correct your work easily.",
                 "options": [
                   {
                     "text": "pencil",
@@ -185,8 +192,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
-                "question": "Which word means “a book with blank pages for recording notes or memoranda”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “She recorded each new word in her _____.”",
+                "explanation": "“notebook” means a book with blank pages for recording notes or memoranda. Example: She recorded each new word in her notebook.",
                 "options": [
                   {
                     "text": "question",
@@ -209,8 +217,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “a sentence or request that asks for information”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “Mina raised her hand to ask a _____.”",
+                "explanation": "“question” means a sentence or request that asks for information. Example: Mina raised her hand to ask a question.",
                 "options": [
                   {
                     "text": "answer",
@@ -235,6 +244,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “a reply to a question or a solution to a problem”?",
+                "explanation": "“answer” means a reply to a question or a solution to a problem. Example: Check your answer before submitting the worksheet.",
                 "options": [
                   {
                     "text": "answer",
@@ -260,11 +270,12 @@
           },
           {
             "title": "Home",
-            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "description": "Learn 10 English words through definitions, sentence context, and precise usage.",
             "challenges": [
               {
                 "type": "SELECT",
                 "question": "Which word means “a social unit living together”?",
+                "explanation": "“family” means a social unit living together. Example: Her family eats dinner together every Friday.",
                 "options": [
                   {
                     "text": "family",
@@ -287,8 +298,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “a mother, father, or person who cares for a child”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “A _____ signed the school permission form.”",
+                "explanation": "“parent” means a mother, father, or person who cares for a child. Example: A parent signed the school permission form.",
                 "options": [
                   {
                     "text": "child",
@@ -311,8 +323,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “a young person of either sex”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “The _____ read the short story aloud.”",
+                "explanation": "“child” means a young person of either sex. Example: The child read the short story aloud.",
                 "options": [
                   {
                     "text": "kitchen",
@@ -335,8 +348,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
+                "type": "SELECT",
                 "question": "Which word means “a room equipped for preparing meals”?",
+                "explanation": "“kitchen” means a room equipped for preparing meals. Example: We prepared breakfast together in the kitchen.",
                 "options": [
                   {
                     "text": "kitchen",
@@ -359,8 +373,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “a room used primarily for sleeping”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “He opened the _____ window to let in fresh air.”",
+                "explanation": "“bedroom” means a room used primarily for sleeping. Example: He opened the bedroom window to let in fresh air.",
                 "options": [
                   {
                     "text": "window",
@@ -383,8 +398,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “a framework of wood or metal that contains a glass windowpane and is built into a wall or roof to admit light or air”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “Sunlight came through the classroom _____.”",
+                "explanation": "“window” means a framework of wood or metal that contains a glass windowpane and is built into a wall or roof to admit light or air. Example: Sunlight came through the classroom window.",
                 "options": [
                   {
                     "text": "garden",
@@ -409,6 +425,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “a piece of land where flowers, fruit, or vegetables are grown”?",
+                "explanation": "“garden” means a piece of land where flowers, fruit, or vegetables are grown. Example: The students planted herbs in the school garden.",
                 "options": [
                   {
                     "text": "garden",
@@ -431,8 +448,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
-                "question": "Which word means “the first meal of the day (usually in the morning)”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “A healthy _____ can help learners concentrate.”",
+                "explanation": "“breakfast” means the first meal of the day (usually in the morning). Example: A healthy breakfast can help learners concentrate.",
                 "options": [
                   {
                     "text": "dinner",
@@ -455,8 +473,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “the main meal of the day served in the evening or at midday”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “We talked about our day during _____.”",
+                "explanation": "“dinner” means the main meal of the day served in the evening or at midday. Example: We talked about our day during dinner.",
                 "options": [
                   {
                     "text": "welcome",
@@ -481,6 +500,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “received with pleasure or friendly approval”?",
+                "explanation": "“welcome” means received with pleasure or friendly approval. Example: The new student received a warm welcome.",
                 "options": [
                   {
                     "text": "welcome",
@@ -506,11 +526,12 @@
           },
           {
             "title": "Food and Drink",
-            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "description": "Learn 10 English words through definitions, sentence context, and precise usage.",
             "challenges": [
               {
                 "type": "SELECT",
                 "question": "Which word means “fruit with red or yellow or green skin and sweet to tart crisp whitish flesh”?",
+                "explanation": "“apple” means fruit with red or yellow or green skin and sweet to tart crisp whitish flesh. Example: She packed an apple for her morning snack.",
                 "options": [
                   {
                     "text": "apple",
@@ -533,8 +554,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “elongated crescent-shaped yellow fruit with soft sweet flesh”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “The _____ was ripe and sweet.”",
+                "explanation": "“banana” means elongated crescent-shaped yellow fruit with soft sweet flesh. Example: The banana was ripe and sweet.",
                 "options": [
                   {
                     "text": "bread",
@@ -557,8 +579,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “food made from dough of flour or meal and usually raised with yeast or baking powder and then baked”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “He made a sandwich with fresh _____.”",
+                "explanation": "“bread” means food made from dough of flour or meal and usually raised with yeast or baking powder and then baked. Example: He made a sandwich with fresh bread.",
                 "options": [
                   {
                     "text": "rice",
@@ -581,8 +604,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
+                "type": "SELECT",
                 "question": "Which word means “grains used as food either unpolished or more often polished”?",
+                "explanation": "“rice” means grains used as food either unpolished or more often polished. Example: The family served vegetables with rice.",
                 "options": [
                   {
                     "text": "rice",
@@ -605,8 +629,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “a clear liquid that people, animals, and plants need to live”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “Remember to drink enough _____ after exercise.”",
+                "explanation": "“water” means a clear liquid that people, animals, and plants need to live. Example: Remember to drink enough water after exercise.",
                 "options": [
                   {
                     "text": "coffee",
@@ -629,8 +654,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “a dark drink made from roasted beans”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “The cafe also serves tea and _____.”",
+                "explanation": "“coffee” means a dark drink made from roasted beans. Example: The cafe also serves tea and coffee.",
                 "options": [
                   {
                     "text": "vegetable",
@@ -655,6 +681,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “edible seeds or roots or stems or leaves or bulbs or tubers or nonsweet fruits of any of numerous herbaceous plant”?",
+                "explanation": "“vegetable” means edible seeds or roots or stems or leaves or bulbs or tubers or nonsweet fruits of any of numerous herbaceous plant. Example: Carrots are the vegetable in today's soup.",
                 "options": [
                   {
                     "text": "vegetable",
@@ -677,8 +704,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
-                "question": "Which word means “needing or wanting food”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “I felt _____ after the football match.”",
+                "explanation": "“hungry” means needing or wanting food. Example: I felt hungry after the football match.",
                 "options": [
                   {
                     "text": "delicious",
@@ -701,8 +729,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “having a very pleasant taste or smell”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “The vegetable soup smelled _____.”",
+                "explanation": "“delicious” means having a very pleasant taste or smell. Example: The vegetable soup smelled delicious.",
                 "options": [
                   {
                     "text": "recipe",
@@ -727,6 +756,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “directions for making something”?",
+                "explanation": "“recipe” means directions for making something. Example: The recipe explains how to prepare the dish step by step.",
                 "options": [
                   {
                     "text": "recipe",
@@ -758,11 +788,12 @@
         "lessons": [
           {
             "title": "Actions",
-            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "description": "Learn 10 English words through definitions, sentence context, and precise usage.",
             "challenges": [
               {
                 "type": "SELECT",
                 "question": "Which word means “the act of traveling by foot”?",
+                "explanation": "“walk” means the act of traveling by foot. Example: We walk to the library after lunch.",
                 "options": [
                   {
                     "text": "walk",
@@ -785,8 +816,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “to use your voice to say words”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “Please _____ clearly during your presentation.”",
+                "explanation": "“speak” means to use your voice to say words. Example: Please speak clearly during your presentation.",
                 "options": [
                   {
                     "text": "listen",
@@ -809,8 +841,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “hear with intention”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “_____ carefully for the main idea.”",
+                "explanation": "“listen” means hear with intention. Example: Listen carefully for the main idea.",
                 "options": [
                   {
                     "text": "write",
@@ -833,8 +866,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
+                "type": "SELECT",
                 "question": "Which word means “to form words or symbols on a surface”?",
+                "explanation": "“write” means to form words or symbols on a surface. Example: Write your name at the top of the page.",
                 "options": [
                   {
                     "text": "write",
@@ -857,8 +891,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “to hold and move something from one place to another”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “This bag can _____ all of my school books.”",
+                "explanation": "“carry” means to hold and move something from one place to another. Example: This bag can carry all of my school books.",
                 "options": [
                   {
                     "text": "open",
@@ -881,8 +916,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “to move something so that it is no longer closed”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “Please _____ your book to page ten.”",
+                "explanation": "“open” means to move something so that it is no longer closed. Example: Please open your book to page ten.",
                 "options": [
                   {
                     "text": "close",
@@ -907,6 +943,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “to shut an opening or bring something to an end”?",
+                "explanation": "“close” means to shut an opening or bring something to an end. Example: Close the door quietly when you leave.",
                 "options": [
                   {
                     "text": "close",
@@ -929,8 +966,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
-                "question": "Which word means “to start doing or being something”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “The assembly will _____ at nine o'clock.”",
+                "explanation": "“begin” means to start doing or being something. Example: The assembly will begin at nine o'clock.",
                 "options": [
                   {
                     "text": "finish",
@@ -953,8 +991,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “to complete something or reach its end”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “Try to _____ the activity before the bell.”",
+                "explanation": "“finish” means to complete something or reach its end. Example: Try to finish the activity before the bell.",
                 "options": [
                   {
                     "text": "choose",
@@ -979,6 +1018,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “select as an alternative over another”?",
+                "explanation": "“choose” means select as an alternative over another. Example: Choose the strongest evidence for your answer.",
                 "options": [
                   {
                     "text": "choose",
@@ -1004,11 +1044,12 @@
           },
           {
             "title": "Feelings and Character",
-            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "description": "Learn 10 English words through definitions, sentence context, and precise usage.",
             "challenges": [
               {
                 "type": "SELECT",
                 "question": "Which word means “enjoying or showing or marked by joy or pleasure”?",
+                "explanation": "“happy” means enjoying or showing or marked by joy or pleasure. Example: The class felt happy about its progress.",
                 "options": [
                   {
                     "text": "happy",
@@ -1031,8 +1072,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “experiencing or showing sorrow or unhappiness”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “The ending of the story made him feel _____.”",
+                "explanation": "“sad” means experiencing or showing sorrow or unhappiness. Example: The ending of the story made him feel sad.",
                 "options": [
                   {
                     "text": "angry",
@@ -1055,8 +1097,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “feeling or showing anger”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “She felt _____ when the rule was applied unfairly.”",
+                "explanation": "“angry” means feeling or showing anger. Example: She felt angry when the rule was applied unfairly.",
                 "options": [
                   {
                     "text": "afraid",
@@ -1079,8 +1122,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
+                "type": "SELECT",
                 "question": "Which word means “feeling fear or worry”?",
+                "explanation": "“afraid” means feeling fear or worry. Example: He was afraid to speak until his partner encouraged him.",
                 "options": [
                   {
                     "text": "afraid",
@@ -1103,8 +1147,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “very enthusiastic and eager”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “The students felt _____ about the class trip.”",
+                "explanation": "“excited” means very enthusiastic and eager. Example: The students felt excited about the class trip.",
                 "options": [
                   {
                     "text": "tired",
@@ -1127,8 +1172,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “in need of rest or sleep”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “After the long journey, everyone felt _____.”",
+                "explanation": "“tired” means in need of rest or sleep. Example: After the long journey, everyone felt tired.",
                 "options": [
                   {
                     "text": "calm",
@@ -1153,6 +1199,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “peaceful and not excited, worried, or upset”?",
+                "explanation": "“calm” means peaceful and not excited, worried, or upset. Example: She stayed calm and followed the safety instructions.",
                 "options": [
                   {
                     "text": "calm",
@@ -1175,8 +1222,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
-                "question": "Which word means “feeling self-respect or pleasure in something by which you measure your self-worth”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “The students were _____ of their community project.”",
+                "explanation": "“proud” means feeling self-respect or pleasure in something by which you measure your self-worth. Example: The students were proud of their community project.",
                 "options": [
                   {
                     "text": "kind",
@@ -1199,8 +1247,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “friendly, generous, and considerate toward others”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “It was _____ of you to help the new learner.”",
+                "explanation": "“kind” means friendly, generous, and considerate toward others. Example: It was kind of you to help the new learner.",
                 "options": [
                   {
                     "text": "brave",
@@ -1225,6 +1274,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “ready to face danger or difficulty with courage”?",
+                "explanation": "“brave” means ready to face danger or difficulty with courage. Example: The brave student admitted the mistake and corrected it.",
                 "options": [
                   {
                     "text": "brave",
@@ -1250,11 +1300,12 @@
           },
           {
             "title": "Around Town",
-            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "description": "Learn 10 English words through definitions, sentence context, and precise usage.",
             "challenges": [
               {
                 "type": "SELECT",
                 "question": "Which word means “a health facility where patients receive treatment”?",
+                "explanation": "“hospital” means a health facility where patients receive treatment. Example: The ambulance carried the patient to the hospital.",
                 "options": [
                   {
                     "text": "hospital",
@@ -1277,8 +1328,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “a place where people buy and sell goods”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “Farmers sell fresh produce at the weekend _____.”",
+                "explanation": "“market” means a place where people buy and sell goods. Example: Farmers sell fresh produce at the weekend market.",
                 "options": [
                   {
                     "text": "station",
@@ -1301,8 +1353,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “a place where trains or buses regularly stop”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “The train arrived at the _____ on time.”",
+                "explanation": "“station” means a place where trains or buses regularly stop. Example: The train arrived at the station on time.",
                 "options": [
                   {
                     "text": "airport",
@@ -1325,8 +1378,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
+                "type": "SELECT",
                 "question": "Which word means “an airfield equipped with control tower and hangars as well as accommodations for passengers and cargo”?",
+                "explanation": "“airport” means an airfield equipped with control tower and hangars as well as accommodations for passengers and cargo. Example: We arrived at the airport two hours before the flight.",
                 "options": [
                   {
                     "text": "airport",
@@ -1349,8 +1403,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “a building where people go to eat”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “The family reserved a table at the _____.”",
+                "explanation": "“restaurant” means a building where people go to eat. Example: The family reserved a table at the restaurant.",
                 "options": [
                   {
                     "text": "street",
@@ -1373,8 +1428,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “a thoroughfare (usually including sidewalks) that is lined with buildings”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “Use the crossing when you walk across the _____.”",
+                "explanation": "“street” means a thoroughfare (usually including sidewalks) that is lined with buildings. Example: Use the crossing when you walk across the street.",
                 "options": [
                   {
                     "text": "bridge",
@@ -1399,6 +1455,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “a structure carrying a path or road over an obstacle”?",
+                "explanation": "“bridge” means a structure carrying a path or road over an obstacle. Example: The bridge connects the village to the main road.",
                 "options": [
                   {
                     "text": "bridge",
@@ -1421,8 +1478,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
-                "question": "Which word means “a community of people smaller than a town”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “The small _____ has a school and a health clinic.”",
+                "explanation": "“village” means a community of people smaller than a town. Example: The small village has a school and a health clinic.",
                 "options": [
                   {
                     "text": "journey",
@@ -1445,8 +1503,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “the act of traveling from one place to another”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “Their long _____ ended safely at the village.”",
+                "explanation": "“journey” means the act of traveling from one place to another. Example: Their long journey ended safely at the village.",
                 "options": [
                   {
                     "text": "ticket",
@@ -1471,6 +1530,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “a commercial document showing that the holder is entitled to something (as to ride on public transportation or to enter a public entertainment)”?",
+                "explanation": "“ticket” means a commercial document showing that the holder is entitled to something (as to ride on public transportation or to enter a public entertainment). Example: Keep your bus ticket until the end of the journey.",
                 "options": [
                   {
                     "text": "ticket",
@@ -1499,9 +1559,9 @@
     ]
   },
   {
-    "code": "MRLC-ENGLISH-WORDS-ACADEMIC-V1",
-    "title": "Academic English Word Quest",
-    "description": "Practise high-value words used in research, writing, science, mathematics, and society.",
+    "code": "MRLC-ENGLISH-WORDS-ACADEMIC-V2",
+    "title": "Academic English Word Quest B1–B2",
+    "description": "Practise high-value B1–B2 words in definitions and real usage contexts from research, writing, science, mathematics, and society.",
     "language": "English",
     "imageEmoji": "🎓",
     "accentColor": "#7c3aed",
@@ -1513,11 +1573,12 @@
         "lessons": [
           {
             "title": "Thinking Skills",
-            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "description": "Learn 10 English words through definitions, sentence context, and precise usage.",
             "challenges": [
               {
                 "type": "SELECT",
                 "question": "Which word means “consider in detail and subject to an analysis in order to discover essential features or meaning”?",
+                "explanation": "“analyze” means consider in detail and subject to an analysis in order to discover essential features or meaning. Example: Students analyze the results before writing a conclusion.",
                 "options": [
                   {
                     "text": "analyze",
@@ -1540,8 +1601,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “examine and note the similarities or differences of”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “_____ the two articles and identify their similarities.”",
+                "explanation": "“compare” means examine and note the similarities or differences of. Example: Compare the two articles and identify their similarities.",
                 "options": [
                   {
                     "text": "contrast",
@@ -1564,8 +1626,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “put in opposition to show or emphasize differences”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “The essay will _____ city life with village life.”",
+                "explanation": "“contrast” means put in opposition to show or emphasize differences. Example: The essay will contrast city life with village life.",
                 "options": [
                   {
                     "text": "evaluate",
@@ -1588,8 +1651,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
+                "type": "SELECT",
                 "question": "Which word means “form a critical opinion of”?",
+                "explanation": "“evaluate” means form a critical opinion of. Example: Researchers evaluate whether the method produced reliable results.",
                 "options": [
                   {
                     "text": "evaluate",
@@ -1612,8 +1676,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “make plain and comprehensible”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “Use the diagram to _____ how the machine works.”",
+                "explanation": "“explain” means make plain and comprehensible. Example: Use the diagram to explain how the machine works.",
                 "options": [
                   {
                     "text": "infer",
@@ -1636,8 +1701,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “to reach a conclusion from evidence and reasoning”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “Readers _____ the character's feelings from clues in the story.”",
+                "explanation": "“infer” means to reach a conclusion from evidence and reasoning. Example: Readers infer the character's feelings from clues in the story.",
                 "options": [
                   {
                     "text": "interpret",
@@ -1662,6 +1728,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “to explain or understand the meaning of something”?",
+                "explanation": "“interpret” means to explain or understand the meaning of something. Example: The class will interpret the information shown in the graph.",
                 "options": [
                   {
                     "text": "interpret",
@@ -1684,8 +1751,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
-                "question": "Which word means “to notice or watch something carefully”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “Scientists _____ the plant each day and record any changes.”",
+                "explanation": "“observe” means to notice or watch something carefully. Example: Scientists observe the plant each day and record any changes.",
                 "options": [
                   {
                     "text": "predict",
@@ -1708,8 +1776,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “to say what is likely to happen in the future”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “Scientists _____ tomorrow's weather using current data.”",
+                "explanation": "“predict” means to say what is likely to happen in the future. Example: Scientists predict tomorrow's weather using current data.",
                 "options": [
                   {
                     "text": "summarize",
@@ -1734,6 +1803,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “to give the main points in a shorter form”?",
+                "explanation": "“summarize” means to give the main points in a shorter form. Example: Summarize the passage in three clear sentences.",
                 "options": [
                   {
                     "text": "summarize",
@@ -1759,11 +1829,12 @@
           },
           {
             "title": "Evidence and Research",
-            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "description": "Learn 10 English words through definitions, sentence context, and precise usage.",
             "challenges": [
               {
                 "type": "SELECT",
                 "question": "Which word means “your basis for belief or disbelief”?",
+                "explanation": "“evidence” means your basis for belief or disbelief. Example: The writer supports the claim with evidence from the text.",
                 "options": [
                   {
                     "text": "evidence",
@@ -1786,8 +1857,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “systematic investigation to establish facts”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “Their _____ examines how sleep affects learning.”",
+                "explanation": "“research” means systematic investigation to establish facts. Example: Their research examines how sleep affects learning.",
                 "options": [
                   {
                     "text": "source",
@@ -1810,8 +1882,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “the place, person, or thing from which information comes”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “Always check whether an online _____ is trustworthy.”",
+                "explanation": "“source” means the place, person, or thing from which information comes. Example: Always check whether an online source is trustworthy.",
                 "options": [
                   {
                     "text": "data",
@@ -1834,8 +1907,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
+                "type": "SELECT",
                 "question": "Which word means “a collection of facts from which conclusions may be drawn”?",
+                "explanation": "“data” means a collection of facts from which conclusions may be drawn. Example: The class organized its survey data in a table.",
                 "options": [
                   {
                     "text": "data",
@@ -1858,8 +1932,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “a way of doing something, especially a systematic way”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “The researcher explained the _____ used in the experiment.”",
+                "explanation": "“method” means a way of doing something, especially a systematic way. Example: The researcher explained the method used in the experiment.",
                 "options": [
                   {
                     "text": "result",
@@ -1882,8 +1957,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “the outcome produced by an action or event”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “The final _____ matched the team's prediction.”",
+                "explanation": "“result” means the outcome produced by an action or event. Example: The final result matched the team's prediction.",
                 "options": [
                   {
                     "text": "theory",
@@ -1908,6 +1984,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “a well-substantiated explanation of some aspect of the natural world”?",
+                "explanation": "“theory” means a well-substantiated explanation of some aspect of the natural world. Example: The evidence supports the theory presented in the article.",
                 "options": [
                   {
                     "text": "theory",
@@ -1930,8 +2007,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
-                "question": "Which word means “a detailed critical inspection”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “The student council conducted a _____ about school lunches.”",
+                "explanation": "“survey” means a detailed critical inspection. Example: The student council conducted a survey about school lunches.",
                 "options": [
                   {
                     "text": "sample",
@@ -1954,8 +2032,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “a small part chosen to represent a larger whole”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “The laboratory tested a small _____ of river water.”",
+                "explanation": "“sample” means a small part chosen to represent a larger whole. Example: The laboratory tested a small sample of river water.",
                 "options": [
                   {
                     "text": "conclusion",
@@ -1980,6 +2059,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “a judgment or decision reached after reasoning”?",
+                "explanation": "“conclusion” means a judgment or decision reached after reasoning. Example: The conclusion explains what the experiment demonstrated.",
                 "options": [
                   {
                     "text": "conclusion",
@@ -2005,11 +2085,12 @@
           },
           {
             "title": "Reading and Writing",
-            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "description": "Learn 10 English words through definitions, sentence context, and precise usage.",
             "challenges": [
               {
                 "type": "SELECT",
                 "question": "Which word means “a fact or assertion offered as evidence that something is true”?",
+                "explanation": "“argument” means a fact or assertion offered as evidence that something is true. Example: A strong argument includes reasons and supporting evidence.",
                 "options": [
                   {
                     "text": "argument",
@@ -2032,8 +2113,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “one of several distinct subdivisions of a text intended to separate ideas”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “Each _____ should develop one clear main idea.”",
+                "explanation": "“paragraph” means one of several distinct subdivisions of a text intended to separate ideas. Example: Each paragraph should develop one clear main idea.",
                 "options": [
                   {
                     "text": "sentence",
@@ -2056,8 +2138,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “a string of words satisfying the grammatical rules of a language”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “Each _____ should express a complete idea.”",
+                "explanation": "“sentence” means a string of words satisfying the grammatical rules of a language. Example: Each sentence should express a complete idea.",
                 "options": [
                   {
                     "text": "context",
@@ -2080,8 +2163,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
+                "type": "SELECT",
                 "question": "Which word means “discourse that surrounds a language unit and helps to determine its interpretation”?",
+                "explanation": "“context” means discourse that surrounds a language unit and helps to determine its interpretation. Example: The surrounding paragraph provides context for the unfamiliar word.",
                 "options": [
                   {
                     "text": "context",
@@ -2104,8 +2188,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “a passage or expression that is quoted or cited”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “Use a short _____ to support your interpretation.”",
+                "explanation": "“quotation” means a passage or expression that is quoted or cited. Example: Use a short quotation to support your interpretation.",
                 "options": [
                   {
                     "text": "reference",
@@ -2128,8 +2213,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “a source used to find or support information”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “The report includes a _____ for every borrowed idea.”",
+                "explanation": "“reference” means a source used to find or support information. Example: The report includes a reference for every borrowed idea.",
                 "options": [
                   {
                     "text": "revise",
@@ -2154,6 +2240,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “make revisions in”?",
+                "explanation": "“revise” means make revisions in. Example: Writers revise their drafts to make the meaning clearer.",
                 "options": [
                   {
                     "text": "revise",
@@ -2176,8 +2263,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
-                "question": "Which word means “an early version of a piece of writing”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “Her first _____ contained several ideas to develop.”",
+                "explanation": "“draft” means an early version of a piece of writing. Example: Her first draft contained several ideas to develop.",
                 "options": [
                   {
                     "text": "grammar",
@@ -2200,8 +2288,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “the branch of linguistics that deals with syntax and morphology (and sometimes also deals with semantics)”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “Careful _____ makes formal writing easier to understand.”",
+                "explanation": "“grammar” means the branch of linguistics that deals with syntax and morphology (and sometimes also deals with semantics). Example: Careful grammar makes formal writing easier to understand.",
                 "options": [
                   {
                     "text": "vocabulary",
@@ -2226,6 +2315,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “a listing of the words used in some enterprise”?",
+                "explanation": "“vocabulary” means a listing of the words used in some enterprise. Example: Reading widely can expand your academic vocabulary.",
                 "options": [
                   {
                     "text": "vocabulary",
@@ -2257,11 +2347,12 @@
         "lessons": [
           {
             "title": "Science",
-            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "description": "Learn 10 English words through definitions, sentence context, and precise usage.",
             "challenges": [
               {
                 "type": "SELECT",
                 "question": "Which word means “the ability to do work or cause change”?",
+                "explanation": "“energy” means the ability to do work or cause change. Example: Solar panels convert sunlight into energy.",
                 "options": [
                   {
                     "text": "energy",
@@ -2284,8 +2375,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “physical substance from which things are made”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “All _____ has mass and occupies space.”",
+                "explanation": "“matter” means physical substance from which things are made. Example: All matter has mass and occupies space.",
                 "options": [
                   {
                     "text": "element",
@@ -2308,8 +2400,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “a pure substance made from one kind of atom”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “Oxygen is an _____ found in air and water.”",
+                "explanation": "“element” means a pure substance made from one kind of atom. Example: Oxygen is an element found in air and water.",
                 "options": [
                   {
                     "text": "organism",
@@ -2332,8 +2425,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
+                "type": "SELECT",
                 "question": "Which word means “a living thing that has (or can develop) the ability to act or function independently”?",
+                "explanation": "“organism” means a living thing that has (or can develop) the ability to act or function independently. Example: Each organism depends on its environment to survive.",
                 "options": [
                   {
                     "text": "organism",
@@ -2356,8 +2450,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “the weather in some location averaged over some long period of time”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “The region's _____ is warm and humid throughout the year.”",
+                "explanation": "“climate” means the weather in some location averaged over some long period of time. Example: The region's climate is warm and humid throughout the year.",
                 "options": [
                   {
                     "text": "environment",
@@ -2380,8 +2475,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “the totality of surrounding conditions”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “Recycling can reduce harm to the _____.”",
+                "explanation": "“environment” means the totality of surrounding conditions. Example: Recycling can reduce harm to the environment.",
                 "options": [
                   {
                     "text": "experiment",
@@ -2406,6 +2502,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “a scientific test used to discover or demonstrate something”?",
+                "explanation": "“experiment” means a scientific test used to discover or demonstrate something. Example: The experiment tests how light affects plant growth.",
                 "options": [
                   {
                     "text": "experiment",
@@ -2428,8 +2525,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
-                "question": "Which word means “a factor that can change or be changed”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “The scientist changed one _____ at a time.”",
+                "explanation": "“variable” means a factor that can change or be changed. Example: The scientist changed one variable at a time.",
                 "options": [
                   {
                     "text": "measure",
@@ -2452,8 +2550,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “to find the size, amount, or degree of something”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “Use a ruler to _____ the length of the leaf.”",
+                "explanation": "“measure” means to find the size, amount, or degree of something. Example: Use a ruler to measure the length of the leaf.",
                 "options": [
                   {
                     "text": "process",
@@ -2478,6 +2577,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “a series of actions that produces a result”?",
+                "explanation": "“process” means a series of actions that produces a result. Example: Photosynthesis is the process plants use to make food.",
                 "options": [
                   {
                     "text": "process",
@@ -2503,11 +2603,12 @@
           },
           {
             "title": "Mathematics",
-            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "description": "Learn 10 English words through definitions, sentence context, and precise usage.",
             "challenges": [
               {
                 "type": "SELECT",
                 "question": "Which word means “a mathematical statement that two expressions are equal”?",
+                "explanation": "“equation” means a mathematical statement that two expressions are equal. Example: Solve the equation to find the unknown value.",
                 "options": [
                   {
                     "text": "equation",
@@ -2530,8 +2631,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “a number representing part of a whole”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “One half is a _____ that represents one of two equal parts.”",
+                "explanation": "“fraction” means a number representing part of a whole. Example: One half is a fraction that represents one of two equal parts.",
                 "options": [
                   {
                     "text": "decimal",
@@ -2554,8 +2656,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “a number written with a point to show a fraction of ten”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “Write one half as the _____ 0.5.”",
+                "explanation": "“decimal” means a number written with a point to show a fraction of ten. Example: Write one half as the decimal 0.5.",
                 "options": [
                   {
                     "text": "ratio",
@@ -2578,8 +2681,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
+                "type": "SELECT",
                 "question": "Which word means “the relative magnitudes of two quantities (usually expressed as a quotient)”?",
+                "explanation": "“ratio” means the relative magnitudes of two quantities (usually expressed as a quotient). Example: The ratio of blue cards to red cards is two to one.",
                 "options": [
                   {
                     "text": "ratio",
@@ -2602,8 +2706,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “a value found by adding numbers and dividing by how many there are”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “The _____ of four, six, and eight is six.”",
+                "explanation": "“average” means a value found by adding numbers and dividing by how many there are. Example: The average of four, six, and eight is six.",
                 "options": [
                   {
                     "text": "geometry",
@@ -2626,8 +2731,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “the pure mathematics of points and lines and curves and surfaces”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “In _____, students study shapes, angles, and space.”",
+                "explanation": "“geometry” means the pure mathematics of points and lines and curves and surfaces. Example: In geometry, students study shapes, angles, and space.",
                 "options": [
                   {
                     "text": "calculate",
@@ -2652,6 +2758,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “make a mathematical calculation or computation”?",
+                "explanation": "“calculate” means make a mathematical calculation or computation. Example: Use the measurements to calculate the area of the room.",
                 "options": [
                   {
                     "text": "calculate",
@@ -2674,8 +2781,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
-                "question": "Which word means “an approximate calculation of quantity or degree or worth”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “Make an _____ before calculating the exact total.”",
+                "explanation": "“estimate” means an approximate calculation of quantity or degree or worth. Example: Make an estimate before calculating the exact total.",
                 "options": [
                   {
                     "text": "sequence",
@@ -2698,8 +2806,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “a set of things arranged in a particular order”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “Place the events in the correct _____.”",
+                "explanation": "“sequence” means a set of things arranged in a particular order. Example: Place the events in the correct sequence.",
                 "options": [
                   {
                     "text": "pattern",
@@ -2724,6 +2833,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “a repeated or regular arrangement”?",
+                "explanation": "“pattern” means a repeated or regular arrangement. Example: The number pattern increases by three each time.",
                 "options": [
                   {
                     "text": "pattern",
@@ -2749,11 +2859,12 @@
           },
           {
             "title": "Society",
-            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "description": "Learn 10 English words through definitions, sentence context, and precise usage.",
             "challenges": [
               {
                 "type": "SELECT",
                 "question": "Which word means “the shared ideas, customs, and arts of a group”?",
+                "explanation": "“culture” means the shared ideas, customs, and arts of a group. Example: Food, language, and art are important parts of culture.",
                 "options": [
                   {
                     "text": "culture",
@@ -2776,8 +2887,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “a group of people living in a particular local area”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “The _____ worked together to clean the park.”",
+                "explanation": "“community” means a group of people living in a particular local area. Example: The community worked together to clean the park.",
                 "options": [
                   {
                     "text": "economy",
@@ -2800,8 +2912,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “the system of production and distribution and consumption”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “Small businesses contribute to the local _____.”",
+                "explanation": "“economy” means the system of production and distribution and consumption. Example: Small businesses contribute to the local economy.",
                 "options": [
                   {
                     "text": "government",
@@ -2824,8 +2937,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
+                "type": "SELECT",
                 "question": "Which word means “the organization that is the governing authority of a political unit”?",
+                "explanation": "“government” means the organization that is the governing authority of a political unit. Example: The government introduced a new education policy.",
                 "options": [
                   {
                     "text": "government",
@@ -2848,8 +2962,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “the quality of being just or fair”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “The court aims to deliver _____ fairly.”",
+                "explanation": "“justice” means the quality of being just or fair. Example: The court aims to deliver justice fairly.",
                 "options": [
                   {
                     "text": "migration",
@@ -2872,8 +2987,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “the movement of persons from one country or locality to another”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “Seasonal _____ brings the birds back each spring.”",
+                "explanation": "“migration” means the movement of persons from one country or locality to another. Example: Seasonal migration brings the birds back each spring.",
                 "options": [
                   {
                     "text": "population",
@@ -2898,6 +3014,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “the people who inhabit a territory or state”?",
+                "explanation": "“population” means the people who inhabit a territory or state. Example: The town's population has grown over the last decade.",
                 "options": [
                   {
                     "text": "population",
@@ -2920,8 +3037,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
-                "question": "Which word means “an inherited pattern of thought or action”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “Sharing this meal is an important family _____.”",
+                "explanation": "“tradition” means an inherited pattern of thought or action. Example: Sharing this meal is an important family tradition.",
                 "options": [
                   {
                     "text": "citizen",
@@ -2944,8 +3062,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “a native or naturalized member of a state or other political community”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “Every _____ has both rights and responsibilities.”",
+                "explanation": "“citizen” means a native or naturalized member of a state or other political community. Example: Every citizen has both rights and responsibilities.",
                 "options": [
                   {
                     "text": "history",
@@ -2970,6 +3089,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “the study or record of past events”?",
+                "explanation": "“history” means the study or record of past events. Example: The museum preserves objects from local history.",
                 "options": [
                   {
                     "text": "history",
@@ -2998,9 +3118,9 @@
     ]
   },
   {
-    "code": "MRLC-ENGLISH-WORDS-POWER-V1",
-    "title": "English Word Power",
-    "description": "Strengthen advanced vocabulary for communication, problem-solving, change, and the wider world.",
+    "code": "MRLC-ENGLISH-WORDS-POWER-V2",
+    "title": "English Word Power C1",
+    "description": "Strengthen C1 vocabulary through precise definitions and real usage contexts for communication, problem-solving, change, and the wider world.",
     "language": "English",
     "imageEmoji": "⚡",
     "accentColor": "#059669",
@@ -3012,11 +3132,12 @@
         "lessons": [
           {
             "title": "Character",
-            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "description": "Learn 10 English words through definitions, sentence context, and precise usage.",
             "challenges": [
               {
                 "type": "SELECT",
                 "question": "Which word means “capable of adapting (of becoming or being made suitable) to a particular situation or use”?",
+                "explanation": "“adaptable” means capable of adapting (of becoming or being made suitable) to a particular situation or use. Example: An adaptable learner can use different study strategies.",
                 "options": [
                   {
                     "text": "adaptable",
@@ -3039,8 +3160,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “having a strong desire for success or achievement”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “The class set an _____ goal for its reading challenge.”",
+                "explanation": "“ambitious” means having a strong desire for success or achievement. Example: The class set an ambitious goal for its reading challenge.",
                 "options": [
                   {
                     "text": "confident",
@@ -3063,8 +3185,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “having or marked by confidence or assurance”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “Practice helped her feel _____ during the presentation.”",
+                "explanation": "“confident” means having or marked by confidence or assurance. Example: Practice helped her feel confident during the presentation.",
                 "options": [
                   {
                     "text": "curious",
@@ -3087,8 +3210,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
+                "type": "SELECT",
                 "question": "Which word means “eager to know or learn something”?",
+                "explanation": "“curious” means eager to know or learn something. Example: A curious student asks questions and explores new ideas.",
                 "options": [
                   {
                     "text": "curious",
@@ -3111,8 +3235,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “quietly and steadily persevering especially in detail or exactness”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “His _____ research uncovered several useful sources.”",
+                "explanation": "“diligent” means quietly and steadily persevering especially in detail or exactness. Example: His diligent research uncovered several useful sources.",
                 "options": [
                   {
                     "text": "generous",
@@ -3135,8 +3260,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “willing to give and share unstintingly”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “The _____ volunteers shared their time and skills.”",
+                "explanation": "“generous” means willing to give and share unstintingly. Example: The generous volunteers shared their time and skills.",
                 "options": [
                   {
                     "text": "honest",
@@ -3161,6 +3287,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “not disposed to cheat or defraud”?",
+                "explanation": "“honest” means not disposed to cheat or defraud. Example: Give an honest account of what happened.",
                 "options": [
                   {
                     "text": "honest",
@@ -3183,8 +3310,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
-                "question": "Which word means “enduring trying circumstances with even temper or characterized by such endurance”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “The tutor remained _____ while the learner tried again.”",
+                "explanation": "“patient” means enduring trying circumstances with even temper or characterized by such endurance. Example: The tutor remained patient while the learner tried again.",
                 "options": [
                   {
                     "text": "reliable",
@@ -3207,8 +3335,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “worthy of reliance or trust”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “A _____ source provides accurate, verifiable information.”",
+                "explanation": "“reliable” means worthy of reliance or trust. Example: A reliable source provides accurate, verifiable information.",
                 "options": [
                   {
                     "text": "resilient",
@@ -3233,6 +3362,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “recovering readily from adversity, depression, or the like”?",
+                "explanation": "“resilient” means recovering readily from adversity, depression, or the like. Example: The resilient team recovered from its early setback.",
                 "options": [
                   {
                     "text": "resilient",
@@ -3258,11 +3388,12 @@
           },
           {
             "title": "Communication",
-            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "description": "Learn 10 English words through definitions, sentence context, and precise usage.",
             "challenges": [
               {
                 "type": "SELECT",
                 "question": "Which word means “expressing yourself easily or characterized by clear expressive language”?",
+                "explanation": "“articulate” means expressing yourself easily or characterized by clear expressive language. Example: Her articulate response communicated a complex idea clearly.",
                 "options": [
                   {
                     "text": "articulate",
@@ -3285,8 +3416,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “make clear and (more) comprehensible”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “Ask a follow-up question to _____ the instructions.”",
+                "explanation": "“clarify” means make clear and (more) comprehensible. Example: Ask a follow-up question to clarify the instructions.",
                 "options": [
                   {
                     "text": "collaborate",
@@ -3309,8 +3441,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “to work together toward a shared goal”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “The two classes _____ on a community garden project.”",
+                "explanation": "“collaborate” means to work together toward a shared goal. Example: The two classes collaborate on a community garden project.",
                 "options": [
                   {
                     "text": "concise",
@@ -3333,8 +3466,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
+                "type": "SELECT",
                 "question": "Which word means “expressing much in few words”?",
+                "explanation": "“concise” means expressing much in few words. Example: A concise summary includes only the most important points.",
                 "options": [
                   {
                     "text": "concise",
@@ -3357,8 +3491,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “the formal presentation of a stated proposition and the opposition to it (usually followed by a vote)”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “Students _____ whether the proposed solution is fair.”",
+                "explanation": "“debate” means the formal presentation of a stated proposition and the opposition to it (usually followed by a vote). Example: Students debate whether the proposed solution is fair.",
                 "options": [
                   {
                     "text": "describe",
@@ -3381,8 +3516,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “give a description of”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “Please _____ what you observed during the experiment.”",
+                "explanation": "“describe” means give a description of. Example: Please describe what you observed during the experiment.",
                 "options": [
                   {
                     "text": "discuss",
@@ -3407,6 +3543,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “to consider or examine in speech or writing”?",
+                "explanation": "“discuss” means to consider or examine in speech or writing. Example: The group will discuss the evidence before making a decision.",
                 "options": [
                   {
                     "text": "discuss",
@@ -3429,8 +3566,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
-                "question": "Which word means “cause somebody to adopt a certain position, belief, or course of action”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “The campaign aims to _____ students to save water.”",
+                "explanation": "“persuade” means cause somebody to adopt a certain position, belief, or course of action. Example: The campaign aims to persuade students to save water.",
                 "options": [
                   {
                     "text": "respond",
@@ -3453,8 +3591,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “to reply or react to something”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “Please _____ to the question with a complete sentence.”",
+                "explanation": "“respond” means to reply or react to something. Example: Please respond to the question with a complete sentence.",
                 "options": [
                   {
                     "text": "translate",
@@ -3479,6 +3618,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “restate (words) from one language into another language”?",
+                "explanation": "“translate” means restate (words) from one language into another language. Example: Can you translate this short message into English?",
                 "options": [
                   {
                     "text": "translate",
@@ -3504,11 +3644,12 @@
           },
           {
             "title": "Change",
-            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "description": "Learn 10 English words through definitions, sentence context, and precise usage.",
             "challenges": [
               {
                 "type": "SELECT",
                 "question": "Which word means “cause to move faster”?",
+                "explanation": "“accelerate” means cause to move faster. Example: New tools can accelerate the research process.",
                 "options": [
                   {
                     "text": "accelerate",
@@ -3531,8 +3672,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “make fit for, or change to suit a new purpose”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “The group will _____ its plan after reviewing the feedback.”",
+                "explanation": "“adapt” means make fit for, or change to suit a new purpose. Example: The group will adapt its plan after reviewing the feedback.",
                 "options": [
                   {
                     "text": "develop",
@@ -3555,8 +3697,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “to grow or change into a more advanced form”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “Students _____ stronger arguments through careful revision.”",
+                "explanation": "“develop” means to grow or change into a more advanced form. Example: Students develop stronger arguments through careful revision.",
                 "options": [
                   {
                     "text": "emerge",
@@ -3579,8 +3722,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
+                "type": "SELECT",
                 "question": "Which word means “come out into view, as from concealment”?",
+                "explanation": "“emerge” means come out into view, as from concealment. Example: New themes emerge as the class examines the interviews.",
                 "options": [
                   {
                     "text": "emerge",
@@ -3603,8 +3747,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “extend in one or more directions”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “Add evidence to _____ the second paragraph.”",
+                "explanation": "“expand” means extend in one or more directions. Example: Add evidence to expand the second paragraph.",
                 "options": [
                   {
                     "text": "improve",
@@ -3627,8 +3772,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “to make or become better”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “Regular feedback can _____ the quality of a first draft.”",
+                "explanation": "“improve” means to make or become better. Example: Regular feedback can improve the quality of a first draft.",
                 "options": [
                   {
                     "text": "innovate",
@@ -3653,6 +3799,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “to introduce new ideas or methods”?",
+                "explanation": "“innovate” means to introduce new ideas or methods. Example: Engineers innovate when existing solutions no longer work.",
                 "options": [
                   {
                     "text": "innovate",
@@ -3675,8 +3822,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
-                "question": "Which word means “to make something smaller or less”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “Turning off unused lights can _____ energy consumption.”",
+                "explanation": "“reduce” means to make something smaller or less. Example: Turning off unused lights can reduce energy consumption.",
                 "options": [
                   {
                     "text": "transform",
@@ -3699,8 +3847,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “to change greatly in form, appearance, or character”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “Heat can _____ ice into liquid water.”",
+                "explanation": "“transform” means to change greatly in form, appearance, or character. Example: Heat can transform ice into liquid water.",
                 "options": [
                   {
                     "text": "transition",
@@ -3725,6 +3874,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “a change from one place or state or subject or stage to another”?",
+                "explanation": "“transition” means a change from one place or state or subject or stage to another. Example: A linking phrase creates a smooth transition between ideas.",
                 "options": [
                   {
                     "text": "transition",
@@ -3756,11 +3906,12 @@
         "lessons": [
           {
             "title": "Challenges and Solutions",
-            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "description": "Learn 10 English words through definitions, sentence context, and precise usage.",
             "challenges": [
               {
                 "type": "SELECT",
                 "question": "Which word means “complicated in structure”?",
+                "explanation": "“complex” means complicated in structure. Example: The team divided the complex problem into smaller steps.",
                 "options": [
                   {
                     "text": "complex",
@@ -3783,8 +3934,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “a serious disagreement or struggle”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “The mediator helped both sides resolve the _____.”",
+                "explanation": "“conflict” means a serious disagreement or struggle. Example: The mediator helped both sides resolve the conflict.",
                 "options": [
                   {
                     "text": "consequence",
@@ -3807,8 +3959,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “a result or effect of an action”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “Soil erosion can be a _____ of removing too many trees.”",
+                "explanation": "“consequence” means a result or effect of an action. Example: Soil erosion can be a consequence of removing too many trees.",
                 "options": [
                   {
                     "text": "obstacle",
@@ -3831,8 +3984,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
+                "type": "SELECT",
                 "question": "Which word means “something immaterial that stands in the way and must be circumvented or surmounted”?",
+                "explanation": "“obstacle” means something immaterial that stands in the way and must be circumvented or surmounted. Example: Limited transport was an obstacle to attending the event.",
                 "options": [
                   {
                     "text": "obstacle",
@@ -3855,8 +4009,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “a difficult demand or feeling of urgency”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “The container cracked when the internal _____ became too high.”",
+                "explanation": "“pressure” means a difficult demand or feeling of urgency. Example: The container cracked when the internal pressure became too high.",
                 "options": [
                   {
                     "text": "priority",
@@ -3879,8 +4034,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “something considered more important than other things”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “Student safety is the school's highest _____.”",
+                "explanation": "“priority” means something considered more important than other things. Example: Student safety is the school's highest priority.",
                 "options": [
                   {
                     "text": "solution",
@@ -3905,6 +4061,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “an answer to a problem or difficult situation”?",
+                "explanation": "“solution” means an answer to a problem or difficult situation. Example: The group tested more than one solution to the problem.",
                 "options": [
                   {
                     "text": "solution",
@@ -3927,8 +4084,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
-                "question": "Which word means “a carefully planned method for achieving a goal”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “The team developed a _____ for completing the project on time.”",
+                "explanation": "“strategy” means a carefully planned method for achieving a goal. Example: The team developed a strategy for completing the project on time.",
                 "options": [
                   {
                     "text": "succeed",
@@ -3951,8 +4109,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “attain success or reach a desired goal”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “Teams _____ when members communicate and share responsibility.”",
+                "explanation": "“succeed” means attain success or reach a desired goal. Example: Teams succeed when members communicate and share responsibility.",
                 "options": [
                   {
                     "text": "urgent",
@@ -3977,6 +4136,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “compelling immediate action”?",
+                "explanation": "“urgent” means compelling immediate action. Example: The broken water pipe required urgent attention.",
                 "options": [
                   {
                     "text": "urgent",
@@ -4002,11 +4162,12 @@
           },
           {
             "title": "Precision",
-            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "description": "Learn 10 English words through definitions, sentence context, and precise usage.",
             "challenges": [
               {
                 "type": "SELECT",
                 "question": "Which word means “conforming exactly or almost exactly to fact or to a standard or performing with total accuracy”?",
+                "explanation": "“accurate” means conforming exactly or almost exactly to fact or to a standard or performing with total accuracy. Example: The report must include accurate measurements.",
                 "options": [
                   {
                     "text": "accurate",
@@ -4029,8 +4190,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “not quite exact or correct”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “The map shows the _____ location of the campsite.”",
+                "explanation": "“approximate” means not quite exact or correct. Example: The map shows the approximate location of the campsite.",
                 "options": [
                   {
                     "text": "consistent",
@@ -4053,8 +4215,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “the same throughout in structure or composition”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “Her results were _____ across all three trials.”",
+                "explanation": "“consistent” means the same throughout in structure or composition. Example: Her results were consistent across all three trials.",
                 "options": [
                   {
                     "text": "distinct",
@@ -4077,8 +4240,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
+                "type": "SELECT",
                 "question": "Which word means “(often followed by `from') not alike”?",
+                "explanation": "“distinct” means (often followed by `from') not alike. Example: The two materials have distinct properties.",
                 "options": [
                   {
                     "text": "distinct",
@@ -4101,8 +4265,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “being effective without wasting time or effort or expense”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “The new system is more _____ and uses less energy.”",
+                "explanation": "“efficient” means being effective without wasting time or effort or expense. Example: The new system is more efficient and uses less energy.",
                 "options": [
                   {
                     "text": "essential",
@@ -4125,8 +4290,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “absolutely necessary”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “Clean water is _____ for human health.”",
+                "explanation": "“essential” means absolutely necessary. Example: Clean water is essential for human health.",
                 "options": [
                   {
                     "text": "flexible",
@@ -4151,6 +4317,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “capable of being changed”?",
+                "explanation": "“flexible” means capable of being changed. Example: A flexible schedule can accommodate unexpected changes.",
                 "options": [
                   {
                     "text": "flexible",
@@ -4173,8 +4340,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
-                "question": "Which word means “important in effect or meaning”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “The study found a _____ improvement in attendance.”",
+                "explanation": "“significant” means important in effect or meaning. Example: The study found a significant improvement in attendance.",
                 "options": [
                   {
                     "text": "specific",
@@ -4197,8 +4365,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “stated explicitly or in detail”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “Use a _____ example to support your claim.”",
+                "explanation": "“specific” means stated explicitly or in detail. Example: Use a specific example to support your claim.",
                 "options": [
                   {
                     "text": "valid",
@@ -4223,6 +4392,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “based on sound reasoning or officially acceptable”?",
+                "explanation": "“valid” means based on sound reasoning or officially acceptable. Example: The conclusion is valid because it follows from the evidence.",
                 "options": [
                   {
                     "text": "valid",
@@ -4248,11 +4418,12 @@
           },
           {
             "title": "Our World",
-            "description": "Learn 10 English words through definitions, choices, and speech.",
+            "description": "Learn 10 English words through definitions, sentence context, and precise usage.",
             "challenges": [
               {
                 "type": "SELECT",
                 "question": "Which word means “a system formed by the interaction of a community of organisms with their physical environment”?",
+                "explanation": "“ecosystem” means a system formed by the interaction of a community of organisms with their physical environment. Example: A healthy wetland ecosystem supports many species.",
                 "options": [
                   {
                     "text": "ecosystem",
@@ -4275,8 +4446,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “the protection of nature and careful use of resources”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “Water _____ helps communities prepare for dry seasons.”",
+                "explanation": "“conservation” means the protection of nature and careful use of resources. Example: Water conservation helps communities prepare for dry seasons.",
                 "options": [
                   {
                     "text": "democracy",
@@ -4299,8 +4471,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “the political orientation of those who favor government by the people or by their elected representatives”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “In a _____, citizens choose representatives through elections.”",
+                "explanation": "“democracy” means the political orientation of those who favor government by the people or by their elected representatives. Example: In a democracy, citizens choose representatives through elections.",
                 "options": [
                   {
                     "text": "equality",
@@ -4323,8 +4496,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
+                "type": "SELECT",
                 "question": "Which word means “the quality of being the same in quantity or measure or value or status”?",
+                "explanation": "“equality” means the quality of being the same in quantity or measure or value or status. Example: The policy promotes equality by giving every learner the same opportunity.",
                 "options": [
                   {
                     "text": "equality",
@@ -4347,8 +4521,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “relating to the whole world”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “Climate change is a _____ challenge.”",
+                "explanation": "“global” means relating to the whole world. Example: Climate change is a global challenge.",
                 "options": [
                   {
                     "text": "infrastructure",
@@ -4371,8 +4546,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “the basic systems and structures a society or organization needs”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “Reliable transport _____ connects rural communities to cities.”",
+                "explanation": "“infrastructure” means the basic systems and structures a society or organization needs. Example: Reliable transport infrastructure connects rural communities to cities.",
                 "options": [
                   {
                     "text": "sustainable",
@@ -4397,6 +4573,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “able to continue without using up resources or harming the environment”?",
+                "explanation": "“sustainable” means able to continue without using up resources or harming the environment. Example: The school chose a sustainable design that uses less energy.",
                 "options": [
                   {
                     "text": "sustainable",
@@ -4419,8 +4596,9 @@
                 ]
               },
               {
-                "type": "ASSIST",
-                "question": "Which word means “scientific knowledge and tools used to solve practical problems”?",
+                "type": "CLOZE",
+                "question": "Complete this sentence: “Assistive _____ can make learning more accessible.”",
+                "explanation": "“technology” means scientific knowledge and tools used to solve practical problems. Example: Assistive technology can make learning more accessible.",
                 "options": [
                   {
                     "text": "urban",
@@ -4443,8 +4621,9 @@
                 ]
               },
               {
-                "type": "SELECT",
-                "question": "Which word means “relating to or concerned with a city or densely populated area”?",
+                "type": "GRAMMAR_TRANSFORM",
+                "question": "Choose the most precise word for this sentence: “The city created more green spaces in _____ neighborhoods.”",
+                "explanation": "“urban” means relating to or concerned with a city or densely populated area. Example: The city created more green spaces in urban neighborhoods.",
                 "options": [
                   {
                     "text": "welfare",
@@ -4469,6 +4648,7 @@
               {
                 "type": "SELECT",
                 "question": "Which word means “the health, happiness, and safety of a person or group”?",
+                "explanation": "“welfare” means the health, happiness, and safety of a person or group. Example: The organization protects the welfare of children and families.",
                 "options": [
                   {
                     "text": "welfare",

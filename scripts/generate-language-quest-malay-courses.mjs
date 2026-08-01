@@ -44,9 +44,9 @@
 // existing best-effort SELECT downgrade rather than risk generating
 // incorrectly-paired MATCHING challenges.
 //
-// Courses are generated as unpublished drafts (published: false) because the
-// source package's own README calls for native-speaker review before this
-// goes live -- see curricula/sources/malay/README.md, "Before this goes live".
+// Phase 5 promotes this school curriculum to the canonical learner path. The
+// overlapping source-guided Malay courses are retained as archived records so
+// learners see one explicit A1-C1 progression rather than competing paths.
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -60,37 +60,37 @@ const outputPath = path.resolve(
 
 const LEVEL_META = {
   A1: {
-    code: "MRLC-MALAY-A1-V1",
+    code: "MRLC-MALAY-A1-V2",
     title: "Bahasa Malaysia A1: Baru Belajar",
-    description: "Survival Malay: greetings, numbers, family, market, food, time, transport, and health basics.",
+    description: "Canonical A1 Malay path: greetings, numbers, family, market, food, time, transport, and health basics.",
     imageEmoji: "🌱",
     accentColor: "#059669",
   },
   A2: {
-    code: "MRLC-MALAY-A2-V1",
+    code: "MRLC-MALAY-A2-V2",
     title: "Bahasa Malaysia A2: Boleh Berbual Sikit",
-    description: "Everyday transactions: clinics, LRT/Grab, banking, renting, work, slang, and simple past-tense stories.",
+    description: "Canonical A2 Malay path: clinics, public transport, banking, renting, work, slang, and simple past-tense stories.",
     imageEmoji: "🧭",
     accentColor: "#0ea5e9",
   },
   B1: {
-    code: "MRLC-MALAY-B1-V1",
+    code: "MRLC-MALAY-B1-V2",
     title: "Bahasa Malaysia B1: Boleh Uruskan Sendiri",
-    description: "Independent living: immigration paperwork, job hunting, tenancy disputes, school, money, and negotiation.",
+    description: "Canonical B1 Malay path: independent living, forms, job hunting, tenancy, school, money, and negotiation.",
     imageEmoji: "📘",
     accentColor: "#6366f1",
   },
   B2: {
-    code: "MRLC-MALAY-B2-V1",
+    code: "MRLC-MALAY-B2-V2",
     title: "Bahasa Malaysia B2: Fasih untuk Kerja",
-    description: "Confident, professional Malay: meetings, customer service, news, legal literacy, culture, and debate.",
+    description: "Canonical B2 Malay path: meetings, customer service, news, legal literacy, culture, and debate.",
     imageEmoji: "💼",
     accentColor: "#db2777",
   },
   C1: {
-    code: "MRLC-MALAY-C1-V1",
+    code: "MRLC-MALAY-C1-V2",
     title: "Bahasa Malaysia C1: Mahir",
-    description: "Advanced, academic Malay: leadership, complex debate, literature, formal writing, and a capstone mock exam.",
+    description: "Canonical C1 Malay path: leadership, complex debate, literature, formal writing, and a capstone mock exam.",
     imageEmoji: "🎓",
     accentColor: "#d97706",
   },
@@ -386,11 +386,7 @@ for (const [level, meta] of Object.entries(LEVEL_META)) {
     ...meta,
     language: "Malay",
     category: "Malay Courses",
-    // Draft/unpublished: the source package's own README calls for
-    // native-speaker review (register accuracy, drift into Indonesian
-    // forms) before this goes live to students. An admin can publish each
-    // course from the Language Quest course editor once reviewed.
-    published: false,
+    published: true,
     units: courseUnits,
   });
 }
@@ -429,5 +425,5 @@ if (badChallenges.length > 0) {
 await mkdir(path.dirname(outputPath), { recursive: true });
 await writeFile(outputPath, `${JSON.stringify(courses, null, 2)}\n`, "utf8");
 console.log(
-  `Generated ${courses.length} Malay CEFR courses with ${totalUnits} units, ${totalLessons} lessons, and ${totalChallenges} challenges (unpublished draft)`,
+  `Generated ${courses.length} canonical Malay CEFR courses with ${totalUnits} units, ${totalLessons} lessons, and ${totalChallenges} challenges`,
 );

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Brain, CheckCircle2, Clock3, Gift, Link2, Sparkles, Users, Zap } from 'lucide-react';
+import { Brain, CheckCircle2, Clock3, Gift, Link2, Sparkles, Target, Users, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -31,6 +31,7 @@ interface EngagementPayload {
   missions: LanguageQuestMissionProgress[];
   classroomChallenges: ClassroomChallenge[];
   masteryDueCount: number;
+  masteryWeakCount: number;
 }
 
 export function LanguageQuestEngagement({ onXpChanged }: { onXpChanged?: () => void }) {
@@ -84,6 +85,11 @@ export function LanguageQuestEngagement({ onXpChanged }: { onXpChanged?: () => v
             <Button variant="outline" className="rounded-xl" render={<Link to="/games/language-quest/mastery" />} nativeButton={false}>
               <Brain className="mr-2 h-4 w-4" /> Mastery {data.masteryDueCount > 0 ? `(${data.masteryDueCount})` : ''}
             </Button>
+            {data.masteryWeakCount > 0 && (
+              <Button variant="outline" className="rounded-xl border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 hover:text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200" render={<Link to="/games/language-quest/mastery?mode=weak" />} nativeButton={false}>
+                <Target className="mr-2 h-4 w-4" /> Weak Areas ({data.masteryWeakCount})
+              </Button>
+            )}
             {data.masteryDueCount > 0 && (
               <>
                 <Button className="rounded-xl bg-emerald-600 text-white hover:bg-emerald-700" render={<Link to="/games/language-quest/mastery?mode=chain" />} nativeButton={false}>

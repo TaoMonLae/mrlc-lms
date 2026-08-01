@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Brain, CheckCircle2, Clock3, Flame, Link2, RotateCcw, Sparkles, Star, Trophy, Volume2, Zap } from 'lucide-react';
+import { ArrowLeft, Brain, CheckCircle2, Clock3, Flame, Link2, RotateCcw, Sparkles, Star, Target, Trophy, Volume2, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ import { useLanguageQuestPreferences } from '@/src/components/games/LanguageQues
 import { playLanguageQuestSuccessSound } from '@/src/lib/languageQuestAudio';
 import { speakLanguageQuestVoice } from '@/src/lib/languageQuestVoice';
 import { LanguageQuestRewardReveal } from '@/src/components/games/LanguageQuestRewards';
+import type { LanguageQuestMasteryConfidence } from '@/shared/languageQuestEngagement';
 
 interface MasteryCard {
   challengeId: string;
@@ -30,14 +31,18 @@ interface MasteryCard {
     | 'DICTATION'
     | 'GRAMMAR_TRANSFORM';
   question: string;
+  accuracyPercent: number;
+  skillLabel: string;
   course: { id: string; title: string; language: string; accentColor: string };
   options: LanguageQuestOption[];
 }
 
 interface MasteryPayload {
   dueCount: number;
+  weakAreaCount: number;
   reviewsToday: number;
   chainTarget: number;
+  mode: 'due' | 'weak';
   cards: MasteryCard[];
 }
 
@@ -47,6 +52,8 @@ interface MasteryResult {
   correctAnswer: string;
   pointsAwarded: number;
   nextDueAt: string;
+  easeFactor: number;
+  intervalDays: number;
   profile?: LanguageQuestProfile;
   unlockedRewardIds?: string[];
 }
@@ -59,6 +66,12 @@ interface MasteryResult {
 // marked wrong against the spaced-repetition schedule.
 const LIGHTNING_SECONDS = 12;
 
+function masteryIntervalLabel(days: number): string {
+  if (days < 1) return `${Math.max(1, Math.round(days * 24))} hours`;
+  if (days < 2) return '1 day';
+  return `${Math.round(days)} days`;
+}
+
 export default function LanguageQuestMastery() {
   const { soundEnabled, reducedMotion, voiceProvider } = useLanguageQuestPreferences();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -69,6 +82,7 @@ export default function LanguageQuestMastery() {
   const [matchedPairs, setMatchedPairs] = useState<[string, string][]>([]);
   const [dictationAnswer, setDictationAnswer] = useState('');
   const [result, setResult] = useState<MasteryResult | null>(null);
+  const [confidence, setConfidence] = useState<LanguageQuestMasteryConfidence>('GOOD');
   const speak = (value: string, language: string) => {
     void speakLanguageQuestVoice(value, language, voiceProvider).then((outcome) => {
       if (outcome === 'unavailable') toast.info('Speech is not supported by this browser');
@@ -80,7 +94,8 @@ export default function LanguageQuestMastery() {
   const [revealOpen, setRevealOpen] = useState(false);
 
   const [lightningMode, setLightningMode] = useState(searchParams.get('mode') === 'lightning');
-  const [chainMode] = useState(searchParams.get('mode') === 'chain');
+  const chainMode = searchParams.get('mode') === 'chain';
+  const weakMode = searchParams.get('mode') === 'weak';
   const [reviewsToday, setReviewsToday] = useState(0);
   const [timeLeft, setTimeLeft] = useState(LIGHTNING_SECONDS);
   const [timedOut, setTimedOut] = useState(false);
@@ -90,7 +105,7 @@ export default function LanguageQuestMastery() {
   const usedLightning = useRef(false);
 
   const load = () => {
-    apiGet<MasteryPayload>('/api/language-quest/mastery')
+    apiGet<MasteryPayload>(weakMode ? '/api/language-quest/mastery?mode=weak' : '/api/language-quest/mastery')
       .then((data) => {
         setPayload(data);
         setReviewsToday(data.reviewsToday);
@@ -100,12 +115,13 @@ export default function LanguageQuestMastery() {
         setMatchedPairs([]);
         setDictationAnswer('');
         setResult(null);
+        setConfidence('GOOD');
         setTimedOut(false);
       })
       .catch((error: any) => toast.error(error?.message || 'Could not load mastery reviews'));
   };
 
-  useEffect(load, []);
+  useEffect(load, [weakMode]);
 
   // Daily Quest Chain is the same due-review deck, capped to just enough
   // cards to reach today's target -- it's about building a fast daily habit,
@@ -164,12 +180,12 @@ export default function LanguageQuestMastery() {
     setChecking(true);
     try {
       const body = isReorder
-        ? { orderedOptionIds: orderedIds }
+        ? { orderedOptionIds: orderedIds, confidence, mode: weakMode ? 'weak' : 'due' }
         : isMatching
-          ? { matchedPairs }
+          ? { matchedPairs, confidence, mode: weakMode ? 'weak' : 'due' }
           : isDictation
-            ? { typedAnswer: dictationAnswer }
-            : { optionId: selectedId };
+            ? { typedAnswer: dictationAnswer, confidence, mode: weakMode ? 'weak' : 'due' }
+            : { optionId: selectedId, confidence, mode: weakMode ? 'weak' : 'due' };
       const answer = await apiSend<MasteryResult>(
         `/api/language-quest/mastery/${card.challengeId}/answer`,
         'POST',
@@ -212,6 +228,7 @@ export default function LanguageQuestMastery() {
     setMatchedPairs([]);
     setDictationAnswer('');
     setResult(null);
+    setConfidence('GOOD');
     setTimedOut(false);
   };
 
@@ -235,18 +252,18 @@ export default function LanguageQuestMastery() {
         </div>
       </div>
 
-      <section className={`relative overflow-hidden rounded-3xl p-6 text-white shadow-xl transition-colors sm:p-8 ${chainMode ? 'bg-gradient-to-br from-emerald-600 via-teal-600 to-sky-700' : lightningMode ? 'bg-gradient-to-br from-orange-600 via-amber-600 to-rose-600' : 'bg-gradient-to-br from-fuchsia-700 via-violet-800 to-sky-700'}`}>
+      <section className={`relative overflow-hidden rounded-3xl p-6 text-white shadow-xl transition-colors sm:p-8 ${chainMode ? 'bg-gradient-to-br from-emerald-600 via-teal-600 to-sky-700' : weakMode ? 'bg-gradient-to-br from-rose-700 via-fuchsia-700 to-violet-800' : lightningMode ? 'bg-gradient-to-br from-orange-600 via-amber-600 to-rose-600' : 'bg-gradient-to-br from-fuchsia-700 via-violet-800 to-sky-700'}`}>
         <div className="absolute -right-12 -top-16 h-56 w-56 rounded-full bg-white/10" />
         <div className="relative flex flex-wrap items-center justify-between gap-5">
           <div className="flex items-center gap-4">
             <span className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-white/15">
-              {chainMode ? <Link2 className="h-8 w-8" /> : lightningMode ? <Zap className="h-8 w-8" /> : <Brain className="h-8 w-8" />}
+              {chainMode ? <Link2 className="h-8 w-8" /> : weakMode ? <Target className="h-8 w-8" /> : lightningMode ? <Zap className="h-8 w-8" /> : <Brain className="h-8 w-8" />}
             </span>
             <div>
               <p className="text-xs font-black uppercase tracking-[0.2em] text-white/70">Spaced repetition</p>
-              <h1 className="mt-1 text-3xl font-black">{chainMode ? 'Daily Chain' : lightningMode ? 'Lightning Round' : 'Mastery Arena'}</h1>
+              <h1 className="mt-1 text-3xl font-black">{chainMode ? 'Daily Chain' : weakMode ? 'Weak Areas' : lightningMode ? 'Lightning Round' : 'Mastery Arena'}</h1>
               <p className="mt-1 text-sm text-white/80">
-                {chainMode ? `A quick ${payload.chainTarget}-review habit -- no full deck, just today's chain.` : lightningMode ? 'Beat the clock on each card to build a combo and a speed bonus.' : 'Review at the right time to make each phrase stick.'}
+                {chainMode ? `A quick ${payload.chainTarget}-review habit -- no full deck, just today's chain.` : weakMode ? 'Practise the skills with your lowest recent accuracy, balanced across courses and activity types.' : lightningMode ? 'Beat the clock on each card to build a combo and a speed bonus.' : 'Review at the right time to make each phrase stick.'}
               </p>
             </div>
           </div>
@@ -254,6 +271,14 @@ export default function LanguageQuestMastery() {
             <div className="rounded-2xl bg-white/10 px-4 py-3 text-center">
               <p className="text-2xl font-black">{Math.min(reviewsToday, payload.chainTarget)}/{payload.chainTarget}</p>
               <p className="text-[11px] font-bold uppercase tracking-wide text-white/70">Today's chain</p>
+            </div>
+          ) : weakMode ? (
+            <div className="flex flex-col items-end gap-2">
+              <div className="rounded-2xl bg-white/10 px-4 py-3 text-center">
+                <p className="text-2xl font-black">{payload.weakAreaCount}</p>
+                <p className="text-[11px] font-bold uppercase tracking-wide text-white/70">Ready today</p>
+              </div>
+              <Button size="sm" variant="outline" className="border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white" render={<Link to="/games/language-quest/mastery" />} nativeButton={false}>Due reviews</Button>
             </div>
           ) : (
             <label className="flex cursor-pointer items-center gap-3 rounded-2xl bg-white/10 px-4 py-3">
@@ -269,13 +294,17 @@ export default function LanguageQuestMastery() {
         <section className="rounded-3xl border border-emerald-200 bg-emerald-50 p-10 text-center shadow-sm dark:border-emerald-500/20 dark:bg-emerald-950/20">
           <CheckCircle2 className="mx-auto h-14 w-14 text-emerald-500" />
           <h2 className="mt-3 text-2xl font-black text-slate-950 dark:text-white">
-            {chainMode ? (payload.cards.length === 0 ? 'No reviews due yet' : "Chain complete for today!") : 'Reviews complete'}
+            {chainMode ? (payload.cards.length === 0 ? 'No reviews due yet' : "Chain complete for today!") : weakMode ? (payload.cards.length === 0 ? 'No weak areas ready' : 'Weak-area practice complete') : 'Reviews complete'}
           </h2>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
             {chainMode
               ? (payload.cards.length === 0
                 ? 'Finish lessons to build your review deck, then come back for a daily chain.'
                 : `${Math.min(reviewsToday, payload.chainTarget)}/${payload.chainTarget} done today. Come back tomorrow for a fresh chain.`)
+              : weakMode
+                ? (payload.cards.length === 0
+                  ? 'Missed items will appear here after a review. Each weak card is offered once per day.'
+                  : 'You targeted the skills that needed the most attention. Return tomorrow for a refreshed queue.')
               : (sessionXp > 0 ? `You strengthened your memory and earned ${sessionXp} XP.` : 'Finish lessons to build your review deck, then return when cards are due.')}
           </p>
           {usedLightning.current && (lightningScore > 0 || bestCombo > 0) && (
@@ -296,9 +325,12 @@ export default function LanguageQuestMastery() {
         </section>
       ) : card && (
         <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-lg dark:border-slate-800 dark:bg-slate-900 sm:p-8">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
             <Badge style={{ borderColor: card.course.accentColor, color: card.course.accentColor }} variant="outline">{card.course.title}</Badge>
-            <span className="text-xs font-black text-slate-500">Review {index + 1}/{effectiveCards.length} • Strength {card.stage}</span>
+            <span className="text-left text-xs font-black text-slate-500 sm:text-right">
+              Review {index + 1}/{effectiveCards.length} • Strength {card.stage}
+              {weakMode && <span className="block text-rose-600 dark:text-rose-300">{card.skillLabel} · {card.accuracyPercent}% recent accuracy</span>}
+            </span>
           </div>
           <Progress value={((index + 1) / effectiveCards.length) * 100} className="mt-4" />
 
@@ -378,6 +410,33 @@ export default function LanguageQuestMastery() {
           </div>
           )}
 
+          {!lightningMode && !result && !timedOut && (
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-950/60">
+              <div>
+                <p className="text-sm font-black text-slate-900 dark:text-white">How did this recall feel?</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Your confidence fine-tunes when a correct card returns.</p>
+              </div>
+              <div className="grid grid-cols-3 gap-1 rounded-xl bg-white p-1 shadow-sm dark:bg-slate-900">
+                {([
+                  ['HARD', 'Still hard'],
+                  ['GOOD', 'Got it'],
+                  ['EASY', 'Easy now'],
+                ] as const).map(([value, label]) => (
+                  <Button
+                    key={value}
+                    type="button"
+                    size="sm"
+                    variant={confidence === value ? 'default' : 'ghost'}
+                    className={confidence === value ? 'bg-violet-700 text-white hover:bg-violet-800' : ''}
+                    onClick={() => setConfidence(value)}
+                  >
+                    {label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {timedOut && (
             <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-rose-900 dark:border-rose-500/25 dark:bg-rose-950/25 dark:text-rose-100">
               <p className="font-black">Too slow! This card stays in your deck for next time.</p>
@@ -385,8 +444,8 @@ export default function LanguageQuestMastery() {
           )}
           {result && (
             <div className={`mt-5 rounded-2xl border p-4 ${result.correct ? 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-500/25 dark:bg-emerald-950/25 dark:text-emerald-100' : 'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-500/25 dark:bg-amber-950/25 dark:text-amber-100'}`}>
-              <p className="font-black">{result.correct ? `Memory win! +${result.pointsAwarded} XP` : `Review again: ${result.correctAnswer}`}</p>
-              <p className="mt-1 text-xs opacity-80"><Clock3 className="mr-1 inline h-3.5 w-3.5" /> This card will return at the next helpful review time.</p>
+              <p className="font-black">{result.correct ? (result.pointsAwarded > 0 ? `Memory win! +${result.pointsAwarded} XP` : 'Weak area strengthened!') : `Review again: ${result.correctAnswer}`}</p>
+              <p className="mt-1 text-xs opacity-80"><Clock3 className="mr-1 inline h-3.5 w-3.5" /> Scheduled to return in about {masteryIntervalLabel(result.intervalDays)}.</p>
             </div>
           )}
 

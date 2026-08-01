@@ -390,7 +390,7 @@ async function drawCourseCertificate(ctx: CanvasRenderingContext2D, input: Achie
 
   drawSeal(ctx, 1192, 883, 68);
 
-  const mascot = await loadImage('/Icons/Owl School 13.svg');
+  const mascot = await loadImage('/icons/LanguageQuests_Graphics/Owl School 13.svg');
   if (mascot) {
     const bounds = opaqueBounds(mascot);
     drawContained(ctx, mascot, bounds, { x: 1330, y: 822, width: 145, height: 158 });

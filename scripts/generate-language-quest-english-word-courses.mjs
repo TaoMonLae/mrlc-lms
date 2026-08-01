@@ -12,9 +12,9 @@ const sourceCandidates = [
 
 const courseSpecs = [
   {
-    code: "MRLC-ENGLISH-WORDS-EVERYDAY-V1",
-    title: "Everyday English Word Quest",
-    description: "Build practical vocabulary for school, home, food, feelings, actions, and places.",
+    code: "MRLC-ENGLISH-WORDS-EVERYDAY-V2",
+    title: "Everyday English Word Quest A1–A2",
+    description: "Build practical A1–A2 vocabulary in definitions and real usage contexts for school, home, food, feelings, actions, and places.",
     imageEmoji: "💬",
     accentColor: "#2563eb",
     units: [
@@ -31,9 +31,9 @@ const courseSpecs = [
     ],
   },
   {
-    code: "MRLC-ENGLISH-WORDS-ACADEMIC-V1",
-    title: "Academic English Word Quest",
-    description: "Practise high-value words used in research, writing, science, mathematics, and society.",
+    code: "MRLC-ENGLISH-WORDS-ACADEMIC-V2",
+    title: "Academic English Word Quest B1–B2",
+    description: "Practise high-value B1–B2 words in definitions and real usage contexts from research, writing, science, mathematics, and society.",
     imageEmoji: "🎓",
     accentColor: "#7c3aed",
     units: [
@@ -50,9 +50,9 @@ const courseSpecs = [
     ],
   },
   {
-    code: "MRLC-ENGLISH-WORDS-POWER-V1",
-    title: "English Word Power",
-    description: "Strengthen advanced vocabulary for communication, problem-solving, change, and the wider world.",
+    code: "MRLC-ENGLISH-WORDS-POWER-V2",
+    title: "English Word Power C1",
+    description: "Strengthen C1 vocabulary through precise definitions and real usage contexts for communication, problem-solving, change, and the wider world.",
     imageEmoji: "⚡",
     accentColor: "#059669",
     units: [
@@ -144,6 +144,189 @@ const definitionOverrides = {
   valid: "based on sound reasoning or officially acceptable",
 };
 
+const usageExampleOverrides = {
+  teacher: "The teacher explained the new idea with a clear example.",
+  lesson: "Today's lesson introduces the water cycle.",
+  library: "We borrowed two science books from the library.",
+  pencil: "Use a pencil so you can correct your work easily.",
+  question: "Mina raised her hand to ask a question.",
+  answer: "Check your answer before submitting the worksheet.",
+  family: "Her family eats dinner together every Friday.",
+  child: "The child read the short story aloud.",
+  window: "Sunlight came through the classroom window.",
+  garden: "The students planted herbs in the school garden.",
+  breakfast: "A healthy breakfast can help learners concentrate.",
+  dinner: "We talked about our day during dinner.",
+  welcome: "The new student received a warm welcome.",
+  bread: "He made a sandwich with fresh bread.",
+  rice: "The family served vegetables with rice.",
+  water: "Remember to drink enough water after exercise.",
+  coffee: "The cafe also serves tea and coffee.",
+  hungry: "I felt hungry after the football match.",
+  delicious: "The vegetable soup smelled delicious.",
+  walk: "We walk to the library after lunch.",
+  speak: "Please speak clearly during your presentation.",
+  listen: "Listen carefully for the main idea.",
+  write: "Write your name at the top of the page.",
+  carry: "This bag can carry all of my school books.",
+  open: "Please open your book to page ten.",
+  close: "Close the door quietly when you leave.",
+  begin: "The assembly will begin at nine o'clock.",
+  finish: "Try to finish the activity before the bell.",
+  choose: "Choose the strongest evidence for your answer.",
+  happy: "The class felt happy about its progress.",
+  sad: "The ending of the story made him feel sad.",
+  angry: "She felt angry when the rule was applied unfairly.",
+  afraid: "He was afraid to speak until his partner encouraged him.",
+  tired: "After the long journey, everyone felt tired.",
+  calm: "She stayed calm and followed the safety instructions.",
+  proud: "The students were proud of their community project.",
+  kind: "It was kind of you to help the new learner.",
+  brave: "The brave student admitted the mistake and corrected it.",
+  market: "Farmers sell fresh produce at the weekend market.",
+  station: "The train arrived at the station on time.",
+  street: "Use the crossing when you walk across the street.",
+  bridge: "The bridge connects the village to the main road.",
+  village: "The small village has a school and a health clinic.",
+  ticket: "Keep your bus ticket until the end of the journey.",
+  analyze: "Students analyze the results before writing a conclusion.",
+  compare: "Compare the two articles and identify their similarities.",
+  contrast: "The essay will contrast city life with village life.",
+  evaluate: "Researchers evaluate whether the method produced reliable results.",
+  explain: "Use the diagram to explain how the machine works.",
+  interpret: "The class will interpret the information shown in the graph.",
+  observe: "Scientists observe the plant each day and record any changes.",
+  summarize: "Summarize the passage in three clear sentences.",
+  evidence: "The writer supports the claim with evidence from the text.",
+  research: "Their research examines how sleep affects learning.",
+  source: "Always check whether an online source is trustworthy.",
+  data: "The class organized its survey data in a table.",
+  result: "The final result matched the team's prediction.",
+  theory: "The evidence supports the theory presented in the article.",
+  survey: "The student council conducted a survey about school lunches.",
+  sample: "The laboratory tested a small sample of river water.",
+  conclusion: "The conclusion explains what the experiment demonstrated.",
+  argument: "A strong argument includes reasons and supporting evidence.",
+  sentence: "Each sentence should express a complete idea.",
+  context: "The surrounding paragraph provides context for the unfamiliar word.",
+  quotation: "Use a short quotation to support your interpretation.",
+  reference: "The report includes a reference for every borrowed idea.",
+  revise: "Writers revise their drafts to make the meaning clearer.",
+  draft: "Her first draft contained several ideas to develop.",
+  vocabulary: "Reading widely can expand your academic vocabulary.",
+  energy: "Solar panels convert sunlight into energy.",
+  matter: "All matter has mass and occupies space.",
+  element: "Oxygen is an element found in air and water.",
+  organism: "Each organism depends on its environment to survive.",
+  climate: "The region's climate is warm and humid throughout the year.",
+  environment: "Recycling can reduce harm to the environment.",
+  experiment: "The experiment tests how light affects plant growth.",
+  variable: "The scientist changed one variable at a time.",
+  measure: "Use a ruler to measure the length of the leaf.",
+  process: "Photosynthesis is the process plants use to make food.",
+  decimal: "Write one half as the decimal 0.5.",
+  average: "The average of four, six, and eight is six.",
+  estimate: "Make an estimate before calculating the exact total.",
+  sequence: "Place the events in the correct sequence.",
+  pattern: "The number pattern increases by three each time.",
+  culture: "Food, language, and art are important parts of culture.",
+  community: "The community worked together to clean the park.",
+  economy: "Small businesses contribute to the local economy.",
+  government: "The government introduced a new education policy.",
+  population: "The town's population has grown over the last decade.",
+  history: "The museum preserves objects from local history.",
+  adaptable: "An adaptable learner can use different study strategies.",
+  ambitious: "The class set an ambitious goal for its reading challenge.",
+  confident: "Practice helped her feel confident during the presentation.",
+  curious: "A curious student asks questions and explores new ideas.",
+  diligent: "His diligent research uncovered several useful sources.",
+  generous: "The generous volunteers shared their time and skills.",
+  honest: "Give an honest account of what happened.",
+  patient: "The tutor remained patient while the learner tried again.",
+  reliable: "A reliable source provides accurate, verifiable information.",
+  resilient: "The resilient team recovered from its early setback.",
+  articulate: "Her articulate response communicated a complex idea clearly.",
+  clarify: "Ask a follow-up question to clarify the instructions.",
+  concise: "A concise summary includes only the most important points.",
+  persuade: "The campaign aims to persuade students to save water.",
+  translate: "Can you translate this short message into English?",
+  adapt: "The group will adapt its plan after reviewing the feedback.",
+  develop: "Students develop stronger arguments through careful revision.",
+  emerge: "New themes emerge as the class examines the interviews.",
+  expand: "Add evidence to expand the second paragraph.",
+  reduce: "Turning off unused lights can reduce energy consumption.",
+  transform: "Heat can transform ice into liquid water.",
+  transition: "A linking phrase creates a smooth transition between ideas.",
+  complex: "The team divided the complex problem into smaller steps.",
+  conflict: "The mediator helped both sides resolve the conflict.",
+  consequence: "Soil erosion can be a consequence of removing too many trees.",
+  obstacle: "Limited transport was an obstacle to attending the event.",
+  pressure: "The container cracked when the internal pressure became too high.",
+  priority: "Student safety is the school's highest priority.",
+  solution: "The group tested more than one solution to the problem.",
+  succeed: "Teams succeed when members communicate and share responsibility.",
+  urgent: "The broken water pipe required urgent attention.",
+  accurate: "The report must include accurate measurements.",
+  approximate: "The map shows the approximate location of the campsite.",
+  consistent: "Her results were consistent across all three trials.",
+  distinct: "The two materials have distinct properties.",
+  efficient: "The new system is more efficient and uses less energy.",
+  essential: "Clean water is essential for human health.",
+  flexible: "A flexible schedule can accommodate unexpected changes.",
+  significant: "The study found a significant improvement in attendance.",
+  specific: "Use a specific example to support your claim.",
+  valid: "The conclusion is valid because it follows from the evidence.",
+  global: "Climate change is a global challenge.",
+  technology: "Assistive technology can make learning more accessible.",
+  urban: "The city created more green spaces in urban neighborhoods.",
+  welfare: "The organization protects the welfare of children and families.",
+  student: "The student asked a thoughtful question during the lesson.",
+  classroom: "The classroom became quiet when the lesson began.",
+  homework: "I finished my homework before dinner.",
+  notebook: "She recorded each new word in her notebook.",
+  parent: "A parent signed the school permission form.",
+  kitchen: "We prepared breakfast together in the kitchen.",
+  bedroom: "He opened the bedroom window to let in fresh air.",
+  apple: "She packed an apple for her morning snack.",
+  banana: "The banana was ripe and sweet.",
+  vegetable: "Carrots are the vegetable in today's soup.",
+  recipe: "The recipe explains how to prepare the dish step by step.",
+  excited: "The students felt excited about the class trip.",
+  hospital: "The ambulance carried the patient to the hospital.",
+  airport: "We arrived at the airport two hours before the flight.",
+  restaurant: "The family reserved a table at the restaurant.",
+  journey: "Their long journey ended safely at the village.",
+  infer: "Readers infer the character's feelings from clues in the story.",
+  predict: "Scientists predict tomorrow's weather using current data.",
+  method: "The researcher explained the method used in the experiment.",
+  paragraph: "Each paragraph should develop one clear main idea.",
+  grammar: "Careful grammar makes formal writing easier to understand.",
+  equation: "Solve the equation to find the unknown value.",
+  fraction: "One half is a fraction that represents one of two equal parts.",
+  ratio: "The ratio of blue cards to red cards is two to one.",
+  geometry: "In geometry, students study shapes, angles, and space.",
+  calculate: "Use the measurements to calculate the area of the room.",
+  justice: "The court aims to deliver justice fairly.",
+  migration: "Seasonal migration brings the birds back each spring.",
+  tradition: "Sharing this meal is an important family tradition.",
+  citizen: "Every citizen has both rights and responsibilities.",
+  collaborate: "The two classes collaborate on a community garden project.",
+  debate: "Students debate whether the proposed solution is fair.",
+  describe: "Please describe what you observed during the experiment.",
+  discuss: "The group will discuss the evidence before making a decision.",
+  respond: "Please respond to the question with a complete sentence.",
+  accelerate: "New tools can accelerate the research process.",
+  improve: "Regular feedback can improve the quality of a first draft.",
+  innovate: "Engineers innovate when existing solutions no longer work.",
+  strategy: "The team developed a strategy for completing the project on time.",
+  ecosystem: "A healthy wetland ecosystem supports many species.",
+  conservation: "Water conservation helps communities prepare for dry seasons.",
+  democracy: "In a democracy, citizens choose representatives through elections.",
+  equality: "The policy promotes equality by giving every learner the same opportunity.",
+  infrastructure: "Reliable transport infrastructure connects rural communities to cities.",
+  sustainable: "The school chose a sustainable design that uses less energy.",
+};
+
 const wordpos = new WordPOS({ stopwords: false });
 
 function lookup(word) {
@@ -171,6 +354,31 @@ function chooseDefinition(word, rows) {
   return candidates[0].definition.replace(/[.;]+$/, "");
 }
 
+function normalizeExample(value) {
+  const compact = value.replace(/_/g, " ").replace(/\s+/g, " ").trim();
+  const sentence = `${compact.charAt(0).toUpperCase()}${compact.slice(1)}`;
+  return /[.!?]$/.test(sentence) ? sentence : `${sentence}.`;
+}
+
+function chooseUsageExample(word, rows) {
+  if (usageExampleOverrides[word]) return usageExampleOverrides[word];
+  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const wordPattern = new RegExp(`\\b${escaped}\\b`, "i");
+  const candidates = (rows || [])
+    .flatMap((row) => Array.isArray(row?.exp) ? row.exp : [])
+    .filter((example) => typeof example === "string" && wordPattern.test(example))
+    .map(normalizeExample)
+    .filter((example) => example.length >= 12 && example.length <= 180)
+    .sort((left, right) => Math.abs(left.length - 72) - Math.abs(right.length - 72));
+  if (!candidates.length) throw new Error(`WordNet has no usage example for “${word}”; add a curated override`);
+  return candidates[0];
+}
+
+function blankUsageExample(word, example) {
+  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return example.replace(new RegExp(`\\b${escaped}\\b`, "i"), "_____");
+}
+
 async function findSourceWords() {
   for (const candidate of sourceCandidates) {
     try {
@@ -194,7 +402,12 @@ if (source) {
 }
 
 const definitions = new Map();
-await Promise.all(selectedWords.map(async (word) => definitions.set(word, chooseDefinition(word, await lookup(word)))));
+const usageExamples = new Map();
+await Promise.all(selectedWords.map(async (word) => {
+  const rows = await lookup(word);
+  definitions.set(word, chooseDefinition(word, rows));
+  usageExamples.set(word, chooseUsageExample(word, rows));
+}));
 
 function createChallenge(words, word, index) {
   const distractors = [];
@@ -204,9 +417,21 @@ function createChallenge(words, word, index) {
   }
   const options = distractors.map((text) => ({ text, correct: false, emoji: null, audioText: text }));
   options.splice(index % 3, 0, { text: word, correct: true, emoji: null, audioText: word });
+  const definition = definitions.get(word);
+  const usageExample = usageExamples.get(word);
+  const explanation = `“${word}” means ${definition}. Example: ${usageExample}`;
+  if (index % 3 === 0) {
+    return {
+      type: "SELECT",
+      question: `Which word means “${definition}”?`,
+      explanation,
+      options,
+    };
+  }
   return {
-    type: index % 4 === 3 ? "ASSIST" : "SELECT",
-    question: `Which word means “${definitions.get(word)}”?`,
+    type: index % 3 === 1 ? "CLOZE" : "GRAMMAR_TRANSFORM",
+    question: `${index % 3 === 1 ? "Complete" : "Choose the most precise word for"} this sentence: “${blankUsageExample(word, usageExample)}”`,
+    explanation,
     options,
   };
 }
@@ -224,7 +449,7 @@ const courses = courseSpecs.map((course) => ({
     description,
     lessons: lessons.map(([lessonTitle, words]) => ({
       title: lessonTitle,
-      description: `Learn ${words.length} English words through definitions, choices, and speech.`,
+      description: `Learn ${words.length} English words through definitions, sentence context, and precise usage.`,
       challenges: words.map((word, index) => createChallenge(words, word, index)),
     })),
   })),
@@ -236,6 +461,12 @@ if (courses.length !== 3 || selectedWords.length !== 180 || challenges.length !=
 }
 if (challenges.some((challenge) => challenge.options.length !== 3 || challenge.options.filter((option) => option.correct).length !== 1)) {
   throw new Error("Every generated word challenge must have three choices and exactly one answer");
+}
+if (challenges.filter((challenge) => challenge.type !== "SELECT").length !== 108) {
+  throw new Error("Expected 108 of the 180 English word challenges to use sentence context");
+}
+if (challenges.some((challenge) => !challenge.explanation || challenge.question.includes("undefined"))) {
+  throw new Error("Every generated English word challenge must include a valid teaching explanation");
 }
 
 await mkdir(path.dirname(outputPath), { recursive: true });
