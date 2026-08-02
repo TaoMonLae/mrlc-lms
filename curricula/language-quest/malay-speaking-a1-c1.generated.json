@@ -14,7 +14,7 @@
       "lessons": [
         {
           "title": "Vocabulary Sprint",
-          "description": "Learn ten high-frequency words or expressions. Listen to every option and repeat the correct answer twice.",
+          "description": "Learn ten high-frequency words or expressions, listen and repeat, then complete an ordering, odd-one-out, and matching review.",
           "challenges": [
             {
               "type": "SELECT",
@@ -255,6 +255,121 @@
                   "audioText": "selamat pagi"
                 }
               ]
+            },
+            {
+              "type": "REORDER",
+              "question": "Put this Malay sentence back in the correct order.",
+              "options": [
+                {
+                  "text": "Saya",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "Saya"
+                },
+                {
+                  "text": "bukan",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "bukan"
+                },
+                {
+                  "text": "orang",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "orang"
+                },
+                {
+                  "text": "Malaysia.",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "Malaysia."
+                }
+              ]
+            },
+            {
+              "type": "ODD_ONE_OUT",
+              "question": "Which Malay word or phrase does not belong with the others?",
+              "explanation": "“keluarga” is from a different unit; the rest of this set is “hai”, “selamat pagi”, “selamat tengah hari”.",
+              "options": [
+                {
+                  "text": "keluarga",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "keluarga"
+                },
+                {
+                  "text": "hai",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "hai"
+                },
+                {
+                  "text": "selamat pagi",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "selamat pagi"
+                },
+                {
+                  "text": "selamat tengah hari",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "selamat tengah hari"
+                }
+              ]
+            },
+            {
+              "type": "MATCHING",
+              "question": "Match each Malay word or phrase to its English meaning.",
+              "options": [
+                {
+                  "text": "hai",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "hai"
+                },
+                {
+                  "text": "hello",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "hello"
+                },
+                {
+                  "text": "selamat pagi",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "selamat pagi"
+                },
+                {
+                  "text": "good morning",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "good morning"
+                },
+                {
+                  "text": "selamat tengah hari",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "selamat tengah hari"
+                },
+                {
+                  "text": "good afternoon",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "good afternoon"
+                },
+                {
+                  "text": "selamat petang",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "selamat petang"
+                },
+                {
+                  "text": "good evening",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "good evening"
+                }
+              ]
             }
           ]
         },
@@ -287,7 +402,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nIntroduce yourself as Amina.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -311,7 +426,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "SPEAKING SCENARIO\nAsk how someone is.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -335,7 +450,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nSay that you are well and thank the person.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -431,7 +546,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nPolitely ask someone to repeat.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -485,7 +600,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "COMPLETE THE DIALOGUE\nA: Nama awak siapa?\nB: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -509,7 +624,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "COMPLETE THE DIALOGUE\nA: Awak dari mana?\nB: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -533,7 +648,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "COMPLETE THE DIALOGUE\nA: Gembira berkenalan dengan awak.\nB: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -608,7 +723,7 @@
         },
         {
           "title": "Sentence Workshop",
-          "description": "Strengthen grammar, word order, register, and sentence-building through spoken translation practice.",
+          "description": "Strengthen grammar, word order, register, and sentence-building through spoken translation, completion, and grammar practice.",
           "challenges": [
             {
               "type": "SELECT",
@@ -635,7 +750,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Are you a teacher?”\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -659,8 +774,8 @@
               ]
             },
             {
-              "type": "ASSIST",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “This is my friend.”\nChoose the best Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “This is my friend.”\nChoose the grammatically correct Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Saya bukan orang Malaysia.",
@@ -683,8 +798,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “What is her name?”\nChoose the best Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “What is her name?”\nComplete the exchange with the correct Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Nama dia siapa?",
@@ -755,8 +870,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “We are students.”\nChoose the best Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “We are students.”\nChoose the grammatically correct Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Kami pelajar.",
@@ -779,8 +894,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Thank you very much.”\nChoose the best Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Thank you very much.”\nComplete the exchange with the correct Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Nama saya Ali.",
@@ -812,7 +927,7 @@
       "lessons": [
         {
           "title": "Vocabulary Sprint",
-          "description": "Learn ten high-frequency words or expressions. Listen to every option and repeat the correct answer twice.",
+          "description": "Learn ten high-frequency words or expressions, listen and repeat, then complete an ordering, odd-one-out, and matching review.",
           "challenges": [
             {
               "type": "SELECT",
@@ -1053,6 +1168,133 @@
                   "audioText": "ibu"
                 }
               ]
+            },
+            {
+              "type": "REORDER",
+              "question": "Put this Malay sentence back in the correct order.",
+              "options": [
+                {
+                  "text": "Kami",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "Kami"
+                },
+                {
+                  "text": "melawat",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "melawat"
+                },
+                {
+                  "text": "keluarga",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "keluarga"
+                },
+                {
+                  "text": "pada",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "pada"
+                },
+                {
+                  "text": "hari",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "hari"
+                },
+                {
+                  "text": "Ahad.",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "Ahad."
+                }
+              ]
+            },
+            {
+              "type": "ODD_ONE_OUT",
+              "question": "Which Malay word or phrase does not belong with the others?",
+              "explanation": "“nasi” is from a different unit; the rest of this set is “keluarga”, “ibu”, “bapa”.",
+              "options": [
+                {
+                  "text": "nasi",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "nasi"
+                },
+                {
+                  "text": "keluarga",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "keluarga"
+                },
+                {
+                  "text": "ibu",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "ibu"
+                },
+                {
+                  "text": "bapa",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "bapa"
+                }
+              ]
+            },
+            {
+              "type": "MATCHING",
+              "question": "Match each Malay word or phrase to its English meaning.",
+              "options": [
+                {
+                  "text": "keluarga",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "keluarga"
+                },
+                {
+                  "text": "family",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "family"
+                },
+                {
+                  "text": "ibu",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "ibu"
+                },
+                {
+                  "text": "mother",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "mother"
+                },
+                {
+                  "text": "bapa",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "bapa"
+                },
+                {
+                  "text": "father",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "father"
+                },
+                {
+                  "text": "adik",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "adik"
+                },
+                {
+                  "text": "younger sibling",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "younger sibling"
+                }
+              ]
             }
           ]
         },
@@ -1085,7 +1327,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nSay that you live with your parents.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -1109,7 +1351,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "SPEAKING SCENARIO\nSay that you eat breakfast before work.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -1133,7 +1375,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nSay that you go to class every day.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -1229,7 +1471,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nSay that you usually sleep early.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -1283,7 +1525,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "COMPLETE THE DIALOGUE\nA: Awak tinggal dengan siapa?\nB: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -1307,7 +1549,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "COMPLETE THE DIALOGUE\nA: Hari ini hari apa?\nB: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -1331,7 +1573,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "COMPLETE THE DIALOGUE\nA: Awak bekerja pada hari Sabtu?\nB: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -1406,7 +1648,7 @@
         },
         {
           "title": "Sentence Workshop",
-          "description": "Strengthen grammar, word order, register, and sentence-building through spoken translation practice.",
+          "description": "Strengthen grammar, word order, register, and sentence-building through spoken translation, completion, and grammar practice.",
           "challenges": [
             {
               "type": "SELECT",
@@ -1433,7 +1675,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SENTENCE PRACTICE\nChoose the Malay phrase for “my younger sibling.”\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -1457,8 +1699,8 @@
               ]
             },
             {
-              "type": "ASSIST",
-              "question": "SENTENCE PRACTICE\nChoose the Malay phrase for “before dinner.”\nChoose the best Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the Malay phrase for “before dinner.”\nChoose the grammatically correct Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "pada pukul lapan",
@@ -1481,8 +1723,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the Malay phrase for “after work.”\nChoose the best Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the Malay phrase for “after work.”\nComplete the exchange with the correct Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "selepas kerja",
@@ -1553,8 +1795,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “I usually cook at home.”\nChoose the best Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “I usually cook at home.”\nChoose the grammatically correct Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Saya biasanya memasak di rumah.",
@@ -1577,8 +1819,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “We visit our family on Sunday.”\nChoose the best Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “We visit our family on Sunday.”\nComplete the exchange with the correct Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "setiap pagi",
@@ -1610,7 +1852,7 @@
       "lessons": [
         {
           "title": "Vocabulary Sprint",
-          "description": "Learn ten high-frequency words or expressions. Listen to every option and repeat the correct answer twice.",
+          "description": "Learn ten high-frequency words or expressions, listen and repeat, then complete an ordering, odd-one-out, and matching review.",
           "challenges": [
             {
               "type": "SELECT",
@@ -1851,6 +2093,127 @@
                   "audioText": "air"
                 }
               ]
+            },
+            {
+              "type": "REORDER",
+              "question": "Put this Malay sentence back in the correct order.",
+              "options": [
+                {
+                  "text": "Saya",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "Saya"
+                },
+                {
+                  "text": "alah",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "alah"
+                },
+                {
+                  "text": "kepada",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "kepada"
+                },
+                {
+                  "text": "kacang",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "kacang"
+                },
+                {
+                  "text": "tanah.",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "tanah."
+                }
+              ]
+            },
+            {
+              "type": "ODD_ONE_OUT",
+              "question": "Which Malay word or phrase does not belong with the others?",
+              "explanation": "“harga” is from a different unit; the rest of this set is “nasi”, “air”, “ayam”.",
+              "options": [
+                {
+                  "text": "harga",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "harga"
+                },
+                {
+                  "text": "nasi",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "nasi"
+                },
+                {
+                  "text": "air",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "air"
+                },
+                {
+                  "text": "ayam",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "ayam"
+                }
+              ]
+            },
+            {
+              "type": "MATCHING",
+              "question": "Match each Malay word or phrase to its English meaning.",
+              "options": [
+                {
+                  "text": "nasi",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "nasi"
+                },
+                {
+                  "text": "rice",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "rice"
+                },
+                {
+                  "text": "air",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "air"
+                },
+                {
+                  "text": "water / drink",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "water / drink"
+                },
+                {
+                  "text": "ayam",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "ayam"
+                },
+                {
+                  "text": "chicken",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "chicken"
+                },
+                {
+                  "text": "ikan",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "ikan"
+                },
+                {
+                  "text": "fish",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "fish"
+                }
+              ]
             }
           ]
         },
@@ -1883,7 +2246,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nOrder chicken rice and water.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -1907,7 +2270,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "SPEAKING SCENARIO\nAsk for the food not to be too spicy.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -1931,7 +2294,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nSay that you do not eat meat.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -2027,7 +2390,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nAsk how much the total is.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -2081,7 +2444,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "COMPLETE THE DIALOGUE\nPelayan: Mahu pedas?\nPelanggan: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -2105,7 +2468,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "COMPLETE THE DIALOGUE\nPelanggan: Ada makanan vegetarian?\nPelayan: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -2129,7 +2492,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "COMPLETE THE DIALOGUE\nPelayan: Makan di sini atau bungkus?\nPelanggan: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -2204,7 +2567,7 @@
         },
         {
           "title": "Sentence Workshop",
-          "description": "Strengthen grammar, word order, register, and sentence-building through spoken translation practice.",
+          "description": "Strengthen grammar, word order, register, and sentence-building through spoken translation, completion, and grammar practice.",
           "challenges": [
             {
               "type": "SELECT",
@@ -2231,7 +2594,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SENTENCE PRACTICE\nChoose the best phrase for “a plate of rice.”\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -2255,8 +2618,8 @@
               ]
             },
             {
-              "type": "ASSIST",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “I would like less sugar.”\nChoose the best Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “I would like less sugar.”\nChoose the grammatically correct Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Ada makanan halal?",
@@ -2279,8 +2642,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “This soup is too salty.”\nChoose the best Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “This soup is too salty.”\nComplete the exchange with the correct Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Sup ini terlalu masin.",
@@ -2351,8 +2714,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “The food is delicious.”\nChoose the best Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “The food is delicious.”\nChoose the grammatically correct Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Makanan ini sedap.",
@@ -2375,8 +2738,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Please bring two spoons.”\nChoose the best Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Please bring two spoons.”\nComplete the exchange with the correct Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "segelas air",
@@ -2408,7 +2771,7 @@
       "lessons": [
         {
           "title": "Vocabulary Sprint",
-          "description": "Learn ten high-frequency words or expressions. Listen to every option and repeat the correct answer twice.",
+          "description": "Learn ten high-frequency words or expressions, listen and repeat, then complete an ordering, odd-one-out, and matching review.",
           "challenges": [
             {
               "type": "SELECT",
@@ -2649,6 +3012,133 @@
                   "audioText": "murah"
                 }
               ]
+            },
+            {
+              "type": "REORDER",
+              "question": "Put this Malay sentence back in the correct order.",
+              "options": [
+                {
+                  "text": "Saya",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "Saya"
+                },
+                {
+                  "text": "perlukan",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "perlukan"
+                },
+                {
+                  "text": "saiz",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "saiz"
+                },
+                {
+                  "text": "yang",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "yang"
+                },
+                {
+                  "text": "lebih",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "lebih"
+                },
+                {
+                  "text": "kecil.",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "kecil."
+                }
+              ]
+            },
+            {
+              "type": "ODD_ONE_OUT",
+              "question": "Which Malay word or phrase does not belong with the others?",
+              "explanation": "“bas” is from a different unit; the rest of this set is “harga”, “murah”, “mahal”.",
+              "options": [
+                {
+                  "text": "bas",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "bas"
+                },
+                {
+                  "text": "harga",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "harga"
+                },
+                {
+                  "text": "murah",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "murah"
+                },
+                {
+                  "text": "mahal",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "mahal"
+                }
+              ]
+            },
+            {
+              "type": "MATCHING",
+              "question": "Match each Malay word or phrase to its English meaning.",
+              "options": [
+                {
+                  "text": "harga",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "harga"
+                },
+                {
+                  "text": "price",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "price"
+                },
+                {
+                  "text": "murah",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "murah"
+                },
+                {
+                  "text": "cheap",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "cheap"
+                },
+                {
+                  "text": "mahal",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "mahal"
+                },
+                {
+                  "text": "expensive",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "expensive"
+                },
+                {
+                  "text": "tunai",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "tunai"
+                },
+                {
+                  "text": "cash",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "cash"
+                }
+              ]
             }
           ]
         },
@@ -2681,7 +3171,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nPolitely ask whether the price can be reduced.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -2705,7 +3195,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "SPEAKING SCENARIO\nSay that you are only looking.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -2729,7 +3219,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nAsk for a larger size.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -2825,7 +3315,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nTell someone to go straight and then turn right.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -2879,7 +3369,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "COMPLETE THE DIALOGUE\nPelanggan: Ada saiz yang lebih kecil?\nPenjual: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -2903,7 +3393,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "COMPLETE THE DIALOGUE\nPenjual: Bayar tunai atau kad?\nPelanggan: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -2927,7 +3417,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "COMPLETE THE DIALOGUE\nPelanggan: Boleh saya dapatkan resit?\nPenjual: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -3002,7 +3492,7 @@
         },
         {
           "title": "Sentence Workshop",
-          "description": "Strengthen grammar, word order, register, and sentence-building through spoken translation practice.",
+          "description": "Strengthen grammar, word order, register, and sentence-building through spoken translation, completion, and grammar practice.",
           "challenges": [
             {
               "type": "SELECT",
@@ -3029,7 +3519,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SENTENCE PRACTICE\nChoose the Malay phrase for “that shop.”\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -3053,8 +3543,8 @@
               ]
             },
             {
-              "type": "ASSIST",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “This one is cheaper.”\nChoose the best Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “This one is cheaper.”\nChoose the grammatically correct Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Farmasi di sebelah bank.",
@@ -3077,8 +3567,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “I need a smaller size.”\nChoose the best Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “I need a smaller size.”\nComplete the exchange with the correct Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Saya perlukan saiz yang lebih kecil.",
@@ -3149,8 +3639,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “The market is opposite the school.”\nChoose the best Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “The market is opposite the school.”\nChoose the grammatically correct Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Pasar terletak bertentangan dengan sekolah.",
@@ -3173,8 +3663,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Can I exchange this item?”\nChoose the best Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Can I exchange this item?”\nComplete the exchange with the correct Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "baju ini",
@@ -3206,7 +3696,7 @@
       "lessons": [
         {
           "title": "Vocabulary Sprint",
-          "description": "Learn ten high-frequency words or expressions. Listen to every option and repeat the correct answer twice.",
+          "description": "Learn ten high-frequency words or expressions, listen and repeat, then complete an ordering, odd-one-out, and matching review.",
           "challenges": [
             {
               "type": "SELECT",
@@ -3447,6 +3937,133 @@
                   "audioText": "kereta api"
                 }
               ]
+            },
+            {
+              "type": "REORDER",
+              "question": "Put this Malay sentence back in the correct order.",
+              "options": [
+                {
+                  "text": "Boleh",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "Boleh"
+                },
+                {
+                  "text": "tolong",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "tolong"
+                },
+                {
+                  "text": "panggilkan",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "panggilkan"
+                },
+                {
+                  "text": "teksi",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "teksi"
+                },
+                {
+                  "text": "untuk",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "untuk"
+                },
+                {
+                  "text": "saya?",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "saya?"
+                }
+              ]
+            },
+            {
+              "type": "ODD_ONE_OUT",
+              "question": "Which Malay word or phrase does not belong with the others?",
+              "explanation": "“sakit” is from a different unit; the rest of this set is “bas”, “kereta api”, “teksi”.",
+              "options": [
+                {
+                  "text": "sakit",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "sakit"
+                },
+                {
+                  "text": "bas",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "bas"
+                },
+                {
+                  "text": "kereta api",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "kereta api"
+                },
+                {
+                  "text": "teksi",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "teksi"
+                }
+              ]
+            },
+            {
+              "type": "MATCHING",
+              "question": "Match each Malay word or phrase to its English meaning.",
+              "options": [
+                {
+                  "text": "bas",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "bas"
+                },
+                {
+                  "text": "bus",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "bus"
+                },
+                {
+                  "text": "kereta api",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "kereta api"
+                },
+                {
+                  "text": "train",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "train"
+                },
+                {
+                  "text": "teksi",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "teksi"
+                },
+                {
+                  "text": "taxi",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "taxi"
+                },
+                {
+                  "text": "tiket",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "tiket"
+                },
+                {
+                  "text": "ticket",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "ticket"
+                }
+              ]
             }
           ]
         },
@@ -3479,7 +4096,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nAsk what time the train departs.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -3503,7 +4120,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "SPEAKING SCENARIO\nAsk which platform to use.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -3527,7 +4144,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nAsk a taxi driver to take you to the hotel.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -3623,7 +4240,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nSay that the bus is thirty minutes late.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -3677,7 +4294,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "COMPLETE THE DIALOGUE\nPenumpang: Di platform mana?\nPetugas: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -3701,7 +4318,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "COMPLETE THE DIALOGUE\nPemandu: Mahu pergi ke mana?\nPenumpang: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -3725,7 +4342,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "COMPLETE THE DIALOGUE\nPenyambut tetamu: Ada tempahan?\nTetamu: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -3800,7 +4417,7 @@
         },
         {
           "title": "Sentence Workshop",
-          "description": "Strengthen grammar, word order, register, and sentence-building through spoken translation practice.",
+          "description": "Strengthen grammar, word order, register, and sentence-building through spoken translation, completion, and grammar practice.",
           "challenges": [
             {
               "type": "SELECT",
@@ -3827,7 +4444,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “The train has not arrived yet.”\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -3851,8 +4468,8 @@
               ]
             },
             {
-              "type": "ASSIST",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “We will leave tomorrow morning.”\nChoose the best Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “We will leave tomorrow morning.”\nChoose the grammatically correct Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Adakah sarapan termasuk?",
@@ -3875,8 +4492,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “How long is the journey?”\nChoose the best Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “How long is the journey?”\nComplete the exchange with the correct Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Berapa lama perjalanan ini?",
@@ -3947,8 +4564,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Could you call a taxi for me?”\nChoose the best Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Could you call a taxi for me?”\nChoose the grammatically correct Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Boleh tolong panggilkan teksi untuk saya?",
@@ -3971,8 +4588,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “My flight was cancelled.”\nChoose the best Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “My flight was cancelled.”\nComplete the exchange with the correct Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Saya sudah membeli tiket.",
@@ -4004,7 +4621,7 @@
       "lessons": [
         {
           "title": "Vocabulary Sprint",
-          "description": "Learn ten high-frequency words or expressions. Listen to every option and repeat the correct answer twice.",
+          "description": "Learn ten high-frequency words or expressions, listen and repeat, then complete an ordering, odd-one-out, and matching review.",
           "challenges": [
             {
               "type": "SELECT",
@@ -4245,6 +4862,133 @@
                   "audioText": "demam"
                 }
               ]
+            },
+            {
+              "type": "REORDER",
+              "question": "Put this Malay sentence back in the correct order.",
+              "options": [
+                {
+                  "text": "Ambil",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "Ambil"
+                },
+                {
+                  "text": "satu",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "satu"
+                },
+                {
+                  "text": "tablet",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "tablet"
+                },
+                {
+                  "text": "setiap",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "setiap"
+                },
+                {
+                  "text": "lapan",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "lapan"
+                },
+                {
+                  "text": "jam.",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "jam."
+                }
+              ]
+            },
+            {
+              "type": "ODD_ONE_OUT",
+              "question": "Which Malay word or phrase does not belong with the others?",
+              "explanation": "“kelas” is from a different unit; the rest of this set is “sakit”, “demam”, “batuk”.",
+              "options": [
+                {
+                  "text": "kelas",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "kelas"
+                },
+                {
+                  "text": "sakit",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "sakit"
+                },
+                {
+                  "text": "demam",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "demam"
+                },
+                {
+                  "text": "batuk",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "batuk"
+                }
+              ]
+            },
+            {
+              "type": "MATCHING",
+              "question": "Match each Malay word or phrase to its English meaning.",
+              "options": [
+                {
+                  "text": "sakit",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "sakit"
+                },
+                {
+                  "text": "sick / painful",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "sick / painful"
+                },
+                {
+                  "text": "demam",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "demam"
+                },
+                {
+                  "text": "fever",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "fever"
+                },
+                {
+                  "text": "batuk",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "batuk"
+                },
+                {
+                  "text": "cough",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "cough"
+                },
+                {
+                  "text": "pening",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "pening"
+                },
+                {
+                  "text": "dizzy",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "dizzy"
+                }
+              ]
             }
           ]
         },
@@ -4277,7 +5021,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nSay that you have had a fever since yesterday.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -4301,7 +5045,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "SPEAKING SCENARIO\nSay that you are allergic to penicillin.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -4325,7 +5069,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nAsk where the nearest clinic is.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -4421,7 +5165,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nSay that you feel better today.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -4475,7 +5219,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "COMPLETE THE DIALOGUE\nDoktor: Ada alahan terhadap ubat?\nPesakit: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -4499,7 +5243,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "COMPLETE THE DIALOGUE\nAhli farmasi: Ubat ini perlu diambil dua kali sehari.\nPesakit: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -4523,7 +5267,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "COMPLETE THE DIALOGUE\nA: Awak nampak pening. Awak okey?\nB: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -4598,7 +5342,7 @@
         },
         {
           "title": "Sentence Workshop",
-          "description": "Strengthen grammar, word order, register, and sentence-building through spoken translation practice.",
+          "description": "Strengthen grammar, word order, register, and sentence-building through spoken translation, completion, and grammar practice.",
           "challenges": [
             {
               "type": "SELECT",
@@ -4625,7 +5369,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “I have been coughing for three days.”\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -4649,8 +5393,8 @@
               ]
             },
             {
-              "type": "ASSIST",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “I feel short of breath.”\nChoose the best Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “I feel short of breath.”\nChoose the grammatically correct Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Ambil satu tablet setiap lapan jam.",
@@ -4673,8 +5417,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Do I need a prescription?”\nChoose the best Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Do I need a prescription?”\nComplete the exchange with the correct Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Adakah saya perlukan preskripsi?",
@@ -4745,8 +5489,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Where is the emergency department?”\nChoose the best Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Where is the emergency department?”\nChoose the grammatically correct Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Di mana jabatan kecemasan?",
@@ -4769,8 +5513,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Please contact my family.”\nChoose the best Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Please contact my family.”\nComplete the exchange with the correct Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Perut saya sakit.",
@@ -4802,7 +5546,7 @@
       "lessons": [
         {
           "title": "Vocabulary Sprint",
-          "description": "Learn ten high-frequency words or expressions. Listen to every option and repeat the correct answer twice.",
+          "description": "Learn ten high-frequency words or expressions, listen and repeat, then complete an ordering, odd-one-out, and matching review.",
           "challenges": [
             {
               "type": "SELECT",
@@ -5043,6 +5787,139 @@
                   "audioText": "guru"
                 }
               ]
+            },
+            {
+              "type": "REORDER",
+              "question": "Put this Malay sentence back in the correct order.",
+              "options": [
+                {
+                  "text": "Saya",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "Saya"
+                },
+                {
+                  "text": "mesti",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "mesti"
+                },
+                {
+                  "text": "siapkan",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "siapkan"
+                },
+                {
+                  "text": "perkara",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "perkara"
+                },
+                {
+                  "text": "ini",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "ini"
+                },
+                {
+                  "text": "hari",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "hari"
+                },
+                {
+                  "text": "ini.",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "ini."
+                }
+              ]
+            },
+            {
+              "type": "ODD_ONE_OUT",
+              "question": "Which Malay word or phrase does not belong with the others?",
+              "explanation": "“jemputan” is from a different unit; the rest of this set is “kelas”, “guru”, “tugasan”.",
+              "options": [
+                {
+                  "text": "jemputan",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "jemputan"
+                },
+                {
+                  "text": "kelas",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "kelas"
+                },
+                {
+                  "text": "guru",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "guru"
+                },
+                {
+                  "text": "tugasan",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "tugasan"
+                }
+              ]
+            },
+            {
+              "type": "MATCHING",
+              "question": "Match each Malay word or phrase to its English meaning.",
+              "options": [
+                {
+                  "text": "kelas",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "kelas"
+                },
+                {
+                  "text": "class",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "class"
+                },
+                {
+                  "text": "guru",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "guru"
+                },
+                {
+                  "text": "teacher",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "teacher"
+                },
+                {
+                  "text": "tugasan",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "tugasan"
+                },
+                {
+                  "text": "assignment / task",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "assignment / task"
+                },
+                {
+                  "text": "mesyuarat",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "mesyuarat"
+                },
+                {
+                  "text": "meeting",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "meeting"
+                }
+              ]
             }
           ]
         },
@@ -5075,7 +5952,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nAsk for another explanation.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -5099,7 +5976,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "SPEAKING SCENARIO\nAsk when the deadline is.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -5123,7 +6000,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nSay that you will send an email this afternoon.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -5219,7 +6096,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nInvite the group to work together.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -5273,7 +6150,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "COMPLETE THE DIALOGUE\nPelajar: Bila tarikh akhir tugasan?\nGuru: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -5297,7 +6174,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "COMPLETE THE DIALOGUE\nPenyelia: Boleh hantar laporan hari ini?\nPekerja: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -5321,7 +6198,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "COMPLETE THE DIALOGUE\nRakan sekerja: Awak sudah terima e-mel saya?\nAnda: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -5396,7 +6273,7 @@
         },
         {
           "title": "Sentence Workshop",
-          "description": "Strengthen grammar, word order, register, and sentence-building through spoken translation practice.",
+          "description": "Strengthen grammar, word order, register, and sentence-building through spoken translation, completion, and grammar practice.",
           "challenges": [
             {
               "type": "SELECT",
@@ -5423,7 +6300,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “This document is for the meeting.”\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -5447,8 +6324,8 @@
               ]
             },
             {
-              "type": "ASSIST",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “The colleague who called me is absent.”\nChoose the best Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “The colleague who called me is absent.”\nChoose the grammatically correct Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Boleh kita tunda mesyuarat?",
@@ -5471,8 +6348,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Please attach the file.”\nChoose the best Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Please attach the file.”\nComplete the exchange with the correct Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Sila lampirkan fail itu.",
@@ -5543,8 +6420,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “The password is incorrect.”\nChoose the best Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “The password is incorrect.”\nChoose the grammatically correct Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Kata laluan itu tidak betul.",
@@ -5567,8 +6444,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “I will update you tomorrow.”\nChoose the best Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “I will update you tomorrow.”\nComplete the exchange with the correct Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Saya mesti siapkan perkara ini hari ini.",
@@ -5600,7 +6477,7 @@
       "lessons": [
         {
           "title": "Vocabulary Sprint",
-          "description": "Learn ten high-frequency words or expressions. Listen to every option and repeat the correct answer twice.",
+          "description": "Learn ten high-frequency words or expressions, listen and repeat, then complete an ordering, odd-one-out, and matching review.",
           "challenges": [
             {
               "type": "SELECT",
@@ -5841,6 +6718,139 @@
                   "audioText": "majlis"
                 }
               ]
+            },
+            {
+              "type": "REORDER",
+              "question": "Put this Malay sentence back in the correct order.",
+              "options": [
+                {
+                  "text": "Saya",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "Saya"
+                },
+                {
+                  "text": "tidak",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "tidak"
+                },
+                {
+                  "text": "dapat",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "dapat"
+                },
+                {
+                  "text": "datang",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "datang"
+                },
+                {
+                  "text": "kerana",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "kerana"
+                },
+                {
+                  "text": "saya",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "saya"
+                },
+                {
+                  "text": "bekerja.",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "bekerja."
+                }
+              ]
+            },
+            {
+              "type": "ODD_ONE_OUT",
+              "question": "Which Malay word or phrase does not belong with the others?",
+              "explanation": "“pendapat” is from a different unit; the rest of this set is “jemputan”, “majlis”, “jiran”.",
+              "options": [
+                {
+                  "text": "pendapat",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "pendapat"
+                },
+                {
+                  "text": "jemputan",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "jemputan"
+                },
+                {
+                  "text": "majlis",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "majlis"
+                },
+                {
+                  "text": "jiran",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "jiran"
+                }
+              ]
+            },
+            {
+              "type": "MATCHING",
+              "question": "Match each Malay word or phrase to its English meaning.",
+              "options": [
+                {
+                  "text": "jemputan",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "jemputan"
+                },
+                {
+                  "text": "invitation",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "invitation"
+                },
+                {
+                  "text": "majlis",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "majlis"
+                },
+                {
+                  "text": "event / ceremony",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "event / ceremony"
+                },
+                {
+                  "text": "jiran",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "jiran"
+                },
+                {
+                  "text": "neighbour",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "neighbour"
+                },
+                {
+                  "text": "komuniti",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "komuniti"
+                },
+                {
+                  "text": "community",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "community"
+                }
+              ]
             }
           ]
         },
@@ -5873,7 +6883,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nDecline politely because you already have plans.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -5897,7 +6907,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "SPEAKING SCENARIO\nAsk what you should bring.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -5921,7 +6931,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nSay that you brought a small gift.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -6017,7 +7027,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nSay that you would like to volunteer.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -6071,7 +7081,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "COMPLETE THE DIALOGUE\nA: Apa yang patut saya bawa?\nB: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -6095,7 +7105,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "COMPLETE THE DIALOGUE\nA: Perlu tanggalkan kasut?\nB: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -6119,7 +7129,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "COMPLETE THE DIALOGUE\nA: Saya tidak makan daging. Ada pilihan lain?\nB: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -6194,7 +7204,7 @@
         },
         {
           "title": "Sentence Workshop",
-          "description": "Strengthen grammar, word order, register, and sentence-building through spoken translation practice.",
+          "description": "Strengthen grammar, word order, register, and sentence-building through spoken translation, completion, and grammar practice.",
           "challenges": [
             {
               "type": "SELECT",
@@ -6221,7 +7231,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “We should respect local customs.”\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -6245,8 +7255,8 @@
               ]
             },
             {
-              "type": "ASSIST",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “I cannot come because I am working.”\nChoose the best Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “I cannot come because I am working.”\nChoose the grammatically correct Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Terima kasih kerana menyambut saya.",
@@ -6269,8 +7279,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Let us share the food.”\nChoose the best Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Let us share the food.”\nComplete the exchange with the correct Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Mari kita berkongsi makanan.",
@@ -6341,8 +7351,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Is this gift appropriate?”\nChoose the best Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Is this gift appropriate?”\nChoose the grammatically correct Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Adakah hadiah ini sesuai?",
@@ -6365,8 +7375,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Everyone is welcome.”\nChoose the best Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Everyone is welcome.”\nComplete the exchange with the correct Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Kalau saya lapang, saya akan datang.",
@@ -6398,7 +7408,7 @@
       "lessons": [
         {
           "title": "Vocabulary Sprint",
-          "description": "Learn ten high-frequency words or expressions. Listen to every option and repeat the correct answer twice.",
+          "description": "Learn ten high-frequency words or expressions, listen and repeat, then complete an ordering, odd-one-out, and matching review.",
           "challenges": [
             {
               "type": "SELECT",
@@ -6639,6 +7649,151 @@
                   "audioText": "setuju"
                 }
               ]
+            },
+            {
+              "type": "REORDER",
+              "question": "Put this Malay sentence back in the correct order.",
+              "options": [
+                {
+                  "text": "Saya",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "Saya"
+                },
+                {
+                  "text": "faham",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "faham"
+                },
+                {
+                  "text": "pandangan",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "pandangan"
+                },
+                {
+                  "text": "awak,",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "awak,"
+                },
+                {
+                  "text": "tetapi",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "tetapi"
+                },
+                {
+                  "text": "saya",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "saya"
+                },
+                {
+                  "text": "ada",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "ada"
+                },
+                {
+                  "text": "satu",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "satu"
+                },
+                {
+                  "text": "kebimbangan.",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "kebimbangan."
+                }
+              ]
+            },
+            {
+              "type": "ODD_ONE_OUT",
+              "question": "Which Malay word or phrase does not belong with the others?",
+              "explanation": "“agenda” is from a different unit; the rest of this set is “pendapat”, “setuju”, “tidak setuju”.",
+              "options": [
+                {
+                  "text": "agenda",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "agenda"
+                },
+                {
+                  "text": "pendapat",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "pendapat"
+                },
+                {
+                  "text": "setuju",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "setuju"
+                },
+                {
+                  "text": "tidak setuju",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "tidak setuju"
+                }
+              ]
+            },
+            {
+              "type": "MATCHING",
+              "question": "Match each Malay word or phrase to its English meaning.",
+              "options": [
+                {
+                  "text": "pendapat",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "pendapat"
+                },
+                {
+                  "text": "opinion",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "opinion"
+                },
+                {
+                  "text": "setuju",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "setuju"
+                },
+                {
+                  "text": "agree",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "agree"
+                },
+                {
+                  "text": "tidak setuju",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "tidak setuju"
+                },
+                {
+                  "text": "disagree",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "disagree"
+                },
+                {
+                  "text": "cadangan",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "cadangan"
+                },
+                {
+                  "text": "suggestion",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "suggestion"
+                }
+              ]
             }
           ]
         },
@@ -6671,7 +7826,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nAgree and give a reason.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -6695,7 +7850,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "SPEAKING SCENARIO\nDisagree gently.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -6719,7 +7874,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nSuggest a different approach.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -6815,7 +7970,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nExplain that the plan has changed.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -6869,7 +8024,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "COMPLETE THE DIALOGUE\nA: Kita perlu membeli peralatan baharu.\nB: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -6893,7 +8048,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "COMPLETE THE DIALOGUE\nA: Jadi, apa cadangan awak?\nB: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -6917,7 +8072,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "COMPLETE THE DIALOGUE\nA: Masa kita sangat singkat.\nB: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -6992,7 +8147,7 @@
         },
         {
           "title": "Sentence Workshop",
-          "description": "Strengthen grammar, word order, register, and sentence-building through spoken translation practice.",
+          "description": "Strengthen grammar, word order, register, and sentence-building through spoken translation, completion, and grammar practice.",
           "challenges": [
             {
               "type": "SELECT",
@@ -7019,7 +8174,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “I understand your point, but I have a concern.”\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -7043,8 +8198,8 @@
               ]
             },
             {
-              "type": "ASSIST",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “This option is cheaper but slower.”\nChoose the best Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “This option is cheaper but slower.”\nChoose the grammatically correct Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Apakah kelebihan dan kekurangannya?",
@@ -7067,8 +8222,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “The main reason is safety.”\nChoose the best Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “The main reason is safety.”\nComplete the exchange with the correct Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Sebab utama ialah keselamatan.",
@@ -7139,8 +8294,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Let us review the facts first.”\nChoose the best Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Let us review the facts first.”\nChoose the grammatically correct Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Mari kita semak fakta terlebih dahulu.",
@@ -7163,8 +8318,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “We reached a decision after discussing it.”\nChoose the best Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “We reached a decision after discussing it.”\nComplete the exchange with the correct Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Pada pandangan saya, perkara ini adil.",
@@ -7196,7 +8351,7 @@
       "lessons": [
         {
           "title": "Vocabulary Sprint",
-          "description": "Learn ten high-frequency words or expressions. Listen to every option and repeat the correct answer twice.",
+          "description": "Learn ten high-frequency words or expressions, listen and repeat, then complete an ordering, odd-one-out, and matching review.",
           "challenges": [
             {
               "type": "SELECT",
@@ -7437,6 +8592,139 @@
                   "audioText": "objektif"
                 }
               ]
+            },
+            {
+              "type": "REORDER",
+              "question": "Put this Malay sentence back in the correct order.",
+              "options": [
+                {
+                  "text": "Kami",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "Kami"
+                },
+                {
+                  "text": "bersedia",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "bersedia"
+                },
+                {
+                  "text": "untuk",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "untuk"
+                },
+                {
+                  "text": "mempertimbangkan",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "mempertimbangkan"
+                },
+                {
+                  "text": "semula",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "semula"
+                },
+                {
+                  "text": "harga",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "harga"
+                },
+                {
+                  "text": "tersebut.",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "tersebut."
+                }
+              ]
+            },
+            {
+              "type": "ODD_ONE_OUT",
+              "question": "Which Malay word or phrase does not belong with the others?",
+              "explanation": "“berita” is from a different unit; the rest of this set is “agenda”, “objektif”, “pembentangan”.",
+              "options": [
+                {
+                  "text": "berita",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "berita"
+                },
+                {
+                  "text": "agenda",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "agenda"
+                },
+                {
+                  "text": "objektif",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "objektif"
+                },
+                {
+                  "text": "pembentangan",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "pembentangan"
+                }
+              ]
+            },
+            {
+              "type": "MATCHING",
+              "question": "Match each Malay word or phrase to its English meaning.",
+              "options": [
+                {
+                  "text": "agenda",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "agenda"
+                },
+                {
+                  "text": "agenda",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "agenda"
+                },
+                {
+                  "text": "objektif",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "objektif"
+                },
+                {
+                  "text": "objective",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "objective"
+                },
+                {
+                  "text": "pembentangan",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "pembentangan"
+                },
+                {
+                  "text": "presentation",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "presentation"
+                },
+                {
+                  "text": "data",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "data"
+                },
+                {
+                  "text": "data",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "data"
+                }
+              ]
             }
           ]
         },
@@ -7469,7 +8757,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nMove to the first agenda item.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -7493,7 +8781,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "SPEAKING SCENARIO\nPresent a key data finding.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -7517,7 +8805,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nAsk a speaker to clarify a point.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -7613,7 +8901,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nClose with action items.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -7667,7 +8955,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "COMPLETE THE DIALOGUE\nPembentang: Kadar penyertaan meningkat dua puluh peratus.\nAhli: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -7691,7 +8979,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "COMPLETE THE DIALOGUE\nPengurus: Tarikh akhir tidak boleh diubah.\nKetua projek: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -7715,7 +9003,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "COMPLETE THE DIALOGUE\nKlien: Bajet kami terhad.\nWakil: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -7790,7 +9078,7 @@
         },
         {
           "title": "Sentence Workshop",
-          "description": "Strengthen grammar, word order, register, and sentence-building through spoken translation practice.",
+          "description": "Strengthen grammar, word order, register, and sentence-building through spoken translation, completion, and grammar practice.",
           "challenges": [
             {
               "type": "SELECT",
@@ -7817,7 +9105,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “We need to identify the root cause.”\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -7841,8 +9129,8 @@
               ]
             },
             {
-              "type": "ASSIST",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “The results support our recommendation.”\nChoose the best Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “The results support our recommendation.”\nChoose the grammatically correct Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Saya ingin membangkitkan satu kebimbangan.",
@@ -7865,8 +9153,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Could we return to the main issue?”\nChoose the best Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Could we return to the main issue?”\nComplete the exchange with the correct Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Bolehkah kita kembali kepada isu utama?",
@@ -7937,8 +9225,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “We are prepared to reconsider the price.”\nChoose the best Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “We are prepared to reconsider the price.”\nChoose the grammatically correct Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Kami bersedia untuk mempertimbangkan semula harga tersebut.",
@@ -7961,8 +9249,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “The next step is to confirm the schedule.”\nChoose the best Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “The next step is to confirm the schedule.”\nComplete the exchange with the correct Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Cadangan tersebut akan dikaji semula.",
@@ -7994,7 +9282,7 @@
       "lessons": [
         {
           "title": "Vocabulary Sprint",
-          "description": "Learn ten high-frequency words or expressions. Listen to every option and repeat the correct answer twice.",
+          "description": "Learn ten high-frequency words or expressions, listen and repeat, then complete an ordering, odd-one-out, and matching review.",
           "challenges": [
             {
               "type": "SELECT",
@@ -8235,6 +9523,151 @@
                   "audioText": "masyarakat"
                 }
               ]
+            },
+            {
+              "type": "REORDER",
+              "question": "Put this Malay sentence back in the correct order.",
+              "options": [
+                {
+                  "text": "Isu",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "Isu"
+                },
+                {
+                  "text": "ini",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "ini"
+                },
+                {
+                  "text": "memberi",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "memberi"
+                },
+                {
+                  "text": "kesan",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "kesan"
+                },
+                {
+                  "text": "yang",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "yang"
+                },
+                {
+                  "text": "berbeza",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "berbeza"
+                },
+                {
+                  "text": "kepada",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "kepada"
+                },
+                {
+                  "text": "setiap",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "setiap"
+                },
+                {
+                  "text": "kumpulan.",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "kumpulan."
+                }
+              ]
+            },
+            {
+              "type": "ODD_ONE_OUT",
+              "question": "Which Malay word or phrase does not belong with the others?",
+              "explanation": "“ambil berat” is from a different unit; the rest of this set is “berita”, “masyarakat”, “ekonomi”.",
+              "options": [
+                {
+                  "text": "ambil berat",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "ambil berat"
+                },
+                {
+                  "text": "berita",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "berita"
+                },
+                {
+                  "text": "masyarakat",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "masyarakat"
+                },
+                {
+                  "text": "ekonomi",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "ekonomi"
+                }
+              ]
+            },
+            {
+              "type": "MATCHING",
+              "question": "Match each Malay word or phrase to its English meaning.",
+              "options": [
+                {
+                  "text": "berita",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "berita"
+                },
+                {
+                  "text": "news",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "news"
+                },
+                {
+                  "text": "masyarakat",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "masyarakat"
+                },
+                {
+                  "text": "society",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "society"
+                },
+                {
+                  "text": "ekonomi",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "ekonomi"
+                },
+                {
+                  "text": "economy",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "economy"
+                },
+                {
+                  "text": "pendidikan",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "pendidikan"
+                },
+                {
+                  "text": "education",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "education"
+                }
+              ]
             }
           ]
         },
@@ -8267,7 +9700,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nQuestion the reliability of a source.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -8291,7 +9724,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "SPEAKING SCENARIO\nRefer to supporting evidence.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -8315,7 +9748,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nExplain a consequence.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -8411,7 +9844,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nLink the evidence to a conclusion.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -8465,7 +9898,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "COMPLETE THE DIALOGUE\nA: Adakah sumber itu boleh dipercayai?\nB: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -8489,7 +9922,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "COMPLETE THE DIALOGUE\nA: Apakah kesan pencemaran terhadap masyarakat?\nB: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -8513,7 +9946,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "COMPLETE THE DIALOGUE\nA: Patutkah dasar itu dilaksanakan segera?\nB: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -8588,7 +10021,7 @@
         },
         {
           "title": "Sentence Workshop",
-          "description": "Strengthen grammar, word order, register, and sentence-building through spoken translation practice.",
+          "description": "Strengthen grammar, word order, register, and sentence-building through spoken translation, completion, and grammar practice.",
           "challenges": [
             {
               "type": "SELECT",
@@ -8615,7 +10048,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “There is insufficient evidence to reach a conclusion.”\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -8639,8 +10072,8 @@
               ]
             },
             {
-              "type": "ASSIST",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “The issue affects different groups differently.”\nChoose the best Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “The issue affects different groups differently.”\nChoose the grammatically correct Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Dakwaan ini perlu disahkan.",
@@ -8663,8 +10096,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “In the long term, prevention is less costly.”\nChoose the best Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “In the long term, prevention is less costly.”\nComplete the exchange with the correct Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Dalam jangka panjang, pencegahan melibatkan kos yang lebih rendah.",
@@ -8735,8 +10168,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Not only is the air polluted, the river is also affected.”\nChoose the best Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Not only is the air polluted, the river is also affected.”\nChoose the grammatically correct Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Bukan sahaja udara tercemar, malah sungai turut terjejas.",
@@ -8759,8 +10192,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “The solution requires cooperation from all parties.”\nChoose the best Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “The solution requires cooperation from all parties.”\nComplete the exchange with the correct Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Dasar itu diperkenalkan pada tahun lalu.",
@@ -8792,7 +10225,7 @@
       "lessons": [
         {
           "title": "Vocabulary Sprint",
-          "description": "Learn ten high-frequency words or expressions. Listen to every option and repeat the correct answer twice.",
+          "description": "Learn ten high-frequency words or expressions, listen and repeat, then complete an ordering, odd-one-out, and matching review.",
           "challenges": [
             {
               "type": "SELECT",
@@ -9033,6 +10466,157 @@
                   "audioText": "ringan tulang"
                 }
               ]
+            },
+            {
+              "type": "REORDER",
+              "question": "Put this Malay sentence back in the correct order.",
+              "options": [
+                {
+                  "text": "Pada",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "Pada"
+                },
+                {
+                  "text": "mulanya",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "mulanya"
+                },
+                {
+                  "text": "semuanya",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "semuanya"
+                },
+                {
+                  "text": "berjalan",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "berjalan"
+                },
+                {
+                  "text": "lancar,",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "lancar,"
+                },
+                {
+                  "text": "tetapi",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "tetapi"
+                },
+                {
+                  "text": "kemudian",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "kemudian"
+                },
+                {
+                  "text": "timbul",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "timbul"
+                },
+                {
+                  "text": "satu",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "satu"
+                },
+                {
+                  "text": "masalah.",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "masalah."
+                }
+              ]
+            },
+            {
+              "type": "ODD_ONE_OUT",
+              "question": "Which Malay word or phrase does not belong with the others?",
+              "explanation": "“hai” is from a different unit; the rest of this set is “ambil berat”, “ringan tulang”, “buah tangan”.",
+              "options": [
+                {
+                  "text": "hai",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "hai"
+                },
+                {
+                  "text": "ambil berat",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "ambil berat"
+                },
+                {
+                  "text": "ringan tulang",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "ringan tulang"
+                },
+                {
+                  "text": "buah tangan",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "buah tangan"
+                }
+              ]
+            },
+            {
+              "type": "MATCHING",
+              "question": "Match each Malay word or phrase to its English meaning.",
+              "options": [
+                {
+                  "text": "ambil berat",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "ambil berat"
+                },
+                {
+                  "text": "care about / show concern",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "care about / show concern"
+                },
+                {
+                  "text": "ringan tulang",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "ringan tulang"
+                },
+                {
+                  "text": "hardworking and helpful",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "hardworking and helpful"
+                },
+                {
+                  "text": "buah tangan",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "buah tangan"
+                },
+                {
+                  "text": "souvenir / gift from a trip",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "souvenir / gift from a trip"
+                },
+                {
+                  "text": "makan angin",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "makan angin"
+                },
+                {
+                  "text": "take a leisure trip",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "take a leisure trip"
+                }
+              ]
             }
           ]
         },
@@ -9065,7 +10649,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nMake a candid but respectful comment.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -9089,7 +10673,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "SPEAKING SCENARIO\nIntroduce a concession.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -9113,7 +10697,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nPresent another angle.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -9209,7 +10793,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SPEAKING SCENARIO\nSequence a story.\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -9263,7 +10847,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "COMPLETE THE DIALOGUE\nA: Saya bawa sesuatu dari Melaka untuk awak.\nB: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -9287,7 +10871,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "COMPLETE THE DIALOGUE\nA: Jangan kecil hati, saya cuma mahu memberi cadangan.\nB: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -9311,7 +10895,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "COMPLETE THE DIALOGUE\nA: Saya setuju bahawa kos penting.\nB: ...\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -9386,7 +10970,7 @@
         },
         {
           "title": "Sentence Workshop",
-          "description": "Strengthen grammar, word order, register, and sentence-building through spoken translation practice.",
+          "description": "Strengthen grammar, word order, register, and sentence-building through spoken translation, completion, and grammar practice.",
           "challenges": [
             {
               "type": "SELECT",
@@ -9413,7 +10997,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SENTENCE PRACTICE\nChoose the idiom for “a souvenir brought home from a trip.”\nChoose the best Malay response, then say it aloud.",
               "options": [
                 {
@@ -9437,8 +11021,8 @@
               ]
             },
             {
-              "type": "ASSIST",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Although I disagree, I respect your stance.”\nChoose the best Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Although I disagree, I respect your stance.”\nChoose the grammatically correct Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Izinkan saya menyatakannya semula dengan lebih jelas.",
@@ -9461,8 +11045,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “What matters is not speed, but accuracy.”\nChoose the best Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “What matters is not speed, but accuracy.”\nComplete the exchange with the correct Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Yang penting bukanlah kepantasan, tetapi ketepatan.",
@@ -9533,8 +11117,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “At first everything went smoothly, but then a problem arose.”\nChoose the best Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “At first everything went smoothly, but then a problem arose.”\nChoose the grammatically correct Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Pada mulanya semuanya berjalan lancar, tetapi kemudian timbul satu masalah.",
@@ -9557,8 +11141,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “In conclusion, cooperation is the key.”\nChoose the best Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “In conclusion, cooperation is the key.”\nComplete the exchange with the correct Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "ambil berat",

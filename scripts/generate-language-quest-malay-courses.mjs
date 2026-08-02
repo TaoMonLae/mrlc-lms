@@ -51,6 +51,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
+import { blankWord, buildOddOneOut } from "./lib/language-quest-practice-helpers.mjs";
 
 const sourceDir = path.resolve(process.cwd(), "curricula/sources/malay");
 const outputPath = path.resolve(
@@ -190,6 +191,44 @@ function minimalPairChallenge(ex, vmap) {
   };
 }
 
+// Pairs up to 4 of a lesson's own vocab items (English meaning <-> Malay
+// word) into one MATCHING challenge. This only ever uses the vocab list's
+// own unambiguous `en`/`ms` fields -- never the source package's separate
+// "matching" practice exercises, whose loose itemIds/pairing can't be
+// reliably auto-derived (see the file-header note on why those still
+// downgrade to SELECT). Returns null when a lesson has fewer than 3 vocab
+// items with unique English and Malay text.
+function lessonMatchingChallenge(itemIds, vmap) {
+  const seenEn = new Set();
+  const seenMs = new Set();
+  const pairs = [];
+  for (const id of itemIds) {
+    const vocab = vmap.get(id);
+    if (!vocab) continue;
+    const en = vocab.en.trim();
+    const ms = vocab.ms.trim();
+    if (!en || !ms) continue;
+    const enKey = en.toLowerCase();
+    const msKey = ms.toLowerCase();
+    if (seenEn.has(enKey) || seenMs.has(msKey)) continue;
+    seenEn.add(enKey);
+    seenMs.add(msKey);
+    pairs.push({ en, ms });
+    if (pairs.length === 4) break;
+  }
+  if (pairs.length < 3) return null;
+  const options = [];
+  for (const pair of pairs) {
+    options.push(option(pair.en, true));
+    options.push(option(pair.ms, true));
+  }
+  return {
+    type: "MATCHING",
+    question: "Match each English meaning to its Malay word.",
+    options,
+  };
+}
+
 function vocabChallenge(vocab, wordPools) {
   const label = VOCAB_LABEL[vocab.type] || "word";
   const registerNote = vocab.register === "standard" ? " (formal/standard Malay)" : "";
@@ -223,6 +262,54 @@ function sentenceExerciseChallenge(ex, sentencePools) {
   const answer = (ex.answer || "").trim();
   if (!answer || isFillTemplate(answer)) return null;
   return buildMcChallenge(ex.prompt, answer, [sentencePools.unit, sentencePools.level]);
+}
+
+// Builds one GRAMMAR_TRANSFORM challenge per lesson. Prefers a real
+// translate/reorder answer sentence (from this unit or level's own
+// sentencePools) that actually contains one of the lesson's vocab words, so
+// the blank is grammatically genuine; falls back to the vocabulary item's
+// own English gloss (same safe construction as the ordinary vocab SELECT
+// downgrade) when no such sentence is found, so this never invents Malay
+// grammar from scratch.
+function grammarTransformChallenge(lesson, vmap, wordPools, sentencePools) {
+  const lessonVocab = (lesson.itemIds || []).map((id) => vmap.get(id)).filter(Boolean);
+  const sentencePool = [...sentencePools.unit, ...sentencePools.level];
+  for (const vocab of lessonVocab) {
+    const sentence = sentencePool.find((candidate) => blankWord(candidate, vocab.ms));
+    if (sentence) {
+      return buildMcChallenge(
+        `Choose the word that correctly completes this sentence: “${blankWord(sentence, vocab.ms)}”`,
+        vocab.ms,
+        [wordPools.lesson, wordPools.unit, wordPools.level],
+        "GRAMMAR_TRANSFORM",
+      );
+    }
+  }
+  const fallback = lessonVocab[0];
+  if (!fallback) return null;
+  return buildMcChallenge(
+    `Which word correctly means “${fallback.en}” in this context?`,
+    fallback.ms,
+    [wordPools.lesson, wordPools.unit, wordPools.level],
+    "GRAMMAR_TRANSFORM",
+  );
+}
+
+// Builds one ODD_ONE_OUT challenge per lesson: three of this lesson's own
+// vocabulary words plus one "ringer" word borrowed from elsewhere in the
+// level's word pool -- always available and always genuinely different,
+// since it's excluded from this lesson's own word list.
+function lessonOddOneOut(lessonWords, levelWordPool) {
+  if (lessonWords.length < 3) return null;
+  const inGroup = lessonWords.slice(0, 3);
+  const inGroupNorm = new Set(lessonWords.map((word) => word.trim().toLowerCase()));
+  const ringer = levelWordPool.find((word) => !inGroupNorm.has(word.trim().toLowerCase()));
+  return buildOddOneOut(
+    "Which word does not belong with the others?",
+    inGroup,
+    ringer,
+    ringer ? `“${ringer}” is from a different lesson; the rest of this set is ${inGroup.map((word) => `“${word}”`).join(", ")}.` : undefined,
+  );
 }
 
 function quizChallenge(question, sentencePools) {
@@ -343,6 +430,15 @@ function convertUnit(unit, levelWordPool, levelSentencePool) {
       if (built) challenges.push(built);
     }
 
+    const grammar = grammarTransformChallenge(lesson, vmap, wordPools, sentencePools);
+    if (grammar) challenges.push(grammar);
+
+    const oddOneOut = lessonOddOneOut(lessonWords, levelWordPool);
+    if (oddOneOut) challenges.push(oddOneOut);
+
+    const matching = lessonMatchingChallenge(lesson.itemIds || [], vmap);
+    if (matching) challenges.push(matching);
+
     if (challenges.length === 0) {
       throw new Error(`Lesson ${lesson.id} produced zero challenges`);
     }
@@ -411,6 +507,16 @@ const badChallenges = allChallenges.filter((challenge) => {
     // must be at least two tokens for ordering to mean anything.
     return challenge.options.length < 2 || challenge.options.some((o) => !o.correct);
   }
+  if (challenge.type === "MATCHING") {
+    // MATCHING has no single "correct option" either -- every option is
+    // `correct: true` and tiles pair up positionally (2k/2k+1), so there
+    // must be an even count of at least 4 (2 pairs). The engine caps this at
+    // 12 (6 pairs), well above the tap-based board's practical needs.
+    return challenge.options.length < 4
+      || challenge.options.length % 2 !== 0
+      || challenge.options.length > 12
+      || challenge.options.some((o) => !o.correct);
+  }
   // Generated challenges always have 3 options; unitQuiz mcq/listening
   // questions carry through the source's own authored option count
   // (usually 4). The UI supports up to 6 options (optionLetters A-F).
@@ -420,6 +526,13 @@ const badChallenges = allChallenges.filter((challenge) => {
 });
 if (badChallenges.length > 0) {
   throw new Error(`Every generated Malay challenge must have valid, speakable options and exactly one answer (${badChallenges.length} bad)`);
+}
+{
+  const typeCounts = new Map();
+  for (const challenge of allChallenges) typeCounts.set(challenge.type, (typeCounts.get(challenge.type) || 0) + 1);
+  for (const requiredType of ["SELECT", "ASSIST", "CLOZE", "GRAMMAR_TRANSFORM", "ODD_ONE_OUT", "REORDER", "MINIMAL_PAIR_LISTENING", "MATCHING"]) {
+    if (!typeCounts.get(requiredType)) throw new Error(`Generated Malay CEFR curriculum is missing ${requiredType} challenges`);
+  }
 }
 
 await mkdir(path.dirname(outputPath), { recursive: true });

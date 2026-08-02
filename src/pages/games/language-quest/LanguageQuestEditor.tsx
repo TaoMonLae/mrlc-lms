@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowDown, ArrowLeft, ArrowUp, CheckCircle2, ChevronDown, ChevronUp, Clock3, GripVertical, MessageSquareWarning, Plus, Save, Send, ShieldCheck, Trash2, Volume2 } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowUp, BarChart3, CheckCircle2, ChevronDown, ChevronUp, ClipboardPaste, Clock3, Eye, GripVertical, MessageSquareWarning, Plus, Save, Send, ShieldCheck, Trash2, Volume2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -19,6 +20,38 @@ import {
   languageQuestReviewStatusLabel,
   type LanguageQuestCourseReviewStatus,
 } from '@/shared/languageQuestCourseReview';
+import { LANGUAGE_QUEST_COURSE_CATEGORIES } from '@/shared/languageQuestCourseCategories';
+import {
+  languageQuestAnalyticsStatusLabel,
+  type LanguageQuestAnalyticsStatus,
+} from '@/shared/languageQuestAnalytics';
+
+interface ChallengeAnalytics {
+  attempts: number;
+  correctAttempts: number;
+  accuracyPercent: number | null;
+  status: LanguageQuestAnalyticsStatus;
+}
+type ChallengeAnalyticsMap = Map<string, ChallengeAnalytics>;
+
+function ChallengeAnalyticsBadge({ analytics }: { analytics: ChallengeAnalytics | undefined }) {
+  if (!analytics || analytics.status === 'NO_DATA') return null;
+  const styles: Record<LanguageQuestAnalyticsStatus, string> = {
+    NO_DATA: '',
+    NEEDS_REVIEW: 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-200',
+    DEVELOPING: 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200',
+    SECURE: 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-200',
+  };
+  return (
+    <Badge
+      variant="outline"
+      className={`shrink-0 ${styles[analytics.status]}`}
+      title={`${analytics.correctAttempts}/${analytics.attempts} correct across all learners`}
+    >
+      {analytics.accuracyPercent}% · {languageQuestAnalyticsStatusLabel(analytics.status)}
+    </Badge>
+  );
+}
 
 interface EditorOption {
   _key: string;
@@ -121,6 +154,46 @@ const newChallenge = (): EditorChallenge => ({
   _key: key(), type: 'SELECT', question: '', explanation: '',
   options: [newOption(true), newOption(), newOption()],
 });
+interface BulkVocabularyEntry {
+  term: string;
+  translation: string;
+}
+
+// Parses "term | translation" (or tab-separated) lines pasted by a teacher.
+function parseBulkVocabularyText(text: string): BulkVocabularyEntry[] {
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => line.split(/\t|\|/).map((part) => part.trim()).filter(Boolean))
+    .filter((parts): parts is [string, string, ...string[]] => parts.length >= 2)
+    .map(([term, translation]) => ({ term, translation }));
+}
+
+// Builds one SELECT challenge per entry, picking up to two distractor
+// translations from other pasted entries -- mirrors the distractor-pool
+// rotation used by the curricula/ generator scripts (see e.g.
+// scripts/generate-language-quest-linguify-courses.mjs's challengeFor).
+function buildBulkVocabularyChallenges(entries: BulkVocabularyEntry[]): EditorChallenge[] {
+  return entries.map((entry, index) => {
+    const distractors: string[] = [];
+    for (let step = 1; distractors.length < 2 && step < entries.length; step += 1) {
+      const candidate = entries[(index + step) % entries.length].translation;
+      if (candidate !== entry.translation && !distractors.includes(candidate)) distractors.push(candidate);
+    }
+    const options = [newOption(true), ...distractors.map(() => newOption(false))];
+    options[0].text = entry.translation;
+    distractors.forEach((text, distractorIndex) => { options[distractorIndex + 1].text = text; });
+    return {
+      _key: key(),
+      type: 'SELECT' as EditorChallengeType,
+      question: `Choose the translation for “${entry.term}”.`,
+      explanation: '',
+      options: optionsForChallengeType('SELECT', options),
+    };
+  });
+}
+
 const newLesson = (): EditorLesson => ({ _key: key(), title: '', description: '', challenges: [newChallenge()] });
 const newUnit = (): EditorUnit => ({ _key: key(), title: '', description: '', lessons: [newLesson()] });
 const emptyCourse = (): EditorCourse => ({
@@ -302,8 +375,8 @@ function DictationOptionEditor({ option, onChange }: { option: EditorOption; onC
   );
 }
 
-function ChallengeEditor({ challenge, index, onChange, onRemove }: {
-  challenge: EditorChallenge; index: number; onChange: (next: EditorChallenge) => void; onRemove: () => void;
+function ChallengeEditor({ challenge, index, analytics, onChange, onRemove }: {
+  challenge: EditorChallenge; index: number; analytics: ChallengeAnalytics | undefined; onChange: (next: EditorChallenge) => void; onRemove: () => void;
 }) {
   const [open, setOpen] = useState(!challenge.id);
   const definition = challengeTypeDefinition(challenge.type);
@@ -325,6 +398,7 @@ function ChallengeEditor({ challenge, index, onChange, onRemove }: {
           <p className="truncate text-sm font-semibold text-slate-700 dark:text-slate-200">{challenge.question || `New challenge ${index + 1}`}</p>
           <p className="mt-0.5 text-[11px] font-bold uppercase tracking-wide text-violet-600 dark:text-violet-300">{definition.label}</p>
         </div>
+        <ChallengeAnalyticsBadge analytics={analytics} />
         <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => setOpen((value) => !value)} aria-label={open ? 'Collapse challenge' : 'Expand challenge'}>{open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}</Button>
         <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-rose-500" onClick={onRemove} aria-label="Remove challenge"><Trash2 className="h-4 w-4" /></Button>
       </div>
@@ -405,11 +479,76 @@ function ChallengeEditor({ challenge, index, onChange, onRemove }: {
   );
 }
 
-function LessonEditor({ lesson, index, onChange, onRemove }: {
-  lesson: EditorLesson; index: number; onChange: (next: EditorLesson) => void; onRemove: () => void;
+function challengePreviewHint(type: EditorChallengeType): string | null {
+  switch (type) {
+    case 'REORDER': return 'Learners drag these tiles into this exact order.';
+    case 'MATCHING': return 'Learners match consecutive pairs (tile 1↔2, 3↔4, and so on).';
+    case 'DICTATION': return 'Learners hear this read aloud and must type it exactly.';
+    default: return null;
+  }
+}
+
+function LessonPreviewDialog({ lesson, open, onOpenChange }: {
+  lesson: EditorLesson; open: boolean; onOpenChange: (open: boolean) => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{lesson.title || 'Untitled lesson'} — preview</DialogTitle>
+          <DialogDescription>How each challenge will appear to a learner. Read-only — nothing here is saved.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          {lesson.challenges.length === 0 && <p className="text-sm text-slate-400">This lesson has no challenges yet.</p>}
+          {lesson.challenges.map((challenge, challengeIndex) => {
+            const definition = challengeTypeDefinition(challenge.type);
+            const hint = challengePreviewHint(challenge.type);
+            return (
+              <div key={challenge._key} className="rounded-xl border border-slate-200 p-3 dark:border-surface-raised">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Challenge {challengeIndex + 1} · {definition.label}</p>
+                <p className="mb-2 font-medium text-slate-900 dark:text-white">{challenge.question || <span className="italic text-slate-400">No question text yet</span>}</p>
+                {hint && <p className="mb-2 text-xs text-slate-400">{hint}</p>}
+                <div className="grid gap-1.5 sm:grid-cols-2">
+                  {challenge.options.map((option) => (
+                    <div
+                      key={option._key}
+                      className={`rounded-lg border px-3 py-1.5 text-sm ${option.correct ? 'border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-200' : 'border-slate-200 text-slate-600 dark:border-surface-raised dark:text-slate-300'}`}
+                    >
+                      {option.text || <span className="italic text-slate-400">Empty option</span>}
+                      {option.emoji ? ` ${option.emoji}` : ''}
+                    </div>
+                  ))}
+                </div>
+                {challenge.explanation && <p className="mt-2 text-xs text-slate-400">Explanation: {challenge.explanation}</p>}
+              </div>
+            );
+          })}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function LessonEditor({ lesson, index, isFirst, isLast, analytics, onChange, onRemove, onMoveUp, onMoveDown }: {
+  lesson: EditorLesson; index: number; isFirst: boolean; isLast: boolean; analytics: ChallengeAnalyticsMap; onChange: (next: EditorLesson) => void; onRemove: () => void; onMoveUp: () => void; onMoveDown: () => void;
 }) {
   const [open, setOpen] = useState(!lesson.id);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkText, setBulkText] = useState('');
   const updateChallenge = (challengeKey: string, next: EditorChallenge) => onChange({ ...lesson, challenges: lesson.challenges.map((challenge) => challenge._key === challengeKey ? next : challenge) });
+  const addBulkChallenges = () => {
+    const entries = parseBulkVocabularyText(bulkText);
+    if (!entries.length) {
+      toast.error('Paste at least one line as "term | translation".');
+      return;
+    }
+    const challenges = buildBulkVocabularyChallenges(entries);
+    onChange({ ...lesson, challenges: [...lesson.challenges, ...challenges] });
+    toast.success(`Added ${challenges.length} challenge${challenges.length === 1 ? '' : 's'} from pasted vocabulary.`);
+    setBulkText('');
+    setBulkOpen(false);
+  };
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-surface-raised dark:bg-surface-indigo">
       <div className="flex items-center gap-3 px-4 py-3">
@@ -418,9 +557,13 @@ function LessonEditor({ lesson, index, onChange, onRemove }: {
           <p className="truncate font-semibold text-slate-900 dark:text-white">{lesson.title || `New lesson ${index + 1}`}</p>
           <p className="text-xs text-slate-400">{lesson.challenges.length} challenge{lesson.challenges.length === 1 ? '' : 's'}</p>
         </div>
+        <Button type="button" variant="ghost" size="icon" className="h-8 w-8" disabled={isFirst} onClick={onMoveUp} aria-label={`Move lesson ${index + 1} up`}><ArrowUp className="h-4 w-4" /></Button>
+        <Button type="button" variant="ghost" size="icon" className="h-8 w-8" disabled={isLast} onClick={onMoveDown} aria-label={`Move lesson ${index + 1} down`}><ArrowDown className="h-4 w-4" /></Button>
+        <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => setPreviewOpen(true)} aria-label={`Preview lesson ${index + 1}`} title="Preview as a learner"><Eye className="h-4 w-4" /></Button>
         <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => setOpen((value) => !value)}>{open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}</Button>
         <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-rose-500" onClick={onRemove}><Trash2 className="h-4 w-4" /></Button>
       </div>
+      <LessonPreviewDialog lesson={lesson} open={previewOpen} onOpenChange={setPreviewOpen} />
       {open && (
         <div className="space-y-4 border-t border-slate-100 p-4 dark:border-surface-raised">
           <div className="grid gap-3 sm:grid-cols-2">
@@ -429,21 +572,54 @@ function LessonEditor({ lesson, index, onChange, onRemove }: {
           </div>
           <div className="space-y-3">
             {lesson.challenges.map((challenge, challengeIndex) => (
-              <ChallengeEditor key={challenge._key} challenge={challenge} index={challengeIndex} onChange={(next) => updateChallenge(challenge._key, next)} onRemove={() => onChange({ ...lesson, challenges: lesson.challenges.filter((item) => item._key !== challenge._key) })} />
+              <ChallengeEditor
+                key={challenge._key}
+                challenge={challenge}
+                index={challengeIndex}
+                analytics={challenge.id ? analytics.get(challenge.id) : undefined}
+                onChange={(next) => updateChallenge(challenge._key, next)}
+                onRemove={() => onChange({ ...lesson, challenges: lesson.challenges.filter((item) => item._key !== challenge._key) })}
+              />
             ))}
           </div>
-          <Button type="button" variant="outline" className="w-full border-dashed" onClick={() => onChange({ ...lesson, challenges: [...lesson.challenges, newChallenge()] })}><Plus className="mr-2 h-4 w-4" /> Add challenge</Button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button type="button" variant="outline" className="w-full border-dashed" onClick={() => onChange({ ...lesson, challenges: [...lesson.challenges, newChallenge()] })}><Plus className="mr-2 h-4 w-4" /> Add challenge</Button>
+            <Button type="button" variant="outline" className="w-full border-dashed" onClick={() => setBulkOpen((value) => !value)}><ClipboardPaste className="mr-2 h-4 w-4" /> Bulk add vocabulary</Button>
+          </div>
+          {bulkOpen && (
+            <div className="space-y-2 rounded-xl border border-dashed border-slate-300 p-3 dark:border-surface-raised">
+              <Label>Paste vocabulary (one pair per line: term | translation)</Label>
+              <Textarea
+                value={bulkText}
+                rows={5}
+                placeholder={'bonjour | hello\nmerci | thank you\nau revoir | goodbye'}
+                onChange={(event) => setBulkText(event.target.value)}
+              />
+              <p className="text-xs text-slate-400">Each line becomes a multiple-choice challenge. Distractor options are picked automatically from the other pasted lines, so paste at least three pairs for the best variety.</p>
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="ghost" size="sm" onClick={() => { setBulkOpen(false); setBulkText(''); }}>Cancel</Button>
+                <Button type="button" size="sm" onClick={addBulkChallenges}>Add challenges</Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-function UnitEditor({ unit, index, onChange, onRemove }: {
-  unit: EditorUnit; index: number; onChange: (next: EditorUnit) => void; onRemove: () => void;
+function UnitEditor({ unit, index, isFirst, isLast, analytics, onChange, onRemove, onMoveUp, onMoveDown }: {
+  unit: EditorUnit; index: number; isFirst: boolean; isLast: boolean; analytics: ChallengeAnalyticsMap; onChange: (next: EditorUnit) => void; onRemove: () => void; onMoveUp: () => void; onMoveDown: () => void;
 }) {
   const [open, setOpen] = useState(true);
   const updateLesson = (lessonKey: string, next: EditorLesson) => onChange({ ...unit, lessons: unit.lessons.map((lesson) => lesson._key === lessonKey ? next : lesson) });
+  const moveLesson = (lessonIndex: number, offset: number) => {
+    const target = lessonIndex + offset;
+    if (target < 0 || target >= unit.lessons.length) return;
+    const lessons = [...unit.lessons];
+    [lessons[lessonIndex], lessons[target]] = [lessons[target], lessons[lessonIndex]];
+    onChange({ ...unit, lessons });
+  };
   return (
     <section className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 shadow-sm dark:border-surface-raised dark:bg-surface-raised/20">
       <header className="flex items-center gap-3 p-4 sm:p-5">
@@ -452,6 +628,8 @@ function UnitEditor({ unit, index, onChange, onRemove }: {
           <h2 className="truncate font-bold text-slate-900 dark:text-white">{unit.title || `New unit ${index + 1}`}</h2>
           <p className="text-xs text-slate-400">{unit.lessons.length} lesson{unit.lessons.length === 1 ? '' : 's'}</p>
         </div>
+        <Button type="button" variant="ghost" size="icon" disabled={isFirst} onClick={onMoveUp} aria-label={`Move unit ${index + 1} up`}><ArrowUp className="h-4 w-4" /></Button>
+        <Button type="button" variant="ghost" size="icon" disabled={isLast} onClick={onMoveDown} aria-label={`Move unit ${index + 1} down`}><ArrowDown className="h-4 w-4" /></Button>
         <Button type="button" variant="ghost" size="icon" onClick={() => setOpen((value) => !value)}>{open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}</Button>
         <Button type="button" variant="ghost" size="icon" className="text-rose-500" onClick={onRemove}><Trash2 className="h-4 w-4" /></Button>
       </header>
@@ -463,7 +641,18 @@ function UnitEditor({ unit, index, onChange, onRemove }: {
           </div>
           <div className="space-y-3">
             {unit.lessons.map((lesson, lessonIndex) => (
-              <LessonEditor key={lesson._key} lesson={lesson} index={lessonIndex} onChange={(next) => updateLesson(lesson._key, next)} onRemove={() => onChange({ ...unit, lessons: unit.lessons.filter((item) => item._key !== lesson._key) })} />
+              <LessonEditor
+                key={lesson._key}
+                lesson={lesson}
+                index={lessonIndex}
+                isFirst={lessonIndex === 0}
+                isLast={lessonIndex === unit.lessons.length - 1}
+                analytics={analytics}
+                onChange={(next) => updateLesson(lesson._key, next)}
+                onRemove={() => onChange({ ...unit, lessons: unit.lessons.filter((item) => item._key !== lesson._key) })}
+                onMoveUp={() => moveLesson(lessonIndex, -1)}
+                onMoveDown={() => moveLesson(lessonIndex, 1)}
+              />
             ))}
           </div>
           <Button type="button" variant="outline" className="w-full border-dashed" onClick={() => onChange({ ...unit, lessons: [...unit.lessons, newLesson()] })}><Plus className="mr-2 h-4 w-4" /> Add lesson</Button>
@@ -484,6 +673,7 @@ export default function LanguageQuestEditor() {
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [analytics, setAnalytics] = useState<ChallengeAnalyticsMap>(new Map());
   const dirty = savedSnapshot !== null && savedSnapshot !== courseContentSnapshot(course);
 
   const reviewRequired = course.reviewRequired || (!isEdit && user?.role === 'TEACHER');
@@ -513,6 +703,31 @@ export default function LanguageQuestEditor() {
   }, [id]);
 
   useEffect(() => {
+    if (!id) return;
+    const controller = new AbortController();
+    // Best-effort: a teacher's own course may have no attempt data yet, and
+    // this view shouldn't block editing if the analytics call fails.
+    apiGet<{ questions: Array<{ challengeId: string; attempts: number; correctAttempts: number; accuracyPercent: number | null; status: LanguageQuestAnalyticsStatus }> }>(
+      `/api/language-quest/analytics?courseId=${id}`,
+      { signal: controller.signal },
+    )
+      .then((payload) => {
+        const next: ChallengeAnalyticsMap = new Map();
+        for (const question of payload?.questions || []) {
+          next.set(question.challengeId, {
+            attempts: question.attempts,
+            correctAttempts: question.correctAttempts,
+            accuracyPercent: question.accuracyPercent,
+            status: question.status,
+          });
+        }
+        setAnalytics(next);
+      })
+      .catch(() => { /* Non-blocking: leave analytics empty on failure. */ });
+    return () => controller.abort();
+  }, [id]);
+
+  useEffect(() => {
     if (!dirty) return;
     const warnBeforeUnload = (event: BeforeUnloadEvent) => {
       event.preventDefault();
@@ -523,6 +738,13 @@ export default function LanguageQuestEditor() {
   }, [dirty]);
 
   const updateUnit = (unitKey: string, next: EditorUnit) => setCourse((current) => ({ ...current, units: current.units.map((unit) => unit._key === unitKey ? next : unit) }));
+  const moveUnit = (unitIndex: number, offset: number) => setCourse((current) => {
+    const target = unitIndex + offset;
+    if (target < 0 || target >= current.units.length) return current;
+    const units = [...current.units];
+    [units[unitIndex], units[target]] = [units[target], units[unitIndex]];
+    return { ...current, units };
+  });
 
   const save = async (): Promise<boolean> => {
     if (!course.title.trim()) { toast.error('Give the course a title'); return false; }
@@ -606,6 +828,11 @@ export default function LanguageQuestEditor() {
         </div>
         <div className="flex flex-wrap gap-2">
           {dirty && <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">Unsaved changes</Badge>}
+          {isEdit && (
+            <Button variant="outline" render={<Link to={`/games/language-quest/analytics?courseId=${id}`} />} nativeButton={false}>
+              <BarChart3 className="mr-2 h-4 w-4" /> View analytics
+            </Button>
+          )}
           {canSubmitForReview && (
             <Button variant="outline" onClick={submitForReview} disabled={saving || submitting}>
               <Send className="mr-2 h-4 w-4" /> {submitting ? 'Submitting…' : 'Save & submit'}
@@ -619,7 +846,21 @@ export default function LanguageQuestEditor() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_90px_90px]">
           <div className="space-y-1.5"><Label htmlFor="course-title">Course title</Label><Input id="course-title" value={course.title} maxLength={120} placeholder="Everyday English" onChange={(event) => setCourse({ ...course, title: event.target.value })} /></div>
           <div className="space-y-1.5"><Label htmlFor="course-language">Language</Label><Input id="course-language" value={course.language} maxLength={80} placeholder="English" onChange={(event) => setCourse({ ...course, language: event.target.value })} /></div>
-          <div className="space-y-1.5"><Label htmlFor="course-category">Category</Label><Input id="course-category" value={course.category} maxLength={80} placeholder="English Courses" onChange={(event) => setCourse({ ...course, category: event.target.value })} /></div>
+          <div className="space-y-1.5">
+            <Label htmlFor="course-category">Category</Label>
+            <select
+              id="course-category"
+              value={course.category}
+              onChange={(event) => setCourse({ ...course, category: event.target.value })}
+              className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100 dark:border-surface-raised dark:bg-surface-indigo dark:text-white"
+            >
+              {/* Preserve an existing custom category (set outside Course Studio, e.g. by a generator script) as its own option rather than silently overwriting it. */}
+              {!LANGUAGE_QUEST_COURSE_CATEGORIES.includes(course.category as any) && course.category && (
+                <option value={course.category}>{course.category} (custom)</option>
+              )}
+              {LANGUAGE_QUEST_COURSE_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}
+            </select>
+          </div>
           <div className="space-y-1.5"><Label htmlFor="course-emoji">Icon</Label><Input id="course-emoji" className="text-center text-xl" value={course.imageEmoji} maxLength={16} onChange={(event) => setCourse({ ...course, imageEmoji: event.target.value })} /></div>
           <div className="space-y-1.5"><Label htmlFor="course-color">Colour</Label><Input id="course-color" type="color" className="h-8 p-1" value={course.accentColor} onChange={(event) => setCourse({ ...course, accentColor: event.target.value })} /></div>
         </div>
@@ -684,7 +925,18 @@ export default function LanguageQuestEditor() {
 
       <div className="space-y-5">
         {course.units.map((unit, unitIndex) => (
-          <UnitEditor key={unit._key} unit={unit} index={unitIndex} onChange={(next) => updateUnit(unit._key, next)} onRemove={() => setCourse((current) => ({ ...current, units: current.units.filter((item) => item._key !== unit._key) }))} />
+          <UnitEditor
+            key={unit._key}
+            unit={unit}
+            index={unitIndex}
+            isFirst={unitIndex === 0}
+            isLast={unitIndex === course.units.length - 1}
+            analytics={analytics}
+            onChange={(next) => updateUnit(unit._key, next)}
+            onRemove={() => setCourse((current) => ({ ...current, units: current.units.filter((item) => item._key !== unit._key) }))}
+            onMoveUp={() => moveUnit(unitIndex, -1)}
+            onMoveDown={() => moveUnit(unitIndex, 1)}
+          />
         ))}
       </div>
 

@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
   BookOpen,
   CheckCircle2,
   Clock3,
+  Copy,
   Eye,
   EyeOff,
   Languages,
@@ -68,11 +69,13 @@ function ReviewBadge({ status }: { status: LanguageQuestCourseReviewStatus }) {
 
 export default function LanguageQuestManage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const isAdmin = user?.role === 'ADMIN';
   const [courses, setCourses] = useState<ManagedCourse[]>([]);
   const [loading, setLoading] = useState(true);
   const [reviewingId, setReviewingId] = useState<string | null>(null);
   const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
 
   const load = () => {
     setLoading(true);
@@ -99,6 +102,19 @@ export default function LanguageQuestManage() {
       toast.success('Course deleted');
     } catch (error: any) {
       toast.error(error?.message || 'Could not delete the course');
+    }
+  };
+
+  const duplicate = async (course: ManagedCourse) => {
+    setDuplicatingId(course.id);
+    try {
+      const result = await apiSend<{ id: string }>(`/api/language-quest/manage/courses/${course.id}/duplicate`, 'POST');
+      toast.success(`Duplicated as "${course.title} (Copy)"`);
+      navigate(`/games/language-quest/manage/${result.id}`);
+    } catch (error: any) {
+      toast.error(error?.message || 'Could not duplicate the course');
+    } finally {
+      setDuplicatingId(null);
     }
   };
 
@@ -227,6 +243,9 @@ export default function LanguageQuestManage() {
 
                 <div className="mt-4 flex gap-2 border-t border-slate-100 pt-4 dark:border-surface-raised">
                   <Button size="sm" className="flex-1" render={<Link to={`/games/language-quest/manage/${course.id}`} />} nativeButton={false}><Pencil className="mr-1.5 h-3.5 w-3.5" /> {isAdmin && course.reviewStatus === 'PENDING' ? 'Inspect course' : 'Edit'}</Button>
+                  <Button size="sm" variant="outline" disabled={duplicatingId === course.id} onClick={() => duplicate(course)} aria-label={`Duplicate ${course.title}`} title="Duplicate as a new draft">
+                    <Copy className="h-3.5 w-3.5" />
+                  </Button>
                   {!course.official && (
                     <Button size="sm" variant="outline" className="text-rose-600 hover:text-rose-700" onClick={() => remove(course)} aria-label={`Delete ${course.title}`}>
                       <Trash2 className="h-3.5 w-3.5" />

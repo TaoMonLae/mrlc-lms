@@ -223,7 +223,7 @@ export default function LanguageQuestProfile() {
         </div>
 
         <TabsContent value="cards" className="space-y-6 outline-none">
-          <LanguageQuestRewardCollection rewards={profile.profile.rewards} bestStreak={profile.profile.bestStreak} />
+          <LanguageQuestRewardCollection rewards={profile.profile.rewards} bestStreak={profile.profile.bestStreak} learnerName={profile.name} />
 
           <LanguageQuestLegendaryVault rewards={profile.profile.rewards} />
 

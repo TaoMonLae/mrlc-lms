@@ -22,7 +22,7 @@ interface AchievementImageInput {
 const CERTIFICATE_WIDTH = 1600;
 const CERTIFICATE_HEIGHT = 1131;
 
-function safeFilename(value: string): string {
+export function safeFilename(value: string): string {
   return value.trim().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '').slice(0, 70) || 'learner';
 }
 
@@ -486,7 +486,7 @@ export async function createLanguageQuestAchievementBlob(input: AchievementImage
   });
 }
 
-function downloadBlob(blob: Blob, filename: string) {
+export function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;

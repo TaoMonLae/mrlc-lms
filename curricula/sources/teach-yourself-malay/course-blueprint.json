@@ -166,6 +166,60 @@
                     "audioText": "Tidak"
                   }
                 ]
+              },
+              {
+                "type": "MATCHING",
+                "question": "Match each English phrase to its Malay translation.",
+                "options": [
+                  {
+                    "text": "good morning",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "good morning"
+                  },
+                  {
+                    "text": "Selamat pagi",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "Selamat pagi"
+                  },
+                  {
+                    "text": "thank you",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "thank you"
+                  },
+                  {
+                    "text": "Terima kasih",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "Terima kasih"
+                  },
+                  {
+                    "text": "sorry / excuse me",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "sorry / excuse me"
+                  },
+                  {
+                    "text": "Maaf",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "Maaf"
+                  },
+                  {
+                    "text": "please / help",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "please / help"
+                  },
+                  {
+                    "text": "Tolong",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "Tolong"
+                  }
+                ]
               }
             ]
           },
@@ -770,6 +824,60 @@
                     "correct": true,
                     "emoji": null,
                     "audioText": "berkenalan"
+                  }
+                ]
+              },
+              {
+                "type": "MATCHING",
+                "question": "Match each English phrase to its Malay translation.",
+                "options": [
+                  {
+                    "text": "welcome",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "welcome"
+                  },
+                  {
+                    "text": "selamat datang",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "selamat datang"
+                  },
+                  {
+                    "text": "name",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "name"
+                  },
+                  {
+                    "text": "nama",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "nama"
+                  },
+                  {
+                    "text": "from",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "from"
+                  },
+                  {
+                    "text": "dari",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "dari"
+                  },
+                  {
+                    "text": "country",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "country"
+                  },
+                  {
+                    "text": "negara",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "negara"
                   }
                 ]
               }
@@ -1378,6 +1486,60 @@
                     "audioText": "alamat"
                   }
                 ]
+              },
+              {
+                "type": "MATCHING",
+                "question": "Match each English phrase to its Malay translation.",
+                "options": [
+                  {
+                    "text": "luggage",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "luggage"
+                  },
+                  {
+                    "text": "bagasi",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "bagasi"
+                  },
+                  {
+                    "text": "passport",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "passport"
+                  },
+                  {
+                    "text": "pasport",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "pasport"
+                  },
+                  {
+                    "text": "airport",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "airport"
+                  },
+                  {
+                    "text": "lapangan terbang",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "lapangan terbang"
+                  },
+                  {
+                    "text": "taxi",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "taxi"
+                  },
+                  {
+                    "text": "teksi",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "teksi"
+                  }
+                ]
               }
             ]
           },
@@ -1982,6 +2144,60 @@
                     "correct": true,
                     "emoji": null,
                     "audioText": "bujang"
+                  }
+                ]
+              },
+              {
+                "type": "MATCHING",
+                "question": "Match each English phrase to its Malay translation.",
+                "options": [
+                  {
+                    "text": "occupation",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "occupation"
+                  },
+                  {
+                    "text": "pekerjaan",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "pekerjaan"
+                  },
+                  {
+                    "text": "language",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "language"
+                  },
+                  {
+                    "text": "bahasa",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "bahasa"
+                  },
+                  {
+                    "text": "family",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "family"
+                  },
+                  {
+                    "text": "keluarga",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "keluarga"
+                  },
+                  {
+                    "text": "wife",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "wife"
+                  },
+                  {
+                    "text": "isteri",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "isteri"
                   }
                 ]
               }
@@ -2590,6 +2806,60 @@
                     "audioText": "sepenuh masa"
                   }
                 ]
+              },
+              {
+                "type": "MATCHING",
+                "question": "Match each English phrase to its Malay translation.",
+                "options": [
+                  {
+                    "text": "secretary",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "secretary"
+                  },
+                  {
+                    "text": "setiausaha",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "setiausaha"
+                  },
+                  {
+                    "text": "school",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "school"
+                  },
+                  {
+                    "text": "sekolah",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "sekolah"
+                  },
+                  {
+                    "text": "skill",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "skill"
+                  },
+                  {
+                    "text": "kemahiran",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "kemahiran"
+                  },
+                  {
+                    "text": "experience",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "experience"
+                  },
+                  {
+                    "text": "pengalaman",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "pengalaman"
+                  }
+                ]
               }
             ]
           },
@@ -3194,6 +3464,60 @@
                     "correct": true,
                     "emoji": null,
                     "audioText": "sepupu"
+                  }
+                ]
+              },
+              {
+                "type": "MATCHING",
+                "question": "Match each English phrase to its Malay translation.",
+                "options": [
+                  {
+                    "text": "parents",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "parents"
+                  },
+                  {
+                    "text": "ibu bapa",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "ibu bapa"
+                  },
+                  {
+                    "text": "older brother",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "older brother"
+                  },
+                  {
+                    "text": "abang",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "abang"
+                  },
+                  {
+                    "text": "older sister",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "older sister"
+                  },
+                  {
+                    "text": "kakak",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "kakak"
+                  },
+                  {
+                    "text": "younger sibling",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "younger sibling"
+                  },
+                  {
+                    "text": "adik",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "adik"
                   }
                 ]
               }
@@ -3802,6 +4126,60 @@
                     "audioText": "tiket"
                   }
                 ]
+              },
+              {
+                "type": "MATCHING",
+                "question": "Match each English phrase to its Malay translation.",
+                "options": [
+                  {
+                    "text": "historic place",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "historic place"
+                  },
+                  {
+                    "text": "tempat bersejarah",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "tempat bersejarah"
+                  },
+                  {
+                    "text": "museum",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "museum"
+                  },
+                  {
+                    "text": "muzium",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "muzium"
+                  },
+                  {
+                    "text": "national park",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "national park"
+                  },
+                  {
+                    "text": "taman negara",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "taman negara"
+                  },
+                  {
+                    "text": "beach",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "beach"
+                  },
+                  {
+                    "text": "pantai",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "pantai"
+                  }
+                ]
               }
             ]
           },
@@ -4406,6 +4784,60 @@
                     "correct": true,
                     "emoji": null,
                     "audioText": "rancangan"
+                  }
+                ]
+              },
+              {
+                "type": "MATCHING",
+                "question": "Match each English phrase to its Malay translation.",
+                "options": [
+                  {
+                    "text": "invitation",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "invitation"
+                  },
+                  {
+                    "text": "jemputan",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "jemputan"
+                  },
+                  {
+                    "text": "event",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "event"
+                  },
+                  {
+                    "text": "majlis",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "majlis"
+                  },
+                  {
+                    "text": "feast / celebration meal",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "feast / celebration meal"
+                  },
+                  {
+                    "text": "kenduri",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "kenduri"
+                  },
+                  {
+                    "text": "date",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "date"
+                  },
+                  {
+                    "text": "tarikh",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "tarikh"
                   }
                 ]
               }
@@ -5014,6 +5446,60 @@
                     "audioText": "belok"
                   }
                 ]
+              },
+              {
+                "type": "MATCHING",
+                "question": "Match each English phrase to its Malay translation.",
+                "options": [
+                  {
+                    "text": "junction",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "junction"
+                  },
+                  {
+                    "text": "simpang",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "simpang"
+                  },
+                  {
+                    "text": "traffic light",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "traffic light"
+                  },
+                  {
+                    "text": "lampu isyarat",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "lampu isyarat"
+                  },
+                  {
+                    "text": "beside",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "beside"
+                  },
+                  {
+                    "text": "di sebelah",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "di sebelah"
+                  },
+                  {
+                    "text": "opposite",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "opposite"
+                  },
+                  {
+                    "text": "bertentangan dengan",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "bertentangan dengan"
+                  }
+                ]
               }
             ]
           },
@@ -5618,6 +6104,60 @@
                     "correct": true,
                     "emoji": null,
                     "audioText": "resit"
+                  }
+                ]
+              },
+              {
+                "type": "MATCHING",
+                "question": "Match each English phrase to its Malay translation.",
+                "options": [
+                  {
+                    "text": "ringgit",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "ringgit"
+                  },
+                  {
+                    "text": "ringgit",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "ringgit"
+                  },
+                  {
+                    "text": "sen",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "sen"
+                  },
+                  {
+                    "text": "sen",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "sen"
+                  },
+                  {
+                    "text": "exchange rate",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "exchange rate"
+                  },
+                  {
+                    "text": "kadar tukaran",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "kadar tukaran"
+                  },
+                  {
+                    "text": "cash",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "cash"
+                  },
+                  {
+                    "text": "tunai",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "tunai"
                   }
                 ]
               }
@@ -6226,6 +6766,60 @@
                     "audioText": "perjalanan"
                   }
                 ]
+              },
+              {
+                "type": "MATCHING",
+                "question": "Match each English phrase to its Malay translation.",
+                "options": [
+                  {
+                    "text": "bus",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "bus"
+                  },
+                  {
+                    "text": "bas",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "bas"
+                  },
+                  {
+                    "text": "train",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "train"
+                  },
+                  {
+                    "text": "kereta api",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "kereta api"
+                  },
+                  {
+                    "text": "aeroplane",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "aeroplane"
+                  },
+                  {
+                    "text": "kapal terbang",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "kapal terbang"
+                  },
+                  {
+                    "text": "ferry",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "ferry"
+                  },
+                  {
+                    "text": "feri",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "feri"
+                  }
+                ]
               }
             ]
           },
@@ -6830,6 +7424,60 @@
                     "correct": true,
                     "emoji": null,
                     "audioText": "daftar keluar"
+                  }
+                ]
+              },
+              {
+                "type": "MATCHING",
+                "question": "Match each English phrase to its Malay translation.",
+                "options": [
+                  {
+                    "text": "vacant room",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "vacant room"
+                  },
+                  {
+                    "text": "bilik kosong",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "bilik kosong"
+                  },
+                  {
+                    "text": "reservation",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "reservation"
+                  },
+                  {
+                    "text": "tempahan",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "tempahan"
+                  },
+                  {
+                    "text": "double bed",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "double bed"
+                  },
+                  {
+                    "text": "katil kelamin",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "katil kelamin"
+                  },
+                  {
+                    "text": "breakfast",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "breakfast"
+                  },
+                  {
+                    "text": "sarapan pagi",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "sarapan pagi"
                   }
                 ]
               }
@@ -7438,6 +8086,60 @@
                     "audioText": "diskaun"
                   }
                 ]
+              },
+              {
+                "type": "MATCHING",
+                "question": "Match each English phrase to its Malay translation.",
+                "options": [
+                  {
+                    "text": "size",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "size"
+                  },
+                  {
+                    "text": "saiz",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "saiz"
+                  },
+                  {
+                    "text": "colour",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "colour"
+                  },
+                  {
+                    "text": "warna",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "warna"
+                  },
+                  {
+                    "text": "cloth / fabric",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "cloth / fabric"
+                  },
+                  {
+                    "text": "kain",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "kain"
+                  },
+                  {
+                    "text": "cotton",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "cotton"
+                  },
+                  {
+                    "text": "kapas",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "kapas"
+                  }
+                ]
               }
             ]
           },
@@ -8042,6 +8744,60 @@
                     "correct": true,
                     "emoji": null,
                     "audioText": "pencuci mulut"
+                  }
+                ]
+              },
+              {
+                "type": "MATCHING",
+                "question": "Match each English phrase to its Malay translation.",
+                "options": [
+                  {
+                    "text": "menu",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "menu"
+                  },
+                  {
+                    "text": "menu",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "menu"
+                  },
+                  {
+                    "text": "dish",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "dish"
+                  },
+                  {
+                    "text": "hidangan",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "hidangan"
+                  },
+                  {
+                    "text": "drink",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "drink"
+                  },
+                  {
+                    "text": "minuman",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "minuman"
+                  },
+                  {
+                    "text": "spicy",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "spicy"
+                  },
+                  {
+                    "text": "pedas",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "pedas"
                   }
                 ]
               }
@@ -8650,6 +9406,60 @@
                     "audioText": "resipi"
                   }
                 ]
+              },
+              {
+                "type": "MATCHING",
+                "question": "Match each English phrase to its Malay translation.",
+                "options": [
+                  {
+                    "text": "basket",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "basket"
+                  },
+                  {
+                    "text": "bakul",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "bakul"
+                  },
+                  {
+                    "text": "trolley",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "trolley"
+                  },
+                  {
+                    "text": "troli",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "troli"
+                  },
+                  {
+                    "text": "one kilogram",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "one kilogram"
+                  },
+                  {
+                    "text": "sekilogram",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "sekilogram"
+                  },
+                  {
+                    "text": "one bottle",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "one bottle"
+                  },
+                  {
+                    "text": "sebotol",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "sebotol"
+                  }
+                ]
               }
             ]
           },
@@ -9256,6 +10066,60 @@
                     "audioText": "melancong"
                   }
                 ]
+              },
+              {
+                "type": "MATCHING",
+                "question": "Match each English phrase to its Malay translation.",
+                "options": [
+                  {
+                    "text": "free time",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "free time"
+                  },
+                  {
+                    "text": "masa lapang",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "masa lapang"
+                  },
+                  {
+                    "text": "favourite",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "favourite"
+                  },
+                  {
+                    "text": "kegemaran",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "kegemaran"
+                  },
+                  {
+                    "text": "to exercise",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "to exercise"
+                  },
+                  {
+                    "text": "bersenam",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "bersenam"
+                  },
+                  {
+                    "text": "to watch",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "to watch"
+                  },
+                  {
+                    "text": "menonton",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "menonton"
+                  }
+                ]
               }
             ]
           },
@@ -9860,6 +10724,60 @@
                     "correct": true,
                     "emoji": null,
                     "audioText": "temu janji"
+                  }
+                ]
+              },
+              {
+                "type": "MATCHING",
+                "question": "Match each English phrase to its Malay translation.",
+                "options": [
+                  {
+                    "text": "fever",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "fever"
+                  },
+                  {
+                    "text": "demam",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "demam"
+                  },
+                  {
+                    "text": "cough",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "cough"
+                  },
+                  {
+                    "text": "batuk",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "batuk"
+                  },
+                  {
+                    "text": "headache",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "headache"
+                  },
+                  {
+                    "text": "sakit kepala",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "sakit kepala"
+                  },
+                  {
+                    "text": "medicine",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "medicine"
+                  },
+                  {
+                    "text": "ubat",
+                    "correct": true,
+                    "emoji": null,
+                    "audioText": "ubat"
                   }
                 ]
               }

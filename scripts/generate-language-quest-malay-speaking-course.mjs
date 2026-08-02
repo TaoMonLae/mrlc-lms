@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
+import { buildOddOneOut, option, tokenizeWords } from "./lib/language-quest-practice-helpers.mjs";
 
 const outputPath = path.resolve(
   process.cwd(),
@@ -1809,6 +1810,23 @@ function rotateOptions(items, index, vocabularyMode = false) {
   return [...options.slice(shift), ...options.slice(0, shift)];
 }
 
+// Pairs up to 4 of a unit's own vocab entries (Malay word <-> English
+// meaning) into one MATCHING challenge (2 tiles per pair, positionally
+// paired -- see matchingChallengeIsCorrect in shared/languageQuest.ts).
+function vocabMatchingChallenge(unit) {
+  const pairs = unit.vocab.slice(0, 4);
+  const options = [];
+  for (const entry of pairs) {
+    options.push({ text: entry[0], correct: true, emoji: null, audioText: entry[0] });
+    options.push({ text: entry[1], correct: true, emoji: null, audioText: entry[1] });
+  }
+  return {
+    type: "MATCHING",
+    question: "Match each Malay word or phrase to its English meaning.",
+    options,
+  };
+}
+
 function vocabChallenges(unit) {
   return unit.vocab.map((entry, index) => ({
     type: index % 4 === 3 ? "ASSIST" : "SELECT",
@@ -1817,14 +1835,57 @@ function vocabChallenges(unit) {
   }));
 }
 
-function speakingChallenges(items, label) {
-  return items.map((entry, index) => ({
-    type: index % 3 === 2 ? "ASSIST" : "SELECT",
-    question: `${label}
+const SPEAKING_QUESTION_FRAMING = {
+  SELECT: "Choose the best Malay response, then say it aloud.",
+  ASSIST: "Choose the best Malay response, then say it aloud.",
+  CLOZE: "Complete the exchange with the correct Malay wording, then say it aloud.",
+  GRAMMAR_TRANSFORM: "Choose the grammatically correct Malay sentence, then say it aloud.",
+};
+
+function speakingChallenges(items, label, typeCycle = ["SELECT", "ASSIST"]) {
+  return items.map((entry, index) => {
+    const type = typeCycle[index % typeCycle.length];
+    return {
+      type,
+      question: `${label}
 ${entry[0]}
-Choose the best Malay response, then say it aloud.`,
-    options: rotateOptions(items, index, false),
-  }));
+${SPEAKING_QUESTION_FRAMING[type]}`,
+      options: rotateOptions(items, index, false),
+    };
+  });
+}
+
+// Rebuilds one of this unit's own real drill sentences, word by word --
+// always available since every unit has at least one multi-word drill
+// answer sentence.
+function unitReorderChallenge(unit) {
+  let best = null;
+  for (const [, answer] of unit.drills) {
+    const tokens = tokenizeWords(answer);
+    if (tokens && (!best || tokens.length > best.tokens.length)) best = { tokens };
+  }
+  if (!best) return null;
+  return {
+    type: "REORDER",
+    question: "Put this Malay sentence back in the correct order.",
+    options: best.tokens.map((token) => option(token, true)),
+  };
+}
+
+// Three of this unit's own vocabulary words/phrases plus one "ringer" word
+// borrowed from a different unit -- always available and always genuinely
+// different, since every unit has its own distinct vocab list.
+function unitOddOneOutChallenge(unit, unitIndex, allUnits) {
+  if (unit.vocab.length < 3) return null;
+  const inGroup = unit.vocab.slice(0, 3).map(([word]) => word);
+  const ringerUnit = allUnits[(unitIndex + 1) % allUnits.length];
+  const oddWord = ringerUnit.vocab[0]?.[0];
+  return buildOddOneOut(
+    "Which Malay word or phrase does not belong with the others?",
+    inGroup,
+    oddWord,
+    oddWord ? `“${oddWord}” is from a different unit; the rest of this set is ${inGroup.map((word) => `“${word}”`).join(", ")}.` : undefined,
+  );
 }
 
 const course = {
@@ -1844,8 +1905,13 @@ const course = {
     lessons: [
       {
         title: "Vocabulary Sprint",
-        description: "Learn ten high-frequency words or expressions. Listen to every option and repeat the correct answer twice.",
-        challenges: vocabChallenges(unit),
+        description: "Learn ten high-frequency words or expressions, listen and repeat, then complete an ordering, odd-one-out, and matching review.",
+        challenges: [
+          ...vocabChallenges(unit),
+          unitReorderChallenge(unit),
+          unitOddOneOutChallenge(unit, unitIndex, sourceUnits),
+          vocabMatchingChallenge(unit),
+        ].filter(Boolean),
       },
       {
         title: "Daily Speaking Sentences",
@@ -1859,15 +1925,19 @@ const course = {
       },
       {
         title: "Sentence Workshop",
-        description: "Strengthen grammar, word order, register, and sentence-building through spoken translation practice.",
-        challenges: speakingChallenges(unit.drills, "SENTENCE PRACTICE"),
+        description: "Strengthen grammar, word order, register, and sentence-building through spoken translation, completion, and grammar practice.",
+        challenges: speakingChallenges(unit.drills, "SENTENCE PRACTICE", ["SELECT", "ASSIST", "GRAMMAR_TRANSFORM", "CLOZE"]),
       },
     ],
   })),
 };
 
 const lessons = course.units.flatMap((unit) => unit.lessons);
-const challenges = lessons.flatMap((lesson) => lesson.challenges);
+const allChallenges = lessons.flatMap((lesson) => lesson.challenges);
+const matchingChallenges = allChallenges.filter((challenge) => challenge.type === "MATCHING");
+const reorderChallenges = allChallenges.filter((challenge) => challenge.type === "REORDER");
+const oddOneOutChallenges = allChallenges.filter((challenge) => challenge.type === "ODD_ONE_OUT");
+const challenges = allChallenges.filter((challenge) => !["MATCHING", "REORDER", "ODD_ONE_OUT"].includes(challenge.type));
 if (course.units.length !== 12 || lessons.length !== 48 || challenges.length !== 384) {
   throw new Error(`Unexpected curriculum size: ${course.units.length} units, ${lessons.length} lessons, ${challenges.length} challenges`);
 }
@@ -1875,6 +1945,37 @@ for (const challenge of challenges) {
   if (challenge.options.length !== 3) throw new Error("Every challenge must have exactly three options");
   if (challenge.options.filter((option) => option.correct).length !== 1) throw new Error("Every challenge must have exactly one correct answer");
   if (challenge.options.some((option) => !option.text || option.audioText !== option.text)) throw new Error("Every option must have matching speakable text");
+}
+{
+  const typeCounts = new Map();
+  for (const challenge of challenges) typeCounts.set(challenge.type, (typeCounts.get(challenge.type) || 0) + 1);
+  for (const requiredType of ["SELECT", "ASSIST", "CLOZE", "GRAMMAR_TRANSFORM"]) {
+    if (!typeCounts.get(requiredType)) throw new Error(`Generated Malay speaking course is missing ${requiredType} challenges`);
+  }
+}
+if (reorderChallenges.length !== course.units.length) {
+  throw new Error(`Expected one REORDER challenge per unit (${course.units.length}), found ${reorderChallenges.length}`);
+}
+for (const challenge of reorderChallenges) {
+  if (challenge.options.length < 2 || challenge.options.some((option) => !option.correct || !option.text || option.audioText !== option.text)) {
+    throw new Error("Every REORDER challenge must have at least two tokens, all marked correct with matching audio text");
+  }
+}
+if (oddOneOutChallenges.length !== course.units.length) {
+  throw new Error(`Expected one ODD_ONE_OUT challenge per unit (${course.units.length}), found ${oddOneOutChallenges.length}`);
+}
+for (const challenge of oddOneOutChallenges) {
+  if (challenge.options.length !== 4 || challenge.options.filter((option) => option.correct).length !== 1 || challenge.options.some((option) => !option.text || option.audioText !== option.text)) {
+    throw new Error("Every ODD_ONE_OUT challenge must have four options and exactly one odd-one-out answer with matching audio text");
+  }
+}
+if (matchingChallenges.length !== course.units.length) {
+  throw new Error(`Expected one MATCHING challenge per unit (${course.units.length}), found ${matchingChallenges.length}`);
+}
+for (const challenge of matchingChallenges) {
+  if (challenge.options.length !== 8 || challenge.options.some((option) => !option.correct || !option.text || option.audioText !== option.text)) {
+    throw new Error("Every generated MATCHING challenge must have 4 pairs (8 tiles), all marked correct with matching audio text");
+  }
 }
 
 await mkdir(path.dirname(outputPath), { recursive: true });

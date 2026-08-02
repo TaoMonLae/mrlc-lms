@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
+import { buildOddOneOut, option, tokenizeWords } from "./lib/language-quest-practice-helpers.mjs";
 
 const outputPath = path.resolve(process.cwd(), "curricula/language-quest/malay-govinfo-guide.generated.json");
 const sourceUnits = [
@@ -1810,12 +1811,72 @@ function rotateOptions(items, index, vocab = false) {
   return [...options.slice(shift), ...options.slice(0, shift)];
 }
 
-function speakingChallenges(items, label) {
-  return items.map((entry, index) => ({
-    type: index % 3 === 2 ? "ASSIST" : "SELECT",
-    question: `${label}\n${entry[0]}\nChoose the best modern Malay response, then say it aloud.`,
-    options: rotateOptions(items, index, false),
-  }));
+// Pairs up to 4 of a unit's own vocab entries (Malay word <-> English
+// meaning) into one MATCHING challenge (2 tiles per pair, positionally
+// paired -- see matchingChallengeIsCorrect in shared/languageQuest.ts).
+function vocabMatchingChallenge(vocab) {
+  const pairs = vocab.slice(0, 4);
+  const options = [];
+  for (const entry of pairs) {
+    options.push({ text: entry[0], correct: true, emoji: entry[2] ?? null, audioText: entry[0] });
+    options.push({ text: entry[1], correct: true, emoji: null, audioText: entry[1] });
+  }
+  return {
+    type: "MATCHING",
+    question: "Match each modern Malay word or phrase to its English meaning.",
+    options,
+  };
+}
+
+const SPEAKING_QUESTION_FRAMING = {
+  SELECT: "Choose the best modern Malay response, then say it aloud.",
+  ASSIST: "Choose the best modern Malay response, then say it aloud.",
+  CLOZE: "Complete the exchange with the correct modern Malay wording, then say it aloud.",
+  GRAMMAR_TRANSFORM: "Choose the grammatically correct modern Malay sentence, then say it aloud.",
+};
+
+function speakingChallenges(items, label, typeCycle = ["SELECT", "ASSIST"]) {
+  return items.map((entry, index) => {
+    const type = typeCycle[index % typeCycle.length];
+    return {
+      type,
+      question: `${label}\n${entry[0]}\n${SPEAKING_QUESTION_FRAMING[type]}`,
+      options: rotateOptions(items, index, false),
+    };
+  });
+}
+
+// Rebuilds one of this unit's own real drill sentences, word by word --
+// always available since every unit has at least one multi-word drill
+// answer sentence (see sourceUnits above).
+function unitReorderChallenge(unit) {
+  let best = null;
+  for (const [, answer] of unit.drills) {
+    const tokens = tokenizeWords(answer);
+    if (tokens && (!best || tokens.length > best.tokens.length)) best = { answer, tokens };
+  }
+  if (!best) return null;
+  return {
+    type: "REORDER",
+    question: `Put this modern Malay sentence back in the correct order.`,
+    options: best.tokens.map((token) => option(token, true)),
+  };
+}
+
+// Three of this unit's own vocabulary words/phrases plus one "ringer" word
+// borrowed from a different unit -- always available and always genuinely
+// different, since every unit has its own distinct vocab list.
+function unitOddOneOutChallenge(unit, unitIndex, allUnits) {
+  if (unit.vocab.length < 3) return null;
+  const inGroup = unit.vocab.slice(0, 3).map(([word]) => word);
+  const ringerUnit = allUnits[(unitIndex + 1) % allUnits.length];
+  const oddWord = ringerUnit.vocab[0]?.[0];
+  return buildOddOneOut(
+    "Which modern Malay word or phrase does not belong with the others?",
+    inGroup,
+    oddWord,
+    oddWord ? `“${oddWord}” is from a different unit; the rest of this set is ${inGroup.map((word) => `“${word}”`).join(", ")}.` : undefined,
+  );
 }
 
 const course = {
@@ -1833,21 +1894,65 @@ const course = {
     title: `${unit.level} · Unit ${unitIndex + 1}: ${unit.title}`,
     description: `${unit.description} Grammar focus: ${unit.grammar} Source anchor: ${unit.source}`,
     lessons: [
-      { title: "Vocabulary and Audio", description: "Learn ten current Malaysian Malay words or expressions and repeat each answer aloud.", challenges: unit.vocab.map((entry, index) => ({ type: index % 4 === 3 ? "ASSIST" : "SELECT", question: `Which modern Malay word or phrase means “${entry[1]}”? Listen, choose, and say it aloud.`, options: rotateOptions(unit.vocab, index, true) })) },
+      {
+        title: "Vocabulary and Audio",
+        description: "Learn ten current Malaysian Malay words or expressions, repeat each answer aloud, and complete an ordering, odd-one-out, and matching review.",
+        challenges: [
+          ...unit.vocab.map((entry, index) => ({ type: index % 4 === 3 ? "ASSIST" : "SELECT", question: `Which modern Malay word or phrase means “${entry[1]}”? Listen, choose, and say it aloud.`, options: rotateOptions(unit.vocab, index, true) })),
+          unitReorderChallenge(unit),
+          unitOddOneOutChallenge(unit, unitIndex, sourceUnits),
+          vocabMatchingChallenge(unit.vocab),
+        ].filter(Boolean),
+      },
       { title: "Daily Speaking", description: "Use source-inspired communication goals in modern civilian situations.", challenges: speakingChallenges(unit.phrases, "DAILY SPEAKING") },
       { title: "Scenario Practice", description: "Complete realistic dialogues and practise both roles with a partner.", challenges: speakingChallenges(unit.dialogues, "SCENARIO DIALOGUE") },
-      { title: "Sentence and Source Workshop", description: "Build sentences, strengthen grammar, and distinguish current forms from obsolete source spellings where relevant.", challenges: speakingChallenges(unit.drills, "SENTENCE PRACTICE") },
+      { title: "Sentence and Source Workshop", description: "Build sentences, strengthen grammar, and distinguish current forms from obsolete source spellings where relevant.", challenges: speakingChallenges(unit.drills, "SENTENCE PRACTICE", ["SELECT", "ASSIST", "GRAMMAR_TRANSFORM", "CLOZE"]) },
     ],
   })),
 };
 
 const lessons = course.units.flatMap((unit) => unit.lessons);
-const challenges = lessons.flatMap((lesson) => lesson.challenges);
+const allChallenges = lessons.flatMap((lesson) => lesson.challenges);
+const matchingChallenges = allChallenges.filter((challenge) => challenge.type === "MATCHING");
+const reorderChallenges = allChallenges.filter((challenge) => challenge.type === "REORDER");
+const oddOneOutChallenges = allChallenges.filter((challenge) => challenge.type === "ODD_ONE_OUT");
+const challenges = allChallenges.filter((challenge) => !["MATCHING", "REORDER", "ODD_ONE_OUT"].includes(challenge.type));
 if (course.units.length !== 12 || lessons.length !== 48 || challenges.length !== 384) throw new Error("Unexpected course size");
 for (const challenge of challenges) {
   if (challenge.options.length !== 3) throw new Error("Every challenge needs three options");
   if (challenge.options.filter((option) => option.correct).length !== 1) throw new Error("Every challenge needs one correct option");
   if (challenge.options.some((option) => !option.text || option.audioText !== option.text)) throw new Error("Every option needs matching audio text");
+}
+{
+  const typeCounts = new Map();
+  for (const challenge of challenges) typeCounts.set(challenge.type, (typeCounts.get(challenge.type) || 0) + 1);
+  for (const requiredType of ["SELECT", "ASSIST", "CLOZE", "GRAMMAR_TRANSFORM"]) {
+    if (!typeCounts.get(requiredType)) throw new Error(`Generated Malay guide course is missing ${requiredType} challenges`);
+  }
+}
+if (reorderChallenges.length !== course.units.length) {
+  throw new Error(`Expected one REORDER challenge per unit (${course.units.length}), found ${reorderChallenges.length}`);
+}
+for (const challenge of reorderChallenges) {
+  if (challenge.options.length < 2 || challenge.options.some((option) => !option.correct || !option.text || option.audioText !== option.text)) {
+    throw new Error("Every REORDER challenge must have at least two tokens, all marked correct with matching audio text");
+  }
+}
+if (oddOneOutChallenges.length !== course.units.length) {
+  throw new Error(`Expected one ODD_ONE_OUT challenge per unit (${course.units.length}), found ${oddOneOutChallenges.length}`);
+}
+for (const challenge of oddOneOutChallenges) {
+  if (challenge.options.length !== 4 || challenge.options.filter((option) => option.correct).length !== 1 || challenge.options.some((option) => !option.text || option.audioText !== option.text)) {
+    throw new Error("Every ODD_ONE_OUT challenge must have four options and exactly one odd-one-out answer with matching audio text");
+  }
+}
+if (matchingChallenges.length !== course.units.length) {
+  throw new Error(`Expected one MATCHING challenge per unit (${course.units.length}), found ${matchingChallenges.length}`);
+}
+for (const challenge of matchingChallenges) {
+  if (challenge.options.length !== 8 || challenge.options.some((option) => !option.correct || !option.text || option.audioText !== option.text)) {
+    throw new Error("Every generated MATCHING challenge must have 4 pairs (8 tiles), all marked correct with matching audio text");
+  }
 }
 
 await mkdir(path.dirname(outputPath), { recursive: true });

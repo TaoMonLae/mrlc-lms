@@ -3302,6 +3302,93 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
     }
   });
 
+  app.post("/api/language-quest/manage/courses/:id/duplicate", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    if (!isManager(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
+    try {
+      const source = await prisma.languageQuestCourse.findUnique({
+        where: { id: req.params.id },
+        include: {
+          units: { orderBy: { order: "asc" }, include: {
+            lessons: { orderBy: { order: "asc" }, include: {
+              challenges: { orderBy: { order: "asc" }, include: { options: { orderBy: { order: "asc" } } } },
+            } },
+          } },
+        },
+      });
+      if (!source) { res.status(404).json({ error: "Course not found" }); return; }
+      if (jwtUser.role !== "ADMIN" && source.createdById !== jwtUser.userId) {
+        res.status(403).json({ error: "You can only duplicate courses you created" });
+        return;
+      }
+      const reviewRequired = jwtUser.role === "TEACHER";
+      const slug = source.title.toUpperCase().replace(/[^A-Z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 48) || "COURSE";
+      let created: any;
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        try {
+          // Duplicating always hands ownership to whoever clicked "Duplicate"
+          // (even for an official course an admin is copying) and always
+          // starts the copy as an unpublished draft -- copying published
+          // status across would let a half-renamed clone go live by accident.
+          created = await prisma.languageQuestCourse.create({
+            data: {
+              code: `${slug}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
+              title: `${source.title} (Copy)`,
+              description: source.description,
+              language: source.language,
+              category: source.category,
+              imageEmoji: source.imageEmoji,
+              accentColor: source.accentColor,
+              published: false,
+              createdById: jwtUser.userId,
+              reviewRequired,
+              reviewStatus: "DRAFT",
+              units: {
+                create: source.units.map((unit: any) => ({
+                  title: unit.title,
+                  description: unit.description,
+                  order: unit.order,
+                  lessons: {
+                    create: unit.lessons.map((lesson: any) => ({
+                      title: lesson.title,
+                      description: lesson.description,
+                      order: lesson.order,
+                      challenges: {
+                        create: lesson.challenges.map((challenge: any) => ({
+                          type: challenge.type,
+                          question: challenge.question,
+                          explanation: challenge.explanation,
+                          order: challenge.order,
+                          options: {
+                            create: challenge.options.map((option: any) => ({
+                              text: option.text,
+                              correct: option.correct,
+                              emoji: option.emoji,
+                              audioText: option.audioText,
+                              order: option.order,
+                            })),
+                          },
+                        })),
+                      },
+                    })),
+                  },
+                })),
+              },
+            },
+          });
+          break;
+        } catch (error: any) {
+          if (error?.code !== "P2002" || attempt === 2) throw error;
+        }
+      }
+      await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "LANGUAGE_QUEST_COURSE", created.id, `Duplicated Language Quest course "${source.title}" as "${created.title}"`, req.ip || null, req.headers["user-agent"] || null);
+      res.status(201).json({ id: created.id });
+    } catch (error) {
+      logger.error("Error duplicating Language Quest course:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to duplicate the course" });
+    }
+  });
+
   app.post("/api/language-quest/manage/courses/:id/submit-review", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     if (!isManager(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }

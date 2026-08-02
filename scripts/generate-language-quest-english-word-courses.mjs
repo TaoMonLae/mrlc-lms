@@ -2,6 +2,7 @@ import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import WordPOS from "wordpos";
+import { buildOddOneOut, option, tokenizeWords } from "./lib/language-quest-practice-helpers.mjs";
 
 const outputPath = path.resolve(process.cwd(), "curricula/language-quest/english-word-courses.generated.json");
 const sourceCandidates = [
@@ -420,22 +421,76 @@ function createChallenge(words, word, index) {
   const definition = definitions.get(word);
   const usageExample = usageExamples.get(word);
   const explanation = `“${word}” means ${definition}. Example: ${usageExample}`;
-  if (index % 3 === 0) {
-    return {
-      type: "SELECT",
-      question: `Which word means “${definition}”?`,
-      explanation,
-      options,
-    };
+  switch (index % 4) {
+    case 0:
+      return { type: "SELECT", question: `Which word means “${definition}”?`, explanation, options };
+    case 1:
+      return { type: "ASSIST", question: `Which word means “${definition}”?`, explanation, options };
+    case 2:
+      return { type: "CLOZE", question: `Complete this sentence: “${blankUsageExample(word, usageExample)}”`, explanation, options };
+    default:
+      return { type: "GRAMMAR_TRANSFORM", question: `Choose the most precise word for this sentence: “${blankUsageExample(word, usageExample)}”`, explanation, options };
+  }
+}
+
+// Pairs the first 4 words of a lesson with their definitions into one
+// MATCHING challenge (2 tiles per pair, positionally paired -- see
+// matchingChallengeIsCorrect in shared/languageQuest.ts).
+function matchingChallenge(words) {
+  const pairs = words.slice(0, 4).map((word) => ({ word, definition: definitions.get(word) }));
+  const options = [];
+  for (const pair of pairs) {
+    options.push({ text: pair.word, correct: true, emoji: null, audioText: pair.word });
+    options.push({ text: pair.definition, correct: true, emoji: null, audioText: pair.definition });
   }
   return {
-    type: index % 3 === 1 ? "CLOZE" : "GRAMMAR_TRANSFORM",
-    question: `${index % 3 === 1 ? "Complete" : "Choose the most precise word for"} this sentence: “${blankUsageExample(word, usageExample)}”`,
-    explanation,
+    type: "MATCHING",
+    question: "Match each word to its definition.",
+    explanation: pairs.map((pair) => `“${pair.word}” means ${pair.definition}.`).join(" "),
     options,
   };
 }
 
+// Precomputes every lesson's own word list up front so each lesson's extra
+// ODD_ONE_OUT/REORDER challenges can safely borrow a "ringer" word from the
+// very next lesson -- guaranteed to exist and guaranteed distinct, since
+// every lesson draws from its own disjoint word list.
+const lessonPlans = courseSpecs.flatMap((course) => course.units.flatMap(([, , lessons]) => lessons.map(([, words]) => words)));
+
+function lessonExtras(planIndex) {
+  const words = lessonPlans[planIndex];
+  const nextWords = lessonPlans[(planIndex + 1) % lessonPlans.length];
+  const extras = [];
+
+  const inGroup = words.slice(0, 3);
+  const oddWord = nextWords[0];
+  const oddOneOut = buildOddOneOut(
+    "Which word does not belong with the others in this lesson?",
+    inGroup,
+    oddWord,
+    `“${oddWord}” comes from a different lesson; the rest of this set is ${inGroup.map((word) => `“${word}”`).join(", ")}.`,
+  );
+  if (oddOneOut) extras.push(oddOneOut);
+
+  let bestSentence = null;
+  for (const word of words) {
+    const tokens = tokenizeWords(usageExamples.get(word));
+    if (tokens && (!bestSentence || tokens.length > bestSentence.tokens.length)) {
+      bestSentence = { word, tokens };
+    }
+  }
+  if (bestSentence) {
+    extras.push({
+      type: "REORDER",
+      question: `Put this example sentence about “${bestSentence.word}” back in the correct order.`,
+      options: bestSentence.tokens.map((token) => option(token, true)),
+    });
+  }
+
+  return extras;
+}
+
+let planIndex = 0;
 const courses = courseSpecs.map((course) => ({
   code: course.code,
   title: course.title,
@@ -447,26 +502,60 @@ const courses = courseSpecs.map((course) => ({
   units: course.units.map(([title, description, lessons]) => ({
     title,
     description,
-    lessons: lessons.map(([lessonTitle, words]) => ({
-      title: lessonTitle,
-      description: `Learn ${words.length} English words through definitions, sentence context, and precise usage.`,
-      challenges: words.map((word, index) => createChallenge(words, word, index)),
-    })),
+    lessons: lessons.map(([lessonTitle, words]) => {
+      const extras = lessonExtras(planIndex);
+      planIndex += 1;
+      return {
+        title: lessonTitle,
+        description: `Learn ${words.length} English words through definitions, sentence context, precise usage, grammar, ordering, and a matching review.`,
+        challenges: [...words.map((word, index) => createChallenge(words, word, index)), ...extras, matchingChallenge(words)],
+      };
+    }),
   })),
 }));
 
-const challenges = courses.flatMap((course) => course.units.flatMap((unit) => unit.lessons.flatMap((lesson) => lesson.challenges)));
+const allChallenges = courses.flatMap((course) => course.units.flatMap((unit) => unit.lessons.flatMap((lesson) => lesson.challenges)));
+const lessonCount = courses.flatMap((course) => course.units.flatMap((unit) => unit.lessons)).length;
+const matchingChallenges = allChallenges.filter((challenge) => challenge.type === "MATCHING");
+const reorderChallenges = allChallenges.filter((challenge) => challenge.type === "REORDER");
+const oddOneOutChallenges = allChallenges.filter((challenge) => challenge.type === "ODD_ONE_OUT");
+const challenges = allChallenges.filter((challenge) => !["MATCHING", "REORDER", "ODD_ONE_OUT"].includes(challenge.type));
 if (courses.length !== 3 || selectedWords.length !== 180 || challenges.length !== 180) {
   throw new Error(`Expected 3 courses and 180 unique challenges; generated ${courses.length} courses, ${selectedWords.length} words, and ${challenges.length} challenges`);
 }
-if (challenges.some((challenge) => challenge.options.length !== 3 || challenge.options.filter((option) => option.correct).length !== 1)) {
+if (challenges.some((challenge) => challenge.options.length !== 3 || challenge.options.filter((opt) => opt.correct).length !== 1)) {
   throw new Error("Every generated word challenge must have three choices and exactly one answer");
 }
-if (challenges.filter((challenge) => challenge.type !== "SELECT").length !== 108) {
-  throw new Error("Expected 108 of the 180 English word challenges to use sentence context");
+if (challenges.filter((challenge) => challenge.type !== "SELECT").length !== 126) {
+  throw new Error("Expected 126 of the 180 English word challenges (7/10 per lesson) to use translation-assist, sentence-context, or grammar framing");
+}
+{
+  const typeCounts = new Map();
+  for (const challenge of challenges) typeCounts.set(challenge.type, (typeCounts.get(challenge.type) || 0) + 1);
+  for (const requiredType of ["SELECT", "ASSIST", "CLOZE", "GRAMMAR_TRANSFORM"]) {
+    if (!typeCounts.get(requiredType)) throw new Error(`Generated English word course is missing ${requiredType} challenges`);
+  }
 }
 if (challenges.some((challenge) => !challenge.explanation || challenge.question.includes("undefined"))) {
   throw new Error("Every generated English word challenge must include a valid teaching explanation");
+}
+if (reorderChallenges.length !== lessonCount) {
+  throw new Error(`Expected one REORDER challenge per lesson (${lessonCount}), found ${reorderChallenges.length}`);
+}
+if (reorderChallenges.some((challenge) => challenge.options.length < 2 || challenge.options.some((opt) => !opt.correct))) {
+  throw new Error("Every REORDER challenge must have at least two tokens, all marked correct");
+}
+if (oddOneOutChallenges.length !== lessonCount) {
+  throw new Error(`Expected one ODD_ONE_OUT challenge per lesson (${lessonCount}), found ${oddOneOutChallenges.length}`);
+}
+if (oddOneOutChallenges.some((challenge) => challenge.options.length !== 4 || challenge.options.filter((opt) => opt.correct).length !== 1)) {
+  throw new Error("Every ODD_ONE_OUT challenge must have four options and exactly one odd-one-out answer");
+}
+if (matchingChallenges.length !== lessonCount) {
+  throw new Error(`Expected one MATCHING challenge per lesson (${lessonCount}), found ${matchingChallenges.length}`);
+}
+if (matchingChallenges.some((challenge) => challenge.options.length !== 8 || challenge.options.some((opt) => !opt.correct))) {
+  throw new Error("Every generated MATCHING challenge must have 4 pairs (8 tiles), all marked correct");
 }
 
 await mkdir(path.dirname(outputPath), { recursive: true });

@@ -527,17 +527,33 @@ test("the generated Mandarin Complete course contains every supplied translation
   assert.equal(completeMandarinCourse.title, "Mandarin Complete A1–B2");
   assert.equal(completeMandarinCourse.units.length, 7);
   assert.equal(lessons.length, 71);
-  assert.equal(challenges.length, 1870);
+  assert.equal(challenges.length, 2083);
   assert.ok(completeMandarinCourse.units.every((unit) => unit.lessons.length <= 30));
   assert.ok(lessons.every((lesson) => lesson.challenges.length <= 50));
-  assert.ok(challenges.every((challenge) => challenge.type === "DICTATION"
-    ? challenge.options.length === 1
-    : challenge.options.length === 3));
-  assert.ok(challenges.every((challenge) => challenge.options.filter((option) => option.correct).length === 1));
+  assert.ok(challenges.every((challenge) => {
+    if (challenge.type === "DICTATION") return challenge.options.length === 1;
+    // Most Mandarin MATCHING challenges pair 4 unique translations (8
+    // tiles), but a lesson with only 3 unique English/Mandarin pairs falls
+    // back to 6 tiles -- see matchingChallenge()'s `unique.length < 3` guard
+    // in scripts/generate-language-quest-chinese-course.mjs.
+    if (challenge.type === "MATCHING") return [6, 8].includes(challenge.options.length) && challenge.options.every((option) => option.correct);
+    // REORDER splits a real Mandarin phrase into individual-character
+    // tiles -- there's no fixed count, only a floor of two, all correct.
+    if (challenge.type === "REORDER") return challenge.options.length >= 2 && challenge.options.every((option) => option.correct);
+    // ODD_ONE_OUT always has exactly one "odd" answer among four options.
+    if (challenge.type === "ODD_ONE_OUT") return challenge.options.length === 4;
+    return challenge.options.length === 3;
+  }));
+  assert.ok(challenges.every((challenge) => ["MATCHING", "REORDER"].includes(challenge.type)
+    ? challenge.options.every((option) => option.correct)
+    : challenge.options.filter((option) => option.correct).length === 1));
   assert.ok(challenges.every((challenge) => challenge.explanation?.trim()));
-  for (const type of ["SELECT", "ASSIST", "CLOZE", "MINIMAL_PAIR_LISTENING", "DICTATION"]) {
+  for (const type of ["SELECT", "ASSIST", "CLOZE", "GRAMMAR_TRANSFORM", "MINIMAL_PAIR_LISTENING", "DICTATION", "ODD_ONE_OUT", "REORDER", "MATCHING"]) {
     assert.ok(challenges.some((challenge) => challenge.type === type), `missing ${type}`);
   }
+  assert.equal(challenges.filter((challenge) => challenge.type === "MATCHING").length, lessons.length);
+  assert.equal(challenges.filter((challenge) => challenge.type === "REORDER").length, lessons.length);
+  assert.equal(challenges.filter((challenge) => challenge.type === "ODD_ONE_OUT").length, lessons.length);
   assert.ok(completeMandarinCourse.units.every((unit) => /^[ABC][12] · /.test(unit.title)));
 });
 
@@ -547,7 +563,7 @@ test("the generated English word courses are focused and classroom-ready", () =>
 
   assert.equal(englishWordCourses.length, 3);
   assert.equal(lessons.length, 18);
-  assert.equal(challenges.length, 180);
+  assert.equal(challenges.length, 234);
   assert.deepEqual(
     englishWordCourses.map((course) => course.code),
     [
@@ -558,13 +574,26 @@ test("the generated English word courses are focused and classroom-ready", () =>
   );
   assert.ok(englishWordCourses.every((course) => course.units.length === 2));
   assert.ok(englishWordCourses.every((course) => course.units.flatMap((unit) => unit.lessons).length === 6));
-  assert.ok(englishWordCourses.every((course) => course.units.flatMap((unit) => unit.lessons).flatMap((lesson) => lesson.challenges).length === 60));
-  assert.ok(challenges.every((challenge) => challenge.options.length === 3));
-  assert.ok(challenges.every((challenge) => challenge.options.filter((option) => option.correct).length === 1));
+  assert.ok(englishWordCourses.every((course) => course.units.flatMap((unit) => unit.lessons).flatMap((lesson) => lesson.challenges).length === 78));
+  const extraTypes = ["MATCHING", "REORDER", "ODD_ONE_OUT"];
+  const wordChallenges = challenges.filter((challenge) => !extraTypes.includes(challenge.type));
+  const matchingChallenges = challenges.filter((challenge) => challenge.type === "MATCHING");
+  const reorderChallenges = challenges.filter((challenge) => challenge.type === "REORDER");
+  const oddOneOutChallenges = challenges.filter((challenge) => challenge.type === "ODD_ONE_OUT");
+  assert.ok(wordChallenges.every((challenge) => challenge.options.length === 3));
+  assert.ok(wordChallenges.every((challenge) => challenge.options.filter((option) => option.correct).length === 1));
   assert.ok(challenges.every((challenge) => challenge.options.every((option) => option.audioText === option.text)));
-  assert.equal(challenges.filter((challenge) => challenge.type === "CLOZE").length, 54);
-  assert.equal(challenges.filter((challenge) => challenge.type === "GRAMMAR_TRANSFORM").length, 54);
-  assert.ok(challenges.every((challenge) => challenge.explanation?.includes("Example:")));
+  assert.equal(wordChallenges.filter((challenge) => challenge.type === "SELECT").length, 54);
+  assert.equal(wordChallenges.filter((challenge) => challenge.type === "ASSIST").length, 54);
+  assert.equal(wordChallenges.filter((challenge) => challenge.type === "CLOZE").length, 36);
+  assert.equal(wordChallenges.filter((challenge) => challenge.type === "GRAMMAR_TRANSFORM").length, 36);
+  assert.ok(wordChallenges.every((challenge) => challenge.explanation?.includes("Example:")));
+  assert.equal(matchingChallenges.length, lessons.length);
+  assert.ok(matchingChallenges.every((challenge) => challenge.options.length === 8 && challenge.options.every((option) => option.correct)));
+  assert.equal(reorderChallenges.length, lessons.length);
+  assert.ok(reorderChallenges.every((challenge) => challenge.options.length >= 2 && challenge.options.every((option) => option.correct)));
+  assert.equal(oddOneOutChallenges.length, lessons.length);
+  assert.ok(oddOneOutChallenges.every((challenge) => challenge.options.length === 4 && challenge.options.filter((option) => option.correct).length === 1));
 });
 
 test("shuffle returns every option exactly once, in some order", () => {
@@ -944,12 +973,26 @@ test("the ranked advanced English courses have a valid progression", () => {
     ],
   );
   assert.equal(lessons.length, 18);
-  assert.equal(challenges.length, 180);
+  assert.equal(challenges.length, 234);
   assert.ok(advancedEnglishCourses.every((course) => course.units.length === 2));
   assert.ok(advancedEnglishCourses.every((course) => course.units.flatMap((unit) => unit.lessons).length === 6));
-  assert.ok(advancedEnglishCourses.every((course) => course.units.flatMap((unit) => unit.lessons).flatMap((lesson) => lesson.challenges).length === 60));
-  assert.ok(challenges.every((challenge) => challenge.options.length === 3));
-  assert.ok(challenges.every((challenge) => challenge.options.filter((option) => option.correct).length === 1));
+  assert.ok(advancedEnglishCourses.every((course) => course.units.flatMap((unit) => unit.lessons).flatMap((lesson) => lesson.challenges).length === 78));
+  const advancedExtraTypes = ["MATCHING", "REORDER", "ODD_ONE_OUT"];
+  const advancedWordChallenges = challenges.filter((challenge) => !advancedExtraTypes.includes(challenge.type));
+  const advancedMatchingChallenges = challenges.filter((challenge) => challenge.type === "MATCHING");
+  const advancedReorderChallenges = challenges.filter((challenge) => challenge.type === "REORDER");
+  const advancedOddOneOutChallenges = challenges.filter((challenge) => challenge.type === "ODD_ONE_OUT");
+  assert.ok(advancedWordChallenges.every((challenge) => challenge.options.length === 3));
+  assert.ok(advancedWordChallenges.every((challenge) => challenge.options.filter((option) => option.correct).length === 1));
+  for (const type of ["SELECT", "ASSIST", "CLOZE", "GRAMMAR_TRANSFORM"]) {
+    assert.ok(advancedWordChallenges.some((challenge) => challenge.type === type), `missing ${type}`);
+  }
+  assert.equal(advancedMatchingChallenges.length, lessons.length);
+  assert.ok(advancedMatchingChallenges.every((challenge) => challenge.options.length === 8 && challenge.options.every((option) => option.correct)));
+  assert.equal(advancedReorderChallenges.length, lessons.length);
+  assert.ok(advancedReorderChallenges.every((challenge) => challenge.options.length >= 2 && challenge.options.every((option) => option.correct)));
+  assert.equal(advancedOddOneOutChallenges.length, lessons.length);
+  assert.ok(advancedOddOneOutChallenges.every((challenge) => challenge.options.length === 4 && challenge.options.filter((option) => option.correct).length === 1));
 });
 
 test("the Linguify import creates a complete A1-C2 vocabulary path", () => {
@@ -966,23 +1009,40 @@ test("the Linguify import creates a complete A1-C2 vocabulary path", () => {
   assert.equal(linguifyCefrCourses.length, 6);
   assert.equal(units.length, 18);
   assert.equal(lessons.length, 36);
-  assert.equal(challenges.length, 360);
+  assert.equal(challenges.length, 468);
   assert.ok(linguifyCefrCourses.every((course) => course.language === "English"));
   assert.ok(linguifyCefrCourses.every((course) => course.units.length === 3));
   assert.ok(units.every((unit) => unit.lessons.length === 2));
-  assert.ok(lessons.every((lesson) => lesson.challenges.length === 10));
-  assert.ok(challenges.every((challenge) => challenge.options.length === 3));
-  assert.ok(challenges.every(
+  assert.ok(lessons.every((lesson) => lesson.challenges.length === 13));
+  const linguifyExtraTypes = ["MATCHING", "REORDER", "ODD_ONE_OUT"];
+  const linguifyWordChallenges = challenges.filter((challenge) => !linguifyExtraTypes.includes(challenge.type));
+  const linguifyMatchingChallenges = challenges.filter((challenge) => challenge.type === "MATCHING");
+  const linguifyReorderChallenges = challenges.filter((challenge) => challenge.type === "REORDER");
+  const linguifyOddOneOutChallenges = challenges.filter((challenge) => challenge.type === "ODD_ONE_OUT");
+  assert.ok(linguifyWordChallenges.every((challenge) => challenge.options.length === 3));
+  assert.ok(linguifyWordChallenges.every(
     (challenge) => challenge.options.filter((option) => option.correct).length === 1,
   ));
   assert.ok(challenges.every(
     (challenge) => challenge.options.every((option) => option.audioText === option.text),
   ));
-  assert.ok(challenges.every((challenge) => challenge.question.includes("Example:")));
+  for (const type of ["SELECT", "ASSIST", "CLOZE", "GRAMMAR_TRANSFORM"]) {
+    assert.ok(linguifyWordChallenges.some((challenge) => challenge.type === type), `missing ${type}`);
+  }
+  // Every word has a real example sentence in the curated Linguify snapshot,
+  // so the *explanation* (unlike the CLOZE/GRAMMAR_TRANSFORM question text,
+  // which blanks the example instead of quoting it whole) always names it.
+  assert.ok(linguifyWordChallenges.every((challenge) => challenge.explanation?.includes("Example:")));
   assert.equal(
-    challenges.filter((challenge) => challenge.question.includes("Pronunciation:")).length,
+    linguifyWordChallenges.filter((challenge) => challenge.explanation?.includes("Pronunciation:")).length,
     340,
   );
+  assert.equal(linguifyMatchingChallenges.length, lessons.length);
+  assert.ok(linguifyMatchingChallenges.every((challenge) => challenge.options.length === 8 && challenge.options.every((option) => option.correct)));
+  assert.equal(linguifyReorderChallenges.length, lessons.length);
+  assert.ok(linguifyReorderChallenges.every((challenge) => challenge.options.length >= 2 && challenge.options.every((option) => option.correct)));
+  assert.equal(linguifyOddOneOutChallenges.length, lessons.length);
+  assert.ok(linguifyOddOneOutChallenges.every((challenge) => challenge.options.length === 4 && challenge.options.filter((option) => option.correct).length === 1));
 });
 
 test("the Malay CEFR import produces one canonical published A1-C1 path", () => {
@@ -1002,25 +1062,32 @@ test("the Malay CEFR import produces one canonical published A1-C1 path", () => 
   assert.ok(malayCefrCourses.every((course) => course.published));
   assert.ok(malayCefrCourses.every((course) => course.description.startsWith("Canonical ")));
   assert.ok(lessons.every((lesson) => lesson.challenges.length > 0));
-  // REORDER challenges are built from a sentence's own word tokens, so they
-  // can run longer than the 2-6 option bank used for multiple choice; every
-  // other challenge type must stay within that bank size.
+  // REORDER and MATCHING challenges have no single "correct option" among
+  // distractors -- REORDER's whole option list is the canonical sequence,
+  // and MATCHING's tiles all pair up positionally -- so both can run longer
+  // than the 2-6 option bank used for multiple choice (MATCHING is capped at
+  // 12 for its up-to-6 pairs); every other challenge type must stay within
+  // that bank size.
   assert.ok(challenges.every((challenge) => {
     if (challenge.type === "REORDER") return challenge.options.length >= 2;
+    if (challenge.type === "MATCHING") return challenge.options.length >= 4 && challenge.options.length <= 12 && challenge.options.length % 2 === 0;
     return challenge.options.length >= 2 && challenge.options.length <= 6;
   }));
-  // REORDER challenges have no single "correct option" -- the whole option
-  // list is the canonical answer sequence, so every option is marked correct.
-  // Every other challenge type still needs exactly one correct option.
+  // REORDER and MATCHING challenges have every option marked correct (no
+  // single answer among distractors). Every other challenge type still
+  // needs exactly one correct option.
   assert.ok(challenges.every((challenge) => {
-    if (challenge.type === "REORDER") {
+    if (challenge.type === "REORDER" || challenge.type === "MATCHING") {
       return challenge.options.every((option) => option.correct);
     }
     return challenge.options.filter((option) => option.correct).length === 1;
   }));
   assert.ok(challenges.some((challenge) => challenge.type === "REORDER"));
   assert.ok(challenges.some((challenge) => challenge.type === "CLOZE"));
+  assert.ok(challenges.some((challenge) => challenge.type === "GRAMMAR_TRANSFORM"));
+  assert.ok(challenges.some((challenge) => challenge.type === "ODD_ONE_OUT"));
   assert.ok(challenges.some((challenge) => challenge.type === "MINIMAL_PAIR_LISTENING"));
+  assert.ok(challenges.some((challenge) => challenge.type === "MATCHING"));
   // The homograph minimal-pair source exercise ("perang" = war vs. blond/
   // brown) can't become a MINIMAL_PAIR_LISTENING challenge -- its two option
   // texts would be identical -- so every MINIMAL_PAIR_LISTENING challenge
@@ -1044,17 +1111,31 @@ test("the Malay speaking and source-guided courses are complete and unpublished"
     assert.equal(course.language, "Malay");
     assert.equal(course.units.length, 12);
     assert.equal(lessons.length, 48);
-    assert.equal(challenges.length, 384);
+    assert.equal(challenges.length, 420);
     // Same review-before-publish policy as every other Malay course.
     assert.ok(!course.published);
     assert.ok(course.retired);
-    assert.ok(challenges.every((challenge) => challenge.options.length === 3));
-    assert.ok(challenges.every(
+    const malaySpeakingExtraTypes = ["MATCHING", "REORDER", "ODD_ONE_OUT"];
+    const wordChallenges = challenges.filter((challenge) => !malaySpeakingExtraTypes.includes(challenge.type));
+    const matchingChallenges = challenges.filter((challenge) => challenge.type === "MATCHING");
+    const reorderChallenges = challenges.filter((challenge) => challenge.type === "REORDER");
+    const oddOneOutChallenges = challenges.filter((challenge) => challenge.type === "ODD_ONE_OUT");
+    assert.ok(wordChallenges.every((challenge) => challenge.options.length === 3));
+    assert.ok(wordChallenges.every(
       (challenge) => challenge.options.filter((option) => option.correct).length === 1,
     ));
+    for (const type of ["SELECT", "ASSIST", "CLOZE", "GRAMMAR_TRANSFORM"]) {
+      assert.ok(wordChallenges.some((challenge) => challenge.type === type), `missing ${type}`);
+    }
     assert.ok(challenges.every(
       (challenge) => challenge.options.every((option) => option.audioText === option.text && option.emoji === null),
     ));
+    assert.equal(matchingChallenges.length, course.units.length);
+    assert.ok(matchingChallenges.every((challenge) => challenge.options.length === 8 && challenge.options.every((option) => option.correct)));
+    assert.equal(reorderChallenges.length, course.units.length);
+    assert.ok(reorderChallenges.every((challenge) => challenge.options.length >= 2 && challenge.options.every((option) => option.correct)));
+    assert.equal(oddOneOutChallenges.length, course.units.length);
+    assert.ok(oddOneOutChallenges.every((challenge) => challenge.options.length === 4 && challenge.options.filter((option) => option.correct).length === 1));
   }
   assert.equal(malaySpeakingCourse.code, "MRLC-MALAY-SPEAKING-A1-C1-V1");
   assert.equal(malayGuideModernCourse.code, "MRLC-MALAY-GOVINFO-GUIDE-V1");
@@ -1069,17 +1150,31 @@ test("the overlapping Teach Yourself Malay course is archived with its content i
   assert.equal(teachYourselfMalayCourse.category, "Malay Courses");
   assert.equal(teachYourselfMalayCourse.units.length, 17);
   assert.equal(lessons.length, 68);
-  assert.equal(challenges.length, 408);
+  assert.equal(challenges.length, 697);
   assert.ok(!teachYourselfMalayCourse.published);
   assert.ok(teachYourselfMalayCourse.retired);
   assert.ok(challenges.every((challenge) => challenge.question.trim().length > 0));
   assert.ok(challenges.every((challenge) => challenge.options.length >= 2));
-  assert.ok(challenges.every(
+  const tymExtraTypes = ["MATCHING", "REORDER", "ODD_ONE_OUT"];
+  const tymWordChallenges = challenges.filter((challenge) => !tymExtraTypes.includes(challenge.type));
+  const tymMatchingChallenges = challenges.filter((challenge) => challenge.type === "MATCHING");
+  const tymReorderChallenges = challenges.filter((challenge) => challenge.type === "REORDER");
+  const tymOddOneOutChallenges = challenges.filter((challenge) => challenge.type === "ODD_ONE_OUT");
+  assert.ok(tymWordChallenges.every(
     (challenge) => challenge.options.filter((option) => option.correct).length === 1,
   ));
+  for (const type of ["SELECT", "ASSIST", "CLOZE", "GRAMMAR_TRANSFORM"]) {
+    assert.ok(tymWordChallenges.some((challenge) => challenge.type === type), `missing ${type}`);
+  }
   assert.ok(challenges.every(
     (challenge) => challenge.options.every((option) => option.text.trim().length > 0),
   ));
+  assert.equal(tymMatchingChallenges.length, teachYourselfMalayCourse.units.length);
+  assert.ok(tymMatchingChallenges.every((challenge) => challenge.options.every((option) => option.correct)));
+  assert.equal(tymReorderChallenges.length, lessons.length);
+  assert.ok(tymReorderChallenges.every((challenge) => challenge.options.length >= 2 && challenge.options.every((option) => option.correct)));
+  assert.equal(tymOddOneOutChallenges.length, lessons.length);
+  assert.ok(tymOddOneOutChallenges.every((challenge) => challenge.options.length === 4 && challenge.options.filter((option) => option.correct).length === 1));
 });
 
 test("every built-in course produces clue-safe assessment prompts", () => {

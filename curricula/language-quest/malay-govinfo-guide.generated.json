@@ -14,7 +14,7 @@
       "lessons": [
         {
           "title": "Vocabulary and Audio",
-          "description": "Learn ten current Malaysian Malay words or expressions and repeat each answer aloud.",
+          "description": "Learn ten current Malaysian Malay words or expressions, repeat each answer aloud, and complete an ordering, odd-one-out, and matching review.",
           "challenges": [
             {
               "type": "SELECT",
@@ -255,6 +255,127 @@
                   "audioText": "ulang"
                 }
               ]
+            },
+            {
+              "type": "REORDER",
+              "question": "Put this modern Malay sentence back in the correct order.",
+              "options": [
+                {
+                  "text": "Saya",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "Saya"
+                },
+                {
+                  "text": "sedang",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "sedang"
+                },
+                {
+                  "text": "belajar",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "belajar"
+                },
+                {
+                  "text": "bahasa",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "bahasa"
+                },
+                {
+                  "text": "Melayu.",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "Melayu."
+                }
+              ]
+            },
+            {
+              "type": "ODD_ONE_OUT",
+              "question": "Which modern Malay word or phrase does not belong with the others?",
+              "explanation": "“selamat pagi” is from a different unit; the rest of this set is “dengar”, “ulang”, “sebut”.",
+              "options": [
+                {
+                  "text": "selamat pagi",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "selamat pagi"
+                },
+                {
+                  "text": "dengar",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "dengar"
+                },
+                {
+                  "text": "ulang",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "ulang"
+                },
+                {
+                  "text": "sebut",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "sebut"
+                }
+              ]
+            },
+            {
+              "type": "MATCHING",
+              "question": "Match each modern Malay word or phrase to its English meaning.",
+              "options": [
+                {
+                  "text": "dengar",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "dengar"
+                },
+                {
+                  "text": "listen",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "listen"
+                },
+                {
+                  "text": "ulang",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "ulang"
+                },
+                {
+                  "text": "repeat",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "repeat"
+                },
+                {
+                  "text": "sebut",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "sebut"
+                },
+                {
+                  "text": "pronounce / say",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "pronounce / say"
+                },
+                {
+                  "text": "jelas",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "jelas"
+                },
+                {
+                  "text": "clear",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "clear"
+                }
+              ]
             }
           ]
         },
@@ -287,7 +408,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nAsk someone to speak more slowly.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -311,7 +432,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "DAILY SPEAKING\nSay that you did not hear clearly.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -335,7 +456,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nAsk how a word is pronounced.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -431,7 +552,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nAsk to listen one more time.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -485,7 +606,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SCENARIO DIALOGUE\nPelajar: Maaf, boleh ulang sekali lagi?\nGuru: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -509,7 +630,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "SCENARIO DIALOGUE\nGuru: Cuba sebut perkataan ini.\nPelajar: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -533,7 +654,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SCENARIO DIALOGUE\nPelajar: Adakah sebutan saya betul?\nGuru: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -635,7 +756,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Say it again.”\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -659,8 +780,8 @@
               ]
             },
             {
-              "type": "ASSIST",
-              "question": "SENTENCE PRACTICE\nChoose the phrase for “more slowly.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the phrase for “more slowly.”\nChoose the grammatically correct modern Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Saya sedang belajar bahasa Melayu.",
@@ -683,8 +804,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the phrase for “clear pronunciation.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the phrase for “clear pronunciation.”\nComplete the exchange with the correct modern Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "sebutan yang jelas",
@@ -755,8 +876,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Let us practise together.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Let us practise together.”\nChoose the grammatically correct modern Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Mari kita berlatih bersama-sama.",
@@ -779,8 +900,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “I can say it now.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “I can say it now.”\nComplete the exchange with the correct modern Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Tolong dengar dengan teliti.",
@@ -812,7 +933,7 @@
       "lessons": [
         {
           "title": "Vocabulary and Audio",
-          "description": "Learn ten current Malaysian Malay words or expressions and repeat each answer aloud.",
+          "description": "Learn ten current Malaysian Malay words or expressions, repeat each answer aloud, and complete an ordering, odd-one-out, and matching review.",
           "challenges": [
             {
               "type": "SELECT",
@@ -1053,6 +1174,121 @@
                   "audioText": "selamat petang"
                 }
               ]
+            },
+            {
+              "type": "REORDER",
+              "question": "Put this modern Malay sentence back in the correct order.",
+              "options": [
+                {
+                  "text": "Dia",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "Dia"
+                },
+                {
+                  "text": "berasal",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "berasal"
+                },
+                {
+                  "text": "dari",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "dari"
+                },
+                {
+                  "text": "Sabah.",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "Sabah."
+                }
+              ]
+            },
+            {
+              "type": "ODD_ONE_OUT",
+              "question": "Which modern Malay word or phrase does not belong with the others?",
+              "explanation": "“satu” is from a different unit; the rest of this set is “selamat pagi”, “selamat petang”, “apa khabar”.",
+              "options": [
+                {
+                  "text": "satu",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "satu"
+                },
+                {
+                  "text": "selamat pagi",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "selamat pagi"
+                },
+                {
+                  "text": "selamat petang",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "selamat petang"
+                },
+                {
+                  "text": "apa khabar",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "apa khabar"
+                }
+              ]
+            },
+            {
+              "type": "MATCHING",
+              "question": "Match each modern Malay word or phrase to its English meaning.",
+              "options": [
+                {
+                  "text": "selamat pagi",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "selamat pagi"
+                },
+                {
+                  "text": "good morning",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "good morning"
+                },
+                {
+                  "text": "selamat petang",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "selamat petang"
+                },
+                {
+                  "text": "good evening",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "good evening"
+                },
+                {
+                  "text": "apa khabar",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "apa khabar"
+                },
+                {
+                  "text": "how are you",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "how are you"
+                },
+                {
+                  "text": "terima kasih",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "terima kasih"
+                },
+                {
+                  "text": "thank you",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "thank you"
+                }
+              ]
             }
           ]
         },
@@ -1085,7 +1321,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nAsk how someone is.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -1109,7 +1345,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "DAILY SPEAKING\nSay that you are well.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -1133,7 +1369,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nAsk for the person’s name.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -1229,7 +1465,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nSay goodbye to someone who is leaving.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -1283,7 +1519,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SCENARIO DIALOGUE\nA: Siapa nama awak?\nB: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -1307,7 +1543,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "SCENARIO DIALOGUE\nA: Awak berasal dari mana?\nB: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -1331,7 +1567,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SCENARIO DIALOGUE\nA: Ini kawan saya, Mei Ling.\nB: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -1433,7 +1669,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “I am not a teacher.”\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -1457,8 +1693,8 @@
               ]
             },
             {
-              "type": "ASSIST",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “She is from Sabah.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “She is from Sabah.”\nChoose the grammatically correct modern Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Sama-sama.",
@@ -1481,8 +1717,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “What is his name?”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “What is his name?”\nComplete the exchange with the correct modern Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Siapa nama dia?",
@@ -1553,8 +1789,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Please have a seat.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Please have a seat.”\nChoose the grammatically correct modern Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Silakan duduk.",
@@ -1577,8 +1813,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “See you tomorrow.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “See you tomorrow.”\nComplete the exchange with the correct modern Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Ini kawan saya.",
@@ -1610,7 +1846,7 @@
       "lessons": [
         {
           "title": "Vocabulary and Audio",
-          "description": "Learn ten current Malaysian Malay words or expressions and repeat each answer aloud.",
+          "description": "Learn ten current Malaysian Malay words or expressions, repeat each answer aloud, and complete an ordering, odd-one-out, and matching review.",
           "challenges": [
             {
               "type": "SELECT",
@@ -1851,6 +2087,133 @@
                   "audioText": "dua"
                 }
               ]
+            },
+            {
+              "type": "REORDER",
+              "question": "Put this modern Malay sentence back in the correct order.",
+              "options": [
+                {
+                  "text": "Kereta",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "Kereta"
+                },
+                {
+                  "text": "api",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "api"
+                },
+                {
+                  "text": "lewat",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "lewat"
+                },
+                {
+                  "text": "lima",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "lima"
+                },
+                {
+                  "text": "belas",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "belas"
+                },
+                {
+                  "text": "minit.",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "minit."
+                }
+              ]
+            },
+            {
+              "type": "ODD_ONE_OUT",
+              "question": "Which modern Malay word or phrase does not belong with the others?",
+              "explanation": "“ini” is from a different unit; the rest of this set is “satu”, “dua”, “tiga”.",
+              "options": [
+                {
+                  "text": "ini",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "ini"
+                },
+                {
+                  "text": "satu",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "satu"
+                },
+                {
+                  "text": "dua",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "dua"
+                },
+                {
+                  "text": "tiga",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "tiga"
+                }
+              ]
+            },
+            {
+              "type": "MATCHING",
+              "question": "Match each modern Malay word or phrase to its English meaning.",
+              "options": [
+                {
+                  "text": "satu",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "satu"
+                },
+                {
+                  "text": "one",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "one"
+                },
+                {
+                  "text": "dua",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "dua"
+                },
+                {
+                  "text": "two",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "two"
+                },
+                {
+                  "text": "tiga",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "tiga"
+                },
+                {
+                  "text": "three",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "three"
+                },
+                {
+                  "text": "sepuluh",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "sepuluh"
+                },
+                {
+                  "text": "ten",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "ten"
+                }
+              ]
             }
           ]
         },
@@ -1883,7 +2246,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nSay that it is three o’clock.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -1907,7 +2270,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "DAILY SPEAKING\nSay that it is half past six.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -1931,7 +2294,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nSay that the class begins at nine.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -2027,7 +2390,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nSay that the meeting is tomorrow.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -2081,7 +2444,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SCENARIO DIALOGUE\nA: Kelas bermula pukul berapa?\nB: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -2105,7 +2468,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "SCENARIO DIALOGUE\nA: Hari ini hari apa?\nB: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -2129,7 +2492,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SCENARIO DIALOGUE\nA: Kita berjumpa bila?\nB: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -2231,7 +2594,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SENTENCE PRACTICE\nChoose the modern Malay word for “twenty.”\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -2255,8 +2618,8 @@
               ]
             },
             {
-              "type": "ASSIST",
-              "question": "SENTENCE PRACTICE\nChoose the phrase for “quarter past five.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the phrase for “quarter past five.”\nChoose the grammatically correct modern Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Masih terlalu awal.",
@@ -2279,8 +2642,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the phrase for “ten minutes to nine.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the phrase for “ten minutes to nine.”\nComplete the exchange with the correct modern Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "pukul sembilan kurang sepuluh minit",
@@ -2351,8 +2714,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “I arrived yesterday.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “I arrived yesterday.”\nChoose the grammatically correct modern Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Saya tiba semalam.",
@@ -2375,8 +2738,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “We will leave on Friday.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “We will leave on Friday.”\nComplete the exchange with the correct modern Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "tujuh",
@@ -2408,7 +2771,7 @@
       "lessons": [
         {
           "title": "Vocabulary and Audio",
-          "description": "Learn ten current Malaysian Malay words or expressions and repeat each answer aloud.",
+          "description": "Learn ten current Malaysian Malay words or expressions, repeat each answer aloud, and complete an ordering, odd-one-out, and matching review.",
           "challenges": [
             {
               "type": "SELECT",
@@ -2649,6 +3012,127 @@
                   "audioText": "itu"
                 }
               ]
+            },
+            {
+              "type": "REORDER",
+              "question": "Put this modern Malay sentence back in the correct order.",
+              "options": [
+                {
+                  "text": "Yang",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "Yang"
+                },
+                {
+                  "text": "mana",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "mana"
+                },
+                {
+                  "text": "satu",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "satu"
+                },
+                {
+                  "text": "lebih",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "lebih"
+                },
+                {
+                  "text": "baik?",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "baik?"
+                }
+              ]
+            },
+            {
+              "type": "ODD_ONE_OUT",
+              "question": "Which modern Malay word or phrase does not belong with the others?",
+              "explanation": "“nasi” is from a different unit; the rest of this set is “ini”, “itu”, “apa”.",
+              "options": [
+                {
+                  "text": "nasi",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "nasi"
+                },
+                {
+                  "text": "ini",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "ini"
+                },
+                {
+                  "text": "itu",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "itu"
+                },
+                {
+                  "text": "apa",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "apa"
+                }
+              ]
+            },
+            {
+              "type": "MATCHING",
+              "question": "Match each modern Malay word or phrase to its English meaning.",
+              "options": [
+                {
+                  "text": "ini",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "ini"
+                },
+                {
+                  "text": "this",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "this"
+                },
+                {
+                  "text": "itu",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "itu"
+                },
+                {
+                  "text": "that",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "that"
+                },
+                {
+                  "text": "apa",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "apa"
+                },
+                {
+                  "text": "what",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "what"
+                },
+                {
+                  "text": "ada",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "ada"
+                },
+                {
+                  "text": "there is / have",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "there is / have"
+                }
+              ]
             }
           ]
         },
@@ -2681,7 +3165,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nSay that this is a cup.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -2705,7 +3189,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "DAILY SPEAKING\nAsk what the object is called in Malay.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -2729,7 +3213,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nAsk whether there is a pen.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -2825,7 +3309,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nAsk which one is yours.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -2879,7 +3363,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SCENARIO DIALOGUE\nA: Apakah nama benda ini dalam bahasa Melayu?\nB: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -2903,7 +3387,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "SCENARIO DIALOGUE\nA: Ada tuala bersih?\nB: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -2927,7 +3411,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SCENARIO DIALOGUE\nA: Beg yang mana satu kepunyaan awak?\nB: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -3029,7 +3513,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “This is very small.”\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -3053,8 +3537,8 @@
               ]
             },
             {
-              "type": "ASSIST",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “There is no hot water.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “There is no hot water.”\nChoose the grammatically correct modern Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Gelas itu kotor.",
@@ -3077,8 +3561,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Do you have paper?”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Do you have paper?”\nComplete the exchange with the correct modern Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Awak ada kertas?",
@@ -3149,8 +3633,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “This is not expensive.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “This is not expensive.”\nChoose the grammatically correct modern Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Ini tidak mahal.",
@@ -3173,8 +3657,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “That place is far.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “That place is far.”\nComplete the exchange with the correct modern Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Itu bukan kepunyaan saya.",
@@ -3206,7 +3690,7 @@
       "lessons": [
         {
           "title": "Vocabulary and Audio",
-          "description": "Learn ten current Malaysian Malay words or expressions and repeat each answer aloud.",
+          "description": "Learn ten current Malaysian Malay words or expressions, repeat each answer aloud, and complete an ordering, odd-one-out, and matching review.",
           "challenges": [
             {
               "type": "SELECT",
@@ -3447,6 +3931,127 @@
                   "audioText": "ikan"
                 }
               ]
+            },
+            {
+              "type": "REORDER",
+              "question": "Put this modern Malay sentence back in the correct order.",
+              "options": [
+                {
+                  "text": "Saya",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "Saya"
+                },
+                {
+                  "text": "alah",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "alah"
+                },
+                {
+                  "text": "kepada",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "kepada"
+                },
+                {
+                  "text": "kacang",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "kacang"
+                },
+                {
+                  "text": "tanah.",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "tanah."
+                }
+              ]
+            },
+            {
+              "type": "ODD_ONE_OUT",
+              "question": "Which modern Malay word or phrase does not belong with the others?",
+              "explanation": "“harga” is from a different unit; the rest of this set is “nasi”, “ikan”, “ayam”.",
+              "options": [
+                {
+                  "text": "harga",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "harga"
+                },
+                {
+                  "text": "nasi",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "nasi"
+                },
+                {
+                  "text": "ikan",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "ikan"
+                },
+                {
+                  "text": "ayam",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "ayam"
+                }
+              ]
+            },
+            {
+              "type": "MATCHING",
+              "question": "Match each modern Malay word or phrase to its English meaning.",
+              "options": [
+                {
+                  "text": "nasi",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "nasi"
+                },
+                {
+                  "text": "rice",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "rice"
+                },
+                {
+                  "text": "ikan",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "ikan"
+                },
+                {
+                  "text": "fish",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "fish"
+                },
+                {
+                  "text": "ayam",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "ayam"
+                },
+                {
+                  "text": "chicken",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "chicken"
+                },
+                {
+                  "text": "sayur",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "sayur"
+                },
+                {
+                  "text": "vegetables",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "vegetables"
+                }
+              ]
             }
           ]
         },
@@ -3479,7 +4084,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nAsk for one glass of water.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -3503,7 +4108,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "DAILY SPEAKING\nOrder a cup of coffee.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -3527,7 +4132,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nAsk for less sugar.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -3623,7 +4228,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nAsk for the bill.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -3677,7 +4282,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SCENARIO DIALOGUE\nPelayan: Mahu pedas?\nPelanggan: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -3701,7 +4306,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "SCENARIO DIALOGUE\nPelanggan: Ada makanan tanpa daging?\nPelayan: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -3725,7 +4330,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SCENARIO DIALOGUE\nPelayan: Makan di sini atau bungkus?\nPelanggan: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -3827,7 +4432,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SENTENCE PRACTICE\nChoose the phrase for “a spoon.”\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -3851,8 +4456,8 @@
               ]
             },
             {
-              "type": "ASSIST",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “The soup is too salty.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “The soup is too salty.”\nChoose the grammatically correct modern Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Saya alah kepada kacang tanah.",
@@ -3875,8 +4480,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “The food is delicious.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “The food is delicious.”\nComplete the exchange with the correct modern Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Makanan ini sedap.",
@@ -3947,8 +4552,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “I want boiled water.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “I want boiled water.”\nChoose the grammatically correct modern Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Saya mahu air masak.",
@@ -3971,8 +4576,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Do you have milk?”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Do you have milk?”\nComplete the exchange with the correct modern Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "sepinggan nasi",
@@ -4004,7 +4609,7 @@
       "lessons": [
         {
           "title": "Vocabulary and Audio",
-          "description": "Learn ten current Malaysian Malay words or expressions and repeat each answer aloud.",
+          "description": "Learn ten current Malaysian Malay words or expressions, repeat each answer aloud, and complete an ordering, odd-one-out, and matching review.",
           "challenges": [
             {
               "type": "SELECT",
@@ -4245,6 +4850,127 @@
                   "audioText": "ringgit"
                 }
               ]
+            },
+            {
+              "type": "REORDER",
+              "question": "Put this modern Malay sentence back in the correct order.",
+              "options": [
+                {
+                  "text": "Saya",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "Saya"
+                },
+                {
+                  "text": "hanya",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "hanya"
+                },
+                {
+                  "text": "ada",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "ada"
+                },
+                {
+                  "text": "wang",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "wang"
+                },
+                {
+                  "text": "tunai.",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "tunai."
+                }
+              ]
+            },
+            {
+              "type": "ODD_ONE_OUT",
+              "question": "Which modern Malay word or phrase does not belong with the others?",
+              "explanation": "“di mana” is from a different unit; the rest of this set is “harga”, “ringgit”, “sen”.",
+              "options": [
+                {
+                  "text": "di mana",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "di mana"
+                },
+                {
+                  "text": "harga",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "harga"
+                },
+                {
+                  "text": "ringgit",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "ringgit"
+                },
+                {
+                  "text": "sen",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "sen"
+                }
+              ]
+            },
+            {
+              "type": "MATCHING",
+              "question": "Match each modern Malay word or phrase to its English meaning.",
+              "options": [
+                {
+                  "text": "harga",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "harga"
+                },
+                {
+                  "text": "price",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "price"
+                },
+                {
+                  "text": "ringgit",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "ringgit"
+                },
+                {
+                  "text": "Malaysian ringgit",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "Malaysian ringgit"
+                },
+                {
+                  "text": "sen",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "sen"
+                },
+                {
+                  "text": "sen",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "sen"
+                },
+                {
+                  "text": "murah",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "murah"
+                },
+                {
+                  "text": "cheap",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "cheap"
+                }
+              ]
             }
           ]
         },
@@ -4277,7 +5003,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nSay that the item is too expensive.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -4301,7 +5027,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "DAILY SPEAKING\nAsk whether there is a cheaper one.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -4325,7 +5051,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nAsk for a larger size.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -4421,7 +5147,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nAsk for a receipt.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -4475,7 +5201,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SCENARIO DIALOGUE\nPelanggan: Ada saiz yang lebih kecil?\nPenjual: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -4499,7 +5225,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "SCENARIO DIALOGUE\nPenjual: Mahu warna apa?\nPelanggan: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -4523,7 +5249,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SCENARIO DIALOGUE\nPenjual: Bayar tunai atau kad?\nPelanggan: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -4625,7 +5351,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “I only have cash.”\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -4649,8 +5375,8 @@
               ]
             },
             {
-              "type": "ASSIST",
-              "question": "SENTENCE PRACTICE\nChoose the phrase for “three ringgit fifty sen.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the phrase for “three ringgit fifty sen.”\nChoose the grammatically correct modern Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Saya tidak perlukan beg.",
@@ -4673,8 +5399,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “This one is better.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “This one is better.”\nComplete the exchange with the correct modern Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Yang ini lebih baik.",
@@ -4745,8 +5471,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “The price is reasonable.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “The price is reasonable.”\nChoose the grammatically correct modern Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Harganya berpatutan.",
@@ -4769,8 +5495,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “I am just looking.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “I am just looking.”\nComplete the exchange with the correct modern Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Berapa harga sekilogram?",
@@ -4802,7 +5528,7 @@
       "lessons": [
         {
           "title": "Vocabulary and Audio",
-          "description": "Learn ten current Malaysian Malay words or expressions and repeat each answer aloud.",
+          "description": "Learn ten current Malaysian Malay words or expressions, repeat each answer aloud, and complete an ordering, odd-one-out, and matching review.",
           "challenges": [
             {
               "type": "SELECT",
@@ -5043,6 +5769,133 @@
                   "audioText": "kiri"
                 }
               ]
+            },
+            {
+              "type": "REORDER",
+              "question": "Put this modern Malay sentence back in the correct order.",
+              "options": [
+                {
+                  "text": "Pejabat",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "Pejabat"
+                },
+                {
+                  "text": "pos",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "pos"
+                },
+                {
+                  "text": "berada",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "berada"
+                },
+                {
+                  "text": "di",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "di"
+                },
+                {
+                  "text": "seberang",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "seberang"
+                },
+                {
+                  "text": "jalan.",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "jalan."
+                }
+              ]
+            },
+            {
+              "type": "ODD_ONE_OUT",
+              "question": "Which modern Malay word or phrase does not belong with the others?",
+              "explanation": "“bas” is from a different unit; the rest of this set is “di mana”, “kiri”, “kanan”.",
+              "options": [
+                {
+                  "text": "bas",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "bas"
+                },
+                {
+                  "text": "di mana",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "di mana"
+                },
+                {
+                  "text": "kiri",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "kiri"
+                },
+                {
+                  "text": "kanan",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "kanan"
+                }
+              ]
+            },
+            {
+              "type": "MATCHING",
+              "question": "Match each modern Malay word or phrase to its English meaning.",
+              "options": [
+                {
+                  "text": "di mana",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "di mana"
+                },
+                {
+                  "text": "where",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "where"
+                },
+                {
+                  "text": "kiri",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "kiri"
+                },
+                {
+                  "text": "left",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "left"
+                },
+                {
+                  "text": "kanan",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "kanan"
+                },
+                {
+                  "text": "right",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "right"
+                },
+                {
+                  "text": "terus",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "terus"
+                },
+                {
+                  "text": "straight",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "straight"
+                }
+              ]
             }
           ]
         },
@@ -5075,7 +5928,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nAsk how far the town is.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -5099,7 +5952,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "DAILY SPEAKING\nAsk whether the clinic is near.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -5123,7 +5976,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nTell someone to go straight.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -5219,7 +6072,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nAsk someone to show the place on a map.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -5273,7 +6126,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SCENARIO DIALOGUE\nA: Adakah hospital itu jauh?\nB: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -5297,7 +6150,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "SCENARIO DIALOGUE\nA: Selepas jambatan, saya perlu ke mana?\nB: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -5321,7 +6174,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SCENARIO DIALOGUE\nA: Boleh tunjukkan jalan pada peta?\nB: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -5423,7 +6276,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SENTENCE PRACTICE\nChoose the correct modern spelling for the old form “djalan.”\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -5447,8 +6300,8 @@
               ]
             },
             {
-              "type": "ASSIST",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “The post office is across the road.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “The post office is across the road.”\nChoose the grammatically correct modern Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Tempat itu tidak jauh dari sini.",
@@ -5471,8 +6324,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “The school is behind the mosque.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “The school is behind the mosque.”\nComplete the exchange with the correct modern Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Sekolah itu di belakang masjid.",
@@ -5543,8 +6396,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Take the second exit.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Take the second exit.”\nChoose the grammatically correct modern Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Ambil jalan keluar yang kedua.",
@@ -5567,8 +6420,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Could you take me there?”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Could you take me there?”\nComplete the exchange with the correct modern Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "jambatan",
@@ -5600,7 +6453,7 @@
       "lessons": [
         {
           "title": "Vocabulary and Audio",
-          "description": "Learn ten current Malaysian Malay words or expressions and repeat each answer aloud.",
+          "description": "Learn ten current Malaysian Malay words or expressions, repeat each answer aloud, and complete an ordering, odd-one-out, and matching review.",
           "challenges": [
             {
               "type": "SELECT",
@@ -5841,6 +6694,133 @@
                   "audioText": "kereta api"
                 }
               ]
+            },
+            {
+              "type": "REORDER",
+              "question": "Put this modern Malay sentence back in the correct order.",
+              "options": [
+                {
+                  "text": "Tolong",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "Tolong"
+                },
+                {
+                  "text": "kejutkan",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "kejutkan"
+                },
+                {
+                  "text": "saya",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "saya"
+                },
+                {
+                  "text": "pada",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "pada"
+                },
+                {
+                  "text": "pukul",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "pukul"
+                },
+                {
+                  "text": "enam.",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "enam."
+                }
+              ]
+            },
+            {
+              "type": "ODD_ONE_OUT",
+              "question": "Which modern Malay word or phrase does not belong with the others?",
+              "explanation": "“tuala” is from a different unit; the rest of this set is “bas”, “kereta api”, “stesen”.",
+              "options": [
+                {
+                  "text": "tuala",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "tuala"
+                },
+                {
+                  "text": "bas",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "bas"
+                },
+                {
+                  "text": "kereta api",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "kereta api"
+                },
+                {
+                  "text": "stesen",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "stesen"
+                }
+              ]
+            },
+            {
+              "type": "MATCHING",
+              "question": "Match each modern Malay word or phrase to its English meaning.",
+              "options": [
+                {
+                  "text": "bas",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "bas"
+                },
+                {
+                  "text": "bus",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "bus"
+                },
+                {
+                  "text": "kereta api",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "kereta api"
+                },
+                {
+                  "text": "train",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "train"
+                },
+                {
+                  "text": "stesen",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "stesen"
+                },
+                {
+                  "text": "station",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "station"
+                },
+                {
+                  "text": "tiket",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "tiket"
+                },
+                {
+                  "text": "ticket",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "ticket"
+                }
+              ]
             }
           ]
         },
@@ -5873,7 +6853,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nAsk what time the train departs.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -5897,7 +6877,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "DAILY SPEAKING\nAsk which platform to use.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -5921,7 +6901,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nSay that the bus has not arrived yet.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -6017,7 +6997,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nAsk where the exit is.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -6071,7 +7051,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SCENARIO DIALOGUE\nPenumpang: Kereta api bertolak pukul berapa?\nPetugas: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -6095,7 +7075,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "SCENARIO DIALOGUE\nTetamu: Saya ada tempahan atas nama Aung.\nPenyambut tetamu: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -6119,7 +7099,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SCENARIO DIALOGUE\nTetamu: Tiada tuala di bilik saya.\nPenyambut tetamu: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -6221,7 +7201,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SENTENCE PRACTICE\nChoose the modern sign for “NO SMOKING.”\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -6245,8 +7225,8 @@
               ]
             },
             {
-              "type": "ASSIST",
-              "question": "SENTENCE PRACTICE\nChoose the modern sign for “OPEN.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the modern sign for “OPEN.”\nChoose the grammatically correct modern Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "SEHALA",
@@ -6269,8 +7249,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the modern sign for “CLOSED.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the modern sign for “CLOSED.”\nComplete the exchange with the correct modern Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "TUTUP",
@@ -6341,8 +7321,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “The train has been delayed.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “The train has been delayed.”\nChoose the grammatically correct modern Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Kereta api telah ditangguhkan.",
@@ -6365,8 +7345,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Please wake me at six.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Please wake me at six.”\nComplete the exchange with the correct modern Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "BERHENTI",
@@ -6398,7 +7378,7 @@
       "lessons": [
         {
           "title": "Vocabulary and Audio",
-          "description": "Learn ten current Malaysian Malay words or expressions and repeat each answer aloud.",
+          "description": "Learn ten current Malaysian Malay words or expressions, repeat each answer aloud, and complete an ordering, odd-one-out, and matching review.",
           "challenges": [
             {
               "type": "SELECT",
@@ -6639,6 +7619,139 @@
                   "audioText": "bantal"
                 }
               ]
+            },
+            {
+              "type": "REORDER",
+              "question": "Put this modern Malay sentence back in the correct order.",
+              "options": [
+                {
+                  "text": "Di",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "Di"
+                },
+                {
+                  "text": "mana",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "mana"
+                },
+                {
+                  "text": "saya",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "saya"
+                },
+                {
+                  "text": "boleh",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "boleh"
+                },
+                {
+                  "text": "mendapatkan",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "mendapatkan"
+                },
+                {
+                  "text": "air",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "air"
+                },
+                {
+                  "text": "bersih?",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "bersih?"
+                }
+              ]
+            },
+            {
+              "type": "ODD_ONE_OUT",
+              "question": "Which modern Malay word or phrase does not belong with the others?",
+              "explanation": "“sakit” is from a different unit; the rest of this set is “tuala”, “bantal”, “selimut”.",
+              "options": [
+                {
+                  "text": "sakit",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "sakit"
+                },
+                {
+                  "text": "tuala",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "tuala"
+                },
+                {
+                  "text": "bantal",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "bantal"
+                },
+                {
+                  "text": "selimut",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "selimut"
+                }
+              ]
+            },
+            {
+              "type": "MATCHING",
+              "question": "Match each modern Malay word or phrase to its English meaning.",
+              "options": [
+                {
+                  "text": "tuala",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "tuala"
+                },
+                {
+                  "text": "towel",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "towel"
+                },
+                {
+                  "text": "bantal",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "bantal"
+                },
+                {
+                  "text": "pillow",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "pillow"
+                },
+                {
+                  "text": "selimut",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "selimut"
+                },
+                {
+                  "text": "blanket",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "blanket"
+                },
+                {
+                  "text": "berus gigi",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "berus gigi"
+                },
+                {
+                  "text": "toothbrush",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "toothbrush"
+                }
+              ]
             }
           ]
         },
@@ -6671,7 +7784,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nAsk whether there is an extra blanket.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -6695,7 +7808,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "DAILY SPEAKING\nAsk where you can buy toothpaste.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -6719,7 +7832,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nAsk where the nearest pharmacy is.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -6815,7 +7928,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nAsk where you can repair a bicycle.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -6869,7 +7982,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SCENARIO DIALOGUE\nPelanggan: Bila pakaian ini siap dicuci?\nPekerja dobi: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -6893,7 +8006,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "SCENARIO DIALOGUE\nPelanggan: Basikal saya rosak.\nMekanik: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -6917,7 +8030,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SCENARIO DIALOGUE\nPelanggan: Saya mahu potong rambut pendek.\nPendandan rambut: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -7019,7 +8132,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “I do not have an umbrella.”\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -7043,8 +8156,8 @@
               ]
             },
             {
-              "type": "ASSIST",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Where can I get clean water?”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Where can I get clean water?”\nChoose the grammatically correct modern Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Benda ini perlu dibaiki.",
@@ -7067,8 +8180,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Is there a mechanic nearby?”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Is there a mechanic nearby?”\nComplete the exchange with the correct modern Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Ada mekanik berdekatan?",
@@ -7139,8 +8252,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “I will come back tomorrow.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “I will come back tomorrow.”\nChoose the grammatically correct modern Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Saya akan datang semula esok.",
@@ -7163,8 +8276,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Please write the address here.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Please write the address here.”\nComplete the exchange with the correct modern Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Tolong bawakan saya sebuah bantal.",
@@ -7196,7 +8309,7 @@
       "lessons": [
         {
           "title": "Vocabulary and Audio",
-          "description": "Learn ten current Malaysian Malay words or expressions and repeat each answer aloud.",
+          "description": "Learn ten current Malaysian Malay words or expressions, repeat each answer aloud, and complete an ordering, odd-one-out, and matching review.",
           "challenges": [
             {
               "type": "SELECT",
@@ -7437,6 +8550,133 @@
                   "audioText": "demam"
                 }
               ]
+            },
+            {
+              "type": "REORDER",
+              "question": "Put this modern Malay sentence back in the correct order.",
+              "options": [
+                {
+                  "text": "Ambil",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "Ambil"
+                },
+                {
+                  "text": "ubat",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "ubat"
+                },
+                {
+                  "text": "ini",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "ini"
+                },
+                {
+                  "text": "dua",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "dua"
+                },
+                {
+                  "text": "kali",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "kali"
+                },
+                {
+                  "text": "sehari.",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "sehari."
+                }
+              ]
+            },
+            {
+              "type": "ODD_ONE_OUT",
+              "question": "Which modern Malay word or phrase does not belong with the others?",
+              "explanation": "“mahu” is from a different unit; the rest of this set is “sakit”, “demam”, “pening”.",
+              "options": [
+                {
+                  "text": "mahu",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "mahu"
+                },
+                {
+                  "text": "sakit",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "sakit"
+                },
+                {
+                  "text": "demam",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "demam"
+                },
+                {
+                  "text": "pening",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "pening"
+                }
+              ]
+            },
+            {
+              "type": "MATCHING",
+              "question": "Match each modern Malay word or phrase to its English meaning.",
+              "options": [
+                {
+                  "text": "sakit",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "sakit"
+                },
+                {
+                  "text": "sick / painful",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "sick / painful"
+                },
+                {
+                  "text": "demam",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "demam"
+                },
+                {
+                  "text": "fever",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "fever"
+                },
+                {
+                  "text": "pening",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "pening"
+                },
+                {
+                  "text": "dizzy",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "dizzy"
+                },
+                {
+                  "text": "ubat",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "ubat"
+                },
+                {
+                  "text": "medicine",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "medicine"
+                }
+              ]
             }
           ]
         },
@@ -7469,7 +8709,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nSay that you have had a fever since yesterday.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -7493,7 +8733,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "DAILY SPEAKING\nSay that you feel dizzy.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -7517,7 +8757,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nSay that you are allergic to penicillin.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -7613,7 +8853,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nWarn someone to be careful.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -7667,7 +8907,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SCENARIO DIALOGUE\nDoktor: Ada alahan terhadap ubat?\nPesakit: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -7691,7 +8931,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "SCENARIO DIALOGUE\nAhli farmasi: Ubat ini perlu diambil selepas makan.\nPelanggan: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -7715,7 +8955,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SCENARIO DIALOGUE\nA: Kawan saya pengsan.\nB: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -7817,7 +9057,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “I have been coughing for three days.”\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -7841,8 +9081,8 @@
               ]
             },
             {
-              "type": "ASSIST",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “I am lost and need help.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “I am lost and need help.”\nChoose the grammatically correct modern Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Kawasan ini berbahaya.",
@@ -7865,8 +9105,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Do not touch that.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Do not touch that.”\nComplete the exchange with the correct modern Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Jangan sentuh benda itu.",
@@ -7937,8 +9177,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “I cannot breathe well.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “I cannot breathe well.”\nChoose the grammatically correct modern Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Saya sukar bernafas.",
@@ -7961,8 +9201,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Please contact my family.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “Please contact my family.”\nComplete the exchange with the correct modern Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Lengan saya sakit.",
@@ -7994,7 +9234,7 @@
       "lessons": [
         {
           "title": "Vocabulary and Audio",
-          "description": "Learn ten current Malaysian Malay words or expressions and repeat each answer aloud.",
+          "description": "Learn ten current Malaysian Malay words or expressions, repeat each answer aloud, and complete an ordering, odd-one-out, and matching review.",
           "challenges": [
             {
               "type": "SELECT",
@@ -8235,6 +9475,133 @@
                   "audioText": "perlu"
                 }
               ]
+            },
+            {
+              "type": "REORDER",
+              "question": "Put this modern Malay sentence back in the correct order.",
+              "options": [
+                {
+                  "text": "Di",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "Di"
+                },
+                {
+                  "text": "mana",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "mana"
+                },
+                {
+                  "text": "saya",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "saya"
+                },
+                {
+                  "text": "boleh",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "boleh"
+                },
+                {
+                  "text": "menukar",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "menukar"
+                },
+                {
+                  "text": "wang?",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "wang?"
+                }
+              ]
+            },
+            {
+              "type": "ODD_ONE_OUT",
+              "question": "Which modern Malay word or phrase does not belong with the others?",
+              "explanation": "“dahulu” is from a different unit; the rest of this set is “mahu”, “perlu”, “boleh”.",
+              "options": [
+                {
+                  "text": "dahulu",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "dahulu"
+                },
+                {
+                  "text": "mahu",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "mahu"
+                },
+                {
+                  "text": "perlu",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "perlu"
+                },
+                {
+                  "text": "boleh",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "boleh"
+                }
+              ]
+            },
+            {
+              "type": "MATCHING",
+              "question": "Match each modern Malay word or phrase to its English meaning.",
+              "options": [
+                {
+                  "text": "mahu",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "mahu"
+                },
+                {
+                  "text": "want",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "want"
+                },
+                {
+                  "text": "perlu",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "perlu"
+                },
+                {
+                  "text": "need",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "need"
+                },
+                {
+                  "text": "boleh",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "boleh"
+                },
+                {
+                  "text": "can / may",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "can / may"
+                },
+                {
+                  "text": "mendapatkan",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "mendapatkan"
+                },
+                {
+                  "text": "obtain / get",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "obtain / get"
+                }
+              ]
             }
           ]
         },
@@ -8267,7 +9634,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nUse the frame “I need ...” with help.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -8291,7 +9658,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "DAILY SPEAKING\nUse the frame “Where can I get ...?” with drinking water.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -8315,7 +9682,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nUse the frame “Do you have ...?” with a map.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -8411,7 +9778,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nUse the frame “Is there ... nearby?” with a bank.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -8465,7 +9832,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SCENARIO DIALOGUE\nA: Di mana saya boleh mendapatkan peta?\nB: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -8489,7 +9856,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "SCENARIO DIALOGUE\nA: Ada kedai makan berdekatan?\nB: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -8513,7 +9880,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SCENARIO DIALOGUE\nA: Boleh tolong bawakan kerusi?\nB: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -8615,7 +9982,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SENTENCE PRACTICE\nComplete the frame: “Saya perlu ___.”\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -8639,8 +10006,8 @@
               ]
             },
             {
-              "type": "ASSIST",
-              "question": "SENTENCE PRACTICE\nComplete the frame: “Di mana saya boleh ___?”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nComplete the frame: “Di mana saya boleh ___?”\nChoose the grammatically correct modern Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Boleh tolong tuliskan alamat itu?",
@@ -8663,8 +10030,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nComplete the frame: “Ada ___?”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nComplete the frame: “Ada ___?”\nComplete the exchange with the correct modern Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Ada tandas berdekatan?",
@@ -8735,8 +10102,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nComplete the frame: “Saya tidak ___.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nComplete the frame: “Saya tidak ___.”\nChoose the grammatically correct modern Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Saya tidak memahami arahan itu.",
@@ -8759,8 +10126,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nComplete the frame: “Berapa lama ___?”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nComplete the frame: “Berapa lama ___?”\nComplete the exchange with the correct modern Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Saya mahu membeli tiket.",
@@ -8792,7 +10159,7 @@
       "lessons": [
         {
           "title": "Vocabulary and Audio",
-          "description": "Learn ten current Malaysian Malay words or expressions and repeat each answer aloud.",
+          "description": "Learn ten current Malaysian Malay words or expressions, repeat each answer aloud, and complete an ordering, odd-one-out, and matching review.",
           "challenges": [
             {
               "type": "SELECT",
@@ -9033,6 +10400,151 @@
                   "audioText": "sekarang"
                 }
               ]
+            },
+            {
+              "type": "REORDER",
+              "question": "Put this modern Malay sentence back in the correct order.",
+              "options": [
+                {
+                  "text": "Walaupun",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "Walaupun"
+                },
+                {
+                  "text": "frasa",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "frasa"
+                },
+                {
+                  "text": "itu",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "itu"
+                },
+                {
+                  "text": "dapat",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "dapat"
+                },
+                {
+                  "text": "difahami,",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "difahami,"
+                },
+                {
+                  "text": "bunyinya",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "bunyinya"
+                },
+                {
+                  "text": "sudah",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "sudah"
+                },
+                {
+                  "text": "ketinggalan",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "ketinggalan"
+                },
+                {
+                  "text": "zaman.",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "zaman."
+                }
+              ]
+            },
+            {
+              "type": "ODD_ONE_OUT",
+              "question": "Which modern Malay word or phrase does not belong with the others?",
+              "explanation": "“dengar” is from a different unit; the rest of this set is “dahulu”, “sekarang”, “ejaan”.",
+              "options": [
+                {
+                  "text": "dengar",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "dengar"
+                },
+                {
+                  "text": "dahulu",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "dahulu"
+                },
+                {
+                  "text": "sekarang",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "sekarang"
+                },
+                {
+                  "text": "ejaan",
+                  "correct": false,
+                  "emoji": null,
+                  "audioText": "ejaan"
+                }
+              ]
+            },
+            {
+              "type": "MATCHING",
+              "question": "Match each modern Malay word or phrase to its English meaning.",
+              "options": [
+                {
+                  "text": "dahulu",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "dahulu"
+                },
+                {
+                  "text": "formerly / in the past",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "formerly / in the past"
+                },
+                {
+                  "text": "sekarang",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "sekarang"
+                },
+                {
+                  "text": "now",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "now"
+                },
+                {
+                  "text": "ejaan",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "ejaan"
+                },
+                {
+                  "text": "spelling",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "spelling"
+                },
+                {
+                  "text": "baku",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "baku"
+                },
+                {
+                  "text": "standard",
+                  "correct": true,
+                  "emoji": null,
+                  "audioText": "standard"
+                }
+              ]
             }
           ]
         },
@@ -9065,7 +10577,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nSay that the course uses current Malaysian Malay.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -9089,7 +10601,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "DAILY SPEAKING\nExplain that “saja” in the source is now written “saya.”\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -9113,7 +10625,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nExplain that “djalan” is now “jalan.”\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -9209,7 +10721,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "DAILY SPEAKING\nSummarise the practical value of the old guide.\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -9263,7 +10775,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SCENARIO DIALOGUE\nA: Adakah semua frasa lama masih sesuai digunakan?\nB: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -9287,7 +10799,7 @@
               ]
             },
             {
-              "type": "ASSIST",
+              "type": "SELECT",
               "question": "SCENARIO DIALOGUE\nTetamu: Tempahan saya tidak ditemui.\nPenyambut tetamu: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -9311,7 +10823,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SCENARIO DIALOGUE\nPelanggan: Harga pada resit tidak sama dengan harga di rak.\nPekerja: ...\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -9413,7 +10925,7 @@
               ]
             },
             {
-              "type": "SELECT",
+              "type": "ASSIST",
               "question": "SENTENCE PRACTICE\nChoose the modern spelling of “Poekoel berapa sekarang?”\nChoose the best modern Malay response, then say it aloud.",
               "options": [
                 {
@@ -9437,8 +10949,8 @@
               ]
             },
             {
-              "type": "ASSIST",
-              "question": "SENTENCE PRACTICE\nChoose the modern spelling of “Dimana roemah sakit?”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the modern spelling of “Dimana roemah sakit?”\nChoose the grammatically correct modern Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Mula-mula saya menyemak jadual, kemudian saya membeli tiket.",
@@ -9461,8 +10973,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the modern sign replacing “DILARANG MINOEM ROKOK.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the modern sign replacing “DILARANG MINOEM ROKOK.”\nComplete the exchange with the correct modern Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "DILARANG MEROKOK",
@@ -9533,8 +11045,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “We should adapt the material without losing its practical purpose.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "GRAMMAR_TRANSFORM",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “We should adapt the material without losing its practical purpose.”\nChoose the grammatically correct modern Malay sentence, then say it aloud.",
               "options": [
                 {
                   "text": "Kita patut menyesuaikan bahan itu tanpa menghilangkan tujuan praktikalnya.",
@@ -9557,8 +11069,8 @@
               ]
             },
             {
-              "type": "SELECT",
-              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “In conclusion, context determines the most appropriate expression.”\nChoose the best modern Malay response, then say it aloud.",
+              "type": "CLOZE",
+              "question": "SENTENCE PRACTICE\nChoose the best Malay sentence for “In conclusion, context determines the most appropriate expression.”\nComplete the exchange with the correct modern Malay wording, then say it aloud.",
               "options": [
                 {
                   "text": "Saya mahu.",
