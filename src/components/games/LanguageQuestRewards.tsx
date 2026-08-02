@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Award, Crown, Download, Loader2, Lock, Share2, Sparkles, Star, Trophy } from 'lucide-react';
+import { Award, Crown, Download, Eye, Loader2, Lock, Share2, Sparkles, Star, Trophy } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -630,13 +630,22 @@ function LanguageQuestCertificateButton({
   rewards: LanguageQuestRewardProgress;
   bestStreak: number;
 }) {
-  const [busy, setBusy] = useState<'download' | 'share' | null>(null);
+  const [busy, setBusy] = useState<'view' | 'download' | 'share' | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  const run = async (action: 'download' | 'share') => {
+  useEffect(() => () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+  }, [previewUrl]);
+
+  const run = async (action: 'view' | 'download' | 'share') => {
     setBusy(action);
     try {
       const blob = await createQuestCertificateBlob({ learnerName, rewards, bestStreak });
       const filename = `MRLC-${safeFilename(learnerName)}-language-quest-certificate.png`;
+      if (action === 'view') {
+        setPreviewUrl(URL.createObjectURL(blob));
+        return;
+      }
       await shareOrDownloadBlob(
         blob,
         filename,
@@ -655,6 +664,9 @@ function LanguageQuestCertificateButton({
     <div className="flex flex-col items-start gap-1.5 sm:items-end">
       <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-violet-600 dark:text-violet-300"><Award className="h-3 w-3" /> Journey certificate</span>
       <div className="flex flex-wrap gap-2">
+        <Button size="sm" variant="outline" className="border-violet-200 bg-white text-violet-800 hover:bg-violet-50 dark:border-violet-500/25 dark:bg-slate-900 dark:text-violet-200" onClick={() => run('view')} disabled={busy !== null}>
+          {busy === 'view' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Eye className="mr-2 h-4 w-4" />} View
+        </Button>
         <Button size="sm" variant="outline" className="border-violet-200 bg-white text-violet-800 hover:bg-violet-50 dark:border-violet-500/25 dark:bg-slate-900 dark:text-violet-200" onClick={() => run('download')} disabled={busy !== null}>
           {busy === 'download' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />} Save
         </Button>
@@ -662,6 +674,21 @@ function LanguageQuestCertificateButton({
           {busy === 'share' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Share2 className="mr-2 h-4 w-4" />} Share
         </Button>
       </div>
+      <Dialog open={previewUrl !== null} onOpenChange={(open) => !open && setPreviewUrl(null)}>
+        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-5xl">
+          <DialogHeader>
+            <DialogTitle>Language Quest journey certificate</DialogTitle>
+            <DialogDescription>Preview of {learnerName}&apos;s current Language Quest achievement certificate.</DialogDescription>
+          </DialogHeader>
+          {previewUrl && (
+            <img
+              src={previewUrl}
+              alt={`${learnerName}'s Language Quest journey certificate`}
+              className="h-auto w-full rounded-lg border border-violet-200 bg-white shadow-sm"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

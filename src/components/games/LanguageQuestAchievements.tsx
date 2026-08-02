@@ -1,7 +1,14 @@
-import { useMemo, useState } from 'react';
-import { Award, Download, Flame, Loader2, Lock, Share2, Sparkles } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Award, Download, Eye, Flame, Loader2, Lock, Share2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import type { LanguageQuestCourseSummary, LanguageQuestProfile } from '@/src/types/languageQuest';
 
 interface AchievementStudioProps {
@@ -501,7 +508,7 @@ export function downloadBlob(blob: Blob, filename: string) {
 // downloading one course's certificate doesn't visually tie up another
 // course's card -- with two or three completed courses now each getting
 // their own card, a shared key would have been misleading.
-function busyKey(kind: AchievementKind, action: 'download' | 'share', courseId?: string): string {
+function busyKey(kind: AchievementKind, action: 'view' | 'download' | 'share', courseId?: string): string {
   return courseId ? `${kind}-${action}-${courseId}` : `${kind}-${action}`;
 }
 
@@ -511,9 +518,14 @@ export function LanguageQuestAchievements({ learnerName, profile, courses }: Ach
   // progressPercent === 100 isn't safe to use as the completion gate.
   const completedCourses = useMemo(() => courses.filter((course) => course.completed), [courses]);
   const [busy, setBusy] = useState<string | null>(null);
+  const [certificatePreview, setCertificatePreview] = useState<{ url: string; courseTitle: string } | null>(null);
   const canCreateStreak = profile.currentStreak > 0;
 
-  const create = async (kind: AchievementKind, action: 'download' | 'share', course?: LanguageQuestCourseSummary) => {
+  useEffect(() => () => {
+    if (certificatePreview) URL.revokeObjectURL(certificatePreview.url);
+  }, [certificatePreview]);
+
+  const create = async (kind: AchievementKind, action: 'view' | 'download' | 'share', course?: LanguageQuestCourseSummary) => {
     if (kind === 'streak' && !canCreateStreak) return;
     if (kind === 'certificate' && !course) return;
     const key = busyKey(kind, action, course?.id);
@@ -522,6 +534,11 @@ export function LanguageQuestAchievements({ learnerName, profile, courses }: Ach
       const blob = await createLanguageQuestAchievementBlob({ kind, learnerName, profile, course });
       const label = kind === 'certificate' ? `certificate-${course?.title}` : `${profile.currentStreak}-day-streak`;
       const filename = `MRLC-${safeFilename(learnerName)}-${safeFilename(label)}.png`;
+
+      if (action === 'view' && course) {
+        setCertificatePreview({ url: URL.createObjectURL(blob), courseTitle: course.title });
+        return;
+      }
 
       if (action === 'share') {
         if (navigator.share && typeof File === 'function') {
@@ -611,6 +628,7 @@ export function LanguageQuestAchievements({ learnerName, profile, courses }: Ach
         ) : (
           <div className="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {completedCourses.map((course) => {
+              const viewKey = busyKey('certificate', 'view', course.id);
               const downloadKey = busyKey('certificate', 'download', course.id);
               const shareKey = busyKey('certificate', 'share', course.id);
               const accent = safeAccentColor(course.accentColor);
@@ -638,12 +656,15 @@ export function LanguageQuestAchievements({ learnerName, profile, courses }: Ach
                   <div className="border-t border-amber-200/80 bg-white p-3 dark:border-amber-400/15 dark:bg-slate-950/50">
                     <p className="mb-3 text-xs font-semibold text-slate-500 dark:text-slate-400">Print-ready landscape certificate</p>
                     <div className="flex flex-wrap gap-2">
-                    <Button size="sm" variant="outline" onClick={() => create('certificate', 'download', course)} disabled={busy !== null && busy !== downloadKey}>
-                      {busy === downloadKey ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />} Save PNG
-                    </Button>
-                    <Button size="sm" onClick={() => create('certificate', 'share', course)} disabled={busy !== null && busy !== shareKey}>
-                      {busy === shareKey ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Share2 className="mr-2 h-4 w-4" />} Share
-                    </Button>
+                      <Button size="sm" variant="outline" onClick={() => create('certificate', 'view', course)} disabled={busy !== null && busy !== viewKey}>
+                        {busy === viewKey ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Eye className="mr-2 h-4 w-4" />} View
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => create('certificate', 'download', course)} disabled={busy !== null && busy !== downloadKey}>
+                        {busy === downloadKey ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />} Save PNG
+                      </Button>
+                      <Button size="sm" onClick={() => create('certificate', 'share', course)} disabled={busy !== null && busy !== shareKey}>
+                        {busy === shareKey ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Share2 className="mr-2 h-4 w-4" />} Share
+                      </Button>
                     </div>
                   </div>
                 </article>
@@ -652,6 +673,22 @@ export function LanguageQuestAchievements({ learnerName, profile, courses }: Ach
           </div>
         )}
       </div>
+
+      <Dialog open={certificatePreview !== null} onOpenChange={(open) => !open && setCertificatePreview(null)}>
+        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-5xl">
+          <DialogHeader>
+            <DialogTitle>{certificatePreview?.courseTitle} certificate</DialogTitle>
+            <DialogDescription>Preview of your print-ready Language Quest certificate.</DialogDescription>
+          </DialogHeader>
+          {certificatePreview && (
+            <img
+              src={certificatePreview.url}
+              alt={`${learnerName}'s ${certificatePreview.courseTitle} certificate`}
+              className="h-auto w-full rounded-lg border border-amber-200 bg-[#fffaf0] shadow-sm"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
