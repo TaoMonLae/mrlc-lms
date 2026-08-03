@@ -66,6 +66,7 @@ export default function LanguageQuestBossBattle() {
   const [unlockedAwardId, setUnlockedAwardId] = useState<string | null>(null);
   const [revealOpen, setRevealOpen] = useState(false);
   const finishedRef = useRef(false);
+  const lockedChallengeIdRef = useRef<string | null>(null);
 
   const load = () => {
     if (!courseId) return;
@@ -76,6 +77,7 @@ export default function LanguageQuestBossBattle() {
     setAnswers([]);
     setSelectedId('');
     finishedRef.current = false;
+    lockedChallengeIdRef.current = null;
     apiGet<BossBattlePayload>(`/api/language-quest/courses/${courseId}/boss-battle`)
       .then(setPayload)
       .catch((error: any) => {
@@ -113,6 +115,12 @@ export default function LanguageQuestBossBattle() {
     } catch (error: any) {
       toast.error(error?.message || 'Could not finish the boss battle');
       finishedRef.current = false;
+      // Keep the learner on the final card and allow a clean retry. Without
+      // removing the failed final answer, retrying appends the same challenge
+      // twice and the server correctly rejects the deck as changed.
+      setAnswers(finalAnswers.slice(0, -1));
+      setSelectedId('');
+      lockedChallengeIdRef.current = null;
     } finally {
       setSubmitting(false);
     }
@@ -120,6 +128,10 @@ export default function LanguageQuestBossBattle() {
 
   const lockInAnswer = (optionId: string | null) => {
     if (!card) return;
+    // A click and the countdown's final tick can land in the same render.
+    // Guard by challenge id so one card can never be appended twice.
+    if (lockedChallengeIdRef.current === card.challengeId) return;
+    lockedChallengeIdRef.current = card.challengeId;
     const nextAnswers = [...answers, { challengeId: card.challengeId, optionId }];
     setAnswers(nextAnswers);
     setSelectedId('');

@@ -17,10 +17,10 @@ msgstr ""
 # Language header, and fill in each msgstr.
 # ── Navigation ──────────────────────────────────────────────
 msgid "Main Navigation"
-msgstr "သ္ကုတ်လံၚ်ညး"
+msgstr "တၚ်ဂၠာဲ"
 
 msgid "Dashboard"
-msgstr "ဒက်ယှ်ဗတ်"
+msgstr "ဒက်(ယှ)ဗတ်"
 
 msgid "Timetable"
 msgstr "ခံက်အၚ်အခိၚ်"
@@ -156,7 +156,7 @@ msgid "Upload Resource"
 msgstr "ပ္တိုန်"
 
 msgid "Record Payment"
-msgstr "ချူစရင်သြန်စောဲ"
+msgstr "ချူစရင်သြန်သုၚ်စောဲ"
 
 msgid "Submit Exam"
 msgstr "အပ်စမ်ၜတ်လိက်"
@@ -175,7 +175,7 @@ msgid "Actions"
 msgstr "ကမၠောန်ဂမၠိုၚ်"
 
 msgid "Description"
-msgstr "ဗွဟ်လးလး"
+msgstr "ပရုပရာအပြောံ"
 
 msgid "Type"
 msgstr "ဂကူ"
@@ -196,7 +196,7 @@ msgid "Room"
 msgstr "ခန်"
 
 msgid "Class"
-msgstr "တန်ဘာ"
+msgstr "တန်ဗ္တောန်ဘာ"
 
 msgid "Subject"
 msgstr "ဘာသာလ္ၚတ်"
@@ -205,7 +205,7 @@ msgid "Student"
 msgstr "ကောန်ကွးဘာ"
 
 msgid "Teacher"
-msgstr "အစာ"
+msgstr "အ္စာ"
 
 msgid "Name"
 msgstr "ယၟု"
@@ -214,10 +214,10 @@ msgid "Email Address"
 msgstr "အဳမေလ်"
 
 msgid "Phone"
-msgstr "ဖုန်"
+msgstr "ဖုၚ်"
 
 msgid "Phone Number"
-msgstr "လၟေၚ်ဖုန်"
+msgstr "မဂၞန်ဖုၚ်"
 
 msgid "Gender"
 msgstr "လိၚ်"
@@ -374,10 +374,10 @@ msgid "Total Students"
 msgstr "ကောန်ကွးဘာဖအိုတ်"
 
 msgid "Daily Attendance"
-msgstr "စရၚ်တိုန်ဘာအရိုဟ်တ္ၚြ"
+msgstr "စရၚ်တိုန်ဘာအရိုဟ်တ္ၚဲ"
 
 msgid "Active Cases"
-msgstr "ပၟိက်အမှုနွံဒၟံၚ်"
+msgstr "အမှုနွံဒၟံၚ်"
 
 msgid "Important Announcements"
 msgstr "လိက်လလောၚ်တြးမပၟိက်ဇၞော်"
@@ -416,7 +416,7 @@ msgid "No classes scheduled for today."
 msgstr "တန်ဗ္တောန် စၟတ်လဝ်သွက်တ္ၚဲဏအ်ဟွံမွဲ"
 
 msgid "No recent cases."
-msgstr "အမှုအကြာဏအ်ဟွံမွဲ"
+msgstr "အကြာဏအ်တန်ဟွံမွဲဏီ"
 
 msgid "No records today"
 msgstr "ဟွံမွဲစရင်တ္ၚဲဏံ"
@@ -425,41 +425,41 @@ msgid "Search students, classes, records..."
 msgstr "ဂၠာဲကောန်ကွးဘာ၊ တန်ဘာ၊ စရင်ဂမၠိုၚ်..."
 
 msgid "Overview of Mon Refugee Learning Centre - GED School"
-msgstr "ရံၚ်အလုံ ဒေသဒုက္ခသည်ကောန်ဂကူမန် - ဘာပညာ GED"
+msgstr "စၟတ်သရောပ်ဌာန်ဗ္တောန်ပညာရုၚ်ဟံၚ်ပြာ်မန်ကၟိန်ဍုၚ်မလေဝ်ယှာ- ဘာဗ္တောာန်ပညာ GED"
 
 # ── Teacher Portal ──────────────────────────────────────────
 msgid "Class Attendance Monthly"
-msgstr "လစဉ် တက်ရောက်မှု တန်ဘာ"
+msgstr "ခံက်အၚ်တိုန်ဘာ လၟေၚ်ဂိတု"
 
 msgid "Detailed attendance breakdown per student for the current month."
 msgstr "စရၚ်ကွးဘာတိုန်စိုပ်သောဲသောဲပြောဲပြောဲပွိုၚ်မွဲဂိတု"
 
 msgid "Exam Performance Analysis"
-msgstr "ဆန်းစစ်ချက်စွမ်းဆောင်ရည် စမ်ၜတ်လိက်"
+msgstr "အကာဲအရာခံက်အံၚ်တၚ်စမ်ၜတ်လိက်"
 
 msgid "Statistical summary of recent exam scores with class average comparison."
-msgstr "စရင်အနှစ်ချုပ် စမ်ၜတ်လိက်မကြာမီဏံ နှိုင်းယှဉ်ကဵုပျမ်းမျှတန်ဘာ။"
+msgstr "ခံက်အၚ်ထ္ၜး စၟတ်အပြောံ ကွးဘာတိုန်အတန်"
 
 msgid "Student Progress Report"
-msgstr "လိက်ဒင်စရင်တိုးတက်မှု ကောန်ကွးဘာ"
+msgstr "လိက်ဒုၚ်စဳရေၚ် ပရေၚ်ကွးလာ"
 
 msgid "Comprehensive progress tracking for individual students in your classes."
-msgstr "ခြေရာခံတိုးတက်မှု အလုံကောန်ကွးဘာမွဲမွဲ ပ္ဍဲတန်ဘာမၞိဟ်။"
+msgstr "ခံက်အၚ်ဒုၚ်စဳရေၚ်ကွးဘာ ပ္ဍဲတန်ဗ္တောန်မၞးဂမၠိုၚ်"
 
 msgid "Configure & Generate"
-msgstr "ပြင်ဆင်ကၠောန်ပ္တိတ်"
+msgstr "ကၠောန်ပ္တိတ် ကေုာံ တၚ်ပလေဝ်ပလေတ်"
 
 msgid "Generate insights and reports for your assigned modules and students."
-msgstr "ကၠောန်ပ္တိတ်ဆန်းစစ်ချက် ကဵုလိက်ဒင်စရင် သွက်တန်ဘာကဵုကောန်ကွးဘာ။"
+msgstr "ကၠောန်ပ္တိတ် စရၚ်စၟဳစၟတ် ကေုာံ လိက်ဒုၚ်စဳရေၚ် တန်မၞးဗ္တောန်"
 
 msgid "Need Access to Sensitive Data?"
-msgstr "နွံပၟိက်အခေါၚ်ကြည့်ရှု ဒေတာကိစ္စဇၞော်ဟာ?"
+msgstr "နွံပၟိက် မိက်ဂွံ ပံက်ဗဵုတၚ်နၚ် ပၟိက်မဇၞော်ဟာ"
 
 msgid "No sessions scheduled yet"
-msgstr "ဟွံမွဲတန်ဘာဇယားအခိၚ်ဏီ"
+msgstr "ခံက်အၚ်တန်ဗ္တောန်ဟွံမွဲဏီ"
 
 msgid "Add your class periods so they appear on the weekly grid."
-msgstr "ထပ်စုတ်အခိၚ်တန်ဘာ သွက်ဂွံပေါ်ပ္ဍဲဇယားအပတ်စဉ်။"
+msgstr "ထပ်စုတ် အခိၚ်တန်ဗ္တောန် သွက်ဂွံဓမံက်ထ္ၜးပ္ဍဲကဵု ခံက်အၚ်လၟေၚ်သတ္တဟ"
 
 msgid "Schedule Session"
 msgstr "သတ်မှတ်ဇယားအခိၚ်"
@@ -471,7 +471,7 @@ msgid "Teaching Schedule"
 msgstr "ခံက်အၚ်အခိၚ်တန်ဗ္တောန်"
 
 msgid "Your assigned teaching sessions and availability across the week."
-msgstr "အခိၚ်သင်ကြား သတ်မှတ်လဝ်ကဵုသင် ကဵုအခိၚ်လၟေၚ်အပတ်ဏံ။"
+msgstr "ခံက်အၚ်တန်ဗ္တောန်မၞးပ္ဍဲမွဲသတ္တဟ"
 
 msgid "Teaching Hours Summary"
 msgstr "အနှစ်ချုပ်နာရီသင်ကြား"
@@ -486,10 +486,10 @@ msgid "Scheduled Period"
 msgstr "အခိၚ်သတ်မှတ်လဝ်"
 
 msgid "No classes assigned to you yet."
-msgstr "ဟွံမွဲတန်ဘာခွဲဝေလဝ် ကဵုမၞိဟ်ဏီ။"
+msgstr "စၞောန်လဝ်တန်ဗ္တောန်သွက်မၞးဟွံမွဲဏီ"
 
 msgid "No announcements yet."
-msgstr "ဟွံမွဲလိက်လလောၚ်တြးဏီ။"
+msgstr "လိက်လလောၚ်တြးဟွံမွဲဏီ"
 
 msgid "My Assigned Classes"
 msgstr "တန်ဘာခွဲဝေလဝ် သွက်မၞိဟ်"
@@ -510,16 +510,16 @@ msgid "View class details"
 msgstr "ရံၚ်အသေးစိတ်တန်ဘာ"
 
 msgid "Record daily attendance for your assigned classes."
-msgstr "စၟတ်စရင်တိုန်ဘာနေ့စဉ် သွက်တန်ဘာခွဲဝေလဝ်။"
+msgstr "ကံက်စရၚ်ကွးဘာသွက်တန်ဗ္တောန်မၞး"
 
 msgid "Please select a class first."
-msgstr "ကျေးဇူးပြု၍ ရွေးတန်ဘာကၠာတေံ။"
+msgstr "ရုဲစှ်ကဵုတန်ဗ္တောန်ကၠာညိ။"
 
 msgid "Please mark attendance for all students before submitting."
-msgstr "ကျေးဇူးပြု၍ စၟတ်တိုန်ဘာ ကောန်ကွးဘာအလုံ ကၠာဟွံတင်သွင်း။"
+msgstr "ကၠာဟွံဂွံသ္ပဒတန် ကံက်စရၚ်ကွးဘာသိုဖအိုတ်ကၠာညိ။"
 
 msgid "Failed to save attendance."
-msgstr "သိမ်းဆည်းစရင်တိုန်ဘာ ဟွံအောင်မြင်။"
+msgstr "သီုဂိုၚ်စရၚ်တိုန်ဘာဟွံအံၚ်ဇၞး"
 
 msgid "Finalize & Submit"
 msgstr "အတည်ပြုကဵုတင်သွင်း"
@@ -540,7 +540,7 @@ msgid "No exams found"
 msgstr "ဟွံမွဲစမ်ၜတ်လိက်မတွေ့"
 
 msgid "Try adjusting your search or filters."
-msgstr "စမ်းသပ်ပြောင်းလဲ ရှာဖွေ သို့မဟုတ် စစ်ထုတ်။"
+msgstr "ပြံၚ်သၠာဲပရေၚ်ဂၠိုက်ဂၠာဲတုဲ ဂ္စာန်မွဲဝါပၠန်ညိ။"
 
 msgid "Drafts"
 msgstr "လိက်ကြမ်းဂမၠိုၚ်"
@@ -549,7 +549,7 @@ msgid "Open exam"
 msgstr "ဖွင့်စမ်ၜတ်လိက်"
 
 msgid "Viewing classes assigned to you for the current academic year."
-msgstr "ကြည့်ရှုတန်ဘာခွဲဝေလဝ် သွက်မၞိဟ် သၞာံပညာသင်ဏံ။"
+msgstr "ဗဵုတန်ဗ္တောန်စၞောန်လဝ်သွက်မၞးပ္ဍဲကဵုသၞာံဗ္တောန်ပညာလၟုဟ်"
 
 msgid "View timetable"
 msgstr "ရံၚ်ဇယားအခိၚ်"
@@ -558,7 +558,7 @@ msgid "Monthly Attendance Tracking"
 msgstr "ခြေရာခံတိုန်ဘာလစဉ်"
 
 msgid "No attendance records available for this class."
-msgstr "ဟွံမွဲစရင်တိုန်ဘာ သွက်တန်ဘာဝွံ။"
+msgstr "သွက်တန်ဗ္တောန်ဏအ် စရၚ်ကွးဘာတိုန်တန်ဗ္တောန်ဟွံမွဲဏီရ"
 
 msgid "Last Exam"
 msgstr "စမ်ၜတ်လိက်နောက်ဆုံး"
@@ -570,7 +570,7 @@ msgid "View exam details"
 msgstr "ရံၚ်အသေးစိတ်စမ်ၜတ်လိက်"
 
 msgid "Roll call sheet downloaded!"
-msgstr "ဒေါင်းလုဒ်စရင်တိုန်ဘာပြီးပြီး။"
+msgstr "ဂၠောၚ်ဖျေံခံက်အံၚ်စရၚ်တိုန်ဘာ တုဲဒှ်!"
 
 msgid "Teaching Resources"
 msgstr "အရင်းအမြစ်သင်ကြားရေးဂမၠိုၚ်"
@@ -594,13 +594,13 @@ msgid "Downloads"
 msgstr "ဒေါင်းလုဒ်ဂမၠိုၚ်"
 
 msgid "More options coming soon."
-msgstr "ရွေးချယ်စရာတခြား မကြာမီလာမည်။"
+msgstr "ပရေၚ်ရုဲစှ်တၞဟ်ဟ် ခြာဟွံလအ်ကၠုၚ်ဏောၚ်။"
 
 msgid "Resource link copied to clipboard!"
-msgstr "ကူးယူလင့်ခ်အရင်းအမြစ်ပြီးပြီး။"
+msgstr "ကူဆာဲလေန်ခ်တုဲဒှ်"
 
 msgid "File downloads will work once resources are uploaded through the Upload form."
-msgstr "ဒေါင်းလုဒ်ဖိုင်အဆင်ပြေ သွက်တင်ပြီးအရင်းအမြစ်။"
+msgstr "ဝှါၚ်တအ်ပ္တိုန်စွံလဝ်တုဲအာမ္ဂး ဂၠောၚ်ဖျေံမာန်ရ။"
 
 # Extracted string
 msgid "./pages/exam2/ExamPlayer"
@@ -676,7 +676,7 @@ msgstr ""
 
 # Extracted string
 msgid "Math"
-msgstr ""
+msgstr "ဂၞန်"
 
 # Extracted string
 msgid "Question media"
@@ -684,35 +684,35 @@ msgstr ""
 
 # Extracted string
 msgid "Remove image"
-msgstr ""
+msgstr "ပလီုဗီု"
 
 # Extracted string
 msgid "Search students, classes..."
-msgstr ""
+msgstr "ဂၠိုက်ဂၠာဲ ကွဘာ၊ တန်…"
 
 # Extracted string
 msgid "Searching..."
-msgstr ""
+msgstr "ဂၠာဲဒၟံၚ်ဖိုဟ်"
 
 # Extracted string
 msgid "No results found"
-msgstr ""
+msgstr "ဂၠာဲဟွံဆဵု"
 
 # Extracted string
 msgid "Try different keywords"
-msgstr ""
+msgstr "တက်စုတ်မလိက်တၞဟ်ဟ်ညိ"
 
 # Extracted string
 msgid "Type to search"
-msgstr ""
+msgstr "မိက်ဂွံဂၠာဲမ္ဂးတက်စုတ်ညိ"
 
 # Extracted string
 msgid "Search students and classes"
-msgstr ""
+msgstr "ဂၠာဲကွးဘာကေုာံ တန်ဂမၠိုၚ်"
 
 # Extracted string
 msgid "Press"
-msgstr ""
+msgstr "ဍဵု"
 
 # Extracted string
 msgid "ESC"
@@ -720,15 +720,15 @@ msgstr ""
 
 # Extracted string
 msgid "to close"
-msgstr ""
+msgstr "ကၟာတ်"
 
 # Extracted string
 msgid "Something went wrong"
-msgstr ""
+msgstr "ယောၚ်ဒၟံၚ်"
 
 # Extracted string
 msgid "Try Again"
-msgstr ""
+msgstr "ဂ္စါန်မွဲဝါပၠန်"
 
 # Extracted string
 msgid "Video playback controls"
@@ -740,7 +740,7 @@ msgstr ""
 
 # Extracted string
 msgid "Volume"
-msgstr ""
+msgstr "ရမျာၚ်"
 
 # Extracted string
 msgid "Playback speed options"
@@ -884,15 +884,15 @@ msgstr ""
 
 # Extracted string
 msgid "Light"
-msgstr ""
+msgstr "တၟး"
 
 # Extracted string
 msgid "Dark"
-msgstr ""
+msgstr "ဂၠု"
 
 # Extracted string
 msgid "System"
-msgstr ""
+msgstr "သၞောတ်စက်"
 
 # Extracted string
 msgid "Mark all as read"
@@ -900,11 +900,11 @@ msgstr ""
 
 # Extracted string
 msgid "No announcements"
-msgstr ""
+msgstr "တၚ်လလောၚ်တြးဟွံမွဲ"
 
 # Extracted string
 msgid "View all announcements →"
-msgstr ""
+msgstr "ဗဵုတၚ်လလောၚ်တြးဂမၠိုၚ်"
 
 # Extracted string
 msgid "Profile picture must be 5 MB or smaller"
@@ -928,7 +928,7 @@ msgstr ""
 
 # Extracted string
 msgid "Signature"
-msgstr ""
+msgstr "စၟတ်တဲ"
 
 # Extracted string
 msgid "Report Parameters"
@@ -936,15 +936,15 @@ msgstr ""
 
 # Extracted string
 msgid "Prepared By"
-msgstr ""
+msgstr "ညးဒုၚ်စဳရေၚ်"
 
 # Extracted string
 msgid "Verified By"
-msgstr ""
+msgstr "ညးစၟဳစၟတ်"
 
 # Extracted string
 msgid "Principal / Administrator"
-msgstr ""
+msgstr "ဂအုပ်ဘာ / ညးအုပ်ဓုပ်ကောပ်ကာဲ"
 
 # Extracted string
 msgid "Students imported successfully."
@@ -1156,31 +1156,31 @@ msgstr ""
 
 # Extracted string
 msgid "Monday"
-msgstr ""
+msgstr "စန်"
 
 # Extracted string
 msgid "Tuesday"
-msgstr ""
+msgstr "အၚါ"
 
 # Extracted string
 msgid "Wednesday"
-msgstr ""
+msgstr "ဗုဒ္ဓဝါ"
 
 # Extracted string
 msgid "Thursday"
-msgstr ""
+msgstr "ဗြဴပတိ"
 
 # Extracted string
 msgid "Friday"
-msgstr ""
+msgstr "သိုက်"
 
 # Extracted string
 msgid "Saturday"
-msgstr ""
+msgstr "သ္ၚိသဝ်"
 
 # Extracted string
 msgid "Sunday"
-msgstr ""
+msgstr "အဒိုတ်"
 
 # Extracted string
 msgid "Schedule Type"
@@ -1192,11 +1192,11 @@ msgstr ""
 
 # Extracted string
 msgid "Exam"
-msgstr ""
+msgstr "လိက်စမ်ၜတ်ဂမၠိုၚ်"
 
 # Extracted string
 msgid "Meeting"
-msgstr ""
+msgstr "ကောံဓရီု"
 
 # Extracted string
 msgid "School holiday"
@@ -1224,11 +1224,11 @@ msgstr ""
 
 # Extracted string
 msgid "Start Time"
-msgstr ""
+msgstr "အခိၚ်မစ"
 
 # Extracted string
 msgid "End Time"
-msgstr ""
+msgstr "အခိၚ်အိုတ်"
 
 # Extracted string
 msgid "Effective From"
@@ -1344,7 +1344,7 @@ msgstr ""
 
 # Extracted string
 msgid "Login"
-msgstr ""
+msgstr "လုပ်"
 
 # Extracted string
 msgid "Purpose-Built for One School"
@@ -18553,4 +18553,3 @@ msgstr ""
 # Extracted string
 msgid "Retry playback"
 msgstr ""
-

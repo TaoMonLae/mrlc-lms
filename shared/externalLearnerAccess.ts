@@ -21,6 +21,8 @@ export function isExternalLearnerAppPathAllowed(value: string): boolean {
     || pathname === "/games/language-quest/leaderboard"
     || pathname === "/games/language-quest/mastery"
     || /^\/games\/language-quest\/courses\/[^/]+$/.test(pathname)
+    || /^\/games\/language-quest\/courses\/[^/]+\/(?:boss-battle|culture)$/.test(pathname)
+    || /^\/games\/language-quest\/courses\/[^/]+\/story\/[^/]+$/.test(pathname)
     || /^\/games\/language-quest\/lessons\/[^/]+$/.test(pathname)
   );
 }
@@ -46,6 +48,7 @@ export function isExternalLearnerApiRequestAllowed(method: string, value: string
       || pathname === "/api/language-quest/mastery"
       || pathname === "/api/language-quest/voice"
       || /^\/api\/language-quest\/courses\/[^/]+$/.test(pathname)
+      || /^\/api\/language-quest\/courses\/[^/]+\/boss-battle$/.test(pathname)
       || /^\/api\/language-quest\/lessons\/[^/]+(?:\/preview)?$/.test(pathname)
     );
   }
@@ -57,6 +60,7 @@ export function isExternalLearnerApiRequestAllowed(method: string, value: string
       || pathname === "/api/language-quest/profile/classrooms"
       || pathname === "/api/language-quest/voice"
       || /^\/api\/language-quest\/challenges\/[^/]+\/answer$/.test(pathname)
+      || /^\/api\/language-quest\/courses\/[^/]+\/boss-battle\/finish$/.test(pathname)
       || /^\/api\/language-quest\/mastery\/[^/]+\/answer$/.test(pathname)
       || /^\/api\/language-quest\/missions\/[^/]+\/claim$/.test(pathname)
     );

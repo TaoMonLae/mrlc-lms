@@ -33,8 +33,16 @@ interface CoursePayload {
       completedChallenges: number;
       completed: boolean;
       locked: boolean;
+      available: boolean;
     }[];
   }[];
+  bossBattle: {
+    available: boolean;
+    unlocked: boolean;
+    eligibleQuestionCount: number;
+    minQuestions: number;
+    remainingChallenges: number;
+  };
 }
 
 export default function LanguageQuestCourse() {
@@ -153,6 +161,40 @@ export default function LanguageQuestCourse() {
         </section>
       )}
 
+      <section className={`overflow-hidden rounded-2xl border-2 ${course.bossBattle.unlocked ? 'border-rose-300 bg-rose-50 dark:border-rose-500/30 dark:bg-rose-950/20' : 'border-slate-200 bg-slate-50/80 dark:border-slate-700 dark:bg-slate-900/60'}`}>
+        <div className="flex flex-col items-start justify-between gap-4 p-5 sm:flex-row sm:items-center">
+          <div className="flex items-start gap-3">
+            <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl text-white ${course.bossBattle.unlocked ? 'bg-gradient-to-br from-rose-600 to-slate-900' : 'bg-slate-400 dark:bg-slate-700'}`}>
+              {course.bossBattle.unlocked ? <Skull className="h-6 w-6" /> : <Lock className="h-5 w-5" />}
+            </span>
+            <div>
+              <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${course.bossBattle.unlocked ? 'text-rose-600 dark:text-rose-300' : 'text-slate-400'}`}>Final challenge</p>
+              <h2 className="mt-1 text-lg font-black text-slate-950 dark:text-white">Boss Battle</h2>
+              <p className="mt-1 max-w-xl text-sm leading-6 text-slate-600 dark:text-slate-300">
+                {!course.bossBattle.available
+                  ? `Unavailable: this course needs at least ${course.bossBattle.minQuestions} compatible choice questions, but has ${course.bossBattle.eligibleQuestionCount}.`
+                  : course.bossBattle.unlocked
+                    ? 'Unlocked! Face a timed set of your toughest course questions and earn bonus XP.'
+                    : `Finish the course to unlock it. ${course.bossBattle.remainingChallenges} scored challenge${course.bossBattle.remainingChallenges === 1 ? '' : 's'} remain.`}
+              </p>
+            </div>
+          </div>
+          {course.bossBattle.unlocked ? (
+            <Button className="shrink-0 bg-rose-700 text-white hover:bg-rose-800" render={<Link to={`/games/language-quest/courses/${course.id}/boss-battle`} />} nativeButton={false}>
+              <Skull className="mr-2 h-4 w-4" /> Challenge the Boss
+            </Button>
+          ) : course.bossBattle.available && nextLesson ? (
+            <Button variant="outline" className="shrink-0" render={<Link to={`/games/language-quest/lessons/${nextLesson.id}`} />} nativeButton={false}>
+              <Play className="mr-2 h-4 w-4" /> Continue course
+            </Button>
+          ) : (
+            <Button variant="outline" className="shrink-0" disabled>
+              <Lock className="mr-2 h-4 w-4" /> Locked
+            </Button>
+          )}
+        </div>
+      </section>
+
       <section className="rounded-2xl border border-violet-100 bg-violet-50/70 p-5 dark:border-violet-500/20 dark:bg-violet-500/10">
         <div className="flex items-start gap-3">
           <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300"><Lightbulb className="h-5 w-5" /></span>
@@ -193,21 +235,21 @@ export default function LanguageQuestCourse() {
                         className={`relative z-10 grid h-12 w-12 shrink-0 place-items-center rounded-2xl border-4 border-white text-white shadow-sm dark:border-surface-indigo ${lesson.locked ? 'bg-slate-300 dark:bg-slate-700' : ''}`}
                         style={!lesson.locked ? { backgroundColor: lesson.completed ? '#10b981' : course.accentColor } : undefined}
                       >
-                        {lesson.locked ? <Lock className="h-4 w-4" /> : lesson.completed ? <Check className="h-5 w-5" /> : <Play className="h-4 w-4 fill-current" />}
+                        {!lesson.available || lesson.locked ? <Lock className="h-4 w-4" /> : lesson.completed ? <Check className="h-5 w-5" /> : <Play className="h-4 w-4 fill-current" />}
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <h3 className={`font-semibold ${lesson.locked ? 'text-slate-400' : 'text-slate-900 dark:text-white'}`}>{lesson.title}</h3>
                           {lesson.completed && <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">Complete</span>}
                         </div>
-                        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-300">{lesson.description || `${lesson.challengeCount} quick challenges`}</p>
-                        <p className="mt-1 text-[11px] font-medium text-slate-400">{lesson.completedChallenges}/{lesson.challengeCount} challenges</p>
+                        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-300">{lesson.available ? (lesson.description || `${lesson.challengeCount} quick challenges`) : 'Content is coming soon.'}</p>
+                        {lesson.available && <p className="mt-1 text-[11px] font-medium text-slate-400">{lesson.completedChallenges}/{lesson.challengeCount} challenges</p>}
                       </div>
-                      {!lesson.locked && (lesson.completed ? <RotateCcw className="h-4 w-4 text-slate-400" /> : <ChevronRight className="h-5 w-5 text-slate-400" />)}
+                      {lesson.available && !lesson.locked && (lesson.completed ? <RotateCcw className="h-4 w-4 text-slate-400" /> : <ChevronRight className="h-5 w-5 text-slate-400" />)}
                     </>
                   );
-                  return lesson.locked ? (
-                    <div key={lesson.id} className="flex items-center gap-4 rounded-2xl border border-slate-100 p-3 opacity-75 dark:border-surface-raised" aria-label={`${lesson.title} is locked`}>{content}</div>
+                  return !lesson.available || lesson.locked ? (
+                    <div key={lesson.id} className="flex items-center gap-4 rounded-2xl border border-slate-100 p-3 opacity-75 dark:border-surface-raised" aria-label={!lesson.available ? `${lesson.title} has no challenges yet` : `${lesson.title} is locked`}>{content}</div>
                   ) : (
                     <Link key={lesson.id} to={`/games/language-quest/lessons/${lesson.id}`} className="flex items-center gap-4 rounded-2xl border border-slate-200 p-3 transition hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-md dark:border-surface-raised dark:hover:border-violet-600">{content}</Link>
                   );
@@ -224,9 +266,6 @@ export default function LanguageQuestCourse() {
           <h2 className="mt-2 text-xl font-black text-slate-900 dark:text-white">Course complete!</h2>
           <p lang={explanationLanguage} className="mt-1 text-sm text-slate-500 dark:text-slate-300">{lq('completeHelp')}</p>
           <div className="mt-4 flex flex-col justify-center gap-2 sm:flex-row">
-            <Button className="bg-rose-700 text-white hover:bg-rose-800" render={<Link to={`/games/language-quest/courses/${course.id}/boss-battle`} />} nativeButton={false}>
-              <Skull className="mr-2 h-4 w-4" /> Challenge the Boss
-            </Button>
             <Button variant="outline" render={<Link to={`/games/language-quest/courses/${course.id}/culture`} />} nativeButton={false}>
               <Globe2 className="mr-2 h-4 w-4" /> Culture Quest
             </Button>

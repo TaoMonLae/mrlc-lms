@@ -15,6 +15,9 @@ import {
   bossBattleSubmissionMatchesDeck,
   isValidMatchingSubmission,
   isValidReorderSubmission,
+  languageQuestAssessmentPrompt,
+  languageQuestBossBattleStatus,
+  languageQuestChallengeSupportsStudyCard,
   languageQuestDayKey,
   languageQuestPracticePrompt,
   matchingChallengeIsCorrect,
@@ -568,6 +571,9 @@ export function nextIncompleteLessonId(units: any[], completed: Set<string>): st
   for (const unit of units) {
     for (const lesson of unit.lessons) {
       const challengeIds = lesson.challenges.map((challenge: any) => challenge.id);
+      // Draft/placeholder lessons have nothing a learner can complete. Skip
+      // them without locking the next real lesson behind an impossible gate.
+      if (challengeIds.length === 0) continue;
       const isComplete = challengeIds.length > 0 && challengeIds.every((id: string) => completed.has(id));
       const locked = !previousLessonComplete;
       previousLessonComplete = isComplete;
@@ -647,16 +653,25 @@ function databaseError(res: express.Response, error: any): boolean {
 async function lessonLockMessage(prisma: any, jwtUser: JwtPayload, lesson: any): Promise<string | null> {
   if (isManager(jwtUser.role)) return null;
   let previous = await prisma.languageQuestLesson.findFirst({
-    where: { unitId: lesson.unitId, order: { lt: lesson.order } },
+    where: {
+      unitId: lesson.unitId,
+      order: { lt: lesson.order },
+      challenges: { some: {} },
+    },
     orderBy: { order: "desc" },
     include: { challenges: { select: { id: true } } },
   });
   if (!previous) {
     const previousUnit = await prisma.languageQuestUnit.findFirst({
-      where: { courseId: lesson.unit.courseId, order: { lt: lesson.unit.order } },
+      where: {
+        courseId: lesson.unit.courseId,
+        order: { lt: lesson.unit.order },
+        lessons: { some: { challenges: { some: {} } } },
+      },
       orderBy: { order: "desc" },
       include: {
         lessons: {
+          where: { challenges: { some: {} } },
           orderBy: { order: "desc" },
           take: 1,
           include: { challenges: { select: { id: true } } },
@@ -673,6 +688,23 @@ async function lessonLockMessage(prisma: any, jwtUser: JwtPayload, lesson: any):
     return "Complete the previous lesson first";
   }
   return null;
+}
+
+function lessonStudyCards(challenges: any[], language: string) {
+  return challenges.flatMap((challenge: any) => {
+    if (!languageQuestChallengeSupportsStudyCard(challenge.type)) return [];
+    const correct = challenge.options.find((option: any) => option.correct);
+    if (!correct?.text?.trim()) return [];
+    return [{
+      id: challenge.id,
+      prompt: challenge.question,
+      practicePrompt: languageQuestPracticePrompt(challenge.question),
+      text: correct.text,
+      emoji: correct.emoji ?? null,
+      audioText: correct.audioText ?? correct.text,
+      pinyin: languageQuestPinyin(correct.text, language),
+    }];
+  });
 }
 
 export function shuffle<T>(items: T[]): T[] {
@@ -970,7 +1002,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
             include: {
               lessons: {
                 orderBy: { order: "asc" },
-                include: { challenges: { orderBy: { order: "asc" }, select: { id: true } } },
+                include: { challenges: { orderBy: { order: "asc" }, select: { id: true, type: true } } },
               },
             },
           },
@@ -981,26 +1013,30 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         where: { userId: jwtUser.userId, completed: true, challenge: { lesson: { unit: { courseId: course.id } } } },
         select: { challengeId: true },
       });
-      const completed = new Set(completedRows.map((row: any) => row.challengeId));
+      const completed = new Set<string>(completedRows.map((row: any) => row.challengeId));
       let previousLessonComplete = true;
       let completedLessons = 0;
       let nextLessonId: string | null = null;
+      const challenges = course.units.flatMap((unit: any) => unit.lessons.flatMap((lesson: any) => lesson.challenges));
       const units = course.units.map((unit: any) => ({
         id: unit.id,
         title: unit.title,
         description: unit.description,
         lessons: unit.lessons.map((lesson: any) => {
+          const available = lesson.challenges.length > 0;
           const completedChallenges = lesson.challenges.filter((challenge: any) => completed.has(challenge.id)).length;
-          const isComplete = lesson.challenges.length > 0 && completedChallenges === lesson.challenges.length;
-          const locked = !previousLessonComplete;
-          previousLessonComplete = isComplete;
+          const isComplete = available && completedChallenges === lesson.challenges.length;
+          const locked = !available || !previousLessonComplete;
+          // Empty placeholder lessons are not learnable and must not block the
+          // next lesson that actually has challenges.
+          if (available) previousLessonComplete = isComplete;
           if (isComplete) completedLessons += 1;
           // First unlocked, unfinished lesson with content -- the "resume
           // where you left off" target shown at the top of the course page.
           if (!nextLessonId && !locked && !isComplete && lesson.challenges.length > 0) nextLessonId = lesson.id;
           return {
             id: lesson.id, title: lesson.title, description: lesson.description,
-            challengeCount: lesson.challenges.length, completedChallenges, completed: isComplete, locked,
+            challengeCount: lesson.challenges.length, completedChallenges, completed: isComplete, locked, available,
           };
         }),
       }));
@@ -1014,8 +1050,13 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         id: course.id, title: course.title, description: course.description,
         language: course.language, category: course.category,
         imageEmoji: course.imageEmoji, accentColor: course.accentColor, units,
-        completedLessons, totalLessons: units.reduce((sum: number, unit: any) => sum + unit.lessons.length, 0),
+        completedLessons,
+        totalLessons: units.reduce(
+          (sum: number, unit: any) => sum + unit.lessons.filter((lesson: any) => lesson.available).length,
+          0,
+        ),
         nextLessonId,
+        bossBattle: languageQuestBossBattleStatus(challenges, completed),
       });
     } catch (error) {
       logger.error("Error loading Language Quest course:", error);
@@ -1056,8 +1097,11 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         select: { challengeId: true, completed: true, wrongAttempts: true },
       });
       const progressByChallenge = new Map<string, any>(progressRows.map((row: any) => [row.challengeId, row]));
-      const courseCompleted = challenges.every((challenge: any) => progressByChallenge.get(challenge.id)?.completed);
-      if (!courseCompleted) {
+      const completedChallengeIds = new Set<string>(
+        progressRows.filter((row: any) => row.completed).map((row: any) => row.challengeId),
+      );
+      const bossStatus = languageQuestBossBattleStatus(challenges, completedChallengeIds);
+      if (bossStatus.remainingChallenges > 0) {
         res.status(403).json({ error: "Finish every lesson in this course to challenge its Boss Battle." });
         return;
       }
@@ -1071,13 +1115,14 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       // that grade something other than a single chosen option -- REORDER
       // (a submitted sequence), MATCHING (connected tile pairs), and
       // DICTATION (typed text, whose lone option would otherwise render as a
-      // directly clickable answer) -- aren't eligible questions here.
+      // directly clickable answer), and MINIMAL_PAIR_LISTENING (the battle
+      // has no hidden audio prompt) -- aren't eligible questions here.
       // Finishing the course still requires clearing them in the normal
       // lesson flow above; they're just never selected into a battle deck.
       const battleEligibleChallenges = challenges.filter(
         (challenge: any) => !LANGUAGE_QUEST_BOSS_BATTLE_INELIGIBLE_TYPES.has(challenge.type),
       );
-      if (battleEligibleChallenges.length < LANGUAGE_QUEST_BOSS_BATTLE_MIN_QUESTIONS) {
+      if (!bossStatus.available) {
         res.status(409).json({
           error: `This course needs at least ${LANGUAGE_QUEST_BOSS_BATTLE_MIN_QUESTIONS} multiple-choice challenges for a Boss Battle.`,
         });
@@ -1298,7 +1343,11 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         challenges: lesson.challenges.map((challenge: any) => ({
           id: challenge.id,
           type: challenge.type,
-          question: languageQuestPracticePrompt(challenge.question),
+          question: languageQuestAssessmentPrompt(
+            challenge.question,
+            challenge.type,
+            challenge.options.map((option: any) => option.text),
+          ),
           explanation: challenge.explanation,
           completed: completedIds.has(challenge.id),
           options: shuffle(challenge.options).map((option: any) => ({
@@ -1306,18 +1355,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
             pinyin: languageQuestPinyin(option.text, lesson.unit.course.language),
           })),
         })),
-        cards: lesson.challenges.map((challenge: any) => {
-          const correct = challenge.options.find((option: any) => option.correct);
-          return {
-            id: challenge.id,
-            prompt: challenge.question,
-            practicePrompt: languageQuestPracticePrompt(challenge.question),
-            text: correct?.text ?? "",
-            emoji: correct?.emoji ?? null,
-            audioText: correct?.audioText ?? correct?.text ?? null,
-            pinyin: languageQuestPinyin(correct?.text ?? "", lesson.unit.course.language),
-          };
-        }),
+        cards: lessonStudyCards(lesson.challenges, lesson.unit.course.language),
       });
     } catch (error) {
       logger.error("Error loading Language Quest lesson:", error);
@@ -1349,18 +1387,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           language: lesson.unit.course.language,
           accentColor: lesson.unit.course.accentColor,
         },
-        cards: lesson.challenges.map((challenge: any) => {
-          const correct = challenge.options.find((option: any) => option.correct);
-          return {
-            id: challenge.id,
-            prompt: challenge.question,
-            practicePrompt: languageQuestPracticePrompt(challenge.question),
-            text: correct?.text ?? "",
-            emoji: correct?.emoji ?? null,
-            audioText: correct?.audioText ?? correct?.text ?? null,
-            pinyin: languageQuestPinyin(correct?.text ?? "", lesson.unit.course.language),
-          };
-        }),
+        cards: lessonStudyCards(lesson.challenges, lesson.unit.course.language),
       });
     } catch (error) {
       logger.error("Error loading Language Quest lesson preview:", error);
@@ -1809,7 +1836,11 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           accuracyPercent: Math.round(languageQuestMasteryAccuracy(row.correctReviews, row.wrongReviews, row.recentAccuracy) * 100),
           skillLabel: `${row.challenge.lesson.unit.course.category} · ${skillLabels[row.challenge.type] ?? "Practice"}`,
           type: row.challenge.type,
-          question: languageQuestPracticePrompt(row.challenge.question),
+          question: languageQuestAssessmentPrompt(
+            row.challenge.question,
+            row.challenge.type,
+            row.challenge.options.map((option: any) => option.text),
+          ),
           course: {
             id: row.challenge.lesson.unit.course.id,
             title: row.challenge.lesson.unit.course.title,

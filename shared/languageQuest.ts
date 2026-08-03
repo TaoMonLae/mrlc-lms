@@ -10,7 +10,15 @@ export const LANGUAGE_QUEST_BOSS_BATTLE_PASS_RATIO = 0.7;
 export const LANGUAGE_QUEST_BOSS_BATTLE_MIN_QUESTIONS = 4;
 export const LANGUAGE_QUEST_BOSS_BATTLE_MAX_QUESTIONS = 8;
 export const LANGUAGE_QUEST_BOSS_BATTLE_ATTEMPT_MINUTES = 20;
-export const LANGUAGE_QUEST_BOSS_BATTLE_INELIGIBLE_TYPES = new Set(["REORDER", "MATCHING", "DICTATION"]);
+export const LANGUAGE_QUEST_BOSS_BATTLE_INELIGIBLE_TYPES = new Set([
+  "REORDER",
+  "MATCHING",
+  "DICTATION",
+  // The current battle renderer has no audio playback or hidden listening
+  // prompt. Showing these as ordinary visible choices turns a listening test
+  // into a text-recognition question, so keep them in lessons/mastery only.
+  "MINIMAL_PAIR_LISTENING",
+]);
 export const LANGUAGE_QUEST_TIME_ZONE = "Asia/Kuala_Lumpur";
 
 export function languageQuestDayKey(
@@ -85,6 +93,80 @@ export function languageQuestPracticePrompt(value: string): string {
     .replace(/\s+/g, " ")
     .trim();
   return prompt || "Choose the best answer.";
+}
+
+/**
+ * REORDER questions sometimes include the canonical sentence in quotes as
+ * authoring context (for example, "Put the characters of ‘再见’ in order").
+ * That is useful on a study card but gives the quiz answer away. Redact the
+ * ordered option text anywhere an assessment prompt is returned.
+ */
+export function languageQuestAssessmentPrompt(
+  value: string,
+  type?: string,
+  orderedOptionTexts: readonly string[] = [],
+): string {
+  let prompt = languageQuestPracticePrompt(value);
+  if (type !== "REORDER" || orderedOptionTexts.length === 0) return prompt;
+
+  const spacedAnswer = orderedOptionTexts.join(" ").replace(/\s+/g, " ").trim();
+  const compactAnswer = orderedOptionTexts.join("").trim();
+  const answers = [...new Set([spacedAnswer, compactAnswer])]
+    .filter((answer) => answer.length > 1)
+    .sort((left, right) => right.length - left.length);
+  for (const answer of answers) {
+    prompt = prompt.split(answer).join("_____");
+  }
+  return prompt || "Put the tiles in the correct order.";
+}
+
+/**
+ * Structural review challenges do not have one vocabulary answer to study.
+ * REORDER and MATCHING mark every tile correct, while ODD_ONE_OUT's correct
+ * option is deliberately the unrelated distractor. Feeding any of those into
+ * Learn/Pick/Spell creates misleading cards, so they go straight to their
+ * purpose-built quiz interaction instead.
+ */
+const LANGUAGE_QUEST_STUDY_CARD_TYPES = new Set([
+  "SELECT",
+  "ASSIST",
+  "CLOZE",
+  "MINIMAL_PAIR_LISTENING",
+  "DICTATION",
+  "GRAMMAR_TRANSFORM",
+]);
+
+export function languageQuestChallengeSupportsStudyCard(type: string): boolean {
+  return LANGUAGE_QUEST_STUDY_CARD_TYPES.has(type);
+}
+
+export interface LanguageQuestBossBattleStatus {
+  available: boolean;
+  unlocked: boolean;
+  eligibleQuestionCount: number;
+  minQuestions: number;
+  remainingChallenges: number;
+}
+
+/** Builds the course-page Boss Battle state from the same rules as the API. */
+export function languageQuestBossBattleStatus(
+  challenges: readonly { id: string; type: string }[],
+  completedChallengeIds: ReadonlySet<string>,
+): LanguageQuestBossBattleStatus {
+  const eligibleQuestionCount = challenges.filter(
+    (challenge) => !LANGUAGE_QUEST_BOSS_BATTLE_INELIGIBLE_TYPES.has(challenge.type),
+  ).length;
+  const remainingChallenges = challenges.filter(
+    (challenge) => !completedChallengeIds.has(challenge.id),
+  ).length;
+  const available = eligibleQuestionCount >= LANGUAGE_QUEST_BOSS_BATTLE_MIN_QUESTIONS;
+  return {
+    available,
+    unlocked: available && challenges.length > 0 && remainingChallenges === 0,
+    eligibleQuestionCount,
+    minQuestions: LANGUAGE_QUEST_BOSS_BATTLE_MIN_QUESTIONS,
+    remainingChallenges,
+  };
 }
 
 /**

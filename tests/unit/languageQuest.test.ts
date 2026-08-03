@@ -6,6 +6,9 @@ import {
   bossBattleSubmissionMatchesDeck,
   isValidMatchingSubmission,
   isValidReorderSubmission,
+  languageQuestAssessmentPrompt,
+  languageQuestBossBattleStatus,
+  languageQuestChallengeSupportsStudyCard,
   languageQuestPracticePrompt,
   languageQuestLookupWord,
   matchingChallengeIsCorrect,
@@ -275,6 +278,30 @@ test("practice prompts hide pronunciation and example clues without losing the q
     'Choose the Mandarin for “Hello”.',
   );
   assert.equal(languageQuestPracticePrompt('Which one means “the man”?'), 'Which one means “the man”?');
+});
+
+test("assessment prompts hide answers embedded in reorder instructions", () => {
+  assert.equal(
+    languageQuestAssessmentPrompt(
+      'Put the characters of “再见！” back in the correct order.',
+      'REORDER',
+      ['再', '见', '！'],
+    ),
+    'Put the characters of “_____” back in the correct order.',
+  );
+  assert.equal(
+    languageQuestAssessmentPrompt('Choose the Mandarin for “Hello”.', 'SELECT', ['你好', '再见']),
+    'Choose the Mandarin for “Hello”.',
+  );
+});
+
+test("structural review challenges do not become misleading study cards", () => {
+  assert.equal(languageQuestChallengeSupportsStudyCard('SELECT'), true);
+  assert.equal(languageQuestChallengeSupportsStudyCard('DICTATION'), true);
+  assert.equal(languageQuestChallengeSupportsStudyCard('REORDER'), false);
+  assert.equal(languageQuestChallengeSupportsStudyCard('MATCHING'), false);
+  assert.equal(languageQuestChallengeSupportsStudyCard('ODD_ONE_OUT'), false);
+  assert.equal(languageQuestChallengeSupportsStudyCard('FUTURE_STRUCTURAL_TYPE'), false);
 });
 
 test("Language Quest dictionary extracts a useful highlighted term", () => {
@@ -653,6 +680,45 @@ test("nextIncompleteLessonId finds the first unlocked, unfinished lesson", () =>
 
   // Every challenge across every unit is done: nothing left to resume.
   assert.equal(nextIncompleteLessonId(units, new Set(["c1", "c2", "c3", "c4", "c5"])), null);
+});
+
+test("empty placeholder lessons do not block the next real lesson", () => {
+  const units = [{
+    lessons: [
+      { id: "placeholder", challenges: [] },
+      { id: "lesson-1", challenges: [{ id: "c1" }] },
+      { id: "another-placeholder", challenges: [] },
+      { id: "lesson-2", challenges: [{ id: "c2" }] },
+    ],
+  }];
+  assert.equal(nextIncompleteLessonId(units, new Set()), "lesson-1");
+  assert.equal(nextIncompleteLessonId(units, new Set(["c1"])), "lesson-2");
+});
+
+test("Boss Battle status matches compatible question and completion rules", () => {
+  const challenges = [
+    { id: "c1", type: "SELECT" },
+    { id: "c2", type: "ASSIST" },
+    { id: "c3", type: "CLOZE" },
+    { id: "c4", type: "GRAMMAR_TRANSFORM" },
+    { id: "listen", type: "MINIMAL_PAIR_LISTENING" },
+    { id: "order", type: "REORDER" },
+  ];
+  assert.deepEqual(languageQuestBossBattleStatus(challenges, new Set(["c1", "c2"])), {
+    available: true,
+    unlocked: false,
+    eligibleQuestionCount: 4,
+    minQuestions: 4,
+    remainingChallenges: 4,
+  });
+  assert.equal(
+    languageQuestBossBattleStatus(challenges, new Set(challenges.map((challenge) => challenge.id))).unlocked,
+    true,
+  );
+  assert.equal(
+    languageQuestBossBattleStatus(challenges.slice(0, 3), new Set(["c1", "c2", "c3"])).available,
+    false,
+  );
 });
 
 test("bossBattleResult grades a battle against the server-side answer key", () => {

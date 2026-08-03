@@ -7,7 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ApiError, apiGet, apiSend } from '@/src/lib/api';
 import type { LanguageQuestChallenge, LanguageQuestLessonPayload, LanguageQuestLessonPreview, LanguageQuestProfile } from '@/src/types/languageQuest';
-import { normalizeSentenceAnswer, requeueMissedLanguageQuestChallenge } from '@/shared/languageQuest';
+import {
+  languageQuestChallengeSupportsStudyCard,
+  normalizeSentenceAnswer,
+  requeueMissedLanguageQuestChallenge,
+} from '@/shared/languageQuest';
 import { containsHanCharacters, isChineseLanguage } from '@/shared/languageQuestLanguage';
 import {
   buildLanguageQuestVocabularyQuestions,
@@ -235,7 +239,9 @@ export default function LanguageQuestLesson() {
   const vocabularyQuestions = useMemo(
     () => buildLanguageQuestVocabularyQuestions(
       practiceCards,
-      lesson?.challenges.flatMap((candidate) => candidate.options) ?? [],
+      lesson?.challenges
+        .filter((candidate) => languageQuestChallengeSupportsStudyCard(candidate.type))
+        .flatMap((candidate) => candidate.options) ?? [],
     ),
     [lesson, practiceCards],
   );
@@ -1149,7 +1155,7 @@ export default function LanguageQuestLesson() {
           </div>
           <div className="rounded-2xl border-2 border-sky-200 bg-sky-50 p-3 sm:p-4 dark:border-sky-500/20 dark:bg-sky-500/10">
             <BookA className="mx-auto h-6 w-6 text-sky-600" />
-            <p className="mt-2 text-xl font-black text-sky-700 sm:text-2xl dark:text-sky-400">{cards.length}</p>
+            <p className="mt-2 text-xl font-black text-sky-700 sm:text-2xl dark:text-sky-400">{practiceCards.length}</p>
             <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-600/70 sm:text-xs">Words learned</p>
           </div>
           <div className="rounded-2xl border-2 border-orange-200 bg-orange-50 p-3 sm:p-4 dark:border-orange-500/20 dark:bg-orange-500/10">
