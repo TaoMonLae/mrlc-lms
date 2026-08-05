@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { ArrowLeft, Award, BookMarked, BookOpenText, Check, ChevronRight, Dices, FileCheck2, Globe2, Headphones, Keyboard, Lightbulb, ListChecks, Lock, Map, Play, RotateCcw, Skull, SpellCheck2, Trophy } from 'lucide-react';
+import { ArrowLeft, Award, BookMarked, BookOpenText, Calculator, Check, ChevronRight, Dices, FileCheck2, Globe2, Headphones, Keyboard, Lightbulb, ListChecks, Lock, Map, Play, RotateCcw, Skull, SpellCheck2, Trophy } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -9,6 +9,7 @@ import { apiGet } from '@/src/lib/api';
 import { useLanguageQuestSupport } from '@/src/components/games/LanguageQuestSupport';
 import { languageQuestCategoryForLanguage } from '@/shared/languageQuestCourseCategories';
 import { languageQuestStoriesForCategory } from '@/shared/languageQuestStory';
+import { languageQuestCourseUsesStudyCards } from '@/shared/languageQuest';
 
 interface CoursePayload {
   id: string;
@@ -136,7 +137,8 @@ export default function LanguageQuestCourse() {
   const nextLesson = course.nextLessonId
     ? course.units.flatMap((unit) => unit.lessons).find((lesson) => lesson.id === course.nextLessonId)
     : null;
-  const courseStories = languageQuestStoriesForCategory(course.category?.trim() || languageQuestCategoryForLanguage(course.language));
+  const isMathematics = !languageQuestCourseUsesStudyCards(course.language);
+  const courseStories = isMathematics ? [] : languageQuestStoriesForCategory(course.category?.trim() || languageQuestCategoryForLanguage(course.language));
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 pb-12">
@@ -146,7 +148,9 @@ export default function LanguageQuestCourse() {
 
       <section className="overflow-hidden rounded-3xl text-white shadow-xl" style={{ background: `linear-gradient(135deg, ${course.accentColor}, ${course.accentColor}cc)` }}>
         <div className="flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:p-8">
-          <div className="grid h-20 w-20 shrink-0 place-items-center rounded-3xl bg-white/15 text-5xl ring-1 ring-white/20">{course.imageEmoji}</div>
+          <div className="grid h-20 w-20 shrink-0 place-items-center rounded-3xl bg-white/15 text-5xl ring-1 ring-white/20">
+            {course.imageEmoji || <Calculator className="h-10 w-10" aria-hidden="true" />}
+          </div>
           <div className="flex-1">
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/70">{course.language}</p>
             <h1 className="mt-1 text-3xl font-black tracking-tight">{course.title}</h1>
@@ -159,7 +163,7 @@ export default function LanguageQuestCourse() {
         </div>
       </section>
 
-      <section className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-sky-200 bg-sky-50 p-5 dark:border-sky-500/20 dark:bg-sky-500/10 sm:flex-row sm:items-center">
+      {!isMathematics && <section className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-sky-200 bg-sky-50 p-5 dark:border-sky-500/20 dark:bg-sky-500/10 sm:flex-row sm:items-center">
         <div className="flex items-start gap-3">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sky-600 text-white"><BookMarked className="h-5 w-5" /></span>
           <div>
@@ -170,7 +174,7 @@ export default function LanguageQuestCourse() {
         <Button variant="outline" className="shrink-0 bg-white dark:bg-slate-900" render={<Link to={`/games/language-quest/words?courseId=${course.id}`} />} nativeButton={false}>
           <BookOpenText className="mr-2 h-4 w-4" /> Review learned words
         </Button>
-      </section>
+      </section>}
 
       {nextLesson && (
         <section className="flex flex-col items-start justify-between gap-4 rounded-2xl border-2 p-5 sm:flex-row sm:items-center" style={{ borderColor: `${course.accentColor}55`, backgroundColor: `${course.accentColor}0f` }}>
@@ -204,7 +208,7 @@ export default function LanguageQuestCourse() {
                   : !course.finalExam.available
                     ? `This course needs at least ${course.finalExam.minQuestions} compatible scored questions before a certificate exam can be generated. It currently has ${course.finalExam.eligibleQuestionCount}.`
                     : course.finalExam.unlocked
-                      ? `${course.finalExam.questionCount} randomized choice and spelling questions • ${course.finalExam.passPercent}% required • ${course.finalExam.attemptMinutes}-minute limit. Leaving the screen terminates the attempt.`
+                      ? `${course.finalExam.questionCount} randomized ${isMathematics ? 'maths questions' : 'choice and spelling questions'} • ${course.finalExam.passPercent}% required • ${course.finalExam.attemptMinutes}-minute limit. Leaving the screen terminates the attempt.`
                       : 'Finish every course practice to unlock the final exam. Course completion alone does not unlock a certificate.'}
               </p>
             </div>
@@ -257,17 +261,30 @@ export default function LanguageQuestCourse() {
       <section className="rounded-2xl border border-violet-100 bg-violet-50/70 p-5 dark:border-violet-500/20 dark:bg-violet-500/10">
         <div className="flex items-start gap-3">
           <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300"><Lightbulb className="h-5 w-5" /></span>
-          <div>
-            <h2 lang={explanationLanguage} className="font-black text-slate-900 dark:text-white">{lq('lessonGuideTitle')}</h2>
-            <p lang={explanationLanguage} className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">{lq('lessonGuideBody')}</p>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-              <div className="flex gap-2 rounded-xl bg-white/80 p-3 dark:bg-surface-indigo/60"><Headphones className="mt-0.5 h-4 w-4 shrink-0 text-sky-600" /><p lang={explanationLanguage} className="text-xs leading-5 text-slate-600 dark:text-slate-200"><strong className="block text-slate-800 dark:text-white">{lq('learnTitle')}</strong>{lq('learnBody')}</p></div>
-              <div className="flex gap-2 rounded-xl bg-white/80 p-3 dark:bg-surface-indigo/60"><ListChecks className="mt-0.5 h-4 w-4 shrink-0 text-violet-600" /><p lang={explanationLanguage} className="text-xs leading-5 text-slate-600 dark:text-slate-200"><strong className="block text-slate-800 dark:text-white">{lq('vocabularyTitle')}</strong>{lq('vocabularyBody')}</p></div>
-              <div className="flex gap-2 rounded-xl bg-white/80 p-3 dark:bg-surface-indigo/60"><SpellCheck2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" /><p lang={explanationLanguage} className="text-xs leading-5 text-slate-600 dark:text-slate-200"><strong className="block text-slate-800 dark:text-white">{lq('spellTitle')}</strong>{lq('spellBody')}</p></div>
-              <div className="flex gap-2 rounded-xl bg-white/80 p-3 dark:bg-surface-indigo/60"><Keyboard className="mt-0.5 h-4 w-4 shrink-0 text-fuchsia-600" /><p lang={explanationLanguage} className="text-xs leading-5 text-slate-600 dark:text-slate-200"><strong className="block text-slate-800 dark:text-white">{lq('buildTitle')}</strong>{lq('buildBody')}</p></div>
-              <div className="flex gap-2 rounded-xl bg-white/80 p-3 dark:bg-surface-indigo/60"><Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" /><p lang={explanationLanguage} className="text-xs leading-5 text-slate-600 dark:text-slate-200"><strong className="block text-slate-800 dark:text-white">{lq('checkTitle')}</strong>{lq('checkBody')}</p></div>
+          {isMathematics ? (
+            <div>
+              <h2 className="font-black text-slate-900 dark:text-white">How maths practice works</h2>
+              <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">Each lesson opens directly on six guided problems. Work out each answer first, then use the explanation to correct mistakes and strengthen the method.</p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="flex gap-2 rounded-xl bg-white/80 p-3 dark:bg-surface-indigo/60"><BookOpenText className="mt-0.5 h-4 w-4 shrink-0 text-sky-600" /><p className="text-xs leading-5 text-slate-600 dark:text-slate-200"><strong className="block text-slate-800 dark:text-white">Understand</strong>Read the problem and identify what it asks.</p></div>
+                <div className="flex gap-2 rounded-xl bg-white/80 p-3 dark:bg-surface-indigo/60"><Calculator className="mt-0.5 h-4 w-4 shrink-0 text-violet-600" /><p className="text-xs leading-5 text-slate-600 dark:text-slate-200"><strong className="block text-slate-800 dark:text-white">Solve</strong>Work it out before selecting or arranging.</p></div>
+                <div className="flex gap-2 rounded-xl bg-white/80 p-3 dark:bg-surface-indigo/60"><Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" /><p className="text-xs leading-5 text-slate-600 dark:text-slate-200"><strong className="block text-slate-800 dark:text-white">Check</strong>Use instant feedback and the worked explanation.</p></div>
+                <div className="flex gap-2 rounded-xl bg-white/80 p-3 dark:bg-surface-indigo/60"><RotateCcw className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" /><p className="text-xs leading-5 text-slate-600 dark:text-slate-200"><strong className="block text-slate-800 dark:text-white">Retry</strong>Missed problems return before the lesson ends.</p></div>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div>
+              <h2 lang={explanationLanguage} className="font-black text-slate-900 dark:text-white">{lq('lessonGuideTitle')}</h2>
+              <p lang={explanationLanguage} className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">{lq('lessonGuideBody')}</p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                <div className="flex gap-2 rounded-xl bg-white/80 p-3 dark:bg-surface-indigo/60"><Headphones className="mt-0.5 h-4 w-4 shrink-0 text-sky-600" /><p lang={explanationLanguage} className="text-xs leading-5 text-slate-600 dark:text-slate-200"><strong className="block text-slate-800 dark:text-white">{lq('learnTitle')}</strong>{lq('learnBody')}</p></div>
+                <div className="flex gap-2 rounded-xl bg-white/80 p-3 dark:bg-surface-indigo/60"><ListChecks className="mt-0.5 h-4 w-4 shrink-0 text-violet-600" /><p lang={explanationLanguage} className="text-xs leading-5 text-slate-600 dark:text-slate-200"><strong className="block text-slate-800 dark:text-white">{lq('vocabularyTitle')}</strong>{lq('vocabularyBody')}</p></div>
+                <div className="flex gap-2 rounded-xl bg-white/80 p-3 dark:bg-surface-indigo/60"><SpellCheck2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" /><p lang={explanationLanguage} className="text-xs leading-5 text-slate-600 dark:text-slate-200"><strong className="block text-slate-800 dark:text-white">{lq('spellTitle')}</strong>{lq('spellBody')}</p></div>
+                <div className="flex gap-2 rounded-xl bg-white/80 p-3 dark:bg-surface-indigo/60"><Keyboard className="mt-0.5 h-4 w-4 shrink-0 text-fuchsia-600" /><p lang={explanationLanguage} className="text-xs leading-5 text-slate-600 dark:text-slate-200"><strong className="block text-slate-800 dark:text-white">{lq('buildTitle')}</strong>{lq('buildBody')}</p></div>
+                <div className="flex gap-2 rounded-xl bg-white/80 p-3 dark:bg-surface-indigo/60"><Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" /><p lang={explanationLanguage} className="text-xs leading-5 text-slate-600 dark:text-slate-200"><strong className="block text-slate-800 dark:text-white">{lq('checkTitle')}</strong>{lq('checkBody')}</p></div>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
@@ -323,25 +340,33 @@ export default function LanguageQuestCourse() {
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center dark:border-amber-500/20 dark:bg-amber-500/10">
           <Trophy className="mx-auto h-10 w-10 text-amber-500" />
           <h2 className="mt-2 text-xl font-black text-slate-900 dark:text-white">Course complete!</h2>
-          <p lang={explanationLanguage} className="mt-1 text-sm text-slate-500 dark:text-slate-300">{lq('completeHelp')}</p>
-          <div className="mt-4 flex flex-col justify-center gap-2 sm:flex-row">
-            <Button variant="outline" render={<Link to={`/games/language-quest/courses/${course.id}/culture`} />} nativeButton={false}>
-              <Globe2 className="mr-2 h-4 w-4" /> Culture Quest
+          <p lang={isMathematics ? undefined : explanationLanguage} className="mt-1 text-sm text-slate-500 dark:text-slate-300">{isMathematics ? 'All practices are complete. Pass the monitored final exam to unlock your certificate.' : lq('completeHelp')}</p>
+          {isMathematics ? (
+            <Button className="mt-4 bg-violet-700 hover:bg-violet-800" render={<Link to={`/games/language-quest/courses/${course.id}/final-exam`} />} nativeButton={false}>
+              <FileCheck2 className="mr-2 h-4 w-4" /> Take final exam
             </Button>
-            {courseStories.length > 0 && (
-              <Button variant="outline" render={<Link to={`/games/language-quest/courses/${course.id}/story/${courseStories[0].id}`} />} nativeButton={false}>
-                <BookOpenText className="mr-2 h-4 w-4" /> Story Mode
+          ) : (
+            <>
+              <div className="mt-4 flex flex-col justify-center gap-2 sm:flex-row">
+                <Button variant="outline" render={<Link to={`/games/language-quest/courses/${course.id}/culture`} />} nativeButton={false}>
+                  <Globe2 className="mr-2 h-4 w-4" /> Culture Quest
+                </Button>
+                {courseStories.length > 0 && (
+                  <Button variant="outline" render={<Link to={`/games/language-quest/courses/${course.id}/story/${courseStories[0].id}`} />} nativeButton={false}>
+                    <BookOpenText className="mr-2 h-4 w-4" /> Story Mode
+                  </Button>
+                )}
+              </div>
+              <Button
+                variant="outline"
+                className="mt-2 border-sky-300 text-sky-700 hover:bg-sky-50 dark:border-sky-500/40 dark:text-sky-300"
+                render={<Link to={`/games/word-trail?courseId=${course.id}`} />}
+                nativeButton={false}
+              >
+                <Dices className="mr-2 h-4 w-4" /> Practice this course in Word Trail
               </Button>
-            )}
-          </div>
-          <Button
-            variant="outline"
-            className="mt-2 border-sky-300 text-sky-700 hover:bg-sky-50 dark:border-sky-500/40 dark:text-sky-300"
-            render={<Link to={`/games/word-trail?courseId=${course.id}`} />}
-            nativeButton={false}
-          >
-            <Dices className="mr-2 h-4 w-4" /> Practice this course in Word Trail
-          </Button>
+            </>
+          )}
         </div>
       )}
     </div>

@@ -9,6 +9,7 @@ import {
   languageQuestAssessmentPrompt,
   languageQuestBossBattleStatus,
   languageQuestChallengeSupportsStudyCard,
+  languageQuestCourseUsesStudyCards,
   languageQuestPracticePrompt,
   languageQuestLookupWord,
   matchingChallengeIsCorrect,
@@ -36,6 +37,7 @@ import { malayCefrCourses } from "../../languageQuestMalayCourses";
 import { malaySpeakingCourse } from "../../languageQuestMalayCourse";
 import { malayGuideModernCourse } from "../../languageQuestMalayGuideCourse";
 import { teachYourselfMalayCourse } from "../../languageQuestTeachYourselfMalayCourse";
+import { k12MathCourses } from "../../languageQuestK12MathCourses";
 import {
   languageQuestCategoryForLanguage,
   orderedLanguageQuestCategories,
@@ -329,6 +331,9 @@ test("structural review challenges do not become misleading study cards", () => 
   assert.equal(languageQuestChallengeSupportsStudyCard('MATCHING'), false);
   assert.equal(languageQuestChallengeSupportsStudyCard('ODD_ONE_OUT'), false);
   assert.equal(languageQuestChallengeSupportsStudyCard('FUTURE_STRUCTURAL_TYPE'), false);
+  assert.equal(languageQuestCourseUsesStudyCards('English'), true);
+  assert.equal(languageQuestCourseUsesStudyCards('Mandarin Chinese'), true);
+  assert.equal(languageQuestCourseUsesStudyCards('Mathematics'), false);
 });
 
 test("Language Quest dictionary extracts a useful highlighted term", () => {
@@ -551,6 +556,7 @@ test("Language Quest groups language courses into a predictable category order",
   assert.equal(languageQuestCategoryForLanguage("Mandarin Chinese"), "Chinese Courses");
   assert.equal(languageQuestCategoryForLanguage("English"), "English Courses");
   assert.equal(languageQuestCategoryForLanguage("Spanish"), "Spanish Courses");
+  assert.equal(languageQuestCategoryForLanguage("Mathematics"), "Mathematics Courses");
   assert.equal(languageQuestCategoryForLanguage("Mon"), "Other Courses");
 
   const groups = orderedLanguageQuestCategories([
@@ -559,6 +565,7 @@ test("Language Quest groups language courses into a predictable category order",
     { category: "English Courses", title: "English" },
     { category: "Chinese Courses", title: "Chinese" },
     { category: "Chinese Courses", title: "Mandarin" },
+    { category: "Mathematics Courses", title: "Grade 1 Mathematics" },
     { language: "Mandarin Chinese", title: "Legacy Chinese" },
   ]);
 
@@ -568,6 +575,7 @@ test("Language Quest groups language courses into a predictable category order",
       ["Chinese Courses", 3],
       ["English Courses", 1],
       ["Spanish Courses", 1],
+      ["Mathematics Courses", 1],
       ["Other Courses", 1],
     ],
   );
@@ -1283,6 +1291,7 @@ test("every built-in course produces clue-safe assessment prompts", () => {
     malaySpeakingCourse,
     malayGuideModernCourse,
     teachYourselfMalayCourse,
+    ...k12MathCourses,
   ];
   const challenges = courses
     .flatMap((course) => course.units)

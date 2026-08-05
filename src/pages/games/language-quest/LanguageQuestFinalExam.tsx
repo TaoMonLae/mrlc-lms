@@ -10,6 +10,7 @@ import type { LanguageQuestOption } from '@/src/types/languageQuest';
 import { LanguageQuestPinyinText } from '@/src/components/games/LanguageQuestPinyinText';
 import { useLanguageQuestPreferences } from '@/src/components/games/LanguageQuestPreferences';
 import { playLanguageQuestProtectedVoice, speakLanguageQuestVoice } from '@/src/lib/languageQuestVoice';
+import { languageQuestCourseUsesStudyCards } from '@/shared/languageQuest';
 
 interface FinalExamStatus {
   available: boolean;
@@ -297,6 +298,8 @@ export default function LanguageQuestFinalExam() {
     );
   }
 
+  const isMathematics = !languageQuestCourseUsesStudyCards(course.language);
+
   if (payload && !result && !terminatedReason) {
     const card = payload.cards[index];
     const isSpelling = card.type === 'DICTATION';
@@ -421,7 +424,7 @@ export default function LanguageQuestFinalExam() {
           <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-slate-600 dark:text-slate-300">
             {result.passed
               ? 'Your monitored pass is saved. The new final-exam-verified certificate is now available in Achievements.'
-              : 'Review the course and your learned words. Correct answers stay hidden to protect future attempts; a 15-minute review break applies.'}
+              : `${isMathematics ? 'Review the course topics and worked explanations.' : 'Review the course and your learned words.'} Correct answers stay hidden to protect future attempts; a 15-minute review break applies.`}
           </p>
           <div className="mt-7 flex flex-col justify-center gap-2 sm:flex-row">
             <Button variant="outline" render={<Link to={`/games/language-quest/courses/${course.id}`} />} nativeButton={false}>Review course</Button>
@@ -474,7 +477,7 @@ export default function LanguageQuestFinalExam() {
             </div>
           )}
           <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-900"><p className="text-2xl font-black text-slate-950 dark:text-white">{course.finalExam.questionCount}</p><p className="text-xs font-bold text-slate-500">choice + spelling questions</p></div>
+            <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-900"><p className="text-2xl font-black text-slate-950 dark:text-white">{course.finalExam.questionCount}</p><p className="text-xs font-bold text-slate-500">{isMathematics ? 'randomized maths questions' : 'choice + spelling questions'}</p></div>
             <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-900"><p className="text-2xl font-black text-slate-950 dark:text-white">{course.finalExam.passPercent}%</p><p className="text-xs font-bold text-slate-500">required to pass</p></div>
             <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-900"><p className="text-2xl font-black text-slate-950 dark:text-white">{course.finalExam.attemptMinutes} min</p><p className="text-xs font-bold text-slate-500">hard time limit</p></div>
           </div>
@@ -485,7 +488,7 @@ export default function LanguageQuestFinalExam() {
               <li>• Do not switch tabs, swap apps/screens, swipe away, close, reload, or leave full screen.</li>
               <li>• Hiding or leaving the exam terminates the attempt and records the integrity reason.</li>
               <li>• Answers lock as you continue. Correct answers are not revealed after a failed attempt.</li>
-              <li>• Courses with dictation include listen-and-type spelling questions.</li>
+              {!isMathematics && <li>• Courses with dictation include listen-and-type spelling questions.</li>}
               <li>• Failed or terminated attempts require a 15-minute review break.</li>
             </ul>
           </div>

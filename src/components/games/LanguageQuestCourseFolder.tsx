@@ -44,6 +44,12 @@ const categoryTones = {
     glow: 'from-sky-500/18 to-cyan-400/5',
     art: '/icons/LanguageQuests_Graphics/Contry Flags/034-malaysia.svg',
   },
+  mathematics: {
+    icon: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300',
+    line: 'from-blue-600 to-indigo-500',
+    glow: 'from-blue-500/18 to-indigo-500/5',
+    art: '/icons/LanguageQuests_Graphics/Owl School 5.svg',
+  },
   other: {
     icon: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',
     line: 'from-emerald-500 to-teal-400',
@@ -58,6 +64,7 @@ function folderTone(category: string) {
   if (normalized.includes('english')) return categoryTones.english;
   if (normalized.includes('spanish')) return categoryTones.spanish;
   if (normalized.includes('malay') || normalized.includes('bahasa')) return categoryTones.malay;
+  if (normalized.includes('math')) return categoryTones.mathematics;
   return categoryTones.other;
 }
 

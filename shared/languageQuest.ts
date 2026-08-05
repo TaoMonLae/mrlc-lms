@@ -140,6 +140,16 @@ export function languageQuestChallengeSupportsStudyCard(type: string): boolean {
   return LANGUAGE_QUEST_STUDY_CARD_TYPES.has(type);
 }
 
+/**
+ * Language courses use Listen/Pick/Spell study cards before scored practice.
+ * Mathematics courses should instead open directly on the problem-solving
+ * interaction; turning a numeric answer into a vocabulary or spelling card is
+ * both misleading and needlessly repetitive.
+ */
+export function languageQuestCourseUsesStudyCards(language: string): boolean {
+  return !language.trim().toLocaleLowerCase().includes("math");
+}
+
 export interface LanguageQuestBossBattleStatus {
   available: boolean;
   unlocked: boolean;

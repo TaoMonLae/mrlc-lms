@@ -119,15 +119,15 @@ export default function LanguageQuestPublic() {
           <div className="relative mx-auto grid max-w-7xl items-center gap-14 lg:grid-cols-[1.03fr_.97fr]">
             <div className="relative z-10 text-center lg:text-left">
               <Badge className="border-violet-200 bg-white/80 px-3 py-1.5 text-violet-700 shadow-sm hover:bg-white/80 dark:border-violet-500/30 dark:bg-slate-900/80 dark:text-violet-300 dark:hover:bg-slate-900/80">
-                <Sparkles className="h-3.5 w-3.5" /> Practical language for real life
+                <Sparkles className="h-3.5 w-3.5" /> Guided learning for real life
               </Badge>
               <h1 className="mx-auto mt-6 max-w-3xl text-[clamp(2.65rem,7.2vw,5rem)] font-black leading-[0.98] tracking-[-0.055em] lg:mx-0">
-                Learn the words.
-                <span className="block bg-gradient-to-r from-violet-700 via-fuchsia-600 to-rose-500 bg-clip-text text-transparent">Build the sentence.</span>
-                <span className="block">Speak with confidence.</span>
+                Learn the idea.
+                <span className="block bg-gradient-to-r from-violet-700 via-fuchsia-600 to-rose-500 bg-clip-text text-transparent">Build the skill.</span>
+                <span className="block">Grow with confidence.</span>
               </h1>
               <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-300 sm:text-lg sm:leading-8 lg:mx-0">
-                Short guided lessons combine listening, spelling, sentence writing, and friendly clue-safe quizzes. Learn at your own pace and keep every achievement in one free account.
+                Short guided courses combine languages, K–12 mathematics, worked feedback, and friendly scored practice. Learn at your own pace and keep every achievement in one free account.
               </p>
               <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
                 <Button size="lg" className="h-13 rounded-xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-7 font-black text-white shadow-xl shadow-violet-600/25 transition hover:-translate-y-0.5 hover:from-violet-800 hover:to-fuchsia-700" render={<Link to={startHref} />} nativeButton={false}>
@@ -143,6 +143,7 @@ export default function LanguageQuestPublic() {
               <div className="mt-7 flex flex-wrap justify-center gap-2 text-xs font-bold lg:justify-start">
                 <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-sky-700 dark:border-sky-500/30 dark:bg-sky-950/60 dark:text-sky-300">🎧 Listen</span>
                 <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/60 dark:text-amber-300">🔤 Spell</span>
+                <span className="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-indigo-700 dark:border-indigo-500/30 dark:bg-indigo-950/60 dark:text-indigo-300">🧮 Solve</span>
                 <span className="rounded-full border border-fuchsia-200 bg-fuchsia-50 px-3 py-1.5 text-fuchsia-700 dark:border-fuchsia-500/30 dark:bg-fuchsia-950/60 dark:text-fuchsia-300">✍️ Write</span>
                 <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/60 dark:text-emerald-300">💬 Speak</span>
               </div>

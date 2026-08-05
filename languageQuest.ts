@@ -18,6 +18,7 @@ import {
   languageQuestAssessmentPrompt,
   languageQuestBossBattleStatus,
   languageQuestChallengeSupportsStudyCard,
+  languageQuestCourseUsesStudyCards,
   languageQuestDayKey,
   languageQuestPracticePrompt,
   matchingChallengeIsCorrect,
@@ -108,6 +109,7 @@ import { malayCefrCourses } from "./languageQuestMalayCourses";
 import { malaySpeakingCourse } from "./languageQuestMalayCourse";
 import { malayGuideModernCourse } from "./languageQuestMalayGuideCourse";
 import { teachYourselfMalayCourse } from "./languageQuestTeachYourselfMalayCourse";
+import { k12MathCourses } from "./languageQuestK12MathCourses";
 import { languageQuestVoiceServiceFromEnv } from "./languageQuestVoice";
 import {
   kokoroSupportsLanguage,
@@ -533,6 +535,7 @@ export async function ensureOfficialCourses(prisma: any): Promise<void> {
     malaySpeakingCourse,
     malayGuideModernCourse,
     teachYourselfMalayCourse,
+    ...k12MathCourses,
   ];
   for (const course of courses) {
     await ensureOfficialCourse(prisma, course);
@@ -756,6 +759,7 @@ async function lessonLockMessage(prisma: any, jwtUser: JwtPayload, lesson: any):
 }
 
 function lessonStudyCards(challenges: any[], language: string) {
+  if (!languageQuestCourseUsesStudyCards(language)) return [];
   return challenges.flatMap((challenge: any) => {
     if (!languageQuestChallengeSupportsStudyCard(challenge.type)) return [];
     const correct = challenge.options.find((option: any) => option.correct);
@@ -810,6 +814,7 @@ async function languageQuestLearnedWordsSnapshot(prisma: any, userId: string, co
     const term = correct?.text?.trim();
     if (!term) continue;
     const course = challenge.lesson.unit.course;
+    if (!languageQuestCourseUsesStudyCards(course.language)) continue;
     const key = languageQuestLearnedWordKey(course.id, term);
     const completedAt = row.completedAt || row.createdAt;
     const existing = wordsByKey.get(key);

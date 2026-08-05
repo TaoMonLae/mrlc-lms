@@ -193,9 +193,9 @@ export function LanguageQuestLanguageAlbums({ courses }: { courses: LanguageQues
   return (
     <section className="rounded-3xl border border-fuchsia-200 bg-gradient-to-br from-fuchsia-50 via-white to-amber-50 p-5 shadow-sm dark:border-fuchsia-500/20 dark:from-fuchsia-950/20 dark:via-slate-950 dark:to-amber-950/15 sm:p-6">
       <div>
-        <p className="text-xs font-black uppercase tracking-[0.18em] text-fuchsia-700 dark:text-fuchsia-300">Language albums</p>
-        <h2 className="mt-1 text-xl font-black text-slate-950 dark:text-white">A card journey for every language</h2>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Each completed challenge fills that language’s album. No purchases or random packs.</p>
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-fuchsia-700 dark:text-fuchsia-300">Subject albums</p>
+        <h2 className="mt-1 text-xl font-black text-slate-950 dark:text-white">A card journey for every subject</h2>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Each completed challenge fills that subject’s album. No purchases or random packs.</p>
       </div>
       <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {albums.map((album) => {
