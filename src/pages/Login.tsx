@@ -355,7 +355,7 @@ export default function LoginPage() {
 
                 <p className="text-center text-sm text-slate-600">
                   New to Language Quest?{" "}
-                  <Link to="/signup" className="font-bold text-violet-700 hover:underline">
+                  <Link to="/signup" state={location.state} className="font-bold text-violet-700 hover:underline">
                     Create a free learner account
                   </Link>
                 </p>

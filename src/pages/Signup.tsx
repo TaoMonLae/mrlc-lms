@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import { ArrowLeft, CheckCircle2, Eye, EyeOff, Headphones, Keyboard, LockKeyhole, Mail, ShieldCheck, Sparkles, UserRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,8 +7,10 @@ import { MrlcQuestBrand, TaoMonLaeCredit } from '@/src/components/games/MrlcQues
 import { LanguageQuestAvatar } from '@/src/components/games/LanguageQuestAvatar';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { LANGUAGE_QUEST_AVATARS } from '@/shared/languageQuestAvatars';
+import { safeAppReturnPath } from '@/shared/accountAccess';
 
 export default function SignupPage() {
+  const location = useLocation();
   const navigate = useNavigate();
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
@@ -36,7 +38,8 @@ export default function SignupPage() {
       if (!response.ok) throw new Error(payload.error || 'Could not create your account.');
       const result = await login(form.email.trim().toLowerCase(), form.password, true);
       if (!result.success) throw new Error(result.error || 'Account created. Please sign in.');
-      navigate('/games/language-quest', { replace: true });
+      const returnPath = safeAppReturnPath((location.state as { from?: unknown } | null)?.from);
+      navigate(returnPath || '/games/language-quest', { replace: true });
     } catch (caught: any) {
       setError(caught?.message || 'Could not create your account.');
     } finally {
@@ -147,7 +150,7 @@ export default function SignupPage() {
               </Button>
             </form>
 
-            <p className="mt-6 text-center text-sm text-slate-600">Already have an account? <Link to="/login" className="font-bold text-violet-700 hover:underline">Sign in</Link></p>
+            <p className="mt-6 text-center text-sm text-slate-600">Already have an account? <Link to="/login" state={location.state} className="font-bold text-violet-700 hover:underline">Sign in</Link></p>
             <p className="mt-5 flex items-start gap-2 rounded-xl border border-emerald-100 bg-emerald-50/70 p-3 text-xs leading-5 text-slate-600">
               <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" /> By continuing, you agree to use the learning experience respectfully. Never share your password.
             </p>

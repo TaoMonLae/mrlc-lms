@@ -10,28 +10,37 @@ import {
   Flame,
   GraduationCap,
   Link2,
+  Pencil,
   Plus,
   RefreshCw,
+  Save,
+  Search,
   ShieldCheck,
   Star,
   Target,
   Trophy,
   UserMinus,
   Users,
+  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
+import { Textarea } from '@/components/ui/textarea';
 import { LanguageQuestAvatar } from '@/src/components/games/LanguageQuestAvatar';
 import { apiGet, apiSend } from '@/src/lib/api';
-import { languageQuestClassroomInvitePath } from '@/shared/languageQuestClassrooms';
+import {
+  languageQuestClassroomChallengeStatus,
+  languageQuestClassroomInvitePath,
+} from '@/shared/languageQuestClassrooms';
 
 interface FocusCourse {
   id: string;
   title: string;
   imageEmoji: string;
+  published?: boolean;
 }
 
 interface ClassroomSummary {
@@ -106,16 +115,52 @@ export default function LanguageQuestClassrooms() {
   const [creating, setCreating] = useState(false);
   const [loadingRoster, setLoadingRoster] = useState(false);
   const [challengeTitle, setChallengeTitle] = useState('');
+  const [challengeDescription, setChallengeDescription] = useState('');
   const [challengeTarget, setChallengeTarget] = useState('300');
   const [challengeDays, setChallengeDays] = useState('7');
   const [challengeReward, setChallengeReward] = useState('');
   const [creatingChallenge, setCreatingChallenge] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [classroomNameDraft, setClassroomNameDraft] = useState('');
+  const [updatingClassroom, setUpdatingClassroom] = useState(false);
+  const [rosterQuery, setRosterQuery] = useState('');
+  const [rosterSort, setRosterSort] = useState<'support' | 'name' | 'recent'>('support');
+  const [statusNow, setStatusNow] = useState(() => new Date());
   const rosterRequestId = useRef(0);
 
   const selectedSummary = useMemo(
     () => payload?.classrooms.find((classroom) => classroom.id === selectedId) || null,
     [payload, selectedId],
   );
+
+  const filteredMembers = useMemo(() => {
+    const query = rosterQuery.trim().toLocaleLowerCase();
+    const members = [...(detail?.members || [])]
+      .filter((member) => !query || member.name.toLocaleLowerCase().includes(query));
+    members.sort((left, right) => {
+      if (rosterSort === 'name') return left.name.localeCompare(right.name);
+      if (rosterSort === 'recent') {
+        return (right.lastPlayedDate ? new Date(right.lastPlayedDate).getTime() : 0)
+          - (left.lastPlayedDate ? new Date(left.lastPlayedDate).getTime() : 0);
+      }
+      const leftProgress = detail?.focusCourse ? left.focusProgressPercent : left.completedChallenges;
+      const rightProgress = detail?.focusCourse ? right.focusProgressPercent : right.completedChallenges;
+      return leftProgress - rightProgress || left.name.localeCompare(right.name);
+    });
+    return members;
+  }, [detail?.focusCourse, detail?.members, rosterQuery, rosterSort]);
+
+  const rosterStats = useMemo(() => {
+    const members = detail?.members || [];
+    const activeLearners = members.filter((member) => member.active).length;
+    const averageProgress = members.length && detail?.focusCourse
+      ? Math.round(members.reduce((sum, member) => sum + member.focusProgressPercent, 0) / members.length)
+      : null;
+    const needsSupport = detail?.focusCourse
+      ? members.filter((member) => member.focusProgressPercent < 50).length
+      : 0;
+    return { activeLearners, averageProgress, needsSupport };
+  }, [detail]);
 
   const loadClassrooms = async (preferId?: string) => {
     setLoadError('');
@@ -135,15 +180,27 @@ export default function LanguageQuestClassrooms() {
     }
   };
 
-  useEffect(() => { loadClassrooms(); }, []);
+  useEffect(() => { void loadClassrooms(); }, []);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setStatusNow(new Date()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (!selectedId) {
+      rosterRequestId.current += 1;
       setDetail(null);
       return;
     }
-    loadRoster(selectedId);
+    void loadRoster(selectedId);
   }, [selectedId]);
+
+  useEffect(() => {
+    setClassroomNameDraft(selectedSummary?.name || '');
+    setEditingName(false);
+    setRosterQuery('');
+  }, [selectedSummary?.id, selectedSummary?.name]);
 
   const loadRoster = async (classroomId: string) => {
     const requestId = ++rosterRequestId.current;
@@ -186,6 +243,7 @@ export default function LanguageQuestClassrooms() {
 
   const toggleClassroom = async () => {
     if (!selectedSummary) return;
+    setUpdatingClassroom(true);
     try {
       await apiSend(`/api/language-quest/classrooms/${selectedSummary.id}`, 'PATCH', { active: !selectedSummary.active });
       toast.success(selectedSummary.active ? 'Classroom closed' : 'Classroom reopened');
@@ -195,11 +253,14 @@ export default function LanguageQuestClassrooms() {
       ]);
     } catch (error: any) {
       toast.error(error?.message || 'Could not update classroom');
+    } finally {
+      setUpdatingClassroom(false);
     }
   };
 
   const changeFocus = async (courseId: string) => {
     if (!selectedSummary) return;
+    setUpdatingClassroom(true);
     try {
       await apiSend(`/api/language-quest/classrooms/${selectedSummary.id}`, 'PATCH', { focusCourseId: courseId || null });
       toast.success('Focus course updated');
@@ -209,6 +270,32 @@ export default function LanguageQuestClassrooms() {
       ]);
     } catch (error: any) {
       toast.error(error?.message || 'Could not update the focus course');
+    } finally {
+      setUpdatingClassroom(false);
+    }
+  };
+
+  const saveClassroomName = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!selectedSummary || !classroomNameDraft.trim() || classroomNameDraft.trim() === selectedSummary.name) {
+      setEditingName(false);
+      return;
+    }
+    setUpdatingClassroom(true);
+    try {
+      await apiSend(`/api/language-quest/classrooms/${selectedSummary.id}`, 'PATCH', {
+        name: classroomNameDraft.trim(),
+      });
+      await Promise.all([
+        loadClassrooms(selectedSummary.id),
+        loadRoster(selectedSummary.id),
+      ]);
+      setEditingName(false);
+      toast.success('Classroom name updated');
+    } catch (error: any) {
+      toast.error(error?.message || 'Could not rename the classroom');
+    } finally {
+      setUpdatingClassroom(false);
     }
   };
 
@@ -259,11 +346,13 @@ export default function LanguageQuestClassrooms() {
     try {
       await apiSend(`/api/language-quest/classrooms/${detail.id}/challenges`, 'POST', {
         title: challengeTitle,
+        description: challengeDescription,
         targetXp: Number(challengeTarget),
         durationDays: Number(challengeDays),
         rewardLabel: challengeReward,
       });
       setChallengeTitle('');
+      setChallengeDescription('');
       setChallengeReward('');
       toast.success('Team challenge started');
       await loadRoster(detail.id);
@@ -368,6 +457,7 @@ export default function LanguageQuestClassrooms() {
                   <button
                     key={classroom.id}
                     type="button"
+                    aria-pressed={selectedId === classroom.id}
                     onClick={() => setSelectedId(classroom.id)}
                     className={`w-full px-5 py-4 text-left transition ${selectedId === classroom.id ? 'bg-violet-50 dark:bg-violet-500/10' : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'}`}
                   >
@@ -399,14 +489,32 @@ export default function LanguageQuestClassrooms() {
               <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
                 <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-start">
                   <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="text-2xl font-black text-slate-950 dark:text-white">{selectedSummary.name}</h2>
-                      <Badge variant={selectedSummary.active ? 'default' : 'secondary'}>{selectedSummary.active ? 'Accepting learners' : 'Closed'}</Badge>
-                    </div>
+                    {editingName ? (
+                      <form onSubmit={saveClassroomName} className="flex max-w-xl flex-wrap items-center gap-2">
+                        <Input
+                          autoFocus
+                          value={classroomNameDraft}
+                          onChange={(event) => setClassroomNameDraft(event.target.value.slice(0, 100))}
+                          maxLength={100}
+                          aria-label="Classroom name"
+                          className="h-10 min-w-56 flex-1 text-lg font-black"
+                        />
+                        <Button type="submit" size="sm" disabled={updatingClassroom || !classroomNameDraft.trim()}><Save className="mr-2 h-4 w-4" /> Save</Button>
+                        <Button type="button" size="icon" variant="ghost" onClick={() => { setEditingName(false); setClassroomNameDraft(selectedSummary.name); }} aria-label="Cancel renaming"><X className="h-4 w-4" /></Button>
+                      </form>
+                    ) : (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="text-2xl font-black text-slate-950 dark:text-white">{selectedSummary.name}</h2>
+                        {selectedSummary.canEdit && (
+                          <Button size="icon" variant="ghost" onClick={() => setEditingName(true)} aria-label="Rename classroom"><Pencil className="h-4 w-4" /></Button>
+                        )}
+                        <Badge variant={selectedSummary.active ? 'default' : 'secondary'}>{selectedSummary.active ? 'Accepting learners' : 'Closed'}</Badge>
+                      </div>
+                    )}
                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Teacher: {selectedSummary.teacherName}</p>
                   </div>
                   {selectedSummary.canEdit && (
-                    <Button variant="outline" onClick={toggleClassroom}>
+                    <Button variant="outline" onClick={toggleClassroom} disabled={updatingClassroom}>
                       {selectedSummary.active ? 'Close classroom' : 'Reopen classroom'}
                     </Button>
                   )}
@@ -432,13 +540,19 @@ export default function LanguageQuestClassrooms() {
                       <select
                         value={selectedSummary.focusCourse?.id || ''}
                         onChange={(event) => changeFocus(event.target.value)}
-                        disabled={!selectedSummary.canEdit}
+                        disabled={!selectedSummary.canEdit || updatingClassroom}
                         className="mt-2 h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                       >
                         <option value="">No focus course</option>
+                        {selectedSummary.focusCourse && !payload.courses.some((course) => course.id === selectedSummary.focusCourse?.id) && (
+                          <option value={selectedSummary.focusCourse.id}>{selectedSummary.focusCourse.imageEmoji} {selectedSummary.focusCourse.title} (assigned draft)</option>
+                        )}
                         {payload.courses.map((course) => <option key={course.id} value={course.id}>{course.imageEmoji} {course.title}</option>)}
                       </select>
                     </label>
+                    {selectedSummary.focusCourse?.published === false && (
+                      <p className="mt-2 rounded-lg bg-amber-100 px-2.5 py-2 text-xs font-semibold text-amber-800 dark:bg-amber-500/15 dark:text-amber-200">This assigned course is in draft. Joined learners keep access while it is reviewed.</p>
+                    )}
                     {selectedSummary.focusCourse ? (
                       <Button variant="outline" size="sm" className="mt-3 w-full" render={<Link to={`/games/language-quest/courses/${selectedSummary.focusCourse.id}`} />} nativeButton={false}>
                         <BookOpen className="mr-2 h-4 w-4" /> Open focus course <ExternalLink className="ml-2 h-3.5 w-3.5" />
@@ -469,6 +583,10 @@ export default function LanguageQuestClassrooms() {
                       Team reward (optional)
                       <Input value={challengeReward} onChange={(event) => setChallengeReward(event.target.value.slice(0, 80))} className="mt-1.5" placeholder="Homework pass or class cheer" />
                     </label>
+                    <label className="text-xs font-bold text-slate-600 dark:text-slate-300 md:col-span-2">
+                      Description (optional)
+                      <Textarea value={challengeDescription} onChange={(event) => setChallengeDescription(event.target.value.slice(0, 300))} rows={2} className="mt-1.5 resize-none" placeholder="Explain what the class is working toward." />
+                    </label>
                     <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
                       Target XP
                       <Input type="number" min={30} max={10000} value={challengeTarget} onChange={(event) => setChallengeTarget(event.target.value)} className="mt-1.5" />
@@ -491,19 +609,23 @@ export default function LanguageQuestClassrooms() {
                 <div className="mt-4 grid gap-3">
                   {!detail?.challenges.length ? (
                     <p className="rounded-2xl border border-dashed border-amber-300 p-5 text-center text-sm text-slate-500 dark:border-amber-500/25 dark:text-slate-300">No classroom challenges yet.</p>
-                  ) : detail.challenges.map((challenge) => (
+                  ) : detail.challenges.map((challenge) => {
+                    const status = languageQuestClassroomChallengeStatus(challenge, statusNow);
+                    const statusLabel = status.charAt(0) + status.slice(1).toLowerCase();
+                    return (
                     <article key={challenge.id} className="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900">
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <div className="flex flex-wrap items-center gap-2">
                             <h3 className="font-black text-slate-950 dark:text-white">{challenge.title}</h3>
-                            <Badge variant={challenge.complete ? 'default' : challenge.active ? 'outline' : 'secondary'}>
-                              {challenge.complete ? 'Completed' : challenge.active ? 'Active' : 'Closed'}
+                            <Badge variant={status === 'COMPLETED' ? 'default' : status === 'ACTIVE' || status === 'UPCOMING' ? 'outline' : 'secondary'}>
+                              {statusLabel}
                             </Badge>
                           </div>
-                          <p className="mt-1 text-xs text-slate-500">Ends {new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(challenge.endsAt))}</p>
+                          {challenge.description && <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{challenge.description}</p>}
+                          <p className="mt-1 text-xs text-slate-500">{status === 'UPCOMING' ? 'Starts' : 'Ends'} {new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(status === 'UPCOMING' ? challenge.startsAt : challenge.endsAt))}</p>
                         </div>
-                        {challenge.active && selectedSummary.canEdit && <Button size="sm" variant="ghost" onClick={() => closeChallenge(challenge.id)}>Close</Button>}
+                        {(status === 'ACTIVE' || status === 'UPCOMING') && selectedSummary.canEdit && <Button size="sm" variant="ghost" onClick={() => closeChallenge(challenge.id)}>Close</Button>}
                       </div>
                       <Progress value={challenge.progressPercent} className="mt-3" />
                       <div className="mt-2 flex justify-between gap-3 text-xs font-bold text-slate-500">
@@ -511,17 +633,57 @@ export default function LanguageQuestClassrooms() {
                         {challenge.rewardLabel && <span className="text-amber-700 dark:text-amber-300">Reward: {challenge.rewardLabel}</span>}
                       </div>
                     </article>
-                  ))}
+                    );
+                  })}
                 </div>
               </section>
 
               <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800 sm:px-6">
-                  <div>
-                    <h2 className="font-black text-slate-950 dark:text-white">Learner roster</h2>
-                    <p className="mt-1 text-xs text-slate-500">{detail?.members.length || 0} learners joined with the classroom code</p>
+                <div className="border-b border-slate-100 px-5 py-4 dark:border-slate-800 sm:px-6">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <h2 className="font-black text-slate-950 dark:text-white">Learner roster</h2>
+                      <p className="mt-1 text-xs text-slate-500">{detail?.members.length || 0} learners joined with the classroom code</p>
+                    </div>
+                    <Button size="icon" variant="ghost" disabled={loadingRoster} onClick={() => { if (selectedId) void loadRoster(selectedId); }} aria-label="Refresh roster"><RefreshCw className={`h-4 w-4 ${loadingRoster ? 'animate-spin' : ''}`} /></Button>
                   </div>
-                  <Button size="icon" variant="ghost" onClick={() => selectedId && loadRoster(selectedId)} aria-label="Refresh roster"><RefreshCw className="h-4 w-4" /></Button>
+                  {!!detail?.members.length && (
+                    <>
+                      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                        <div className="rounded-xl bg-emerald-50 px-3 py-2 dark:bg-emerald-500/10">
+                          <p className="text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Active accounts</p>
+                          <p className="mt-1 text-lg font-black text-slate-950 dark:text-white">{rosterStats.activeLearners}/{detail.members.length}</p>
+                        </div>
+                        {detail.focusCourse && (
+                          <>
+                            <div className="rounded-xl bg-violet-50 px-3 py-2 dark:bg-violet-500/10">
+                              <p className="text-[10px] font-black uppercase tracking-wider text-violet-700 dark:text-violet-300">Average progress</p>
+                              <p className="mt-1 text-lg font-black text-slate-950 dark:text-white">{rosterStats.averageProgress}%</p>
+                            </div>
+                            <div className="col-span-2 rounded-xl bg-amber-50 px-3 py-2 dark:bg-amber-500/10 sm:col-span-1">
+                              <p className="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-300">Below 50%</p>
+                              <p className="mt-1 text-lg font-black text-slate-950 dark:text-white">{rosterStats.needsSupport}</p>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_180px]">
+                        <label className="relative">
+                          <span className="sr-only">Search learners</span>
+                          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                          <Input value={rosterQuery} onChange={(event) => setRosterQuery(event.target.value)} className="pl-9" placeholder="Search learners…" />
+                        </label>
+                        <label>
+                          <span className="sr-only">Sort learners</span>
+                          <select value={rosterSort} onChange={(event) => setRosterSort(event.target.value as typeof rosterSort)} className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white">
+                            <option value="support">{detail.focusCourse ? 'Needs support first' : 'Fewest practices first'}</option>
+                            <option value="name">Name A–Z</option>
+                            <option value="recent">Most recent activity</option>
+                          </select>
+                        </label>
+                      </div>
+                    </>
+                  )}
                 </div>
                 {loadingRoster ? (
                   <div className="grid min-h-56 place-items-center"><div className="h-9 w-9 animate-spin rounded-full border-4 border-violet-200 border-t-violet-600" /></div>
@@ -531,9 +693,15 @@ export default function LanguageQuestClassrooms() {
                     <p className="mt-3 font-black text-slate-800 dark:text-white">No learners have joined yet</p>
                     <p className="mt-1 text-sm text-slate-500">Share the join code above. Learners enter it from their Language Quest profile.</p>
                   </div>
+                ) : !filteredMembers.length ? (
+                  <div className="p-10 text-center">
+                    <Search className="mx-auto h-10 w-10 text-slate-300" />
+                    <p className="mt-3 font-black text-slate-800 dark:text-white">No learners match “{rosterQuery}”</p>
+                    <Button variant="ghost" size="sm" className="mt-2" onClick={() => setRosterQuery('')}>Clear search</Button>
+                  </div>
                 ) : (
                   <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {detail.members.map((member) => (
+                    {filteredMembers.map((member) => (
                       <article key={member.userId} className="p-5 sm:p-6">
                         <div className="flex items-start gap-3">
                           <LanguageQuestAvatar avatarId={member.avatarId} name={member.name} className="h-12 w-12 text-2xl" />

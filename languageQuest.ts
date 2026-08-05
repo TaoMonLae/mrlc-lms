@@ -44,7 +44,10 @@ import {
   languageQuestCourseReviewDecision,
   languageQuestTeacherEditReviewData,
 } from "./shared/languageQuestCourseReview";
-import { normalizeLanguageQuestClassroomCode } from "./shared/languageQuestClassrooms";
+import {
+  canJoinLanguageQuestClassroom,
+  normalizeLanguageQuestClassroomCode,
+} from "./shared/languageQuestClassrooms";
 import { languageQuestAnswerMatches, languageQuestPinyin } from "./shared/languageQuestPinyin";
 import { languageQuestGlobalLeaderboardWhere } from "./shared/externalLearnerAccess";
 import {
@@ -639,16 +642,20 @@ async function missionSnapshot(prisma: any, userId: string, now = new Date()) {
   };
 }
 
-async function classroomChallengeProgress(prisma: any, challenge: any): Promise<number> {
-  const members = await prisma.languageQuestClassroomMember.findMany({
+async function classroomChallengeProgress(
+  prisma: any,
+  challenge: any,
+  knownMemberIds?: string[],
+): Promise<number> {
+  const memberIds = knownMemberIds ?? (await prisma.languageQuestClassroomMember.findMany({
     where: { classroomId: challenge.classroomId },
     select: { userId: true },
-  });
-  if (members.length === 0) return 0;
+  })).map((member: any) => member.userId);
+  if (memberIds.length === 0) return 0;
   const aggregate = await prisma.languageQuestXpEvent.aggregate({
     where: {
-      userId: { in: members.map((member: any) => member.userId) },
-      occurredAt: { gte: challenge.startsAt, lte: challenge.endsAt },
+      userId: { in: memberIds },
+      occurredAt: { gte: challenge.startsAt, lt: challenge.endsAt },
       source: { not: "MISSION_REWARD" },
       ...(challenge.classroom?.focusCourseId ? { courseId: challenge.classroom.focusCourseId } : {}),
     },
@@ -922,10 +929,10 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         where: { joinCode },
         include: {
           teacher: { select: { firstName: true, lastName: true } },
-          focusCourse: { select: { id: true, title: true, imageEmoji: true } },
+          focusCourse: { select: { id: true, title: true, imageEmoji: true, published: true } },
         },
       });
-      if (!classroom || !classroom.active) {
+      if (!classroom) {
         res.status(404).json({ error: "That classroom code is not active" });
         return;
       }
@@ -933,6 +940,10 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         where: { classroomId_userId: { classroomId: classroom.id, userId: jwtUser.userId } },
         select: { id: true },
       });
+      if (!canJoinLanguageQuestClassroom(classroom.active, Boolean(existingMembership))) {
+        res.status(404).json({ error: "That classroom code is not active" });
+        return;
+      }
       await prisma.languageQuestClassroomMember.upsert({
         where: { classroomId_userId: { classroomId: classroom.id, userId: jwtUser.userId } },
         update: {},
@@ -1639,7 +1650,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           where: {
             active: true,
             startsAt: { lte: now },
-            endsAt: { gte: now },
+            endsAt: { gt: now },
             classroom: {
               active: true,
               members: { some: { userId: jwtUser.userId } },
@@ -2587,7 +2598,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         orderBy: [{ active: "desc" }, { updatedAt: "desc" }],
         include: {
           teacher: { select: { firstName: true, lastName: true } },
-          focusCourse: { select: { id: true, title: true, imageEmoji: true } },
+          focusCourse: { select: { id: true, title: true, imageEmoji: true, published: true } },
           _count: { select: { members: true } },
         },
       });
@@ -2723,11 +2734,12 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           unit.lessons.flatMap((lesson: any) => lesson.challenges.map((challenge: any) => challenge.id)),
         ) || [],
       );
+      const classroomMemberIds = classroom.members.map((membership: any) => membership.user.id);
       const challenges = await Promise.all(classroom.challenges.map(async (challenge: any) => {
         const progressXp = await classroomChallengeProgress(prisma, {
           ...challenge,
           classroom: { focusCourseId: classroom.focusCourseId },
-        });
+        }, classroomMemberIds);
         return {
           id: challenge.id,
           title: challenge.title,
@@ -2752,6 +2764,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           id: classroom.focusCourse.id,
           title: classroom.focusCourse.title,
           imageEmoji: classroom.focusCourse.imageEmoji,
+          published: classroom.focusCourse.published,
           challengeCount: focusChallengeIds.size,
         } : null,
         challenges,
