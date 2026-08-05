@@ -76,6 +76,13 @@ import {
   languageQuestAnalyticsStatus,
   languageQuestAnalyticsStatusLabel,
 } from "../../shared/languageQuestAnalytics";
+import {
+  LANGUAGE_QUEST_SURPRISE_CARDS,
+  languageQuestHeartRefillPassed,
+  languageQuestHeartRefillRequiredCorrect,
+  languageQuestHeartRefillSubmissionMatchesDeck,
+  nextLanguageQuestSurpriseCard,
+} from "../../shared/languageQuestHeartRefill";
 
 test("teacher edits return reviewed Language Quest courses to a private draft", () => {
   assert.deepEqual(languageQuestTeacherEditReviewData(), {
@@ -197,6 +204,26 @@ test("streak card frames unlock deterministically from the learner's best streak
   assert.equal(languageQuestStreakFrame(6).id, "ember");
   assert.equal(languageQuestStreakFrame(7).id, "aurora");
   assert.equal(languageQuestStreakFrame(30).id, "legend");
+});
+
+test("heart refill quizzes require a complete one-time deck and a 70 percent pass", () => {
+  assert.equal(languageQuestHeartRefillRequiredCorrect(5), 4);
+  assert.equal(languageQuestHeartRefillPassed(4, 5), true);
+  assert.equal(languageQuestHeartRefillPassed(3, 5), false);
+  assert.equal(languageQuestHeartRefillPassed(2, 3), false);
+  assert.equal(languageQuestHeartRefillPassed(3, 3), true);
+  assert.equal(languageQuestHeartRefillPassed(2, 2), false, "tiny decks are not valid refill quizzes");
+  assert.equal(languageQuestHeartRefillSubmissionMatchesDeck(["a", "b", "c"], ["a", "b", "c"]), true);
+  assert.equal(languageQuestHeartRefillSubmissionMatchesDeck(["a", "b", "c"], ["b", "a", "c"]), false);
+  assert.equal(languageQuestHeartRefillSubmissionMatchesDeck(["a", "a", "c"], ["a", "a", "c"]), false);
+});
+
+test("surprise heart cards are original, unique, and never repeat an owned card", () => {
+  assert.equal(LANGUAGE_QUEST_SURPRISE_CARDS.length, 12);
+  assert.equal(new Set(LANGUAGE_QUEST_SURPRISE_CARDS.map((card) => card.id)).size, LANGUAGE_QUEST_SURPRISE_CARDS.length);
+  const owned = new Set(LANGUAGE_QUEST_SURPRISE_CARDS.slice(0, 11).map((card) => card.id));
+  assert.equal(nextLanguageQuestSurpriseCard(owned, 0.5)?.id, LANGUAGE_QUEST_SURPRISE_CARDS[11].id);
+  assert.equal(nextLanguageQuestSurpriseCard(new Set(LANGUAGE_QUEST_SURPRISE_CARDS.map((card) => card.id))), null);
 });
 
 test("Language Quest missions use Kuala Lumpur daily and weekly periods", () => {

@@ -59,6 +59,19 @@ import {
   newlyUnlockedLanguageQuestRewardIds,
 } from "./shared/languageQuestRewards";
 import {
+  LANGUAGE_QUEST_HEART_REFILL_ATTEMPT_MINUTES,
+  LANGUAGE_QUEST_HEART_REFILL_MAX_QUESTIONS,
+  LANGUAGE_QUEST_HEART_REFILL_MIN_QUESTIONS,
+  LANGUAGE_QUEST_HEART_REFILL_PASS_RATIO,
+  LANGUAGE_QUEST_HEART_REFILL_TYPES,
+  LANGUAGE_QUEST_SURPRISE_CARDS,
+  languageQuestHeartRefillPassed,
+  languageQuestHeartRefillRequiredCorrect,
+  languageQuestHeartRefillSubmissionMatchesDeck,
+  languageQuestSurpriseCardById,
+  nextLanguageQuestSurpriseCard,
+} from "./shared/languageQuestHeartRefill";
+import {
   LANGUAGE_QUEST_DAILY_CHAIN_TARGET,
   LANGUAGE_QUEST_MASTERY_POINTS,
   LANGUAGE_QUEST_MISSIONS,
@@ -580,6 +593,18 @@ function profileJson(progress: any) {
   };
 }
 
+function surpriseCardCollectionJson(unlocks: readonly { cardId: string }[]) {
+  const unlockedIds = unlocks
+    .map((unlock) => unlock.cardId)
+    .filter((id) => Boolean(languageQuestSurpriseCardById(id)));
+  return {
+    unlockedIds,
+    unlockedCount: unlockedIds.length,
+    totalCount: LANGUAGE_QUEST_SURPRISE_CARDS.length,
+    complete: unlockedIds.length >= LANGUAGE_QUEST_SURPRISE_CARDS.length,
+  };
+}
+
 // Walks a course's units/lessons in path order (mirroring the lock logic in
 // GET /api/language-quest/courses/:id) to find the first lesson that's both
 // unlocked and not yet fully completed. Powers the "resume where you left
@@ -862,6 +887,10 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           languageQuestAvatar: true,
           languageQuestBio: true,
           languageQuestProgress: true,
+          languageQuestSurpriseCards: {
+            orderBy: { unlockedAt: "desc" },
+            select: { cardId: true },
+          },
           languageQuestMemberships: {
             orderBy: { joinedAt: "desc" },
             include: {
@@ -884,6 +913,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         avatarId: user.languageQuestAvatar || DEFAULT_LANGUAGE_QUEST_AVATAR,
         bio: user.languageQuestBio || "",
         profile: profileJson(user.languageQuestProgress || await getProgress(prisma, jwtUser.userId)),
+        surpriseCards: surpriseCardCollectionJson(user.languageQuestSurpriseCards),
         classrooms: user.languageQuestMemberships.map((membership: any) => ({
           id: membership.classroom.id,
           name: membership.classroom.name,
@@ -980,7 +1010,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
     const jwtUser = (req as any).user as JwtPayload;
     try {
       await ensureOfficialCoursesOnce(prisma);
-      const [progress, courses, completedRows] = await Promise.all([
+      const [progress, courses, completedRows, surpriseCardUnlocks] = await Promise.all([
         getProgress(prisma, jwtUser.userId),
         prisma.languageQuestCourse.findMany({
           where: { published: true },
@@ -996,10 +1026,16 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           where: { userId: jwtUser.userId, completed: true },
           select: { challengeId: true },
         }),
+        prisma.languageQuestSurpriseCardUnlock.findMany({
+          where: { userId: jwtUser.userId },
+          orderBy: { unlockedAt: "desc" },
+          select: { cardId: true },
+        }),
       ]);
       const completed = new Set<string>(completedRows.map((row: any) => row.challengeId));
       res.json({
         profile: profileJson(progress),
+        surpriseCards: surpriseCardCollectionJson(surpriseCardUnlocks),
         canManage: isManager(jwtUser.role),
         courses: courses.map((course: any) => {
           const challengeIds = course.units.flatMap((unit: any) => unit.lessons.flatMap((lesson: any) => lesson.challenges.map((challenge: any) => challenge.id)));
@@ -1026,6 +1062,240 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
     } catch (error) {
       logger.error("Error loading Language Quest overview:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load Language Quest" });
+    }
+  });
+
+  app.post("/api/language-quest/heart-refill/start", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      await ensureOfficialCoursesOnce(prisma);
+      const progress = await getProgress(prisma, jwtUser.userId);
+      if (progress.hearts >= LANGUAGE_QUEST_MAX_HEARTS) {
+        res.status(409).json({
+          error: "Your hearts are already full. Come back after a challenging lesson.",
+          code: "HEARTS_FULL",
+          profile: profileJson(progress),
+        });
+        return;
+      }
+
+      const challengeInclude = {
+        options: { orderBy: { order: "asc" } },
+        lesson: {
+          include: {
+            unit: { include: { course: { select: { id: true, language: true, published: true } } } },
+          },
+        },
+      } as const;
+      const eligibleWhere = {
+        type: { in: [...LANGUAGE_QUEST_HEART_REFILL_TYPES] },
+        lesson: { unit: { course: { published: true } } },
+      };
+      // Prefer material the learner has already cleared. If their history is
+      // still small, fill the deck from published course questions so even a
+      // new learner who loses their first hearts has a route back into play.
+      const completed = await prisma.languageQuestChallenge.findMany({
+        where: {
+          ...eligibleWhere,
+          progress: { some: { userId: jwtUser.userId, completed: true } },
+        },
+        include: challengeInclude,
+        take: 80,
+      });
+      let candidates = shuffle(completed).filter(
+        (challenge: any) => challenge.options.length >= 2
+          && challenge.options.filter((option: any) => option.correct).length === 1,
+      );
+      if (candidates.length < LANGUAGE_QUEST_HEART_REFILL_MAX_QUESTIONS) {
+        const fallback = await prisma.languageQuestChallenge.findMany({
+          where: {
+            ...eligibleWhere,
+            id: { notIn: candidates.map((challenge: any) => challenge.id) },
+          },
+          include: challengeInclude,
+          take: 120,
+        });
+        candidates = [
+          ...candidates,
+          ...shuffle(fallback).filter(
+            (challenge: any) => challenge.options.length >= 2
+              && challenge.options.filter((option: any) => option.correct).length === 1,
+          ),
+        ];
+      }
+      const deck = shuffle(candidates).slice(0, LANGUAGE_QUEST_HEART_REFILL_MAX_QUESTIONS);
+      if (deck.length < LANGUAGE_QUEST_HEART_REFILL_MIN_QUESTIONS) {
+        res.status(409).json({ error: "There are not enough published quiz questions to run a heart refill yet." });
+        return;
+      }
+
+      const attempt = await prisma.languageQuestHeartRefillAttempt.create({
+        data: {
+          userId: jwtUser.userId,
+          challengeIds: deck.map((challenge: any) => challenge.id),
+          expiresAt: new Date(Date.now() + LANGUAGE_QUEST_HEART_REFILL_ATTEMPT_MINUTES * 60_000),
+        },
+        select: { id: true, expiresAt: true },
+      });
+      res.status(201).json({
+        attemptId: attempt.id,
+        expiresAt: attempt.expiresAt,
+        passRatio: LANGUAGE_QUEST_HEART_REFILL_PASS_RATIO,
+        requiredCorrect: languageQuestHeartRefillRequiredCorrect(deck.length),
+        profile: profileJson(progress),
+        cards: deck.map((challenge: any) => {
+          const language = challenge.lesson.unit.course.language;
+          return {
+            challengeId: challenge.id,
+            question: languageQuestPracticePrompt(challenge.question),
+            language,
+            options: shuffle(challenge.options).map((option: any) => ({
+              id: option.id,
+              text: option.text,
+              emoji: option.emoji,
+              audioText: option.audioText,
+              pinyin: languageQuestPinyin(option.text, language),
+            })),
+          };
+        }),
+      });
+    } catch (error) {
+      logger.error("Error starting Language Quest heart refill:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to start a heart refill quiz" });
+    }
+  });
+
+  app.post("/api/language-quest/heart-refill/finish", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const attemptId = text(req.body?.attemptId, 100);
+    const submitted = Array.isArray(req.body?.answers) ? req.body.answers : [];
+    const answers = submitted
+      .filter((entry: any) => entry && typeof entry.challengeId === "string")
+      .map((entry: any) => ({
+        challengeId: entry.challengeId,
+        optionId: typeof entry.optionId === "string" ? entry.optionId : null,
+      }));
+    if (!attemptId || answers.length < LANGUAGE_QUEST_HEART_REFILL_MIN_QUESTIONS || answers.length > LANGUAGE_QUEST_HEART_REFILL_MAX_QUESTIONS) {
+      res.status(400).json({ error: "Answer every refill question before finishing" });
+      return;
+    }
+
+    const now = new Date();
+    try {
+      const attempt = await prisma.languageQuestHeartRefillAttempt.findFirst({
+        where: { id: attemptId, userId: jwtUser.userId, consumedAt: null, expiresAt: { gt: now } },
+      });
+      const deckChallengeIds = Array.isArray(attempt?.challengeIds)
+        ? attempt.challengeIds.filter((id: unknown): id is string => typeof id === "string")
+        : [];
+      if (!attempt || !languageQuestHeartRefillSubmissionMatchesDeck(deckChallengeIds, answers.map((answer: any) => answer.challengeId))) {
+        res.status(409).json({ error: "This refill quiz expired or its question set changed. Start a new quiz." });
+        return;
+      }
+
+      const storedChallenges = await prisma.languageQuestChallenge.findMany({
+        where: { id: { in: deckChallengeIds } },
+        include: { options: { orderBy: { order: "asc" } } },
+      });
+      const challengeById = new Map(storedChallenges.map((challenge: any) => [challenge.id, challenge]));
+      const deckChallenges = deckChallengeIds.map((id) => challengeById.get(id)).filter(Boolean);
+      if (deckChallenges.length !== deckChallengeIds.length) {
+        res.status(409).json({ error: "One of these questions is no longer available. Start a new quiz." });
+        return;
+      }
+      const answerKey = deckChallenges.map((challenge: any) => {
+        const correct = challenge.options.find((option: any) => option.correct);
+        return { challengeId: challenge.id, correctOptionId: correct?.id ?? "", correctAnswer: correct?.text ?? "" };
+      });
+      if (answerKey.some((entry: any) => !entry.correctOptionId)) {
+        res.status(409).json({ error: "One of these questions no longer has an answer. Start a new quiz." });
+        return;
+      }
+      const outcome = bossBattleResult(answers, answerKey, {
+        minQuestions: deckChallengeIds.length,
+        passRatio: LANGUAGE_QUEST_HEART_REFILL_PASS_RATIO,
+      });
+      const passed = languageQuestHeartRefillPassed(outcome.correctCount, outcome.total);
+      const periods = languageQuestPeriodBounds(now);
+
+      await prisma.languageQuestUserProgress.upsert({
+        where: { userId: jwtUser.userId }, update: {}, create: { userId: jwtUser.userId },
+      });
+      const reward = await prisma.$transaction(async (tx: any) => {
+        const consumed = await tx.languageQuestHeartRefillAttempt.updateMany({
+          where: { id: attempt.id, userId: jwtUser.userId, consumedAt: null, expiresAt: { gt: now } },
+          data: { consumedAt: now },
+        });
+        if (consumed.count !== 1) return null;
+
+        const rows: any[] = await tx.$queryRaw`
+          SELECT * FROM "LanguageQuestUserProgress" WHERE "userId" = ${jwtUser.userId} FOR UPDATE
+        `;
+        const before = rows[0];
+        const heartAdded = passed && before.hearts < LANGUAGE_QUEST_MAX_HEARTS;
+        const updated = heartAdded
+          ? await tx.languageQuestUserProgress.update({
+            where: { userId: jwtUser.userId },
+            data: { hearts: { increment: 1 } },
+          })
+          : before;
+
+        let surpriseCard = null;
+        if (heartAdded) {
+          const alreadyAwardedToday = await tx.languageQuestSurpriseCardUnlock.findUnique({
+            where: {
+              userId_source_dayKey: {
+                userId: jwtUser.userId,
+                source: "HEART_REFILL",
+                dayKey: periods.dayKey,
+              },
+            },
+            select: { id: true },
+          });
+          if (!alreadyAwardedToday) {
+            const owned = await tx.languageQuestSurpriseCardUnlock.findMany({
+              where: { userId: jwtUser.userId },
+              select: { cardId: true },
+            });
+            surpriseCard = nextLanguageQuestSurpriseCard(new Set(owned.map((entry: any) => entry.cardId)));
+            if (surpriseCard) {
+              await tx.languageQuestSurpriseCardUnlock.create({
+                data: {
+                  userId: jwtUser.userId,
+                  cardId: surpriseCard.id,
+                  source: "HEART_REFILL",
+                  dayKey: periods.dayKey,
+                  unlockedAt: now,
+                },
+              });
+            }
+          }
+        }
+        const unlocks = await tx.languageQuestSurpriseCardUnlock.findMany({
+          where: { userId: jwtUser.userId },
+          orderBy: { unlockedAt: "desc" },
+          select: { cardId: true },
+        });
+        return {
+          heartAdded,
+          profile: profileJson(updated),
+          surpriseCard,
+          surpriseCards: surpriseCardCollectionJson(unlocks),
+        };
+      });
+      if (!reward) {
+        res.status(409).json({ error: "This refill quiz was already finished. Start a new quiz." });
+        return;
+      }
+      res.json({
+        ...outcome,
+        passed,
+        requiredCorrect: languageQuestHeartRefillRequiredCorrect(outcome.total),
+        ...reward,
+      });
+    } catch (error) {
+      logger.error("Error finishing Language Quest heart refill:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to finish the heart refill quiz" });
     }
   });
 
@@ -1626,7 +1896,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       });
       if (result.outOfHearts) {
         res.status(403).json({
-          error: "You're out of hearts for new challenges. Replay a lesson you've already finished to earn hearts back, or come back after your daily refill.",
+          error: "You're out of hearts for new challenges. Take a Heart Refill Quiz, replay a finished lesson, or come back after your daily refill.",
           code: "OUT_OF_HEARTS",
           profile: result.profile,
         });

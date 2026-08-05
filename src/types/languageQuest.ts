@@ -1,6 +1,7 @@
 import type { LanguageQuestRewardProgress } from '@/shared/languageQuestRewards';
 import type { LanguageQuestChallengeType } from '@/shared/languageQuestAuthoring';
 import type { LanguageQuestAnalyticsStatus } from '@/shared/languageQuestAnalytics';
+import type { LanguageQuestSurpriseCardCollection } from '@/shared/languageQuestHeartRefill';
 
 export interface LanguageQuestProfile {
   hearts: number;
@@ -33,6 +34,7 @@ export interface LanguageQuestCourseSummary {
 
 export interface LanguageQuestOverview {
   profile: LanguageQuestProfile;
+  surpriseCards: LanguageQuestSurpriseCardCollection;
   canManage: boolean;
   courses: LanguageQuestCourseSummary[];
 }

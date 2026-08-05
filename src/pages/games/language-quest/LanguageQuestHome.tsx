@@ -240,6 +240,24 @@ export default function LanguageQuestHome() {
         <StatCard icon={<Trophy className="h-5 w-5" />} label="Best streak" value={data.profile.bestStreak} tone="bg-violet-100 text-violet-600 dark:bg-violet-500/15" />
       </section>
 
+      <section className="flex flex-col justify-between gap-5 overflow-hidden rounded-3xl border border-rose-200 bg-gradient-to-r from-rose-50 via-fuchsia-50 to-violet-50 p-5 shadow-sm dark:border-rose-500/20 dark:from-rose-950/25 dark:via-fuchsia-950/20 dark:to-violet-950/25 sm:flex-row sm:items-center sm:p-6">
+        <div className="flex items-start gap-4">
+          <span className="grid h-13 w-13 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-rose-500 to-fuchsia-600 text-white shadow-lg"><Heart className="h-6 w-6 fill-current" /></span>
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-fuchsia-600 dark:text-fuchsia-300">Comeback corner</p>
+            <h2 className="mt-1 text-xl font-black text-slate-950 dark:text-white">Refill hearts. Reveal unique cards.</h2>
+            <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
+              {data.profile.hearts < data.profile.maxHearts
+                ? 'Take a short review quiz to restore one heart. Your first successful refill today includes a no-duplicate surprise card.'
+                : `Hearts are full. You have found ${data.surpriseCards.unlockedCount}/${data.surpriseCards.totalCount} Surprise Heart Cards.`}
+            </p>
+          </div>
+        </div>
+        <Button className="shrink-0 bg-fuchsia-700 font-black text-white hover:bg-fuchsia-800" render={<Link to="/games/language-quest/heart-refill" />} nativeButton={false}>
+          <Sparkles className="mr-2 h-4 w-4" /> {data.profile.hearts < data.profile.maxHearts ? 'Refill a heart' : 'See refill challenge'}
+        </Button>
+      </section>
+
       <CourseLibrary courses={data.courses} progressSavedText={lq('progressSaved')} />
 
       <LanguageQuestEngagement onXpChanged={load} />

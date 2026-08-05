@@ -61,7 +61,7 @@ const copy = {
     nextSpelling: 'Next spelling',
     startSentencePractice: 'Start sentence practice',
     startQuiz: 'Start quiz',
-    outOfHeartsHelp: "No worries — hearts refill every day. In the meantime, replay a lesson you've already finished to earn some back.",
+    outOfHeartsHelp: "No worries — take a short Heart Refill Quiz now, replay a finished lesson, or wait for the daily refill.",
     completeHelp: 'Replay lessons to practise and refill hearts.',
   },
   my: {
@@ -119,7 +119,7 @@ const copy = {
     nextSpelling: 'နောက်စာလုံးပေါင်း',
     startSentencePractice: 'ဝါကျလေ့ကျင့်မှု စမည်',
     startQuiz: 'မေးခွန်း စမည်',
-    outOfHeartsHelp: 'စိတ်မပူပါနှင့် — နှလုံးများကို နေ့စဉ် ပြန်ဖြည့်ပေးသည်။ စောင့်နေစဉ် ပြီးဆုံးထားသော သင်ခန်းစာကို ပြန်လေ့ကျင့်ပြီး နှလုံးပြန်ရယူနိုင်သည်။',
+    outOfHeartsHelp: 'စိတ်မပူပါနှင့် — Heart Refill Quiz အတိုကို ဖြေဆိုပါ၊ ပြီးဆုံးထားသော သင်ခန်းစာကို ပြန်လေ့ကျင့်ပါ၊ သို့မဟုတ် နေ့စဉ် ပြန်ဖြည့်ချိန်ကို စောင့်ပါ။',
     completeHelp: 'သင်ခန်းစာများကို ပြန်လေ့ကျင့်ပြီး နှလုံးများ ပြန်ဖြည့်နိုင်သည်။',
   },
 } as const;

@@ -1200,6 +1200,9 @@ export default function LanguageQuestLesson() {
           {lq('outOfHeartsHelp')}
         </p>
         <div className="mt-7 w-full">
+          <Button className="mb-3 w-full bg-rose-600 text-white hover:bg-rose-700" render={<Link to="/games/language-quest/heart-refill" />} nativeButton={false}>
+            <Heart className="mr-2 h-4 w-4 fill-current" /> Take a Heart Refill Quiz
+          </Button>
           <Button className="w-full" style={{ backgroundColor: lesson.course.accentColor }} render={<Link to={`/games/language-quest/courses/${lesson.course.id}`} />} nativeButton={false}>
             Back to course
           </Button>

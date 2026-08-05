@@ -20,6 +20,7 @@ export function isExternalLearnerAppPathAllowed(value: string): boolean {
     || pathname === "/games/language-quest/profile"
     || pathname === "/games/language-quest/leaderboard"
     || pathname === "/games/language-quest/mastery"
+    || pathname === "/games/language-quest/heart-refill"
     || /^\/games\/language-quest\/courses\/[^/]+$/.test(pathname)
     || /^\/games\/language-quest\/courses\/[^/]+\/(?:boss-battle|culture)$/.test(pathname)
     || /^\/games\/language-quest\/courses\/[^/]+\/story\/[^/]+$/.test(pathname)
@@ -59,6 +60,8 @@ export function isExternalLearnerApiRequestAllowed(method: string, value: string
       || pathname === "/api/auth/change-password"
       || pathname === "/api/language-quest/profile/classrooms"
       || pathname === "/api/language-quest/voice"
+      || pathname === "/api/language-quest/heart-refill/start"
+      || pathname === "/api/language-quest/heart-refill/finish"
       || /^\/api\/language-quest\/challenges\/[^/]+\/answer$/.test(pathname)
       || /^\/api\/language-quest\/courses\/[^/]+\/boss-battle\/finish$/.test(pathname)
       || /^\/api\/language-quest\/mastery\/[^/]+\/answer$/.test(pathname)

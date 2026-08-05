@@ -39,6 +39,10 @@ import {
 import { useLanguageQuestPreferences } from '@/src/components/games/LanguageQuestPreferences';
 import { LanguageQuestLegendaryVault } from '@/src/components/games/LanguageQuestLegendaryRewards';
 import {
+  LanguageQuestSurpriseCardCollection,
+} from '@/src/components/games/LanguageQuestSurpriseCards';
+import type { LanguageQuestSurpriseCardCollection as SurpriseCardCollection } from '@/shared/languageQuestHeartRefill';
+import {
   LANGUAGE_QUEST_CLASSROOM_CODE_LENGTH,
   languageQuestProfileSection,
   normalizeLanguageQuestClassroomCode,
@@ -61,6 +65,7 @@ interface LearnerProfilePayload {
   avatarId: string;
   bio: string;
   profile: ProgressProfile;
+  surpriseCards: SurpriseCardCollection;
   classrooms: LearnerClassroom[];
 }
 
@@ -243,6 +248,8 @@ export default function LanguageQuestProfile() {
 
         <TabsContent value="cards" className="space-y-6 outline-none">
           <LanguageQuestRewardCollection rewards={profile.profile.rewards} bestStreak={profile.profile.bestStreak} learnerName={profile.name} />
+
+          <LanguageQuestSurpriseCardCollection collection={profile.surpriseCards} />
 
           <LanguageQuestLegendaryVault rewards={profile.profile.rewards} />
 

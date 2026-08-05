@@ -272,17 +272,17 @@ model User {
   passwordResetTokens    PasswordResetToken[]
   queuedEmails           EmailOutbox[]
 
-  conversationsCreated       Conversation[]                   @relation("ConversationCreatedBy")
+  conversationsCreated       Conversation[]                    @relation("ConversationCreatedBy")
   conversationParticipations ConversationParticipant[]
   chatMessages               ChatMessage[]
-  socialPosts                SocialPost[]                     @relation("SocialAuthor")
-  socialLikes                SocialLike[]                     @relation("SocialLiker")
-  socialComments             SocialComment[]                  @relation("SocialCommenter")
-  socialSeen                 SocialSeen?                      @relation("SocialSeenBy")
-  socialReportsFiled         SocialReport[]                   @relation("SocialReporter")
-  reportedRuleViolations     RuleViolation[]                  @relation("ReportedRuleViolations")
-  chessMatchesWhite          ChessMatch[]                     @relation("ChessWhite")
-  chessMatchesBlack          ChessMatch[]                     @relation("ChessBlack")
+  socialPosts                SocialPost[]                      @relation("SocialAuthor")
+  socialLikes                SocialLike[]                      @relation("SocialLiker")
+  socialComments             SocialComment[]                   @relation("SocialCommenter")
+  socialSeen                 SocialSeen?                       @relation("SocialSeenBy")
+  socialReportsFiled         SocialReport[]                    @relation("SocialReporter")
+  reportedRuleViolations     RuleViolation[]                   @relation("ReportedRuleViolations")
+  chessMatchesWhite          ChessMatch[]                      @relation("ChessWhite")
+  chessMatchesBlack          ChessMatch[]                      @relation("ChessBlack")
   pacmanGameScores           PacmanGameScore[]
   languageQuestProgress      LanguageQuestUserProgress?
   languageQuestChallenges    LanguageQuestChallengeProgress[]
@@ -290,14 +290,16 @@ model User {
   languageQuestMastery       LanguageQuestMasteryProgress[]
   languageQuestMissionClaims LanguageQuestMissionClaim[]
   languageQuestBossBattles   LanguageQuestBossBattleAttempt[]
-  languageQuestAvatar        String                           @default("owl")
+  languageQuestHeartRefills  LanguageQuestHeartRefillAttempt[]
+  languageQuestSurpriseCards LanguageQuestSurpriseCardUnlock[]
+  languageQuestAvatar        String                            @default("owl")
   languageQuestBio           String?
-  languageQuestClassrooms    LanguageQuestClassroom[]         @relation("LanguageQuestClassroomTeacher")
+  languageQuestClassrooms    LanguageQuestClassroom[]          @relation("LanguageQuestClassroomTeacher")
   languageQuestMemberships   LanguageQuestClassroomMember[]
   dailyQuestSessions         DailyQuestSession[]
   wordTrailGames             WordTrailGame[]
-  gameControlPoliciesCreated GameControlPolicy[]              @relation("GameControlCreatedBy")
-  gameControlPoliciesUpdated GameControlPolicy[]              @relation("GameControlUpdatedBy")
+  gameControlPoliciesCreated GameControlPolicy[]               @relation("GameControlCreatedBy")
+  gameControlPoliciesUpdated GameControlPolicy[]               @relation("GameControlUpdatedBy")
   gamePlaySessions           GamePlaySession[]
   gameDailyUsage             GameDailyUsage[]
 
@@ -4131,6 +4133,33 @@ model LanguageQuestBossBattleAttempt {
 
   @@index([userId, courseId])
   @@index([expiresAt])
+}
+
+model LanguageQuestHeartRefillAttempt {
+  id           String    @id @default(uuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challengeIds Json
+  expiresAt    DateTime
+  consumedAt   DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@index([userId, createdAt])
+  @@index([expiresAt])
+}
+
+model LanguageQuestSurpriseCardUnlock {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cardId     String
+  source     String   @default("HEART_REFILL")
+  dayKey     String
+  unlockedAt DateTime @default(now())
+
+  @@unique([userId, cardId])
+  @@unique([userId, source, dayKey])
+  @@index([userId, unlockedAt])
 }
 
 model LanguageQuestMasteryProgress {
