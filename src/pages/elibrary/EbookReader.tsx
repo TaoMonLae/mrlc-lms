@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router';
 import { Document, Page, pdfjs } from 'react-pdf';
 // Let Vite compile the pdf.js worker through its own pipeline. The `?worker`
 // import yields a Worker constructor that works in both dev and build, with the

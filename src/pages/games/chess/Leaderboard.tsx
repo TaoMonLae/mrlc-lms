@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { Loader2, Medal, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";

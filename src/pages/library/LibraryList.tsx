@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Plus, Search, Filter, FileText, Image as ImageIcon, Video, Link as LinkIcon, File, Download, ExternalLink, MoreVertical, Edit2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

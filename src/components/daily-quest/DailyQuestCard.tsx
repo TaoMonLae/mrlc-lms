@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ArrowRight, CheckCircle2, Flame, Loader2, Sparkles, Target } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';

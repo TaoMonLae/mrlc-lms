@@ -22,6 +22,7 @@ const MONTH_LABELS = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 ];
+const REPORT_YEARS = Array.from({ length: 6 }, (_, index) => new Date().getFullYear() + 1 - index);
 
 interface MonthlyCashFlow {
   month: number;
@@ -255,7 +256,7 @@ export default function MonthlyFinanceReport() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {[2024, 2025, 2026].map((y) => (
+              {REPORT_YEARS.map((y) => (
                 <SelectItem key={y} value={y.toString()}>
                   {y}
                 </SelectItem>

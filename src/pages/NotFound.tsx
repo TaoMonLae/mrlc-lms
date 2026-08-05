@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ArrowLeft, Home } from 'lucide-react';
 import Lottie from 'lottie-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router';
 import errorAnimation from '../../404-error-page.json';
 import { Button } from '@/components/ui/button';
 

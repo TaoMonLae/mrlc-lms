@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import {
   ArrowLeft, Search, Loader2, BookMarked, Download, CheckCircle2, BookOpen,
 } from 'lucide-react';

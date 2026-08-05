@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router';
 import confetti from 'canvas-confetti';
 import { ArrowLeft, Check, Clock3, Shield, Skull, Sparkles, Star, Swords, X } from 'lucide-react';
 import { toast } from 'sonner';

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router';
 import { ArrowLeft, Pencil, Trash2, BookUp, BookDown, BookMarked } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';

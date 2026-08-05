@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Video, Play, Clock, BookOpen, Check, CheckSquare, Square, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow, format } from 'date-fns';

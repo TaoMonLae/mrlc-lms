@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Loader2, AlertTriangle } from 'lucide-react';
 import { authHeaders } from '../../lib/api';

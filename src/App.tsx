@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { lazyWithRetry as lazy } from "./lib/lazyWithRetry";
 const AppLayout = lazy(() => import("./components/layout/AppLayout").then((module) => ({ default: module.AppLayout })));
 import { ExternalLearnerBoundary, ProtectedRoute } from "./components/auth/ProtectedRoute";

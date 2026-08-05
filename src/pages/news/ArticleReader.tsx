@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router';
 import { ArrowLeft, ExternalLink, Newspaper, Clock, ClipboardList, BookA, Loader2, Volume2, X } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import DOMPurify from 'dompurify';

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router';
 import { ArrowLeft, Edit2, Trash2, Download, ExternalLink, FileText, Image as ImageIcon, Video, Link as LinkIcon, File } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

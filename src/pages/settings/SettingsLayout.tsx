@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, Outlet, useLocation, Navigate } from 'react-router-dom';
+import { Link, Outlet, useLocation, Navigate } from 'react-router';
 import { Activity, Building2, Palette, Settings as SettingsIcon, Shield, ChevronRight, DatabaseBackup, Rss, Trash2 } from 'lucide-react';
 import { usePermissions } from '../../lib/permissions';
 

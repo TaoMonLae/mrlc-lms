@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { apiGet } from '../../lib/api';
 
 interface AvailableExam { id: string; title: string; subject: string; duration: string; questions: number; deadline: string; opensAt?: string | null; type: string; }

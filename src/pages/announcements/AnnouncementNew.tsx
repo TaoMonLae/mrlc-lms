@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { AnnouncementForm } from '@/src/components/announcements/AnnouncementForm';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Megaphone } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { toast } from 'sonner';
 
 export default function AnnouncementNew() {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ArrowRight, Dices, Loader2, Map, Trophy } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";

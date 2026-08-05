@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { usePermissions } from "@/src/lib/permissions";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import type { Color, PieceSymbol } from "chess.js";
 import { Bot, Check, Crown, Gamepad2, Swords, Trophy, Users, Wifi } from "lucide-react";
 import { Button } from "@/components/ui/button";

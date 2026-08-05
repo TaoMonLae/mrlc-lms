@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router';
 import { useAuth } from '../../providers/AuthProvider';
 import { hasPermission, Permission, UserRole } from '../../lib/permissions';
 import { isExternalLearnerAppPathAllowed } from '@/shared/externalLearnerAccess';

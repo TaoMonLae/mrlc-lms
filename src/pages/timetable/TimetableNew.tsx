@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router';
 import { TimetableForm } from '@/src/components/timetable/TimetableForm';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, CalendarDays } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { toast } from 'sonner';
 
 export default function TimetableNew() {

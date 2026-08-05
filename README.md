@@ -11,7 +11,7 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 - Default local URL: `http://localhost:8000`
 - Public Language Quest preview: `http://localhost:8000/language-quest`
 - Public Language Quest credits and course sources: `http://localhost:8000/language-quest/about`
-- Primary runtime: Node.js 20, Express, React 19, PostgreSQL 16
+- Primary runtime: Node.js 22.22+, Express, React 19, PostgreSQL 16
 - Developed by Tao Mon Lae
 - Developer: [github.com/TaoMonLae](https://github.com/TaoMonLae)
 
@@ -294,7 +294,7 @@ The production build creates:
 
 ### Required
 
-- Node.js 20 LTS or newer
+- Node.js 22.22 or newer
 - npm
 - PostgreSQL 16 or a compatible supported PostgreSQL release
 - A persistent filesystem for uploads and backups
@@ -543,10 +543,7 @@ Use a PostgreSQL client matching the server major version. Set `OFFSITE_BACKUP_D
 
 Production operators should also enforce HTTPS, protect database and backup credentials, restrict filesystem permissions, monitor PM2/container logs, and regularly test restoration from backup.
 
-### `npm run audit:prod` known finding
-
-`npm run audit:prod` (`npm audit --omit=dev --audit-level=high`) will always report one high-severity finding on `react-router`/`react-router-dom`:
-[GHSA-qwww-vcr4-c8h2](https://github.com/advisories/GHSA-qwww-vcr4-c8h2), a CSRF bypass in React Router's **unstable RSC (React Server Components) mode**. This app renders with plain `<BrowserRouter>`/`<Routes>`/`<Route>` (see `src/App.tsx`) and never uses React Router's RSC APIs, so the vulnerable code path is not reachable here. The only real fix is React Router v8, which folded `react-router-dom` into the `react-router` package -- a rename-plus-migration across every file that currently imports from `react-router-dom`, not a drop-in bump. `npm audit fix --force`'s alternative of downgrading to `react-router-dom@7.11.0` is worse, not better: that version is exposed to well over a dozen *other* advisories (XSS, an RCE via deserialization, open redirects, DoS) that 7.18.x has already patched. Stay on the latest 7.x release and treat this one finding as accepted risk until a v8 migration is scheduled.
+`npm run audit:prod` runs `npm audit --omit=dev --audit-level=high` and must pass before deployment. The app uses the patched React Router v8 package directly; v8 removed the legacy `react-router-dom` compatibility package.
 
 ## Project structure
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router';
 import { AnnouncementForm } from '@/src/components/announcements/AnnouncementForm';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Megaphone } from 'lucide-react';

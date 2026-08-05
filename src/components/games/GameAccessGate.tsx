@@ -1,6 +1,6 @@
 import { Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { Clock3, GraduationCap, RefreshCw, ShieldAlert, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ApiError, apiGet, apiSend, authHeaders } from "../../lib/api";

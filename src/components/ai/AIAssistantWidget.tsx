@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation } from "react-router";
 import { Sparkles, X, Send, Copy, Check, Trash2 } from "lucide-react";
 import { useAuth } from "../../providers/AuthProvider";
 import { apiSend } from "../../lib/api";

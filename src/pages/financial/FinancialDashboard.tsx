@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router';
 import { DollarSign, TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight, Calendar, Users, AlertTriangle, CheckCircle2, PiggyBank, FileBarChart, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,7 +36,7 @@ export default function FinancialDashboard() {
 
   const currency = systemSettings.currency || 'MYR';
   const currentYear = new Date().getFullYear();
-  const currentMonth = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+  const yearOptions = Array.from({ length: Math.max(4, currentYear - 2023 + 2) }, (_, index) => currentYear + 1 - index);
 
   useEffect(() => {
     const token = sessionStorage.getItem('auth_token');
@@ -46,13 +46,13 @@ export default function FinancialDashboard() {
 
     // Fetch both legacy and new financial data
     Promise.all([
-      fetch('/api/fees', { headers }).then(r => r.json()),
+      fetch(`/api/fees?year=${year}`, { headers }).then(r => r.json()),
       // The expenses list is paginated; totals come from its `summary`, which
       // is computed server-side over ALL matching rows (not just one page).
-      fetch('/api/expenses?limit=1', { headers }).then(r => r.json()),
+      fetch(`/api/expenses?limit=1&startDate=${yearStart}&endDate=${yearEnd}`, { headers }).then(r => r.json()),
       // Pending approvals fetched separately so the count/list are complete.
-      fetch('/api/expenses?status=PENDING_APPROVAL&limit=5', { headers }).then(r => r.json()),
-      fetch('/api/budgets', { headers }).then(r => r.json()),
+      fetch(`/api/expenses?status=PENDING_APPROVAL&limit=5&startDate=${yearStart}&endDate=${yearEnd}`, { headers }).then(r => r.json()),
+      fetch(`/api/budgets?fiscalYear=${year}`, { headers }).then(r => r.json()),
       // New enhanced data (server expects `fiscalYear`, not `year`)
       fetch(`/api/financial-reports/summary?fiscalYear=${year}`, { headers }).then(r => r.ok ? r.json() : null),
       fetch(`/api/financial-reports/cash-flow?startDate=${yearStart}&endDate=${yearEnd}`, { headers }).then(r => r.ok ? r.json() : null),
@@ -78,7 +78,9 @@ export default function FinancialDashboard() {
           id: f.id,
           type: 'FEE_PAYMENT',
           studentId: f.studentId,
-          studentName: 'Student',
+          studentName: f.student
+            ? `${f.student.user?.firstName ?? ''} ${f.student.user?.lastName ?? ''}`.trim() || f.student.studentCode || 'Student'
+            : 'Student',
           amount: paidForFee(f),
           date: f.paidDate || f.createdAt,
           status: f.status,
@@ -165,7 +167,7 @@ export default function FinancialDashboard() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Financial Dashboard</h1>
-          <p className="text-sm text-slate-500">Overview of fees, expenses, and budgets for {currentMonth}</p>
+          <p className="text-sm text-slate-500">Overview of fees, expenses, and budgets for fiscal year {year}</p>
         </div>
         <div className="flex gap-2">
           <Select value={year.toString()} onValueChange={(value) => setYear(parseInt(value))}>
@@ -173,7 +175,7 @@ export default function FinancialDashboard() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {[2024, 2025, 2026].map(y => (
+              {yearOptions.map(y => (
                 <SelectItem key={y} value={y.toString()}>
                   {y}
                 </SelectItem>

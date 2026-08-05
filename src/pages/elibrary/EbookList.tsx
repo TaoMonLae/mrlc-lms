@@ -1,5 +1,5 @@
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router';
 import {
   ArrowUpDown, BarChart3, BookMarked, BookOpen, ChevronDown, ChevronLeft,
   ChevronRight, ClipboardList, Download, LibraryBig, Lock, Pencil, Plus,

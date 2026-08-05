@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router';
 import QRCode from 'qrcode';
 import { ArrowLeft, Ban, Download, Loader2, Printer, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router';
 import { TimetableForm } from '@/src/components/timetable/TimetableForm';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, CalendarDays } from 'lucide-react';

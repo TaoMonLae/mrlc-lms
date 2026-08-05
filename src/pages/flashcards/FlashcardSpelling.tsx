@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useLocation, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router';
 import { ArrowLeft, SpellCheck, Volume2, CheckCircle2, XCircle, RotateCw, Brain, Grid3x3 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';

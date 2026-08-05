@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { apiGet, apiSend, authHeaders } from '../../lib/api';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {

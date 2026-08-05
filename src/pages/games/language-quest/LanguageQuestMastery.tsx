@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router';
 import { ArrowLeft, Brain, CheckCircle2, Clock3, Flame, Link2, RotateCcw, Sparkles, Star, Target, Trophy, Volume2, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';

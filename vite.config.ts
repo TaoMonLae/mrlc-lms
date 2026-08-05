@@ -28,7 +28,7 @@ export default defineConfig(() => {
         output: {
           manualChunks(id: string) {
             if (!id.includes('node_modules')) return undefined;
-            if (/node_modules\/(react|react-dom|react-router|react-router-dom|scheduler)\//.test(id)) return 'vendor-react';
+            if (/node_modules\/(react|react-dom|react-router|scheduler)\//.test(id)) return 'vendor-react';
             if (/node_modules\/(@base-ui|@radix-ui|lucide-react|sonner|next-themes|clsx|tailwind-merge|class-variance-authority)\//.test(id)) return 'vendor-ui';
             if (id.includes('node_modules/date-fns/')) return 'vendor-date';
             if (/node_modules\/(@hookform|react-hook-form|zod)\//.test(id)) return 'vendor-forms';

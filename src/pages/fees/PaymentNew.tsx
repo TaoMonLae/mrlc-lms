@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import { ArrowLeft, Save, Receipt, Calendar } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -152,6 +152,7 @@ export default function PaymentNew() {
         amountPaid: data.amountPaid,
         paymentMethod: data.paymentMethod,
         paymentDate: data.paymentDate,
+        billingMonth: `${data.paymentYear}-${data.paymentMonth.padStart(2, '0')}`,
         dueDate: data.dueDate || undefined,
         receiptNumber: data.receiptNumber,
         notes: data.notes,

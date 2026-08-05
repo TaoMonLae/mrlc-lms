@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router';
 import confetti from 'canvas-confetti';
 import { ArrowLeft, BookOpenText, RotateCcw, Volume2 } from 'lucide-react';
 import { toast } from 'sonner';

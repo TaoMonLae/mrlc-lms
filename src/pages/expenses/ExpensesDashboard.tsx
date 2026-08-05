@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Plus, Search, DollarSign, TrendingUp, AlertCircle, CheckCircle2, Receipt, Building2, Wallet, Printer, FileSpreadsheet, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';

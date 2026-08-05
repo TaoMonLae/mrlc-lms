@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { MessageSquare, Plus, Send, Search, Flag, ArrowLeft, ShieldAlert, ImagePlus, X, Loader2, Sticker, Camera, Download, Clock, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePermissions } from '../../lib/permissions';

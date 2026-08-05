@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router';
 import { usePermissions } from '../../lib/permissions';
 import { ArrowLeft, FileText, Plus, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';

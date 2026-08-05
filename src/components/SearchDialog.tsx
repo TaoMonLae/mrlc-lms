@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { apiGet } from "../lib/api";
 
 interface SearchResult {

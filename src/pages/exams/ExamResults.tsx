@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router';
 import { Loader2 } from 'lucide-react';
 import { useUser } from '../../lib/permissions';
 import { apiGet } from '../../lib/api';

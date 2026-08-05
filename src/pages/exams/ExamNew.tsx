@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router';
 import { ArrowLeft, Loader2, Sparkles } from 'lucide-react';
 import { apiGet, apiSend } from '../../lib/api';
 import { Button } from '@/components/ui/button';

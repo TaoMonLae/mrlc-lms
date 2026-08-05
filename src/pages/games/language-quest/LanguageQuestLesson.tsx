@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router';
 import confetti from 'canvas-confetti';
 import { ArrowLeft, BookA, Flame, Headphones, Heart, Lightbulb, ListChecks, Mic, PartyPopper, PencilLine, SpellCheck2, Square, Star, Volume2, VolumeX } from 'lucide-react';
 import { toast } from 'sonner';

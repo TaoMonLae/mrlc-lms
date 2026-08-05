@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { useEffect, useState } from 'react';
 import { Wallet, Printer } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';

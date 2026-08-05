@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Wallet, Plus, Download, RefreshCw, Pencil, Trash2, Printer } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router';
+import { Wallet, Plus, Download, RefreshCw, Pencil, Trash2, Printer, FilterX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,6 +35,19 @@ export default function Payroll() {
   const [refreshing, setRefreshing] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [yearFilter, setYearFilter] = useState('ALL');
+  const [monthFilter, setMonthFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+
+  const availableYears = useMemo(
+    () => Array.from(new Set(runs.map((run) => run.periodYear))).sort((a, b) => b - a),
+    [runs],
+  );
+  const filteredRuns = useMemo(() => runs.filter((run) => (
+    (yearFilter === 'ALL' || run.periodYear === Number(yearFilter))
+    && (monthFilter === 'ALL' || run.periodMonth === Number(monthFilter))
+    && (statusFilter === 'ALL' || run.status === statusFilter)
+  )), [runs, yearFilter, monthFilter, statusFilter]);
 
   async function load() {
     setLoading(true);
@@ -45,6 +58,9 @@ export default function Payroll() {
     finally { setLoading(false); }
   }
   useEffect(() => { load(); }, []);
+  useEffect(() => {
+    if (selected && !filteredRuns.some((run) => run.id === selected.id)) setSelected(null);
+  }, [filteredRuns, selected]);
 
   async function openRun(id: string) {
     try { setSelected(await apiGet(`/api/payroll-runs/${id}`)); }
@@ -182,13 +198,48 @@ export default function Payroll() {
         </div>
       </div>
 
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900/40">
+        <Select value={yearFilter} onValueChange={setYearFilter}>
+          <SelectTrigger className="w-36"><SelectValue placeholder="Year" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All years</SelectItem>
+            {availableYears.map((availableYear) => <SelectItem key={availableYear} value={String(availableYear)}>{availableYear}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={monthFilter} onValueChange={setMonthFilter}>
+          <SelectTrigger className="w-40"><SelectValue placeholder="Month" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All months</SelectItem>
+            {MONTHS.map((monthName, index) => <SelectItem key={monthName} value={String(index + 1)}>{monthName}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-40"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All statuses</SelectItem>
+            {Object.keys(STATUS_STYLES).map((status) => <SelectItem key={status} value={status}>{status}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        {(yearFilter !== 'ALL' || monthFilter !== 'ALL' || statusFilter !== 'ALL') && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => { setYearFilter('ALL'); setMonthFilter('ALL'); setStatusFilter('ALL'); }}
+          >
+            <FilterX className="mr-1 h-4 w-4" /> Clear filters
+          </Button>
+        )}
+        <span className="ml-auto text-xs text-slate-500">Showing {filteredRuns.length} of {runs.length} runs</span>
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-2 lg:col-span-1">
           <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Runs</h2>
           {loading ? <p className="text-sm text-slate-400">Loading…</p> :
             runs.length === 0 ? <p className="text-sm text-slate-400">No payroll runs yet.</p> :
+            filteredRuns.length === 0 ? <p className="text-sm text-slate-400">No payroll runs match these filters.</p> :
             <ul className="space-y-1">
-              {runs.map((r) => (
+              {filteredRuns.map((r) => (
                 <li key={r.id}>
                   <button onClick={() => openRun(r.id)} className={`flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-sm transition-colors ${selected?.id === r.id ? 'border-indigo-300 bg-indigo-50 dark:border-indigo-700 dark:bg-indigo-950/40' : 'border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800'}`}>
                     <span>{MONTHS[r.periodMonth - 1]} {r.periodYear} <span className="text-xs text-slate-400">· {r._count?.payslips ?? 0} payslips</span></span>

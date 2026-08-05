@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, Outlet, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useNavigate } from 'react-router';
 import { BarChart3, Brain, GraduationCap, Info, Languages, LogOut, Moon, Settings2, Sun, Trophy, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/src/providers/AuthProvider';

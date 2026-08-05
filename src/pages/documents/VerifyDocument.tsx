@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { ShieldCheck, ShieldX, ShieldAlert, Loader2 } from 'lucide-react';
 
 interface VerifyResult {

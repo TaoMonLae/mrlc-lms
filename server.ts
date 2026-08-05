@@ -75,6 +75,7 @@ import {
 import { checkWritableDirectory, probeCommand, summarizeHealth, type HealthCheckResult } from "./lib/systemHealth";
 import { extractRarEntry, listRarImageEntries } from "./lib/portableRar";
 import { cleanEbookTitle, findDuplicateEbookSeriesVolume, findDuplicateEbookTitle, normalizedTitleForColumn } from "./lib/ebookTitles";
+import { feeMonthRange, feeYearRange, normalizeFeeMonth } from "./shared/feePeriods";
 
 dotenv.config();
 
@@ -1081,7 +1082,7 @@ const schemas = {
     // rest as an outstanding balance to be topped up later.
     amountPaid: optNum,
     paymentType: optStr, paymentMethod: optStr, paymentDate: optStr,
-    dueDate: optStr,
+    billingMonth: optStr, dueDate: optStr,
     receiptNumber: optStr, notes: optStr,
   }),
   feePaymentTopUp: z.object({
@@ -8419,16 +8420,42 @@ async function startServer() {
   // who had been assigned a fee but hadn't paid it yet had zero rows to
   // show under any status -- "Unpaid"/"Partial" were structurally
   // impossible to see, not just empty by coincidence.
-  const buildStudentFeeOverview = async () => {
+  type FeeOverviewPeriod = { month?: string; year?: number };
+
+  const buildStudentFeeOverview = async (period: FeeOverviewPeriod = {}) => {
+    const monthRange = period.month ? feeMonthRange(period.month) : null;
+    const yearRange = period.year != null ? feeYearRange(period.year) : null;
+    const range = monthRange || yearRange;
+    const dueDateFilter = range ? { gte: range.start, lt: range.endExclusive } : undefined;
+
+    const assignmentWhere: any = { status: { not: "WAIVED" } };
+    if (dueDateFilter) assignmentWhere.dueDate = dueDateFilter;
+
+    const orphanPaymentWhere: any = { assignmentId: null };
+    if (period.month && dueDateFilter) {
+      // billingMonth is authoritative for new rows. The dueDate fallback
+      // keeps this endpoint safe during a rolling deploy and for any legacy
+      // row that predates the backfill migration.
+      orphanPaymentWhere.OR = [
+        { billingMonth: period.month },
+        { billingMonth: null, dueDate: dueDateFilter },
+      ];
+    } else if (period.year != null && dueDateFilter) {
+      orphanPaymentWhere.OR = [
+        { billingMonth: { gte: `${period.year}-01`, lte: `${period.year}-12` } },
+        { billingMonth: null, dueDate: dueDateFilter },
+      ];
+    }
+
     const [assignments, orphanPayments] = await Promise.all([
-      prisma.feeAssignment.findMany({ include: { student: { include: { user: true, class: true } }, feeItem: true } }),
+      prisma.feeAssignment.findMany({ where: assignmentWhere, include: { student: { include: { user: true, class: true } }, feeItem: true } }),
       // assignmentId is unique+optional: null means this payment wasn't
       // recorded against a structured assignment (the ad-hoc flow).
       // Cast: discountAmount/paidAmount are new columns (see the
       // add_fee_payment_discount_and_partial migration) not yet reflected
       // in this environment's generated Prisma client typings; the real
       // runtime client is regenerated from schema.prisma before deploy.
-      prisma.feePayment.findMany({ where: { assignmentId: null }, include: { student: { include: { user: true, class: true } } } }) as Promise<any[]>,
+      prisma.feePayment.findMany({ where: orphanPaymentWhere, include: { student: { include: { user: true, class: true } } } }) as Promise<any[]>,
     ]);
 
     const byStudent = new Map<string, {
@@ -8500,6 +8527,7 @@ async function startServer() {
       paymentMethod: null,
       paidDate: null,
       dueDate: a.dueDate,
+      billingMonth: a.dueDate.toISOString().slice(0, 7),
       createdAt: a.dueDate,
       receiptNumber: null,
     }));
@@ -8531,7 +8559,26 @@ async function startServer() {
           res.json(await buildStudentTransactionRows(studentId, fallbackCurrency));
           return;
         }
-        const overview = await buildStudentFeeOverview();
+        const requestedMonth = req.query.month;
+        const requestedYear = req.query.year;
+        const month = requestedMonth == null ? undefined : normalizeFeeMonth(requestedMonth);
+        if (requestedMonth != null && !month) {
+          res.status(400).json({ error: "month must use YYYY-MM format" });
+          return;
+        }
+        const yearRange = requestedYear == null ? null : feeYearRange(requestedYear);
+        if (requestedYear != null && !yearRange) {
+          res.status(400).json({ error: "year must be a whole number between 2000 and 2100" });
+          return;
+        }
+        if (month && requestedYear != null) {
+          res.status(400).json({ error: "Use either month or year, not both" });
+          return;
+        }
+        const overview = await buildStudentFeeOverview({
+          ...(month ? { month } : {}),
+          ...(requestedYear != null ? { year: Number(requestedYear) } : {}),
+        });
         res.json(overview.map(({ student, expected, paid, balance, status, lastPaymentDate }) => ({
           id: student.id,
           studentId: student.id,
@@ -8595,7 +8642,7 @@ async function startServer() {
       res.status(403).json({ error: "Forbidden" });
       return;
     }
-    const { studentId, totalAmount, discountAmount, amountPaid, paymentType, paymentMethod, paymentDate, dueDate, receiptNumber, notes } = req.body;
+    const { studentId, totalAmount, discountAmount, amountPaid, paymentType, paymentMethod, paymentDate, dueDate, billingMonth, receiptNumber, notes } = req.body;
     const gross = Number(totalAmount);
     if (!studentId || !totalAmount) {
       res.status(400).json({ error: "studentId and totalAmount are required" });
@@ -8620,6 +8667,13 @@ async function startServer() {
     // in this environment's generated Prisma client typings -- cast so this
     // still compiles here; the real client is regenerated before deploy.
     const status: any = paidNow <= 0 ? "PENDING" : paidNow >= netAmount ? "PAID" : "PARTIAL";
+    const canonicalBillingMonth = billingMonth == null
+      ? normalizeFeeMonth(String(dueDate || paymentDate || new Date().toISOString()).slice(0, 7))
+      : normalizeFeeMonth(billingMonth);
+    if (!canonicalBillingMonth) {
+      res.status(400).json({ error: "billingMonth must use YYYY-MM format" });
+      return;
+    }
     try {
       const profile = await prisma.schoolProfile.findFirst();
       const fee = await prisma.feePayment.create({
@@ -8629,6 +8683,7 @@ async function startServer() {
           discountAmount: discount,
           paidAmount: paidNow,
           currency: profile?.currency || "MYR",
+          billingMonth: canonicalBillingMonth,
           description: paymentType || "Tuition Fee",
           paymentMethod: paymentMethod || "CASH",
           paidDate: paidNow > 0 ? (paymentDate ? new Date(paymentDate) : new Date()) : null,
@@ -9272,6 +9327,7 @@ async function startServer() {
           amount: assignment.outstandingAmount,
           paidAmount: assignment.outstandingAmount,
           currency: feeProfile?.currency || "MYR",
+          billingMonth: assignment.dueDate.toISOString().slice(0, 7),
           dueDate: assignment.dueDate,
           paidDate: new Date(),
           status: "PAID",
@@ -12140,23 +12196,22 @@ async function startServer() {
       const reportYear = dateFilter.gte.getUTCFullYear();
 
       for (let i = 0; i < 12; i++) {
-        const monthStart = new Date(reportYear, i, 1);
-        // End of the month's last day, so records dated on it are included.
-        const monthEnd = new Date(reportYear, i + 1, 0, 23, 59, 59, 999);
+        const monthStart = new Date(Date.UTC(reportYear, i, 1));
+        const nextMonthStart = new Date(Date.UTC(reportYear, i + 1, 1));
 
         const monthFeeInflows = feeInflows.filter(f => {
           const date = new Date(f.paidDate);
-          return date >= monthStart && date <= monthEnd;
+          return date >= monthStart && date < nextMonthStart;
         });
 
         const monthDonationInflows = donationInflows.filter(d => {
           const date = new Date(d.donationDate);
-          return date >= monthStart && date <= monthEnd;
+          return date >= monthStart && date < nextMonthStart;
         });
 
         const monthExpenseOutflows = expenseOutflows.filter(e => {
           const date = new Date(e.paymentDate);
-          return date >= monthStart && date <= monthEnd;
+          return date >= monthStart && date < nextMonthStart;
         });
 
         const totalInflow = monthFeeInflows.reduce((sum, f) => sum + ((f as any).paidAmount ?? f.amount), 0) +
@@ -17618,7 +17673,7 @@ async function startServer() {
 
   // Fees report: per-student expected/paid/balance + totals
   app.get("/api/reports/fees", authMiddleware, reportRole(["ADMIN", "ACCOUNTANT"]), async (req, res) => {
-    const { classId, status } = req.query as { classId?: string; status?: string };
+    const { classId, status, month: requestedMonth } = req.query as { classId?: string; status?: string; month?: string };
     try {
       // Same combined source as GET /api/fees: structured FeeAssignment
       // obligations (which stay unpaid until actually paid) plus ad-hoc
@@ -17627,7 +17682,12 @@ async function startServer() {
       // here at all -- "expected" was silently reconstructed from whatever
       // had already been paid, so this report could never show a real
       // outstanding balance.
-      const overview = await buildStudentFeeOverview();
+      const month = requestedMonth == null || requestedMonth === "all" ? undefined : normalizeFeeMonth(requestedMonth);
+      if (requestedMonth != null && requestedMonth !== "all" && !month) {
+        res.status(400).json({ error: "month must use YYYY-MM format" });
+        return;
+      }
+      const overview = await buildStudentFeeOverview(month ? { month } : {});
       const profile = await prisma.schoolProfile.findFirst();
 
       let rows = overview

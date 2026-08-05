@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router';
 import { ArrowLeft, Printer, Filter, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { PrintLayout } from '../../components/reports/PrintLayout';
 import { apiGet, qs } from '../../lib/api';
 import { formatMoney } from '../../lib/locale';
+import { feeMonthLabel, feeMonthOptions } from '../../../shared/feePeriods';
 
 interface ClassOption { id: string; name: string; }
 interface FeeRow { studentName: string; className: string; expected: number; paid: number; balance: number; status: string; }
@@ -24,6 +25,8 @@ export default function FeesReport() {
   const [classes, setClasses] = useState<ClassOption[]>([]);
   const [classFilter, setClassFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [monthFilter, setMonthFilter] = useState('all');
+  const monthOptions = useMemo(() => feeMonthOptions(new Date(), 36, 12), []);
 
   const [data, setData] = useState<FeesReportData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -39,7 +42,7 @@ export default function FeesReport() {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await apiGet<FeesReportData>(`/api/reports/fees${qs({ classId: classFilter, status: statusFilter })}`);
+      const res = await apiGet<FeesReportData>(`/api/reports/fees${qs({ classId: classFilter, status: statusFilter, month: monthFilter })}`);
       setData(res);
     } catch (err: any) {
       setError(err.message || 'Failed to load report');
@@ -53,6 +56,7 @@ export default function FeesReport() {
 
   const classLabel = classFilter === 'all' ? 'All Classes' : classes.find((c) => c.id === classFilter)?.name || '—';
   const statusLabel = statusFilter === 'all' ? 'All Statuses' : statusFilter;
+  const monthLabel = monthFilter === 'all' ? 'All Months' : feeMonthLabel(monthFilter);
   const cur = data?.currency || 'MYR';
   const rows = data?.rows ?? [];
 
@@ -75,6 +79,16 @@ export default function FeesReport() {
       </div>
 
       <div className="print:hidden bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl p-4 flex flex-wrap gap-4 items-end shadow-sm">
+         <div className="space-y-1.5 flex-1 min-w-[200px]">
+           <label className="text-xs font-semibold text-slate-500 uppercase">Billing Month</label>
+           <Select value={monthFilter} onValueChange={setMonthFilter}>
+              <SelectTrigger><SelectValue placeholder="Select Month" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Months</SelectItem>
+                {monthOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+         </div>
          <div className="space-y-1.5 flex-1 min-w-[200px]">
            <label className="text-xs font-semibold text-slate-500 uppercase">Class</label>
            <Select value={classFilter} onValueChange={setClassFilter}>
@@ -110,7 +124,7 @@ export default function FeesReport() {
       <PrintLayout
         title="Fee Collection Summary"
         preparedBy="Finance Admin"
-        filters={{ Class: classLabel, Status: statusLabel }}
+        filters={{ Month: monthLabel, Class: classLabel, Status: statusLabel }}
       >
         <div className="mb-8 grid grid-cols-3 gap-6">
            <div className="border border-slate-300 p-4 rounded">

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { Grid3x3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SudokuDataGate from "./SudokuDataGate";

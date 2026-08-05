@@ -10,7 +10,7 @@
  * Design reference: "Exam Builder — Guided Studio" handoff.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router';
 import {
   Check, ChevronDown, GripVertical, Loader2, Plus, Sparkles, Trash2, X,
   FileText, ListChecks, CalendarClock, Award, Smartphone, Monitor, Play,

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router';
 import {
   ArrowLeft, UploadCloud, FileText, Loader2, Lock, Download, X,
   CheckCircle2, AlertCircle, BookMarked, LibraryBig,

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { Loader2, ShieldAlert, ShieldCheck, ShieldX } from 'lucide-react';
 import { formatMoney } from '../../lib/locale';
 

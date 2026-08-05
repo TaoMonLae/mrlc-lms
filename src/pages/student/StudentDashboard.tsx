@@ -18,7 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { useEffect, useState } from 'react';
 import { useSettings } from '../../providers/SettingsProvider';
 import { formatMoney } from '../../lib/locale';

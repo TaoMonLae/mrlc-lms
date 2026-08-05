@@ -15,7 +15,7 @@ import {
   Users
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { apiGet } from "../../lib/api";
 

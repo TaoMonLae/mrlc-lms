@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router";
 import { Button } from "@/components/ui/button";
 import CheckerGame from "./CheckerGame";
 import PixelBlast from "@/components/PixelBlast";

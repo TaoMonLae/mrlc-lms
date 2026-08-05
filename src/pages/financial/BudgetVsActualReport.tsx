@@ -12,6 +12,8 @@ import { cn } from "@/lib/utils";
 import { exportReportToExcel } from "@/src/lib/exportReport";
 import { PrintLayout } from "../../components/reports/PrintLayout";
 
+const REPORT_YEARS = Array.from({ length: 6 }, (_, index) => new Date().getFullYear() + 1 - index);
+
 interface BudgetComparison {
   id: string;
   name: string;
@@ -212,7 +214,7 @@ export default function BudgetVsActualReport() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {[2024, 2025, 2026].map(y => (
+              {REPORT_YEARS.map(y => (
                 <SelectItem key={y} value={y.toString()}>
                   {y}
                 </SelectItem>

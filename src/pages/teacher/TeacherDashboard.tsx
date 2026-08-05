@@ -4,7 +4,7 @@ import { Users, BookOpen, Clock, CheckCircle2, GraduationCap, Calendar, ArrowRig
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { apiGet } from "../../lib/api";
 import { DailyQuestCard } from "@/src/components/daily-quest/DailyQuestCard";
 import { WordTrailCard } from "@/src/components/word-trail/WordTrailCard";

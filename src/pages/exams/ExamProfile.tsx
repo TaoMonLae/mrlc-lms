@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router';
 import { ArrowLeft, Edit, Play, Users, BarChart3, Clock, CheckCircle2, Settings, Trash2, BookOpenCheck, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

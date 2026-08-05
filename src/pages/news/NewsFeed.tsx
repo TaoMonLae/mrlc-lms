@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Newspaper, Search, ExternalLink, RefreshCw, Settings2, BookOpenText, ClipboardList } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';

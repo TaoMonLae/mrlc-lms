@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router';
 import { Layers, Plus, Pencil, Trash2, BookOpen, Download, Brain, Grid3x3, SpellCheck, BarChart3, Users, Copy, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';

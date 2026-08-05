@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { BarChart3, BookOpen, Flame, GraduationCap, Heart, Languages, Map, Settings2, Sparkles, Star, Trophy, UserRound, Users, WholeWord } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';

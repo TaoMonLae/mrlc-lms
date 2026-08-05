@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Users, BookOpen, AlertCircle, CalendarRange, TrendingUp, Megaphone, Pin, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate } from "react-router";
 import { usePermissions } from "@/src/lib/permissions";
 import { toast } from "sonner";
 

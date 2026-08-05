@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Users, Calendar, GraduationCap, DollarSign, Activity, FileSpreadsheet, Loader2, TrendingUp } from 'lucide-react';
 import { usePermissions } from '../../lib/permissions';
 import { apiGet } from '../../lib/api';

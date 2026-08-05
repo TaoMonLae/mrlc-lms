@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Video, Search, Filter, Play, Clock, BookOpen, Check, AlertTriangle } from 'lucide-react';
 import { apiGet, apiSend } from '../../lib/api';
 import { Button } from '@/components/ui/button';

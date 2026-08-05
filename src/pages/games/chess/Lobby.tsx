@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { Bell, Check, Clock, Loader2, Search, Swords, Trophy, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";

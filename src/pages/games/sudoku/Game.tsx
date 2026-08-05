@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router";
 
 import { useGame, GameStateMachine, GameState, INITIAL_GAME_STATE, GameProvider } from "./context/GameContext";
 import { emptyGrid, INITIAL_CREATE_NEW_SUDOKU_STATE, SudokuProvider, SudokuState, useSudoku } from "./context/SudokuContext";

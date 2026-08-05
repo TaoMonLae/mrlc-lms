@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import {
   Sparkles, Image as ImageIcon, Camera, Heart, MessageCircle, Send, Trash2,
   Clock, X, Loader2, Flag, Pencil, Check, ShieldAlert, GraduationCap,

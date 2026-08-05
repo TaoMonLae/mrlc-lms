@@ -8,7 +8,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { stringifySudoku } from "@/src/lib/sudoku/engine/utility";
 import { useElementWidth } from "@/src/lib/sudoku/utils/hooks";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { localStoragePlayedSudokuRepository, StoredPlayedSudokuState } from "@/src/lib/sudoku/database/playedSudokus";
 import { Collection, translateCollectionName } from "@/src/lib/sudoku/database/collections";
 import NewSudoku from "./NewSudoku";

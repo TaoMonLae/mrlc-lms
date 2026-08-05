@@ -1,7 +1,7 @@
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { TopBar } from "./TopBar";
-import { Outlet, useLocation, Navigate } from "react-router-dom";
+import { Outlet, useLocation, Navigate } from "react-router";
 import { motion } from "motion/react";
 import { useAuth } from "../../providers/AuthProvider";
 import ChatWidget from "../chat/ChatWidget";

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router";
 import { Button } from "@/components/ui/button";
 import { SnakeProvider } from "./context/SnakeContext";
 import VocabularySnakeGame from "./components/VocabularySnakeGame";

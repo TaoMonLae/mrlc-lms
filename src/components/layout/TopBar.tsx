@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Search, Moon, Sun, Monitor, Bell, Megaphone, Pin, Calendar, Clock, Settings } from "lucide-react";
 import { Input } from "@/components/ui/input";

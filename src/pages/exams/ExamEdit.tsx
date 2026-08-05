@@ -1,4 +1,4 @@
-import { Navigate, useParams } from 'react-router-dom';
+import { Navigate, useParams } from 'react-router';
 
 /**
  * The classic exam builder has been removed — the Guided Studio

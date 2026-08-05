@@ -18,7 +18,7 @@ import {
 import { NAVIGATION_ITEMS, ROLE_NAV, isNavGroup } from "@/src/lib/navigation";
 import { GraduationCap, LogOut, User, ChevronDown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuGroup } from "@/components/ui/dropdown-menu";
 import { usePermissions, useUser } from "@/src/lib/permissions";
