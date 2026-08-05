@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { ArrowLeft, BookOpenText, Check, ChevronRight, Dices, Globe2, Headphones, Keyboard, Lightbulb, ListChecks, Lock, Map, Play, RotateCcw, Skull, SpellCheck2, Trophy } from 'lucide-react';
+import { ArrowLeft, Award, BookMarked, BookOpenText, Check, ChevronRight, Dices, FileCheck2, Globe2, Headphones, Keyboard, Lightbulb, ListChecks, Lock, Map, Play, RotateCcw, Skull, SpellCheck2, Trophy } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -42,6 +42,21 @@ interface CoursePayload {
     eligibleQuestionCount: number;
     minQuestions: number;
     remainingChallenges: number;
+  };
+  finalExam: {
+    available: boolean;
+    unlocked: boolean;
+    eligibleQuestionCount: number;
+    minQuestions: number;
+    questionCount: number;
+    passPercent: number;
+    attemptMinutes: number;
+    passed: boolean;
+    certificateEligible: boolean;
+    passedAt: string | null;
+    bestScorePercent: number | null;
+    latestAttempt: { status: string; scorePercent: number | null; submittedAt: string | null; violationReason: string | null } | null;
+    retryAt: string | null;
   };
 }
 
@@ -144,6 +159,19 @@ export default function LanguageQuestCourse() {
         </div>
       </section>
 
+      <section className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-sky-200 bg-sky-50 p-5 dark:border-sky-500/20 dark:bg-sky-500/10 sm:flex-row sm:items-center">
+        <div className="flex items-start gap-3">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sky-600 text-white"><BookMarked className="h-5 w-5" /></span>
+          <div>
+            <h2 className="font-black text-slate-950 dark:text-white">Words learned in this course</h2>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Completed vocabulary practices are saved in your personal word bank for review.</p>
+          </div>
+        </div>
+        <Button variant="outline" className="shrink-0 bg-white dark:bg-slate-900" render={<Link to={`/games/language-quest/words?courseId=${course.id}`} />} nativeButton={false}>
+          <BookOpenText className="mr-2 h-4 w-4" /> Review learned words
+        </Button>
+      </section>
+
       {nextLesson && (
         <section className="flex flex-col items-start justify-between gap-4 rounded-2xl border-2 p-5 sm:flex-row sm:items-center" style={{ borderColor: `${course.accentColor}55`, backgroundColor: `${course.accentColor}0f` }}>
           <div className="flex items-center gap-3">
@@ -160,6 +188,37 @@ export default function LanguageQuestCourse() {
           </Button>
         </section>
       )}
+
+      <section className={`overflow-hidden rounded-2xl border-2 ${course.finalExam.passed ? 'border-emerald-300 bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-950/20' : course.finalExam.unlocked ? 'border-violet-300 bg-violet-50 dark:border-violet-500/30 dark:bg-violet-950/20' : 'border-slate-200 bg-slate-50/80 dark:border-slate-700 dark:bg-slate-900/60'}`}>
+        <div className="flex flex-col items-start justify-between gap-4 p-5 sm:flex-row sm:items-center">
+          <div className="flex items-start gap-3">
+            <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl text-white ${course.finalExam.passed ? 'bg-emerald-600' : course.finalExam.unlocked ? 'bg-gradient-to-br from-violet-700 to-indigo-900' : 'bg-slate-400 dark:bg-slate-700'}`}>
+              {course.finalExam.passed ? <Award className="h-6 w-6" /> : course.finalExam.unlocked ? <FileCheck2 className="h-6 w-6" /> : <Lock className="h-5 w-5" />}
+            </span>
+            <div>
+              <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${course.finalExam.passed ? 'text-emerald-700 dark:text-emerald-300' : course.finalExam.unlocked ? 'text-violet-700 dark:text-violet-300' : 'text-slate-400'}`}>Certificate requirement</p>
+              <h2 className="mt-1 text-lg font-black text-slate-950 dark:text-white">Monitored Final Exam</h2>
+              <p className="mt-1 max-w-xl text-sm leading-6 text-slate-600 dark:text-slate-300">
+                {course.finalExam.passed
+                  ? `Passed${course.finalExam.bestScorePercent !== null ? ` with a best score of ${course.finalExam.bestScorePercent}%` : ''}. Your final-exam-verified certificate is unlocked.`
+                  : !course.finalExam.available
+                    ? `This course needs at least ${course.finalExam.minQuestions} compatible scored questions before a certificate exam can be generated. It currently has ${course.finalExam.eligibleQuestionCount}.`
+                    : course.finalExam.unlocked
+                      ? `${course.finalExam.questionCount} randomized choice and spelling questions • ${course.finalExam.passPercent}% required • ${course.finalExam.attemptMinutes}-minute limit. Leaving the screen terminates the attempt.`
+                      : 'Finish every course practice to unlock the final exam. Course completion alone does not unlock a certificate.'}
+              </p>
+            </div>
+          </div>
+          {course.finalExam.unlocked && course.finalExam.available ? (
+            <Button className={`shrink-0 ${course.finalExam.passed ? 'bg-emerald-700 hover:bg-emerald-800' : 'bg-violet-700 hover:bg-violet-800'} text-white`} render={<Link to={`/games/language-quest/courses/${course.id}/final-exam`} />} nativeButton={false}>
+              {course.finalExam.passed ? <Award className="mr-2 h-4 w-4" /> : <FileCheck2 className="mr-2 h-4 w-4" />}
+              {course.finalExam.passed ? 'View exam status' : 'Take final exam'}
+            </Button>
+          ) : (
+            <Button variant="outline" className="shrink-0" disabled><Lock className="mr-2 h-4 w-4" /> Locked</Button>
+          )}
+        </div>
+      </section>
 
       <section className={`overflow-hidden rounded-2xl border-2 ${course.bossBattle.unlocked ? 'border-rose-300 bg-rose-50 dark:border-rose-500/30 dark:bg-rose-950/20' : 'border-slate-200 bg-slate-50/80 dark:border-slate-700 dark:bg-slate-900/60'}`}>
         <div className="flex flex-col items-start justify-between gap-4 p-5 sm:flex-row sm:items-center">

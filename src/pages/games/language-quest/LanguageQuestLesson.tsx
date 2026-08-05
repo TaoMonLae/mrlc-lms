@@ -1176,6 +1176,9 @@ export default function LanguageQuestLesson() {
           </div>
         )}
         <div className="mt-7 flex w-full flex-col gap-2 sm:flex-row">
+          <Button variant="outline" className="flex-1" render={<Link to={`/games/language-quest/words?courseId=${lesson.course.id}`} />} nativeButton={false}>
+            <BookA className="mr-2 h-4 w-4" /> Learned words
+          </Button>
           <Button variant="outline" className="flex-1" onClick={practiseAgain}>
             Practise again
           </Button>

@@ -216,7 +216,7 @@ async function drawQuestCertificate(ctx: CanvasRenderingContext2D, input: QuestC
   ctx.textAlign = 'center';
   ctx.fillStyle = '#fffaf0';
   ctx.font = '800 18px "Geist", sans-serif';
-  ctx.fillText('JOURNEY CERTIFICATE', 1321, 174);
+  ctx.fillText('JOURNEY PROGRESS', 1321, 174);
 
   ctx.strokeStyle = '#dfd1b5';
   ctx.lineWidth = 2;
@@ -228,11 +228,11 @@ async function drawQuestCertificate(ctx: CanvasRenderingContext2D, input: QuestC
   ctx.textAlign = 'center';
   ctx.fillStyle = gold;
   ctx.font = '700 28px "Georgia", serif';
-  ctx.fillText('Certificate of Achievement', width / 2, 346);
+  ctx.fillText('Language Quest Progress Keepsake', width / 2, 346);
 
   ctx.fillStyle = muted;
   ctx.font = '600 22px "Geist", sans-serif';
-  ctx.fillText('This certificate is proudly presented to', width / 2, 405);
+  ctx.fillText('This progress keepsake celebrates', width / 2, 405);
 
   const nameSize = fitFontSize(ctx, input.learnerName, 1160, 86, 900, 48);
   ctx.fillStyle = navy;
@@ -299,7 +299,7 @@ async function drawQuestCertificate(ctx: CanvasRenderingContext2D, input: QuestC
   ctx.textAlign = 'left';
   ctx.fillStyle = muted;
   ctx.font = '600 14px "Geist", sans-serif';
-  ctx.fillText('This certificate reflects progress at the time it was generated.', 132, 1055);
+  ctx.fillText('This keepsake reflects progress at the time it was generated and is not a course certificate.', 132, 1055);
   ctx.textAlign = 'right';
   ctx.fillStyle = navy;
   ctx.font = '700 15px "Geist", sans-serif';
@@ -328,7 +328,7 @@ async function createQuestCertificateBlob(input: QuestCertificateInput): Promise
   if (!ctx) throw new Error('Image creation is not supported by this browser');
   await drawQuestCertificate(ctx, input);
   return new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Could not create the certificate image'))), 'image/png', 0.95);
+    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Could not create the progress keepsake'))), 'image/png', 0.95);
   });
 }
 
@@ -641,7 +641,7 @@ function LanguageQuestCertificateButton({
     setBusy(action);
     try {
       const blob = await createQuestCertificateBlob({ learnerName, rewards, bestStreak });
-      const filename = `MRLC-${safeFilename(learnerName)}-language-quest-certificate.png`;
+      const filename = `MRLC-${safeFilename(learnerName)}-language-quest-progress.png`;
       if (action === 'view') {
         setPreviewUrl(URL.createObjectURL(blob));
         return;
@@ -649,12 +649,12 @@ function LanguageQuestCertificateButton({
       await shareOrDownloadBlob(
         blob,
         filename,
-        'My Language Quest certificate',
+        'My Language Quest progress',
         `${learnerName} reached Level ${rewards.level} (${rewards.title}) on MRLC Language Quest.`,
         action,
       );
     } catch (error: any) {
-      if (error?.name !== 'AbortError') toast.error(error?.message || 'Could not create the certificate image');
+      if (error?.name !== 'AbortError') toast.error(error?.message || 'Could not create the progress keepsake');
     } finally {
       setBusy(null);
     }
@@ -662,7 +662,7 @@ function LanguageQuestCertificateButton({
 
   return (
     <div className="flex flex-col items-start gap-1.5 sm:items-end">
-      <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-violet-600 dark:text-violet-300"><Award className="h-3 w-3" /> Journey certificate</span>
+      <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-violet-600 dark:text-violet-300"><Award className="h-3 w-3" /> Journey progress keepsake</span>
       <div className="flex flex-wrap gap-2">
         <Button size="sm" variant="outline" className="border-violet-200 bg-white text-violet-800 hover:bg-violet-50 dark:border-violet-500/25 dark:bg-slate-900 dark:text-violet-200" onClick={() => run('view')} disabled={busy !== null}>
           {busy === 'view' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Eye className="mr-2 h-4 w-4" />} View
@@ -677,13 +677,13 @@ function LanguageQuestCertificateButton({
       <Dialog open={previewUrl !== null} onOpenChange={(open) => !open && setPreviewUrl(null)}>
         <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-5xl">
           <DialogHeader>
-            <DialogTitle>Language Quest journey certificate</DialogTitle>
-            <DialogDescription>Preview of {learnerName}&apos;s current Language Quest achievement certificate.</DialogDescription>
+            <DialogTitle>Language Quest progress keepsake</DialogTitle>
+            <DialogDescription>Preview of {learnerName}&apos;s current progress keepsake. This is not a course certificate.</DialogDescription>
           </DialogHeader>
           {previewUrl && (
             <img
               src={previewUrl}
-              alt={`${learnerName}'s Language Quest journey certificate`}
+              alt={`${learnerName}'s Language Quest progress keepsake`}
               className="h-auto w-full rounded-lg border border-violet-200 bg-white shadow-sm"
             />
           )}

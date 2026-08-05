@@ -5,6 +5,12 @@ import {
   uniqueLanguageQuestVocabularyCards,
   type LanguageQuestVocabularyCard,
 } from "../../shared/languageQuestVocabularyPractice";
+import {
+  languageQuestLearnedWordAccuracy,
+  languageQuestLearnedWordKey,
+  languageQuestLearnedWordStatus,
+  normalizeLanguageQuestLearnedWord,
+} from "../../shared/languageQuestLearnedWords";
 
 const cards: LanguageQuestVocabularyCard[] = [
   {
@@ -64,4 +70,20 @@ test("vocabulary question order and answer positions are deterministic", () => {
     first.slice(0, cards.length).map((question) => question.options.map((option) => option.text)),
     first.slice(cards.length).map((question) => question.options.map((option) => option.text)),
   );
+});
+
+test("learned word keys normalize duplicates within a course without merging courses", () => {
+  assert.equal(normalizeLanguageQuestLearnedWord("  Terima   Kasih  "), "terima kasih");
+  assert.equal(languageQuestLearnedWordKey("malay-a1", "Terima kasih"), "malay-a1:terima kasih");
+  assert.notEqual(
+    languageQuestLearnedWordKey("malay-a1", "Terima kasih"),
+    languageQuestLearnedWordKey("malay-a2", "Terima kasih"),
+  );
+});
+
+test("learned word review status distinguishes first exposure, secure recall, and weak terms", () => {
+  assert.equal(languageQuestLearnedWordStatus({ attempts: 1, correctAttempts: 1, wrongAttempts: 0 }), "LEARNING");
+  assert.equal(languageQuestLearnedWordStatus({ attempts: 3, correctAttempts: 3, wrongAttempts: 0 }), "SECURE");
+  assert.equal(languageQuestLearnedWordStatus({ attempts: 3, correctAttempts: 1, wrongAttempts: 2 }), "REVIEW");
+  assert.equal(languageQuestLearnedWordAccuracy({ attempts: 3, correctAttempts: 2, wrongAttempts: 1 }), 67);
 });

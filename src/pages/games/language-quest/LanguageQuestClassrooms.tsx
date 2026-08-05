@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import {
   ArrowLeft,
   BookOpen,
+  BookOpenText,
   CheckCircle2,
   Clipboard,
   Copy,
@@ -730,6 +731,17 @@ export default function LanguageQuestClassrooms() {
                               </div>
                             ) : (
                               <p className="mt-3 text-xs font-semibold text-slate-500 dark:text-slate-400"><CheckCircle2 className="mr-1 inline h-3.5 w-3.5 text-emerald-500" /> {member.completedChallenges} practices completed across Language Quest</p>
+                            )}
+                            {detail.focusCourse && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="mt-3"
+                                render={<Link to={`/games/language-quest/words?classroomId=${detail.id}&learnerId=${member.userId}`} />}
+                                nativeButton={false}
+                              >
+                                <BookOpenText className="mr-2 h-4 w-4" /> Review learned words
+                              </Button>
                             )}
                           </div>
                           {selectedSummary.canEdit && (

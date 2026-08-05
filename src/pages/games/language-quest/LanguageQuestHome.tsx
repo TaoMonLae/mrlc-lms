@@ -80,10 +80,10 @@ function CourseLibrary({ courses, progressSavedText }: { courses: LanguageQuestC
                   <Button
                     className="flex-1"
                     style={{ backgroundColor: course.accentColor }}
-                    render={<Link to={course.nextLessonId ? `/games/language-quest/lessons/${course.nextLessonId}` : `/games/language-quest/courses/${course.id}`} />}
+                    render={<Link to={course.completed && !course.certificateEligible && course.finalExam.available ? `/games/language-quest/courses/${course.id}/final-exam` : course.nextLessonId ? `/games/language-quest/lessons/${course.nextLessonId}` : `/games/language-quest/courses/${course.id}`} />}
                     nativeButton={false}
                   >
-                    {course.completed ? 'Review course' : course.nextLessonId ? (course.progressPercent > 0 ? 'Resume lesson' : 'Start course') : 'View course'}
+                    {course.certificateEligible ? 'Certificate earned' : course.completed && course.finalExam.available ? 'Take final exam' : course.completed ? 'Exam setup required' : course.nextLessonId ? (course.progressPercent > 0 ? 'Resume lesson' : 'Start course') : 'View course'}
                   </Button>
                   {course.progressPercent > 0 && (
                     <Button
@@ -207,6 +207,9 @@ export default function LanguageQuestHome() {
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" className="border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white" render={<Link to="/games/language-quest/profile" />} nativeButton={false}>
               <UserRound className="mr-2 h-4 w-4" /> My Profile
+            </Button>
+            <Button variant="outline" className="border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white" render={<Link to="/games/language-quest/words" />} nativeButton={false}>
+              <BookOpen className="mr-2 h-4 w-4" /> My Learned Words
             </Button>
             <Button variant="outline" className="border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white" render={<Link to="/games/language-quest/leaderboard" />} nativeButton={false}>
               <Trophy className="mr-2 h-4 w-4" /> Leaderboard

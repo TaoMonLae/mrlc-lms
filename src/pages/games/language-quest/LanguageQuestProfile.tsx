@@ -393,7 +393,7 @@ export default function LanguageQuestProfile() {
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-sky-600 text-white"><GraduationCap className="h-5 w-5" /></span>
           <div>
             <h2 className="text-xl font-black text-slate-950 dark:text-white">My classrooms</h2>
-            <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">A teacher can share an eight-character code. Joining lets that teacher see your Language Quest points, streak, activity date, and progress in the class focus course.</p>
+            <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">A teacher can share an eight-character code. Joining lets that teacher see your Language Quest points, streak, activity date, progress, and learned words in the class focus course. Learning from other courses stays private.</p>
           </div>
         </div>
 

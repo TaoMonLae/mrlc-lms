@@ -202,12 +202,14 @@ const LanguageQuestLeaderboard = lazy(() => import("./pages/games/language-quest
 const LanguageQuestProfile = lazy(() => import("./pages/games/language-quest/LanguageQuestProfile"));
 const LanguageQuestMastery = lazy(() => import("./pages/games/language-quest/LanguageQuestMastery"));
 const LanguageQuestHeartRefill = lazy(() => import("./pages/games/language-quest/LanguageQuestHeartRefill"));
+const LanguageQuestWords = lazy(() => import("./pages/games/language-quest/LanguageQuestWords"));
 const LanguageQuestClassrooms = lazy(() => import("./pages/games/language-quest/LanguageQuestClassrooms"));
 const LanguageQuestAnalytics = lazy(() => import("./pages/games/language-quest/LanguageQuestAnalytics"));
 const LanguageQuestLearners = lazy(() => import("./pages/games/language-quest/LanguageQuestLearners"));
 const LanguageQuestManage = lazy(() => import("./pages/games/language-quest/LanguageQuestManage"));
 const LanguageQuestEditor = lazy(() => import("./pages/games/language-quest/LanguageQuestEditor"));
 const LanguageQuestBossBattle = lazy(() => import("./pages/games/language-quest/LanguageQuestBossBattle"));
+const LanguageQuestFinalExam = lazy(() => import("./pages/games/language-quest/LanguageQuestFinalExam"));
 const LanguageQuestCulture = lazy(() => import("./pages/games/language-quest/LanguageQuestCulture"));
 const LanguageQuestStory = lazy(() => import("./pages/games/language-quest/LanguageQuestStory"));
 const LanguageQuestShell = lazy(() => import("./components/games/LanguageQuestShell").then((module) => ({ default: module.LanguageQuestShell })));
@@ -321,7 +323,9 @@ export default function App() {
                 <Route path="/games/language-quest/profile" element={<LanguageQuestProfile />} />
                 <Route path="/games/language-quest/mastery" element={<LanguageQuestMastery />} />
                 <Route path="/games/language-quest/heart-refill" element={<LanguageQuestHeartRefill />} />
+                <Route path="/games/language-quest/words" element={<LanguageQuestWords />} />
                 <Route path="/games/language-quest/courses/:courseId/boss-battle" element={<LanguageQuestBossBattle />} />
+                <Route path="/games/language-quest/courses/:courseId/final-exam" element={<LanguageQuestFinalExam />} />
                 <Route path="/games/language-quest/courses/:courseId/culture" element={<LanguageQuestCulture />} />
                 <Route path="/games/language-quest/courses/:courseId/story/:storyId" element={<LanguageQuestStory />} />
                 <Route element={<ProtectedRoute allowedRoles={['TEACHER', 'ADMIN']} />}>

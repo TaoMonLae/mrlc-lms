@@ -28,6 +28,18 @@ export interface LanguageQuestCourseSummary {
   completedChallenges: number;
   progressPercent: number;
   completed: boolean;
+  /** A certificate requires both exact course completion and a passed final exam. */
+  certificateEligible: boolean;
+  finalExam: {
+    available: boolean;
+    eligibleQuestionCount: number;
+    minQuestions: number;
+    questionCount: number;
+    passPercent: number;
+    passed: boolean;
+    bestScorePercent: number | null;
+    passedAt: string | null;
+  };
   /** First unlocked, unfinished lesson -- null once the course is complete. */
   nextLessonId: string | null;
 }

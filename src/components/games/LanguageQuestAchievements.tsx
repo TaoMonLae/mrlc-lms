@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router';
 import { Award, Download, Eye, Flame, Loader2, Lock, Share2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -212,7 +213,7 @@ function safeAccentColor(value: string | undefined): string {
 }
 
 function awardReference(learnerName: string, course: LanguageQuestCourseSummary): string {
-  const source = `${learnerName}|${course.code}|${course.id}`;
+  const source = `${learnerName}|${course.code}|${course.id}|${course.finalExam.passedAt}|${course.finalExam.bestScorePercent}`;
   let hash = 2166136261;
   for (let index = 0; index < source.length; index++) {
     hash ^= source.charCodeAt(index);
@@ -325,7 +326,7 @@ async function drawCourseCertificate(ctx: CanvasRenderingContext2D, input: Achie
   ctx.textAlign = 'center';
   ctx.fillStyle = '#fffaf0';
   ctx.font = '800 18px "Geist", sans-serif';
-  ctx.fillText('COURSE COMPLETION', 1311, 162);
+  ctx.fillText('FINAL EXAM VERIFIED', 1311, 162);
 
   ctx.strokeStyle = '#dfd1b5';
   ctx.lineWidth = 2;
@@ -357,14 +358,14 @@ async function drawCourseCertificate(ctx: CanvasRenderingContext2D, input: Achie
 
   ctx.fillStyle = muted;
   ctx.font = '600 22px "Geist", sans-serif';
-  ctx.fillText('for successfully completing the Language Quest course', width / 2, 596);
+  ctx.fillText('for completing the course and passing its monitored final exam', width / 2, 596);
 
   const courseSize = fitText(ctx, course.title, 1080, 60, 800, 38);
   ctx.fillStyle = accent;
   ctx.font = `800 ${courseSize}px "Geist", "Padauk", "Noto Sans Myanmar", sans-serif`;
   fillCenteredTextFit(ctx, course.title, width / 2, 678, 1080);
 
-  const courseFacts = [course.language, `${course.lessonCount} lessons`, `${course.challengeCount} challenges`]
+  const courseFacts = [course.language, `${course.lessonCount} lessons`, `${course.finalExam.bestScorePercent ?? 0}% final exam`]
     .filter(Boolean)
     .join('  •  ');
   roundedRect(ctx, width / 2 - 300, 717, 600, 52, 26);
@@ -374,7 +375,9 @@ async function drawCourseCertificate(ctx: CanvasRenderingContext2D, input: Achie
   ctx.font = '700 18px "Geist", sans-serif';
   ctx.fillText(courseFacts, width / 2, 750);
 
-  const completedOn = new Intl.DateTimeFormat('en-GB', { dateStyle: 'long' }).format(new Date());
+  const completedOn = new Intl.DateTimeFormat('en-GB', { dateStyle: 'long' }).format(
+    course.finalExam.passedAt ? new Date(course.finalExam.passedAt) : new Date(),
+  );
   const baseline = 920;
   ctx.textAlign = 'center';
   ctx.strokeStyle = '#aeb5bf';
@@ -392,7 +395,7 @@ async function drawCourseCertificate(ctx: CanvasRenderingContext2D, input: Achie
   ctx.fillText('Language Quest Learning Team', 812, baseline - 12);
   ctx.fillStyle = muted;
   ctx.font = '600 16px "Geist", sans-serif';
-  ctx.fillText('DATE OF COMPLETION', 400, baseline + 30);
+  ctx.fillText('FINAL EXAM PASSED', 400, baseline + 30);
   ctx.fillText('LEARNING TEAM', 812, baseline + 30);
 
   drawSeal(ctx, 1192, 883, 68);
@@ -516,7 +519,11 @@ export function LanguageQuestAchievements({ learnerName, profile, courses }: Ach
   // `completed` is an exact all-challenges-done flag from the server, not a
   // rounded percentage -- see languageQuest.ts's /overview route for why
   // progressPercent === 100 isn't safe to use as the completion gate.
-  const completedCourses = useMemo(() => courses.filter((course) => course.completed), [courses]);
+  const certifiedCourses = useMemo(() => courses.filter((course) => course.certificateEligible), [courses]);
+  const examRequiredCourses = useMemo(
+    () => courses.filter((course) => course.completed && !course.certificateEligible),
+    [courses],
+  );
   const [busy, setBusy] = useState<string | null>(null);
   const [certificatePreview, setCertificatePreview] = useState<{ url: string; courseTitle: string } | null>(null);
   const canCreateStreak = profile.currentStreak > 0;
@@ -553,7 +560,7 @@ export function LanguageQuestAchievements({ learnerName, profile, courses }: Ach
             await navigator.share({
               title: kind === 'certificate' ? 'My Language Quest certificate' : 'My Language Quest streak',
               text: kind === 'certificate'
-                ? `${learnerName} completed ${course?.title} on MRLC Language Quest.`
+                ? `${learnerName} completed ${course?.title} and passed its final exam on MRLC Language Quest.`
                 : `${learnerName} reached a ${profile.currentStreak}-day streak on MRLC Language Quest.`,
               files: [file],
             });
@@ -581,8 +588,8 @@ export function LanguageQuestAchievements({ learnerName, profile, courses }: Ach
         <div>
           <h2 className="text-xl font-black text-slate-950 dark:text-white">Achievements</h2>
           <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
-            {completedCourses.length > 0
-              ? `${completedCourses.length} certificate${completedCourses.length === 1 ? '' : 's'} earned so far. Save a personalized PNG or open your device's share menu -- only your name and achievement appear.`
+            {certifiedCourses.length > 0
+              ? `${certifiedCourses.length} verified certificate${certifiedCourses.length === 1 ? '' : 's'} earned so far. Each one requires a passed final exam.`
               : 'Save a personalized PNG or open your device’s share menu for social media. Only your name and Language Quest achievement appear.'}
           </p>
         </div>
@@ -616,18 +623,41 @@ export function LanguageQuestAchievements({ learnerName, profile, courses }: Ach
       <div className="mt-6">
         <h3 className="flex items-center gap-2 text-sm font-black uppercase tracking-wide text-slate-600 dark:text-slate-300">
           <Award className="h-4 w-4 text-sky-600 dark:text-sky-300" /> Course certificates
-          {completedCourses.length > 0 && (
-            <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-black text-sky-700 dark:bg-sky-500/15 dark:text-sky-300">{completedCourses.length}</span>
+          {certifiedCourses.length > 0 && (
+            <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-black text-sky-700 dark:bg-sky-500/15 dark:text-sky-300">{certifiedCourses.length}</span>
           )}
         </h3>
 
-        {completedCourses.length === 0 ? (
+        <div className="mt-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-500/30 dark:bg-amber-950/20 dark:text-amber-100">
+          <p className="font-black">Certificate rule updated</p>
+          <p className="mt-1 leading-6">Course-completion certificates issued by the old automatic rule are withdrawn. Complete the course, then pass its monitored final exam with at least 80% to unlock a new verified certificate.</p>
+        </div>
+
+        {examRequiredCourses.length > 0 && (
+          <div className="mt-3 space-y-2">
+            {examRequiredCourses.map((course) => (
+              <div key={course.id} className="flex flex-col gap-3 rounded-2xl border border-violet-200 bg-violet-50 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-violet-500/25 dark:bg-violet-950/20">
+                <div>
+                  <p className="font-black text-slate-900 dark:text-white">{course.imageEmoji} {course.title}</p>
+                  <p className="mt-1 text-xs font-semibold text-slate-600 dark:text-slate-300">{course.finalExam.available ? 'Lessons complete • Final exam required to unlock certificate' : `Exam setup requires at least ${course.finalExam.minQuestions} compatible questions`}</p>
+                </div>
+                {course.finalExam.available ? (
+                  <Button size="sm" render={<Link to={`/games/language-quest/courses/${course.id}/final-exam`} />} nativeButton={false}>Take final exam</Button>
+                ) : (
+                  <Button size="sm" variant="outline" disabled>Exam setup required</Button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {certifiedCourses.length === 0 ? (
           <div className="mt-3 flex items-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-5 text-sm font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
-            <Lock className="h-4 w-4 shrink-0" /> Finish every lesson in a course to unlock its certificate -- every course you complete earns its own.
+            <Lock className="h-4 w-4 shrink-0" /> Finish a course and pass its final exam to unlock a verified certificate.
           </div>
         ) : (
           <div className="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {completedCourses.map((course) => {
+            {certifiedCourses.map((course) => {
               const viewKey = busyKey('certificate', 'view', course.id);
               const downloadKey = busyKey('certificate', 'download', course.id);
               const shareKey = busyKey('certificate', 'share', course.id);
@@ -654,7 +684,7 @@ export function LanguageQuestAchievements({ learnerName, profile, courses }: Ach
                     <span className="absolute bottom-4 right-4 grid h-7 w-7 place-items-center rounded-full border-2 border-amber-700 bg-amber-400 text-[8px] font-black text-white shadow-sm">LQ</span>
                   </div>
                   <div className="border-t border-amber-200/80 bg-white p-3 dark:border-amber-400/15 dark:bg-slate-950/50">
-                    <p className="mb-3 text-xs font-semibold text-slate-500 dark:text-slate-400">Print-ready landscape certificate</p>
+                    <p className="mb-3 text-xs font-semibold text-slate-500 dark:text-slate-400">Final exam verified • {course.finalExam.bestScorePercent}% • Print-ready</p>
                     <div className="flex flex-wrap gap-2">
                       <Button size="sm" variant="outline" onClick={() => create('certificate', 'view', course)} disabled={busy !== null && busy !== viewKey}>
                         {busy === viewKey ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Eye className="mr-2 h-4 w-4" />} View

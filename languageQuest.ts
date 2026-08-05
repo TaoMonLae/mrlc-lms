@@ -72,6 +72,22 @@ import {
   nextLanguageQuestSurpriseCard,
 } from "./shared/languageQuestHeartRefill";
 import {
+  isLanguageQuestLearnedWordStatus,
+  languageQuestLearnedWordAccuracy,
+  languageQuestLearnedWordKey,
+  languageQuestLearnedWordStatus,
+} from "./shared/languageQuestLearnedWords";
+import {
+  LANGUAGE_QUEST_FINAL_EXAM_ATTEMPT_MINUTES,
+  LANGUAGE_QUEST_FINAL_EXAM_MAX_QUESTIONS,
+  LANGUAGE_QUEST_FINAL_EXAM_MIN_QUESTIONS,
+  LANGUAGE_QUEST_FINAL_EXAM_PASS_RATIO,
+  LANGUAGE_QUEST_FINAL_EXAM_TYPES,
+  languageQuestFinalExamResult,
+  languageQuestFinalExamRetryAt,
+  languageQuestFinalExamSubmissionMatchesDeck,
+} from "./shared/languageQuestFinalExam";
+import {
   LANGUAGE_QUEST_DAILY_CHAIN_TARGET,
   LANGUAGE_QUEST_MASTERY_POINTS,
   LANGUAGE_QUEST_MISSIONS,
@@ -756,6 +772,102 @@ function lessonStudyCards(challenges: any[], language: string) {
   });
 }
 
+async function languageQuestLearnedWordsSnapshot(prisma: any, userId: string, courseId?: string | null) {
+  const progressRows = await prisma.languageQuestChallengeProgress.findMany({
+    where: {
+      userId,
+      completed: true,
+      ...(courseId ? { challenge: { lesson: { unit: { courseId } } } } : {}),
+    },
+    orderBy: [{ completedAt: "desc" }, { updatedAt: "desc" }],
+    include: {
+      challenge: {
+        include: {
+          options: { where: { correct: true }, orderBy: { order: "asc" } },
+          lesson: {
+            include: {
+              unit: {
+                include: {
+                  course: {
+                    select: {
+                      id: true, title: true, language: true, imageEmoji: true, accentColor: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const wordsByKey = new Map<string, any>();
+  for (const row of progressRows) {
+    const challenge = row.challenge;
+    if (!languageQuestChallengeSupportsStudyCard(challenge.type)) continue;
+    const correct = challenge.options[0];
+    const term = correct?.text?.trim();
+    if (!term) continue;
+    const course = challenge.lesson.unit.course;
+    const key = languageQuestLearnedWordKey(course.id, term);
+    const completedAt = row.completedAt || row.createdAt;
+    const existing = wordsByKey.get(key);
+    if (existing) {
+      existing.attempts += row.attempts;
+      existing.correctAttempts += row.correctAttempts;
+      existing.wrongAttempts += row.wrongAttempts;
+      existing.encounters += 1;
+      if (completedAt < existing.firstLearnedAt) existing.firstLearnedAt = completedAt;
+      if (row.lastAttemptAt > existing.lastPractisedAt) existing.lastPractisedAt = row.lastAttemptAt;
+      continue;
+    }
+    wordsByKey.set(key, {
+      id: key,
+      challengeId: challenge.id,
+      term,
+      clue: languageQuestPracticePrompt(challenge.question),
+      emoji: correct.emoji,
+      audioText: correct.audioText || term,
+      pinyin: languageQuestPinyin(term, course.language),
+      course,
+      unit: { id: challenge.lesson.unit.id, title: challenge.lesson.unit.title },
+      lesson: { id: challenge.lesson.id, title: challenge.lesson.title },
+      attempts: row.attempts,
+      correctAttempts: row.correctAttempts,
+      wrongAttempts: row.wrongAttempts,
+      encounters: 1,
+      firstLearnedAt: completedAt,
+      lastPractisedAt: row.lastAttemptAt,
+    });
+  }
+
+  const words = [...wordsByKey.values()]
+    .map((word) => ({
+      ...word,
+      accuracyPercent: languageQuestLearnedWordAccuracy(word),
+      status: languageQuestLearnedWordStatus(word),
+    }))
+    .sort((left, right) => right.lastPractisedAt.getTime() - left.lastPractisedAt.getTime());
+  const courseBuckets = new Map<string, any>();
+  for (const word of words) {
+    const bucket = courseBuckets.get(word.course.id) ?? {
+      ...word.course,
+      wordCount: 0,
+      reviewCount: 0,
+      secureCount: 0,
+    };
+    bucket.wordCount += 1;
+    if (word.status === "REVIEW") bucket.reviewCount += 1;
+    if (word.status === "SECURE") bucket.secureCount += 1;
+    courseBuckets.set(word.course.id, bucket);
+  }
+  return {
+    words,
+    courses: [...courseBuckets.values()].sort((left, right) => left.title.localeCompare(right.title)),
+  };
+}
+
 export function shuffle<T>(items: T[]): T[] {
   const array = [...items];
   for (let i = array.length - 1; i > 0; i--) {
@@ -1010,7 +1122,11 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
     const jwtUser = (req as any).user as JwtPayload;
     try {
       await ensureOfficialCoursesOnce(prisma);
-      const [progress, courses, completedRows, surpriseCardUnlocks] = await Promise.all([
+      await prisma.languageQuestFinalExamAttempt.updateMany({
+        where: { userId: jwtUser.userId, status: "IN_PROGRESS", expiresAt: { lte: new Date() } },
+        data: { status: "EXPIRED", submittedAt: new Date() },
+      });
+      const [progress, courses, completedRows, surpriseCardUnlocks, finalExamAttempts] = await Promise.all([
         getProgress(prisma, jwtUser.userId),
         prisma.languageQuestCourse.findMany({
           where: { published: true },
@@ -1018,7 +1134,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           include: {
             units: {
               orderBy: { order: "asc" },
-              include: { lessons: { orderBy: { order: "asc" }, include: { challenges: { select: { id: true } } } } },
+              include: { lessons: { orderBy: { order: "asc" }, include: { challenges: { select: { id: true, type: true } } } } },
             },
           },
         }),
@@ -1031,16 +1147,42 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           orderBy: { unlockedAt: "desc" },
           select: { cardId: true },
         }),
+        prisma.languageQuestFinalExamAttempt.findMany({
+          where: { userId: jwtUser.userId },
+          orderBy: { createdAt: "desc" },
+          select: {
+            courseId: true, courseUpdatedAt: true, status: true, scorePercent: true, submittedAt: true,
+            createdAt: true, updatedAt: true,
+          },
+        }),
       ]);
       const completed = new Set<string>(completedRows.map((row: any) => row.challengeId));
+      const finalExamsByCourse = new Map<string, any[]>();
+      for (const attempt of finalExamAttempts) {
+        const attempts = finalExamsByCourse.get(attempt.courseId) ?? [];
+        attempts.push(attempt);
+        finalExamsByCourse.set(attempt.courseId, attempts);
+      }
       res.json({
         profile: profileJson(progress),
         surpriseCards: surpriseCardCollectionJson(surpriseCardUnlocks),
         canManage: isManager(jwtUser.role),
         courses: courses.map((course: any) => {
           const challengeIds = course.units.flatMap((unit: any) => unit.lessons.flatMap((lesson: any) => lesson.challenges.map((challenge: any) => challenge.id)));
+          const examEligibleChallenges = course.units.flatMap((unit: any) => unit.lessons.flatMap((lesson: any) => lesson.challenges))
+            .filter((challenge: any) => LANGUAGE_QUEST_FINAL_EXAM_TYPES.has(challenge.type));
           const completedChallenges = challengeIds.filter((id: string) => completed.has(id)).length;
           const lessonCount = course.units.reduce((sum: number, unit: any) => sum + unit.lessons.length, 0);
+          const courseCompleted = challengeIds.length > 0 && completedChallenges === challengeIds.length;
+          const courseExamAttempts = finalExamsByCourse.get(course.id) ?? [];
+          const currentVersionAttempts = courseExamAttempts.filter(
+            (attempt: any) => attempt.courseUpdatedAt.getTime() === course.updatedAt.getTime(),
+          );
+          const passedExam = currentVersionAttempts.find((attempt: any) => attempt.status === "PASSED") ?? null;
+          const bestScorePercent = currentVersionAttempts.reduce(
+            (best: number | null, attempt: any) => attempt.scorePercent === null ? best : Math.max(best ?? 0, attempt.scorePercent),
+            null,
+          );
           return {
             id: course.id, code: course.code, title: course.title, description: course.description,
             language: course.language, category: course.category,
@@ -1054,7 +1196,18 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
             // can already read 100 with up to ~9 challenges still unfinished.
             // Certificate eligibility and any other "is this course done"
             // check should use this, not progressPercent === 100.
-            completed: challengeIds.length > 0 && completedChallenges === challengeIds.length,
+            completed: courseCompleted,
+            certificateEligible: courseCompleted && Boolean(passedExam),
+            finalExam: {
+              available: examEligibleChallenges.length >= LANGUAGE_QUEST_FINAL_EXAM_MIN_QUESTIONS,
+              eligibleQuestionCount: examEligibleChallenges.length,
+              minQuestions: LANGUAGE_QUEST_FINAL_EXAM_MIN_QUESTIONS,
+              questionCount: Math.min(LANGUAGE_QUEST_FINAL_EXAM_MAX_QUESTIONS, examEligibleChallenges.length),
+              passPercent: Math.round(LANGUAGE_QUEST_FINAL_EXAM_PASS_RATIO * 100),
+              passed: Boolean(passedExam),
+              bestScorePercent,
+              passedAt: passedExam?.submittedAt ?? null,
+            },
             nextLessonId: nextIncompleteLessonId(course.units, completed),
           };
         }),
@@ -1062,6 +1215,112 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
     } catch (error) {
       logger.error("Error loading Language Quest overview:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load Language Quest" });
+    }
+  });
+
+  app.get("/api/language-quest/learned-words", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const requestedLearnerId = text(req.query.learnerId, 100);
+    const classroomId = text(req.query.classroomId, 100);
+    const requestedCourseId = text(req.query.courseId, 100);
+    const query = text(req.query.q, 100).toLocaleLowerCase();
+    const requestedStatus = text(req.query.status, 20).toUpperCase();
+    const status = isLanguageQuestLearnedWordStatus(requestedStatus) ? requestedStatus : null;
+    const page = Math.max(1, Math.floor(Number(req.query.page) || 1));
+    const pageSize = Math.min(100, Math.max(12, Math.floor(Number(req.query.pageSize) || 48)));
+    const learnerId = requestedLearnerId || jwtUser.userId;
+    const viewingAnotherLearner = learnerId !== jwtUser.userId;
+
+    try {
+      let classroomScope: any = null;
+      let forcedCourseId: string | null = null;
+      if (viewingAnotherLearner) {
+        if (!isManager(jwtUser.role)) {
+          res.status(403).json({ error: "You can only view your own learned words" });
+          return;
+        }
+        if (!classroomId) {
+          res.status(400).json({ error: "Choose a classroom before reviewing a learner's words" });
+          return;
+        }
+        classroomScope = await prisma.languageQuestClassroom.findFirst({
+          where: {
+            id: classroomId,
+            ...(jwtUser.role === "ADMIN" ? {} : { teacherId: jwtUser.userId }),
+            members: { some: { userId: learnerId } },
+          },
+          select: {
+            id: true,
+            name: true,
+            focusCourse: {
+              select: { id: true, title: true, language: true, imageEmoji: true, accentColor: true },
+            },
+          },
+        });
+        if (!classroomScope) {
+          res.status(403).json({ error: "This learner is not in a classroom you can review" });
+          return;
+        }
+        if (!classroomScope.focusCourse) {
+          res.status(409).json({ error: "Assign a focus course before reviewing learned words" });
+          return;
+        }
+        // Teacher visibility remains limited to the course explicitly assigned
+        // to this classroom; joining one class never exposes unrelated study.
+        forcedCourseId = classroomScope.focusCourse.id;
+      }
+
+      const learner = await prisma.user.findUnique({
+        where: { id: learnerId },
+        select: { id: true, firstName: true, lastName: true, languageQuestAvatar: true, isActive: true },
+      });
+      if (!learner) { res.status(404).json({ error: "Learner not found" }); return; }
+
+      const snapshot = await languageQuestLearnedWordsSnapshot(prisma, learnerId, forcedCourseId);
+      const selectedCourseId = forcedCourseId || requestedCourseId || null;
+      const filtered = snapshot.words.filter((word: any) => {
+        if (selectedCourseId && word.course.id !== selectedCourseId) return false;
+        if (status && word.status !== status) return false;
+        if (!query) return true;
+        return [word.term, word.clue, word.course.title, word.unit.title, word.lesson.title]
+          .some((value) => value.toLocaleLowerCase().includes(query));
+      });
+      const offset = (page - 1) * pageSize;
+      const scopedWords = selectedCourseId
+        ? snapshot.words.filter((word: any) => word.course.id === selectedCourseId)
+        : snapshot.words;
+      res.json({
+        viewerMode: viewingAnotherLearner ? "TEACHER" : "SELF",
+        learner: {
+          id: learner.id,
+          name: `${learner.firstName} ${learner.lastName}`.trim(),
+          avatarId: learner.languageQuestAvatar || DEFAULT_LANGUAGE_QUEST_AVATAR,
+          active: learner.isActive,
+        },
+        classroom: classroomScope ? {
+          id: classroomScope.id,
+          name: classroomScope.name,
+          focusCourse: classroomScope.focusCourse,
+        } : null,
+        selection: { courseId: selectedCourseId, status, query },
+        summary: {
+          totalWords: scopedWords.length,
+          secureWords: scopedWords.filter((word: any) => word.status === "SECURE").length,
+          reviewWords: scopedWords.filter((word: any) => word.status === "REVIEW").length,
+          learningWords: scopedWords.filter((word: any) => word.status === "LEARNING").length,
+        },
+        courses: snapshot.courses,
+        words: filtered.slice(offset, offset + pageSize),
+        pagination: {
+          page,
+          pageSize,
+          total: filtered.length,
+          totalPages: Math.max(1, Math.ceil(filtered.length / pageSize)),
+        },
+      });
+    } catch (error) {
+      logger.error("Error loading Language Quest learned words:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load learned words" });
     }
   });
 
@@ -1354,6 +1613,26 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         update: { activeCourseId: course.id },
         create: { userId: jwtUser.userId, activeCourseId: course.id },
       });
+      await prisma.languageQuestFinalExamAttempt.updateMany({
+        where: { userId: jwtUser.userId, courseId: course.id, status: "IN_PROGRESS", expiresAt: { lte: new Date() } },
+        data: { status: "EXPIRED", submittedAt: new Date() },
+      });
+      const finalExamAttempts = await prisma.languageQuestFinalExamAttempt.findMany({
+        where: { userId: jwtUser.userId, courseId: course.id },
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true, courseUpdatedAt: true, status: true, scorePercent: true, correctCount: true, totalQuestions: true,
+          expiresAt: true, submittedAt: true, createdAt: true, updatedAt: true, violationReason: true,
+        },
+      });
+      const examEligibleChallenges = challenges.filter((challenge: any) => LANGUAGE_QUEST_FINAL_EXAM_TYPES.has(challenge.type));
+      const currentVersionExamAttempts = finalExamAttempts.filter(
+        (attempt: any) => attempt.courseUpdatedAt.getTime() === course.updatedAt.getTime(),
+      );
+      const passedExam = currentVersionExamAttempts.find((attempt: any) => attempt.status === "PASSED") ?? null;
+      const latestExam = currentVersionExamAttempts[0] ?? null;
+      const retryAt = languageQuestFinalExamRetryAt(latestExam);
+      const courseCompleted = challenges.length > 0 && challenges.every((challenge: any) => completed.has(challenge.id));
       res.json({
         id: course.id, title: course.title, description: course.description,
         language: course.language, category: course.category,
@@ -1365,10 +1644,357 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         ),
         nextLessonId,
         bossBattle: languageQuestBossBattleStatus(challenges, completed),
+        finalExam: {
+          available: examEligibleChallenges.length >= LANGUAGE_QUEST_FINAL_EXAM_MIN_QUESTIONS,
+          unlocked: courseCompleted,
+          eligibleQuestionCount: examEligibleChallenges.length,
+          minQuestions: LANGUAGE_QUEST_FINAL_EXAM_MIN_QUESTIONS,
+          questionCount: Math.min(LANGUAGE_QUEST_FINAL_EXAM_MAX_QUESTIONS, examEligibleChallenges.length),
+          passPercent: Math.round(LANGUAGE_QUEST_FINAL_EXAM_PASS_RATIO * 100),
+          attemptMinutes: LANGUAGE_QUEST_FINAL_EXAM_ATTEMPT_MINUTES,
+          passed: Boolean(passedExam),
+          certificateEligible: courseCompleted && Boolean(passedExam),
+          passedAt: passedExam?.submittedAt ?? null,
+          bestScorePercent: currentVersionExamAttempts.reduce(
+            (best: number | null, attempt: any) => attempt.scorePercent === null ? best : Math.max(best ?? 0, attempt.scorePercent),
+            null,
+          ),
+          latestAttempt: latestExam ? {
+            status: latestExam.status,
+            scorePercent: latestExam.scorePercent,
+            submittedAt: latestExam.submittedAt,
+            violationReason: latestExam.violationReason,
+          } : null,
+          retryAt: retryAt && retryAt > new Date() ? retryAt : null,
+        },
       });
     } catch (error) {
       logger.error("Error loading Language Quest course:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load the course" });
+    }
+  });
+
+  // A certificate exam is intentionally separate from the replayable Boss
+  // Battle. It creates an auditable one-time deck, reveals no correctness
+  // during the attempt, and is the only server-side certificate gate.
+  app.post("/api/language-quest/courses/:id/final-exam/start", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const now = new Date();
+    try {
+      const course = await prisma.languageQuestCourse.findUnique({
+        where: { id: req.params.id },
+        include: {
+          units: {
+            orderBy: { order: "asc" },
+            include: {
+              lessons: {
+                orderBy: { order: "asc" },
+                include: { challenges: { orderBy: { order: "asc" }, include: { options: { orderBy: { order: "asc" } } } } },
+              },
+            },
+          },
+        },
+      });
+      if (!course || !(await canAccessLanguageQuestCourse(prisma, jwtUser, course))) {
+        res.status(404).json({ error: "Course not found" });
+        return;
+      }
+
+      const challenges = course.units.flatMap((unit: any) => unit.lessons.flatMap((lesson: any) => lesson.challenges));
+      const completedRows = await prisma.languageQuestChallengeProgress.findMany({
+        where: { userId: jwtUser.userId, completed: true, challengeId: { in: challenges.map((challenge: any) => challenge.id) } },
+        select: { challengeId: true },
+      });
+      const completedIds = new Set(completedRows.map((row: any) => row.challengeId));
+      if (challenges.length === 0 || !challenges.every((challenge: any) => completedIds.has(challenge.id))) {
+        res.status(403).json({ error: "Finish every practice in this course before taking the final exam." });
+        return;
+      }
+
+      await prisma.languageQuestFinalExamAttempt.updateMany({
+        where: { userId: jwtUser.userId, courseId: course.id, status: "IN_PROGRESS", expiresAt: { lte: now } },
+        data: { status: "EXPIRED", submittedAt: now },
+      });
+      await prisma.languageQuestFinalExamAttempt.updateMany({
+        where: {
+          userId: jwtUser.userId, courseId: course.id, status: "IN_PROGRESS",
+          courseUpdatedAt: { not: course.updatedAt },
+        },
+        data: { status: "TERMINATED", submittedAt: now, violationReason: "COURSE_CHANGED" },
+      });
+      const activeAttempt = await prisma.languageQuestFinalExamAttempt.findFirst({
+        where: {
+          userId: jwtUser.userId, courseId: course.id, courseUpdatedAt: course.updatedAt,
+          status: "IN_PROGRESS", expiresAt: { gt: now },
+        },
+        select: { id: true },
+      });
+      if (activeAttempt) {
+        await prisma.languageQuestFinalExamAttempt.updateMany({
+          where: { id: activeAttempt.id, status: "IN_PROGRESS" },
+          data: {
+            status: "TERMINATED", submittedAt: now, violationCount: { increment: 1 },
+            violationReason: "PREVIOUS_ATTEMPT_LEFT",
+          },
+        });
+        res.status(409).json({ error: "The previous exam attempt was left before submission and has been terminated. Wait for the retry timer before starting again." });
+        return;
+      }
+      const latestAttempt = await prisma.languageQuestFinalExamAttempt.findFirst({
+        where: { userId: jwtUser.userId, courseId: course.id, courseUpdatedAt: course.updatedAt },
+        orderBy: { createdAt: "desc" },
+        select: { status: true, submittedAt: true, updatedAt: true },
+      });
+      const retryAt = languageQuestFinalExamRetryAt(latestAttempt);
+      if (retryAt && retryAt > now) {
+        res.status(429).json({ error: "A short review break is required before another final exam attempt.", retryAt });
+        return;
+      }
+
+      const eligible = challenges.filter((challenge: any) =>
+        LANGUAGE_QUEST_FINAL_EXAM_TYPES.has(challenge.type)
+        && challenge.options.some((option: any) => option.correct),
+      );
+      if (eligible.length < LANGUAGE_QUEST_FINAL_EXAM_MIN_QUESTIONS) {
+        res.status(409).json({ error: `This course needs at least ${LANGUAGE_QUEST_FINAL_EXAM_MIN_QUESTIONS} compatible scored questions before a final exam can be generated.` });
+        return;
+      }
+      const deckSize = Math.min(eligible.length, LANGUAGE_QUEST_FINAL_EXAM_MAX_QUESTIONS);
+      const spellingQuestions = shuffle(eligible.filter((challenge: any) => challenge.type === "DICTATION"));
+      const choiceQuestions = shuffle(eligible.filter((challenge: any) => challenge.type !== "DICTATION"));
+      // When a course teaches spelling, reserve roughly 20% of the exam for it
+      // (and always at least one question) instead of leaving it to random chance.
+      const spellingSlots = spellingQuestions.length
+        ? Math.min(spellingQuestions.length, Math.max(1, Math.ceil(deckSize * 0.2)))
+        : 0;
+      const selectedSpelling = spellingQuestions.slice(0, spellingSlots);
+      const selectedChoice = choiceQuestions.slice(0, deckSize - selectedSpelling.length);
+      const remainingSlots = deckSize - selectedSpelling.length - selectedChoice.length;
+      const deck = shuffle([
+        ...selectedSpelling,
+        ...selectedChoice,
+        ...spellingQuestions.slice(spellingSlots, spellingSlots + remainingSlots),
+      ]);
+      const expiresAt = new Date(now.getTime() + LANGUAGE_QUEST_FINAL_EXAM_ATTEMPT_MINUTES * 60_000);
+      const attempt = await prisma.languageQuestFinalExamAttempt.create({
+        data: {
+          userId: jwtUser.userId,
+          courseId: course.id,
+          courseUpdatedAt: course.updatedAt,
+          challengeIds: deck.map((challenge: any) => challenge.id),
+          expiresAt,
+          totalQuestions: deck.length,
+          passPercent: Math.round(LANGUAGE_QUEST_FINAL_EXAM_PASS_RATIO * 100),
+        },
+        select: { id: true },
+      });
+
+      res.status(201).json({
+        attemptId: attempt.id,
+        expiresAt,
+        passPercent: Math.round(LANGUAGE_QUEST_FINAL_EXAM_PASS_RATIO * 100),
+        course: { id: course.id, title: course.title, language: course.language, accentColor: course.accentColor },
+        cards: deck.map((challenge: any) => {
+          const correctOption = challenge.options.find((option: any) => option.correct);
+          const secureAudio = challenge.type === "DICTATION"
+            && voiceService.enabled
+            && kokoroSupportsLanguage(course.language);
+          return {
+            challengeId: challenge.id,
+            type: challenge.type,
+            question: languageQuestAssessmentPrompt(
+              challenge.question,
+              challenge.type,
+              challenge.options.map((option: any) => option.text),
+            ),
+            secureAudio,
+            speechText: challenge.type === "DICTATION" && !secureAudio
+              ? correctOption?.audioText || correctOption?.text || null
+              : null,
+            options: challenge.type === "DICTATION"
+              ? []
+              : shuffle(challenge.options).map((option: any) => ({
+                id: option.id, text: option.text, emoji: option.emoji, audioText: option.audioText,
+                pinyin: languageQuestPinyin(option.text, course.language),
+              })),
+          };
+        }),
+      });
+    } catch (error) {
+      logger.error("Error starting Language Quest final exam:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to start the final exam" });
+    }
+  });
+
+  app.post("/api/language-quest/courses/:id/final-exam/audio", authMiddleware, voiceLimiter, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const attemptId = text(req.body?.attemptId, 100);
+    const challengeId = text(req.body?.challengeId, 100);
+    if (!attemptId || !challengeId) {
+      res.status(400).json({ error: "Exam attempt and spelling question are required" });
+      return;
+    }
+    try {
+      const attempt = await prisma.languageQuestFinalExamAttempt.findFirst({
+        where: {
+          id: attemptId,
+          userId: jwtUser.userId,
+          courseId: req.params.id,
+          status: "IN_PROGRESS",
+          violationCount: 0,
+          expiresAt: { gt: new Date() },
+        },
+        include: { course: { select: { language: true, updatedAt: true } } },
+      });
+      const challengeIds = Array.isArray(attempt?.challengeIds)
+        ? attempt.challengeIds.filter((id: unknown): id is string => typeof id === "string")
+        : [];
+      if (!attempt || attempt.courseUpdatedAt.getTime() !== attempt.course.updatedAt.getTime() || !challengeIds.includes(challengeId)) {
+        res.status(409).json({ error: "This spelling audio is not part of an active final exam." });
+        return;
+      }
+      const challenge = await prisma.languageQuestChallenge.findFirst({
+        where: { id: challengeId, type: "DICTATION", lesson: { unit: { courseId: req.params.id } } },
+        include: { options: true },
+      });
+      const correctText = challenge?.options.find((option: any) => option.correct)?.text;
+      if (!correctText) {
+        res.status(409).json({ error: "This spelling question has no exam audio configured." });
+        return;
+      }
+      if (!voiceService.enabled || !kokoroSupportsLanguage(attempt.course.language)) {
+        res.status(503).json({ error: "Secure spelling audio is temporarily unavailable. Ask your teacher before continuing." });
+        return;
+      }
+      const audio = await voiceService.synthesize(correctText, attempt.course.language);
+      res.setHeader("Content-Type", audio.contentType);
+      res.setHeader("Content-Length", String(audio.data.length));
+      res.setHeader("Cache-Control", "private, no-store");
+      res.send(audio.data);
+    } catch (error) {
+      logger.warn?.("Language Quest final exam spelling audio failed:", error);
+      res.status(503).json({ error: "Secure spelling audio could not be played. Ask your teacher before continuing." });
+    }
+  });
+
+  app.post("/api/language-quest/courses/:id/final-exam/finish", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const attemptId = text(req.body?.attemptId, 100);
+    const submitted = Array.isArray(req.body?.answers) ? req.body.answers : [];
+    const answers = submitted
+      .filter((entry: any) => entry && typeof entry.challengeId === "string")
+      .map((entry: any) => ({
+        challengeId: entry.challengeId,
+        optionId: typeof entry.optionId === "string" ? entry.optionId : null,
+        typedAnswer: text(entry.typedAnswer, 300) || null,
+      }));
+    if (!attemptId || answers.length === 0 || answers.length > LANGUAGE_QUEST_FINAL_EXAM_MAX_QUESTIONS) {
+      res.status(400).json({ error: "Submit every final exam answer" });
+      return;
+    }
+    const now = new Date();
+    try {
+      const attempt = await prisma.languageQuestFinalExamAttempt.findFirst({
+        where: { id: attemptId, userId: jwtUser.userId, courseId: req.params.id },
+        include: { course: { select: { updatedAt: true } } },
+      });
+      if (!attempt || attempt.status !== "IN_PROGRESS" || attempt.violationCount > 0) {
+        res.status(409).json({ error: "This final exam is no longer active." });
+        return;
+      }
+      if (attempt.expiresAt <= now) {
+        await prisma.languageQuestFinalExamAttempt.updateMany({
+          where: { id: attempt.id, status: "IN_PROGRESS" },
+          data: { status: "EXPIRED", submittedAt: now },
+        });
+        res.status(409).json({ error: "The final exam time limit expired." });
+        return;
+      }
+      if (attempt.courseUpdatedAt.getTime() !== attempt.course.updatedAt.getTime()) {
+        await prisma.languageQuestFinalExamAttempt.updateMany({
+          where: { id: attempt.id, status: "IN_PROGRESS" },
+          data: { status: "TERMINATED", submittedAt: now, violationReason: "COURSE_CHANGED" },
+        });
+        res.status(409).json({ error: "The course changed after this exam started. Review the updated course and start a new exam." });
+        return;
+      }
+      const deckChallengeIds = Array.isArray(attempt.challengeIds)
+        ? attempt.challengeIds.filter((id: unknown): id is string => typeof id === "string")
+        : [];
+      if (!languageQuestFinalExamSubmissionMatchesDeck(deckChallengeIds, answers.map((answer: any) => answer.challengeId))) {
+        res.status(409).json({ error: "The submitted answers do not match this one-time exam." });
+        return;
+      }
+      const challenges = await prisma.languageQuestChallenge.findMany({
+        where: { id: { in: deckChallengeIds }, lesson: { unit: { courseId: req.params.id } } },
+        include: { options: true },
+      });
+      const challengeById = new Map(challenges.map((challenge: any) => [challenge.id, challenge]));
+      const answerKey = deckChallengeIds.map((challengeId: string) => {
+        const challenge: any = challengeById.get(challengeId);
+        const correctOption = challenge?.options.find((option: any) => option.correct);
+        return {
+          challengeId,
+          type: challenge?.type,
+          correctOptionId: correctOption?.id ?? "",
+          correctText: correctOption?.text ?? "",
+        };
+      });
+      if (answerKey.some((entry: any) => !entry.correctOptionId)) {
+        res.status(409).json({ error: "The exam question set changed. This attempt was not graded." });
+        return;
+      }
+      const outcome = languageQuestFinalExamResult(answers, answerKey);
+      const updated = await prisma.languageQuestFinalExamAttempt.updateMany({
+        where: {
+          id: attempt.id, status: "IN_PROGRESS", violationCount: 0,
+          expiresAt: { gt: now },
+        },
+        data: {
+          status: outcome.passed ? "PASSED" : "FAILED",
+          submittedAt: now,
+          correctCount: outcome.correctCount,
+          scorePercent: outcome.scorePercent,
+        },
+      });
+      if (updated.count !== 1) {
+        res.status(409).json({ error: "This final exam was already closed." });
+        return;
+      }
+      res.json({
+        ...outcome,
+        certificateUnlocked: outcome.passed,
+        passedAt: outcome.passed ? now : null,
+      });
+    } catch (error) {
+      logger.error("Error finishing Language Quest final exam:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to finish the final exam" });
+    }
+  });
+
+  app.post("/api/language-quest/courses/:id/final-exam/violation", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const attemptId = text(req.body?.attemptId, 100);
+    const requestedReason = text(req.body?.reason, 50).toUpperCase();
+    const allowedReasons = new Set(["TAB_HIDDEN", "WINDOW_BLUR", "FULLSCREEN_EXIT", "PAGE_EXIT"]);
+    const reason = allowedReasons.has(requestedReason) ? requestedReason : "PAGE_EXIT";
+    if (!attemptId) {
+      res.status(400).json({ error: "Exam attempt is required" });
+      return;
+    }
+    try {
+      const now = new Date();
+      const terminated = await prisma.languageQuestFinalExamAttempt.updateMany({
+        where: { id: attemptId, userId: jwtUser.userId, courseId: req.params.id, status: "IN_PROGRESS" },
+        data: {
+          status: "TERMINATED", submittedAt: now,
+          violationCount: { increment: 1 }, violationReason: reason,
+        },
+      });
+      res.json({ terminated: terminated.count === 1, reason });
+    } catch (error) {
+      logger.error("Error recording Language Quest final exam violation:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to close the final exam" });
     }
   });
 

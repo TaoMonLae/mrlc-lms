@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router';
-import { BarChart3, Brain, GraduationCap, Info, Languages, LogOut, Moon, Settings2, Sun, Trophy, Users } from 'lucide-react';
+import { BarChart3, BookOpenText, Brain, GraduationCap, Info, Languages, LogOut, Moon, Settings2, Sun, Trophy, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { useTheme } from '@/src/components/theme-provider';
@@ -54,6 +54,12 @@ function LanguageQuestShellContent() {
         <div className="mx-auto flex min-h-18 max-w-7xl items-center justify-between gap-2 px-3 py-2 sm:px-6">
           <MrlcQuestBrand to="/games/language-quest" compact />
           <nav className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" className="hidden font-bold text-sky-700 lg:flex" render={<Link to="/games/language-quest/words" />} nativeButton={false}>
+              <BookOpenText className="mr-2 h-4 w-4" /> My Words
+            </Button>
+            <Button variant="ghost" size="icon" className="text-sky-600 lg:hidden" aria-label="My learned words" title="My learned words" render={<Link to="/games/language-quest/words" />} nativeButton={false}>
+              <BookOpenText className="h-4 w-4" />
+            </Button>
             <Button variant="ghost" size="icon" className="hidden text-fuchsia-600 min-[520px]:inline-flex" aria-label="Mastery reviews" title="Mastery reviews" render={<Link to="/games/language-quest/mastery" />} nativeButton={false}>
               <Brain className="h-4 w-4" />
             </Button>

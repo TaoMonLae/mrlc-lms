@@ -290,6 +290,7 @@ model User {
   languageQuestMastery       LanguageQuestMasteryProgress[]
   languageQuestMissionClaims LanguageQuestMissionClaim[]
   languageQuestBossBattles   LanguageQuestBossBattleAttempt[]
+  languageQuestFinalExams    LanguageQuestFinalExamAttempt[]
   languageQuestHeartRefills  LanguageQuestHeartRefillAttempt[]
   languageQuestSurpriseCards LanguageQuestSurpriseCardUnlock[]
   languageQuestAvatar        String                            @default("owl")
@@ -3982,6 +3983,7 @@ model LanguageQuestCourse {
   classrooms   LanguageQuestClassroom[]
   xpEvents     LanguageQuestXpEvent[]
   bossBattles  LanguageQuestBossBattleAttempt[]
+  finalExams   LanguageQuestFinalExamAttempt[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -4133,6 +4135,32 @@ model LanguageQuestBossBattleAttempt {
 
   @@index([userId, courseId])
   @@index([expiresAt])
+}
+
+model LanguageQuestFinalExamAttempt {
+  id              String              @id @default(uuid())
+  userId          String
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId        String
+  course          LanguageQuestCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseUpdatedAt DateTime
+  challengeIds    Json
+  status          String              @default("IN_PROGRESS") // IN_PROGRESS | PASSED | FAILED | TERMINATED | EXPIRED
+  expiresAt       DateTime
+  submittedAt     DateTime?
+  correctCount    Int?
+  totalQuestions  Int
+  scorePercent    Int?
+  passPercent     Int                 @default(80)
+  violationCount  Int                 @default(0)
+  violationReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, courseId, status])
+  @@index([userId, createdAt])
+  @@index([expiresAt, status])
 }
 
 model LanguageQuestHeartRefillAttempt {

@@ -98,3 +98,31 @@ export async function speakLanguageQuestVoice(
   }
   return version === requestVersion ? speakWithBrowser(text, language) : 'cancelled';
 }
+
+/** Plays server-owned speech without exposing protected assessment text. */
+export async function playLanguageQuestProtectedVoice(
+  url: string,
+  body: Record<string, string>,
+): Promise<LanguageQuestVoiceResult> {
+  cancelLanguageQuestVoice();
+  const version = requestVersion;
+  const controller = new AbortController();
+  activeRequest = controller;
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+    if (!response.ok) return 'unavailable';
+    const blob = await response.blob();
+    if (version !== requestVersion) return 'cancelled';
+    return await playAudioBlob(blob, version) ? 'kokoro' : 'unavailable';
+  } catch (error: any) {
+    if (error?.name === 'AbortError' || version !== requestVersion) return 'cancelled';
+    return 'unavailable';
+  } finally {
+    if (activeRequest === controller) activeRequest = null;
+  }
+}
