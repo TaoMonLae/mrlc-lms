@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import {
   ArrowLeft,
+  ArrowRight,
   AudioLines,
   BookOpen,
+  CalendarDays,
   Check,
   Copy,
   DoorOpen,
@@ -36,6 +38,11 @@ import {
 } from '@/shared/languageQuestRewards';
 import { useLanguageQuestPreferences } from '@/src/components/games/LanguageQuestPreferences';
 import { LanguageQuestLegendaryVault } from '@/src/components/games/LanguageQuestLegendaryRewards';
+import {
+  LANGUAGE_QUEST_CLASSROOM_CODE_LENGTH,
+  languageQuestProfileSection,
+  normalizeLanguageQuestClassroomCode,
+} from '@/shared/languageQuestClassrooms';
 
 interface LearnerClassroom {
   id: string;
@@ -58,6 +65,7 @@ interface LearnerProfilePayload {
 }
 
 export default function LanguageQuestProfile() {
+  const location = useLocation();
   const { updateUser } = useAuth();
   const {
     soundEnabled,
@@ -74,30 +82,31 @@ export default function LanguageQuestProfile() {
   const [saving, setSaving] = useState(false);
   const [joining, setJoining] = useState(false);
   const [loadError, setLoadError] = useState('');
-  const [activeSection, setActiveSection] = useState(
-    window.location.hash === '#quest-cards' ? 'cards' : 'profile',
-  );
+  const [activeSection, setActiveSection] = useState(() => languageQuestProfileSection(location.hash));
 
-  const load = () => {
+  const load = async () => {
     setLoadError('');
-    apiGet<LearnerProfilePayload>('/api/language-quest/profile')
-      .then((payload) => {
-        setProfile(payload);
-        setAvatarId(payload.avatarId);
-        setBio(payload.bio);
-      })
-      .catch((error: any) => {
-        const message = error?.message || 'Could not load your learner profile';
-        setLoadError(message);
-        toast.error(message);
-      });
+    try {
+      const payload = await apiGet<LearnerProfilePayload>('/api/language-quest/profile');
+      setProfile(payload);
+      setAvatarId(payload.avatarId);
+      setBio(payload.bio);
+    } catch (error: any) {
+      const message = error?.message || 'Could not load your learner profile';
+      setLoadError(message);
+      toast.error(message);
+    }
   };
 
-  useEffect(load, []);
+  useEffect(() => { void load(); }, []);
 
   useEffect(() => {
-    if (window.location.hash === '#quest-cards') setActiveSection('cards');
-  }, [profile]);
+    const inviteCode = normalizeLanguageQuestClassroomCode(
+      new URLSearchParams(location.search).get('classroomCode'),
+    );
+    if (inviteCode) setJoinCode(inviteCode);
+    setActiveSection(languageQuestProfileSection(location.hash));
+  }, [location.hash, location.search]);
 
   const save = async () => {
     setSaving(true);
@@ -122,14 +131,22 @@ export default function LanguageQuestProfile() {
     if (!joinCode.trim()) return;
     setJoining(true);
     try {
-      const classroom = await apiSend<{ name: string; teacherName: string }>(
+      const classroom = await apiSend<{
+        name: string;
+        teacherName: string;
+        alreadyMember: boolean;
+        focusCourse: LearnerClassroom['focusCourse'];
+      }>(
         '/api/language-quest/profile/classrooms',
         'POST',
         { joinCode },
       );
       setJoinCode('');
-      toast.success(`Joined ${classroom.name} with ${classroom.teacherName}`);
-      load();
+      toast.success(classroom.alreadyMember
+        ? `You are already in ${classroom.name}`
+        : `Joined ${classroom.name} with ${classroom.teacherName}`);
+      await load();
+      window.history.replaceState(null, '', `${location.pathname}#classrooms`);
     } catch (error: any) {
       toast.error(error?.message || 'Could not join that classroom');
     } finally {
@@ -156,7 +173,7 @@ export default function LanguageQuestProfile() {
         <div className="rounded-3xl border border-rose-300 bg-rose-50 p-8 shadow-sm dark:border-rose-500/30 dark:bg-rose-950/25">
           <h1 className="text-2xl font-black text-slate-950 dark:text-white">We could not load your profile</h1>
           <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">{loadError}</p>
-          <Button className="mt-6" onClick={load}>Try again</Button>
+          <Button className="mt-6" onClick={() => { void load(); }}>Try again</Button>
         </div>
       </div>
     );
@@ -196,11 +213,13 @@ export default function LanguageQuestProfile() {
       <Tabs
         value={activeSection}
         onValueChange={(value) => {
-          setActiveSection(value);
+          const section = languageQuestProfileSection(value === 'cards' ? '#quest-cards' : `#${value}`);
+          setActiveSection(section);
+          const hash = section === 'cards' ? '#quest-cards' : section === 'profile' ? '' : `#${section}`;
           window.history.replaceState(
             null,
             '',
-            value === 'cards' ? `${window.location.pathname}#quest-cards` : window.location.pathname,
+            `${window.location.pathname}${hash}`,
           );
         }}
         className="space-y-5"
@@ -378,13 +397,13 @@ export default function LanguageQuestProfile() {
             <Input
               id="language-quest-class-code"
               value={joinCode}
-              onChange={(event) => setJoinCode(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8))}
-              maxLength={8}
+              onChange={(event) => setJoinCode(normalizeLanguageQuestClassroomCode(event.target.value))}
+              maxLength={LANGUAGE_QUEST_CLASSROOM_CODE_LENGTH}
               className="h-12 pl-10 font-mono text-base font-black uppercase tracking-[0.2em]"
               placeholder="JOINCODE"
             />
           </div>
-          <Button type="submit" disabled={joining || joinCode.length < 6} className="h-12 rounded-xl bg-sky-600 font-black text-white hover:bg-sky-700">
+          <Button type="submit" disabled={joining || joinCode.length !== LANGUAGE_QUEST_CLASSROOM_CODE_LENGTH} className="h-12 rounded-xl bg-sky-600 font-black text-white hover:bg-sky-700">
             {joining ? 'Joining…' : 'Join classroom'}
           </Button>
         </form>
@@ -397,18 +416,43 @@ export default function LanguageQuestProfile() {
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">You can still learn independently.</p>
             </div>
           ) : profile.classrooms.map((classroom) => (
-            <article key={classroom.id} className="flex flex-col justify-between gap-4 rounded-2xl border border-sky-200 bg-white p-4 dark:border-sky-500/20 dark:bg-slate-900 sm:flex-row sm:items-center">
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="font-black text-slate-950 dark:text-white">{classroom.name}</h3>
-                  <Badge variant={classroom.active ? 'default' : 'secondary'}>{classroom.active ? 'Active' : 'Closed'}</Badge>
+            <article key={classroom.id} className="overflow-hidden rounded-2xl border border-sky-200 bg-white shadow-sm transition hover:border-sky-300 hover:shadow-md dark:border-sky-500/20 dark:bg-slate-900">
+              <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+                <div className="flex min-w-0 items-start gap-3">
+                  <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-sky-500 to-violet-600 text-2xl text-white shadow-sm">
+                    {classroom.focusCourse?.imageEmoji || '🎓'}
+                  </span>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="truncate font-black text-slate-950 dark:text-white">{classroom.name}</h3>
+                      <Badge variant={classroom.active ? 'default' : 'secondary'}>{classroom.active ? 'Active' : 'Closed to new learners'}</Badge>
+                    </div>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Teacher: {classroom.teacherName}</p>
+                    <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
+                      <CalendarDays className="h-3.5 w-3.5" /> Joined {new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(classroom.joinedAt))}
+                    </p>
+                    {classroom.focusCourse ? (
+                      <p className="mt-2 text-sm font-bold text-violet-700 dark:text-violet-300">Class course: {classroom.focusCourse.title}</p>
+                    ) : (
+                      <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Your teacher has not selected a focus course yet.</p>
+                    )}
+                  </div>
                 </div>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Teacher: {classroom.teacherName}</p>
-                {classroom.focusCourse && <p className="mt-1 text-sm font-semibold text-violet-700 dark:text-violet-300">{classroom.focusCourse.imageEmoji} Focus: {classroom.focusCourse.title}</p>}
+                <div className="flex shrink-0 flex-wrap gap-2 sm:justify-end">
+                  {classroom.focusCourse ? (
+                    <Button className="flex-1 rounded-xl bg-violet-700 font-black text-white hover:bg-violet-800 sm:flex-none" render={<Link to={`/games/language-quest/courses/${classroom.focusCourse.id}`} />} nativeButton={false}>
+                      <BookOpen className="mr-2 h-4 w-4" /> Open course <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <Button variant="outline" className="flex-1 rounded-xl sm:flex-none" render={<Link to="/games/language-quest" />} nativeButton={false}>
+                      Browse courses
+                    </Button>
+                  )}
+                  <Button type="button" variant="ghost" size="sm" onClick={() => leaveClassroom(classroom)} className="text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-500/10">
+                    <DoorOpen className="mr-2 h-4 w-4" /> Leave
+                  </Button>
+                </div>
               </div>
-              <Button type="button" variant="outline" size="sm" onClick={() => leaveClassroom(classroom)} className="text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-500/10">
-                <DoorOpen className="mr-2 h-4 w-4" /> Leave
-              </Button>
             </article>
           ))}
         </div>

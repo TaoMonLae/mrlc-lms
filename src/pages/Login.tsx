@@ -14,13 +14,14 @@ import {
   ShieldCheck,
   AlertCircle,
 } from "lucide-react";
-import { Link, useNavigate } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAuth } from "../providers/AuthProvider";
 import DotGrid from "@/components/DotGrid";
+import { safeAppReturnPath } from "@/shared/accountAccess";
 
 // Accepts either an email address or a username so the same field can log
 // people in either way.
@@ -37,6 +38,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 const HERO_FALLBACK = "/login-hero.jpg";
 
 export default function LoginPage() {
+  const location = useLocation();
   const navigate = useNavigate();
   const { login } = useAuth();
   const [serverError, setServerError] = useState<string | null>(null);
@@ -103,15 +105,16 @@ export default function LoginPage() {
       if (result.mfaRequired) setMfaRequired(true);
       setServerError(result.error ?? "Login failed. Please try again.");
     } else {
-      let destination = "/dashboard";
+      const returnPath = safeAppReturnPath((location.state as { from?: unknown } | null)?.from);
+      let destination = returnPath || "/dashboard";
       try {
         const stored = JSON.parse(sessionStorage.getItem("auth_user") || "{}");
-        if (stored.isExternalLearner) destination = "/games/language-quest";
-        else if (stored.role === "LIBRARIAN") destination = "/books";
+        if (!returnPath && stored.isExternalLearner) destination = "/games/language-quest";
+        else if (!returnPath && stored.role === "LIBRARIAN") destination = "/books";
       } catch {
         /* fall back to the default destination */
       }
-      navigate(destination);
+      navigate(destination, { replace: true });
     }
   };
 

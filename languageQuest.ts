@@ -44,6 +44,7 @@ import {
   languageQuestCourseReviewDecision,
   languageQuestTeacherEditReviewData,
 } from "./shared/languageQuestCourseReview";
+import { normalizeLanguageQuestClassroomCode } from "./shared/languageQuestClassrooms";
 import { languageQuestAnswerMatches, languageQuestPinyin } from "./shared/languageQuestPinyin";
 import { languageQuestGlobalLeaderboardWhere } from "./shared/externalLearnerAccess";
 import {
@@ -262,6 +263,22 @@ const starterUnits = [
 
 function isManager(role: string): boolean {
   return role === "ADMIN" || role === "TEACHER";
+}
+
+export async function canAccessLanguageQuestCourse(
+  prisma: any,
+  jwtUser: Pick<JwtPayload, "userId" | "role">,
+  course: { id: string; published: boolean },
+): Promise<boolean> {
+  if (course.published || isManager(jwtUser.role)) return true;
+  const membership = await prisma.languageQuestClassroomMember.findFirst({
+    where: {
+      userId: jwtUser.userId,
+      classroom: { focusCourseId: course.id },
+    },
+    select: { id: true },
+  });
+  return Boolean(membership);
 }
 
 function languageQuestJoinCode(): string {
@@ -898,26 +915,36 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
 
   app.post("/api/language-quest/profile/classrooms", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
-    const joinCode = text(req.body?.joinCode, 20).replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+    const joinCode = normalizeLanguageQuestClassroomCode(req.body?.joinCode);
     if (!joinCode) { res.status(400).json({ error: "Enter the classroom join code" }); return; }
     try {
       const classroom = await prisma.languageQuestClassroom.findUnique({
         where: { joinCode },
-        include: { teacher: { select: { firstName: true, lastName: true } } },
+        include: {
+          teacher: { select: { firstName: true, lastName: true } },
+          focusCourse: { select: { id: true, title: true, imageEmoji: true } },
+        },
       });
       if (!classroom || !classroom.active) {
         res.status(404).json({ error: "That classroom code is not active" });
         return;
       }
+      const existingMembership = await prisma.languageQuestClassroomMember.findUnique({
+        where: { classroomId_userId: { classroomId: classroom.id, userId: jwtUser.userId } },
+        select: { id: true },
+      });
       await prisma.languageQuestClassroomMember.upsert({
         where: { classroomId_userId: { classroomId: classroom.id, userId: jwtUser.userId } },
         update: {},
         create: { classroomId: classroom.id, userId: jwtUser.userId },
       });
-      res.status(201).json({
+      res.status(existingMembership ? 200 : 201).json({
         id: classroom.id,
         name: classroom.name,
+        active: classroom.active,
         teacherName: `${classroom.teacher.firstName} ${classroom.teacher.lastName}`.trim(),
+        focusCourse: classroom.focusCourse,
+        alreadyMember: Boolean(existingMembership),
       });
     } catch (error) {
       logger.error("Error joining Language Quest classroom:", error);
@@ -1008,7 +1035,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           },
         },
       });
-      if (!course || (!course.published && !isManager(jwtUser.role))) { res.status(404).json({ error: "Course not found" }); return; }
+      if (!course || !(await canAccessLanguageQuestCourse(prisma, jwtUser, course))) { res.status(404).json({ error: "Course not found" }); return; }
       const completedRows = await prisma.languageQuestChallengeProgress.findMany({
         where: { userId: jwtUser.userId, completed: true, challenge: { lesson: { unit: { courseId: course.id } } } },
         select: { challengeId: true },
@@ -1087,7 +1114,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           },
         },
       });
-      if (!course || (!course.published && !isManager(jwtUser.role))) { res.status(404).json({ error: "Course not found" }); return; }
+      if (!course || !(await canAccessLanguageQuestCourse(prisma, jwtUser, course))) { res.status(404).json({ error: "Course not found" }); return; }
 
       const challenges = course.units.flatMap((unit: any) => unit.lessons.flatMap((lesson: any) => lesson.challenges));
       if (challenges.length === 0) { res.status(409).json({ error: "This course does not have any challenges yet" }); return; }
@@ -1210,7 +1237,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           units: { include: { lessons: { include: { challenges: { include: { options: true } } } } } },
         },
       });
-      if (!course || (!course.published && !isManager(jwtUser.role))) { res.status(404).json({ error: "Course not found" }); return; }
+      if (!course || !(await canAccessLanguageQuestCourse(prisma, jwtUser, course))) { res.status(404).json({ error: "Course not found" }); return; }
 
       const challenges = course.units.flatMap((unit: any) => unit.lessons.flatMap((lesson: any) => lesson.challenges));
       const progressRows = await prisma.languageQuestChallengeProgress.findMany({
@@ -1318,7 +1345,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           challenges: { orderBy: { order: "asc" }, include: { options: { orderBy: { order: "asc" } } } },
         },
       });
-      if (!lesson || (!lesson.unit.course.published && !isManager(jwtUser.role))) { res.status(404).json({ error: "Lesson not found" }); return; }
+      if (!lesson || !(await canAccessLanguageQuestCourse(prisma, jwtUser, lesson.unit.course))) { res.status(404).json({ error: "Lesson not found" }); return; }
       if (lesson.challenges.length === 0) { res.status(409).json({ error: "This lesson does not have any challenges yet" }); return; }
 
       const lockMessage = await lessonLockMessage(prisma, jwtUser, lesson);
@@ -1373,7 +1400,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           challenges: { orderBy: { order: "asc" }, include: { options: { orderBy: { order: "asc" } } } },
         },
       });
-      if (!lesson || (!lesson.unit.course.published && !isManager(jwtUser.role))) { res.status(404).json({ error: "Lesson not found" }); return; }
+      if (!lesson || !(await canAccessLanguageQuestCourse(prisma, jwtUser, lesson.unit.course))) { res.status(404).json({ error: "Lesson not found" }); return; }
       if (lesson.challenges.length === 0) { res.status(409).json({ error: "This lesson does not have any challenges yet" }); return; }
 
       const lockMessage = await lessonLockMessage(prisma, jwtUser, lesson);
@@ -1419,7 +1446,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           lesson: { include: { unit: { include: { course: true } } } },
         },
       });
-      if (!challenge || !challenge.lesson.unit.course.published) { res.status(404).json({ error: "Challenge not found" }); return; }
+      if (!challenge || !(await canAccessLanguageQuestCourse(prisma, jwtUser, challenge.lesson.unit.course))) { res.status(404).json({ error: "Challenge not found" }); return; }
 
       // The lesson and preview endpoints enforce path progression, but the
       // answer endpoint is the authority that changes progress and awards XP.

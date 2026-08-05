@@ -30,6 +30,9 @@ function LanguageQuestShellContent() {
   const [systemDark, setSystemDark] = useState(false);
   const canManage = user?.role === 'ADMIN' || user?.role === 'TEACHER';
   const isAdmin = user?.role === 'ADMIN';
+  const classroomsHref = canManage
+    ? '/games/language-quest/classrooms'
+    : '/games/language-quest/profile#classrooms';
   const darkMode = theme === 'dark' || (theme === 'system' && systemDark);
 
   useEffect(() => {
@@ -75,16 +78,12 @@ function LanguageQuestShellContent() {
                 </Button>
               </>
             )}
-            {canManage && (
-              <>
-                <Button variant="ghost" size="sm" className="hidden xl:flex" render={<Link to="/games/language-quest/classrooms" />} nativeButton={false}>
-                  <GraduationCap className="mr-2 h-4 w-4" /> Classrooms
-                </Button>
-                <Button variant="ghost" size="icon" className="hidden text-sky-600 min-[560px]:inline-flex xl:hidden" aria-label="Classrooms" render={<Link to="/games/language-quest/classrooms" />} nativeButton={false}>
-                  <GraduationCap className="h-4 w-4" />
-                </Button>
-              </>
-            )}
+            <Button variant="ghost" size="sm" className="hidden xl:flex" render={<Link to={classroomsHref} />} nativeButton={false}>
+              <GraduationCap className="mr-2 h-4 w-4" /> Classrooms
+            </Button>
+            <Button variant="ghost" size="icon" className={`${canManage ? 'hidden min-[560px]:inline-flex' : 'inline-flex'} text-sky-600 xl:hidden`} aria-label="Classrooms" render={<Link to={classroomsHref} />} nativeButton={false}>
+              <GraduationCap className="h-4 w-4" />
+            </Button>
             {isAdmin && (
               <>
                 <Button variant="ghost" size="sm" className="hidden xl:flex" render={<Link to="/games/language-quest/learners" />} nativeButton={false}>

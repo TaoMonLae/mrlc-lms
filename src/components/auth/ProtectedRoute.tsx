@@ -28,7 +28,7 @@ export function ProtectedRoute({ requiredPermission, allowedRoles, strictRoles }
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
   if (user.status !== 'ACTIVE') {

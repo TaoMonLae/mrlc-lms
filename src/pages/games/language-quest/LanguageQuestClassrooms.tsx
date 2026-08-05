@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import {
   ArrowLeft,
@@ -6,8 +6,10 @@ import {
   CheckCircle2,
   Clipboard,
   Copy,
+  ExternalLink,
   Flame,
   GraduationCap,
+  Link2,
   Plus,
   RefreshCw,
   ShieldCheck,
@@ -24,6 +26,7 @@ import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { LanguageQuestAvatar } from '@/src/components/games/LanguageQuestAvatar';
 import { apiGet, apiSend } from '@/src/lib/api';
+import { languageQuestClassroomInvitePath } from '@/shared/languageQuestClassrooms';
 
 interface FocusCourse {
   id: string;
@@ -95,6 +98,7 @@ function relativeActivity(value: string | null): string {
 
 export default function LanguageQuestClassrooms() {
   const [payload, setPayload] = useState<ClassroomPayload | null>(null);
+  const [loadError, setLoadError] = useState('');
   const [selectedId, setSelectedId] = useState('');
   const [detail, setDetail] = useState<ClassroomDetail | null>(null);
   const [name, setName] = useState('');
@@ -106,6 +110,7 @@ export default function LanguageQuestClassrooms() {
   const [challengeDays, setChallengeDays] = useState('7');
   const [challengeReward, setChallengeReward] = useState('');
   const [creatingChallenge, setCreatingChallenge] = useState(false);
+  const rosterRequestId = useRef(0);
 
   const selectedSummary = useMemo(
     () => payload?.classrooms.find((classroom) => classroom.id === selectedId) || null,
@@ -113,6 +118,7 @@ export default function LanguageQuestClassrooms() {
   );
 
   const loadClassrooms = async (preferId?: string) => {
+    setLoadError('');
     try {
       const result = await apiGet<ClassroomPayload>('/api/language-quest/classrooms');
       setPayload(result);
@@ -123,7 +129,9 @@ export default function LanguageQuestClassrooms() {
           : result.classrooms[0]?.id || '';
       });
     } catch (error: any) {
-      toast.error(error?.message || 'Could not load Language Quest classrooms');
+      const message = error?.message || 'Could not load Language Quest classrooms';
+      setLoadError(message);
+      toast.error(message);
     }
   };
 
@@ -137,15 +145,22 @@ export default function LanguageQuestClassrooms() {
     loadRoster(selectedId);
   }, [selectedId]);
 
-  const loadRoster = (classroomId: string) => {
+  const loadRoster = async (classroomId: string) => {
+    const requestId = ++rosterRequestId.current;
     setLoadingRoster(true);
-    apiGet<ClassroomDetail>(`/api/language-quest/classrooms/${classroomId}`)
-      .then(setDetail)
-      .catch((error: any) => {
+    try {
+      const result = await apiGet<ClassroomDetail>(`/api/language-quest/classrooms/${classroomId}`);
+      if (requestId === rosterRequestId.current) setDetail(result);
+      return result;
+    } catch (error: any) {
+      if (requestId === rosterRequestId.current) {
         setDetail(null);
         toast.error(error?.message || 'Could not load the classroom roster');
-      })
-      .finally(() => setLoadingRoster(false));
+      }
+      return null;
+    } finally {
+      if (requestId === rosterRequestId.current) setLoadingRoster(false);
+    }
   };
 
   const createClassroom = async (event: React.FormEvent) => {
@@ -174,8 +189,10 @@ export default function LanguageQuestClassrooms() {
     try {
       await apiSend(`/api/language-quest/classrooms/${selectedSummary.id}`, 'PATCH', { active: !selectedSummary.active });
       toast.success(selectedSummary.active ? 'Classroom closed' : 'Classroom reopened');
-      await loadClassrooms(selectedSummary.id);
-      setDetail((current) => current ? { ...current, active: !selectedSummary.active } : current);
+      await Promise.all([
+        loadClassrooms(selectedSummary.id),
+        loadRoster(selectedSummary.id),
+      ]);
     } catch (error: any) {
       toast.error(error?.message || 'Could not update classroom');
     }
@@ -186,9 +203,10 @@ export default function LanguageQuestClassrooms() {
     try {
       await apiSend(`/api/language-quest/classrooms/${selectedSummary.id}`, 'PATCH', { focusCourseId: courseId || null });
       toast.success('Focus course updated');
-      await loadClassrooms(selectedSummary.id);
-      const refreshed = await apiGet<ClassroomDetail>(`/api/language-quest/classrooms/${selectedSummary.id}`);
-      setDetail(refreshed);
+      await Promise.all([
+        loadClassrooms(selectedSummary.id),
+        loadRoster(selectedSummary.id),
+      ]);
     } catch (error: any) {
       toast.error(error?.message || 'Could not update the focus course');
     }
@@ -201,6 +219,17 @@ export default function LanguageQuestClassrooms() {
       toast.success('Join code copied');
     } catch {
       toast.info(`Classroom code: ${selectedSummary.joinCode}`);
+    }
+  };
+
+  const copyInviteLink = async () => {
+    if (!selectedSummary) return;
+    const inviteUrl = `${window.location.origin}${languageQuestClassroomInvitePath(selectedSummary.joinCode)}`;
+    try {
+      await navigator.clipboard.writeText(inviteUrl);
+      toast.success('Classroom invite link copied');
+    } catch {
+      toast.info(`Invite learners at ${inviteUrl}`);
     }
   };
 
@@ -237,7 +266,7 @@ export default function LanguageQuestClassrooms() {
       setChallengeTitle('');
       setChallengeReward('');
       toast.success('Team challenge started');
-      loadRoster(detail.id);
+      await loadRoster(detail.id);
     } catch (error: any) {
       toast.error(error?.message || 'Could not create the team challenge');
     } finally {
@@ -254,11 +283,23 @@ export default function LanguageQuestClassrooms() {
         { active: false },
       );
       toast.success('Team challenge closed');
-      loadRoster(detail.id);
+      await loadRoster(detail.id);
     } catch (error: any) {
       toast.error(error?.message || 'Could not close the team challenge');
     }
   };
+
+  if (loadError && !payload) {
+    return (
+      <div className="mx-auto grid min-h-[420px] max-w-lg place-items-center px-4 text-center">
+        <div className="rounded-3xl border border-rose-300 bg-rose-50 p-8 shadow-sm dark:border-rose-500/30 dark:bg-rose-950/25">
+          <h1 className="text-2xl font-black text-slate-950 dark:text-white">We could not load your classrooms</h1>
+          <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">{loadError}</p>
+          <Button className="mt-6" onClick={() => { void loadClassrooms(); }}>Try again</Button>
+        </div>
+      </div>
+    );
+  }
 
   if (!payload) {
     return <div className="grid min-h-[420px] place-items-center"><div className="h-11 w-11 animate-spin rounded-full border-4 border-violet-200 border-t-violet-600" /></div>;
@@ -374,23 +415,38 @@ export default function LanguageQuestClassrooms() {
                 <div className="mt-5 grid gap-4 sm:grid-cols-2">
                   <div className="rounded-2xl bg-gradient-to-br from-violet-700 to-fuchsia-600 p-4 text-white">
                     <p className="text-xs font-black uppercase tracking-[0.18em] text-white/70">Learner join code</p>
-                    <div className="mt-2 flex items-center justify-between gap-3">
-                      <p className="font-mono text-2xl font-black tracking-[0.2em]">{selectedSummary.joinCode}</p>
-                      <Button size="icon" variant="outline" onClick={copyJoinCode} className="border-white/25 bg-white/15 text-white hover:bg-white/25 hover:text-white" aria-label="Copy join code"><Copy className="h-4 w-4" /></Button>
+                    <p className="mt-2 font-mono text-2xl font-black tracking-[0.2em]">{selectedSummary.joinCode}</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Button size="sm" variant="outline" onClick={copyJoinCode} className="border-white/25 bg-white/15 text-white hover:bg-white/25 hover:text-white">
+                        <Copy className="mr-2 h-4 w-4" /> Copy code
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={copyInviteLink} disabled={!selectedSummary.active} className="border-white/25 bg-white/15 text-white hover:bg-white/25 hover:text-white disabled:text-white/60">
+                        <Link2 className="mr-2 h-4 w-4" /> Copy invite link
+                      </Button>
                     </div>
+                    <p className="mt-3 text-xs leading-5 text-white/70">The invite opens the learner classroom tab with this code ready to join.</p>
                   </div>
-                  <label className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">
-                    Focus course
-                    <select
-                      value={selectedSummary.focusCourse?.id || ''}
-                      onChange={(event) => changeFocus(event.target.value)}
-                      disabled={!selectedSummary.canEdit}
-                      className="mt-2 h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-                    >
-                      <option value="">No focus course</option>
-                      {payload.courses.map((course) => <option key={course.id} value={course.id}>{course.imageEmoji} {course.title}</option>)}
-                    </select>
-                  </label>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">
+                    <label>
+                      Focus course
+                      <select
+                        value={selectedSummary.focusCourse?.id || ''}
+                        onChange={(event) => changeFocus(event.target.value)}
+                        disabled={!selectedSummary.canEdit}
+                        className="mt-2 h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                      >
+                        <option value="">No focus course</option>
+                        {payload.courses.map((course) => <option key={course.id} value={course.id}>{course.imageEmoji} {course.title}</option>)}
+                      </select>
+                    </label>
+                    {selectedSummary.focusCourse ? (
+                      <Button variant="outline" size="sm" className="mt-3 w-full" render={<Link to={`/games/language-quest/courses/${selectedSummary.focusCourse.id}`} />} nativeButton={false}>
+                        <BookOpen className="mr-2 h-4 w-4" /> Open focus course <ExternalLink className="ml-2 h-3.5 w-3.5" />
+                      </Button>
+                    ) : (
+                      <p className="mt-3 text-xs font-medium leading-5 text-slate-500 dark:text-slate-400">Choose a course to give joined learners a direct classroom course link.</p>
+                    )}
+                  </div>
                 </div>
               </section>
 

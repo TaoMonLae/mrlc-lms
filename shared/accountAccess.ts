@@ -15,3 +15,27 @@ export function shouldForcePasswordChange(
 ): boolean {
   return Boolean(mustChangePassword) && accountPathname(value) !== "/change-password";
 }
+
+/**
+ * Convert React Router's saved location into a same-app return URL. Reject
+ * protocol-relative and malformed paths so login redirects cannot be used to
+ * navigate outside the application.
+ */
+export function safeAppReturnPath(value: unknown): string | null {
+  if (!value || typeof value !== "object") return null;
+  const candidate = value as { pathname?: unknown; search?: unknown; hash?: unknown };
+  if (
+    typeof candidate.pathname !== "string"
+    || !candidate.pathname.startsWith("/")
+    || candidate.pathname.startsWith("//")
+    || candidate.pathname.includes("\\")
+    || candidate.pathname === "/login"
+  ) return null;
+  const search = typeof candidate.search === "string" && candidate.search.startsWith("?")
+    ? candidate.search
+    : "";
+  const hash = typeof candidate.hash === "string" && candidate.hash.startsWith("#")
+    ? candidate.hash
+    : "";
+  return `${candidate.pathname}${search}${hash}`;
+}
