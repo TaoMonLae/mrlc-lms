@@ -4346,7 +4346,7 @@ model GameControlPolicy {
   id                  String  @id @default(uuid())
   scope               String // GLOBAL | CLASS | STUDENT
   scopeKey            String // GLOBAL | CLASS:<id> | STUDENT:<id>
-  gameKey             String // ALL | SNAKE | SUDOKU | CHECKERS | CHESS | PACMAN | WORD_TRAIL
+  gameKey             String // ALL | SNAKE | SUDOKU | CHECKERS | CHESS | PACMAN | WORD_TRAIL | PERIODIC_TABLE
   enabled             Boolean @default(true)
   blocked             Boolean @default(false)
   dailyLimitMinutes   Int?

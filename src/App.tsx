@@ -193,6 +193,11 @@ const ChessLobbyPage = lazy(() => import("./pages/games/chess/Lobby"));
 const ChessLeaderboardPage = lazy(() => import("./pages/games/chess/Leaderboard"));
 const PacmanSelectPage = lazy(() => import("./pages/games/pacman/index"));
 const PacmanPlayPage = lazy(() => import("./pages/games/pacman/PlayPage"));
+const PeriodicTableHubPage = lazy(() => import("./pages/games/periodic-table/index"));
+const PeriodicTableQuizPage = lazy(() => import("./pages/games/periodic-table/ElementQuiz"));
+const PeriodicTableMatchPage = lazy(() => import("./pages/games/periodic-table/ElementMatch"));
+const PeriodicTableSpeedTapPage = lazy(() => import("./pages/games/periodic-table/SpeedTap"));
+const PeriodicTableBuildAtomPage = lazy(() => import("./pages/games/periodic-table/BuildAtom"));
 const LanguageQuestHome = lazy(() => import("./pages/games/language-quest/LanguageQuestHome"));
 const LanguageQuestPublic = lazy(() => import("./pages/games/language-quest/LanguageQuestPublic"));
 const LanguageQuestAbout = lazy(() => import("./pages/games/language-quest/LanguageQuestAbout"));
@@ -418,6 +423,12 @@ export default function App() {
 
                 <Route path="/games/pacman" element={<GameAccessGate gameKey="PACMAN"><PacmanSelectPage /></GameAccessGate>} />
                 <Route path="/games/pacman/play" element={<GameAccessGate gameKey="PACMAN" consumeTime><PacmanPlayPage /></GameAccessGate>} />
+
+                <Route path="/games/periodic-table" element={<GameAccessGate gameKey="PERIODIC_TABLE"><PeriodicTableHubPage /></GameAccessGate>} />
+                <Route path="/games/periodic-table/quiz" element={<GameAccessGate gameKey="PERIODIC_TABLE" consumeTime><PeriodicTableQuizPage /></GameAccessGate>} />
+                <Route path="/games/periodic-table/match" element={<GameAccessGate gameKey="PERIODIC_TABLE" consumeTime><PeriodicTableMatchPage /></GameAccessGate>} />
+                <Route path="/games/periodic-table/speed-tap" element={<GameAccessGate gameKey="PERIODIC_TABLE" consumeTime><PeriodicTableSpeedTapPage /></GameAccessGate>} />
+                <Route path="/games/periodic-table/build-atom" element={<GameAccessGate gameKey="PERIODIC_TABLE" consumeTime><PeriodicTableBuildAtomPage /></GameAccessGate>} />
 
                 <Route element={<ProtectedRoute strictRoles={['STUDENT', 'TEACHER']} />}>
                   <Route path="/daily-quest" element={<DailyQuestPage />} />

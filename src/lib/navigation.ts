@@ -42,6 +42,7 @@ import {
   Map,
   Ghost,
   ShieldCheck,
+  Atom,
 } from "lucide-react";
 import { UserRole } from "./permissions";
 
@@ -92,6 +93,7 @@ const GAME_ITEMS: NavGroupItem[] = [
   { title: "Checkers", url: "/games/checkers", icon: Dice5 },
   { title: "Chess", url: "/games/chess", icon: Crown },
   { title: "Pac-Man", url: "/games/pacman", icon: Ghost },
+  { title: "Periodic Table", url: "/games/periodic-table", icon: Atom },
 ];
 
 const LEARNER_GAME_ITEMS: NavGroupItem[] = [
@@ -390,6 +392,11 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     title: "Pac-Man",
     url: "/games/pacman",
     icon: Ghost,
+  },
+  {
+    title: "Periodic Table",
+    url: "/games/periodic-table",
+    icon: Atom,
   },
   {
     title: "Dictionary",
