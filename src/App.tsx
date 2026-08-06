@@ -238,6 +238,7 @@ const GradebookClassReport = lazy(() => import("./pages/gradebook/GradebookClass
 
 const DocumentsPage = lazy(() => import("./pages/documents/Documents"));
 const DocumentPrint = lazy(() => import("./pages/documents/DocumentPrint"));
+const StudentIdCardPrint = lazy(() => import("./pages/documents/StudentIdCardPrint"));
 const VerifyDocument = lazy(() => import("./pages/documents/VerifyDocument"));
 const StudentDocumentsPage = lazy(() => import("./pages/student/StudentDocuments"));
 
@@ -318,6 +319,7 @@ export default function App() {
             <Route element={<ProtectedRoute />}>
               <Route path="/change-password" element={<ChangePassword />} />
               <Route path="/documents/:id/print" element={<DocumentPrint />} />
+              <Route path="/documents/:id/id-card" element={<StudentIdCardPrint />} />
               <Route path="/payroll/payslips/:id/print" element={<PayslipPrint />} />
               <Route path="/payroll/runs/:id/print" element={<PayrollRunPrint />} />
               <Route element={<LanguageQuestShell />}>

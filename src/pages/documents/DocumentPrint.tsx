@@ -39,6 +39,9 @@ export default function DocumentPrint() {
     if (!id) return;
     apiGet<DocRecord>(`/api/documents/${id}`)
       .then(async (d) => {
+        // Student ID cards use a dedicated CR80-sized print layout, not this
+        // letter-sized document sheet — hand off to that page instead.
+        if (d.type === 'STUDENT_ID_CARD') { navigate(`/documents/${id}/id-card`, { replace: true }); return; }
         setDoc(d);
         const verifyUrl = `${window.location.origin}/verify/${d.verifyToken}`;
         try { setQr(await QRCode.toDataURL(verifyUrl, { margin: 1, width: 220 })); } catch { /* ignore */ }
@@ -46,7 +49,7 @@ export default function DocumentPrint() {
       .catch(() => toast.error('Failed to load document'))
       .finally(() => setLoading(false));
     apiGet<Branding>('/api/settings').then(setBranding).catch(() => {});
-  }, [id]);
+  }, [id, navigate]);
 
   const handleDownload = async () => {
     if (doc) apiSend(`/api/documents/${doc.id}/download`, 'POST').catch(() => {});

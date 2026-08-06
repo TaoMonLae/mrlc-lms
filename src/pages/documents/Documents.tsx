@@ -18,6 +18,7 @@ const TYPE_LABELS: Record<string, string> = {
   ENROLLMENT_CONFIRMATION: 'Enrollment Confirmation',
   COMPLETION_CERTIFICATE: 'Completion Certificate',
   PROGRESS_REPORT: 'Progress Report',
+  STUDENT_ID_CARD: 'Student ID Card',
 };
 
 type Doc = {

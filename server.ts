@@ -19221,7 +19221,7 @@ async function startServer() {
   // ── Official documents (report cards, transcripts, certificates) ─────────────
   const DOC_PREFIX: Record<string, string> = {
     REPORT_CARD: "RC", TRANSCRIPT: "TR", ENROLLMENT_CONFIRMATION: "EN",
-    COMPLETION_CERTIFICATE: "CC", PROGRESS_REPORT: "PR",
+    COMPLETION_CERTIFICATE: "CC", PROGRESS_REPORT: "PR", STUDENT_ID_CARD: "ID",
   };
   const DOC_TYPES = Object.keys(DOC_PREFIX);
   const canIssueDocs = (role: string) => role === "ADMIN" || role === "TEACHER";
@@ -19263,11 +19263,13 @@ async function startServer() {
         enrollmentDate: student.enrollmentDate, status: student.status || "ACTIVE",
         academicYear: student.class?.academicYear || null,
         level: student.class?.level || null,
+        photoUrl: student.profilePhotoUrl || null,
+        dateOfBirth: student.dateOfBirth || null,
       },
       term: term || student.class?.academicYear || null,
     };
 
-    if (type === "ENROLLMENT_CONFIRMATION") return base;
+    if (type === "STUDENT_ID_CARD" || type === "ENROLLMENT_CONFIRMATION") return base;
 
     const progress = await buildStudentProgress(studentId).catch(() => null);
     const attendance = await attendanceSummary(studentId);
@@ -19613,7 +19615,7 @@ async function startServer() {
       const TYPE_LABELS: Record<string, string> = {
         REPORT_CARD: "Term Report Card", TRANSCRIPT: "Academic Transcript",
         ENROLLMENT_CONFIRMATION: "Enrollment Confirmation", COMPLETION_CERTIFICATE: "Completion Certificate",
-        PROGRESS_REPORT: "Student Progress Report",
+        PROGRESS_REPORT: "Student Progress Report", STUDENT_ID_CARD: "Student ID Card",
       };
       res.json({
         valid: doc.status === "ACTIVE",
