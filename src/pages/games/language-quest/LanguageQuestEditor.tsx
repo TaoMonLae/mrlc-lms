@@ -68,6 +68,7 @@ interface EditorChallenge {
   type: EditorChallengeType;
   question: string;
   explanation: string;
+  hint: string;
   options: EditorOption[];
 }
 
@@ -98,6 +99,7 @@ interface EditorLesson {
   id?: string;
   title: string;
   description: string;
+  conceptIntro: string;
   challenges: EditorChallenge[];
 }
 
@@ -151,7 +153,7 @@ function changeChallengeType(challenge: EditorChallenge, type: EditorChallengeTy
 }
 
 const newChallenge = (): EditorChallenge => ({
-  _key: key(), type: 'SELECT', question: '', explanation: '',
+  _key: key(), type: 'SELECT', question: '', explanation: '', hint: '',
   options: [newOption(true), newOption(), newOption()],
 });
 interface BulkVocabularyEntry {
@@ -189,12 +191,13 @@ function buildBulkVocabularyChallenges(entries: BulkVocabularyEntry[]): EditorCh
       type: 'SELECT' as EditorChallengeType,
       question: `Choose the translation for “${entry.term}”.`,
       explanation: '',
+      hint: '',
       options: optionsForChallengeType('SELECT', options),
     };
   });
 }
 
-const newLesson = (): EditorLesson => ({ _key: key(), title: '', description: '', challenges: [newChallenge()] });
+const newLesson = (): EditorLesson => ({ _key: key(), title: '', description: '', conceptIntro: '', challenges: [newChallenge()] });
 const newUnit = (): EditorUnit => ({ _key: key(), title: '', description: '', lessons: [newLesson()] });
 const emptyCourse = (): EditorCourse => ({
   title: '', description: '', language: 'English', category: 'English Courses',
@@ -219,6 +222,7 @@ function hydrateCourse(raw: any): EditorCourse {
       _key: key(), id: unit.id, title: unit.title || '', description: unit.description || '',
       lessons: (unit.lessons || []).map((lesson: any) => ({
         _key: key(), id: lesson.id, title: lesson.title || '', description: lesson.description || '',
+        conceptIntro: lesson.conceptIntro || '',
         challenges: (lesson.challenges || []).map((challenge: any) => {
           // Preserve every supported stored type while normalising only the
           // invariants its learner UI and server grader already require.
@@ -232,6 +236,7 @@ function hydrateCourse(raw: any): EditorCourse {
             type,
             question: challenge.question || '',
             explanation: challenge.explanation || '',
+            hint: challenge.hint || '',
             options: optionsForChallengeType(type, options),
           };
         }),
@@ -442,6 +447,19 @@ function ChallengeEditor({ challenge, index, analytics, onChange, onRemove }: {
             <p className="text-xs text-slate-400">Shown only after the learner checks an answer.</p>
           </div>
 
+          <div className="space-y-1.5">
+            <Label htmlFor={`challenge-hint-${challenge._key}`}>Hint <span className="font-normal text-slate-400">(optional)</span></Label>
+            <Textarea
+              id={`challenge-hint-${challenge._key}`}
+              value={challenge.hint}
+              maxLength={800}
+              rows={2}
+              placeholder="A nudge toward the strategy, without giving the answer away."
+              onChange={(event) => onChange({ ...challenge, hint: event.target.value })}
+            />
+            <p className="text-xs text-slate-400">Learners can reveal this before answering, with a "Get a hint" button.</p>
+          </div>
+
           {challenge.type === 'REORDER' ? (
             <div className="space-y-2">
               <div><p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Correct tile order</p><p className="text-xs text-slate-400">Enter tiles in the finished sentence order; learners will receive them shuffled.</p></div>
@@ -499,15 +517,22 @@ function LessonPreviewDialog({ lesson, open, onOpenChange }: {
           <DialogDescription>How each challenge will appear to a learner. Read-only — nothing here is saved.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
+          {lesson.conceptIntro && (
+            <div className="rounded-xl border border-sky-200 bg-sky-50 p-3 dark:border-sky-500/20 dark:bg-sky-500/10">
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-300">Shown first: concept introduction</p>
+              <p className="whitespace-pre-line text-sm leading-6 text-sky-950 dark:text-sky-100">{lesson.conceptIntro}</p>
+            </div>
+          )}
           {lesson.challenges.length === 0 && <p className="text-sm text-slate-400">This lesson has no challenges yet.</p>}
           {lesson.challenges.map((challenge, challengeIndex) => {
             const definition = challengeTypeDefinition(challenge.type);
-            const hint = challengePreviewHint(challenge.type);
+            const mechanicsHint = challengePreviewHint(challenge.type);
             return (
               <div key={challenge._key} className="rounded-xl border border-slate-200 p-3 dark:border-surface-raised">
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Challenge {challengeIndex + 1} · {definition.label}</p>
                 <p className="mb-2 font-medium text-slate-900 dark:text-white">{challenge.question || <span className="italic text-slate-400">No question text yet</span>}</p>
-                {hint && <p className="mb-2 text-xs text-slate-400">{hint}</p>}
+                {mechanicsHint && <p className="mb-2 text-xs text-slate-400">{mechanicsHint}</p>}
+                {challenge.hint && <p className="mb-2 text-xs text-amber-600 dark:text-amber-300">Hint available: {challenge.hint}</p>}
                 <div className="grid gap-1.5 sm:grid-cols-2">
                   {challenge.options.map((option) => (
                     <div
@@ -569,6 +594,18 @@ function LessonEditor({ lesson, index, isFirst, isLast, analytics, onChange, onR
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5"><Label>Lesson title</Label><Input value={lesson.title} maxLength={160} placeholder="e.g. Friendly greetings" onChange={(event) => onChange({ ...lesson, title: event.target.value })} /></div>
             <div className="space-y-1.5"><Label>Short description</Label><Input value={lesson.description} maxLength={500} placeholder="What learners will practise" onChange={(event) => onChange({ ...lesson, description: event.target.value })} /></div>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor={`lesson-concept-${lesson._key}`}>Concept introduction <span className="font-normal text-slate-400">(optional)</span></Label>
+            <Textarea
+              id={`lesson-concept-${lesson._key}`}
+              value={lesson.conceptIntro}
+              maxLength={4000}
+              rows={4}
+              placeholder="The key idea, formula, vocabulary, or a worked example -- shown once before the learner's first challenge in this lesson."
+              onChange={(event) => onChange({ ...lesson, conceptIntro: event.target.value })}
+            />
+            <p className="text-xs text-slate-400">Separate paragraphs with a blank line. Leave empty to skip straight to practice, as before.</p>
           </div>
           <div className="space-y-3">
             {lesson.challenges.map((challenge, challengeIndex) => (

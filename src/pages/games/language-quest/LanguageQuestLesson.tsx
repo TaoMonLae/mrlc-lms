@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import confetti from 'canvas-confetti';
-import { ArrowLeft, BookA, Flame, Headphones, Heart, Lightbulb, ListChecks, Mic, PartyPopper, PencilLine, SpellCheck2, Square, Star, Volume2, VolumeX } from 'lucide-react';
+import { ArrowLeft, BookA, BookOpen, Flame, Headphones, Heart, Lightbulb, ListChecks, Mic, PartyPopper, PencilLine, SpellCheck2, Square, Star, Volume2, VolumeX } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -148,7 +148,8 @@ export default function LanguageQuestLesson() {
   const [checking, setChecking] = useState(false);
   const [sessionPoints, setSessionPoints] = useState(0);
   const [profile, setProfile] = useState<LanguageQuestProfile | null>(null);
-  const [phase, setPhase] = useState<'learn' | 'vocabulary' | 'spelling' | 'sentence' | 'quiz'>('learn');
+  const [phase, setPhase] = useState<'concept' | 'learn' | 'vocabulary' | 'spelling' | 'sentence' | 'quiz'>('learn');
+  const [hintRevealed, setHintRevealed] = useState(false);
   const [preview, setPreview] = useState<LanguageQuestLessonPreview | null>(null);
   const [previewLoading, setPreviewLoading] = useState(true);
   const [previewIndex, setPreviewIndex] = useState(0);
@@ -202,6 +203,7 @@ export default function LanguageQuestLesson() {
     setSpellingFeedback(null);
     setUnlockedRewardId(null);
     setRewardRevealOpen(false);
+    setHintRevealed(false);
     speechSessionRef.current?.stop();
     setListening(false);
 
@@ -218,7 +220,11 @@ export default function LanguageQuestLesson() {
           cards: payload.cards,
         });
         setPreviewLoading(false);
-        if (!languageQuestCourseUsesStudyCards(payload.course.language)) setPhase('quiz');
+        // A concept intro always comes first, regardless of course type --
+        // once the learner continues past it, they fall into whichever flow
+        // the course normally uses (study cards, or straight to the quiz).
+        if (payload.conceptIntro) setPhase('concept');
+        else if (!languageQuestCourseUsesStudyCards(payload.course.language)) setPhase('quiz');
       })
       .catch((error: any) => {
         if (error?.name !== 'AbortError') {
@@ -292,6 +298,11 @@ export default function LanguageQuestLesson() {
     }
   }, [challenge?.type, challengeGuidance, isMathematics, phase]);
 
+  // A revealed hint only makes sense for the challenge it belongs to.
+  useEffect(() => {
+    setHintRevealed(false);
+  }, [challenge?.id]);
+
   const dismissGuidance = () => {
     if (!guidanceType) return;
     try {
@@ -316,6 +327,13 @@ export default function LanguageQuestLesson() {
     if (firstSpellingCard && lesson) {
       speak(firstSpellingCard.audioText || firstSpellingCard.text, lesson.course.language);
     }
+  };
+
+  // Leaving the concept intro falls into whichever flow this course normally
+  // uses next -- straight to the quiz for courses with no study cards (like
+  // Mathematics), or the usual flashcard "Learn" step otherwise.
+  const startFromConcept = () => {
+    setPhase(isMathematics ? 'quiz' : 'learn');
   };
 
   const continueAfterVocabulary = () => {
@@ -597,6 +615,14 @@ export default function LanguageQuestLesson() {
       if (target && ['INPUT', 'TEXTAREA'].includes(target.tagName)) return;
       if (loading || !lesson) return;
 
+      if (phase === 'concept') {
+        if (event.key === 'Enter' || event.key === 'ArrowRight') {
+          event.preventDefault();
+          startFromConcept();
+        }
+        return;
+      }
+
       if (phase === 'learn') {
         if (event.key === 'ArrowRight' || event.key === 'Enter') {
           event.preventDefault();
@@ -678,6 +704,33 @@ export default function LanguageQuestLesson() {
       <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center dark:border-surface-raised dark:bg-surface-indigo">
         <p className="font-semibold text-slate-900 dark:text-white">This lesson is unavailable.</p>
         <Button className="mt-4" variant="outline" render={<Link to="/games/language-quest" />} nativeButton={false}>Back to Language Quest</Button>
+      </div>
+    );
+  }
+
+  if (phase === 'concept') {
+    return (
+      <div className="mx-auto flex min-h-[calc(100dvh-8rem)] max-w-3xl flex-col pb-6">
+        <header className="flex items-center gap-3 py-2 sm:gap-5">
+          <Button variant="ghost" size="icon" aria-label="Exit lesson" render={<Link to={`/games/language-quest/courses/${lesson.course.id}`} />} nativeButton={false}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <SoundToggleButton soundEnabled={soundEnabled} onToggle={() => setSoundEnabled(!soundEnabled)} />
+          <div className="flex-1" />
+          <Button variant="ghost" size="sm" className="text-slate-400 hover:text-slate-600" onClick={startFromConcept}>Skip to practice</Button>
+        </header>
+        <main className="flex flex-1 flex-col justify-center py-8">
+          <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-sky-600 dark:text-sky-300">
+            <BookOpen className="h-4 w-4" /> Before you practice
+          </p>
+          <h1 className="mt-4 text-2xl font-black leading-tight text-slate-900 dark:text-white sm:text-3xl">{lesson.title}</h1>
+          <div className="mt-6 space-y-4 rounded-3xl border border-sky-200 bg-gradient-to-br from-sky-50 via-white to-violet-50 p-6 shadow-lg shadow-sky-950/5 dark:border-sky-500/20 dark:from-sky-950/30 dark:via-slate-900 dark:to-violet-950/20 sm:p-7">
+            {(lesson.conceptIntro || '').split(/\n{2,}/).map((paragraph, paragraphIndex) => (
+              <p key={paragraphIndex} className="whitespace-pre-line text-sm leading-7 text-slate-700 dark:text-slate-200">{paragraph}</p>
+            ))}
+          </div>
+          <Button className="mt-8 w-full sm:w-auto" onClick={startFromConcept}>Start practice</Button>
+        </main>
       </div>
     );
   }
@@ -1289,6 +1342,27 @@ export default function LanguageQuestLesson() {
           <BookA className="h-3.5 w-3.5" />
           {isMathematics ? 'Work it out before choosing. Feedback explains the correct method.' : 'Highlight an unfamiliar word to check the dictionary.'}
         </p>
+
+        {challenge.hint && (
+          <div className="mt-3">
+            {hintRevealed ? (
+              <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+                <Lightbulb className="mt-0.5 h-4 w-4 shrink-0" />
+                <p>{challenge.hint}</p>
+              </div>
+            ) : !answer ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1.5 border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-500/30 dark:text-amber-300 dark:hover:bg-amber-500/10"
+                onClick={() => setHintRevealed(true)}
+              >
+                <Lightbulb className="h-3.5 w-3.5" /> Get a hint
+              </Button>
+            ) : null}
+          </div>
+        )}
 
         {isReorder ? (
           <LanguageQuestReorderTiles

@@ -4017,6 +4017,10 @@ model LanguageQuestLesson {
   unit        LanguageQuestUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
   title       String
   description String?
+  // Longer-form concept explanation (key idea, formula, worked example) shown
+  // once before the lesson's first challenge -- distinct from `description`,
+  // which stays a short teaser shown on the course/unit map.
+  conceptIntro String?
   order       Int
 
   challenges LanguageQuestChallenge[]
@@ -4035,6 +4039,7 @@ model LanguageQuestChallenge {
   type        String              @default("SELECT") // SELECT | ASSIST | CLOZE | ODD_ONE_OUT | REORDER | MATCHING | MINIMAL_PAIR_LISTENING | DICTATION | GRAMMAR_TRANSFORM
   question    String
   explanation String? // Teaching feedback shown after an answer is checked
+  hint        String? // Optional nudge learners can reveal before answering
   order       Int
 
   options  LanguageQuestOption[]

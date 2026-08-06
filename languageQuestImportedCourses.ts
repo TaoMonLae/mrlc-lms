@@ -41,6 +41,8 @@ export interface OfficialLanguageQuestChallenge {
   question: string;
   /** Optional teaching note revealed after the learner checks an answer. */
   explanation?: string | null;
+  /** Optional nudge the learner can reveal before answering, without giving the answer away. */
+  hint?: string | null;
   options: OfficialLanguageQuestOption[];
 }
 
@@ -65,6 +67,8 @@ export interface OfficialLanguageQuestCourse {
     lessons: Array<{
       title: string;
       description: string;
+      /** Optional concept explanation shown once before the lesson's first challenge. */
+      conceptIntro?: string | null;
       challenges: OfficialLanguageQuestChallenge[];
     }>;
   }>;

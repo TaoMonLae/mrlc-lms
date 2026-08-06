@@ -150,8 +150,8 @@ interface Deps {
 type DraftOption = { id?: string; text: string; correct: boolean; emoji: string | null; audioText: string | null };
 type DraftChallengeType = LanguageQuestChallengeType;
 const DRAFT_CHALLENGE_TYPES: readonly DraftChallengeType[] = LANGUAGE_QUEST_CHALLENGE_TYPES;
-type DraftChallenge = { id?: string; type: DraftChallengeType; question: string; explanation: string | null; options: DraftOption[] };
-type DraftLesson = { id?: string; title: string; description: string | null; challenges: DraftChallenge[] };
+type DraftChallenge = { id?: string; type: DraftChallengeType; question: string; explanation: string | null; hint: string | null; options: DraftOption[] };
+type DraftLesson = { id?: string; title: string; description: string | null; conceptIntro: string | null; challenges: DraftChallenge[] };
 type DraftUnit = { id?: string; title: string; description: string | null; lessons: DraftLesson[] };
 type CourseDraft = {
   title: string; description: string | null; language: string; category: string; imageEmoji: string;
@@ -366,6 +366,7 @@ export function normalizeCourseDraft(raw: any): { value?: CourseDraft; error?: s
         const sourceChallenge = sourceLesson.challenges[challengeIndex];
         const question = text(sourceChallenge?.question, 1000);
         const explanation = nullableText(sourceChallenge?.explanation, 1600);
+        const hint = nullableText(sourceChallenge?.hint, 800);
         if (!question) return { error: `Challenge ${challengeIndex + 1} in “${lessonTitle}” needs a question` };
         // Course Studio only offers authoring for SELECT/ASSIST, but it must
         // still be able to load, save, and publish courses (like the
@@ -412,6 +413,7 @@ export function normalizeCourseDraft(raw: any): { value?: CourseDraft; error?: s
           type,
           question,
           explanation,
+          hint,
           options,
         });
       }
@@ -419,6 +421,7 @@ export function normalizeCourseDraft(raw: any): { value?: CourseDraft; error?: s
         id: typeof sourceLesson?.id === "string" ? sourceLesson.id : undefined,
         title: lessonTitle,
         description: nullableText(sourceLesson?.description, 500),
+        conceptIntro: nullableText(sourceLesson?.conceptIntro, 4000),
         challenges,
       });
     }
@@ -474,7 +477,7 @@ export async function ensureOfficialCourse(prisma: any, course: OfficialLanguage
         units.push({ id: unitId, courseId: created.id, title: unit.title, description: unit.description, order: unitOrder });
         unit.lessons.forEach((lesson, lessonOrder) => {
           const lessonId = randomUUID();
-          lessons.push({ id: lessonId, unitId, title: lesson.title, description: lesson.description, order: lessonOrder });
+          lessons.push({ id: lessonId, unitId, title: lesson.title, description: lesson.description, conceptIntro: lesson.conceptIntro ?? null, order: lessonOrder });
           lesson.challenges.forEach((challenge, challengeOrder) => {
             const challengeId = randomUUID();
             challenges.push({
@@ -483,6 +486,7 @@ export async function ensureOfficialCourse(prisma: any, course: OfficialLanguage
               type: challenge.type,
               question: challenge.question,
               explanation: challenge.explanation ?? null,
+              hint: challenge.hint ?? null,
               order: challengeOrder,
             });
             challenge.options.forEach((option, optionOrder) => {
@@ -2271,7 +2275,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       const completedIds = new Set(completions.filter((row: any) => row.completed).map((row: any) => row.challengeId));
 
       res.json({
-        id: lesson.id, title: lesson.title, description: lesson.description,
+        id: lesson.id, title: lesson.title, description: lesson.description, conceptIntro: lesson.conceptIntro,
         course: {
           id: lesson.unit.course.id,
           title: lesson.unit.course.title,
@@ -2288,6 +2292,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
             challenge.options.map((option: any) => option.text),
           ),
           explanation: challenge.explanation,
+          hint: challenge.hint,
           completed: completedIds.has(challenge.id),
           options: shuffle(challenge.options).map((option: any) => ({
             id: option.id, text: option.text, emoji: option.emoji, audioText: option.audioText,
@@ -4110,12 +4115,13 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           const existingLesson: any = lessonDraft.id ? lessonMap.get(lessonDraft.id) : null;
           const lessonChanged = existingLesson && (
             lessonsReordered || existingLesson.title !== lessonDraft.title || existingLesson.description !== lessonDraft.description
+            || existingLesson.conceptIntro !== lessonDraft.conceptIntro
           );
           const lesson = existingLesson
             ? (lessonChanged
-              ? await tx.languageQuestLesson.update({ where: { id: existingLesson.id }, data: { title: lessonDraft.title, description: lessonDraft.description, order: lessonOrder } })
+              ? await tx.languageQuestLesson.update({ where: { id: existingLesson.id }, data: { title: lessonDraft.title, description: lessonDraft.description, conceptIntro: lessonDraft.conceptIntro, order: lessonOrder } })
               : existingLesson)
-            : await tx.languageQuestLesson.create({ data: { unitId: unit.id, title: lessonDraft.title, description: lessonDraft.description, order: lessonOrder } });
+            : await tx.languageQuestLesson.create({ data: { unitId: unit.id, title: lessonDraft.title, description: lessonDraft.description, conceptIntro: lessonDraft.conceptIntro, order: lessonOrder } });
           savedLessonIds.push(lesson.id);
 
           const currentChallenges = existingLesson?.challenges ?? [];
@@ -4129,13 +4135,13 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
             const existingChallenge: any = challengeDraft.id ? challengeMap.get(challengeDraft.id) : null;
             const challengeChanged = existingChallenge && (
               challengesReordered || existingChallenge.type !== challengeDraft.type || existingChallenge.question !== challengeDraft.question
-              || existingChallenge.explanation !== challengeDraft.explanation
+              || existingChallenge.explanation !== challengeDraft.explanation || existingChallenge.hint !== challengeDraft.hint
             );
             const challenge = existingChallenge
               ? (challengeChanged
-                ? await tx.languageQuestChallenge.update({ where: { id: existingChallenge.id }, data: { type: challengeDraft.type, question: challengeDraft.question, explanation: challengeDraft.explanation, order: challengeOrder } })
+                ? await tx.languageQuestChallenge.update({ where: { id: existingChallenge.id }, data: { type: challengeDraft.type, question: challengeDraft.question, explanation: challengeDraft.explanation, hint: challengeDraft.hint, order: challengeOrder } })
                 : existingChallenge)
-              : await tx.languageQuestChallenge.create({ data: { lessonId: lesson.id, type: challengeDraft.type, question: challengeDraft.question, explanation: challengeDraft.explanation, order: challengeOrder } });
+              : await tx.languageQuestChallenge.create({ data: { lessonId: lesson.id, type: challengeDraft.type, question: challengeDraft.question, explanation: challengeDraft.explanation, hint: challengeDraft.hint, order: challengeOrder } });
             savedChallengeIds.push(challenge.id);
 
             const currentOptions = existingChallenge?.options ?? [];
@@ -4324,12 +4330,14 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
                     create: unit.lessons.map((lesson: any) => ({
                       title: lesson.title,
                       description: lesson.description,
+                      conceptIntro: lesson.conceptIntro,
                       order: lesson.order,
                       challenges: {
                         create: lesson.challenges.map((challenge: any) => ({
                           type: challenge.type,
                           question: challenge.question,
                           explanation: challenge.explanation,
+                          hint: challenge.hint,
                           order: challenge.order,
                           options: {
                             create: challenge.options.map((option: any) => ({

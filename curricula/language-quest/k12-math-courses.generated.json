@@ -15932,7 +15932,7 @@
               {
                 "type": "SELECT",
                 "question": "Round 7848 to the nearest 10.",
-                "explanation": "Look at the digit immediately to the right of the 10 place.",
+                "explanation": "7848 -> the ones digit is 8, which is 5 or more, so round up: 7850.",
                 "options": [
                   {
                     "text": "7840",
@@ -15958,12 +15958,13 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Find the tens place, then look at the digit right after it (the ones digit). 5 or more rounds that place up; below 5 keeps it the same."
               },
               {
                 "type": "CLOZE",
                 "question": "Round 3216 to the nearest 10.",
-                "explanation": "Look at the digit immediately to the right of the 10 place.",
+                "explanation": "3216 -> the ones digit is 6, which is 5 or more, so round up: 3220.",
                 "options": [
                   {
                     "text": "-3220",
@@ -15989,12 +15990,13 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Find the tens place, then look at the digit right after it (the ones digit). 5 or more rounds that place up; below 5 keeps it the same."
               },
               {
                 "type": "ASSIST",
                 "question": "Round 8354 to the nearest 1000.",
-                "explanation": "Look at the digit immediately to the right of the 1000 place.",
+                "explanation": "8354 -> the hundreds digit is 3, which is less than 5, so round down: 8000.",
                 "options": [
                   {
                     "text": "8000",
@@ -16020,12 +16022,13 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Find the thousands place, then look at the digit right after it (the hundreds digit). 5 or more rounds that place up; below 5 keeps it the same."
               },
               {
                 "type": "SELECT",
                 "question": "Round 4306 to the nearest 10.",
-                "explanation": "Look at the digit immediately to the right of the 10 place.",
+                "explanation": "4306 -> the ones digit is 6, which is 5 or more, so round up: 4310.",
                 "options": [
                   {
                     "text": "4290",
@@ -16051,12 +16054,13 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Find the tens place, then look at the digit right after it (the ones digit). 5 or more rounds that place up; below 5 keeps it the same."
               },
               {
                 "type": "MATCHING",
                 "question": "Match each number with its expanded form.",
-                "explanation": "Expanded form shows the value contributed by each digit.",
+                "explanation": "Each digit's value depends on its place: the hundreds digit counts hundreds, the tens digit counts tens, and the ones digit counts ones. Add those values together to expand a number, e.g. 325 = 300 + 20 + 5.",
                 "options": [
                   {
                     "text": "325",
@@ -16094,12 +16098,13 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Multiply each digit by its place value (hundreds, tens, ones) and add the results."
               },
               {
                 "type": "REORDER",
                 "question": "Arrange the values from least to greatest.",
-                "explanation": "Compare place values or positions on the number line.",
+                "explanation": "Compare the numbers by their number of digits first (more digits means a larger number), then compare matching place values from left to right until one number is bigger.",
                 "options": [
                   {
                     "text": "12",
@@ -16131,9 +16136,11 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Line the numbers up and compare the leftmost (largest place-value) digits first."
               }
-            ]
+            ],
+            "conceptIntro": "Every digit in a number has a value that depends on where it sits. In 4,326 the 4 means 4 thousands (4,000), the 3 means 3 hundreds (300), the 2 means 2 tens (20), and the 6 means 6 ones. Written as a sum, that is 4,326 = 4,000 + 300 + 20 + 6 -- this is called expanded form.\n\nRounding replaces a number with a nearby, simpler one. To round to a place (say, the nearest hundred), find that place's digit, then look at the digit immediately to its right. If that digit is 5 or more, round up; if it is less than 5, keep the place digit the same and replace everything to its right with zeros.\n\nWorked example: round 4,326 to the nearest hundred. The hundreds digit is 3. The digit right after it (tens place) is 2, which is less than 5, so the hundreds digit stays a 3 and the rest becomes zero: 4,326 rounds to 4,300."
           },
           {
             "title": "Build the Skill",
@@ -16142,7 +16149,7 @@
               {
                 "type": "SELECT",
                 "question": "Round 9108 to the nearest 10.",
-                "explanation": "Look at the digit immediately to the right of the 10 place.",
+                "explanation": "9108 -> the ones digit is 8, which is 5 or more, so round up: 9110.",
                 "options": [
                   {
                     "text": "9120",
@@ -16168,12 +16175,13 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Find the tens place, then look at the digit right after it (the ones digit). 5 or more rounds that place up; below 5 keeps it the same."
               },
               {
                 "type": "CLOZE",
                 "question": "Round 1655 to the nearest 1000.",
-                "explanation": "Look at the digit immediately to the right of the 1000 place.",
+                "explanation": "1655 -> the hundreds digit is 6, which is 5 or more, so round up: 2000.",
                 "options": [
                   {
                     "text": "2000",
@@ -16199,12 +16207,13 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Find the thousands place, then look at the digit right after it (the hundreds digit). 5 or more rounds that place up; below 5 keeps it the same."
               },
               {
                 "type": "ASSIST",
                 "question": "Round 5322 to the nearest 1000.",
-                "explanation": "Look at the digit immediately to the right of the 1000 place.",
+                "explanation": "5322 -> the hundreds digit is 3, which is less than 5, so round down: 5000.",
                 "options": [
                   {
                     "text": "-5000",
@@ -16230,12 +16239,13 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Find the thousands place, then look at the digit right after it (the hundreds digit). 5 or more rounds that place up; below 5 keeps it the same."
               },
               {
                 "type": "SELECT",
                 "question": "Round 5278 to the nearest 100.",
-                "explanation": "Look at the digit immediately to the right of the 100 place.",
+                "explanation": "5278 -> the tens digit is 7, which is 5 or more, so round up: 5300.",
                 "options": [
                   {
                     "text": "-5300",
@@ -16261,12 +16271,13 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Find the hundreds place, then look at the digit right after it (the tens digit). 5 or more rounds that place up; below 5 keeps it the same."
               },
               {
                 "type": "MATCHING",
                 "question": "Match each number with its expanded form.",
-                "explanation": "Expanded form shows the value contributed by each digit.",
+                "explanation": "Each digit's value depends on its place: the hundreds digit counts hundreds, the tens digit counts tens, and the ones digit counts ones. Add those values together to expand a number, e.g. 325 = 300 + 20 + 5.",
                 "options": [
                   {
                     "text": "325",
@@ -16304,12 +16315,13 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Multiply each digit by its place value (hundreds, tens, ones) and add the results."
               },
               {
                 "type": "REORDER",
                 "question": "Arrange the values from least to greatest.",
-                "explanation": "Compare place values or positions on the number line.",
+                "explanation": "Compare the numbers by their number of digits first (more digits means a larger number), then compare matching place values from left to right until one number is bigger.",
                 "options": [
                   {
                     "text": "1",
@@ -16341,7 +16353,8 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Line the numbers up and compare the leftmost (largest place-value) digits first."
               }
             ]
           },
@@ -16352,7 +16365,7 @@
               {
                 "type": "SELECT",
                 "question": "Round 7108 to the nearest 1000.",
-                "explanation": "Look at the digit immediately to the right of the 1000 place.",
+                "explanation": "7108 -> the hundreds digit is 1, which is less than 5, so round down: 7000.",
                 "options": [
                   {
                     "text": "7000",
@@ -16378,12 +16391,13 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Find the thousands place, then look at the digit right after it (the hundreds digit). 5 or more rounds that place up; below 5 keeps it the same."
               },
               {
                 "type": "CLOZE",
                 "question": "Round 7499 to the nearest 10.",
-                "explanation": "Look at the digit immediately to the right of the 10 place.",
+                "explanation": "7499 -> the ones digit is 9, which is 5 or more, so round up: 7500.",
                 "options": [
                   {
                     "text": "-7500",
@@ -16409,12 +16423,13 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Find the tens place, then look at the digit right after it (the ones digit). 5 or more rounds that place up; below 5 keeps it the same."
               },
               {
                 "type": "ASSIST",
                 "question": "Round 3971 to the nearest 10.",
-                "explanation": "Look at the digit immediately to the right of the 10 place.",
+                "explanation": "3971 -> the ones digit is 1, which is less than 5, so round down: 3970.",
                 "options": [
                   {
                     "text": "3970",
@@ -16440,12 +16455,13 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Find the tens place, then look at the digit right after it (the ones digit). 5 or more rounds that place up; below 5 keeps it the same."
               },
               {
                 "type": "SELECT",
                 "question": "Round 8032 to the nearest 10.",
-                "explanation": "Look at the digit immediately to the right of the 10 place.",
+                "explanation": "8032 -> the ones digit is 2, which is less than 5, so round down: 8030.",
                 "options": [
                   {
                     "text": "8010",
@@ -16471,12 +16487,13 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Find the tens place, then look at the digit right after it (the ones digit). 5 or more rounds that place up; below 5 keeps it the same."
               },
               {
                 "type": "MATCHING",
                 "question": "Match each number with its expanded form.",
-                "explanation": "Expanded form shows the value contributed by each digit.",
+                "explanation": "Each digit's value depends on its place: the hundreds digit counts hundreds, the tens digit counts tens, and the ones digit counts ones. Add those values together to expand a number, e.g. 325 = 300 + 20 + 5.",
                 "options": [
                   {
                     "text": "325",
@@ -16514,12 +16531,13 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Multiply each digit by its place value (hundreds, tens, ones) and add the results."
               },
               {
                 "type": "REORDER",
                 "question": "Arrange the values from least to greatest.",
-                "explanation": "Compare place values or positions on the number line.",
+                "explanation": "Compare the numbers by their number of digits first (more digits means a larger number), then compare matching place values from left to right until one number is bigger.",
                 "options": [
                   {
                     "text": "1",
@@ -16551,7 +16569,8 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Line the numbers up and compare the leftmost (largest place-value) digits first."
               }
             ]
           }
@@ -45044,7 +45063,7 @@
               {
                 "type": "SELECT",
                 "question": "Solve 9x + 19 > 26.",
-                "explanation": "Undo addition, then division. The inequality direction stays because the divisor is positive.",
+                "explanation": "9x + 19 > 26 -> subtract 19 from both sides: 9x > 7 -> divide both sides by 9 (positive, so the inequality sign stays the same): x > 0.778.",
                 "options": [
                   {
                     "text": "x > 7",
@@ -45070,12 +45089,13 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Undo the addition first (subtract the constant from both sides), then undo the multiplication by dividing both sides by x's coefficient. Dividing by a positive number never flips the inequality sign."
               },
               {
                 "type": "CLOZE",
                 "question": "Solve 9x + 16 > 24.",
-                "explanation": "Undo addition, then division. The inequality direction stays because the divisor is positive.",
+                "explanation": "9x + 16 > 24 -> subtract 16 from both sides: 9x > 8 -> divide both sides by 9 (positive, so the inequality sign stays the same): x > 0.889.",
                 "options": [
                   {
                     "text": "x < 8",
@@ -45101,12 +45121,13 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Undo the addition first (subtract the constant from both sides), then undo the multiplication by dividing both sides by x's coefficient. Dividing by a positive number never flips the inequality sign."
               },
               {
                 "type": "ASSIST",
                 "question": "Solve 6x + 1 > 9.",
-                "explanation": "Undo addition, then division. The inequality direction stays because the divisor is positive.",
+                "explanation": "6x + 1 > 9 -> subtract 1 from both sides: 6x > 8 -> divide both sides by 6 (positive, so the inequality sign stays the same): x > 1.333.",
                 "options": [
                   {
                     "text": "x > 1.333",
@@ -45132,12 +45153,13 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Undo the addition first (subtract the constant from both sides), then undo the multiplication by dividing both sides by x's coefficient. Dividing by a positive number never flips the inequality sign."
               },
               {
                 "type": "GRAMMAR_TRANSFORM",
                 "question": "Solve 9x + 17 > 18.",
-                "explanation": "Undo addition, then division. The inequality direction stays because the divisor is positive.",
+                "explanation": "9x + 17 > 18 -> subtract 17 from both sides: 9x > 1 -> divide both sides by 9 (positive, so the inequality sign stays the same): x > 0.111.",
                 "options": [
                   {
                     "text": "x > 1",
@@ -45163,12 +45185,13 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Undo the addition first (subtract the constant from both sides), then undo the multiplication by dividing both sides by x's coefficient. Dividing by a positive number never flips the inequality sign."
               },
               {
                 "type": "MATCHING",
                 "question": "Match each equation with its solution.",
-                "explanation": "Use inverse operations to isolate x.",
+                "explanation": "Isolate x using the inverse operation: undo addition/subtraction first, then undo multiplication/division. x+3=8 undoes +3 by subtracting 3, giving x=5. 2x=12 undoes *2 by dividing by 2, giving x=6. x-4=7 undoes -4 by adding 4, giving x=11.",
                 "options": [
                   {
                     "text": "x+3=8",
@@ -45206,12 +45229,13 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Work backwards: whatever was done to x, undo it with the opposite operation on both sides."
               },
               {
                 "type": "REORDER",
                 "question": "Put the equation-solving steps in order for 3x + 5 = 20.",
-                "explanation": "Undo operations in reverse order and verify.",
+                "explanation": "Undo operations in the reverse order they were applied: subtract the constant term first, then divide by the coefficient of x, then check the answer by substituting it back into the original equation.",
                 "options": [
                   {
                     "text": "Start: 3x + 5 = 20",
@@ -45237,9 +45261,11 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Work from the outside in: undo addition/subtraction before undoing multiplication/division, then verify by substituting back."
               }
-            ]
+            ],
+            "conceptIntro": "A linear inequality like 3x + 5 > 20 asks: which values of x make this statement true? Solving it means isolating x on one side, using inverse operations in reverse order -- undo addition or subtraction first, then undo multiplication or division.\n\nOne rule matters more here than in equations: multiplying or dividing both sides by a positive number keeps the inequality sign pointing the same way, but multiplying or dividing by a negative number flips it. Every problem in this unit divides by a positive coefficient, so the sign never flips.\n\nWorked example: solve 3x + 5 > 20. Subtract 5 from both sides: 3x > 15. Divide both sides by 3 (positive, so the sign stays): x > 5. Always check by substituting a value back in -- if x = 6, then 3(6) + 5 = 23, and 23 > 20 is true, confirming the solution direction."
           },
           {
             "title": "Build the Skill",
@@ -45248,7 +45274,7 @@
               {
                 "type": "SELECT",
                 "question": "Solve 4x + 11 > 16.",
-                "explanation": "Undo addition, then division. The inequality direction stays because the divisor is positive.",
+                "explanation": "4x + 11 > 16 -> subtract 11 from both sides: 4x > 5 -> divide both sides by 4 (positive, so the inequality sign stays the same): x > 1.25.",
                 "options": [
                   {
                     "text": "x > 5",
@@ -45274,12 +45300,13 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Undo the addition first (subtract the constant from both sides), then undo the multiplication by dividing both sides by x's coefficient. Dividing by a positive number never flips the inequality sign."
               },
               {
                 "type": "CLOZE",
                 "question": "Solve 9x + 15 > 21.",
-                "explanation": "Undo addition, then division. The inequality direction stays because the divisor is positive.",
+                "explanation": "9x + 15 > 21 -> subtract 15 from both sides: 9x > 6 -> divide both sides by 9 (positive, so the inequality sign stays the same): x > 0.667.",
                 "options": [
                   {
                     "text": "x > 0.667",
@@ -45305,12 +45332,13 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Undo the addition first (subtract the constant from both sides), then undo the multiplication by dividing both sides by x's coefficient. Dividing by a positive number never flips the inequality sign."
               },
               {
                 "type": "ASSIST",
                 "question": "Solve 3x + 2 > 9.",
-                "explanation": "Undo addition, then division. The inequality direction stays because the divisor is positive.",
+                "explanation": "3x + 2 > 9 -> subtract 2 from both sides: 3x > 7 -> divide both sides by 3 (positive, so the inequality sign stays the same): x > 2.333.",
                 "options": [
                   {
                     "text": "x < 2.333",
@@ -45336,12 +45364,13 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Undo the addition first (subtract the constant from both sides), then undo the multiplication by dividing both sides by x's coefficient. Dividing by a positive number never flips the inequality sign."
               },
               {
                 "type": "GRAMMAR_TRANSFORM",
                 "question": "Solve 8x + 20 > 28.",
-                "explanation": "Undo addition, then division. The inequality direction stays because the divisor is positive.",
+                "explanation": "8x + 20 > 28 -> subtract 20 from both sides: 8x > 8 -> divide both sides by 8 (positive, so the inequality sign stays the same): x > 1.",
                 "options": [
                   {
                     "text": "x > 8",
@@ -45367,12 +45396,13 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Undo the addition first (subtract the constant from both sides), then undo the multiplication by dividing both sides by x's coefficient. Dividing by a positive number never flips the inequality sign."
               },
               {
                 "type": "MATCHING",
                 "question": "Match each equation with its solution.",
-                "explanation": "Use inverse operations to isolate x.",
+                "explanation": "Isolate x using the inverse operation: undo addition/subtraction first, then undo multiplication/division. x+3=8 undoes +3 by subtracting 3, giving x=5. 2x=12 undoes *2 by dividing by 2, giving x=6. x-4=7 undoes -4 by adding 4, giving x=11.",
                 "options": [
                   {
                     "text": "x+3=8",
@@ -45410,12 +45440,13 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Work backwards: whatever was done to x, undo it with the opposite operation on both sides."
               },
               {
                 "type": "REORDER",
                 "question": "Put the equation-solving steps in order for 3x + 5 = 20.",
-                "explanation": "Undo operations in reverse order and verify.",
+                "explanation": "Undo operations in the reverse order they were applied: subtract the constant term first, then divide by the coefficient of x, then check the answer by substituting it back into the original equation.",
                 "options": [
                   {
                     "text": "Start: 3x + 5 = 20",
@@ -45441,7 +45472,8 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Work from the outside in: undo addition/subtraction before undoing multiplication/division, then verify by substituting back."
               }
             ]
           },
@@ -45452,7 +45484,7 @@
               {
                 "type": "SELECT",
                 "question": "Solve 3x + 19 > 34.",
-                "explanation": "Undo addition, then division. The inequality direction stays because the divisor is positive.",
+                "explanation": "3x + 19 > 34 -> subtract 19 from both sides: 3x > 15 -> divide both sides by 3 (positive, so the inequality sign stays the same): x > 5.",
                 "options": [
                   {
                     "text": "x < 15",
@@ -45478,12 +45510,13 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Undo the addition first (subtract the constant from both sides), then undo the multiplication by dividing both sides by x's coefficient. Dividing by a positive number never flips the inequality sign."
               },
               {
                 "type": "CLOZE",
                 "question": "Solve 7x + 9 > 11.",
-                "explanation": "Undo addition, then division. The inequality direction stays because the divisor is positive.",
+                "explanation": "7x + 9 > 11 -> subtract 9 from both sides: 7x > 2 -> divide both sides by 7 (positive, so the inequality sign stays the same): x > 0.286.",
                 "options": [
                   {
                     "text": "x > 2",
@@ -45509,12 +45542,13 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Undo the addition first (subtract the constant from both sides), then undo the multiplication by dividing both sides by x's coefficient. Dividing by a positive number never flips the inequality sign."
               },
               {
                 "type": "ASSIST",
                 "question": "Solve 5x + 1 > 11.",
-                "explanation": "Undo addition, then division. The inequality direction stays because the divisor is positive.",
+                "explanation": "5x + 1 > 11 -> subtract 1 from both sides: 5x > 10 -> divide both sides by 5 (positive, so the inequality sign stays the same): x > 2.",
                 "options": [
                   {
                     "text": "x > 10",
@@ -45540,12 +45574,13 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Undo the addition first (subtract the constant from both sides), then undo the multiplication by dividing both sides by x's coefficient. Dividing by a positive number never flips the inequality sign."
               },
               {
                 "type": "GRAMMAR_TRANSFORM",
                 "question": "Solve 8x + 13 > 20.",
-                "explanation": "Undo addition, then division. The inequality direction stays because the divisor is positive.",
+                "explanation": "8x + 13 > 20 -> subtract 13 from both sides: 8x > 7 -> divide both sides by 8 (positive, so the inequality sign stays the same): x > 0.875.",
                 "options": [
                   {
                     "text": "x > 7",
@@ -45571,12 +45606,13 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Undo the addition first (subtract the constant from both sides), then undo the multiplication by dividing both sides by x's coefficient. Dividing by a positive number never flips the inequality sign."
               },
               {
                 "type": "MATCHING",
                 "question": "Match each equation with its solution.",
-                "explanation": "Use inverse operations to isolate x.",
+                "explanation": "Isolate x using the inverse operation: undo addition/subtraction first, then undo multiplication/division. x+3=8 undoes +3 by subtracting 3, giving x=5. 2x=12 undoes *2 by dividing by 2, giving x=6. x-4=7 undoes -4 by adding 4, giving x=11.",
                 "options": [
                   {
                     "text": "x+3=8",
@@ -45614,12 +45650,13 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Work backwards: whatever was done to x, undo it with the opposite operation on both sides."
               },
               {
                 "type": "REORDER",
                 "question": "Put the equation-solving steps in order for 3x + 5 = 20.",
-                "explanation": "Undo operations in reverse order and verify.",
+                "explanation": "Undo operations in the reverse order they were applied: subtract the constant term first, then divide by the coefficient of x, then check the answer by substituting it back into the original equation.",
                 "options": [
                   {
                     "text": "Start: 3x + 5 = 20",
@@ -45645,7 +45682,8 @@
                     "emoji": null,
                     "audioText": null
                   }
-                ]
+                ],
+                "hint": "Work from the outside in: undo addition/subtraction before undoing multiplication/division, then verify by substituting back."
               }
             ]
           }

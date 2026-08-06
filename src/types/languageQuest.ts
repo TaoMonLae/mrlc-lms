@@ -132,6 +132,8 @@ export interface LanguageQuestChallenge {
   type: LanguageQuestChallengeType;
   question: string;
   explanation: string | null;
+  /** Optional nudge learners can reveal before answering, without giving the answer away. */
+  hint: string | null;
   completed: boolean;
   options: LanguageQuestOption[];
 }
@@ -140,6 +142,8 @@ export interface LanguageQuestLessonPayload {
   id: string;
   title: string;
   description: string | null;
+  /** Optional concept explanation shown once before the lesson's first challenge. */
+  conceptIntro: string | null;
   course: { id: string; title: string; language: string; accentColor: string };
   profile: LanguageQuestProfile;
   challenges: LanguageQuestChallenge[];
