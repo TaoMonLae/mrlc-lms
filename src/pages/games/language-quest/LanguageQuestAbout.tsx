@@ -4,9 +4,13 @@ import {
   ArrowLeft,
   ArrowRight,
   BookOpen,
+  BrainCircuit,
+  Calculator,
   CheckCircle2,
   ExternalLink,
+  FileCheck2,
   Github,
+  Heart,
   HeartHandshake,
   Headphones,
   Languages,
@@ -14,12 +18,12 @@ import {
   MessageCircleMore,
   MousePointerClick,
   ScrollText,
-  ShieldCheck,
   Sparkles,
   Star,
+  Trophy,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { MrlcQuestBrand, TaoMonLaeCredit } from '@/src/components/games/MrlcQuestBrand';
+import { MrlcQuestBrand } from '@/src/components/games/MrlcQuestBrand';
 
 interface CourseSource {
   title: string;
@@ -38,6 +42,20 @@ const COURSE_SOURCES: CourseSource[] = [
     accent: 'from-violet-600 to-fuchsia-600',
     art: '/icons/optimized/Eduv1_01.png',
     description: 'Written and organized for MRLC learners, with practical situations, guided sentence practice, and classroom-friendly lesson lengths.',
+  },
+  {
+    title: 'K–12 Mathematics curriculum',
+    courses: 'Kindergarten Mathematics through Grade 12 Mathematics',
+    badge: 'Original pathway',
+    accent: 'from-blue-600 to-indigo-600',
+    art: '/icons/optimized/Eduv1_08.png',
+    description: (
+      <>
+        A complete MRLC activity pathway with 13 courses, 104 units, 312 lessons, and 1,872 challenges. Its progression is informed by the{' '}
+        <SourceLink href="https://corestandards.org/mathematics-standards/">Common Core Mathematics Standards</SourceLink>{' '}
+        emphasis on conceptual understanding, procedural fluency, mathematical practice, and real-world problem solving; it is not an official Common Core publication.
+      </>
+    ),
   },
   {
     title: 'Archived Spanish experiment',
@@ -160,14 +178,14 @@ export default function LanguageQuestAbout() {
 
           <div className="relative z-10 flex flex-col justify-center px-5 py-9 sm:px-10 sm:py-16 lg:px-14">
             <span className="inline-flex w-fit items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-black uppercase tracking-[0.18em] text-violet-100 backdrop-blur">
-              <Sparkles className="h-3.5 w-3.5 text-amber-300" /> The story behind the quest
+              <Sparkles className="h-3.5 w-3.5 text-amber-300" /> Languages • Mathematics • Community
             </span>
             <h1 className="mt-5 max-w-3xl text-[clamp(2.55rem,12vw,5.2rem)] font-black leading-[0.94] tracking-[-0.055em] sm:mt-6">
-              Language learning,
-              <span className="block bg-gradient-to-r from-amber-300 via-orange-300 to-pink-300 bg-clip-text text-transparent">made more human.</span>
+              Learning that feels human,
+              <span className="block bg-gradient-to-r from-amber-300 via-orange-300 to-pink-300 bg-clip-text text-transparent">built to grow with you.</span>
             </h1>
             <p className="mt-5 max-w-2xl text-[15px] leading-7 text-slate-200 sm:mt-6 sm:text-lg sm:leading-8">
-              Language Quest is MRLC’s colorful learning space for useful words, complete sentences, confident speaking, and classroom connection—with transparent credit for every source that helped shape it.
+              Language Quest brings language practice, K–12 Mathematics, meaningful review, classroom connection, and verified achievements into one colorful learning journey—with clear credit for the sources that helped shape it.
             </p>
             <div className="mt-7 flex flex-col gap-3 sm:mt-8 sm:flex-row">
               <Button
@@ -190,9 +208,9 @@ export default function LanguageQuestAbout() {
             </div>
             <div className="mt-8 grid max-w-xl grid-cols-3 gap-2 border-t border-white/10 pt-5 sm:mt-9 sm:pt-6">
               {[
-                ['5 steps', 'Learn to check'],
-                ['Free', 'Learner account'],
-                ['Global', 'Quest community'],
+                ['13', 'Maths courses'],
+                ['3', 'Guidance languages'],
+                ['80%', 'Exam pass mark'],
               ].map(([value, label]) => (
                 <div key={value}>
                   <p className="text-lg font-black text-white sm:text-xl">{value}</p>
@@ -214,7 +232,7 @@ export default function LanguageQuestAbout() {
             </div>
             <div className="lq-float absolute left-3 top-5 z-10 rounded-xl border border-white/15 bg-slate-950/75 px-3 py-2.5 shadow-xl backdrop-blur sm:left-10 sm:top-12 sm:rounded-2xl sm:px-4 sm:py-3">
               <p className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-sky-300">
-                <Headphones className="h-4 w-4" /> Listen • Pick • Spell
+                <Headphones className="h-4 w-4" /> Listen • Solve • Practise
               </p>
             </div>
             <div className="lq-float-delayed absolute bottom-5 right-3 z-10 max-w-[175px] rounded-xl border border-amber-200/30 bg-amber-300 px-3 py-2.5 text-slate-950 shadow-xl sm:bottom-20 sm:right-8 sm:max-w-[190px] sm:rounded-2xl sm:px-4 sm:py-3">
@@ -229,27 +247,34 @@ export default function LanguageQuestAbout() {
         </section>
 
         <section className="mx-auto mt-8 max-w-7xl rounded-[2rem] border border-white/80 bg-white/75 p-3 shadow-xl shadow-violet-900/5 backdrop-blur dark:border-slate-800 dark:bg-slate-950/55 sm:p-4">
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             {[
               {
                 art: '/icons/optimized/LanguageLearning/V1/Languages.png',
                 icon: Languages,
-                title: 'Practise for real life',
-                copy: 'Move from listening and recognition to spelling, sentence building, and confident recall.',
+                title: 'Languages and Mathematics',
+                copy: 'Language courses build listening, spelling, and sentences. Maths courses move directly into guided problem solving.',
                 tone: 'from-sky-100 to-cyan-50 dark:from-sky-950 dark:to-slate-900',
               },
               {
-                art: '/icons/optimized/Eduv1_05.png',
-                icon: ShieldCheck,
-                title: 'A safe learner space',
-                copy: 'Public learner accounts stay separated from private student records and LMS administration.',
+                art: '/icons/optimized/Eduv1_06.png',
+                icon: BrainCircuit,
+                title: 'Review that remembers',
+                copy: 'Learned Words, mastery reviews, retries, and worked explanations help learners return to what needs attention.',
                 tone: 'from-violet-100 to-fuchsia-50 dark:from-violet-950 dark:to-slate-900',
+              },
+              {
+                art: '/icons/optimized/Eduv1_05.png',
+                icon: FileCheck2,
+                title: 'Verified achievements',
+                copy: 'Course practices unlock a monitored final exam. A server-verified pass unlocks the certificate.',
+                tone: 'from-emerald-100 to-teal-50 dark:from-emerald-950 dark:to-slate-900',
               },
               {
                 art: '/icons/optimized/LanguageLearning/V1/Blackboard.png',
                 icon: HeartHandshake,
                 title: 'Ready for classrooms',
-                copy: 'Teachers can organize opt-in classrooms while learners keep their own progress and rewards.',
+                copy: 'Teachers can assign a focus course, review progress and learned words, and run shared classroom goals.',
                 tone: 'from-amber-100 to-orange-50 dark:from-amber-950 dark:to-slate-900',
               },
             ].map(({ art, icon: Icon, title, copy, tone }) => (
@@ -267,6 +292,31 @@ export default function LanguageQuestAbout() {
                   aria-hidden="true"
                   className="absolute -bottom-8 -right-9 h-40 w-40 object-contain opacity-90 drop-shadow-xl transition duration-300 group-hover:-translate-y-2 group-hover:rotate-3 group-hover:scale-105"
                 />
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="mx-auto mt-16 max-w-7xl">
+          <div className="text-center">
+            <p className="text-sm font-black uppercase tracking-[0.18em] text-violet-700 dark:text-violet-300">A complete learning loop</p>
+            <h2 className="mx-auto mt-3 max-w-3xl text-3xl font-black tracking-[-0.035em] sm:text-5xl">Learn, recover, prove, and keep going.</h2>
+            <p className="mx-auto mt-4 max-w-2xl leading-7 text-slate-600 dark:text-slate-300">Progress is designed around useful practice—not endless tapping. Every support feature leads learners back to the course.</p>
+          </div>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { icon: Calculator, number: '01', title: 'Learn the right way', copy: 'Subject-aware lessons use language study cards or direct maths problems instead of forcing one format onto every course.', color: 'text-blue-600 dark:text-blue-300' },
+              { icon: Heart, number: '02', title: 'Recover with practice', copy: 'A Heart Refill Quiz uses completed material to restore hearts and can reveal a unique Surprise Card.', color: 'text-rose-600 dark:text-rose-300' },
+              { icon: FileCheck2, number: '03', title: 'Pass the final exam', copy: 'Randomized, server-graded questions and secure attempt rules protect the value of every certificate.', color: 'text-violet-600 dark:text-violet-300' },
+              { icon: Trophy, number: '04', title: 'Keep the achievement', copy: 'Verified certificates, Quest Cards, streaks, subject albums, and mastery progress make effort visible.', color: 'text-amber-600 dark:text-amber-300' },
+            ].map(({ icon: Icon, number, title, copy, color }) => (
+              <article key={number} className="rounded-3xl border border-slate-200 bg-white/85 p-6 shadow-lg shadow-violet-900/5 backdrop-blur dark:border-slate-800 dark:bg-slate-900/85">
+                <div className="flex items-center justify-between">
+                  <span className={`grid h-11 w-11 place-items-center rounded-2xl bg-slate-100 dark:bg-white/10 ${color}`}><Icon className="h-5 w-5" /></span>
+                  <span className="text-sm font-black tracking-[0.18em] text-slate-300 dark:text-slate-600">{number}</span>
+                </div>
+                <h3 className="mt-5 text-lg font-black">{title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{copy}</p>
               </article>
             ))}
           </div>
@@ -356,7 +406,7 @@ export default function LanguageQuestAbout() {
               </span>
               <h2 className="mt-5 text-xl font-black">Learning support</h2>
               <p className="mt-3 text-sm leading-7 text-violet-100 [&_a]:text-violet-100">
-                Chinese pronunciation uses tone-marked Pinyin beneath each Hanzi. Supported courses can use the Apache-2.0-licensed{' '}
+                Guidance is available in English, Burmese, and Mon. Chinese pronunciation uses tone-marked Pinyin beneath each Hanzi, while Mathematics receives subject-specific instructions and worked feedback. Supported language courses can use the Apache-2.0-licensed{' '}
                 <SourceLink href="https://huggingface.co/hexgrad/Kokoro-82M">hexgrad/Kokoro-82M</SourceLink>{' '}
                 teacher voice, with an automatic browser-voice fallback.
               </p>
@@ -407,7 +457,7 @@ export default function LanguageQuestAbout() {
       <footer className="border-t border-white/70 bg-white/70 px-4 py-7 backdrop-blur dark:border-slate-800 dark:bg-slate-950/75">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 sm:flex-row">
           <MrlcQuestBrand compact />
-          <TaoMonLaeCredit />
+          <p className="text-center text-xs font-bold tracking-wide text-slate-500 dark:text-slate-400">Open-source learning • MIT licensed • Transparent course attribution</p>
         </div>
       </footer>
     </div>
