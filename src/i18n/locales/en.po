@@ -18545,3 +18545,627 @@ msgstr ""
 msgid "Retry playback"
 msgstr ""
 
+# Extracted string
+msgid "Certificate rule updated"
+msgstr ""
+
+# Extracted string
+msgid "Course-completion certificates issued by the old automatic rule are withdrawn. Complete the course, then pass its monitored final exam with at least 80% to unlock a new verified certificate."
+msgstr ""
+
+# Extracted string
+msgid "Take final exam"
+msgstr ""
+
+# Extracted string
+msgid "Exam setup required"
+msgstr ""
+
+# Extracted string
+msgid "Finish a course and pass its final exam to unlock a verified certificate."
+msgstr ""
+
+# Extracted string
+msgid "Preview of your print-ready Language Quest certificate."
+msgstr ""
+
+# Extracted string
+msgid "Subject albums"
+msgstr ""
+
+# Extracted string
+msgid "A card journey for every subject"
+msgstr ""
+
+# Extracted string
+msgid "Each completed challenge fills that subject’s album. No purchases or random packs."
+msgstr ""
+
+# Extracted string
+msgid "Image saved"
+msgstr ""
+
+# Extracted string
+msgid "Tap to view, save, or share"
+msgstr ""
+
+# Extracted string
+msgid "Journey progress keepsake"
+msgstr ""
+
+# Extracted string
+msgid "Language Quest progress keepsake"
+msgstr ""
+
+# Extracted string
+msgid "My learned words"
+msgstr ""
+
+# Extracted string
+msgid "My Words"
+msgstr ""
+
+# Extracted string
+msgid "Unique"
+msgstr ""
+
+# Extracted string
+msgid "Special power"
+msgstr ""
+
+# Extracted string
+msgid "Secret collection"
+msgstr ""
+
+# Extracted string
+msgid "Surprise Heart Cards"
+msgstr ""
+
+# Extracted string
+msgid "Your first successful Heart Refill Quiz each day reveals one card you do not own yet."
+msgstr ""
+
+# Extracted string
+msgid "Mystery card"
+msgstr ""
+
+# Extracted string
+msgid "Pass a refill quiz to reveal it"
+msgstr ""
+
+# Extracted string
+msgid "Billing month"
+msgstr ""
+
+# Extracted string
+msgid "All Months"
+msgstr ""
+
+# Extracted string
+msgid "Classroom name updated"
+msgstr ""
+
+# Extracted string
+msgid "Classroom invite link copied"
+msgstr ""
+
+# Extracted string
+msgid "Invite learners at ${inviteUrl}"
+msgstr ""
+
+# Extracted string
+msgid "Cancel renaming"
+msgstr ""
+
+# Extracted string
+msgid "Rename classroom"
+msgstr ""
+
+# Extracted string
+msgid "Explain what the class is working toward."
+msgstr ""
+
+# Extracted string
+msgid "Search learners…"
+msgstr ""
+
+# Extracted string
+msgid "member.focusProgressPercent"
+msgstr ""
+
+# Extracted string
+msgid "We could not load your classrooms"
+msgstr ""
+
+# Extracted string
+msgid "Copy code"
+msgstr ""
+
+# Extracted string
+msgid "Copy invite link"
+msgstr ""
+
+# Extracted string
+msgid "The invite opens the learner classroom tab with this code ready to join."
+msgstr ""
+
+# Extracted string
+msgid "This assigned course is in draft. Joined learners keep access while it is reviewed."
+msgstr ""
+
+# Extracted string
+msgid "Open focus course"
+msgstr ""
+
+# Extracted string
+msgid "Choose a course to give joined learners a direct classroom course link."
+msgstr ""
+
+# Extracted string
+msgid "Active accounts"
+msgstr ""
+
+# Extracted string
+msgid "Average progress"
+msgstr ""
+
+# Extracted string
+msgid "Below 50%"
+msgstr ""
+
+# Extracted string
+msgid "Sort learners"
+msgstr ""
+
+# Extracted string
+msgid "Name A–Z"
+msgstr ""
+
+# Extracted string
+msgid "Review learned words"
+msgstr ""
+
+# Extracted string
+msgid "Words learned in this course"
+msgstr ""
+
+# Extracted string
+msgid "Completed vocabulary practices are saved in your personal word bank for review."
+msgstr ""
+
+# Extracted string
+msgid "Certificate requirement"
+msgstr ""
+
+# Extracted string
+msgid "Monitored Final Exam"
+msgstr ""
+
+# Extracted string
+msgid "Locked"
+msgstr ""
+
+# Extracted string
+msgid "Final challenge"
+msgstr ""
+
+# Extracted string
+msgid "Continue course"
+msgstr ""
+
+# Extracted string
+msgid "How maths practice works"
+msgstr ""
+
+# Extracted string
+msgid "Each lesson opens directly on six guided problems. Work out each answer first, then use the explanation to correct mistakes and strengthen the method."
+msgstr ""
+
+# Extracted string
+msgid "Understand"
+msgstr ""
+
+# Extracted string
+msgid "Read the problem and identify what it asks."
+msgstr ""
+
+# Extracted string
+msgid "Solve"
+msgstr ""
+
+# Extracted string
+msgid "Work it out before selecting or arranging."
+msgstr ""
+
+# Extracted string
+msgid "Use instant feedback and the worked explanation."
+msgstr ""
+
+# Extracted string
+msgid "Retry"
+msgstr ""
+
+# Extracted string
+msgid "Paste at least one line as \"term | translation\"."
+msgstr ""
+
+# Extracted string
+msgid "Added ${challenges.length} challenge${challenges.length === 1 ? '' : 's'} from pasted vocabulary."
+msgstr ""
+
+# Extracted string
+msgid "Discard your unsaved Course Studio changes?"
+msgstr ""
+
+# Extracted string
+msgid "Preview as a learner"
+msgstr ""
+
+# Extracted string
+msgid "How each challenge will appear to a learner. Read-only — nothing here is saved."
+msgstr ""
+
+# Extracted string
+msgid "No question text yet"
+msgstr ""
+
+# Extracted string
+msgid "Empty option"
+msgstr ""
+
+# Extracted string
+msgid "Bulk add vocabulary"
+msgstr ""
+
+# Extracted string
+msgid "Each line becomes a multiple-choice challenge. Distractor options are picked automatically from the other pasted lines, so paste at least three pairs for the best variety."
+msgstr ""
+
+# Extracted string
+msgid "Add challenges"
+msgstr ""
+
+# Extracted string
+msgid "Unsaved changes"
+msgstr ""
+
+# Extracted string
+msgid "View analytics"
+msgstr ""
+
+# Extracted string
+msgid "Full-screen permission is required to start this exam."
+msgstr ""
+
+# Extracted string
+msgid "Secure spelling audio is unavailable. Ask your teacher before continuing."
+msgstr ""
+
+# Extracted string
+msgid "Enter your spelling"
+msgstr ""
+
+# Extracted string
+msgid "Final exam unavailable"
+msgstr ""
+
+# Extracted string
+msgid "Monitored final exam"
+msgstr ""
+
+# Extracted string
+msgid "Time remaining"
+msgstr ""
+
+# Extracted string
+msgid "Answers are locked after Continue. Leaving, hiding, switching, or closing this screen terminates the attempt."
+msgstr ""
+
+# Extracted string
+msgid "Listen to the word or phrase"
+msgstr ""
+
+# Extracted string
+msgid "Type exactly what you hear"
+msgstr ""
+
+# Extracted string
+msgid "You may replay the audio. Browser spelling suggestions are disabled, and your answer is checked using this course’s language rules."
+msgstr ""
+
+# Extracted string
+msgid "Exam attempt terminated"
+msgstr ""
+
+# Extracted string
+msgid "A 15-minute review break applies before another attempt."
+msgstr ""
+
+# Extracted string
+msgid "Final exam result"
+msgstr ""
+
+# Extracted string
+msgid "Review course"
+msgstr ""
+
+# Extracted string
+msgid "Question report"
+msgstr ""
+
+# Extracted string
+msgid "Use this to identify which course topics to revisit. Answer keys are not shown."
+msgstr ""
+
+# Extracted string
+msgid "Certificate final exam"
+msgstr ""
+
+# Extracted string
+msgid "Pass this monitored assessment to unlock the course certificate."
+msgstr ""
+
+# Extracted string
+msgid "Certificate already unlocked"
+msgstr ""
+
+# Extracted string
+msgid "Finish the course first"
+msgstr ""
+
+# Extracted string
+msgid "Every scored practice must be completed before the final exam unlocks."
+msgstr ""
+
+# Extracted string
+msgid "required to pass"
+msgstr ""
+
+# Extracted string
+msgid "hard time limit"
+msgstr ""
+
+# Extracted string
+msgid "Read before starting"
+msgstr ""
+
+# Extracted string
+msgid "• The exam enters secure full-screen mode when your browser supports it."
+msgstr ""
+
+# Extracted string
+msgid "• Do not switch tabs, swap apps/screens, swipe away, close, reload, or leave full screen."
+msgstr ""
+
+# Extracted string
+msgid "• Hiding or leaving the exam terminates the attempt and records the integrity reason."
+msgstr ""
+
+# Extracted string
+msgid "• Courses with dictation include listen-and-type spelling questions."
+msgstr ""
+
+# Extracted string
+msgid "• Failed or terminated attempts require a 15-minute review break."
+msgstr ""
+
+# Extracted string
+msgid "I understand the exam rules, have a stable connection, and am ready to stay on this screen until I submit."
+msgstr ""
+
+# Extracted string
+msgid "Start final exam"
+msgstr ""
+
+# Extracted string
+msgid "Leave refill quiz"
+msgstr ""
+
+# Extracted string
+msgid "Answer choices"
+msgstr ""
+
+# Extracted string
+msgid "Daily surprise"
+msgstr ""
+
+# Extracted string
+msgid "A new unique card found!"
+msgstr ""
+
+# Extracted string
+msgid "View my cards"
+msgstr ""
+
+# Extracted string
+msgid "Quiz review"
+msgstr ""
+
+# Extracted string
+msgid "Try another quiz"
+msgstr ""
+
+# Extracted string
+msgid "Refill another heart"
+msgstr ""
+
+# Extracted string
+msgid "Back to courses"
+msgstr ""
+
+# Extracted string
+msgid "Comeback challenge"
+msgstr ""
+
+# Extracted string
+msgid "Heart Refill Quiz"
+msgstr ""
+
+# Extracted string
+msgid "Answer a five-question review and pass at least 70% to restore one heart. Your first successful refill today also reveals a random card you have never received before."
+msgstr ""
+
+# Extracted string
+msgid "Server graded"
+msgstr ""
+
+# Extracted string
+msgid "Answers stay fair and secure."
+msgstr ""
+
+# Extracted string
+msgid "+1 heart"
+msgstr ""
+
+# Extracted string
+msgid "No XP is farmed here."
+msgstr ""
+
+# Extracted string
+msgid "No duplicates"
+msgstr ""
+
+# Extracted string
+msgid "Daily reveals are always new."
+msgstr ""
+
+# Extracted string
+msgid "My Learned Words"
+msgstr ""
+
+# Extracted string
+msgid "Comeback corner"
+msgstr ""
+
+# Extracted string
+msgid "Refill hearts. Reveal unique cards."
+msgstr ""
+
+# Extracted string
+msgid "Learned words"
+msgstr ""
+
+# Extracted string
+msgid "Take a Heart Refill Quiz"
+msgstr ""
+
+# Extracted string
+msgid "Duplicated as \"${course.title} (Copy)\""
+msgstr ""
+
+# Extracted string
+msgid "Duplicate as a new draft"
+msgstr ""
+
+# Extracted string
+msgid "A teacher can share an eight-character code. Joining lets that teacher see your Language Quest points, streak, activity date, progress, and learned words in the class focus course. Learning from other courses stays private."
+msgstr ""
+
+# Extracted string
+msgid "Open course"
+msgstr ""
+
+# Extracted string
+msgid "Browse courses"
+msgstr ""
+
+# Extracted string
+msgid "Guided learning for real life"
+msgstr ""
+
+# Extracted string
+msgid "Learn the idea."
+msgstr ""
+
+# Extracted string
+msgid "Build the skill."
+msgstr ""
+
+# Extracted string
+msgid "Grow with confidence."
+msgstr ""
+
+# Extracted string
+msgid "Short guided courses combine languages, K–12 mathematics, worked feedback, and friendly scored practice. Learn at your own pace and keep every achievement in one free account."
+msgstr ""
+
+# Extracted string
+msgid "🧮 Solve"
+msgstr ""
+
+# Extracted string
+msgid "Loading course previews…"
+msgstr ""
+
+# Extracted string
+msgid "We could not load the course library."
+msgstr ""
+
+# Extracted string
+msgid "Check your connection and try again."
+msgstr ""
+
+# Extracted string
+msgid "No courses are published yet."
+msgstr ""
+
+# Extracted string
+msgid "Search words, meanings, lessons…"
+msgstr ""
+
+# Extracted string
+msgid "Learned words pages"
+msgstr ""
+
+# Extracted string
+msgid "Learned words are unavailable"
+msgstr ""
+
+# Extracted string
+msgid "Search learned words"
+msgstr ""
+
+# Extracted string
+msgid "Filter by learning status"
+msgstr ""
+
+# Extracted string
+msgid "Secure"
+msgstr ""
+
+# Extracted string
+msgid "Think of the word…"
+msgstr ""
+
+# Extracted string
+msgid "Meaning or practice clue"
+msgstr ""
+
+# Extracted string
+msgid "This review is limited to"
+msgstr ""
+
+# Extracted string
+msgid "All years"
+msgstr ""
+
+# Extracted string
+msgid "All months"
+msgstr ""
+
+# Extracted string
+msgid "No payroll runs match these filters."
+msgstr ""
+
+# Extracted string
+msgid "Billing Month"
+msgstr ""
+
+# Extracted string
+msgid "ဘာသာမန်"
+msgstr ""
+
+# Extracted string
+msgid "English, Burmese & Mon guidance"
+msgstr ""
+

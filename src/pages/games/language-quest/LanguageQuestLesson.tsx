@@ -751,6 +751,9 @@ export default function LanguageQuestLesson() {
                 {explanationLanguage === 'my' && (
                   <p lang="my" className="mx-2 mt-2 rounded-xl border border-violet-200/70 bg-violet-50/80 px-4 py-3 text-sm leading-7 text-slate-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-slate-200">{lq('burmesePromptFallback')}</p>
                 )}
+                {explanationLanguage === 'mnw' && (
+                  <p lang="mnw" className="mx-2 mt-2 rounded-xl border border-violet-200/70 bg-violet-50/80 px-4 py-3 text-sm leading-7 text-slate-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-slate-200">{lq('monPromptFallback')}</p>
+                )}
                 <p lang={explanationLanguage} className="flex items-center gap-2 px-3 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400">
                   <Volume2 className="h-3.5 w-3.5 text-sky-600 dark:text-sky-300" /> {lq('listenSay')}
                 </p>

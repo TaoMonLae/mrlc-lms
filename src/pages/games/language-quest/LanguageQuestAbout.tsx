@@ -219,7 +219,7 @@ export default function LanguageQuestAbout() {
             </div>
             <div className="lq-float-delayed absolute bottom-5 right-3 z-10 max-w-[175px] rounded-xl border border-amber-200/30 bg-amber-300 px-3 py-2.5 text-slate-950 shadow-xl sm:bottom-20 sm:right-8 sm:max-w-[190px] sm:rounded-2xl sm:px-4 sm:py-3">
               <p className="flex items-center gap-2 text-xs font-black sm:text-sm">
-                <MessageCircleMore className="h-4 w-4" /> English + Burmese guidance
+                <MessageCircleMore className="h-4 w-4" /> English, Burmese & Mon guidance
               </p>
             </div>
             <span className="absolute right-14 top-8 hidden h-12 w-12 place-items-center rounded-2xl bg-fuchsia-500 text-white shadow-xl sm:grid">

@@ -12,10 +12,19 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 - Public Language Quest preview: `http://localhost:8000/language-quest`
 - Public Language Quest credits and course sources: `http://localhost:8000/language-quest/about`
 - Primary runtime: Node.js 22.22+, Express, React 19, PostgreSQL 16
-- Developed by Tao Mon Lae
-- Developer: [github.com/TaoMonLae](https://github.com/TaoMonLae)
+- Developer: [Tao Mon Lae](https://github.com/TaoMonLae)
 
-## Latest updates — July 2026
+## Latest updates — August 2026
+
+### Language Quest expansion and verified certificates
+
+- Added a complete published **K–12 Mathematics** pathway covering Kindergarten through Grade 12: 13 courses, 104 units, 312 lessons, and 1,872 challenges. Mathematics has its own catalog folder, visual treatment, direct problem-solving flow, worked feedback, and subject-appropriate guidance without language-only vocabulary or spelling stages.
+- Added a generated curriculum snapshot, standards map, curriculum guide, validation tests, and `npm run generate:language-quest-k12-math` for checking the Mathematics package.
+- Learners now keep a searchable **Learned Words** bank from completed language practices. Teachers can use course progress and learned-word review data to identify material that needs reinforcement; Mathematics answers are deliberately excluded from the vocabulary bank.
+- Certificates now require a monitored final exam after every scored course practice is complete. Exams use randomized server-graded questions, require 80% to pass, enforce a 30-minute limit, terminate when the learner leaves the protected screen, and apply a 15-minute review break after failed or terminated attempts. Dictation-enabled language courses include typed spelling questions; Mathematics exams use subject-appropriate scored questions.
+- Added server-verified **Heart Refill Quizzes** using three to five completed-course questions. Passing at least 70% restores hearts and can reveal one of twelve original Surprise Cards without duplicate rewards.
+- Classroom members can open assigned focus courses directly from the classroom experience, including teacher-assigned draft courses, while non-members remain blocked from private course content.
+- Improved Finance fee filtering with validated month/year periods, correct cross-year month options, and clearer monthly reporting behavior.
 
 ### Game-time parental controls
 
@@ -52,7 +61,7 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 
 ### Language Quest
 
-Language Quest is MRLC's public-facing, game-like language learning experience. Visitors can browse the published course catalog at `/language-quest`; beginning a lesson and saving progress requires a free account. Public learner accounts are deliberately isolated from private LMS records and school administration.
+Language Quest is MRLC's public-facing, game-like language and mathematics learning experience. Visitors can browse the published course catalog at `/language-quest`; beginning a lesson and saving progress requires a free account. Public learner accounts are deliberately isolated from private LMS records and school administration.
 
 #### Preview
 
@@ -60,11 +69,11 @@ The responsive learner dashboard brings courses, hearts, points, streaks, senten
 
 ![Language Quest learner dashboard with course cards, progress, hearts, points, and streaks](docs/images/language-quest-dashboard.png)
 
-Course pages provide a consistent Learn → Build → Check routine and an English/Burmese explanation switch. Learners can listen first, type complete sentences from memory, and then continue to the quiz with clear correction and retry guidance.
+Language course pages provide a consistent Learn → Build → Check routine and an English/Burmese explanation switch. Learners can listen first, type complete sentences from memory, and then continue to the quiz with clear correction and retry guidance. Mathematics lessons open directly on guided problems and use maths-specific instructions, explanations, matching, ordering, and retry feedback.
 
 ![Language Quest Spanish course with Burmese lesson guidance](docs/images/language-quest-burmese-guide.png)
 
-Completed courses unlock personalized certificates. Active learners can also create streak cards containing their name, points, and current achievement; both formats can be saved as PNG files or shared through the device share menu.
+Completing every course practice unlocks a monitored final exam; passing it unlocks the personalized certificate. Active learners can also create streak cards containing their name, points, and current achievement; both formats can be saved as PNG files or shared through the device share menu.
 
 ![Language Quest completion certificate for Everyday English](docs/images/language-quest-completion-certificate.png)
 
@@ -79,16 +88,18 @@ Completed courses unlock personalized certificates. Active learners can also cre
 #### Learner experience
 
 - Guided course paths with unit and lesson progression, lesson locking, five daily hearts, points, current/best streaks, saved progress, replay practice, and a learner leaderboard.
-- Daily and weekly missions reward consistent learning, mastery reviews, and exploring more than one language course. Mission rewards are server-verified and cannot count toward their own goals.
+- Daily and weekly missions reward consistent learning, mastery reviews, and exploring more than one course. Mission rewards are server-verified and cannot count toward their own goals.
 - The spaced-repetition **Mastery Arena** schedules completed challenges at expanding review intervals, awards XP for correct recall, and returns missed cards sooner without consuming hearts.
-- Twelve original Quest Card companions unlock at fixed XP levels. After Level 12, nine mystery **Legendary Vault** rewards reveal MRLC’s supplied Mon history portrait cards from animated golden chests. Separate language albums fill from completed challenges, while best-streak milestones unlock cosmetic card frames.
+- Twelve original Quest Card companions unlock at fixed XP levels. After Level 12, nine mystery **Legendary Vault** rewards reveal MRLC’s supplied Mon history portrait cards from animated golden chests. Separate subject albums fill from completed challenges, while best-streak milestones unlock cosmetic card frames.
 - A dedicated learner profile lets each person choose from twelve safe built-in avatars, write a short learning bio, and see their Language Quest identity without uploading a personal photo.
-- Each lesson follows three stages: learn and listen, build complete sentences from memory, then check understanding with a quiz.
+- Language lessons move through listening, recognition, spelling or sentence recall, and scored practice. Mathematics lessons skip language-only study cards and move directly into six guided problems with worked explanations.
 - Sentence checks ignore capitalization, repeated spaces, and light punctuation while still requiring the correct words and spelling.
 - Correct sentence practice triggers immediate visual celebration and a short success sound.
 - Incorrect answers show the model sentence and focused retry guidance instead of ending the practice.
 - Optional Kokoro-82M speech provides a consistent multilingual teacher voice for supported courses, with automatic browser-voice fallback when the local model is offline or the language is unsupported. Learners may choose either provider in their profile.
 - Learners can highlight an unfamiliar word anywhere in the lesson area to open the built-in dictionary. Available English definitions, Myanmar translations, and Mon entries appear without leaving Language Quest.
+- Completed language practices populate a personal Learned Words bank with course filters, search, accuracy, and review status. Learners can reopen the source lesson or review weak words; numeric Mathematics answers do not appear as vocabulary.
+- Learners who run out of hearts can take a timed, server-graded Heart Refill Quiz based on completed material. A passing result restores hearts and may unlock a new Surprise Card.
 
 #### Guidance, accessibility, and achievements
 
@@ -96,7 +107,8 @@ Completed courses unlock personalized certificates. Active learners can also cre
 - Light and dark themes are available throughout the public landing page and signed-in experience, with readable text, cards, controls, and course content in both modes.
 - Device-local controls let learners turn success sounds off or reduce confetti, tilting, animation, and transition motion. The reduced-motion default respects the browser or operating-system preference.
 - Learners can generate a personalized streak card after completing a lesson that day.
-- Completing a course unlocks a personalized certificate containing the learner's name, course title, points, date, MRLC logo, and developer credit.
+- Completing all scored practices unlocks a monitored final exam. A server-verified pass of at least 80% unlocks a personalized certificate containing the learner's name, course title, points, date, MRLC logo, and attribution.
+- Final exams randomize eligible course questions, include typed spelling for dictation-enabled language courses, enforce a hard time limit, and terminate attempts when the tab, app, window, or protected full-screen experience is left.
 - Achievement cards and certificates can be downloaded as 1200×630 PNG images or shared using the browser/device share menu. If file sharing is unavailable, Language Quest saves the image locally.
 
 #### Classroom use and learner administration
@@ -114,7 +126,9 @@ Completed courses unlock personalized certificates. Active learners can also cre
 
 - Teacher and administrator Course Studio supports courses, units, lessons, multiple challenge types, accent colors, images, ordering, and draft/published states.
 - Answers, progress, hearts, streaks, points, rewards, and completion are verified by the server rather than trusted to the browser.
-- The public catalog and signed-in learner dashboard organize published content into collapsible, folder-style **Chinese Courses**, **English Courses**, **Spanish Courses**, and **Other Courses** so learners can find the language path they want quickly.
+- The public catalog and signed-in learner dashboard organize published content into collapsible, folder-style **Chinese Courses**, **English Courses**, **Spanish Courses**, **Mathematics Courses**, and **Other Courses** so learners can find the right path quickly.
+- Includes a complete published **K–12 Mathematics** sequence from Kindergarten through Grade 12, containing 13 courses, 104 units, 312 lessons, and 1,872 challenges across conceptual understanding, fluency, reasoning, applications, and cumulative mastery.
+- Run `npm run generate:language-quest-k12-math` to validate the generated Mathematics curriculum after editing `curricula/language-quest/k12-math-courses.generated.json`. See `docs/language-quest/K12_MATH_CURRICULUM_GUIDE.md` and `docs/language-quest/k12-math-standards-map.tsv` for structure and standards coverage.
 - Includes an original **Everyday English** starter course with two units, four lessons, and twelve challenges, provisioned when Language Quest is first opened.
 - Includes the linked source repository's Spanish course as **Spanish Foundations**, with two units, ten lessons, and eighty visual or speech-assisted challenges.
 - Includes an original **Chinese Conversation Starter** course with two units, eight lessons, and thirty-two speech-assisted practices for greetings, names, countries, introductions, friends, and simple identity questions. Pinyin appears in every question as pronunciation guidance.
@@ -219,7 +233,7 @@ The service binds to `127.0.0.1` by default. Do not expose port `8810` publicly.
 | Word Trail | Student/teacher English vocabulary board game with dice, special spaces, saved progress, scores, and leaderboard |
 | Multiplayer Neon Snake | Authenticated real-time 3D arena with LMS player names, live ranking, keyboard/touch controls, and saved Student scores |
 | Game-time controls | Admin/teacher blocking, schedules, daily/session limits, breaks, server heartbeats, and student lock screens |
-| Language Quest | Public course browsing, isolated learner signup, built-in avatar profiles, opt-in teacher classrooms, cooperative class goals, admin learner lifecycle controls, bilingual guidance, sentence practice, spaced-repetition mastery, missions, Quest Card levels, language albums, streak frames, accessibility controls, monthly showcases, achievements, speech-assisted challenges, hearts, XP, streaks, leaderboard, and Course Studio |
+| Language Quest | Public language and K–12 Mathematics courses, isolated learner signup, teacher classrooms and assigned-course access, bilingual guidance, subject-aware practice, Learned Words, spaced-repetition mastery, monitored final exams and verified certificates, Heart Refill Quizzes, Surprise/Quest Cards, missions, hearts, XP, streaks, leaderboard, accessibility controls, and Course Studio |
 | Flashcards | Deck creation, sharing, class assignment, mastery, quiz, match, spelling, and progress reporting |
 | Lesson planner | Teacher planning and classroom resource organization |
 | Video lessons | Upload/conversion, custom thumbnails, captions, required viewing, progress, and watch analytics |

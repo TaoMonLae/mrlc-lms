@@ -1,7 +1,7 @@
 import { createContext, useContext, useMemo, useState } from 'react';
 import { Languages } from 'lucide-react';
 
-export type ExplanationLanguage = 'en' | 'my';
+export type ExplanationLanguage = 'en' | 'my' | 'mnw';
 
 const STORAGE_KEY = 'mrlc-language-quest-explanation-language';
 
@@ -27,6 +27,7 @@ const copy = {
     whenToUse: 'When to use it',
     listenSay: 'Listen, say it aloud, then move on when the meaning feels clear.',
     burmesePromptFallback: '',
+    monPromptFallback: '',
     sentenceHeading: 'Type the complete phrase from memory.',
     situation: 'Situation',
     sentenceHelp: 'Capital letters and punctuation do not affect the check. Press Enter when ready.',
@@ -85,6 +86,7 @@ const copy = {
     whenToUse: 'ဘယ်အချိန်မှာ သုံးမလဲ',
     listenSay: 'အသံကို နားထောင်ပါ၊ အသံထွက်ပြောပါ၊ အဓိပ္ပာယ်နားလည်သွားသောအခါ နောက်တစ်ဆင့်သို့ ဆက်ပါ။',
     burmesePromptFallback: 'အပေါ်တွင် ဖော်ပြထားသော အခြေအနေကို ဖတ်ပြီး မှန်ကန်သော စကားလုံး သို့မဟုတ် ဝါကျကို အသံထွက်ကာ မှတ်သားပါ။',
+    monPromptFallback: '',
     sentenceHeading: 'မှတ်မိသည့်အတိုင်း ဝါကျအပြည့်အစုံကို ရေးပါ။',
     situation: 'အသုံးပြုရမည့် အခြေအနေ',
     sentenceHelp: 'စာလုံးအကြီးအသေးနှင့် သတ်ပုံအမှတ်များကို ထည့်မတွက်ပါ။ အဆင်သင့်ဖြစ်လျှင် Enter ကို နှိပ်ပါ။',
@@ -122,6 +124,65 @@ const copy = {
     outOfHeartsHelp: 'စိတ်မပူပါနှင့် — Heart Refill Quiz အတိုကို ဖြေဆိုပါ၊ ပြီးဆုံးထားသော သင်ခန်းစာကို ပြန်လေ့ကျင့်ပါ၊ သို့မဟုတ် နေ့စဉ် ပြန်ဖြည့်ချိန်ကို စောင့်ပါ။',
     completeHelp: 'သင်ခန်းစာများကို ပြန်လေ့ကျင့်ပြီး နှလုံးများ ပြန်ဖြည့်နိုင်သည်။',
   },
+  mnw: {
+    explanation: 'တၚ်သောၚ်ကၠး',
+    journeySummary: 'သိုၚ်ခၞံကေတ်စနောမ်အရေဝ်မဒှ်ဖဵုဂမၠိုၚ် နကဵုသင်ခန်းစာမပြဟ်၊ ပရေၚ်စမ်ၜတ်ဒုၚ်သဇိုၚ်၊ စနောမ်သတ္တဟ ကေုာံ ပရေၚ်ပြိုၚ်ပ္ကာန်အလုံဘာဂမၠိုၚ်။',
+    sentenceFeatureTitle: 'တၟိ — ဗှ်သၞာဝေါဟာရ ကၠာဟွံဂွံစပ်စာလုံး',
+    sentenceFeatureBody: 'မလိက် သို့မဟုတ် ဝါကျမွဲမွဲ ကၠာဟွံဂွံစပ်စာလုံး ကေုာံ ချူဝါကျမ္ဂး ဒးလ္ၚတ်ကေတ် ရုဲမလိက် ၜါဝါရ။ ဟွံဒးစံၚ်တူ ကဵုအခေါၚ်ဗ္တောန်ပြံၚ်သၠာဲတုဲ ကၠာဟွံဂွံစမေးခွန်းကဵုစၟတ် ညံၚ်ဂွံဗှ်သၞာဂၠိုၚ်တိုန်ရ။',
+    progressSaved: 'စရၚ်လ္ၚတ်မၞး ဂိုၚ်ဒေပ်လဝ်ကဵု အလိုအလျောက်ရ။',
+    lessonGuideTitle: 'နဲကဲလ္ၚတ်သင်ခန်းစာတစ်ခုစီ',
+    lessonGuideBody: 'သင်ခန်းစာတစ်ခုစီ အကြောင်းအရာအလိုက် ပလေဝ်စပ်ကဵုရ။ အရေဝ်မဒှ်ဖဵုဂမၠိုၚ် ရံၚ်နကဵု က္တောဝ်ကၠေၚ်၊ ရုဲစှ်၊ စပ်စာလုံး ကေုာံ ချူဝါကျတအ်တုဲ ပရေၚ်စပ် ကေုာံ စီစဥ်မလိက်တအ် ဓမံက်ထ္ၜးနကဵုဗီုပြင်လ္ၚတ်တၞဟ်တၞဟ်ရ။',
+    learnTitle: '၁။ လ္ၚတ်ညိ',
+    learnBody: 'က္တောဝ်ကၠေၚ်ရမျာၚ်တုဲ စပ်ကဵုအကာဲအရာမကတုဲဒှ်ညိ။',
+    vocabularyTitle: '၂။ ရုဲစှ်ညိ',
+    vocabularyBody: 'ကၠာဟွံဂွံတက်လိက် စပ်ကဵုမလိက် သို့မဟုတ် ဝါကျမွဲမွဲ ကုအဓိပ္ပါယ် ၜါဝါညိ။',
+    spellTitle: '၃။ စပ်စာလုံးညိ',
+    spellBody: 'ဟွံဒးရံၚ်သွဟ် က္တောဝ်ကၠေၚ်ရမျာၚ်တုဲ ကြားသည့်အတိုင်း ချူညိ။',
+    buildTitle: '၄။ သိုၚ်ခၞံဝါကျညိ',
+    buildBody: 'ချူဝါကျအပြည့်အစုံ နကဵုစိုတ်ဗှ်သၞာညိ။',
+    checkTitle: '၅။ စၟဳစၟတ်ညိ',
+    checkBody: 'သွဟ်ကေတ် သၟာန်သွဟ်မဟွံထ္ၜးသွဟ်တုဲ ရံၚ်တၚ်သောၚ်ကၠးတုဲ ဂ္စာန်မွဲဝါပၠန်ညိ။',
+    whenToUse: 'အခိၚ်လဵုသုၚ်စောဲရော',
+    listenSay: 'က္တောဝ်ကၠေၚ်၊ ဟီုပ္တိတ်ရမျာၚ်၊ အဓိပ္ပါယ်သောၚ်ကၠးတုဲမ္ဂး ဆက်အာညိ။',
+    burmesePromptFallback: '',
+    monPromptFallback: 'ဗှ်အကာဲအရာမထ္ၜးလဝ်လ္တူတုဲ က္တောဝ်ကၠေၚ်၊ ဟီုပ္တိတ်ရမျာၚ် မလိက် သို့မဟုတ် ဝါကျမတိုက်ရိုက်ညိ။',
+    sentenceHeading: 'ချူဝါကျအပြည့်အစုံ အတိုၚ်ဗှ်သၞာညိ။',
+    situation: 'အကာဲအရာသုၚ်စောဲ',
+    sentenceHelp: 'မလိက်ဇၞော်သောဲ ကေုာံ သတ်ပုံအမှတ်တအ် ဟွံထည့်တွက်ပါ။ အဆင်သင့်ဖြစ်မ္ဂး ဍဵု Enter ညိ။',
+    sentenceHelpChinese: 'တရုတ်ကီးဘုတ် ဟွံမွဲဟာ? တက်စုတ် Pinyin နွံရမျာၚ်အမှတ် (ဥပမာ "nǐ hǎo") သို့မဟုတ် ဟွံမွဲရမျာၚ်အမှတ် (ဥပမာ "ni3 hao3" သို့မဟုတ် "ni hao") ဂွံရ၊ တက်စုတ်မလိက်တရုတ်လေဝ် ဂွံဒၟံၚ်ရ။',
+    incorrectTitle: 'ကြပ်ကၠုၚ်တုဲ — နှိုင်းယှဉ်ရံၚ်တုဲ ဂ္စာန်မွဲဝါပၠန်ညိ။',
+    incorrectHelp: 'အာရုံစိုက်ကဵု မလိက်မပျောက် သို့မဟုတ် ပြောင်းလဲအာညိ၊ စပ်စာလုံးညံၚ်ဂွံတိုက်ရိုက်တုဲ သတ်ပုံအမှတ် ဟွံပၟိက်ပါ။',
+    correctTitle: 'ဝါကျတိုက်ရိုက်ဒှ်တုဲ!',
+    correctHelp: 'ဗှ်သၞာဝါကျအပြည့်အစုံမာန်ကၠုၚ်တုဲ။ ကၠာဟွံဂွံဆက်အာ ဟီုပ္တိတ်ရမျာၚ်မွဲဝါညိ။',
+    spellingHeading: 'က္တောဝ်ကၠေၚ်တုဲ စပ်စာလုံးညိ။',
+    spellingInstruction: 'သွဟ်ချူလဝ်တအ် ကၟာတ်လဝ်ရ။ က္တောဝ်ကၠေၚ်ရမျာၚ်မွဲဝါပၠန်တုဲ ချူမလိက် သို့မဟုတ် ဝါကျ အတိုၚ်ဗှ်သၞာညိ။',
+    spellingLabel: 'မၞးစပ်စာလုံး',
+    spellingPlaceholder: 'ချူမလိက် အတိုၚ်က္တောဝ်ကၠေၚ်ညိ…',
+    spellingHelp: 'မလိက်ဇၞော်သောဲ ကေုာံ သတ်ပုံအမှတ်အညိည ဟွံထည့်တွက်ပါ။ မလိက် ကေုာံ ဝါကျဂမၠိုၚ် တိုက်ရိုက်ကိုက်ညီရမည်။',
+    spellingHelpChinese: 'တရုတ်ကီးဘုတ် ဟွံမွဲဟာ? တက်စုတ် Pinyin နွံရမျာၚ်အမှတ် (ဥပမာ "nǐ hǎo") သို့မဟုတ် ဟွံမွဲရမျာၚ်အမှတ် (ဥပမာ "ni3 hao3" သို့မဟုတ် "ni hao") ဂွံရ၊ တက်စုတ်မလိက်တရုတ်လေဝ် ဂွံဒၟံၚ်ရ။',
+    spellingIncorrectTitle: 'က္တောဝ်ကၠေၚ်မွဲဝါပၠန်တုဲ စၟဳစၟတ်ရမျာၚ်ညိ။',
+    spellingIncorrectHelp: 'သွက်ဂွံဂ္စာန် နကဵုစိုတ်ဗှ်သၞာတုဲ သွဟ်တအ် ကၟာတ်စွံလဝ်ဖိုဟ်ရ။',
+    spellingCorrectTitle: 'စပ်စာလုံးတုဲဒှ်!',
+    spellingCorrectHelp: 'ကိုက်ညီကဵု မလိက် သို့မဟုတ် ဝါကျမက္တောဝ်ကၠေၚ်တုဲ။',
+    vocabularyHeading: 'ရုဲစှ်မလိက် သို့မဟုတ် ဝါကျမကိုက်ညီညိ။',
+    vocabularyInstruction: 'ဝေါဟာရတစ်ခုစီ ရုဲစှ်ၜါဝါရ။ ကၠာဟွံဂွံစပ်စာလုံး သွဟ်မှားတအ် ပြံၚ်ပြင်ညံၚ်ဂွံမှန်ညိ။',
+    vocabularyCorrectTitle: 'စၟတ်သမ္တီခိုဟ်!',
+    vocabularyCorrectHelp: 'ဆက်စပ်အဓိပ္ပါယ် ကုမလိက်မတိုက်ရိုက်မာန်ကၠုၚ်တုဲ။ ကၠာဟွံဂွံဆက်အာ ဟီုပ္တိတ်ရမျာၚ်မွဲဝါညိ။',
+    vocabularyIncorrectTitle: 'ရံၚ်မွဲဝါပၠန်တုဲ ပြန်ရုဲမလိက်ဏံညိ။',
+    vocabularyIncorrectHelp: 'ပ္ဍဲပရေၚ်လ္ၚတ်ဏံ ဟွံအိုတ်စိုတ်ရ။ နှိုင်းယှဉ်ရွေးချယ်စရာဂမၠိုၚ်တုဲ ပြန်သွဟ်သၟာန်တူတူမွဲဝါပၠန်ညိ။',
+    skipVocabulary: 'ကျော်ဝေါဟာရလ္ၚတ်',
+    checkVocabulary: 'စၟဳစၟတ်ရုဲစှ်',
+    retryVocabulary: 'ပြန်ဂ္စာန်မလိက်ဏံ',
+    nextVocabulary: 'နောက်ရွေးချယ်မှု',
+    startSpelling: 'စစပ်စာလုံး',
+    skipSpelling: 'ကျော်စပ်စာလုံးလ္ၚတ်',
+    checkSpelling: 'စၟဳစၟတ်စပ်စာလုံး',
+    nextSpelling: 'နောက်စပ်စာလုံး',
+    startSentencePractice: 'စချူဝါကျလ္ၚတ်',
+    startQuiz: 'စမေးခွန်း',
+    outOfHeartsHelp: 'ဟွံဒးစံၚ်တူ — သွဟ် Heart Refill Quiz အတိုညိ၊ ပြန်လ္ၚတ်သင်ခန်းစာမတုဲဒှ် သို့မဟုတ် စၟဳစရၚ်ကဵုအရိုဟ်တ္ၚဲညိ။',
+    completeHelp: 'ပြန်လ္ၚတ်သင်ခန်းစာဂမၠိုၚ်တုဲ နှလုံးပြန်ဖြည့်မာန်ရ။',
+  },
 } as const;
 
 export type LanguageQuestCopyKey = keyof typeof copy.en;
@@ -138,7 +199,7 @@ export function LanguageQuestSupportProvider({ children }: { children: React.Rea
   const [explanationLanguage, setLanguage] = useState<ExplanationLanguage>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored === 'en' || stored === 'my') {
+      if (stored === 'en' || stored === 'my' || stored === 'mnw') {
         return stored;
       }
     } catch {
@@ -207,6 +268,15 @@ export function LanguageQuestExplanationToggle() {
         aria-pressed={explanationLanguage === 'my'}
       >
         မြန်မာ
+      </button>
+      <button
+        type="button"
+        lang="mnw"
+        onClick={() => setExplanationLanguage('mnw')}
+        className={`rounded-lg px-2 py-1 text-[11px] font-black transition ${explanationLanguage === 'mnw' ? 'bg-violet-600 text-white' : 'text-slate-500 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'}`}
+        aria-pressed={explanationLanguage === 'mnw'}
+      >
+        ဘာသာမန်
       </button>
     </div>
   );

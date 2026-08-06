@@ -10,5 +10,621 @@
   {
     "id": "🧭",
     "str": ""
+  },
+  {
+    "id": "Certificate rule updated",
+    "str": ""
+  },
+  {
+    "id": "Course-completion certificates issued by the old automatic rule are withdrawn. Complete the course, then pass its monitored final exam with at least 80% to unlock a new verified certificate.",
+    "str": ""
+  },
+  {
+    "id": "Take final exam",
+    "str": ""
+  },
+  {
+    "id": "Exam setup required",
+    "str": ""
+  },
+  {
+    "id": "Finish a course and pass its final exam to unlock a verified certificate.",
+    "str": ""
+  },
+  {
+    "id": "Preview of your print-ready Language Quest certificate.",
+    "str": ""
+  },
+  {
+    "id": "Subject albums",
+    "str": ""
+  },
+  {
+    "id": "A card journey for every subject",
+    "str": ""
+  },
+  {
+    "id": "Each completed challenge fills that subject’s album. No purchases or random packs.",
+    "str": ""
+  },
+  {
+    "id": "Image saved",
+    "str": ""
+  },
+  {
+    "id": "Tap to view, save, or share",
+    "str": ""
+  },
+  {
+    "id": "Journey progress keepsake",
+    "str": ""
+  },
+  {
+    "id": "Language Quest progress keepsake",
+    "str": ""
+  },
+  {
+    "id": "My learned words",
+    "str": ""
+  },
+  {
+    "id": "My Words",
+    "str": ""
+  },
+  {
+    "id": "Unique",
+    "str": ""
+  },
+  {
+    "id": "Special power",
+    "str": ""
+  },
+  {
+    "id": "Secret collection",
+    "str": ""
+  },
+  {
+    "id": "Surprise Heart Cards",
+    "str": ""
+  },
+  {
+    "id": "Your first successful Heart Refill Quiz each day reveals one card you do not own yet.",
+    "str": ""
+  },
+  {
+    "id": "Mystery card",
+    "str": ""
+  },
+  {
+    "id": "Pass a refill quiz to reveal it",
+    "str": ""
+  },
+  {
+    "id": "Billing month",
+    "str": ""
+  },
+  {
+    "id": "All Months",
+    "str": ""
+  },
+  {
+    "id": "Classroom name updated",
+    "str": ""
+  },
+  {
+    "id": "Classroom invite link copied",
+    "str": ""
+  },
+  {
+    "id": "Invite learners at ${inviteUrl}",
+    "str": ""
+  },
+  {
+    "id": "Cancel renaming",
+    "str": ""
+  },
+  {
+    "id": "Rename classroom",
+    "str": ""
+  },
+  {
+    "id": "Explain what the class is working toward.",
+    "str": ""
+  },
+  {
+    "id": "Search learners…",
+    "str": ""
+  },
+  {
+    "id": "member.focusProgressPercent",
+    "str": ""
+  },
+  {
+    "id": "We could not load your classrooms",
+    "str": ""
+  },
+  {
+    "id": "Copy code",
+    "str": ""
+  },
+  {
+    "id": "Copy invite link",
+    "str": ""
+  },
+  {
+    "id": "The invite opens the learner classroom tab with this code ready to join.",
+    "str": ""
+  },
+  {
+    "id": "This assigned course is in draft. Joined learners keep access while it is reviewed.",
+    "str": ""
+  },
+  {
+    "id": "Open focus course",
+    "str": ""
+  },
+  {
+    "id": "Choose a course to give joined learners a direct classroom course link.",
+    "str": ""
+  },
+  {
+    "id": "Active accounts",
+    "str": ""
+  },
+  {
+    "id": "Average progress",
+    "str": ""
+  },
+  {
+    "id": "Below 50%",
+    "str": ""
+  },
+  {
+    "id": "Sort learners",
+    "str": ""
+  },
+  {
+    "id": "Name A–Z",
+    "str": ""
+  },
+  {
+    "id": "Review learned words",
+    "str": ""
+  },
+  {
+    "id": "Words learned in this course",
+    "str": ""
+  },
+  {
+    "id": "Completed vocabulary practices are saved in your personal word bank for review.",
+    "str": ""
+  },
+  {
+    "id": "Certificate requirement",
+    "str": ""
+  },
+  {
+    "id": "Monitored Final Exam",
+    "str": ""
+  },
+  {
+    "id": "Locked",
+    "str": ""
+  },
+  {
+    "id": "Final challenge",
+    "str": ""
+  },
+  {
+    "id": "Continue course",
+    "str": ""
+  },
+  {
+    "id": "How maths practice works",
+    "str": ""
+  },
+  {
+    "id": "Each lesson opens directly on six guided problems. Work out each answer first, then use the explanation to correct mistakes and strengthen the method.",
+    "str": ""
+  },
+  {
+    "id": "Understand",
+    "str": ""
+  },
+  {
+    "id": "Read the problem and identify what it asks.",
+    "str": ""
+  },
+  {
+    "id": "Solve",
+    "str": ""
+  },
+  {
+    "id": "Work it out before selecting or arranging.",
+    "str": ""
+  },
+  {
+    "id": "Use instant feedback and the worked explanation.",
+    "str": ""
+  },
+  {
+    "id": "Retry",
+    "str": ""
+  },
+  {
+    "id": "Paste at least one line as \"term | translation\".",
+    "str": ""
+  },
+  {
+    "id": "Added ${challenges.length} challenge${challenges.length === 1 ? '' : 's'} from pasted vocabulary.",
+    "str": ""
+  },
+  {
+    "id": "Discard your unsaved Course Studio changes?",
+    "str": ""
+  },
+  {
+    "id": "Preview as a learner",
+    "str": ""
+  },
+  {
+    "id": "How each challenge will appear to a learner. Read-only — nothing here is saved.",
+    "str": ""
+  },
+  {
+    "id": "No question text yet",
+    "str": ""
+  },
+  {
+    "id": "Empty option",
+    "str": ""
+  },
+  {
+    "id": "Bulk add vocabulary",
+    "str": ""
+  },
+  {
+    "id": "Each line becomes a multiple-choice challenge. Distractor options are picked automatically from the other pasted lines, so paste at least three pairs for the best variety.",
+    "str": ""
+  },
+  {
+    "id": "Add challenges",
+    "str": ""
+  },
+  {
+    "id": "Unsaved changes",
+    "str": ""
+  },
+  {
+    "id": "View analytics",
+    "str": ""
+  },
+  {
+    "id": "Full-screen permission is required to start this exam.",
+    "str": ""
+  },
+  {
+    "id": "Secure spelling audio is unavailable. Ask your teacher before continuing.",
+    "str": ""
+  },
+  {
+    "id": "Enter your spelling",
+    "str": ""
+  },
+  {
+    "id": "Final exam unavailable",
+    "str": ""
+  },
+  {
+    "id": "Monitored final exam",
+    "str": ""
+  },
+  {
+    "id": "Time remaining",
+    "str": ""
+  },
+  {
+    "id": "Answers are locked after Continue. Leaving, hiding, switching, or closing this screen terminates the attempt.",
+    "str": ""
+  },
+  {
+    "id": "Listen to the word or phrase",
+    "str": ""
+  },
+  {
+    "id": "Type exactly what you hear",
+    "str": ""
+  },
+  {
+    "id": "You may replay the audio. Browser spelling suggestions are disabled, and your answer is checked using this course’s language rules.",
+    "str": ""
+  },
+  {
+    "id": "Exam attempt terminated",
+    "str": ""
+  },
+  {
+    "id": "A 15-minute review break applies before another attempt.",
+    "str": ""
+  },
+  {
+    "id": "Final exam result",
+    "str": ""
+  },
+  {
+    "id": "Review course",
+    "str": ""
+  },
+  {
+    "id": "Question report",
+    "str": ""
+  },
+  {
+    "id": "Use this to identify which course topics to revisit. Answer keys are not shown.",
+    "str": ""
+  },
+  {
+    "id": "Certificate final exam",
+    "str": ""
+  },
+  {
+    "id": "Pass this monitored assessment to unlock the course certificate.",
+    "str": ""
+  },
+  {
+    "id": "Certificate already unlocked",
+    "str": ""
+  },
+  {
+    "id": "Finish the course first",
+    "str": ""
+  },
+  {
+    "id": "Every scored practice must be completed before the final exam unlocks.",
+    "str": ""
+  },
+  {
+    "id": "required to pass",
+    "str": ""
+  },
+  {
+    "id": "hard time limit",
+    "str": ""
+  },
+  {
+    "id": "Read before starting",
+    "str": ""
+  },
+  {
+    "id": "• The exam enters secure full-screen mode when your browser supports it.",
+    "str": ""
+  },
+  {
+    "id": "• Do not switch tabs, swap apps/screens, swipe away, close, reload, or leave full screen.",
+    "str": ""
+  },
+  {
+    "id": "• Hiding or leaving the exam terminates the attempt and records the integrity reason.",
+    "str": ""
+  },
+  {
+    "id": "• Courses with dictation include listen-and-type spelling questions.",
+    "str": ""
+  },
+  {
+    "id": "• Failed or terminated attempts require a 15-minute review break.",
+    "str": ""
+  },
+  {
+    "id": "I understand the exam rules, have a stable connection, and am ready to stay on this screen until I submit.",
+    "str": ""
+  },
+  {
+    "id": "Start final exam",
+    "str": ""
+  },
+  {
+    "id": "Leave refill quiz",
+    "str": ""
+  },
+  {
+    "id": "Answer choices",
+    "str": ""
+  },
+  {
+    "id": "Daily surprise",
+    "str": ""
+  },
+  {
+    "id": "A new unique card found!",
+    "str": ""
+  },
+  {
+    "id": "View my cards",
+    "str": ""
+  },
+  {
+    "id": "Quiz review",
+    "str": ""
+  },
+  {
+    "id": "Try another quiz",
+    "str": ""
+  },
+  {
+    "id": "Refill another heart",
+    "str": ""
+  },
+  {
+    "id": "Back to courses",
+    "str": ""
+  },
+  {
+    "id": "Comeback challenge",
+    "str": ""
+  },
+  {
+    "id": "Heart Refill Quiz",
+    "str": ""
+  },
+  {
+    "id": "Answer a five-question review and pass at least 70% to restore one heart. Your first successful refill today also reveals a random card you have never received before.",
+    "str": ""
+  },
+  {
+    "id": "Server graded",
+    "str": ""
+  },
+  {
+    "id": "Answers stay fair and secure.",
+    "str": ""
+  },
+  {
+    "id": "+1 heart",
+    "str": ""
+  },
+  {
+    "id": "No XP is farmed here.",
+    "str": ""
+  },
+  {
+    "id": "No duplicates",
+    "str": ""
+  },
+  {
+    "id": "Daily reveals are always new.",
+    "str": ""
+  },
+  {
+    "id": "My Learned Words",
+    "str": ""
+  },
+  {
+    "id": "Comeback corner",
+    "str": ""
+  },
+  {
+    "id": "Refill hearts. Reveal unique cards.",
+    "str": ""
+  },
+  {
+    "id": "Learned words",
+    "str": ""
+  },
+  {
+    "id": "Take a Heart Refill Quiz",
+    "str": ""
+  },
+  {
+    "id": "Duplicated as \"${course.title} (Copy)\"",
+    "str": ""
+  },
+  {
+    "id": "Duplicate as a new draft",
+    "str": ""
+  },
+  {
+    "id": "A teacher can share an eight-character code. Joining lets that teacher see your Language Quest points, streak, activity date, progress, and learned words in the class focus course. Learning from other courses stays private.",
+    "str": ""
+  },
+  {
+    "id": "Open course",
+    "str": ""
+  },
+  {
+    "id": "Browse courses",
+    "str": ""
+  },
+  {
+    "id": "Guided learning for real life",
+    "str": ""
+  },
+  {
+    "id": "Learn the idea.",
+    "str": ""
+  },
+  {
+    "id": "Build the skill.",
+    "str": ""
+  },
+  {
+    "id": "Grow with confidence.",
+    "str": ""
+  },
+  {
+    "id": "Short guided courses combine languages, K–12 mathematics, worked feedback, and friendly scored practice. Learn at your own pace and keep every achievement in one free account.",
+    "str": ""
+  },
+  {
+    "id": "🧮 Solve",
+    "str": ""
+  },
+  {
+    "id": "Loading course previews…",
+    "str": ""
+  },
+  {
+    "id": "We could not load the course library.",
+    "str": ""
+  },
+  {
+    "id": "Check your connection and try again.",
+    "str": ""
+  },
+  {
+    "id": "No courses are published yet.",
+    "str": ""
+  },
+  {
+    "id": "Search words, meanings, lessons…",
+    "str": ""
+  },
+  {
+    "id": "Learned words pages",
+    "str": ""
+  },
+  {
+    "id": "Learned words are unavailable",
+    "str": ""
+  },
+  {
+    "id": "Search learned words",
+    "str": ""
+  },
+  {
+    "id": "Filter by learning status",
+    "str": ""
+  },
+  {
+    "id": "Secure",
+    "str": ""
+  },
+  {
+    "id": "Think of the word…",
+    "str": ""
+  },
+  {
+    "id": "Meaning or practice clue",
+    "str": ""
+  },
+  {
+    "id": "This review is limited to",
+    "str": ""
+  },
+  {
+    "id": "All years",
+    "str": ""
+  },
+  {
+    "id": "All months",
+    "str": ""
+  },
+  {
+    "id": "No payroll runs match these filters.",
+    "str": ""
+  },
+  {
+    "id": "Billing Month",
+    "str": ""
   }
 ]
