@@ -5,6 +5,7 @@ import { ArrowLeft, Download, Printer, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { apiGet, apiSend } from '../../lib/api';
+import { useAuth } from '../../providers/AuthProvider';
 
 const TYPE_TITLES: Record<string, string> = {
   REPORT_CARD: 'Term Report Card',
@@ -30,6 +31,7 @@ const fmtDate = (d?: string | null) => (d ? new Date(d).toLocaleDateString(undef
 export default function DocumentPrint() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [doc, setDoc] = useState<DocRecord | null>(null);
   const [branding, setBranding] = useState<Branding>({});
   const [qr, setQr] = useState<string>('');
@@ -62,15 +64,17 @@ export default function DocumentPrint() {
   const p = doc.payload || {};
   const school = p.school || { name: branding.name };
   const student = p.student || {};
+  const logoUrl = school.logoUrl || branding.logoUrl;
   const verifyUrl = `${window.location.origin}/verify/${doc.verifyToken}`;
   const cancelled = doc.status !== 'ACTIVE';
+  const backPath = user?.role === 'STUDENT' ? '/student/documents' : '/documents';
 
   return (
     <div className="min-h-screen bg-slate-100 print:bg-white py-8 print:py-0">
       {/* Action bar (hidden when printing) */}
       <div className="max-w-[820px] mx-auto mb-4 flex items-center justify-between print:hidden px-4">
-        <Button variant="ghost" size="sm" className="text-slate-600" onClick={() => navigate('/documents')}>
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Documents
+        <Button variant="ghost" size="sm" className="text-slate-600" onClick={() => navigate(backPath)}>
+          <ArrowLeft className="mr-2 h-4 w-4" /> {user?.role === 'STUDENT' ? 'Back to My Documents' : 'Back to Documents'}
         </Button>
         <Button onClick={handleDownload} className="bg-primary text-primary-foreground">
           <Download className="mr-2 h-4 w-4" /> Download / Print PDF
@@ -88,8 +92,8 @@ export default function DocumentPrint() {
         {/* Header */}
         <div className="flex items-start justify-between border-b-2 border-slate-800 pb-4">
           <div className="flex items-center gap-4">
-            {branding.logoUrl ? (
-              <img src={branding.logoUrl} alt="" className="h-16 w-16 object-contain" />
+            {logoUrl ? (
+              <img src={logoUrl} alt="" className="h-16 w-16 object-contain" />
             ) : (
               <div className="h-16 w-16 rounded-lg bg-slate-800 text-white flex items-center justify-center font-bold text-xl">{(school.name || 'S')[0]}</div>
             )}

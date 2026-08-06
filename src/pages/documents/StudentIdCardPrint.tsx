@@ -4,7 +4,9 @@ import QRCode from 'qrcode';
 import { ArrowLeft, Printer, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { apiGet } from '../../lib/api';
+import { apiGet, apiSend } from '../../lib/api';
+import { useAuth } from '../../providers/AuthProvider';
+import { officialDocumentBackPath } from '@/shared/officialDocuments';
 
 // Standard ID-1 / "CR80" card size (ISO/IEC 7810) — the same physical
 // dimensions used by credit cards, driver's licenses and most school ID
@@ -41,6 +43,7 @@ const fmtDate = (d?: string | null) =>
 export default function StudentIdCardPrint() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [doc, setDoc] = useState<DocRecord | null>(null);
   const [branding, setBranding] = useState<Branding>({});
   const [qr, setQr] = useState<string>('');
@@ -70,6 +73,7 @@ export default function StudentIdCardPrint() {
   const p = doc.payload || {};
   const school = p.school || { name: branding.name };
   const student = p.student || {};
+  const logoUrl = school.logoUrl || branding.logoUrl;
   const verifyUrl = `${window.location.origin}/verify/${doc.verifyToken}`;
   const revoked = doc.status !== 'ACTIVE';
   const initials = (doc.studentName || '?')
@@ -78,6 +82,11 @@ export default function StudentIdCardPrint() {
     .slice(0, 2)
     .map((w: string) => w[0]?.toUpperCase())
     .join('');
+  const backPath = officialDocumentBackPath(user?.role);
+  const handlePrint = () => {
+    apiSend(`/api/documents/${doc.id}/download`, 'POST').catch(() => {});
+    window.print();
+  };
 
   return (
     <div className="min-h-screen bg-slate-100 print:bg-white py-8 print:py-0">
@@ -91,10 +100,10 @@ export default function StudentIdCardPrint() {
 
       {/* Action bar (hidden when printing) */}
       <div className="max-w-3xl mx-auto mb-6 flex items-center justify-between print:hidden px-4">
-        <Button variant="ghost" size="sm" className="text-slate-600" onClick={() => navigate('/documents')}>
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Documents
+        <Button variant="ghost" size="sm" className="text-slate-600" onClick={() => navigate(backPath)}>
+          <ArrowLeft className="mr-2 h-4 w-4" /> {user?.role === 'STUDENT' ? 'Back to My Profile' : 'Back to Documents'}
         </Button>
-        <Button onClick={() => window.print()} className="bg-primary text-primary-foreground">
+        <Button onClick={handlePrint} className="bg-primary text-primary-foreground">
           <Printer className="mr-2 h-4 w-4" /> Print card
         </Button>
       </div>
@@ -118,8 +127,8 @@ export default function StudentIdCardPrint() {
 
           {/* Header strip */}
           <div className="flex items-center gap-1.5 bg-slate-900 px-2.5 py-1.5">
-            {branding.logoUrl ? (
-              <img src={branding.logoUrl} alt="" className="h-4 w-4 object-contain" />
+            {logoUrl ? (
+              <img src={logoUrl} alt="" className="h-4 w-4 object-contain" />
             ) : (
               <div className="flex h-4 w-4 items-center justify-center rounded-sm bg-white text-[7px] font-black text-slate-900">
                 {(school.name || 'S')[0]}

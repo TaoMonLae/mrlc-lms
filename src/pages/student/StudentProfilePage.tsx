@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { HoloProfileHeader } from '@/src/components/profile/HoloProfileHeader';
+import { OfficialStudentCard } from '@/src/components/students/OfficialStudentCard';
 
 function sanitizeText(text: string): string {
   if (!text) return text;
@@ -95,6 +96,8 @@ export default function StudentProfilePage() {
           </div>
         </div>
       </div>
+
+      <OfficialStudentCard />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-2 space-y-8">

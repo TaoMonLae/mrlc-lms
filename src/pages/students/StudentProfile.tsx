@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { StudentDocuments } from '@/src/components/students/StudentDocuments';
+import { OfficialStudentCard } from '@/src/components/students/OfficialStudentCard';
 import { toast } from 'sonner';
 import { HoloProfileHeader } from '@/src/components/profile/HoloProfileHeader';
 import {
@@ -585,7 +586,12 @@ export default function StudentProfile() {
             </TabsContent>}
 
             <TabsContent value="documents" className="p-6 m-0 border-none focus-visible:outline-none focus-visible:ring-0">
-              <StudentDocuments studentId={id || ''} />
+              <div className="space-y-6">
+                <OfficialStudentCard studentId={id || undefined} />
+                <div className="border-t border-slate-200 pt-6 dark:border-surface-raised">
+                  <StudentDocuments studentId={id || ''} />
+                </div>
+              </div>
             </TabsContent>
 
             {canViewCases && (

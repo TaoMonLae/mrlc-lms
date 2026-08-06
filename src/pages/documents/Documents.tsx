@@ -11,6 +11,7 @@ import {
 import { toast } from 'sonner';
 import { apiGet, apiSend } from '../../lib/api';
 import { usePermissions } from '../../lib/permissions';
+import { officialDocumentViewPath } from '@/shared/officialDocuments';
 
 const TYPE_LABELS: Record<string, string> = {
   REPORT_CARD: 'Report Card',
@@ -86,7 +87,10 @@ export default function DocumentsPage() {
     try {
       const r = await apiSend<{ generated: number; skipped: number; failed: number; total: number; className: string }>(
         '/api/documents/bulk', 'POST', { type: bulkType, classId: bulkClassId, term: bulkTerm || undefined });
-      if (r.generated > 0) toast.success(`${r.generated} ${TYPE_LABELS[bulkType]}${r.generated === 1 ? '' : 's'} generated for ${r.className}`);
+      if (r.generated > 0) toast.success(
+        `${r.generated} ${TYPE_LABELS[bulkType]}${r.generated === 1 ? '' : 's'} generated for ${r.className}`,
+        bulkType === 'STUDENT_ID_CARD' ? { description: 'The cards are now available on each learner’s profile.' } : undefined,
+      );
       if (r.skipped > 0) toast.info(`${r.skipped} student(s) skipped (existing document)`);
       if (r.failed > 0) toast.warning(`${r.failed} student(s) failed`);
       if (r.generated === 0 && r.skipped === 0 && r.failed === 0) toast.info('No active students in that class');
@@ -104,7 +108,10 @@ export default function DocumentsPage() {
     setGenerating(true);
     try {
       const doc = await apiSend<Doc>('/api/documents', 'POST', { type: docType, studentId, term: term || undefined });
-      toast.success(`${TYPE_LABELS[docType]} generated (${doc.documentNumber})`);
+      toast.success(
+        `${TYPE_LABELS[docType]} generated (${doc.documentNumber})`,
+        docType === 'STUDENT_ID_CARD' ? { description: 'The learner can now view and print it from My Profile.' } : undefined,
+      );
       setTerm('');
       loadDocs();
     } catch (e: any) {
@@ -156,7 +163,7 @@ export default function DocumentsPage() {
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
           <FileBadge className="h-6 w-6 text-aubergine-600" /> Official Documents
         </h1>
-        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Generate verifiable report cards, transcripts and certificates.</p>
+        <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Generate verifiable student cards, report cards, transcripts and certificates.</p>
       </div>
 
       {/* Generate */}
@@ -281,7 +288,7 @@ export default function DocumentsPage() {
                     <DropdownMenu>
                       <DropdownMenuTrigger render={<Button variant="ghost" size="sm" className="h-8">Actions</Button>} nativeButton={true} />
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem render={<Link to={`/documents/${d.id}/print`} className="flex w-full" />} nativeButton={false}><Eye className="h-4 w-4 mr-2" /> Open / Print</DropdownMenuItem>
+                        <DropdownMenuItem render={<Link to={officialDocumentViewPath(d)} className="flex w-full" />} nativeButton={false}><Eye className="h-4 w-4 mr-2" /> {d.type === 'STUDENT_ID_CARD' ? 'View / Print card' : 'Open / Print'}</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => copyVerifyLink(d)}><Link2 className="h-4 w-4 mr-2" /> Copy verify link</DropdownMenuItem>
                         <DropdownMenuItem render={<a href={`/verify/${d.verifyToken}`} target="_blank" rel="noreferrer" className="flex w-full" />} nativeButton={false}><ExternalLink className="h-4 w-4 mr-2" /> Public verify page</DropdownMenuItem>
                         {canModify(d) && (
