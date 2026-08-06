@@ -72,6 +72,25 @@ export async function apiSend<T = any>(
   return (text ? JSON.parse(text) : undefined) as T;
 }
 
+/** Download a protected server-generated file without exposing the auth token in the URL. */
+export async function downloadAuthenticatedFile(path: string, fallbackFilename: string): Promise<void> {
+  const res = await fetch(path, { headers: authHeaders() });
+  if (!res.ok) throw await responseError(res);
+  const blob = await res.blob();
+  const disposition = res.headers.get('Content-Disposition') || '';
+  const encoded = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
+  const quoted = disposition.match(/filename="([^"]+)"/i)?.[1];
+  const filename = encoded ? decodeURIComponent(encoded) : quoted || fallbackFilename;
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 /** True only in a Vite dev build. Production never falls back to mock data. */
 export const IS_DEV: boolean = import.meta.env.DEV;
 

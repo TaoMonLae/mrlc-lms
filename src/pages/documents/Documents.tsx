@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router';
-import { FileBadge, Plus, Loader2, ExternalLink, Link2, Ban, RefreshCw, Eye, Layers, Trash2 } from 'lucide-react';
+import { FileBadge, Plus, Loader2, ExternalLink, Link2, Ban, RefreshCw, Eye, Layers, Trash2, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -9,7 +9,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
-import { apiGet, apiSend } from '../../lib/api';
+import { apiGet, apiSend, downloadAuthenticatedFile } from '../../lib/api';
 import { usePermissions } from '../../lib/permissions';
 import { officialDocumentViewPath } from '@/shared/officialDocuments';
 
@@ -124,6 +124,16 @@ export default function DocumentsPage() {
   const copyVerifyLink = (d: Doc) => {
     navigator.clipboard.writeText(`${window.location.origin}/verify/${d.verifyToken}`);
     toast.success('Verification link copied');
+  };
+
+  const downloadCardPdf = async (d: Doc) => {
+    try {
+      await downloadAuthenticatedFile(`/api/documents/${d.id}/student-card.pdf`, `Student-Card-${d.studentCode}.pdf`);
+      toast.success('Student card PDF downloaded');
+      loadDocs();
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to download student card PDF');
+    }
   };
 
   const cancelDoc = async (d: Doc) => {
@@ -289,6 +299,9 @@ export default function DocumentsPage() {
                       <DropdownMenuTrigger render={<Button variant="ghost" size="sm" className="h-8">Actions</Button>} nativeButton={true} />
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem render={<Link to={officialDocumentViewPath(d)} className="flex w-full" />} nativeButton={false}><Eye className="h-4 w-4 mr-2" /> {d.type === 'STUDENT_ID_CARD' ? 'View / Print card' : 'Open / Print'}</DropdownMenuItem>
+                        {d.type === 'STUDENT_ID_CARD' && (
+                          <DropdownMenuItem onClick={() => downloadCardPdf(d)}><Download className="h-4 w-4 mr-2" /> Download card PDF</DropdownMenuItem>
+                        )}
                         <DropdownMenuItem onClick={() => copyVerifyLink(d)}><Link2 className="h-4 w-4 mr-2" /> Copy verify link</DropdownMenuItem>
                         <DropdownMenuItem render={<a href={`/verify/${d.verifyToken}`} target="_blank" rel="noreferrer" className="flex w-full" />} nativeButton={false}><ExternalLink className="h-4 w-4 mr-2" /> Public verify page</DropdownMenuItem>
                         {canModify(d) && (

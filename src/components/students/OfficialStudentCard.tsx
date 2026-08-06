@@ -1,10 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router';
-import { CreditCard, ExternalLink, RefreshCw, ShieldCheck } from 'lucide-react';
+import { CreditCard, Download, ExternalLink, RefreshCw, ShieldCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { apiGet } from '@/src/lib/api';
+import { apiGet, downloadAuthenticatedFile } from '@/src/lib/api';
 import { officialDocumentViewPath } from '@/shared/officialDocuments';
+import { toast } from 'sonner';
 
 type StudentCardDocument = {
   id: string;
@@ -13,6 +14,7 @@ type StudentCardDocument = {
   type: 'STUDENT_ID_CARD';
   status: string;
   issueDate: string;
+  expiryDate?: string | null;
   className?: string | null;
   term?: string | null;
 };
@@ -48,6 +50,17 @@ export function OfficialStudentCard({ studentId }: OfficialStudentCardProps) {
   }, [studentId, reloadKey]);
 
   const card = cards[0];
+  const expired = Boolean(card?.expiryDate && new Date(card.expiryDate).getTime() < Date.now());
+
+  const downloadPdf = async () => {
+    if (!card) return;
+    try {
+      await downloadAuthenticatedFile(`/api/documents/${card.id}/student-card.pdf`, 'Student-Card.pdf');
+      toast.success('Student card PDF downloaded');
+    } catch (requestError: any) {
+      toast.error(requestError.message || 'Failed to download student card PDF');
+    }
+  };
 
   return (
     <section className="overflow-hidden rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-950 via-slate-900 to-violet-950 text-white shadow-sm dark:border-indigo-400/20">
@@ -59,7 +72,11 @@ export function OfficialStudentCard({ studentId }: OfficialStudentCardProps) {
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-base font-bold">Official Student Card</h2>
-              {card && <Badge className="border-0 bg-emerald-400/15 text-emerald-200 hover:bg-emerald-400/15"><ShieldCheck className="size-3" /> Active</Badge>}
+              {card && (
+                <Badge className={`border-0 ${expired ? 'bg-amber-400/15 text-amber-200 hover:bg-amber-400/15' : 'bg-emerald-400/15 text-emerald-200 hover:bg-emerald-400/15'}`}>
+                  <ShieldCheck className="size-3" /> {expired ? 'Expired' : 'Active'}
+                </Badge>
+              )}
             </div>
             {loading ? (
               <p className="mt-1 text-sm text-white/65">Checking for your issued card…</p>
@@ -69,6 +86,7 @@ export function OfficialStudentCard({ studentId }: OfficialStudentCardProps) {
               <div className="mt-1 space-y-0.5 text-sm text-white/70">
                 <p className="truncate font-mono text-xs text-white/85">{card.documentNumber}</p>
                 <p>Issued {new Date(card.issueDate).toLocaleDateString()}{card.className ? ` · ${card.className}` : ''}</p>
+                {card.expiryDate && <p>Valid through {new Date(card.expiryDate).toLocaleDateString()}</p>}
               </div>
             ) : (
               <p className="mt-1 text-sm text-white/65">No active student card has been issued yet. It will appear here automatically after generation.</p>
@@ -86,6 +104,9 @@ export function OfficialStudentCard({ studentId }: OfficialStudentCardProps) {
             <>
               <Button className="bg-white text-indigo-950 hover:bg-indigo-50" render={<Link to={officialDocumentViewPath(card)} />} nativeButton={false}>
                 <CreditCard className="size-4" /> View / Print Card
+              </Button>
+              <Button variant="outline" className="border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white" onClick={downloadPdf}>
+                <Download className="size-4" /> PDF
               </Button>
               <Button variant="outline" className="border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white" aria-label="Open public verification page" render={<a href={`/verify/${card.verifyToken}`} target="_blank" rel="noreferrer" />} nativeButton={false}>
                 <ExternalLink className="size-4" /> Verify

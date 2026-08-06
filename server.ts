@@ -31,6 +31,8 @@ import { registerFeesPdfRoutes } from "./feesPdf";
 import { registerFlashcardRoutes } from "./flashcards";
 import { registerConductRoutes } from "./conduct";
 import { registerConductPdfRoutes } from "./conductPdf";
+import { loadPdfLogo } from "./pdfBranding";
+import { renderStudentCardPdf } from "./studentCardPdf";
 import { registerDictionaryRoutes } from "./dictionary";
 import { registerGutenbergRoutes } from "./gutenberg";
 import { registerSnakeGameRoutes } from "./snakeGame";
@@ -76,6 +78,7 @@ import { checkWritableDirectory, probeCommand, summarizeHealth, type HealthCheck
 import { extractRarEntry, listRarImageEntries } from "./lib/portableRar";
 import { cleanEbookTitle, findDuplicateEbookSeriesVolume, findDuplicateEbookTitle, normalizedTitleForColumn } from "./lib/ebookTitles";
 import { feeMonthRange, feeYearRange, normalizeFeeMonth } from "./shared/feePeriods";
+import { inferStudentCardExpiry } from "./shared/studentCardValidity";
 import {
   GRADE_CATEGORIES,
   isGradeCategory,
@@ -19251,7 +19254,7 @@ async function startServer() {
   };
 
   // Builds an immutable snapshot for a document at issue time.
-  const buildDocumentSnapshot = async (type: string, studentId: string, term?: string) => {
+  const buildDocumentSnapshot = async (type: string, studentId: string, term?: string, issuedAt = new Date()) => {
     const student = await prisma.student.findUnique({ where: { id: studentId }, include: { user: true, class: true } });
     if (!student) return null;
     const profile = await prisma.schoolProfile.findFirst();
@@ -19277,7 +19280,14 @@ async function startServer() {
       term: term || student.class?.academicYear || null,
     };
 
-    if (type === "STUDENT_ID_CARD" || type === "ENROLLMENT_CONFIRMATION") return base;
+    if (type === "STUDENT_ID_CARD") {
+      const expiryDate = inferStudentCardExpiry(student.class?.academicYear, issuedAt);
+      return {
+        ...base,
+        validity: { issueDate: issuedAt.toISOString(), expiryDate: expiryDate.toISOString() },
+      };
+    }
+    if (type === "ENROLLMENT_CONFIRMATION") return base;
 
     const progress = await buildStudentProgress(studentId).catch(() => null);
     const attendance = await attendanceSummary(studentId);
@@ -19333,7 +19343,8 @@ async function startServer() {
         res.status(403).json({ error: "You may only issue documents to students in your assigned classes" });
         return;
       }
-      const snapshot = await buildDocumentSnapshot(type, studentId, normalizedTerm);
+      const issuedAt = new Date();
+      const snapshot = await buildDocumentSnapshot(type, studentId, normalizedTerm, issuedAt);
       if (!snapshot) { res.status(404).json({ error: "Student not found" }); return; }
       const existing = await prisma.generatedDocument.findFirst({
         where: { studentId, type, status: "ACTIVE", term: snapshot.term ?? null },
@@ -19354,6 +19365,8 @@ async function startServer() {
           studentId, studentName: snapshot.student.name, studentCode: snapshot.student.code,
           className: snapshot.student.className, term: snapshot.term,
           payload: snapshot, issuedById: jwtUser.userId, issuedByName: jwtUser.email,
+          issueDate: issuedAt,
+          expiryDate: type === "STUDENT_ID_CARD" ? new Date(snapshot.validity.expiryDate) : null,
         },
       });
       await createAuditLog(jwtUser.userId, jwtUser.email, "GENERATE", "DOCUMENT", doc.id,
@@ -19459,7 +19472,8 @@ async function startServer() {
               continue;
             }
 
-            const snapshot = await buildDocumentSnapshot(type, s.id, normalizedTerm);
+            const issuedAt = new Date();
+            const snapshot = await buildDocumentSnapshot(type, s.id, normalizedTerm, issuedAt);
             if (!snapshot) { errors.push({ studentId: s.id, message: "Student data unavailable" }); continue; }
 
             const documentNumber = await makeDocumentNumber(type);
@@ -19470,6 +19484,8 @@ async function startServer() {
                 studentId: s.id, studentName: snapshot.student.name, studentCode: snapshot.student.code,
                 className: snapshot.student.className, term: snapshot.term,
                 payload: snapshot, issuedById: jwtUser.userId, issuedByName: jwtUser.email,
+                issueDate: issuedAt,
+                expiryDate: type === "STUDENT_ID_CARD" ? new Date(snapshot.validity.expiryDate) : null,
               },
             });
             generated++;
@@ -19569,6 +19585,78 @@ async function startServer() {
     }
   });
 
+  app.get("/api/documents/:id/student-card.pdf", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    try {
+      const card = await prisma.generatedDocument.findUnique({ where: { id: req.params.id } });
+      if (!card) { res.status(404).json({ error: "Document not found" }); return; }
+      if (card.type !== "STUDENT_ID_CARD") { res.status(400).json({ error: "Document is not a student card" }); return; }
+      if (!(await canReadGeneratedDocument(req, card))) { res.status(403).json({ error: "Forbidden" }); return; }
+
+      const payload = (card.payload || {}) as any;
+      const student = payload.student || {};
+      const school = payload.school || {};
+      const profile = await prisma.schoolProfile.findFirst();
+      const schoolName = school.name || profile?.name || "School";
+      const issueDate = card.issueDate;
+      const expiryDate = card.expiryDate
+        || (payload.validity?.expiryDate ? new Date(payload.validity.expiryDate) : null)
+        || inferStudentCardExpiry(student.academicYear || card.term, issueDate);
+      const verifyUrl = `${req.protocol}://${req.get("host")}/verify/${card.verifyToken}`;
+      const logo = await loadPdfLogo(school.logoUrl || profile?.logoUrl);
+
+      let photo: Buffer | null = null;
+      const photoUrl = typeof student.photoUrl === "string" ? student.photoUrl : "";
+      const photoPrefix = "/uploads/profile-photos/";
+      if (photoUrl.startsWith(photoPrefix)) {
+        const filename = photoUrl.slice(photoPrefix.length).split(/[?#]/, 1)[0];
+        if (filename && filename === path.basename(filename)) {
+          try {
+            const input = await fs.promises.readFile(path.join(PROFILE_PHOTO_DIR, filename));
+            photo = await sharp(input, { animated: false, limitInputPixels: 40_000_000 })
+              .rotate().resize(600, 760, { fit: "cover" }).jpeg({ quality: 90 }).toBuffer();
+          } catch {
+            photo = null;
+          }
+        }
+      }
+
+      let qr: Buffer | null = null;
+      try { qr = await QRCode.toBuffer(verifyUrl, { margin: 1, width: 500 }); } catch { qr = null; }
+      const pdf = await renderStudentCardPdf({
+        documentNumber: card.documentNumber,
+        status: card.status === "ACTIVE" && expiryDate.getTime() < Date.now() ? "EXPIRED" : card.status,
+        studentName: card.studentName,
+        studentCode: card.studentCode,
+        className: card.className,
+        level: student.level || null,
+        dateOfBirth: student.dateOfBirth || null,
+        academicYear: student.academicYear || card.term || null,
+        issueDate,
+        expiryDate,
+        schoolName,
+        schoolAddress: school.address || profile?.address || null,
+        schoolPhone: school.contactPhone || profile?.contactPhone || null,
+        verifyUrl,
+        logo,
+        photo,
+        qr,
+      });
+
+      await prisma.generatedDocument.update({ where: { id: card.id }, data: { downloadCount: { increment: 1 } } });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "DOWNLOAD", "DOCUMENT", card.id,
+        `STUDENT_ID_CARD ${card.documentNumber} downloaded as PDF.`, req.ip, req.headers["user-agent"] || null, "INFO");
+      const safeStudentCode = card.studentCode.replace(/[^a-zA-Z0-9_-]+/g, "-");
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `attachment; filename="Student-Card-${safeStudentCode}.pdf"`);
+      res.setHeader("Content-Length", pdf.length.toString());
+      res.send(pdf);
+    } catch (err) {
+      logger.error("Error generating student card PDF:", err);
+      res.status(500).json({ error: "Failed to generate student card PDF" });
+    }
+  });
+
   app.post("/api/documents/:id/download", authMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
     try {
@@ -19640,7 +19728,8 @@ async function startServer() {
     try {
       const old = await prisma.generatedDocument.findUnique({ where: { id: req.params.id } });
       if (!old) { res.status(404).json({ error: "Document not found" }); return; }
-      const snapshot = await buildDocumentSnapshot(old.type, old.studentId, old.term || undefined);
+      const issuedAt = new Date();
+      const snapshot = await buildDocumentSnapshot(old.type, old.studentId, old.term || undefined, issuedAt);
       if (!snapshot) { res.status(404).json({ error: "Student not found" }); return; }
       const documentNumber = await makeDocumentNumber(old.type);
       const verifyToken = crypto.randomBytes(16).toString("hex");
@@ -19651,6 +19740,8 @@ async function startServer() {
             studentId: old.studentId, studentName: snapshot.student.name, studentCode: snapshot.student.code,
             className: snapshot.student.className, term: snapshot.term, payload: snapshot,
             issuedById: jwtUser.userId, issuedByName: jwtUser.email, reissuedFromId: old.id,
+            issueDate: issuedAt,
+            expiryDate: old.type === "STUDENT_ID_CARD" ? new Date(snapshot.validity.expiryDate) : null,
           },
         });
         await tx.generatedDocument.update({ where: { id: old.id }, data: { status: "REISSUED" } });
@@ -19676,14 +19767,22 @@ async function startServer() {
         ENROLLMENT_CONFIRMATION: "Enrollment Confirmation", COMPLETION_CERTIFICATE: "Completion Certificate",
         PROGRESS_REPORT: "Student Progress Report", STUDENT_ID_CARD: "Student ID Card",
       };
+      const payload = (doc.payload || {}) as any;
+      const expiryDate = doc.type === "STUDENT_ID_CARD"
+        ? doc.expiryDate
+          || (payload.validity?.expiryDate ? new Date(payload.validity.expiryDate) : null)
+          || inferStudentCardExpiry(payload.student?.academicYear || doc.term, doc.issueDate)
+        : null;
+      const expired = Boolean(expiryDate && expiryDate.getTime() < Date.now());
       res.json({
-        valid: doc.status === "ACTIVE",
-        status: doc.status,
+        valid: doc.status === "ACTIVE" && !expired,
+        status: expired && doc.status === "ACTIVE" ? "EXPIRED" : doc.status,
         documentNumber: doc.documentNumber,
         documentType: TYPE_LABELS[doc.type] || doc.type,
         studentName: doc.studentName,
         term: doc.term,
         issueDate: doc.issueDate,
+        expiryDate,
         school: { name: profile?.name || "School", logoUrl: profile?.logoUrl || null },
         cancelledReason: doc.status === "CANCELLED" ? doc.cancelledReason : null,
       });

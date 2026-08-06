@@ -2366,6 +2366,7 @@ model GeneratedDocument {
   issuedById   String?
   issuedByName String?
   issueDate    DateTime @default(now())
+  expiryDate   DateTime?
 
   reissuedFromId  String?
   cancelledReason String?

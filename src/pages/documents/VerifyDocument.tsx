@@ -10,6 +10,7 @@ interface VerifyResult {
   studentName: string;
   term: string | null;
   issueDate: string;
+  expiryDate: string | null;
   school: { name: string; logoUrl: string | null };
   cancelledReason: string | null;
 }
@@ -73,10 +74,14 @@ export default function VerifyDocument() {
                 ) : (
                   <>
                     <ShieldAlert className="h-14 w-14 text-amber-500 mx-auto mb-2" />
-                    <h2 className="text-lg font-bold text-amber-700">{result.status === 'CANCELLED' ? 'Cancelled Document' : 'Superseded Document'}</h2>
+                    <h2 className="text-lg font-bold text-amber-700">
+                      {result.status === 'CANCELLED' ? 'Cancelled Document' : result.status === 'EXPIRED' ? 'Expired Document' : 'Superseded Document'}
+                    </h2>
                     <p className="text-sm text-slate-500">
                       {result.status === 'CANCELLED'
                         ? 'This document has been cancelled and is no longer valid.'
+                        : result.status === 'EXPIRED'
+                          ? 'This student card has reached its valid-through date and is no longer active.'
                         : 'This document has been reissued; a newer version exists.'}
                     </p>
                     {result.cancelledReason && <p className="text-xs text-slate-400 mt-1">Reason: {result.cancelledReason}</p>}
@@ -90,6 +95,7 @@ export default function VerifyDocument() {
                 <Row label="Issued To" value={result.studentName} />
                 {result.term && <Row label="Term / Period" value={result.term} />}
                 <Row label="Issue Date" value={fmtDate(result.issueDate)} />
+                {result.expiryDate && <Row label="Valid Through" value={fmtDate(result.expiryDate)} />}
                 <Row label="Status" value={result.status} />
               </div>
 

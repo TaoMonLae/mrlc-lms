@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router';
-import { FileBadge, ExternalLink, Eye } from 'lucide-react';
+import { FileBadge, ExternalLink, Eye, Download } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { apiGet } from '../../lib/api';
+import { apiGet, downloadAuthenticatedFile } from '../../lib/api';
 import { officialDocumentLabel, officialDocumentViewPath } from '@/shared/officialDocuments';
 
 type Doc = {
@@ -18,6 +18,15 @@ const statusStyle = (s: string) =>
 export default function StudentDocumentsPage() {
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const downloadCardPdf = async (doc: Doc) => {
+    try {
+      await downloadAuthenticatedFile(`/api/documents/${doc.id}/student-card.pdf`, 'Student-Card.pdf');
+      toast.success('Student card PDF downloaded');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to download student card PDF');
+    }
+  };
 
   useEffect(() => {
     apiGet<Doc[]>('/api/student/documents')
@@ -60,6 +69,11 @@ export default function StudentDocumentsPage() {
                 <Button size="sm" className="bg-primary text-primary-foreground flex-1" render={<Link to={officialDocumentViewPath(d)} />} nativeButton={false}>
                   <Eye className="h-4 w-4 mr-1" /> {d.type === 'STUDENT_ID_CARD' ? 'View / Print Card' : 'Open / Download'}
                 </Button>
+                {d.type === 'STUDENT_ID_CARD' && (
+                  <Button size="sm" variant="outline" onClick={() => downloadCardPdf(d)} aria-label="Download student card PDF">
+                    <Download className="h-4 w-4" />
+                  </Button>
+                )}
                 <Button size="sm" variant="outline" render={<a href={`/verify/${d.verifyToken}`} target="_blank" rel="noreferrer" />} nativeButton={false}>
                   <ExternalLink className="h-4 w-4" />
                 </Button>
