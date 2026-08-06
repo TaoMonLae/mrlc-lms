@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
@@ -278,18 +279,20 @@ export function LanguageQuestExplanationToggle() {
         <ChevronDown className="hidden h-3.5 w-3.5 text-slate-400 min-[520px]:block" aria-hidden="true" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-52 rounded-xl p-1.5" data-no-i18n>
-        <DropdownMenuLabel className="px-2 py-1.5 text-[11px] font-black uppercase tracking-wider">{lq('explanation')}</DropdownMenuLabel>
-        {options.map((option) => (
-          <DropdownMenuItem
-            key={option.code}
-            lang={option.lang}
-            onClick={() => setExplanationLanguage(option.code)}
-            className="flex min-h-10 items-center rounded-lg px-2.5 font-bold"
-          >
-            <span className="flex-1">{option.label}</span>
-            {option.code === explanationLanguage && <Check className="h-4 w-4 text-violet-600" aria-hidden="true" />}
-          </DropdownMenuItem>
-        ))}
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="px-2 py-1.5 text-[11px] font-black uppercase tracking-wider">{lq('explanation')}</DropdownMenuLabel>
+          {options.map((option) => (
+            <DropdownMenuItem
+              key={option.code}
+              lang={option.lang}
+              onClick={() => setExplanationLanguage(option.code)}
+              className="flex min-h-10 items-center rounded-lg px-2.5 font-bold"
+            >
+              <span className="flex-1">{option.label}</span>
+              {option.code === explanationLanguage && <Check className="h-4 w-4 text-violet-600" aria-hidden="true" />}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );
