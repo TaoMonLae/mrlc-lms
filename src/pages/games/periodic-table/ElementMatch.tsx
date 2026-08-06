@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Blocks, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -29,6 +29,11 @@ export default function ElementMatchPage() {
   const [matched, setMatched] = useState<Set<string>>(new Set());
   const [moves, setMoves] = useState(0);
   const [busy, setBusy] = useState(false);
+  const resolveTimeout = useRef<number | null>(null);
+
+  useEffect(() => () => {
+    if (resolveTimeout.current) window.clearTimeout(resolveTimeout.current);
+  }, []);
 
   const elementByNumber = new Map(elements.map((element) => [element.number, element]));
   const complete = matched.size === cards.length;
@@ -44,7 +49,7 @@ export default function ElementMatchPage() {
       const first = cards.find((c) => c.key === firstKey)!;
       const second = cards.find((c) => c.key === secondKey)!;
       const isMatch = first.elementNumber === second.elementNumber && first.kind !== second.kind;
-      window.setTimeout(() => {
+      resolveTimeout.current = window.setTimeout(() => {
         if (isMatch) {
           setMatched((current) => new Set([...current, firstKey, secondKey]));
         }
@@ -55,6 +60,7 @@ export default function ElementMatchPage() {
   };
 
   const playAgain = () => {
+    if (resolveTimeout.current) window.clearTimeout(resolveTimeout.current);
     setDeck(buildDeck());
     setFlipped([]);
     setMatched(new Set());
@@ -87,13 +93,13 @@ export default function ElementMatchPage() {
               key={card.key}
               type="button"
               onClick={() => flip(card)}
-              disabled={isMatched}
+              disabled={isMatched || (busy && !isFlipped)}
               className={`flex aspect-[3/4] flex-col items-center justify-center rounded-xl border-2 p-2 text-center font-black transition-all duration-200 ${
                 isMatched
                   ? `${style?.bg} ${style?.text} ${style?.border} opacity-70`
                   : isFlipped
                     ? `${style?.bg} ${style?.text} ${style?.border}`
-                    : 'border-slate-300 bg-slate-100 text-transparent hover:-translate-y-0.5 dark:border-surface-raised dark:bg-surface-raised'
+                    : `border-slate-300 bg-slate-100 text-transparent dark:border-surface-raised dark:bg-surface-raised ${busy ? 'cursor-default' : 'hover:-translate-y-0.5'}`
               }`}
             >
               {isFlipped ? (

@@ -46,7 +46,7 @@ export function PeriodicTableGrid({ onTileClick, tileState, size = 'md' }: Perio
             disabled={!interactive}
             onClick={() => onTileClick?.(element)}
             style={{ gridColumn: col, gridRow: row }}
-            className={`flex aspect-square flex-col items-center justify-center rounded-sm border transition-transform duration-150 ${tileSize} ${style.bg} ${style.text} ${style.border} ${STATE_CLASSES[state]} ${interactive ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-md' : 'cursor-default'}`}
+            className={`relative flex aspect-square flex-col items-center justify-center rounded-sm border transition-transform duration-150 ${tileSize} ${style.bg} ${style.text} ${style.border} ${STATE_CLASSES[state]} ${interactive ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-md' : 'cursor-default'}`}
             aria-label={`${element.name} (${element.symbol}), atomic number ${element.number}`}
           >
             <span className={`font-semibold leading-none opacity-70 ${numberSize}`}>{element.number}</span>

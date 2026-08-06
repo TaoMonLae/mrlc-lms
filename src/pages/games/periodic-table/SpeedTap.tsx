@@ -43,6 +43,7 @@ export default function SpeedTapPage() {
   const [secondsLeft, setSecondsLeft] = useState(GAME_SECONDS);
   const [running, setRunning] = useState(true);
   const flashTimeout = useRef<number | null>(null);
+  const roundAdvanceTimeout = useRef<number | null>(null);
 
   const targetNumbers = useMemo(
     () => new Set(PERIODIC_ELEMENTS.filter((element) => criterion.test(element)).map((element) => element.number)),
@@ -63,6 +64,11 @@ export default function SpeedTapPage() {
     return () => window.clearInterval(interval);
   }, [running]);
 
+  useEffect(() => () => {
+    if (flashTimeout.current) window.clearTimeout(flashTimeout.current);
+    if (roundAdvanceTimeout.current) window.clearTimeout(roundAdvanceTimeout.current);
+  }, []);
+
   const nextRound = (bonus: number) => {
     setScore((value) => value + bonus);
     setRoundsCleared((value) => value + 1);
@@ -77,7 +83,7 @@ export default function SpeedTapPage() {
       setFound(nextFound);
       setScore((value) => value + 10);
       if (nextFound.size === targetNumbers.size) {
-        window.setTimeout(() => nextRound(25), 300);
+        roundAdvanceTimeout.current = window.setTimeout(() => nextRound(25), 300);
       }
     } else {
       setScore((value) => Math.max(0, value - 5));

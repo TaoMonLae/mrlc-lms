@@ -223,13 +223,18 @@ export const ELEMENT_BY_SYMBOL: Map<string, PeriodicElement> = new Map(
 );
 
 /**
- * Simplified Bohr-model shell filling (2, 8, 8, 18, 18, 32) used by
- * introductory "build an atom" style games. This intentionally does not
- * reproduce the handful of real quantum-mechanical exceptions (e.g.
- * chromium, copper) -- it is a teaching model, not a subshell configuration.
+ * Simplified Bohr-model shell filling used by introductory "build an atom"
+ * style games. This intentionally does not reproduce the handful of real
+ * quantum-mechanical exceptions (e.g. chromium, copper) -- it is a teaching
+ * model, not a subshell configuration.
+ *
+ * The classic 2/8/8/18/18/32 capacities only sum to 106, which silently
+ * dropped electrons for every element from bohrium (107) to oganesson
+ * (118). A 7th shell (also capped at 32, rather than the strict 2n^2=98)
+ * closes the gap so all 118 elements are fully and correctly accounted for.
  */
 export function electronShells(electronCount: number): number[] {
-  const capacities = [2, 8, 8, 18, 18, 32];
+  const capacities = [2, 8, 8, 18, 18, 32, 32];
   const shells: number[] = [];
   let remaining = Math.max(0, Math.floor(electronCount));
   for (const capacity of capacities) {

@@ -9,17 +9,28 @@ import {
   type PeriodicElement,
 } from '@/shared/periodicTable';
 
-const MAX_PARTICLES = 130;
+// Protons/electrons never exceed 118 (no known element goes higher), but
+// neutrons can: the heaviest elements (Ts, Lv, Og...) need up to ~177
+// neutrons, so a shared 130 cap made roughly a quarter of the periodic
+// table (everything from francium up) mathematically impossible to build
+// correctly. Each control now gets a ceiling that fits what it actually
+// needs, with a little headroom.
+const MAX_PROTON_ELECTRON = 118;
+const MAX_NEUTRONS = 190;
 
 function AtomDiagram({ protons, neutrons, electrons, maxShells }: { protons: number; neutrons: number; electrons: number; maxShells: number }) {
   const size = 320;
   const center = size / 2;
   const shells = electronShells(electrons);
-  const ringGap = maxShells > 0 ? (center - 60) / maxShells : 0;
+  // Defends against the ring layout being too small if the learner briefly
+  // adds more electrons than the target needs -- the rings simply expand
+  // rather than letting dots spill past the outermost ring.
+  const ringCount = Math.max(maxShells, shells.length);
+  const ringGap = ringCount > 0 ? (center - 60) / ringCount : 0;
 
   return (
     <svg viewBox={`0 0 ${size} ${size}`} className="mx-auto h-64 w-64 sm:h-80 sm:w-80" aria-hidden="true">
-      {Array.from({ length: maxShells }, (_, shellIndex) => {
+      {Array.from({ length: ringCount }, (_, shellIndex) => {
         const radius = 40 + (shellIndex + 1) * ringGap;
         return <circle key={shellIndex} cx={center} cy={center} r={radius} fill="none" stroke="currentColor" strokeOpacity={0.2} strokeWidth={1.5} className="text-slate-400" />;
       })}
@@ -39,7 +50,7 @@ function AtomDiagram({ protons, neutrons, electrons, maxShells }: { protons: num
   );
 }
 
-function ParticleControl({ label, value, onChange, color }: { label: string; value: number; onChange: (next: number) => void; color: string }) {
+function ParticleControl({ label, value, max, onChange, color }: { label: string; value: number; max: number; onChange: (next: number) => void; color: string }) {
   return (
     <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 p-3 dark:border-surface-raised">
       <div>
@@ -50,7 +61,7 @@ function ParticleControl({ label, value, onChange, color }: { label: string; val
         <Button type="button" variant="outline" size="icon" onClick={() => onChange(Math.max(0, value - 1))} aria-label={`Remove ${label.toLowerCase()}`}>
           <Minus className="size-4" />
         </Button>
-        <Button type="button" variant="outline" size="icon" onClick={() => onChange(Math.min(MAX_PARTICLES, value + 1))} aria-label={`Add ${label.toLowerCase()}`}>
+        <Button type="button" variant="outline" size="icon" onClick={() => onChange(Math.min(max, value + 1))} aria-label={`Add ${label.toLowerCase()}`}>
           <Plus className="size-4" />
         </Button>
       </div>
@@ -70,8 +81,17 @@ export default function BuildAtomPage() {
   const targetNeutrons = useMemo(() => typicalNeutronCount(target), [target]);
   const maxShells = useMemo(() => electronShells(target.number).length, [target]);
 
+  // Real elements have more than one stable isotope, and the "typical"
+  // neutron count here is derived from a rounded average atomic mass -- for
+  // a handful of elements (bromine, gallium, copper, silver, antimony,
+  // thallium, europium...) that rounds to a mass number no real isotope
+  // actually has. Accepting neutrons within 1 of the typical count covers
+  // every real stable isotope for those elements instead of demanding an
+  // exact number that can be chemically impossible.
+  const neutronsClose = Math.abs(neutrons - targetNeutrons) <= 1;
+
   const check = () => {
-    const correct = protons === target.number && neutrons === targetNeutrons && electrons === target.number;
+    const correct = protons === target.number && neutronsClose && electrons === target.number;
     setFeedback(correct ? 'correct' : 'incorrect');
     if (correct) setScore((value) => value + 1);
   };
@@ -103,9 +123,9 @@ export default function BuildAtomPage() {
         <AtomDiagram protons={protons} neutrons={neutrons} electrons={electrons} maxShells={maxShells} />
 
         <div className="mt-2 grid gap-3 sm:grid-cols-3">
-          <ParticleControl label="Protons" value={protons} onChange={setProtons} color="text-rose-600 dark:text-rose-300" />
-          <ParticleControl label="Neutrons" value={neutrons} onChange={setNeutrons} color="text-slate-500 dark:text-slate-300" />
-          <ParticleControl label="Electrons" value={electrons} onChange={setElectrons} color="text-sky-600 dark:text-sky-300" />
+          <ParticleControl label="Protons" value={protons} max={MAX_PROTON_ELECTRON} onChange={setProtons} color="text-rose-600 dark:text-rose-300" />
+          <ParticleControl label="Neutrons" value={neutrons} max={MAX_NEUTRONS} onChange={setNeutrons} color="text-slate-500 dark:text-slate-300" />
+          <ParticleControl label="Electrons" value={electrons} max={MAX_PROTON_ELECTRON} onChange={setElectrons} color="text-sky-600 dark:text-sky-300" />
         </div>
 
         {feedback === 'correct' && (
@@ -118,7 +138,7 @@ export default function BuildAtomPage() {
             <p className="font-black">Not quite yet:</p>
             <ul className="mt-1 list-disc pl-5">
               {protons !== target.number && <li>Protons should equal the atomic number.</li>}
-              {neutrons !== targetNeutrons && <li>Neutron count isn't right for this isotope.</li>}
+              {!neutronsClose && <li>Neutron count isn't close to a real isotope of this element.</li>}
               {electrons !== target.number && <li>A neutral atom needs electrons equal to protons.</li>}
             </ul>
           </div>
