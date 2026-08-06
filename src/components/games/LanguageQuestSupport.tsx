@@ -1,5 +1,13 @@
 import { createContext, useContext, useMemo, useState } from 'react';
-import { Languages } from 'lucide-react';
+import { Check, ChevronDown, Languages } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export type ExplanationLanguage = 'en' | 'my' | 'mnw';
 
@@ -244,40 +252,45 @@ export function useLanguageQuestSupport(): SupportContextValue {
 
 export function LanguageQuestExplanationToggle() {
   const { explanationLanguage, setExplanationLanguage, lq } = useLanguageQuestSupport();
+  const options: Array<{ code: ExplanationLanguage; short: string; label: string; lang: string }> = [
+    { code: 'en', short: 'EN', label: 'English', lang: 'en' },
+    { code: 'my', short: 'မြန်မာ', label: 'မြန်မာ', lang: 'my' },
+    { code: 'mnw', short: 'မန်', label: 'ဘာသာမန်', lang: 'mnw' },
+  ];
+  const selected = options.find((option) => option.code === explanationLanguage) ?? options[0];
 
   return (
-    <div
-      className="flex items-center rounded-xl border border-slate-200 bg-white p-1 shadow-sm dark:border-slate-700 dark:bg-slate-900"
-      aria-label={lq('explanation')}
-      title={lq('explanation')}
-    >
-      <Languages className="mx-1 hidden h-4 w-4 text-violet-600 min-[520px]:block dark:text-violet-300" aria-hidden="true" />
-      <button
-        type="button"
-        onClick={() => setExplanationLanguage('en')}
-        className={`rounded-lg px-2 py-1 text-[11px] font-black transition ${explanationLanguage === 'en' ? 'bg-violet-600 text-white' : 'text-slate-500 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'}`}
-        aria-pressed={explanationLanguage === 'en'}
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-10 min-w-10 shrink-0 gap-1 rounded-xl border-slate-200 bg-white px-2 font-black text-violet-700 shadow-sm hover:bg-violet-50 dark:border-slate-700 dark:bg-slate-900 dark:text-violet-200 dark:hover:bg-slate-800"
+            aria-label={`${lq('explanation')}: ${selected.label}`}
+            title={`${lq('explanation')}: ${selected.label}`}
+          />
+        }
+        nativeButton={true}
       >
-        EN
-      </button>
-      <button
-        type="button"
-        lang="my"
-        onClick={() => setExplanationLanguage('my')}
-        className={`rounded-lg px-2 py-1 text-[11px] font-black transition ${explanationLanguage === 'my' ? 'bg-violet-600 text-white' : 'text-slate-500 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'}`}
-        aria-pressed={explanationLanguage === 'my'}
-      >
-        မြန်မာ
-      </button>
-      <button
-        type="button"
-        lang="mnw"
-        onClick={() => setExplanationLanguage('mnw')}
-        className={`rounded-lg px-2 py-1 text-[11px] font-black transition ${explanationLanguage === 'mnw' ? 'bg-violet-600 text-white' : 'text-slate-500 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'}`}
-        aria-pressed={explanationLanguage === 'mnw'}
-      >
-        ဘာသာမန်
-      </button>
-    </div>
+        <Languages className="h-4 w-4" aria-hidden="true" />
+        <span lang={selected.lang} className="hidden max-w-20 truncate text-[11px] min-[520px]:inline">{selected.short}</span>
+        <ChevronDown className="hidden h-3.5 w-3.5 text-slate-400 min-[520px]:block" aria-hidden="true" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-52 rounded-xl p-1.5" data-no-i18n>
+        <DropdownMenuLabel className="px-2 py-1.5 text-[11px] font-black uppercase tracking-wider">{lq('explanation')}</DropdownMenuLabel>
+        {options.map((option) => (
+          <DropdownMenuItem
+            key={option.code}
+            lang={option.lang}
+            onClick={() => setExplanationLanguage(option.code)}
+            className="flex min-h-10 items-center rounded-lg px-2.5 font-bold"
+          >
+            <span className="flex-1">{option.label}</span>
+            {option.code === explanationLanguage && <Check className="h-4 w-4 text-violet-600" aria-hidden="true" />}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
