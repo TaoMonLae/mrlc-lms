@@ -19629,13 +19629,10 @@ async function startServer() {
         studentName: card.studentName,
         studentCode: card.studentCode,
         className: card.className,
-        level: student.level || null,
-        dateOfBirth: student.dateOfBirth || null,
         academicYear: student.academicYear || card.term || null,
         issueDate,
         expiryDate,
         schoolName,
-        schoolAddress: school.address || profile?.address || null,
         schoolPhone: school.contactPhone || profile?.contactPhone || null,
         verifyUrl,
         logo,
@@ -19783,7 +19780,11 @@ async function startServer() {
         term: doc.term,
         issueDate: doc.issueDate,
         expiryDate,
-        school: { name: profile?.name || "School", logoUrl: profile?.logoUrl || null },
+        school: {
+          name: profile?.name || "School",
+          logoUrl: profile?.logoUrl || null,
+          contactPhone: profile?.contactPhone || null,
+        },
         cancelledReason: doc.status === "CANCELLED" ? doc.cancelledReason : null,
       });
     } catch (err: any) {

@@ -11,7 +11,7 @@ interface VerifyResult {
   term: string | null;
   issueDate: string;
   expiryDate: string | null;
-  school: { name: string; logoUrl: string | null };
+  school: { name: string; logoUrl: string | null; contactPhone: string | null };
   cancelledReason: string | null;
 }
 
@@ -96,6 +96,7 @@ export default function VerifyDocument() {
                 {result.term && <Row label="Term / Period" value={result.term} />}
                 <Row label="Issue Date" value={fmtDate(result.issueDate)} />
                 {result.expiryDate && <Row label="Valid Through" value={fmtDate(result.expiryDate)} />}
+                {result.school.contactPhone && <Row label="School Contact" value={result.school.contactPhone} />}
                 <Row label="Status" value={result.status} />
               </div>
 

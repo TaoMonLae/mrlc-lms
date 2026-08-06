@@ -10,13 +10,10 @@ export type StudentCardPdfData = {
   studentName: string;
   studentCode: string;
   className: string | null;
-  level: string | null;
-  dateOfBirth: Date | string | null;
   academicYear: string | null;
   issueDate: Date | string;
   expiryDate: Date | string;
   schoolName: string;
-  schoolAddress: string | null;
   schoolPhone: string | null;
   verifyUrl: string;
   logo: Buffer | null;
@@ -151,19 +148,20 @@ function drawBack(doc: PDFKit.PDFDocument, data: StudentCardPdfData): void {
   doc.font("Courier").fontSize(4).fillColor("#94a3b8")
     .text(data.verifyUrl, 16, 177, { width: STUDENT_CARD_WIDTH_PT - 32, align: "center", height: 19, ellipsis: true });
 
-  doc.roundedRect(12, 201, STUDENT_CARD_WIDTH_PT - 24, 28, 6).fill("#f8fafc");
+  doc.roundedRect(12, 197, STUDENT_CARD_WIDTH_PT - 24, 28, 6).fill("#f8fafc");
   doc.font("Helvetica-Bold").fontSize(5.1).fillColor("#64748b")
-    .text("IF THIS CARD IS FOUND", 19, 207, { characterSpacing: 0.55 });
+    .text("IF THIS CARD IS FOUND", 19, 202, { characterSpacing: 0.55 });
   doc.font("Helvetica").fontSize(5.2).fillColor("#334155")
-    .text(`Please return it to ${data.schoolName}.`, 19, 215, { width: STUDENT_CARD_WIDTH_PT - 38, ellipsis: true, lineBreak: false });
-  const contact = [data.schoolPhone, data.schoolAddress].filter(Boolean).join(" - ");
-  if (contact) doc.font("Helvetica").fontSize(4.3).fillColor("#94a3b8")
-    .text(contact, 19, 222, { width: STUDENT_CARD_WIDTH_PT - 38, ellipsis: true, lineBreak: false });
+    .text(`Please return it to ${data.schoolName}.`, 19, 210, { width: STUDENT_CARD_WIDTH_PT - 38, ellipsis: true, lineBreak: false });
+  doc.font("Helvetica-Bold").fontSize(4.6).fillColor("#64748b")
+    .text(`School contact: ${data.schoolPhone || "Not provided"}`, 19, 218, {
+      width: STUDENT_CARD_WIDTH_PT - 38,
+      ellipsis: true,
+      lineBreak: false,
+    });
 
   doc.font("Helvetica").fontSize(4.2).fillColor("#94a3b8")
-    .text(`Property of ${data.schoolName} - Non-transferable`, 8, 231, { width: STUDENT_CARD_WIDTH_PT - 16, align: "center", ellipsis: true, lineBreak: false });
-  doc.font("Courier").fontSize(3.4).fillColor("#cbd5e1")
-    .text(`${data.documentNumber} - Valid through ${formatDate(data.expiryDate)}`, 8, 238, { width: STUDENT_CARD_WIDTH_PT - 16, align: "center", ellipsis: true, lineBreak: false });
+    .text(`Property of ${data.schoolName} - Non-transferable`, 8, 233, { width: STUDENT_CARD_WIDTH_PT - 16, align: "center", ellipsis: true, lineBreak: false });
 }
 
 export async function renderStudentCardPdf(data: StudentCardPdfData): Promise<Buffer> {

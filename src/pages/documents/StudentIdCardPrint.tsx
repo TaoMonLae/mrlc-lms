@@ -78,7 +78,6 @@ export default function StudentIdCardPrint() {
   const student = p.student || {};
   const logoUrl = school.logoUrl || branding.logoUrl;
   const schoolPhone = school.contactPhone || branding.contactPhone;
-  const schoolAddress = school.address || branding.address;
   const verifyUrl = `${window.location.origin}/verify/${doc.verifyToken}`;
   const expiryDate = doc.expiryDate || p.validity?.expiryDate
     || inferStudentCardExpiry(student.academicYear || doc.term, new Date(doc.issueDate)).toISOString();
@@ -193,20 +192,14 @@ export default function StudentIdCardPrint() {
 
             <div className="mt-[3mm] grid grid-cols-2 gap-[1.5mm] text-left">
               <CardDetail label="Class" value={doc.className || '—'} />
-              <CardDetail label="Level" value={student.level || '—'} />
-              <CardDetail label="Date of birth" value={fmtDate(student.dateOfBirth)} />
               <CardDetail label="Academic year" value={student.academicYear || doc.term || '—'} />
+              <CardDetail label="Issued" value={fmtDate(doc.issueDate)} />
+              <CardDetail label="Valid through" value={fmtDate(expiryDate)} />
             </div>
 
-            <div className="mt-[2mm] grid grid-cols-2 overflow-hidden rounded-[2mm] bg-slate-900 text-left text-white">
-              <div className="px-[2mm] py-[1.2mm]">
-                <span className="block text-[4.5px] font-bold uppercase tracking-[0.1em] text-slate-400">Issued</span>
-                <span className="mt-[0.3mm] block text-[5.8px] font-black">{fmtDate(doc.issueDate)}</span>
-              </div>
-              <div className="border-l border-white/10 px-[2mm] py-[1.2mm]">
-                <span className="block text-[4.5px] font-bold uppercase tracking-[0.1em] text-teal-300">Valid through</span>
-                <span className="mt-[0.3mm] block text-[5.8px] font-black">{fmtDate(expiryDate)}</span>
-              </div>
+            <div className={`mt-[2.5mm] flex items-center justify-center gap-[1.2mm] text-[5.5px] font-black uppercase tracking-[0.16em] ${cardStatus === 'ACTIVE' ? 'text-emerald-700' : 'text-red-600'}`}>
+              <span className={`h-[1.5mm] w-[1.5mm] rounded-full ${cardStatus === 'ACTIVE' ? 'bg-emerald-500' : 'bg-red-500'}`} />
+              {cardStatus === 'ACTIVE' ? 'Active student' : cardStatus}
             </div>
           </div>
 
@@ -245,14 +238,12 @@ export default function StudentIdCardPrint() {
             <div className="mt-[3mm] w-full rounded-[3mm] bg-slate-50 px-[3mm] py-[2.5mm] text-left ring-1 ring-slate-100">
               <p className="text-[5.5px] font-black uppercase tracking-[0.14em] text-slate-500">If this card is found</p>
               <p className="mt-[1mm] text-[5.8px] font-semibold leading-snug text-slate-700">Please return it to {school.name || 'the school office'}.</p>
-              {schoolPhone && <p className="mt-[0.8mm] text-[5.3px] text-slate-500">Tel: {schoolPhone}</p>}
-              {schoolAddress && <p className="mt-[0.5mm] line-clamp-2 text-[5px] leading-snug text-slate-400">{schoolAddress}</p>}
+              <p className="mt-[1mm] text-[5.3px] font-bold text-slate-500">School contact: {schoolPhone || 'Not provided'}</p>
             </div>
           </div>
 
           <div className="mx-[4mm] mb-[2.5mm] border-t border-slate-100 pt-[1.8mm] text-center">
             <p className="text-[4.8px] font-medium leading-tight text-slate-400">Property of {school.name || 'the school'} · Non-transferable</p>
-            <p className="mt-[0.8mm] font-mono text-[4.5px] text-slate-300">{doc.documentNumber} · Valid through {fmtDate(expiryDate)}</p>
           </div>
         </div>
       </div>
