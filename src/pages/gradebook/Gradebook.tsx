@@ -1,16 +1,24 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router';
-import { BookOpenCheck, Plus, Save, Trash2, Loader2, AlertTriangle } from 'lucide-react';
+import { AlertTriangle, BookOpenCheck, CalendarDays, ClipboardList, Loader2, Plus, RefreshCw, Save, Trash2, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { EmptyState } from '../../components/ui/empty-state';
 import { toast } from 'sonner';
 import { apiGet, apiSend } from '../../lib/api';
 import { usePermissions } from '../../lib/permissions';
 import { localToday } from '../../lib/dates';
+import {
+  MAX_GRADE_ITEM_MARKS,
+  normalizeGradeItemTitle,
+  parseCategoryWeight,
+  parseGradeItemMaxMarks,
+  parseGradeMarks,
+} from '../../../shared/gradebook';
 
 const CATEGORY_LABELS: Record<string, string> = {
   ASSIGNMENT: 'Assignment',
@@ -47,6 +55,12 @@ export default function GradebookPage() {
   const [subjectId, setSubjectId] = useState('all');
   const [data, setData] = useState<Gradebook | null>(null);
   const [loading, setLoading] = useState(false);
+  const [classesLoading, setClassesLoading] = useState(true);
+  const [classesError, setClassesError] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const loadRequestRef = useRef(0);
+  const subjectRequestRef = useRef(0);
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
   // New grade item form
   const [newItem, setNewItem] = useState({ title: '', category: 'ASSIGNMENT', maxMarks: '100', date: localToday() });
@@ -63,18 +77,25 @@ export default function GradebookPage() {
   const [savingWeights, setSavingWeights] = useState(false);
 
   useEffect(() => {
+    setClassesLoading(true);
+    setClassesError(false);
     apiGet<any[]>('/api/classes').then((cs) => {
       const list = cs.map((c) => ({ id: c.id, name: c.name }));
       setClasses(list);
       if (list[0]) setClassId(list[0].id);
-    }).catch(() => {});
+    }).catch(() => {
+      setClassesError(true);
+      toast.error('Failed to load classes');
+    }).finally(() => setClassesLoading(false));
   }, []);
 
   // Subjects scoped to the selected class (direct assignments + exam-linked).
   useEffect(() => {
+    const requestId = ++subjectRequestRef.current;
     if (!classId) { setSubjects([]); return; }
     apiGet<any>(`/api/classes/${classId}`)
       .then((klass) => {
+        if (requestId !== subjectRequestRef.current) return;
         const map = new Map<string, string>();
         for (const cs of klass.subjects || []) {
           if (cs.subject?.id) map.set(cs.subject.id, cs.subject.name);
@@ -85,25 +106,39 @@ export default function GradebookPage() {
         setSubjects(Array.from(map.entries()).map(([id, name]) => ({ id, name })));
         setSubjectId((prev) => (prev !== 'all' && !map.has(prev) ? 'all' : prev));
       })
-      .catch(() => setSubjects([]));
+      .catch(() => {
+        if (requestId === subjectRequestRef.current) setSubjects([]);
+      });
   }, [classId]);
 
-  const loadGradebook = () => {
-    if (!classId) return;
+  const loadGradebook = useCallback(async () => {
+    if (!classId) {
+      setData(null);
+      setLoading(false);
+      return;
+    }
+    const requestId = ++loadRequestRef.current;
     setLoading(true);
+    setLoadError(false);
     const params = new URLSearchParams({ classId, ...(subjectId !== 'all' ? { subjectId } : {}) });
-    apiGet<Gradebook>(`/api/gradebook?${params}`)
-      .then((d) => {
+    try {
+      const d = await apiGet<Gradebook>(`/api/gradebook?${params}`);
+      if (requestId === loadRequestRef.current) {
         setData(d);
         setWeights(d.weights || {});
-        // Seed bulk-entry fields if an item is active.
-        if (activeItemId && !d.items.find((i) => i.id === activeItemId)) setActiveItemId('');
-      })
-      .catch(() => toast.error('Failed to load gradebook'))
-      .finally(() => setLoading(false));
-  };
+        setActiveItemId((current) => d.items.some((item) => item.id === current) ? current : '');
+      }
+    } catch {
+      if (requestId === loadRequestRef.current) {
+        setLoadError(true);
+        toast.error('Failed to load gradebook');
+      }
+    } finally {
+      if (requestId === loadRequestRef.current) setLoading(false);
+    }
+  }, [classId, subjectId]);
 
-  useEffect(() => { loadGradebook(); /* eslint-disable-next-line */ }, [classId, subjectId]);
+  useEffect(() => { void loadGradebook(); }, [loadGradebook]);
 
   // When the active item changes, seed marks/comments from existing data.
   useEffect(() => {
@@ -121,14 +156,45 @@ export default function GradebookPage() {
 
   const activeItem = data?.items.find((i) => i.id === activeItemId);
   const weightTotal = useMemo(() => Object.values(weights).reduce((a, b) => a + (Number(b) || 0), 0), [weights]);
+  const parsedMaxMarks = parseGradeItemMaxMarks(newItem.maxMarks);
+  const titleIsValid = normalizeGradeItemTitle(newItem.title) != null;
+  const canCreateItem = Boolean(classId && titleIsValid && parsedMaxMarks != null && newItem.date);
+  const invalidEntryIds = useMemo(() => {
+    if (!activeItem) return new Set<string>();
+    return new Set((data?.rows || [])
+      .filter((row) => parseGradeMarks(entryMarks[row.studentId], activeItem.maxMarks) === undefined)
+      .map((row) => row.studentId));
+  }, [activeItem, data?.rows, entryMarks]);
+  const weightsAreValid = Object.values(weights).every((weight) => parseCategoryWeight(weight) != null) && weightTotal > 0;
+  const summaryColumnCount = (data?.categories.length ?? Object.keys(CATEGORY_LABELS).length) + 4;
+
+  const changeClass = (nextClassId: string) => {
+    loadRequestRef.current += 1;
+    subjectRequestRef.current += 1;
+    setClassId(nextClassId);
+    setSubjectId('all');
+    setSubjects([]);
+    setActiveItemId('');
+    setData(null);
+  };
+
+  const changeSubject = (nextSubjectId: string) => {
+    loadRequestRef.current += 1;
+    setSubjectId(nextSubjectId);
+    setActiveItemId('');
+  };
 
   const createItem = async () => {
-    if (!newItem.title.trim()) { toast.error('Enter a title'); return; }
+    const title = normalizeGradeItemTitle(newItem.title);
+    const maxMarks = parseGradeItemMaxMarks(newItem.maxMarks);
+    if (!title) { toast.error('Enter a title of 120 characters or fewer'); titleInputRef.current?.focus(); return; }
+    if (maxMarks == null) { toast.error(`Max marks must be greater than 0 and no more than ${MAX_GRADE_ITEM_MARKS.toLocaleString()}`); return; }
+    if (!classId) { toast.error('Select a class first'); return; }
     setCreating(true);
     try {
       await apiSend('/api/grade-items', 'POST', {
-        title: newItem.title.trim(), category: newItem.category,
-        maxMarks: Number(newItem.maxMarks) || 100, date: newItem.date,
+        title, category: newItem.category,
+        maxMarks, date: newItem.date,
         classId, subjectId: subjectId !== 'all' ? subjectId : null,
       });
       toast.success('Grade item added');
@@ -155,11 +221,15 @@ export default function GradebookPage() {
 
   const saveEntries = async () => {
     if (!activeItem) return;
+    if (invalidEntryIds.size > 0) {
+      toast.error(`Fix ${invalidEntryIds.size} mark ${invalidEntryIds.size === 1 ? 'value' : 'values'} before saving`);
+      return;
+    }
     setSavingEntry(true);
     try {
       const entries = (data?.rows || []).map((r) => ({
         studentId: r.studentId,
-        marks: entryMarks[r.studentId] === '' || entryMarks[r.studentId] == null ? null : Number(entryMarks[r.studentId]),
+        marks: parseGradeMarks(entryMarks[r.studentId], activeItem.maxMarks) ?? null,
         comment: entryComments[r.studentId] || '',
       }));
       const res = await apiSend<{ changed: number }>('/api/grades/bulk', 'POST', { gradeItemId: activeItem.id, entries });
@@ -173,6 +243,7 @@ export default function GradebookPage() {
   };
 
   const saveWeights = async () => {
+    if (!weightsAreValid) { toast.error('Each weight must be a whole number from 0 to 100, with at least one above 0'); return; }
     setSavingWeights(true);
     try {
       await apiSend('/api/category-weights', 'PUT', { classId, weights });
@@ -186,37 +257,60 @@ export default function GradebookPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="mx-auto max-w-[1440px] space-y-5">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            <BookOpenCheck className="h-6 w-6 text-aubergine-600" /> Gradebook
+            <span className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <BookOpenCheck className="h-5 w-5" />
+            </span>
+            Gradebook
           </h1>
           <p className="text-sm text-slate-500 mt-1 dark:text-slate-300">Assignments, quizzes, exams and weighted grades.</p>
         </div>
-        <div className="flex flex-wrap gap-3">
-          <Select value={classId} onValueChange={setClassId}>
-            <SelectTrigger className="w-[200px]"><SelectValue placeholder="Class">{classes.find((c) => c.id === classId)?.name || 'Class'}</SelectValue></SelectTrigger>
-            <SelectContent>
-              {classes.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={subjectId} onValueChange={setSubjectId}>
-            <SelectTrigger className="w-[200px]"><SelectValue placeholder="Subject">{subjectId === 'all' ? 'All Subjects' : (subjects.find((s) => s.id === subjectId)?.name || 'Subject')}</SelectValue></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Subjects</SelectItem>
-              {subjects.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
+        <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 lg:w-auto">
+          <div className="space-y-1.5">
+            <Label htmlFor="gradebook-class" className="text-xs text-muted-foreground">Class</Label>
+            <Select value={classId} onValueChange={changeClass} disabled={classesLoading || classes.length === 0}>
+              <SelectTrigger id="gradebook-class" aria-label="Filter gradebook by class" className="h-10 w-full sm:w-[220px]">
+                <SelectValue placeholder={classesLoading ? 'Loading classes…' : 'Select a class'}>{classes.find((c) => c.id === classId)?.name || 'Select a class'}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {classes.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="gradebook-subject" className="text-xs text-muted-foreground">Subject</Label>
+            <Select value={subjectId} onValueChange={changeSubject} disabled={!classId}>
+              <SelectTrigger id="gradebook-subject" aria-label="Filter gradebook by subject" className="h-10 w-full sm:w-[220px]">
+                <SelectValue placeholder="All subjects">{subjectId === 'all' ? 'All Subjects' : (subjects.find((s) => s.id === subjectId)?.name || 'Subject')}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Subjects</SelectItem>
+                {subjects.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
-      <Tabs defaultValue="summary" className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm">
-        <div className="px-6 pt-4">
-          <TabsList className="bg-transparent border-b border-slate-100 dark:border-surface-raised w-full justify-start rounded-none h-12 gap-6">
-            <TabsTrigger value="summary" className="flex-none border-b-2 border-transparent data-[state=active]:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Summary</TabsTrigger>
-            {canManage && <TabsTrigger value="entry" className="flex-none border-b-2 border-transparent data-[state=active]:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Grade Entry</TabsTrigger>}
-            {canManage && <TabsTrigger value="weights" className="flex-none border-b-2 border-transparent data-[state=active]:border-aubergine-500 rounded-none bg-transparent px-0 text-sm font-semibold h-12">Categories &amp; Weights</TabsTrigger>}
+      {(classesError || (!classesLoading && classes.length === 0)) && (
+        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-950 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-100" role="status">
+          <AlertTriangle className="mt-0.5 size-5 shrink-0" />
+          <div>
+            <p className="font-semibold">{classesError ? 'Classes could not be loaded' : 'No classes are available'}</p>
+            <p className="mt-0.5 text-sm opacity-80">{classesError ? 'Refresh the page and try again.' : 'Assign a class before creating grade items or entering marks.'}</p>
+          </div>
+        </div>
+      )}
+
+      <Tabs defaultValue="summary" className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-surface-raised dark:bg-surface-indigo">
+        <div className="border-b border-slate-200 px-4 pt-2 dark:border-surface-raised sm:px-6">
+          <TabsList variant="line" aria-label="Gradebook sections" className="h-12 w-full justify-start gap-1 overflow-x-auto">
+            <TabsTrigger value="summary" className="h-10 flex-none rounded-lg px-3 font-semibold data-active:text-primary data-active:after:bg-primary focus-visible:border-transparent focus-visible:bg-primary/10 focus-visible:ring-0 focus-visible:outline-none">Summary</TabsTrigger>
+            {canManage && <TabsTrigger value="entry" className="h-10 flex-none rounded-lg px-3 font-semibold data-active:text-primary data-active:after:bg-primary focus-visible:border-transparent focus-visible:bg-primary/10 focus-visible:ring-0 focus-visible:outline-none">Grade Entry</TabsTrigger>}
+            {canManage && <TabsTrigger value="weights" className="h-10 flex-none rounded-lg px-3 font-semibold data-active:text-primary data-active:after:bg-primary focus-visible:border-transparent focus-visible:bg-primary/10 focus-visible:ring-0 focus-visible:outline-none">Categories &amp; Weights</TabsTrigger>}
           </TabsList>
         </div>
 
@@ -234,9 +328,30 @@ export default function GradebookPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {loading && <tr><td colSpan={9} className="px-6 py-8 text-center text-slate-500">Loading…</td></tr>}
-                {!loading && (data?.rows.length ?? 0) === 0 && <tr><td colSpan={9} className="px-6 py-8 text-center text-slate-500">No students or grades yet.</td></tr>}
-                {!loading && data?.rows.map((r) => (
+                {loading && (
+                  <tr><td colSpan={summaryColumnCount} className="px-6 py-14 text-center text-slate-500"><Loader2 className="mr-2 inline size-4 animate-spin" />Loading gradebook…</td></tr>
+                )}
+                {!loading && loadError && (
+                  <tr><td colSpan={summaryColumnCount}>
+                    <EmptyState
+                      icon={AlertTriangle}
+                      title="Gradebook could not be loaded"
+                      description="Check your connection and try loading this class again."
+                      action={<Button variant="outline" onClick={() => void loadGradebook()}><RefreshCw className="size-4" />Try again</Button>}
+                    />
+                  </td></tr>
+                )}
+                {!loading && !loadError && classId && data && data.rows.length === 0 && (
+                  <tr><td colSpan={summaryColumnCount}>
+                    <EmptyState icon={Users} title="No learners in this class" description="Enrol learners in the selected class to start tracking grades." />
+                  </td></tr>
+                )}
+                {!loading && !loadError && !classId && !classesLoading && (
+                  <tr><td colSpan={summaryColumnCount}>
+                    <EmptyState icon={BookOpenCheck} title="Select a class to begin" description="Choose a class above to view its grade summary." />
+                  </td></tr>
+                )}
+                {!loading && !loadError && data?.rows.map((r) => (
                   <tr key={r.studentId} className="hover:bg-slate-50 dark:hover:bg-surface-raised/50">
                     <td className="px-6 py-3 font-medium text-slate-900 dark:text-white sticky left-0 z-10 bg-white dark:bg-surface-indigo">
                       <Link to={`/gradebook/students/${r.studentId}`} className="hover:text-aubergine-600 hover:underline">{r.name}</Link>
@@ -261,125 +376,200 @@ export default function GradebookPage() {
 
         {/* ── Grade Entry ── */}
         {canManage && (
-        <TabsContent value="entry" className="p-6 space-y-6">
-          {/* Add item */}
-          <div className="bg-slate-50 dark:bg-surface-raised/30 border border-slate-200 dark:border-surface-raised rounded-xl p-4">
-            <h3 className="font-semibold text-slate-900 dark:text-white mb-3 text-sm">Add Grade Item</h3>
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
-              <div className="space-y-1.5 md:col-span-2">
-                <Label>Title</Label>
-                <Input value={newItem.title} onChange={(e) => setNewItem({ ...newItem, title: e.target.value })} placeholder="e.g. Algebra Quiz 1" />
+        <TabsContent value="entry" className="space-y-6 p-4 sm:p-6">
+          <section aria-labelledby="add-grade-item-heading" className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 dark:border-surface-raised dark:bg-surface-raised/30 sm:p-5">
+            <div className="mb-4 flex items-start gap-3">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-teal-100 text-teal-700 dark:bg-teal-400/15 dark:text-teal-300"><Plus className="size-4" /></span>
+              <div>
+                <h3 id="add-grade-item-heading" className="font-semibold text-slate-900 dark:text-white">Add grade item</h3>
+                <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">Create an assignment, quiz, or exam for the selected class and subject.</p>
+              </div>
+            </div>
+            <form className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 xl:grid-cols-[minmax(16rem,2fr)_minmax(9rem,1fr)_minmax(8rem,.75fr)_minmax(9rem,.9fr)_auto]" onSubmit={(event) => { event.preventDefault(); void createItem(); }}>
+              <div className="space-y-1.5">
+                <Label htmlFor="grade-item-title">Title</Label>
+                <Input
+                  ref={titleInputRef}
+                  id="grade-item-title"
+                  value={newItem.title}
+                  maxLength={120}
+                  aria-invalid={newItem.title.length > 0 && !titleIsValid}
+                  onChange={(event) => setNewItem((current) => ({ ...current, title: event.target.value }))}
+                  placeholder="e.g. Algebra Quiz 1"
+                  className="h-10"
+                />
               </div>
               <div className="space-y-1.5">
-                <Label>Category</Label>
-                <Select value={newItem.category} onValueChange={(v) => setNewItem({ ...newItem, category: v })}>
-                  <SelectTrigger><SelectValue>{CATEGORY_LABELS[newItem.category]}</SelectValue></SelectTrigger>
+                <Label htmlFor="grade-item-category">Category</Label>
+                <Select value={newItem.category} onValueChange={(value) => setNewItem((current) => ({ ...current, category: value }))}>
+                  <SelectTrigger id="grade-item-category" className="h-10 w-full"><SelectValue>{CATEGORY_LABELS[newItem.category]}</SelectValue></SelectTrigger>
                   <SelectContent>
-                    {Object.entries(CATEGORY_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
+                    {Object.entries(CATEGORY_LABELS).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Max Marks</Label>
-                <Input type="number" value={newItem.maxMarks} onChange={(e) => setNewItem({ ...newItem, maxMarks: e.target.value })} />
+                <Label htmlFor="grade-item-max-marks">Max marks</Label>
+                <Input
+                  id="grade-item-max-marks"
+                  type="number"
+                  min="0.01"
+                  max={MAX_GRADE_ITEM_MARKS}
+                  step="any"
+                  value={newItem.maxMarks}
+                  aria-invalid={newItem.maxMarks.length > 0 && parsedMaxMarks == null}
+                  onChange={(event) => setNewItem((current) => ({ ...current, maxMarks: event.target.value }))}
+                  className="h-10"
+                />
               </div>
-              <Button onClick={createItem} disabled={creating || !classId} className="bg-primary text-primary-foreground">
-                {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />} Add
+              <div className="space-y-1.5">
+                <Label htmlFor="grade-item-date">Date</Label>
+                <div className="relative">
+                  <CalendarDays className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                  <Input id="grade-item-date" type="date" value={newItem.date} onChange={(event) => setNewItem((current) => ({ ...current, date: event.target.value }))} className="h-10 pl-9" />
+                </div>
+              </div>
+              <Button type="submit" size="lg" disabled={creating || !canCreateItem} className="mt-auto h-10 rounded-lg bg-teal-600 px-5 text-white hover:bg-teal-700 dark:bg-teal-400 dark:text-slate-950 dark:hover:bg-teal-300">
+                {creating ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
+                {creating ? 'Adding…' : 'Add item'}
               </Button>
-            </div>
-          </div>
+            </form>
+          </section>
 
-          {/* Pick item + bulk entry */}
-          <div className="space-y-3">
-            <div className="flex flex-wrap items-center gap-3">
-              <Label className="shrink-0">Enter marks for:</Label>
-              <Select value={activeItemId} onValueChange={setActiveItemId}>
-                <SelectTrigger className="w-[320px]">
-                  <SelectValue placeholder="Select a grade item">
-                    {activeItem ? `${CATEGORY_LABELS[activeItem.category]} · ${activeItem.title} (/${activeItem.maxMarks})` : 'Select a grade item'}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {data?.items.map((i) => <SelectItem key={i.id} value={i.id}>{CATEGORY_LABELS[i.category]} · {i.title} (/{i.maxMarks})</SelectItem>)}
-                </SelectContent>
-              </Select>
+          <section aria-labelledby="enter-marks-heading" className="space-y-4">
+            <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
+              <div className="min-w-0 space-y-1.5">
+                <Label id="enter-marks-heading" htmlFor="grade-item-picker">Enter marks for</Label>
+                <Select value={activeItemId} onValueChange={setActiveItemId} disabled={loading || !data?.items.length}>
+                  <SelectTrigger id="grade-item-picker" className="h-10 w-full sm:w-[420px]">
+                    <SelectValue placeholder="Select a grade item">
+                      {activeItem ? `${CATEGORY_LABELS[activeItem.category]} · ${activeItem.title} (/${activeItem.maxMarks})` : 'Select a grade item'}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {data?.items.map((item) => <SelectItem key={item.id} value={item.id}>{CATEGORY_LABELS[item.category]} · {item.title} (/{item.maxMarks})</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
               {activeItem && (
-                <Button variant="ghost" size="sm" className="text-red-500" onClick={() => deleteItem(activeItem.id)}>
-                  <Trash2 className="h-4 w-4 mr-1" /> Delete item
-                </Button>
-              )}
-              <div className="flex-1" />
-              {activeItem && (
-                <Button onClick={saveEntries} disabled={savingEntry} className="bg-primary text-primary-foreground">
-                  {savingEntry ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />} Save All
-                </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button type="button" variant="destructive" onClick={() => void deleteItem(activeItem.id)}><Trash2 className="size-4" />Delete item</Button>
+                  <Button type="button" onClick={() => void saveEntries()} disabled={savingEntry || invalidEntryIds.size > 0 || !data?.rows.length} className="bg-teal-600 text-white hover:bg-teal-700 dark:bg-teal-400 dark:text-slate-950 dark:hover:bg-teal-300">
+                    {savingEntry ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+                    {savingEntry ? 'Saving…' : 'Save all marks'}
+                  </Button>
+                </div>
               )}
             </div>
 
-            {activeItem ? (
-              <div className="overflow-x-auto border border-slate-200 dark:border-surface-raised rounded-xl">
+            {loading ? (
+              <div className="rounded-xl border border-slate-200 py-14 text-center text-sm text-slate-500 dark:border-surface-raised"><Loader2 className="mr-2 inline size-4 animate-spin" />Loading grade items…</div>
+            ) : loadError ? (
+              <div className="rounded-xl border border-slate-200 dark:border-surface-raised"><EmptyState icon={AlertTriangle} title="Grade items could not be loaded" description="Try loading the selected class again." action={<Button variant="outline" onClick={() => void loadGradebook()}><RefreshCw className="size-4" />Try again</Button>} /></div>
+            ) : !classId ? (
+              <div className="rounded-xl border border-dashed border-slate-300 dark:border-surface-raised"><EmptyState icon={BookOpenCheck} title="Select a class first" description="Choose a class above before creating grade items or entering marks." /></div>
+            ) : data?.items.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-slate-300 dark:border-surface-raised"><EmptyState icon={ClipboardList} title="No grade items yet" description="Create the first item above, then enter marks for the whole class." action={<Button variant="outline" onClick={() => titleInputRef.current?.focus()}><Plus className="size-4" />Create first item</Button>} /></div>
+            ) : !activeItem ? (
+              <div className="rounded-xl border border-dashed border-slate-300 dark:border-surface-raised"><EmptyState icon={ClipboardList} title="Choose a grade item" description="Select an assignment, quiz, or exam above to enter learner marks." /></div>
+            ) : !data?.rows.length ? (
+              <div className="rounded-xl border border-dashed border-slate-300 dark:border-surface-raised"><EmptyState icon={Users} title="No learners in this class" description="Enrol learners before entering marks for this item." /></div>
+            ) : (
+              <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-surface-raised">
                 <table className="w-full text-left text-sm">
-                  <thead className="bg-slate-50 dark:bg-surface-raised/50 text-slate-500 uppercase tracking-wider font-semibold text-[11px]">
+                  <thead className="bg-slate-50 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:bg-surface-raised/50">
                     <tr>
-                      <th className="px-6 py-3 min-w-[200px]">Student</th>
-                      <th className="px-4 py-3 w-[140px]">Marks (/{activeItem.maxMarks})</th>
-                      <th className="px-4 py-3">Comment</th>
+                      <th className="min-w-[220px] px-5 py-3">Learner</th>
+                      <th className="w-[170px] px-4 py-3">Marks (/{activeItem.maxMarks})</th>
+                      <th className="min-w-[280px] px-4 py-3">Teacher comment</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {data?.rows.map((r) => (
-                      <tr key={r.studentId}>
-                        <td className="px-6 py-2 font-medium text-slate-900 dark:text-white">{r.name} <span className="text-xs text-slate-400 font-mono ml-1">{r.code}</span></td>
-                        <td className="px-4 py-2">
-                          <Input
-                            type="number" min={0} max={activeItem.maxMarks}
-                            value={entryMarks[r.studentId] ?? ''}
-                            onChange={(e) => setEntryMarks({ ...entryMarks, [r.studentId]: e.target.value })}
-                            className="h-9"
-                          />
-                        </td>
-                        <td className="px-4 py-2">
-                          <Input
-                            value={entryComments[r.studentId] ?? ''}
-                            onChange={(e) => setEntryComments({ ...entryComments, [r.studentId]: e.target.value })}
-                            placeholder="Optional teacher comment"
-                            className="h-9"
-                          />
-                        </td>
-                      </tr>
-                    ))}
+                    {data.rows.map((row) => {
+                      const markIsInvalid = invalidEntryIds.has(row.studentId);
+                      return (
+                        <tr key={row.studentId} className="hover:bg-slate-50/80 dark:hover:bg-surface-raised/30">
+                          <td className="px-5 py-3 font-medium text-slate-900 dark:text-white">
+                            <span className="block">{row.name}</span>
+                            <span className="font-mono text-xs font-normal text-slate-400">{row.code}</span>
+                          </td>
+                          <td className="px-4 py-3 align-top">
+                            <Input
+                              aria-label={`Marks for ${row.name}`}
+                              aria-invalid={markIsInvalid}
+                              type="number"
+                              min={0}
+                              max={activeItem.maxMarks}
+                              step="any"
+                              value={entryMarks[row.studentId] ?? ''}
+                              onChange={(event) => setEntryMarks((current) => ({ ...current, [row.studentId]: event.target.value }))}
+                              className="h-9"
+                            />
+                            {markIsInvalid && <p className="mt-1 text-xs text-red-600">Use 0–{activeItem.maxMarks}</p>}
+                          </td>
+                          <td className="px-4 py-3 align-top">
+                            <Input
+                              aria-label={`Comment for ${row.name}`}
+                              value={entryComments[row.studentId] ?? ''}
+                              maxLength={500}
+                              onChange={(event) => setEntryComments((current) => ({ ...current, [row.studentId]: event.target.value }))}
+                              placeholder="Optional feedback"
+                              className="h-9"
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
-            ) : (
-              <p className="text-sm text-slate-500">Add a grade item above, then pick it here to enter marks for the whole class.</p>
             )}
-          </div>
+          </section>
         </TabsContent>
         )}
 
         {/* ── Weights ── */}
         {canManage && (
-        <TabsContent value="weights" className="p-6 space-y-4 max-w-xl">
-          <p className="text-sm text-slate-500">Set how much each category contributes to the overall grade. Only categories that have grades are counted (weights are normalized).</p>
-          {Object.keys(CATEGORY_LABELS).map((c) => (
-            <div key={c} className="flex items-center gap-4">
-              <Label className="w-32">{CATEGORY_LABELS[c]}</Label>
-              <Input
-                type="number" min={0} max={100}
-                value={weights[c] ?? 0}
-                onChange={(e) => setWeights({ ...weights, [c]: Number(e.target.value) })}
-                className="w-28"
-              />
-              <span className="text-sm text-slate-400">%</span>
+        <TabsContent value="weights" className="p-4 sm:p-6">
+          <section className="max-w-2xl rounded-2xl border border-slate-200 bg-slate-50/70 p-5 dark:border-surface-raised dark:bg-surface-raised/30" aria-labelledby="category-weights-heading">
+            <h3 id="category-weights-heading" className="font-semibold text-slate-900 dark:text-white">Category weights</h3>
+            <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">Set how much each category contributes to the overall grade. Categories without marks are automatically excluded and the remaining weights are normalized.</p>
+            <div className="mt-5 divide-y divide-slate-200 dark:divide-slate-700/70">
+              {Object.keys(CATEGORY_LABELS).map((category) => {
+                const weightIsInvalid = parseCategoryWeight(weights[category]) == null;
+                return (
+                  <div key={category} className="grid grid-cols-[1fr_7rem] items-center gap-4 py-3">
+                    <Label htmlFor={`weight-${category}`} className="text-slate-700 dark:text-slate-200">{CATEGORY_LABELS[category]}</Label>
+                    <div className="relative">
+                      <Input
+                        id={`weight-${category}`}
+                        aria-invalid={weightIsInvalid}
+                        aria-label={`${CATEGORY_LABELS[category]} weight percentage`}
+                        type="number"
+                        min={0}
+                        max={100}
+                        step={1}
+                        value={weights[category] ?? 0}
+                        onChange={(event) => setWeights((current) => ({ ...current, [category]: Number(event.target.value) }))}
+                        className="h-9 pr-8 text-right"
+                      />
+                      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">%</span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          ))}
-          <div className={`text-sm font-semibold ${weightTotal === 100 ? 'text-emerald-600' : 'text-amber-600'}`}>
-            Total: {weightTotal}% {weightTotal !== 100 && '(weights are normalized, but 100% is recommended)'}
-          </div>
-          <Button onClick={saveWeights} disabled={savingWeights} className="bg-primary text-primary-foreground">
-            {savingWeights ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />} Save Weights
-          </Button>
+            <div className={`mt-4 flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between ${weightTotal === 100 ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200' : 'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200'}`}>
+              <div>
+                <p className="font-semibold">Total: {weightTotal}%</p>
+                <p className="mt-0.5 text-xs opacity-80">{weightTotal === 100 ? 'Weights are balanced and ready to save.' : 'A 100% total is recommended; other positive totals will be normalized.'}</p>
+              </div>
+              <Button onClick={() => void saveWeights()} disabled={savingWeights || !weightsAreValid || !classId} className="bg-teal-600 text-white hover:bg-teal-700 dark:bg-teal-400 dark:text-slate-950 dark:hover:bg-teal-300">
+                {savingWeights ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+                {savingWeights ? 'Saving…' : 'Save weights'}
+              </Button>
+            </div>
+          </section>
         </TabsContent>
         )}
       </Tabs>

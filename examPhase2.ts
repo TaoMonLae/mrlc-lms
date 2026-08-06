@@ -3,6 +3,7 @@ import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import rateLimit from "express-rate-limit";
 import { composeQuestionSet, freezeAttempt, dragDropBank, seededShuffle } from "./examBank";
+import { analyticsSelectedValues, analyzeDistractorResponses, hasAnalyticsResponse } from "./shared/examAnalytics";
 
 interface JwtPayload { userId: string; role: string; email: string; }
 
@@ -1552,57 +1553,80 @@ function registerGradingAndOps(deps: any) {
   app.post("/api/exams/:id/analyze", authMiddleware, teacherGuard, examGuard(), async (req: any, res: any) => {
     const examId = req.params.id;
     try {
-      const questions = await prisma.question.findMany({ where: { examId } });
+      const questions = await prisma.question.findMany({
+        where: { OR: [{ examId }, { examLinks: { some: { examId } } }] },
+      });
       const attempts = await prisma.examAttempt.findMany({
         where: { examId, state: { in: ["SUBMITTED", "AUTO_SUBMITTED", "FINALIZED", "RELEASED"] } },
         include: { answers: true },
+      });
+      const activeQuestionIds = questions.map((question: any) => question.id);
+      await prisma.questionStatistic.deleteMany({
+        where: { examId, ...(activeQuestionIds.length ? { questionId: { notIn: activeQuestionIds } } : {}) },
       });
       // Rank attempts by total score for discrimination (upper/lower 27%).
       const ranked = [...attempts].sort((a, b) => (b.score || 0) - (a.score || 0));
       const groupSize = Math.max(1, Math.floor(ranked.length * 0.27));
       const upper = new Set(ranked.slice(0, groupSize).map((a) => a.id));
       const lower = new Set(ranked.slice(-groupSize).map((a) => a.id));
+      const allResponseTimes = attempts.flatMap((attempt: any) => attempt.answers
+        .filter((answer: any) => answer.timeSpentSeconds != null)
+        .map((answer: any) => Number(answer.timeSpentSeconds))
+        .filter(Number.isFinite));
+      const globalAvg = allResponseTimes.length
+        ? allResponseTimes.reduce((sum: number, seconds: number) => sum + seconds, 0) / allResponseTimes.length
+        : 0;
 
       const stats: any[] = [];
       for (const q of questions) {
-        let correct = 0, incorrect = 0, blank = 0, upperC = 0, lowerC = 0;
+        let correct = 0, incorrect = 0, blank = 0, upperC = 0, lowerC = 0, upperN = 0, lowerN = 0, responseCount = 0;
         const times: number[] = []; const scores: number[] = [];
-        const distract: Record<string, number> = {};
+        const incorrectSelections: string[][] = [];
         for (const at of attempts) {
+          const assignedIds = Array.isArray(at.selectedQuestionIds) && at.selectedQuestionIds.length
+            ? at.selectedQuestionIds
+            : Array.isArray(at.questionOrder) && at.questionOrder.length ? at.questionOrder : null;
+          if (assignedIds && !assignedIds.includes(q.id)) continue;
+          responseCount++;
+          if (upper.has(at.id)) upperN++;
+          if (lower.has(at.id)) lowerN++;
           const a = at.answers.find((x: any) => x.questionId === q.id);
-          if (!a || (a.answerText == null && a.selectedOptions == null)) { blank++; continue; }
-          const isC = a.isCorrect === true;
-          if (isC) correct++; else incorrect++;
+          if (!a || !hasAnalyticsResponse(a.answerText, a.selectedOptions)) { blank++; continue; }
           if (a.timeSpentSeconds != null) times.push(a.timeSpentSeconds);
           if (a.pointsAwarded != null) scores.push(a.pointsAwarded);
-          if (upper.has(at.id) && isC) upperC++;
-          if (lower.has(at.id) && isC) lowerC++;
-          if (!isC && a.answerText) distract[a.answerText] = (distract[a.answerText] || 0) + 1;
+          if (a.isCorrect === true) {
+            correct++;
+            if (upper.has(at.id)) upperC++;
+            if (lower.has(at.id)) lowerC++;
+          } else if (a.isCorrect === false) {
+            incorrect++;
+            incorrectSelections.push(analyticsSelectedValues(a.answerText, a.selectedOptions));
+          }
         }
-        const n = correct + incorrect + blank;
-        const difficulty = n ? correct / n : null; // p-value
-        const discrimination = groupSize ? (upperC - lowerC) / groupSize : null;
+        const analyzedResponses = correct + incorrect + blank;
+        const difficulty = analyzedResponses ? correct / analyzedResponses : null; // p-value
+        const discrimination = upperN && lowerN ? (upperC / upperN) - (lowerC / lowerN) : null;
         const avgScore = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
+        const distractorAnalysis = analyzeDistractorResponses({
+          options: q.options,
+          correctAnswer: q.correctAnswer,
+          correctAnswers: q.correctAnswers,
+          incorrectSelections,
+          responseCount,
+        });
         const flags: string[] = [];
         if (difficulty != null && difficulty > 0.9) flags.push("TOO_EASY");
         if (difficulty != null && difficulty < 0.2) flags.push("TOO_HARD");
         if (discrimination != null && discrimination < 0.2) flags.push("POOR_DISCRIMINATION");
-        if (Array.isArray(q.options)) {
-          const used = new Set(Object.keys(distract));
-          const correctStr = q.correctAnswer != null ? String(q.correctAnswer) : null;
-          const unused = (q.options as any[]).map(String).filter((o) => o !== correctStr && !used.has(o));
-          if (unused.length) flags.push("UNUSED_DISTRACTOR");
-        }
+        if (distractorAnalysis.hasUnusedDistractor) flags.push("UNUSED_DISTRACTOR");
         const avgTime = times.length ? times.reduce((a, b) => a + b, 0) / times.length : null;
-        const allTimes = attempts.flatMap((at: any) => at.answers.filter((x: any) => x.timeSpentSeconds != null).map((x: any) => x.timeSpentSeconds));
-        const globalAvg = allTimes.length ? allTimes.reduce((a: number, b: number) => a + b, 0) / allTimes.length : 0;
         if (avgTime != null && globalAvg && avgTime > globalAvg * 1.75) flags.push("SLOW");
-        if (n >= 5 && difficulty != null && (difficulty === 0 || difficulty === 1)) flags.push("ABNORMAL_PATTERN");
+        if (analyzedResponses >= 5 && difficulty != null && (difficulty === 0 || difficulty === 1)) flags.push("ABNORMAL_PATTERN");
 
         const row = {
-          questionId: q.id, examId, attempts: n, correctCount: correct, incorrectCount: incorrect, blankCount: blank,
+          questionId: q.id, examId, attempts: responseCount, correctCount: correct, incorrectCount: incorrect, blankCount: blank,
           avgResponseSeconds: avgTime, difficultyIndex: difficulty, discriminationIndex: discrimination,
-          distractorRates: n ? Object.fromEntries(Object.entries(distract).map(([k, v]) => [k, v / n])) : {},
+          distractorRates: distractorAnalysis.distractorRates,
           avgScore, medianScore: median(scores), stdDev: stddev(scores),
           passRate: null, scoreDistribution: null, flags, computedAt: new Date(),
         };
@@ -1625,10 +1649,12 @@ function registerGradingAndOps(deps: any) {
       const exam = await prisma.exam.findUnique({ where: { id: req.params.id } });
       res.json({
         attempts: attempts.length,
+        scoredAttempts: scores.length,
         avgScore: scores.length ? scores.reduce((a: number, b: number) => a + b, 0) / scores.length : null,
         medianScore: median(scores), stdDev: stddev(scores),
         passRate: (exam?.passMark != null && scores.length) ? scores.filter((s: number) => s >= exam.passMark).length / scores.length : null,
         scoreDistribution: scores,
+        exam: exam ? { id: exam.id, title: exam.title, totalMarks: exam.totalMarks, passMark: exam.passMark } : null,
         questions: stats,
         flaggedQuestions: stats.filter((s: any) => (s.flags || []).length),
       });

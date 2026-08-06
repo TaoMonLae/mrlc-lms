@@ -76,6 +76,14 @@ import { checkWritableDirectory, probeCommand, summarizeHealth, type HealthCheck
 import { extractRarEntry, listRarImageEntries } from "./lib/portableRar";
 import { cleanEbookTitle, findDuplicateEbookSeriesVolume, findDuplicateEbookTitle, normalizedTitleForColumn } from "./lib/ebookTitles";
 import { feeMonthRange, feeYearRange, normalizeFeeMonth } from "./shared/feePeriods";
+import {
+  GRADE_CATEGORIES,
+  isGradeCategory,
+  normalizeGradeItemTitle,
+  parseCategoryWeight,
+  parseGradeItemDate,
+  parseGradeItemMaxMarks,
+} from "./shared/gradebook";
 
 dotenv.config();
 
@@ -18414,7 +18422,6 @@ async function startServer() {
   });
 
   // ── Gradebook & GED readiness API ────────────────────────────────────────────
-  const GRADE_CATEGORIES = ["ASSIGNMENT", "QUIZ", "MIDTERM", "FINAL", "MOCK_GED"] as const;
   const GED_SUBJECTS = ["RLA", "MATH", "SCIENCE", "SOCIAL_STUDIES"] as const;
   const GED_STATUSES = ["NOT_READY", "DEVELOPING", "NEAR_READY", "READY", "TEST_SCHEDULED", "PASSED"] as const;
   const DEFAULT_WEIGHTS: Record<string, number> = {
@@ -18422,6 +18429,19 @@ async function startServer() {
   };
   const WARNING_THRESHOLD = 60; // overall % below which an academic warning is raised
   const canManageGrades = (role: string) => role === "ADMIN" || role === "TEACHER";
+
+  const subjectBelongsToClass = async (subjectId: string, classId: string) => Boolean(
+    await prisma.subject.findFirst({
+      where: {
+        id: subjectId,
+        OR: [
+          { classes: { some: { classId } } },
+          { exams: { some: { classId } } },
+        ],
+      },
+      select: { id: true },
+    })
+  );
 
   // Subject.code/name are free text the school configures (e.g. seeded as "GED-MATH",
   // "GED-SCI", "GED-SOC") — they don't equal the GED_SUBJECTS enum values, so callers
@@ -18543,20 +18563,30 @@ async function startServer() {
     const jwtUser = (req as any).user as JwtPayload;
     if (!canManageGrades(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
     const { title, category, maxMarks, date, classId, subjectId } = req.body || {};
-    if (!title || !category || !classId) { res.status(400).json({ error: "title, category and classId are required" }); return; }
-    if (!GRADE_CATEGORIES.includes(category)) { res.status(400).json({ error: "Invalid category" }); return; }
+    const normalizedTitle = normalizeGradeItemTitle(title);
+    const normalizedMaxMarks = maxMarks == null ? 100 : parseGradeItemMaxMarks(maxMarks);
+    const normalizedDate = parseGradeItemDate(date);
+    if (!normalizedTitle || !category || typeof classId !== "string") {
+      res.status(400).json({ error: "A title, category and class are required" }); return;
+    }
+    if (!isGradeCategory(category)) { res.status(400).json({ error: "Invalid category" }); return; }
+    if (normalizedMaxMarks == null) { res.status(400).json({ error: "Max marks must be greater than 0 and no more than 10,000" }); return; }
+    if (!normalizedDate) { res.status(400).json({ error: "Invalid grade item date" }); return; }
     if (!(await canManageExamClass(jwtUser, classId))) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+    if (subjectId && (typeof subjectId !== "string" || !(await subjectBelongsToClass(subjectId, classId)))) {
+      res.status(400).json({ error: "Subject is not assigned to this class" }); return;
+    }
     try {
       const item = await prisma.gradeItem.create({
         data: {
-          title, category,
-          maxMarks: maxMarks != null ? Number(maxMarks) : 100,
-          date: date ? new Date(date) : new Date(),
+          title: normalizedTitle, category,
+          maxMarks: normalizedMaxMarks,
+          date: normalizedDate,
           classId, subjectId: subjectId || null, createdById: jwtUser.userId,
         },
       });
       await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "GRADE_ITEM", item.id,
-        `Grade item '${title}' (${category}) created.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
+        `Grade item '${normalizedTitle}' (${category}) created.`, req.ip, req.headers["user-agent"] || null, "SUCCESS");
       res.status(201).json(item);
     } catch (err) {
       logger.error("Error creating grade item:", err);
@@ -18573,13 +18603,23 @@ async function startServer() {
       const existingItem = await prisma.gradeItem.findUnique({ where: { id }, select: { classId: true } });
       if (!existingItem) { res.status(404).json({ error: "Grade item not found" }); return; }
       if (!(await canManageExamClass(jwtUser, existingItem.classId))) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+      const normalizedTitle = title === undefined ? undefined : normalizeGradeItemTitle(title);
+      const normalizedMaxMarks = maxMarks === undefined ? undefined : parseGradeItemMaxMarks(maxMarks);
+      const normalizedDate = date === undefined ? undefined : parseGradeItemDate(date);
+      if (title !== undefined && !normalizedTitle) { res.status(400).json({ error: "Title must be between 1 and 120 characters" }); return; }
+      if (category !== undefined && !isGradeCategory(category)) { res.status(400).json({ error: "Invalid category" }); return; }
+      if (maxMarks !== undefined && normalizedMaxMarks == null) { res.status(400).json({ error: "Max marks must be greater than 0 and no more than 10,000" }); return; }
+      if (date !== undefined && !normalizedDate) { res.status(400).json({ error: "Invalid grade item date" }); return; }
+      if (subjectId && (typeof subjectId !== "string" || !(await subjectBelongsToClass(subjectId, existingItem.classId)))) {
+        res.status(400).json({ error: "Subject is not assigned to this class" }); return;
+      }
       const item = await prisma.gradeItem.update({
         where: { id },
         data: {
-          ...(title !== undefined ? { title } : {}),
+          ...(normalizedTitle !== undefined ? { title: normalizedTitle } : {}),
           ...(category !== undefined ? { category } : {}),
-          ...(maxMarks !== undefined ? { maxMarks: Number(maxMarks) } : {}),
-          ...(date !== undefined ? { date: date ? new Date(date) : new Date() } : {}),
+          ...(normalizedMaxMarks !== undefined ? { maxMarks: normalizedMaxMarks } : {}),
+          ...(normalizedDate !== undefined ? { date: normalizedDate } : {}),
           ...(subjectId !== undefined ? { subjectId: subjectId || null } : {}),
         },
       });
@@ -18681,6 +18721,7 @@ async function startServer() {
   app.get("/api/category-weights", authMiddleware, reportRole(["ADMIN", "TEACHER"]), async (req, res) => {
     const { classId } = req.query as { classId?: string };
     if (!classId) { res.status(400).json({ error: "classId is required" }); return; }
+    if (!(await canAccessTeacherClass(req, classId))) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
     try {
       res.json(await weightsForClass(classId));
     } catch (err: any) {
@@ -18694,15 +18735,25 @@ async function startServer() {
     const jwtUser = (req as any).user as JwtPayload;
     if (!canManageGrades(jwtUser.role)) { res.status(403).json({ error: "Forbidden" }); return; }
     const { classId, weights } = req.body as { classId: string; weights: Record<string, number> };
-    if (!classId || !weights) { res.status(400).json({ error: "classId and weights are required" }); return; }
+    if (!classId || !weights || typeof weights !== "object" || Array.isArray(weights)) { res.status(400).json({ error: "classId and weights are required" }); return; }
     if (!(await canManageExamClass(jwtUser, classId))) { res.status(403).json({ error: "Forbidden: not your class" }); return; }
+    const normalizedWeights: Record<string, number> = {};
+    for (const category of GRADE_CATEGORIES) {
+      if (weights[category] == null) continue;
+      const weight = parseCategoryWeight(weights[category]);
+      if (weight == null) { res.status(400).json({ error: `${category} weight must be a whole number between 0 and 100` }); return; }
+      normalizedWeights[category] = weight;
+    }
+    if (Object.values(normalizedWeights).reduce((total, weight) => total + weight, 0) <= 0) {
+      res.status(400).json({ error: "At least one category weight must be greater than 0" }); return;
+    }
     try {
       await prisma.$transaction(
-        GRADE_CATEGORIES.filter((c) => weights[c] != null).map((c) =>
+        GRADE_CATEGORIES.filter((c) => normalizedWeights[c] != null).map((c) =>
           prisma.categoryWeight.upsert({
             where: { classId_category: { classId, category: c } },
-            update: { weight: Number(weights[c]) },
-            create: { classId, category: c, weight: Number(weights[c]) },
+            update: { weight: normalizedWeights[c] },
+            create: { classId, category: c, weight: normalizedWeights[c] },
           })
         )
       );
