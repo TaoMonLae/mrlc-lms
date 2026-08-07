@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { HoloProfileHeader } from '@/src/components/profile/HoloProfileHeader';
+import { PersonnelIdentityCard } from '@/src/components/profile/PersonnelIdentityCard';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
@@ -103,13 +104,14 @@ export default function StaffProfile() {
             ProfilePhotoUploader control) — name/role/status only. */}
         <HoloProfileHeader
           name={`${emp.firstName} ${emp.lastName}`}
-          title={emp.designation?.name || emp.department?.name || 'Staff'}
+          title={emp.designation?.title || emp.designation?.name || emp.department?.name || 'Staff'}
           handle={emp.employeeCode}
           status={emp.status.replace('_', ' ')}
-          photoUrl={null}
+          photoUrl={emp.profilePhotoUrl}
           onPhotoUploaded={() => {}}
           targetType="user"
           canEditPhoto={false}
+          enableEffects={false}
           contactText="Print / Export"
           onContactClick={() => window.print()}
         />
@@ -122,6 +124,18 @@ export default function StaffProfile() {
           )}
         </div>
       </div>
+
+      <PersonnelIdentityCard
+        kind="STAFF"
+        name={`${emp.firstName} ${emp.lastName}`.trim()}
+        code={emp.employeeCode}
+        photoUrl={emp.profilePhotoUrl}
+        status={emp.status}
+        roleTitle={emp.designation?.title || emp.designation?.name || 'Staff'}
+        organizationUnit={emp.department?.name || 'School Operations'}
+        employmentType="Staff"
+        joinedDate={emp.hireDate}
+      />
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-4 rounded-lg border border-slate-200 p-4 lg:col-span-2">

@@ -20,6 +20,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { HoloProfileHeader } from '@/src/components/profile/HoloProfileHeader';
+import { PersonnelIdentityCard } from '@/src/components/profile/PersonnelIdentityCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
@@ -207,6 +208,7 @@ export default function TeacherProfile() {
             targetType="teacher"
             targetId={teacher.id}
             canEditPhoto={canEdit}
+            enableEffects={false}
             contactText={canEdit ? 'Edit Profile' : 'Print PDF'}
             onContactClick={canEdit ? () => navigate(`/teachers/${id}/edit`) : handlePrint}
           />
@@ -231,6 +233,18 @@ export default function TeacherProfile() {
           ))}
         </div>
       </div>
+
+      <PersonnelIdentityCard
+        kind="TEACHER"
+        name={`${teacher.firstName} ${teacher.lastName}`.trim()}
+        code={teacher.teacherId}
+        photoUrl={teacher.photoUrl}
+        status={teacher.status}
+        roleTitle={teacher.specialization || 'Teacher'}
+        organizationUnit={teacher.subjects.map((subject: { name: string }) => subject.name).slice(0, 2).join(', ') || teacher.assignedClasses[0]?.name || 'Academic Faculty'}
+        employmentType={teacher.employmentType}
+        joinedDate={teacher.joinedDate}
+      />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm">
         <div className="px-6 pt-4">
