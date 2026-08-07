@@ -440,6 +440,15 @@ model Teacher {
   employmentType  String   @default("FULL_TIME")
   notes           String?
 
+  // Persistent identity-card metadata. Display fields are optional overrides;
+  // the live profile remains the fallback until an administrator customizes a card.
+  cardDisplayName      String?
+  cardRoleTitle        String?
+  cardOrganizationUnit String?
+  cardIssueDate        DateTime?
+  cardExpiryDate       DateTime?
+  cardVerifyToken      String?  @unique
+
   classes        ClassTeacher[]
   subjects       SubjectTeacher[]
   lessonPlans    LessonPlan[]
@@ -2954,6 +2963,15 @@ model Employee {
   baseSalary      Float          @default(0)
   currency        String         @default("MYR")
   profilePhotoUrl String?
+
+  // Persistent identity-card metadata. Display fields are optional overrides;
+  // the live HR profile remains the fallback until an administrator customizes a card.
+  cardDisplayName      String?
+  cardRoleTitle        String?
+  cardOrganizationUnit String?
+  cardIssueDate        DateTime?
+  cardExpiryDate       DateTime?
+  cardVerifyToken      String?  @unique
 
   departmentId  String?
   department    Department?  @relation(fields: [departmentId], references: [id])
