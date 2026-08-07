@@ -179,7 +179,7 @@ function drawFront(doc: PDFKit.PDFDocument, data: PersonnelCardPdfData): void {
 
   doc.moveTo(11, 234).lineTo(PERSONNEL_CARD_WIDTH_PT - 11, 234).lineWidth(0.5).strokeColor("#e2e8f0").stroke();
   doc.font("Helvetica-Bold").fontSize(4.2).fillColor("#94a3b8")
-    .text("AUTHORIZED PERSONNEL", 11, 238, { width: PERSONNEL_CARD_WIDTH_PT - 22, align: "center", characterSpacing: 0.7, lineBreak: false });
+    .text("AUTHORIZED PERSONNEL", 11, 236, { width: PERSONNEL_CARD_WIDTH_PT - 22, align: "center", characterSpacing: 0.7, lineBreak: false });
 }
 
 function drawBack(doc: PDFKit.PDFDocument, data: PersonnelCardPdfData): void {
@@ -246,4 +246,3 @@ export async function renderPersonnelCardPdf(data: PersonnelCardPdfData): Promis
   doc.end();
   return output;
 }
-

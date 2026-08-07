@@ -240,6 +240,7 @@ const DocumentsPage = lazy(() => import("./pages/documents/Documents"));
 const DocumentPrint = lazy(() => import("./pages/documents/DocumentPrint"));
 const StudentIdCardPrint = lazy(() => import("./pages/documents/StudentIdCardPrint"));
 const VerifyDocument = lazy(() => import("./pages/documents/VerifyDocument"));
+const VerifyPersonnelCard = lazy(() => import("./pages/documents/VerifyPersonnelCard"));
 const StudentDocumentsPage = lazy(() => import("./pages/student/StudentDocuments"));
 
 const TimetablePage = lazy(() => import("./pages/timetable/TimetablePage"));
@@ -311,6 +312,7 @@ export default function App() {
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
             <Route path="/verify/payment/:id" element={<VerifyPaymentReceipt />} />
+            <Route path="/verify/personnel/:token" element={<VerifyPersonnelCard />} />
             <Route path="/verify/:token" element={<VerifyDocument />} />
 
             {/* Dictionary — public, no sign-in required (also linked from inside the app) */}

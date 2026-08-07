@@ -13,11 +13,13 @@ import {
 import { toast } from 'sonner';
 import { apiGet, apiSend } from '../../lib/api';
 import { formatMoney } from '../../lib/locale';
+import { usePermissions } from '../../lib/permissions';
 import { format } from 'date-fns';
 
 export default function StaffProfile() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { isAdmin } = usePermissions();
   const [emp, setEmp] = useState<any>(null);
   const [departments, setDepartments] = useState<any[]>([]);
   const [designations, setDesignations] = useState<any[]>([]);
@@ -126,6 +128,7 @@ export default function StaffProfile() {
       </div>
 
       <PersonnelIdentityCard
+        holderId={emp.id}
         kind="STAFF"
         name={`${emp.firstName} ${emp.lastName}`.trim()}
         code={emp.employeeCode}
@@ -135,6 +138,8 @@ export default function StaffProfile() {
         organizationUnit={emp.department?.name || 'School Operations'}
         employmentType="Staff"
         joinedDate={emp.hireDate}
+        canEdit={isAdmin}
+        canDownload={isAdmin}
       />
 
       <div className="grid gap-6 lg:grid-cols-3">

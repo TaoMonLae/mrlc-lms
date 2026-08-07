@@ -235,6 +235,7 @@ export default function TeacherProfile() {
       </div>
 
       <PersonnelIdentityCard
+        holderId={teacher.id}
         kind="TEACHER"
         name={`${teacher.firstName} ${teacher.lastName}`.trim()}
         code={teacher.teacherId}
@@ -244,6 +245,8 @@ export default function TeacherProfile() {
         organizationUnit={teacher.subjects.map((subject: { name: string }) => subject.name).slice(0, 2).join(', ') || teacher.assignedClasses[0]?.name || 'Academic Faculty'}
         employmentType={teacher.employmentType}
         joinedDate={teacher.joinedDate}
+        canEdit={isAdmin}
+        canDownload={isAdmin}
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-white dark:bg-surface-indigo border border-slate-200 dark:border-surface-raised rounded-xl shadow-sm">

@@ -33,6 +33,11 @@ import { registerConductRoutes } from "./conduct";
 import { registerConductPdfRoutes } from "./conductPdf";
 import { loadPdfLogo } from "./pdfBranding";
 import { renderStudentCardPdf } from "./studentCardPdf";
+import {
+  PERSONNEL_CARD_RASTER_HEIGHT_PX,
+  PERSONNEL_CARD_RASTER_WIDTH_PX,
+  renderPersonnelCardPdf,
+} from "./personnelCardPdf";
 import { registerDictionaryRoutes } from "./dictionary";
 import { registerGutenbergRoutes } from "./gutenberg";
 import { registerSnakeGameRoutes } from "./snakeGame";
@@ -19218,6 +19223,244 @@ async function startServer() {
       }
       logger.error("Error building class performance:", err);
       res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // ── Teacher and staff identity cards ────────────────────────────────────────
+  type PersonnelCardKind = "TEACHER" | "STAFF";
+
+  const personnelCardKind = (value: unknown): PersonnelCardKind | null => {
+    const normalized = String(value || "").trim().toUpperCase();
+    return normalized === "TEACHER" || normalized === "STAFF" ? normalized : null;
+  };
+
+  const personnelCardExpiry = (issueDate: Date): Date => {
+    const expiry = new Date(issueDate);
+    expiry.setUTCFullYear(expiry.getUTCFullYear() + 3);
+    return expiry;
+  };
+
+  const loadPersonnelCard = async (kind: PersonnelCardKind, id: string, initialize = false): Promise<any | null> => {
+    const include = kind === "TEACHER"
+      ? {
+          user: true,
+          classes: { include: { class: true } },
+          subjects: { include: { subject: true } },
+        }
+      : { user: true, department: true, designation: true };
+    let record: any = kind === "TEACHER"
+      ? await prisma.teacher.findUnique({ where: { id }, include: include as any })
+      : await prisma.employee.findUnique({ where: { id }, include: include as any });
+    if (!record || !initialize) return record;
+
+    const issueDate = record.cardIssueDate || new Date();
+    const data: any = {};
+    if (!record.cardIssueDate) data.cardIssueDate = issueDate;
+    if (!record.cardExpiryDate) data.cardExpiryDate = personnelCardExpiry(issueDate);
+    if (!record.cardVerifyToken) data.cardVerifyToken = crypto.randomBytes(18).toString("hex");
+    if (!Object.keys(data).length) return record;
+
+    record = kind === "TEACHER"
+      ? await prisma.teacher.update({ where: { id }, data, include: include as any })
+      : await prisma.employee.update({ where: { id }, data, include: include as any });
+    return record;
+  };
+
+  const personnelCardSchool = async () => {
+    const profile = await prisma.schoolProfile.findFirst();
+    return {
+      name: profile?.name || "School",
+      logoUrl: profile?.logoUrl || null,
+      contactPhone: profile?.contactPhone || null,
+      contactEmail: profile?.contactEmail || null,
+      address: profile?.address || null,
+    };
+  };
+
+  const personnelCardPayload = async (kind: PersonnelCardKind, record: any) => {
+    const teacherName = fullName(record.user);
+    const teacherUnits = (record.subjects || [])
+      .map((entry: any) => entry.subject?.name)
+      .filter(Boolean)
+      .slice(0, 2)
+      .join(", ");
+    const displayName = record.cardDisplayName || (kind === "TEACHER"
+      ? teacherName
+      : `${record.firstName || ""} ${record.lastName || ""}`.trim());
+    const roleTitle = record.cardRoleTitle || (kind === "TEACHER"
+      ? record.specialization || "Teacher"
+      : record.designation?.title || "Staff");
+    const organizationUnit = record.cardOrganizationUnit || (kind === "TEACHER"
+      ? teacherUnits || record.classes?.[0]?.class?.level || "Academic Faculty"
+      : record.department?.name || "Administration");
+    const active = kind === "TEACHER" ? record.user?.isActive !== false : record.status === "ACTIVE";
+    return {
+      kind,
+      holderId: record.id,
+      cardNumber: kind === "TEACHER" ? record.teacherCode : record.employeeCode,
+      displayName: displayName || (kind === "TEACHER" ? record.teacherCode : record.employeeCode),
+      roleTitle,
+      organizationUnit,
+      employmentType: kind === "TEACHER" ? record.employmentType || "FULL_TIME" : "STAFF",
+      status: active ? "ACTIVE" : "INACTIVE",
+      issueDate: record.cardIssueDate,
+      expiryDate: record.cardExpiryDate,
+      verifyToken: record.cardVerifyToken,
+      photoUrl: record.profilePhotoUrl || record.user?.profilePhotoUrl || null,
+      school: await personnelCardSchool(),
+    };
+  };
+
+  const canReadPersonnelCard = (jwtUser: JwtPayload, kind: PersonnelCardKind, record: any) =>
+    jwtUser.role === "ADMIN" || (kind === "TEACHER" && jwtUser.role === "TEACHER" && record.userId === jwtUser.userId);
+
+  const personnelCardUpdateSchema = z.object({
+    displayName: z.string().trim().min(1).max(120),
+    roleTitle: z.string().trim().min(1).max(120),
+    organizationUnit: z.string().trim().min(1).max(160),
+    issueDate: z.string().datetime({ offset: true }).or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)),
+    expiryDate: z.string().datetime({ offset: true }).or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)),
+  });
+
+  app.get("/api/personnel-cards/:kind/:id", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const kind = personnelCardKind(req.params.kind);
+    if (!kind) { res.status(400).json({ error: "Card type must be teacher or staff" }); return; }
+    try {
+      const existing = await loadPersonnelCard(kind, req.params.id);
+      if (!existing) { res.status(404).json({ error: `${kind === "TEACHER" ? "Teacher" : "Staff member"} not found` }); return; }
+      if (!canReadPersonnelCard(jwtUser, kind, existing)) { res.status(403).json({ error: "Forbidden" }); return; }
+      const record = await loadPersonnelCard(kind, req.params.id, true);
+      res.json(await personnelCardPayload(kind, record));
+    } catch (err) {
+      logger.error("Error fetching personnel card:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.put("/api/personnel-cards/:kind/:id", authMiddleware, requirePermission("manage_all"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const kind = personnelCardKind(req.params.kind);
+    if (!kind) { res.status(400).json({ error: "Card type must be teacher or staff" }); return; }
+    const parsed = personnelCardUpdateSchema.safeParse(req.body);
+    if (!parsed.success) { res.status(400).json({ error: parsed.error.issues[0]?.message || "Invalid card fields" }); return; }
+    const issueDate = new Date(parsed.data.issueDate);
+    const expiryDate = new Date(parsed.data.expiryDate);
+    if (expiryDate.getTime() <= issueDate.getTime()) { res.status(400).json({ error: "Expiry date must be after the issue date" }); return; }
+    try {
+      const existing = await loadPersonnelCard(kind, req.params.id, true);
+      if (!existing) { res.status(404).json({ error: `${kind === "TEACHER" ? "Teacher" : "Staff member"} not found` }); return; }
+      const data = {
+        cardDisplayName: parsed.data.displayName,
+        cardRoleTitle: parsed.data.roleTitle,
+        cardOrganizationUnit: parsed.data.organizationUnit,
+        cardIssueDate: issueDate,
+        cardExpiryDate: expiryDate,
+      };
+      const record: any = kind === "TEACHER"
+        ? await prisma.teacher.update({ where: { id: req.params.id }, data, include: { user: true, classes: { include: { class: true } }, subjects: { include: { subject: true } } } })
+        : await prisma.employee.update({ where: { id: req.params.id }, data, include: { user: true, department: true, designation: true } });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", `${kind}_CARD`, record.id,
+        `Updated ${kind.toLowerCase()} identity card fields for ${kind === "TEACHER" ? record.teacherCode : record.employeeCode}.`,
+        req.ip, req.headers["user-agent"] || null, "SUCCESS");
+      res.json(await personnelCardPayload(kind, record));
+    } catch (err) {
+      logger.error("Error updating personnel card:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  app.get("/api/personnel-cards/:kind/:id/pdf", authMiddleware, requirePermission("manage_all"), async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const kind = personnelCardKind(req.params.kind);
+    if (!kind) { res.status(400).json({ error: "Card type must be teacher or staff" }); return; }
+    try {
+      const record = await loadPersonnelCard(kind, req.params.id, true);
+      if (!record) { res.status(404).json({ error: `${kind === "TEACHER" ? "Teacher" : "Staff member"} not found` }); return; }
+      const card = await personnelCardPayload(kind, record);
+      const verifyUrl = `${req.protocol}://${req.get("host")}/verify/personnel/${card.verifyToken}`;
+      const logo = await loadPdfLogo(card.school.logoUrl);
+
+      let photo: Buffer | null = null;
+      const photoPrefix = "/uploads/profile-photos/";
+      if (typeof card.photoUrl === "string" && card.photoUrl.startsWith(photoPrefix)) {
+        const filename = card.photoUrl.slice(photoPrefix.length).split(/[?#]/, 1)[0];
+        if (filename && filename === path.basename(filename)) {
+          try {
+            const input = await fs.promises.readFile(path.join(PROFILE_PHOTO_DIR, filename));
+            photo = await sharp(input, { animated: false, limitInputPixels: 40_000_000 })
+              .rotate()
+              .resize(PERSONNEL_CARD_RASTER_WIDTH_PX, PERSONNEL_CARD_RASTER_HEIGHT_PX, { fit: "cover" })
+              .jpeg({ quality: 94, chromaSubsampling: "4:4:4" })
+              .toBuffer();
+          } catch { photo = null; }
+        }
+      }
+      let qr: Buffer | null = null;
+      try { qr = await QRCode.toBuffer(verifyUrl, { margin: 1, width: 700, errorCorrectionLevel: "H" }); } catch { qr = null; }
+      const pdf = await renderPersonnelCardPdf({
+        kind,
+        cardNumber: card.cardNumber,
+        holderName: card.displayName,
+        roleTitle: card.roleTitle,
+        organizationUnit: card.organizationUnit,
+        employmentType: card.employmentType,
+        status: card.status,
+        issueDate: card.issueDate,
+        expiryDate: card.expiryDate,
+        schoolName: card.school.name,
+        schoolPhone: card.school.contactPhone,
+        verifyUrl,
+        logo,
+        photo,
+        qr,
+      });
+      await createAuditLog(jwtUser.userId, jwtUser.email, "DOWNLOAD", `${kind}_CARD`, record.id,
+        `${kind} identity card ${card.cardNumber} downloaded as 300 DPI print PDF.`,
+        req.ip, req.headers["user-agent"] || null, "INFO");
+      const safeCardNumber = card.cardNumber.replace(/[^a-zA-Z0-9_-]+/g, "-");
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `attachment; filename="${kind === "TEACHER" ? "Teacher" : "Staff"}-Card-${safeCardNumber}-300DPI.pdf"`);
+      res.setHeader("Content-Length", pdf.length.toString());
+      res.send(pdf);
+    } catch (err) {
+      logger.error("Error generating personnel card PDF:", err);
+      res.status(500).json({ error: "Failed to generate personnel card PDF" });
+    }
+  });
+
+  // Public card verification exposes only identity and validity fields.
+  app.get("/api/verify/personnel/:token", async (req, res) => {
+    try {
+      const teacher = await prisma.teacher.findUnique({
+        where: { cardVerifyToken: req.params.token },
+        include: { user: true, classes: { include: { class: true } }, subjects: { include: { subject: true } } },
+      });
+      const kind: PersonnelCardKind = teacher ? "TEACHER" : "STAFF";
+      const record = teacher || await prisma.employee.findUnique({
+        where: { cardVerifyToken: req.params.token },
+        include: { user: true, department: true, designation: true },
+      });
+      if (!record) { res.status(404).json({ valid: false, error: "Personnel card not found" }); return; }
+      const card = await personnelCardPayload(kind, record);
+      const expired = !card.expiryDate || new Date(card.expiryDate).getTime() < Date.now();
+      const status = card.status !== "ACTIVE" ? "INACTIVE" : expired ? "EXPIRED" : "ACTIVE";
+      res.json({
+        valid: status === "ACTIVE",
+        status,
+        cardNumber: card.cardNumber,
+        cardType: kind === "TEACHER" ? "Teacher ID Card" : "Staff ID Card",
+        holderName: card.displayName,
+        roleTitle: card.roleTitle,
+        organizationUnit: card.organizationUnit,
+        issueDate: card.issueDate,
+        expiryDate: card.expiryDate,
+        school: card.school,
+      });
+    } catch (err: any) {
+      if (err?.code === "P2021" || err?.code === "P2022") { res.status(404).json({ valid: false, error: "Verification unavailable" }); return; }
+      logger.error("Error verifying personnel card:", err);
+      res.status(500).json({ valid: false, error: "Internal Server Error" });
     }
   });
 
