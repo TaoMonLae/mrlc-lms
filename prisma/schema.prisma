@@ -297,6 +297,8 @@ model User {
   languageQuestBio           String?
   languageQuestClassrooms    LanguageQuestClassroom[]          @relation("LanguageQuestClassroomTeacher")
   languageQuestMemberships   LanguageQuestClassroomMember[]
+  languageQuestFollowing     LanguageQuestFollow[]             @relation("LanguageQuestFollower")
+  languageQuestFollowers     LanguageQuestFollow[]             @relation("LanguageQuestFollowing")
   dailyQuestSessions         DailyQuestSession[]
   wordTrailGames             WordTrailGame[]
   gameControlPoliciesCreated GameControlPolicy[]               @relation("GameControlCreatedBy")
@@ -4281,6 +4283,22 @@ model LanguageQuestClassroomMember {
 
   @@unique([classroomId, userId])
   @@index([userId])
+}
+
+// One-way follow between any two Language Quest users (global leaderboard
+// social feature). A "friend" is simply a mutual follow — computed at read
+// time rather than stored, so there is no separate friend-request model.
+model LanguageQuestFollow {
+  id          String   @id @default(uuid())
+  followerId  String
+  follower    User     @relation("LanguageQuestFollower", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String
+  following   User     @relation("LanguageQuestFollowing", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
 }
 
 // -----------------------------------------------------------------------------

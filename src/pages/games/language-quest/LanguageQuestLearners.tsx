@@ -10,6 +10,7 @@ import {
   ShieldAlert,
   Star,
   Trash2,
+  Trophy,
   UserCheck,
   Users,
 } from 'lucide-react';
@@ -44,6 +45,7 @@ interface ManagedLearner {
   avatarId: string;
   bio: string;
   points: number;
+  rewards: { level: number; title: string };
   currentStreak: number;
   lastPlayedDate: string | null;
   completedChallenges: number;
@@ -268,6 +270,9 @@ export default function LanguageQuestLearners() {
                       <div className="flex flex-wrap items-center gap-2">
                         <h2 className="truncate text-lg font-black text-slate-950 dark:text-white">{learner.name}</h2>
                         <Badge variant={learner.active ? 'default' : 'destructive'}>{learner.active ? 'Active' : 'Inactive'}</Badge>
+                        <Badge variant="outline" className="gap-1 text-amber-700 dark:text-amber-300">
+                          <Trophy className="h-3 w-3" /> Level {learner.rewards.level} · {learner.rewards.title}
+                        </Badge>
                         {!learner.isExternalLearner && (
                           <Badge variant="outline" className="text-violet-700 dark:text-violet-300">{ROLE_LABEL[learner.role] ?? learner.role}</Badge>
                         )}

@@ -3048,7 +3048,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
 
       if (scope === "global") {
         // The original school-wide lifetime board remains the default view.
-        const [leaders, mine, monthlyXp] = await Promise.all([
+        const [leaders, mine, monthlyXp, myFollowing, myFollowers] = await Promise.all([
         prisma.languageQuestUserProgress.findMany({
           where: { user: audienceWhere },
           take: 50,
@@ -3067,7 +3067,15 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           orderBy: { _sum: { points: "desc" } },
           take: 3,
         }),
+        // Who the requesting learner follows / is followed by, so each row
+        // below can show a Follow button and a mutual-follow "Friend" badge.
+        // (See the `prisma as any` note on the follow routes further down —
+        // same reason applies here.)
+        (prisma as any).languageQuestFollow.findMany({ where: { followerId: jwtUser.userId }, select: { followingId: true } }),
+        (prisma as any).languageQuestFollow.findMany({ where: { followingId: jwtUser.userId }, select: { followerId: true } }),
         ]);
+        const followingSet = new Set(myFollowing.map((row: any) => row.followingId));
+        const followerSet = new Set(myFollowers.map((row: any) => row.followerId));
         const showcaseUsers = monthlyXp.length
           ? await prisma.user.findMany({
               where: { id: { in: monthlyXp.map((row: any) => row.userId) } },
@@ -3109,6 +3117,8 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
             avatarId: row.user.languageQuestAvatar || DEFAULT_LANGUAGE_QUEST_AVATAR,
             points: row.points,
             currentStreak: row.currentStreak,
+            isFollowing: followingSet.has(row.userId),
+            isFriend: followingSet.has(row.userId) && followerSet.has(row.userId),
           })),
         });
         return;
@@ -3217,6 +3227,53 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
     } catch (error) {
       logger.error("Error loading Language Quest leaderboard:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load the leaderboard" });
+    }
+  });
+
+  // One-way follow, used on the global leaderboard. A mutual follow (both
+  // directions exist) is surfaced to the client as a "friend" — there is no
+  // separate friend-request flow to keep this simple.
+  //
+  // NOTE: `prisma as any` is used here because the sandbox this route was
+  // authored in can't reach binaries.prisma.sh to regenerate the Prisma
+  // Client after adding the LanguageQuestFollow model to schema.prisma, so
+  // the generated client's TypeScript types don't include it yet. Run
+  // `npx prisma generate` (it will pick up the new model from schema.prisma)
+  // and these casts can be dropped — the queries themselves are unaffected.
+  app.post("/api/language-quest/follow/:userId", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const targetId = req.params.userId;
+    if (!targetId || targetId === jwtUser.userId) { res.status(400).json({ error: "You can't follow yourself" }); return; }
+    try {
+      const target = await prisma.user.findUnique({ where: { id: targetId }, select: { id: true } });
+      if (!target) { res.status(404).json({ error: "Learner not found" }); return; }
+      try {
+        await (prisma as any).languageQuestFollow.create({ data: { followerId: jwtUser.userId, followingId: targetId } });
+      } catch (createError: any) {
+        if (createError?.code !== "P2002") throw createError; // already following — no-op
+      }
+      const followedBack = Boolean(await (prisma as any).languageQuestFollow.findFirst({
+        where: { followerId: targetId, followingId: jwtUser.userId },
+        select: { id: true },
+      }));
+      res.json({ following: true, isFriend: followedBack });
+    } catch (error) {
+      logger.error("Error following Language Quest learner:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to follow this learner" });
+    }
+  });
+
+  app.delete("/api/language-quest/follow/:userId", authMiddleware, async (req, res) => {
+    const jwtUser = (req as any).user as JwtPayload;
+    const targetId = req.params.userId;
+    try {
+      await (prisma as any).languageQuestFollow.deleteMany({
+        where: { followerId: jwtUser.userId, followingId: targetId },
+      });
+      res.json({ following: false });
+    } catch (error) {
+      logger.error("Error unfollowing Language Quest learner:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to unfollow this learner" });
     }
   });
 
@@ -3903,6 +3960,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           avatarId: learner.languageQuestAvatar || DEFAULT_LANGUAGE_QUEST_AVATAR,
           bio: learner.languageQuestBio || "",
           points: learner.languageQuestProgress?.points || 0,
+          rewards: languageQuestRewardProgress(learner.languageQuestProgress?.points || 0),
           currentStreak: learner.languageQuestProgress?.currentStreak || 0,
           lastPlayedDate: learner.languageQuestProgress?.lastPlayedDate || null,
           completedChallenges: learner.languageQuestChallenges.length,

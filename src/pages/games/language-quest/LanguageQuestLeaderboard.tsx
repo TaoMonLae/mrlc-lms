@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
-import { ArrowLeft, BookOpen, Flame, Globe2, Layers3, Medal, Shield, Sparkles, Star, Trophy, Users } from 'lucide-react';
+import { ArrowLeft, BookOpen, Flame, Globe2, Heart, Layers3, Medal, Shield, Sparkles, Star, Trophy, UserCheck, UserPlus, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { LanguageQuestAvatar } from '@/src/components/games/LanguageQuestAvatar';
-import { apiGet, qs } from '@/src/lib/api';
+import { apiGet, apiSend, qs } from '@/src/lib/api';
 import { languageQuestRewardCardById } from '@/shared/languageQuestRewards';
 import type { LanguageQuestLeaderboardScope, LanguageQuestLeague } from '@/shared/languageQuestLeaderboard';
 
@@ -37,6 +37,8 @@ interface LeaderboardPayload {
     avatarId: string;
     points: number;
     currentStreak: number;
+    isFollowing?: boolean;
+    isFriend?: boolean;
   }[];
 }
 
@@ -65,6 +67,11 @@ export default function LanguageQuestLeaderboard() {
   const [data, setData] = useState<LeaderboardPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState<LeaderboardQuery>({ scope: 'global', courseId: '', category: '', classroomId: '' });
+  // Follow state per learner, keyed by userId. Seeded from the leaderboard
+  // payload on every fetch, then updated optimistically as the current user
+  // follows/unfollows people so the button doesn't need a full refetch.
+  const [followState, setFollowState] = useState<Record<string, { following: boolean; isFriend: boolean }>>({});
+  const [followBusyId, setFollowBusyId] = useState('');
 
   useEffect(() => {
     setLoading(true);
@@ -74,10 +81,34 @@ export default function LanguageQuestLeaderboard() {
       category: query.scope === 'category' ? query.category : null,
       classroomId: query.scope === 'classroom' ? query.classroomId : null,
     })}`)
-      .then(setData)
+      .then((payload) => {
+        setData(payload);
+        setFollowState(Object.fromEntries(
+          payload.leaders.map((leader) => [leader.userId, { following: !!leader.isFollowing, isFriend: !!leader.isFriend }]),
+        ));
+      })
       .catch((error: any) => toast.error(error?.message || 'Could not load the leaderboard'))
       .finally(() => setLoading(false));
   }, [query]);
+
+  const toggleFollow = async (leader: { userId: string; name: string }) => {
+    const current = followState[leader.userId] ?? { following: false, isFriend: false };
+    setFollowBusyId(leader.userId);
+    try {
+      if (current.following) {
+        await apiSend(`/api/language-quest/follow/${leader.userId}`, 'DELETE');
+        setFollowState((state) => ({ ...state, [leader.userId]: { following: false, isFriend: false } }));
+      } else {
+        const result = await apiSend<{ following: boolean; isFriend: boolean }>(`/api/language-quest/follow/${leader.userId}`, 'POST');
+        setFollowState((state) => ({ ...state, [leader.userId]: { following: true, isFriend: result.isFriend } }));
+        toast.success(result.isFriend ? `You and ${leader.name} are now friends!` : `Following ${leader.name}`);
+      }
+    } catch (error: any) {
+      toast.error(error?.message || 'Could not update follow status');
+    } finally {
+      setFollowBusyId('');
+    }
+  };
 
   const changeScope = (scope: LanguageQuestLeaderboardScope) => {
     setQuery((current) => ({
@@ -246,6 +277,7 @@ export default function LanguageQuestLeaderboard() {
           <div className={`divide-y divide-slate-100 transition-opacity dark:divide-surface-raised ${loading ? 'opacity-60' : ''}`}>
             {data.leaders.map((leader) => {
               const mine = leader.userId === data.currentUserId;
+              const follow = followState[leader.userId] ?? { following: !!leader.isFollowing, isFriend: !!leader.isFriend };
               return (
                 <div key={leader.userId} className={`flex items-center gap-3 px-4 py-4 sm:px-6 ${mine ? 'bg-violet-50 dark:bg-violet-500/10' : ''}`}>
                   <div className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-black ${rankTone[leader.rank] || 'bg-slate-100 text-slate-500 dark:bg-surface-raised dark:text-slate-300'}`}>
@@ -256,11 +288,31 @@ export default function LanguageQuestLeaderboard() {
                     <div className="flex items-center gap-2">
                       <p className="truncate font-semibold text-slate-900 dark:text-white">{leader.name}</p>
                       {mine && <Badge className="bg-violet-100 text-violet-700 hover:bg-violet-100 dark:bg-violet-500/15 dark:text-violet-300">You</Badge>}
+                      {!mine && follow.isFriend && (
+                        <Badge className="gap-1 bg-rose-100 text-rose-700 hover:bg-rose-100 dark:bg-rose-500/15 dark:text-rose-300">
+                          <Heart className="h-3 w-3 fill-current" /> Friends
+                        </Badge>
+                      )}
                     </div>
                     <p className="text-xs capitalize text-slate-400">{leader.role.toLowerCase().replace('_', ' ')}</p>
                   </div>
                   <div className="hidden items-center gap-1 text-sm font-bold text-orange-500 sm:flex"><Flame className="h-4 w-4 fill-current" /> {leader.currentStreak}</div>
-                  <div className="flex min-w-20 items-center justify-end gap-1 text-sm font-black text-amber-500"><Star className="h-4 w-4 fill-current" /> {leader.points}</div>
+                  <div className="flex min-w-16 items-center justify-end gap-1 text-sm font-black text-amber-500"><Star className="h-4 w-4 fill-current" /> {leader.points}</div>
+                  {data.scope === 'global' && !mine && (
+                    <Button
+                      size="sm"
+                      variant={follow.following ? 'outline' : 'default'}
+                      disabled={followBusyId === leader.userId}
+                      onClick={() => toggleFollow(leader)}
+                      className={`ml-1 shrink-0 ${follow.following ? '' : 'bg-violet-600 text-white hover:bg-violet-700'}`}
+                    >
+                      {follow.following ? (
+                        <><UserCheck className="mr-1 h-3.5 w-3.5" /> Following</>
+                      ) : (
+                        <><UserPlus className="mr-1 h-3.5 w-3.5" /> Follow</>
+                      )}
+                    </Button>
+                  )}
                 </div>
               );
             })}
