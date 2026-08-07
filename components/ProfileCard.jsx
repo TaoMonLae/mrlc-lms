@@ -37,6 +37,7 @@ const ProfileCardComponent = ({
   behindGlowColor = undefined,
   behindGlowSize = undefined,
   className = '',
+  enableEffects = true,
   enableTilt = true,
   enableMobileTilt = false,
   mobileTiltSensitivity = 5,
@@ -415,7 +416,7 @@ const ProfileCardComponent = ({
       className={`relative touch-none ${className}`.trim()}
       style={{ perspective: '500px', transform: 'translate3d(0, 0, 0.1px)', ...cardStyle }}
     >
-      {behindGlowEnabled && (
+      {enableEffects && behindGlowEnabled && (
         <div
           className="absolute inset-0 z-0 pointer-events-none transition-opacity duration-200 ease-out"
           style={{
@@ -464,17 +465,21 @@ const ProfileCardComponent = ({
               gridArea: '1 / -1'
             }}
           >
-            {/* Shine layer */}
-            <div style={shineStyle} />
+            {enableEffects && (
+              <>
+                {/* Shine layer */}
+                <div style={shineStyle} />
 
-            {/* Glare layer */}
-            <div style={glareStyle} />
+                {/* Glare layer */}
+                <div style={glareStyle} />
+              </>
+            )}
 
             {/* Avatar content */}
             <div
               className="overflow-visible backface-hidden"
               style={{
-                mixBlendMode: 'luminosity',
+                mixBlendMode: enableEffects ? 'luminosity' : 'normal',
                 transform: 'translateZ(2px)',
                 gridArea: '1 / -1',
                 borderRadius: cardRadius,
@@ -488,8 +493,9 @@ const ProfileCardComponent = ({
                 loading="lazy"
                 style={{
                   transformOrigin: '50% 100%',
-                  transform:
-                    'translateX(calc(-50% + (var(--pointer-from-left) - 0.5) * 6px)) translateZ(0) scaleY(calc(1 + (var(--pointer-from-top) - 0.5) * 0.02)) scaleX(calc(1 + (var(--pointer-from-left) - 0.5) * 0.01))',
+                  transform: enableEffects
+                    ? 'translateX(calc(-50% + (var(--pointer-from-left) - 0.5) * 6px)) translateZ(0) scaleY(calc(1 + (var(--pointer-from-top) - 0.5) * 0.02)) scaleX(calc(1 + (var(--pointer-from-left) - 0.5) * 0.01))'
+                    : 'translateX(-50%)',
                   borderRadius: cardRadius
                 }}
                 onError={e => {
@@ -551,9 +557,10 @@ const ProfileCardComponent = ({
             <div
               className="max-h-full overflow-hidden text-center relative z-[5]"
               style={{
-                transform:
-                  'translate3d(calc(var(--pointer-from-left) * -6px + 3px), calc(var(--pointer-from-top) * -6px + 3px), 0.1px)',
-                mixBlendMode: 'luminosity',
+                transform: enableEffects
+                  ? 'translate3d(calc(var(--pointer-from-left) * -6px + 3px), calc(var(--pointer-from-top) * -6px + 3px), 0.1px)'
+                  : 'none',
+                mixBlendMode: enableEffects ? 'luminosity' : 'normal',
                 gridArea: '1 / -1',
                 borderRadius: cardRadius,
                 pointerEvents: 'none'

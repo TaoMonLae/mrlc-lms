@@ -31,3 +31,25 @@ test("student card PDF contains exactly two portrait CR80 pages", async () => {
   assert.ok(Math.abs(Number(mediaBox[1]) - STUDENT_CARD_WIDTH_PT) < 0.001);
   assert.ok(Math.abs(Number(mediaBox[2]) - STUDENT_CARD_HEIGHT_PT) < 0.001);
 });
+
+test("long school details stay on the card back without creating an overflow page", async () => {
+  const pdf = await renderStudentCardPdf({
+    documentNumber: "MRLC--ID-20260807030043962-298945",
+    status: "ACTIVE",
+    studentName: "Min Khant Aung",
+    studentCode: "STD-2024-001",
+    className: "GED",
+    academicYear: "2026-2027",
+    issueDate: "2026-08-07",
+    expiryDate: "2027-07-31T15:59:59.999Z",
+    schoolName: "Mon Refugee Learning Centre - GED School",
+    schoolPhone: "+60 12-345-6789",
+    verifyUrl: "http://localhost:8000/verify/44f334419371cd48fb29aacde867e1fc",
+    logo: null,
+    photo: null,
+    qr: null,
+  });
+
+  const source = pdf.toString("latin1");
+  assert.equal((source.match(/\/Type \/Page\b/g) || []).length, 2);
+});

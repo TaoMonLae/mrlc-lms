@@ -84,6 +84,7 @@ export default function StudentProfilePage() {
           photoUrl={student.profilePhotoUrl}
           onPhotoUploaded={(url) => setStudent((prev) => ({ ...prev, profilePhotoUrl: url }))}
           targetType="student"
+          enableEffects={false}
           contactText="Print Profile"
           onContactClick={handlePrint}
         />

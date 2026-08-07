@@ -269,6 +269,7 @@ export default function StudentProfile() {
           onPhotoUploaded={(url) => setStudent((prev: any) => prev ? { ...prev, profilePhotoUrl: url } : prev)}
           targetType="student"
           targetId={s.id}
+          enableEffects={false}
           contactText={isAdmin ? 'Edit Profile' : 'Back to Students'}
           onContactClick={() => navigate(isAdmin ? `/students/${id}/edit` : '/students')}
         />

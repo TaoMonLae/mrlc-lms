@@ -74,6 +74,51 @@ function drawDetail(
     .text(value || "-", x + 5, y + 9.5, { width: width - 10, lineBreak: false, ellipsis: true });
 }
 
+/**
+ * PDFKit may wrap a text run even when it sits at the bottom of a fixed-size
+ * page. On a CR80 card that can create an otherwise blank overflow page. Fit
+ * and, if necessary, truncate the text before drawing so each label is
+ * guaranteed to remain on one line and inside its allotted width.
+ */
+function drawFittedSingleLine(
+  doc: PDFKit.PDFDocument,
+  text: string,
+  x: number,
+  y: number,
+  width: number,
+  options: { font: string; maxFontSize: number; minFontSize: number; align?: "left" | "center" | "right" },
+): void {
+  const value = String(text || "-").replace(/\s+/g, " ").trim();
+  let fontSize = options.maxFontSize;
+  doc.font(options.font).fontSize(fontSize);
+  while (fontSize > options.minFontSize && doc.widthOfString(value) > width) {
+    fontSize = Math.max(options.minFontSize, fontSize - 0.2);
+    doc.fontSize(fontSize);
+  }
+
+  let fitted = value;
+  if (doc.widthOfString(fitted) > width) {
+    const suffix = "...";
+    let low = 0;
+    let high = fitted.length;
+    while (low < high) {
+      const midpoint = Math.ceil((low + high) / 2);
+      const candidate = `${fitted.slice(0, midpoint).trimEnd()}${suffix}`;
+      if (doc.widthOfString(candidate) <= width) low = midpoint;
+      else high = midpoint - 1;
+    }
+    fitted = `${fitted.slice(0, low).trimEnd()}${suffix}`;
+  }
+
+  const fittedWidth = Math.min(doc.widthOfString(fitted), width);
+  const textX = options.align === "center"
+    ? x + (width - fittedWidth) / 2
+    : options.align === "right"
+      ? x + width - fittedWidth
+      : x;
+  doc.text(fitted, textX, y, { lineBreak: false });
+}
+
 function drawFront(doc: PDFKit.PDFDocument, data: StudentCardPdfData): void {
   cardPage(doc);
   const headerHeight = 82;
@@ -151,17 +196,26 @@ function drawBack(doc: PDFKit.PDFDocument, data: StudentCardPdfData): void {
   doc.roundedRect(12, 197, STUDENT_CARD_WIDTH_PT - 24, 28, 6).fill("#f8fafc");
   doc.font("Helvetica-Bold").fontSize(5.1).fillColor("#64748b")
     .text("IF THIS CARD IS FOUND", 19, 202, { characterSpacing: 0.55 });
-  doc.font("Helvetica").fontSize(5.2).fillColor("#334155")
-    .text(`Please return it to ${data.schoolName}.`, 19, 210, { width: STUDENT_CARD_WIDTH_PT - 38, ellipsis: true, lineBreak: false });
-  doc.font("Helvetica-Bold").fontSize(4.6).fillColor("#64748b")
-    .text(`School contact: ${data.schoolPhone || "Not provided"}`, 19, 218, {
-      width: STUDENT_CARD_WIDTH_PT - 38,
-      ellipsis: true,
-      lineBreak: false,
-    });
+  doc.fillColor("#334155");
+  drawFittedSingleLine(doc, `Please return it to ${data.schoolName}.`, 19, 210, STUDENT_CARD_WIDTH_PT - 38, {
+    font: "Helvetica",
+    maxFontSize: 5.2,
+    minFontSize: 4,
+  });
+  doc.fillColor("#64748b");
+  drawFittedSingleLine(doc, `School contact: ${data.schoolPhone || "Not provided"}`, 19, 218, STUDENT_CARD_WIDTH_PT - 38, {
+    font: "Helvetica-Bold",
+    maxFontSize: 4.6,
+    minFontSize: 3.9,
+  });
 
-  doc.font("Helvetica").fontSize(4.2).fillColor("#94a3b8")
-    .text(`Property of ${data.schoolName} - Non-transferable`, 8, 233, { width: STUDENT_CARD_WIDTH_PT - 16, align: "center", ellipsis: true, lineBreak: false });
+  doc.fillColor("#94a3b8");
+  drawFittedSingleLine(doc, `Property of ${data.schoolName} - Non-transferable`, 8, 233, STUDENT_CARD_WIDTH_PT - 16, {
+    font: "Helvetica",
+    maxFontSize: 4.2,
+    minFontSize: 3.5,
+    align: "center",
+  });
 }
 
 export async function renderStudentCardPdf(data: StudentCardPdfData): Promise<Buffer> {

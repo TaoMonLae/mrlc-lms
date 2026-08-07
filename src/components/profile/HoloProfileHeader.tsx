@@ -20,6 +20,8 @@ interface HoloProfileHeaderProps {
   onContactClick?: () => void;
   /** Hide the "Change Photo" control for viewers who can't edit this profile. Defaults to true. */
   canEditPhoto?: boolean;
+  /** Disable the holographic glare, colour blending, and tilt while keeping the same profile layout. */
+  enableEffects?: boolean;
 }
 
 /**
@@ -32,7 +34,7 @@ interface HoloProfileHeaderProps {
  */
 export function HoloProfileHeader({
   name, title, handle, status, photoUrl, onPhotoUploaded, targetType, targetId,
-  contactText = 'Edit Profile', onContactClick, canEditPhoto = true,
+  contactText = 'Edit Profile', onContactClick, canEditPhoto = true, enableEffects = true,
 }: HoloProfileHeaderProps) {
   return (
     <div className="flex flex-col items-center gap-3 mx-auto md:mx-0 w-fit">
@@ -43,6 +45,9 @@ export function HoloProfileHeader({
         title={title}
         handle={handle || '—'}
         status={status || ''}
+        enableEffects={enableEffects}
+        enableTilt={enableEffects}
+        behindGlowEnabled={enableEffects}
         contactText={contactText}
         onContactClick={onContactClick}
       />
