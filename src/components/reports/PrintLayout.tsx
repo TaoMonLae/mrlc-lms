@@ -7,9 +7,11 @@ interface PrintLayoutProps {
   title: string;
   filters?: Record<string, string>;
   preparedBy?: string;
+  className?: string;
+  showSignatures?: boolean;
 }
 
-export function PrintLayout({ children, title, filters, preparedBy }: PrintLayoutProps) {
+export function PrintLayout({ children, title, filters, preparedBy, className = '', showSignatures = true }: PrintLayoutProps) {
   const { schoolProfile, brandingSettings } = useSettings();
 
   const accent = brandingSettings.primaryColor || '#7a3dff';
@@ -17,7 +19,7 @@ export function PrintLayout({ children, title, filters, preparedBy }: PrintLayou
 
   return (
     <div
-      className="report-print bg-white text-black p-8 mx-auto rounded-xl border border-slate-200 shadow-sm print:rounded-none print:border-0 print:shadow-none"
+      className={`report-print bg-white text-black p-8 mx-auto rounded-xl border border-slate-200 shadow-sm print:rounded-none print:border-0 print:shadow-none ${className}`}
       style={{ ['--report-accent' as string]: accent }}
     >
       {/* Header */}
@@ -70,7 +72,7 @@ export function PrintLayout({ children, title, filters, preparedBy }: PrintLayou
       <div className="mb-12 print-content">{children}</div>
 
       {/* Footer / Signatures */}
-      <div className="mt-16 pt-8 grid grid-cols-3 gap-8 text-sm page-break-inside-avoid report-signatures">
+      {showSignatures && <div className="mt-16 pt-8 grid grid-cols-3 gap-8 text-sm page-break-inside-avoid report-signatures">
         <div className="text-center">
           <div className="border-b border-slate-400 h-16 mb-2 flex items-end justify-center pb-2">
             {preparedBy && <span className="italic text-slate-600">{preparedBy}</span>}
@@ -93,7 +95,7 @@ export function PrintLayout({ children, title, filters, preparedBy }: PrintLayou
           </div>
           <p className="font-medium text-slate-800">Principal / Administrator</p>
         </div>
-      </div>
+      </div>}
 
       <div className="text-center text-xs text-slate-400 mt-8">
         End of Report &middot; {schoolProfile.shortName} LMS
@@ -149,10 +151,21 @@ export function PrintLayout({ children, title, filters, preparedBy }: PrintLayou
           -webkit-print-color-adjust: exact;
           print-color-adjust: exact;
         }
+        .report-print .print-content thead th.text-right { text-align: right; }
+        .report-print .print-content thead th.text-center { text-align: center; }
         .report-print .print-content tbody td {
           padding: 8px 12px;
           border: 1px solid #d9d4e8;
           color: #1f2937;
+        }
+        .report-print .print-content tfoot td {
+          padding: 8px 12px;
+          border: 1px solid #c8c2dc;
+          background: #eeebf8;
+          color: #111827;
+          font-weight: 700;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
         }
         .report-print .print-content tbody tr:nth-child(even) td {
           background: #f6f4fc;
