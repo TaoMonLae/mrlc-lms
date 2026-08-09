@@ -102,8 +102,8 @@ export default function ReportsDashboard() {
     },
     {
       id: 'monthly-finance',
-      title: 'Monthly Finance Report',
-      description: 'Income vs. expenses by month, with running cash balance and CSV export.',
+      title: 'Monthly Income & Expenses',
+      description: 'Separate monthly income/fees and paid-expense tracking, with dedicated exports.',
       icon: <TrendingUp className="h-6 w-6 text-green-500" />,
       path: '/financial/reports/monthly',
       color: 'bg-green-50 dark:bg-green-900/20',

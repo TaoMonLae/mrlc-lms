@@ -878,6 +878,7 @@ model FeePayment {
   assignment    FeeAssignment?  @relation("FeeAssignmentPayments", fields: [assignmentId], references: [id])
   installmentId String?         @unique
   installment   FeeInstallment? @relation("FeeInstallmentPayments", fields: [installmentId], references: [id])
+  collections   FeeCollection[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -887,6 +888,30 @@ model FeePayment {
   @@index([billingMonth])
   @@index([assignmentId])
   @@index([installmentId])
+}
+
+// One row per cash receipt against a fee charge. FeePayment.paidAmount is the
+// current aggregate balance; these rows preserve when each instalment was
+// actually collected so monthly income reports do not move earlier receipts
+// into the month of the latest top-up.
+model FeeCollection {
+  id String @id @default(uuid())
+
+  feePaymentId String
+  feePayment   FeePayment @relation(fields: [feePaymentId], references: [id], onDelete: Cascade)
+
+  amount        Float
+  currency      String   @default("MYR")
+  paymentDate   DateTime @default(now())
+  paymentMethod String?
+  reference     String?
+  notes         String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([feePaymentId])
+  @@index([paymentDate])
 }
 
 model FeeStructure {

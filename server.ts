@@ -83,6 +83,7 @@ import { checkWritableDirectory, probeCommand, summarizeHealth, type HealthCheck
 import { extractRarEntry, listRarImageEntries } from "./lib/portableRar";
 import { cleanEbookTitle, findDuplicateEbookSeriesVolume, findDuplicateEbookTitle, normalizedTitleForColumn } from "./lib/ebookTitles";
 import { feeMonthRange, feeYearRange, normalizeFeeMonth } from "./shared/feePeriods";
+import { buildMonthlyFinanceRows } from "./shared/monthlyFinance";
 import { inferStudentCardExpiry } from "./shared/studentCardValidity";
 import {
   GRADE_CATEGORIES,
@@ -8707,6 +8708,18 @@ async function startServer() {
           status,
           receiptNumber: receiptNumber || `RCP-${Date.now()}`,
           notes,
+          ...(paidNow > 0 && {
+            collections: {
+              create: {
+                amount: paidNow,
+                currency: profile?.currency || "MYR",
+                paymentDate: paymentDate ? new Date(paymentDate) : new Date(),
+                paymentMethod: paymentMethod || "CASH",
+                reference: receiptNumber || null,
+                notes: notes || null,
+              },
+            },
+          }),
         } as any,
         include: { student: { include: { user: true, class: true } } }
       });
@@ -8768,16 +8781,28 @@ async function startServer() {
       const paymentDate = req.body.paymentDate ? new Date(req.body.paymentDate) : new Date();
       const noteLine = `${paymentDate.toISOString().slice(0, 10)}: +${applied} payment recorded${req.body.notes ? ` (${req.body.notes})` : ""}`;
 
-      const updated: any = await prisma.feePayment.update({
-        where: { id: fee.id },
-        data: {
-          paidAmount: newPaid,
-          status: newStatus,
-          paidDate: paymentDate,
-          paymentMethod: req.body.paymentMethod || fee.paymentMethod,
-          notes: fee.notes ? `${fee.notes}\n${noteLine}` : noteLine,
-        } as any,
-        include: { student: { include: { user: true, class: true } } },
+      const updated: any = await prisma.$transaction(async (tx) => {
+        await tx.feeCollection.create({
+          data: {
+            feePaymentId: fee.id,
+            amount: applied,
+            currency: fee.currency || "MYR",
+            paymentDate,
+            paymentMethod: req.body.paymentMethod || fee.paymentMethod,
+            notes: req.body.notes || null,
+          },
+        });
+        return tx.feePayment.update({
+          where: { id: fee.id },
+          data: {
+            paidAmount: newPaid,
+            status: newStatus,
+            paidDate: paymentDate,
+            paymentMethod: req.body.paymentMethod || fee.paymentMethod,
+            notes: fee.notes ? `${fee.notes}\n${noteLine}` : noteLine,
+          } as any,
+          include: { student: { include: { user: true, class: true } } },
+        });
       });
 
       const profile = await prisma.schoolProfile.findFirst();
@@ -8819,6 +8844,8 @@ async function startServer() {
 
       const voidedAt = new Date();
       const voidNote = `${voidedAt.toISOString().slice(0, 10)}: Payment voided by ${jwtUser.email}. Reason: ${req.body.reason}`;
+      // Keep the collection rows as an immutable audit trail. Financial
+      // reports exclude collections whose parent charge is WAIVED.
       const updated: any = await prisma.feePayment.update({
         where: { id: fee.id },
         data: {
@@ -9350,6 +9377,15 @@ async function startServer() {
           description: assignment.feeItem?.name || "Fee payment",
           paymentMethod: req.body.paymentMethod || "OTHER",
           notes: req.body.notes,
+          collections: {
+            create: {
+              amount: assignment.outstandingAmount,
+              currency: feeProfile?.currency || "MYR",
+              paymentDate: new Date(),
+              paymentMethod: req.body.paymentMethod || "OTHER",
+              notes: req.body.notes || null,
+            },
+          },
         } as any,
       });
 
@@ -10320,21 +10356,29 @@ async function startServer() {
         prisma.expense.count({ where }),
       ]);
 
-      // Calculate summary
-      const summary = await prisma.expense.groupBy({
-        by: ['status'],
+      // Calculate totals from gross invoice amounts and actual bill-payment
+      // rows. The previous status-only summary omitted tax, treated a partial
+      // payment as wholly unpaid, and counted rejected/cancelled expenses.
+      const summaryExpenses = await prisma.expense.findMany({
         where,
-        _sum: { amount: true, taxAmount: true },
+        select: {
+          amount: true,
+          taxAmount: true,
+          status: true,
+          payments: { select: { amount: true } },
+        },
       });
-
-      const sumFor = (entry: (typeof summary)[number] | undefined) => entry
-        ? (entry._sum.amount ?? 0) + (entry._sum.taxAmount ?? 0)
-        : 0;
+      const trackableExpenses = summaryExpenses.filter((expense) => !['REJECTED', 'CANCELLED'].includes(expense.status));
       const summaryData = {
-        totalAmount: summary.reduce((sum, entry) => sum + sumFor(entry), 0),
-        paidAmount: sumFor(summary.find((entry) => entry.status === "PAID")),
-        pendingAmount: ["DRAFT", "PENDING_APPROVAL", "APPROVED", "PARTIAL"]
-          .reduce((sum, statusName) => sum + sumFor(summary.find((entry) => entry.status === statusName)), 0),
+        totalAmount: trackableExpenses.reduce((sum, expense) => sum + getExpenseGrossAmount(expense), 0),
+        paidAmount: trackableExpenses.reduce(
+          (sum, expense) => sum + expense.payments.reduce((paid, payment) => paid + payment.amount, 0),
+          0,
+        ),
+        pendingAmount: trackableExpenses.reduce((sum, expense) => {
+          const paid = expense.payments.reduce((paymentSum, payment) => paymentSum + payment.amount, 0);
+          return sum + Math.max(0, getExpenseGrossAmount(expense) - paid);
+        }, 0),
       };
 
       res.json({
@@ -11753,19 +11797,17 @@ async function startServer() {
         (fiscalYear || yearParam) as string | undefined
       );
 
-      // Get fee payments (income). Includes PARTIAL charges too -- some
-      // real cash has already come in against those even though the
-      // balance isn't fully settled (same reasoning as the PARTIAL expense
-      // handling below), and sums paidAmount rather than amount so a
-      // partially-paid charge only counts the portion actually collected.
-      const feePayments = await prisma.feePayment.aggregate({
+      // Count dated cash receipts rather than FeePayment.paidAmount. A fee
+      // charge can be paid in several months; its paidAmount is cumulative
+      // and paidDate only represents the latest receipt.
+      const feeCollections = await prisma.feeCollection.aggregate({
         where: {
-          paidDate: dateFilter,
-          status: { in: ['PAID', 'PARTIAL'] },
+          paymentDate: dateFilter,
+          feePayment: { status: { not: 'WAIVED' } },
         },
-        _sum: { paidAmount: true },
+        _sum: { amount: true },
         _count: true,
-      } as any);
+      });
 
       // Get donations (income)
       const donations = await prisma.donation.aggregate({
@@ -11822,7 +11864,7 @@ async function startServer() {
         _count: true,
       });
 
-      const totalIncome = ((feePayments._sum as any).paidAmount || 0) + (donations._sum.amount || 0);
+      const totalIncome = (feeCollections._sum.amount || 0) + (donations._sum.amount || 0);
       const totalExpenses = billPayments._sum.amount || 0;
       const netCashFlow = totalIncome - totalExpenses;
 
@@ -11833,9 +11875,9 @@ async function startServer() {
         },
         income: {
           total: totalIncome,
-          fees: (feePayments._sum as any).paidAmount || 0,
+          fees: feeCollections._sum.amount || 0,
           donations: donations._sum.amount || 0,
-          feePayments: feePayments._count,
+          feePayments: feeCollections._count,
           donationCount: donations._count,
         },
         expenses: {
@@ -11882,19 +11924,6 @@ async function startServer() {
         startDate as string | undefined,
         endDate as string | undefined
       );
-
-      // Get income by period. Includes PARTIAL charges and sums paidAmount
-      // (not amount) so only cash actually collected counts as income --
-      // see the matching comment on the summary endpoint above.
-      const feePaymentsByPeriod = await prisma.feePayment.groupBy({
-        by: groupBy === 'month' ? ['paidDate'] : ['paidDate'],
-        where: {
-          paidDate: dateFilter,
-          status: { in: ['PAID', 'PARTIAL'] as any },
-        },
-        _sum: { paidAmount: true } as any,
-        _count: true,
-      });
 
       const donationsByPeriod = await prisma.donation.groupBy({
         by: groupBy === 'month' ? ['donationDate'] : ['donationDate'],
@@ -11949,25 +11978,29 @@ async function startServer() {
       // only show totals by source/category, which isn't enough to actually
       // audit a period; these feed the "detailed" transaction tables in the
       // Income & Expense Report.
-      const [feePaymentDetails, donationDetails, expenseDetails] = await Promise.all([
-        prisma.feePayment.findMany({
-          where: { paidDate: dateFilter, status: { in: ['PAID', 'PARTIAL'] as any } },
+      const [feeCollectionDetails, donationDetails, expenseDetails] = await Promise.all([
+        prisma.feeCollection.findMany({
+          where: { paymentDate: dateFilter, feePayment: { status: { not: 'WAIVED' } } },
           select: {
             id: true,
             amount: true,
-            paidAmount: true,
-            paidDate: true,
-            receiptNumber: true,
+            paymentDate: true,
             paymentMethod: true,
-            student: {
+            reference: true,
+            feePayment: {
               select: {
-                studentCode: true,
-                preferredName: true,
-                user: { select: { firstName: true, lastName: true } },
+                receiptNumber: true,
+                student: {
+                  select: {
+                    studentCode: true,
+                    preferredName: true,
+                    user: { select: { firstName: true, lastName: true } },
+                  },
+                },
               },
             },
           },
-          orderBy: { paidDate: 'desc' },
+          orderBy: { paymentDate: 'desc' },
         }),
         prisma.donation.findMany({
           where: { donationDate: dateFilter, status: { in: ['RECEIVED', 'PROCESSED'] } },
@@ -11985,17 +12018,17 @@ async function startServer() {
         Promise.resolve(billPaymentDetails),
       ]);
 
-      const studentLabel = (s: (typeof feePaymentDetails)[number]['student']) =>
+      const studentLabel = (s: (typeof feeCollectionDetails)[number]['feePayment']['student']) =>
         s.preferredName || (s.user ? `${s.user.firstName} ${s.user.lastName}` : s.studentCode);
 
       const incomeDetail = [
-        ...feePaymentDetails.map((p) => ({
-          date: p.paidDate,
+        ...feeCollectionDetails.map((p) => ({
+          date: p.paymentDate,
           type: 'Fee Payment' as const,
-          description: `Fee payment — ${studentLabel(p.student)}`,
-          reference: p.receiptNumber || null,
+          description: `Fee payment — ${studentLabel(p.feePayment.student)}`,
+          reference: p.reference || p.feePayment.receiptNumber || null,
           paymentMethod: p.paymentMethod || null,
-          amount: (p as any).paidAmount ?? p.amount,
+          amount: p.amount,
         })),
         ...donationDetails.map((d) => ({
           date: d.donationDate,
@@ -12018,7 +12051,8 @@ async function startServer() {
       }));
 
       // Calculate totals
-      const totalIncome = (feePaymentsByPeriod.reduce((sum, p) => sum + ((p._sum as any).paidAmount || 0), 0) +
+      const feeIncome = feeCollectionDetails.reduce((sum, payment) => sum + payment.amount, 0);
+      const totalIncome = (feeIncome +
                            donationsByPeriod.reduce((sum, p) => sum + (p._sum.amount || 0), 0));
       const totalExpenses = expensesByCategory.reduce((sum, cat) => sum + (cat._sum.amount || 0), 0);
       const netSurplus = totalIncome - totalExpenses;
@@ -12032,7 +12066,7 @@ async function startServer() {
         income: {
           total: totalIncome,
           bySource: {
-            fees: feePaymentsByPeriod.reduce((sum, p) => sum + ((p._sum as any).paidAmount || 0), 0),
+            fees: feeIncome,
             donations: donationsByPeriod.reduce((sum, p) => sum + (p._sum.amount || 0), 0),
           },
           detail: incomeDetail,
@@ -12162,15 +12196,14 @@ async function startServer() {
       );
 
       // Cash inflows
-      const feeInflows = await prisma.feePayment.findMany({
+      const feeInflows = await prisma.feeCollection.findMany({
         where: {
-          paidDate: dateFilter,
-          status: { in: ['PAID', 'PARTIAL'] as any },
+          paymentDate: dateFilter,
+          feePayment: { status: { not: 'WAIVED' } },
         },
         select: {
-          paidDate: true,
+          paymentDate: true,
           amount: true,
-          paidAmount: true,
           paymentMethod: true,
         },
       });
@@ -12201,63 +12234,15 @@ async function startServer() {
         },
       });
 
-      // Combine and group by month
-      const monthlyCashFlow = [];
-
       // Use the UTC year of the range start. The old code did
       // `new Date(dateFilter.gte).setMonth(i)` which (a) shifted to the
       // previous year in negative-UTC-offset timezones ("2026-01-01" parses to
       // Dec 31 local) and (b) skipped months via day-of-month overflow when the
       // start day was the 29th–31st.
       const reportYear = dateFilter.gte.getUTCFullYear();
+      const monthlyCashFlow = buildMonthlyFinanceRows(reportYear, feeInflows, donationInflows, expenseOutflows);
 
-      for (let i = 0; i < 12; i++) {
-        const monthStart = new Date(Date.UTC(reportYear, i, 1));
-        const nextMonthStart = new Date(Date.UTC(reportYear, i + 1, 1));
-
-        const monthFeeInflows = feeInflows.filter(f => {
-          const date = new Date(f.paidDate);
-          return date >= monthStart && date < nextMonthStart;
-        });
-
-        const monthDonationInflows = donationInflows.filter(d => {
-          const date = new Date(d.donationDate);
-          return date >= monthStart && date < nextMonthStart;
-        });
-
-        const monthExpenseOutflows = expenseOutflows.filter(e => {
-          const date = new Date(e.paymentDate);
-          return date >= monthStart && date < nextMonthStart;
-        });
-
-        const totalInflow = monthFeeInflows.reduce((sum, f) => sum + ((f as any).paidAmount ?? f.amount), 0) +
-                            monthDonationInflows.reduce((sum, d) => sum + d.amount, 0);
-        const totalOutflow = monthExpenseOutflows.reduce((sum, e) => sum + e.amount, 0);
-        const netFlow = totalInflow - totalOutflow;
-
-        monthlyCashFlow.push({
-          month: i + 1,
-          year: reportYear,
-          inflow: {
-            total: totalInflow,
-            fees: monthFeeInflows.reduce((sum, f) => sum + ((f as any).paidAmount ?? f.amount), 0),
-            donations: monthDonationInflows.reduce((sum, d) => sum + d.amount, 0),
-          },
-          outflow: {
-            total: totalOutflow,
-            byCategory: monthExpenseOutflows.reduce((acc, e) => {
-              const category = e.expense.category;
-              acc[category] = (acc[category] || 0) + e.amount;
-              return acc;
-            }, {} as Record<string, number>),
-          },
-          netFlow,
-          cumulative: monthlyCashFlow.length > 0 ?
-            monthlyCashFlow[monthlyCashFlow.length - 1].cumulative + netFlow : netFlow,
-        });
-      }
-
-      const totalInflow = feeInflows.reduce((sum, f) => sum + ((f as any).paidAmount ?? f.amount), 0) +
+      const totalInflow = feeInflows.reduce((sum, f) => sum + f.amount, 0) +
                          donationInflows.reduce((sum, d) => sum + d.amount, 0);
       const totalOutflow = expenseOutflows.reduce((sum, e) => sum + e.amount, 0);
       const netCashFlow = totalInflow - totalOutflow;

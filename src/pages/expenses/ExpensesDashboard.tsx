@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router';
-import { Plus, Search, DollarSign, TrendingUp, AlertCircle, CheckCircle2, Receipt, Building2, Wallet, Printer, FileSpreadsheet, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Search, DollarSign, TrendingUp, AlertCircle, CheckCircle2, Receipt, Building2, Wallet, Printer, FileSpreadsheet, Pencil, Trash2, CalendarDays } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,12 @@ import { formatMoney } from '../../lib/locale';
 import { useSettings } from '../../providers/SettingsProvider';
 import { exportReportToExcel } from '../../lib/exportReport';
 import { PrintLayout } from '../../components/reports/PrintLayout';
+import { feeMonthLabel, feeMonthOptions } from '../../../shared/feePeriods';
+
+const expenseGrossAmount = (expense: any) => expense.totalAmount ?? ((expense.amount || 0) + (expense.taxAmount || 0));
+const expensePaidAmount = (expense: any) => Array.isArray(expense.payments)
+  ? expense.payments.reduce((sum: number, payment: any) => sum + (payment.amount || 0), 0)
+  : 0;
 
 export default function ExpensesDashboard() {
   const { hasPermission } = usePermissions();
@@ -25,26 +31,46 @@ export default function ExpensesDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
+  const [monthFilter, setMonthFilter] = useState('ALL');
   const [expenses, setExpenses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const monthOptions = useMemo(() => feeMonthOptions(new Date(), 36, 12), []);
 
   const currency = systemSettings.currency || 'MYR';
 
   useEffect(() => {
+    const controller = new AbortController();
     const token = sessionStorage.getItem('auth_token');
-    fetch('/api/expenses', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(r => r.json())
-      .then(data => {
-        if (data.data) {
-          setExpenses(data.data);
-        }
-      })
-      .catch(() => {
+    const headers = { Authorization: `Bearer ${token}` };
+
+    const loadExpenses = async () => {
+      try {
+        setLoading(true);
+        const firstResponse = await fetch('/api/expenses?limit=100&page=1', { headers, signal: controller.signal });
+        const firstPage = await firstResponse.json().catch(() => ({}));
+        if (!firstResponse.ok) throw new Error(firstPage.error || 'Failed to load expenses');
+
+        const totalPages = firstPage.pagination?.totalPages || 1;
+        const remainingPages = await Promise.all(
+          Array.from({ length: Math.max(0, totalPages - 1) }, async (_, index) => {
+            const response = await fetch(`/api/expenses?limit=100&page=${index + 2}`, { headers, signal: controller.signal });
+            const body = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(body.error || 'Failed to load expenses');
+            return body.data || [];
+          }),
+        );
+        setExpenses([...(firstPage.data || []), ...remainingPages.flat()]);
+      } catch (error: any) {
+        if (error?.name === 'AbortError') return;
         setExpenses([]);
-      })
-      .finally(() => setLoading(false));
+        toast.error(error?.message || 'Failed to load expenses');
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    };
+
+    void loadExpenses();
+    return () => controller.abort();
   }, []);
 
   const filteredExpenses = expenses.filter(e => {
@@ -53,14 +79,18 @@ export default function ExpensesDashboard() {
                           (e.vendorInvoiceNo && e.vendorInvoiceNo.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesStatus = statusFilter === 'ALL' || e.status === statusFilter;
     const matchesCategory = categoryFilter === 'ALL' || e.category === categoryFilter;
-    return matchesSearch && matchesStatus && matchesCategory;
+    const matchesMonth = monthFilter === 'ALL' || String(e.expenseDate || '').slice(0, 7) === monthFilter;
+    return matchesSearch && matchesStatus && matchesCategory && matchesMonth;
   });
 
-  const totalAmount = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
-  const paidAmount = expenses.filter(e => e.status === 'PAID').reduce((sum, e) => sum + (e.amount || 0), 0);
-  const pendingAmount = expenses.filter(e => ['DRAFT', 'PENDING_APPROVAL', 'APPROVED'].includes(e.status))
-    .reduce((sum, e) => sum + (e.amount || 0), 0);
-  const pendingApproval = expenses.filter(e => e.status === 'PENDING_APPROVAL').length;
+  const trackableExpenses = filteredExpenses.filter((expense) => !['REJECTED', 'CANCELLED'].includes(expense.status));
+  const totalAmount = trackableExpenses.reduce((sum, expense) => sum + expenseGrossAmount(expense), 0);
+  const paidAmount = trackableExpenses.reduce((sum, expense) => sum + expensePaidAmount(expense), 0);
+  const pendingAmount = trackableExpenses.reduce(
+    (sum, expense) => sum + Math.max(0, expenseGrossAmount(expense) - expensePaidAmount(expense)),
+    0,
+  );
+  const pendingApproval = filteredExpenses.filter(e => e.status === 'PENDING_APPROVAL').length;
 
   const categoryOptions = Array.from(new Set(expenses.map((e) => e.category)));
 
@@ -68,6 +98,7 @@ export default function ExpensesDashboard() {
     switch (status) {
       case 'PAID': return 'bg-green-100 text-green-800 border-green-200';
       case 'APPROVED': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'PARTIAL': return 'bg-purple-100 text-purple-800 border-purple-200';
       case 'PENDING_APPROVAL': return 'bg-amber-100 text-amber-800 border-amber-200';
       case 'REJECTED': return 'bg-red-100 text-red-800 border-red-200';
       case 'CANCELLED': return 'bg-slate-100 text-slate-800 border-slate-200';
@@ -95,11 +126,11 @@ export default function ExpensesDashboard() {
     exportReportToExcel({
       title: 'Expenses',
       subtitle: `${filteredExpenses.length} expense${filteredExpenses.length === 1 ? '' : 's'}`,
-      filename: 'expenses',
+      filename: monthFilter === 'ALL' ? 'expenses' : `expenses-${monthFilter}`,
       summary: [
         { label: 'Total Expenses', value: formatMoney(totalAmount, currency) },
         { label: 'Paid', value: formatMoney(paidAmount, currency) },
-        { label: 'Pending', value: formatMoney(pendingAmount, currency) },
+        { label: 'Outstanding', value: formatMoney(pendingAmount, currency) },
         { label: 'Awaiting Approval', value: String(pendingApproval) },
       ],
       sections: [
@@ -111,7 +142,7 @@ export default function ExpensesDashboard() {
             getCategoryLabel(e.category),
             e.vendor?.name || '-',
             new Date(e.expenseDate).toLocaleDateString(),
-            formatMoney(e.amount, e.currency || currency),
+            formatMoney(expenseGrossAmount(e), e.currency || currency),
             e.status.replace('_', ' '),
           ]),
         },
@@ -145,6 +176,7 @@ export default function ExpensesDashboard() {
   if (searchTerm) activeFilters['Search'] = searchTerm;
   if (statusFilter !== 'ALL') activeFilters['Status'] = statusFilter.replace('_', ' ');
   if (categoryFilter !== 'ALL') activeFilters['Category'] = getCategoryLabel(categoryFilter);
+  if (monthFilter !== 'ALL') activeFilters['Month'] = feeMonthLabel(monthFilter);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -198,7 +230,7 @@ export default function ExpensesDashboard() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Pending</CardTitle>
+            <CardTitle className="text-sm font-medium text-slate-500">Outstanding</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-amber-600">{formatMoney(pendingAmount, currency)}</div>
@@ -225,6 +257,18 @@ export default function ExpensesDashboard() {
             className="pl-10"
           />
         </div>
+        <Select value={monthFilter} onValueChange={setMonthFilter}>
+          <SelectTrigger className="w-full sm:w-[190px]">
+            <CalendarDays className="mr-2 h-4 w-4 text-slate-400" />
+            <SelectValue placeholder="Expense month" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All Months</SelectItem>
+            {monthOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="All Status" />
@@ -234,6 +278,7 @@ export default function ExpensesDashboard() {
             <SelectItem value="DRAFT">Draft</SelectItem>
             <SelectItem value="PENDING_APPROVAL">Pending Approval</SelectItem>
             <SelectItem value="APPROVED">Approved</SelectItem>
+            <SelectItem value="PARTIAL">Partially Paid</SelectItem>
             <SelectItem value="PAID">Paid</SelectItem>
             <SelectItem value="REJECTED">Rejected</SelectItem>
             <SelectItem value="CANCELLED">Cancelled</SelectItem>
@@ -275,7 +320,7 @@ export default function ExpensesDashboard() {
               ) : filteredExpenses.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="text-center py-8 text-slate-500">
-                    {searchTerm || statusFilter !== 'ALL' || categoryFilter !== 'ALL'
+                    {searchTerm || statusFilter !== 'ALL' || categoryFilter !== 'ALL' || monthFilter !== 'ALL'
                       ? 'No expenses found matching your filters.'
                       : 'No expenses yet. Create your first expense to get started.'}
                   </td>
@@ -301,7 +346,7 @@ export default function ExpensesDashboard() {
                       {new Date(expense.expenseDate).toLocaleDateString()}
                     </td>
                     <td className="py-3 px-4 text-right font-medium text-slate-900 dark:text-white">
-                      {formatMoney(expense.amount, expense.currency || currency)}
+                      {formatMoney(expenseGrossAmount(expense), expense.currency || currency)}
                     </td>
                     <td className="py-3 px-4 text-center">
                       <Badge className={getStatusColor(expense.status)}>
@@ -351,7 +396,7 @@ export default function ExpensesDashboard() {
               <p className="text-lg font-bold mt-1">{formatMoney(paidAmount, currency)}</p>
             </div>
             <div className="border border-slate-300 p-3 rounded text-center">
-              <p className="text-xs text-slate-500 uppercase font-bold">Pending</p>
+              <p className="text-xs text-slate-500 uppercase font-bold">Outstanding</p>
               <p className="text-lg font-bold mt-1">{formatMoney(pendingAmount, currency)}</p>
             </div>
             <div className="border border-slate-300 p-3 rounded text-center">
@@ -388,7 +433,7 @@ export default function ExpensesDashboard() {
                     <td className="p-2">{getCategoryLabel(expense.category)}</td>
                     <td className="p-2">{expense.vendor?.name || '-'}</td>
                     <td className="p-2">{new Date(expense.expenseDate).toLocaleDateString()}</td>
-                    <td className="text-right p-2">{formatMoney(expense.amount, expense.currency || currency)}</td>
+                    <td className="text-right p-2">{formatMoney(expenseGrossAmount(expense), expense.currency || currency)}</td>
                     <td className="p-2">{expense.status.replace('_', ' ')}</td>
                   </tr>
                 ))
