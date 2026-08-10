@@ -36,9 +36,41 @@ test("personnel card PDF contains exactly two portrait CR80 pages", async () => 
   assert.ok(Math.abs(Number(mediaBox[2]) - PERSONNEL_CARD_HEIGHT_PT) < 0.001);
 });
 
+test("personnel card PDF renders for every status value, including EXPIRED", async () => {
+  // Server-side, `status` now always arrives pre-derived by
+  // shared/studentCardValidity.ts's personnelCardStatus() — which can
+  // produce "EXPIRED" (see tests/unit/studentCardValidity.test.ts, which is
+  // the real regression test for that bug: the PDF used to re-derive its own
+  // ACTIVE/EXPIRED badge and print a green "ACTIVE" badge on expired cards).
+  // This just confirms the renderer itself accepts every status value for
+  // every card kind without throwing, since it used to only ever see
+  // ACTIVE/INACTIVE.
+  for (const status of ["ACTIVE", "INACTIVE", "EXPIRED"]) {
+    for (const kind of ["TEACHER", "STAFF"] as const) {
+      const pdf = await renderPersonnelCardPdf({
+        kind,
+        cardNumber: `${kind}-000001`,
+        holderName: "Test Holder",
+        roleTitle: "Role",
+        organizationUnit: "Unit",
+        employmentType: "FULL_TIME",
+        status,
+        issueDate: "2020-01-01",
+        expiryDate: "2021-01-01",
+        schoolName: "Test School",
+        schoolPhone: null,
+        verifyUrl: "https://example.test/verify/personnel/token",
+        logo: null,
+        photo: null,
+        qr: null,
+      });
+      assert.ok(pdf.length > 0, `expected a non-empty PDF for ${kind}/${status}`);
+    }
+  }
+});
+
 test("personnel card print assets meet 300 DPI CR80 dimensions", () => {
   assert.equal(PERSONNEL_CARD_PRINT_DPI, 300);
   assert.ok(PERSONNEL_CARD_RASTER_WIDTH_PX >= 638);
   assert.ok(PERSONNEL_CARD_RASTER_HEIGHT_PX >= 1011);
 });
-

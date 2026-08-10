@@ -172,7 +172,11 @@ function drawFront(doc: PDFKit.PDFDocument, data: PersonnelCardPdfData): void {
   drawDetail(doc, "Issued", formatDate(data.issueDate), 12, 198, boxW);
   drawDetail(doc, "Valid through", formatDate(data.expiryDate), 12 + boxW + gap, 198, boxW);
 
-  const active = data.status === "ACTIVE" && new Date(data.expiryDate).getTime() >= Date.now();
+  // `data.status` is expected to already be the expiry-aware ACTIVE/INACTIVE/
+  // EXPIRED value from shared/studentCardValidity.ts's personnelCardStatus() —
+  // computed once by the caller rather than re-derived here, so this badge
+  // can't disagree with the verify page or on-screen card.
+  const active = data.status === "ACTIVE";
   doc.circle(PERSONNEL_CARD_WIDTH_PT / 2 - 26, 225, 2.3).fill(active ? "#10b981" : "#f59e0b");
   doc.font("Helvetica-Bold").fontSize(5.2).fillColor(active ? "#047857" : "#b45309")
     .text(active ? `ACTIVE ${data.kind}` : data.status, PERSONNEL_CARD_WIDTH_PT / 2 - 20, 222, { characterSpacing: 0.7, lineBreak: false });

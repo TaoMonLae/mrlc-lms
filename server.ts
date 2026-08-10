@@ -84,7 +84,7 @@ import { extractRarEntry, listRarImageEntries } from "./lib/portableRar";
 import { cleanEbookTitle, findDuplicateEbookSeriesVolume, findDuplicateEbookTitle, normalizedTitleForColumn } from "./lib/ebookTitles";
 import { feeMonthRange, feeYearRange, normalizeFeeMonth } from "./shared/feePeriods";
 import { buildMonthlyFinanceRows } from "./shared/monthlyFinance";
-import { inferStudentCardExpiry } from "./shared/studentCardValidity";
+import { inferStudentCardExpiry, personnelCardStatus } from "./shared/studentCardValidity";
 import {
   GRADE_CATEGORIES,
   isGradeCategory,
@@ -19383,6 +19383,11 @@ async function startServer() {
       }
       let qr: Buffer | null = null;
       try { qr = await QRCode.toBuffer(verifyUrl, { margin: 1, width: 700, errorCorrectionLevel: "H" }); } catch { qr = null; }
+      // Same expiry-aware check as the JSON verify endpoint and the on-screen
+      // card — the printed PDF used to pass `card.status` straight through,
+      // so an expired-but-still-employed holder's card printed a green
+      // "ACTIVE" badge instead of "EXPIRED".
+      const cardStatus = personnelCardStatus(card.status, card.expiryDate);
       const pdf = await renderPersonnelCardPdf({
         kind,
         cardNumber: card.cardNumber,
@@ -19390,7 +19395,7 @@ async function startServer() {
         roleTitle: card.roleTitle,
         organizationUnit: card.organizationUnit,
         employmentType: card.employmentType,
-        status: card.status,
+        status: cardStatus,
         issueDate: card.issueDate,
         expiryDate: card.expiryDate,
         schoolName: card.school.name,
@@ -19428,8 +19433,7 @@ async function startServer() {
       });
       if (!record) { res.status(404).json({ valid: false, error: "Personnel card not found" }); return; }
       const card = await personnelCardPayload(kind, record);
-      const expired = !card.expiryDate || new Date(card.expiryDate).getTime() < Date.now();
-      const status = card.status !== "ACTIVE" ? "INACTIVE" : expired ? "EXPIRED" : "ACTIVE";
+      const status = personnelCardStatus(card.status, card.expiryDate);
       res.json({
         valid: status === "ACTIVE",
         status,

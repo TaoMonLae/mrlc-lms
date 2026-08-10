@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { apiGet, apiSend, downloadAuthenticatedFile } from '@/src/lib/api';
+import { personnelCardStatus } from '@/shared/studentCardValidity';
 import { toast } from 'sonner';
 
 type PersonnelCardKind = 'TEACHER' | 'STAFF';
@@ -132,8 +133,7 @@ export function PersonnelIdentityCard({
   const displayStatus = card?.status || status;
   const displayPhoto = card?.photoUrl || photoUrl;
   const school = card?.school || { name: 'School', logoUrl: null, contactPhone: null, contactEmail: null };
-  const expired = Boolean(card?.expiryDate && new Date(card.expiryDate).getTime() < Date.now());
-  const cardStatus = displayStatus !== 'ACTIVE' ? 'INACTIVE' : expired ? 'EXPIRED' : 'ACTIVE';
+  const cardStatus = personnelCardStatus(displayStatus, card?.expiryDate);
   const active = cardStatus === 'ACTIVE';
   const initials = displayName.split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('');
 

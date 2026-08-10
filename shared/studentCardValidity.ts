@@ -19,3 +19,23 @@ export function inferStudentCardExpiry(
   }
   return expiry;
 }
+
+/**
+ * Shared "is this personnel card still good" check for teacher/staff ID
+ * cards, used by every place that renders a status (the public verify JSON,
+ * the on-screen card, and the printable PDF) so they can't drift out of sync
+ * the way the PDF export once did — it passed the raw ACTIVE/INACTIVE holder
+ * status straight through, so an expired-but-still-employed holder's card
+ * printed a green "ACTIVE" badge instead of "EXPIRED".
+ *
+ * A missing expiry date is treated as expired (fail closed) rather than
+ * valid, since a card with no known expiry can't be confirmed current.
+ */
+export function personnelCardStatus(
+  holderStatus: string,
+  expiryDate: Date | string | null | undefined,
+): 'ACTIVE' | 'INACTIVE' | 'EXPIRED' {
+  if (holderStatus !== 'ACTIVE') return 'INACTIVE';
+  const expired = !expiryDate || new Date(expiryDate).getTime() < Date.now();
+  return expired ? 'EXPIRED' : 'ACTIVE';
+}
