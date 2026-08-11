@@ -399,6 +399,15 @@ export const LANGUAGE_QUEST_LEGENDARY_AWARDS: readonly LanguageQuestLegendaryAwa
   },
 ] as const;
 
+export function languageQuestLegendaryCollectionVisible(
+  level: number,
+  expanded?: boolean,
+): boolean {
+  if (typeof expanded === "boolean") return expanded;
+  const safeLevel = Math.max(0, Math.floor(Number.isFinite(level) ? level : 0));
+  return safeLevel >= LANGUAGE_QUEST_REWARD_CARDS.at(-1)!.level;
+}
+
 export function languageQuestRewardProgress(points: number): LanguageQuestRewardProgress {
   const xp = Math.max(0, Math.floor(Number.isFinite(points) ? points : 0));
   const currentIndex = [...LANGUAGE_QUEST_REWARD_CARDS]

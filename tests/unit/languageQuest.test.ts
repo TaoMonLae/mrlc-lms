@@ -53,6 +53,7 @@ import {
   LANGUAGE_QUEST_REWARD_CARDS,
   LANGUAGE_QUEST_LEGENDARY_AWARDS,
   languageQuestLegendaryAwardById,
+  languageQuestLegendaryCollectionVisible,
   languageQuestRewardProgress,
   languageQuestStreakFrame,
   newlyUnlockedLanguageQuestRewardIds,
@@ -191,14 +192,29 @@ test("legendary Mon history cards unlock only after the main Quest Card path", (
     new Set(LANGUAGE_QUEST_LEGENDARY_AWARDS.map((award) => award.id)).size,
     LANGUAGE_QUEST_LEGENDARY_AWARDS.length,
   );
+  const levelTwenty = languageQuestRewardProgress(13_000);
+  assert.equal(levelTwenty.level, 20);
+  assert.equal(levelTwenty.unlockedCardIds.length, LANGUAGE_QUEST_REWARD_CARDS.length);
+  assert.deepEqual(levelTwenty.unlockedLegendaryIds, []);
+  assert.equal(levelTwenty.nextLegendaryId, "king-ukkalapa");
   const sealed = languageQuestRewardProgress(14_999);
   assert.deepEqual(sealed.unlockedLegendaryIds, []);
   assert.equal(sealed.nextLegendaryId, "king-ukkalapa");
+  const firstLegend = languageQuestRewardProgress(15_000);
+  assert.deepEqual(firstLegend.unlockedLegendaryIds, ["king-ukkalapa"]);
+  assert.equal(firstLegend.currentLegendaryId, "king-ukkalapa");
   const revealed = languageQuestRewardProgress(17_000);
   assert.deepEqual(revealed.unlockedLegendaryIds, ["king-ukkalapa", "king-siha-sudhamma"]);
   assert.equal(revealed.currentLegendaryId, "king-siha-sudhamma");
   assert.deepEqual(newlyUnlockedLanguageQuestRewardIds(14_990, 15_010), ["king-ukkalapa"]);
   assert.equal(languageQuestLegendaryAwardById("queen-banya-htau")?.achievement, "Golden Counsel");
+});
+
+test("the legendary collection becomes visible when Level 20 is reached", () => {
+  assert.equal(languageQuestLegendaryCollectionVisible(19), false);
+  assert.equal(languageQuestLegendaryCollectionVisible(20), true);
+  assert.equal(languageQuestLegendaryCollectionVisible(20, false), false);
+  assert.equal(languageQuestLegendaryCollectionVisible(0, true), true);
 });
 
 test("streak card frames unlock deterministically from the learner's best streak", () => {

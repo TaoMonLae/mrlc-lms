@@ -251,7 +251,7 @@ export default function LanguageQuestProfile() {
 
           <LanguageQuestSurpriseCardCollection collection={profile.surpriseCards} />
 
-          <LanguageQuestLegendaryVault rewards={profile.profile.rewards} />
+          <LanguageQuestLegendaryVault rewards={profile.profile.rewards} expanded />
 
           <section className="rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 to-fuchsia-50 p-5 shadow-sm dark:border-amber-500/20 dark:from-amber-950/20 dark:to-fuchsia-950/20 sm:p-7">
         <div className="flex items-start gap-3">

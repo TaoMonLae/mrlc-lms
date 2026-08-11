@@ -13,6 +13,7 @@ import {
   LANGUAGE_QUEST_LEGENDARY_AWARDS,
   LANGUAGE_QUEST_REWARD_CARDS,
   languageQuestLegendaryAwardById,
+  languageQuestLegendaryCollectionVisible,
   type LanguageQuestLegendaryAward,
   type LanguageQuestRewardProgress,
 } from '@/shared/languageQuestRewards';
@@ -106,7 +107,7 @@ function LegendaryAwardCard({
 
 export function LanguageQuestLegendaryVault({
   rewards,
-  expanded = false,
+  expanded,
 }: {
   rewards: LanguageQuestRewardProgress;
   expanded?: boolean;
@@ -117,6 +118,9 @@ export function LanguageQuestLegendaryVault({
   const questCardGateXp = LANGUAGE_QUEST_REWARD_CARDS.at(-1)!.unlockXp;
   const previousThreshold = current?.unlockXp ?? questCardGateXp;
   const nextThreshold = next?.unlockXp ?? LANGUAGE_QUEST_LEGENDARY_AWARDS.at(-1)!.unlockXp;
+  // Once the standard card path is complete, the legendary collection must
+  // become visible without requiring a caller to remember an extra UI flag.
+  const showCollection = languageQuestLegendaryCollectionVisible(rewards.level, expanded);
   const progress = next
     ? Math.max(0, Math.min(100, Math.round(((rewards.xp - previousThreshold) / (nextThreshold - previousThreshold)) * 100)))
     : 100;
@@ -158,7 +162,7 @@ export function LanguageQuestLegendaryVault({
         </div>
       </div>
 
-      {expanded && (
+      {showCollection && (
         <div className="relative mt-7 border-t border-amber-300/15 pt-7">
           <div className="mb-5 flex items-center gap-3">
             <span className="grid h-10 w-10 place-items-center rounded-xl bg-amber-300 text-amber-950"><Gem className="h-5 w-5" /></span>
