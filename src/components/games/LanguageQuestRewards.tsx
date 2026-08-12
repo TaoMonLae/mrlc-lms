@@ -22,7 +22,7 @@ import {
   type LanguageQuestStreakFrame,
 } from '@/shared/languageQuestRewards';
 import { LanguageQuestLegendaryReveal } from './LanguageQuestLegendaryRewards';
-import { downloadBlob, safeFilename } from './LanguageQuestAchievements';
+import { downloadBlob, safeFilename, shareOrDownloadBlob } from './LanguageQuestAchievements';
 
 const CARD_IMAGE_WIDTH = 900;
 const CARD_IMAGE_HEIGHT = 1260;
@@ -330,27 +330,6 @@ async function createQuestCertificateBlob(input: QuestCertificateInput): Promise
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Could not create the progress keepsake'))), 'image/png', 0.95);
   });
-}
-
-async function shareOrDownloadBlob(blob: Blob, filename: string, shareTitle: string, shareText: string, action: 'download' | 'share') {
-  if (action === 'share' && navigator.share && typeof File === 'function') {
-    const file = new File([blob], filename, { type: 'image/png' });
-    let canShareFile = false;
-    try {
-      canShareFile = navigator.canShare?.({ files: [file] }) ?? false;
-    } catch {
-      canShareFile = false;
-    }
-    if (canShareFile) {
-      await navigator.share({ title: shareTitle, text: shareText, files: [file] });
-      return;
-    }
-    downloadBlob(blob, filename);
-    toast.info('Sharing files is unavailable here, so the image was saved. Attach it to your social post.');
-    return;
-  }
-  downloadBlob(blob, filename);
-  toast.success('Image saved');
 }
 
 const RARITY_STYLES: Record<LanguageQuestRewardCard['rarity'], string> = {

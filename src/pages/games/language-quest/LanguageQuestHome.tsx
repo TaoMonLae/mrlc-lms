@@ -267,7 +267,7 @@ export default function LanguageQuestHome() {
 
       <LanguageQuestRewardTrack rewards={data.profile.rewards} bestStreak={data.profile.bestStreak} />
 
-      <LanguageQuestLegendaryVault rewards={data.profile.rewards} />
+      <LanguageQuestLegendaryVault rewards={data.profile.rewards} learnerName={user?.name || 'Language Quest Learner'} />
 
       <LanguageQuestLanguageAlbums courses={data.courses} />
 

@@ -507,6 +507,28 @@ export function downloadBlob(blob: Blob, filename: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1_000);
 }
 
+/** Shared view/download/share action for any generated reward image (Quest Cards, Legendary Awards, certificates). */
+export async function shareOrDownloadBlob(blob: Blob, filename: string, shareTitle: string, shareText: string, action: 'download' | 'share') {
+  if (action === 'share' && navigator.share && typeof File === 'function') {
+    const file = new File([blob], filename, { type: 'image/png' });
+    let canShareFile = false;
+    try {
+      canShareFile = navigator.canShare?.({ files: [file] }) ?? false;
+    } catch {
+      canShareFile = false;
+    }
+    if (canShareFile) {
+      await navigator.share({ title: shareTitle, text: shareText, files: [file] });
+      return;
+    }
+    downloadBlob(blob, filename);
+    toast.info('Sharing files is unavailable here, so the image was saved. Attach it to your social post.');
+    return;
+  }
+  downloadBlob(blob, filename);
+  toast.success('Image saved');
+}
+
 // Certificate busy-state is keyed per course (not just per kind+action) so
 // downloading one course's certificate doesn't visually tie up another
 // course's card -- with two or three completed courses now each getting
