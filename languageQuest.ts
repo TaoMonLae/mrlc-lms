@@ -10,7 +10,6 @@ import {
   LANGUAGE_QUEST_BOSS_BATTLE_POINTS,
   LANGUAGE_QUEST_FIRST_CLEAR_POINTS,
   LANGUAGE_QUEST_MAX_HEARTS,
-  LANGUAGE_QUEST_PRACTICE_POINTS,
   bossBattleResult,
   bossBattleSubmissionMatchesDeck,
   isValidMatchingSubmission,
@@ -2292,7 +2291,19 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
             challenge.options.map((option: any) => option.text),
           ),
           explanation: challenge.explanation,
-          hint: challenge.hint,
+          // The hint is shown *before* the learner answers (unlike
+          // `explanation`, which only appears in post-answer feedback), so it
+          // needs the same spoiler redaction as `question` — otherwise an
+          // author could accidentally write a hint containing a
+          // "Pronunciation:"/"Example:" clue or, for REORDER, the literal
+          // answer sentence, and it would reach the learner unfiltered.
+          hint: challenge.hint
+            ? languageQuestAssessmentPrompt(
+                challenge.hint,
+                challenge.type,
+                challenge.options.map((option: any) => option.text),
+              )
+            : challenge.hint,
           completed: completedIds.has(challenge.id),
           options: shuffle(challenge.options).map((option: any) => ({
             id: option.id, text: option.text, emoji: option.emoji, audioText: option.audioText,
@@ -2445,15 +2456,19 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         }
         if (isCorrect) {
           const firstClear = !existing?.completed;
-          // Practising an already-cleared challenge only earns points while it is
-          // actually refilling a heart (hearts below max). Once hearts are full,
-          // replaying the same cleared challenge pays out nothing, which closes off
-          // unlimited point farming from scripted replays while preserving the
-          // "replay a finished lesson to earn hearts back" design.
+          // Practising an already-cleared challenge can refill a heart (hearts
+          // below max), but never pays points. It used to award
+          // LANGUAGE_QUEST_PRACTICE_POINTS whenever it refilled a heart, which
+          // opened an infinite-XP loop: deliberately answer any OTHER
+          // challenge wrong (hearts -1), then replay this cleared one correct
+          // (hearts +1, +points) and repeat — hearts never actually run out
+          // because the wrong/right pair cancels out, so a scripted client
+          // could farm unlimited XP. The dedicated Heart Refill Quiz
+          // (/games/language-quest/heart-refill) is the protected, documented
+          // way to earn hearts *and* progression rewards back; replaying a
+          // cleared challenge is just a hearts top-up, not a second reward.
           const refillsHeart = !firstClear && progress.hearts < LANGUAGE_QUEST_MAX_HEARTS;
-          const pointsAwarded = firstClear
-            ? LANGUAGE_QUEST_FIRST_CLEAR_POINTS
-            : (refillsHeart ? LANGUAGE_QUEST_PRACTICE_POINTS : 0);
+          const pointsAwarded = firstClear ? LANGUAGE_QUEST_FIRST_CLEAR_POINTS : 0;
           const streak = nextLanguageQuestStreak({
             currentStreak: progress.currentStreak,
             bestStreak: progress.bestStreak,

@@ -348,6 +348,32 @@ test("assessment prompts hide answers embedded in reorder instructions", () => {
   );
 });
 
+test("hints get the same spoiler redaction as assessment prompts", () => {
+  // Regression test: GET /api/language-quest/lessons/:id used to send
+  // challenge.hint straight to the client with no filtering, unlike
+  // `question`, even though the "Get a hint" button shows it *before* the
+  // learner answers. An author-written hint containing a Pronunciation:/
+  // Example: clue, or (for REORDER) the literal answer sentence, would leak
+  // unredacted. The fix runs `hint` through the same
+  // languageQuestAssessmentPrompt() call already used for `question`.
+  assert.equal(
+    languageQuestAssessmentPrompt(
+      'Remember the pronunciation. Pronunciation: /haʊʔs/. Example: “My house has three bedrooms.”',
+      'SELECT',
+      ['house', 'car'],
+    ),
+    'Remember the pronunciation.',
+  );
+  assert.equal(
+    languageQuestAssessmentPrompt(
+      'It reads the same as “再见！” once ordered.',
+      'REORDER',
+      ['再', '见', '！'],
+    ),
+    'It reads the same as “_____” once ordered.',
+  );
+});
+
 test("structural review challenges do not become misleading study cards", () => {
   assert.equal(languageQuestChallengeSupportsStudyCard('SELECT'), true);
   assert.equal(languageQuestChallengeSupportsStudyCard('DICTATION'), true);
