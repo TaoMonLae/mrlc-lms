@@ -326,6 +326,13 @@ test("practice prompts hide pronunciation and example clues without losing the q
   assert.equal(languageQuestPracticePrompt('Which one means “the man”?'), 'Which one means “the man”?');
 });
 
+test("practice prompts preserve intentional source and question paragraphs", () => {
+  assert.equal(
+    languageQuestPracticePrompt('A source passage with evidence.\n\n  Which claim is supported?  '),
+    'A source passage with evidence.\n\nWhich claim is supported?',
+  );
+});
+
 test("assessment prompts hide answers embedded in reorder instructions", () => {
   assert.equal(
     languageQuestAssessmentPrompt(

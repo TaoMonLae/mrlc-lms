@@ -13,7 +13,6 @@ interface LanguageQuestCourseFoldersProps<T> {
   renderCourse: (course: T) => ReactNode;
   idPrefix?: string;
   courseGridClassName?: string;
-  defaultCategory?: string | null;
 }
 
 const categoryTones = {
@@ -77,9 +76,8 @@ export function LanguageQuestCourseFolders<T>({
   renderCourse,
   idPrefix = 'course-folder',
   courseGridClassName,
-  defaultCategory = null,
 }: LanguageQuestCourseFoldersProps<T>) {
-  const [activeCategory, setActiveCategory] = useState<string | null>(defaultCategory);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   useEffect(() => {
     if (activeCategory && !groups.some((group) => group.category === activeCategory)) {
@@ -119,7 +117,7 @@ export function LanguageQuestCourseFolders<T>({
               aria-label={`${selected ? 'Close' : 'Open'} ${group.category} folder`}
               onClick={() => setActiveCategory(selected ? null : group.category)}
               className={cn(
-                'group/folder relative min-h-36 overflow-hidden rounded-3xl border p-4 text-left shadow-sm outline-none transition duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:ring-4 focus-visible:ring-violet-400/35 sm:min-h-40 sm:p-5',
+                'group/folder relative overflow-hidden rounded-2xl border p-3 text-left shadow-sm outline-none transition duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:ring-4 focus-visible:ring-violet-400/35 sm:min-h-40 sm:rounded-3xl sm:p-5',
                 selected
                   ? 'border-violet-400 bg-white ring-2 ring-violet-200 dark:border-violet-400/70 dark:bg-slate-900 dark:ring-violet-500/20'
                   : 'border-slate-200 bg-white/75 hover:border-violet-300 dark:border-slate-700 dark:bg-slate-900/70 dark:hover:border-violet-500/50',
@@ -131,21 +129,21 @@ export function LanguageQuestCourseFolders<T>({
                 src={tone.art}
                 alt=""
                 aria-hidden="true"
-                className="pointer-events-none absolute -bottom-5 -right-5 h-28 w-28 object-contain opacity-45 drop-shadow-xl transition duration-300 group-hover/folder:-translate-y-1 group-hover/folder:rotate-2 group-hover/folder:scale-110 sm:h-32 sm:w-32"
+                className="pointer-events-none absolute -bottom-5 -right-5 hidden h-28 w-28 object-contain opacity-45 drop-shadow-xl transition duration-300 group-hover/folder:-translate-y-1 group-hover/folder:rotate-2 group-hover/folder:scale-110 sm:block sm:h-32 sm:w-32"
               />
 
-              <span className="relative flex h-full min-h-28 flex-col items-start justify-between sm:min-h-32">
-                <span className={`grid h-10 w-10 place-items-center rounded-2xl shadow-sm ${tone.icon}`}>
-                  <FolderOpen className="h-5 w-5" aria-hidden="true" />
+              <span className="relative flex h-full items-center gap-2.5 sm:min-h-32 sm:flex-col sm:items-start sm:justify-between sm:gap-0">
+                <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl shadow-sm sm:h-10 sm:w-10 sm:rounded-2xl ${tone.icon}`}>
+                  <FolderOpen className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
                 </span>
-                <span className="max-w-[78%]">
-                  <span className="block text-[10px] font-black uppercase tracking-[0.18em] text-violet-600 dark:text-violet-300">
+                <span className="min-w-0 flex-1 sm:max-w-[78%] sm:flex-none">
+                  <span className="hidden text-[10px] font-black uppercase tracking-[0.18em] text-violet-600 dark:text-violet-300 sm:block">
                     Course folder
                   </span>
-                  <span className="mt-1 block text-base font-black leading-tight text-slate-950 dark:text-white sm:text-lg">
+                  <span className="block truncate text-xs font-black leading-tight text-slate-950 dark:text-white sm:mt-1 sm:text-lg">
                     {group.category}
                   </span>
-                  <span className="mt-2 flex items-center gap-1.5 text-[11px] font-black text-slate-500 dark:text-slate-300">
+                  <span className="mt-1 flex items-center gap-1 text-[10px] font-black text-slate-500 dark:text-slate-300 sm:mt-2 sm:gap-1.5 sm:text-[11px]">
                     {group.courses.length} {group.courses.length === 1 ? 'course' : 'courses'}
                     {selected
                       ? <ChevronDown className="h-3.5 w-3.5 text-violet-600" />

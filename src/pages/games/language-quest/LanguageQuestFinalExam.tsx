@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { ApiError, apiGet, apiSend } from '@/src/lib/api';
 import type { LanguageQuestOption } from '@/src/types/languageQuest';
 import { LanguageQuestContentText } from '@/src/components/games/LanguageQuestContentText';
+import { LanguageQuestQuestionText } from '@/src/components/games/LanguageQuestQuestionText';
 import { useLanguageQuestPreferences } from '@/src/components/games/LanguageQuestPreferences';
 import { playLanguageQuestProtectedVoice, speakLanguageQuestVoice } from '@/src/lib/languageQuestVoice';
 import { languageQuestCourseMode, languageQuestCourseUsesStudyCards } from '@/shared/languageQuest';
@@ -331,7 +332,7 @@ export default function LanguageQuestFinalExam() {
               <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-violet-600">
                 {isSpelling && <Keyboard className="h-4 w-4" />} Question {index + 1}{isSpelling ? ' • Spelling' : ''}
               </p>
-              <h2 className="mt-3 whitespace-pre-line text-xl font-black leading-tight sm:text-3xl"><LanguageQuestContentText language={payload.course.language} text={card.question} /></h2>
+              <LanguageQuestQuestionText language={payload.course.language} text={card.question} headingLevel={2} className="mt-3" />
               {isSpelling ? (
                 <div className="mt-6 rounded-2xl border-2 border-violet-200 bg-violet-50/70 p-4 sm:p-5">
                   <Button
@@ -439,7 +440,7 @@ export default function LanguageQuestFinalExam() {
             {result.results.map((entry, entryIndex) => (
               <div key={entry.challengeId} className={`flex items-start gap-3 rounded-xl border p-3 text-sm ${entry.correct ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-500/20 dark:bg-emerald-500/10' : 'border-rose-200 bg-rose-50 dark:border-rose-500/20 dark:bg-rose-500/10'}`}>
                 <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-white ${entry.correct ? 'bg-emerald-500' : 'bg-rose-500'}`}>{entry.correct ? <Check className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />}</span>
-                <p className="font-semibold text-slate-800 dark:text-white">{payload?.cards[entryIndex] ? <LanguageQuestContentText language={course.language} text={payload.cards[entryIndex].question} /> : null}</p>
+                <div className="min-w-0 flex-1 font-semibold text-slate-800 dark:text-white">{payload?.cards[entryIndex] ? <LanguageQuestQuestionText language={course.language} text={payload.cards[entryIndex].question} headingLevel={3} compact /> : null}</div>
               </div>
             ))}
           </div>

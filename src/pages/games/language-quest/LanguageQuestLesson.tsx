@@ -22,6 +22,7 @@ import {
 import { useLanguageQuestSupport } from '@/src/components/games/LanguageQuestSupport';
 import { LanguageQuestPinyinText } from '@/src/components/games/LanguageQuestPinyinText';
 import { LanguageQuestContentText } from '@/src/components/games/LanguageQuestContentText';
+import { LanguageQuestQuestionText } from '@/src/components/games/LanguageQuestQuestionText';
 import { LanguageQuestPhaseStepper } from '@/src/components/games/LanguageQuestPhaseStepper';
 import { LanguageQuestReorderTiles } from '@/src/components/games/LanguageQuestReorderTiles';
 import { LanguageQuestMatchingBoard } from '@/src/components/games/LanguageQuestMatchingBoard';
@@ -1339,7 +1340,7 @@ export default function LanguageQuestLesson() {
           </aside>
         )}
         <div className="mt-3 flex items-start justify-between gap-4">
-          <h1 className="max-w-2xl whitespace-pre-line text-2xl font-black leading-tight text-slate-900 dark:text-white sm:text-3xl"><LanguageQuestContentText language={lesson.course.language} text={challenge.question} /></h1>
+          <LanguageQuestQuestionText language={lesson.course.language} text={challenge.question} className="min-w-0 flex-1" />
           {!isMathematics && <Button variant="outline" size="icon" className="shrink-0 rounded-full" onClick={() => speak(challenge.question, lesson.course.language)} aria-label="Read question aloud">
             <Volume2 className="h-4 w-4" />
           </Button>}

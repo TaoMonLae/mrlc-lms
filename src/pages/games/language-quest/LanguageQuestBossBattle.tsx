@@ -9,6 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { ApiError, apiGet, apiSend } from '@/src/lib/api';
 import type { LanguageQuestOption, LanguageQuestProfile } from '@/src/types/languageQuest';
 import { LanguageQuestContentText } from '@/src/components/games/LanguageQuestContentText';
+import { LanguageQuestQuestionText } from '@/src/components/games/LanguageQuestQuestionText';
 import { LanguageQuestRewardReveal } from '@/src/components/games/LanguageQuestRewards';
 import { useLanguageQuestPreferences } from '@/src/components/games/LanguageQuestPreferences';
 
@@ -232,9 +233,7 @@ export default function LanguageQuestBossBattle() {
                   {entry.correct ? <Check className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-slate-800 dark:text-white">
-                    <LanguageQuestContentText language={payload.course.language} text={payload.cards[entryIndex]?.question ?? ''} />
-                  </p>
+                  <LanguageQuestQuestionText language={payload.course.language} text={payload.cards[entryIndex]?.question ?? ''} headingLevel={3} compact />
                   {!entry.correct && (
                     <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-300">
                       Correct: <LanguageQuestContentText language={payload.course.language} text={entry.correctAnswer} />
@@ -262,9 +261,7 @@ export default function LanguageQuestBossBattle() {
           </div>
           <Progress value={(timeLeft / QUESTION_SECONDS) * 100} className={`mt-1.5 ${timeLeft < 4 ? '[&_[data-slot=progress-indicator]]:bg-rose-600' : '[&_[data-slot=progress-indicator]]:bg-orange-500'}`} />
 
-          <h2 className="mt-7 text-2xl font-black leading-tight text-slate-950 dark:text-white sm:text-3xl">
-            <LanguageQuestContentText language={payload.course.language} text={card.question} />
-          </h2>
+          <LanguageQuestQuestionText language={payload.course.language} text={card.question} headingLevel={2} className="mt-7" />
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
             {card.options.map((option) => (
               <button

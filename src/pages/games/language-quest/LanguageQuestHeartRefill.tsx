@@ -9,6 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import type { LanguageQuestOption, LanguageQuestProfile } from '@/src/types/languageQuest';
 import { ApiError, apiSend } from '@/src/lib/api';
 import { LanguageQuestContentText } from '@/src/components/games/LanguageQuestContentText';
+import { LanguageQuestQuestionText } from '@/src/components/games/LanguageQuestQuestionText';
 import {
   LanguageQuestSurpriseCardView,
 } from '@/src/components/games/LanguageQuestSurpriseCards';
@@ -148,7 +149,7 @@ export default function LanguageQuestHeartRefill() {
                   {entry.correct ? <Check className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />}
                 </span>
                 <div>
-                  <p className="font-bold text-slate-900 dark:text-white">{payload.cards[resultIndex] ? <LanguageQuestContentText language={payload.cards[resultIndex].language} text={payload.cards[resultIndex].question} /> : null}</p>
+                  <div className="font-bold text-slate-900 dark:text-white">{payload.cards[resultIndex] ? <LanguageQuestQuestionText language={payload.cards[resultIndex].language} text={payload.cards[resultIndex].question} headingLevel={3} compact /> : null}</div>
                   {!entry.correct && payload.cards[resultIndex] && <p className="mt-1 text-sm text-rose-700 dark:text-rose-300">Correct answer: <LanguageQuestContentText language={payload.cards[resultIndex].language} text={entry.correctAnswer} /></p>}
                 </div>
               </div>
@@ -205,7 +206,7 @@ export default function LanguageQuestHeartRefill() {
           <p className="text-xs font-black uppercase tracking-[0.18em] text-fuchsia-600 dark:text-fuchsia-300">Refill question {index + 1} of {payload.cards.length}</p>
           <Badge variant="outline">Need {payload.requiredCorrect} correct</Badge>
         </div>
-        <h1 className="mt-5 whitespace-pre-line text-2xl font-black leading-tight text-slate-950 dark:text-white sm:text-3xl"><LanguageQuestContentText language={card.language} text={card.question} /></h1>
+        <LanguageQuestQuestionText language={card.language} text={card.question} className="mt-5" />
         <div className="mt-7 grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Answer choices">
           {card.options.map((option) => {
             const selected = selectedId === option.id;

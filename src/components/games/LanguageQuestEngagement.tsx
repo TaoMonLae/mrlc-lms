@@ -75,13 +75,13 @@ export function LanguageQuestEngagement({ onXpChanged }: { onXpChanged?: () => v
   return (
     <>
       <section className="grid gap-5 xl:grid-cols-[1.2fr_.8fr]">
-      <div className="rounded-3xl border border-violet-200 bg-white/90 p-5 shadow-sm dark:border-violet-500/20 dark:bg-slate-900/85 sm:p-6">
+      <div className="rounded-2xl border border-violet-200 bg-white/90 p-3 shadow-sm dark:border-violet-500/20 dark:bg-slate-900/85 sm:rounded-3xl sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-600 dark:text-violet-300">Daily &amp; weekly missions</p>
             <h2 className="mt-1 text-xl font-black text-slate-950 dark:text-white">Small goals, extra XP</h2>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex max-w-full flex-nowrap items-center gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
             <Button variant="outline" className="rounded-xl" render={<Link to="/games/language-quest/mastery" />} nativeButton={false}>
               <Brain className="mr-2 h-4 w-4" /> Mastery {data.masteryDueCount > 0 ? `(${data.masteryDueCount})` : ''}
             </Button>
@@ -104,7 +104,7 @@ export function LanguageQuestEngagement({ onXpChanged }: { onXpChanged?: () => v
         </div>
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           {data.missions.map((mission) => (
-            <article key={mission.key} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-950/70">
+            <article key={mission.key} className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-950/70 sm:rounded-2xl sm:p-4">
               <div className="flex items-start gap-3">
                 <span className="text-2xl" aria-hidden="true">{mission.emoji}</span>
                 <div className="min-w-0 flex-1">
@@ -131,7 +131,7 @@ export function LanguageQuestEngagement({ onXpChanged }: { onXpChanged?: () => v
         </div>
       </div>
 
-      <div className="rounded-3xl border border-sky-200 bg-gradient-to-br from-sky-50 to-cyan-50 p-5 shadow-sm dark:border-sky-500/20 dark:from-sky-950/25 dark:to-cyan-950/20 sm:p-6">
+      <div className="rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-50 to-cyan-50 p-3 shadow-sm dark:border-sky-500/20 dark:from-sky-950/25 dark:to-cyan-950/20 sm:rounded-3xl sm:p-6">
         <div className="flex items-center gap-3">
           <span className="grid h-11 w-11 place-items-center rounded-2xl bg-sky-600 text-white"><Users className="h-5 w-5" /></span>
           <div>
@@ -191,13 +191,13 @@ export function LanguageQuestLanguageAlbums({ courses }: { courses: LanguageQues
   }, [courses]);
 
   return (
-    <section className="rounded-3xl border border-fuchsia-200 bg-gradient-to-br from-fuchsia-50 via-white to-amber-50 p-5 shadow-sm dark:border-fuchsia-500/20 dark:from-fuchsia-950/20 dark:via-slate-950 dark:to-amber-950/15 sm:p-6">
+    <section className="rounded-2xl border border-fuchsia-200 bg-gradient-to-br from-fuchsia-50 via-white to-amber-50 p-3 shadow-sm dark:border-fuchsia-500/20 dark:from-fuchsia-950/20 dark:via-slate-950 dark:to-amber-950/15 sm:rounded-3xl sm:p-6">
       <div>
         <p className="text-xs font-black uppercase tracking-[0.18em] text-fuchsia-700 dark:text-fuchsia-300">Subject albums</p>
         <h2 className="mt-1 text-xl font-black text-slate-950 dark:text-white">A card journey for every subject</h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Each completed challenge fills that subject’s album. No purchases or random packs.</p>
       </div>
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="-mx-1 mt-4 flex snap-x gap-3 overflow-x-auto px-1 pb-2 sm:mx-0 sm:mt-5 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-3">
         {albums.map((album) => {
           const progress = languageQuestRewardProgress(album.completed * 10);
           const card = LANGUAGE_QUEST_REWARD_CARDS.find((item) => item.id === progress.currentCardId)
@@ -205,7 +205,7 @@ export function LanguageQuestLanguageAlbums({ courses }: { courses: LanguageQues
           const hasCompanion = progress.currentCardId !== null;
           const percent = album.total ? Math.round((album.completed / album.total) * 100) : 0;
           return (
-            <article key={album.language} className="relative overflow-hidden rounded-2xl border border-white/70 bg-slate-950 p-4 text-white shadow-lg">
+            <article key={album.language} className="relative min-w-[16rem] snap-start overflow-hidden rounded-2xl border border-white/70 bg-slate-950 p-4 text-white shadow-lg sm:min-w-0">
               <div className="absolute inset-0 opacity-50" style={{ background: `radial-gradient(circle at 100% 0%, ${card.colors[1]}, transparent 55%)` }} />
               <div className="relative flex items-center gap-4">
                 <span className="grid h-16 w-16 place-items-center rounded-2xl bg-white/10 text-4xl">{hasCompanion ? card.emoji : '❔'}</span>

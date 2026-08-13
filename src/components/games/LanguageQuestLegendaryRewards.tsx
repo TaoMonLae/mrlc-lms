@@ -374,7 +374,7 @@ export function LanguageQuestLegendaryVault({
     : 100;
 
   return (
-    <section id="legendary-vault" className="relative scroll-mt-28 overflow-hidden rounded-3xl border border-amber-400/40 bg-gradient-to-br from-[#120b02] via-[#301b05] to-[#090601] p-5 text-white shadow-2xl sm:p-7">
+    <section id="legendary-vault" className="relative scroll-mt-28 overflow-hidden rounded-2xl border border-amber-400/40 bg-gradient-to-br from-[#120b02] via-[#301b05] to-[#090601] p-4 text-white shadow-2xl sm:rounded-3xl sm:p-7">
       <div className="pointer-events-none absolute inset-0 opacity-25 [background-image:radial-gradient(circle_at_20%_15%,#fef3c7_0,transparent_18%),radial-gradient(circle_at_85%_5%,#f59e0b_0,transparent_24%)]" />
       <div className="relative grid gap-6 lg:grid-cols-[1fr_280px] lg:items-center">
         <div>
@@ -386,10 +386,10 @@ export function LanguageQuestLegendaryVault({
               {unlocked.size}/{LANGUAGE_QUEST_LEGENDARY_AWARDS.length} historical cards
             </span>
           </div>
-          <h2 className="mt-4 text-2xl font-black text-amber-50 sm:text-3xl">
+          <h2 className="mt-3 text-xl font-black text-amber-50 sm:mt-4 sm:text-3xl">
             {current ? `${current.name} has entered your legend.` : `A golden mystery waits beyond Level ${LANGUAGE_QUEST_REWARD_CARDS.length}.`}
           </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-amber-100/70">
+          <p className="mt-2 line-clamp-2 max-w-2xl text-xs leading-5 text-amber-100/70 sm:text-sm sm:leading-6">
             Complete the full Quest Card path, then continue earning learning XP to open sealed golden chests and reveal MRLC’s Mon history collection. Every portrait stays hidden until its milestone is reached.
           </p>
           <div className="mt-5 max-w-xl">
@@ -400,7 +400,7 @@ export function LanguageQuestLegendaryVault({
             <Progress value={progress} className="mt-2 [&_[data-slot=progress-track]]:bg-white/10 [&_[data-slot=progress-indicator]]:bg-gradient-to-r [&_[data-slot=progress-indicator]]:from-amber-600 [&_[data-slot=progress-indicator]]:via-yellow-300 [&_[data-slot=progress-indicator]]:to-amber-500" />
           </div>
         </div>
-        <div className="relative mx-auto h-52 w-full max-w-[280px] overflow-hidden rounded-2xl border border-amber-300/35 bg-black shadow-xl shadow-amber-600/10">
+        <div className="relative mx-auto hidden h-52 w-full max-w-[280px] overflow-hidden rounded-2xl border border-amber-300/35 bg-black shadow-xl shadow-amber-600/10 sm:block">
           <img src={renownedKingsArt} alt="Renowned Mon Kings in History collection overview" className="h-full w-full object-cover object-top opacity-75" />
           <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-amber-200/10" />
           <div className="absolute inset-x-0 bottom-0 p-4">

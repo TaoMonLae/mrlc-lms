@@ -90,8 +90,10 @@ export function sentenceAnswerMatches(answer: string, modelSentence: string): bo
 export function languageQuestPracticePrompt(value: string): string {
   const prompt = value
     .split(/\s*\b(?:Pronunciation|Example)\s*:/iu, 1)[0]
-    .replace(/\s+/g, " ")
-    .trim();
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.replace(/\s+/g, " ").trim())
+    .filter(Boolean)
+    .join("\n\n");
   return prompt || "Choose the best answer.";
 }
 

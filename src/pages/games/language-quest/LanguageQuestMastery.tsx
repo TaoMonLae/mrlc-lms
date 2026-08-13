@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { apiGet, apiSend } from '@/src/lib/api';
 import type { LanguageQuestOption, LanguageQuestProfile } from '@/src/types/languageQuest';
 import { LanguageQuestContentText } from '@/src/components/games/LanguageQuestContentText';
+import { LanguageQuestQuestionText } from '@/src/components/games/LanguageQuestQuestionText';
 import { LanguageQuestReorderTiles } from '@/src/components/games/LanguageQuestReorderTiles';
 import { LanguageQuestMatchingBoard } from '@/src/components/games/LanguageQuestMatchingBoard';
 import { useLanguageQuestPreferences } from '@/src/components/games/LanguageQuestPreferences';
@@ -347,7 +348,7 @@ export default function LanguageQuestMastery() {
             </div>
           )}
 
-          <h2 className="mt-7 whitespace-pre-line text-2xl font-black leading-tight text-slate-950 dark:text-white sm:text-3xl"><LanguageQuestContentText language={card.course.language} text={card.question} /></h2>
+          <LanguageQuestQuestionText language={card.course.language} text={card.question} headingLevel={2} className="mt-7" />
           {isReorder ? (
             <LanguageQuestReorderTiles
               options={card.options}

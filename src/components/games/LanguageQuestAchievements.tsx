@@ -604,12 +604,12 @@ export function LanguageQuestAchievements({ learnerName, profile, courses }: Ach
   };
 
   return (
-    <section className="rounded-3xl border border-violet-200/80 bg-white/80 p-5 shadow-lg shadow-violet-900/5 backdrop-blur sm:p-6 dark:border-violet-500/20 dark:bg-slate-950/55">
+    <section className="rounded-2xl border border-violet-200/80 bg-white/80 p-3 shadow-lg shadow-violet-900/5 backdrop-blur sm:rounded-3xl sm:p-6 dark:border-violet-500/20 dark:bg-slate-950/55">
       <div className="flex items-start gap-3">
         <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-amber-300 to-orange-500 text-white shadow-lg"><Sparkles className="h-5 w-5" /></span>
         <div>
           <h2 className="text-xl font-black text-slate-950 dark:text-white">Achievements</h2>
-          <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
+          <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-600 dark:text-slate-300 sm:text-sm sm:leading-6">
             {certifiedCourses.length > 0
               ? `${certifiedCourses.length} verified certificate${certifiedCourses.length === 1 ? '' : 's'} earned so far. Each one requires a passed final exam.`
               : 'Save a personalized PNG or open your device’s share menu for social media. Only your name and Language Quest achievement appear.'}
@@ -618,13 +618,13 @@ export function LanguageQuestAchievements({ learnerName, profile, courses }: Ach
       </div>
 
       <article className={`mt-5 overflow-hidden rounded-2xl border ${canCreateStreak ? 'border-orange-200 dark:border-orange-500/25' : 'border-slate-200 opacity-70 dark:border-slate-700'}`}>
-        <div className="flex flex-col gap-4 bg-gradient-to-br from-violet-800 via-fuchsia-700 to-orange-500 p-5 text-white sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 bg-gradient-to-br from-violet-800 via-fuchsia-700 to-orange-500 p-4 text-white sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-5">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <Flame className="h-5 w-5 shrink-0 fill-amber-300 text-amber-300" />
               <p className="text-xs font-black uppercase tracking-[0.2em] text-white/75">Learning streak</p>
             </div>
-            <p className="mt-2 text-3xl font-black">{profile.currentStreak} {profile.currentStreak === 1 ? 'day' : 'days'}</p>
+            <p className="mt-2 text-2xl font-black sm:text-3xl">{profile.currentStreak} {profile.currentStreak === 1 ? 'day' : 'days'}</p>
             <p className="mt-1 truncate text-sm font-bold text-white/85">{learnerName} • Best: {profile.bestStreak} days • {profile.points} points</p>
           </div>
           {!canCreateStreak ? (
@@ -652,7 +652,7 @@ export function LanguageQuestAchievements({ learnerName, profile, courses }: Ach
 
         <div className="mt-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-500/30 dark:bg-amber-950/20 dark:text-amber-100">
           <p className="font-black">Certificate rule updated</p>
-          <p className="mt-1 leading-6">Course-completion certificates issued by the old automatic rule are withdrawn. Complete the course, then pass its monitored final exam with at least 80% to unlock a new verified certificate.</p>
+          <p className="mt-1 line-clamp-2 leading-6 sm:line-clamp-none">Course-completion certificates issued by the old automatic rule are withdrawn. Complete the course, then pass its monitored final exam with at least 80% to unlock a new verified certificate.</p>
         </div>
 
         {examRequiredCourses.length > 0 && (

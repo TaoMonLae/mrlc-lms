@@ -458,7 +458,7 @@ export function LanguageQuestRewardTrack({
   const frame = languageQuestStreakFrame(bestStreak);
 
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-violet-200 bg-gradient-to-br from-slate-950 via-violet-950 to-fuchsia-950 p-5 text-white shadow-xl sm:p-6 dark:border-violet-500/25">
+    <section className="relative overflow-hidden rounded-2xl border border-violet-200 bg-gradient-to-br from-slate-950 via-violet-950 to-fuchsia-950 p-4 text-white shadow-xl sm:rounded-3xl sm:p-6 dark:border-violet-500/25">
       <div className="absolute -right-12 -top-16 h-48 w-48 rounded-full bg-fuchsia-400/15 blur-2xl" />
       <div className="relative grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-center">
         <div>
@@ -468,10 +468,10 @@ export function LanguageQuestRewardTrack({
             </Badge>
             <span className="text-xs font-black uppercase tracking-[0.18em] text-violet-200">{rewards.title}</span>
           </div>
-          <h2 className="mt-4 text-2xl font-black sm:text-3xl">
+          <h2 className="mt-3 text-xl font-black sm:mt-4 sm:text-3xl">
             {current ? `${current.name} joined your quest!` : 'Earn your first Quest Card'}
           </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-violet-100/80">
+          <p className="mt-2 line-clamp-2 max-w-2xl text-xs leading-5 text-violet-100/80 sm:text-sm sm:leading-6">
             Every correct first answer earns XP. Your first companion unlocks at 100 XP, and every later card demands a bigger learning milestone.
           </p>
 
@@ -483,7 +483,7 @@ export function LanguageQuestRewardTrack({
             <Progress value={rewards.progressPercent} className="mt-2 [&_[data-slot=progress-track]]:h-3 [&_[data-slot=progress-track]]:bg-white/15 [&_[data-slot=progress-indicator]]:bg-gradient-to-r [&_[data-slot=progress-indicator]]:from-amber-300 [&_[data-slot=progress-indicator]]:to-fuchsia-400" />
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
+          <div className="mt-4 hidden grid-cols-2 gap-2 sm:grid sm:grid-cols-5">
             {QUEST_CARD_CHAPTERS.map((chapter) => {
               const complete = rewards.level >= chapter.endLevel;
               const active = rewards.level < chapter.startLevel
@@ -511,7 +511,7 @@ export function LanguageQuestRewardTrack({
           </div>
         </div>
 
-        <div className="mx-auto w-full max-w-[230px]">
+        <div className="mx-auto hidden w-full max-w-[230px] sm:block">
           {featuredCard && (
             <LanguageQuestRewardCardView
               card={featuredCard}
