@@ -18,6 +18,8 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 
 ### Language Quest expansion and verified certificates
 
+- Added a published **GED Social Studies Preparation & Practice** course with 4 proportionally weighted units, 40 guided lessons, and 120 original questions across civics and government, U.S. history, economics, geography, source analysis, and quantitative reasoning. Rich lesson blocks include objectives, key terms, tables, charts, timelines, evidence models, GED strategies, checkpoints, hints, and worked answer explanations.
+- The GED Social Studies curriculum is independently authored from first-party GED Testing Service specifications and authoritative government references. See [`docs/language-quest/GED_SOCIAL_STUDIES_CURRICULUM_GUIDE.md`](docs/language-quest/GED_SOCIAL_STUDIES_CURRICULUM_GUIDE.md) for the research method, exact curriculum map, sources, limitations, and AI-assisted research disclosure.
 - Added a complete published **K–12 Mathematics** pathway covering Kindergarten through Grade 12: 13 courses, 104 units, 312 lessons, and 1,872 challenges. Mathematics has its own catalog folder, visual treatment, direct problem-solving flow, worked feedback, and subject-appropriate guidance without language-only vocabulary or spelling stages.
 - Added a generated curriculum snapshot, standards map, curriculum guide, validation tests, and `npm run generate:language-quest-k12-math` for checking the Mathematics package.
 - Learners now keep a searchable **Learned Words** bank from completed language practices. Teachers can use course progress and learned-word review data to identify material that needs reinforcement; Mathematics answers are deliberately excluded from the vocabulary bank.
@@ -61,7 +63,7 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 
 ### Language Quest
 
-Language Quest is MRLC's public-facing, game-like language and mathematics learning experience. Visitors can browse the published course catalog at `/language-quest`; beginning a lesson and saving progress requires a free account. Public learner accounts are deliberately isolated from private LMS records and school administration.
+Language Quest is MRLC's public-facing, game-like language, mathematics, and GED preparation experience. Visitors can browse the published course catalog at `/language-quest`; beginning a lesson and saving progress requires a free account. Public learner accounts are deliberately isolated from private LMS records and school administration.
 
 #### Preview
 
@@ -69,7 +71,7 @@ The responsive learner dashboard brings courses, hearts, points, streaks, senten
 
 ![Language Quest learner dashboard with course cards, progress, hearts, points, and streaks](docs/images/language-quest-dashboard.png)
 
-Language course pages provide a consistent Learn → Build → Check routine and an English/Burmese explanation switch. Learners can listen first, type complete sentences from memory, and then continue to the quiz with clear correction and retry guidance. Mathematics lessons open directly on guided problems and use maths-specific instructions, explanations, matching, ordering, and retry feedback.
+Language course pages provide a consistent Learn → Build → Check routine and an English/Burmese explanation switch. Learners can listen first, type complete sentences from memory, and then continue to the quiz with clear correction and retry guidance. Mathematics and GED subject lessons open with rich concept blocks and then move directly into guided problems with subject-specific instructions, evidence, visuals, explanations, and retry feedback.
 
 ![Language Quest Spanish course with Burmese lesson guidance](docs/images/language-quest-burmese-guide.png)
 
@@ -92,7 +94,7 @@ Completing every course practice unlocks a monitored final exam; passing it unlo
 - The spaced-repetition **Mastery Arena** schedules completed challenges at expanding review intervals, awards XP for correct recall, and returns missed cards sooner without consuming hearts.
 - Twelve original Quest Card companions unlock at fixed XP levels. After Level 12, nine mystery **Legendary Vault** rewards reveal MRLC’s supplied Mon history portrait cards from animated golden chests. Separate subject albums fill from completed challenges, while best-streak milestones unlock cosmetic card frames.
 - A dedicated learner profile lets each person choose from twelve safe built-in avatars, write a short learning bio, and see their Language Quest identity without uploading a personal photo.
-- Language lessons move through listening, recognition, spelling or sentence recall, and scored practice. Mathematics lessons skip language-only study cards and move directly into six guided problems with worked explanations.
+- Language lessons move through listening, recognition, spelling or sentence recall, and scored practice. Mathematics, GED Science, and GED Social Studies skip language-only study cards and move from concept instruction directly into subject practice with worked explanations.
 - Sentence checks ignore capitalization, repeated spaces, and light punctuation while still requiring the correct words and spelling.
 - Correct sentence practice triggers immediate visual celebration and a short success sound.
 - Incorrect answers show the model sentence and focused retry guidance instead of ending the practice.
@@ -126,9 +128,12 @@ Completing every course practice unlocks a monitored final exam; passing it unlo
 
 - Teacher and administrator Course Studio supports courses, units, lessons, multiple challenge types, accent colors, images, ordering, and draft/published states.
 - Answers, progress, hearts, streaks, points, rewards, and completion are verified by the server rather than trusted to the browser.
-- The public catalog and signed-in learner dashboard organize published content into collapsible, folder-style **Chinese Courses**, **English Courses**, **Spanish Courses**, **Mathematics Courses**, and **Other Courses** so learners can find the right path quickly.
+- The public catalog and signed-in learner dashboard organize published content into collapsible, folder-style **Chinese Courses**, **English Courses**, **Spanish Courses**, **Malay Courses**, **Mathematics Courses**, **GED Preparation**, and **Other Courses** so learners can find the right path quickly.
 - Includes a complete published **K–12 Mathematics** sequence from Kindergarten through Grade 12, containing 13 courses, 104 units, 312 lessons, and 1,872 challenges across conceptual understanding, fluency, reasoning, applications, and cumulative mastery.
 - Run `npm run generate:language-quest-k12-math` to validate the generated Mathematics curriculum after editing `curricula/language-quest/k12-math-courses.generated.json`. See `docs/language-quest/K12_MATH_CURRICULUM_GUIDE.md` and `docs/language-quest/k12-math-standards-map.tsv` for structure and standards coverage.
+- Includes **GED Science V2** with 38 visual, concept-first lessons and 114 practice questions across life science, physical science, and Earth and space science.
+- Includes **GED Social Studies Preparation & Practice** with 20 civics and government lessons, 8 U.S. history lessons, 6 economics lessons, and 6 geography and world lessons. The 40-lesson, 120-question balance follows the official approximate 50/20/15/15 content weighting while integrating primary and secondary sources, central ideas, claims and evidence, chronology, multiple causation, point of view, paired sources, maps, graphs, percentages, economic indicators, and policy trade-offs.
+- GED Social Studies source alignment and maintenance guidance are documented in [`docs/language-quest/GED_SOCIAL_STUDIES_CURRICULUM_GUIDE.md`](docs/language-quest/GED_SOCIAL_STUDIES_CURRICULUM_GUIDE.md). All questions and explanations are original MRLC work; official sample questions are not reproduced.
 - Includes an original **Everyday English** starter course with two units, four lessons, and twelve challenges, provisioned when Language Quest is first opened.
 - Includes the linked source repository's Spanish course as **Spanish Foundations**, with two units, ten lessons, and eighty visual or speech-assisted challenges.
 - Includes an original **Chinese Conversation Starter** course with two units, eight lessons, and thirty-two speech-assisted practices for greetings, names, countries, introductions, friends, and simple identity questions. Pinyin appears in every question as pronunciation guidance.
@@ -233,7 +238,7 @@ The service binds to `127.0.0.1` by default. Do not expose port `8810` publicly.
 | Word Trail | Student/teacher English vocabulary board game with dice, special spaces, saved progress, scores, and leaderboard |
 | Multiplayer Neon Snake | Authenticated real-time 3D arena with LMS player names, live ranking, keyboard/touch controls, and saved Student scores |
 | Game-time controls | Admin/teacher blocking, schedules, daily/session limits, breaks, server heartbeats, and student lock screens |
-| Language Quest | Public language and K–12 Mathematics courses, isolated learner signup, teacher classrooms and assigned-course access, bilingual guidance, subject-aware practice, Learned Words, spaced-repetition mastery, monitored final exams and verified certificates, Heart Refill Quizzes, Surprise/Quest Cards, missions, hearts, XP, streaks, leaderboard, accessibility controls, and Course Studio |
+| Language Quest | Public language, K–12 Mathematics, and GED preparation courses; isolated learner signup; teacher classrooms and assigned-course access; bilingual guidance; subject-aware practice; Learned Words; spaced-repetition mastery; monitored final exams and verified certificates; Heart Refill Quizzes; Surprise/Quest Cards; missions; hearts; XP; streaks; leaderboard; accessibility controls; and Course Studio |
 | Flashcards | Deck creation, sharing, class assignment, mastery, quiz, match, spelling, and progress reporting |
 | Lesson planner | Teacher planning and classroom resource organization |
 | Video lessons | Upload/conversion, custom thumbnails, captions, required viewing, progress, and watch analytics |
@@ -647,6 +652,7 @@ Confirm `DATABASE_URL`, `SESSION_SECRET`, `APP_URL`, port availability, and writ
 
 ## Notable third-party data and acknowledgments
 
+- The independently authored GED preparation curricula are informed by public GED Testing Service assessment specifications and study resources. GED and GED Testing Service are registered marks of their owners; MRLC Language Quest is not endorsed by GED Testing Service and does not reproduce official test questions.
 - Language Quest was informed by the concepts and interface patterns in [sanidhyy/duolingo-clone](https://github.com/sanidhyy/duolingo-clone), licensed under MIT. Its Spanish seed curriculum was adapted from [TaoMonLae/duolingo-clone](https://github.com/TaoMonLae/duolingo-clone). The complete attribution and license text are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 - Optional Language Quest speech uses [hexgrad/Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M), licensed under Apache-2.0. Kokoro and its model weights are installed separately and are not bundled in this repository.
 - The six CEFR vocabulary courses adapt the MIT-licensed vocabulary sets from [AyeNyeinSan22/linguify](https://github.com/AyeNyeinSan22/linguify); attribution and license text are retained in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

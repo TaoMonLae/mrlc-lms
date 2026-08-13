@@ -574,6 +574,7 @@ test("Language Quest groups language courses into a predictable category order",
   assert.equal(languageQuestCategoryForLanguage("English"), "English Courses");
   assert.equal(languageQuestCategoryForLanguage("Spanish"), "Spanish Courses");
   assert.equal(languageQuestCategoryForLanguage("Mathematics"), "Mathematics Courses");
+  assert.equal(languageQuestCategoryForLanguage("GED Social Studies"), "GED Preparation");
   assert.equal(languageQuestCategoryForLanguage("Mon"), "Other Courses");
 
   const groups = orderedLanguageQuestCategories([
@@ -583,6 +584,7 @@ test("Language Quest groups language courses into a predictable category order",
     { category: "Chinese Courses", title: "Chinese" },
     { category: "Chinese Courses", title: "Mandarin" },
     { category: "Mathematics Courses", title: "Grade 1 Mathematics" },
+    { category: "GED Preparation", title: "GED Social Studies" },
     { language: "Mandarin Chinese", title: "Legacy Chinese" },
   ]);
 
@@ -593,6 +595,7 @@ test("Language Quest groups language courses into a predictable category order",
       ["English Courses", 1],
       ["Spanish Courses", 1],
       ["Mathematics Courses", 1],
+      ["GED Preparation", 1],
       ["Other Courses", 1],
     ],
   );

@@ -1,6 +1,7 @@
-import { Atom, BookOpenCheck, FlaskConical, Image as ImageIcon, Lightbulb, Microscope, Sigma, Target, TrendingUp } from 'lucide-react';
+import { Atom, BookOpenCheck, FlaskConical, Image as ImageIcon, Landmark, Lightbulb, Microscope, ScrollText, Sigma, Target, TrendingUp } from 'lucide-react';
 
 const SCIENCE_V2_PREFIX = 'SCIENCE_V2::';
+const SOCIAL_STUDIES_V1_PREFIX = 'SOCIAL_STUDIES_V1::';
 
 type ScienceLabel = { marker: string; text: string };
 type ScienceTableVisual = { type: 'table'; title: string; headers: string[]; rows: string[][]; caption?: string };
@@ -25,7 +26,8 @@ export type ScienceVisual =
   | ScienceEvidenceVisual;
 
 export interface ScienceConceptDocument {
-  version: 2;
+  version: 1 | 2;
+  subject?: 'science' | 'social-studies';
   summary: string;
   objectives: string[];
   explanation: string[];
@@ -40,11 +42,19 @@ export function encodeScienceConcept(document: ScienceConceptDocument): string {
 }
 
 export function parseScienceConcept(source: string): ScienceConceptDocument | null {
-  if (!source.startsWith(SCIENCE_V2_PREFIX)) return null;
+  const prefix = source.startsWith(SCIENCE_V2_PREFIX)
+    ? SCIENCE_V2_PREFIX
+    : source.startsWith(SOCIAL_STUDIES_V1_PREFIX)
+      ? SOCIAL_STUDIES_V1_PREFIX
+      : null;
+  if (!prefix) return null;
   try {
-    const parsed = JSON.parse(source.slice(SCIENCE_V2_PREFIX.length)) as ScienceConceptDocument;
-    if (parsed?.version !== 2 || !Array.isArray(parsed.objectives) || !Array.isArray(parsed.explanation)) return null;
-    return parsed;
+    const parsed = JSON.parse(source.slice(prefix.length)) as ScienceConceptDocument;
+    if (![1, 2].includes(parsed?.version) || !Array.isArray(parsed.objectives) || !Array.isArray(parsed.explanation)) return null;
+    return {
+      ...parsed,
+      subject: prefix === SOCIAL_STUDIES_V1_PREFIX ? 'social-studies' : (parsed.subject || 'science'),
+    };
   } catch {
     return null;
   }
@@ -194,11 +204,15 @@ function ScienceVisualBlock({ visual }: { visual: ScienceVisual }) {
 export function LanguageQuestScienceConcept({ source }: { source: string }) {
   const document = parseScienceConcept(source);
   if (!document) return <PlainConcept source={source} />;
+  const isSocialStudies = document.subject === 'social-studies';
+  const SubjectIcon = isSocialStudies ? Landmark : Microscope;
+  const ConceptIcon = isSocialStudies ? ScrollText : Atom;
+  const TermsIcon = isSocialStudies ? BookOpenCheck : FlaskConical;
 
   return (
     <div className="space-y-5">
       <section className="rounded-2xl border border-sky-200 bg-sky-50/80 p-4 dark:border-sky-500/25 dark:bg-sky-500/10 sm:p-5">
-        <div className="flex items-start gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-sky-600 text-white"><Microscope className="h-5 w-5" /></span><div><p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-700 dark:text-sky-300">Science idea</p><p className="mt-1 text-sm font-semibold leading-6 text-slate-700 dark:text-slate-200">{document.summary}</p></div></div>
+        <div className="flex items-start gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-sky-600 text-white"><SubjectIcon className="h-5 w-5" /></span><div><p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-700 dark:text-sky-300">{isSocialStudies ? 'Social studies idea' : 'Science idea'}</p><p className="mt-1 text-sm font-semibold leading-6 text-slate-700 dark:text-slate-200">{document.summary}</p></div></div>
       </section>
 
       <section>
@@ -207,13 +221,13 @@ export function LanguageQuestScienceConcept({ source }: { source: string }) {
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-950/50 sm:p-5">
-        <h2 className="flex items-center gap-2 text-sm font-black text-slate-950 dark:text-white"><Atom className="h-4 w-4 text-sky-600" /> Learn the concept</h2>
+        <h2 className="flex items-center gap-2 text-sm font-black text-slate-950 dark:text-white"><ConceptIcon className="h-4 w-4 text-sky-600" /> Learn the concept</h2>
         <div className="mt-3 space-y-3">{document.explanation.map((paragraph) => <p key={paragraph} className="text-sm leading-7 text-slate-700 dark:text-slate-200">{paragraph}</p>)}</div>
       </section>
 
       {document.visual ? <ScienceVisualBlock visual={document.visual} /> : null}
 
-      {document.keyTerms?.length ? <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/60"><h2 className="flex items-center gap-2 text-sm font-black text-slate-950 dark:text-white"><FlaskConical className="h-4 w-4 text-emerald-600" /> Key terms</h2><div className="mt-3 grid gap-2 sm:grid-cols-2">{document.keyTerms.map((term) => <div key={term.marker} className="rounded-xl bg-white px-3 py-2 text-xs leading-5 text-slate-700 shadow-sm dark:bg-slate-950/60 dark:text-slate-200"><strong>{term.marker}</strong> — {term.text}</div>)}</div></section> : null}
+      {document.keyTerms?.length ? <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/60"><h2 className="flex items-center gap-2 text-sm font-black text-slate-950 dark:text-white"><TermsIcon className="h-4 w-4 text-emerald-600" /> Key terms</h2><div className="mt-3 grid gap-2 sm:grid-cols-2">{document.keyTerms.map((term) => <div key={term.marker} className="rounded-xl bg-white px-3 py-2 text-xs leading-5 text-slate-700 shadow-sm dark:bg-slate-950/60 dark:text-slate-200"><strong>{term.marker}</strong> — {term.text}</div>)}</div></section> : null}
 
       {document.gedStrategy ? <aside className="rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/25 dark:bg-amber-500/10"><p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-amber-800 dark:text-amber-200"><Lightbulb className="h-4 w-4" /> GED strategy</p><p className="mt-2 text-sm font-semibold leading-6 text-slate-700 dark:text-slate-200">{document.gedStrategy}</p></aside> : null}
 

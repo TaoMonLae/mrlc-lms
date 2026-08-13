@@ -4,6 +4,7 @@ export const LANGUAGE_QUEST_COURSE_CATEGORIES = [
   "Spanish Courses",
   "Malay Courses",
   "Mathematics Courses",
+  "GED Preparation",
   "Other Courses",
 ] as const;
 
@@ -14,6 +15,7 @@ export function languageQuestCategoryForLanguage(language: string): string {
   if (normalized.includes("spanish")) return "Spanish Courses";
   if (normalized.includes("malay") || normalized.includes("bahasa melayu")) return "Malay Courses";
   if (normalized.includes("math")) return "Mathematics Courses";
+  if (normalized.includes("ged") || normalized.includes("social studies") || normalized.includes("science")) return "GED Preparation";
   return "Other Courses";
 }
 

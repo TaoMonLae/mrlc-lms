@@ -58,6 +58,22 @@ const COURSE_SOURCES: CourseSource[] = [
     ),
   },
   {
+    title: 'GED preparation curriculum',
+    courses: 'GED Science V2 and GED Social Studies Preparation & Practice',
+    badge: 'Officially informed',
+    accent: 'from-cyan-600 to-blue-700',
+    art: '/icons/optimized/Eduv1_03.png',
+    description: (
+      <>
+        Original MRLC lessons and practice aligned to the GED Testing Service{' '}
+        <SourceLink href="https://www.ged.com/content/dam/websites/ged/resources/assessment-guide-for-educators-social-studies.pdf">Social Studies Assessment Guide</SourceLink>,{' '}
+        <SourceLink href="https://www.ged.com/content/dam/websites/ged/resources/en/High-Impact-Indicators.pdf">High Impact Indicators</SourceLink>, and{' '}
+        <SourceLink href="https://www.ged.com/content/dam/websites/ged/uploads/Educator-Handbook-Ed6-ebook-US-FINAL.pdf">Educator Handbook</SourceLink>.
+        The Social Studies course follows the official 50/20/15/15 content balance across civics, U.S. history, economics, and geography. It is independently authored and is not endorsed by GED Testing Service.
+      </>
+    ),
+  },
+  {
     title: 'Archived Spanish experiment',
     courses: 'Spanish Foundations (not in the learner catalog)',
     badge: 'Archived',
@@ -178,14 +194,14 @@ export default function LanguageQuestAbout() {
 
           <div className="relative z-10 flex flex-col justify-center px-5 py-9 sm:px-10 sm:py-16 lg:px-14">
             <span className="inline-flex w-fit items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-black uppercase tracking-[0.18em] text-violet-100 backdrop-blur">
-              <Sparkles className="h-3.5 w-3.5 text-amber-300" /> Languages • Mathematics • Community
+              <Sparkles className="h-3.5 w-3.5 text-amber-300" /> Languages • Mathematics • GED preparation
             </span>
             <h1 className="mt-5 max-w-3xl text-[clamp(2.55rem,12vw,5.2rem)] font-black leading-[0.94] tracking-[-0.055em] sm:mt-6">
               Learning that feels human,
               <span className="block bg-gradient-to-r from-amber-300 via-orange-300 to-pink-300 bg-clip-text text-transparent">built to grow with you.</span>
             </h1>
             <p className="mt-5 max-w-2xl text-[15px] leading-7 text-slate-200 sm:mt-6 sm:text-lg sm:leading-8">
-              Language Quest brings language practice, K–12 Mathematics, meaningful review, classroom connection, and verified achievements into one colorful learning journey—with clear credit for the sources that helped shape it.
+              Language Quest brings language practice, K–12 Mathematics, GED preparation, meaningful review, classroom connection, and verified achievements into one colorful learning journey—with clear credit for the sources that helped shape it.
             </p>
             <div className="mt-7 flex flex-col gap-3 sm:mt-8 sm:flex-row">
               <Button
@@ -209,7 +225,7 @@ export default function LanguageQuestAbout() {
             <div className="mt-8 grid max-w-xl grid-cols-3 gap-2 border-t border-white/10 pt-5 sm:mt-9 sm:pt-6">
               {[
                 ['13', 'Maths courses'],
-                ['3', 'Guidance languages'],
+                ['2', 'GED prep courses'],
                 ['80%', 'Exam pass mark'],
               ].map(([value, label]) => (
                 <div key={value}>
@@ -252,8 +268,8 @@ export default function LanguageQuestAbout() {
               {
                 art: '/icons/optimized/LanguageLearning/V1/Languages.png',
                 icon: Languages,
-                title: 'Languages and Mathematics',
-                copy: 'Language courses build listening, spelling, and sentences. Maths courses move directly into guided problem solving.',
+                title: 'Languages, Maths, and GED',
+                copy: 'Language courses build communication, while Mathematics and GED courses move into guided, evidence-based problem solving.',
                 tone: 'from-sky-100 to-cyan-50 dark:from-sky-950 dark:to-slate-900',
               },
               {
@@ -305,7 +321,7 @@ export default function LanguageQuestAbout() {
           </div>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { icon: Calculator, number: '01', title: 'Learn the right way', copy: 'Subject-aware lessons use language study cards or direct maths problems instead of forcing one format onto every course.', color: 'text-blue-600 dark:text-blue-300' },
+              { icon: Calculator, number: '01', title: 'Learn the right way', copy: 'Subject-aware lessons use language study cards or direct Maths, Science, and Social Studies problems instead of forcing one format onto every course.', color: 'text-blue-600 dark:text-blue-300' },
               { icon: Heart, number: '02', title: 'Recover with practice', copy: 'A Heart Refill Quiz uses completed material to restore hearts and can reveal a unique Surprise Card.', color: 'text-rose-600 dark:text-rose-300' },
               { icon: FileCheck2, number: '03', title: 'Pass the final exam', copy: 'Randomized, server-graded questions and secure attempt rules protect the value of every certificate.', color: 'text-violet-600 dark:text-violet-300' },
               { icon: Trophy, number: '04', title: 'Keep the achievement', copy: 'Verified certificates, Quest Cards, streaks, subject albums, and mastery progress make effort visible.', color: 'text-amber-600 dark:text-amber-300' },
