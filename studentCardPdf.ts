@@ -9,6 +9,7 @@ export type StudentCardPdfData = {
   status: string;
   studentName: string;
   studentCode: string;
+  identityNumber: string | null;
   className: string | null;
   academicYear: string | null;
   issueDate: Date | string;
@@ -70,8 +71,12 @@ function drawDetail(
   doc.roundedRect(x, y, width, 18, 3).fill("#f8fafc");
   doc.font("Helvetica-Bold").fontSize(4.8).fillColor("#94a3b8")
     .text(label.toUpperCase(), x + 5, y + 3, { width: width - 10, characterSpacing: 0.45, lineBreak: false });
-  doc.font("Helvetica-Bold").fontSize(6.7).fillColor("#1e293b")
-    .text(value || "-", x + 5, y + 9.5, { width: width - 10, lineBreak: false, ellipsis: true });
+  doc.fillColor("#1e293b");
+  drawFittedSingleLine(doc, value || "-", x + 5, y + 9.5, width - 10, {
+    font: "Helvetica-Bold",
+    maxFontSize: 6.7,
+    minFontSize: 4.4,
+  });
 }
 
 /**
@@ -159,8 +164,11 @@ function drawFront(doc: PDFKit.PDFDocument, data: StudentCardPdfData): void {
 
   const gap = 5;
   const boxW = (STUDENT_CARD_WIDTH_PT - 24 - gap) / 2;
-  drawDetail(doc, "Class", data.className || "-", 12, 175, boxW);
-  drawDetail(doc, "Academic year", data.academicYear || "-", 12 + boxW + gap, 175, boxW);
+  const compactGap = 4;
+  const compactBoxW = (STUDENT_CARD_WIDTH_PT - 24 - (compactGap * 2)) / 3;
+  drawDetail(doc, "Class", data.className || "-", 12, 175, compactBoxW);
+  drawDetail(doc, "Academic year", data.academicYear || "-", 12 + compactBoxW + compactGap, 175, compactBoxW);
+  drawDetail(doc, "ID No.", data.identityNumber || "-", 12 + ((compactBoxW + compactGap) * 2), 175, compactBoxW);
   drawDetail(doc, "Issued", formatDate(data.issueDate), 12, 198, boxW);
   drawDetail(doc, "Valid through", formatDate(data.expiryDate), 12 + boxW + gap, 198, boxW);
 

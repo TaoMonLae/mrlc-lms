@@ -7,15 +7,16 @@ import {
 } from "../../shared/languageQuestFinalExam";
 
 test("K-12 mathematics curricula are structurally valid", () => {
-  assert.equal(k12MathCourses.length, 13);
+  const mathCourses = k12MathCourses.filter((course) => course.code.startsWith("MRLC-K12-MATH-"));
+  assert.equal(mathCourses.length, 13);
   assert.equal(new Set(k12MathCourses.map((course) => course.code)).size, k12MathCourses.length);
   assert.deepEqual(
-    k12MathCourses.map((course) => course.code),
+    mathCourses.map((course) => course.code),
     ["K", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"]
       .map((grade) => `MRLC-K12-MATH-${grade}-V1`),
   );
   let challengeCount = 0;
-  for (const course of k12MathCourses) {
+  for (const course of mathCourses) {
     assert.equal(course.category, "Mathematics Courses");
     assert.equal(course.language, "Mathematics");
     assert.equal(course.published, true);

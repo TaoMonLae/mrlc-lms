@@ -190,11 +190,12 @@ export default function StudentIdCardPrint() {
               {doc.studentCode}
             </div>
 
-            <div className="mt-[3mm] grid grid-cols-2 gap-[1.5mm] text-left">
-              <CardDetail label="Class" value={doc.className || '—'} />
-              <CardDetail label="Academic year" value={student.academicYear || doc.term || '—'} />
-              <CardDetail label="Issued" value={fmtDate(doc.issueDate)} />
-              <CardDetail label="Valid through" value={fmtDate(expiryDate)} />
+            <div className="mt-[3mm] grid grid-cols-6 gap-[1.5mm] text-left">
+              <CardDetail label="Class" value={doc.className || '—'} className="col-span-2" />
+              <CardDetail label="Academic year" value={student.academicYear || doc.term || '—'} className="col-span-2" />
+              <CardDetail label="ID No." value={student.identityNumber || '—'} className="col-span-2" />
+              <CardDetail label="Issued" value={fmtDate(doc.issueDate)} className="col-span-3" />
+              <CardDetail label="Valid through" value={fmtDate(expiryDate)} className="col-span-3" />
             </div>
 
             <div className={`mt-[2.5mm] flex items-center justify-center gap-[1.2mm] text-[5.5px] font-black uppercase tracking-[0.16em] ${cardStatus === 'ACTIVE' ? 'text-emerald-700' : 'text-red-600'}`}>
@@ -251,9 +252,9 @@ export default function StudentIdCardPrint() {
   );
 }
 
-function CardDetail({ label, value }: { label: string; value: string }) {
+function CardDetail({ label, value, className = '' }: { label: string; value: string; className?: string }) {
   return (
-    <div className="min-w-0 rounded-[2mm] bg-slate-50 px-[2mm] py-[1.5mm] ring-1 ring-slate-100">
+    <div className={`min-w-0 rounded-[2mm] bg-slate-50 px-[2mm] py-[1.5mm] ring-1 ring-slate-100 ${className}`}>
       <span className="block truncate text-[5px] font-bold uppercase tracking-[0.12em] text-slate-400">{label}</span>
       <span className="mt-[0.5mm] block truncate text-[6.5px] font-black text-slate-800">{value}</span>
     </div>

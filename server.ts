@@ -19508,6 +19508,8 @@ async function startServer() {
         level: student.class?.level || null,
         photoUrl: student.profilePhotoUrl || null,
         dateOfBirth: student.dateOfBirth || null,
+        identityType: student.identityType || null,
+        identityNumber: student.identityNumber || null,
       },
       term: term || student.class?.academicYear || null,
     };
@@ -19743,6 +19745,37 @@ async function startServer() {
     }
   });
 
+  const hydrateLegacyStudentCardIdentity = async <T extends { type: string; studentId: string; payload: unknown }>(docs: T[]): Promise<T[]> => {
+    const legacy = docs.filter((doc) => {
+      if (doc.type !== "STUDENT_ID_CARD") return false;
+      const student = ((doc.payload || {}) as any).student;
+      return !student || !("identityNumber" in student);
+    });
+    if (!legacy.length) return docs;
+    const students = await prisma.student.findMany({
+      where: { id: { in: [...new Set(legacy.map((doc) => doc.studentId))] } },
+      select: { id: true, identityType: true, identityNumber: true },
+    });
+    const identityByStudent = new Map(students.map((student) => [student.id, student]));
+    return docs.map((doc) => {
+      const identity = identityByStudent.get(doc.studentId);
+      if (doc.type !== "STUDENT_ID_CARD" || !identity) return doc;
+      const payload = (doc.payload || {}) as any;
+      if (payload.student && "identityNumber" in payload.student) return doc;
+      return {
+        ...doc,
+        payload: {
+          ...payload,
+          student: {
+            ...(payload.student || {}),
+            identityType: identity.identityType || null,
+            identityNumber: identity.identityNumber || null,
+          },
+        },
+      };
+    });
+  };
+
   app.get("/api/documents", authMiddleware, reportRole(["ADMIN", "TEACHER"]), async (req, res) => {
     const { studentId, type, status } = req.query as { studentId?: string; type?: string; status?: string };
     if (type && !DOC_TYPES.includes(type)) { res.status(400).json({ error: "Invalid document type" }); return; }
@@ -19758,7 +19791,7 @@ async function startServer() {
         where.student = { classId: { in: classIds } };
       }
       const docs = await prisma.generatedDocument.findMany({ where, orderBy: { createdAt: "desc" }, take: 300 });
-      res.json(docs);
+      res.json(await hydrateLegacyStudentCardIdentity(docs));
     } catch (err: any) {
       if (err?.code === "P2021" || err?.code === "P2022") { res.json([]); return; }
       logger.error("Error listing documents:", err);
@@ -19780,7 +19813,7 @@ async function startServer() {
         where,
         orderBy: { createdAt: "desc" },
       });
-      res.json(docs);
+      res.json(await hydrateLegacyStudentCardIdentity(docs));
     } catch (err: any) {
       if (err?.code === "P2021" || err?.code === "P2022") { res.json([]); return; }
       logger.error("Error listing own documents:", err);
@@ -19810,7 +19843,7 @@ async function startServer() {
       const doc = await prisma.generatedDocument.findUnique({ where: { id: req.params.id } });
       if (!doc) { res.status(404).json({ error: "Document not found" }); return; }
       if (!(await canReadGeneratedDocument(req, doc))) { res.status(403).json({ error: "Forbidden" }); return; }
-      res.json(doc);
+      res.json((await hydrateLegacyStudentCardIdentity([doc]))[0]);
     } catch (err) {
       logger.error("Error fetching document:", err);
       res.status(500).json({ error: "Internal Server Error" });
@@ -19827,6 +19860,14 @@ async function startServer() {
 
       const payload = (card.payload || {}) as any;
       const student = payload.student || {};
+      if (!("identityNumber" in student)) {
+        const currentStudent = await prisma.student.findUnique({
+          where: { id: card.studentId },
+          select: { identityType: true, identityNumber: true },
+        });
+        student.identityType = currentStudent?.identityType || null;
+        student.identityNumber = currentStudent?.identityNumber || null;
+      }
       const school = payload.school || {};
       const profile = await prisma.schoolProfile.findFirst();
       const schoolName = school.name || profile?.name || "School";
@@ -19860,6 +19901,7 @@ async function startServer() {
         status: card.status === "ACTIVE" && expiryDate.getTime() < Date.now() ? "EXPIRED" : card.status,
         studentName: card.studentName,
         studentCode: card.studentCode,
+        identityNumber: typeof student.identityNumber === "string" ? student.identityNumber : null,
         className: card.className,
         academicYear: student.academicYear || card.term || null,
         issueDate,

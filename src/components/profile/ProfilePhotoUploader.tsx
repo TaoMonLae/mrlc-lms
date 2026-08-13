@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Camera, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ProfilePhotoCropDialog } from './ProfilePhotoCropDialog';
 import { toast } from 'sonner';
 
 type ProfilePhotoUploaderProps = {
@@ -28,6 +29,7 @@ export function ProfilePhotoUploader({
   const [uploading, setUploading] = useState(false);
   const [removing, setRemoving] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(currentUrl || '');
+  const [cropFile, setCropFile] = useState<File | null>(null);
 
   const handleRemove = async () => {
     if (!confirm('Remove this profile picture?')) return;
@@ -56,28 +58,14 @@ export function ProfilePhotoUploader({
     setPreviewUrl(currentUrl || '');
   }, [currentUrl]);
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Profile picture must be 5 MB or smaller');
-      event.target.value = '';
-      return;
-    }
-
-    if (!file.type.startsWith('image/')) {
-      toast.error('Profile picture must be an image file');
-      event.target.value = '';
-      return;
-    }
-
+  const uploadPhoto = async (file: File) => {
     const token = sessionStorage.getItem('auth_token');
     const formData = new FormData();
     formData.append('file', file);
     formData.append('targetType', targetType);
     if (targetId) formData.append('targetId', targetId);
 
+    setCropFile(null);
     setUploading(true);
     try {
       const res = await fetch('/api/profile-photo', {
@@ -95,11 +83,31 @@ export function ProfilePhotoUploader({
       toast.error(error.message || 'Failed to upload profile picture');
     } finally {
       setUploading(false);
-      event.target.value = '';
+      if (inputRef.current) inputRef.current.value = '';
     }
   };
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Profile picture must be 5 MB or smaller');
+      event.target.value = '';
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Profile picture must be an image file');
+      event.target.value = '';
+      return;
+    }
+
+    setCropFile(file);
+  };
+
   return (
+    <>
     <div className={`flex flex-col items-center gap-3 ${className}`}>
       <div className={`${imageClassName} overflow-hidden bg-slate-100 dark:bg-surface-raised border border-slate-200 dark:border-surface-raised flex items-center justify-center text-slate-500 font-bold`}>
         {previewUrl ? (
@@ -130,5 +138,15 @@ export function ProfilePhotoUploader({
         )}
       </div>
     </div>
+    <ProfilePhotoCropDialog
+      file={cropFile}
+      open={Boolean(cropFile)}
+      onCancel={() => {
+        setCropFile(null);
+        if (inputRef.current) inputRef.current.value = '';
+      }}
+      onCropped={uploadPhoto}
+    />
+    </>
   );
 }

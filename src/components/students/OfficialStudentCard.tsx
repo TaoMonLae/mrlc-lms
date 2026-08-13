@@ -29,6 +29,7 @@ type StudentCardDocument = {
     student?: {
       academicYear?: string | null;
       photoUrl?: string | null;
+      identityNumber?: string | null;
     };
   } | null;
 };
@@ -134,11 +135,12 @@ function StudentCardPreview({ card, expired }: { card: StudentCardDocument; expi
                 {card.studentCode}
               </span>
 
-              <span className="mt-4 grid grid-cols-2 gap-2 text-left">
-                <CardDetail label="Class" value={card.className || '—'} />
-                <CardDetail label="Academic year" value={student.academicYear || card.term || '—'} />
-                <CardDetail label="Issued" value={formatDate(card.issueDate)} />
-                <CardDetail label="Valid through" value={formatDate(card.expiryDate)} />
+              <span className="mt-4 grid grid-cols-6 gap-2 text-left">
+                <CardDetail label="Class" value={card.className || '—'} className="col-span-2" />
+                <CardDetail label="Academic year" value={student.academicYear || card.term || '—'} className="col-span-2" />
+                <CardDetail label="ID No." value={student.identityNumber || '—'} className="col-span-2" />
+                <CardDetail label="Issued" value={formatDate(card.issueDate)} className="col-span-3" />
+                <CardDetail label="Valid through" value={formatDate(card.expiryDate)} className="col-span-3" />
               </span>
 
               <span className={`mt-4 flex items-center justify-center gap-2 text-[9px] font-black uppercase tracking-[0.16em] ${cardStatus === 'ACTIVE' ? 'text-emerald-700' : 'text-red-600'}`}>
@@ -198,9 +200,9 @@ function StudentCardPreview({ card, expired }: { card: StudentCardDocument; expi
   );
 }
 
-function CardDetail({ label, value }: { label: string; value: string }) {
+function CardDetail({ label, value, className = '' }: { label: string; value: string; className?: string }) {
   return (
-    <span className="min-w-0 rounded-lg bg-slate-50 px-2.5 py-2 ring-1 ring-slate-100">
+    <span className={`min-w-0 rounded-lg bg-slate-50 px-2.5 py-2 ring-1 ring-slate-100 ${className}`}>
       <span className="block truncate text-[8px] font-bold uppercase tracking-[0.1em] text-slate-400">{label}</span>
       <span className="mt-0.5 block truncate text-[10px] font-black text-slate-800">{value}</span>
     </span>

@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { localToday } from '../../lib/dates';
+import { ProfilePhotoCropDialog } from '@/src/components/profile/ProfilePhotoCropDialog';
 
 const teacherSchema = z.object({
   fullName: z.string().min(2, 'Full name must be at least 2 characters'),
@@ -48,6 +49,11 @@ export default function TeacherNew() {
   const navigate = useNavigate();
   const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
   const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
+  const [pendingCropFile, setPendingCropFile] = useState<File | null>(null);
+
+  React.useEffect(() => () => {
+    if (profilePhotoUrl) URL.revokeObjectURL(profilePhotoUrl);
+  }, [profilePhotoUrl]);
   
   const {
     register,
@@ -77,8 +83,15 @@ export default function TeacherNew() {
       event.target.value = '';
       return;
     }
+    setPendingCropFile(file);
+    event.target.value = '';
+  };
+
+  const acceptPhotoCrop = (file: File) => {
+    if (profilePhotoUrl) URL.revokeObjectURL(profilePhotoUrl);
     setProfilePhotoFile(file);
     setProfilePhotoUrl(URL.createObjectURL(file));
+    setPendingCropFile(null);
   };
 
   const onSubmit = async (data: TeacherFormValues) => {
@@ -290,6 +303,12 @@ export default function TeacherNew() {
           </div>
         </div>
       </form>
+      <ProfilePhotoCropDialog
+        file={pendingCropFile}
+        open={Boolean(pendingCropFile)}
+        onCancel={() => setPendingCropFile(null)}
+        onCropped={acceptPhotoCrop}
+      />
     </div>
   );
 }

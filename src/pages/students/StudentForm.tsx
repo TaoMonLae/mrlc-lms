@@ -14,6 +14,7 @@ import {
 import { Image as ImageIcon, UploadCloud } from 'lucide-react';
 import { toast } from 'sonner';
 import { ProfilePhotoUploader } from '@/src/components/profile/ProfilePhotoUploader';
+import { ProfilePhotoCropDialog } from '@/src/components/profile/ProfilePhotoCropDialog';
 import { localToday } from '../../lib/dates';
 
 interface StudentFormProps {
@@ -68,6 +69,7 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
   const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(initialData?.profilePhotoUrl || initialData?.user?.profilePhotoUrl || null);
   const [pendingProfilePhoto, setPendingProfilePhoto] = useState<File | null>(null);
   const [pendingProfilePhotoPreview, setPendingProfilePhotoPreview] = useState<string | null>(null);
+  const [pendingCropFile, setPendingCropFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -107,9 +109,15 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) { toast.error('Profile picture must be 5 MB or smaller'); event.target.value = ''; return; }
     if (!file.type.startsWith('image/')) { toast.error('Profile picture must be an image file'); event.target.value = ''; return; }
+    setPendingCropFile(file);
+    event.target.value = '';
+  };
+
+  const acceptPendingCrop = (file: File) => {
     if (pendingProfilePhotoPreview) URL.revokeObjectURL(pendingProfilePhotoPreview);
     setPendingProfilePhoto(file);
     setPendingProfilePhotoPreview(URL.createObjectURL(file));
+    setPendingCropFile(null);
   };
 
   const uploadPendingProfilePhoto = async (studentId: string) => {
@@ -472,6 +480,12 @@ export default function StudentForm({ initialData, isEdit = false }: StudentForm
           {isSubmitting ? 'Saving...' : (isEdit ? 'Save Changes' : 'Create Student')}
         </Button>
       </div>
+      <ProfilePhotoCropDialog
+        file={pendingCropFile}
+        open={Boolean(pendingCropFile)}
+        onCancel={() => setPendingCropFile(null)}
+        onCropped={acceptPendingCrop}
+      />
     </form>
   );
 }
