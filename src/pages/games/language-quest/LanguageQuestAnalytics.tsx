@@ -110,7 +110,7 @@ export default function LanguageQuestAnalytics() {
       .then(setData)
       .catch((error: any) => {
         if (error?.name === 'AbortError') return;
-        const message = error?.message || 'Could not load Language Quest analytics';
+        const message = error?.message || 'Could not load Learning Quest analytics';
         setLoadError(message);
         toast.error(message);
       })
@@ -154,7 +154,7 @@ export default function LanguageQuestAnalytics() {
   return (
     <div className={`min-w-0 max-w-full space-y-6 pb-12 transition-opacity ${loading ? 'opacity-70' : 'opacity-100'}`} aria-busy={loading}>
       <Button variant="ghost" className="-ml-2" render={<Link to="/games/language-quest" />} nativeButton={false}>
-        <ArrowLeft className="mr-2 h-4 w-4" /> Language Quest
+        <ArrowLeft className="mr-2 h-4 w-4" /> Learning Quest
       </Button>
 
       <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-slate-950 via-violet-950 to-fuchsia-900 p-6 text-white shadow-xl sm:p-8">
@@ -165,7 +165,7 @@ export default function LanguageQuestAnalytics() {
             <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-fuchsia-200">
               <BarChart3 className="h-4 w-4" /> Teacher learning insights
             </p>
-            <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Language Quest Analytics</h1>
+            <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Learning Quest Analytics</h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-white/75 sm:text-base">
               See which questions, lessons, and practice skills need reteaching—and which learners may benefit from focused support.
             </p>
@@ -228,7 +228,7 @@ export default function LanguageQuestAnalytics() {
         <section className="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center dark:border-slate-700 dark:bg-slate-900">
           <BookOpenCheck className="mx-auto h-12 w-12 text-slate-300" />
           <h2 className="mt-4 text-xl font-black text-slate-900 dark:text-white">No attempts in this view yet</h2>
-          <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-slate-500">Try another classroom or course. Analytics will appear after learners answer Language Quest challenges.</p>
+          <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-slate-500">Try another classroom or course. Analytics will appear after learners answer Learning Quest challenges.</p>
         </section>
       ) : (
         <>

@@ -163,7 +163,7 @@ function drawQuestCardImage(ctx: CanvasRenderingContext2D, card: LanguageQuestRe
   ctx.textAlign = 'center';
   ctx.fillStyle = 'rgba(255,255,255,.7)';
   ctx.font = '700 17px "Geist", sans-serif';
-  ctx.fillText('Mon Refugee Learning Centre  •  Language Quest', width / 2, height - 62);
+  ctx.fillText('Mon Refugee Learning Centre  •  Learning Quest', width / 2, height - 62);
 }
 
 interface QuestCertificateInput {
@@ -208,7 +208,7 @@ async function drawQuestCertificate(ctx: CanvasRenderingContext2D, input: QuestC
   ctx.fillText('MON REFUGEE LEARNING CENTRE', 132, 168);
   ctx.fillStyle = accent;
   ctx.font = '800 22px "Geist", sans-serif';
-  ctx.fillText('LANGUAGE QUEST', 132, 205);
+  ctx.fillText('LEARNING QUEST', 132, 205);
 
   roundedRectPath(ctx, 1174, 136, 294, 60, 30);
   ctx.fillStyle = navy;
@@ -228,7 +228,7 @@ async function drawQuestCertificate(ctx: CanvasRenderingContext2D, input: QuestC
   ctx.textAlign = 'center';
   ctx.fillStyle = gold;
   ctx.font = '700 28px "Georgia", serif';
-  ctx.fillText('Language Quest Progress Keepsake', width / 2, 346);
+  ctx.fillText('Learning Quest Progress Keepsake', width / 2, 346);
 
   ctx.fillStyle = muted;
   ctx.font = '600 22px "Geist", sans-serif';
@@ -546,7 +546,7 @@ function LanguageQuestRewardCardActions({
         blob,
         filename,
         `My ${card.name} Quest Card`,
-        `${learnerName} earned the ${card.name} Quest Card (${card.achievement}) on MRLC Language Quest.`,
+        `${learnerName} earned the ${card.name} Quest Card (${card.achievement}) on MRLC Learning Quest.`,
         action,
       );
     } catch (error: any) {
@@ -628,8 +628,8 @@ function LanguageQuestCertificateButton({
       await shareOrDownloadBlob(
         blob,
         filename,
-        'My Language Quest progress',
-        `${learnerName} reached Level ${rewards.level} (${rewards.title}) on MRLC Language Quest.`,
+        'My Learning Quest progress',
+        `${learnerName} reached Level ${rewards.level} (${rewards.title}) on MRLC Learning Quest.`,
         action,
       );
     } catch (error: any) {
@@ -656,13 +656,13 @@ function LanguageQuestCertificateButton({
       <Dialog open={previewUrl !== null} onOpenChange={(open) => !open && setPreviewUrl(null)}>
         <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-5xl">
           <DialogHeader>
-            <DialogTitle>Language Quest progress keepsake</DialogTitle>
+            <DialogTitle>Learning Quest progress keepsake</DialogTitle>
             <DialogDescription>Preview of {learnerName}&apos;s current progress keepsake. This is not a course certificate.</DialogDescription>
           </DialogHeader>
           {previewUrl && (
             <img
               src={previewUrl}
-              alt={`${learnerName}'s Language Quest progress keepsake`}
+              alt={`${learnerName}'s Learning Quest progress keepsake`}
               className="h-auto w-full rounded-lg border border-violet-200 bg-white shadow-sm"
             />
           )}

@@ -2,13 +2,13 @@
 
 ## Purpose
 
-This guide documents the research basis, scope, design decisions, and quality limits of the original MRLC Language Quest course `MRLC-GED-SOCIAL-STUDIES-V1`.
+This guide documents the research basis, scope, design decisions, and quality limits of the original MRLC Learning Quest course `MRLC-GED-SOCIAL-STUDIES-V1`.
 
 The course prepares learners to reason with social studies sources; it is not a memorization survey and does not reproduce official GED questions. It contains 4 units, 40 guided lessons, and 120 original four-option practices with hints, answer explanations, quantitative displays, and a monitored final exam.
 
 ## Research question and method
 
-**Question:** What content and reasoning practice should a comprehensive Language Quest course include to prepare learners for the current GED Social Studies assessment?
+**Question:** What content and reasoning practice should a comprehensive Learning Quest course include to prepare learners for the current GED Social Studies assessment?
 
 Research prioritized first-party GED Testing Service documents, then authoritative U.S. government sources for stable civic, historical, economic, and geographic concepts. Sources were checked for provenance, current availability, internal consistency, and relevance to an adult high-school-equivalency course. Official sample questions were not copied or adapted.
 
@@ -18,7 +18,7 @@ Research prioritized first-party GED Testing Service documents, then authoritati
 - The three broad reasoning areas—reading/writing, social studies concepts, and mathematical reasoning—are each approximately one-third of the assessment.
 - Content weighting is approximately 50% civics and government, 20% U.S. history, 15% economics, and 15% geography and the world.
 - Each assessed item combines a Social Studies Practice with a content topic. Practices include inference, central ideas, chronology, cause and effect, purpose and point of view, integrating text and visuals, evaluating evidence, comparing sources, interpreting graphs, and measuring center.
-- Approximately half of official items use a shared stimulus for two or three questions. Language Quest approximates this through a concept/source display followed by three related practices per lesson.
+- Approximately half of official items use a shared stimulus for two or three questions. Learning Quest approximates this through a concept/source display followed by three related practices per lesson.
 - GED Testing Service identifies central ideas/evidence, connections among people and processes, multiple causation, historical context and point of view, and cross-source comparison as high-impact instructional priorities.
 
 ## Curriculum map

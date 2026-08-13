@@ -1,5 +1,5 @@
 // Shared helpers for adding grammar/cloze/reorder/odd-one-out practice
-// challenges to the Language Quest course generator scripts. Every helper
+// challenges to the Learning Quest course generator scripts. Every helper
 // here reuses data the caller has already validated (a real word, a real
 // example sentence, a real part-of-speech tag) rather than inventing new
 // language content, so the risk profile matches the rest of these scripts:

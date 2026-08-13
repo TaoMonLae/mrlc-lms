@@ -1,6 +1,6 @@
 # English words source
 
-The generated Language Quest English vocabulary courses select words from
+The generated Learning Quest English vocabulary courses select words from
 [`dwyl/english-words`](https://github.com/dwyl/english-words), validated against
 `words_alpha.txt` from upstream commit `20f5cc9`.
 

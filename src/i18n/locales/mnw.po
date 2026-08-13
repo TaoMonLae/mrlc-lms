@@ -10771,7 +10771,7 @@ msgstr ""
 msgid "Back to learning"
 msgstr ""
 # Extracted string
-msgid "Open Language Quest"
+msgid "Open Learning Quest"
 msgstr ""
 # Extracted string
 msgid "apiGet"
@@ -10801,7 +10801,7 @@ msgstr ""
 msgid "Mon Refugee Learning Centre"
 msgstr ""
 # Extracted string
-msgid "Language Quest"
+msgid "Learning Quest"
 msgstr ""
 # Extracted string
 msgid "Certificate of Completion"
@@ -10834,7 +10834,7 @@ msgstr ""
 msgid "Dictionary word"
 msgstr ""
 # Extracted string
-msgid "Language Quest Dictionary"
+msgid "Learning Quest Dictionary"
 msgstr ""
 # Extracted string
 msgid "Highlight a word anywhere in the lesson, then choose"
@@ -10990,7 +10990,7 @@ msgstr ""
 msgid "မြန်မာ"
 msgstr ""
 # Extracted string
-msgid "MRLC Language Quest home"
+msgid "MRLC Learning Quest home"
 msgstr ""
 # Extracted string
 msgid "MRLC logo"
@@ -11158,7 +11158,7 @@ msgstr ""
 msgid "Game Time Controls"
 msgstr ""
 # Extracted string
-msgid "Language Learning"
+msgid "Learning Tools"
 msgstr ""
 # Extracted string
 msgid "Reading Analytics"
@@ -11257,7 +11257,7 @@ msgstr ""
 msgid "Back to sign in"
 msgstr ""
 # Extracted string
-msgid "Try Language Quest"
+msgid "Try Learning Quest"
 msgstr ""
 # Extracted string
 msgid "6-digit code or recovery code"
@@ -11272,7 +11272,7 @@ msgstr ""
 msgid "Create a free learner account"
 msgstr ""
 # Extracted string
-msgid "Secure access for school members and Language Quest learners"
+msgid "Secure access for school members and Learning Quest learners"
 msgstr ""
 # Extracted string
 msgid "Developed by Tao Mon Lae"
@@ -11329,7 +11329,7 @@ msgstr ""
 msgid "At least 8 characters"
 msgstr ""
 # Extracted string
-msgid "Back to Language Quest"
+msgid "Back to Learning Quest"
 msgstr ""
 # Extracted string
 msgid "A colorful learning journey"
@@ -11353,13 +11353,13 @@ msgstr ""
 msgid "Free learner account"
 msgstr ""
 # Extracted string
-msgid "Start your Language Quest"
+msgid "Start your Learning Quest"
 msgstr ""
 # Extracted string
 msgid "Choose a learner avatar"
 msgstr ""
 # Extracted string
-msgid "Built-in characters only—profile-photo uploads are not used in Language Quest."
+msgid "Built-in characters only—profile-photo uploads are not used in Learning Quest."
 msgstr ""
 # Extracted string
 msgid "Use at least 8 characters."
@@ -12064,7 +12064,7 @@ msgstr ""
 msgid "Correct answer:"
 msgstr ""
 # Extracted string
-msgid "Friendly Language Quest guide wearing a yellow hoodie"
+msgid "Friendly Learning Quest guide wearing a yellow hoodie"
 msgstr ""
 # Extracted string
 msgid "dwyl/english-words"
@@ -12088,7 +12088,7 @@ msgstr ""
 msgid "made more human."
 msgstr ""
 # Extracted string
-msgid "Language Quest is MRLC’s colorful learning space for useful words, complete sentences, confident speaking, and classroom connection—with transparent credit for every source that helped shape it."
+msgid "Learning Quest is MRLC’s colorful learning space for useful words, complete sentences, confident speaking, and classroom connection—with transparent credit for every source that helped shape it."
 msgstr ""
 # Extracted string
 msgid "Explore courses"
@@ -12136,7 +12136,7 @@ msgstr ""
 msgid "Built with the community in mind"
 msgstr ""
 # Extracted string
-msgid "Designed and built for the learners, teachers, and community of the Mon Refugee Learning Centre. Language Quest is open source so others can learn from it, improve it, and give credit to the work behind it."
+msgid "Designed and built for the learners, teachers, and community of the Mon Refugee Learning Centre. Learning Quest is open source so others can learn from it, improve it, and give credit to the work behind it."
 msgstr ""
 # Extracted string
 msgid "Visit GitHub profile"
@@ -12157,7 +12157,7 @@ msgstr ""
 msgid "Teacher learning insights"
 msgstr ""
 # Extracted string
-msgid "Language Quest Analytics"
+msgid "Learning Quest Analytics"
 msgstr ""
 # Extracted string
 msgid "See which questions, lessons, and practice skills need reteaching—and which learners may benefit from focused support."
@@ -12187,7 +12187,7 @@ msgstr ""
 msgid "No attempts in this view yet"
 msgstr ""
 # Extracted string
-msgid "Try another classroom or course. Analytics will appear after learners answer Language Quest challenges."
+msgid "Try another classroom or course. Analytics will appear after learners answer Learning Quest challenges."
 msgstr ""
 # Extracted string
 msgid "Practice skills"
@@ -12286,7 +12286,7 @@ msgstr ""
 msgid "Teacher classroom tools"
 msgstr ""
 # Extracted string
-msgid "Language Quest Classrooms"
+msgid "Learning Quest Classrooms"
 msgstr ""
 # Extracted string
 msgid "Create a classroom, share its join code, choose a focus course, and quickly see who may need encouragement or extra practice."
@@ -12361,7 +12361,7 @@ msgstr ""
 msgid "No learners have joined yet"
 msgstr ""
 # Extracted string
-msgid "Share the join code above. Learners enter it from their Language Quest profile."
+msgid "Share the join code above. Learners enter it from their Learning Quest profile."
 msgstr ""
 # Extracted string
 msgid "Loading course"
@@ -12544,7 +12544,7 @@ msgstr ""
 msgid "View course path"
 msgstr ""
 # Extracted string
-msgid "Loading Language Quest"
+msgid "Loading Learning Quest"
 msgstr ""
 # Extracted string
 msgid "Continue learning"
@@ -12559,7 +12559,7 @@ msgstr ""
 msgid "A teacher or administrator can create the first course."
 msgstr ""
 # Extracted string
-msgid "Language Quest is taking a break"
+msgid "Learning Quest is taking a break"
 msgstr ""
 # Extracted string
 msgid "Please try loading the courses again."
@@ -12568,7 +12568,7 @@ msgstr ""
 msgid "Learn • Play • Grow"
 msgstr ""
 # Extracted string
-msgid "MRLC Language Quest"
+msgid "MRLC Learning Quest"
 msgstr ""
 # Extracted string
 msgid "Manage Courses"
@@ -12634,7 +12634,7 @@ msgstr ""
 msgid "Administrator tools"
 msgstr ""
 # Extracted string
-msgid "Language Quest Learners"
+msgid "Learning Quest Learners"
 msgstr ""
 # Extracted string
 msgid "Public learners"
@@ -12931,13 +12931,13 @@ msgstr ""
 msgid "Limit confetti, card tilts, and movement."
 msgstr ""
 # Extracted string
-msgid "Kokoro provides a clearer built-in AI teacher voice when the local service supports the course language. Language Quest automatically uses your browser voice if it is offline or unsupported."
+msgid "Kokoro provides a clearer built-in AI teacher voice when the local service supports the course language. Learning Quest automatically uses your browser voice if it is offline or unsupported."
 msgstr ""
 # Extracted string
-msgid "Choose your Language Quest avatar"
+msgid "Choose your Learning Quest avatar"
 msgstr ""
 # Extracted string
-msgid "Pick a friendly built-in character. Language Quest does not accept profile-photo uploads."
+msgid "Pick a friendly built-in character. Learning Quest does not accept profile-photo uploads."
 msgstr ""
 # Extracted string
 msgid "About my learning"
@@ -12946,7 +12946,7 @@ msgstr ""
 msgid "My classrooms"
 msgstr ""
 # Extracted string
-msgid "A teacher can share an eight-character code. Joining lets that teacher see your Language Quest points, streak, activity date, and progress in the class focus course."
+msgid "A teacher can share an eight-character code. Joining lets that teacher see your Learning Quest points, streak, activity date, and progress in the class focus course."
 msgstr ""
 # Extracted string
 msgid "Classroom join code"
@@ -13888,8 +13888,8 @@ msgstr "နွံပၟိက်ပလေဝ်ပလေတ်စမ်ၜတ်
 msgid "Finish a course and pass its final exam to unlock a verified certificate."
 msgstr "သွက်ဂွံပံက်လိက်သက်သဳ ကၠောန်တုဲသင်တန်း ကေုာံ သွဟ်အံၚ်စမ်ၜတ်လိက်လက္ကရဴညိ။"
 # Extracted string
-msgid "Preview of your print-ready Language Quest certificate."
-msgstr "ဗဵုစမ်ၜတ်လိက်သက်သဳ Language Quest မဆိုက်ပ္တိတ်။"
+msgid "Preview of your print-ready Learning Quest certificate."
+msgstr "ဗဵုစမ်ၜတ်လိက်သက်သဳ Learning Quest မဆိုက်ပ္တိတ်။"
 # Extracted string
 msgid "Subject albums"
 msgstr "အေလ်ဗမ်ဘာသာလ္ၚတ်ဂမၠိုၚ်"
@@ -13909,8 +13909,8 @@ msgstr "ဍဵုသွက်ဂွံရံၚ်၊ ဂိုၚ်ဒေပ�
 msgid "Journey progress keepsake"
 msgstr "တၚ်စမ္တီပရေၚ်ဇၞော်မောဝ်တရဴ"
 # Extracted string
-msgid "Language Quest progress keepsake"
-msgstr "တၚ်စမ္တီပရေၚ်ဇၞော်မောဝ် Language Quest"
+msgid "Learning Quest progress keepsake"
+msgstr "တၚ်စမ္တီပရေၚ်ဇၞော်မောဝ် Learning Quest"
 # Extracted string
 msgid "My learned words"
 msgstr "မလိက်အဲမလ္ၚတ်လဝ်ဂမၠိုၚ်"
@@ -14257,8 +14257,8 @@ msgstr "ထပ်ပွားနကဵု `${course.title} (ကူဆာဲ)`"
 msgid "Duplicate as a new draft"
 msgstr "ထပ်ပွားနကဵုမူအပြောံတၟိ"
 # Extracted string
-msgid "A teacher can share an eight-character code. Joining lets that teacher see your Language Quest points, streak, activity date, progress, and learned words in the class focus course. Learning from other courses stays private."
-msgstr "အာစာမၞး မျှဝေကုဒ် ၈ မလိက်မာန်ရ။ လုပ်ပူးပေါင်းမ္ဂး အာစာဂှ် ဆဵုစၟတ် Language Quest၊ စနောမ်သတ္တဟ၊ စၟတ်တ္ၚဲချဳဒရာၚ်၊ ပရေၚ်ဇၞော်မောဝ် ကေုာံ မလိက်လ္ၚတ်လဝ်ပ္ဍဲသင်တန်းခန်ဘာမာန်ရ။ ပရေၚ်လ္ၚတ်နူသင်တန်းတၞဟ်တအ် ဓမံက်စွံလဝ်အပြောံ။"
+msgid "A teacher can share an eight-character code. Joining lets that teacher see your Learning Quest points, streak, activity date, progress, and learned words in the class focus course. Learning from other courses stays private."
+msgstr "အာစာမၞး မျှဝေကုဒ် ၈ မလိက်မာန်ရ။ လုပ်ပူးပေါင်းမ္ဂး အာစာဂှ် ဆဵုစၟတ် Learning Quest၊ စနောမ်သတ္တဟ၊ စၟတ်တ္ၚဲချဳဒရာၚ်၊ ပရေၚ်ဇၞော်မောဝ် ကေုာံ မလိက်လ္ၚတ်လဝ်ပ္ဍဲသင်တန်းခန်ဘာမာန်ရ။ ပရေၚ်လ္ၚတ်နူသင်တန်းတၞဟ်တအ် ဓမံက်စွံလဝ်အပြောံ။"
 # Extracted string
 msgid "Open course"
 msgstr "ပံက်သင်တန်း"

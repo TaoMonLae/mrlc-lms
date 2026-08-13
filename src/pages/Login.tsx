@@ -354,7 +354,7 @@ export default function LoginPage() {
                 </Button>
 
                 <p className="text-center text-sm text-slate-600">
-                  New to Language Quest?{" "}
+                  New to Learning Quest?{" "}
                   <Link to="/signup" state={location.state} className="font-bold text-violet-700 hover:underline">
                     Create a free learner account
                   </Link>
@@ -384,7 +384,7 @@ export default function LoginPage() {
         <footer className="px-6 pb-6 sm:px-10">
           <div className="text-center sm:text-right">
             <p className="flex items-center justify-center gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-600 sm:justify-end">
-              <ShieldCheck className="h-4 w-4" /> Secure access for school members and Language Quest learners
+              <ShieldCheck className="h-4 w-4" /> Secure access for school members and Learning Quest learners
             </p>
             {(contactEmail || contactPhone) && (
               <p className="mt-1 text-sm text-slate-600">

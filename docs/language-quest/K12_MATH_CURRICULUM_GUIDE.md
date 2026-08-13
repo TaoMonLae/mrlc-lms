@@ -10,7 +10,7 @@ The course family treats mathematics as a language of quantities, patterns, rela
 
 The design is informed by the Common Core Mathematics Standards emphasis on focused progressions, conceptual understanding, procedural skill, mathematical practices, and real-world problem solving. It remains adaptable to other K-12 systems.
 
-## Language Quest interaction design
+## Learning Quest interaction design
 
 - **SELECT / ASSIST / CLOZE:** calculations, concepts, and missing values.
 - **GRAMMAR_TRANSFORM:** equivalent forms and algebraic transformations.
@@ -197,7 +197,7 @@ Broad reference domains: `F-TF; N-VM; A-APR; S-MD; Precalculus/Calculus extensio
 - Use one unit every three to five weeks depending on timetable and learner support needs.
 - Require at least 80% lesson accuracy before moving to the next unit.
 - Use mastery review for missed skills and boss battles as cumulative unit checks.
-- Pair Language Quest work with teacher-led manipulatives, diagrams, written working, projects, and discussion.
+- Pair Learning Quest work with teacher-led manipulatives, diagrams, written working, projects, and discussion.
 
 ## Assessment model
 

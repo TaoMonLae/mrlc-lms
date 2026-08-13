@@ -239,7 +239,7 @@ export default function LanguageQuestMastery() {
     <div className="mx-auto max-w-4xl space-y-6 pb-10">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Button variant="ghost" className="-ml-2" render={<Link to="/games/language-quest" />} nativeButton={false}>
-          <ArrowLeft className="mr-2 h-4 w-4" /> Language Quest
+          <ArrowLeft className="mr-2 h-4 w-4" /> Learning Quest
         </Button>
         <div className="flex items-center gap-2">
           {lightningMode && bestCombo >= 2 && (

@@ -85,7 +85,7 @@ const COURSE_SOURCES: CourseSource[] = [
       <>
         Historical seed content adapted from{' '}
         <SourceLink href="https://github.com/TaoMonLae/duolingo-clone">TaoMonLae/duolingo-clone</SourceLink>.
-        The course remains retired while its records are preserved. Language Quest’s learning flow was also informed by the MIT-licensed{' '}
+        The course remains retired while its records are preserved. Learning Quest’s learning flow was also informed by the MIT-licensed{' '}
         <SourceLink href="https://github.com/sanidhyy/duolingo-clone">sanidhyy/duolingo-clone</SourceLink>{' '}
         project.
       </>
@@ -203,7 +203,7 @@ export default function LanguageQuestAbout() {
               <span className="block bg-gradient-to-r from-amber-300 via-orange-300 to-pink-300 bg-clip-text text-transparent">built to grow with you.</span>
             </h1>
             <p className="mt-5 max-w-2xl text-[15px] leading-7 text-slate-200 sm:mt-6 sm:text-lg sm:leading-8">
-              Language Quest brings language practice, K–12 Mathematics, GED preparation, meaningful review, classroom connection, and verified achievements into one colorful learning journey—with clear credit for the sources that helped shape it.
+              Learning Quest brings language practice, K–12 Mathematics, GED preparation, meaningful review, classroom connection, and verified achievements into one colorful learning journey—with clear credit for the sources that helped shape it.
             </p>
             <div className="mt-7 flex flex-col gap-3 sm:mt-8 sm:flex-row">
               <Button
@@ -244,7 +244,7 @@ export default function LanguageQuestAbout() {
             <div className="absolute bottom-0 left-1/2 z-[2] h-[80%] -translate-x-1/2 sm:h-[96%]">
               <img
                 src="/icons/optimized/YellowHoodieGuide.png"
-                alt="Friendly Language Quest guide wearing a yellow hoodie"
+                alt="Friendly Learning Quest guide wearing a yellow hoodie"
                 className="lq-float-delayed h-full w-auto max-w-none object-contain drop-shadow-[0_30px_35px_rgba(0,0,0,.35)]"
               />
             </div>
@@ -447,7 +447,7 @@ export default function LanguageQuestAbout() {
             <p className="text-sm font-black uppercase tracking-[0.18em] text-violet-700 dark:text-violet-300">Built with the community in mind</p>
             <h2 className="mt-3 text-3xl font-black tracking-tight">Developed by Tao Mon Lae</h2>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 dark:text-slate-300">
-              Designed and built for the learners, teachers, and community of the Mon Refugee Learning Centre. Language Quest is open source so others can learn from it, improve it, and give credit to the work behind it.
+              Designed and built for the learners, teachers, and community of the Mon Refugee Learning Centre. Learning Quest is open source so others can learn from it, improve it, and give credit to the work behind it.
             </p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <a

@@ -175,7 +175,7 @@ export default function LanguageQuestClassrooms() {
           : result.classrooms[0]?.id || '';
       });
     } catch (error: any) {
-      const message = error?.message || 'Could not load Language Quest classrooms';
+      const message = error?.message || 'Could not load Learning Quest classrooms';
       setLoadError(message);
       toast.error(message);
     }
@@ -398,7 +398,7 @@ export default function LanguageQuestClassrooms() {
   return (
     <div className="space-y-6 pb-10">
       <Button variant="ghost" className="-ml-2" render={<Link to="/games/language-quest" />} nativeButton={false}>
-        <ArrowLeft className="mr-2 h-4 w-4" /> Language Quest
+        <ArrowLeft className="mr-2 h-4 w-4" /> Learning Quest
       </Button>
 
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-sky-700 via-violet-700 to-fuchsia-700 p-6 text-white shadow-xl sm:p-8">
@@ -406,7 +406,7 @@ export default function LanguageQuestClassrooms() {
         <div className="relative flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
           <div className="max-w-2xl">
             <p className="text-xs font-black uppercase tracking-[0.2em] text-white/70">Teacher classroom tools</p>
-            <h1 className="mt-2 text-3xl font-black sm:text-4xl">Language Quest Classrooms</h1>
+            <h1 className="mt-2 text-3xl font-black sm:text-4xl">Learning Quest Classrooms</h1>
             <p className="mt-3 text-sm leading-6 text-white/80 sm:text-base">Create a classroom, share its join code, choose a focus course, and quickly see who may need encouragement or extra practice.</p>
           </div>
           <div className="flex flex-wrap gap-2 text-xs font-bold">
@@ -692,7 +692,7 @@ export default function LanguageQuestClassrooms() {
                   <div className="p-12 text-center">
                     <Users className="mx-auto h-11 w-11 text-slate-300" />
                     <p className="mt-3 font-black text-slate-800 dark:text-white">No learners have joined yet</p>
-                    <p className="mt-1 text-sm text-slate-500">Share the join code above. Learners enter it from their Language Quest profile.</p>
+                    <p className="mt-1 text-sm text-slate-500">Share the join code above. Learners enter it from their Learning Quest profile.</p>
                   </div>
                 ) : !filteredMembers.length ? (
                   <div className="p-10 text-center">
@@ -730,7 +730,7 @@ export default function LanguageQuestClassrooms() {
                                 <Progress value={member.focusProgressPercent} />
                               </div>
                             ) : (
-                              <p className="mt-3 text-xs font-semibold text-slate-500 dark:text-slate-400"><CheckCircle2 className="mr-1 inline h-3.5 w-3.5 text-emerald-500" /> {member.completedChallenges} practices completed across Language Quest</p>
+                              <p className="mt-3 text-xs font-semibold text-slate-500 dark:text-slate-400"><CheckCircle2 className="mr-1 inline h-3.5 w-3.5 text-emerald-500" /> {member.completedChallenges} practices completed across Learning Quest</p>
                             )}
                             {detail.focusCourse && (
                               <Button

@@ -12,7 +12,7 @@ export function MrlcQuestBrand({ to = '/language-quest', compact = false, invers
     <Link
       to={to}
       className={`group inline-flex min-w-0 items-center ${compact ? 'gap-2' : 'gap-3'}`}
-      aria-label="MRLC Language Quest home"
+      aria-label="MRLC Learning Quest home"
     >
       <span className={`relative grid shrink-0 place-items-center rounded-2xl bg-white shadow-lg ring-1 ring-black/5 transition-transform duration-300 group-hover:-rotate-3 group-hover:scale-105 ${compact ? 'h-10 w-10 p-1' : 'h-12 w-12 p-1.5'}`}>
         <img src="/icon-192.png" alt="MRLC logo" className="h-full w-full object-contain" />
@@ -22,7 +22,7 @@ export function MrlcQuestBrand({ to = '/language-quest', compact = false, invers
       </span>
       <span className={`min-w-0 leading-tight ${compact ? 'max-[430px]:hidden' : ''}`}>
         <span className={`block text-[10px] font-black uppercase tracking-[0.2em] ${inverse ? 'text-white/65' : 'text-violet-600'}`}>MRLC</span>
-        <span className={`block truncate font-black tracking-[-0.025em] ${compact ? 'text-base' : 'text-lg'} ${inverse ? 'text-white' : 'text-slate-950 dark:text-white'}`}>Language Quest</span>
+        <span className={`block truncate font-black tracking-[-0.025em] ${compact ? 'text-base' : 'text-lg'} ${inverse ? 'text-white' : 'text-slate-950 dark:text-white'}`}>Learning Quest</span>
       </span>
     </Link>
   );

@@ -76,15 +76,15 @@ const COMMUNITY_ITEMS: NavGroupItem[] = [
   { title: "News", url: "/news", icon: Newspaper },
 ];
 
-const LANGUAGE_LEARNING_ITEMS: NavGroupItem[] = [
-  { title: "Language Quest", url: "/games/language-quest", icon: Languages },
+const LEARNING_TOOL_ITEMS: NavGroupItem[] = [
+  { title: "Learning Quest", url: "/games/language-quest", icon: Languages },
   { title: "Mon Language", url: "/mon-language", icon: BookOpenText },
   { title: "Dictionary", url: "/dictionary", icon: BookA },
 ];
 
-const LEARNER_LANGUAGE_ITEMS: NavGroupItem[] = [
+const LEARNER_LEARNING_TOOL_ITEMS: NavGroupItem[] = [
   { title: "Daily Quest", url: "/daily-quest", icon: Target },
-  ...LANGUAGE_LEARNING_ITEMS,
+  ...LEARNING_TOOL_ITEMS,
 ];
 
 const GAME_ITEMS: NavGroupItem[] = [
@@ -146,7 +146,7 @@ export const ADMIN_NAV: AdminNavEntry[] = [
       { title: "Analytics", url: "/analytics/attendance", icon: BarChart3 },
     ],
   },
-  { label: "Language Learning", icon: Languages, items: LANGUAGE_LEARNING_ITEMS },
+  { label: "Learning Tools", icon: GraduationCap, items: LEARNING_TOOL_ITEMS },
   {
     label: "Resources",
     icon: Library,
@@ -232,7 +232,7 @@ export const TEACHER_NAV: AdminNavEntry[] = [
       { title: "Analytics", url: "/analytics/attendance", icon: BarChart3 },
     ],
   },
-  { label: "Language Learning", icon: Languages, items: LEARNER_LANGUAGE_ITEMS },
+  { label: "Learning Tools", icon: GraduationCap, items: LEARNER_LEARNING_TOOL_ITEMS },
   {
     label: "Resources",
     icon: Library,
@@ -277,7 +277,7 @@ export const STUDENT_NAV: AdminNavEntry[] = [
       { title: "Flashcards", url: "/student/flashcards", icon: Layers },
     ],
   },
-  { label: "Language Learning", icon: Languages, items: LEARNER_LANGUAGE_ITEMS },
+  { label: "Learning Tools", icon: GraduationCap, items: LEARNER_LEARNING_TOOL_ITEMS },
   {
     label: "Resources",
     icon: Library,
@@ -352,7 +352,7 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     roles: ["TEACHER", "STUDENT"],
   },
   {
-    title: "Language Quest",
+    title: "Learning Quest",
     url: "/games/language-quest",
     icon: Languages,
   },

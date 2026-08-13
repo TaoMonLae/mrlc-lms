@@ -712,7 +712,7 @@ export default function LanguageQuestLesson() {
     return (
       <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center dark:border-surface-raised dark:bg-surface-indigo">
         <p className="font-semibold text-slate-900 dark:text-white">This lesson is unavailable.</p>
-        <Button className="mt-4" variant="outline" render={<Link to="/games/language-quest" />} nativeButton={false}>Back to Language Quest</Button>
+        <Button className="mt-4" variant="outline" render={<Link to="/games/language-quest" />} nativeButton={false}>Back to Learning Quest</Button>
       </div>
     );
   }

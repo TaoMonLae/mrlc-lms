@@ -1,4 +1,4 @@
-# Language Quest: Lesson & Course-Practice Improvements — Implementation Plan
+# Learning Quest: Lesson & Course-Practice Improvements — Implementation Plan
 
 This is the companion plan to `language-quest-practice-styles-plan.md`. That plan scoped new **challenge types** (REORDER, CLOZE, MATCHING, DICTATION, GRAMMAR_TRANSFORM, MINIMAL_PAIR_LISTENING) and Phases 1–2 of it have shipped in the engine (`fb23d2c`, `0b31681`). This plan addresses everything that plan didn't cover: the shipped types are barely used in real content, and there are separate gaps in lesson pedagogy, spaced repetition, course-authoring tooling, leaderboards, content depth, and speech assessment.
 
@@ -60,7 +60,7 @@ This is the companion plan to `language-quest-practice-styles-plan.md`. That pla
 
 ## Phase 7 — Teacher-facing per-skill analytics (medium lift)
 
-- Add a per-question/per-skill accuracy view for Language Quest, mirroring the existing exam module's `QuestionAnalytics.tsx` pattern, so teachers can see which concepts a class is failing rather than only per-student aggregate progress (points/streak/% complete) as today.
+- Add a per-question/per-skill accuracy view for Learning Quest, mirroring the existing exam module's `QuestionAnalytics.tsx` pattern, so teachers can see which concepts a class is failing rather than only per-student aggregate progress (points/streak/% complete) as today.
 - **Rough size:** 1–2 sprints.
 
 ## Suggested sequencing

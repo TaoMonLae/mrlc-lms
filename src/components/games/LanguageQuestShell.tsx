@@ -33,7 +33,7 @@ class LanguageQuestRouteErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error('Language Quest page failed to render', error, info);
+    console.error('Learning Quest page failed to render', error, info);
   }
 
   render() {
@@ -105,12 +105,12 @@ function LanguageQuestShellContent() {
   };
 
   return (
-    <div className="lq-mesh flex min-h-screen flex-col text-slate-900 transition-colors duration-300 dark:text-slate-100">
+    <div className="lq-mesh flex min-h-screen min-w-0 flex-col overflow-x-hidden text-slate-900 transition-colors duration-300 dark:text-slate-100">
       <header className="sticky top-0 z-40 border-b border-white/70 bg-white/85 shadow-sm shadow-violet-900/5 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/90">
         <div className="mx-auto flex min-h-18 max-w-[1600px] items-center gap-2 px-3 py-2 sm:px-5">
           <div className="shrink-0"><MrlcQuestBrand to="/games/language-quest" compact /></div>
           <div className="ml-auto flex min-w-0 items-center gap-1">
-            <nav aria-label="Language Quest" className="hidden shrink-0 items-center gap-1 lg:flex">
+            <nav aria-label="Learning Quest" className="hidden shrink-0 items-center gap-1 lg:flex">
               <Button variant="ghost" size="sm" className={`h-10 gap-2 rounded-xl px-3 font-bold text-sky-700 ${pathIs('/games/language-quest/words') ? 'bg-sky-50 dark:bg-sky-500/10' : ''}`} title="My learned words" render={<Link to="/games/language-quest/words" aria-current={pathIs('/games/language-quest/words') ? 'page' : undefined} />} nativeButton={false}>
                 <BookOpenText className="h-4 w-4" /><span className="hidden 2xl:inline">My Words</span>
               </Button>
@@ -127,7 +127,7 @@ function LanguageQuestShellContent() {
 
             <DropdownMenu>
               <DropdownMenuTrigger
-                render={<Button variant="outline" size="icon" className="h-10 w-10 shrink-0 rounded-xl border-slate-200 bg-white text-slate-700 shadow-sm lg:hidden dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200" aria-label="Open Language Quest navigation" title="Navigation" />}
+                render={<Button variant="outline" size="icon" className="h-10 w-10 shrink-0 rounded-xl border-slate-200 bg-white text-slate-700 shadow-sm lg:hidden dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200" aria-label="Open Learning Quest navigation" title="Navigation" />}
                 nativeButton={true}
               >
                 <Menu className="h-4 w-4" />
@@ -213,7 +213,7 @@ function LanguageQuestShellContent() {
           </div>
         </div>
       </header>
-      <main data-lq-dictionary-scope className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6">
+      <main data-lq-dictionary-scope className="mx-auto min-w-0 w-full max-w-7xl flex-1 px-4 py-6 sm:px-6">
         <Outlet />
       </main>
       <footer className="border-t border-white/70 bg-white/65 px-4 py-6 backdrop-blur dark:border-slate-800 dark:bg-slate-950/75">

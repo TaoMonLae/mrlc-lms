@@ -9,16 +9,16 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 ![MRLC LMS webapp login portal](docs/images/mrlc-lms-webapp-preview.jpg)
 
 - Default local URL: `http://localhost:8000`
-- Public Language Quest preview: `http://localhost:8000/language-quest`
-- Public Language Quest credits and course sources: `http://localhost:8000/language-quest/about`
+- Public Learning Quest preview: `http://localhost:8000/language-quest`
+- Public Learning Quest credits and course sources: `http://localhost:8000/language-quest/about`
 - Primary runtime: Node.js 22.22+, Express, React 19, PostgreSQL 16
 - Developer: [Tao Mon Lae](https://github.com/TaoMonLae)
 
 ## Latest updates — August 2026
 
-### Language Quest expansion and verified certificates
+### Learning Quest expansion and verified certificates
 
-- Language Quest now includes **four published GED preparation courses**—Science, Social Studies, Reasoning Through Language Arts, and Mathematical Reasoning—with 150 concept-first lessons and 450 original scored practices in total.
+- Learning Quest now includes **four published GED preparation courses**—Science, Social Studies, Reasoning Through Language Arts, and Mathematical Reasoning—with 150 concept-first lessons and 450 original scored practices in total.
 - Added a published **GED Mathematical Reasoning Preparation & Practice** course with 4 exactly weighted units, 40 concept-first lessons, and 120 original questions. Its 10/8/12/10 lesson allocation preserves the official 25% rational-number, 20% measurement/data/probability, 30% expressions/equations, and 25% graphs/functions reporting-category balance. Mathematical notation is rendered with KaTeX across lessons, exams, mastery, heart refills, and boss battles. See [`docs/language-quest/GED_MATH_CURRICULUM_GUIDE.md`](docs/language-quest/GED_MATH_CURRICULUM_GUIDE.md) for sources, alignment, limitations, and the AI-assisted research disclosure.
 - Fixed shared GED lesson behavior so Science, Social Studies, and RLA are no longer mislabeled or guided as Mathematics. Subject-aware prompts, evidence feedback, completion summaries, final exams, mastery reviews, heart refills, and boss battles now stay in the correct course mode. Removed fallback assessment emojis and fixed automatic equation detection so ordinary hyphenated prose such as “GED-style” remains readable.
 - Added a published **GED Reasoning Through Language Arts Preparation & Practice** course with 4 units, 32 guided lessons, and 96 original source-based questions. Its exact 75% informational/25% literary source balance covers close reading, argument analysis, the 45-minute extended response and three-trait rubric, editing, and standard written English. See [`docs/language-quest/GED_RLA_CURRICULUM_GUIDE.md`](docs/language-quest/GED_RLA_CURRICULUM_GUIDE.md) for sources, curriculum mapping, limitations, and the AI-assisted research disclosure.
@@ -39,7 +39,7 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 - Supports complete blocking, daily allowances, per-session timers, mandatory screen breaks, weekday selection, and allowed-time windows.
 - The most restrictive matching rule wins. Teachers cannot weaken or remove administrator-managed policies, and teachers can manage only their assigned classes and students.
 - Student play sessions use authenticated server heartbeats, persisted daily usage, automatic lock screens, and visible countdowns. Word Trail, multiplayer Chess, and Neon Snake also enforce access through their server APIs or socket authentication.
-- Language Quest and Daily Quest remain learning activities and are not counted as recreational game time.
+- Learning Quest and Daily Quest remain learning activities and are not counted as recreational game time.
 
 ### Daily Learning Quest
 
@@ -65,30 +65,30 @@ MRLC LMS combines teaching, assessment, student services, communication, finance
 - Completed Student runs continue to feed the existing Classic Snake score history and class leaderboard.
 - Vocabulary Snake remains available as the learning-focused alternative.
 
-### Language Quest
+### Learning Quest
 
-Language Quest is MRLC's public-facing, game-like language, mathematics, and GED preparation experience. Visitors can browse the published course catalog at `/language-quest`; beginning a lesson and saving progress requires a free account. Public learner accounts are deliberately isolated from private LMS records and school administration.
+Learning Quest is MRLC's public-facing, game-like learning experience for languages, mathematics, and GED preparation. Visitors can browse the published course catalog at `/language-quest`; beginning a lesson and saving progress requires a free account. Public learner accounts are deliberately isolated from private LMS records and school administration.
 
 #### Preview
 
 The responsive learner dashboard brings courses, hearts, points, streaks, sentence practice, and progress together in a colorful light/dark experience.
 
-![Language Quest learner dashboard with course cards, progress, hearts, points, and streaks](docs/images/language-quest-dashboard.png)
+![Learning Quest learner dashboard with course cards, progress, hearts, points, and streaks](docs/images/language-quest-dashboard.png)
 
 Language course pages provide a consistent Learn → Build → Check routine and an English/Burmese explanation switch. Learners can listen first, type complete sentences from memory, and then continue to the quiz with clear correction and retry guidance. Mathematics and GED subject lessons open with rich concept blocks and then move directly into guided problems with subject-specific instructions, evidence, visuals, explanations, and retry feedback.
 
-![Language Quest Spanish course with Burmese lesson guidance](docs/images/language-quest-burmese-guide.png)
+![Learning Quest Spanish course with Burmese lesson guidance](docs/images/language-quest-burmese-guide.png)
 
 Completing every course practice unlocks a monitored final exam; passing it unlocks the personalized certificate. Active learners can also create streak cards containing their name, points, and current achievement; both formats can be saved as PNG files or shared through the device share menu.
 
-![Language Quest completion certificate for Everyday English](docs/images/language-quest-completion-certificate.png)
+![Learning Quest completion certificate for Everyday English](docs/images/language-quest-completion-certificate.png)
 
 #### Public access and account isolation
 
 - `/language-quest` is a public, responsive course showcase with an accessible light/dark switch and complete contrast styling in both themes.
 - Visitors may browse the published catalog without signing in. Starting lessons, earning points, and saving progress require an account.
-- `/signup` creates a free Language Quest learner account that remains separate from school records and private LMS modules. A learner chooses one of the built-in character avatars during signup; profile-photo uploads are intentionally unavailable.
-- External learners are restricted to an explicit browser-route and API allowlist covering Language Quest and its in-lesson learning tools. Both client and server checks prevent access to administration, finance, student records, Course Studio, and other private LMS content.
+- `/signup` creates a free Learning Quest learner account that remains separate from school records and private LMS modules. A learner chooses one of the built-in character avatars during signup; profile-photo uploads are intentionally unavailable.
+- External learners are restricted to an explicit browser-route and API allowlist covering Learning Quest and its in-lesson learning tools. Both client and server checks prevent access to administration, finance, student records, Course Studio, and other private LMS content.
 - Existing students, teachers, administrators, and staff continue to use their normal LMS accounts.
 
 #### Learner experience
@@ -97,32 +97,32 @@ Completing every course practice unlocks a monitored final exam; passing it unlo
 - Daily and weekly missions reward consistent learning, mastery reviews, and exploring more than one course. Mission rewards are server-verified and cannot count toward their own goals.
 - The spaced-repetition **Mastery Arena** schedules completed challenges at expanding review intervals, awards XP for correct recall, and returns missed cards sooner without consuming hearts.
 - Twelve original Quest Card companions unlock at fixed XP levels. After Level 12, nine mystery **Legendary Vault** rewards reveal MRLC’s supplied Mon history portrait cards from animated golden chests. Separate subject albums fill from completed challenges, while best-streak milestones unlock cosmetic card frames.
-- A dedicated learner profile lets each person choose from twelve safe built-in avatars, write a short learning bio, and see their Language Quest identity without uploading a personal photo.
+- A dedicated learner profile lets each person choose from twelve safe built-in avatars, write a short learning bio, and see their Learning Quest identity without uploading a personal photo.
 - Language lessons move through listening, recognition, spelling or sentence recall, and scored practice. Mathematics, GED Science, GED Social Studies, and GED RLA skip language-only study cards and move from concept instruction directly into subject practice with worked explanations. Shared subject classification keeps each course's guide, feedback, final exam, mastery review, heart refill, and boss battle in the correct learning mode.
 - Sentence checks ignore capitalization, repeated spaces, and light punctuation while still requiring the correct words and spelling.
 - Correct sentence practice triggers immediate visual celebration and a short success sound.
 - Incorrect answers show the model sentence and focused retry guidance instead of ending the practice.
 - Optional Kokoro-82M speech provides a consistent multilingual teacher voice for supported courses, with automatic browser-voice fallback when the local model is offline or the language is unsupported. Learners may choose either provider in their profile.
-- Learners can highlight an unfamiliar word anywhere in the lesson area to open the built-in dictionary. Available English definitions, Myanmar translations, and Mon entries appear without leaving Language Quest.
+- Learners can highlight an unfamiliar word anywhere in the lesson area to open the built-in dictionary. Available English definitions, Myanmar translations, and Mon entries appear without leaving Learning Quest.
 - Completed language practices populate a personal Learned Words bank with course filters, search, accuracy, and review status. Learners can reopen the source lesson or review weak words; numeric Mathematics answers do not appear as vocabulary.
 - Learners who run out of hearts can take a timed, server-graded Heart Refill Quiz based on completed material. A passing result restores hearts and may unlock a new Surprise Card.
 
 #### Guidance, accessibility, and achievements
 
-- The Language Quest header includes an English/Burmese explanation switch. The choice updates lesson guides, sentence instructions, recovery messages, and other learning support copy.
+- The Learning Quest header includes an English/Burmese explanation switch. The choice updates lesson guides, sentence instructions, recovery messages, and other learning support copy.
 - Light and dark themes are available throughout the public landing page and signed-in experience, with readable text, cards, controls, and course content in both modes.
 - Device-local controls let learners turn success sounds off or reduce confetti, tilting, animation, and transition motion. The reduced-motion default respects the browser or operating-system preference.
 - Learners can generate a personalized streak card after completing a lesson that day.
 - Completing all scored practices unlocks a monitored final exam. A server-verified pass of at least 80% unlocks a personalized certificate containing the learner's name, course title, points, date, MRLC logo, and attribution.
 - Final exams randomize eligible course questions, include typed spelling for dictation-enabled language courses, enforce a hard time limit, and terminate attempts when the tab, app, window, or protected full-screen experience is left.
-- Achievement cards and certificates can be downloaded as 1200×630 PNG images or shared using the browser/device share menu. If file sharing is unavailable, Language Quest saves the image locally.
+- Achievement cards and certificates can be downloaded as 1200×630 PNG images or shared using the browser/device share menu. If file sharing is unavailable, Learning Quest saves the image locally.
 
 #### Classroom use and learner administration
 
-- Teachers can create opt-in Language Quest classrooms, choose a focus course, and share an automatically generated eight-character join code.
+- Teachers can create opt-in Learning Quest classrooms, choose a focus course, and share an automatically generated eight-character join code.
 - Teachers can start time-bounded cooperative classroom XP challenges with a goal and optional classroom reward. Eligible XP from all enrolled learners contributes to one shared progress bar.
 - Learners join or leave classrooms from their profile. Joining does not create or modify a private school Student record.
-- Teacher rosters show the learner's display name, built-in avatar, points, streak, last Language Quest activity, and focus-course completion. Learner email addresses and private LMS data are not exposed.
+- Teacher rosters show the learner's display name, built-in avatar, points, streak, last Learning Quest activity, and focus-course completion. Learner email addresses and private LMS data are not exposed.
 - Teachers can close a classroom to new joins, change its focus course, refresh the roster, and remove a learner while preserving that learner's independent progress.
 - Administrators can search and filter public learner accounts, review learning activity and classroom membership, deactivate or reactivate access, and permanently terminate an inactive account.
 - Deactivation immediately blocks sign-in and revokes active sessions while preserving progress. Permanent termination is deliberately a second step and is available only after deactivation.
@@ -140,7 +140,7 @@ Completing every course practice unlocks a monitored final exam; passing it unlo
 - GED Social Studies source alignment and maintenance guidance are documented in [`docs/language-quest/GED_SOCIAL_STUDIES_CURRICULUM_GUIDE.md`](docs/language-quest/GED_SOCIAL_STUDIES_CURRICULUM_GUIDE.md). All questions and explanations are original MRLC work; official sample questions are not reproduced.
 - Includes **GED Reasoning Through Language Arts Preparation & Practice** with 10 informational-reading lessons, 8 literary-reading lessons, 6 argument and extended-response lessons, and 8 language/editing lessons. Every one of its 96 original questions keeps its source visible, and exact source balance plus content integrity are enforced by automated tests. Research and maintenance guidance are documented in [`docs/language-quest/GED_RLA_CURRICULUM_GUIDE.md`](docs/language-quest/GED_RLA_CURRICULUM_GUIDE.md).
 - Includes **GED Mathematical Reasoning Preparation & Practice** with 10 rational-number lessons, 8 measurement/data/probability lessons, 12 expressions/equations lessons, and 10 graphs/functions lessons. Its 120 original questions use explicit LaTeX delimiters and the shared KaTeX renderer so fractions, roots, exponents, systems, inequalities, and functions stay visible and readable throughout every assessment flow. Research and maintenance guidance are documented in [`docs/language-quest/GED_MATH_CURRICULUM_GUIDE.md`](docs/language-quest/GED_MATH_CURRICULUM_GUIDE.md).
-- Includes an original **Everyday English** starter course with two units, four lessons, and twelve challenges, provisioned when Language Quest is first opened.
+- Includes an original **Everyday English** starter course with two units, four lessons, and twelve challenges, provisioned when Learning Quest is first opened.
 - Includes the linked source repository's Spanish course as **Spanish Foundations**, with two units, ten lessons, and eighty visual or speech-assisted challenges.
 - Includes an original **Chinese Conversation Starter** course with two units, eight lessons, and thirty-two speech-assisted practices for greetings, names, countries, introductions, friends, and simple identity questions. Pinyin appears in every question as pronunciation guidance.
 - Includes an original **Mandarin Foundations** course with three units, nine lessons, and thirty-six speech-assisted challenges covering beginner conversations and daily life.
@@ -152,14 +152,14 @@ Completing every course practice unlocks a monitored final exam; passing it unlo
 - Run `npm run generate:language-quest-advanced-english` to rebuild the ranked courses; set `ADVANCED_ENGLISH_VOCAB_PATH` to the upstream `9ormore-withfreqandlistcount-413.csv` file to refresh the validated selection.
 - Adds six CEFR courses from [AyeNyeinSan22/linguify](https://github.com/AyeNyeinSan22/linguify), progressing from **A1 Foundations** to **C2 Mastery**, with 18 topic units and 360 definition, example, part-of-speech, listening, and source-supplied IPA challenges.
 - Run `npm run generate:language-quest-linguify` to rebuild the six CEFR courses from the licensed source snapshot.
-- Adds five school-provided Bahasa Malaysia CEFR courses (**A1–C1**, 46 units, ~370 vocabulary items) converted from a richer curriculum snapshot in `curricula/sources/malay/` -- see that folder's own README for the full package (vocabulary, matching/cloze/reorder drills, an AI-conversation scenario, speaking prompts, and a unit quiz per unit). Only the vocabulary and unit-quiz content converts into Language Quest's current multiple-choice/typed-answer format; matching, cloze, reorder, minimal-pair, listening, and speaking-drill exercises don't have a corresponding engine yet, so a best-effort subset of them is folded into extra multiple-choice questions and the rest (the AI-roleplay scenario, audio recording + rubric speaking prompts) are not imported. These five courses are seeded **unpublished** (`published: false`) because the source package's own README calls for native-speaker review (register accuracy, checking for drift into Indonesian forms) before going live -- publish each from the Language Quest course editor once reviewed. Malay has no Kokoro voice, so its teacher voice always uses the browser's installed `ms-MY` speech, same as Burmese and Mon.
+- Adds five school-provided Bahasa Malaysia CEFR courses (**A1–C1**, 46 units, ~370 vocabulary items) converted from a richer curriculum snapshot in `curricula/sources/malay/` -- see that folder's own README for the full package (vocabulary, matching/cloze/reorder drills, an AI-conversation scenario, speaking prompts, and a unit quiz per unit). Only the vocabulary and unit-quiz content converts into Learning Quest's current multiple-choice/typed-answer format; matching, cloze, reorder, minimal-pair, listening, and speaking-drill exercises don't have a corresponding engine yet, so a best-effort subset of them is folded into extra multiple-choice questions and the rest (the AI-roleplay scenario, audio recording + rubric speaking prompts) are not imported. These five courses are seeded **unpublished** (`published: false`) because the source package's own README calls for native-speaker review (register accuracy, checking for drift into Indonesian forms) before going live -- publish each from the Learning Quest course editor once reviewed. Malay has no Kokoro voice, so its teacher voice always uses the browser's installed `ms-MY` speech, same as Burmese and Mon.
 - Run `npm run generate:language-quest-malay` to rebuild the five Malay CEFR courses from the source snapshot.
 - Adds two more Malay courses, self-contained and speaking-first (vocabulary sprint, daily speaking sentences, scenario dialogue, sentence workshop, per unit): **Malay Speaking: Beginner to Advanced** (`MRLC-MALAY-SPEAKING-A1-C1-V1`, 12 units) and **Modern Spoken Malay: Source-Guided Course** (`MRLC-MALAY-GOVINFO-GUIDE-V1`, 12 units). The source-guided course follows the practical sequence of a 1943 U.S. War Department Malay phrasebook (public domain) but is newly written in current Malaysian Malay -- old spelling, military material, and colonial-era framing are removed; see `curricula/sources/malay-pack-v2/SOURCE_REFERENCE.md` for the full modernization policy and old-to-modern spelling table. Both courses are also seeded **unpublished** pending review, same as the other Malay courses, and use the same `ms-MY` browser voice fallback.
 - Run `npm run generate:language-quest-malay-speaking` and `npm run generate:language-quest-malay-guide` to rebuild these two courses.
 
 #### Optional Kokoro teacher voice
 
-Language Quest can use the Apache-2.0-licensed [hexgrad/Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) model as a private, built-in speech provider with named voices (see its [VOICES.md](https://huggingface.co/hexgrad/Kokoro-82M/blob/main/VOICES.md)). The browser never connects to Kokoro directly: authenticated requests go through the LMS, which validates the language and text, caches generated audio, and falls back to browser speech if the provider is unavailable. Each supported course language is pinned to that language's highest-graded published voice (for example American English uses `af_heart`, Japanese uses `jf_alpha`). **Kokoro's published voice list has no Burmese/Myanmar voice**, so Burmese now uses browser speech, same as Mon already does.
+Learning Quest can use the Apache-2.0-licensed [hexgrad/Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) model as a private, built-in speech provider with named voices (see its [VOICES.md](https://huggingface.co/hexgrad/Kokoro-82M/blob/main/VOICES.md)). The browser never connects to Kokoro directly: authenticated requests go through the LMS, which validates the language and text, caches generated audio, and falls back to browser speech if the provider is unavailable. Each supported course language is pinned to that language's highest-graded published voice (for example American English uses `af_heart`, Japanese uses `jf_alpha`). **Kokoro's published voice list has no Burmese/Myanmar voice**, so Burmese now uses browser speech, same as Mon already does.
 
 Kokoro is a small model (82M parameters) and downloads its weights on first launch. It runs comfortably on CPU; a GPU is optional. It also depends on the system `espeak-ng` package for phoneme fallback in most non-English languages.
 
@@ -244,7 +244,7 @@ The service binds to `127.0.0.1` by default. Do not expose port `8810` publicly.
 | Word Trail | Student/teacher English vocabulary board game with dice, special spaces, saved progress, scores, and leaderboard |
 | Multiplayer Neon Snake | Authenticated real-time 3D arena with LMS player names, live ranking, keyboard/touch controls, and saved Student scores |
 | Game-time controls | Admin/teacher blocking, schedules, daily/session limits, breaks, server heartbeats, and student lock screens |
-| Language Quest | Public language, 13-course K–12 Mathematics, and four-subject GED preparation paths; 150 GED lessons and 450 original GED practices; isolated learner signup; teacher classrooms and assigned-course access; bilingual guidance; subject-aware practice with readable formulas; Learned Words; spaced-repetition mastery; monitored final exams and verified certificates; Heart Refill Quizzes; Surprise/Quest Cards; missions; hearts; XP; streaks; leaderboard; accessibility controls; and Course Studio |
+| Learning Quest | Public language, 13-course K–12 Mathematics, and four-subject GED preparation paths; 150 GED lessons and 450 original GED practices; isolated learner signup; teacher classrooms and assigned-course access; bilingual guidance; subject-aware practice with readable formulas; Learned Words; spaced-repetition mastery; monitored final exams and verified certificates; Heart Refill Quizzes; Surprise/Quest Cards; missions; hearts; XP; streaks; leaderboard; accessibility controls; and Course Studio |
 | Flashcards | Deck creation, sharing, class assignment, mastery, quiz, match, spelling, and progress reporting |
 | Lesson planner | Teacher planning and classroom resource organization |
 | Video lessons | Upload/conversion, custom thumbnails, captions, required viewing, progress, and watch analytics |
@@ -276,7 +276,7 @@ The service binds to `127.0.0.1` by default. Do not expose port `8810` publicly.
 - Announcements with rich content and audience visibility.
 - Curated RSS news and an in-app article reader.
 - AI assistant for lesson planning, quiz generation, announcements, and translation using Gemini or a local Ollama model.
-- Daily Learning Quest, Word Trail, Language Quest, Sudoku, Multiplayer Neon Snake, Snake vocabulary mode, and Checkers with account-backed progress, scores, or learning activity where applicable.
+- Daily Learning Quest, Word Trail, Learning Quest, Sudoku, Multiplayer Neon Snake, Snake vocabulary mode, and Checkers with account-backed progress, scores, or learning activity where applicable.
 - Global search across major school records.
 
 ### Languages
@@ -285,15 +285,15 @@ The interface supports English, Burmese, and Mon through locale files under `src
 
 The **Mon Language** tab at `/mon-language` embeds `https://the-mon-language.web.app/` for all authenticated users. It requires browser access to that external origin; if embedding is unavailable, users can open the learning app in a separate tab from the page header.
 
-**Language Quest** has a public course showcase at `/language-quest`. Visitors can browse published courses, while `/signup` creates a learning-only account for starting lessons and saving progress. These external accounts are restricted to Language Quest routes and in-lesson learning tools and cannot access private school modules or records. Existing LMS users enter the learning experience at `/games/language-quest`; teachers and administrators can publish and maintain course content from `/games/language-quest/manage`.
+**Learning Quest** has a public course showcase at `/language-quest`. Visitors can browse published courses, while `/signup` creates a learning-only account for starting lessons and saving progress. These external accounts are restricted to Learning Quest routes and in-lesson learning tools and cannot access private school modules or records. Existing LMS users enter the learning experience at `/games/language-quest`; teachers and administrators can publish and maintain course content from `/games/language-quest/manage`.
 
 Signed-in learners manage their built-in avatar, learning bio, and classroom codes at `/games/language-quest/profile`. Teachers and administrators use `/games/language-quest/classrooms` for opt-in rosters and focus-course progress. Administrators use `/games/language-quest/learners` to manage public learner access without mixing those accounts into school Student records.
 
-Language Quest explanations can be switched between English and Burmese independently from the language being studied. The selected explanation language is remembered in the browser. The shared light/dark preference also applies to the public landing page, which includes its own theme switch.
+Learning Quest explanations can be switched between English and Burmese independently from the language being studied. The selected explanation language is remembered in the browser. The shared light/dark preference also applies to the public landing page, which includes its own theme switch.
 
 **Daily Learning Quest** at `/daily-quest` is restricted to Student and Teacher accounts and creates one English Word practice session per Kuala Lumpur calendar day. Learners choose a 3-, 5-, or 7-question mode; answers, completion XP, review words, and streaks are stored against their existing LMS account.
 
-**Word Trail** at `/games/word-trail` is restricted to Student and Teacher accounts. It uses only the curated English Word Language Quest courses, saves the active board after every turn, and keeps personal results and a learner leaderboard.
+**Word Trail** at `/games/word-trail` is restricted to Student and Teacher accounts. It uses only the curated English Word Learning Quest courses, saves the active board after every turn, and keeps personal results and a learner leaderboard.
 
 **Multiplayer Neon Snake** at `/games/snake/play?mode=classic` uses authenticated LMS Socket.IO sessions for the live arena. The original Vocabulary Snake mode remains at `/games/snake/play?mode=vocabulary`.
 
@@ -426,7 +426,7 @@ Never use the demo passwords in production. Set the three seed password variable
 | `GEMINI_MODEL` | No | `gemini-2.0-flash` in server code | Gemini model name |
 | `OLLAMA_API_URL` | Ollama only | `http://localhost:11434/api/chat` | Local Ollama chat endpoint |
 | `OLLAMA_MODEL` | No | `gemma2:9b` | Local Ollama model |
-| `KOKORO_API_URL` | No | unset | Private Kokoro endpoint; when unset Language Quest uses browser speech |
+| `KOKORO_API_URL` | No | unset | Private Kokoro endpoint; when unset Learning Quest uses browser speech |
 | `KOKORO_MODEL` | No | `hexgrad/Kokoro-82M` | Model identifier sent to the voice service |
 | `KOKORO_TIMEOUT_MS` | No | `120000` | Maximum server wait for one speech generation request |
 
@@ -558,7 +558,7 @@ Use a PostgreSQL client matching the server major version. Set `OFFSITE_BACKUP_D
 
 - JWT authentication with bcrypt password hashing.
 - Server-enforced roles and granular permission checks.
-- Public Language Quest accounts are confined by client route guards and a server-side method/path allowlist.
+- Public Learning Quest accounts are confined by client route guards and a server-side method/path allowlist.
 - Ownership and class-scope checks on student, exam, accommodation, media, flashcard, and analytics APIs.
 - Helmet security headers, restricted CORS, and rate limiting.
 - DOMPurify sanitization for rendered user content.
@@ -580,8 +580,8 @@ mrlc-lms/
 │   │   ├── elibrary/           # PDF/EPUB list, upload, reader, analytics
 │   │   ├── exam2/              # Advanced exam workflow
 │   │   ├── flashcards/         # Deck, study, game, and progress UI
-│   │   └── games/              # Daily Quest, Language Quest, Word Trail, Sudoku, Neon Snake, Checkers, and Chess
-│   ├── components/             # App-specific components, including Language Quest shell, dictionary, and achievements
+│   │   └── games/              # Daily Quest, Learning Quest, Word Trail, Sudoku, Neon Snake, Checkers, and Chess
+│   ├── components/             # App-specific components, including Learning Quest shell, dictionary, and achievements
 │   ├── lib/                    # API and feature utilities
 │   ├── providers/              # React providers
 │   └── i18n/                   # Locale setup and translations
@@ -597,7 +597,7 @@ mrlc-lms/
 ├── examBank.ts                 # Question bank and exam composition
 ├── examPhase2.ts               # Attempts, scheduling, accommodations, grading
 ├── flashcards.ts               # Flashcard API and image lifecycle
-├── languageQuest.ts            # Language Quest courses, progress, rewards, and authoring API
+├── languageQuest.ts            # Learning Quest courses, progress, rewards, and authoring API
 ├── shared/externalLearnerAccess.ts # External learner browser/API allowlists
 ├── dailyQuest.ts               # Daily English Word practice, review, XP, and streak API
 ├── englishWordPractice.ts       # Shared curated English Word question provider
@@ -658,9 +658,9 @@ Confirm `DATABASE_URL`, `SESSION_SECRET`, `APP_URL`, port availability, and writ
 
 ## Notable third-party data and acknowledgments
 
-- The independently authored GED preparation curricula are informed by public GED Testing Service assessment specifications and study resources. GED and GED Testing Service are registered marks of their owners; MRLC Language Quest is not endorsed by GED Testing Service and does not reproduce official test questions.
-- Language Quest was informed by the concepts and interface patterns in [sanidhyy/duolingo-clone](https://github.com/sanidhyy/duolingo-clone), licensed under MIT. Its Spanish seed curriculum was adapted from [TaoMonLae/duolingo-clone](https://github.com/TaoMonLae/duolingo-clone). The complete attribution and license text are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
-- Optional Language Quest speech uses [hexgrad/Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M), licensed under Apache-2.0. Kokoro and its model weights are installed separately and are not bundled in this repository.
+- The independently authored GED preparation curricula are informed by public GED Testing Service assessment specifications and study resources. GED and GED Testing Service are registered marks of their owners; MRLC Learning Quest is not endorsed by GED Testing Service and does not reproduce official test questions.
+- Learning Quest was informed by the concepts and interface patterns in [sanidhyy/duolingo-clone](https://github.com/sanidhyy/duolingo-clone), licensed under MIT. Its Spanish seed curriculum was adapted from [TaoMonLae/duolingo-clone](https://github.com/TaoMonLae/duolingo-clone). The complete attribution and license text are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+- Optional Learning Quest speech uses [hexgrad/Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M), licensed under Apache-2.0. Kokoro and its model weights are installed separately and are not bundled in this repository.
 - The six CEFR vocabulary courses adapt the MIT-licensed vocabulary sets from [AyeNyeinSan22/linguify](https://github.com/AyeNyeinSan22/linguify); attribution and license text are retained in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 - Sudoku is adapted from [super-sudoku](https://github.com/TN1ck/super-sudoku) by Tom Nick under the MIT License.
 - English definitions use [WordPOS](https://github.com/moos/wordpos) and Princeton WordNet 3.1.

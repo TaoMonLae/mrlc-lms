@@ -428,7 +428,7 @@ function celebrateWin() {
 
 export default function WordTrailPage() {
   const navigate = useNavigate();
-  // Present when arriving from a Language Quest course's "Practice in Word
+  // Present when arriving from a Learning Quest course's "Practice in Word
   // Trail" button -- builds the board from that course's own challenges
   // instead of the default English-word pool. Only consulted when starting a
   // brand new game; an already-active game keeps whatever deck it started with.

@@ -23,7 +23,7 @@ export default function LandingPage() {
   };
 
   const navLinks = [
-    { name: 'Language Quest', href: '/language-quest' },
+    { name: 'Learning Quest', href: '/language-quest' },
     { name: 'Features', href: '#features' },
     { name: 'Roles', href: '#roles' },
     { name: 'Workflow', href: '#workflow' },
@@ -139,7 +139,7 @@ export default function LandingPage() {
                   View Features
                 </Button>
                 <Button render={<Link to="/language-quest" />} variant="ghost" size="lg" className="w-full sm:w-auto text-violet-700 dark:text-violet-300 font-bold text-xs uppercase tracking-widest h-12 px-6" nativeButton={false}>
-                  <Languages className="mr-2 h-4 w-4" /> Try Language Quest
+                  <Languages className="mr-2 h-4 w-4" /> Try Learning Quest
                 </Button>
               </div>
             </div>

@@ -289,7 +289,7 @@ export default function LanguageQuestFinalExam() {
   if (loadError || !course) {
     return (
       <div className="mx-auto max-w-2xl space-y-5 pb-12">
-        <Button variant="ghost" render={<Link to="/games/language-quest" />} nativeButton={false}><ArrowLeft className="mr-2 h-4 w-4" /> Language Quest</Button>
+        <Button variant="ghost" render={<Link to="/games/language-quest" />} nativeButton={false}><ArrowLeft className="mr-2 h-4 w-4" /> Learning Quest</Button>
         <div className="rounded-3xl border border-rose-200 bg-rose-50 p-10 text-center dark:border-rose-500/25 dark:bg-rose-950/20">
           <ShieldAlert className="mx-auto h-12 w-12 text-rose-600" />
           <h1 className="mt-3 text-xl font-black text-slate-900 dark:text-white">Final exam unavailable</h1>
@@ -430,7 +430,7 @@ export default function LanguageQuestFinalExam() {
           </p>
           <div className="mt-7 flex flex-col justify-center gap-2 sm:flex-row">
             <Button variant="outline" render={<Link to={`/games/language-quest/courses/${course.id}`} />} nativeButton={false}>Review course</Button>
-            <Button render={<Link to="/games/language-quest" />} nativeButton={false}>{result.passed ? 'View certificate' : 'Return to Language Quest'}</Button>
+            <Button render={<Link to="/games/language-quest" />} nativeButton={false}>{result.passed ? 'View certificate' : 'Return to Learning Quest'}</Button>
           </div>
         </section>
         <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">

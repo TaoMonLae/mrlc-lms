@@ -7,7 +7,7 @@ function accountPathname(value: string): string {
 /**
  * Temporary-password accounts may only reach the password replacement page.
  * Keep this independent of any particular app layout so standalone products
- * such as Language Quest cannot accidentally bypass the requirement.
+ * such as Learning Quest cannot accidentally bypass the requirement.
  */
 export function shouldForcePasswordChange(
   mustChangePassword: boolean | null | undefined,

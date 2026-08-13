@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Local, OpenAI-compatible Kokoro-82M speech service for Language Quest.
+"""Local, OpenAI-compatible Kokoro-82M speech service for Learning Quest.
 
 Kokoro (https://huggingface.co/hexgrad/Kokoro-82M) is a small, Apache-2.0
 licensed multilingual TTS model with a published set of named voices
@@ -131,7 +131,7 @@ class SpeechRequestHandler(BaseHTTPRequestHandler):
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Serve Kokoro-82M speech for MRLC Language Quest")
+    parser = argparse.ArgumentParser(description="Serve Kokoro-82M speech for MRLC Learning Quest")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8810)
     parser.add_argument("--device", default="auto")
@@ -140,7 +140,7 @@ def main() -> None:
     engine = SpeechEngine(device=args.device)
     server = ThreadingHTTPServer((args.host, args.port), SpeechRequestHandler)
     server.engine = engine  # type: ignore[attr-defined]
-    print(f"Language Quest Kokoro ready at http://{args.host}:{args.port}", file=sys.stderr)
+    print(f"Learning Quest Kokoro ready at http://{args.host}:{args.port}", file=sys.stderr)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

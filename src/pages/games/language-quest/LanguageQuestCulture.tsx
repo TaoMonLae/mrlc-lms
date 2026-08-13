@@ -45,7 +45,7 @@ export default function LanguageQuestCulture() {
       <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center dark:border-surface-raised dark:bg-surface-indigo">
         <Globe2 className="mx-auto h-12 w-12 text-slate-300" />
         <p className="mt-3 font-semibold text-slate-900 dark:text-white">This course could not be found.</p>
-        <Button variant="outline" className="mt-4" render={<Link to="/games/language-quest" />} nativeButton={false}>Back to Language Quest</Button>
+        <Button variant="outline" className="mt-4" render={<Link to="/games/language-quest" />} nativeButton={false}>Back to Learning Quest</Button>
       </div>
     );
   }

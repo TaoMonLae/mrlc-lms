@@ -1,6 +1,6 @@
-# Teach Yourself Malay - MRLC Language Quest Course
+# Teach Yourself Malay - MRLC Learning Quest Course
 
-This package converts the user-supplied **Teach Yourself Malay** EPUB into an emoji-free, speaking-first MRLC Language Quest course.
+This package converts the user-supplied **Teach Yourself Malay** EPUB into an emoji-free, speaking-first MRLC Learning Quest course.
 
 ## Curriculum size
 

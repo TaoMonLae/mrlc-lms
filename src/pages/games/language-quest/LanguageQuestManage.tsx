@@ -142,7 +142,7 @@ export default function LanguageQuestManage() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <Button variant="ghost" className="-ml-2 mb-2" render={<Link to="/games/language-quest" />} nativeButton={false}>
-            <ArrowLeft className="mr-2 h-4 w-4" /> Language Quest
+            <ArrowLeft className="mr-2 h-4 w-4" /> Learning Quest
           </Button>
           <h1 className="flex items-center gap-2 text-2xl font-black text-slate-900 dark:text-white">
             <Languages className="h-6 w-6 text-violet-600" /> Course Studio

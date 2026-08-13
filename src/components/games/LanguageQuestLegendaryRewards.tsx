@@ -182,7 +182,7 @@ async function drawLegendaryAwardImage(ctx: CanvasRenderingContext2D, award: Lan
   ctx.textAlign = 'center';
   ctx.fillStyle = 'rgba(255,255,255,.7)';
   ctx.font = '700 17px "Geist", sans-serif';
-  ctx.fillText('Mon Refugee Learning Centre  •  Language Quest', width / 2, height - 62);
+  ctx.fillText('Mon Refugee Learning Centre  •  Learning Quest', width / 2, height - 62);
 }
 
 async function createLegendaryAwardBlob(award: LanguageQuestLegendaryAward, learnerName: string): Promise<Blob> {
@@ -297,7 +297,7 @@ function LegendaryAwardCardActions({
         blob,
         filename,
         `My ${award.name} Legendary Award`,
-        `${learnerName} unlocked the ${award.name} legendary award (${award.achievement}) on MRLC Language Quest.`,
+        `${learnerName} unlocked the ${award.name} legendary award (${award.achievement}) on MRLC Learning Quest.`,
         action,
       );
     } catch (error: any) {

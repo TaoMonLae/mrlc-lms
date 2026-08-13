@@ -2,7 +2,7 @@
 
 ## Purpose and scope
 
-`GED Mathematical Reasoning Preparation & Practice` is an independently authored MRLC Language Quest course. It contains 4 units, 40 concept-first lessons, and 120 original multiple-choice questions. It is preparation material, not an official GED Testing Service product, and it does not reproduce secure or official test questions.
+`GED Mathematical Reasoning Preparation & Practice` is an independently authored MRLC Learning Quest course. It contains 4 units, 40 concept-first lessons, and 120 original multiple-choice questions. It is preparation material, not an official GED Testing Service product, and it does not reproduce secure or official test questions.
 
 The course teaches both mathematical content and the reasoning practices needed to select a model, use a formula, estimate, calculate, and interpret a result. Every lesson supplies a readable typeset formula, a worked example, key terms, a GED strategy, a checkpoint, hints, and answer explanations.
 
@@ -97,10 +97,10 @@ The official formula sheet remains a learner resource; the course teaches how to
 - Four unique choices and exactly one keyed answer per question.
 - Hints guide setup without disclosing the answer.
 - Explanations show the governing relationship and calculation.
-- All questions are eligible for the monitored Language Quest final-exam pool.
+- All questions are eligible for the monitored Learning Quest final-exam pool.
 - Automated tests enforce lesson weights, unique prompts, content limits, visible math delimiters, absence of emoji/audio clues, concept parsing, and answer-key validity.
 
-Language Quest currently expresses these items as accessible selected-response tasks. The official exam also uses fill-in-the-blank, drop-down, hot-spot, and drag-and-drop interactions; learners should use official GED Ready and GED practice materials to become familiar with those interfaces.
+Learning Quest currently expresses these items as accessible selected-response tasks. The official exam also uses fill-in-the-blank, drop-down, hot-spot, and drag-and-drop interactions; learners should use official GED Ready and GED practice materials to become familiar with those interfaces.
 
 ## Limitations and maintenance
 

@@ -7,5 +7,5 @@ import type { OfficialLanguageQuestCourse } from "./languageQuestImportedCourses
 // content is converted, and curricula/sources/malay/README.md for the
 // original package's own caveats. Imported unpublished (published: false)
 // pending native-speaker review; an admin can publish each course from the
-// Language Quest course editor once reviewed.
+// Learning Quest course editor once reviewed.
 export const malayCefrCourses = generatedCourses as unknown as OfficialLanguageQuestCourse[];

@@ -27,16 +27,16 @@ test('grouped navigation keeps labels and destinations unique for each role', ()
   }
 });
 
-test('language tools are grouped together and Daily Quest is learner-only', () => {
+test('learning tools are grouped together and Daily Quest is learner-only', () => {
   for (const [role, entries] of Object.entries(ROLE_NAVS)) {
     const languageGroup = entries.find(
-      (entry) => isNavGroup(entry) && entry.label === 'Language Learning',
+      (entry) => isNavGroup(entry) && entry.label === 'Learning Tools',
     );
 
-    assert.ok(languageGroup && isNavGroup(languageGroup), `${role} is missing Language Learning`);
+    assert.ok(languageGroup && isNavGroup(languageGroup), `${role} is missing Learning Tools`);
     const expectedTitles = role === 'ADMIN'
-      ? ['Language Quest', 'Mon Language', 'Dictionary']
-      : ['Daily Quest', 'Language Quest', 'Mon Language', 'Dictionary'];
+      ? ['Learning Quest', 'Mon Language', 'Dictionary']
+      : ['Daily Quest', 'Learning Quest', 'Mon Language', 'Dictionary'];
     assert.deepEqual(languageGroup.items.map((item) => item.title), expectedTitles);
     assert.equal(
       new Set(languageGroup.items.map((item) => item.icon)).size,

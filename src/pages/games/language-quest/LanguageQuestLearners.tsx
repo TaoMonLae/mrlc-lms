@@ -86,7 +86,7 @@ export default function LanguageQuestLearners() {
   const [status, setStatus] = useState('all');
   // "external" mirrors this page's original scope (public self-signup
   // learners, whose account lifecycle is managed right here). "all" widens
-  // the list to every student/teacher/learner with any Language Quest
+  // the list to every student/teacher/learner with any Learning Quest
   // activity, purely so course engagement can be tracked school-wide.
   const [scope, setScope] = useState<'external' | 'all'>('external');
   const [courseFilter, setCourseFilter] = useState('');
@@ -107,7 +107,7 @@ export default function LanguageQuestLearners() {
       );
       setLearners(result.learners);
     } catch (error: any) {
-      toast.error(error?.message || 'Could not load Language Quest learners');
+      toast.error(error?.message || 'Could not load Learning Quest learners');
     } finally {
       setLoading(false);
     }
@@ -173,14 +173,14 @@ export default function LanguageQuestLearners() {
   return (
     <div className="space-y-6 pb-10">
       <Button variant="ghost" className="-ml-2" render={<Link to="/games/language-quest" />} nativeButton={false}>
-        <ArrowLeft className="mr-2 h-4 w-4" /> Language Quest
+        <ArrowLeft className="mr-2 h-4 w-4" /> Learning Quest
       </Button>
 
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-violet-950 to-fuchsia-900 p-6 text-white shadow-xl sm:p-8">
         <div className="absolute -right-14 -top-20 h-64 w-64 rounded-full bg-fuchsia-400/15" />
         <div className="relative max-w-3xl">
           <p className="text-xs font-black uppercase tracking-[0.2em] text-violet-200">Administrator tools</p>
-          <h1 className="mt-2 text-3xl font-black sm:text-4xl">Language Quest Learners</h1>
+          <h1 className="mt-2 text-3xl font-black sm:text-4xl">Learning Quest Learners</h1>
           <p className="mt-3 text-sm leading-6 text-slate-300 sm:text-base">
             {scope === 'external'
               ? 'Manage public learning-only accounts without mixing them into private school Student records. Deactivate access first; permanent termination is available only for inactive learners.'

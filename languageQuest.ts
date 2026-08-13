@@ -717,7 +717,7 @@ function databaseUnavailable(error: any): boolean {
 
 function databaseError(res: express.Response, error: any): boolean {
   if (!databaseUnavailable(error)) return false;
-  res.status(503).json({ error: "Language Quest database tables are not ready — run `npx prisma migrate deploy` and restart the server." });
+  res.status(503).json({ error: "Learning Quest database tables are not ready — run `npx prisma migrate deploy` and restart the server." });
   return true;
 }
 
@@ -941,7 +941,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         })),
       });
     } catch (error) {
-      logger.error("Error loading the public Language Quest catalog:", error);
+      logger.error("Error loading the public Learning Quest catalog:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load the course catalog" });
     }
   });
@@ -985,7 +985,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       res.setHeader("Cache-Control", "private, max-age=3600");
       res.send(audio.data);
     } catch (error) {
-      logger.warn?.("Kokoro Language Quest synthesis failed:", error);
+      logger.warn?.("Kokoro Learning Quest synthesis failed:", error);
       res.status(503).json({
         error: "Kokoro could not generate speech; use the browser voice",
         code: "VOICE_PROVIDER_UNAVAILABLE",
@@ -1044,7 +1044,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         })),
       });
     } catch (error) {
-      logger.error("Error loading Language Quest learner profile:", error);
+      logger.error("Error loading Learning Quest learner profile:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load your learner profile" });
     }
   });
@@ -1054,7 +1054,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
     const avatarId = req.body?.avatarId;
     const bio = text(req.body?.bio, 240);
     if (!isLanguageQuestAvatarId(avatarId)) {
-      res.status(400).json({ error: "Choose one of the available Language Quest avatars" });
+      res.status(400).json({ error: "Choose one of the available Learning Quest avatars" });
       return;
     }
     try {
@@ -1065,7 +1065,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       } as any);
       res.json({ avatarId: user.languageQuestAvatar, bio: user.languageQuestBio || "" });
     } catch (error) {
-      logger.error("Error updating Language Quest learner profile:", error);
+      logger.error("Error updating Learning Quest learner profile:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to save your learner profile" });
     }
   });
@@ -1108,7 +1108,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         alreadyMember: Boolean(existingMembership),
       });
     } catch (error) {
-      logger.error("Error joining Language Quest classroom:", error);
+      logger.error("Error joining Learning Quest classroom:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to join that classroom" });
     }
   });
@@ -1121,7 +1121,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       });
       res.json({ success: true });
     } catch (error) {
-      logger.error("Error leaving Language Quest classroom:", error);
+      logger.error("Error leaving Learning Quest classroom:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to leave that classroom" });
     }
   });
@@ -1221,8 +1221,8 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         }),
       });
     } catch (error) {
-      logger.error("Error loading Language Quest overview:", error);
-      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load Language Quest" });
+      logger.error("Error loading Learning Quest overview:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load Learning Quest" });
     }
   });
 
@@ -1327,7 +1327,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         },
       });
     } catch (error) {
-      logger.error("Error loading Language Quest learned words:", error);
+      logger.error("Error loading Learning Quest learned words:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load learned words" });
     }
   });
@@ -1427,7 +1427,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         }),
       });
     } catch (error) {
-      logger.error("Error starting Language Quest heart refill:", error);
+      logger.error("Error starting Learning Quest heart refill:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to start a heart refill quiz" });
     }
   });
@@ -1561,7 +1561,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         ...reward,
       });
     } catch (error) {
-      logger.error("Error finishing Language Quest heart refill:", error);
+      logger.error("Error finishing Learning Quest heart refill:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to finish the heart refill quiz" });
     }
   });
@@ -1677,7 +1677,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         },
       });
     } catch (error) {
-      logger.error("Error loading Language Quest course:", error);
+      logger.error("Error loading Learning Quest course:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load the course" });
     }
   });
@@ -1829,7 +1829,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         }),
       });
     } catch (error) {
-      logger.error("Error starting Language Quest final exam:", error);
+      logger.error("Error starting Learning Quest final exam:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to start the final exam" });
     }
   });
@@ -1880,7 +1880,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       res.setHeader("Cache-Control", "private, no-store");
       res.send(audio.data);
     } catch (error) {
-      logger.warn?.("Language Quest final exam spelling audio failed:", error);
+      logger.warn?.("Learning Quest final exam spelling audio failed:", error);
       res.status(503).json({ error: "Secure spelling audio could not be played. Ask your teacher before continuing." });
     }
   });
@@ -1975,7 +1975,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         passedAt: outcome.passed ? now : null,
       });
     } catch (error) {
-      logger.error("Error finishing Language Quest final exam:", error);
+      logger.error("Error finishing Learning Quest final exam:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to finish the final exam" });
     }
   });
@@ -2001,7 +2001,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       });
       res.json({ terminated: terminated.count === 1, reason });
     } catch (error) {
-      logger.error("Error recording Language Quest final exam violation:", error);
+      logger.error("Error recording Learning Quest final exam violation:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to close the final exam" });
     }
   });
@@ -2108,7 +2108,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         })),
       });
     } catch (error) {
-      logger.error("Error loading Language Quest boss battle:", error);
+      logger.error("Error loading Learning Quest boss battle:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load the boss battle" });
     }
   });
@@ -2245,7 +2245,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
 
       res.json({ ...outcome, ...award });
     } catch (error) {
-      logger.error("Error finishing Language Quest boss battle:", error);
+      logger.error("Error finishing Learning Quest boss battle:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to finish the boss battle" });
     }
   });
@@ -2313,7 +2313,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         cards: lessonStudyCards(lesson.challenges, lesson.unit.course.language),
       });
     } catch (error) {
-      logger.error("Error loading Language Quest lesson:", error);
+      logger.error("Error loading Learning Quest lesson:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load the lesson" });
     }
   });
@@ -2345,7 +2345,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         cards: lessonStudyCards(lesson.challenges, lesson.unit.course.language),
       });
     } catch (error) {
-      logger.error("Error loading Language Quest lesson preview:", error);
+      logger.error("Error loading Learning Quest lesson preview:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load the lesson preview" });
     }
   });
@@ -2555,7 +2555,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       }
       res.json({ ...result, correctOptionId, correctAnswer });
     } catch (error) {
-      logger.error("Error saving Language Quest answer:", error);
+      logger.error("Error saving Learning Quest answer:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to check that answer" });
     }
   });
@@ -2614,7 +2614,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       }));
       res.json({ missions, classroomChallenges: teamChallenges, masteryDueCount, masteryWeakCount });
     } catch (error) {
-      logger.error("Error loading Language Quest engagement:", error);
+      logger.error("Error loading Learning Quest engagement:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load missions and challenges" });
     }
   });
@@ -2677,7 +2677,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         res.status(409).json({ error: "This mission reward was already claimed" });
         return;
       }
-      logger.error("Error claiming Language Quest mission:", error);
+      logger.error("Error claiming Learning Quest mission:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to claim this mission" });
     }
   });
@@ -2816,7 +2816,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         })),
       });
     } catch (error) {
-      logger.error("Error loading Language Quest mastery reviews:", error);
+      logger.error("Error loading Learning Quest mastery reviews:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load mastery reviews" });
     }
   });
@@ -3003,7 +3003,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       }
       res.json(result);
     } catch (error) {
-      logger.error("Error checking Language Quest mastery answer:", error);
+      logger.error("Error checking Learning Quest mastery answer:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to check this mastery answer" });
     }
   });
@@ -3240,7 +3240,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         })),
       });
     } catch (error) {
-      logger.error("Error loading Language Quest leaderboard:", error);
+      logger.error("Error loading Learning Quest leaderboard:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load the leaderboard" });
     }
   });
@@ -3273,7 +3273,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       }));
       res.json({ following: true, isFriend: followedBack });
     } catch (error) {
-      logger.error("Error following Language Quest learner:", error);
+      logger.error("Error following Learning Quest learner:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to follow this learner" });
     }
   });
@@ -3287,7 +3287,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       });
       res.json({ following: false });
     } catch (error) {
-      logger.error("Error unfollowing Language Quest learner:", error);
+      logger.error("Error unfollowing Learning Quest learner:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to unfollow this learner" });
     }
   });
@@ -3562,8 +3562,8 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         learners,
       });
     } catch (error) {
-      logger.error("Error loading Language Quest analytics:", error);
-      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load Language Quest analytics" });
+      logger.error("Error loading Learning Quest analytics:", error);
+      if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load Learning Quest analytics" });
     }
   });
 
@@ -3600,7 +3600,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         })),
       });
     } catch (error) {
-      logger.error("Error loading Language Quest classrooms:", error);
+      logger.error("Error loading Learning Quest classrooms:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load classrooms" });
     }
   });
@@ -3628,10 +3628,10 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         }
       }
       await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "LANGUAGE_QUEST_CLASSROOM", classroom.id,
-        `Created Language Quest classroom '${name}'.`, req.ip || null, req.headers["user-agent"] || null);
+        `Created Learning Quest classroom '${name}'.`, req.ip || null, req.headers["user-agent"] || null);
       res.status(201).json(classroom);
     } catch (error) {
-      logger.error("Error creating Language Quest classroom:", error);
+      logger.error("Error creating Learning Quest classroom:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to create classroom" });
     }
   });
@@ -3664,7 +3664,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       });
       res.json(classroom);
     } catch (error) {
-      logger.error("Error updating Language Quest classroom:", error);
+      logger.error("Error updating Learning Quest classroom:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to update classroom" });
     }
   });
@@ -3769,7 +3769,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         }),
       });
     } catch (error) {
-      logger.error("Error loading Language Quest classroom roster:", error);
+      logger.error("Error loading Learning Quest classroom roster:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load classroom roster" });
     }
   });
@@ -3821,7 +3821,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       );
       res.status(201).json(challenge);
     } catch (error) {
-      logger.error("Error creating Language Quest classroom challenge:", error);
+      logger.error("Error creating Learning Quest classroom challenge:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to create classroom challenge" });
     }
   });
@@ -3850,7 +3850,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       if (!updated.count) { res.status(404).json({ error: "Classroom challenge not found" }); return; }
       res.json({ success: true });
     } catch (error) {
-      logger.error("Error updating Language Quest classroom challenge:", error);
+      logger.error("Error updating Learning Quest classroom challenge:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to update classroom challenge" });
     }
   });
@@ -3870,7 +3870,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       });
       res.json({ success: true });
     } catch (error) {
-      logger.error("Error removing Language Quest classroom member:", error);
+      logger.error("Error removing Learning Quest classroom member:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to remove learner" });
     }
   });
@@ -3987,7 +3987,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         })),
       });
     } catch (error) {
-      logger.error("Error loading Language Quest learners:", error);
+      logger.error("Error loading Learning Quest learners:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load learner accounts" });
     }
   });
@@ -4001,7 +4001,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         where: { id: req.params.id, isExternalLearner: true },
         select: { id: true, email: true, firstName: true, lastName: true },
       });
-      if (!learner) { res.status(404).json({ error: "Language Quest learner not found" }); return; }
+      if (!learner) { res.status(404).json({ error: "Learning Quest learner not found" }); return; }
       await prisma.$transaction([
         prisma.user.update({ where: { id: learner.id }, data: { isActive: req.body.active } }),
         ...(req.body.active ? [] : [
@@ -4009,11 +4009,11 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         ]),
       ]);
       await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "PUBLIC_LEARNER_ACCOUNT", learner.id,
-        `${req.body.active ? "Reactivated" : "Deactivated"} Language Quest learner '${learner.firstName} ${learner.lastName}' (${learner.email}).`,
+        `${req.body.active ? "Reactivated" : "Deactivated"} Learning Quest learner '${learner.firstName} ${learner.lastName}' (${learner.email}).`,
         req.ip || null, req.headers["user-agent"] || null, req.body.active ? "SUCCESS" : "WARNING");
       res.json({ success: true, active: req.body.active });
     } catch (error) {
-      logger.error("Error updating Language Quest learner status:", error);
+      logger.error("Error updating Learning Quest learner status:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to update learner status" });
     }
   });
@@ -4026,7 +4026,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         where: { id: req.params.id, isExternalLearner: true },
         select: { id: true, email: true, firstName: true, lastName: true, isActive: true },
       });
-      if (!learner) { res.status(404).json({ error: "Language Quest learner not found" }); return; }
+      if (!learner) { res.status(404).json({ error: "Learning Quest learner not found" }); return; }
       if (learner.isActive) {
         res.status(409).json({ error: "Deactivate this learner before permanently terminating the account" });
         return;
@@ -4034,11 +4034,11 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       const label = `${learner.firstName} ${learner.lastName}`.trim();
       await prisma.user.delete({ where: { id: learner.id } });
       await createAuditLog(jwtUser.userId, jwtUser.email, "DELETE", "PUBLIC_LEARNER_ACCOUNT", learner.id,
-        `Permanently terminated inactive Language Quest learner '${label}' (${learner.email}).`,
+        `Permanently terminated inactive Learning Quest learner '${label}' (${learner.email}).`,
         req.ip || null, req.headers["user-agent"] || null, "WARNING");
       res.json({ success: true });
     } catch (error) {
-      logger.error("Error terminating Language Quest learner:", error);
+      logger.error("Error terminating Learning Quest learner:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to terminate learner account" });
     }
   });
@@ -4067,7 +4067,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         challengeCount: course.units.reduce((sum: number, unit: any) => sum + unit.lessons.reduce((inner: number, lesson: any) => inner + lesson.challenges.length, 0), 0),
       })));
     } catch (error) {
-      logger.error("Error listing managed Language Quest courses:", error);
+      logger.error("Error listing managed Learning Quest courses:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load courses" });
     }
   });
@@ -4094,7 +4094,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         retired: RETIRED_OFFICIAL_COURSE_CODES.has(course.code),
       });
     } catch (error) {
-      logger.error("Error loading managed Language Quest course:", error);
+      logger.error("Error loading managed Learning Quest course:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to load the course editor" });
     }
   });
@@ -4292,7 +4292,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         }
       }
       const saved = await saveCurriculum(course.id, draft);
-      await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "LANGUAGE_QUEST_COURSE", saved.id, `Created Language Quest course “${saved.title}”`, req.ip || null, req.headers["user-agent"] || null);
+      await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "LANGUAGE_QUEST_COURSE", saved.id, `Created Learning Quest course “${saved.title}”`, req.ip || null, req.headers["user-agent"] || null);
       res.status(201).json({
         id: saved.id,
         updatedAt: saved.updatedAt,
@@ -4301,7 +4301,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         reviewStatus: saved.reviewStatus,
       });
     } catch (error) {
-      logger.error("Error creating Language Quest course:", error);
+      logger.error("Error creating Learning Quest course:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to create the course" });
     }
   });
@@ -4338,7 +4338,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         teacherOwnedEdit ? languageQuestTeacherEditReviewData() : {},
         expectedUpdatedAt,
       );
-      await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "LANGUAGE_QUEST_COURSE", saved.id, `Updated Language Quest course “${saved.title}”`, req.ip || null, req.headers["user-agent"] || null);
+      await createAuditLog(jwtUser.userId, jwtUser.email, "UPDATE", "LANGUAGE_QUEST_COURSE", saved.id, `Updated Learning Quest course “${saved.title}”`, req.ip || null, req.headers["user-agent"] || null);
       res.json({
         id: saved.id,
         updatedAt: saved.updatedAt,
@@ -4347,7 +4347,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         reviewStatus: saved.reviewStatus,
       });
     } catch (error: any) {
-      logger.error("Error updating Language Quest course:", error);
+      logger.error("Error updating Learning Quest course:", error);
       if (error?.statusCode) { res.status(error.statusCode).json({ error: error.message }); return; }
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to update the course" });
     }
@@ -4434,10 +4434,10 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
           if (error?.code !== "P2002" || attempt === 2) throw error;
         }
       }
-      await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "LANGUAGE_QUEST_COURSE", created.id, `Duplicated Language Quest course "${source.title}" as "${created.title}"`, req.ip || null, req.headers["user-agent"] || null);
+      await createAuditLog(jwtUser.userId, jwtUser.email, "CREATE", "LANGUAGE_QUEST_COURSE", created.id, `Duplicated Learning Quest course "${source.title}" as "${created.title}"`, req.ip || null, req.headers["user-agent"] || null);
       res.status(201).json({ id: created.id });
     } catch (error) {
-      logger.error("Error duplicating Language Quest course:", error);
+      logger.error("Error duplicating Learning Quest course:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to duplicate the course" });
     }
   });
@@ -4500,10 +4500,10 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         where: { id: course.id },
         select: { updatedAt: true },
       });
-      await createAuditLog(jwtUser.userId, jwtUser.email, "SUBMIT", "LANGUAGE_QUEST_COURSE", course.id, `Submitted Language Quest course “${course.title}” for review`, req.ip || null, req.headers["user-agent"] || null);
+      await createAuditLog(jwtUser.userId, jwtUser.email, "SUBMIT", "LANGUAGE_QUEST_COURSE", course.id, `Submitted Learning Quest course “${course.title}” for review`, req.ip || null, req.headers["user-agent"] || null);
       res.json({ id: course.id, reviewStatus: "PENDING", published: false, updatedAt: submittedCourse?.updatedAt });
     } catch (error) {
-      logger.error("Error submitting Language Quest course for review:", error);
+      logger.error("Error submitting Learning Quest course for review:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to submit the course for review" });
     }
   });
@@ -4547,8 +4547,8 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       }
       const auditAction = action === "APPROVE" ? "APPROVE" : "REQUEST_CHANGES";
       const auditDescription = action === "APPROVE"
-        ? `Approved and published Language Quest course “${course.title}”`
-        : `Requested changes to Language Quest course “${course.title}”`;
+        ? `Approved and published Learning Quest course “${course.title}”`
+        : `Requested changes to Learning Quest course “${course.title}”`;
       await createAuditLog(jwtUser.userId, jwtUser.email, auditAction, "LANGUAGE_QUEST_COURSE", course.id, auditDescription, req.ip || null, req.headers["user-agent"] || null);
       res.json({
         id: course.id,
@@ -4558,7 +4558,7 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
         reviewedAt,
       });
     } catch (error) {
-      logger.error("Error reviewing Language Quest course:", error);
+      logger.error("Error reviewing Learning Quest course:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to review the course" });
     }
   });
@@ -4572,10 +4572,10 @@ export function registerLanguageQuestRoutes(deps: Deps): void {
       if (course.createdById === null) { res.status(400).json({ error: "Official courses cannot be deleted" }); return; }
       if (jwtUser.role !== "ADMIN" && course.createdById !== jwtUser.userId) { res.status(403).json({ error: "You can only delete courses you created" }); return; }
       await prisma.languageQuestCourse.delete({ where: { id: course.id } });
-      await createAuditLog(jwtUser.userId, jwtUser.email, "DELETE", "LANGUAGE_QUEST_COURSE", course.id, `Deleted Language Quest course “${course.title}”`, req.ip || null, req.headers["user-agent"] || null, "WARNING");
+      await createAuditLog(jwtUser.userId, jwtUser.email, "DELETE", "LANGUAGE_QUEST_COURSE", course.id, `Deleted Learning Quest course “${course.title}”`, req.ip || null, req.headers["user-agent"] || null, "WARNING");
       res.json({ success: true });
     } catch (error) {
-      logger.error("Error deleting Language Quest course:", error);
+      logger.error("Error deleting Learning Quest course:", error);
       if (!databaseError(res, error)) res.status(500).json({ error: "Unable to delete the course" });
     }
   });

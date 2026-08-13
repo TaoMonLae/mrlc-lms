@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { languageQuestSpeechLocale } from "../../src/lib/languageQuestSpeechInput";
 
-test("languageQuestSpeechLocale maps every Language Quest course language to a speech-recognition locale", () => {
+test("languageQuestSpeechLocale maps every Learning Quest course language to a speech-recognition locale", () => {
   assert.equal(languageQuestSpeechLocale("Mandarin Chinese"), "zh-CN");
   assert.equal(languageQuestSpeechLocale("Chinese"), "zh-CN");
   assert.equal(languageQuestSpeechLocale("Spanish"), "es-ES");

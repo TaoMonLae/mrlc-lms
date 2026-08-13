@@ -170,7 +170,7 @@ function drawSeal(ctx: CanvasRenderingContext2D, cx: number, cy: number, radius:
   ctx.save();
   ctx.translate(cx, cy);
 
-  // Deep-blue ribbons keep the seal connected to Language Quest's identity
+  // Deep-blue ribbons keep the seal connected to Learning Quest's identity
   // while the warm gold face gives the certificate a traditional finish.
   ctx.beginPath();
   ctx.moveTo(-radius * 0.62, radius * 0.46);
@@ -318,7 +318,7 @@ async function drawCourseCertificate(ctx: CanvasRenderingContext2D, input: Achie
   ctx.fillText('MON REFUGEE LEARNING CENTRE', 265, 156);
   ctx.fillStyle = accent;
   ctx.font = '800 22px "Geist", sans-serif';
-  ctx.fillText('LANGUAGE QUEST', 265, 193);
+  ctx.fillText('LEARNING QUEST', 265, 193);
 
   roundedRect(ctx, 1174, 124, 274, 60, 30);
   ctx.fillStyle = navy;
@@ -392,7 +392,7 @@ async function drawCourseCertificate(ctx: CanvasRenderingContext2D, input: Achie
   ctx.fillStyle = ink;
   ctx.font = '800 20px "Geist", sans-serif';
   ctx.fillText(completedOn, 400, baseline - 12);
-  ctx.fillText('Language Quest Learning Team', 812, baseline - 12);
+  ctx.fillText('Learning Quest Team', 812, baseline - 12);
   ctx.fillStyle = muted;
   ctx.font = '600 16px "Geist", sans-serif';
   ctx.fillText('FINAL EXAM PASSED', 400, baseline + 30);
@@ -463,7 +463,7 @@ export async function createLanguageQuestAchievementBlob(input: AchievementImage
   }
   ctx.fillStyle = '#c4b5fd';
   ctx.font = '800 22px "Geist", sans-serif';
-  ctx.fillText('MRLC LANGUAGE QUEST', 184, 112);
+  ctx.fillText('MRLC LEARNING QUEST', 184, 112);
   ctx.fillStyle = '#fff';
   ctx.font = '700 18px "Geist", sans-serif';
   ctx.fillText('Learn • Practise • Grow', 184, 142);
@@ -489,7 +489,7 @@ export async function createLanguageQuestAchievementBlob(input: AchievementImage
   ctx.textAlign = 'right';
   ctx.fillStyle = 'rgba(255,255,255,.65)';
   ctx.font = '600 16px "Geist", sans-serif';
-  ctx.fillText('MRLC • Language Quest', 1114, 556);
+  ctx.fillText('MRLC • Learning Quest', 1114, 556);
 
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('Could not create the achievement image')), 'image/png', 0.95);
@@ -580,10 +580,10 @@ export function LanguageQuestAchievements({ learnerName, profile, courses }: Ach
           }
           if (canShareFile) {
             await navigator.share({
-              title: kind === 'certificate' ? 'My Language Quest certificate' : 'My Language Quest streak',
+              title: kind === 'certificate' ? 'My Learning Quest certificate' : 'My Learning Quest streak',
               text: kind === 'certificate'
-                ? `${learnerName} completed ${course?.title} and passed its final exam on MRLC Language Quest.`
-                : `${learnerName} reached a ${profile.currentStreak}-day streak on MRLC Language Quest.`,
+                ? `${learnerName} completed ${course?.title} and passed its final exam on MRLC Learning Quest.`
+                : `${learnerName} reached a ${profile.currentStreak}-day streak on MRLC Learning Quest.`,
               files: [file],
             });
             return;
@@ -612,7 +612,7 @@ export function LanguageQuestAchievements({ learnerName, profile, courses }: Ach
           <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-600 dark:text-slate-300 sm:text-sm sm:leading-6">
             {certifiedCourses.length > 0
               ? `${certifiedCourses.length} verified certificate${certifiedCourses.length === 1 ? '' : 's'} earned so far. Each one requires a passed final exam.`
-              : 'Save a personalized PNG or open your device’s share menu for social media. Only your name and Language Quest achievement appear.'}
+              : 'Save a personalized PNG or open your device’s share menu for social media. Only your name and Learning Quest achievement appear.'}
           </p>
         </div>
       </div>
@@ -693,7 +693,7 @@ export function LanguageQuestAchievements({ learnerName, profile, courses }: Ach
                     <div className="relative flex items-start justify-between gap-3 pl-3">
                       <div>
                         <p className="text-[8px] font-black uppercase tracking-[0.12em] text-[#183153] sm:text-[9px]">Mon Refugee Learning Centre</p>
-                        <p className="mt-0.5 text-[7px] font-black uppercase tracking-[0.18em]" style={{ color: accent }}>Language Quest</p>
+                        <p className="mt-0.5 text-[7px] font-black uppercase tracking-[0.18em]" style={{ color: accent }}>Learning Quest</p>
                       </div>
                       <span className="text-xl" aria-hidden="true">{course.imageEmoji}</span>
                     </div>
@@ -730,7 +730,7 @@ export function LanguageQuestAchievements({ learnerName, profile, courses }: Ach
         <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-5xl">
           <DialogHeader>
             <DialogTitle>{certificatePreview?.courseTitle} certificate</DialogTitle>
-            <DialogDescription>Preview of your print-ready Language Quest certificate.</DialogDescription>
+            <DialogDescription>Preview of your print-ready Learning Quest certificate.</DialogDescription>
           </DialogHeader>
           {certificatePreview && (
             <img

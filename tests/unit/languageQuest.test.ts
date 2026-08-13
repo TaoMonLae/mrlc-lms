@@ -88,7 +88,7 @@ import {
   nextLanguageQuestSurpriseCard,
 } from "../../shared/languageQuestHeartRefill";
 
-test("teacher edits return reviewed Language Quest courses to a private draft", () => {
+test("teacher edits return reviewed Learning Quest courses to a private draft", () => {
   assert.deepEqual(languageQuestTeacherEditReviewData(), {
     published: false,
     reviewStatus: "DRAFT",
@@ -98,7 +98,7 @@ test("teacher edits return reviewed Language Quest courses to a private draft", 
   });
 });
 
-test("Language Quest review decisions publish approvals and keep change requests private", () => {
+test("Learning Quest review decisions publish approvals and keep change requests private", () => {
   const reviewedAt = new Date("2026-08-01T12:00:00.000Z");
   assert.deepEqual(languageQuestCourseReviewDecision("APPROVE", "Ready to launch", reviewedAt), {
     published: true,
@@ -114,7 +114,7 @@ test("Language Quest review decisions publish approvals and keep change requests
   });
 });
 
-test("Language Quest leaderboard scopes reject unknown values and use stable recent-XP leagues", () => {
+test("Learning Quest leaderboard scopes reject unknown values and use stable recent-XP leagues", () => {
   assert.equal(languageQuestLeaderboardScope("classroom"), "classroom");
   assert.equal(languageQuestLeaderboardScope("anything-else"), "global");
   assert.equal(languageQuestLeagueForXp(0).id, "sprout");
@@ -124,7 +124,7 @@ test("Language Quest leaderboard scopes reject unknown values and use stable rec
   assert.equal(languageQuestLeagueForXp(700).id, "luminary");
 });
 
-test("Language Quest analytics classifies accuracy signals consistently", () => {
+test("Learning Quest analytics classifies accuracy signals consistently", () => {
   assert.equal(languageQuestAnalyticsAccuracyPercent(0, 0), null);
   assert.equal(languageQuestAnalyticsAccuracyPercent(2, 3), 67);
   assert.equal(languageQuestAnalyticsAccuracyPercent(9, 10), 90);
@@ -138,7 +138,7 @@ test("Language Quest analytics classifies accuracy signals consistently", () => 
   assert.equal(LANGUAGE_QUEST_SKILL_LABELS.GRAMMAR_TRANSFORM, "Grammar and usage");
 });
 
-test("Language Quest turns saved XP into stable levels and collectible cards", () => {
+test("Learning Quest turns saved XP into stable levels and collectible cards", () => {
   const beginner = languageQuestRewardProgress(0);
   assert.equal(beginner.level, 0);
   assert.equal(beginner.title, "Quest Initiate");
@@ -166,7 +166,7 @@ test("Language Quest turns saved XP into stable levels and collectible cards", (
   assert.equal(committedLearner.progressPercent, 20);
 });
 
-test("Language Quest reward thresholds are ordered, unique, and announce only new unlocks", () => {
+test("Learning Quest reward thresholds are ordered, unique, and announce only new unlocks", () => {
   assert.equal(LANGUAGE_QUEST_REWARD_CARDS.length, 20);
   assert.equal(LANGUAGE_QUEST_REWARD_CARDS[0].unlockXp, 100);
   assert.deepEqual(
@@ -245,7 +245,7 @@ test("surprise heart cards are original, unique, and never repeat an owned card"
   assert.equal(nextLanguageQuestSurpriseCard(new Set(LANGUAGE_QUEST_SURPRISE_CARDS.map((card) => card.id))), null);
 });
 
-test("Language Quest missions use Kuala Lumpur daily and weekly periods", () => {
+test("Learning Quest missions use Kuala Lumpur daily and weekly periods", () => {
   const now = new Date("2026-07-29T04:00:00.000Z");
   const periods = languageQuestPeriodBounds(now);
   assert.equal(periods.dayKey, "2026-07-29");
@@ -294,7 +294,7 @@ test("weak-area accuracy prefers rolling performance and smooths lifetime result
   assert.equal(languageQuestMasteryAccuracy(3, 1, null), 4 / 6);
 });
 
-test("Language Quest starts a new streak on the first active day", () => {
+test("Learning Quest starts a new streak on the first active day", () => {
   assert.deepEqual(
     nextLanguageQuestStreak({
       currentStreak: 0,
@@ -358,7 +358,7 @@ test("hints get the same spoiler redaction as assessment prompts", () => {
   // languageQuestAssessmentPrompt() call already used for `question`.
   assert.equal(
     languageQuestAssessmentPrompt(
-      'Remember the pronunciation. Pronunciation: /haʊʔs/. Example: “My house has three bedrooms.”',
+      'Remember the pronunciation. Pronunciation: /haʊs/. Example: “My house has three bedrooms.”',
       'SELECT',
       ['house', 'car'],
     ),
@@ -393,7 +393,7 @@ test("structural review challenges do not become misleading study cards", () => 
   assert.equal(languageQuestCourseMode('GED Reasoning Through Language Arts'), 'rla');
 });
 
-test("Language Quest dictionary extracts a useful highlighted term", () => {
+test("Learning Quest dictionary extracts a useful highlighted term", () => {
   assert.equal(languageQuestLookupWord(" borrow and read books? "), "borrow");
   assert.equal(languageQuestLookupWord("“You're”"), "You're");
   assert.equal(languageQuestLookupWord("စာကြည့်တိုက်"), "စာကြည့်တိုက်");
@@ -404,7 +404,7 @@ test("Language Quest dictionary extracts a useful highlighted term", () => {
   assert.equal(languageQuestLookupWord("你好 (nǐ hǎo)!"), "你好");
 });
 
-test("Language Quest adds tone-marked Pinyin to Chinese course text", () => {
+test("Learning Quest adds tone-marked Pinyin to Chinese course text", () => {
   assert.equal(isChineseLanguage("Mandarin Chinese"), true);
   assert.deepEqual(languageQuestPinyin("你好", "Mandarin Chinese"), ["nǐ", "hǎo"]);
   assert.deepEqual(
@@ -486,7 +486,7 @@ test("every Hanzi answer in every built-in Chinese course receives Pinyin", () =
   ));
 });
 
-test("Language Quest accepts only the curated built-in learner avatars", () => {
+test("Learning Quest accepts only the curated built-in learner avatars", () => {
   assert.ok(LANGUAGE_QUEST_AVATARS.length >= 8);
   assert.equal(new Set(LANGUAGE_QUEST_AVATARS.map((avatar) => avatar.id)).size, LANGUAGE_QUEST_AVATARS.length);
   assert.equal(isLanguageQuestAvatarId("owl"), true);
@@ -494,7 +494,7 @@ test("Language Quest accepts only the curated built-in learner avatars", () => {
   assert.equal(isLanguageQuestAvatarId("../uploads/avatar.png"), false);
 });
 
-test("Language Quest avatar images use case-correct public asset routes", () => {
+test("Learning Quest avatar images use case-correct public asset routes", () => {
   const publicRoot = new URL("../../public/", import.meta.url);
   const imageAvatars = LANGUAGE_QUEST_AVATARS.filter((avatar) => "image" in avatar);
 
@@ -508,7 +508,7 @@ test("Language Quest avatar images use case-correct public asset routes", () => 
   }
 });
 
-test("Language Quest only increments once per Kuala Lumpur calendar day", () => {
+test("Learning Quest only increments once per Kuala Lumpur calendar day", () => {
   assert.deepEqual(
     nextLanguageQuestStreak({
       currentStreak: 4,
@@ -520,7 +520,7 @@ test("Language Quest only increments once per Kuala Lumpur calendar day", () => 
   );
 });
 
-test("Language Quest increments consecutive days and resets after a gap", () => {
+test("Learning Quest increments consecutive days and resets after a gap", () => {
   const consecutive = nextLanguageQuestStreak({
     currentStreak: 4,
     bestStreak: 4,
@@ -609,7 +609,7 @@ test("the Chinese Conversation Starter course is complete and classroom-ready", 
   ));
 });
 
-test("Language Quest groups language courses into a predictable category order", () => {
+test("Learning Quest groups language courses into a predictable category order", () => {
   assert.equal(languageQuestCategoryForLanguage("Mandarin Chinese"), "Chinese Courses");
   assert.equal(languageQuestCategoryForLanguage("English"), "English Courses");
   assert.equal(languageQuestCategoryForLanguage("Spanish"), "Spanish Courses");
@@ -969,7 +969,7 @@ test("pairedMatchAnswerSummary joins consecutive option pairs as a readable left
   assert.equal(pairedMatchAnswerSummary([]), "");
 });
 
-test("a missed Language Quest challenge is requeued after an interleaving gap", () => {
+test("a missed Learning Quest challenge is requeued after an interleaving gap", () => {
   const original = ["a", "b", "c", "d", "e"];
   const requeued = requeueMissedLanguageQuestChallenge(original, 1);
 
@@ -1011,7 +1011,7 @@ test("Course Studio type switching produces valid option shapes", () => {
 // including generator-built ones like the Malay CEFR courses that contain
 // REORDER/CLOZE/MINIMAL_PAIR_LISTENING challenges. normalizeCourseDraft() is
 // what the save/publish endpoint runs the submitted course through, so it
-// must recognize every challenge type Language Quest supports instead of
+// must recognize every challenge type Learning Quest supports instead of
 // collapsing anything but ASSIST down to SELECT (which used to silently
 // corrupt saved challenges) or requiring "exactly one correct option" for
 // every type (which used to reject REORDER/MATCHING outright with a "Course

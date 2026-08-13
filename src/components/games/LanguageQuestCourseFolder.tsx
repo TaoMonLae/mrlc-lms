@@ -101,7 +101,7 @@ export function LanguageQuestCourseFolders<T>({
         aria-label="Course folders"
         className="grid grid-cols-2 gap-3 lg:grid-cols-4"
       >
-        {groups.map((group) => {
+        {groups.map((group, groupIndex) => {
           const tone = folderTone(group.category);
           const selected = group.category === activeGroup?.category;
           const tabId = categoryId(group.category, idPrefix);
@@ -118,6 +118,7 @@ export function LanguageQuestCourseFolders<T>({
               onClick={() => setActiveCategory(selected ? null : group.category)}
               className={cn(
                 'group/folder relative overflow-hidden rounded-2xl border p-3 text-left shadow-sm outline-none transition duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:ring-4 focus-visible:ring-violet-400/35 sm:min-h-40 sm:rounded-3xl sm:p-5',
+                groups.length % 2 === 1 && groupIndex === groups.length - 1 && 'col-span-2 lg:col-span-1',
                 selected
                   ? 'border-violet-400 bg-white ring-2 ring-violet-200 dark:border-violet-400/70 dark:bg-slate-900 dark:ring-violet-500/20'
                   : 'border-slate-200 bg-white/75 hover:border-violet-300 dark:border-slate-700 dark:bg-slate-900/70 dark:hover:border-violet-500/50',

@@ -247,7 +247,7 @@ export function registerWordTrailRoutes(deps: Deps): void {
 
   app.post("/api/games/word-trail/start", authMiddleware, learnerOnly, gameAccessMiddleware, async (req, res) => {
     const jwtUser = (req as any).user as JwtPayload;
-    // Optional crossover: build the board from one specific Language Quest
+    // Optional crossover: build the board from one specific Learning Quest
     // course's own challenges instead of the default English-word pool, so
     // a learner can practise a Mandarin, Spanish, or any other course they're
     // taking through the Word Trail board game.
@@ -269,7 +269,7 @@ export function registerWordTrailRoutes(deps: Deps): void {
           select: { id: true, title: true, published: true },
         });
         if (!course || !course.published) {
-          res.status(404).json({ error: "That Language Quest course is not available" });
+          res.status(404).json({ error: "That Learning Quest course is not available" });
           return;
         }
         deck = await loadLanguageQuestCourseDeck(prisma, courseId, seed, WORD_TRAIL_QUESTION_COUNT);

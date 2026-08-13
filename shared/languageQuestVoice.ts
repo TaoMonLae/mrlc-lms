@@ -24,7 +24,7 @@ export interface LanguageQuestKokoroVoice {
   voice: string;
 }
 
-// Kokoro-82M's published voice list (VOICES.md) covers these Language Quest
+// Kokoro-82M's published voice list (VOICES.md) covers these Learning Quest
 // languages. It has no Burmese/Myanmar voice, so Burmese continues to use an
 // installed browser voice, same as Mon already does.
 const KOKORO_VOICE_BY_LANGUAGE: Record<string, LanguageQuestKokoroVoice> = {

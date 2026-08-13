@@ -12,6 +12,7 @@ test('course folders start closed and do not render a course panel automatically
 
   assert.match(html, /aria-expanded="false"/);
   assert.match(html, /Open English folder/);
+  assert.match(html, /col-span-2/);
   assert.doesNotMatch(html, /GED RLA/);
   assert.doesNotMatch(html, /course-folder-panel/);
 });

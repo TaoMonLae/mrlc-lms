@@ -17,7 +17,7 @@ const STORAGE_KEY = 'mrlc-language-quest-explanation-language';
 const copy = {
   en: {
     explanation: 'Explanation',
-    journeySummary: 'Build useful language skills through quick lessons, friendly challenges, streaks, and school-wide competition.',
+    journeySummary: 'Build language, mathematics, and GED skills through quick lessons, friendly challenges, streaks, and school-wide competition.',
     sentenceFeatureTitle: 'New: remember vocabulary before spelling',
     sentenceFeatureBody: 'Lessons now give every word or phrase two multiple-choice recognition rounds before spelling and sentence writing. Mistakes are retried without costing hearts, so learners build memory before the scored quiz.',
     progressSaved: 'Your progress is saved automatically.',
@@ -217,7 +217,7 @@ export function LanguageQuestSupportProvider({ children }: { children: React.Rea
     return 'en';
   });
 
-  // This preference is intentionally scoped to Language Quest only and must
+  // This preference is intentionally scoped to Learning Quest only and must
   // never drive the app-wide language (useI18n's setLang). See bug report:
   // toggling this used to relocalize the entire LMS (admin, finance, etc.)
   // for the user's whole session.

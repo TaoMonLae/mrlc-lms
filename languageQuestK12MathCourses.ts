@@ -8,7 +8,7 @@ import type { OfficialLanguageQuestCourse } from "./languageQuestImportedCourses
 const generatedMathCourses = generatedCourses as unknown as OfficialLanguageQuestCourse[];
 
 // Keep subject-area official courses in the same bootstrap collection so the
-// existing Language Quest seeding path can register them without duplicating
+// existing Learning Quest seeding path can register them without duplicating
 // server bootstrap logic.
 export const k12MathCourses: OfficialLanguageQuestCourse[] = [
   ...generatedMathCourses,

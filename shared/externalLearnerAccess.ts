@@ -8,7 +8,7 @@ function cleanPathname(value: string): string {
  * Browser routes available after a public learner signs in.
  *
  * Keep this deliberately narrower than the general STUDENT route set:
- * public learner accounts exist only for Language Quest and password changes.
+ * public learner accounts exist only for Learning Quest and password changes.
  */
 export function isExternalLearnerAppPathAllowed(value: string): boolean {
   const pathname = cleanPathname(value);
@@ -33,7 +33,7 @@ export function isExternalLearnerAppPathAllowed(value: string): boolean {
  * Authenticated API surface available to a public learner token.
  *
  * This is an explicit method-and-route allowlist. In particular, the broad
- * Language Quest prefix is not enough because it also contains management
+ * Learning Quest prefix is not enough because it also contains management
  * endpoints intended for school staff.
  */
 export function isExternalLearnerApiRequestAllowed(method: string, value: string): boolean {
@@ -84,7 +84,7 @@ export function isExternalLearnerApiRequestAllowed(method: string, value: string
 }
 
 /**
- * The Language Quest leaderboard is global across public learner accounts and
+ * The Learning Quest leaderboard is global across public learner accounts and
  * LMS members. Only active accounts are eligible; this does not grant public
  * learners access to any private LMS route or API.
  */

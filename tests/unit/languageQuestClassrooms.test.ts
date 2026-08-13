@@ -9,7 +9,7 @@ import {
   normalizeLanguageQuestClassroomCode,
 } from "../../shared/languageQuestClassrooms";
 
-test("Language Quest classroom codes are normalized consistently", () => {
+test("Learning Quest classroom codes are normalized consistently", () => {
   assert.equal(normalizeLanguageQuestClassroomCode(" ab-cd 12!xy "), "ABCD12XY");
   assert.equal(normalizeLanguageQuestClassroomCode("abcdefghijk"), "ABCDEFGH");
   assert.equal(normalizeLanguageQuestClassroomCode(null), "");

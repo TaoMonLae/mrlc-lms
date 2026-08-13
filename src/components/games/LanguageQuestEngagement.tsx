@@ -74,37 +74,37 @@ export function LanguageQuestEngagement({ onXpChanged }: { onXpChanged?: () => v
 
   return (
     <>
-      <section className="grid gap-5 xl:grid-cols-[1.2fr_.8fr]">
-      <div className="rounded-2xl border border-violet-200 bg-white/90 p-3 shadow-sm dark:border-violet-500/20 dark:bg-slate-900/85 sm:rounded-3xl sm:p-6">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
+      <section className="grid min-w-0 max-w-full gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,.8fr)]">
+      <div className="min-w-0 max-w-full overflow-hidden rounded-2xl border border-violet-200 bg-white/90 p-3 shadow-sm dark:border-violet-500/20 dark:bg-slate-900/85 sm:rounded-3xl sm:p-6">
+        <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-600 dark:text-violet-300">Daily &amp; weekly missions</p>
             <h2 className="mt-1 text-xl font-black text-slate-950 dark:text-white">Small goals, extra XP</h2>
           </div>
-          <div className="flex max-w-full flex-nowrap items-center gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
-            <Button variant="outline" className="rounded-xl" render={<Link to="/games/language-quest/mastery" />} nativeButton={false}>
+          <div className="flex w-full min-w-0 max-w-full flex-nowrap items-center gap-2 overflow-x-auto pb-1 sm:w-auto sm:flex-wrap sm:overflow-visible sm:pb-0">
+            <Button variant="outline" className="shrink-0 rounded-xl" render={<Link to="/games/language-quest/mastery" />} nativeButton={false}>
               <Brain className="mr-2 h-4 w-4" /> Mastery {data.masteryDueCount > 0 ? `(${data.masteryDueCount})` : ''}
             </Button>
             {data.masteryWeakCount > 0 && (
-              <Button variant="outline" className="rounded-xl border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 hover:text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200" render={<Link to="/games/language-quest/mastery?mode=weak" />} nativeButton={false}>
+              <Button variant="outline" className="shrink-0 rounded-xl border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 hover:text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200" render={<Link to="/games/language-quest/mastery?mode=weak" />} nativeButton={false}>
                 <Target className="mr-2 h-4 w-4" /> Weak Areas ({data.masteryWeakCount})
               </Button>
             )}
             {data.masteryDueCount > 0 && (
               <>
-                <Button className="rounded-xl bg-emerald-600 text-white hover:bg-emerald-700" render={<Link to="/games/language-quest/mastery?mode=chain" />} nativeButton={false}>
+                <Button className="shrink-0 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700" render={<Link to="/games/language-quest/mastery?mode=chain" />} nativeButton={false}>
                   <Link2 className="mr-2 h-4 w-4" /> Daily Chain
                 </Button>
-                <Button className="rounded-xl bg-orange-600 text-white hover:bg-orange-700" render={<Link to="/games/language-quest/mastery?mode=lightning" />} nativeButton={false}>
+                <Button className="shrink-0 rounded-xl bg-orange-600 text-white hover:bg-orange-700" render={<Link to="/games/language-quest/mastery?mode=lightning" />} nativeButton={false}>
                   <Zap className="mr-2 h-4 w-4" /> Lightning Round
                 </Button>
               </>
             )}
           </div>
         </div>
-        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <div className="mt-5 grid min-w-0 gap-3 sm:grid-cols-2">
           {data.missions.map((mission) => (
-            <article key={mission.key} className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-950/70 sm:rounded-2xl sm:p-4">
+            <article key={mission.key} className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-950/70 sm:rounded-2xl sm:p-4">
               <div className="flex items-start gap-3">
                 <span className="text-2xl" aria-hidden="true">{mission.emoji}</span>
                 <div className="min-w-0 flex-1">
@@ -131,7 +131,7 @@ export function LanguageQuestEngagement({ onXpChanged }: { onXpChanged?: () => v
         </div>
       </div>
 
-      <div className="rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-50 to-cyan-50 p-3 shadow-sm dark:border-sky-500/20 dark:from-sky-950/25 dark:to-cyan-950/20 sm:rounded-3xl sm:p-6">
+      <div className="min-w-0 max-w-full rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-50 to-cyan-50 p-3 shadow-sm dark:border-sky-500/20 dark:from-sky-950/25 dark:to-cyan-950/20 sm:rounded-3xl sm:p-6">
         <div className="flex items-center gap-3">
           <span className="grid h-11 w-11 place-items-center rounded-2xl bg-sky-600 text-white"><Users className="h-5 w-5" /></span>
           <div>

@@ -36,13 +36,13 @@ export function ProtectedRoute({ requiredPermission, allowedRoles, strictRoles }
   }
 
   // Enforce temporary-password replacement for every protected experience,
-  // including the standalone Language Quest shell. AppLayout also keeps this
+  // including the standalone Learning Quest shell. AppLayout also keeps this
   // guard as defense in depth for the wider LMS.
   if (shouldForcePasswordChange(user.mustChangePassword, location.pathname)) {
     return <Navigate to="/change-password" replace />;
   }
 
-  // Public self-signups are intentionally scoped to Language Quest. This UI
+  // Public self-signups are intentionally scoped to Learning Quest. This UI
   // guard complements the server-side API allowlist, so an outside learner
   // cannot wander into private school modules.
   if (

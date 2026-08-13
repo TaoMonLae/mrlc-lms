@@ -248,7 +248,7 @@ model User {
   role                  Role      @default(STUDENT)
   isActive              Boolean   @default(true)
   // Public self-signups are learning-only accounts. They use the STUDENT role
-  // for Language Quest progress, but are isolated from private school modules.
+  // for Learning Quest progress, but are isolated from private school modules.
   isExternalLearner     Boolean   @default(false)
   mustChangePassword    Boolean   @default(false)
   lastLoginAt           DateTime?
@@ -3998,7 +3998,7 @@ model ChessMatch {
 }
 
 // -----------------------------------------------------------------------------
-// LANGUAGE QUEST — game-like language courses for every authenticated role
+// LEARNING QUEST — game-like language courses for every authenticated role
 // -----------------------------------------------------------------------------
 
 model LanguageQuestCourse {
@@ -4328,7 +4328,7 @@ model LanguageQuestClassroomMember {
   @@index([userId])
 }
 
-// One-way follow between any two Language Quest users (global leaderboard
+// One-way follow between any two Learning Quest users (global leaderboard
 // social feature). A "friend" is simply a mutual follow — computed at read
 // time rather than stored, so there is no separate friend-request model.
 model LanguageQuestFollow {

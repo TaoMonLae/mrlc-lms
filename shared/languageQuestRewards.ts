@@ -65,7 +65,7 @@ export function languageQuestStreakFrame(bestStreak: number): LanguageQuestStrea
 
 /**
  * Original MRLC collectible companions. Their names, achievements, and visual
- * identity belong to Language Quest; no third-party game characters or card
+ * identity belong to Learning Quest; no third-party game characters or card
  * artwork are used.
  */
 export const LANGUAGE_QUEST_REWARD_CARDS: readonly LanguageQuestRewardCard[] = [
@@ -207,7 +207,7 @@ export const LANGUAGE_QUEST_REWARD_CARDS: readonly LanguageQuestRewardCard[] = [
     unlockXp: 4_500,
     name: "Luminova",
     epithet: "The Quest Light",
-    achievement: "Language Quest Legend",
+    achievement: "Learning Quest Legend",
     powerMove: "Guiding Nova",
     emoji: "🌟",
     rarity: "Legend",

@@ -194,7 +194,7 @@ export default function LanguageQuestProfile() {
   return (
     <div className="mx-auto max-w-5xl space-y-6 pb-10">
       <Button variant="ghost" className="-ml-2" render={<Link to="/games/language-quest" />} nativeButton={false}>
-        <ArrowLeft className="mr-2 h-4 w-4" /> Language Quest
+        <ArrowLeft className="mr-2 h-4 w-4" /> Learning Quest
       </Button>
 
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-800 via-fuchsia-700 to-sky-600 p-6 text-white shadow-xl sm:p-8">
@@ -307,7 +307,7 @@ export default function LanguageQuestProfile() {
               <span className="min-w-0 flex-1">
                 <span className="block font-black text-slate-900 dark:text-white">Lesson voice</span>
                 <span className="text-xs leading-5 text-slate-500 dark:text-slate-400">
-                  Kokoro provides a clearer built-in AI teacher voice when the local service supports the course language. Language Quest automatically uses your browser voice if it is offline or unsupported.
+                  Kokoro provides a clearer built-in AI teacher voice when the local service supports the course language. Learning Quest automatically uses your browser voice if it is offline or unsupported.
                 </span>
               </span>
             </div>
@@ -343,8 +343,8 @@ export default function LanguageQuestProfile() {
         <div className="flex items-start gap-3">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300"><UserRound className="h-5 w-5" /></span>
           <div>
-            <h2 className="text-xl font-black text-slate-950 dark:text-white">Choose your Language Quest avatar</h2>
-            <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">Pick a friendly built-in character. Language Quest does not accept profile-photo uploads.</p>
+            <h2 className="text-xl font-black text-slate-950 dark:text-white">Choose your Learning Quest avatar</h2>
+            <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">Pick a friendly built-in character. Learning Quest does not accept profile-photo uploads.</p>
           </div>
         </div>
 
@@ -393,7 +393,7 @@ export default function LanguageQuestProfile() {
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-sky-600 text-white"><GraduationCap className="h-5 w-5" /></span>
           <div>
             <h2 className="text-xl font-black text-slate-950 dark:text-white">My classrooms</h2>
-            <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">A teacher can share an eight-character code. Joining lets that teacher see your Language Quest points, streak, activity date, progress, and learned words in the class focus course. Learning from other courses stays private.</p>
+            <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">A teacher can share an eight-character code. Joining lets that teacher see your Learning Quest points, streak, activity date, progress, and learned words in the class focus course. Learning from other courses stays private.</p>
           </div>
         </div>
 

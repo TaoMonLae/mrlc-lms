@@ -112,7 +112,7 @@ export default function LanguageQuestHeartRefill() {
     return (
       <div className="mx-auto max-w-4xl space-y-6 pb-10">
         <Button variant="ghost" className="-ml-2" render={<Link to="/games/language-quest" />} nativeButton={false}>
-          <ArrowLeft className="mr-2 h-4 w-4" /> Language Quest
+          <ArrowLeft className="mr-2 h-4 w-4" /> Learning Quest
         </Button>
         <section className={`rounded-3xl border-2 p-6 text-center shadow-lg sm:p-8 ${result.passed ? 'border-emerald-300 bg-emerald-50 dark:border-emerald-500/25 dark:bg-emerald-950/20' : 'border-rose-200 bg-rose-50 dark:border-rose-500/25 dark:bg-rose-950/20'}`}>
           <span className={`mx-auto grid h-20 w-20 place-items-center rounded-full text-white shadow-lg ${result.passed ? 'bg-gradient-to-br from-emerald-500 to-teal-600' : 'bg-gradient-to-br from-rose-500 to-orange-500'}`}>
@@ -132,7 +132,7 @@ export default function LanguageQuestHeartRefill() {
               <Badge className="bg-fuchsia-600 text-white hover:bg-fuchsia-600"><Gift className="h-3.5 w-3.5" /> Daily surprise</Badge>
               <h2 className="mt-4 text-3xl font-black text-slate-950 dark:text-white">A new unique card found!</h2>
               <p className="mt-3 leading-7 text-slate-600 dark:text-slate-300">
-                {result.surpriseCard.name} has joined your secret collection. Language Quest always chooses from cards you do not own, so every reveal is new.
+                {result.surpriseCard.name} has joined your secret collection. Learning Quest always chooses from cards you do not own, so every reveal is new.
               </p>
               <p className="mt-4 font-black text-fuchsia-700 dark:text-fuchsia-300">{result.surpriseCards.unlockedCount}/{result.surpriseCards.totalCount} Surprise Heart Cards collected</p>
               <Button className="mt-5" variant="outline" render={<Link to="/games/language-quest/profile#quest-cards" />} nativeButton={false}>View my cards</Button>
@@ -169,7 +169,7 @@ export default function LanguageQuestHeartRefill() {
     return (
       <div className="mx-auto max-w-3xl space-y-6 pb-10">
         <Button variant="ghost" className="-ml-2" render={<Link to="/games/language-quest" />} nativeButton={false}>
-          <ArrowLeft className="mr-2 h-4 w-4" /> Language Quest
+          <ArrowLeft className="mr-2 h-4 w-4" /> Learning Quest
         </Button>
         <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-rose-600 via-fuchsia-700 to-violet-800 p-7 text-white shadow-2xl sm:p-10">
           <div className="absolute -right-16 -top-20 h-64 w-64 rounded-full bg-white/10" />

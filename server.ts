@@ -889,7 +889,7 @@ async function authMiddleware(
     }
     if (payload.externalLearner) {
       if (!isExternalLearnerApiRequestAllowed(req.method, req.originalUrl)) {
-        res.status(403).json({ error: "This learner account can only access Language Quest" });
+        res.status(403).json({ error: "This learner account can only access Learning Quest" });
         return;
       }
     }
@@ -2307,7 +2307,7 @@ async function startServer() {
 
   /**
    * POST /api/auth/public-learner-signup
-   * Creates a learning-only account for the public Language Quest experience.
+   * Creates a learning-only account for the public Learning Quest experience.
    * These users intentionally have no Student profile and are API-restricted
    * by authMiddleware even though progress uses the STUDENT role.
    */
@@ -2351,7 +2351,7 @@ async function startServer() {
           "CREATE",
           "PUBLIC_LEARNER_ACCOUNT",
           learner.id,
-          "Created a self-service Language Quest learner account",
+          "Created a self-service Learning Quest learner account",
           req.ip || null,
           req.headers["user-agent"] || null,
         );

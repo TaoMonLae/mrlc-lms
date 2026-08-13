@@ -287,7 +287,7 @@ export default function LanguageQuestPublic() {
             <h2 className="mt-5 text-3xl font-black tracking-tight">Ready to say more than single words?</h2>
             <p className="mt-3 max-w-xl text-slate-300">Create your free learner account and turn useful language into complete, confident sentences.</p>
             <Button size="lg" className="relative mt-7 rounded-xl bg-white font-black text-slate-950 shadow-xl hover:bg-violet-100" render={<Link to={startHref} />} nativeButton={false}>
-              {user ? 'Continue learning' : 'Start Language Quest'} <ArrowRight className="ml-2 h-4 w-4" />
+              {user ? 'Continue learning' : 'Start Learning Quest'} <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
         </section>

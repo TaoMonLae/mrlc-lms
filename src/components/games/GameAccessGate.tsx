@@ -180,7 +180,7 @@ function RestrictedGame({ gameKey, access }: { gameKey: GameKey; access: AccessP
               Back to learning
             </Button>
             <Button variant="outline" render={<Link to="/games/language-quest" />} nativeButton={false}>
-              Open Language Quest
+              Open Learning Quest
             </Button>
           </div>
         </div>

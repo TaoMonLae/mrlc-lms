@@ -129,7 +129,7 @@ export default function LanguageQuestLeaderboard() {
   return (
     <div className="mx-auto max-w-5xl space-y-6 pb-10">
       <Button variant="ghost" className="-ml-2" render={<Link to="/games/language-quest" />} nativeButton={false}>
-        <ArrowLeft className="mr-2 h-4 w-4" /> Language Quest
+        <ArrowLeft className="mr-2 h-4 w-4" /> Learning Quest
       </Button>
 
       <section className="overflow-hidden rounded-3xl bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 p-7 text-white shadow-xl">

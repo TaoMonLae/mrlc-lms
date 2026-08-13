@@ -37,7 +37,7 @@ export function LanguageQuestCompanion({ rewards, reaction, reducedMotion, size 
   return (
     <span
       role="img"
-      aria-label={card ? `${card.name}, your Language Quest companion` : 'Your Language Quest companion'}
+      aria-label={card ? `${card.name}, your Learning Quest companion` : 'Your Learning Quest companion'}
       title={card?.name ?? 'Your companion'}
       className={`grid shrink-0 place-items-center rounded-full shadow-md ring-2 ring-white dark:ring-slate-900 ${SIZE_CLASSES[size]} ${animationClass}`}
       style={{ background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]}, ${colors[2]})` }}

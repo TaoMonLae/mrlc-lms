@@ -1897,7 +1897,7 @@ const course = {
   imageEmoji: "",
   accentColor: "#dc2626",
   // Imported as an unpublished draft, consistent with the rest of the Malay
-  // catalog -- publish from the Language Quest course editor after review.
+  // catalog -- publish from the Learning Quest course editor after review.
   published: false,
   units: sourceUnits.map((unit, unitIndex) => ({
     title: `${unit.level} · Unit ${unitIndex + 1}: ${unit.title}`,

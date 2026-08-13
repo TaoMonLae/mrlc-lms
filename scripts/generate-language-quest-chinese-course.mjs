@@ -347,7 +347,7 @@ for (const requiredType of ["SELECT", "ASSIST", "CLOZE", "MINIMAL_PAIR_LISTENING
   if (!challengeTypes.get(requiredType)) throw new Error(`Generated Mandarin course is missing ${requiredType} challenges`);
 }
 if (units.length > 20 || units.some((unit) => unit.lessons.length > 30) || lessons.some((lesson) => lesson.challenges.length > 50)) {
-  throw new Error("Generated course exceeds Language Quest curriculum limits");
+  throw new Error("Generated course exceeds Learning Quest curriculum limits");
 }
 
 await mkdir(path.dirname(outputPath), { recursive: true });

@@ -49,7 +49,7 @@ function CompactDashboardSection({
   const panelId = `${id}-panel`;
 
   return (
-    <div>
+    <div className="min-w-0 max-w-full">
       <button
         type="button"
         aria-expanded={open}
@@ -66,7 +66,7 @@ function CompactDashboardSection({
         </span>
         <ChevronDown className={`h-5 w-5 shrink-0 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
       </button>
-      <div id={panelId} className={`${open ? 'mt-3 block' : 'hidden'} md:block`}>
+      <div id={panelId} className={`min-w-0 max-w-full ${open ? 'mt-3 block' : 'hidden'} md:block`}>
         {children}
       </div>
     </div>
@@ -160,7 +160,7 @@ export default function LanguageQuestHome() {
       .then(setData)
       .catch((error: any) => {
         setFailed(true);
-        toast.error(error?.message || 'Could not load Language Quest');
+        toast.error(error?.message || 'Could not load Learning Quest');
       })
       .finally(() => setLoading(false));
   };
@@ -169,7 +169,7 @@ export default function LanguageQuestHome() {
 
   if (loading) {
     return (
-      <div className="space-y-7 pb-10" aria-busy="true" aria-label="Loading Language Quest">
+      <div className="space-y-7 pb-10" aria-busy="true" aria-label="Loading Learning Quest">
         <div className="rounded-3xl bg-violet-100/70 p-6 dark:bg-violet-500/10 sm:p-8">
           <Skeleton className="h-5 w-32 rounded-full bg-violet-200/70 dark:bg-violet-900/40" />
           <Skeleton className="mt-4 h-9 w-72 max-w-full bg-violet-200/70 dark:bg-violet-900/40" />
@@ -215,7 +215,7 @@ export default function LanguageQuestHome() {
     return (
       <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center dark:border-surface-raised dark:bg-surface-indigo">
         <Languages className="mx-auto h-12 w-12 text-slate-300" />
-        <h1 className="mt-3 text-xl font-bold text-slate-900 dark:text-white">Language Quest is taking a break</h1>
+        <h1 className="mt-3 text-xl font-bold text-slate-900 dark:text-white">Learning Quest is taking a break</h1>
         <p className="mt-1 text-sm text-slate-500">Please try loading the courses again.</p>
         <Button className="mt-5" onClick={load}>Try Again</Button>
       </div>
@@ -223,7 +223,7 @@ export default function LanguageQuestHome() {
   }
 
   return (
-    <div className="space-y-4 pb-8 sm:space-y-7 sm:pb-10">
+    <div className="min-w-0 max-w-full space-y-4 pb-8 sm:space-y-7 sm:pb-10">
       <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-700 via-fuchsia-700 to-rose-600 p-4 text-white shadow-xl sm:rounded-3xl sm:p-8">
         <div className="absolute -right-12 -top-16 h-52 w-52 rounded-full bg-white/10" />
         <div className="absolute -bottom-20 right-24 h-44 w-44 rounded-full bg-amber-300/15" />
@@ -238,7 +238,7 @@ export default function LanguageQuestHome() {
             <Badge className="border-white/20 bg-white/15 text-white hover:bg-white/15">
               <Sparkles className="h-3 w-3" /> Learn • Play • Grow
             </Badge>
-            <h1 className="mt-3 text-2xl font-black tracking-tight sm:mt-4 sm:text-4xl">MRLC Language Quest</h1>
+            <h1 className="mt-3 text-2xl font-black tracking-tight sm:mt-4 sm:text-4xl">MRLC Learning Quest</h1>
             <p lang={explanationLanguage} className="mt-1 line-clamp-2 max-w-xl text-xs leading-5 text-white/85 sm:mt-2 sm:text-base sm:leading-6">
               {lq('journeySummary')}
             </p>
@@ -311,7 +311,7 @@ export default function LanguageQuestHome() {
       </CompactDashboardSection>
 
       <CompactDashboardSection id="dashboard-legendary-vault" icon={<Star className="h-5 w-5" />} title="Legendary Vault" summary={`${data.profile.rewards.unlockedLegendaryIds.length} historical cards unlocked`}>
-        <LanguageQuestLegendaryVault rewards={data.profile.rewards} learnerName={user?.name || 'Language Quest Learner'} />
+        <LanguageQuestLegendaryVault rewards={data.profile.rewards} learnerName={user?.name || 'Learning Quest Learner'} />
       </CompactDashboardSection>
 
       <CompactDashboardSection id="dashboard-subject-albums" icon={<BookOpen className="h-5 w-5" />} title="Subject albums" summary={`${new Set(data.courses.map((course) => course.language)).size} subjects in your card journey`}>
@@ -330,7 +330,7 @@ export default function LanguageQuestHome() {
 
       <CompactDashboardSection id="dashboard-achievements" icon={<Sparkles className="h-5 w-5" />} title="Achievements" summary={`${data.profile.currentStreak}-day streak • certificates and sharing`}>
         <LanguageQuestAchievements
-          learnerName={user?.name || 'Language Quest Learner'}
+          learnerName={user?.name || 'Learning Quest Learner'}
           profile={data.profile}
           courses={data.courses}
         />

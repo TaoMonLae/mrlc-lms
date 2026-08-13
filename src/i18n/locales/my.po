@@ -10707,7 +10707,7 @@ msgstr "လက်ရှိ လုပ်ဆောင်နေသော ရော�
 # Extracted string
 msgid "Expense Count"
 msgstr "အသုံးစရိတ် အရေအတွက်"
-# ── Language Quest Course Metadata ───────────────────────────
+# ── Learning Quest Course Metadata ───────────────────────────
 msgid "Everyday English"
 msgstr "နေ့စဉ်သုံး အင်္ဂလိပ်စာ"
 msgid "Short, practical lessons for friendly conversations and school life."
@@ -10920,8 +10920,8 @@ msgstr "မျက်လုံးကိုဆန့်ရန်၊ အနား�
 msgid "Back to learning"
 msgstr "သင်ယူခြင်းသို့ ပြန်သွားရန်"
 # Extracted string
-msgid "Open Language Quest"
-msgstr "ဘာသာစကား Quest ကိုဖွင့်ပါ။"
+msgid "Open Learning Quest"
+msgstr "Learning Quest ကိုဖွင့်ပါ။"
 # Extracted string
 msgid "apiGet"
 msgstr "apiGet"
@@ -10950,8 +10950,8 @@ msgstr "၎င်း၏ လက်မှတ်ကို သော့ဖွင့�
 msgid "Mon Refugee Learning Centre"
 msgstr "Mon Refugee Learning Center"
 # Extracted string
-msgid "Language Quest"
-msgstr "ဘာသာစကား Quest"
+msgid "Learning Quest"
+msgstr "Learning Quest"
 # Extracted string
 msgid "Certificate of Completion"
 msgstr "ဘွဲ့လက်မှတ်"
@@ -10983,8 +10983,8 @@ msgstr "…စကားလုံးကို ရိုက်ထည့်ပါ �
 msgid "Dictionary word"
 msgstr "အဘိဓာန်စကားလုံး"
 # Extracted string
-msgid "Language Quest Dictionary"
-msgstr "ဘာသာစကား Quest အဘိဓာန်"
+msgid "Learning Quest Dictionary"
+msgstr "Learning Quest အဘိဓာန်"
 # Extracted string
 msgid "Highlight a word anywhere in the lesson, then choose"
 msgstr "သင်ခန်းစာရှိ မည်သည့်နေရာတွင်မဆို စကားလုံးတစ်ခုကို မီးမောင်းထိုးပြပြီး ရွေးချယ်ပါ။"
@@ -11139,8 +11139,8 @@ msgstr "EN"
 msgid "မြန်မာ"
 msgstr "မြန်မာ"
 # Extracted string
-msgid "MRLC Language Quest home"
-msgstr "MRLC ဘာသာစကား Quest အိမ်"
+msgid "MRLC Learning Quest home"
+msgstr "MRLC Learning Quest ပင်မစာမျက်နှာ"
 # Extracted string
 msgid "MRLC logo"
 msgstr "MRLC လိုဂို"
@@ -11307,8 +11307,8 @@ msgstr "Word Trail"
 msgid "Game Time Controls"
 msgstr "ဂိမ်းအချိန်ထိန်းချုပ်မှုများ"
 # Extracted string
-msgid "Language Learning"
-msgstr "ဘာသာစကားသင်ယူခြင်း။"
+msgid "Learning Tools"
+msgstr "သင်ယူရေး ကိရိယာများ"
 # Extracted string
 msgid "Reading Analytics"
 msgstr "ပိုင်းခြားစိတ်ဖြာဖတ်ခြင်း"
@@ -11406,8 +11406,8 @@ msgstr "သင်၏အီးမေးလ်ကိုစစ်ဆေးပါ။
 msgid "Back to sign in"
 msgstr "လက်မှတ်ထိုးဝင်ရန် ပြန်သွားပါ။"
 # Extracted string
-msgid "Try Language Quest"
-msgstr "ဘာသာစကား Quest ကိုစမ်းကြည့်ပါ။"
+msgid "Try Learning Quest"
+msgstr "Learning Quest ကိုစမ်းကြည့်ပါ။"
 # Extracted string
 msgid "6-digit code or recovery code"
 msgstr "ဂဏန်း 6 လုံးကုဒ် သို့မဟုတ် ပြန်လည်ရယူရေးကုဒ်"
@@ -11421,8 +11421,8 @@ msgstr "သင်၏ အထောက်အထားစိစစ်ခြင်�
 msgid "Create a free learner account"
 msgstr "အခမဲ့သင်ယူသူအကောင့်တစ်ခုဖန်တီးပါ။"
 # Extracted string
-msgid "Secure access for school members and Language Quest learners"
-msgstr "ကျောင်းအဖွဲ့ဝင်များနှင့် Language Quest သင်ယူသူများအတွက် လုံခြုံသောဝင်ရောက်ခွင့်"
+msgid "Secure access for school members and Learning Quest learners"
+msgstr "ကျောင်းအဖွဲ့ဝင်များနှင့် Learning Quest သင်ယူသူများအတွက် လုံခြုံသောဝင်ရောက်ခွင့်"
 # Extracted string
 msgid "Developed by Tao Mon Lae"
 msgstr "Tao Mon Lae မှတီထွင်သည်။"
@@ -11478,8 +11478,8 @@ msgstr "you@example.com"
 msgid "At least 8 characters"
 msgstr "အနည်းဆုံး စာလုံး ၈ လုံး"
 # Extracted string
-msgid "Back to Language Quest"
-msgstr "ဘာသာစကား Quest သို့ ပြန်သွားရန်"
+msgid "Back to Learning Quest"
+msgstr "Learning Quest သို့ ပြန်သွားရန်"
 # Extracted string
 msgid "A colorful learning journey"
 msgstr "ရောင်စုံလေ့လာရေးခရီး"
@@ -11502,14 +11502,14 @@ msgstr "\"မင်္ဂလာနံနက်ခင်းပါ!\""
 msgid "Free learner account"
 msgstr "အခမဲ့သင်ယူသူအကောင့်"
 # Extracted string
-msgid "Start your Language Quest"
-msgstr "သင်၏ဘာသာစကားရှာဖွေမှုစတင်ပါ။"
+msgid "Start your Learning Quest"
+msgstr "သင်၏ Learning Quest ကို စတင်ပါ။"
 # Extracted string
 msgid "Choose a learner avatar"
 msgstr "သင်ယူသူကိုယ်ပွားကို ရွေးပါ။"
 # Extracted string
-msgid "Built-in characters only—profile-photo uploads are not used in Language Quest."
-msgstr "ပါ၀င်သော စာလုံးများသာ—ပရိုဖိုင်-ဓာတ်ပုံ အပ်လုဒ်များကို Language Quest တွင် အသုံးမပြုပါ။"
+msgid "Built-in characters only—profile-photo uploads are not used in Learning Quest."
+msgstr "ပါ၀င်သော စာလုံးများသာ—ပရိုဖိုင်-ဓာတ်ပုံ အပ်လုဒ်များကို Learning Quest တွင် အသုံးမပြုပါ။"
 # Extracted string
 msgid "Use at least 8 characters."
 msgstr "အနည်းဆုံး စာလုံး 8 လုံး အသုံးပြုပါ။"
@@ -12213,7 +12213,7 @@ msgstr "ပြန်လှန်မေးခွန်း"
 msgid "Correct answer:"
 msgstr "အဖြေမှန်-"
 # Extracted string
-msgid "Friendly Language Quest guide wearing a yellow hoodie"
+msgid "Friendly Learning Quest guide wearing a yellow hoodie"
 msgstr "အဝါရောင် hoodie ၀တ်ဆင်ထားသော အဆင်ပြေသော ဘာသာစကားရှာဖွေရေး လမ်းညွှန်"
 # Extracted string
 msgid "dwyl/english-words"
@@ -12237,8 +12237,8 @@ msgstr "ဘာသာစကားသင်ယူမှု၊"
 msgid "made more human."
 msgstr "လူပိုလုပ်တယ်။"
 # Extracted string
-msgid "Language Quest is MRLC’s colorful learning space for useful words, complete sentences, confident speaking, and classroom connection—with transparent credit for every source that helped shape it."
-msgstr "Language Quest သည် MRLC ၏ အသုံးဝင်သော စကားလုံးများ၊ စာကြောင်းများ အပြည့်အစုံ၊ ယုံကြည်စွာ ပြောဆိုခြင်းနှင့် စာသင်ခန်းချိတ်ဆက်မှု—အတွက် MRLC ၏ အရောင်အသွေးစုံလင်သော သင်ယူမှုနေရာဖြစ်ပြီး ၎င်းကို ပုံသွင်းပေးသော အရင်းအမြစ်တိုင်းအတွက် ပွင့်လင်းမြင်သာသော ခရက်ဒစ်ဖြင့် ပြုလုပ်ပါသည်။"
+msgid "Learning Quest is MRLC’s colorful learning space for useful words, complete sentences, confident speaking, and classroom connection—with transparent credit for every source that helped shape it."
+msgstr "Learning Quest သည် MRLC ၏ အသုံးဝင်သော စကားလုံးများ၊ စာကြောင်းများ အပြည့်အစုံ၊ ယုံကြည်စွာ ပြောဆိုခြင်းနှင့် စာသင်ခန်းချိတ်ဆက်မှု—အတွက် MRLC ၏ အရောင်အသွေးစုံလင်သော သင်ယူမှုနေရာဖြစ်ပြီး ၎င်းကို ပုံသွင်းပေးသော အရင်းအမြစ်တိုင်းအတွက် ပွင့်လင်းမြင်သာသော ခရက်ဒစ်ဖြင့် ပြုလုပ်ပါသည်။"
 # Extracted string
 msgid "Explore courses"
 msgstr "သင်တန်းများကို လေ့လာပါ။"
@@ -12285,8 +12285,8 @@ msgstr "hexgrad/Kokoro-82M"
 msgid "Built with the community in mind"
 msgstr "အသိုက်အဝန်းနဲ့ တည်ဆောက်ထားတာပါ။"
 # Extracted string
-msgid "Designed and built for the learners, teachers, and community of the Mon Refugee Learning Centre. Language Quest is open source so others can learn from it, improve it, and give credit to the work behind it."
-msgstr "Mon Refugee Learning Centre ၏ သင်ယူသူများ၊ ဆရာများနှင့် အသိုက်အဝန်းအတွက် ဒီဇိုင်းဆွဲတည်ဆောက်ထားသည်။ Language Quest သည် open source ဖြစ်ပြီး အခြားသူများမှ ၎င်းထံမှ သင်ယူနိုင်၊ မြှင့်တင်ရန်နှင့် ၎င်းနောက်ကွယ်မှ အလုပ်အတွက် ခရက်ဒစ်ပေးနိုင်ပါသည်။"
+msgid "Designed and built for the learners, teachers, and community of the Mon Refugee Learning Centre. Learning Quest is open source so others can learn from it, improve it, and give credit to the work behind it."
+msgstr "Mon Refugee Learning Centre ၏ သင်ယူသူများ၊ ဆရာများနှင့် အသိုက်အဝန်းအတွက် ဒီဇိုင်းဆွဲတည်ဆောက်ထားသည်။ Learning Quest သည် open source ဖြစ်ပြီး အခြားသူများမှ ၎င်းထံမှ သင်ယူနိုင်၊ မြှင့်တင်ရန်နှင့် ၎င်းနောက်ကွယ်မှ အလုပ်အတွက် ခရက်ဒစ်ပေးနိုင်ပါသည်။"
 # Extracted string
 msgid "Visit GitHub profile"
 msgstr "GitHub ပရိုဖိုင်ကို ဝင်ကြည့်ပါ။"
@@ -12306,8 +12306,8 @@ msgstr "အတန်းသင်ယူမှုပုံ…တည်ဆောက
 msgid "Teacher learning insights"
 msgstr "ဆရာများ၏ သင်ယူမှု ဗဟုသုတများ"
 # Extracted string
-msgid "Language Quest Analytics"
-msgstr "ဘာသာစကား Quest ပိုင်းခြားစိတ်ဖြာချက်"
+msgid "Learning Quest Analytics"
+msgstr "Learning Quest ပိုင်းခြားစိတ်ဖြာချက်"
 # Extracted string
 msgid "See which questions, lessons, and practice skills need reteaching—and which learners may benefit from focused support."
 msgstr "မည်သည့်မေးခွန်းများ၊ သင်ခန်းစာများနှင့် အလေ့အကျင့်စွမ်းရည်များ—ကို ပြန်လည်သင်ကြားရန် လိုအပ်ပြီး သင်ယူသူများသည် အာရုံစိုက်ပံ့ပိုးမှုမှ အကျိုးကျေးဇူးရရှိနိုင်မည့်အရာများကို ကြည့်ရှုပါ။"
@@ -12336,8 +12336,8 @@ msgstr ". ထိုသင်တန်းကို ခွဲထုတ်ရန်
 msgid "No attempts in this view yet"
 msgstr "ဤမြင်ကွင်းတွင် ကြိုးစားမှုမရှိသေးပါ။"
 # Extracted string
-msgid "Try another classroom or course. Analytics will appear after learners answer Language Quest challenges."
-msgstr "အခြားစာသင်ခန်း သို့မဟုတ် သင်တန်းကို စမ်းကြည့်ပါ။ သင်ယူသူများသည် Language Quest စိန်ခေါ်မှုများကိုဖြေဆိုပြီးနောက် ပိုင်းခြားစိတ်ဖြာချက်ပေါ်လာပါမည်။"
+msgid "Try another classroom or course. Analytics will appear after learners answer Learning Quest challenges."
+msgstr "အခြားစာသင်ခန်း သို့မဟုတ် သင်တန်းကို စမ်းကြည့်ပါ။ သင်ယူသူများသည် Learning Quest စိန်ခေါ်မှုများကိုဖြေဆိုပြီးနောက် ပိုင်းခြားစိတ်ဖြာချက်ပေါ်လာပါမည်။"
 # Extracted string
 msgid "Practice skills"
 msgstr "အတတ်ပညာကို လေ့ကျင့်ပါ။"
@@ -12435,8 +12435,8 @@ msgstr "စာရင်းကို ပြန်လည်စတင်ပါ။"
 msgid "Teacher classroom tools"
 msgstr "ဆရာမ စာသင်ခန်းသုံးကိရိယာများ"
 # Extracted string
-msgid "Language Quest Classrooms"
-msgstr "ဘာသာစကား Quest စာသင်ခန်းများ"
+msgid "Learning Quest Classrooms"
+msgstr "Learning Quest စာသင်ခန်းများ"
 # Extracted string
 msgid "Create a classroom, share its join code, choose a focus course, and quickly see who may need encouragement or extra practice."
 msgstr "စာသင်ခန်းတစ်ခု ဖန်တီးပါ၊ ၎င်း၏ ပူးပေါင်းကုဒ်ကို မျှဝေပါ၊ အာရုံစူးစိုက်မှု သင်တန်းကို ရွေးချယ်ကာ အားပေးမှု သို့မဟုတ် လေ့ကျင့်မှု အပိုလိုအပ်နိုင်သူများကို အမြန်ကြည့်ရှုပါ။"
@@ -12510,8 +12510,8 @@ msgstr "သင်ယူသူစာရင်း"
 msgid "No learners have joined yet"
 msgstr "သင်ယူသူ မရှိသေးပါ။"
 # Extracted string
-msgid "Share the join code above. Learners enter it from their Language Quest profile."
-msgstr "အပေါ်က Join Code ကိုမျှဝေပါ။ သင်ယူသူများသည် ၎င်းတို့၏ Language Quest ပရိုဖိုင်မှ ၎င်းကို ထည့်သွင်းသည်။"
+msgid "Share the join code above. Learners enter it from their Learning Quest profile."
+msgstr "အပေါ်က Join Code ကိုမျှဝေပါ။ သင်ယူသူများသည် ၎င်းတို့၏ Learning Quest ပရိုဖိုင်မှ ၎င်းကို ထည့်သွင်းသည်။"
 # Extracted string
 msgid "Loading course"
 msgstr "သင်တန်းတက်နေသည်။"
@@ -12690,8 +12690,8 @@ msgstr "ယူနစ်ထည့်ပါ။"
 msgid "View course path"
 msgstr "သင်တန်းလမ်းကြောင်းကိုကြည့်ပါ။"
 # Extracted string
-msgid "Loading Language Quest"
-msgstr "ဘာသာစကား Quest ကို တင်နေသည်။"
+msgid "Loading Learning Quest"
+msgstr "Learning Quest ကို တင်နေသည်။"
 # Extracted string
 msgid "Continue learning"
 msgstr "ဆက်လေ့လာပါ။"
@@ -12705,8 +12705,8 @@ msgstr "ထုတ်ပြန်ထားသော သင်တန်းမျ�
 msgid "A teacher or administrator can create the first course."
 msgstr "ဆရာ သို့မဟုတ် စီမံခန့်ခွဲသူတစ်ဦးသည် ပထမဆုံးသင်တန်းကို ဖန်တီးနိုင်သည်။"
 # Extracted string
-msgid "Language Quest is taking a break"
-msgstr "Language Quest သည် အနားယူနေပါသည်။"
+msgid "Learning Quest is taking a break"
+msgstr "Learning Quest သည် အနားယူနေပါသည်။"
 # Extracted string
 msgid "Please try loading the courses again."
 msgstr "သင်တန်းများကို ထပ်တင်ကြည့်ပါ။"
@@ -12714,8 +12714,8 @@ msgstr "သင်တန်းများကို ထပ်တင်ကြည�
 msgid "Learn • Play • Grow"
 msgstr "•Play•ကြီးထွားလေ့လာရန်"
 # Extracted string
-msgid "MRLC Language Quest"
-msgstr "MRLC ဘာသာစကားရှာဖွေမှု"
+msgid "MRLC Learning Quest"
+msgstr "MRLC Learning Quest"
 # Extracted string
 msgid "Manage Courses"
 msgstr "သင်တန်းများကို စီမံခန့်ခွဲပါ။"
@@ -12780,8 +12780,8 @@ msgstr "အမည် သို့မဟုတ် အီးမေးလ်…ရ�
 msgid "Administrator tools"
 msgstr "စီမံခန့်ခွဲရေးကိရိယာများ"
 # Extracted string
-msgid "Language Quest Learners"
-msgstr "ဘာသာစကား Quest သင်ယူသူများ"
+msgid "Learning Quest Learners"
+msgstr "Learning Quest သင်ယူသူများ"
 # Extracted string
 msgid "Public learners"
 msgstr "အများသူငှာ သင်ယူသူများ"
@@ -13077,14 +13077,14 @@ msgstr "အဖြေမှန်အတွက် အသံတိုတိုက�
 msgid "Limit confetti, card tilts, and movement."
 msgstr "စာရွက်များ၊ ကတ်စောင်းများနှင့် လှုပ်ရှားမှုကို ကန့်သတ်ပါ။"
 # Extracted string
-msgid "Kokoro provides a clearer built-in AI teacher voice when the local service supports the course language. Language Quest automatically uses your browser voice if it is offline or unsupported."
-msgstr "Kokoro သည် သင်တန်းဘာသာစကားကို ဒေသန္တရဝန်ဆောင်မှုမှပံ့ပိုးပေးသောအခါတွင် ပိုမိုရှင်းလင်းသော built-in AI ဆရာ၏အသံကို ပံ့ပိုးပေးပါသည်။ အော့ဖ်လိုင်းဖြစ်နေလျှင် သို့မဟုတ် ပံ့ပိုးမထားသော ဘာသာစကား Quest သည် သင့်ဘရောက်ဆာအသံကို အလိုအလျောက်အသုံးပြုသည်။"
+msgid "Kokoro provides a clearer built-in AI teacher voice when the local service supports the course language. Learning Quest automatically uses your browser voice if it is offline or unsupported."
+msgstr "Kokoro သည် သင်တန်းဘာသာစကားကို ဒေသန္တရဝန်ဆောင်မှုမှပံ့ပိုးပေးသောအခါတွင် ပိုမိုရှင်းလင်းသော built-in AI ဆရာ၏အသံကို ပံ့ပိုးပေးပါသည်။ အော့ဖ်လိုင်းဖြစ်နေလျှင် သို့မဟုတ် ပံ့ပိုးမထားသော Learning Quest သည် သင့်ဘရောက်ဆာအသံကို အလိုအလျောက်အသုံးပြုသည်။"
 # Extracted string
-msgid "Choose your Language Quest avatar"
-msgstr "သင်၏ Language Quest ကိုယ်ပွားကို ရွေးပါ။"
+msgid "Choose your Learning Quest avatar"
+msgstr "သင်၏ Learning Quest ကိုယ်ပွားကို ရွေးပါ။"
 # Extracted string
-msgid "Pick a friendly built-in character. Language Quest does not accept profile-photo uploads."
-msgstr "ဖော်ရွေသော ပါ၀င်သည့် ဇာတ်ကောင်ကို ရွေးပါ။ Language Quest သည် ပရိုဖိုင်-ဓာတ်ပုံ အပ်လုဒ်များကို လက်မခံပါ။"
+msgid "Pick a friendly built-in character. Learning Quest does not accept profile-photo uploads."
+msgstr "ဖော်ရွေသော ပါ၀င်သည့် ဇာတ်ကောင်ကို ရွေးပါ။ Learning Quest သည် ပရိုဖိုင်-ဓာတ်ပုံ အပ်လုဒ်များကို လက်မခံပါ။"
 # Extracted string
 msgid "About my learning"
 msgstr "ငါ့ရဲ့သင်ယူမှုအကြောင်း"
@@ -13092,8 +13092,8 @@ msgstr "ငါ့ရဲ့သင်ယူမှုအကြောင်း"
 msgid "My classrooms"
 msgstr "ငါ့စာသင်ခန်း"
 # Extracted string
-msgid "A teacher can share an eight-character code. Joining lets that teacher see your Language Quest points, streak, activity date, and progress in the class focus course."
-msgstr "ဆရာတစ်ဦးသည် စာလုံးရှစ်လုံးပါသော ကုဒ်တစ်ခုကို မျှဝေနိုင်သည်။ ပါဝင်ခြင်းဖြင့် ထိုဆရာသည် သင်၏ ဘာသာစကားရှာဖွေမှု အမှတ်များ၊ ပွဲစဉ်၊ လှုပ်ရှားမှု ရက်စွဲနှင့် အတန်းချိန်ညှိမှု သင်တန်းတွင် တိုးတက်မှုကို မြင်နိုင်စေပါသည်။"
+msgid "A teacher can share an eight-character code. Joining lets that teacher see your Learning Quest points, streak, activity date, and progress in the class focus course."
+msgstr "ဆရာတစ်ဦးသည် စာလုံးရှစ်လုံးပါသော ကုဒ်တစ်ခုကို မျှဝေနိုင်သည်။ ပါဝင်ခြင်းဖြင့် ထိုဆရာသည် သင်၏ Learning Quest အမှတ်များ၊ ပွဲစဉ်၊ လှုပ်ရှားမှု ရက်စွဲနှင့် အတန်းချိန်ညှိမှု သင်တန်းတွင် တိုးတက်မှုကို မြင်နိုင်စေပါသည်။"
 # Extracted string
 msgid "Classroom join code"
 msgstr "Classroom join code"
@@ -14034,8 +14034,8 @@ msgstr "စာမေးပွဲ ပြင်ဆင်ရန် လိုအပ�
 msgid "Finish a course and pass its final exam to unlock a verified certificate."
 msgstr "လက်မှတ်ကို ရယူရန် သင်တန်းပြီးဆုံးအောင် လေ့လာပြီးနောက် စာမေးပွဲကို အောင်မြင်အောင် ဖြေဆိုပါ။"
 # Extracted string
-msgid "Preview of your print-ready Language Quest certificate."
-msgstr "ပုံနှိပ်ရန် အဆင်သင့်ဖြစ်သော သင်၏ Language Quest လက်မှတ်၏ အစမ်းကြည့်ရှုမှု။"
+msgid "Preview of your print-ready Learning Quest certificate."
+msgstr "ပုံနှိပ်ရန် အဆင်သင့်ဖြစ်သော သင်၏ Learning Quest လက်မှတ်၏ အစမ်းကြည့်ရှုမှု။"
 # Extracted string
 msgid "Subject albums"
 msgstr "ဘာသာရပ် အယ်လ်ဘမ်များ"
@@ -14055,8 +14055,8 @@ msgstr "ကြည့်ရှုရန်၊ သိမ်းဆည်းရန�
 msgid "Journey progress keepsake"
 msgstr "ခရီးစဉ်တိုးတက်မှု အမှတ်တရ"
 # Extracted string
-msgid "Language Quest progress keepsake"
-msgstr "Language Quest တိုးတက်မှု အမှတ်တရ"
+msgid "Learning Quest progress keepsake"
+msgstr "Learning Quest တိုးတက်မှု အမှတ်တရ"
 # Extracted string
 msgid "My learned words"
 msgstr "ကျွန်ုပ် လေ့လာပြီးသော စကားလုံးများ"
@@ -14403,8 +14403,8 @@ msgstr "`${course.title} (ကူးယူချက်)` အဖြစ် ထပ�
 msgid "Duplicate as a new draft"
 msgstr "မူကြမ်းအသစ်အဖြစ် ထပ်ပွားပါ"
 # Extracted string
-msgid "A teacher can share an eight-character code. Joining lets that teacher see your Language Quest points, streak, activity date, progress, and learned words in the class focus course. Learning from other courses stays private."
-msgstr "ဆရာက ၈ လုံးပါသော ကုဒ်ကို မျှဝေနိုင်သည်။ ပူးပေါင်းခြင်းဖြင့် ထိုဆရာသည် သင်၏ Language Quest ရမှတ်များ၊ နေ့စဉ်ဆက်တိုက်မှတ်တမ်း၊ လှုပ်ရှားမှုရက်စွဲ၊ တိုးတက်မှုနှင့် အတန်း၏အဓိကသင်တန်းတွင် လေ့လာခဲ့သောစကားလုံးများကို မြင်နိုင်မည်ဖြစ်သည်။ အခြားသင်တန်းများမှ လေ့လာမှုများသည် လျှို့ဝှက်အဖြစ် ဆက်လက်ရှိနေမည်ဖြစ်သည်။"
+msgid "A teacher can share an eight-character code. Joining lets that teacher see your Learning Quest points, streak, activity date, progress, and learned words in the class focus course. Learning from other courses stays private."
+msgstr "ဆရာက ၈ လုံးပါသော ကုဒ်ကို မျှဝေနိုင်သည်။ ပူးပေါင်းခြင်းဖြင့် ထိုဆရာသည် သင်၏ Learning Quest ရမှတ်များ၊ နေ့စဉ်ဆက်တိုက်မှတ်တမ်း၊ လှုပ်ရှားမှုရက်စွဲ၊ တိုးတက်မှုနှင့် အတန်း၏အဓိကသင်တန်းတွင် လေ့လာခဲ့သောစကားလုံးများကို မြင်နိုင်မည်ဖြစ်သည်။ အခြားသင်တန်းများမှ လေ့လာမှုများသည် လျှို့ဝှက်အဖြစ် ဆက်လက်ရှိနေမည်ဖြစ်သည်။"
 # Extracted string
 msgid "Open course"
 msgstr "သင်တန်းကို ဖွင့်ပါ"

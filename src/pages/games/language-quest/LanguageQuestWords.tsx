@@ -136,7 +136,7 @@ export default function LanguageQuestWords() {
   const returnPath = data?.viewerMode === 'TEACHER'
     ? '/games/language-quest/classrooms'
     : initialCourseId ? `/games/language-quest/courses/${initialCourseId}` : '/games/language-quest';
-  const returnLabel = data?.viewerMode === 'TEACHER' ? 'Classroom roster' : initialCourseId ? 'Course path' : 'Language Quest';
+  const returnLabel = data?.viewerMode === 'TEACHER' ? 'Classroom roster' : initialCourseId ? 'Course path' : 'Learning Quest';
   const currentCourse = useMemo(
     () => data?.courses.find((course) => course.id === data.selection.courseId) || data?.classroom?.focusCourse || null,
     [data],
@@ -165,7 +165,7 @@ export default function LanguageQuestWords() {
         <BookOpenText className="mx-auto h-12 w-12 text-slate-300" />
         <h1 className="mt-4 text-2xl font-black text-slate-950 dark:text-white">Learned words are unavailable</h1>
         <p className="mt-2 text-slate-500 dark:text-slate-300">{loadError}</p>
-        <Button className="mt-6" render={<Link to="/games/language-quest" />} nativeButton={false}>Back to Language Quest</Button>
+        <Button className="mt-6" render={<Link to="/games/language-quest" />} nativeButton={false}>Back to Learning Quest</Button>
       </div>
     );
   }

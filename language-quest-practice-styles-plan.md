@@ -1,6 +1,6 @@
-# Language Quest: New Practice Styles — Implementation Plan
+# Learning Quest: New Practice Styles — Implementation Plan
 
-This plans out the practice-style ideas discussed earlier, scoped against the actual Language Quest engine as it exists today (`LanguageQuestChallenge`/`LanguageQuestOption` in `prisma/schema.prisma`, the SELECT/ASSIST challenge types, and the course-generator script pattern in `scripts/generate-language-quest-*.mjs`).
+This plans out the practice-style ideas discussed earlier, scoped against the actual Learning Quest engine as it exists today (`LanguageQuestChallenge`/`LanguageQuestOption` in `prisma/schema.prisma`, the SELECT/ASSIST challenge types, and the course-generator script pattern in `scripts/generate-language-quest-*.mjs`).
 
 ## Guiding constraints
 

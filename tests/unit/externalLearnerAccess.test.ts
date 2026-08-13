@@ -6,7 +6,7 @@ import {
   languageQuestGlobalLeaderboardWhere,
 } from "../../shared/externalLearnerAccess";
 
-test("external learners stay within the Language Quest browser routes", () => {
+test("external learners stay within the Learning Quest browser routes", () => {
   const allowed = [
     "/language-quest",
     "/language-quest/about",
@@ -94,7 +94,7 @@ test("external learner API access uses an explicit method and route allowlist", 
   }
 });
 
-test("Language Quest leaderboard includes every active learner globally", () => {
+test("Learning Quest leaderboard includes every active learner globally", () => {
   assert.deepEqual(
     languageQuestGlobalLeaderboardWhere(),
     { isActive: true },

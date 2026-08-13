@@ -66,14 +66,14 @@ export function normalizeChallenge(challenge: any, seed: string): EnglishWordPra
     sourceType: "LANGUAGE_QUEST",
     sourceId: challenge.id,
     courseCode: course.code,
-    sourceLabel: `Language Quest · ${course.title}`,
+    sourceLabel: `Learning Quest · ${course.title}`,
     subject: course.language,
     difficulty: "Practice",
     // Some generated courses (e.g. the Linguify CEFR import) build their
     // question text as "Which noun means \"...\"? Pronunciation: /.../
     // Example: \"My luggage is very heavy.\"" -- the example sentence
     // often uses the target word directly, which would hand the answer to
-    // whichever game shows this prompt. The main Language Quest lesson
+    // whichever game shows this prompt. The main Learning Quest lesson
     // route already strips this via languageQuestPracticePrompt(); Word
     // Trail and Daily Quest both build their decks from this same
     // normalizeChallenge() and need the same redaction.
@@ -87,7 +87,7 @@ export function normalizeChallenge(challenge: any, seed: string): EnglishWordPra
 export function isEnglishWordPracticeQuestion(
   item: Partial<EnglishWordPracticeQuestion>,
 ): boolean {
-  const legacyCourseTitle = String(item.sourceLabel ?? "").replace(/^Language Quest · /, "");
+  const legacyCourseTitle = String(item.sourceLabel ?? "").replace(/^Learning Quest · /, "");
   return item.sourceType === "LANGUAGE_QUEST"
     && (
       ENGLISH_WORD_COURSE_CODES.includes(String(item.courseCode ?? ""))
@@ -98,7 +98,7 @@ export function isEnglishWordPracticeQuestion(
 // Word Trail's board game engine only cares that a deck is an array of
 // EnglishWordPracticeQuestion-shaped objects with unique ids -- it has no
 // idea whether they came from the fixed English-word course pool above or
-// from an arbitrary Language Quest course. This lets a learner start a Word
+// from an arbitrary Learning Quest course. This lets a learner start a Word
 // Trail game built from any single published course's own challenges (e.g.
 // a Mandarin or Spanish course), reusing every bit of Word Trail's existing
 // board, dice, and scoring logic untouched.

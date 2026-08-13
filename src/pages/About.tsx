@@ -22,7 +22,7 @@ const PLATFORM_PILLARS = [
   {
     eyebrow: "Learning",
     title: "Teach, practise, and grow",
-    description: "Classes, homework, exams, dictionaries, an e-library, and Language Quest—including K–12 Mathematics and four GED preparation courses—live in one familiar learning space.",
+    description: "Classes, homework, exams, dictionaries, an e-library, and Learning Quest—including K–12 Mathematics and four GED preparation courses—live in one familiar learning space.",
     art: "/icons/optimized/Eduv2_06.png",
     tone: "from-violet-50 to-indigo-100/80 dark:from-violet-500/10 dark:to-indigo-500/10",
   },
@@ -51,7 +51,7 @@ const PLATFORM_PILLARS = [
 
 const THIRD_PARTY_NOTICES: { title: string; description: ReactNode }[] = [
   {
-    title: "Language Quest",
+    title: "Learning Quest",
     description: (
       <>
         Informed by the concepts and interface patterns in{" "}
@@ -127,7 +127,7 @@ const THIRD_PARTY_NOTICES: { title: string; description: ReactNode }[] = [
 
 const CREDITS = [
   {
-    title: "Language Quest",
+    title: "Learning Quest",
     description: "An LMS-native language, K–12 Mathematics, and four-subject GED experience with readable formulas, mastery practice, rewards, and teacher insights.",
     icon: Languages,
   },

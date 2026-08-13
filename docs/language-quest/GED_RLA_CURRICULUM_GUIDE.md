@@ -2,13 +2,13 @@
 
 ## Purpose
 
-This guide documents the research basis, curriculum map, design decisions, and limits of the original MRLC Language Quest course `MRLC-GED-RLA-V1`.
+This guide documents the research basis, curriculum map, design decisions, and limits of the original MRLC Learning Quest course `MRLC-GED-RLA-V1`.
 
 The course contains 4 units, 32 guided lessons, and 96 original source-based questions. It prepares learners to read closely, evaluate arguments, plan and revise an extended response, and edit standard written English. It does not reproduce official GED questions or guarantee a test score.
 
 ## Research question and method
 
-**Question:** What reading, argument, writing, and language practice should a comprehensive Language Quest course include to align with the current GED Reasoning Through Language Arts assessment?
+**Question:** What reading, argument, writing, and language practice should a comprehensive Learning Quest course include to align with the current GED Reasoning Through Language Arts assessment?
 
 Research prioritized first-party GED Testing Service sources. The assessment guide, high-impact indicators, educator handbook, RLA overview, and extended-response scoring resources were cross-checked for content targets, text balance, source format, timing, and rubric expectations. Current public pages and PDFs were accessed on 13 August 2026. Official sample questions and passages were not copied or adapted.
 
@@ -47,7 +47,7 @@ The 8 literary lessons are exactly 25% of the 32-lesson source set; the other 24
 
 - Automated tests enforce course size, unique lesson and question prompts, exact 75/25 source balance, source visibility, the 4,000-character concept limit, one correct answer per question, distinct distractors, worked explanations, hints, final-exam eligibility, and the absence of emojis/audio prompts.
 - Language-only listening, pronunciation, spelling, and vocabulary-card stages are bypassed for this subject course.
-- Language Quest uses focused micro-sources so learners can practise one skill at a time. These are shorter than the official 400–900-word passages, so teachers should add sustained reading and timed full-length practice.
+- Learning Quest uses focused micro-sources so learners can practise one skill at a time. These are shorter than the official 400–900-word passages, so teachers should add sustained reading and timed full-length practice.
 - The current course approximates dropdown and technology-enhanced reasoning through accessible four-option interactions; it does not reproduce every official interface type.
 - The course teaches extended-response analysis and self-checking but does not collect or automatically score a full essay against the official rubric.
 - GED procedures and specifications can change. Maintainers should recheck the first-party sources during major revisions.

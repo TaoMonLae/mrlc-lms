@@ -52,7 +52,7 @@ export default function SignupPage() {
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3">
         <MrlcQuestBrand compact />
         <Link to="/language-quest" className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-bold text-slate-600 transition hover:bg-white/70 hover:text-violet-700">
-          <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">Back to Language Quest</span><span className="sm:hidden">Back</span>
+          <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">Back to Learning Quest</span><span className="sm:hidden">Back</span>
         </Link>
       </div>
 
@@ -88,8 +88,8 @@ export default function SignupPage() {
 
           <main className="flex flex-col justify-center p-5 sm:p-9 lg:p-12 xl:p-14">
             <p className="text-xs font-black uppercase tracking-[0.2em] text-violet-700 sm:text-sm">Free learner account</p>
-            <h2 className="mt-3 text-3xl font-black tracking-[-0.035em] text-slate-950 sm:text-4xl">Start your Language Quest</h2>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">Join learners building useful language one sentence at a time. Your account opens Language Quest only; private school areas stay separate.</p>
+            <h2 className="mt-3 text-3xl font-black tracking-[-0.035em] text-slate-950 sm:text-4xl">Start your Learning Quest</h2>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">Join learners building useful language, mathematics, and GED skills one lesson at a time. Your account opens Learning Quest only; private school areas stay separate.</p>
 
             <form onSubmit={submit} className="mt-7 space-y-5" noValidate>
               {error && <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">{error}</div>}
@@ -111,7 +111,7 @@ export default function SignupPage() {
               </div>
               <fieldset>
                 <legend className="text-sm font-bold text-slate-700">Choose a learner avatar</legend>
-                <p className="mt-1 text-xs text-slate-500">Built-in characters only—profile-photo uploads are not used in Language Quest.</p>
+                <p className="mt-1 text-xs text-slate-500">Built-in characters only—profile-photo uploads are not used in Learning Quest.</p>
                 <div className="mt-3 grid grid-cols-6 gap-2">
                   {LANGUAGE_QUEST_AVATARS.map((avatar) => (
                     <button

@@ -2,7 +2,7 @@
 
 ## Lingo / duolingo-clone
 
-MRLC Language Quest was informed by the concepts and interface patterns in
+MRLC Learning Quest was informed by the concepts and interface patterns in
 [`sanidhyy/duolingo-clone`](https://github.com/sanidhyy/duolingo-clone).
 The Spanish Foundations course adapts the Spanish seed curriculum from
 [`TaoMonLae/duolingo-clone`](https://github.com/TaoMonLae/duolingo-clone),
@@ -35,7 +35,7 @@ database and MRLC-authored clarifications for ambiguous senses.
 ## Chinese dictionary
 
 The Chinese-English dictionary feature (in the standalone Dictionary page and
-the Language Quest in-lesson lookup tool) is built on
+the Learning Quest in-lesson lookup tool) is built on
 [CC-CEDICT](https://cc-cedict.org), the community-maintained Chinese-English
 dictionary published by MDBG and referenced by
 [`sotch-pr35mac/syng`](https://github.com/sotch-pr35mac/syng) and most other
@@ -89,7 +89,7 @@ are also imported as unpublished drafts pending review.
 
 ## hexgrad Kokoro-82M
 
-Language Quest optionally integrates with
+Learning Quest optionally integrates with
 [`hexgrad/Kokoro-82M`](https://huggingface.co/hexgrad/Kokoro-82M) as a
 separately installed multilingual text-to-speech service, using its published
 named voices (see [VOICES.md](https://huggingface.co/hexgrad/Kokoro-82M/blob/main/VOICES.md)).
@@ -108,7 +108,7 @@ adapt the 18 CEFR vocabulary sets from
 [`AyeNyeinSan22/linguify`](https://github.com/AyeNyeinSan22/linguify).
 MRLC groups the source sets into six level-based courses and converts each
 word, definition, example sentence, part of speech, and IPA transcription into
-native Language Quest lessons and challenges.
+native Learning Quest lessons and challenges.
 
 MIT License
 

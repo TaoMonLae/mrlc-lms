@@ -1,6 +1,6 @@
 # Advanced English vocabulary source
 
-The generated advanced Language Quest courses use a ranked selection from
+The generated advanced Learning Quest courses use a ranked selection from
 [`Isomorpheuss/advanced-english-vocabulary`](https://github.com/Isomorpheuss/advanced-english-vocabulary)
 at upstream commit `7d1bfdb`.
 

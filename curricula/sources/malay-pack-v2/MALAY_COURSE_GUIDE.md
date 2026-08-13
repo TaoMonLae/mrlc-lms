@@ -1,6 +1,6 @@
 # Malay Speaking: Beginner to Advanced
 
-**Platform:** MRLC Language Quest  
+**Platform:** MRLC Learning Quest
 **Course code:** `MRLC-MALAY-SPEAKING-A1-C1-V1`  
 **Scope:** 12 units · 48 lessons · 384 challenges  
 **Variety:** Malaysian Malay / Bahasa Melayu  
@@ -37,7 +37,7 @@ Every answer option includes matching `audioText`. Learners should listen, choos
 
 - **Intensive:** 12 weeks, one unit per week, 4–5 sessions weekly.
 - **Standard:** 24 weeks, two weeks per unit, 3 sessions weekly.
-- **Session:** 25–40 minutes of Language Quest plus 10–15 minutes of partner speaking.
+- **Session:** 25–40 minutes of Learning Quest plus 10–15 minutes of partner speaking.
 - Move forward when a learner scores at least 80% and can perform the role-play with limited prompting.
 
 ## Unit map
@@ -342,4 +342,4 @@ Learners complete a two-minute role-play and answer five follow-up questions. Sc
 
 ## Platform note
 
-The current Language Quest schema records multiple-choice/assist answers rather than microphone speech recognition. The course is therefore speaking-first through listen-and-repeat, sentence choice, dialogue completion, and teacher/partner role-play. The included `ms-MY` voice patch enables the browser voice path for Malay when a compatible system voice is installed.
+The current Learning Quest schema records multiple-choice/assist answers rather than microphone speech recognition. The course is therefore speaking-first through listen-and-repeat, sentence choice, dialogue completion, and teacher/partner role-play. The included `ms-MY` voice patch enables the browser voice path for Malay when a compatible system voice is installed.

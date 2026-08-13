@@ -1,14 +1,14 @@
 // Converts the school-provided Malay (Bahasa Malaysia) curriculum snapshot in
-// curricula/sources/malay/ into five CEFR-level Language Quest courses, using
+// curricula/sources/malay/ into five CEFR-level Learning Quest courses, using
 // the same SELECT/ASSIST multiple-choice challenge format every other course
 // in this app already uses (see languageQuestImportedCourses.ts).
 //
-// The source package is much richer than what Language Quest's engine can
+// The source package is much richer than what Learning Quest's engine can
 // currently render: alongside vocabulary it has matching/cloze/reorder/
 // minimal-pair drills, an AI-conversation-partner scenario per unit, speaking
 // prompts with rubrics, and a full unit quiz. None of those exercise engines
 // (drag-to-match, blank-filling, an AI roleplay chat, audio recording +
-// rubric grading) exist in Language Quest yet, so this script converts what
+// rubric grading) exist in Learning Quest yet, so this script converts what
 // it reasonably can into multiple choice / typed-answer challenges and skips
 // the rest:
 //   - vocab items                          -> one SELECT/ASSIST challenge each
@@ -33,7 +33,7 @@
 //                                              question's own answer sentence
 //   - scenario, speakingPrompts             -> not converted (no engine yet)
 //
-// Note on "matching": Language Quest's MATCHING challenge type exists (see
+// Note on "matching": Learning Quest's MATCHING challenge type exists (see
 // languageQuestImportedCourses.ts), but this source package's own "matching"
 // exercises only carry a loose `itemIds` list plus free-text prose describing
 // the pairing ("Match each family word to a picture of the family member",

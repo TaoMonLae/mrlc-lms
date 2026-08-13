@@ -191,7 +191,7 @@ export function LanguageQuestDictionary() {
               <span className="grid h-9 w-9 place-items-center rounded-xl bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300">
                 <BookA className="h-4 w-4" />
               </span>
-              Language Quest Dictionary
+              Learning Quest Dictionary
             </DialogTitle>
           </DialogHeader>
 

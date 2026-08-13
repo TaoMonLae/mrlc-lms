@@ -8,7 +8,7 @@ export interface LanguageQuestCultureTopic {
 
 // Culture Quest is unscored, side-of-the-path content: short, factual reads
 // that give a language some real-world context between lessons. Grouped by
-// the same broad course category used elsewhere in Language Quest (Chinese /
+// the same broad course category used elsewhere in Learning Quest (Chinese /
 // English / Spanish / Other) rather than per-course, since the same cultural
 // notes are useful across every course in that language.
 export const LANGUAGE_QUEST_CULTURE_TOPICS: Record<string, LanguageQuestCultureTopic[]> = {

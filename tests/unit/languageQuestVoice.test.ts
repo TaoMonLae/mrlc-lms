@@ -10,7 +10,7 @@ import {
   normalizeLanguageQuestSpeechText,
 } from "../../shared/languageQuestVoice";
 
-test("Language Quest maps course languages to speech locales and Kokoro support", () => {
+test("Learning Quest maps course languages to speech locales and Kokoro support", () => {
   assert.equal(languageQuestSpeechLocale("Mandarin Chinese"), "zh-CN");
   assert.equal(languageQuestSpeechLocale("Burmese"), "my-MM");
   assert.equal(kokoroSupportsLanguage("English"), true);
@@ -21,7 +21,7 @@ test("Language Quest maps course languages to speech locales and Kokoro support"
   assert.equal(kokoroSupportsLanguage("Mon"), false);
 });
 
-test("Language Quest picks a named Kokoro voice per supported language", () => {
+test("Learning Quest picks a named Kokoro voice per supported language", () => {
   assert.deepEqual(languageQuestKokoroVoice("English"), { langCode: "a", voice: "af_heart" });
   assert.deepEqual(languageQuestKokoroVoice("Mandarin Chinese"), { langCode: "z", voice: "zf_xiaoxiao" });
   assert.deepEqual(languageQuestKokoroVoice("Japanese"), { langCode: "j", voice: "jf_alpha" });
@@ -29,7 +29,7 @@ test("Language Quest picks a named Kokoro voice per supported language", () => {
   assert.equal(languageQuestKokoroVoice("Myanmar"), null);
 });
 
-test("Language Quest voice text is normalized and bounded", () => {
+test("Learning Quest voice text is normalized and bounded", () => {
   assert.equal(normalizeLanguageQuestSpeechText("  Hello \n learner  "), "Hello learner");
   assert.equal(normalizeLanguageQuestSpeechText(""), null);
   assert.equal(normalizeLanguageQuestSpeechText("x".repeat(501)), null);

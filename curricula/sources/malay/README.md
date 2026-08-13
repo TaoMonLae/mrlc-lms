@@ -1,6 +1,6 @@
-# Language Quest — Malaysian Malay, A1–C1 (complete course content)
+# Learning Quest — Malaysian Malay, A1–C1 (complete course content)
 
-Full content for the "Language Quest" module of the MRLC LMS (github.com/TaoMonLae/mrlc-lms), built from the Language Quest research report (habit-formation science + CEFR curriculum design). **All five CEFR levels are now complete.**
+Full content for the "Learning Quest" module of the MRLC LMS (github.com/TaoMonLae/mrlc-lms), built from the Learning Quest research report (habit-formation science + CEFR curriculum design). **All five CEFR levels are now complete.**
 
 ## What's in this package
 

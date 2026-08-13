@@ -1,4 +1,4 @@
-# Language Quest content schema
+# Learning Quest content schema
 
 Each unit is one JSON file: `units/<unit-id>.json`. Shape:
 
@@ -95,4 +95,4 @@ Each unit is one JSON file: `units/<unit-id>.json`. Shape:
 }
 ```
 
-Per-user `reviewState` (SRS) and `progress` records are NOT authored here — they are generated at runtime by the app per the schema shown in the Language Quest research report.
+Per-user `reviewState` (SRS) and `progress` records are NOT authored here — they are generated at runtime by the app per the schema shown in the Learning Quest research report.
