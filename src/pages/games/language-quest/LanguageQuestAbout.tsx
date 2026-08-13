@@ -59,17 +59,19 @@ const COURSE_SOURCES: CourseSource[] = [
   },
   {
     title: 'GED preparation curriculum',
-    courses: 'GED Science V2 and GED Social Studies Preparation & Practice',
+    courses: 'GED Science, Social Studies, RLA, and Mathematical Reasoning preparation',
     badge: 'Officially informed',
     accent: 'from-cyan-600 to-blue-700',
     art: '/icons/optimized/Eduv1_03.png',
     description: (
       <>
         Original MRLC lessons and practice aligned to the GED Testing Service{' '}
+        <SourceLink href="https://www.ged.com/content/dam/websites/ged/resources/en/assessment-guide-for-educators-math.pdf">Mathematical Reasoning Assessment Guide</SourceLink>,{' '}
+        <SourceLink href="https://www.ged.com/content/dam/websites/ged/resources/assessment-guide-for-educators-rla.pdf">RLA Assessment Guide</SourceLink>,{' '}
         <SourceLink href="https://www.ged.com/content/dam/websites/ged/resources/assessment-guide-for-educators-social-studies.pdf">Social Studies Assessment Guide</SourceLink>,{' '}
-        <SourceLink href="https://www.ged.com/content/dam/websites/ged/resources/en/High-Impact-Indicators.pdf">High Impact Indicators</SourceLink>, and{' '}
+        <SourceLink href="https://www.ged.com/content/dam/websites/ged/resources/High-Impact-Indicators.pdf">High Impact Indicators</SourceLink>, and{' '}
         <SourceLink href="https://www.ged.com/content/dam/websites/ged/uploads/Educator-Handbook-Ed6-ebook-US-FINAL.pdf">Educator Handbook</SourceLink>.
-        The Social Studies course follows the official 50/20/15/15 content balance across civics, U.S. history, economics, and geography. It is independently authored and is not endorsed by GED Testing Service.
+        The Mathematics course follows the official 25/20/30/25 reporting-category balance, while Social Studies follows its official 50/20/15/15 content balance. All four courses are independently authored and are not endorsed by GED Testing Service.
       </>
     ),
   },
@@ -224,9 +226,9 @@ export default function LanguageQuestAbout() {
             </div>
             <div className="mt-8 grid max-w-xl grid-cols-3 gap-2 border-t border-white/10 pt-5 sm:mt-9 sm:pt-6">
               {[
-                ['13', 'Maths courses'],
-                ['2', 'GED prep courses'],
-                ['80%', 'Exam pass mark'],
+                ['150', 'GED lessons'],
+                ['4', 'GED prep courses'],
+                ['450', 'GED practices'],
               ].map(([value, label]) => (
                 <div key={value}>
                   <p className="text-lg font-black text-white sm:text-xl">{value}</p>
@@ -269,7 +271,7 @@ export default function LanguageQuestAbout() {
                 art: '/icons/optimized/LanguageLearning/V1/Languages.png',
                 icon: Languages,
                 title: 'Languages, Maths, and GED',
-                copy: 'Language courses build communication, while Mathematics and GED courses move into guided, evidence-based problem solving.',
+                copy: 'Language courses build communication, while Mathematics and all four GED subjects use guided, evidence-based problem solving with readable notation.',
                 tone: 'from-sky-100 to-cyan-50 dark:from-sky-950 dark:to-slate-900',
               },
               {
@@ -321,7 +323,7 @@ export default function LanguageQuestAbout() {
           </div>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { icon: Calculator, number: '01', title: 'Learn the right way', copy: 'Subject-aware lessons use language study cards or direct Maths, Science, and Social Studies problems instead of forcing one format onto every course.', color: 'text-blue-600 dark:text-blue-300' },
+              { icon: Calculator, number: '01', title: 'Learn the right way', copy: 'Subject-aware lessons use language study cards or direct Mathematics, Science, Social Studies, and RLA problems with readable formulas and evidence.', color: 'text-blue-600 dark:text-blue-300' },
               { icon: Heart, number: '02', title: 'Recover with practice', copy: 'A Heart Refill Quiz uses completed material to restore hearts and can reveal a unique Surprise Card.', color: 'text-rose-600 dark:text-rose-300' },
               { icon: FileCheck2, number: '03', title: 'Pass the final exam', copy: 'Randomized, server-graded questions and secure attempt rules protect the value of every certificate.', color: 'text-violet-600 dark:text-violet-300' },
               { icon: Trophy, number: '04', title: 'Keep the achievement', copy: 'Verified certificates, Quest Cards, streaks, subject albums, and mastery progress make effort visible.', color: 'text-amber-600 dark:text-amber-300' },
@@ -422,7 +424,7 @@ export default function LanguageQuestAbout() {
               </span>
               <h2 className="mt-5 text-xl font-black">Learning support</h2>
               <p className="mt-3 text-sm leading-7 text-violet-100 [&_a]:text-violet-100">
-                Guidance is available in English, Burmese, and Mon. Chinese pronunciation uses tone-marked Pinyin beneath each Hanzi, while Mathematics receives subject-specific instructions and worked feedback. Supported language courses can use the Apache-2.0-licensed{' '}
+                Guidance is available in English, Burmese, and Mon. Chinese pronunciation uses tone-marked Pinyin beneath each Hanzi. Mathematics receives subject-specific instructions, worked feedback, and KaTeX notation across lessons, final exams, mastery reviews, heart refills, and boss battles. Supported language courses can use the Apache-2.0-licensed{' '}
                 <SourceLink href="https://huggingface.co/hexgrad/Kokoro-82M">hexgrad/Kokoro-82M</SourceLink>{' '}
                 teacher voice, with an automatic browser-voice fallback.
               </p>

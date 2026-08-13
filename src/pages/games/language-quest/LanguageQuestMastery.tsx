@@ -8,7 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
 import { apiGet, apiSend } from '@/src/lib/api';
 import type { LanguageQuestOption, LanguageQuestProfile } from '@/src/types/languageQuest';
-import { LanguageQuestPinyinText } from '@/src/components/games/LanguageQuestPinyinText';
+import { LanguageQuestContentText } from '@/src/components/games/LanguageQuestContentText';
 import { LanguageQuestReorderTiles } from '@/src/components/games/LanguageQuestReorderTiles';
 import { LanguageQuestMatchingBoard } from '@/src/components/games/LanguageQuestMatchingBoard';
 import { useLanguageQuestPreferences } from '@/src/components/games/LanguageQuestPreferences';
@@ -347,7 +347,7 @@ export default function LanguageQuestMastery() {
             </div>
           )}
 
-          <h2 className="mt-7 text-2xl font-black leading-tight text-slate-950 dark:text-white sm:text-3xl">{card.question}</h2>
+          <h2 className="mt-7 whitespace-pre-line text-2xl font-black leading-tight text-slate-950 dark:text-white sm:text-3xl"><LanguageQuestContentText language={card.course.language} text={card.question} /></h2>
           {isReorder ? (
             <LanguageQuestReorderTiles
               options={card.options}
@@ -400,9 +400,9 @@ export default function LanguageQuestMastery() {
                           : 'border-slate-200 hover:border-violet-300 dark:border-slate-700'
                   } ${timedOut ? 'opacity-50' : ''}`}
                 >
-                  <span className="text-2xl">{option.emoji || '💬'}</span>
+                  {option.emoji && <span className="text-2xl" aria-hidden="true">{option.emoji}</span>}
                   <span className="font-black text-slate-900 dark:text-white">
-                    <LanguageQuestPinyinText text={option.text} pinyin={option.pinyin} />
+                    <LanguageQuestContentText language={card.course.language} text={option.text} pinyin={option.pinyin} />
                   </span>
                 </button>
               );
@@ -444,7 +444,7 @@ export default function LanguageQuestMastery() {
           )}
           {result && (
             <div className={`mt-5 rounded-2xl border p-4 ${result.correct ? 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-500/25 dark:bg-emerald-950/25 dark:text-emerald-100' : 'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-500/25 dark:bg-amber-950/25 dark:text-amber-100'}`}>
-              <p className="font-black">{result.correct ? (result.pointsAwarded > 0 ? `Memory win! +${result.pointsAwarded} XP` : 'Weak area strengthened!') : `Review again: ${result.correctAnswer}`}</p>
+              <p className="font-black">{result.correct ? (result.pointsAwarded > 0 ? `Memory win! +${result.pointsAwarded} XP` : 'Weak area strengthened!') : <>Review again: <LanguageQuestContentText language={card.course.language} text={result.correctAnswer} /></>}</p>
               <p className="mt-1 text-xs opacity-80"><Clock3 className="mr-1 inline h-3.5 w-3.5" /> Scheduled to return in about {masteryIntervalLabel(result.intervalDays)}.</p>
             </div>
           )}

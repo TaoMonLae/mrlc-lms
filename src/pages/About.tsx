@@ -22,7 +22,7 @@ const PLATFORM_PILLARS = [
   {
     eyebrow: "Learning",
     title: "Teach, practise, and grow",
-    description: "Classes, homework, exams, Language Quest, dictionaries, and an e-library live in one familiar learning space.",
+    description: "Classes, homework, exams, dictionaries, an e-library, and Language Quest—including K–12 Mathematics and four GED preparation courses—live in one familiar learning space.",
     art: "/icons/optimized/Eduv2_06.png",
     tone: "from-violet-50 to-indigo-100/80 dark:from-violet-500/10 dark:to-indigo-500/10",
   },
@@ -62,11 +62,11 @@ const THIRD_PARTY_NOTICES: { title: string; description: ReactNode }[] = [
         <a href="https://github.com/TaoMonLae/duolingo-clone" target="_blank" rel="noopener noreferrer" className="font-bold text-aubergine-700 hover:underline dark:text-violet-300">
           TaoMonLae/duolingo-clone
         </a>
-        . MRLC’s original GED subject courses are informed by the public assessment guides and educator resources from{" "}
-        <a href="https://www.ged.com/educators-admins/teaching/classroom-materials.html" target="_blank" rel="noopener noreferrer" className="font-bold text-aubergine-700 hover:underline dark:text-violet-300">
+        . MRLC’s original GED Science, Social Studies, RLA, and Mathematical Reasoning courses are informed by the public assessment guides and educator resources from{" "}
+        <a href="https://www.ged.com/content/dam/websites/ged/resources/en/assessment-guide-for-educators-math.pdf" target="_blank" rel="noopener noreferrer" className="font-bold text-aubergine-700 hover:underline dark:text-violet-300">
           GED Testing Service
         </a>
-        ; they are independent preparation materials and do not reproduce official questions.
+        . They contain 150 concept-first lessons and 450 original practices, remain independent preparation materials, and do not reproduce official questions.
       </>
     ),
   },
@@ -128,7 +128,7 @@ const THIRD_PARTY_NOTICES: { title: string; description: ReactNode }[] = [
 const CREDITS = [
   {
     title: "Language Quest",
-    description: "An LMS-native language experience with lessons, mastery practice, rewards, and teacher insights.",
+    description: "An LMS-native language, K–12 Mathematics, and four-subject GED experience with readable formulas, mastery practice, rewards, and teacher insights.",
     icon: Languages,
   },
   {

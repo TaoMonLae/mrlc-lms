@@ -140,6 +140,18 @@ export function languageQuestChallengeSupportsStudyCard(type: string): boolean {
   return LANGUAGE_QUEST_STUDY_CARD_TYPES.has(type);
 }
 
+export type LanguageQuestCourseMode = 'language' | 'mathematics' | 'science' | 'social-studies' | 'rla';
+
+/** One canonical subject classifier keeps learner, exam, and course screens consistent. */
+export function languageQuestCourseMode(language: string): LanguageQuestCourseMode {
+  const normalized = language.trim().toLocaleLowerCase();
+  if (normalized.includes('math')) return 'mathematics';
+  if (normalized.includes('science')) return 'science';
+  if (normalized.includes('social studies')) return 'social-studies';
+  if (normalized.includes('rla') || normalized.includes('language arts')) return 'rla';
+  return 'language';
+}
+
 /**
  * Language courses use Listen/Pick/Spell study cards before scored practice.
  * Subject courses should instead open directly on their problem-solving
@@ -147,12 +159,7 @@ export function languageQuestChallengeSupportsStudyCard(type: string): boolean {
  * listening, or spelling card is both misleading and needlessly repetitive.
  */
 export function languageQuestCourseUsesStudyCards(language: string): boolean {
-  const normalized = language.trim().toLocaleLowerCase();
-  return !normalized.includes("math")
-    && !normalized.includes("science")
-    && !normalized.includes("social studies")
-    && !normalized.includes("rla")
-    && !normalized.includes("language arts");
+  return languageQuestCourseMode(language) === 'language';
 }
 
 export interface LanguageQuestBossBattleStatus {

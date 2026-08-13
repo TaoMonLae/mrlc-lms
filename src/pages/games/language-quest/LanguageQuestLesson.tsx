@@ -9,6 +9,7 @@ import { ApiError, apiGet, apiSend } from '@/src/lib/api';
 import type { LanguageQuestChallenge, LanguageQuestLessonPayload, LanguageQuestLessonPreview, LanguageQuestProfile } from '@/src/types/languageQuest';
 import {
   languageQuestChallengeSupportsStudyCard,
+  languageQuestCourseMode,
   languageQuestCourseUsesStudyCards,
   normalizeSentenceAnswer,
   requeueMissedLanguageQuestChallenge,
@@ -20,6 +21,7 @@ import {
 } from '@/shared/languageQuestVocabularyPractice';
 import { useLanguageQuestSupport } from '@/src/components/games/LanguageQuestSupport';
 import { LanguageQuestPinyinText } from '@/src/components/games/LanguageQuestPinyinText';
+import { LanguageQuestContentText } from '@/src/components/games/LanguageQuestContentText';
 import { LanguageQuestPhaseStepper } from '@/src/components/games/LanguageQuestPhaseStepper';
 import { LanguageQuestReorderTiles } from '@/src/components/games/LanguageQuestReorderTiles';
 import { LanguageQuestMatchingBoard } from '@/src/components/games/LanguageQuestMatchingBoard';
@@ -280,12 +282,12 @@ export default function LanguageQuestLesson() {
   const vocabularyQuestion = vocabularyQuestions[vocabularyIndex];
   const sentenceCard = sentenceCards[sentenceIndex];
   const spellingCard = spellingCards[spellingIndex];
-  const normalizedCourseLanguage = lesson?.course.language.trim().toLocaleLowerCase() ?? '';
   const usesStudyCards = Boolean(lesson && languageQuestCourseUsesStudyCards(lesson.course.language));
-  const isMathematics = normalizedCourseLanguage.includes('math');
-  const isScience = normalizedCourseLanguage.includes('science');
-  const isSubjectCourse = isMathematics || isScience;
-  const guidanceMode = isMathematics ? 'math' : isScience ? 'science' : 'language';
+  const courseMode = lesson ? languageQuestCourseMode(lesson.course.language) : 'language';
+  const isMathematics = courseMode === 'mathematics';
+  const isEvidenceCourse = courseMode === 'science' || courseMode === 'social-studies' || courseMode === 'rla';
+  const isSubjectCourse = courseMode !== 'language';
+  const guidanceMode = isMathematics ? 'math' : isEvidenceCourse ? 'science' : 'language';
   const challengeGuidance = isMathematics ? MATH_CHALLENGE_GUIDANCE : CHALLENGE_GUIDANCE;
   // Practising an already-completed challenge is how hearts get refilled, so
   // only gate challenges the learner hasn't cleared yet (matches the server
@@ -1243,7 +1245,7 @@ export default function LanguageQuestLesson() {
           <div className="rounded-2xl border-2 border-sky-200 bg-sky-50 p-3 sm:p-4 dark:border-sky-500/20 dark:bg-sky-500/10">
             <BookA className="mx-auto h-6 w-6 text-sky-600" />
             <p className="mt-2 text-xl font-black text-sky-700 sm:text-2xl dark:text-sky-400">{isSubjectCourse ? quizChallenges.length : practiceCards.length}</p>
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-600/70 sm:text-xs">{isMathematics ? 'Problems practised' : isScience ? 'Questions practised' : 'Words learned'}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-600/70 sm:text-xs">{isMathematics ? 'Problems practised' : isSubjectCourse ? 'Questions practised' : 'Words learned'}</p>
           </div>
           <div className="rounded-2xl border-2 border-orange-200 bg-orange-50 p-3 sm:p-4 dark:border-orange-500/20 dark:bg-orange-500/10">
             <Flame className={`mx-auto h-6 w-6 fill-orange-500 text-orange-500 ${reducedMotion ? '' : 'animate-pulse'}`} />
@@ -1337,16 +1339,16 @@ export default function LanguageQuestLesson() {
           </aside>
         )}
         <div className="mt-3 flex items-start justify-between gap-4">
-          <h1 className="max-w-2xl text-2xl font-black leading-tight text-slate-900 dark:text-white sm:text-3xl">{challenge.question}</h1>
-          <Button variant="outline" size="icon" className="shrink-0 rounded-full" onClick={() => speak(challenge.question, lesson.course.language)} aria-label="Read question aloud">
+          <h1 className="max-w-2xl whitespace-pre-line text-2xl font-black leading-tight text-slate-900 dark:text-white sm:text-3xl"><LanguageQuestContentText language={lesson.course.language} text={challenge.question} /></h1>
+          {!isMathematics && <Button variant="outline" size="icon" className="shrink-0 rounded-full" onClick={() => speak(challenge.question, lesson.course.language)} aria-label="Read question aloud">
             <Volume2 className="h-4 w-4" />
-          </Button>
+          </Button>}
         </div>
         <p className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-sky-600 dark:text-sky-300">
           <BookA className="h-3.5 w-3.5" />
           {isMathematics
             ? 'Work it out before choosing. Feedback explains the correct method.'
-            : isScience
+            : isEvidenceCourse
               ? 'Use the passage, visual, units, and evidence before choosing.'
               : 'Highlight an unfamiliar word to check the dictionary.'}
         </p>
@@ -1356,7 +1358,7 @@ export default function LanguageQuestLesson() {
             {hintRevealed ? (
               <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
                 <Lightbulb className="mt-0.5 h-4 w-4 shrink-0" />
-                <p>{challenge.hint}</p>
+                <p><LanguageQuestContentText language={lesson.course.language} text={challenge.hint} /></p>
               </div>
             ) : !answer ? (
               <Button
@@ -1433,7 +1435,7 @@ export default function LanguageQuestLesson() {
                   <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-black ${selected ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-500 dark:bg-surface-raised dark:text-slate-300'}`}>{optionLetters[optionIndex]}</span>
                   {option.emoji && <span className="text-3xl" aria-hidden="true">{option.emoji}</span>}
                   <span className="min-w-0 flex-1 font-semibold text-slate-800 dark:text-white">
-                    <LanguageQuestPinyinText text={option.text} pinyin={option.pinyin} />
+                    <LanguageQuestContentText language={lesson.course.language} text={option.text} pinyin={option.pinyin} />
                   </span>
                 </button>
                 {option.audioText && (
@@ -1460,16 +1462,17 @@ export default function LanguageQuestLesson() {
               <div className="flex items-center gap-3 text-emerald-700 dark:text-emerald-400">
                 <LanguageQuestCompanion rewards={profile?.rewards} reaction="correct" reducedMotion={reducedMotion} size="sm" />
                 <div>
-                  <p className="font-black">{isMathematics ? 'Correct — your reasoning checks out.' : isScience ? 'Correct — the evidence supports that answer.' : 'Excellent — that meaning fits.'}</p>
+                  <p className="font-black">{isMathematics ? 'Correct — your reasoning checks out.' : isEvidenceCourse ? 'Correct — the evidence supports that answer.' : 'Excellent — that meaning fits.'}</p>
                   {challenge.explanation && (
-                    <p className="mt-1 max-w-2xl text-sm leading-6 text-emerald-800 dark:text-emerald-300">{challenge.explanation}</p>
+                    <p className="mt-1 max-w-2xl text-sm leading-6 text-emerald-800 dark:text-emerald-300"><LanguageQuestContentText language={lesson.course.language} text={challenge.explanation} /></p>
                   )}
                   <div className="mt-1 flex flex-wrap items-end gap-1 text-xs">
-                    <LanguageQuestPinyinText
+                    <LanguageQuestContentText
+                      language={lesson.course.language}
                       text={answer.correctAnswer}
                       pinyin={isReorder || isMatching ? null : challenge.options.find((option) => option.id === answer.correctOptionId)?.pinyin ?? null}
                     />
-                    <span>{isMathematics ? 'is the correct result here.' : isScience ? 'is the best-supported answer.' : 'is the best response here.'} +{answer.pointsAwarded} XP</span>
+                    <span>{isMathematics ? 'is the correct result here.' : isEvidenceCourse ? 'is the best-supported answer.' : 'is the best response here.'} +{answer.pointsAwarded} XP</span>
                   </div>
                 </div>
               </div>
@@ -1478,13 +1481,14 @@ export default function LanguageQuestLesson() {
               <div className="flex items-center gap-3 text-rose-700 dark:text-rose-400">
                 <LanguageQuestCompanion rewards={profile?.rewards} reaction="incorrect" reducedMotion={reducedMotion} size="sm" />
                 <div>
-                  <p className="font-black">{isMathematics ? 'Not quite — this problem will return after a few more questions.' : isScience ? 'Not quite — review the evidence before this question returns.' : 'Not quite — we’ll revisit this after a few more questions.'}</p>
+                  <p className="font-black">{isMathematics ? 'Not quite — this problem will return after a few more questions.' : isEvidenceCourse ? 'Not quite — review the evidence before this question returns.' : 'Not quite — we’ll revisit this after a few more questions.'}</p>
                   {challenge.explanation && (
-                    <p className="mt-1 max-w-2xl text-sm leading-6 text-rose-800 dark:text-rose-300">{challenge.explanation}</p>
+                    <p className="mt-1 max-w-2xl text-sm leading-6 text-rose-800 dark:text-rose-300"><LanguageQuestContentText language={lesson.course.language} text={challenge.explanation} /></p>
                   )}
                   <div className="mt-1 flex flex-wrap items-end gap-1 text-xs">
-                    <span>{isMathematics ? 'Correct result:' : isScience ? 'Evidence-supported answer:' : 'Best answer:'}</span>
-                    <LanguageQuestPinyinText
+                    <span>{isMathematics ? 'Correct result:' : isEvidenceCourse ? 'Evidence-supported answer:' : 'Best answer:'}</span>
+                    <LanguageQuestContentText
+                      language={lesson.course.language}
                       text={answer.correctAnswer}
                       pinyin={isReorder || isMatching ? null : challenge.options.find((option) => option.id === answer.correctOptionId)?.pinyin ?? null}
                     />

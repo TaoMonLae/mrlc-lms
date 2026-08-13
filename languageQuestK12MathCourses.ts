@@ -2,6 +2,7 @@ import generatedCourses from "./curricula/language-quest/k12-math-courses.genera
 import { gedScienceCourse } from "./languageQuestGedScienceCourse";
 import { gedSocialStudiesCourse } from "./languageQuestGedSocialStudiesCourse";
 import { gedRlaCourse } from "./languageQuestGedRlaCourse";
+import { gedMathCourse } from "./languageQuestGedMathCourse";
 import type { OfficialLanguageQuestCourse } from "./languageQuestImportedCourses";
 
 const generatedMathCourses = generatedCourses as unknown as OfficialLanguageQuestCourse[];
@@ -14,4 +15,5 @@ export const k12MathCourses: OfficialLanguageQuestCourse[] = [
   gedScienceCourse,
   gedSocialStudiesCourse,
   gedRlaCourse,
+  gedMathCourse,
 ];

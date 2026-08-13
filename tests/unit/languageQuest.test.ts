@@ -9,6 +9,7 @@ import {
   languageQuestAssessmentPrompt,
   languageQuestBossBattleStatus,
   languageQuestChallengeSupportsStudyCard,
+  languageQuestCourseMode,
   languageQuestCourseUsesStudyCards,
   languageQuestPracticePrompt,
   languageQuestLookupWord,
@@ -351,6 +352,12 @@ test("structural review challenges do not become misleading study cards", () => 
   assert.equal(languageQuestCourseUsesStudyCards('Mandarin Chinese'), true);
   assert.equal(languageQuestCourseUsesStudyCards('Mathematics'), false);
   assert.equal(languageQuestCourseUsesStudyCards('GED Science'), false);
+  assert.equal(languageQuestCourseUsesStudyCards('GED Social Studies'), false);
+  assert.equal(languageQuestCourseUsesStudyCards('GED RLA'), false);
+  assert.equal(languageQuestCourseMode('GED Mathematical Reasoning'), 'mathematics');
+  assert.equal(languageQuestCourseMode('GED Science'), 'science');
+  assert.equal(languageQuestCourseMode('GED Social Studies'), 'social-studies');
+  assert.equal(languageQuestCourseMode('GED Reasoning Through Language Arts'), 'rla');
 });
 
 test("Language Quest dictionary extracts a useful highlighted term", () => {

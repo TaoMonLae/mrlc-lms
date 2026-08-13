@@ -7,10 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ApiError, apiGet, apiSend } from '@/src/lib/api';
 import type { LanguageQuestOption } from '@/src/types/languageQuest';
-import { LanguageQuestPinyinText } from '@/src/components/games/LanguageQuestPinyinText';
+import { LanguageQuestContentText } from '@/src/components/games/LanguageQuestContentText';
 import { useLanguageQuestPreferences } from '@/src/components/games/LanguageQuestPreferences';
 import { playLanguageQuestProtectedVoice, speakLanguageQuestVoice } from '@/src/lib/languageQuestVoice';
-import { languageQuestCourseUsesStudyCards } from '@/shared/languageQuest';
+import { languageQuestCourseMode, languageQuestCourseUsesStudyCards } from '@/shared/languageQuest';
 
 interface FinalExamStatus {
   available: boolean;
@@ -298,7 +298,8 @@ export default function LanguageQuestFinalExam() {
     );
   }
 
-  const isMathematics = !languageQuestCourseUsesStudyCards(course.language);
+  const isMathematics = languageQuestCourseMode(course.language) === 'mathematics';
+  const isSubjectCourse = !languageQuestCourseUsesStudyCards(course.language);
 
   if (payload && !result && !terminatedReason) {
     const card = payload.cards[index];
@@ -330,7 +331,7 @@ export default function LanguageQuestFinalExam() {
               <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-violet-600">
                 {isSpelling && <Keyboard className="h-4 w-4" />} Question {index + 1}{isSpelling ? ' • Spelling' : ''}
               </p>
-              <h2 className="mt-3 text-xl font-black leading-tight sm:text-3xl">{card.question}</h2>
+              <h2 className="mt-3 whitespace-pre-line text-xl font-black leading-tight sm:text-3xl"><LanguageQuestContentText language={payload.course.language} text={card.question} /></h2>
               {isSpelling ? (
                 <div className="mt-6 rounded-2xl border-2 border-violet-200 bg-violet-50/70 p-4 sm:p-5">
                   <Button
@@ -379,7 +380,7 @@ export default function LanguageQuestFinalExam() {
                       >
                         <span className="flex items-center gap-3">
                           {option.emoji && <span className="text-2xl" aria-hidden="true">{option.emoji}</span>}
-                          <span><LanguageQuestPinyinText text={option.text} pinyin={option.pinyin} /></span>
+                          <span><LanguageQuestContentText language={payload.course.language} text={option.text} pinyin={option.pinyin} /></span>
                           {selected && <CheckCircle2 className="ml-auto h-5 w-5 shrink-0 text-violet-700" />}
                         </span>
                       </button>
@@ -424,7 +425,7 @@ export default function LanguageQuestFinalExam() {
           <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-slate-600 dark:text-slate-300">
             {result.passed
               ? 'Your monitored pass is saved. The new final-exam-verified certificate is now available in Achievements.'
-              : `${isMathematics ? 'Review the course topics and worked explanations.' : 'Review the course and your learned words.'} Correct answers stay hidden to protect future attempts; a 15-minute review break applies.`}
+              : `${isSubjectCourse ? 'Review the course topics and worked explanations.' : 'Review the course and your learned words.'} Correct answers stay hidden to protect future attempts; a 15-minute review break applies.`}
           </p>
           <div className="mt-7 flex flex-col justify-center gap-2 sm:flex-row">
             <Button variant="outline" render={<Link to={`/games/language-quest/courses/${course.id}`} />} nativeButton={false}>Review course</Button>
@@ -438,7 +439,7 @@ export default function LanguageQuestFinalExam() {
             {result.results.map((entry, entryIndex) => (
               <div key={entry.challengeId} className={`flex items-start gap-3 rounded-xl border p-3 text-sm ${entry.correct ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-500/20 dark:bg-emerald-500/10' : 'border-rose-200 bg-rose-50 dark:border-rose-500/20 dark:bg-rose-500/10'}`}>
                 <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-white ${entry.correct ? 'bg-emerald-500' : 'bg-rose-500'}`}>{entry.correct ? <Check className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />}</span>
-                <p className="font-semibold text-slate-800 dark:text-white">{payload?.cards[entryIndex]?.question}</p>
+                <p className="font-semibold text-slate-800 dark:text-white">{payload?.cards[entryIndex] ? <LanguageQuestContentText language={course.language} text={payload.cards[entryIndex].question} /> : null}</p>
               </div>
             ))}
           </div>
@@ -477,7 +478,7 @@ export default function LanguageQuestFinalExam() {
             </div>
           )}
           <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-900"><p className="text-2xl font-black text-slate-950 dark:text-white">{course.finalExam.questionCount}</p><p className="text-xs font-bold text-slate-500">{isMathematics ? 'randomized maths questions' : 'choice + spelling questions'}</p></div>
+            <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-900"><p className="text-2xl font-black text-slate-950 dark:text-white">{course.finalExam.questionCount}</p><p className="text-xs font-bold text-slate-500">{isMathematics ? 'randomized maths questions' : isSubjectCourse ? 'randomized subject questions' : 'choice + spelling questions'}</p></div>
             <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-900"><p className="text-2xl font-black text-slate-950 dark:text-white">{course.finalExam.passPercent}%</p><p className="text-xs font-bold text-slate-500">required to pass</p></div>
             <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-900"><p className="text-2xl font-black text-slate-950 dark:text-white">{course.finalExam.attemptMinutes} min</p><p className="text-xs font-bold text-slate-500">hard time limit</p></div>
           </div>
@@ -488,7 +489,7 @@ export default function LanguageQuestFinalExam() {
               <li>• Do not switch tabs, swap apps/screens, swipe away, close, reload, or leave full screen.</li>
               <li>• Hiding or leaving the exam terminates the attempt and records the integrity reason.</li>
               <li>• Answers lock as you continue. Correct answers are not revealed after a failed attempt.</li>
-              {!isMathematics && <li>• Courses with dictation include listen-and-type spelling questions.</li>}
+              {!isSubjectCourse && <li>• Courses with dictation include listen-and-type spelling questions.</li>}
               <li>• Failed or terminated attempts require a 15-minute review break.</li>
             </ul>
           </div>

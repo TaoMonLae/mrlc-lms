@@ -1,8 +1,10 @@
-import { Atom, BookOpenCheck, FileText, FlaskConical, Image as ImageIcon, Landmark, Lightbulb, Microscope, ScrollText, Sigma, Target, TrendingUp } from 'lucide-react';
+import { Atom, BookOpenCheck, Calculator, FileText, FlaskConical, Image as ImageIcon, Landmark, Lightbulb, Microscope, ScrollText, Sigma, Target, TrendingUp } from 'lucide-react';
+import { MathText } from '@/src/components/MathText';
 
 const SCIENCE_V2_PREFIX = 'SCIENCE_V2::';
 const SOCIAL_STUDIES_V1_PREFIX = 'SOCIAL_STUDIES_V1::';
 const RLA_V1_PREFIX = 'RLA_V1::';
+const MATH_V1_PREFIX = 'MATH_V1::';
 
 type ScienceLabel = { marker: string; text: string };
 type ScienceTableVisual = { type: 'table'; title: string; headers: string[]; rows: string[][]; caption?: string };
@@ -30,7 +32,7 @@ export type ScienceVisual =
 
 export interface ScienceConceptDocument {
   version: 1 | 2;
-  subject?: 'science' | 'social-studies' | 'rla';
+  subject?: 'science' | 'social-studies' | 'rla' | 'mathematics';
   sourceType?: 'informational' | 'literary' | 'argument' | 'editing';
   summary: string;
   objectives: string[];
@@ -52,7 +54,9 @@ export function parseScienceConcept(source: string): ScienceConceptDocument | nu
       ? SOCIAL_STUDIES_V1_PREFIX
       : source.startsWith(RLA_V1_PREFIX)
         ? RLA_V1_PREFIX
-      : null;
+        : source.startsWith(MATH_V1_PREFIX)
+          ? MATH_V1_PREFIX
+          : null;
   if (!prefix) return null;
   try {
     const parsed = JSON.parse(source.slice(prefix.length)) as ScienceConceptDocument;
@@ -63,7 +67,9 @@ export function parseScienceConcept(source: string): ScienceConceptDocument | nu
         ? 'social-studies'
         : prefix === RLA_V1_PREFIX
           ? 'rla'
-          : (parsed.subject || 'science'),
+          : prefix === MATH_V1_PREFIX
+            ? 'mathematics'
+            : (parsed.subject || 'science'),
     };
   } catch {
     return null;
@@ -146,9 +152,9 @@ function FormulaVisual({ visual }: { visual: ScienceFormulaVisual }) {
   return (
     <figure className="rounded-2xl border border-violet-200 bg-violet-50/70 p-5 dark:border-violet-500/25 dark:bg-violet-500/10">
       <figcaption className="flex items-center gap-2 text-sm font-black text-violet-900 dark:text-violet-100"><Sigma className="h-4 w-4" /> {visual.title}</figcaption>
-      <div className="my-4 overflow-x-auto rounded-xl bg-white px-4 py-5 text-center font-mono text-xl font-black text-slate-950 shadow-sm dark:bg-slate-950 dark:text-white">{visual.formula}</div>
+      <div className="my-4 overflow-x-auto rounded-xl bg-white px-4 py-5 text-center text-xl font-black text-slate-950 shadow-sm dark:bg-slate-950 dark:text-white"><MathText>{visual.formula}</MathText></div>
       {visual.variables?.length ? <div className="grid gap-2 sm:grid-cols-2">{visual.variables.map((item) => <div key={item.marker} className="text-xs leading-5 text-slate-700 dark:text-slate-200"><strong>{item.marker}</strong> — {item.text}</div>)}</div> : null}
-      {visual.example ? <p className="mt-4 rounded-xl bg-white/80 px-4 py-3 text-xs font-semibold leading-5 text-slate-700 dark:bg-slate-950/50 dark:text-slate-200"><strong>Worked example:</strong> {visual.example}</p> : null}
+      {visual.example ? <p className="mt-4 rounded-xl bg-white/80 px-4 py-3 text-xs font-semibold leading-5 text-slate-700 dark:bg-slate-950/50 dark:text-slate-200"><strong>Worked example:</strong> <MathText>{visual.example}</MathText></p> : null}
     </figure>
   );
 }
@@ -237,33 +243,35 @@ export function LanguageQuestScienceConcept({ source }: { source: string }) {
   if (!document) return <PlainConcept source={source} />;
   const isSocialStudies = document.subject === 'social-studies';
   const isRla = document.subject === 'rla';
-  const SubjectIcon = isRla ? BookOpenCheck : isSocialStudies ? Landmark : Microscope;
-  const ConceptIcon = isRla ? FileText : isSocialStudies ? ScrollText : Atom;
-  const TermsIcon = isRla ? ScrollText : isSocialStudies ? BookOpenCheck : FlaskConical;
+  const isMathematics = document.subject === 'mathematics';
+  const SubjectIcon = isMathematics ? Calculator : isRla ? BookOpenCheck : isSocialStudies ? Landmark : Microscope;
+  const ConceptIcon = isMathematics ? Sigma : isRla ? FileText : isSocialStudies ? ScrollText : Atom;
+  const TermsIcon = isMathematics ? Calculator : isRla ? ScrollText : isSocialStudies ? BookOpenCheck : FlaskConical;
+  const content = (value: string) => isMathematics ? <MathText>{value}</MathText> : value;
 
   return (
     <div className="space-y-5">
       <section className="rounded-2xl border border-sky-200 bg-sky-50/80 p-4 dark:border-sky-500/25 dark:bg-sky-500/10 sm:p-5">
-        <div className="flex items-start gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-sky-600 text-white"><SubjectIcon className="h-5 w-5" /></span><div><p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-700 dark:text-sky-300">{isRla ? 'RLA reading and writing skill' : isSocialStudies ? 'Social studies idea' : 'Science idea'}</p><p className="mt-1 text-sm font-semibold leading-6 text-slate-700 dark:text-slate-200">{document.summary}</p></div></div>
+        <div className="flex items-start gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-sky-600 text-white"><SubjectIcon className="h-5 w-5" /></span><div><p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-700 dark:text-sky-300">{isMathematics ? 'Mathematical reasoning skill' : isRla ? 'RLA reading and writing skill' : isSocialStudies ? 'Social studies idea' : 'Science idea'}</p><p className="mt-1 text-sm font-semibold leading-6 text-slate-700 dark:text-slate-200">{content(document.summary)}</p></div></div>
       </section>
 
       <section>
         <h2 className="flex items-center gap-2 text-sm font-black text-slate-950 dark:text-white"><Target className="h-4 w-4 text-violet-600" /> Learning goals</h2>
-        <div className="mt-3 grid gap-2 sm:grid-cols-2">{document.objectives.map((objective) => <div key={objective} className="flex items-start gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 text-xs font-semibold leading-5 text-slate-700 dark:border-slate-700 dark:bg-slate-950/50 dark:text-slate-200"><BookOpenCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />{objective}</div>)}</div>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">{document.objectives.map((objective) => <div key={objective} className="flex items-start gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 text-xs font-semibold leading-5 text-slate-700 dark:border-slate-700 dark:bg-slate-950/50 dark:text-slate-200"><BookOpenCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />{content(objective)}</div>)}</div>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-950/50 sm:p-5">
         <h2 className="flex items-center gap-2 text-sm font-black text-slate-950 dark:text-white"><ConceptIcon className="h-4 w-4 text-sky-600" /> Learn the concept</h2>
-        <div className="mt-3 space-y-3">{document.explanation.map((paragraph) => <p key={paragraph} className="text-sm leading-7 text-slate-700 dark:text-slate-200">{paragraph}</p>)}</div>
+        <div className="mt-3 space-y-3">{document.explanation.map((paragraph) => <p key={paragraph} className="text-sm leading-7 text-slate-700 dark:text-slate-200">{content(paragraph)}</p>)}</div>
       </section>
 
       {document.visual ? <ScienceVisualBlock visual={document.visual} /> : null}
 
       {document.keyTerms?.length ? <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/60"><h2 className="flex items-center gap-2 text-sm font-black text-slate-950 dark:text-white"><TermsIcon className="h-4 w-4 text-emerald-600" /> Key terms</h2><div className="mt-3 grid gap-2 sm:grid-cols-2">{document.keyTerms.map((term) => <div key={term.marker} className="rounded-xl bg-white px-3 py-2 text-xs leading-5 text-slate-700 shadow-sm dark:bg-slate-950/60 dark:text-slate-200"><strong>{term.marker}</strong> — {term.text}</div>)}</div></section> : null}
 
-      {document.gedStrategy ? <aside className="rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/25 dark:bg-amber-500/10"><p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-amber-800 dark:text-amber-200"><Lightbulb className="h-4 w-4" /> GED strategy</p><p className="mt-2 text-sm font-semibold leading-6 text-slate-700 dark:text-slate-200">{document.gedStrategy}</p></aside> : null}
+      {document.gedStrategy ? <aside className="rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/25 dark:bg-amber-500/10"><p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-amber-800 dark:text-amber-200"><Lightbulb className="h-4 w-4" /> GED strategy</p><p className="mt-2 text-sm font-semibold leading-6 text-slate-700 dark:text-slate-200">{content(document.gedStrategy)}</p></aside> : null}
 
-      {document.checkpoint ? <aside className="rounded-2xl border border-violet-200 bg-violet-50 p-4 dark:border-violet-500/25 dark:bg-violet-500/10"><p className="text-xs font-black uppercase tracking-[0.14em] text-violet-800 dark:text-violet-200">Check your understanding</p><p className="mt-2 text-sm font-semibold leading-6 text-slate-700 dark:text-slate-200">{document.checkpoint}</p></aside> : null}
+      {document.checkpoint ? <aside className="rounded-2xl border border-violet-200 bg-violet-50 p-4 dark:border-violet-500/25 dark:bg-violet-500/10"><p className="text-xs font-black uppercase tracking-[0.14em] text-violet-800 dark:text-violet-200">Check your understanding</p><p className="mt-2 text-sm font-semibold leading-6 text-slate-700 dark:text-slate-200">{content(document.checkpoint)}</p></aside> : null}
     </div>
   );
 }

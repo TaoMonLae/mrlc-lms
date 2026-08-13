@@ -7,9 +7,10 @@ import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { apiGet } from '@/src/lib/api';
 import { useLanguageQuestSupport } from '@/src/components/games/LanguageQuestSupport';
+import { LanguageQuestContentText } from '@/src/components/games/LanguageQuestContentText';
 import { languageQuestCategoryForLanguage } from '@/shared/languageQuestCourseCategories';
 import { languageQuestStoriesForCategory } from '@/shared/languageQuestStory';
-import { languageQuestCourseUsesStudyCards } from '@/shared/languageQuest';
+import { languageQuestCourseMode, languageQuestCourseUsesStudyCards } from '@/shared/languageQuest';
 
 interface CoursePayload {
   id: string;
@@ -137,8 +138,18 @@ export default function LanguageQuestCourse() {
   const nextLesson = course.nextLessonId
     ? course.units.flatMap((unit) => unit.lessons).find((lesson) => lesson.id === course.nextLessonId)
     : null;
-  const isMathematics = !languageQuestCourseUsesStudyCards(course.language);
-  const courseStories = isMathematics ? [] : languageQuestStoriesForCategory(course.category?.trim() || languageQuestCategoryForLanguage(course.language));
+  const courseMode = languageQuestCourseMode(course.language);
+  const usesStudyCards = languageQuestCourseUsesStudyCards(course.language);
+  const isMathematics = courseMode === 'mathematics';
+  const isSubjectCourse = !usesStudyCards;
+  const subjectLabel = isMathematics
+    ? 'maths'
+    : courseMode === 'science'
+      ? 'science'
+      : courseMode === 'social-studies'
+        ? 'social studies'
+        : 'RLA';
+  const courseStories = usesStudyCards ? languageQuestStoriesForCategory(course.category?.trim() || languageQuestCategoryForLanguage(course.language)) : [];
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 pb-12">
@@ -154,7 +165,7 @@ export default function LanguageQuestCourse() {
           <div className="flex-1">
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/70">{course.language}</p>
             <h1 className="mt-1 text-3xl font-black tracking-tight">{course.title}</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-white/80">{course.description}</p>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-white/80"><LanguageQuestContentText language={course.language} text={course.description ?? ''} /></p>
             <div className="mt-4 flex items-center gap-3">
               <Progress value={percent} className="flex-1 [&_[data-slot=progress-track]]:h-2 [&_[data-slot=progress-track]]:bg-white/20 [&_[data-slot=progress-indicator]]:bg-white" />
               <span className="text-sm font-bold">{percent}%</span>
@@ -163,7 +174,7 @@ export default function LanguageQuestCourse() {
         </div>
       </section>
 
-      {!isMathematics && <section className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-sky-200 bg-sky-50 p-5 dark:border-sky-500/20 dark:bg-sky-500/10 sm:flex-row sm:items-center">
+      {usesStudyCards && <section className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-sky-200 bg-sky-50 p-5 dark:border-sky-500/20 dark:bg-sky-500/10 sm:flex-row sm:items-center">
         <div className="flex items-start gap-3">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sky-600 text-white"><BookMarked className="h-5 w-5" /></span>
           <div>
@@ -208,7 +219,7 @@ export default function LanguageQuestCourse() {
                   : !course.finalExam.available
                     ? `This course needs at least ${course.finalExam.minQuestions} compatible scored questions before a certificate exam can be generated. It currently has ${course.finalExam.eligibleQuestionCount}.`
                     : course.finalExam.unlocked
-                      ? `${course.finalExam.questionCount} randomized ${isMathematics ? 'maths questions' : 'choice and spelling questions'} • ${course.finalExam.passPercent}% required • ${course.finalExam.attemptMinutes}-minute limit. Leaving the screen terminates the attempt.`
+                      ? `${course.finalExam.questionCount} randomized ${isSubjectCourse ? `${subjectLabel} questions` : 'choice and spelling questions'} • ${course.finalExam.passPercent}% required • ${course.finalExam.attemptMinutes}-minute limit. Leaving the screen terminates the attempt.`
                       : 'Finish every course practice to unlock the final exam. Course completion alone does not unlock a certificate.'}
               </p>
             </div>
@@ -261,10 +272,10 @@ export default function LanguageQuestCourse() {
       <section className="rounded-2xl border border-violet-100 bg-violet-50/70 p-5 dark:border-violet-500/20 dark:bg-violet-500/10">
         <div className="flex items-start gap-3">
           <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300"><Lightbulb className="h-5 w-5" /></span>
-          {isMathematics ? (
+          {isSubjectCourse ? (
             <div>
-              <h2 className="font-black text-slate-900 dark:text-white">How maths practice works</h2>
-              <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">Each lesson opens directly on six guided problems. Work out each answer first, then use the explanation to correct mistakes and strengthen the method.</p>
+              <h2 className="font-black text-slate-900 dark:text-white">How {subjectLabel} practice works</h2>
+              <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">Each lesson opens with guided instruction and moves directly into subject practice. Work through the source, visual, or calculation first, then use the explanation to correct mistakes and strengthen the method.</p>
               <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="flex gap-2 rounded-xl bg-white/80 p-3 dark:bg-surface-indigo/60"><BookOpenText className="mt-0.5 h-4 w-4 shrink-0 text-sky-600" /><p className="text-xs leading-5 text-slate-600 dark:text-slate-200"><strong className="block text-slate-800 dark:text-white">Understand</strong>Read the problem and identify what it asks.</p></div>
                 <div className="flex gap-2 rounded-xl bg-white/80 p-3 dark:bg-surface-indigo/60"><Calculator className="mt-0.5 h-4 w-4 shrink-0 text-violet-600" /><p className="text-xs leading-5 text-slate-600 dark:text-slate-200"><strong className="block text-slate-800 dark:text-white">Solve</strong>Work it out before selecting or arranging.</p></div>
@@ -295,7 +306,7 @@ export default function LanguageQuestCourse() {
               <div className="grid h-9 w-9 place-items-center rounded-xl text-sm font-black text-white" style={{ backgroundColor: course.accentColor }}>{unitIndex + 1}</div>
               <div>
                 <h2 className="font-bold text-slate-900 dark:text-white">{unit.title}</h2>
-                {unit.description && <p className="text-xs text-slate-500 dark:text-slate-300">{unit.description}</p>}
+                {unit.description && <p className="text-xs text-slate-500 dark:text-slate-300"><LanguageQuestContentText language={course.language} text={unit.description} /></p>}
               </div>
             </div>
           </header>
@@ -318,7 +329,7 @@ export default function LanguageQuestCourse() {
                           <h3 className={`font-semibold ${lesson.locked ? 'text-slate-400' : 'text-slate-900 dark:text-white'}`}>{lesson.title}</h3>
                           {lesson.completed && <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">Complete</span>}
                         </div>
-                        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-300">{lesson.available ? (lesson.description || `${lesson.challengeCount} quick challenges`) : 'Content is coming soon.'}</p>
+                        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-300"><LanguageQuestContentText language={course.language} text={lesson.available ? (lesson.description || `${lesson.challengeCount} quick challenges`) : 'Content is coming soon.'} /></p>
                         {lesson.available && <p className="mt-1 text-[11px] font-medium text-slate-400">{lesson.completedChallenges}/{lesson.challengeCount} challenges</p>}
                       </div>
                       {lesson.available && !lesson.locked && (lesson.completed ? <RotateCcw className="h-4 w-4 text-slate-400" /> : <ChevronRight className="h-5 w-5 text-slate-400" />)}
@@ -340,8 +351,8 @@ export default function LanguageQuestCourse() {
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center dark:border-amber-500/20 dark:bg-amber-500/10">
           <Trophy className="mx-auto h-10 w-10 text-amber-500" />
           <h2 className="mt-2 text-xl font-black text-slate-900 dark:text-white">Course complete!</h2>
-          <p lang={isMathematics ? undefined : explanationLanguage} className="mt-1 text-sm text-slate-500 dark:text-slate-300">{isMathematics ? 'All practices are complete. Pass the monitored final exam to unlock your certificate.' : lq('completeHelp')}</p>
-          {isMathematics ? (
+          <p lang={isSubjectCourse ? undefined : explanationLanguage} className="mt-1 text-sm text-slate-500 dark:text-slate-300">{isSubjectCourse ? 'All practices are complete. Pass the monitored final exam to unlock your certificate.' : lq('completeHelp')}</p>
+          {isSubjectCourse ? (
             <Button className="mt-4 bg-violet-700 hover:bg-violet-800" render={<Link to={`/games/language-quest/courses/${course.id}/final-exam`} />} nativeButton={false}>
               <FileCheck2 className="mr-2 h-4 w-4" /> Take final exam
             </Button>
