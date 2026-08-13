@@ -575,6 +575,7 @@ test("Language Quest groups language courses into a predictable category order",
   assert.equal(languageQuestCategoryForLanguage("Spanish"), "Spanish Courses");
   assert.equal(languageQuestCategoryForLanguage("Mathematics"), "Mathematics Courses");
   assert.equal(languageQuestCategoryForLanguage("GED Social Studies"), "GED Preparation");
+  assert.equal(languageQuestCategoryForLanguage("GED RLA"), "GED Preparation");
   assert.equal(languageQuestCategoryForLanguage("Mon"), "Other Courses");
 
   const groups = orderedLanguageQuestCategories([

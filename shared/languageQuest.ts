@@ -143,12 +143,16 @@ export function languageQuestChallengeSupportsStudyCard(type: string): boolean {
 /**
  * Language courses use Listen/Pick/Spell study cards before scored practice.
  * Subject courses should instead open directly on their problem-solving
- * interaction; turning a numeric, scientific, or social-studies answer into a vocabulary,
+ * interaction; turning a numeric, scientific, social-studies, or RLA answer into a vocabulary,
  * listening, or spelling card is both misleading and needlessly repetitive.
  */
 export function languageQuestCourseUsesStudyCards(language: string): boolean {
   const normalized = language.trim().toLocaleLowerCase();
-  return !normalized.includes("math") && !normalized.includes("science") && !normalized.includes("social studies");
+  return !normalized.includes("math")
+    && !normalized.includes("science")
+    && !normalized.includes("social studies")
+    && !normalized.includes("rla")
+    && !normalized.includes("language arts");
 }
 
 export interface LanguageQuestBossBattleStatus {

@@ -1,7 +1,8 @@
-import { Atom, BookOpenCheck, FlaskConical, Image as ImageIcon, Landmark, Lightbulb, Microscope, ScrollText, Sigma, Target, TrendingUp } from 'lucide-react';
+import { Atom, BookOpenCheck, FileText, FlaskConical, Image as ImageIcon, Landmark, Lightbulb, Microscope, ScrollText, Sigma, Target, TrendingUp } from 'lucide-react';
 
 const SCIENCE_V2_PREFIX = 'SCIENCE_V2::';
 const SOCIAL_STUDIES_V1_PREFIX = 'SOCIAL_STUDIES_V1::';
+const RLA_V1_PREFIX = 'RLA_V1::';
 
 type ScienceLabel = { marker: string; text: string };
 type ScienceTableVisual = { type: 'table'; title: string; headers: string[]; rows: string[][]; caption?: string };
@@ -13,6 +14,7 @@ type ScienceLineVisual = { type: 'line'; title: string; points: { x: number; y: 
 type ScienceLayersVisual = { type: 'layers'; title: string; layers: { name: string; detail: string }[]; caption?: string };
 type ScienceCompareVisual = { type: 'compare'; title: string; leftTitle: string; rightTitle: string; left: string[]; shared?: string[]; right: string[] };
 type ScienceEvidenceVisual = { type: 'evidence'; title: string; claim: string; evidence: string[]; reasoning: string };
+type ReadingPassageVisual = { type: 'passage'; title: string; text: string; attribution?: string; kind?: 'informational' | 'literary' | 'argument' | 'editing' };
 
 export type ScienceVisual =
   | ScienceTableVisual
@@ -23,11 +25,13 @@ export type ScienceVisual =
   | ScienceLineVisual
   | ScienceLayersVisual
   | ScienceCompareVisual
-  | ScienceEvidenceVisual;
+  | ScienceEvidenceVisual
+  | ReadingPassageVisual;
 
 export interface ScienceConceptDocument {
   version: 1 | 2;
-  subject?: 'science' | 'social-studies';
+  subject?: 'science' | 'social-studies' | 'rla';
+  sourceType?: 'informational' | 'literary' | 'argument' | 'editing';
   summary: string;
   objectives: string[];
   explanation: string[];
@@ -46,6 +50,8 @@ export function parseScienceConcept(source: string): ScienceConceptDocument | nu
     ? SCIENCE_V2_PREFIX
     : source.startsWith(SOCIAL_STUDIES_V1_PREFIX)
       ? SOCIAL_STUDIES_V1_PREFIX
+      : source.startsWith(RLA_V1_PREFIX)
+        ? RLA_V1_PREFIX
       : null;
   if (!prefix) return null;
   try {
@@ -53,7 +59,11 @@ export function parseScienceConcept(source: string): ScienceConceptDocument | nu
     if (![1, 2].includes(parsed?.version) || !Array.isArray(parsed.objectives) || !Array.isArray(parsed.explanation)) return null;
     return {
       ...parsed,
-      subject: prefix === SOCIAL_STUDIES_V1_PREFIX ? 'social-studies' : (parsed.subject || 'science'),
+      subject: prefix === SOCIAL_STUDIES_V1_PREFIX
+        ? 'social-studies'
+        : prefix === RLA_V1_PREFIX
+          ? 'rla'
+          : (parsed.subject || 'science'),
     };
   } catch {
     return null;
@@ -189,7 +199,28 @@ function EvidenceVisual({ visual }: { visual: ScienceEvidenceVisual }) {
   return <figure className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 dark:border-amber-500/25 dark:bg-amber-500/10"><figcaption className="mb-3 text-sm font-black text-amber-950 dark:text-amber-100">{visual.title}</figcaption><div className="space-y-3 text-xs leading-5"><div className="rounded-xl bg-white/80 p-3 dark:bg-slate-950/50"><strong>Claim:</strong> {visual.claim}</div><div className="rounded-xl bg-white/80 p-3 dark:bg-slate-950/50"><strong>Evidence:</strong><ul className="mt-1 space-y-1">{visual.evidence.map((item) => <li key={item}>• {item}</li>)}</ul></div><div className="rounded-xl bg-white/80 p-3 dark:bg-slate-950/50"><strong>Reasoning:</strong> {visual.reasoning}</div></div></figure>;
 }
 
+function PassageVisual({ visual }: { visual: ReadingPassageVisual }) {
+  const label = visual.kind === 'literary'
+    ? 'Literary source'
+    : visual.kind === 'editing'
+      ? 'Editing source'
+      : visual.kind === 'argument'
+        ? 'Argument source'
+        : 'Informational source';
+  return (
+    <figure className="overflow-hidden rounded-2xl border border-violet-200 bg-white dark:border-violet-500/25 dark:bg-slate-950/60">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-violet-100 bg-violet-50/70 px-4 py-3 dark:border-violet-500/20 dark:bg-violet-500/10">
+        <figcaption className="flex items-center gap-2 text-sm font-black text-slate-900 dark:text-white"><FileText className="h-4 w-4 text-violet-600" /> {visual.title}</figcaption>
+        <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-violet-700 shadow-sm dark:bg-slate-950 dark:text-violet-300">{label}</span>
+      </div>
+      <blockquote className="whitespace-pre-line px-5 py-5 text-sm leading-7 text-slate-700 dark:text-slate-200 sm:px-6">{visual.text}</blockquote>
+      {visual.attribution ? <p className="border-t border-violet-100 px-5 py-3 text-xs leading-5 text-slate-500 dark:border-violet-500/20 dark:text-slate-400">{visual.attribution}</p> : null}
+    </figure>
+  );
+}
+
 function ScienceVisualBlock({ visual }: { visual: ScienceVisual }) {
+  if (visual.type === 'passage') return <PassageVisual visual={visual} />;
   if (visual.type === 'image') return <ImageVisual visual={visual} />;
   if (visual.type === 'table') return <TableVisual visual={visual} />;
   if (visual.type === 'process') return <ProcessVisual visual={visual} />;
@@ -205,14 +236,15 @@ export function LanguageQuestScienceConcept({ source }: { source: string }) {
   const document = parseScienceConcept(source);
   if (!document) return <PlainConcept source={source} />;
   const isSocialStudies = document.subject === 'social-studies';
-  const SubjectIcon = isSocialStudies ? Landmark : Microscope;
-  const ConceptIcon = isSocialStudies ? ScrollText : Atom;
-  const TermsIcon = isSocialStudies ? BookOpenCheck : FlaskConical;
+  const isRla = document.subject === 'rla';
+  const SubjectIcon = isRla ? BookOpenCheck : isSocialStudies ? Landmark : Microscope;
+  const ConceptIcon = isRla ? FileText : isSocialStudies ? ScrollText : Atom;
+  const TermsIcon = isRla ? ScrollText : isSocialStudies ? BookOpenCheck : FlaskConical;
 
   return (
     <div className="space-y-5">
       <section className="rounded-2xl border border-sky-200 bg-sky-50/80 p-4 dark:border-sky-500/25 dark:bg-sky-500/10 sm:p-5">
-        <div className="flex items-start gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-sky-600 text-white"><SubjectIcon className="h-5 w-5" /></span><div><p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-700 dark:text-sky-300">{isSocialStudies ? 'Social studies idea' : 'Science idea'}</p><p className="mt-1 text-sm font-semibold leading-6 text-slate-700 dark:text-slate-200">{document.summary}</p></div></div>
+        <div className="flex items-start gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-sky-600 text-white"><SubjectIcon className="h-5 w-5" /></span><div><p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-700 dark:text-sky-300">{isRla ? 'RLA reading and writing skill' : isSocialStudies ? 'Social studies idea' : 'Science idea'}</p><p className="mt-1 text-sm font-semibold leading-6 text-slate-700 dark:text-slate-200">{document.summary}</p></div></div>
       </section>
 
       <section>

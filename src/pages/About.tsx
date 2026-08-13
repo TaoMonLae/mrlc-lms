@@ -62,7 +62,11 @@ const THIRD_PARTY_NOTICES: { title: string; description: ReactNode }[] = [
         <a href="https://github.com/TaoMonLae/duolingo-clone" target="_blank" rel="noopener noreferrer" className="font-bold text-aubergine-700 hover:underline dark:text-violet-300">
           TaoMonLae/duolingo-clone
         </a>
-        .
+        . MRLC’s original GED subject courses are informed by the public assessment guides and educator resources from{" "}
+        <a href="https://www.ged.com/educators-admins/teaching/classroom-materials.html" target="_blank" rel="noopener noreferrer" className="font-bold text-aubergine-700 hover:underline dark:text-violet-300">
+          GED Testing Service
+        </a>
+        ; they are independent preparation materials and do not reproduce official questions.
       </>
     ),
   },
